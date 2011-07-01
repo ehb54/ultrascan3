@@ -448,7 +448,7 @@ void US_License::update( void )
 
   if ( license.size() > 8 )
   {
-    //qDebug() << "license len > 8";
+    // qDebug() << "license len > 8";
     if ( le_email->text() != license[ 8 ] )
     {
       int result = QMessageBox::question( this,
@@ -505,12 +505,8 @@ void US_License::update_response( const QString& response )
   int error = data[ 0 ].toInt();
   if ( error == 0 )
   {
-    code1      = data[ 1 ];
-    code2      = data[ 2 ];
-    code3      = data[ 3 ];
-    code4      = data[ 4 ];
-    code5      = data[ 5 ];
-    expiration = data[ 6 ];
+    validation = data[ 1 ];
+    expiration = data[ 2 ];
     version    = US_Version;
 
     if ( save() ) 
@@ -575,7 +571,7 @@ void US_License::request_response( const QString& response )
   //qDebug() << data;
   int error = data[ 0 ].toInt();
 
-  //Debug() << "Request response data: " << error;
+  //qDebug() << "Request response data: " << error;
   if ( error == 0 )
   {
     pb_update->setText( "Finish Registration" );
@@ -601,9 +597,6 @@ bool US_License::save( void )
   QString     error;
   QString     message;
   QStringList license;
-
-  QString validation = code1 + "-" + code2 + "-" + code3 + "-" + 
-                       code4 + "-" + code5;
 
   license << lastname              << firstname 
           << institution           << address 

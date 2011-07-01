@@ -69,11 +69,6 @@ class US_GUI_EXTERN US_License : public US_Widgets
     QString version;
     QString licensetype;
     QString validation;
-    QString code1;
-    QString code2;
-    QString code3;
-    QString code4;
-    QString code5;
     QString expiration;
 
     QLineEdit* le_firstname;

@@ -24,9 +24,6 @@ class US_UTIL_EXTERN US_License_t
     */
     static int isValid( QString&, const QStringList& = QStringList() );
 
-  private:
-
-    static QString encode( const QString&, const QString& );
 };
 
 #endif
