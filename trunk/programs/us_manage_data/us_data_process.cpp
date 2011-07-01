@@ -53,16 +53,15 @@ DbgLv(1) << "REC_ULD: row" << row+1;
    QString filename = filepath.section( "/", -1, -1 );
    int     idData   = cdesc.recordID;
 
-   if      ( cdesc.recType == 1 )
+   //if      ( cdesc.recType == 1 )
+   if      ( cdesc.recType == 1  &&  cdesc.recType != 1 )  // never upload raw
    {  // upload a Raw record
       QString runID    = filename.section( ".",  0,  0 );
       QString tripl    = filename.section( ".", -4, -2 )
                          .replace( ".", " / " );
 DbgLv(1) << "REC_ULD:RAW: runID" << runID << "  tripl" << tripl;
 
-      //US_DataIO2::readRawData( filepath, rdata );
-
-      stat = syncExper->synchronize( cdesc );
+      //stat = syncExper->synchronize( cdesc );
 DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       QString expGUID  = cdesc.parentGUID;
 
@@ -216,7 +215,8 @@ int US_DataProcess::record_download( int row )
       }
    }
 
-   if      ( cdesc.recType == 1 )
+   //if      ( cdesc.recType == 1 )
+   if      ( cdesc.recType == 1  &&  cdesc.recType != 1 )  // never download raw
    {  // download a Raw record
       stat   = db->readBlobFromDB( filepath, "download_aucData", idData );
       if ( stat != 0 )

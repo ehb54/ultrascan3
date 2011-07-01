@@ -580,34 +580,22 @@ void US_DataLoader::scan_dbase_edit()
 
    while ( db.next() )
    {
-      QString recID = db.value( 0 ).toString();
-      QString etype = db.value( 8 ).toString().toLower();
+      QString recID    = db.value( 0 ).toString();
+      int     idRec    = recID.toInt();
+      QString etype    = db.value( 8 ).toString().toLower();
 
       // If type filtering, ignore runIDs that do not match experiment type
       if ( tfilter  &&  etype != etype_filt )
          continue;
 
       edtIDs << recID;
-   }
-
-//qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < edtIDs.size(); ii++ )
-   {
-      QString recID   = edtIDs.at( ii );
-      int     idRec   = recID.toInt();
-
 //qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      query.clear();
-      query << "get_editedData" << recID;
-      db.query( query );
-      db.next();
-
-      QString parID    = db.value( 0 ).toString();
-      QString recGUID  = db.value( 1 ).toString();
-      QString descrip  = db.value( 2 ).toString();
-      QString filename = db.value( 3 ).toString().replace( "\\", "/" );
+      QString descrip  = db.value( 1 ).toString();
+      QString filename = db.value( 2 ).toString().replace( "\\", "/" );
+      QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );
+      QString recGUID  = db.value( 9 ).toString();
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, 0 )
                          : descrip;

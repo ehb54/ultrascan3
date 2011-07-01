@@ -381,7 +381,7 @@ DbgLv(2) << "    context_menu RTN addAction";
    }
 
    if ( ( jdesc.recState & US_DataModel::REC_DB ) == 0 )
-      adnload->setEnabled( false );
+      aupload->setEnabled( false );
 
    // display the context menu and act on selection
 DbgLv(2) << "    context_menu CALL cmenu exec";
@@ -671,7 +671,7 @@ DbgLv(2) << "DT: i_details row" << irow;
       tr( "  File Name      : " )
          + cdesc.filename.section( "/", -1, -1 ) + "\n" +
       tr( "  File Last Mod  : " ) + cdesc.filemodDate + "\n" +
-      tr( "  Last Mod Date  : " ) + cdesc.lastmodDate + "\n" +
+      tr( "  DB   Last Mod  : " ) + cdesc.lastmodDate + "\n" +
       tr( "  Record State   : " ) + record_state( cdesc.recState ) + "\n";
 
    if ( cdesc.contents.length() < 60 )
@@ -869,7 +869,12 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
          US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
          int ityp   = ddesc.recType;
 
-         if ( ityp > lrtyp )  continue;  // skip if descendant of last removed
+         if ( ityp > lrtyp )
+         {  // Just mark as deleted if descendant of last removed
+            ddesc.recordID = -1;
+            da_model->change_datadesc( ddesc, irow );
+            continue;
+         }
 
          lrtyp      = ityp;              // save type of last removed
          karows++;

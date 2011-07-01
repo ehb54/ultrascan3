@@ -56,12 +56,13 @@ class US_GUI_EXTERN US_LoadableNoise : public QObject
 
     int dbg_level;
 
-    QStringList noiIDs;      // Noise IDs (ID for db, GUID for disk)
+    QStringList noiIDs;      // Noise GUIDs
     QStringList noiEdIDs;    // Noise edit GUIDs
-    QStringList noiMoIDs;    // Noise model IDs (db ID, disk GUID)
+    QStringList noiMoIDs;    // Noise model GUIDs
     QStringList noiTypes;    // Noise types
-    QStringList modIDs;      // Model IDs (db ID, disk GUID)
+    QStringList modIDs;      // Model GUIDs
     QStringList modEdIDs;    // Model edit GUIDs
+    QStringList modDescs;    // Model descriptions
 };
 #endif
 
