@@ -3,6 +3,8 @@
 #include "../include/us_surfracer.h"
 #include "qmessagebox.h"
 
+#undef DEBUG
+
 #define DOTSOMO      ""
 #ifndef WIN32
 #   include <unistd.h>

@@ -4,6 +4,8 @@
 /* Used with permission */
 /* integrated into UltraScan by E. Brookes, 2008 */
 
+#undef DEBUG
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>

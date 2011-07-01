@@ -12,6 +12,7 @@
 
 #define DEBUG
 #define SLIST
+#undef DEBUG
 
 SA2D::SA2D(bool *fit_status) {
    this->fit_status = fit_status;

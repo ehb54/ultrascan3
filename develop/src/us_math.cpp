@@ -2,6 +2,8 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+#undef DEBUG
+
 unsigned long square(int num)
 {
    return num * num;

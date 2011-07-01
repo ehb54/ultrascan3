@@ -2,6 +2,8 @@
 #include "../include/us_util.h"
 #include <algorithm>
 
+#undef DEBUG
+
 // #define DEBUG_ALLOC
 // #define DEBUG_RSS
 // #define DEBUG
