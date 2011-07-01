@@ -77,7 +77,7 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   if ( license.size() == 12 )
   {
     ErrorMessage = QString( qApp->translate( "UltraScan", 
-             "Your UltraScan resistration is pending.\n"
+             "Your UltraScan registration is pending.\n"
              "Please respond to the email sent to complete the process." ) );
 
     return Pending;
