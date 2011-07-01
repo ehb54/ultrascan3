@@ -95,10 +95,10 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
          any_models = true;
          if(!pdb_asa_for_saxs_hydrate())
          {
-            list_exposed();
-            view_exposed();
+            // list_exposed();
+            // view_exposed();
             build_to_hydrate();
-            cout << list_to_hydrate();
+            // cout << list_to_hydrate();
             progress->setProgress(9);
             qApp->processEvents();
             if ( !compute_to_hydrate_dihedrals( error_msg ) )
@@ -108,7 +108,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                                      error_msg );
                any_errors = true;
             }
-            cout << list_to_hydrate_dihedrals();
+            // cout << list_to_hydrate_dihedrals();
             progress->setProgress(10);
             qApp->processEvents();
             if ( !compute_best_fit_rotamer( error_msg ) )
@@ -118,7 +118,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                                      error_msg );
                any_errors = true;
             }
-            cout << list_best_fit_rotamer();
+            // cout << list_best_fit_rotamer();
             progress->setProgress(11);
             qApp->processEvents();
             if ( !compute_waters_to_add( error_msg ) )
@@ -128,7 +128,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                                      error_msg );
                any_errors = true;
             }
-            cout << list_waters_to_add();
+            // cout << list_waters_to_add();
             progress->setProgress(1, 1);
             qApp->processEvents();
             if ( !write_pdb_with_waters( error_msg ) )
