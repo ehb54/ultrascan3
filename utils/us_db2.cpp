@@ -370,6 +370,11 @@ int US_DB2::statusQuery( const QStringList& arguments )
    return statusQuery( buildQuery( arguments ) );
 }
 
+int US_DB2::functionQuery( const QStringList& arguments )
+{
+   return statusQuery( buildQuerySelect( arguments ) );
+}
+
 #ifdef NO_DB
 void US_DB2::query( const QString& ) {}
 #else
@@ -434,6 +439,25 @@ QString US_DB2::buildQuery( const QStringList& arguments )
    newquery += ")";
 
 //qDebug() << "NewQuery:" << newquery;
+   return newquery;
+}
+
+QString US_DB2::buildQuerySelect( const QStringList& arguments )
+{
+   QString newquery = "SELECT " + arguments[ 0 ]
+                    + "('" + guid + "', '" + userPW + "'";
+
+   for ( int i = 1; i < arguments.size(); i++ )
+   {
+      QString arg = arguments[ i ];
+      arg.replace( "'", "\\'" );
+
+      newquery += ", '" + arg + "'";
+   }
+
+   newquery += ")";
+
+//qDebug() << "NewQuerySelect:" << newquery;
    return newquery;
 }
 

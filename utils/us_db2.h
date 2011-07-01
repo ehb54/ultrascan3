@@ -179,6 +179,17 @@ class US_UTIL_EXTERN US_DB2
     */
     int           statusQuery ( const QStringList& );
 
+    /*! \brief Implements a query on the active database connection, 
+        cleaning up any unused results from a previous query. FunctionQuery()
+        returns the integer status of the query from the US3 database,
+        but no other result data. Useful for COUNT style queries. Uses
+        a SELECT command.
+
+        \param arguments A list that contains the function name and any 
+                         additional arguments needed.
+    */
+    int           functionQuery( const QStringList& );
+
     /*! \brief Implements a general-purpose query on the active database 
         connection, cleaning up any unused results from a previous query. 
         Query() can be used for INSERT, UPDATE, or DELETE style queries, 
@@ -367,6 +378,8 @@ class US_UTIL_EXTERN US_DB2
     QString    error;
     int        db_errno;
 
-    QString    buildQuery( const QStringList& );
+    QString    buildQuery      ( const QStringList& );
+    QString    buildQuerySelect( const QStringList& );
 };
 #endif
+

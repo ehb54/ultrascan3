@@ -44,8 +44,9 @@ int main( int argc, char* argv[] )
 // US_ManageData class constructor
 US_ManageData::US_ManageData() : US_Widgets()
 {
-   // set up the GUI
+   dbg_level     = US_Settings::us_debug();
 
+   // set up the GUI
    setWindowTitle( tr( "Manage US DB/Local Data Sets" ) );
    setPalette( US_GuiSettings::frameColor() );
 DbgLv(1) << "GUI setup begun";
@@ -72,7 +73,6 @@ DbgLv(1) << "GUI setup begun";
    statLayout->setContentsMargins( 0, 0, 0, 0 );
    treeLayout->setSpacing        ( 1 );
    treeLayout->setContentsMargins( 0, 0, 0, 0 );
-   dbg_level     = US_Settings::us_debug();
 
    // fill in the GUI components
    int row       = 0;

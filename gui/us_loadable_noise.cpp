@@ -235,9 +235,8 @@ int US_LoadableNoise::id_list_db()
    noiTypes.clear();
    modIDs  .clear();
    modEdIDs.clear();
+   modDescs.clear();
 
-   QStringList mGUIDs;
-   QStringList nGUIDs;
    QStringList reqIDs;
 
    // Build noise, edit, model ID lists for all noises
@@ -247,10 +246,9 @@ int US_LoadableNoise::id_list_db()
 
    while ( db.next() )
    {  // Accumulate lists from noise records
-      noiIDs   << db.value( 0 ).toString();
-      nGUIDs   << db.value( 1 ).toString();
-      noiMoIDs << db.value( 3 ).toString();
+      noiIDs   << db.value( 1 ).toString();
       noiTypes << db.value( 4 ).toString();
+      noiMoIDs << db.value( 5 ).toString();
    }
 
    // Build model, edit ID lists for all models
@@ -260,62 +258,50 @@ int US_LoadableNoise::id_list_db()
 
    while ( db.next() )
    {  // Accumulate from db desc entries matching noise model IDs
-      QString modelID = db.value( 0 ).toString();
+      QString modGUID = db.value( 1 ).toString();
 
-      if ( noiMoIDs.contains( modelID ) )
+      if ( noiMoIDs.contains( modGUID ) )
       {  // Only list models that have associated noise
-         QString modGUID = db.value( 1 ).toString();
-         QString editID  = db.value( 5 ).toString();
-         modIDs   << modelID;
-         modEdIDs << editID;
-         mGUIDs   << modGUID;
+         modIDs   << modGUID;
+         modDescs << db.value( 2 ).toString();
+         modEdIDs << db.value( 5 ).toString();
       }
    }
 
    // Loop through models to edit out any extra monteCarlo models
    for ( int ii = modIDs.size() - 1; ii >=0; ii-- )
    {  // Work from the back so any removed records do not affect indexes
-      US_Model wmodel;
+      QString mdesc  = modDescs.at( ii );
+      QString asysID = mdesc.section( ".", -2, -2 );
+      bool    mCarlo = ( asysID.contains( "-MC" )  &&
+                         asysID.contains( "_mc" ) );
+      QString reqID  = asysID.section( "_", 0, -2 );
 
-      wmodel.load( true, mGUIDs.at( ii ), &db );
-
-      if ( wmodel.monteCarlo )
+      if ( mCarlo )
       {  // Treat monte carlo in a special way (as single composite model)
-         if ( reqIDs.contains( wmodel.requestGUID ) )
+         if ( reqIDs.contains( reqID ) )
          {  // already have this request GUID, so remove this model
             modIDs  .removeAt( ii );
+            modDescs.removeAt( ii );
             modEdIDs.removeAt( ii );
-            mGUIDs  .removeAt( ii );
          }
 
          else
          {  // This is the first time for this request, so save it in a list
-            reqIDs << wmodel.requestGUID;
+            reqIDs << reqID;
          }
       }
    }
 
-   // Convert edit IDs to edit GUIDs in noises list
+   // Create list of edit GUIDs for noises
    for ( int ii = 0; ii < noiTypes.size(); ii++ )
    {
-      QString modelID = noiMoIDs.at( ii );
-      int     jj      = modIDs.indexOf( modelID );
+      QString moGUID  = noiMoIDs.at( ii );
+      int     jj      = modIDs.indexOf( moGUID );
       QString edGUID  = modEdIDs.at( jj );
-      QString moGUID  = mGUIDs  .at( jj );
 
       noiEdIDs << edGUID;
-      noiMoIDs.replace( ii, moGUID );
    }
-
-   // Replace IDs with GUIDs in main model,noise IDs list
-   modIDs.clear();
-   noiIDs.clear();
-
-   for ( int ii = 0; ii < mGUIDs.size(); ii++ )
-      modIDs   << mGUIDs.at( ii );
-
-   for ( int ii = 0; ii < nGUIDs.size(); ii++ )
-      noiIDs   << nGUIDs.at( ii );
 
    return noiIDs.size();
 }
@@ -400,7 +386,7 @@ int US_LoadableNoise::id_list_disk()
             QString editID  = attr.value( "editGUID"    ).toString();
             QString reqGUID = attr.value( "requestGUID" ).toString();
             QString mcst    = attr.value( "monteCarlo"  ).toString();
-            bool    mCarlo  = ( ! mcst.isEmpty()  &&  mcst!= "0" );
+            bool    mCarlo  = ( ! mcst.isEmpty()  &&  mcst != "0" );
 
             if ( noiMoIDs.contains( modelID ) )
             {  // Only list models that have associated noise

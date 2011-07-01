@@ -16,6 +16,8 @@ class US_GUI_EXTERN US_Choice : public US_WidgetsDialog
    Q_OBJECT
 
 	public:
+      //! \brief Constructor of a Choice dialog to act on a solution.
+      //! \param solution The solution for which an analyte choice is made.
       US_Choice( const US_Solution& );
 
    signals:
