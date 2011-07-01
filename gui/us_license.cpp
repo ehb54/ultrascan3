@@ -458,7 +458,15 @@ void US_License::update( void )
               "Continue?" ),
           QMessageBox::Yes, QMessageBox::No );
 
-      if ( result == QMessageBox::No ) return;
+      if ( result == QMessageBox::No ) 
+		{
+			return;
+		}
+		else
+		{
+			request();
+			return;
+		}
     }
   }
   else

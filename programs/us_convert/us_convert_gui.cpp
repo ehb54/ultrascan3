@@ -238,7 +238,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
 
-   ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
    settings->addWidget( ct_from, row++, 1 );
 
@@ -247,7 +247,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0 );
 
-   ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
    settings->addWidget( ct_to, row++, 1 );
 
