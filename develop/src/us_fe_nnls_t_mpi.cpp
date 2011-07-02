@@ -1073,7 +1073,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
    this->checkpoint_file = checkpoint_file;
    this->mc_cutoff = mc_cutoff;
    job_udp_msg_key = "js|" + job_id + QString("|Processes %1. ").arg(npes);
-   host_address_udp = QHostAddress("129.111.140.173"); // bcf.uthscsa.edu");
+   host_address_udp = QHostAddress("129.111.140.167"); // ultrascan.uthscsa.edu");
    host_port = 787;
    socket_device_udp = new QSocketDevice(QSocketDevice::Datagram);
    job_udp_msg_status = "Start run. ";
