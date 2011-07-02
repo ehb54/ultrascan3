@@ -1,1 +1,1 @@
-echo tigre_job_clear > /share/apps64/ultrascan/etc/us_gridpipe
+echo tigre_job_clear > /usr/local/ultrascan2/etc/grid/us_gridpipe

@@ -16,6 +16,7 @@
 # $laredo_no_procs = 20;
 # $laredo_no_procs = 20 - 4 * @laredodowncount;
 
+$us = $ENV{'ULTRASCAN'} || die "$0 environment variable ULTRASCAN must be defined\n";
 $logfiledir = "$us/etc/grid/log";    
 
 $MAX_RETRIES = 11;
@@ -1483,7 +1484,7 @@ if ( $res ne "$logfiledir/us_job${id}.stdout" )
 print "emailing results\n";
 print `cp email_text_* email_msg
 echo "Results processed by TIGRE on $default_system" >> email_msg`;
-print `perl $ENV{'ULTRASCAN'}/bin64/us_email.pl email_list_* email_msg` if $execute;
+print `perl $ENV{'ULTRASCAN'}/etc/grid/us_email.pl email_list_* email_msg` if $execute;
 
 
 # cleanup
