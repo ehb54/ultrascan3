@@ -173,7 +173,7 @@ $server = IO::Socket::INET->new(LocalPort => $port,
 
 use Inline C;
 
-reduce_perms(25,25);
+reduce_perms(48,48);
 
 print "awating UDP messages on port $port\n";
 

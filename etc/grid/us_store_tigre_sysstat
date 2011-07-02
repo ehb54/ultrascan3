@@ -19,7 +19,7 @@ use Net::Telnet;
 
 $ultrascan = $ENV{'ULTRASCAN'} || die "$0: environment variable ULTRASCAN not set\n";
 
-$exclude = `cat $ultrascan/grid/etc/tigre_exclude 2> /dev/null`;
+$exclude = `cat $ultrascan/etc/grid/tigre_exclude 2> /dev/null`;
 
 open(OUT, ">$ultrascan/etc/grid/tigre_sysstat.new") || die "$0: can not open $ultrascan/etc/grid/tigre_sysstat.new for writing $!\n";
 

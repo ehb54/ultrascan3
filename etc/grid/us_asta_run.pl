@@ -90,7 +90,7 @@ if($walltime != 0){
 if($noofProcess != 0){
         $headercond = $headercond. "node-count=\"$noofProcess\" ";
 }
-if ($noofHosts !=''){
+if ($noofHosts != 0){
         $headercond = $headercond. "cpu-count=\"$noofHosts\" ";
 }
 if($queueName ne ''){
