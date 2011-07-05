@@ -440,49 +440,15 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
  << c_solutes[maxdepth][nsolutes-1].c;
-#if 0
-   // calculate the simulation data
-
-   US_AstfemMath::initSimData( sdata, *edata, 0.0 );
-   US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-//DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar;
-//DbgLv(1) << "FIN_FIN: rotorcoefs"
-//   << simparms->rotorcoeffs[0] << simparms->rotorcoeffs[1];
-//DbgLv(1) << "FIN_FIN: bottom bposition" << simparms->bottom
-//   << simparms->bottom_position;
-//DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution
-//   << simparms->meniscus << simparms->temperature;
-   US_Astfem_RSA astfem_rsa( model, dsets[ 0 ]->simparams );
-
-   astfem_rsa.calculate( sdata );
-
    nscans           = edata->scanData.size();
    npoints          = edata->x.size();
-   double vari      = 0.0;
-
-   // build residuals data set (experiment minus simulation minus any noise)
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         double rval = edata->value( ss, rr ) - sdata.value( ss, rr )
-                       - tinvec[ rr ] - rinvec[ ss ];
-         vari       += sq( rval );
-
-         rdata.scanData[ ss ].readings[ rr ] = US_DataIO2::Reading( rval );
-      }
-   }
-
-   vari      /= (double)( nscans * npoints );
-#endif
-#if 1
-   nscans           = edata->scanData.size();
-   npoints          = edata->x.size();
-   double vari      = wresult.sim_vals.variance;
+   double vari      = wresult.sim_vals.variances[ 0 ];
+DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
    US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
+
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
    {
@@ -493,7 +459,6 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
       }
    }
 
-#endif
 int mms=nscans/2;
 int mmr=npoints/2;
 DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
@@ -507,6 +472,8 @@ DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
    rscan0->rpm        = (double)( r_iter + 1 );
    rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
    rscan0->plateau    = ( mmtype != 1 ) ? 0.0 : edata->meniscus;
+DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
+ << rscan0->rpm << rscan0->seconds << rscan0->plateau;
 
    // determine elapsed time
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
@@ -643,6 +610,8 @@ bool US_2dsaProcess::get_results( US_DataIO2::RawData* da_sim,
       *da_rin     = ri_noise;                     // copy any ri noise
 
 DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
+DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
+ << da_res->scanData[0].delta_r;
    return all_ok;
 }
 
@@ -1079,6 +1048,7 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
 DbgLv(1) << "MCARLO: mm_iter" << mm_iter << " sigma0 c0 v0 cn vn"
  << sigmas[0] << bdata->value(0,0) << edata->value(0,0)
  << bdata->value(nscans-1,npoints-1) << edata->value(nscans-1,npoints-1);
+   dsets[ 0 ]->run_data = wdata;
 
    // Re-queue all the original subgrid tasks
 

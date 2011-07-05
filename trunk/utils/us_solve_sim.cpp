@@ -46,13 +46,16 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntotal    = 0;
    int ntinois   = 0;
    int nrinois   = 0;
+   calc_ti       = ( ( noisflag & 1 ) != 0 );
+   calc_ri       = ( ( noisflag & 2 ) != 0 );
+   startCalc     = QDateTime::currentDateTime();
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {  // Count scan,point totals for all data sets
       DataSet* dset = data_sets[ ee ];
       int nscans    = dset->run_data.scanData.size();
       int npoints   = dset->run_data.x.size();
-      ntotal       += nscans * npoints;
+      ntotal       += ( nscans * npoints );
       ntinois      += npoints;
       nrinois      += nscans;
    }
@@ -171,13 +174,13 @@ DbgLv(1) << "   CR:  simulations size" << simulations.size();
    kstodo     = max( kstodo, 2 );
 
 DebugTime("BEG:clcr-nn");
-   if ( ( noisflag & 1 ) != 0 )
+   if ( calc_ti )
    {  // Compute TI Noise (and, optionally, RI Noise)
       if ( abort ) return;
       // Compute a_tilde, the average experiment signal at each time
       QVector< double > a_tilde( nrinois, 0.0 );
 
-      if ( noisflag == 3 )
+      if ( calc_ri )
          compute_a_tilde( a_tilde );
 
       // Compute a_bar, the average experiment signal at each radius
@@ -187,7 +190,7 @@ DebugTime("BEG:clcr-nn");
       // Compute L_tildes, the average signal at each radius (if RI noise)
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
 
-      if ( noisflag == 3 )
+      if ( calc_ri )
          compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Compute L_bars
@@ -218,7 +221,7 @@ DbgLv(1) << "  noise small NNLS";
       // Compute L_tilde, the average model signal at each radius
       QVector< double > L_tilde( nrinois, 0.0 );
 
-      if ( noisflag == 3 )
+      if ( calc_ri )
          compute_L_tilde( L_tilde, L );
 
       // Compute L_bar, the average model signal at each radius
@@ -229,7 +232,7 @@ DbgLv(1) << "  noise small NNLS";
       for ( int ii = 0; ii < ntinois; ii++ )
          tinvec[ ii ] = a_bar[ ii ] - L_bar[ ii ];
 
-      if ( noisflag == 3 )
+      if ( calc_ri )
       {  // Compute RI_noise
          for ( int ii = 0; ii < nrinois; ii++ )
             rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
@@ -239,7 +242,7 @@ DbgLv(1) << "  noise small NNLS";
          emit work_progress( kstodo );  // Report noise NNLS steps done
    }  // End tinoise and optional rinoise calculation
 
-   else if ( ( noisflag & 2 ) != 0 )
+   else if ( calc_ri )
    {  // Compute RI noise (when RI only)
       if ( abort ) return;
       // Compute a_tilde, the average experiment signal at each time
@@ -419,6 +422,7 @@ DbgLv(1) << "CR: index variance" << index << variance;
 
    sim_vals.variances.resize( dataset_count );
    variance /= (double)ntotal;    // total sets variance
+   sim_vals.variance = variance;
    kk        = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
@@ -452,12 +456,12 @@ DbgLv(1) << "CR:   jj solute-c" << kk-1 << sim_vals.solutes[kk-1].c;
    if ( abort ) return;
 
    // Fill noise objects with any calculated vectors
-   if ( ( noisflag & 1 ) != 0 )
+   if ( calc_ti )
    {
       sim_vals.ti_noise << tinvec;
    }
 
-   if ( ( noisflag & 2 ) != 0 )
+   if ( calc_ri )
    {
       sim_vals.ri_noise << rinvec;
    }
@@ -547,7 +551,7 @@ void US_SolveSim::compute_L( int                      ntotal,
    {
       double concentration = nnls_x[ cc ];
 
-      if ( concentration > 0 )
+      if ( concentration > 0.0 )
       {
          int r_index = cc * ntotal;
          int count   = 0;
@@ -831,13 +835,13 @@ void US_SolveSim::compute_L_bars( int                      nsolutes,
    }
 }
 
-// Debug message with thread/processor number and time value
+// Debug message with thread/processor number and elapsed time value
 void US_SolveSim::DebugTime( QString mtext )
 {
    if ( dbg_timing )
    {
-      qDebug() << "w" << thrnrank << "TM:" <<
-         mtext  + " " + QTime::currentTime().toString("hh:mm:ss.zzz");
+      qDebug() << "w" << thrnrank << "TM:" << mtext
+         << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
    }
 }
 

@@ -688,6 +688,7 @@ void US_PlotConfig::updateAxis( int axis )
    axisWidget->exec();
    qApp->processEvents();
    delete axisWidget;
+   axisWidget = NULL;
 
 }
 

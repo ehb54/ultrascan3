@@ -1414,6 +1414,7 @@ void US_FeMatch::load_model( )
 
    // load model
    bool loadDB = dkdb_cntrls->db();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    US_ModelLoader dialog( loadDB, mfilter, model,
       mdesc, dataList[ drow ].editGUID );
@@ -1422,6 +1423,7 @@ void US_FeMatch::load_model( )
             this,    SLOT( update_disk_db( bool ) ) );
 
    dialog.move( this->pos() + QPoint( 200, 200 ) );
+   QApplication::restoreOverrideCursor();
 
    if ( dialog.exec() != QDialog::Accepted )
       return;                     // Cancel:  bail out now
