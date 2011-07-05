@@ -63,6 +63,8 @@ class US_Edit : public US_Widgets
       QList< int >       sd_knts;    // speed data counts, ea. triple
       QList< int >       includes;
       QList< double >    residuals;
+      QVector< QString > editGUIDs;
+      QVector< QString > editIDs;
 
       US_Help            showHelp;
 
