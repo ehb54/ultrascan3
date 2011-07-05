@@ -442,6 +442,8 @@ void US_Edit::reset( void )
    triples       .clear();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
+   editGUIDs     .clear();
+   editIDs       .clear();
 
    set_pbColors( NULL );
 }
@@ -1002,6 +1004,10 @@ void US_Edit::load( void )
                 + " " + DEGC + tr( ". The accuracy of experimental\n"
                 "results may be affected significantly." ) );
    }
+
+   int ntriples = triples.size();
+   editGUIDs.fill( "", ntriples );
+   editIDs  .fill( "", ntriples );
 }
 
 // Set pushbutton colors
@@ -2701,7 +2707,14 @@ void US_Edit::write_triple( void )
    xml.writeAttribute   ( "value", runID );
    xml.writeEndElement  ();
 
-   QString editGUID = US_Util::new_guid();
+   QString editGUID = editGUIDs[ triple_index ];
+
+   if ( editGUID.isEmpty() )
+   {
+      editGUID = US_Util::new_guid();
+      editGUIDs.replace( triple_index, editGUID );
+   }
+
    xml.writeStartElement( "editGUID" );
    xml.writeAttribute   ( "value", editGUID );
    xml.writeEndElement  ();
@@ -2926,25 +2939,51 @@ void US_Edit::write_triple( void )
       {
          db.next();
          QString rawDataID = db.value( 0 ).toString();
+
+         QString editID    = editIDs[ triple_index ];
+         int     idEdit    = editID.toInt();
+
          // Save edit file to DB
          q.clear();
-         q << "new_editedData" << rawDataID << editGUID << runID
-           << filename << "";
 
-         db.query( q );
-
-         if ( db.lastErrno() != US_DB2::OK )
+         if ( editID.isEmpty() )
          {
-            QMessageBox::warning( this, tr( "Database Problem" ),
-              tr( "Could not insert metadata into the database \n" ) + 
-              db.lastError() );
+            q << "new_editedData" << rawDataID << editGUID << runID
+              << filename << "";
 
-            return;
+            db.query( q );
+
+            if ( db.lastErrno() != US_DB2::OK )
+            {
+               QMessageBox::warning( this, tr( "Database Problem" ),
+                 tr( "Could not insert metadata into the database \n" ) + 
+                 db.lastError() );
+
+               return;
+            }
+
+            idEdit   = db.lastInsertID();
+            editID   = QString::number( idEdit );
+            editIDs.replace( triple_index, editID );
          }
 
-         int insertID = db.lastInsertID();
+         else
+         {
+            q << "update_editedData" << editID << rawDataID << editGUID
+              << runID << filename << "";
+            db.query( q );
 
-         db.writeBlobToDB( workingDir + filename, "upload_editData", insertID );
+            if ( db.lastErrno() != US_DB2::OK )
+            {
+               QMessageBox::warning( this, tr( "Database Problem" ),
+                 tr( "Could not update metadata in the database \n" ) + 
+                 db.lastError() );
+
+               return;
+            }
+         }
+
+         db.writeBlobToDB( workingDir + filename, "upload_editData", idEdit );
 
          if ( db.lastErrno() != US_DB2::OK )
          {
