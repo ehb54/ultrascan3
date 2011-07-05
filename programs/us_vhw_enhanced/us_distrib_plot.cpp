@@ -291,6 +291,7 @@ void US_DistribPlot::plot_distrib( void )
    double* yy = yv.data();
    double maxx = 0.0;
    double minx = 100.0;
+   double xinc = 1.0;
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
@@ -300,9 +301,11 @@ void US_DistribPlot::plot_distrib( void )
       minx     = min( minx, xx[ jj ] );
    }
 
+   minx     = (double)( (int)( minx - 0.5 ) );
    maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
    maxx     = ( ( maxx - minx ) < 2.0 ) ? ( maxx + 1.0 ) : maxx;
-   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
+   xinc     = ( ( maxx - minx ) < 15.0 ) ? xinc : ( xinc * 5.0 );
+   data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, xinc );
 
    // first draw the yellow line through points
    dcurve  = us_curve( data_plot, tr( "Distrib Line" ) );
@@ -328,6 +331,7 @@ void US_DistribPlot::plot_histogram( void )
 {
    QVector< double > xvec;
    QVector< double > yvec;
+   double  minx;
    double  maxx;
    double  maxy;
    int     npoints;
@@ -344,19 +348,22 @@ void US_DistribPlot::plot_histogram( void )
    npoints  = histo_data( xvec, yvec );
    double* xx = xvec.data();
    double* yy = yvec.data();
+   minx     = xx[ 0 ];
    maxx     = xx[ 0 ];
    maxy     = yy[ 0 ];
 
    for ( int jj = 1; jj < npoints; jj++ )
    {
+      minx     = min( minx, xx[ jj ] );
       maxx     = max( maxx, xx[ jj ] );
       maxy     = max( maxy, yy[ jj ] );
    }
 
+   minx     = (double)( (int)( minx - 0.5 ) );
    maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
    maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
-   data_plot->setAxisScale( QwtPlot::yLeft,   0.0,  maxy,  5.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
+   data_plot->setAxisScale( QwtPlot::yLeft,    0.0, maxy, 5.0 );
+   data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, 1.0 );
 
 DbgLv(2) << "HISTO_DAT:" << npoints;
 for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
@@ -381,6 +388,7 @@ void US_DistribPlot::plot_envelope( void )
    QVector< double > yvec;
    double* xx;
    double* yy;
+   double  minx;
    double  maxx;
    double  maxy;
    int     npoints;
@@ -398,19 +406,22 @@ void US_DistribPlot::plot_envelope( void )
       npoints  = histo_data( xvec, yvec );
       xx       = xvec.data();
       yy       = yvec.data();
+      minx     = xx[ 0 ];
       maxx     = xx[ 0 ];
       maxy     = yy[ 0 ];
 
       for ( int jj = 1; jj < npoints; jj++ )
       {
+         minx     = min( minx, xx[ jj ] );
          maxx     = max( maxx, xx[ jj ] );
          maxy     = max( maxy, yy[ jj ] );
       }
 
+      minx     = (double)( (int)( minx - 0.5 ) );
       maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
       maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
-      data_plot->setAxisScale( QwtPlot::yLeft,   0.0,  maxy,  5.0 );
-      data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
+      data_plot->setAxisScale( QwtPlot::yLeft,    0.0, maxy, 5.0 );
+      data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, 1.0 );
    }
 
    // Calculate envelope data
@@ -438,6 +449,7 @@ int US_DistribPlot::histo_data( QVector< double >& xvec,
                                 QVector< double >& yvec )
 {
    int     steps;
+   int     stoff    = 0;
    double  max_cept = 1.0e-6;
    double  min_cept = 1.0e+6;
    double  sed_bin  = dsedcs.at( 0 );
@@ -457,6 +469,9 @@ int US_DistribPlot::histo_data( QVector< double >& xvec,
    sed_bin      = ( max_cept - min_cept ) / div_scl;
    max_step     = max_cept * 4.0 / 3.0;
    steps        = (int)( max_step / sed_bin );
+   stoff        = (int)( min_cept / sed_bin ) - 1;
+   stoff        = qMax( stoff, 0 );
+   steps       -= stoff;
 
    xvec.fill( 0.0, steps );
    yvec.fill( 0.0, steps );
@@ -466,9 +481,9 @@ int US_DistribPlot::histo_data( QVector< double >& xvec,
    for ( int jj = 0; jj < steps; jj++ )
    {  // accumulate histogram values
       int kbin     = 0;
-      sed_lo       = sed_bin * (double)jj;       // low bin sedcoeff
-      sed_hi       = sed_lo + sed_bin;           // high bin sedcoeff
-      sval[ jj ]   = ( sed_lo + sed_hi ) * 0.5;  // mid bin sedcoeff
+      sed_lo       = sed_bin * (double)( jj + stoff ); // low bin sedcoeff
+      sed_hi       = sed_lo + sed_bin;                 // high bin sedcoeff
+      sval[ jj ]   = ( sed_lo + sed_hi ) * 0.5;        // mid bin sedcoeff
 
       for ( int kk = 0; kk < divsCount; kk++ )
       {  // accumulate count of sedcoeff values in current bin
@@ -489,6 +504,7 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
                                 QVector< double >& yvec )
 {
    int     steps;
+   int     stoff    = 0;
    int     array    = 300;
    double  max_cept = 1.0e-6;
    double  min_cept = 1.0e+6;
@@ -512,6 +528,11 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
    sed_bin      = ( max_cept - min_cept ) / div_scl;
    max_step     = max_cept * 4.0 / 3.0;
    steps        = (int)( max_step / sed_bin );
+   stoff        = (int)( min_cept / sed_bin ) - 1;
+   stoff        = qMax( stoff, 0 );
+DbgLv(2) << "ED: steps stoff" << steps << stoff;
+   steps       -= stoff;
+DbgLv(2) << "ED:  steps" << steps;
 
    if ( array <= steps )
    {  // insure envelope array size bigger than histogram array size
@@ -529,7 +550,7 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
 
    for ( int jj = 0; jj < array; jj++ )
    {  // initialize envelope values
-      xval[ jj ]   = scale * (double)jj;
+      xval[ jj ]   = scale * (double)( jj + stoff );
       yval[ jj ]   = 0.0;
    }
 
@@ -538,7 +559,7 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
    for ( int jj = 0; jj < steps; jj++ )
    {  // calculate histogram values and envelope values based on them
       int kbin     = 0;
-      sed_lo       = sed_bin * (double)jj;
+      sed_lo       = sed_bin * (double)( jj + stoff );
       sed_hi       = sed_lo + sed_bin;
       sval         = ( sed_lo + sed_hi ) * 0.5;
 
@@ -569,7 +590,7 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
       env_sum     += yval[ kk ];
    }
 
-   env_sum     *= xval[ 1 ];            // sum times X increment
+   env_sum     *= scale;                // sum times X increment
    scale        = his_sum / env_sum;    // normalizing scale factor
 DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
 

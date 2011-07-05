@@ -191,6 +191,7 @@ void US_2dsa::analysis_done( int updflag )
       double  rmsd  = sqrt( vari );
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
+DbgLv(1) << "Analysis Done VARI" << vari;
 
       qApp->processEvents();
       return;
@@ -373,6 +374,7 @@ void US_2dsa::data_plot( void )
    rmsd     = sqrt( vari );
    le_vari->setText( QString::number( vari ) );
    le_rmsd->setText( QString::number( rmsd ) );
+DbgLv(1) << "Data Plot VARI" << vari;
 }
 
 // view data report

@@ -101,6 +101,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings
     bool               abort;         // Flag to abort at next opportunity
+    bool               calc_ti;       // Calculate-TI-noise flag
+    bool               calc_ri;       // Calculate-RI-noise flag
+    QDateTime          startCalc;     // Start calc time for elapsed time prints
 
   private slots:
     // Compute "a~", the average experiment signal at each time
