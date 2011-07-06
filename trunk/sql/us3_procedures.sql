@@ -155,7 +155,6 @@ BEGIN
   DECLARE md5_pw VARCHAR(80);
   DECLARE l_password VARCHAR(80);
   DECLARE activated INT;
-  DECLARE status INT;
 
   call config();
   SET @US3_LAST_ERRNO = @OK;
@@ -170,7 +169,6 @@ BEGIN
   SET @USERLEVEL      = NULL;
 
   SET md5_pw          = MD5( p_password );
-  SET status          = @ERROR;
 
   SELECT COUNT(*)
   INTO   count_user
@@ -231,13 +229,14 @@ BEGIN
       SET    lastLogin = NOW()
       WHERE  personID = @US3_ID;
 
-      SET status      = @OK;
+      SET @US3_LAST_ERROR = '';
+      SET @US3_LAST_ERRNO = @OK;
 
     END IF;
 
   END IF;
 
-  RETURN( status );
+  RETURN( @US3_LAST_ERRNO );
 
 END$$
 
@@ -253,7 +252,6 @@ BEGIN
   DECLARE md5_pw     VARCHAR(80);
   DECLARE l_password VARCHAR(80);
   DECLARE activated  INT;
-  DECLARE status     INT;
 
   call config();
   SET @US3_LAST_ERRNO = @OK;
@@ -268,7 +266,6 @@ BEGIN
   SET @USERLEVEL      = NULL;
 
   SET md5_pw          = MD5( p_password );
-  SET status          = @ERROR;
 
   SELECT COUNT(*)
   INTO   count_user
@@ -335,13 +332,14 @@ BEGIN
       SET    lastLogin = NOW()
       WHERE  personID  = @US3_ID;
 
-      SET status       = @OK;
+      SET @US3_LAST_ERRNO = @OK;
+      SET @US3_LAST_ERROR = '';
 
     END IF;
 
   END IF;
 
-  RETURN( status );
+  RETURN( @US3_LSAST_ERRNO );
 
 END$$
 

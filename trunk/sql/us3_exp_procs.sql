@@ -82,7 +82,6 @@ CREATE FUNCTION verify_operator_permission( p_personGUID   CHAR(36),
 BEGIN
   DECLARE count_instruments INT;
   DECLARE count_labs        INT;
-  DECLARE status            INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @ERROR;
@@ -102,25 +101,25 @@ BEGIN
   WHERE  instrumentID = p_instrumentID
   AND    labID        = p_labID;
  
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    IF ( count_instruments < 1 ) THEN
-      SET @US3_LAST_ERRNO = @BADOPERATOR;
-      SET @US3_LAST_ERROR = 'MySQL: operator is not permitted to work on this instrument';
+  IF ( verify_user( p_personGUID, p_password ) != @OK ) THEN
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to use this instrument';
 
-    ELSEIF ( count_labs < 1 ) THEN
-      SET @US3_LAST_ERRNO = @BADLABLOCATION;
-      SET @US3_LAST_ERROR = 'MySQL: that instrument is not located in that lab';
+  ELSEIF ( count_labs < 1 ) THEN
+    SET @US3_LAST_ERRNO = @BADLABLOCATION;
+    SET @US3_LAST_ERROR = 'MySQL: that instrument is not located in that lab';
 
-    ELSE
-      SET @US3_LAST_ERRNO = @OK;
+  ELSEIF ( count_instruments < 1 ) THEN
+    SET @US3_LAST_ERRNO = @BADOPERATOR;
+    SET @US3_LAST_ERROR = 'MySQL: operator is not permitted to work on this instrument';
 
-    END IF;
+  ELSE
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
 
   END IF;
 
-  SET status = @US3_LAST_ERRNO;
-
-  RETURN( status );
+  RETURN( @US3_LAST_ERRNO );
 
 END$$
 
