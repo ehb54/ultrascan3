@@ -1602,7 +1602,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                // << " saxs_name " << it->second.saxs_name
                // << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
                // // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
-                    << endl;
+               // << endl;
                b[it->first] = 
                   it->second.num_elect;
             }
