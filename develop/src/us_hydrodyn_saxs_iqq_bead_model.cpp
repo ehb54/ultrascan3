@@ -584,7 +584,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
       double scaling_sigb;
       double scaling_chi2;
 
-      if ( qsl_plotted_iq_names.size() )
+      if ( !our_saxs_options->disable_iq_scaling &&
+           qsl_plotted_iq_names.size() )
       {
          bool ok;
          scaling_target = QInputDialog::getItem(
@@ -1231,7 +1232,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       double scaling_sigb;
       double scaling_chi2;
 
-      if ( qsl_plotted_iq_names.size() )
+      if ( !our_saxs_options->disable_iq_scaling &&
+           qsl_plotted_iq_names.size() )
       {
          bool ok;
          scaling_target = QInputDialog::getItem(
@@ -1978,7 +1980,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
       double scaling_sigb;
       double scaling_chi2;
 
-      if ( qsl_plotted_iq_names.size() )
+      if ( !our_saxs_options->disable_iq_scaling &&
+           qsl_plotted_iq_names.size() )
       {
          bool ok;
          scaling_target = QInputDialog::getItem(
@@ -2745,7 +2748,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       double scaling_sigb;
       double scaling_chi2;
 
-      if ( qsl_plotted_iq_names.size() )
+      if ( !our_saxs_options->disable_iq_scaling &&
+           qsl_plotted_iq_names.size() )
       {
          bool ok;
          scaling_target = QInputDialog::getItem(

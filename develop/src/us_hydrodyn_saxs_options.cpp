@@ -223,6 +223,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_crysol_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_crysol_fibonacci_grid_order(double)));
 
+   lbl_crysol_hydration_shell_contrast = new QLabel(tr(" Crysol: Contrast of hydration shell (e / A^3):"), this);
+   lbl_crysol_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
+   lbl_crysol_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_crysol_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_crysol_hydration_shell_contrast = new QwtCounter(this);
+   cnt_crysol_hydration_shell_contrast->setRange(0, 1, 0.001);
+   cnt_crysol_hydration_shell_contrast->setValue((*saxs_options).crysol_hydration_shell_contrast);
+   cnt_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
+   cnt_crysol_hydration_shell_contrast->setEnabled(true);
+   cnt_crysol_hydration_shell_contrast->setNumButtons(3);
+   cnt_crysol_hydration_shell_contrast->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_crysol_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_crysol_hydration_shell_contrast, SIGNAL(valueChanged(double)), SLOT(update_crysol_hydration_shell_contrast(double)));
+
    cb_crysol_default_load_difference_intensity = new QCheckBox(this);
    cb_crysol_default_load_difference_intensity->setText(tr("Crysol: automatically load difference intensity"));
    cb_crysol_default_load_difference_intensity->setEnabled(true);
@@ -798,6 +814,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_iq_scale_nm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_scale_nm, SIGNAL(clicked()), this, SLOT(set_iq_scale_nm()));
 
+   cb_disable_iq_scaling = new QCheckBox(this);
+   cb_disable_iq_scaling->setText(tr(" Disable I(q) scaling"));
+   cb_disable_iq_scaling->setEnabled(true);
+   cb_disable_iq_scaling->setChecked((*saxs_options).disable_iq_scaling);
+   cb_disable_iq_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_disable_iq_scaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
+
    pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_mw_cache->setMinimumHeight(minHeight1);
@@ -864,6 +888,10 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    background->addWidget(lbl_crysol_fibonacci_grid_order, j, 0);
    background->addWidget(cnt_crysol_fibonacci_grid_order, j, 1);
+   j++;
+
+   background->addWidget(lbl_crysol_hydration_shell_contrast, j, 0);
+   background->addWidget(cnt_crysol_hydration_shell_contrast, j, 1);
    j++;
 
    background->addMultiCellWidget(cb_crysol_default_load_difference_intensity, j, j, 0, 1);
@@ -987,6 +1015,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    hbl_iq_scale->addWidget(cb_iq_scale_angstrom);
    hbl_iq_scale->addWidget(cb_iq_scale_nm);
    background->addMultiCellLayout(hbl_iq_scale, k, k, 2, 3);
+   k++;
+
+   background->addMultiCellWidget(cb_disable_iq_scaling, k, k, 2, 3);
    k++;
 
    background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
@@ -1193,6 +1224,12 @@ void US_Hydrodyn_SaxsOptions::update_crysol_max_harmonics(double val)
 void US_Hydrodyn_SaxsOptions::update_crysol_fibonacci_grid_order(double val)
 {
    (*saxs_options).crysol_fibonacci_grid_order = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_crysol_hydration_shell_contrast(double val)
+{
+   (*saxs_options).crysol_hydration_shell_contrast = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1516,6 +1553,12 @@ void US_Hydrodyn_SaxsOptions::set_iq_scale_angstrom()
 void US_Hydrodyn_SaxsOptions::set_iq_scale_nm()
 {
    (*saxs_options).iq_scale_nm = cb_iq_scale_nm->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_disable_iq_scaling()
+{
+   (*saxs_options).disable_iq_scaling = cb_disable_iq_scaling->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

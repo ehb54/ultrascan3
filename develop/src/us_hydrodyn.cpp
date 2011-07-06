@@ -41,6 +41,8 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+// #define USE_H
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 // #define GRID_HYDRATE_DEBUG
@@ -246,6 +248,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.crysol_max_harmonics = 15;
    saxs_options.crysol_fibonacci_grid_order = 17;
+   saxs_options.crysol_hydration_shell_contrast = 0.03;
    saxs_options.crysol_default_load_difference_intensity = true;
    saxs_options.crysol_version_26 = false;
 
@@ -260,6 +263,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
 
    saxs_options.steric_clash_distance = 1.4;
+
+   saxs_options.disable_iq_scaling = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
@@ -608,13 +613,14 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
-   // pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
-   //   Q_CHECK_PTR(pb_pdb_hydrate_for_saxs);
-   //   pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
-   //   pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   //   pb_pdb_hydrate_for_saxs->setEnabled(false);
-   //   pb_pdb_hydrate_for_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   //   connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
+#if defined(USE_H)
+   pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
+   pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
+   pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_hydrate_for_saxs->setEnabled(true);
+   pb_pdb_hydrate_for_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
+#endif
 
    pb_pdb_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
@@ -886,7 +892,9 @@ void US_Hydrodyn::setupGUI()
    j++;
    QHBoxLayout *hbl_pdb_saxs = new QHBoxLayout;
    hbl_pdb_saxs->addWidget(pb_pdb_saxs);
-   //   hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
+#if defined(USE_H)
+   hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
+#endif
    background->addLayout(hbl_pdb_saxs, j, 0);
    j++;
    background->addWidget(pb_dmd_run, j, 0);

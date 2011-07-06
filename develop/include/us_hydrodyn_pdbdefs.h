@@ -225,6 +225,7 @@ struct saxs_options
    // crysol specific options
    unsigned int crysol_max_harmonics;
    unsigned int crysol_fibonacci_grid_order;
+   float        crysol_hydration_shell_contrast;
 
    float   fast_bin_size;
    float   fast_modulation;
@@ -241,6 +242,8 @@ struct saxs_options
    QString default_rotamer_filename;
 
    double  steric_clash_distance;
+
+   bool    disable_iq_scaling;
 };
 
 struct hybridization
@@ -252,6 +255,7 @@ struct hybridization
    float   scat_len;             // Scattering length in H20 (*10^-12 cm)
    int     exch_prot;            // Number of exchangable protons
    int     num_elect;            // Number of electrons
+   int     hydrogens;            // Number of hydrogens
 };
 
 struct atom

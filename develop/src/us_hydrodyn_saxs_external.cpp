@@ -307,6 +307,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol->addArgument( "/dns" );
    crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
 
+   crysol->addArgument( "/dro" );
+   crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
+
    crysol->addArgument( "/lm" );
    crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_max_harmonics ) );
 

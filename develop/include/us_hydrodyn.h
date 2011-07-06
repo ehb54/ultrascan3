@@ -74,6 +74,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
    Q_OBJECT
 
    public:
+      friend class US_Hydrodyn_Batch;
+
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
                   const char *name = 0);

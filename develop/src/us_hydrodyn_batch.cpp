@@ -965,6 +965,8 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
    save_pdb_parse = ((US_Hydrodyn *)us_hydrodyn)->pdb_parse;
    save_pb_rule_on = ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on;
    save_calcAutoHydro = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
+   save_disable_iq_scaling = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling;
+   
    if ( any_pdb_in_list )
    {
       puts("bg atoms is enabled");
@@ -978,6 +980,7 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
       puts("bg atoms is NOT enabled");
    }
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling = true;
 }
 
 void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
@@ -985,6 +988,7 @@ void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse = save_pdb_parse;
    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = save_pb_rule_on;
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = save_calcAutoHydro;
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling = save_disable_iq_scaling;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2164,20 +2168,31 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
                  vector_double_to_csv(saxs_iqq[i]).ascii());
       }
       fprintf(of, "\n");
+      bool any_printed = false;
       for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
       {
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 csv_source_name_iqq[i].ascii(),
-                 "Ia(q)",
-                 vector_double_to_csv(saxs_iqqa[i]).ascii());
+         if ( saxs_iqqa[i].size() )
+         {
+            any_printed = true;
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    csv_source_name_iqq[i].ascii(),
+                    "Ia(q)",
+                    vector_double_to_csv(saxs_iqqa[i]).ascii());
+         }
       }
-      fprintf(of, "\n");
+      if ( any_printed )
+      {
+         fprintf(of, "\n");
+      }
       for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
       {
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 csv_source_name_iqq[i].ascii(),
-                 "Ic(q)",
-                 vector_double_to_csv(saxs_iqqc[i]).ascii());
+         if ( saxs_iqqc[i].size() )
+         {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    csv_source_name_iqq[i].ascii(),
+                    "Ic(q)",
+                    vector_double_to_csv(saxs_iqqc[i]).ascii());
+         }
       }
       fclose(of);
       editor->append(tr("Created file: " + fname + "\n"));

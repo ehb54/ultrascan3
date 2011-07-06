@@ -69,6 +69,9 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_crysol_fibonacci_grid_order;
       QwtCounter *cnt_crysol_fibonacci_grid_order;
 
+      QLabel     *lbl_crysol_hydration_shell_contrast;
+      QwtCounter *cnt_crysol_hydration_shell_contrast;
+
       QCheckBox  *cb_crysol_default_load_difference_intensity;
       QCheckBox  *cb_crysol_version_26;
 
@@ -153,6 +156,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox   *cb_iq_scale_angstrom;
       QCheckBox   *cb_iq_scale_nm;
 
+      QCheckBox   *cb_disable_iq_scaling;
+
       QPushButton *pb_clear_mw_cache;
 
       QPushButton *pb_help;
@@ -181,6 +186,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void update_crysol_max_harmonics(double);
       void update_crysol_fibonacci_grid_order(double);
+      void update_crysol_hydration_shell_contrast(double);
       void set_crysol_default_load_difference_intensity();
       void set_crysol_version_26();
 
@@ -229,6 +235,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_iq_scale_ask();
       void set_iq_scale_angstrom();
       void set_iq_scale_nm();
+
+      void set_disable_iq_scaling();
 
       void clear_mw_cache();
 

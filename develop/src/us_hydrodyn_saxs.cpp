@@ -1585,10 +1585,24 @@ void US_Hydrodyn_Saxs::show_plot_pr()
               )
          {
             // for each entry in hybrid_map, compute b
+            // if ( !saxs_map.count("H") )
+            // {
+            // QMessageBox::message(tr("No Hydrogens:"), tr("No Hydrogen defined in SAXS Atom table"));
+            // return;
+            // }
+            // float excl_volH = saxs_map["H"].volume;
             for (map < QString, hybridization >::iterator it = hybrid_map.begin();
                  it != hybrid_map.end();
                  it++)
             {
+               cout << " computing b for " << it->first 
+                    << " hydrogens " << it->second.hydrogens 
+                    << " exch_prot " << it->second.exch_prot
+                    << " num elect " << it->second.num_elect
+                    << " saxs_name " << it->second.saxs_name
+                    << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
+                  // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
+                    << endl;
                b[it->first] = 
                   it->second.num_elect;
             }
@@ -1664,7 +1678,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                         radius = hybrid_map[hybrid_name].radius;
                      }
                   }
-                  new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * radius * radius * radius;
+                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
+                  {
+                     QMessageBox::message( tr("Missing Atom:"), 
+                                           QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     return;
+                  }
+                  cout << "atom " << this_atom->name 
+                       << " hybrid " << this_atom->hybrid_name
+                       << " excl_vol " <<  atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol 
+                       << " radius cubed " << radius * radius * radius 
+                       << " pi radius cubed " << M_PI * radius * radius * radius 
+                       << endl;
+                  new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
@@ -3499,6 +3525,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
    QFile f(filename);
    hybrid_list.clear();
    hybrid_map.clear();
+   QRegExp count_hydrogens("H(\\d)");
    if (f.open(IO_ReadOnly|IO_Translate))
    {
       QTextStream ts(&f);
@@ -3511,6 +3538,12 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          ts >> current_hybrid.scat_len;
          ts >> current_hybrid.exch_prot;
          ts >> current_hybrid.num_elect;
+         current_hybrid.hydrogens = 0;
+         if ( count_hydrogens.search( current_hybrid.name ) != -1 )
+         {
+            current_hybrid.hydrogens = count_hydrogens.cap(1).toUInt();
+         }
+
          str1 = ts.readLine(); // read rest of line
          if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
          {

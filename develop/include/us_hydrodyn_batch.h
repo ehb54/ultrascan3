@@ -144,6 +144,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       pdb_parsing   save_pdb_parse;
       bool          save_pb_rule_on;
       bool          save_calcAutoHydro;
+      bool          save_disable_iq_scaling;
 
       bool          stopFlag;
       bool          disable_updates;
