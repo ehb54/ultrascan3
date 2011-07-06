@@ -1595,13 +1595,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                  it != hybrid_map.end();
                  it++)
             {
-               cout << " computing b for " << it->first 
-                    << " hydrogens " << it->second.hydrogens 
-                    << " exch_prot " << it->second.exch_prot
-                    << " num elect " << it->second.num_elect
-                    << " saxs_name " << it->second.saxs_name
-                    << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
-                  // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
+               // cout << " computing b for " << it->first 
+               // << " hydrogens " << it->second.hydrogens 
+               // << " exch_prot " << it->second.exch_prot
+               // << " num elect " << it->second.num_elect
+               // << " saxs_name " << it->second.saxs_name
+               // << " saxs_excl_vol noH " << saxs_map[it->second.saxs_name].volume
+               // // << " saxs_excl_vol  " << ( saxs_map[it->second.saxs_name].volume + it->second.hydrogens * excl_volH )
                     << endl;
                b[it->first] = 
                   it->second.num_elect;
@@ -1684,12 +1684,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                            QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
                      return;
                   }
-                  cout << "atom " << this_atom->name 
-                       << " hybrid " << this_atom->hybrid_name
-                       << " excl_vol " <<  atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol 
-                       << " radius cubed " << radius * radius * radius 
-                       << " pi radius cubed " << M_PI * radius * radius * radius 
-                       << endl;
+                  // cout << "atom " << this_atom->name 
+                  // << " hybrid " << this_atom->hybrid_name
+                  // << " excl_vol " <<  atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol 
+                  // << " radius cubed " << radius * radius * radius 
+                  // << " pi radius cubed " << M_PI * radius * radius * radius 
+                  // << endl;
                   new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
