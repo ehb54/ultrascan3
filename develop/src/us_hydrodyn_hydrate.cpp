@@ -2420,7 +2420,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          ts << 
             QString("")
             .sprintf(     
-                     "ATOM   %4d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
+                     "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
                      ++atom_number,
                      chainID.ascii(),
                      ++residue_number,

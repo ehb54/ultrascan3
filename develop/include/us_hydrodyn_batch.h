@@ -56,8 +56,11 @@ struct batch_info
    QString avg_hydro_name;
    int height;
    int width;
+   bool compute_iq_avg;
+   bool compute_iq_std_dev;
    bool compute_prr_avg;
    bool compute_prr_std_dev;
+   bool hydrate;
 };
 
 class US_EXTERN US_Hydrodyn_Batch : public QFrame
@@ -122,6 +125,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_csv_saxs;
       QLineEdit     *le_csv_saxs_name;
       QCheckBox     *cb_create_native_saxs;
+      QCheckBox     *cb_hydrate;
+      QCheckBox     *cb_compute_iq_avg;
+      QCheckBox     *cb_compute_iq_std_dev;
       QCheckBox     *cb_compute_prr_avg;
       QCheckBox     *cb_compute_prr_std_dev;
       QCheckBox     *cb_hydro;
@@ -222,6 +228,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_csv_saxs();
       void update_csv_saxs_name(const QString &);
       void set_create_native_saxs();
+      void set_hydrate();
+      void set_compute_iq_avg();
+      void set_compute_iq_std_dev();
       void set_compute_prr_avg();
       void set_compute_prr_std_dev();
       void select_save_params();

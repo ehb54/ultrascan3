@@ -13,6 +13,8 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+// #define USE_H
+
 #if defined(OSX)
 #   define BW_LISTBOX
 #endif
@@ -64,8 +66,11 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->csv_saxs = false;
    batch->csv_saxs_name = "results";
    batch->create_native_saxs = true;
+   batch->compute_iq_avg = false;
+   batch->compute_iq_std_dev = false;
    batch->compute_prr_avg = false;
    batch->compute_prr_std_dev = false;
+   batch->hydrate = false;
    if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq )
    {
       batch->somo = true;
@@ -324,18 +329,27 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
    cb_iqq = new QCheckBox(this);
-   cb_iqq->setText(tr(" Compute SAXS I(q) vs q curve "));
+   cb_iqq->setText(tr("Compute SAXS I(q) vs q curve   "));
    cb_iqq->setChecked(batch->iqq);
    cb_iqq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq, SIGNAL(clicked()), this, SLOT(set_iqq()));
 
    cb_prr = new QCheckBox(this);
-   cb_prr->setText(tr(" Compute SAXS P(r) vs r curve "));
+   cb_prr->setText(tr("Compute SAXS P(r) vs r curve   "));
    cb_prr->setChecked(batch->prr);
    cb_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_prr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_prr, SIGNAL(clicked()), this, SLOT(set_prr()));
+
+#if defined(USE_H)
+   cb_hydrate = new QCheckBox(this);
+   cb_hydrate->setText(tr("Hydrate "));
+   cb_hydrate->setChecked(batch->hydrate);
+   cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_hydrate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_hydrate, SIGNAL(clicked()), this, SLOT(set_hydrate()));
+#endif
 
    cb_csv_saxs = new QCheckBox(this);
    cb_csv_saxs->setText(tr(" Combined SAXS Results File:"));
@@ -358,6 +372,20 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_native_saxs, SIGNAL(clicked()), this, SLOT(set_create_native_saxs()));
+
+   cb_compute_iq_avg = new QCheckBox(this);
+   cb_compute_iq_avg->setText(tr(" Compute I(q) average curves"));
+   cb_compute_iq_avg->setChecked(batch->compute_iq_avg);
+   cb_compute_iq_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_iq_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_iq_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_avg()));
+
+   cb_compute_iq_std_dev = new QCheckBox(this);
+   cb_compute_iq_std_dev->setText(tr(" Compute I(q) std deviation curves"));
+   cb_compute_iq_std_dev->setChecked(batch->compute_iq_std_dev);
+   cb_compute_iq_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_iq_std_dev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_iq_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_iq_std_dev()));
 
    cb_compute_prr_avg = new QCheckBox(this);
    cb_compute_prr_avg->setText(tr(" Compute P(r) average curves"));
@@ -504,11 +532,18 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout *hbl_iqq_prr = new QHBoxLayout;
    hbl_iqq_prr->addWidget(cb_iqq);
    hbl_iqq_prr->addWidget(cb_prr);
+#if defined(USE_H)
+   hbl_iqq_prr->addWidget(cb_hydrate);
+#endif
 
    QHBoxLayout *hbl_csv_saxs = new QHBoxLayout;
    hbl_csv_saxs->addWidget(cb_csv_saxs);
    hbl_csv_saxs->addWidget(le_csv_saxs_name);
    hbl_csv_saxs->addWidget(cb_create_native_saxs);
+
+   QHBoxLayout *hbl_iq_avg_std_dev = new QHBoxLayout;
+   hbl_iq_avg_std_dev->addWidget(cb_compute_iq_avg);
+   hbl_iq_avg_std_dev->addWidget(cb_compute_iq_std_dev);
 
    QHBoxLayout *hbl_prr_avg_std_dev = new QHBoxLayout;
    hbl_prr_avg_std_dev->addWidget(cb_compute_prr_avg);
@@ -543,6 +578,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addLayout(hbl_somo_grid);
    leftside->addLayout(hbl_iqq_prr);
    leftside->addLayout(hbl_csv_saxs);
+   leftside->addLayout(hbl_iq_avg_std_dev);
    leftside->addLayout(hbl_prr_avg_std_dev);
    leftside->addWidget(cb_hydro);
    leftside->addLayout(hbl_hydro);
@@ -917,6 +953,9 @@ void US_Hydrodyn_Batch::update_enables()
    cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
    le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
+   cb_hydrate->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
+   cb_compute_iq_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
+   cb_compute_iq_std_dev->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs && batch->compute_iq_avg);
    cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
    cb_compute_prr_std_dev->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs && batch->compute_prr_avg);
    pb_start->setEnabled(count_selected);
@@ -1142,6 +1181,24 @@ void US_Hydrodyn_Batch::set_create_native_saxs()
 void US_Hydrodyn_Batch::update_csv_saxs_name(const QString &str)
 {
    batch->csv_saxs_name = str;
+}
+
+void US_Hydrodyn_Batch::set_hydrate()
+{
+   batch->hydrate = cb_hydrate->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_compute_iq_avg()
+{
+   batch->compute_iq_avg = cb_compute_iq_avg->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_compute_iq_std_dev()
+{
+   batch->compute_iq_std_dev = cb_compute_iq_std_dev->isChecked();
+   update_enables();
 }
 
 void US_Hydrodyn_Batch::set_compute_prr_avg()
