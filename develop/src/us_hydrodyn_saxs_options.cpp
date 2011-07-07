@@ -1229,7 +1229,7 @@ void US_Hydrodyn_SaxsOptions::update_crysol_fibonacci_grid_order(double val)
 
 void US_Hydrodyn_SaxsOptions::update_crysol_hydration_shell_contrast(double val)
 {
-   (*saxs_options).crysol_hydration_shell_contrast = (unsigned int) val;
+   (*saxs_options).crysol_hydration_shell_contrast = (float) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
