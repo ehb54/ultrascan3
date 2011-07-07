@@ -300,6 +300,7 @@ void US_Pseudo3D_Combine::reset( void )
    minmax     = false;
    zoom       = false;
    plot_s     = true;
+   need_save  = true;
    cb_plot_s->setChecked( plot_s );  
    cb_plot_mw->setChecked( !plot_s );
 
@@ -380,6 +381,13 @@ void US_Pseudo3D_Combine::plot_data( void )
    colormap = tsys->colormap;
    cmapname = tsys->cmapname;
 
+   QString tstr = tsys->run_name + "\n" + tsys->analys_name
+                  + "\n" + tsys->method;
+   QwtText qwtTitle;
+   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+                            US_GuiSettings::fontSize() + 1, QFont::Bold ) );
+   qwtTitle.setText( tstr );
+   data_plot->setTitle( qwtTitle );
    data_plot->detachItems();
    QColor bg   = colormap->color1();
    data_plot->setCanvasBackground( bg );
@@ -403,7 +411,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
    rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
-   QwtText zTitle( "Frequency" );
+   QwtText zTitle( "Partial Concentration" );
    zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
       US_GuiSettings::fontSize(), QFont::Bold ) );
    data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
@@ -411,7 +419,7 @@ void US_Pseudo3D_Combine::plot_data( void )
       spec_dat.range().minValue(), spec_dat.range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
 
-   if ( auto_lim )
+   if ( auto_lim  &&  ! looping )
    {   // auto limits
       data_plot->setAxisScale( QwtPlot::yLeft,
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
@@ -424,32 +432,31 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
    }
 
-   QString tstr = tsys->run_name + "\n" + tsys->analys_name
-                  + "\n" + tsys->method;
-   QwtText qwtTitle( tstr );
-   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-                            US_GuiSettings::fontSize() + 1, QFont::Bold ) );
-   data_plot->setTitle( qwtTitle );
-
-   // automatically save plot image in a PNG file
-   QPixmap plotmap( data_plot->size() );
-   plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
-   data_plot->print( plotmap );
-
-   QString ofdir  = US_Settings::reportDir() + "/" + tsys->run_name;
-   QDir dirof( ofdir );
-   if ( !dirof.exists( ) )
-      QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
-   QString celli  = "." + tsys->run_name.section( ".", -1, -1 );
-   QString methi  = tsys->method;
-   methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
-   if ( tsys->distro_type == (int)US_Model::MANUAL )
-      methi          = methi + ".00";
-   QString ofname = ofdir + "/" + methi + celli + ".png";
-
-   plotmap.save( ofname );
-
    data_plot->replot();
+
+qDebug() << "curr_distr need_save" << curr_distr << need_save;
+   if ( need_save )
+   {  // automatically save plot image in a PNG file
+      QPixmap plotmap( data_plot->size() );
+      plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
+
+      QString ofdir  = US_Settings::reportDir() + "/"
+         + tsys->run_name.section( ".", 0, -2 );
+      QDir dirof( ofdir );
+      if ( !dirof.exists( ) )
+         QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
+      QString celli  = "." + tsys->run_name.section( ".", -1, -1 ) + ".plot";
+      QString distr  = QString().sprintf( "%2.2d", ( curr_distr + 1 ) );
+      QString methi  = tsys->method;
+      methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
+      if ( tsys->distro_type == (int)US_Model::MANUAL )
+         methi          = methi + ".00";
+      QString ofname = ofdir + "/" + methi + celli + distr + ".png";
+
+      data_plot->print( plotmap );
+      plotmap.save( ofname );
+   }
+
 }
 
 void US_Pseudo3D_Combine::plot_data( int )
@@ -706,12 +713,14 @@ void US_Pseudo3D_Combine::plotall()
    if ( curr_distr == system.size() )
       curr_distr--;
 
+   need_save  = true;
 }
 
 // Stop the distros-plotting loop
 void US_Pseudo3D_Combine::stop()
 {
-   looping  = false;
+   looping    = false;
+   need_save  = true;
 }
 
 void US_Pseudo3D_Combine::set_limits()
@@ -928,7 +937,11 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
 
    if ( syssiz > 0  &&  looping )
    {   // If still looping, plot the next distribution
-      if ( jdistr > maxsiz ) jdistr = 0;
+      if ( jdistr > maxsiz )
+      {
+         jdistr = 0;
+         need_save = false;
+      }
       curr_distr = jdistr;
       plot_data();
    }
@@ -939,7 +952,7 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
       pb_stopplt->setEnabled( false );
       curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
    }
-   ct_curr_distr->setValue( curr_distr+1 );
+   ct_curr_distr->setValue( curr_distr + 1 );
 }
 
 // Flag whether two values are effectively equal within a given epsilon

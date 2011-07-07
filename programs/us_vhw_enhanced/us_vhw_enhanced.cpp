@@ -600,7 +600,6 @@ DbgLv(1) << "scn liv" << ii+1 << kl
    << " radius concen time" << bdrad << bdcon << timev;
 
       ptx[ ii ]  = timex;                 // Save corrected time and accum max
-      xmax       = ( xmax > timex ) ? xmax : timex;
 
       range      = scplats[ ii ] - baseline;
       cconc      = baseline + range * positPct; // Initial conc for span
@@ -688,6 +687,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          {  // Points in a scan
             x[ count ] = xv;
             y[ count ] = yv;
+            xmax       = ( xmax > xv ) ? xmax : xv;
             count++;
          }
       }
@@ -738,6 +738,12 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          y[ 0 ] = intcept;                  // Y from intercept to y at x-max
          y[ 1 ] = y[ 0 ] + x[ 1 ] * slope;
 
+         if ( y[ 1 ] < 0.0 )
+         {
+            y[ 1 ] = 0.0;
+            x[ 1 ] = ( slope != 0.0 ? ( -y[ 0 ] / slope ) : xmax );
+         }
+
          curve  = us_curve( data_plot1, tr( "Fitted Line %1" ).arg( jj ) );
          curve->setPen( QPen( Qt::yellow ) );
          curve->setData( x, y, 2 );
@@ -749,8 +755,8 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    xmax  *= 1.05;
    xmax   = (double)qRound( ( xmax + 0.0009 ) / 0.001 ) * 0.001;
    ymax   = (double)qRound( ( ymax + 0.3900 ) / 0.400 ) * 0.400;
-   data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, xmax, 0.005 );
-   data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, ymax, 0.500 );
+   data_plot1->setAxisScale(     QwtPlot::xBottom, 0.0, xmax, 0.005 );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft );
 
    count  = 0;
 

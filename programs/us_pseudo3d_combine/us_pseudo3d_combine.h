@@ -109,6 +109,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          auto_lim;
       bool          plot_s;
       bool          looping;
+      bool          need_save;
 
       QString       xa_title_s;
       QString       xa_title_mw;

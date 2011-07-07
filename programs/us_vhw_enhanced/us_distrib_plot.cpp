@@ -292,6 +292,7 @@ void US_DistribPlot::plot_distrib( void )
    double maxx = 0.0;
    double minx = 100.0;
    double xinc = 1.0;
+   double rngx = 100.0;
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
@@ -301,10 +302,11 @@ void US_DistribPlot::plot_distrib( void )
       minx     = min( minx, xx[ jj ] );
    }
 
-   minx     = (double)( (int)( minx - 0.5 ) );
-   maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
-   maxx     = ( ( maxx - minx ) < 2.0 ) ? ( maxx + 1.0 ) : maxx;
-   xinc     = ( ( maxx - minx ) < 15.0 ) ? xinc : ( xinc * 5.0 );
+   rngx     = maxx - minx;
+   minx     = minx - rngx * 0.2;
+   maxx     = maxx + rngx * 0.2;
+   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
    data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, xinc );
 
    // first draw the yellow line through points
@@ -331,9 +333,11 @@ void US_DistribPlot::plot_histogram( void )
 {
    QVector< double > xvec;
    QVector< double > yvec;
-   double  minx;
-   double  maxx;
-   double  maxy;
+   double  minx = dsedcs[ 0 ];
+   double  maxx = minx;;
+   //double  maxy;
+   double  xval;
+   double  rngx;
    int     npoints;
 
    // Set up the titles and axes
@@ -348,22 +352,19 @@ void US_DistribPlot::plot_histogram( void )
    npoints  = histo_data( xvec, yvec );
    double* xx = xvec.data();
    double* yy = yvec.data();
-   minx     = xx[ 0 ];
-   maxx     = xx[ 0 ];
-   maxy     = yy[ 0 ];
 
-   for ( int jj = 1; jj < npoints; jj++ )
+   for ( int jj = 0; jj < divsCount; jj++ )
    {
-      minx     = min( minx, xx[ jj ] );
-      maxx     = max( maxx, xx[ jj ] );
-      maxy     = max( maxy, yy[ jj ] );
+      xval     = dsedcs.at( jj );
+      minx     = qMin( minx, xval );
+      maxx     = qMax( maxx, xval );
    }
 
-   minx     = (double)( (int)( minx - 0.5 ) );
-   maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
-   maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
-   data_plot->setAxisScale( QwtPlot::yLeft,    0.0, maxy, 5.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, 1.0 );
+   rngx     = maxx - minx;
+   minx     = minx - rngx * 0.2;
+   maxx     = maxx + rngx * 0.2;
+   data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, 1.0 );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
 
 DbgLv(2) << "HISTO_DAT:" << npoints;
 for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
@@ -388,10 +389,22 @@ void US_DistribPlot::plot_envelope( void )
    QVector< double > yvec;
    double* xx;
    double* yy;
-   double  minx;
-   double  maxx;
-   double  maxy;
+   double  minx = dsedcs[ 0 ];
+   double  maxx = minx;
+   double  xval;
+   double  rngx;
    int     npoints;
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {
+      xval     = dsedcs.at( jj );
+      minx     = qMin( minx, xval );
+      maxx     = qMax( maxx, xval );
+   }
+
+   rngx     = maxx - minx;
+   minx     = minx - rngx * 0.2;
+   maxx     = maxx + rngx * 0.2;
 
    if ( plotType == ENVEL )
    { // if envelope only, must set titles and axes (otherwise handled by histo)
@@ -406,22 +419,8 @@ void US_DistribPlot::plot_envelope( void )
       npoints  = histo_data( xvec, yvec );
       xx       = xvec.data();
       yy       = yvec.data();
-      minx     = xx[ 0 ];
-      maxx     = xx[ 0 ];
-      maxy     = yy[ 0 ];
-
-      for ( int jj = 1; jj < npoints; jj++ )
-      {
-         minx     = min( minx, xx[ jj ] );
-         maxx     = max( maxx, xx[ jj ] );
-         maxy     = max( maxy, yy[ jj ] );
-      }
-
-      minx     = (double)( (int)( minx - 0.5 ) );
-      maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
-      maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
-      data_plot->setAxisScale( QwtPlot::yLeft,    0.0, maxy, 5.0 );
-      data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, 1.0 );
+      data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, 1.0 );
+      data_plot->setAxisAutoScale( QwtPlot::yLeft );
    }
 
    // Calculate envelope data

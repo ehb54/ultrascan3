@@ -1099,7 +1099,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
    data_plot1->clear();
 
-   QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
 
    int     dsize  = model_loaded.components.size();
@@ -1198,7 +1198,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    data_plot1->clear();
    data_plot1->detachItems();
 
-   QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
    QwtSymbol     symbol;
 
@@ -1319,8 +1319,6 @@ void US_FeMatch::distrib_plot_resids( )
       for ( int jj = 0; jj < dsize; jj++ )
       {
          yval     = resids[ ii ][ jj ];
-         yval     = min( yval, 0.1 );
-         yval     = max( yval, -0.1 );
          ymin     = min( yval, ymin );
          ymax     = max( yval, ymax );
       }
@@ -1353,10 +1351,7 @@ void US_FeMatch::distrib_plot_resids( )
 
       for ( int jj = 0; jj < dsize; jj++ )
       {  // get residuals for this scan
-         yval     = resids[ ii ][ jj ];
-         yval     = min( yval, 0.1 );
-         yval     = max( yval, -0.1 );
-         yy[ jj ] = yval;
+         yy[ jj ] = resids[ ii ][ jj ];
       }
 
       // plot the residual scatter for this scan
