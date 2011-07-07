@@ -773,7 +773,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_steric_clash_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_steric_clash_distance = new QwtCounter(this);
-   cnt_steric_clash_distance->setRange(1.0, 10, 0.1);
+   cnt_steric_clash_distance->setRange(0.0, 10, 0.1);
    cnt_steric_clash_distance->setValue((*saxs_options).steric_clash_distance);
    cnt_steric_clash_distance->setMinimumHeight(minHeight1);
    cnt_steric_clash_distance->setEnabled(true);

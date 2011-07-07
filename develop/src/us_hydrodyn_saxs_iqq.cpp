@@ -19,6 +19,8 @@
 // #define SAXS_DEBUG_FF
 // #define SAXS_DEBUG2
 
+static bool save_calc_to_csv = true;
+
 void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 {
    // don't forget to later merge deleted waters into model_vector
@@ -1482,6 +1484,56 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #if defined(SAXS_DEBUG)
       cout << "f' computed, now compute I\n";
 #endif
+      if ( save_calc_to_csv )
+      {
+         QString out = ",,,,\"q:\",";
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            out += QString("%1,").arg(q[i]);
+         }
+         out += "\n\n\n\"f':\"\n";
+         out += 
+            "\"number\","
+            "\"name\","
+            "\"hybrid name\","
+            "\"excluded volume\","
+            "\"number of hydrogens\","
+            "\"structure factors\","
+            "\n";
+
+         for ( unsigned int i = 0; i < atoms.size(); i++ )
+         {
+            out += 
+               QString(
+                       "%1,"
+                       "\"%1\","
+                       "\"%1\","
+                       "%1,"
+                       "%1,"
+                       )
+               .arg(i + 1)
+               .arg(atoms[i].saxs_name)
+               .arg(atoms[i].hybrid_name)
+               .arg(atoms[i].excl_vol)
+               .arg(atoms[i].hydrogens)
+               ;
+            for ( unsigned int j = 0; j < q.size(); j++ )
+            {
+               out += QString("%1,").arg(fp[j][i]);
+            }
+            out += "\n";
+         }
+
+         QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "last_iqq.csv" );
+         if ( f.open( IO_WriteOnly ) )
+         {
+            QTextStream t( &f );
+            t << out;
+            f.close();
+            editor->append(QString("created %1\n").arg(f.name()));
+         }
+      }            
+
       editor->append("f' computed, starting computation of I(q)\n");
       qApp->processEvents();
       if ( stopFlag ) 
