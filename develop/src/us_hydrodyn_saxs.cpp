@@ -5446,3 +5446,47 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
    cout << "bead models are ok for saxs\n";
    bead_model_ok_for_saxs = true;
 }
+
+void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
+                                              vector < double > q,
+                                              vector < double > I1, 
+                                              vector < double > I2 )
+{
+   // make sure things aren't to big
+
+   unsigned int min_len = q.size();
+   if ( I1.size() <  min_len ) 
+   {
+      min_len = I1.size();
+   }
+   if ( I2.size() <  min_len ) 
+   {
+      min_len = I2.size();
+   }
+   q.resize(min_len);
+
+   vector < double > difference( q.size() );
+   vector < double > residual( q.size() );
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      I1[ i ] = log10( I1[ i ] );
+      I2[ i ] = log10( I2[ i ] );
+      difference[ i ] = I1[ i ] - I2[ i ];
+      residual[ i ]  = fabs( difference[ i ] );
+   }
+
+   saxs_iqq_residuals_window = 
+      new US_Hydrodyn_Saxs_Iqq_Residuals(
+                                         &saxs_iqq_residuals_widget,
+                                         plot_saxs->width(),
+                                         tr("Log10 I(q) residuals & difference targeting:\n") + title,
+                                         q,
+                                         difference,
+                                         residual,
+                                         I2,
+                                         false,
+                                         true,
+                                         true
+                                         );
+   saxs_iqq_residuals_window->show();
+}

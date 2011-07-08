@@ -250,7 +250,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.crysol_fibonacci_grid_order = 17;
    saxs_options.crysol_hydration_shell_contrast = 0.03;
    saxs_options.crysol_default_load_difference_intensity = true;
-   saxs_options.crysol_version_26 = false;
+   saxs_options.crysol_version_26 = true;
 
    saxs_options.fast_bin_size = 0.5;
    saxs_options.fast_modulation = 0.23;
@@ -265,6 +265,11 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.steric_clash_distance = 1.4;
 
    saxs_options.disable_iq_scaling = false;
+   saxs_options.autocorrelate = true;
+   saxs_options.hybrid_radius_excl_vol = false;
+   saxs_options.scale_excl_vol = 1.0f;
+   saxs_options.subtract_radius = false;
+   saxs_options.iqq_scale_maxq = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

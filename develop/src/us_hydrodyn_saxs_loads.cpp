@@ -58,11 +58,6 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
 
    // scaling fields
    QString scaling_target = "";
-   double scaling_a;
-   double scaling_b;
-   double scaling_siga;
-   double scaling_sigb;
-   double scaling_chi2;
 
    if ( f.open(IO_ReadOnly) )
    {
@@ -323,102 +318,11 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
            !scaling_target.isEmpty() && 
            plotted_iq_names_to_pos.count(scaling_target) )
       {
-         unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
-         cout << "scaling target pos is " << iq_pos << endl;
-         double target_q_min = plotted_q[iq_pos][0];
-         double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
-         double source_q_min = q[0];
-         double source_q_max = q[q.size() - 1];
-         double q_min = target_q_min;
-         if ( q_min < source_q_min )
+         if ( Icolumn2 )
          {
-            q_min = source_q_min;
-         }
-         double q_max = target_q_max;
-         if ( q_max > source_q_max )
-         {
-            q_max = source_q_max;
-         }
-
-         cout << QString(
-                         "target q_min %1 max %2\n"
-                         "source q_min %3 max %4\n"
-                         "select q_min %5 max %6\n"
-                         )
-            .arg(target_q_min)
-            .arg(target_q_max)
-            .arg(source_q_min)
-            .arg(source_q_max)
-            .arg(q_min)
-            .arg(q_max)
-            ;
-
-         vector < double > use_q;
-         vector < double > use_I;
-         for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
-         {
-            if ( plotted_q[iq_pos][i] >= q_min &&
-                 plotted_q[iq_pos][i] <= q_max )
-            {
-               use_q.push_back(plotted_q[iq_pos][i]);
-               use_I.push_back(plotted_I[iq_pos][i]);
-            }
-         }
-         
-         cout << QString("After cropping q to overlap region:\n"
-                         "use_q.size == %1\n").arg(use_q.size());
-
-         if ( !use_q.size() )
-         {
-            QMessageBox::warning( this, "UltraScan",
-                                  QString(tr("Could not find sufficient q range overlap\n"
-                                             "to scale the loaded data to the selected target")) );
+            rescale_iqq_curve( scaling_target, q, I, I2 );
          } else {
-            vector < double > use_source_I = interpolate(use_q, q, I);
-
-            US_Saxs_Util usu;
-
-            usu.linear_fit(
-                           use_source_I, 
-                           use_I, 
-                           scaling_a,
-                           scaling_b,
-                           scaling_siga,
-                           scaling_sigb,
-                           scaling_chi2
-                           );
-
-            QString results = 
-               QString("Scaling factor: %1  Offset: %2  Chi^2: %3\n")
-               .arg(scaling_b)
-               .arg(scaling_a)
-               .arg(scaling_chi2);
-            editor->append(results);
-            // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
-            for ( unsigned int i = 0; i < I.size(); i++ )
-            {
-               I[i] = scaling_a + scaling_b * I[i];
-               if ( I[i] <= 0e0 )
-               {
-                  I.resize(i);
-                  q.resize(i);
-                  break;
-               }
-            }
-            // cout << "saxs curve scaled " << vector_double_to_csv(I) << endl;
-            if ( I2.size() )
-            {
-               for ( unsigned int i = 0; i < I2.size(); i++ )
-               {
-                  I2[i] = scaling_a + scaling_b * I2[i];
-                  if ( I2[i] <= 0e0 )
-                  {
-                     I2.resize(i);
-                     q2.resize(i);
-                     break;
-                  }
-               }
-            }
+            rescale_iqq_curve( scaling_target, q, I );
          }
       }
 
@@ -1631,5 +1535,187 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          (*remember_mw_source)[use_filename] = "loaded from sprr file";
       }         
       plot_one_pr(r, pr, use_filename);
+   }
+}
+
+
+void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
+                                          vector < double > &q,
+                                          vector < double > &I )
+{
+   vector < double > I2;
+   rescale_iqq_curve( scaling_target, q, I, I2 );
+}
+
+void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
+                                          vector < double > &q,
+                                          vector < double > &I,
+                                          vector < double > &I2
+                                          )
+{
+   if ( !q.size() ||
+        scaling_target.isEmpty() ||
+        !plotted_iq_names_to_pos.count(scaling_target) )
+   {
+      return;
+   }
+
+   double scaling_a;
+   double scaling_b;
+   double scaling_siga;
+   double scaling_sigb;
+   double scaling_chi2;
+
+   unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
+   cout << "scaling target pos is " << iq_pos << endl;
+   double target_q_min = plotted_q[iq_pos][0];
+   double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
+   double source_q_min = q[0];
+   double source_q_max = q[q.size() - 1];
+   double q_min = target_q_min;
+   if ( q_min < source_q_min )
+   {
+      q_min = source_q_min;
+   }
+   double q_max = target_q_max;
+
+   if ( our_saxs_options->iqq_scale_maxq > 0.0f )
+   {
+      q_max = our_saxs_options->iqq_scale_maxq;
+   }
+
+   if ( q_max > source_q_max )
+   {
+      q_max = source_q_max;
+   }
+   
+   cout << QString(
+                   "target q_min %1 max %2\n"
+                   "source q_min %3 max %4\n"
+                   "select q_min %5 max %6\n"
+                   )
+      .arg(target_q_min)
+      .arg(target_q_max)
+      .arg(source_q_min)
+      .arg(source_q_max)
+      .arg(q_min)
+      .arg(q_max)
+      ;
+   
+   vector < double > use_q;
+   vector < double > use_I;
+   for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
+   {
+      if ( plotted_q[iq_pos][i] >= q_min &&
+           plotted_q[iq_pos][i] <= q_max )
+      {
+         use_q.push_back(plotted_q[iq_pos][i]);
+         use_I.push_back(plotted_I[iq_pos][i]);
+      }
+   }
+   
+   cout << QString("After cropping q to overlap region:\n"
+                   "use_q.size == %1\n").arg(use_q.size());
+   
+   if ( !use_q.size() )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not find sufficient q range overlap\n"
+                                       "to scale the loaded data to the selected target")) );
+   } else {
+      vector < double > use_source_I = interpolate(use_q, q, I);
+
+      vector < double > save_source_I = use_source_I;
+      vector < double > save_use_I = use_I;
+      
+      US_Saxs_Util usu;
+      
+      for ( unsigned int i = 0; i < use_I.size(); i++ )
+      {
+         use_I[ i ] = log10( use_I[ i ] );
+         use_source_I[ i ] = log10( use_source_I[ i ] );
+         if ( isnan( use_I[ i ] ) )
+         {
+            use_I[ i ] = 1e-34;
+         }
+         if ( isnan( use_source_I[ i ] ) )
+         {
+            use_source_I[ i ] = 1e-34;
+         }
+      }
+
+      usu.linear_fit(
+                     use_source_I, 
+                     use_I, 
+                     scaling_a,
+                     scaling_b,
+                     scaling_siga,
+                     scaling_sigb,
+                     scaling_chi2
+                     );
+      
+      QString results = "Scaling ";
+
+      if ( our_saxs_options->iqq_scale_maxq > 0.0f )
+      {
+         results += QString("maxq: %1 ").arg( our_saxs_options->iqq_scale_maxq );
+      }
+
+      results += 
+         QString("factor: %1  Offset: %2  Chi^2: %3\n")
+         .arg(scaling_b)
+         .arg(scaling_a)
+         .arg(scaling_chi2);
+      editor->append(results);
+      // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
+
+      for ( unsigned int i = 0; i < I.size(); i++ )
+      {
+         // I[i] = scaling_a + scaling_b * I[i];
+         I[i] = log10( I[i] );
+         if ( isnan(I[i]) )
+         {
+            I[i] = 1e-34;
+         }
+         I[i] = exp10( scaling_a + scaling_b * I[i] );
+         // if ( I[i] <= 0e0 )
+         // {
+         // I[i] = 1e-32;
+         // //                  I.resize(i);
+         // //                  q.resize(i);
+         // // break;
+         // }
+      }
+      
+      display_iqq_residuals( scaling_target, 
+                             use_q,
+                             save_use_I,
+                             save_source_I );
+      
+      // cout << "saxs curve scaled " << vector_double_to_csv(I) << endl;
+      if ( I2.size() )
+      {
+         for ( unsigned int i = 0; i < I2.size(); i++ )
+         {
+            I2[i] = log10( I2[i] );
+            if ( isnan(I2[i]) )
+            {
+               I2[i] = 1e-34;
+            }
+            I2[i] = exp10( scaling_a + scaling_b * I2[i] );
+            //            I2[i] = scaling_a + scaling_b * I2[i];
+            //            if ( I2[i] <= 0e0 )
+            //            {
+            //               I2[i] = 1e-32;
+            //               // I2.resize(i);
+            //               // q2.resize(i);
+            //               // break;
+            //            }
+         }
+         display_iqq_residuals( scaling_target, 
+                                use_q,
+                                I2,
+                                save_use_I );
+      }
    }
 }

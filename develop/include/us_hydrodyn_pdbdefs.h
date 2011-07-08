@@ -244,6 +244,11 @@ struct saxs_options
    double  steric_clash_distance;
 
    bool    disable_iq_scaling;
+   bool    autocorrelate;
+   bool    hybrid_radius_excl_vol;
+   float   scale_excl_vol;
+   bool    subtract_radius;
+   float   iqq_scale_maxq;
 };
 
 struct hybridization

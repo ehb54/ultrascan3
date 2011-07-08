@@ -157,6 +157,16 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox   *cb_iq_scale_nm;
 
       QCheckBox   *cb_disable_iq_scaling;
+      QCheckBox   *cb_autocorrelate;
+      QCheckBox   *cb_hybrid_radius_excl_vol;
+
+      QLabel      *lbl_scale_excl_vol;
+      QwtCounter  *cnt_scale_excl_vol;
+
+      QCheckBox   *cb_subtract_radius;
+
+      QLabel      *lbl_iqq_scale_maxq;
+      QwtCounter  *cnt_iqq_scale_maxq;
 
       QPushButton *pb_clear_mw_cache;
 
@@ -237,7 +247,11 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_iq_scale_nm();
 
       void set_disable_iq_scaling();
-
+      void set_autocorrelate();
+      void set_hybrid_radius_excl_vol();
+      void update_scale_excl_vol(double);
+      void set_subtract_radius();
+      void update_iqq_scale_maxq(double);
       void clear_mw_cache();
 
       void cancel();

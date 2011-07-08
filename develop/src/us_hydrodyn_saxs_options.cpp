@@ -822,6 +822,62 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_disable_iq_scaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
 
+   cb_autocorrelate = new QCheckBox(this);
+   cb_autocorrelate->setText(tr(" Autocorrelate"));
+   cb_autocorrelate->setEnabled(true);
+   cb_autocorrelate->setChecked((*saxs_options).autocorrelate);
+   cb_autocorrelate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_autocorrelate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_autocorrelate, SIGNAL(clicked()), this, SLOT(set_autocorrelate()));
+
+   cb_hybrid_radius_excl_vol = new QCheckBox(this);
+   cb_hybrid_radius_excl_vol->setText(tr(" Use hybrid radius for excluded volume"));
+   cb_hybrid_radius_excl_vol->setEnabled(true);
+   cb_hybrid_radius_excl_vol->setChecked((*saxs_options).hybrid_radius_excl_vol);
+   cb_hybrid_radius_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_hybrid_radius_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_hybrid_radius_excl_vol, SIGNAL(clicked()), this, SLOT(set_hybrid_radius_excl_vol()));
+
+   lbl_scale_excl_vol = new QLabel(tr(" Excluded volume scaling: "), this);
+   lbl_scale_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_scale_excl_vol->setMinimumHeight(minHeight1);
+   lbl_scale_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_scale_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_scale_excl_vol = new QwtCounter(this);
+   cnt_scale_excl_vol->setRange(.5, 1.5, 0.001);
+   cnt_scale_excl_vol->setValue((*saxs_options).scale_excl_vol);
+   cnt_scale_excl_vol->setMinimumHeight(minHeight1);
+   cnt_scale_excl_vol->setEnabled(true);
+   cnt_scale_excl_vol->setNumButtons(3);
+   cnt_scale_excl_vol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_scale_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_scale_excl_vol, SIGNAL(valueChanged(double)), SLOT(update_scale_excl_vol(double)));
+
+   cb_subtract_radius = new QCheckBox(this);
+   cb_subtract_radius->setText(tr(" Subtract radii for debye pairwise distance "));
+   cb_subtract_radius->setEnabled(true);
+   cb_subtract_radius->setChecked((*saxs_options).subtract_radius);
+   cb_subtract_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_subtract_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_subtract_radius, SIGNAL(clicked()), this, SLOT(set_subtract_radius()));
+
+   lbl_iqq_scale_maxq = new QLabel(tr(" I(q) curve scaling max q (Angstrom) "), this);
+   lbl_iqq_scale_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_iqq_scale_maxq->setMinimumHeight(minHeight1);
+   lbl_iqq_scale_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_iqq_scale_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_iqq_scale_maxq = new QwtCounter(this);
+   cnt_iqq_scale_maxq->setRange(0.0, 5, 0.01);
+   cnt_iqq_scale_maxq->setValue((*saxs_options).iqq_scale_maxq);
+   cnt_iqq_scale_maxq->setMinimumHeight(minHeight1);
+   cnt_iqq_scale_maxq->setEnabled(true);
+   cnt_iqq_scale_maxq->setNumButtons(3);
+   cnt_iqq_scale_maxq->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_iqq_scale_maxq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_iqq_scale_maxq, SIGNAL(valueChanged(double)), SLOT(update_iqq_scale_maxq(double)));
+
    pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_mw_cache->setMinimumHeight(minHeight1);
@@ -1020,7 +1076,24 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellWidget(cb_disable_iq_scaling, k, k, 2, 3);
    k++;
 
+   background->addMultiCellWidget(cb_autocorrelate, k, k, 2, 3);
+   k++;
+
+   background->addMultiCellWidget(cb_hybrid_radius_excl_vol, k, k, 2, 3);
+   k++;
+
+   background->addMultiCellWidget(cb_subtract_radius, k, k, 2, 3);
+   k++;
+
+   background->addWidget(lbl_scale_excl_vol, k, 2);
+   background->addWidget(cnt_scale_excl_vol, k, 3);
+   k++;
+
    background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
+   k++;
+
+   background->addWidget(lbl_iqq_scale_maxq, k, 2);
+   background->addWidget(cnt_iqq_scale_maxq, k, 3);
    k++;
 
    if ( k > j )
@@ -1560,6 +1633,36 @@ void US_Hydrodyn_SaxsOptions::set_disable_iq_scaling()
 {
    (*saxs_options).disable_iq_scaling = cb_disable_iq_scaling->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_autocorrelate()
+{
+   (*saxs_options).autocorrelate = cb_autocorrelate->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_hybrid_radius_excl_vol()
+{
+   (*saxs_options).hybrid_radius_excl_vol = cb_hybrid_radius_excl_vol->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_scale_excl_vol(double val)
+{
+   (*saxs_options).scale_excl_vol = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_subtract_radius()
+{
+   (*saxs_options).subtract_radius = cb_subtract_radius->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq(double val)
+{
+   (*saxs_options).iqq_scale_maxq = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_guinier_csv()

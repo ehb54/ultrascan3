@@ -27,6 +27,7 @@
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
+#include "us_hydrodyn_saxs_iqq_residuals.h"
 #include "us_hydrodyn_saxs_residuals.h"
 
 //standard C and C++ defs:
@@ -53,6 +54,7 @@ struct saxs_atom
    float excl_vol;
    float b;           // scattering factor b for p(r) calcs
 
+   float radius;      // radius of atomic group
    // for bead models:
    float srv;         // square root of relative volume
    saxs saxs_data;    
@@ -284,8 +286,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool bead_model_ok_for_saxs;
 
-      bool                       saxs_residuals_widget;
-      US_Hydrodyn_Saxs_Residuals *saxs_residuals_window;
+      bool                           saxs_residuals_widget;
+      US_Hydrodyn_Saxs_Residuals     *saxs_residuals_window;
+
+      bool                           saxs_iqq_residuals_widget;
+      US_Hydrodyn_Saxs_Iqq_Residuals *saxs_iqq_residuals_window;
 
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
@@ -355,7 +360,25 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString load_pr_selected_filter;
       QString load_saxs_sans_selected_filter;
 
-   private:
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif      
+      void display_iqq_residuals( QString title,
+                                  vector < double > q,
+                                  vector < double > I1,
+                                  vector < double > I2 );
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I );
+
+      void rescale_iqq_curve( QString scaling_target,
+                              vector < double > &q,
+                              vector < double > &I,
+                              vector < double > &I2 );
 
       void editor_msg( QString color, QString msg );
 
