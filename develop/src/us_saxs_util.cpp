@@ -6203,3 +6203,49 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
       return false;
    }
 }
+
+void US_Saxs_Util::scaling_fit( 
+                              vector < double > x, 
+                              vector < double > y, 
+                              double &k,
+                              double &chi2
+                              )
+{
+   if ( x.size() != y.size() )
+   {
+      cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
+   }
+
+   k = 0e0;
+
+   double Sx  = 0e0;
+   double Sy  = 0e0;
+   double Sxx = 0e0;
+   double Sxy = 0e0;
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      Sx  += x[i];
+      Sy  += y[i];
+      Sxx += x[i] * x[i];
+      Sxy += x[i] * y[i];
+   }
+
+   if ( Sx != Sxx )
+   {
+      k = ( Sy - Sxy ) / ( Sx - Sxx );
+   } else {
+      k = 1e0;
+   }
+
+   chi2 = 0e0;
+   unsigned int used = 0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( y[i] != 0 )
+      {
+         chi2 += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] ) / ( y[i] * y[i] );
+         used++;
+      }
+   }
+}

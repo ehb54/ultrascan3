@@ -1560,11 +1560,6 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       return;
    }
 
-   double scaling_a;
-   double scaling_b;
-   double scaling_siga;
-   double scaling_sigb;
-   double scaling_chi2;
 
    unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
    cout << "scaling target pos is " << iq_pos << endl;
@@ -1622,100 +1617,59 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       QMessageBox::warning( this, "UltraScan",
                             QString(tr("Could not find sufficient q range overlap\n"
                                        "to scale the loaded data to the selected target")) );
-   } else {
-      vector < double > use_source_I = interpolate(use_q, q, I);
+      return;
+   }
 
-      vector < double > save_source_I = use_source_I;
-      vector < double > save_use_I = use_I;
-      
-      US_Saxs_Util usu;
-      
-      for ( unsigned int i = 0; i < use_I.size(); i++ )
+
+   vector < double > use_source_I = interpolate(use_q, q, I);
+   
+   vector < double > save_source_I = use_source_I;
+   vector < double > save_use_I = use_I;
+   
+   US_Saxs_Util usu;
+
+   double k;
+   double chi2;
+
+   usu.scaling_fit( 
+                   use_source_I, 
+                   use_I, 
+                   k, 
+                   chi2
+                   );
+                   
+
+   QString results = "Scaling ";
+   
+   if ( our_saxs_options->iqq_scale_maxq > 0.0f )
+   {
+      results += QString("maxq: %1 ").arg( our_saxs_options->iqq_scale_maxq );
+   }
+   
+   results += 
+      QString("factor: %1 Chi^2: %2\n")
+      .arg(k)
+      .arg(chi2);
+   editor->append(results);
+
+   for ( unsigned int i = 0; i < I.size(); i++ )
+   {
+      I[i] = k * I[i];
+   }
+   display_iqq_residuals( scaling_target, 
+                          use_q,
+                          save_use_I,
+                          save_source_I );
+
+   if ( I2.size() )
+   {
+      for ( unsigned int i = 0; i < I2.size(); i++ )
       {
-         use_I[ i ] = log10( use_I[ i ] );
-         use_source_I[ i ] = log10( use_source_I[ i ] );
-         if ( isnan( use_I[ i ] ) )
-         {
-            use_I[ i ] = 1e-34;
-         }
-         if ( isnan( use_source_I[ i ] ) )
-         {
-            use_source_I[ i ] = 1e-34;
-         }
+         I2[i] = k * I2[i];
       }
-
-      usu.linear_fit(
-                     use_source_I, 
-                     use_I, 
-                     scaling_a,
-                     scaling_b,
-                     scaling_siga,
-                     scaling_sigb,
-                     scaling_chi2
-                     );
-      
-      QString results = "Scaling ";
-
-      if ( our_saxs_options->iqq_scale_maxq > 0.0f )
-      {
-         results += QString("maxq: %1 ").arg( our_saxs_options->iqq_scale_maxq );
-      }
-
-      results += 
-         QString("factor: %1  Offset: %2  Chi^2: %3\n")
-         .arg(scaling_b)
-         .arg(scaling_a)
-         .arg(scaling_chi2);
-      editor->append(results);
-      // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
-
-      for ( unsigned int i = 0; i < I.size(); i++ )
-      {
-         // I[i] = scaling_a + scaling_b * I[i];
-         I[i] = log10( I[i] );
-         if ( isnan(I[i]) )
-         {
-            I[i] = 1e-34;
-         }
-         I[i] = exp10( scaling_a + scaling_b * I[i] );
-         // if ( I[i] <= 0e0 )
-         // {
-         // I[i] = 1e-32;
-         // //                  I.resize(i);
-         // //                  q.resize(i);
-         // // break;
-         // }
-      }
-      
       display_iqq_residuals( scaling_target, 
                              use_q,
-                             save_use_I,
-                             save_source_I );
-      
-      // cout << "saxs curve scaled " << vector_double_to_csv(I) << endl;
-      if ( I2.size() )
-      {
-         for ( unsigned int i = 0; i < I2.size(); i++ )
-         {
-            I2[i] = log10( I2[i] );
-            if ( isnan(I2[i]) )
-            {
-               I2[i] = 1e-34;
-            }
-            I2[i] = exp10( scaling_a + scaling_b * I2[i] );
-            //            I2[i] = scaling_a + scaling_b * I2[i];
-            //            if ( I2[i] <= 0e0 )
-            //            {
-            //               I2[i] = 1e-32;
-            //               // I2.resize(i);
-            //               // q2.resize(i);
-            //               // break;
-            //            }
-         }
-         display_iqq_residuals( scaling_target, 
-                                use_q,
-                                I2,
-                                save_use_I );
-      }
+                             I2,
+                             save_use_I );
    }
 }

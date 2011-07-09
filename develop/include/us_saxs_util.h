@@ -282,6 +282,14 @@ class US_EXTERN US_Saxs_Util
                       double &chi2
                       );
 
+      // linear fit code, solves  y = kx, returing chi2
+      void scaling_fit( 
+                       vector < double > x, 
+                       vector < double > y, 
+                       double &a,
+                       double &chi2
+                       );
+
       static double calc_rmsd( vector < double > v1,  vector < double > v2 );
       static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)
       static bool calc_chisq1( vector < double > bins,
