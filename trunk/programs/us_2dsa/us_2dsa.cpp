@@ -254,7 +254,9 @@ DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
 // plot the data
 void US_2dsa::data_plot( void )
 {
+DbgLv(1) << "Data Plot by Base";
    US_AnalysisBase2::data_plot();      // plot experiment data
+DbgLv(1) << "Data Plot from Base";
 
    pb_fitcntl->setEnabled( true );
    ct_from   ->setEnabled( true );
@@ -741,7 +743,7 @@ void US_2dsa::open_fitcntl()
 
    edata           = &dataList[ drow ];
    double avTemp   = edata->average_temperature();
-   double vbar20   = solution_rec.commonVbar20;
+   double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
    double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
    US_Math2::SolutionData sd;
    sd.density      = density;
@@ -750,13 +752,10 @@ void US_2dsa::open_fitcntl()
    sd.vbar         = vbartb;
    US_Math2::data_correction( avTemp, sd );
 
-DbgLv(1) << "  OFitCntl: dens visc vbar20 vbartb" << edata->dataType;
-
    US_Passwd pw;
    US_DB2* dbP             = disk_controls->db()
                              ? new US_DB2( pw.getPasswd() )
                              : NULL;
-DbgLv(1) << "  OFitCntl - CC";
    dset.simparams.initFromData( dbP, dataList[ drow ] );
 
    dset.run_data           = dataList[ drow ];
@@ -768,7 +767,6 @@ DbgLv(1) << "  OFitCntl - CC";
    dset.vbartb             = vbartb;
    dset.s20w_correction    = sd.s20w_correction;
    dset.D20w_correction    = sd.D20w_correction;
-DbgLv(1) << "  OFitCntl - EE";
 
    if ( analcd != 0 )
    {
@@ -781,7 +779,6 @@ DbgLv(1) << "  OFitCntl - EE";
    analcd  = new US_AnalysisControl( dsets, this );
    analcd->move( acd_pos );
    analcd->show();
-DbgLv(1) << "  AFitCntl: dens visc vbar20 vbartb" << edata->dataType;
    qApp->processEvents();
 }
 
