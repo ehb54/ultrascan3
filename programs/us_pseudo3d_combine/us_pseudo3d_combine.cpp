@@ -383,11 +383,7 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
-   QwtText qwtTitle;
-   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-                            US_GuiSettings::fontSize() + 1, QFont::Bold ) );
-   qwtTitle.setText( tstr );
-   data_plot->setTitle( qwtTitle );
+   data_plot->setTitle( tstr );
    data_plot->detachItems();
    QColor bg   = colormap->color1();
    data_plot->setCanvasBackground( bg );
@@ -434,7 +430,6 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    data_plot->replot();
 
-qDebug() << "curr_distr need_save" << curr_distr << need_save;
    if ( need_save )
    {  // automatically save plot image in a PNG file
       QPixmap plotmap( data_plot->size() );

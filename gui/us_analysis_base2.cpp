@@ -369,10 +369,8 @@ void US_AnalysisBase2::update( int selection )
       buffLoaded  = false;
       le_density  ->setText( bdens );
       le_viscosity->setText( bvisc );
-      le_vbar     ->setText( svbar );
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
-      vbar        = svbar.toDouble();
       buffLoaded  = true;
 
       if ( solID.isEmpty() )
@@ -392,6 +390,9 @@ void US_AnalysisBase2::update( int selection )
       }
 
       le_solution ->setText( solution_rec.solutionDesc );
+      vbar         = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+      svbar        = QString::number( vbar );
+      le_vbar     ->setText( svbar );
    }
 
    else
@@ -1121,8 +1122,7 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
-   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
-                                                  avgTemp );
+   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
@@ -1439,7 +1439,7 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
 
    density      = bdens.toDouble();
    viscosity    = bvisc.toDouble();
-   vbar         = solution_rec.commonVbar20;
+   vbar         = US_Math2::calcCommonVbar( solution_rec, 20.0 );
    svbar        = QString::number( vbar );
 
    le_density  ->setText( bdens );

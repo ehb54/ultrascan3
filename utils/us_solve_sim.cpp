@@ -34,21 +34,20 @@ US_SolveSim::Simulation::Simulation()
    noisflag      = 0;
 }
 
-// Do the real work of a 2dsa/ga thread/processor:
-//   simulation from solutes set
+// Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
 void US_SolveSim::calc_residuals( int offset, int dataset_count,
       Simulation& sim_vals )
 {
-   dbg_level     = sim_vals.dbg_level;
-   dbg_timing    = sim_vals.dbg_timing;
-   noisflag      = sim_vals.noisflag;
-   int nsolutes  = sim_vals.solutes.size();
-   int ntotal    = 0;
-   int ntinois   = 0;
-   int nrinois   = 0;
-   calc_ti       = ( ( noisflag & 1 ) != 0 );
-   calc_ri       = ( ( noisflag & 2 ) != 0 );
-   startCalc     = QDateTime::currentDateTime();
+   dbg_level     = sim_vals.dbg_level;            // Debug level
+   dbg_timing    = sim_vals.dbg_timing;           // Debug-timing flag
+   noisflag      = sim_vals.noisflag;             // Noise-calculation flag
+   int nsolutes  = sim_vals.solutes.size();       // Input solutes count
+   calc_ti       = ( ( noisflag & 1 ) != 0 );     // Calculate-TI flag
+   calc_ri       = ( ( noisflag & 2 ) != 0 );     // Calculate-RI flag
+   startCalc     = QDateTime::currentDateTime();  // Start calc time for timings
+   int ntotal    = 0;                             // Total points count
+   int ntinois   = 0;                             // TI noise value count
+   int nrinois   = 0;                             // RI noise value count
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {  // Count scan,point totals for all data sets
@@ -60,7 +59,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
       nrinois      += nscans;
    }
 
-   // set up and clear work vectors
+   // Set up and clear work vectors
    int navals    = ntotal * nsolutes;   // Size of "A" matrix
 DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    QVector< double > nnls_a( navals,   0.0 );
@@ -73,7 +72,7 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    US_Model model;
    model.components.resize( 1 );
 
-   US_Model::SimulationComponent zcomponent; // zeroed component to init models
+   US_Model::SimulationComponent zcomponent; // Zeroed component to init models
    zcomponent.s     = 0.0;
    zcomponent.D     = 0.0;
    zcomponent.mw    = 0.0;
@@ -82,7 +81,7 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
 
 
 DebugTime("BEG:calcres");
-   // populate b array with experiment data concentrations
+   // Populate b array with experiment data concentrations
    int    kk        = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
@@ -106,9 +105,9 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
    QList< US_DataIO2::RawData > simulations;
 
    // Simulate data using models, each with a single s,f/f0 component
-   int    increp  = nsolutes / 10;                 // progress report increment
+   int    increp  = nsolutes / 10;                 // Progress report increment
           increp  = ( increp < 10 ) ? 10 : increp;
-   int    kstep   = 0;                             // progress step count
+   int    kstep   = 0;                             // Progress step count
           kk      = 0;                             // nnls_a output index
 
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -207,7 +206,7 @@ DbgLv(1) << "  set SMALL_A+B";
                         small_a, small_b, a_bar, L_bars, nnls_a );
       if ( abort ) return;
 
-      // This is Sum( concentration * Lamm ) for the models after NNLS
+      // Do NNLS to compute concentrations (nnls_x)
 DbgLv(1) << "  noise small NNLS";
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
                       small_b.data(), nnls_x.data() );
@@ -308,7 +307,7 @@ DbgLv(1) << "CR: kstodo" << kstodo;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
-      US_DataIO2::RawData tdata;  // Init temp sim data with edata's grid
+      US_DataIO2::RawData tdata;      // Init temp sim data with edata's grid
       US_AstfemMath::initSimData( tdata, data_sets[ ee ]->run_data, 0.0 );
 
       int nscans  = tdata.scanData.size();
@@ -317,7 +316,7 @@ DbgLv(1) << "CR: kstodo" << kstodo;
 
       if ( ee == offset )
       {
-         sim_vals.sim_data = tdata;   // init (first) dataset sim data
+         sim_vals.sim_data = tdata;   // Init (first) dataset sim data
          jscan += nscans;
       }
       else
@@ -411,9 +410,7 @@ DbgLv(1) << "CR:     ss rr sval" << ss << rr << soluval
          }
       }
 
-DbgLv(1) << "CR: index" << index;
-
-      rmsds[ index ] = variance;  // variance for a data set
+      rmsds[ index ] = variance;          // Variance for a data set
       soffs         += nscans;
       tinoffs       += npoints;
       rinoffs       += nscans;
@@ -421,7 +418,7 @@ DbgLv(1) << "CR: index variance" << index << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
-   variance /= (double)ntotal;    // total sets variance
+   variance         /= (double)ntotal;    // Total sets variance
    sim_vals.variance = variance;
    kk        = 0;
 
@@ -450,21 +447,17 @@ DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
    sim_vals.solutes.resize( kk );    // Truncate solutes at non-zero count
 DbgLv(1) << "CR: out solutes size" << kk;
 DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.solutes[0].c;
-DbgLv(1) << "CR:   jj solute-c" << 1 << sim_vals.solutes[1].c;
-DbgLv(1) << "CR:   jj solute-c" << kk-2 << sim_vals.solutes[kk-2].c;
-DbgLv(1) << "CR:   jj solute-c" << kk-1 << sim_vals.solutes[kk-1].c;
+DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.solutes[1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.solutes[kk-2].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
    if ( abort ) return;
 
    // Fill noise objects with any calculated vectors
    if ( calc_ti )
-   {
       sim_vals.ti_noise << tinvec;
-   }
 
    if ( calc_ri )
-   {
       sim_vals.ri_noise << rinvec;
-   }
 
 DebugTime("END:calcres");
 }

@@ -510,12 +510,10 @@ void US_FeMatch::update( int drow )
       le_density  ->setText( bdens );
       le_viscosity->setText( bvisc );
       le_compress ->setText( bcomp );
-      le_vbar     ->setText( svbar );
       buffLoaded  = true;
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
-      vbar        = svbar.toDouble();
 
       if ( solID.isEmpty() )
       {
@@ -526,24 +524,6 @@ void US_FeMatch::update( int drow )
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
          solution_rec.readFromDB( solID.toInt(), dbP );
-
-DbgLv(1) << "FeM:SOL: solID cvbar sttemp" << solution_rec.solutionID
- << solution_rec.commonVbar20 << solution_rec.storageTemp;
-US_Passwd pw;
-US_DB2* dbP = new US_DB2( pw.getPasswd() );
-for ( int mm=0; mm<solution_rec.analyteInfo.size(); mm++ )
-{
- DbgLv(1) << "FeM:SOL: mm amt mw" << mm << solution_rec.analyteInfo[mm].amount
-  << solution_rec.analyteInfo[mm].analyte.mw;
- QString anID=solution_rec.analyteInfo[mm].analyte.analyteID;
- QString anGID=solution_rec.analyteInfo[mm].analyte.analyteGUID;
- DbgLv(1) << "FeM:SOL:  anID" << anID << "anGUID" << anGID;
- US_Analyte alyt;
- alyt.load( true, anGID, dbP );
- DbgLv(1) << "FeM:SOL:  a.anID" <<  alyt.analyteID<< "a.anGUID"
-  << alyt.analyteGUID;
- DbgLv(1) << "FeM:SOL:  a.mw" <<  alyt.mw;
-}
       }
 
       else
@@ -552,6 +532,9 @@ for ( int mm=0; mm<solution_rec.analyteInfo.size(); mm++ )
       }
    
       le_solution ->setText( solution_rec.solutionDesc );
+      vbar          = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+      svbar         = QString::number( vbar );
+      le_vbar     ->setText( svbar );
    }
 
    else
