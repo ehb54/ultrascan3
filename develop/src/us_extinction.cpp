@@ -939,7 +939,7 @@ void US_Extinction::save()
 		ts << "using namespace std;\n"; 
 		ts << "int main (int argc, char **argv)\n"; 
 		ts << "{\n"; 
-		ts << "  float p[5], w[5], a[5], c=0.0, rel_conc;\n"; 
+		ts << "  float p[" << order << "], w[" << order << "], a[" << order << "], c=0.0, rel_conc;\n"; 
 		ts << "  int start, end;\n"; 
       for (i=0; i<order; i++)
       {
@@ -961,7 +961,7 @@ void US_Extinction::save()
 		ts << "  for (int j=start; j<end; j++)\n"; 
 		ts << "  {\n"; 
 		ts << "     c = 0.0;\n"; 
-		ts << "     for (int i=0; i<5; i++)\n"; 
+		ts << "     for (int i=0; i<" << order << "; i++)\n"; 
 		ts << "     {\n"; 
 		ts << "        c += rel_conc * a[i] * exp(-pow(j-p[i], 2.0)/(2.0*w[i]*w[i]));\n"; 
 		ts << "     }\n"; 
