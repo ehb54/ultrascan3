@@ -6214,6 +6214,8 @@ void US_Saxs_Util::scaling_fit(
    if ( x.size() != y.size() )
    {
       cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
+      k = 1e0;
+      chi2 = 9e99;
    }
 
    k = 0e0;
@@ -6248,4 +6250,46 @@ void US_Saxs_Util::scaling_fit(
          used++;
       }
    }
+}
+
+void US_Saxs_Util::nnls_fit( 
+                              vector < double > x, 
+                              vector < double > y, 
+                              double &k,
+                              double &nnls_rmsd
+                              )
+{
+   if ( x.size() != y.size() )
+   {
+      cerr << "US_Saxs_Util::nnls_fit() incompatible vector sizes\n";
+      k = 1e0;
+      nnls_rmsd = 9e99;
+   }
+
+   int const_one = 1;
+   int len = (int) x.size();
+   
+   double            nnls_wp;
+   vector < double > nnls_zzp( x.size() );
+   int               nnls_indexp;
+
+   int result =
+      nnls( (double *)&x[0],
+            len,
+            len,
+            const_one,
+            (double *)&y[0],
+            (double *)&k,
+            &nnls_rmsd,
+            (double *)&nnls_wp,
+            (double *)&nnls_zzp[0],
+            (int  *)&nnls_indexp
+            );
+            
+   if ( result != 0 )
+   {
+      cerr << "NNLS error!\n";
+   }
+   
+   cerr << QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd);
 }

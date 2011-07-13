@@ -4,6 +4,7 @@
 // QT defs:
 
 #include "us_util.h"
+#include "us_math.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include <math.h>
 #include <sys/time.h>
@@ -289,6 +290,13 @@ class US_EXTERN US_Saxs_Util
                        double &a,
                        double &chi2
                        );
+
+      void nnls_fit( 
+                    vector < double > x, 
+                    vector < double > y, 
+                    double &k,
+                    double &nnls_rmsd
+                    );
 
       static double calc_rmsd( vector < double > v1,  vector < double > v2 );
       static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)

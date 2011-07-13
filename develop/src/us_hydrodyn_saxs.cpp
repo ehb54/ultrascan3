@@ -5466,24 +5466,36 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    q.resize(min_len);
 
    vector < double > difference( q.size() );
-   vector < double > residual( q.size() );
+   vector < double > log_difference( q.size() );
+   vector < double > log_I1 ( I1.size() );
+   vector < double > log_I2 ( I2.size() );
+
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
-      I1[ i ] = log10( I1[ i ] );
-      I2[ i ] = log10( I2[ i ] );
-      difference[ i ] = I1[ i ] - I2[ i ];
-      residual[ i ]  = fabs( difference[ i ] );
+      difference[ i ] = I2[ i ] - I1[ i ];
+      log_I1[ i ] = log10( I1[ i ] );
+      log_I2[ i ] = log10( I2[ i ] );
+      if ( isnan( log_I1[ i ] ) )
+      {
+         log_I1[ i ] = 1e-34;
+      }
+      if ( isnan( log_I2[ i ] ) )
+      {
+         log_I2[ i ] = 1e-34;
+      }
+      log_difference[ i ] = log_I2[ i ] - log_I1[ i ];
    }
 
    saxs_iqq_residuals_window = 
       new US_Hydrodyn_Saxs_Iqq_Residuals(
                                          &saxs_iqq_residuals_widget,
                                          plot_saxs->width(),
-                                         tr("Log10 I(q) residuals & difference targeting:\n") + title,
+                                         tr("Residuals & difference targeting:\n") + title,
                                          q,
                                          difference,
-                                         residual,
                                          I2,
+                                         log_difference,
+                                         log_I2,
                                          false,
                                          true,
                                          true

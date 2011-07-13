@@ -6,9 +6,10 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              QString title,
                                                              vector < double > q,
                                                              vector < double > difference,
-                                                             vector < double > residuals,
                                                              vector < double > target,
-                                                             bool plot_residuals,
+                                                             vector < double > log_difference,
+                                                             vector < double > log_target,
+                                                             bool plot_log,
                                                              bool plot_difference,
                                                              bool plot_as_percent,
                                                              QWidget *p, 
@@ -19,9 +20,10 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->title = title;
    this->q = q;
    this->difference = difference;
-   this->residuals = residuals;
    this->target = target;
-   this->plot_residuals = plot_residuals;
+   this->log_difference = log_difference;
+   this->log_target = log_target;
+   this->plot_log = plot_log;
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
 
@@ -32,34 +34,50 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    {
       min_len = difference.size();
    }
-   if ( residuals.size() <  min_len ) 
+   if ( log_difference.size() <  min_len ) 
    {
-      min_len = residuals.size();
+      min_len = log_difference.size();
    }
    if ( target.size() <  min_len ) 
    {
       min_len = target.size();
    }
+   if ( log_target.size() <  min_len ) 
+   {
+      min_len = log_target.size();
+   }
    q.resize(min_len);
    difference.resize(min_len);
-   residuals.resize(min_len);
+   log_difference.resize(min_len);
    target.resize(min_len);
+   log_target.resize(min_len);
    difference_pct.resize(min_len);
-   residuals_pct.resize(min_len);
+   log_difference_pct.resize(min_len);
    double area = 0e0;
+   double log_area = 0e0;
    for ( unsigned int i = 0; i < target.size(); i++ )
    {
-      area += target[i];
+      area += fabs(target[i]);
+      log_area += fabs(log_target[i]);
    }
    if ( target.size() )
    {
       area /= target.size();
    }
+   if ( log_target.size() )
+   {
+      log_area /= log_target.size();
+   }
+   cout << "area " << area << endl;
 
    for ( unsigned int i = 0; i < target.size(); i++ )
    {
       difference_pct[i] = 100.0 * difference[i] / area;
-      residuals_pct[i] = 100.0 * residuals[i] / area;
+   }
+
+   for ( unsigned int i = 0; i < log_target.size(); i++ )
+   {
+      log_difference_pct[i] = 100.0 * log_difference[i] / area;
    }
 
    USglobal = new US_Config();
@@ -81,15 +99,6 @@ US_Hydrodyn_Saxs_Iqq_Residuals::~US_Hydrodyn_Saxs_Iqq_Residuals()
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
 {
-
-   // int minHeight1 = 30;
-
-   // lbl_title = new QLabel(title, this);
-   // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   // lbl_title->setMinimumHeight(minHeight1);
-   // lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    plot = new QwtPlot(this);
 #ifndef QT4
@@ -131,44 +140,45 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    plot->setTitle(title);
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
-   cb_plot_residuals = new QCheckBox(this);
-   cb_plot_residuals->setText(tr(" Plot residuals"));
-   cb_plot_residuals->setEnabled(true);
-   cb_plot_residuals->setChecked(plot_residuals);
-   cb_plot_residuals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_residuals = QColorGroup(
-                                                QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
-                                                USglobal->global_colors.cg_normal.button(), 
-                                                USglobal->global_colors.cg_normal.light(), 
-                                                USglobal->global_colors.cg_normal.dark(), 
-                                                USglobal->global_colors.cg_normal.mid(), 
-                                                USglobal->global_colors.cg_normal.text(),
-                                                USglobal->global_colors.cg_normal.brightText(), 
-                                                USglobal->global_colors.cg_normal.base(), 
-                                                QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-                                                );
-   cb_plot_residuals->setPalette( QPalette(qcg_plot_residuals, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-   connect(cb_plot_residuals, SIGNAL(clicked()), SLOT(set_plot_residuals()));
-
    cb_plot_difference = new QCheckBox(this);
    cb_plot_difference->setText(tr(" Plot difference"));
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    QColorGroup qcg_plot_difference = QColorGroup(
-                                                QBrush(Qt::yellow), //USglobal->global_colors.cg_normal.foreground(),
-                                                USglobal->global_colors.cg_normal.button(), 
-                                                USglobal->global_colors.cg_normal.light(), 
-                                                USglobal->global_colors.cg_normal.dark(), 
-                                                USglobal->global_colors.cg_normal.mid(), 
-                                                USglobal->global_colors.cg_normal.text(),
-                                                USglobal->global_colors.cg_normal.brightText(), 
-                                                USglobal->global_colors.cg_normal.base(), 
-                                                QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
+                                                 QBrush(Qt::yellow), // USglobal->global_colors.cg_normal.foreground(),
+                                                 USglobal->global_colors.cg_normal.button(), 
+                                                 USglobal->global_colors.cg_normal.light(), 
+                                                 USglobal->global_colors.cg_normal.dark(), 
+                                                 USglobal->global_colors.cg_normal.mid(), 
+                                                 USglobal->global_colors.cg_normal.text(),
+                                                 USglobal->global_colors.cg_normal.brightText(), 
+                                                 USglobal->global_colors.cg_normal.base(), 
+                                                 QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
                                                 );
    cb_plot_difference->setPalette( QPalette(qcg_plot_difference, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    connect(cb_plot_difference, SIGNAL(clicked()), SLOT(set_plot_difference()));
+
+   cb_plot_log = new QCheckBox(this);
+   cb_plot_log->setText(tr(" Plot log"));
+   cb_plot_log->setEnabled(true);
+   cb_plot_log->setChecked(plot_log);
+   cb_plot_log->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   QColorGroup qcg_plot_log = QColorGroup(
+                                          QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
+                                          USglobal->global_colors.cg_normal.button(), 
+                                          USglobal->global_colors.cg_normal.light(), 
+                                          USglobal->global_colors.cg_normal.dark(), 
+                                          USglobal->global_colors.cg_normal.mid(), 
+                                          USglobal->global_colors.cg_normal.text(),
+                                          USglobal->global_colors.cg_normal.brightText(), 
+                                          USglobal->global_colors.cg_normal.base(), 
+                                          QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
+                                          );
+   cb_plot_log->setPalette( QPalette(qcg_plot_log, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   connect(cb_plot_log, SIGNAL(clicked()), SLOT(set_plot_log()));
 
    cb_plot_as_percent = new QCheckBox(this);
    cb_plot_as_percent->setText(tr(" Plot as percent"));
@@ -185,7 +195,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
                                                  USglobal->global_colors.cg_normal.brightText(), 
                                                  USglobal->global_colors.cg_normal.base(), 
                                                  QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-                                                );
+                                                 );
    cb_plot_as_percent->setPalette( QPalette(qcg_plot_as_percent, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
@@ -217,13 +227,11 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    j++;
 
    QBoxLayout *hbl = new QHBoxLayout(0);
-   hbl->addWidget(cb_plot_residuals);
    hbl->addWidget(cb_plot_difference);
+   hbl->addWidget(cb_plot_log);
    hbl->addWidget(cb_plot_as_percent);
 
    background->addMultiCellLayout(hbl, j, j, 0, 1);
-   // background->addWidget(cb_plot_residuals, j, 0);
-   // background->addWidget(cb_plot_difference, j, 1);
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -252,28 +260,16 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::closeEvent( QCloseEvent *e )
    e->accept();
 }
 
-void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_residuals()
+void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_log()
 {
-   plot_residuals = cb_plot_residuals->isChecked();
-   if ( !plot_residuals && !plot_difference )
-   {
-      cb_plot_difference->setChecked(true);
-      set_plot_difference();
-   } else {
-      update_plot();
-   }
+   plot_log = cb_plot_log->isChecked();
+   update_plot();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_difference()
 {
    plot_difference = cb_plot_difference->isChecked();
-   if ( !plot_residuals && !plot_difference )
-   {
-      cb_plot_residuals->setChecked(true);
-      set_plot_residuals();
-   } else {
-      update_plot();
-   }
+   update_plot();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_as_percent()
@@ -285,15 +281,15 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_as_percent()
 void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 {
    plot->clear();
-   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("Log10 delta I(q)"));
-   if ( plot_residuals ) 
+   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("I(q)"));
+   if ( plot_log ) 
    {
 #ifndef QT4
       long iqq = plot->insertCurve("Log10 I(q) vs q"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
       plot->setCurveData(iqq, 
                          (double *)&(q[0]), 
-                         plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
+                         plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
                          (int)q.size());
       plot->setCurvePen(iqq, QPen(Qt::green, 2, SolidLine));
 #else
@@ -301,7 +297,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setData(
                      (double *)&(q[0]), 
-                     plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
+                     plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
                      (int)q.size()
                      );
       curve->setPen( QPen(Qt::green, 2, SolidLine) );

@@ -1550,7 +1550,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          vector < double > &I2
+                                          vector < double > &I2 
                                           )
 {
    if ( !q.size() ||
@@ -1560,7 +1560,6 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       return;
    }
 
-
    unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
    cout << "scaling target pos is " << iq_pos << endl;
    double target_q_min = plotted_q[iq_pos][0];
@@ -1568,6 +1567,11 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    double source_q_min = q[0];
    double source_q_max = q[q.size() - 1];
    double q_min = target_q_min;
+   if ( q_min < our_saxs_options->iqq_scale_minq )
+   {
+      q_min = our_saxs_options->iqq_scale_minq;
+   }
+
    if ( q_min < source_q_min )
    {
       q_min = source_q_min;
@@ -1623,32 +1627,46 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 
    vector < double > use_source_I = interpolate(use_q, q, I);
    
-   vector < double > save_source_I = use_source_I;
-   vector < double > save_use_I = use_I;
-   
    US_Saxs_Util usu;
+
+
 
    double k;
    double chi2;
 
-   usu.scaling_fit( 
+   if ( our_saxs_options->iqq_scale_nnls )
+   {
+      usu.nnls_fit( 
                    use_source_I, 
                    use_I, 
                    k, 
                    chi2
                    );
-                   
-
+   } else {
+      usu.scaling_fit( 
+                      use_source_I, 
+                      use_I, 
+                      k, 
+                      chi2
+                      );
+   }
+   
    QString results = "Scaling ";
    
+   if ( our_saxs_options->iqq_scale_minq > 0.0f )
+   {
+      results += QString("minq: %1 ").arg( our_saxs_options->iqq_scale_minq );
+   }
+
    if ( our_saxs_options->iqq_scale_maxq > 0.0f )
    {
       results += QString("maxq: %1 ").arg( our_saxs_options->iqq_scale_maxq );
    }
    
    results += 
-      QString("factor: %1 Chi^2: %2\n")
+      QString("factor: %1 %2: %3\n")
       .arg(k)
+      .arg( our_saxs_options->iqq_scale_nnls ? "RMSD" : "chi^2" )
       .arg(chi2);
    editor->append(results);
 
@@ -1656,20 +1674,27 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    {
       I[i] = k * I[i];
    }
+   
+   for ( unsigned int i = 0; i < use_source_I.size(); i++ )
+   {
+      use_source_I[i] = k * use_source_I[i];
+   }
+   
    display_iqq_residuals( scaling_target, 
                           use_q,
-                          save_use_I,
-                          save_source_I );
-
-   if ( I2.size() )
-   {
-      for ( unsigned int i = 0; i < I2.size(); i++ )
-      {
-         I2[i] = k * I2[i];
-      }
-      display_iqq_residuals( scaling_target, 
-                             use_q,
-                             I2,
-                             save_use_I );
-   }
+                          use_I,
+                          use_source_I );
+   
+   // check this, as I2 may need to be interpolated
+   // if ( I2.size() )
+   //   {
+   //      for ( unsigned int i = 0; i < I2.size(); i++ )
+   //      {
+   //         I2[i] = k * I2[i];
+   //      }
+   //      display_iqq_residuals( scaling_target, 
+   //                             use_q,
+   //                             I2,
+   //                             save_use_I );
+   //   }
 }

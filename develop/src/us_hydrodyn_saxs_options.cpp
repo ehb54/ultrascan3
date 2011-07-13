@@ -862,21 +862,39 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_subtract_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_subtract_radius, SIGNAL(clicked()), this, SLOT(set_subtract_radius()));
 
-   lbl_iqq_scale_maxq = new QLabel(tr(" I(q) curve scaling max q (Angstrom) "), this);
-   lbl_iqq_scale_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_iqq_scale_maxq->setMinimumHeight(minHeight1);
-   lbl_iqq_scale_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_iqq_scale_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve scaling q (Angstrom) "), this);
+   lbl_iqq_scale_min_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_iqq_scale_min_maxq->setMinimumHeight(minHeight1);
+   lbl_iqq_scale_min_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_iqq_scale_min_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_iqq_scale_maxq = new QwtCounter(this);
-   cnt_iqq_scale_maxq->setRange(0.0, 5, 0.01);
-   cnt_iqq_scale_maxq->setValue((*saxs_options).iqq_scale_maxq);
-   cnt_iqq_scale_maxq->setMinimumHeight(minHeight1);
-   cnt_iqq_scale_maxq->setEnabled(true);
-   cnt_iqq_scale_maxq->setNumButtons(3);
-   cnt_iqq_scale_maxq->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_iqq_scale_maxq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_iqq_scale_maxq, SIGNAL(valueChanged(double)), SLOT(update_iqq_scale_maxq(double)));
+   le_iqq_scale_minq = new QLineEdit(this, "iqq_scale_minq Line Edit");
+   (*saxs_options).iqq_scale_minq ? 
+      le_iqq_scale_minq->setText(QString("%1").arg((*saxs_options).iqq_scale_minq)) :
+      le_iqq_scale_minq->setText("");
+   // le_iqq_scale_minq->setMinimumHeight(minHeight1);
+   le_iqq_scale_minq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_iqq_scale_minq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iqq_scale_minq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_iqq_scale_minq, SIGNAL(textChanged(const QString &)), SLOT(update_iqq_scale_minq(const QString &)));
+
+   le_iqq_scale_maxq = new QLineEdit(this, "iqq_scale_maxq Line Edit");
+   (*saxs_options).iqq_scale_maxq ? 
+      le_iqq_scale_maxq->setText(QString("%1").arg((*saxs_options).iqq_scale_maxq)) :
+      le_iqq_scale_maxq->setText("");
+   // le_iqq_scale_maxq->setMinimumHeight(minHeight1);
+   le_iqq_scale_maxq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_iqq_scale_maxq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iqq_scale_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_iqq_scale_maxq, SIGNAL(textChanged(const QString &)), SLOT(update_iqq_scale_maxq(const QString &)));
+
+   cb_iqq_scale_nnls = new QCheckBox(this);
+   cb_iqq_scale_nnls->setText(tr(" Use alternate scaling function"));
+   cb_iqq_scale_nnls->setEnabled(true);
+   cb_iqq_scale_nnls->setChecked((*saxs_options).iqq_scale_nnls);
+   cb_iqq_scale_nnls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_scale_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_scale_nnls, SIGNAL(clicked()), this, SLOT(set_iqq_scale_nnls()));
 
    pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -950,10 +968,10 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(cnt_crysol_hydration_shell_contrast, j, 1);
    j++;
 
-   background->addMultiCellWidget(cb_crysol_default_load_difference_intensity, j, j, 0, 1);
-   j++;
-
-   background->addMultiCellWidget(cb_crysol_version_26, j, j, 0, 1);
+   QHBoxLayout *hbl_crysol = new QHBoxLayout;
+   hbl_crysol->addWidget(cb_crysol_default_load_difference_intensity);
+   hbl_crysol->addWidget(cb_crysol_version_26);
+   background->addMultiCellLayout(hbl_crysol, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(lbl_sans_options, j, j, 0, 1);
@@ -1033,17 +1051,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(lbl_delta_q, k, 2);
    background->addWidget(cnt_delta_q, k, 3);
    k++;
-   background->addMultiCellWidget(cb_hydrate_pdb, k, k, 2, 3);
-   k++;
-   background->addMultiCellWidget(cb_normalize_by_mw, k, k, 2, 3);
+
+   QHBoxLayout *hbl_curve_opts = new QHBoxLayout;
+   hbl_curve_opts->addWidget(cb_hydrate_pdb);
+   hbl_curve_opts->addWidget(cb_normalize_by_mw);
+   background->addMultiCellLayout(hbl_curve_opts, k, k, 2, 3);
    k++;
 
    background->addMultiCellWidget(lbl_bead_model_control, k, k, 2, 3);
    k++;
-   background->addMultiCellWidget(cb_compute_saxs_coeff_for_bead_models, k, k, 2, 3);
+
+   QHBoxLayout *hbl_coeff_bead_model = new QHBoxLayout;
+   hbl_coeff_bead_model->addWidget(cb_compute_saxs_coeff_for_bead_models);
+   hbl_coeff_bead_model->addWidget(cb_compute_sans_coeff_for_bead_models);
+   background->addMultiCellLayout(hbl_coeff_bead_model, k, k, 2, 3);
    k++;
-   background->addMultiCellWidget(cb_compute_sans_coeff_for_bead_models, k, k, 2, 3);
-   k++;
+
    background->addWidget(pb_default_atom_filename, k, 2);
    background->addWidget(le_default_atom_filename, k, 3);
    k++;
@@ -1062,9 +1085,12 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(lbl_steric_clash_distance, k, 2);
    background->addWidget(cnt_steric_clash_distance, k, 3);
    k++;
-   background->addMultiCellWidget(cb_iq_ask, k, k, 2, 3);
-   k++;
-   background->addMultiCellWidget(cb_iq_scale_ask, k, k, 2, 3);
+   
+   QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
+   hbl_iq_ask->addWidget(cb_iq_ask);
+   hbl_iq_ask->addWidget(cb_iq_scale_ask);
+   
+   background->addMultiCellLayout(hbl_iq_ask, k, k, 2, 3);
    k++;
 
    QHBoxLayout *hbl_iq_scale = new QHBoxLayout;
@@ -1073,16 +1099,16 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellLayout(hbl_iq_scale, k, k, 2, 3);
    k++;
 
-   background->addMultiCellWidget(cb_disable_iq_scaling, k, k, 2, 3);
+   QHBoxLayout *hbl_various_1 = new QHBoxLayout;
+   hbl_various_1->addWidget(cb_disable_iq_scaling);
+   hbl_various_1->addWidget(cb_autocorrelate);
+   background->addMultiCellLayout(hbl_various_1, k, k, 2, 3);
    k++;
 
-   background->addMultiCellWidget(cb_autocorrelate, k, k, 2, 3);
-   k++;
-
-   background->addMultiCellWidget(cb_hybrid_radius_excl_vol, k, k, 2, 3);
-   k++;
-
-   background->addMultiCellWidget(cb_subtract_radius, k, k, 2, 3);
+   QHBoxLayout *hbl_various_2 = new QHBoxLayout;
+   hbl_various_2->addWidget(cb_hybrid_radius_excl_vol);
+   hbl_various_2->addWidget(cb_subtract_radius);
+   background->addMultiCellLayout(hbl_various_2, k, k, 2, 3);
    k++;
 
    background->addWidget(lbl_scale_excl_vol, k, 2);
@@ -1092,8 +1118,17 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
    k++;
 
-   background->addWidget(lbl_iqq_scale_maxq, k, 2);
-   background->addWidget(cnt_iqq_scale_maxq, k, 3);
+   QHBoxLayout *hbl_iqq_scaling = new QHBoxLayout;
+   hbl_iqq_scaling->addWidget(lbl_iqq_scale_min_maxq);
+   hbl_iqq_scaling->addWidget(le_iqq_scale_minq);
+   hbl_iqq_scaling->addWidget(le_iqq_scale_maxq);
+   background->addMultiCellLayout(hbl_iqq_scaling, k, k, 2, 3);
+   k++;
+
+   QHBoxLayout *hbl_various_3 = new QHBoxLayout;
+   
+   hbl_various_3->addWidget(cb_iqq_scale_nnls);
+   background->addMultiCellLayout(hbl_various_3, k, k, 2, 3);
    k++;
 
    if ( k > j )
@@ -1620,12 +1655,16 @@ void US_Hydrodyn_SaxsOptions::set_iq_scale_ask()
 void US_Hydrodyn_SaxsOptions::set_iq_scale_angstrom()
 {
    (*saxs_options).iq_scale_angstrom = cb_iq_scale_angstrom->isChecked();
+   (*saxs_options).iq_scale_nm = !cb_iq_scale_angstrom->isChecked();
+   cb_iq_scale_nm->setChecked((*saxs_options).iq_scale_nm);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_iq_scale_nm()
 {
    (*saxs_options).iq_scale_nm = cb_iq_scale_nm->isChecked();
+   (*saxs_options).iq_scale_angstrom = !cb_iq_scale_nm->isChecked();
+   cb_iq_scale_angstrom->setChecked((*saxs_options).iq_scale_angstrom);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1659,10 +1698,22 @@ void US_Hydrodyn_SaxsOptions::set_subtract_radius()
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq(double val)
+void US_Hydrodyn_SaxsOptions::update_iqq_scale_minq( const QString &str )
 {
-   (*saxs_options).iqq_scale_maxq = (float) val;
+   (*saxs_options).iqq_scale_minq = str.toFloat();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq( const QString &str )
+{
+   (*saxs_options).iqq_scale_maxq = str.toFloat();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_scale_nnls()
+{
+   (*saxs_options).iqq_scale_nnls = cb_iqq_scale_nnls->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_guinier_csv()

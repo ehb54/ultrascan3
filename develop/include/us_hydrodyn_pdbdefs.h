@@ -248,7 +248,10 @@ struct saxs_options
    bool    hybrid_radius_excl_vol;
    float   scale_excl_vol;
    bool    subtract_radius;
+   float   iqq_scale_minq;
    float   iqq_scale_maxq;
+
+   bool    iqq_scale_nnls;
 };
 
 struct hybridization

@@ -38,9 +38,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      QString title,
                                      vector < double > q,
                                      vector < double > difference,
-                                     vector < double > residuals,
                                      vector < double > target,
-                                     bool plot_residuals,
+                                     vector < double > log_difference,
+                                     vector < double > log_target,
+                                     bool plot_log,
                                      bool plot_difference,
                                      bool plot_as_percent,
                                      QWidget *p = 0, 
@@ -57,18 +58,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
       vector < double > q;
+
       vector < double > difference;
-      vector < double > residuals;
+      vector < double > log_difference;
+
       vector < double > target;
+      vector < double > log_target;
 
       vector < double > difference_pct;
-      vector < double > residuals_pct;
+      vector < double > log_difference_pct;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-      bool              plot_residuals;
+      bool              plot_log;
       bool              plot_difference;
       bool              plot_as_percent;
 
@@ -81,7 +85,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       QwtPlotGrid       *grid;
 #endif
 
-      QCheckBox         *cb_plot_residuals;
+      QCheckBox         *cb_plot_log;
       QCheckBox         *cb_plot_difference;
       QCheckBox         *cb_plot_as_percent;
 
@@ -98,7 +102,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       
       void setupGUI();
 
-      void set_plot_residuals();
+      void set_plot_log();
       void set_plot_difference();
       void set_plot_as_percent();
 

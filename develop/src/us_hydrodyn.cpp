@@ -269,7 +269,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.hybrid_radius_excl_vol = false;
    saxs_options.scale_excl_vol = 1.0f;
    saxs_options.subtract_radius = false;
-   saxs_options.iqq_scale_maxq = false;
+   saxs_options.iqq_scale_minq = 0.0f;
+   saxs_options.iqq_scale_maxq = 0.0f;
+
+   saxs_options.iqq_scale_nnls = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
