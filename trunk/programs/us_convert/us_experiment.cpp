@@ -387,6 +387,9 @@ int US_Experiment::saveToDisk(
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
 
+   // Make sure the project is saved to disk too
+   this->project.saveToDisk();
+
    return( US_Convert::OK );
 }
 
