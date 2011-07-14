@@ -37,6 +37,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -172,6 +173,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
             new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
             new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
             {
@@ -615,6 +617,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
       // vector < float > save_hist = hist;
       // hist[0] = 0.0;
+
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
          QString("%1_%2")
@@ -1082,6 +1086,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -1215,6 +1220,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
             new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
             new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
@@ -1692,6 +1698,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
          QString("%1_%2")
@@ -1897,6 +1904,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -2022,6 +2030,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
             }
             new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
             new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
@@ -2524,6 +2533,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
 
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+
       QString name = 
          QString("%1_%2")
          .arg(QFileInfo(te_filename2->text()).fileName())
@@ -2724,6 +2735,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -2849,6 +2861,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
             new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
             new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
@@ -3376,6 +3389,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
+
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
          QString("%1_%2")

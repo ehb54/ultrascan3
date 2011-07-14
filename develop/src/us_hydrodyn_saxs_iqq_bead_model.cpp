@@ -35,6 +35,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -70,6 +71,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
+         tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
@@ -362,6 +364,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 
       // vector < float > save_hist = hist;
       // hist[0] = 0.0;
+
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
          QString("%1_%2")
@@ -827,6 +831,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -862,6 +867,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
+         tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
@@ -1177,6 +1183,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
 
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+
       QString name = 
          QString("%1_%2")
          .arg(QFileInfo(te_filename2->text()).fileName())
@@ -1378,6 +1386,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -1413,6 +1422,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
+         tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
@@ -1837,6 +1847,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
 
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+
       QString name = 
          QString("%1_%2")
          .arg(QFileInfo(te_filename2->text()).fileName())
@@ -2034,6 +2046,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      double tot_excl_vol = 0e0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -2069,6 +2082,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
+         tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
@@ -2516,6 +2530,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
+
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
          QString("%1_%2")

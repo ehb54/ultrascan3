@@ -211,70 +211,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.asa_rg_neg = 0.0;
 
    // move to save/restore
-   asa.hydrate_probe_radius = 1.4;
-   asa.hydrate_threshold = 10;
-
-   dmd_options.force_chem = true;
-   dmd_options.pdb_static_pairs = false;
-   dmd_options.threshold_pb_pb = 5;
-   dmd_options.threshold_pb_sc = 5;
-   dmd_options.threshold_sc_sc = 5;
-
-   saxs_options.normalize_by_mw = true;
-
-   saxs_options.saxs_iq_native_debye = false;
-   saxs_options.saxs_iq_native_hybrid = false;
-   saxs_options.saxs_iq_native_hybrid2 = true;
-   saxs_options.saxs_iq_native_fast = false;
-   saxs_options.saxs_iq_native_fast_compute_pr = false;
-   saxs_options.saxs_iq_foxs = false;
-   saxs_options.saxs_iq_crysol = false;
-
-   saxs_options.sans_iq_native_debye = true;
-   saxs_options.sans_iq_native_hybrid = false;
-   saxs_options.sans_iq_native_hybrid2 = false;
-   saxs_options.sans_iq_native_fast = false;
-   saxs_options.sans_iq_native_fast_compute_pr = false;
-   saxs_options.sans_iq_cryson = false;
-
-   saxs_options.hybrid_q_point = 0.15;
-   saxs_options.hybrid2_q_points = 15;
-
-   saxs_options.iq_ask = false;
-
-   saxs_options.iq_scale_ask = false;
-   saxs_options.iq_scale_angstrom = true;
-   saxs_options.iq_scale_nm = false;
-
-   saxs_options.crysol_max_harmonics = 15;
-   saxs_options.crysol_fibonacci_grid_order = 17;
-   saxs_options.crysol_hydration_shell_contrast = 0.03;
-   saxs_options.crysol_default_load_difference_intensity = true;
-   saxs_options.crysol_version_26 = true;
-
-   saxs_options.fast_bin_size = 0.5;
-   saxs_options.fast_modulation = 0.23;
-
-   saxs_options.compute_saxs_coeff_for_bead_models = true;
-   saxs_options.compute_sans_coeff_for_bead_models = false;
-   saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
-   saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
-   saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
-   saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
-
-   saxs_options.steric_clash_distance = 1.4;
-
-   saxs_options.disable_iq_scaling = false;
-   saxs_options.autocorrelate = true;
-   saxs_options.hybrid_radius_excl_vol = false;
-   saxs_options.scale_excl_vol = 1.0f;
-   saxs_options.subtract_radius = false;
-   saxs_options.iqq_scale_minq = 0.0f;
-   saxs_options.iqq_scale_maxq = 0.0f;
-
-   saxs_options.iqq_scale_nnls = false;
-
-   rotamer_changed = true;  // force on-demand loading of rotamer file
+   // put in set_default!!!!!
 
    // this should be stored in the residue file, hardcoded for now
 

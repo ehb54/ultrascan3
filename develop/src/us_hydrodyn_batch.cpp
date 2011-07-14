@@ -953,7 +953,9 @@ void US_Hydrodyn_Batch::update_enables()
    cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
    le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
+#if defined(USE_H)
    cb_hydrate->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
+#endif
    cb_compute_iq_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
    cb_compute_iq_std_dev->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs && batch->compute_iq_avg);
    cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
@@ -962,7 +964,7 @@ void US_Hydrodyn_Batch::update_enables()
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
-   pb_load_saxs->setEnabled(count_selected);
+   pb_load_saxs->setEnabled(count_selected == 1);
    if ( pb_make_movie )
    {
       pb_make_movie->setEnabled(count_selected > 1);
