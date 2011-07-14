@@ -482,7 +482,14 @@ void US_Solution::saveBufferDisk( void )
    QString path = US_Settings::dataDir() + "/buffers";
 
    if ( ! dir.exists( path ) )
-      return;
+   {
+      if ( ! dir.mkpath( path ) )
+      {
+         qDebug() << "Error: Could not create default directory for buffers\n" 
+                  << path;
+         return ;
+      }
+   }
 
    // Find the buffer file, or create a new one
    bool    newFile;
@@ -500,8 +507,19 @@ void US_Solution::saveBufferDisk( void )
 void US_Solution::saveAnalytesDisk( void )
 {
    // Find the analyte directory on disk
-   QString path;
-   if ( ! US_Analyte::analyte_path( path ) ) return;
+   QDir dir;
+   QString path = US_Settings::dataDir() + "/analytes";
+
+   if ( ! dir.exists( path ) )
+   {
+      if ( ! dir.mkpath( path ) )
+      {
+         qDebug() << "Error: Could not create default directory for analytes\n" 
+                  << path;
+         return;
+      }
+   }
+
 
    foreach ( AnalyteInfo ai, analyteInfo )
    {

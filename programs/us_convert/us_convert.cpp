@@ -212,6 +212,9 @@ int US_Convert::saveToDisk(
          triples[ i ].solution.solutionDesc = "New Solution";
       }
 
+      // Make sure solution is saved to disk
+      triples[ i ].solution.saveToDisk();
+
       // Save the filename of this triple
       triples[ i ].tripleFilename = filename;
 
@@ -240,6 +243,7 @@ int US_Convert::saveToDisk(
       return NOT_WRITTEN;
    }
 
+   
    return OK;
 }
 
