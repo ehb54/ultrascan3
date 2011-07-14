@@ -1,4 +1,6 @@
 #include "us_mpi_analysis.h"
+#include "us_math2.h"
+#include "us_settings.h"
 #include "mpi.h"
 
 //  Parse XML routines
@@ -35,7 +37,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
 
          if ( xml.name() == "dataset" )
          {
-            DataSet* d = new DataSet;
+            US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
             parse_dataset( xml, d );
             data_sets << d;
          }
@@ -53,7 +55,7 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
    {
       xml.readNext();
 
-      if ( xml.isEndElement()  &&  xml.name() == "job" ) return;
+      if ( xml.isEndElement()  &&  xml.name() == "job" ) break;
 
       if ( xml.isStartElement()  &&  xml.name() == "cluster" )
       {
@@ -87,12 +89,13 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
          while ( ! xml.atEnd() )
          {
             xml.readNext();
+            QString name = xml.name().toString();
 
-            if ( xml.isEndElement()  &&  xml.name() == "jobParameters" ) break;
+            if ( xml.isEndElement()  &&  name == "jobParameters" ) break;
 
             if ( xml.isStartElement() )
             {
-               if ( xml.name() == "bucket" )
+               if ( name == "bucket" )
                {
                   QXmlStreamAttributes a    = xml.attributes();
                   Bucket               b;
@@ -106,22 +109,26 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
                else
                {
                   QXmlStreamAttributes a    = xml.attributes();
-                  QString              name = xml.name().toString();
                   parameters[ name ]        = a.value( "value" ).toString();
                }
             }
          }
       }
    }
+if ( !parameters.contains("debug_level") ) parameters["debug_level"]="2";
+
+   US_Settings::set_us_debug( parameters[ "debug_level" ].toInt() );
 }
 
-void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
+void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
+      US_SolveSim::DataSet* dataset )
 {
    QXmlStreamAttributes a;
 
    while ( ! xml.atEnd() )
    {
       xml.readNext();
+      QString              name = xml.name().toString();
 
       if ( xml.isEndElement()  &&  xml.name() == "dataset" ) return;
 
@@ -134,25 +141,29 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
       if ( xml.isStartElement()  &&  xml.name() == "simpoints" )
       {
          a                  = xml.attributes();
-         dataset->simpoints = a.value( "value" ).toString().toInt();
+         dataset->simparams.simpoints
+                            = a.value( "value" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "band_volume" )
       {
-         a                    = xml.attributes();
-         dataset->band_volume = a.value( "value" ).toString().toDouble();
+         a                  = xml.attributes();
+         dataset->simparams.band_volume
+                            = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "radial_grid" )
       {
-         a                    = xml.attributes();
-         dataset->radial_grid = (MESH)a.value( "value" ).toString().toInt();
+         a                  = xml.attributes();
+         dataset->simparams.meshType = (US_SimulationParameters::MeshType)
+                              a.value( "value" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "time_grid" )
       {
-         a                    = xml.attributes();
-         dataset->time_grid   = (GRID)a.value( "value" ).toString().toInt();
+         a                  = xml.attributes();
+         dataset->simparams.gridType = (US_SimulationParameters::GridType)
+                              a.value( "value" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "density" )
@@ -185,7 +196,8 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
    }
 }
 
-void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DataSet* dataset )
+void US_MPI_Analysis::parse_files( QXmlStreamReader& xml,
+      US_SolveSim::DataSet* dataset )
 {
    while ( ! xml.atEnd() )
    {
@@ -207,15 +219,14 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DataSet* dataset )
    }
 }
 
-void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DataSet* dataset )
+void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml,
+      US_SolveSim::DataSet* dataset )
 {
-   dataset->analytes.clear();
-
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
-      if ( xml.isEndElement()  &&  xml.name() == "solution" ) return;
+      if ( xml.isEndElement()  &&  xml.name() == "solution" ) break;
 
       if ( xml.isStartElement() && xml.name() == "buffer" )
       {
@@ -226,15 +237,25 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DataSet* dataset )
 
       if ( xml.isStartElement() && xml.name() == "analyte" )
       {
-         AnalyteInfo          analyte;
+         US_Solution::AnalyteInfo aninfo;
          QXmlStreamAttributes a        = xml.attributes();
 
-         analyte.mw     = a.value( "mw"     ).toString().toDouble();
-         analyte.vbar20 = a.value( "vbar20" ).toString().toDouble();
-         analyte.amount = a.value( "amount" ).toString().toDouble();
-         analyte.type   = a.value( "type"   ).toString();
+         aninfo.analyte.mw     = a.value( "mw"     ).toString().toDouble();
+         aninfo.analyte.vbar20 = a.value( "vbar20" ).toString().toDouble();
+         aninfo.amount         = a.value( "amount" ).toString().toDouble();
+         QString atype         = a.value( "type"   ).toString();
+         aninfo.analyte.type   = US_Analyte::PROTEIN;
+         if ( atype == "DNA" )
+            aninfo.analyte.type   = US_Analyte::DNA;
+         if ( atype == "RNA" )
+            aninfo.analyte.type   = US_Analyte::RNA;
+         if ( atype == "Other" )
+            aninfo.analyte.type   = US_Analyte::CARBOHYDRATE;
 
-         dataset->analytes << analyte;
+         dataset->solution_rec.analyteInfo << aninfo;
       }
    }
+
+   dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
 }
+

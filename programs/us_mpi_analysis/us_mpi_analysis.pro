@@ -18,11 +18,9 @@ SOURCES      += us_mpi_analysis.cpp \
                 2dsa_worker.cpp     \
                 ga_master.cpp       \
                 ga_worker.cpp       \
-                us_mpi_parse.cpp    \
-                us_tar.cpp
+                us_mpi_parse.cpp
 
-HEADERS      += us_mpi_analysis.h \
-                us_tar.h
+HEADERS      += us_mpi_analysis.h
 
 INCLUDEPATH  += ../../utils /usr/include/mysql
 DEPENDPATH   += ../../utils

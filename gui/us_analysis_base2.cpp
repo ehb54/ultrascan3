@@ -289,10 +289,10 @@ void US_AnalysisBase2::load( void )
       savedValues << v;
    }
 
-   noiflags.fill( -1, dataList.size() );
+   noiflags.fill( -1,            dataList.size() );
    allExcls.fill( excludedScans, dataList.size() );
-   rinoises.fill( US_Noise(), dataList.size() );
-   tinoises.fill( US_Noise(), dataList.size() );
+   rinoises.fill( US_Noise(),    dataList.size() );
+   tinoises.fill( US_Noise(),    dataList.size() );
 
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );

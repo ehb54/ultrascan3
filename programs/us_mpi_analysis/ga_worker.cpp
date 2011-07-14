@@ -327,7 +327,7 @@ void US_MPI_Analysis::align_gene( Gene& gene )
 
 double US_MPI_Analysis::get_fitness( const Gene& gene )
 {
-   Simulation sim;
+   US_SolveSim::Simulation sim;
    sim.solutes = gene;
 
    QString key = "";
@@ -425,7 +425,7 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
    }
 }
 
-void US_MPI_Analysis::mutate_s( Solute& solute, int b )
+void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 {
    // Consider paramaterizing the sigma and x calculations
    double s_min = buckets[ b ].s_min;
@@ -440,7 +440,7 @@ void US_MPI_Analysis::mutate_s( Solute& solute, int b )
    solute.s  = qMin( solute.s, s_min + ( s_grid - 1 ) * buckets[ b ].ds );
 }
 
-void US_MPI_Analysis::mutate_k( Solute& solute, int b )
+void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 {
    static const double mutate_sigma = parameters[ "mutate_sigma" ].toDouble();
 
@@ -486,7 +486,7 @@ int US_MPI_Analysis::migrate_genes( void )
    static const int migrate_count = parameters[ "migration" ].toInt();
    static const int elitism_count = parameters[ "elitism"   ].toInt();
 
-   QVector< Solute > emmigrants;
+   QVector< US_Solute > emmigrants;
 
    // Send genes to master
    for ( int i = 0; i < migrate_count; i++ )
@@ -515,7 +515,7 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_COMM_WORLD );
 
    // Get genes from master as concatenated genes
-   QVector< Solute > immigrants( migrate_count * buckets.size() );
+   QVector< US_Solute > immigrants( migrate_count * buckets.size() );
    MPI_Status        status;
 
    MPI_Recv( immigrants.data(),  // from MPI #5
@@ -550,7 +550,7 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 
    for ( int b = 0; b < buckets.size(); b++ )
    {
-      Solute solute;
+      US_Solute solute;
 
       double s_min   = buckets[ b ].s_min;
       double ff0_min = buckets[ b ].ff0_min;

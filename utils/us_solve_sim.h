@@ -37,6 +37,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             US_DataIO2::EditedData  run_data;     //!< Experiment data
             US_Model                model;        //!< Model input and output
             SIMPARAMS               simparams;    //!< Simulation parameters
+            US_Solution             solution_rec; //!< Solution record
             double                  viscosity;    //!< Solution buffer viscosity
             double                  density;      //!< Solution buffer density
             double                  temperature;  //!< Average run temperature

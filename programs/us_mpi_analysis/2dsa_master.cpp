@@ -110,68 +110,52 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
             abort( msg );
             break;
       }
+
+      max_rss();
    } 
 }
 
-//////////////////
-QVector< US_MPI_Analysis::Solute > US_MPI_Analysis::create_solutes( 
-        double s_min,   double s_max,   double s_step,
-        double ff0_min, double ff0_max, double ff0_step )
-{
-   QVector< Solute > solute_vector;
 
-   for ( double ff0 = ff0_min; ff0 <= ff0_max; ff0 += ff0_step )
-      for ( double s = s_min; s <= s_max; s += s_step )
-      {
-         // Omit s values close to zero.
-         if ( s >= -1.0e-14  &&  s <= 1.0e-14 ) continue;
-
-         solute_vector << Solute( s, ff0, 0.0 ); 
-      }
-
-   return solute_vector;
-}
-
-//////////////////
 void US_MPI_Analysis::init_solutes( void )
 {
 // For now assume one data set
    calculated_solutes.clear();
    orig_solutes.clear();
+   simulation_values.noisflag    = parameters[ "tinoise_option" ].toInt() > 0 ?
+                                   1 : 0;
+   simulation_values.noisflag   += parameters[ "rinoise_option" ].toInt() > 0 ?
+                                   2 : 0;
+   simulation_values.dbg_level   = parameters.contains( "debug_level" ) ?
+                                   parameters[ "debug_level"    ].toInt() : 0;
+   simulation_values.dbg_timing  = parameters.contains( "debug_timings" ) &&
+                                   parameters[ "debug_timings"  ].toInt() != 0;
+qDebug() << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
-   double s_min   = parameters[ "s_min"          ].toDouble() * 1.0e-13;
-   double s_max   = parameters[ "s_max"          ].toDouble() * 1.0e-13;
-   double s_res   = parameters[ "s_resolution"   ].toDouble();
-   double ff0_min = parameters[ "ff0_min"        ].toDouble();
-   double ff0_max = parameters[ "ff0_max"        ].toDouble();
-   double ff0_res = parameters[ "ff0_resolution" ].toDouble();
+   double s_min   = parameters[ "s_min"           ].toDouble() * 1.0e-13;
+   double s_max   = parameters[ "s_max"           ].toDouble() * 1.0e-13;
+   double ff0_min = parameters[ "ff0_min"         ].toDouble();
+   double ff0_max = parameters[ "ff0_max"         ].toDouble();
 
    int grid_repetitions = parameters[ "uniform_grid" ].toInt();
    if ( grid_repetitions < 1 ) grid_repetitions = 1;
 
-   double s_step   = ( s_max   - s_min   ) / ( s_res   - 1 );
-   double ff0_step = ( ff0_max - ff0_min ) / ( ff0_res - 1 );
+   double s_pts    = 60.0;
+   double ff0_pts  = 60.0;
+   if ( parameters.contains( "s_grid_points"   ) )
+      s_pts    = parameters[ "s_grid_points"   ].toDouble();
+   else if ( parameters.contains( "s_resolution"    ) )
+      s_pts    = parameters[ "s_resolution"    ].toDouble() * grid_repetitions;
+   if ( parameters.contains( "ff0_grid_points" ) )
+      ff0_pts  = parameters[ "ff0_grid_points" ].toDouble();
+   else if ( parameters.contains( "ff0_resolution"  ) )
+      ff0_pts  = parameters[ "ff0_resolution"  ].toDouble() * grid_repetitions;
 
-   // Allow a 5% overscan
-   s_max   += 0.05 * s_step;  // Assumes positive s
-   ff0_max += 0.05 * ff0_step;
+   int    nsstep   = (int)( s_pts );
+   int    nkstep   = (int)( ff0_pts );
 
-   orig_solutes.reserve( sq( grid_repetitions ) );
-
-   double s_grid   = s_step   / grid_repetitions;
-   double ff0_grid = ff0_step / grid_repetitions;
-
-   // Generate solutes for each grid repetition
-   for ( int i = 0; i < grid_repetitions; i++ )
-   {
-      for ( int j = 0; j < grid_repetitions; j++ )
-      {
-         orig_solutes << create_solutes( 
-               s_min   + s_grid   * i,   s_max,   s_step, 
-               ff0_min + ff0_grid * j, ff0_max, ff0_step );
-   
-      }
-   }
+   US_Solute::init_solutes( s_min,   s_max,   nsstep,
+                            ff0_min, ff0_max, nkstep,
+                            grid_repetitions, orig_solutes );
 }
 
 //////////////////
@@ -433,11 +417,12 @@ void US_MPI_Analysis::write_output( void )
 {
    qSort( simulation_values.solutes );
    
-   Simulation sim;
+   US_SolveSim::Simulation sim;
    double     save_meniscus = meniscus_value;
    sim.solutes              = calculated_solutes[ max_depth ]; 
    sim.variance             = simulation_values.variance;
    meniscus_value           = meniscus_values[ meniscus_run ];
+   qSort( sim.solutes );
 
    //write_2dsa();
    write_model( sim, US_Model::TWODSA );
@@ -452,22 +437,46 @@ void US_MPI_Analysis::write_output( void )
 //////////////////
 void US_MPI_Analysis::iterate( void )
 {
-   // Just return if the number of iterations exceed the max or of the
-   // last two iterations converged and are essentially identical
+   // Just return if the number of iterations exceed the max
+   // or if the last two iterations converged and are essentially identical
    if ( ++iterations > max_iterations ) return;
 
-   double diff = fabs( simulation_values.variance - previous_values.variance );
-   if ( iterations > 1  &&  diff < min_variance_improvement  ) return;
+   double diff  = fabs( simulation_values.variance - previous_values.variance );
+   bool   ssame = false;
+
+   if ( iterations > 1 )
+   {
+      if ( diff < min_variance_improvement )  return;
+
+      int    nsols = previous_values.solutes.size();
+
+      if ( nsols == simulation_values.solutes.size() )
+      {
+         ssame   = true;
+
+         for ( int jj = 0; jj < nsols; jj++ )
+         {
+            if ( previous_values.solutes[ jj ] != simulation_values.solutes[ jj ] )
+            {  // Mismatch:  may need to iterate
+               ssame    = false;
+               break;
+            }
+         }
+      }
+   }
+
+   if ( ssame )  return;  // Solutes same as previous:  no more iterations
 
    // Save the most recent variance for the next time
    previous_values.variance = simulation_values.variance;
+   previous_values.solutes  = simulation_values.solutes;
    
    // Set up for another round at depth 0
    _2dsa_Job job;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
 
-   QVector< Solute > prev_solutes = simulation_values.solutes;
+   QVector< SOLUTE > prev_solutes = simulation_values.solutes;
    
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
@@ -597,7 +606,7 @@ void US_MPI_Analysis::process_results( int        worker,
  
    // This loop should only execute, at most, once per result.
    while ( calculated_solutes.size() < depth + 1 )
-      calculated_solutes << QVector< Solute >();
+      calculated_solutes << QVector< SOLUTE >();
 
    // How big will our vector be?
    int new_length = calculated_solutes[ depth ].size() + 
@@ -612,6 +621,7 @@ void US_MPI_Analysis::process_results( int        worker,
       job.mpi_job.depth          = depth + 1;
       job.mpi_job.dataset_offset = current_dataset;
       job.mpi_job.dataset_count  = datasets_to_process;
+      qSort( job.solutes );
       job_queue << job;
 
       max_depth = max( depth + 1, max_depth );
@@ -657,6 +667,7 @@ void US_MPI_Analysis::process_results( int        worker,
          job.mpi_job.depth          = d + 1;
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
+         qSort( job.solutes );
          job_queue << job;
 
          calculated_solutes[ d ].clear();
@@ -685,6 +696,7 @@ void US_MPI_Analysis::process_results( int        worker,
          job.mpi_job.depth          = depth + 1;
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
+         qSort( job.solutes );
          job_queue << job;
 
          calculated_solutes[ depth ].clear();

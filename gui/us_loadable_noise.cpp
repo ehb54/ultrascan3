@@ -408,13 +408,14 @@ int US_LoadableNoise::id_list_disk()
 
       m_file.close();
    }
+   QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
 
    // Fill in edit GUIDs for noises by cross referencing model
    for ( int ii = 0; ii < noiMoIDs.size(); ii++ )
    {
       QString modelID = noiMoIDs.at( ii );
       int     jj      = modIDs.indexOf( modelID );
-      QString editID  = modEdIDs.at( jj );
+      QString editID  = jj >=0 ? modEdIDs.at( jj ) : dmyGUID;
 
       noiEdIDs << editID;
    }

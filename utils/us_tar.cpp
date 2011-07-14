@@ -20,7 +20,6 @@
 #   include <sys/timeb.h>
 #   include <BaseTsd.h>
 #   include <winsock2.h>
-#   define utime   _utime
 #   define open    _open
 #   define read    _read
 #   define write   _write
@@ -44,6 +43,10 @@
 
 #include <vector>
 using namespace std;
+
+US_Tar::US_Tar()
+{
+}
 
 int US_Tar::create( const QString& archive, const QString& directory,
                     QStringList* list )
@@ -889,11 +892,11 @@ QString US_Tar::explain( const int error )
    switch ( error )
    {
    case TAR_OK:
-      explanation = "The (un)tar operation was succesful.";
+      explanation = "The (un)tar operation was successful.";
       break;
 
    case TAR_CANNOTCREATE:
-      explanation = "Could not create the ouput file." ;
+      explanation = "Could not create the output file." ;
       break;
 
    case   TAR_NOTFOUND:
@@ -921,7 +924,7 @@ QString US_Tar::explain( const int error )
       break;
 
    case TAR_ARCHIVEERROR:
-      explanation = "The archive was not not formatted properly." ;
+      explanation = "The archive was not formatted properly." ;
       break;
 
    case TAR_MKDIRFAILED:

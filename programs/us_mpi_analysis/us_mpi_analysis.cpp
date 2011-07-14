@@ -81,7 +81,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    // Read data 
    for ( int i = 0; i < data_sets.size(); i++ )
    {
-      DataSet* d = data_sets[ i ];
+      US_SolveSim::DataSet* d = data_sets[ i ];
 
       try
       {
@@ -118,6 +118,9 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
              abort( msg );
           }
       }
+
+      d->temperature = d->run_data.average_temperature();
+      d->vbartb = US_Math2::calcCommonVbar( d->solution_rec, d->temperature );
    }
 
    // After reading all input, set the working directory for file output.
@@ -185,47 +188,17 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    regularization          = parameters[ "regularization" ].toDouble();
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
 
-   // Calculate vbar20, vbar_tb, and s, D corrections for calc_residuals
+   // Calculate s, D corrections for calc_residuals; simulation parameters
    for ( int i = 0; i < data_sets.size(); i++ )
    {
-      DataSet* ds = data_sets[ i ];
-
-      // Calculate average temperature
-      ds->temperature = ds->run_data.average_temperature();
-
-      // Calculate common vbar
-      US_Solution solution;
-
-      for ( int j = 0; j < ds->analytes.size(); j++ )
-      {
-         US_Solution::AnalyteInfo ai;
-
-         ai.amount         = ds->analytes[ j ].amount;
-         ai.analyte.vbar20 = ds->analytes[ j ].vbar20;
-         ai.analyte.mw     = ds->analytes[ j ].mw;
-
-if ( my_rank == 0 )
-   qDebug() << "analyte vbar20/mw/amount" << ai.analyte.vbar20 
-                                          << ai.analyte.mw 
-                                          << ai.amount;
-
-         if ( ds->analytes[ j ].type == "Protein" )
-            ai.analyte.type   = US_Analyte::PROTEIN;
-         else
-            ai.analyte.type   = US_Analyte::DNA;  // Actually 'other'
-
-         solution.analyteInfo << ai;
-      }
-
-      ds->vbar20  = US_Math2::calcCommonVbar( solution, 20.0 );
-      ds->vbar_tb = US_Math2::calcCommonVbar( solution, ds->temperature );
+      US_SolveSim::DataSet* ds = data_sets[ i ];
 
       // Convert to a different structure and calulate the s and D corrections
       US_Math2::SolutionData sd;
       sd.density   = ds->density;
       sd.viscosity = ds->viscosity;
       sd.vbar20    = ds->vbar20;
-      sd.vbar      = ds->vbar_tb;
+      sd.vbar      = ds->vbartb;
 
 if ( my_rank == 0 )
    qDebug() << "density/viscosity/comm vbar20/commvbar" << sd.density
@@ -240,7 +213,17 @@ if ( my_rank == 0 )
 
 if ( my_rank == 0 )
    qDebug() << "s20w_correction/D20w_correction" << sd.s20w_correction 
-                                                 << sd.D20w_correction;
+    << sd.D20w_correction;
+
+      // Set up simulation parameters for the data set
+ 
+      ds->simparams.initFromData( NULL, ds->run_data );
+ 
+      ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
+      ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
+      ds->simparams.bottom_position   = ds->centerpiece_bottom;
+      ds->simparams.bottom            = ds->centerpiece_bottom;
+      ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
    }
 
    // Check GA buckets
@@ -291,6 +274,8 @@ if ( my_rank == 0 )
 // Main function
 void US_MPI_Analysis::start( void )
 {
+   QDateTime analysisStart = QDateTime::currentDateTime();
+
    // Real processing goes here
    if ( analysis_type == "2DSA" )
    {
@@ -328,8 +313,14 @@ void US_MPI_Analysis::start( void )
 
    if ( my_rank == 0 )
    {
-      send_udp( "Finished: " + QString::number( maxrss) );
-      qDebug() << "Finished: " + QString::number( maxrss );
+      max_rss();
+      double  elapsed  = analysisStart.msecsTo( QDateTime::currentDateTime() )
+         / 1000.0;
+      double  maxrssmb = (double)maxrss / 1024.0;
+      send_udp( "Finished: maxrss " + QString::number( maxrssmb )
+            + " MB,  total run secs. " + QString::number( elapsed ) );
+      qDebug() << "Finished:  maxrss " << maxrssmb
+               << "MB,  total run secs. " << elapsed;
    }
 
    MPI_Finalize();
