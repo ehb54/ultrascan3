@@ -17,7 +17,7 @@ qDebug() << "master start GA" << startTime;
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
 
-   Gene working_gene( buckets.count(), Solute() );
+   Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
    for ( int i = 0; i < node_count; i++ )
@@ -60,6 +60,8 @@ qDebug() << "master start GA" << startTime;
          simulation_values.solutes[ g ].s *= 1.0e-13;
 
       calc_residuals( 0, data_sets.size(), simulation_values );
+
+      qSort( simulation_values.solutes );
 
       write_model( simulation_values, US_Model::GA );
 
@@ -233,7 +235,7 @@ for ( int i = 0; i < buckets.size(); i++ )
                {
                   double s = emmigrants[ solute++ ];
                   double k = emmigrants[ solute++ ];
-                  gene << Solute( s, k );
+                  gene << US_Solute( s, k );
                   solute++; // Concentration         
                }
 
@@ -244,7 +246,7 @@ for ( int i = 0; i < buckets.size(); i++ )
             if ( emigres.size() < gene_count * 5 ) doubles_count = 0;
 
             // Get immigrents from emmigres
-            QVector< Solute > immigrants;
+            QVector< US_Solute > immigrants;
 
             if ( doubles_count > 0 )
             {
@@ -412,8 +414,8 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
               MPI_COMM_WORLD );
 }
 
-void US_MPI_Analysis::write_model( const Simulation&      sim, 
-                                   US_Model::AnalysisType type )
+void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
+                                   US_Model::AnalysisType         type )
 {
    US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
@@ -465,7 +467,6 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    else
       iterID = "i01";
 
-
    QString id = model.typeText();
 
    QString analysisID = dates + "_" + id + "_" + requestID + "_" + iterID;
@@ -477,7 +478,7 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
 
    for ( int i = 0; i < sim.solutes.size(); i++ )
    {
-      const Solute* solute = &sim.solutes[ i ];
+      const US_Solute* solute = &sim.solutes[ i ];
 
       US_Model::SimulationComponent component;
       component.s                    = solute->s;

@@ -411,6 +411,7 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
  << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
+   qSort( c_solutes[ maxdepth ] );
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -520,7 +521,7 @@ DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
    {  // possibly iterate if not yet at maximum iterations
 
       if ( r_iter < 1 )
-      {  // if max is 2 or more, we must do at least 2 iterations to compare
+      {  // if max not 2 or more, we must do at least 2 iterations to compare
          neediter     = true;
       }
 

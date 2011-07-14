@@ -49,6 +49,7 @@ HEADERS      = us_analyte.h       \
                us_solution_vals.h \
                us_solve_sim.h     \
                us_stiffbase.h     \
+               us_tar.h           \
                us_util.h          \
                us_vector.h        \
                us_rotor.h
@@ -81,6 +82,7 @@ SOURCES      = us_analyte.cpp       \
                us_solution_vals.cpp \
                us_solve_sim.cpp     \
                us_stiffbase.cpp     \
+               us_tar.cpp           \
                us_util.cpp          \
                us_vector.cpp        \
                us_rotor.cpp

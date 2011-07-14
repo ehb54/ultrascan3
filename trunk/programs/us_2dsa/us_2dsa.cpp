@@ -153,9 +153,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    acd_pos      = this->pos() + QPoint(  500,  50 );
 
    dsets.clear();
-DbgLv(1) << "  main constr - FF";
    dsets << &dset;
-DbgLv(1) << "  main constr - GG";
 }
 
 // slot to handle the completion of a 2-D spectrum analysis stage
@@ -496,11 +494,11 @@ void US_2dsa::save( void )
             break;
       }
    }
-double tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
-double tini = ti_noise_in.count > 0 ? ti_noise_in.values[0] : 0.0;
-double rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
-DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
+//double tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+//double tini = ti_noise_in.count > 0 ? ti_noise_in.values[0] : 0.0;
+//double rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+//double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
+//DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
    for ( int jj = 0; jj < nmodels; jj++ )
    {  // loop to output models and noises
@@ -553,14 +551,25 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
          ti_noise.modelGUID   = model.modelGUID;
          ti_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
+         int nicount          = ti_noise_in.count;
 
-         if ( ti_noise_in.count > 0 )   // Sum in any input noise
+         if ( nicount > 0 )   // Sum in any input noise
             ti_noise.sum_noise( ti_noise_in, true );
 
          ti_noise.write( nname );
 
          if ( dbp != NULL )
             ti_noise.write( dbp );
+
+         if ( nicount > 0 )   // Remove input noise in case re-plotted
+         {
+            US_Noise noise_rmv = ti_noise_in;
+
+            for ( int kk = 0; kk < nicount; kk++ )
+               noise_rmv.values[ kk ] *= -1.0;
+
+            ti_noise.sum_noise( noise_rmv, true );
+         }
       }
 
       if ( have_ri )
@@ -571,19 +580,30 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
          ri_noise.modelGUID   = model.modelGUID;
          ri_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
+         int nicount          = ri_noise_in.count;
 
-         if ( ri_noise_in.count > 0 )   // Sum in any input noise
+         if ( nicount > 0 )   // Sum in any input noise
             ri_noise.sum_noise( ri_noise_in, true );
 
          ri_noise.write( nname );
 
          if ( dbp != NULL )
             ri_noise.write( dbp );
+
+         if ( nicount > 0 )   // Remove input noise in case re-plotted
+         {
+            US_Noise noise_rmv = ri_noise_in;
+
+            for ( int kk = 0; kk < nicount; kk++ )
+               noise_rmv.values[ kk ] *= -1.0;
+
+            ri_noise.sum_noise( noise_rmv, true );
+         }
       }
    }
-tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
-rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-DbgLv(1) << "  Post-sum tno rno" << tino << rino;
+//tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+//rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+//DbgLv(1) << "  Post-sum tno rno" << tino << rino;
 
    QString filebase  = reppath + "/" + runID + "/"
                     + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )

@@ -109,6 +109,7 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;                             // Progress step count
           kk      = 0;                             // nnls_a output index
+   qSort( sim_vals.solutes );
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {  // Solve for each solute
@@ -365,11 +366,12 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
             }
 
             scan_ix += nscans;
-DbgLv(1) << "CR:   scan_ix" << scan_ix;
 int ss=nscans/2;
 int rr=npoints/2;
-DbgLv(1) << "CR:     ss rr sval" << ss << rr << soluval
-   << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
+DbgLv(1) << "CR:   scan_ix ss rr" << scan_ix << ss << rr;
+DbgLv(1) << "CR:     s k sval" << sim_vals.solutes[cc].s
+ << sim_vals.solutes[cc].k << soluval << "idat sdat"
+ << idata->value(ss,rr) << sdata->value(ss,rr);
          }
       }
    }

@@ -9,12 +9,23 @@
 #include "us_dataIO2.h"
 #include "us_noise.h"
 #include "us_simparms.h"
+#include "us_solve_sim.h"
 #include "us_vector.h"
 
+#ifdef NEED_MPI2
 #define MPI_COMM_WORLD2  (((MPI_Comm)(void*)&(ompi_mpi_comm_world)))
 #define MPI_BYTE2        (((MPI_Datatype)(void*)&(ompi_mpi_byte)))
 #define MPI_DOUBLE2      (((MPI_Datatype)(void *)&(ompi_mpi_double)))
 #define MPI_INT2         (((MPI_Datatype)(void *)&(ompi_mpi_int)))
+#else
+#define MPI_COMM_WORLD2  MPI_COMM_WORLD
+#define MPI_BYTE2        MPI_BYTE
+#define MPI_DOUBLE2      MPI_DOUBLE
+#define MPI_INT2         MPI_INT
+#endif
+#define SOLUTE           US_Solute
+#define SIMULATION       US_SolveSim::Simulation
+#define DATASET          US_SolveSim::DataSet
 
 class US_MPI_Analysis : public QObject
 {
@@ -78,52 +89,8 @@ class US_MPI_Analysis : public QObject
   
     QDateTime           startTime;
 
-// Convenience
-#define MESH US_SimulationParameters::MeshType
-#define GRID US_SimulationParameters::GridType
-
-    class AnalyteInfo
-    {
-        public:
-            double  mw;
-            double  vbar20;
-            double  amount;
-            QString type;
-    };
-
-    class DataSet
-    {
-        public:
-            QString                requestID;
-            QString                auc_file;
-            QString                edit_file;
-            QString                model_file;
-            QList< QString >       noise_files;
-            US_DataIO2::EditedData run_data;
-            US_Model               model;    
-            int                    simpoints;
-            double                 band_volume;
-            
-            MESH                   radial_grid;
-            GRID                   time_grid;
-            
-            QList< AnalyteInfo >   analytes;
-            double                 viscosity;   // buffer
-            double                 density;     // buffer
-
-            double                 temperature; // run
-
-            double                 vbar20;
-            double                 vbar_tb;
-            double                 s20w_correction;
-            double                 D20w_correction;
-
-            double                 rotor_stretch[ 5 ];
-            double                 centerpiece_bottom;
-    };
-
-    int               set_count;
-    QList< DataSet* > data_sets;
+    int                 set_count;
+    QList< DATASET* >   data_sets;
 
     class MPI_Job
     {
@@ -154,70 +121,23 @@ class US_MPI_Analysis : public QObject
             };
     };
 
-    class Solute
-    {
-       public:
-          double s;
-          double k;
-          double c;
-          
-          Solute( double s0 = 0.0, double k0 = 0.0, double c0 = 0.0 )
-          {
-            s = s0;
-            k = k0;
-            c = c0;
-          }
-
-          bool operator== ( const Solute& solute )
-          {
-             return s == solute.s && k == solute.k;
-          }
-         
-          bool operator!= ( const Solute& solute )
-          {
-             return s != solute.s || k != solute.k;
-          }
-         
-          bool operator< ( const Solute& solute ) const
-          {
-             if ( s < solute.s )
-                return true;
-             
-             else if (  s == solute.s && k < solute.k )
-                return true;
-             
-             else
-                return false;
-          }
-    };
-
-    QList< QVector< Solute > > orig_solutes;
+    QList< QVector< SOLUTE > > orig_solutes;
 
     class _2dsa_Job
     {
        public:
           MPI_Job           mpi_job;
-          QVector< Solute > solutes;
+          QVector< SOLUTE > solutes;
     };
 
     QList< _2dsa_Job > job_queue;
 
     static const double LARGE          = 9.9e99;
-    static const int    solute_doubles = sizeof( Solute ) / sizeof( double );
-    QList< QVector< Solute > > calculated_solutes;
+    static const int    solute_doubles = sizeof( SOLUTE ) / sizeof( double );
+    QList< QVector< SOLUTE > > calculated_solutes;
 
-    class Simulation
-    {
-      public:
-         double            variance;
-         QVector< double > variances;
-         QVector< double > ti_noise;
-         QVector< double > ri_noise;
-         QVector< Solute > solutes;
-    };
-
-    Simulation simulation_values;
-    Simulation previous_values;
+    SIMULATION simulation_values;
+    SIMULATION previous_values;
 
     // GA class variables and classes
 
@@ -237,14 +157,14 @@ class US_MPI_Analysis : public QObject
     int                       k_grid;
     int                       fitness_count;
 
-    typedef QVector< Solute > Gene;
+    typedef QVector< SOLUTE > Gene;
 
     double                    regularization;
     double                    concentration_threshold;
     QList< Bucket >           buckets;
     QList< Gene >             genes;
     QList< Gene >             best_genes;   // Size is number of processors
-    QList< Simulation >       sim_values;
+    QList< SIMULATION >       sim_values;
     QMap < QString, double >  fitness_map;
     int                       fitness_hits;
 
@@ -290,9 +210,9 @@ class US_MPI_Analysis : public QObject
 
     void     parse         ( const QString& );
     void     parse_job     ( QXmlStreamReader& );
-    void     parse_dataset ( QXmlStreamReader&, DataSet* );
-    void     parse_files   ( QXmlStreamReader&, DataSet* );
-    void     parse_solution( QXmlStreamReader&, DataSet* );
+    void     parse_dataset ( QXmlStreamReader&, DATASET* );
+    void     parse_files   ( QXmlStreamReader&, DATASET* );
+    void     parse_solution( QXmlStreamReader&, DATASET* );
     void     send_udp      ( const QString& );
     void     abort         ( const QString&, int=-1 );
     long int max_rss       ( void );
@@ -314,12 +234,12 @@ class US_MPI_Analysis : public QObject
     void     write_output      ( void );
     void     set_gaussians     ( void );
     void     global_fit        ( void );
-    void     write_model       ( const Simulation&, US_Model::AnalysisType );
+    void     write_model       ( const SIMULATION&, US_Model::AnalysisType );
 
     // Worker
     void     _2dsa_worker      ( void );
 
-    void     calc_residuals    ( int, int, Simulation& );
+    void     calc_residuals    ( int, int, SIMULATION& );
     double   calc_bottom       ( int, double );
     void     compute_a_tilde   ( QVector< double >& );
     
@@ -372,8 +292,8 @@ class US_MPI_Analysis : public QObject
     void   ga_worker_loop( void );
     Gene   new_gene      ( void );
     void   init_fitness  ( void );
-    void   mutate_s      ( Solute&, int );
-    void   mutate_k      ( Solute&, int );
+    void   mutate_s      ( SOLUTE&, int );
+    void   mutate_k      ( SOLUTE&, int );
     void   mutate_gene   ( Gene& );
     void   cross_gene    ( Gene& );
     int    migrate_genes ( void );

@@ -2,6 +2,7 @@
 #define US_TAR_H
 
 #include <QtCore>
+#include "us_extern.h"
 
 // Error codes
 
@@ -16,20 +17,48 @@
 #define TAR_ARCHIVEERROR        8
 #define TAR_MKDIRFAILED         9
 
-#define US_EXTERN
-class US_EXTERN US_Tar
+//! A class to provide tar functions internally to a routine. The functions
+//! provided are create, extract, and list.
+class US_UTIL_EXTERN US_Tar
 {
    public:
+      US_Tar();
 
-      // From a directory
+      //! Create a tar file from a directory
+      //!
+      //! \param archive   The name of the tar file to be created.
+      //! \param directory The name of the directory to archive.
+      //! \param list      The optional output list of archived files.
+      //! \return          An error code. Zero for no error (see explain method)
       int     create ( const QString&, const QString&, QStringList* = 0 ); 
 
-      // From a list of files ( including directories )
+      //! Create a tar file from a list of files (including directories)
+      //!
+      //! \param archive The name of the tar file to be created.
+      //! \param files   A list of names of files/directories to archive.
+      //! \param list    The optional output list of archived files.
+      //! \return        An error code. Zero for no error (see explain method).
       int     create ( const QString&, const QStringList&, 
                               QStringList* = 0 );
       
+      //! Extract from a tar file the files archived.
+      //!
+      //! \param archive The name of the tar file from which to extract.
+      //! \param list    The optional output list of extracted files.
+      //! \return        An error code. Zero for no error (see explain method).
       int     extract( const QString&, QStringList* = 0 ); 
+      
+      //! List the files archived in a tar file.
+      //!
+      //! \param archive The name of the tar file whose content is to be listed.
+      //! \param files   The output list of archived files.
+      //! \return        An error code. Zero for no error (see explain method).
       int     list   ( const QString&, QStringList& ); 
+      
+      //! Explain in a message string the tar function error that occurred.
+      //!
+      //! \param error The error code to be explained.
+      //! \return      A string documenting the nature of the error.
       QString explain( const int ); 
 
    private:
