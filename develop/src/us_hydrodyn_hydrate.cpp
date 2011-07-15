@@ -1394,7 +1394,7 @@ bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
    vector < point > p(4);
    float dihedral;
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.+)$");
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for (  map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
           it != to_hydrate.end();
@@ -1994,7 +1994,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
 {
    best_fit_rotamer.clear();
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.+)$");
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    // go through the computed dihedrals, compute sum of abs differences, choose best one
    for ( map < QString, vector < float > >::iterator it = to_hydrate_dihedrals.begin();
