@@ -274,12 +274,17 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          }
       }
 
+      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setMinimal( true );
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
-         if ( qv[i].contains(QRegExp("^#")) )
+         if ( qv[i].contains(QRegExp("^#")) ||
+              rx_ok_line.search( qv[i] ) == -1 )
          {
+            cout << "not ok: " << qv[i] << endl; 
             continue;
          }
+         
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
          if ( tokens.size() > Icolumn )
          {

@@ -123,7 +123,8 @@ void US_Hydrodyn_Saxs::foxs_processExited()
    // pdb.dat
 
    QString created_dat = foxs_last_pdb + ".dat";
-   QString created_plt = foxs_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),".plt");
+   QString created_plt = foxs_last_pdb;
+   created_plt.replace(QRegExp("\\.(pdb|PDB)$"),".plt");
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -144,7 +145,7 @@ void US_Hydrodyn_Saxs::foxs_processExited()
 
    // now move the file to the saxs directory
    QString new_created_dat = 
-      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + QFileInfo( created_dat ).fileName();
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + QFileInfo(foxs_last_pdb).fileName() + iqq_suffix() + ".dat";
 
    if ( QFile::exists(new_created_dat) )
    {
@@ -364,7 +365,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
 
    // we just want the .int, the rest will be removed if needed
 
-   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00.int";
+   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00.int";
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -376,7 +377,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + ".int";
+      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + ".int";
 
    if ( QFile::exists(new_created_dat) )
    {

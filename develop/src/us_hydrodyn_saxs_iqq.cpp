@@ -621,9 +621,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
-         QString("%1_%2")
+         QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1);
+         .arg(current_model + 1)
+         .arg(iqq_suffix());
 
       QString plot_name = name;
 
@@ -1701,9 +1702,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
-         QString("%1_%2")
+         QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1);
+         .arg(current_model + 1)
+         .arg(iqq_suffix());
+
       QString plot_name = name;
       int extension = 0;
 
@@ -2536,9 +2539,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
-         QString("%1_%2")
+         QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1);
+         .arg(current_model + 1)
+         .arg(iqq_suffix());
+
       QString plot_name = name;
       int extension = 0;
 
@@ -3393,9 +3398,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
-         QString("%1_%2")
+         QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1);
+         .arg(current_model + 1)
+         .arg(iqq_suffix());
+
       QString plot_name = name;
       int extension = 0;
 

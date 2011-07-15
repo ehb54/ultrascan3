@@ -230,7 +230,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_crysol_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_crysol_hydration_shell_contrast = new QwtCounter(this);
-   cnt_crysol_hydration_shell_contrast->setRange(0, 1, 0.001);
+   cnt_crysol_hydration_shell_contrast->setRange(-1, 1, 0.001);
    cnt_crysol_hydration_shell_contrast->setValue((*saxs_options).crysol_hydration_shell_contrast);
    cnt_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
    cnt_crysol_hydration_shell_contrast->setEnabled(true);
@@ -1327,18 +1327,30 @@ void US_Hydrodyn_SaxsOptions::update_crysol_max_harmonics(double val)
 {
    (*saxs_options).crysol_max_harmonics = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::update_crysol_fibonacci_grid_order(double val)
 {
    (*saxs_options).crysol_fibonacci_grid_order = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::update_crysol_hydration_shell_contrast(double val)
 {
    (*saxs_options).crysol_hydration_shell_contrast = (float) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::set_crysol_default_load_difference_intensity()
@@ -1690,6 +1702,11 @@ void US_Hydrodyn_SaxsOptions::update_scale_excl_vol(double val)
 {
    (*saxs_options).scale_excl_vol = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::set_subtract_radius()

@@ -64,7 +64,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs_Options;
+      friend class US_Hydrodyn;
+
    public:
+
       US_Hydrodyn_Saxs(
                        bool                           *saxs_widget, 
                        saxs_options                   *our_saxs_options,
@@ -134,6 +138,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_sans_iq_native_hybrid2;
       QRadioButton *rb_sans_iq_native_fast;
       QRadioButton *rb_sans_iq_cryson;
+
+      QLabel       *lbl_iqq_suffix;
+      QLineEdit    *le_iqq_manual_suffix;
+      QLineEdit    *le_iqq_full_suffix;
 
       QPushButton *pb_plot_saxs_sans;
       QPushButton *pb_load_saxs_sans;
@@ -279,6 +287,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QProgressBar *progress;
 
       void set_current_method_buttons();
+      void update_iqq_suffix();
 
    private:
 
@@ -407,6 +416,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void calc_saxs_iq_native_fast_bead_model();
 
       void set_bead_model_ok_for_saxs(); // checks current_model
+
+      QString iqq_suffix();
 
    private slots:
 

@@ -387,6 +387,27 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_sans_iq->insert(rb_sans_iq_cryson);
    connect(bg_sans_iq, SIGNAL(clicked(int)), SLOT(set_sans_iq(int)));
 
+   lbl_iqq_suffix = new QLabel(tr(" File suffix: "), this);
+   lbl_iqq_suffix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_iqq_suffix->setMinimumHeight(minHeight1);
+   lbl_iqq_suffix->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_iqq_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_iqq_manual_suffix = new QLineEdit(this, "iqq_manual_suffix Line Edit");
+   le_iqq_manual_suffix->setText(tr(""));
+   le_iqq_manual_suffix->setMinimumHeight(minHeight1);
+   le_iqq_manual_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_iqq_manual_suffix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iqq_manual_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   le_iqq_full_suffix = new QLineEdit(this, "iqq_full_suffix Line Edit");
+   le_iqq_full_suffix->setText(tr(""));
+   le_iqq_full_suffix->setMinimumHeight(minHeight1);
+   le_iqq_full_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_iqq_full_suffix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iqq_full_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_iqq_full_suffix->setReadOnly(true);
+
    lbl_atom_table = new QLabel(tr(" not selected"),this);
    lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -836,6 +857,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
    j++;
    
+   QBoxLayout *hbl_iqq_suffix = new QHBoxLayout(0);
+   hbl_iqq_suffix->addWidget(lbl_iqq_suffix);
+   hbl_iqq_suffix->addWidget(le_iqq_manual_suffix);
+   hbl_iqq_suffix->addWidget(le_iqq_full_suffix);
+   background->addMultiCellLayout(hbl_iqq_suffix, j, j, 0, 1);
+   j++;
+
    background->addWidget(pb_plot_saxs_sans, j, 0);
    background->addWidget(progress_saxs, j, 1);
    j++;
@@ -3414,6 +3442,7 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       rb_sans_iq_native_fast ->setEnabled(false);
       rb_sans_iq_cryson      ->setEnabled(false);
    }
+   update_iqq_suffix();
 }
 
 void US_Hydrodyn_Saxs::load_sans()
@@ -3624,6 +3653,7 @@ QString US_Hydrodyn_Saxs::saxs_filestring()
    QString result = 
       QString("%1").arg(te_filename2->text()) +
       QString("_%1").arg(current_model + 1) + 
+      iqq_suffix() +
       ".ssaxs";
    return result;
 }
@@ -5391,6 +5421,8 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
    rb_sans_iq_native_hybrid2->setChecked(our_saxs_options->sans_iq_native_hybrid2);
    rb_sans_iq_native_fast   ->setChecked(our_saxs_options->sans_iq_native_fast);
    rb_sans_iq_cryson        ->setChecked(our_saxs_options->sans_iq_cryson);
+
+   update_iqq_suffix();
 }
 
 
@@ -5410,6 +5442,7 @@ void US_Hydrodyn_Saxs::set_saxs_iq(int val)
    our_saxs_options->saxs_iq_foxs           = rb_saxs_iq_foxs          ->isChecked();
    our_saxs_options->saxs_iq_crysol         = rb_saxs_iq_crysol        ->isChecked();
 
+   update_iqq_suffix();
 }
 
 void US_Hydrodyn_Saxs::set_sans_iq(int val)
@@ -5425,6 +5458,8 @@ void US_Hydrodyn_Saxs::set_sans_iq(int val)
    our_saxs_options->sans_iq_native_hybrid2 = rb_sans_iq_native_hybrid2->isChecked();
    our_saxs_options->sans_iq_native_fast    = rb_sans_iq_native_fast   ->isChecked();
    our_saxs_options->sans_iq_cryson         = rb_sans_iq_cryson        ->isChecked();
+
+   update_iqq_suffix();
 }
    
 void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
@@ -5501,4 +5536,75 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                          true
                                          );
    saxs_iqq_residuals_window->show();
+}
+
+void US_Hydrodyn_Saxs::update_iqq_suffix()
+{
+   QString qs = "";
+   // don't forget to update us_hydrodyn_saxs_options update to call this
+
+   // the method:
+   if ( rb_saxs->isChecked() )
+   {
+      if ( our_saxs_options->saxs_iq_crysol )
+      {
+         qs += "cr";
+         qs += QString("_h%1_g%2_hs%3")
+            .arg( our_saxs_options->crysol_max_harmonics )
+            .arg( our_saxs_options->crysol_fibonacci_grid_order )
+            .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+      }
+      if ( our_saxs_options->saxs_iq_foxs )
+      {
+         qs += "fx";
+      }
+      if ( our_saxs_options->saxs_iq_native_debye )
+      {
+         qs += "db";
+         if ( our_saxs_options->scale_excl_vol != 1e0 )
+         {
+            qs += QString("_evs%1")
+               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+         }
+      }
+      if ( our_saxs_options->saxs_iq_native_fast )
+      {
+         qs += "fd";
+         if ( our_saxs_options->scale_excl_vol != 1e0 )
+         {
+            qs += QString("_evs%1")
+               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+         }
+      }
+      if ( our_saxs_options->saxs_iq_native_hybrid )
+      {
+         qs += "hy";
+         if ( our_saxs_options->scale_excl_vol != 1e0 )
+         {
+            qs += QString("_evs%1")
+               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+         }
+      }
+      if ( our_saxs_options->saxs_iq_native_hybrid2 )
+      {
+         qs += "h2";
+         if ( our_saxs_options->scale_excl_vol != 1e0 )
+         {
+            qs += QString("_evs%1")
+               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+         }
+      }
+   }
+   cout << "qs is now " << qs << endl;
+   le_iqq_full_suffix->setText(qs);
+}
+
+QString US_Hydrodyn_Saxs::iqq_suffix()
+{
+   update_iqq_suffix();
+   QString qs = 
+      le_iqq_manual_suffix->text() +
+      ( le_iqq_manual_suffix->text().length() ? "-" : "" ) +
+      le_iqq_full_suffix->text();
+   return qs.length() ? ( "-" + qs ) : "";
 }
