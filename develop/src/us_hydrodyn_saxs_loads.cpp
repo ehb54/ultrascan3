@@ -59,6 +59,8 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    // scaling fields
    QString scaling_target = "";
 
+   bool do_crop = false;
+
    if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
@@ -163,6 +165,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       if ( ext == "dat" ) 
       {
          // foxs?
+         do_crop = true;
 
          Icolumn = 1;
          if ( qsl.grep("exp_intensity").size() )
@@ -311,14 +314,21 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          }
       }
 
+      cout << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
+
       cout << QFileInfo(filename).fileName() << endl;
-      if ( Icolumn2 )
+      if ( do_crop )
       {
-         q2 = q;
-         crop_iq_data(q2, I2);
+         if ( Icolumn2 )
+         {
+            q2 = q;
+            crop_iq_data(q2, I2);
+         }
+         crop_iq_data(q, I);
       }
-      crop_iq_data(q, I);
          
+      cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+
       if ( q.size() &&
            !scaling_target.isEmpty() && 
            plotted_iq_names_to_pos.count(scaling_target) )
@@ -1555,7 +1565,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          vector < double > &I2 
+                                          vector < double > & /* I2 */
                                           )
 {
    if ( !q.size() ||

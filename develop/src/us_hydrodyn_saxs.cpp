@@ -4136,7 +4136,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          }
       }
       
-      editor->append(QString("%1 NRMSD %2\% Chi^2 %3 nu %4\n")
+      editor->append(QString("%1 NRMSD %2% Chi^2 %3 nu %4\n")
                      .arg(model_names[i])
                      .arg(rmsds[i])
                      .arg(chi2[i])
@@ -4224,7 +4224,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          //  header: "name","type",r1,r2,...,rn, header info
          fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
                  vector_double_to_csv(nnls_r).ascii(),
-                 QString("Best fit NRMSD %1\% Chi^2 %2 : %3")
+                 QString("Best fit NRMSD %1% Chi^2 %2 : %3")
                  .arg(rmsds[lowest_rmsd_pos])
                  .arg(chi2[lowest_rmsd_pos])
                  .arg(nnls_header_tag).ascii()
@@ -5553,45 +5553,36 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             .arg( our_saxs_options->crysol_max_harmonics )
             .arg( our_saxs_options->crysol_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
-      }
-      if ( our_saxs_options->saxs_iq_foxs )
-      {
-         qs += "fx";
-      }
-      if ( our_saxs_options->saxs_iq_native_debye )
-      {
-         qs += "db";
-         if ( our_saxs_options->scale_excl_vol != 1e0 )
+      } else {
+         if ( our_saxs_options->saxs_iq_foxs )
          {
-            qs += QString("_evs%1")
-               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
-         }
-      }
-      if ( our_saxs_options->saxs_iq_native_fast )
-      {
-         qs += "fd";
-         if ( our_saxs_options->scale_excl_vol != 1e0 )
-         {
-            qs += QString("_evs%1")
-               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
-         }
-      }
-      if ( our_saxs_options->saxs_iq_native_hybrid )
-      {
-         qs += "hy";
-         if ( our_saxs_options->scale_excl_vol != 1e0 )
-         {
-            qs += QString("_evs%1")
-               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
-         }
-      }
-      if ( our_saxs_options->saxs_iq_native_hybrid2 )
-      {
-         qs += "h2";
-         if ( our_saxs_options->scale_excl_vol != 1e0 )
-         {
-            qs += QString("_evs%1")
-               .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+            qs += "fx";
+         } else {
+            if ( our_saxs_options->saxs_iq_native_debye )
+            {
+               qs += "db";
+            }
+            if ( our_saxs_options->saxs_iq_native_fast )
+            {
+               qs += "fd";
+            }
+            if ( our_saxs_options->saxs_iq_native_hybrid )
+            {
+               qs += "hy";
+            }
+            if ( our_saxs_options->saxs_iq_native_hybrid2 )
+            {
+               qs += "h2";
+            }
+            if ( our_saxs_options->scale_excl_vol != 1e0 )
+            {
+               qs += QString("_evs%1")
+                  .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+            }
+            if ( !our_saxs_options->autocorrelate )
+            {
+               qs += "_nac";
+            }
          }
       }
    }

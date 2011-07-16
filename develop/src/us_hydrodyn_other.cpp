@@ -3262,8 +3262,8 @@ void US_Hydrodyn::set_default()
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
-   asa.hydrate_probe_radius = 1.4;
-   asa.hydrate_threshold = 10;
+   asa.hydrate_probe_radius = 1.4f;
+   asa.hydrate_threshold = 10.0f;
 
    dmd_options.force_chem = true;
    dmd_options.pdb_static_pairs = false;
@@ -3288,7 +3288,7 @@ void US_Hydrodyn::set_default()
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
 
-   saxs_options.hybrid_q_point = 0.15;
+   saxs_options.hybrid_q_point = 0.15f;
    saxs_options.hybrid2_q_points = 15;
 
    saxs_options.iq_ask = false;
@@ -3299,12 +3299,12 @@ void US_Hydrodyn::set_default()
 
    saxs_options.crysol_max_harmonics = 15;
    saxs_options.crysol_fibonacci_grid_order = 17;
-   saxs_options.crysol_hydration_shell_contrast = 0.03;
+   saxs_options.crysol_hydration_shell_contrast = 0.03f;
    saxs_options.crysol_default_load_difference_intensity = true;
    saxs_options.crysol_version_26 = true;
 
-   saxs_options.fast_bin_size = 0.5;
-   saxs_options.fast_modulation = 0.23;
+   saxs_options.fast_bin_size = 0.5f;
+   saxs_options.fast_modulation = 0.23f;
 
    saxs_options.compute_saxs_coeff_for_bead_models = true;
    saxs_options.compute_sans_coeff_for_bead_models = false;

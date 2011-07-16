@@ -7,7 +7,7 @@
 #include "us_math.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include <math.h>
-#include <sys/time.h>
+#include <time.h>
 #include <map>
 #include <qregexp.h>
 
