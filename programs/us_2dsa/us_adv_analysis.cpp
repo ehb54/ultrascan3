@@ -62,12 +62,12 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    QLayout* lo_bandcp      = us_radiobutton( tr( "Band-forming Centerpiece" ),
          rb_bandcp,  sparms->band_forming );
 
-   ct_bandload  = us_counter( 3,    1,    15,   1 );
+   ct_bandload  = us_counter( 3,    1,    20,   1 );
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
 
    ct_bandload->setStep(  0.1 );
-   ct_bandload->setValue( 1.5 );
-   ct_spoints ->setStep(    1 );
+   ct_bandload->setValue(  15 );
+   ct_spoints ->setStep(   10 );
    ct_spoints ->setValue( 200 );
    ct_bandload->setEnabled( rb_bandcp->isChecked() );
 
