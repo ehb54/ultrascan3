@@ -209,7 +209,7 @@ qDebug() << "ASim:InSP:  bottom" << bottom << simparams.bottom;
 
    simparams.speed_step << sp;
 
-   simparams.simpoints         = 100;
+   simparams.simpoints         = 200;
    simparams.radial_resolution = 0.001;
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;

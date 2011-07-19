@@ -75,6 +75,7 @@ class US_AdvAnalysis : public US_WidgetsDialog
    private slots:
       void optimize_options( void );
       void uncheck_optimize( int  );
+      void checkBandForm(    bool );
       void checkUniGrid (    bool );
       void checkLocalUni(    bool );
       void checkRandLoc (    bool );

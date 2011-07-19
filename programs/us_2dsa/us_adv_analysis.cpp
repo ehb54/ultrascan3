@@ -34,7 +34,8 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    mainLayout->setStretchFactor( simparmsLayout, 1 );
 
    QLabel* lb_simpars      = us_banner( tr( "Simulation Parameters:" ) );
-   QLabel* lb_bandload     = us_label(  tr( "Band loading volume (ml):" ) );
+   QLabel* lb_bandload     = us_label(  tr( "Band loading volume (" ) 
+         + QString( QChar( 181 ) ) + "l):" );
    QLabel* lb_spoints      = us_label(  tr( "Simulation Points:" ) );
    QLabel* lb_refopts      = us_banner( tr( "Refinement Options:" ) );
 
@@ -61,11 +62,13 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    QLayout* lo_bandcp      = us_radiobutton( tr( "Band-forming Centerpiece" ),
          rb_bandcp,  sparms->band_forming );
 
-   ct_bandload  = us_counter( 3,  0.1,    5,   1 );
-   ct_spoints   = us_counter( 2,    1,  100,  10 );
+   ct_bandload  = us_counter( 3,    1,    15,   1 );
+   ct_spoints   = us_counter( 3,   50, 10000,  10 );
 
    ct_bandload->setStep(  0.1 );
+   ct_bandload->setValue( 1.5 );
    ct_spoints ->setStep(    1 );
+   ct_spoints ->setValue( 200 );
    ct_bandload->setEnabled( rb_bandcp->isChecked() );
 
    QLayout*  lo_unifgr  =
@@ -183,6 +186,8 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
 
    optimize_options();
 
+   connect( rb_bandcp, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkBandForm( bool ) ) );
    connect( ck_unifgr, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkUniGrid(  bool ) ) );
    connect( ck_locugr, SIGNAL( toggled( bool ) ),
@@ -291,6 +296,12 @@ void US_AdvAnalysis::uncheck_optimize( int ckflag )
    if ( ckflag != 5 ) ck_clipcs->setChecked( false );
 }
 
+// handle band forming toggled
+void US_AdvAnalysis::checkBandForm( bool checked )
+{
+   ct_bandload->setEnabled( checked );
+}
+
 // handle uniform grid checked
 void US_AdvAnalysis::checkUniGrid(  bool checked )
 {
@@ -350,7 +361,7 @@ void US_AdvAnalysis::checkRegular(  bool checked )
 void US_AdvAnalysis::select()
 {
    sparms->band_forming = rb_bandcp  ->isChecked();
-   sparms->band_volume  = ct_bandload->value();
+   sparms->band_volume  = ct_bandload->value() / 1000.0;
    sparms->simpoints    = (int)ct_spoints ->value();
    sparms->meshType     = (US_SimulationParameters::MeshType)
                           cmb_mesh   ->currentIndex();

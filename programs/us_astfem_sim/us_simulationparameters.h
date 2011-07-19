@@ -85,7 +85,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
       void reconnect_all        ( void   );
 
       void update_lamella       ( double lamella )
-         { simparams.band_volume = lamella; };
+         { simparams.band_volume = lamella / 1000.0; };
 
       void update_meniscus      ( double meniscus )
          { simparams.meniscus    = meniscus; };
@@ -112,7 +112,8 @@ class US_SimulationParametersGui : public US_WidgetsDialog
          { simparams.gridType    = (US_SimulationParameters::GridType) grid; };
 
       void select_centerpiece   ( bool )
-         { simparams.band_forming = rb_band->isChecked(); };
+         { simparams.band_forming = rb_band->isChecked();
+           cnt_lamella->setEnabled( simparams.band_forming ); };
 
       void update_temp          ( double temp )
          { simparams.temperature   = temp;   };

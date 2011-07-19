@@ -115,9 +115,10 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
          }
       }
    }
-if ( !parameters.contains("debug_level") ) parameters["debug_level"]="2";
+//if (!parameters.contains("debug_level")) parameters["debug_level"]="1";
 
-   US_Settings::set_us_debug( parameters[ "debug_level" ].toInt() );
+   if ( parameters.contains( "debug_level" ) )
+      US_Settings::set_us_debug( parameters[ "debug_level" ].toInt() );
 }
 
 void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
