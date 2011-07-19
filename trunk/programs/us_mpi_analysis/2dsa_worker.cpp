@@ -166,9 +166,8 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 {
    count_calc_residuals++;
 
-   US_SolveSim* solvesim = new US_SolveSim( data_sets, my_rank, false );
+   US_SolveSim solvesim( data_sets, my_rank, false );
 
-   solvesim->calc_residuals( offset, dataset_count, simu_values );
-
+   solvesim.calc_residuals( offset, dataset_count, simu_values );
 }
 

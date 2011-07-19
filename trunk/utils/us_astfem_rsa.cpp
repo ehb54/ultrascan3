@@ -786,8 +786,12 @@ DbgLv(2) << "RSA: init_conc() ENTER kk" << kk;
       if ( simparams.band_forming )
       {
          // Calculate the width of the lamella
+         double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
+         double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
+DbgLv(0) << "RSA: angle pathlen" << angl << plen;
+DbgLv(0) << "RSA:  bandvol" << simparams.band_volume;
          double base = af_params.current_meniscus * af_params.current_meniscus 
-            + simparams.band_volume * 360.0 / ( 2.5 * 1.2 * M_PI );
+            + simparams.band_volume * 360.0 / ( angl * plen * M_PI );
 
          double lamella_width = sqrt( base ) - af_params.current_meniscus;
             

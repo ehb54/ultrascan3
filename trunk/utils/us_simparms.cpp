@@ -29,6 +29,10 @@ US_SimulationParameters::US_SimulationParameters()
    bottom_position   = 7.2;
    rotorcoeffs[ 0 ]  = 0.0;
    rotorcoeffs[ 1 ]  = 0.0;
+   cp_sector         = 0;
+   cp_pathlen        = 1.2;
+   cp_angle          = 2.5;
+   cp_width          = 0.0;
 
    firstScanIsConcentration = false;
 }
@@ -57,6 +61,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    double rpm          = editdata.scanData[ 0 ].rpm;
    double rpmnext      = rpm;
    int    jj           = 0;
+   int    cp_id        = 1;
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
@@ -77,6 +82,12 @@ void US_SimulationParameters::initFromData( US_DB2* db,
             rotorCalID       = a.value( "id"     ).toString();
             rotorcoeffs[ 0 ] = a.value( "coeff1" ).toString().toDouble();
             rotorcoeffs[ 1 ] = a.value( "coeff2" ).toString().toDouble();
+         }
+
+         if ( xml.isStartElement()  &&  xml.name() == "centerpiece" )
+         {  // pick up centerpiece ID from  <centerpiece ... id=...
+            QXmlStreamAttributes a = xml.attributes();
+            cp_id            = a.value( "id"     ).toString().toInt();
          }
       }
 
@@ -166,7 +177,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    }
 
    // set rotor coefficients, channel bottom position from hardware files
-   setHardware( db, rotorCalID, 0, 0 );
+   setHardware( db, rotorCalID, -cp_id, 0 );
 
    // calculate bottom using RPM, start bottom, and rotor coefficients
    bottom = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
@@ -189,7 +200,25 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
    rotor_map.clear();
 
    if ( US_AbstractCenterpiece::read_centerpieces( cp_list ) )
+   {
+      if ( cp < 0 )
+      {
+         int cp_id = -cp;
+             cp    = 0;
+
+         for ( int jj = 0; jj < cp_list.size(); jj++ )
+         {
+            if ( cp_id == cp_list[ jj ].serial_number )
+            {
+               cp   = jj;
+               break;
+            }
+         }
+      }
+
       bottom_position = cp_list[ cp ].bottom_position[ ch ];
+      band_forming    = cp_list[ cp ].shape == "band forming";
+   }
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {
@@ -276,6 +305,12 @@ int US_SimulationParameters::load_simparms( QString fname )
             astr  = a.value( "bandform"    ).toString();
             if ( !astr.isEmpty() )
                band_forming = ( astr == "yes" || astr == "1" );
+            else
+               band_forming = false;
+            if ( band_forming )
+               band_volume  = a.value( "bandvolume" ).toString().toDouble();
+            else
+               band_volume  = 0.0;
             astr  = a.value( "rotorCalID" ).toString();
             if ( !astr.isEmpty() )
                rotorCalID   = astr;
@@ -285,6 +320,18 @@ int US_SimulationParameters::load_simparms( QString fname )
                rotorcoeffs[ 0 ] = astr.section( " ", 0, 0 ).toDouble();
                rotorcoeffs[ 1 ] = astr.section( " ", 1, 1 ).toDouble();
             }
+            astr  = a.value( "sector"      ).toString();
+            if ( !astr.isEmpty() )
+               cp_sector    = astr.toInt();
+            astr  = a.value( "pathlength"  ).toString();
+            if ( !astr.isEmpty() )
+               cp_pathlen   = astr.toDouble();
+            astr  = a.value( "angle"       ).toString();
+            if ( !astr.isEmpty() )
+               cp_angle     = astr.toDouble();
+            astr  = a.value( "width"       ).toString();
+            if ( !astr.isEmpty() )
+               cp_width     = astr.toDouble();
          }
 
          else if ( xml.isStartElement()  &&  xml.name() == "speedstep" )
@@ -383,6 +430,14 @@ int US_SimulationParameters::save_simparms( QString fname )
 
       xml.writeAttribute   ( "bandform",  band_forming ? "1" : "0" );
 
+      if ( band_forming )
+         xml.writeAttribute   ( "bandvolume",  QString::number( band_volume ) );
+
+      xml.writeAttribute   ( "sector",      QString::number( cp_sector  ) );
+      xml.writeAttribute   ( "pathlength",  QString::number( cp_pathlen ) );
+      xml.writeAttribute   ( "angle",       QString::number( cp_angle   ) );
+      xml.writeAttribute   ( "width",       QString::number( cp_width   ) );
+
       if ( meshType == US_SimulationParameters::USER )
       {
          for ( int ii = 0; ii < mesh_radius.size(); ii++ )
@@ -467,6 +522,10 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Band Volume     :" << band_volume;
    qDebug() << "Rotor Calibr.ID :" << rotorCalID;
    qDebug() << "Rotor Coeffs    :" << rotorcoeffs[ 0 ] << rotorcoeffs[ 1 ];
+   qDebug() << "CP Sector       :" << cp_sector;
+   qDebug() << "CP Pathlength   :" << cp_pathlen;
+   qDebug() << "CP Angle        :" << cp_angle;
+   qDebug() << "CP Width        :" << cp_width;
 
    for ( int i = 0; i < speed_step.size(); i++ )
    {

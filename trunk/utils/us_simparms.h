@@ -111,6 +111,11 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! First sedimentation scan is initializer for concentration
    bool      firstScanIsConcentration; 
 
+   int       cp_sector;         //!< Shape of centerpiece (0-4: see US_Hardware)
+   double    cp_pathlen;        //!< Pathlength of centerpiece
+   double    cp_angle;          //!< Angle of centerpiece sector
+   double    cp_width;          //!< Width of centerpiece channel if rectangular
+
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile
    {

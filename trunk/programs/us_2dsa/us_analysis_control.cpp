@@ -650,6 +650,7 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 void US_AnalysisControl::advanced()
 {
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
 
    US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, this );
    if ( aadiag->exec() == QDialog::Accepted )

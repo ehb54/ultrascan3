@@ -199,11 +199,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
                          SLOT  ( select_centerpiece( bool ) ) );
 
    // Band loading
-   QLabel* lb_lamella = us_label( tr( "Band loading volume (ml):" ) );
+   QLabel* lb_lamella = us_label( tr( "Band loading volume (" )
+         + QString( QChar( 181 ) ) + "l):" );
    main->addWidget( lb_lamella, row, 4, 1, 3 );
 
-   cnt_lamella = us_counter( 3, 0.001, 0.1, simparams.band_volume );
-   cnt_lamella->setStep    ( 0.0001 );
+   cnt_lamella = us_counter( 3, 1, 15, simparams.band_volume * 1000.0  );
+   cnt_lamella->setValue   ( simparams.band_volume * 1000.0  );
+   cnt_lamella->setStep    ( 0.1 );
    cnt_lamella->setIncSteps( QwtCounter::Button1,   1 );
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
    cnt_lamella->setEnabled( false );
@@ -817,7 +819,10 @@ void US_SimulationParametersGui::load( void )
       cmb_mesh            ->setCurrentIndex( (int)simparams.meshType );
       cmb_moving          ->setCurrentIndex( (int)simparams.gridType );
 
-      rb_band->setChecked( simparams.band_forming );
+      rb_band    ->setChecked( simparams.band_forming );
+      rb_standard->setChecked( ! simparams.band_forming );
+      cnt_lamella->setValue  ( simparams.band_volume * 1000.0  );
+      cnt_lamella->setEnabled( simparams.band_forming );
 
       reconnect_all();
 
