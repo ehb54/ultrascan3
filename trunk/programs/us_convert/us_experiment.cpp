@@ -547,7 +547,7 @@ void US_Experiment::readExperiment(
                if ( runType == "WA" )
                {
                    double r       = wl.toDouble() * 1000.0;
-                   QString radius = QString::number( (int) round( r ) );
+                   QString radius = QString::number( qRound( r ) );
                    triples[ ndx ].tripleFilename = runID      + "." 
                                                  + runType    + "." 
                                                  + cell       + "." 
