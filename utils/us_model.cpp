@@ -188,7 +188,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    // Start with already calculated s if possible
    if ( s != 0.0 )
    {
-      s20w           = qAbs( s );
+      s20w           = s;
 
       // First check s and k (f_f0)
                                                  ///////////////

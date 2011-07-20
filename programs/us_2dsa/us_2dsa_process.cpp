@@ -419,7 +419,7 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
       // Get standard-space solute values (20,W)
       US_Model::SimulationComponent mcomp;
       mcomp.vbar20 = vbar20;
-      mcomp.s      = qAbs( c_solutes[ maxdepth ][ cc ].s );
+      mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
       mcomp.D      = 0.0;
       mcomp.mw     = 0.0;
       mcomp.f      = 0.0;

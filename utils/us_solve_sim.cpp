@@ -127,7 +127,7 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
          // Set model with standard space s and k
          zcomponent.vbar20          = dset->vbar20;
          model.components[ 0 ]      = zcomponent;
-         model.components[ 0 ].s    = qAbs( sim_vals.solutes[ cc ].s );
+         model.components[ 0 ].s    = sim_vals.solutes[ cc ].s;
          model.components[ 0 ].f_f0 = sim_vals.solutes[ cc ].k;
 
          // Fill in the missing component values
