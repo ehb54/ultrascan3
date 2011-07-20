@@ -113,6 +113,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void checkMonteCar(    bool );
       void checkRegular (    bool );
       void grid_change(      void );
+      void slim_change(      void );
       void start(            void );
       void stop_fit(         void );
       void plot(             void );

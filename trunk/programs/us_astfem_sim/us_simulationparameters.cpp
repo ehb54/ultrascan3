@@ -203,8 +203,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
          + QString( QChar( 181 ) ) + "l):" );
    main->addWidget( lb_lamella, row, 4, 1, 3 );
 
-   cnt_lamella = us_counter( 3, 1, 15, simparams.band_volume * 1000.0  );
-   cnt_lamella->setValue   ( simparams.band_volume * 1000.0  );
+   cnt_lamella = us_counter( 3, 1, 20, 15 );
    cnt_lamella->setStep    ( 0.1 );
    cnt_lamella->setIncSteps( QwtCounter::Button1,   1 );
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
@@ -246,11 +245,8 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_simpoints = us_label( tr( "Radial Discretization (points):" ) );
    main->addWidget( lb_simpoints, row, 4, 1, 3 );
 
-   cnt_simpoints = us_counter( 3, 50, 5000, simparams.simpoints );
+   cnt_simpoints = us_counter( 3, 50, 10000, 200 );
    cnt_simpoints->setStep    ( 10 );
-   cnt_simpoints->setIncSteps( QwtCounter::Button1,   1 );
-   cnt_simpoints->setIncSteps( QwtCounter::Button2,  10 );
-   cnt_simpoints->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
    connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ), 
@@ -807,6 +803,7 @@ void US_SimulationParametersGui::load( void )
       cb_acceleration_flag->setChecked( sp->acceleration_flag );
       cnt_acceleration    ->setEnabled( sp->acceleration_flag );
       
+      cnt_lamella         ->setValue( simparams.band_volume * 1000.0  );
       cnt_simpoints       ->setValue( simparams.simpoints         );
       cnt_radial_res      ->setValue( simparams.radial_resolution );
       cnt_meniscus        ->setValue( simparams.meniscus          );
@@ -821,7 +818,6 @@ void US_SimulationParametersGui::load( void )
 
       rb_band    ->setChecked( simparams.band_forming );
       rb_standard->setChecked( ! simparams.band_forming );
-      cnt_lamella->setValue  ( simparams.band_volume * 1000.0  );
       cnt_lamella->setEnabled( simparams.band_forming );
 
       reconnect_all();

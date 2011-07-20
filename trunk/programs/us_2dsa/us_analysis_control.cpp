@@ -78,13 +78,13 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
 DbgLv(1) << "idealThrCout" << nthr;
-   ct_lolimits  = us_counter( 3,  0.2,   10,   1 );
-   ct_uplimits  = us_counter( 3,    1,  100,  10 );
-   ct_nstepss   = us_counter( 3,    1, 1000,  60 );
-   ct_lolimitk  = us_counter( 3,    1,    8,   1 );
-   ct_uplimitk  = us_counter( 3,    2,   10,   4 );
-   ct_nstepsk   = us_counter( 3,    1, 1000,  60 );
-   ct_thrdcnt   = us_counter( 2,    1,   64, nthr );
+   ct_lolimits  = us_counter( 3, -10000, 10000,  1 );
+   ct_uplimits  = us_counter( 3, -10000, 10000 ,10 );
+   ct_nstepss   = us_counter( 3,      1,  1000,  60 );
+   ct_lolimitk  = us_counter( 3,      1,     8,   1 );
+   ct_uplimitk  = us_counter( 3,      2,    10,   4 );
+   ct_nstepsk   = us_counter( 3,      1,  1000,  60 );
+   ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_lolimits->setStep( 0.1 );
    ct_uplimits->setStep( 0.1 );
    ct_nstepss ->setStep(   1 );
@@ -223,6 +223,10 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,        SLOT(   grid_change()          ) );
    connect( ct_thrdcnt,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
+   connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   slim_change()          ) );
+   connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   slim_change()          ) );
 
    connect( pb_strtfit, SIGNAL( clicked()   ),
             this,       SLOT(   start()     ) );
@@ -359,6 +363,17 @@ void US_AnalysisControl::start()
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
 
+   // Make sure that ranges are reasonable
+   if ( ( ct_uplimits->value() - ct_lolimits->value() ) <= 0.0  ||
+        ( ct_uplimitk->value() - ct_lolimitk->value() ) <= 0.0 )
+   {
+      QMessageBox::critical( this, tr( "Limits Inconsistent!" ),
+         tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"
+             "Please re-check the limits and correct them\n"
+             "before again clicking \"Start Fit\"." ) );
+      return;
+   }
+
    // Make sure that any fit-meniscus is reasonable
    if ( ck_menisc->isChecked() )
    {
@@ -486,13 +501,13 @@ void US_AnalysisControl::save()
    mainw->analysis_done( 2 );
 }
 
-// close button clicked
+// Close button clicked
 void US_AnalysisControl::close_all()
 {
    close();
 }
 
-// reset memory estimate when grid steps, threads or repetitions changes
+// Reset memory estimate when grid steps, threads or repetitions changes
 void US_AnalysisControl::grid_change()
 {
    int    nsteps = (int)ct_nstepss ->value();         // # steps s
@@ -526,6 +541,32 @@ void US_AnalysisControl::grid_change()
 //DbgLv(1) << "GC:  mgrid msubg mmatr megs" << mgrid << msubg << mmatr << megs;
 
    le_estmemory->setText( QString::number( megs ) + " MB" );
+}
+
+// Reset s-limit step sizes when s-limit value changes
+void US_AnalysisControl::slim_change()
+{
+   double maglim = qAbs( ct_uplimits->value() - ct_lolimits->value() );
+   double lostep = ct_lolimits->step();
+   double upstep = ct_uplimits->step();
+
+   if ( maglim > 50.0 )
+   {
+      if ( lostep != 10.0  ||  upstep != 10.0 )
+      {
+         ct_lolimits->setStep( 10.0 );
+         ct_uplimits->setStep( 10.0 );
+      }
+   }
+
+   else
+   {
+      if ( lostep != 0.1  ||  upstep != 0.1 )
+      {
+         ct_lolimits->setStep( 0.1 );
+         ct_uplimits->setStep( 0.1 );
+      }
+   }
 }
 
 // slot to handle progress update
