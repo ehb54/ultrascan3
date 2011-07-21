@@ -88,7 +88,7 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    QLayout*  lo_regulz  =
       us_checkbox( tr( "Regularization"                    ), ck_regulz );
 
-   ct_grrefine  = us_counter( 2,    1,   20,    7 );
+   ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_repetloc  = us_counter( 2,    1,   20,    1 );
    ct_scfactor  = us_counter( 3, 0.01, 10.0,  0.3 );
    ct_scfact2   = us_counter( 3, 0.01, 10.0,  0.9 );

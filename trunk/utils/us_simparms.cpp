@@ -216,8 +216,18 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
          }
       }
 
+      QString shape   = cp_list[ cp ].shape;
       bottom_position = cp_list[ cp ].bottom_position[ ch ];
-      band_forming    = cp_list[ cp ].shape == "band forming";
+      band_forming    = shape == "band forming";
+      cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
+      cp_angle        = cp_list[ cp ].angle;
+      cp_width        = cp_list[ cp ].width;
+      cp_sector       = 0;
+      cp_sector       = ( shape == "rectangular"       ) ? 1 : cp_sector;
+      cp_sector       = ( shape == "circular"          ) ? 2 : cp_sector;
+      cp_sector       = ( shape == "meniscus matching" ) ? 3 : cp_sector;
+      cp_sector       = ( shape == "band forming"      ) ? 4 : cp_sector;
+
    }
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )

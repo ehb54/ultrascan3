@@ -382,15 +382,15 @@ void US_ResidPlot::plot_edata()
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double rl        = 0.0;
-   double vh        = 9999.0;
+   //double vh        = 9999.0;
    double sval;
 
    if ( have_ed )
    {
       points   = edata->x.size();
       rl       = edata->radius( 0 );
-      vh       = edata->value( 0, points - 1 );
-      vh      *= 1.05;
+      //vh       = edata->value( 0, points - 1 );
+      //vh      *= 1.05;
    }
 
    if ( !do_plteda  &&  !do_pltsda )
@@ -502,8 +502,8 @@ void US_ResidPlot::plot_edata()
             else
                sval     = edata->value( ii, jj ) - rinoi - tinoi;
 
-            if ( sval > vh )
-               sval     = vv[ jj - 1 ];
+            //if ( sval > vh )
+            //   sval     = vv[ jj - 1 ];
 
             vv[ jj ] = sval;
          }
