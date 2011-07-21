@@ -8,7 +8,18 @@ void US_MPI_Analysis::ga_master( void )
    current_dataset = 0;
 qDebug() << "master start GA" << startTime;
    // Tell calc_residuals to use the edited data meniscus value
-   meniscus_value = -1.0; 
+   meniscus_value  = -1.0; 
+
+   // Set noise and debug flags
+   simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
+                                  1 : 0;
+   simulation_values.noisflag  += parameters[ "rinoise_option" ].toInt() > 0 ?
+                                  2 : 0;
+   simulation_values.dbg_level  = parameters.contains( "debug_level" ) ?
+                                  parameters[ "debug_level"    ].toInt() : 0;
+   simulation_values.dbg_timing = parameters.contains( "debug_timings" ) &&
+                                  parameters[ "debug_timings"  ].toInt() != 0;
+qDebug() << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
    best_genes  .reserve( node_count);
