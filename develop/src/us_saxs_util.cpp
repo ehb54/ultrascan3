@@ -59,7 +59,7 @@ QString US_Saxs_Util::list_waves()
    return result;
 }
 
-bool US_Saxs_Util::read(QString filename, QString tag)
+bool US_Saxs_Util::read( QString filename, QString tag )
 {
    // read filename into wave[tag]
    wave[tag].clear();
@@ -376,6 +376,35 @@ bool US_Saxs_Util::join(QString outtag, QString tag1, QString tag2, double pt)
    return true;
 }
 
+bool US_Saxs_Util::normalize( QString outtag, QString tag )
+{
+   errormsg = "";
+
+   wave[outtag] = wave[tag];
+   wave[outtag].filename = QString("normalize_%1").arg(tag);
+
+   double sum = 0e0;
+
+   for ( unsigned int i = 0; i < wave[tag].r.size(); i++ )
+   {
+      sum += wave[tag].r[i];
+   }
+
+   if ( sum == 0e0 )
+   {
+      errormsg = QString("US_Saxs_Util::normalize %1 has zero sum").arg(tag);
+      return false;
+   }
+
+   double oneoversum = 1e0 / sum;
+
+   for ( unsigned int i = 0; i < wave[tag].r.size(); i++ )
+   {
+      wave[outtag].r[i] *= oneoversum;
+   }
+   return true;
+}
+   
 bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
 {
    errormsg = "";
@@ -6252,6 +6281,84 @@ void US_Saxs_Util::scaling_fit(
    }
 }
 
+bool US_Saxs_Util::nnls_fit( 
+                            vector < vector < double > > A, 
+                            vector < double >            y, 
+                            vector < double >            &x,
+                            double                       &nnls_rmsd
+                            )
+{
+   if ( !A.size() )
+   {
+      errormsg = "US_Saxs_Util::nnls_fit matrix A is empty";
+      return false;
+   }
+
+   x.resize( A.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      x[ i ] = 0e0;
+   }
+
+   if ( A[0].size() != y.size() )
+   {
+      errormsg =  "US_Saxs_Util::nnls_fit incompatible vector sizes";
+      nnls_rmsd = 9e99;
+      return false;
+   }
+
+   // check A
+
+   for ( unsigned int i = 1; i < A.size(); i++ )
+   {
+      if ( A[ i ].size() != A[ 0 ].size() )
+      {
+         errormsg =  "US_Saxs_Util::nnls_fit inconsistant vector sizes in A";
+         nnls_rmsd = 9e99;
+         return false;
+      }
+   }
+
+   int vectors = (int) A.size();
+   int len     = (int) y.size();
+   
+   vector < double > nnls_wp     ( A.size() );
+   vector < double > nnls_zzp    ( y.size() );
+   vector < int >    nnls_indexp ( A.size() );
+
+   vector < double > use_A;
+
+   for ( unsigned int i = 0; i < A.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < A[ i ].size(); j++ )
+      {
+         use_A.push_back( A[ i ][ j ] );
+      }
+   }
+
+   int result =
+      nnls( (double *)&use_A[0],
+            len,
+            len,
+            vectors,
+            (double *)&y[0],
+            (double *)&x[0],
+            &nnls_rmsd,
+            (double *)&nnls_wp[0],
+            (double *)&nnls_zzp[0],
+            (int  *)&nnls_indexp[0]
+            );
+            
+   if ( result != 0 )
+   {
+      cout << "ending nnls 1\n";
+      errormsg = QString("US_Saxs_Util::nnls_fit NNLS error %1").arg( result );
+      return false;
+   }
+   return true;
+   // cerr << QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd);
+}
+
 void US_Saxs_Util::nnls_fit( 
                               vector < double > x, 
                               vector < double > y, 
@@ -6291,5 +6398,266 @@ void US_Saxs_Util::nnls_fit(
       cerr << "NNLS error!\n";
    }
    
-   cerr << QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd);
+   // cerr << QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd);
+}
+
+bool US_Saxs_Util::iqq_sphere(
+                              QString tag,
+                              double  radius,
+                              double  delta_rho,
+                              double  min_q,
+                              double  max_q,
+                              double  delta_q 
+                              )
+{
+   errormsg = "";
+
+   if ( radius <= 0e0 )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere radius must be greater than zero";
+      return false;
+   }
+
+   wave[ tag ].clear();
+   wave[ tag ].filename = tag;
+   wave[ tag ].header   = 
+      QString( 
+              "# iqq_sphere %1 radius %2 delta_rho %3 min_q %4 max_q %5 delta_q %6\n"
+              "#\tq\tI(q)"
+              )
+      .arg( tag )
+      .arg( radius )
+      .arg( delta_rho )
+      .arg( min_q )
+      .arg( max_q )
+      .arg( delta_q )
+      ;
+
+   double delta_rho2   = delta_rho * delta_rho;
+   double v            = ( 4.0 / 3.0 ) * M_PI * radius * radius * radius;
+   double v2           = v * v;
+   double delta_rho2v2 = delta_rho2 * v2;
+   
+   if ( min_q == 0e0 )
+   {
+      wave[ tag ].q.push_back( min_q );
+      wave[ tag ].r.push_back( delta_rho2v2 );
+      wave[ tag ].s.push_back( 0e0 );
+      min_q += delta_q;
+   }
+   
+   for ( double q = min_q; q <= max_q; q += delta_q )
+   {
+      double qradius = q * radius;
+      double arg     =
+         3.0 * ( sin( qradius ) - qradius * cos( qradius ) ) / ( qradius * qradius * qradius );
+      double arg2    = arg * arg;
+
+      wave[ tag ].q.push_back( q );
+      wave[ tag ].r.push_back( delta_rho2v2 * arg2 );
+      wave[ tag ].s.push_back( 0e0 );
+   }
+   return true;
+}
+
+bool US_Saxs_Util::iqq_sphere_grid(
+                                   QString outtag,
+                                   QString intag,
+                                   double  radius,
+                                   double  delta_rho
+                                   )
+{
+   errormsg = "";
+
+   if ( radius <= 0 )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere_grid radius must be greater than zero";
+      return false;
+   }
+
+   wave[ outtag ].clear();
+   wave[ outtag ].filename = outtag;
+   wave[ outtag ].header   = 
+      QString( 
+              "# iqq_sphere %1 radius %2 delta_rho %3 grid matched to %4" 
+              "#\tq\tI(q)"
+              )
+      .arg( outtag )
+      .arg( radius )
+      .arg( delta_rho )
+      .arg( intag )
+      ;
+
+   double delta_rho2   = delta_rho * delta_rho;
+   double v            = ( 4.0 / 3.0 ) * M_PI * radius * radius * radius;
+   double v2           = v * v;
+   double delta_rho2v2 = delta_rho2 * v2;
+   
+   for ( unsigned int i = 0; i < wave[ intag ].q.size(); i++ )
+   {
+      double q =  wave[ intag ].q[ i ];
+      wave[ outtag ].q.push_back( wave[ intag ].q[ i ] );
+      if ( q == 0e0 )
+      {
+         wave[ outtag ].r.push_back( delta_rho2v2 );
+      } else {
+         double qradius = q * radius;
+         double arg     =
+            3.0 * ( sin( qradius ) - qradius * cos( qradius ) ) / ( qradius * qradius * qradius );
+         double arg2    = arg * arg;
+         
+         wave[ outtag ].r.push_back( delta_rho2v2 * arg2 );
+      }
+      wave[ outtag ].s.push_back( 0e0 );
+   }
+   return true;
+}
+
+bool US_Saxs_Util::iqq_sphere_fit( 
+                                  QString infile,
+                                  double  min_radius,
+                                  double  max_radius,
+                                  double  delta_radius,
+                                  double  min_delta_rho,
+                                  double  max_delta_rho,
+                                  double  delta_delta_rho,
+                                  double  min_q,
+                                  double  max_q
+                                  )
+{
+   errormsg = "";
+
+   // load infile
+   if ( !read( infile, infile ) )
+   {
+      return false;
+   }
+
+   QString cropped = infile + "_cropped";
+   if ( !crop( cropped, infile, min_q, max_q ) )
+   {
+      return false;
+   }      
+
+   if ( !wave[ cropped ].q.size() )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere_fit cropped data leaves nothing to fit\n";
+      return false;
+   }
+   cout << "US_Saxs_Util::iqq_sphere_fit q points after cropping: " << wave[ cropped ].q.size() << endl;
+
+   // build a matrix of the models in A
+
+   vector < vector < double > > A;
+   vector < QString >           A_tag;
+   vector < double >            A_radius;
+   vector < double >            A_delta_rho;
+
+   for ( double radius = min_radius; 
+         radius <= max_radius; 
+         radius += delta_radius )
+   {
+      for ( double delta_rho = min_delta_rho;
+            delta_rho <= max_delta_rho; 
+            delta_rho += delta_delta_rho )
+      {
+         QString tag = QString("radius %1 delta_rho %2").arg( radius ).arg( delta_rho );
+         if ( !iqq_sphere_grid( tag, cropped, radius, delta_rho ) )
+         {
+            return false;
+         }
+         if ( !normalize( tag, tag ) )
+         {
+            return false;
+         }
+         A.          push_back( wave[ tag ].r );
+         A_tag.      push_back( tag );
+         A_radius.   push_back( radius );
+         A_delta_rho.push_back( delta_rho );
+      }
+   }
+
+   if ( !A.size() )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere_fit no models created!\n";
+      return false;
+   }
+      
+   // find single best fit:
+
+   unsigned int best_pos  = 0;
+   double       k;
+   double       best_rmsd;
+
+   nnls_fit(
+            A[ 0 ],
+            wave[ cropped ].r,
+            k,
+            best_rmsd
+            );
+             
+   for ( unsigned int i = 1; i < A.size(); i++ )
+   {
+      double rmsd;
+      nnls_fit(
+            A[ i ],
+            wave[ cropped ].r,
+            k,
+            rmsd
+            );
+      if ( rmsd < best_rmsd )
+      {
+         best_rmsd = rmsd;
+         best_pos = i;
+      }
+   }
+   
+   cout << QString("best single model %1 rmsd %2\n").arg( A_tag[ best_pos ] ).arg( best_rmsd );
+
+   vector < double > x;
+   double            nnls_rmsd;
+
+   bool result = nnls_fit( A, wave[ cropped ].r, x, nnls_rmsd );
+
+   if ( !result )
+   {
+      return false;
+   }
+
+   cout << QString( "nnls rmsd %1\n" ).arg( nnls_rmsd );
+
+
+   double totconc = 0e0;
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( x[ i ] > 0e0 )
+      {
+         totconc += x[ i ];
+      }
+   }
+
+   if ( totconc == 0e0 )
+   {
+      totconc = 1e0;
+   }
+
+   double oneovertotconc = 1e0 / totconc;
+
+   double avgradius      = 0e0;
+   double avgdelta_rho   = 0e0;
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( x[ i ] > 0e0 )
+      {
+         avgradius    += x[ i ] * oneovertotconc * A_radius[ i ];
+         avgdelta_rho += x[ i ] * oneovertotconc * A_delta_rho[ i ];
+         cout << QString("nnls model %1 conc %2\n").arg( A_tag[ i ] ).arg( x[ i ] * oneovertotconc );
+      }
+   }
+
+   cout << QString("nnls avg radius %1 avg delta_rho %2\n").arg( avgradius ).arg( avgdelta_rho );
+   
+   return true;
 }

@@ -27,7 +27,9 @@
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
-#include "us_hydrodyn_saxs_iqq_residuals.h"
+#ifndef WIN32
+# include "us_hydrodyn_saxs_iqq_residuals.h"
+#endif
 #include "us_hydrodyn_saxs_residuals.h"
 
 //standard C and C++ defs:
@@ -299,7 +301,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       US_Hydrodyn_Saxs_Residuals     *saxs_residuals_window;
 
       bool                           saxs_iqq_residuals_widget;
+#ifndef WIN32
       US_Hydrodyn_Saxs_Iqq_Residuals *saxs_iqq_residuals_window;
+#endif
 
 #ifdef WIN32
      #pragma warning ( disable: 4251 )

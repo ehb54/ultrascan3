@@ -10,37 +10,44 @@ int main (int argc, char **argv)
              "usage: %s command params\n"
              "Valid commands \tparams:\n"
              "avg       \toutfile infile1 infile2 {infile3 etc}"
-             "\tAverage curves\n"
+             "          \tAverage curves\n"
              "sbg       \toutfile solutionfile bufferfile alpha"
-             "\tSubtract background wave\n"
+             "          \tSubtract background wave\n"
              "scw       \toutfile solutionfile bufferfile emptycellfile alpha"
-             "\tSubtract background and cell wave\n"
+             "          \tSubtract background and cell wave\n"
              "wgsbs     \toutfile solutionfile bufferfile waxsfile alpha beta const low high"
-             "\tWAXS guided SAXS buffer subtraction\n"
+             "          \tWAXS guided SAXS buffer subtraction\n"
              "wgsbsg    \toutfile logfile solutionfile bufferfile waxsfile alphamin alphamax alphainc betamin betamax betainc constmin constmax constinc low high\n"
-             "\tWAXS guided SAXS buffer subtraction grid search\n"
+             "          \tWAXS guided SAXS buffer subtraction grid search\n"
              "wgsbsgsm  \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations alphainit alphamin alphamax alphainc betainit betamin betamax betainc constinit constmin constmax constinc low high\n"
-             "\tWAXS guided SAXS buffer subtraction gsm search, bounded by *min,*man, starting at *init, deltas *inc\n"
+             "          \tWAXS guided SAXS buffer subtraction gsm search, bounded by *min,*man, starting at *init, deltas *inc\n"
              "wgsbsggsm \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
-             "\tWAXS guided SAXS buffer subtraction grid then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for gsm search from min\n"
+             "          \tWAXS guided SAXS buffer subtraction grid then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for gsm search from min\n"
              "wgsbsnggsm \toutfile logfile solutionfile bufferfile waxsfile grids gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
-             "\tWAXS guided SAXS buffer subtraction n grids then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for subsequent grid searches and then gsm search from min\n"
+             "           \tWAXS guided SAXS buffer subtraction n grids then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for subsequent grid searches and then gsm search from min\n"
              "join       \toutfile infile1 infile2 q-value\n"
-             "\tjoin two files\n"
+             "           \tjoin two files\n"
              "guinier_plot  \toutfile infile\n"
-             "\treplace q with q*q, r with log(r), don't plot in logscale\n"
+             "              \treplace q with q*q, r with log(r), don't plot in logscale\n"
              "guinier_fit   \tlogfile infile startpos endpos minlen maxlen\n"
-             "\tcompute guinier fit\n"
+             "              \tcompute guinier fit\n"
              "guinier_fit2  \tlogfile infile pointsmin pointsmax sRgmaxlimit pointweightpower\n"
-             "\tcompute guinier fit\n"
+             "              \tcompute guinier fit\n"
              "project_init  \tprojectname\n"
-             "\tcreates a new blank project directory & template files\n"
+             "              \tcreates a new blank project directory & template files\n"
              "project_rebuild\n"
-             "\treads the project file and produces wiki pages & pngs describing the analysis\n"
-             "project_merge outfile { gnom }\n"
-             "\treads project files and produces a Rg/Io summary wiki page and optionally produce gnom Dmax series\n"
-             "project_1d    wikiprefix\n"
-             "\tbuilds wiki page and computes averages for files in 1d directory\n"
+             "              \treads the project file and produces wiki pages & pngs describing the analysis\n"
+             "project_merge \toutfile { gnom }\n"
+             "              \treads project files and produces a Rg/Io summary wiki page and optionally produce gnom Dmax series\n"
+             "project_1d    \twikiprefix pngsplits\n"
+             "              \tbuilds wiki page and computes averages for files in 1d directory\n"
+             "iqqshere      \toutfile radius delta_rho minq maxq deltaq\n"
+             "              \tproduces a .dat file containing the I(q) vs q curve, min,max,deltaq in 1/angstrom\n"
+             "iqqspherefit  \tinfile\n"
+             "              \tminradius   maxradius   deltaradius\n"
+             "              \tmindeltarho maxdeltarho deltadeltrarho\n"
+             "              \tminq        maxq\n"
+             "              \tbuild a collection of iqqsphere's and compute best fit & nnls distribution\n"
              , argv[0]
              );
       exit(-1);
@@ -1524,6 +1531,90 @@ int main (int argc, char **argv)
       {
          cout << usu.errormsg << endl;
          exit(errorbase - 1);
+      }
+      exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "iqqsphere" ) 
+   {
+      if ( cmds.size() != 7 ) 
+      {
+         printf(
+                "usage: %s %s outfile radius delta_rho minq maxq deltaq\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString outfile   = cmds[ p++ ];
+      double  radius    = cmds[ p++ ].toDouble();
+      double  delta_rho = cmds[ p++ ].toDouble();
+      double  minq      = cmds[ p++ ].toDouble();
+      double  maxq      = cmds[ p++ ].toDouble();
+      double  deltaq    = cmds[ p++ ].toDouble();
+
+      US_Saxs_Util usu;
+      if ( !usu.iqq_sphere( outfile,
+                            radius,
+                            delta_rho,
+                            minq,
+                            maxq,
+                            deltaq ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase - 1 );
+      }
+      if ( !usu.write( outfile, outfile ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase - 2 );
+      }
+
+      exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "iqqspherefit" ) 
+   {
+      if ( cmds.size() != 10 ) 
+      {
+         printf(
+                "usage: %s %s infile minradius maxradius deltaradius mindeltarho maxdeltarho deltadeltarho minq maxq\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString infile          = cmds[ p++ ];
+      double  min_radius      = cmds[ p++ ].toDouble();
+      double  max_radius      = cmds[ p++ ].toDouble();
+      double  delta_radius    = cmds[ p++ ].toDouble();
+      double  min_delta_rho   = cmds[ p++ ].toDouble();
+      double  max_delta_rho   = cmds[ p++ ].toDouble();
+      double  delta_delta_rho = cmds[ p++ ].toDouble();
+      double  min_q           = cmds[ p++ ].toDouble();
+      double  max_q           = cmds[ p++ ].toDouble();
+
+      US_Saxs_Util usu;
+      if ( !usu.iqq_sphere_fit( infile,
+                                min_radius,
+                                max_radius,
+                                delta_radius,
+                                min_delta_rho,
+                                max_delta_rho,
+                                delta_delta_rho,
+                                min_q,
+                                max_q ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase - 1 );
       }
       exit(0);
    }

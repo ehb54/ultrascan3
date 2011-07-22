@@ -60,27 +60,32 @@ class US_EXTERN US_Saxs_Util
 
       US_Saxs_Util();
 
-      void clear();
-      bool read(QString filename, QString tag);
-      bool write(QString filename, QString tag);
-      bool compat(QString tag1, QString tag2);
-      void scale(QString outtag, QString intag, double multiplier);
-      bool avg(QString outtag, vector < QString > tags);
-      bool crop(QString outtag, QString fromtag, double low, double high);
-      bool interpolate(QString outtag, QString totag, QString fromtag);
-      double rmsd(QString tag1, QString tag2);
-      bool join(QString outtag, QString tag1, QString tag2, double pt);
+      void   clear      ();
+      bool   read       ( QString filename, QString tag );
+      bool   write      ( QString filename, QString tag );
+      bool   compat     ( QString tag1,     QString tag2 );
+      void   scale      ( QString outtag,   QString intag,           double multiplier );
+      bool   avg        ( QString outtag,   vector < QString > tags );
+      bool   crop       ( QString outtag,   QString fromtag,         double low,        double high );
+      bool   interpolate( QString outtag,   QString totag,           QString fromtag );
+      double rmsd       ( QString tag1,     QString tag2 );
+      bool   join       ( QString outtag,   QString tag1,            QString tag2,       double pt );
+      bool   normalize  ( QString outtag,   QString tag );
 
-      bool subbackground(QString outtag, 
+      bool subbackground(
+                         QString outtag, 
                          QString solutiontag, 
                          QString buffertag, 
-                         double alpha);
+                         double alpha
+                         );
 
-      bool subcellwave(QString outtag, 
+      bool subcellwave(
+                       QString outtag, 
                        QString solutiontag, 
                        QString buffertag, 
                        QString emptytag, 
-                       double alpha);
+                       double alpha
+                       );
 
       bool waxsguidedsaxsbuffersub(
                                    double &nrmsd,
@@ -298,6 +303,13 @@ class US_EXTERN US_Saxs_Util
                     double &nnls_rmsd
                     );
 
+      bool nnls_fit( 
+                    vector < vector < double > > A, 
+                    vector < double >            y, 
+                    vector < double >            &x,
+                    double                       &nnls_rmsd
+                    );
+
       static double calc_rmsd( vector < double > v1,  vector < double > v2 );
       static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)
       static bool calc_chisq1( vector < double > bins,
@@ -335,6 +347,34 @@ class US_EXTERN US_Saxs_Util
   #pragma warning ( default: 4251 )
 #endif
 
+      bool iqq_sphere( 
+                      QString tag,          // creates iqq for a sphere based on Rayleigh (1911)
+                      double  radius,
+                      double  delta_rho,
+                      double  min_q,
+                      double  max_q,
+                      double  delta_q
+                      );
+
+      bool iqq_sphere_grid( 
+                           QString outtag,    // build sphere I(q) on intag's grid
+                           QString intag,     
+                           double  radius,
+                           double  delta_rho
+                           );
+      
+      bool iqq_sphere_fit( 
+                          QString infile,
+                          double  min_radius,
+                          double  max_radius,
+                          double  delta_radius,
+                          double  min_delta_rho,
+                          double  max_delta_rho,
+                          double  delta_delta_rho,
+                          double  min_q,
+                          double  max_q
+                          );
+      
    private:
 
       bool run_gnom( 

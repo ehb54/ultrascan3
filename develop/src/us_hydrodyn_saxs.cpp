@@ -5521,6 +5521,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       log_difference[ i ] = log_I2[ i ] - log_I1[ i ];
    }
 
+#ifndef WIN32
    saxs_iqq_residuals_window = 
       new US_Hydrodyn_Saxs_Iqq_Residuals(
                                          &saxs_iqq_residuals_widget,
@@ -5536,6 +5537,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                          true
                                          );
    saxs_iqq_residuals_window->show();
+#endif
 }
 
 void US_Hydrodyn_Saxs::update_iqq_suffix()
