@@ -6514,6 +6514,7 @@ bool US_Saxs_Util::iqq_sphere_grid(
 }
 
 bool US_Saxs_Util::iqq_sphere_fit( 
+                                  QString outfile,
                                   QString infile,
                                   double  min_radius,
                                   double  max_radius,
@@ -6522,7 +6523,8 @@ bool US_Saxs_Util::iqq_sphere_fit(
                                   double  max_delta_rho,
                                   double  delta_delta_rho,
                                   double  min_q,
-                                  double  max_q
+                                  double  max_q,
+                                  bool    do_normalize
                                   )
 {
    errormsg = "";
@@ -6566,9 +6568,12 @@ bool US_Saxs_Util::iqq_sphere_fit(
          {
             return false;
          }
-         if ( !normalize( tag, tag ) )
+         if ( do_normalize )
          {
-            return false;
+            if ( !normalize( tag, tag ) )
+            {
+               return false;
+            }
          }
          A.          push_back( wave[ tag ].r );
          A_tag.      push_back( tag );
@@ -6658,6 +6663,163 @@ bool US_Saxs_Util::iqq_sphere_fit(
    }
 
    cout << QString("nnls avg radius %1 avg delta_rho %2\n").arg( avgradius ).arg( avgdelta_rho );
+
+   // build output
    
+   vector < double >             by_radius;
+   vector < double >             by_delta_rho;
+   vector < double >             val_radius;
+   vector < double >             val_delta_rho;
+   map < double, unsigned int >  index_radius;
+   map < double, unsigned int >  index_delta_rho;
+
+   for ( double radius = min_radius; 
+         radius <= max_radius; 
+         radius += delta_radius )
+   {
+      index_radius[ radius ] = by_radius.size();
+      by_radius .push_back( 0e0 );
+      val_radius.push_back( radius );
+   }
+
+   for ( double delta_rho = min_delta_rho;
+         delta_rho <= max_delta_rho; 
+         delta_rho += delta_delta_rho )
+   {
+      index_delta_rho[ delta_rho ] = by_delta_rho.size();
+      by_delta_rho .push_back( 0e0 );
+      val_delta_rho.push_back( delta_rho );
+   }
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      by_radius   [ index_radius   [ A_radius   [ i ] ] ] += x[ i ] * oneovertotconc;
+      by_delta_rho[ index_delta_rho[ A_delta_rho[ i ] ] ] += x[ i ] * oneovertotconc;
+   }
+
+   QString out_radius;
+   QString out_delta_rho;
+   QString out;
+
+   for ( unsigned int i = 0; i < by_radius.size(); i++ )
+   {
+      out_radius += QString( "%1 %1\n" ).arg( val_radius[ i ] ).arg( by_radius[ i ] );
+   }
+
+   for ( unsigned int i = 0; i < by_delta_rho.size(); i++ )
+   {
+      out_delta_rho += QString( "%1 %1\n" ).arg( val_delta_rho[ i ] ).arg( by_delta_rho[ i ] );
+   }
+   
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      out += QString( "%1 %1 %1\n" )
+         .arg( val_radius   [ index_radius   [ A_radius   [ i ] ] ] )
+         .arg( val_delta_rho[ index_delta_rho[ A_delta_rho[ i ] ] ] )
+         .arg( x[ i ] * oneovertotconc );
+   }
+
+
+   {
+      QFile f( outfile + "-radius.txt" );
+      
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         return false;
+      }
+      QTextStream ts(&f);
+      ts << out_radius;
+      f.close();      
+   }
+
+   {
+      QFile f( outfile + "-delta_rho.txt" );
+      
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         return false;
+      }
+      QTextStream ts(&f);
+      ts << out_delta_rho;
+      f.close();
+   }
+
+   {
+      QFile f( outfile + ".txt" );
+      
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         return false;
+      }
+      QTextStream ts(&f);
+      ts << out;
+      f.close();
+   }
+   
+   return true;
+}
+
+bool US_Saxs_Util::merge( 
+                         QString outtag,
+                         QString tag1,
+                         double  w1,
+                         QString tag2,
+                         double   w2 )
+{
+   errormsg = "";
+
+   wave[outtag].clear();
+   wave[outtag].filename = QString("merge_%1_%2_%3_%4").arg(tag1).arg(w1).arg(tag2).arg(w2);
+   wave[outtag].header = wave[tag1].header;
+
+   // grid range
+   if ( wave[tag1].q.size() < 3 )
+   {
+      errormsg = QString("US_Saxs_Util::merge too few points wave[%1].q.size() == %2").arg(tag1).arg(wave[tag1].q.size());
+      return false;
+   }
+      
+   double min_q = wave[tag1].q[1];
+   double max_q = wave[tag1].q[wave[tag1].q.size() - 2];
+
+   if ( min_q < wave[tag2].q[0] )
+   {
+      min_q = wave[tag2].q[0];
+   }
+   if ( max_q > wave[tag2].q[wave[tag2].q.size() - 1] )
+   {
+      max_q = wave[tag2].q[wave[tag2].q.size() - 1];
+   }
+
+   for( unsigned int i = 0; i < wave[tag1].q.size(); i++ )
+   {
+      if ( wave[tag1].q[i] >= min_q && 
+           wave[tag1].q[i] <= max_q )
+      {
+         wave[outtag].q.push_back(wave[tag1].q[i]);
+         wave[outtag].r.push_back(wave[tag1].r[i] * w1);
+         wave[outtag].s.push_back(wave[tag1].s[i]);
+      }
+   }
+         
+   QString tag2_interp = "tag2_interp";
+   if ( !interpolate( tag2_interp, outtag, tag2 ) )
+   {
+      return false;
+   }
+
+   for( unsigned int i = 0; i < wave[tag2_interp].q.size(); i++ )
+   {
+      if ( wave[outtag].q[i] != wave[tag2_interp].q[i] )
+      {
+         errormsg = QString("US_Saxs_Util::merge q values inconsistant point %1").arg(i);
+         return false;
+      }
+      wave[outtag].r[i] += wave[tag2_interp].r[i] * w2;
+      wave[outtag].s[i] += wave[tag2_interp].s[i];
+   }
    return true;
 }

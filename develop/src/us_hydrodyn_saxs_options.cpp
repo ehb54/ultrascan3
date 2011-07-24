@@ -596,7 +596,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_delta_angle= new QwtCounter(this);
    Q_CHECK_PTR(cnt_delta_angle);
-   cnt_delta_angle->setRange(0.001, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_delta_angle->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_angle->setValue((*saxs_options).delta_angle);
    cnt_delta_angle->setMinimumHeight(minHeight1);
    cnt_delta_angle->setEnabled(true);
@@ -650,7 +650,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_delta_q= new QwtCounter(this);
    Q_CHECK_PTR(cnt_delta_q);
-   cnt_delta_q->setRange(0.001, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_delta_q->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_q->setValue((*saxs_options).delta_q);
    cnt_delta_q->setMinimumHeight(minHeight1);
    cnt_delta_q->setEnabled(true);
@@ -1189,7 +1189,7 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_debye()
    (*saxs_options).saxs_iq_native_debye = cb_saxs_iq_native_debye->isChecked();
    (*saxs_options).saxs_iq_native_fast = !cb_saxs_iq_native_debye->isChecked();
    (*saxs_options).saxs_iq_native_hybrid = false;
-   (*saxs_options).saxs_iq_native_hybrid = false;
+   (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
 

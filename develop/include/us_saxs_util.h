@@ -64,13 +64,14 @@ class US_EXTERN US_Saxs_Util
       bool   read       ( QString filename, QString tag );
       bool   write      ( QString filename, QString tag );
       bool   compat     ( QString tag1,     QString tag2 );
-      void   scale      ( QString outtag,   QString intag,           double multiplier );
+      void   scale      ( QString outtag,   QString intag,   double multiplier );
       bool   avg        ( QString outtag,   vector < QString > tags );
-      bool   crop       ( QString outtag,   QString fromtag,         double low,        double high );
-      bool   interpolate( QString outtag,   QString totag,           QString fromtag );
+      bool   crop       ( QString outtag,   QString fromtag, double low,   double high );
+      bool   interpolate( QString outtag,   QString totag,   QString fromtag );
       double rmsd       ( QString tag1,     QString tag2 );
-      bool   join       ( QString outtag,   QString tag1,            QString tag2,       double pt );
+      bool   join       ( QString outtag,   QString tag1,    QString tag2,  double pt );
       bool   normalize  ( QString outtag,   QString tag );
+      bool   merge      ( QString outtag,   QString tag1,    double  w1,    QString tag2,  double w2 );
 
       bool subbackground(
                          QString outtag, 
@@ -364,6 +365,7 @@ class US_EXTERN US_Saxs_Util
                            );
       
       bool iqq_sphere_fit( 
+                          QString outfile,
                           QString infile,
                           double  min_radius,
                           double  max_radius,
@@ -372,7 +374,8 @@ class US_EXTERN US_Saxs_Util
                           double  max_delta_rho,
                           double  delta_delta_rho,
                           double  min_q,
-                          double  max_q
+                          double  max_q,
+                          bool    do_normalize = true
                           );
       
    private:

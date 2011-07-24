@@ -269,7 +269,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 };
 
 // used for adjusting buttons/rounding for the q & angle
-#define SAXS_Q_ROUNDING 1000.0f
+#define SAXS_Q_ROUNDING 10000.0f
 #define SAXS_Q_BUTTONS 3
 
 #endif

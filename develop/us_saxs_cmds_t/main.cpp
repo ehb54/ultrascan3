@@ -43,11 +43,15 @@ int main (int argc, char **argv)
              "              \tbuilds wiki page and computes averages for files in 1d directory\n"
              "iqqshere      \toutfile radius delta_rho minq maxq deltaq\n"
              "              \tproduces a .dat file containing the I(q) vs q curve, min,max,deltaq in 1/angstrom\n"
-             "iqqspherefit  \tinfile\n"
+             "iqqspherefit  \toutfile     infile\n"
              "              \tminradius   maxradius   deltaradius\n"
              "              \tmindeltarho maxdeltarho deltadeltrarho\n"
              "              \tminq        maxq\n"
+             "              \tnormalize{y|n}\n"
              "              \tbuild a collection of iqqsphere's and compute best fit & nnls distribution\n"
+             "              \toutputs datafiles: outfile-radius.txt, outfile-delta_rho.txt, outfile.txt\n"
+             "merge         \toutfile     infile1     weight1     infile2     weight2\n"
+             "              \tproduce a weighted merge of the two files\n"
              , argv[0]
              );
       exit(-1);
@@ -1580,10 +1584,10 @@ int main (int argc, char **argv)
 
    if ( cmds[0].lower() == "iqqspherefit" ) 
    {
-      if ( cmds.size() != 10 ) 
+      if ( cmds.size() != 12 ) 
       {
          printf(
-                "usage: %s %s infile minradius maxradius deltaradius mindeltarho maxdeltarho deltadeltarho minq maxq\n"
+                "usage: %s %s outfile infile minradius maxradius deltaradius mindeltarho maxdeltarho deltadeltarho minq maxq normalize{y|n}\n"
                 , argv[0]
                 , argv[1]
                 );
@@ -1592,6 +1596,7 @@ int main (int argc, char **argv)
       errorbase--;
 
       int p = 1;
+      QString outfile         = cmds[ p++ ];
       QString infile          = cmds[ p++ ];
       double  min_radius      = cmds[ p++ ].toDouble();
       double  max_radius      = cmds[ p++ ].toDouble();
@@ -1601,9 +1606,13 @@ int main (int argc, char **argv)
       double  delta_delta_rho = cmds[ p++ ].toDouble();
       double  min_q           = cmds[ p++ ].toDouble();
       double  max_q           = cmds[ p++ ].toDouble();
+      bool    do_normalize    = cmds[ p++ ].contains( QRegExp("^(Y|y)") );
+
+      cout << ( do_normalize ? "yes, normalize\n" : "no don't normalize\n" );
 
       US_Saxs_Util usu;
-      if ( !usu.iqq_sphere_fit( infile,
+      if ( !usu.iqq_sphere_fit( outfile,
+                                infile,
                                 min_radius,
                                 max_radius,
                                 delta_radius,
@@ -1611,7 +1620,47 @@ int main (int argc, char **argv)
                                 max_delta_rho,
                                 delta_delta_rho,
                                 min_q,
-                                max_q ) )
+                                max_q,
+                                do_normalize
+                                ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase - 1 );
+      }
+      exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "merge" ) 
+   {
+      if ( cmds.size() != 6 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile1 weight1 infile2 weight2\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString outfile         = cmds[ p++ ];
+      QString infile1         = cmds[ p++ ];
+      double  weight1         = cmds[ p++ ].toDouble();
+      QString infile2         = cmds[ p++ ];
+      double  weight2         = cmds[ p++ ].toDouble();
+
+      US_Saxs_Util usu;
+      if ( !usu.read(infile1, infile1) ||
+           !usu.read(infile2, infile2) ||
+           !usu.merge( outfile,
+                       infile1,
+                       weight1,
+                       infile2,
+                       weight2
+                       ) ||
+           !usu.write( outfile, outfile ) )
       {
          cout << usu.errormsg << endl;
          exit( errorbase - 1 );
