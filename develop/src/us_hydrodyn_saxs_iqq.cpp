@@ -909,6 +909,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       //            .arg(i).arg(q[i]).arg(i).arg(I[i]);
       //      }
       plotted_I.push_back(I);
+      push_back_zero_I_error();      
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
@@ -1740,6 +1741,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          plotted_q2.push_back(q2);
       }
       plotted_I.push_back(I);
+      push_back_zero_I_error();      
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
@@ -2577,6 +2579,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
          plotted_q2.push_back(q2);
       }
       plotted_I.push_back(I);
+      push_back_zero_I_error();      
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
@@ -3436,6 +3439,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          plotted_q2.push_back(q2);
       }
       plotted_I.push_back(I);
+      push_back_zero_I_error();      
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;

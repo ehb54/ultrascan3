@@ -233,6 +233,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector < double > >                    plotted_q;
       vector < vector < double > >                    plotted_q2;  // q^2 for guinier plots
       vector < vector < double > >                    plotted_I;
+      vector < vector < double > >                    plotted_I_error; 
 
 #ifndef QT4
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
@@ -343,6 +344,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        QString name
                        );
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);
+      void plot_one_iqq(vector < double > q, vector < double > I, vector < double > I_error, QString name);
       bool plotted;
       bool save_to_csv;
       QString csv_filename;
@@ -422,6 +424,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_bead_model_ok_for_saxs(); // checks current_model
 
       QString iqq_suffix();
+
+      void push_back_zero_I_error();
+      QString Iq_plotted_summary();
 
    private slots:
 

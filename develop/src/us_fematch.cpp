@@ -1647,6 +1647,7 @@ float US_FeMatch_W::calc_residuals_ra()
    data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
    data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
    delete data_io;
+   //   sp.band_forming = true;
    if (sp.band_forming)
    {
       OneLiner *ol;
@@ -1659,6 +1660,11 @@ float US_FeMatch_W::calc_residuals_ra()
       }
       delete ol;
    }
+   if ( sp.band_volume == 0e0 )
+   {
+      sp.band_forming = false;
+   }
+   
    //US_FemGlobal fg;
    //fg.write_simulationParameters(&sp, "simparams.out");
    sp.simpoints = 200;

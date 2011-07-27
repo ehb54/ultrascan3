@@ -69,7 +69,23 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    // don't forget to make target part of it even if it isn't selected.
 }
 
-void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QString name)
+
+void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q, 
+                                     vector < double > I, 
+                                     QString name )
+{
+   vector < double > I_error = I;
+   for ( unsigned int i = 0; i < I_error.size(); i++ )
+   {
+      I_error[ i ] = 0e0;
+   }
+   plot_one_iqq( q, I, I_error, name );
+}
+
+void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q, 
+                                     vector < double > I, 
+                                     vector < double > I_error, 
+                                     QString name )
 {
    if ( q.size() < I.size() )
    {
@@ -116,6 +132,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
       plotted_q2.push_back(q2);
    }
    plotted_I.push_back(I);
+   plotted_I_error.push_back(I_error);
 
    unsigned int q_points = q.size();
    unsigned int p = plotted_q.size() - 1;
@@ -151,4 +168,63 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    editor->setColor(plot_colors[p % plot_colors.size()]);
    editor->append(name + "\n");
    editor->setColor(save_color);
+}
+
+void US_Hydrodyn_Saxs::push_back_zero_I_error()
+{
+   if ( !plotted_I.size() )
+   {
+      return;
+   }
+
+   vector < double > I_error( plotted_I[ plotted_I.size() - 1 ] );
+   for ( unsigned int i = 0; i < I_error.size(); i++ )
+   {
+      I_error[ i ] = 0e0;
+   }
+   plotted_I_error.push_back( I_error );
+}
+
+QString US_Hydrodyn_Saxs::Iq_plotted_summary()
+{
+   QString qs = "Iq_plotted_summary:\n";
+
+   qs += 
+      QString(
+              "plotted_q.size() %1\n"
+              "plotted_q2.size() %2\n"
+              "plotted_I.size() %3\n"
+              "plotted_I_error.size() %4\n" 
+              "\n"
+              )
+      .arg( plotted_q.size() )
+      .arg( plotted_q2.size() )
+      .arg( plotted_I.size() )
+      .arg( plotted_I_error.size() )
+      ;
+
+   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+   {
+      bool all_zero = true;
+      for ( unsigned int j = 0; j < plotted_I_error[ i ].size(); j++ )
+      {
+         if ( plotted_I_error[ i ][ j ] != 0e0 )
+         {
+            all_zero = false;
+            break;
+         }
+      }
+         
+      qs += 
+         QString( "pos %1 q.size() %2 q2.size() %3 I.size() %4 I_error.size() %5 %6\n" )
+         .arg( i )
+         .arg( plotted_q[ i ].size() )
+         .arg( plotted_q2[ i ].size() )
+         .arg( plotted_I[ i ].size() )
+         .arg( plotted_I_error[ i ].size() )
+         .arg( all_zero ? "zero error" : "contains error" )
+         ;
+   }
+
+   return qs;
 }

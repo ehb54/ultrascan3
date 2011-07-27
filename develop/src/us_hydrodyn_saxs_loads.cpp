@@ -43,13 +43,16 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    our_saxs_options->path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > I;
+   vector < double > I_error;
    vector < double > I2;
    vector < double > q;
    vector < double > q2;
    double new_I;
+   double new_I_error;
    double new_I2;
    double new_q;
    unsigned int Icolumn = 1;
+   unsigned int I_errorcolumn = 0;
    bool dolog10 = false;
    QString res = "";
    unsigned int Icolumn2 = 0;
@@ -168,8 +171,10 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          do_crop = true;
 
          Icolumn = 1;
+         I_errorcolumn = 2;
          if ( qsl.grep("exp_intensity").size() )
          {
+            I_errorcolumn = 0;
             
             switch ( QMessageBox::question(this, 
                                            tr("UltraScan Notice"),
@@ -293,6 +298,11 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          {
             new_q = tokens[0].toDouble();
             new_I = tokens[Icolumn].toDouble();
+            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            {
+               new_I_error = tokens[I_errorcolumn].toDouble();
+            }
+            
             if ( Icolumn2 && tokens.size() > Icolumn2 )
             {
                new_I2 = tokens[Icolumn2].toDouble();
@@ -301,12 +311,17 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                   new_I2 = log10(new_I2);
                }
             }
+
             if ( dolog10 )
             {
                new_I = log10(new_I);
             }
             I.push_back(new_I);
             q.push_back(new_q * units);
+            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            {
+               I_error.push_back(new_I2);
+            }
             if ( Icolumn2 && tokens.size() > Icolumn2 )
             {
                I2.push_back(new_I2);
@@ -343,7 +358,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
 
       if ( q.size() )
       {
-         plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
+         plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
       }
       if ( q2.size() )
       {

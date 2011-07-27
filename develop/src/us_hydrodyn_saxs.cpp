@@ -3180,6 +3180,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          plotted_q2.push_back(q2);
       }
       plotted_I.push_back(I);
+      push_back_zero_I_error();      
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
@@ -3369,6 +3370,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
    plotted_q.clear();
    plotted_q2.clear();
    plotted_I.clear();
+   plotted_I_error.clear();
    plot_saxs->clear();
    plot_saxs->replot();
 #ifndef QT4
@@ -4664,6 +4666,8 @@ void US_Hydrodyn_Saxs::rescale_plot()
 
 void US_Hydrodyn_Saxs::set_user_range()
 {
+   cout << Iq_plotted_summary();
+
    if ( cb_user_range->isChecked() &&
         cb_guinier->isChecked() )
    {
