@@ -185,6 +185,34 @@ void US_Hydrodyn_Saxs::push_back_zero_I_error()
    plotted_I_error.push_back( I_error );
 }
 
+bool US_Hydrodyn_Saxs::is_zero_vector( vector < double > &v )
+{
+   bool all_zero = true;
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] != 0e0 )
+      {
+         all_zero = false;
+         break;
+      }
+   }
+   return all_zero;
+}
+
+bool US_Hydrodyn_Saxs::is_nonzero_vector( vector < double > &v )
+{
+   bool non_zero = true;
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] == 0e0 )
+      {
+         non_zero = false;
+         break;
+      }
+   }
+   return non_zero;
+}
+
 QString US_Hydrodyn_Saxs::Iq_plotted_summary()
 {
    QString qs = "Iq_plotted_summary:\n";
@@ -205,15 +233,7 @@ QString US_Hydrodyn_Saxs::Iq_plotted_summary()
 
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
-      bool all_zero = true;
-      for ( unsigned int j = 0; j < plotted_I_error[ i ].size(); j++ )
-      {
-         if ( plotted_I_error[ i ][ j ] != 0e0 )
-         {
-            all_zero = false;
-            break;
-         }
-      }
+      bool all_zero = is_zero_vector( plotted_I_error[ i ] );
          
       qs += 
          QString( "pos %1 q.size() %2 q2.size() %3 I.size() %4 I_error.size() %5 %6\n" )

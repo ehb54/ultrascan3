@@ -297,6 +297,14 @@ class US_EXTERN US_Saxs_Util
                        double &chi2
                        );
 
+      void scaling_fit( 
+                       vector < double > x, 
+                       vector < double > y, 
+                       vector < double > sd, 
+                       double &a,
+                       double &chi2
+                       );
+
       void nnls_fit( 
                     vector < double > x, 
                     vector < double > y, 

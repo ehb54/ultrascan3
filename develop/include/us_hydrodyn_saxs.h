@@ -425,6 +425,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QString iqq_suffix();
 
+      bool is_zero_vector( vector < double > &v );    // returns true if all zeros
+      bool is_nonzero_vector( vector < double > &v ); // returns true if all non-zero
       void push_back_zero_I_error();
       QString Iq_plotted_summary();
 

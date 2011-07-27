@@ -783,7 +783,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cnt_steric_clash_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_distance(double)));
 
    cb_iq_ask = new QCheckBox(this);
-   cb_iq_ask->setText(tr(" Manually choose I(q) method"));
+   cb_iq_ask->setText(tr("Manually choose I(q) method"));
    cb_iq_ask->setEnabled(true);
    cb_iq_ask->setChecked((*saxs_options).iq_ask);
    cb_iq_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -791,7 +791,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
 
    cb_iq_scale_ask = new QCheckBox(this);
-   cb_iq_scale_ask->setText(tr(" Always ask angstrom or nanometer"));
+   cb_iq_scale_ask->setText(tr("Always ask angstrom or nanometer"));
    cb_iq_scale_ask->setEnabled(true);
    cb_iq_scale_ask->setChecked((*saxs_options).iq_scale_ask);
    cb_iq_scale_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -799,7 +799,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iq_scale_ask, SIGNAL(clicked()), this, SLOT(set_iq_scale_ask()));
 
    cb_iq_scale_angstrom = new QCheckBox(this);
-   cb_iq_scale_angstrom->setText(tr(" I(q) curves in angstrom"));
+   cb_iq_scale_angstrom->setText(tr("I(q) curves in angstrom"));
    cb_iq_scale_angstrom->setEnabled(true);
    cb_iq_scale_angstrom->setChecked((*saxs_options).iq_scale_angstrom);
    cb_iq_scale_angstrom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -807,7 +807,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iq_scale_angstrom, SIGNAL(clicked()), this, SLOT(set_iq_scale_angstrom()));
 
    cb_iq_scale_nm = new QCheckBox(this);
-   cb_iq_scale_nm->setText(tr(" I(q) curves in nanometer"));
+   cb_iq_scale_nm->setText(tr("I(q) curves in nanometer"));
    cb_iq_scale_nm->setEnabled(true);
    cb_iq_scale_nm->setChecked((*saxs_options).iq_scale_nm);
    cb_iq_scale_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -815,15 +815,31 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iq_scale_nm, SIGNAL(clicked()), this, SLOT(set_iq_scale_nm()));
 
    cb_disable_iq_scaling = new QCheckBox(this);
-   cb_disable_iq_scaling->setText(tr(" Disable I(q) scaling"));
+   cb_disable_iq_scaling->setText(tr("Disable I(q) scaling"));
    cb_disable_iq_scaling->setEnabled(true);
    cb_disable_iq_scaling->setChecked((*saxs_options).disable_iq_scaling);
    cb_disable_iq_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_disable_iq_scaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_disable_iq_scaling, SIGNAL(clicked()), this, SLOT(set_disable_iq_scaling()));
 
+   cb_iqq_scale_linear_offset = new QCheckBox(this);
+   cb_iqq_scale_linear_offset->setText(tr("Scale with linear offset"));
+   cb_iqq_scale_linear_offset->setEnabled(true);
+   cb_iqq_scale_linear_offset->setChecked((*saxs_options).iqq_scale_linear_offset);
+   cb_iqq_scale_linear_offset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_scale_linear_offset->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_scale_linear_offset, SIGNAL(clicked()), this, SLOT(set_iqq_scale_linear_offset()));
+
+   cb_iqq_scale_chi2_fitting = new QCheckBox(this);
+   cb_iqq_scale_chi2_fitting->setText(tr("Chi^2 fitting"));
+   cb_iqq_scale_chi2_fitting->setEnabled(true);
+   cb_iqq_scale_chi2_fitting->setChecked((*saxs_options).iqq_scale_chi2_fitting);
+   cb_iqq_scale_chi2_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_scale_chi2_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_scale_chi2_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scale_chi2_fitting()));
+
    cb_autocorrelate = new QCheckBox(this);
-   cb_autocorrelate->setText(tr(" Autocorrelate"));
+   cb_autocorrelate->setText(tr("Autocorrelate"));
    cb_autocorrelate->setEnabled(true);
    cb_autocorrelate->setChecked((*saxs_options).autocorrelate);
    cb_autocorrelate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -831,7 +847,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_autocorrelate, SIGNAL(clicked()), this, SLOT(set_autocorrelate()));
 
    cb_hybrid_radius_excl_vol = new QCheckBox(this);
-   cb_hybrid_radius_excl_vol->setText(tr(" Use hybrid radius for excluded volume"));
+   cb_hybrid_radius_excl_vol->setText(tr("Use hybrid radius for excluded volume"));
    cb_hybrid_radius_excl_vol->setEnabled(true);
    cb_hybrid_radius_excl_vol->setChecked((*saxs_options).hybrid_radius_excl_vol);
    cb_hybrid_radius_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -855,7 +871,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cnt_scale_excl_vol, SIGNAL(valueChanged(double)), SLOT(update_scale_excl_vol(double)));
 
    cb_subtract_radius = new QCheckBox(this);
-   cb_subtract_radius->setText(tr(" Subtract radii for debye pairwise distance "));
+   cb_subtract_radius->setText(tr("Subtract radii for debye pairwise distance "));
    cb_subtract_radius->setEnabled(true);
    cb_subtract_radius->setChecked((*saxs_options).subtract_radius);
    cb_subtract_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1101,11 +1117,13 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    QHBoxLayout *hbl_various_1 = new QHBoxLayout;
    hbl_various_1->addWidget(cb_disable_iq_scaling);
-   hbl_various_1->addWidget(cb_autocorrelate);
+   hbl_various_1->addWidget(cb_iqq_scale_linear_offset);
+   hbl_various_1->addWidget(cb_iqq_scale_chi2_fitting);
    background->addMultiCellLayout(hbl_various_1, k, k, 2, 3);
    k++;
 
    QHBoxLayout *hbl_various_2 = new QHBoxLayout;
+   hbl_various_2->addWidget(cb_autocorrelate);
    hbl_various_2->addWidget(cb_hybrid_radius_excl_vol);
    hbl_various_2->addWidget(cb_subtract_radius);
    background->addMultiCellLayout(hbl_various_2, k, k, 2, 3);
@@ -1685,6 +1703,19 @@ void US_Hydrodyn_SaxsOptions::set_disable_iq_scaling()
    (*saxs_options).disable_iq_scaling = cb_disable_iq_scaling->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+
+void US_Hydrodyn_SaxsOptions::set_iqq_scale_linear_offset()
+{
+   (*saxs_options).iqq_scale_linear_offset = cb_iqq_scale_linear_offset->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_scale_chi2_fitting()
+{
+   (*saxs_options).iqq_scale_chi2_fitting = cb_iqq_scale_chi2_fitting->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 
 void US_Hydrodyn_SaxsOptions::set_autocorrelate()
 {

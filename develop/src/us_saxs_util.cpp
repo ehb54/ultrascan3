@@ -6237,14 +6237,14 @@ void US_Saxs_Util::scaling_fit(
                               vector < double > x, 
                               vector < double > y, 
                               double &k,
-                              double &chi2
+                              double &rmsd
                               )
 {
    if ( x.size() != y.size() )
    {
       cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
       k = 1e0;
-      chi2 = 9e99;
+      rmsd = 9e99;
    }
 
    k = 0e0;
@@ -6269,15 +6269,59 @@ void US_Saxs_Util::scaling_fit(
       k = 1e0;
    }
 
-   chi2 = 0e0;
-   unsigned int used = 0;
+   rmsd = 0e0;
    for ( unsigned int i = 0; i < x.size(); i++ )
    {
-      if ( y[i] != 0 )
-      {
-         chi2 += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] ) / ( y[i] * y[i] );
-         used++;
-      }
+      rmsd += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] );
+   }
+   rmsd = sqrt(rmsd);
+}
+
+void US_Saxs_Util::scaling_fit( 
+                              vector < double > x, 
+                              vector < double > y, 
+                              vector < double > sd, 
+                              double &k,
+                              double &chi2
+                              )
+{
+   if ( x.size() != y.size() ||
+        x.size() != sd.size() )
+   {
+      cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
+      k = 1e0;
+      chi2 = 9e99;
+   }
+
+   k = 0e0;
+
+   double Sx  = 0e0;
+   double Sy  = 0e0;
+   double Sxx = 0e0;
+   double Sxy = 0e0;
+
+   vector < double > oneoversd2( sd.size() );
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      oneoversd2[ i ] =  1.0 / ( sd[ i ] * sd[ i ] );
+      Sx  += x[i] * oneoversd2[ i ];
+      Sy  += y[i] * oneoversd2[ i ];
+      Sxx += x[i] * x[i] * oneoversd2[ i ];
+      Sxy += x[i] * y[i] * oneoversd2[ i ];
+   }
+
+   if ( Sx != Sxx )
+   {
+      k = ( Sy - Sxy ) / ( Sx - Sxx );
+   } else {
+      k = 1e0;
+   }
+
+   chi2 = 0e0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      chi2 += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] ) * oneoversd2[ i ];
    }
 }
 
@@ -6397,7 +6441,6 @@ void US_Saxs_Util::nnls_fit(
    {
       cerr << "NNLS error!\n";
    }
-   
    // cerr << QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd);
 }
 

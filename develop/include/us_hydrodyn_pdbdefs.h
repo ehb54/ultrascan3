@@ -252,6 +252,9 @@ struct saxs_options
    float   iqq_scale_maxq;
 
    bool    iqq_scale_nnls;
+
+   bool    iqq_scale_linear_offset;
+   bool    iqq_scale_chi2_fitting;
 };
 
 struct hybridization

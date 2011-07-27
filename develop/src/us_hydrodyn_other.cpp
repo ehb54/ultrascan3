@@ -3324,6 +3324,8 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_scale_maxq = 0.0f;
 
    saxs_options.iqq_scale_nnls = false;
+   saxs_options.iqq_scale_linear_offset = false;
+   saxs_options.iqq_scale_chi2_fitting = true;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

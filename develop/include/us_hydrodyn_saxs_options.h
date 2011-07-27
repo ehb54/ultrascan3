@@ -157,6 +157,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox   *cb_iq_scale_nm;
 
       QCheckBox   *cb_disable_iq_scaling;
+      QCheckBox   *cb_iqq_scale_linear_offset;
+      QCheckBox   *cb_iqq_scale_chi2_fitting;
       QCheckBox   *cb_autocorrelate;
       QCheckBox   *cb_hybrid_radius_excl_vol;
 
@@ -250,6 +252,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_iq_scale_nm();
 
       void set_disable_iq_scaling();
+      void set_iqq_scale_linear_offset();
+      void set_iqq_scale_chi2_fitting();
       void set_autocorrelate();
       void set_hybrid_radius_excl_vol();
       void update_scale_excl_vol(double);
