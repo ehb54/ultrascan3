@@ -360,6 +360,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       {
          if ( I_error.size() )
          {
+            editor_msg("dark blue", "Loaded standard deviation data\n");
             plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
@@ -1749,10 +1750,10 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                            0.5 * chi2,
                            chi2_prob );
       fit_msg = 
-         QString("chi^2=%1 df=%2 p=%3")
+         QString("chi^2=%1 df=%2 q=%3")
          .arg(chi2)
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         .arg( chi2_prob );
+         .arg( 1e0 - chi2_prob );
    } else {
       fit_msg = QString("RMSD=%1").arg(chi2);
    }
