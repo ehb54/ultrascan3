@@ -341,6 +341,14 @@ class US_EXTERN US_Saxs_Util
       hybridization current_hybrid;
       saxs current_saxs;
 
+      bool set_excluded_volume( 
+                               PDB_atom                 &this_atom, 
+                               double                   &vol, 
+                               double                   &scaled_vol, 
+                               saxs_options             &our_saxs_options, 
+                               map < QString, QString > &residue_atom_hybrid_map
+                               );
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif

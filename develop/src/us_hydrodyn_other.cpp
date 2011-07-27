@@ -3743,6 +3743,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
            );
 
    fclose(f);
+   editor_msg("dark blue", QString("").sprintf("Volume from ASA calculation %.2f A^3", total_vol));
 }
 
 

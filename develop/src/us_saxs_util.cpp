@@ -6866,3 +6866,48 @@ bool US_Saxs_Util::merge(
    }
    return true;
 }
+
+bool US_Saxs_Util::set_excluded_volume( 
+                                       PDB_atom                 &this_atom, 
+                                       double                   &vol, 
+                                       double                   &scaled_vol, 
+                                       saxs_options             &our_saxs_options, 
+                                       map < QString, QString > &residue_atom_hybrid_map
+                                       )
+{
+   errormsg = "";
+
+   QString mapkey = QString("%1|%2").arg(this_atom.resName).arg(this_atom.name);
+   if ( this_atom.name == "OXT" )
+   {
+      mapkey = "OXT|OXT";
+   }
+   QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+   if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+   {
+      errormsg = QString("error: hybrid name missing for %1|%2").arg(this_atom.resName).arg(this_atom.name);
+      return false;
+   }
+
+   if ( !hybrid_map.count(hybrid_name) )
+   {
+      errormsg = QString("error: hybrid_map name missing for hybrid_name %1").arg(hybrid_name);
+      return false;
+   }
+
+   if ( !atom_map.count(this_atom.name + "~" + hybrid_name) )
+   {
+      errormsg = QString("error: atom_map missing for hybrid_name %1 atom name %2").arg(hybrid_name).arg(this_atom.name);
+      return false;
+   }
+
+   double use_vol = atom_map[this_atom.name + "~" + hybrid_name].saxs_excl_vol;
+   vol = use_vol;
+   if ( our_saxs_options.hybrid_radius_excl_vol )
+   {
+      use_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+   }
+   scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
+   return true;
+}

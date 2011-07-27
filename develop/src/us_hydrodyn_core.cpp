@@ -7125,6 +7125,23 @@ void US_Hydrodyn::calc_mw()
 {
    unsigned int save_current_model = current_model;
    QString error_string;
+
+   US_Saxs_Util usu;
+   bool do_excl_vol = true;
+   if ( !usu.setup_saxs_maps( 
+                             saxs_options.default_atom_filename ,
+                             saxs_options.default_hybrid_filename ,
+                             saxs_options.default_saxs_filename 
+                             ) )
+   {
+      editor_msg( "red", 
+                  QString( tr("error: could not open %1, %2 or %3, no atomic excluded volume calc") )
+                  .arg( saxs_options.default_atom_filename )
+                  .arg( saxs_options.default_hybrid_filename )
+                  .arg( saxs_options.default_saxs_filename ) );
+      do_excl_vol = false;
+   }
+
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
@@ -7132,12 +7149,18 @@ void US_Hydrodyn::calc_mw()
                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
                      
       current_model = i;
-      model_vector[i].mw = 0.0;
+
+      model_vector[i].mw         = 0.0;
+      double tot_excl_vol        = 0.0;
+      double tot_scaled_excl_vol = 0.0;
+
       create_beads(&error_string, true);
       if( !error_string.length() ) 
       {
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
          {
+            double chain_excl_vol        = 0.0;
+            double chain_scaled_excl_vol = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -7147,25 +7170,68 @@ void US_Hydrodyn::calc_mw()
                   //       i, j, k, this_atom->mw);
                   model_vector[i].mw += this_atom->mw;
                   model_vector[i].molecule[j].mw += this_atom->mw;
+                  if ( do_excl_vol )
+                  {
+                     double excl_vol;
+                     double scaled_excl_vol;
+                     if ( !usu.set_excluded_volume( *this_atom, 
+                                                    excl_vol, 
+                                                    scaled_excl_vol, 
+                                                    saxs_options, 
+                                                    residue_atom_hybrid_map ) )
+                     {
+                        editor_msg( "dark red", usu.errormsg );
+                     } else {
+                        chain_excl_vol        += excl_vol;
+                        chain_scaled_excl_vol += scaled_excl_vol;
+                        tot_excl_vol          += excl_vol;
+                        tot_scaled_excl_vol   += scaled_excl_vol;
+                     }
+                  }
                }
             }
             // printf("model %u chain %u mw %g\n",
             //i, j, model_vector[i].molecule[j].mw);
             if (model_vector[i].molecule[j].mw != 0.0 )
             {
-               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 Angstrom^3  "))
+               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5"))
                               .arg(model_vector[i].model_id)
                               .arg(model_vector[i].molecule[j].chainID)
                               .arg(model_vector[i].molecule[j].mw)
                               .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
+                              .arg( do_excl_vol ?
+                                    QString(", atomic volume %1 A^3%2")
+                                    .arg( chain_excl_vol )
+                                    .arg( chain_excl_vol != chain_scaled_excl_vol ?
+                                          QString(", scaled atomic volume %1 A^2")
+                                          .arg( chain_scaled_excl_vol )
+                                          :
+                                          ""
+                                          )
+                                    :
+                                    ""
+                                    )
                               );
             }
          }
       }
-      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 Angstrom^3"))
+
+      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4"))
                      .arg(model_vector[i].model_id)
                      .arg(model_vector[i].mw)
                      .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+                     .arg( do_excl_vol ?
+                           QString(", atomic volume %1 A^3%2")
+                           .arg( tot_excl_vol )
+                           .arg( tot_excl_vol != tot_scaled_excl_vol ?
+                                 QString(", scaled atomic volume %1 A^2")
+                                 .arg( tot_scaled_excl_vol )
+                                 :
+                                 ""
+                                 )
+                           :
+                           ""
+                           )
                      );
       // printf("model %u  mw %g\n",
       //       i, model_vector[i].mw);

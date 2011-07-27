@@ -1754,22 +1754,21 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       results += QString("maxq: %1 ").arg( our_saxs_options->iqq_scale_maxq );
    }
 
-   double chi2_prob = 0e0;
+   // double chi2_prob = 0e0;
    QString fit_msg = "";
    if ( do_chi2_fitting )
    {
-      usu.calc_chisq_prob( 0.5 * use_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
-                           0.5 * chi2,
-                           chi2_prob );
+      // usu.calc_chisq_prob( 0.5 * use_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
+      // 0.5 * chi2,
+      // chi2_prob );
       fit_msg = 
-         QString("chi^2=%1 df=%2 q=%3 nchi^2=%4")
-         .arg(chi2)
+         QString("chi^2=%1 df=%2 nchi=%4")
+         .arg(chi2, 6)
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         .arg( 1e0 - chi2_prob )
-         .arg(chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) )
+         .arg(sqrt( chi2 ) / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
          ;
    } else {
-      fit_msg = QString("RMSD=%1").arg(chi2);
+      fit_msg = QString("RMSD=%1").arg(chi2, 5);
    }
 
    results += 
