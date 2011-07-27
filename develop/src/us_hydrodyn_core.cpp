@@ -7114,12 +7114,23 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    }
 }
 
+float US_Hydrodyn::mw_to_volume( float mw , float vbar )
+{
+   return 
+      mw * vbar * 1e24 / AVOGADRO;
+      ;
+}
+
 void US_Hydrodyn::calc_mw() 
 {
    unsigned int save_current_model = current_model;
    QString error_string;
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
+      editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
+                      .arg(model_vector[i].model_id)
+                      .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+                     
       current_model = i;
       model_vector[i].mw = 0.0;
       create_beads(&error_string, true);
@@ -7142,16 +7153,20 @@ void US_Hydrodyn::calc_mw()
             //i, j, model_vector[i].molecule[j].mw);
             if (model_vector[i].molecule[j].mw != 0.0 )
             {
-               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons"))
+               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 Angstrom^3  "))
                               .arg(model_vector[i].model_id)
                               .arg(model_vector[i].molecule[j].chainID)
-                              .arg(model_vector[i].molecule[j].mw));
+                              .arg(model_vector[i].molecule[j].mw)
+                              .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
+                              );
             }
          }
       }
-      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons"))
+      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 Angstrom^3"))
                      .arg(model_vector[i].model_id)
-                     .arg(model_vector[i].mw));
+                     .arg(model_vector[i].mw)
+                     .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+                     );
       // printf("model %u  mw %g\n",
       //       i, model_vector[i].mw);
    }

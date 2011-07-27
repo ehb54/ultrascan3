@@ -534,6 +534,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool selected_models_contain_SWH();
 
+      float mw_to_volume( float mw, float vbar );
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file

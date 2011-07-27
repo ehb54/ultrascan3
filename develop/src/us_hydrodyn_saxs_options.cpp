@@ -814,6 +814,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_iq_scale_nm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_scale_nm, SIGNAL(clicked()), this, SLOT(set_iq_scale_nm()));
 
+   cb_iqq_expt_data_contains_variances = new QCheckBox(this);
+   cb_iqq_expt_data_contains_variances->setText(tr("Expt. data in variance"));
+   cb_iqq_expt_data_contains_variances->setEnabled(true);
+   cb_iqq_expt_data_contains_variances->setChecked((*saxs_options).iqq_expt_data_contains_variances);
+   cb_iqq_expt_data_contains_variances->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_expt_data_contains_variances->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_expt_data_contains_variances, SIGNAL(clicked()), this, SLOT(set_iqq_expt_data_contains_variances()));
+
    cb_disable_iq_scaling = new QCheckBox(this);
    cb_disable_iq_scaling->setText(tr("Disable I(q) scaling"));
    cb_disable_iq_scaling->setEnabled(true);
@@ -1112,6 +1120,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_iq_scale = new QHBoxLayout;
    hbl_iq_scale->addWidget(cb_iq_scale_angstrom);
    hbl_iq_scale->addWidget(cb_iq_scale_nm);
+   hbl_iq_scale->addWidget(cb_iqq_expt_data_contains_variances);
    background->addMultiCellLayout(hbl_iq_scale, k, k, 2, 3);
    k++;
 
@@ -1695,6 +1704,12 @@ void US_Hydrodyn_SaxsOptions::set_iq_scale_nm()
    (*saxs_options).iq_scale_nm = cb_iq_scale_nm->isChecked();
    (*saxs_options).iq_scale_angstrom = !cb_iq_scale_nm->isChecked();
    cb_iq_scale_angstrom->setChecked((*saxs_options).iq_scale_angstrom);
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_expt_data_contains_variances()
+{
+   (*saxs_options).iqq_expt_data_contains_variances = cb_iqq_expt_data_contains_variances->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
