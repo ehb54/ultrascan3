@@ -407,11 +407,30 @@ void US_RotorCalibration::loadDB( void )
    ct_channel->setRange(1, 2, 1);
 
    // Load the data
+   QDir dir;
    QString  tempdir  = US_Settings::tmpDir() + "/";
+   if ( ! dir.exists( tempdir ) )
+   {
+      if ( ! dir.mkpath( tempdir ) )
+      {
+         qDebug() << "Error: Could not create temporary directory for auc files\n"
+                  << tempdir;
+         return ;
+      }
+   }
+
    for ( int i = 0; i < rawDataIDs.size(); i++ )
    {
       QString filename = tempdir + filenames[ i ];
-      db.readBlobFromDB( filename, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
+      int readStatus = db.readBlobFromDB( filename, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
+      if ( readStatus != US_DB2::OK )
+      {
+         QMessageBox::warning( this, 
+            tr( "Error" ),
+            tr( "Error downloading the data.\n" )
+            + db.lastError() + "\n" + filename );
+         return;
+      }
 
       int result = US_DataIO2::readRawData( filename, data );
       if ( result != US_DataIO2::OK )
