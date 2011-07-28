@@ -536,6 +536,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       float mw_to_volume( float mw, float vbar );
 
+      QString list_chainIDs( vector < PDB_model > &mv );
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file

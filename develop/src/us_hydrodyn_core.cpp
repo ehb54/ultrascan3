@@ -1905,6 +1905,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                   break;
                } // switch
             } // atoms
+            if ( tmp_chain.atom.size() )
+            {
+               tmp_chain.chainID = tmp_chain.atom[0].chainID;
+            }
             model->molecule.push_back(tmp_chain);
             abb_msgs += "\n";
          } // molecules
@@ -7123,6 +7127,9 @@ float US_Hydrodyn::mw_to_volume( float mw , float vbar )
 
 void US_Hydrodyn::calc_mw() 
 {
+   // cout << "calc_mw chains:\n";
+   // cout << list_chainIDs(model_vector);
+
    unsigned int save_current_model = current_model;
    QString error_string;
 
@@ -7159,8 +7166,8 @@ void US_Hydrodyn::calc_mw()
       {
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
          {
-            double chain_excl_vol        = 0.0;
-            double chain_scaled_excl_vol = 0.0;
+            double chain_excl_vol          = 0.0;
+            double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -7168,7 +7175,10 @@ void US_Hydrodyn::calc_mw()
                if(this_atom->active) {
                   // printf("model %u chain %u atom %u mw %g\n",
                   //       i, j, k, this_atom->mw);
-                  model_vector[i].mw += this_atom->mw;
+                  if ( this_atom->resName != "SWH" )
+                  {
+                     model_vector[i].mw += this_atom->mw;
+                  }
                   model_vector[i].molecule[j].mw += this_atom->mw;
                   if ( do_excl_vol )
                   {
@@ -7184,8 +7194,11 @@ void US_Hydrodyn::calc_mw()
                      } else {
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;
-                        tot_excl_vol          += excl_vol;
-                        tot_scaled_excl_vol   += scaled_excl_vol;
+                        if ( this_atom->resName != "SWH" )
+                        {
+                           tot_excl_vol          += excl_vol;
+                           tot_scaled_excl_vol   += scaled_excl_vol;
+                        }
                      }
                   }
                }

@@ -734,6 +734,8 @@ int US_Hydrodyn::read_pdb(const QString &filename)
    {
       list_model_vector(&model_vector_as_loaded);
    }
+   // cout << list_chainIDs(model_vector);
+   // cout << list_chainIDs(model_vector_as_loaded);
    return 0;
 }
 
@@ -5344,4 +5346,29 @@ QString US_Hydrodyn::saxs_sans_ext()
       break;
    }
    return result;
+}
+
+QString US_Hydrodyn::list_chainIDs( vector < PDB_model > &mv )
+{
+   QString qs;
+
+   for ( unsigned int i = 0; i < mv.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < mv[i].molecule.size(); j++ )
+      {
+         if ( mv[i].molecule[j].atom.size() )
+         {
+            qs += QString("mv %1 mol %2 chainID %3\n")
+               .arg(i).arg(j).arg(mv[i].molecule[j].chainID);
+         }
+         for ( unsigned int k = 0; k < mv[i].molecule[j].atom.size(); j++ )
+         {
+            PDB_atom *this_atom = &(mv[i].molecule[j].atom[k]);
+            qs += QString("mv %1 mol %2 atom 0 chainID %3\n")
+               .arg(i).arg(j).arg(this_atom->chainID);
+            break;
+         }
+      }
+   }
+   return qs;
 }

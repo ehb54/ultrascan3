@@ -27,6 +27,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                                               "ssaxs files (*.ssaxs);;"
                                               "int files [crysol] (*.int);;"
                                               "dat files [foxs / other] (*.dat);;"
+                                              "fit files [crysol] (*.fit);;"
                                               , this
                                               , "open file dialog"
                                               , "Open"
@@ -209,6 +210,13 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                break;
             }
          }             
+      }
+      if ( ext == "fit" ) 
+      {
+         do_crop = true;
+
+         Icolumn = 2;
+         I_errorcolumn = 0;
       }
       if ( ext == "ssaxs" ) 
       {
@@ -1765,7 +1773,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          QString("chi^2=%1 df=%2 nchi=%4")
          .arg(chi2, 6)
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
-         .arg(sqrt( chi2 ) / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ), 5 )
+         .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
          ;
    } else {
       fit_msg = QString("RMSD=%1").arg(chi2, 5);
