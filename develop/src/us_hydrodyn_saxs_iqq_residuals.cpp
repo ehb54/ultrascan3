@@ -9,6 +9,8 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              vector < double > target,
                                                              vector < double > log_difference,
                                                              vector < double > log_target,
+                                                             QColor plot_color,
+                                                             bool use_errors,
                                                              bool plot_log,
                                                              bool plot_difference,
                                                              bool plot_as_percent,
@@ -23,6 +25,8 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->target = target;
    this->log_difference = log_difference;
    this->log_target = log_target;
+   this->plot_color = plot_color;
+   this->use_errors = use_errors;
    this->plot_log = plot_log;
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
@@ -145,18 +149,19 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_difference = QColorGroup(
-                                                 QBrush(Qt::yellow), // USglobal->global_colors.cg_normal.foreground(),
-                                                 USglobal->global_colors.cg_normal.button(), 
-                                                 USglobal->global_colors.cg_normal.light(), 
-                                                 USglobal->global_colors.cg_normal.dark(), 
-                                                 USglobal->global_colors.cg_normal.mid(), 
-                                                 USglobal->global_colors.cg_normal.text(),
-                                                 USglobal->global_colors.cg_normal.brightText(), 
-                                                 USglobal->global_colors.cg_normal.base(), 
-                                                 QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-                                                );
-   cb_plot_difference->setPalette( QPalette(qcg_plot_difference, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // QColorGroup qcg_plot_difference = QColorGroup(
+   // QBrush(Qt::yellow), // USglobal->global_colors.cg_normal.foreground(),
+   // USglobal->global_colors.cg_normal.button(), 
+   // USglobal->global_colors.cg_normal.light(), 
+   // USglobal->global_colors.cg_normal.dark(), 
+   // USglobal->global_colors.cg_normal.mid(), 
+   // USglobal->global_colors.cg_normal.text(),
+   // USglobal->global_colors.cg_normal.brightText(), 
+   // USglobal->global_colors.cg_normal.base(), 
+   // QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
+   // );
+   // cb_plot_difference->setPalette( QPalette(qcg_plot_difference, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_plot_difference->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    connect(cb_plot_difference, SIGNAL(clicked()), SLOT(set_plot_difference()));
 
@@ -165,18 +170,19 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_log->setEnabled(true);
    cb_plot_log->setChecked(plot_log);
    cb_plot_log->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_log = QColorGroup(
-                                          QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
-                                          USglobal->global_colors.cg_normal.button(), 
-                                          USglobal->global_colors.cg_normal.light(), 
-                                          USglobal->global_colors.cg_normal.dark(), 
-                                          USglobal->global_colors.cg_normal.mid(), 
-                                          USglobal->global_colors.cg_normal.text(),
-                                          USglobal->global_colors.cg_normal.brightText(), 
-                                          USglobal->global_colors.cg_normal.base(), 
-                                          QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-                                          );
-   cb_plot_log->setPalette( QPalette(qcg_plot_log, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // QColorGroup qcg_plot_log = QColorGroup(
+   // QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
+   // USglobal->global_colors.cg_normal.button(), 
+   // USglobal->global_colors.cg_normal.light(), 
+   // USglobal->global_colors.cg_normal.dark(), 
+   // USglobal->global_colors.cg_normal.mid(), 
+   // USglobal->global_colors.cg_normal.text(),
+   // USglobal->global_colors.cg_normal.brightText(), 
+   // USglobal->global_colors.cg_normal.base(), 
+   // QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
+   // );
+   // cb_plot_log->setPalette( QPalette(qcg_plot_log, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_plot_log->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    connect(cb_plot_log, SIGNAL(clicked()), SLOT(set_plot_log()));
 
@@ -185,18 +191,19 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_as_percent->setEnabled(true);
    cb_plot_as_percent->setChecked(plot_as_percent);
    cb_plot_as_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_as_percent = QColorGroup(
-                                                 QBrush(Qt::white), //USglobal->global_colors.cg_normal.foreground(),
-                                                 USglobal->global_colors.cg_normal.button(), 
-                                                 USglobal->global_colors.cg_normal.light(), 
-                                                 USglobal->global_colors.cg_normal.dark(), 
-                                                 USglobal->global_colors.cg_normal.mid(), 
-                                                 USglobal->global_colors.cg_normal.text(),
-                                                 USglobal->global_colors.cg_normal.brightText(), 
-                                                 USglobal->global_colors.cg_normal.base(), 
-                                                 QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-                                                 );
-   cb_plot_as_percent->setPalette( QPalette(qcg_plot_as_percent, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // QColorGroup qcg_plot_as_percent = QColorGroup(
+   // QBrush(Qt::white), //USglobal->global_colors.cg_normal.foreground(),
+   // USglobal->global_colors.cg_normal.button(), 
+   //                                                 USglobal->global_colors.cg_normal.light(), 
+   // USglobal->global_colors.cg_normal.dark(), 
+   // USglobal->global_colors.cg_normal.mid(), 
+   // USglobal->global_colors.cg_normal.text(),
+   // USglobal->global_colors.cg_normal.brightText(), 
+   //                                                  USglobal->global_colors.cg_normal.base(), 
+   //                                                 QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
+   //);
+   // cb_plot_as_percent->setPalette( QPalette(qcg_plot_as_percent, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_plot_as_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
    pb_help = new QPushButton(tr("Help"), this);
@@ -263,12 +270,16 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::closeEvent( QCloseEvent *e )
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_log()
 {
    plot_log = cb_plot_log->isChecked();
+   cb_plot_difference->setChecked( !plot_log );
+   plot_difference = !plot_log;
    update_plot();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_difference()
 {
    plot_difference = cb_plot_difference->isChecked();
+   cb_plot_log->setChecked( !plot_difference );
+   plot_log = !plot_difference;
    update_plot();
 }
 
@@ -291,7 +302,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          (double *)&(q[0]), 
                          plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
                          (int)q.size());
-      plot->setCurvePen(iqq, QPen(Qt::green, 2, SolidLine));
+      plot->setCurvePen(iqq, QPen(plot_color, 2, SolidLine));
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
       curve->setStyle( QwtPlotCurve::Lines );
@@ -300,7 +311,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                      plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
                      (int)q.size()
                      );
-      curve->setPen( QPen(Qt::green, 2, SolidLine) );
+      curve->setPen( QPen(plot_color, 2, SolidLine) );
       curve->attach( plot );
 #endif
    }
@@ -313,7 +324,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          (double *)&(q[0]), 
                          plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                          (int)q.size());
-      plot->setCurvePen(iqq, QPen(Qt::yellow, 2, SolidLine));
+      plot->setCurvePen(iqq, QPen(plot_color, 2, SolidLine));
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
       curve->setStyle( QwtPlotCurve::Lines );
@@ -322,9 +333,58 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                      plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                      (int)q.size()
                      );
-      curve->setPen( QPen(Qt::yellow, 2, SolidLine) );
+      curve->setPen( QPen(plot_color, 2, SolidLine) );
       curve->attach( plot );
 #endif
+      if ( use_errors && !plot_as_percent )
+      {
+         double x[2];
+         double y[2];
+         x[0] = q[0];
+         x[1] = q[q.size() - 1];
+         y[0] = 2;
+         y[1] = 2;
+#ifndef QT4
+         long iqq = plot->insertCurve("+2 sd"); 
+         plot->setCurveStyle(iqq, QwtCurve::Lines);
+         plot->setCurveData(iqq, 
+                            (double *)&(x[0]), 
+                            (double *)&(y[0]), 
+                            2);
+         plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+         QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+#endif
+         y[0] = -2;
+         y[1] = -2;
+#ifndef QT4
+         iqq = plot->insertCurve("-2 sd"); 
+         plot->setCurveStyle(iqq, QwtCurve::Lines);
+         plot->setCurveData(iqq, 
+                            (double *)&(x[0]), 
+                            (double *)&(y[0]), 
+                            2);
+         plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+         QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+#endif
+      }
    }
    plot->replot();
 }

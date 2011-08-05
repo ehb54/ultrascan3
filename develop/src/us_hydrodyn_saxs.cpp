@@ -5489,7 +5489,9 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
 void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               vector < double > q,
                                               vector < double > I1, 
-                                              vector < double > I2 )
+                                              vector < double > I2,
+                                              QColor            plot_color,
+                                              vector < double > I_errors)
 {
    // make sure things aren't to big
 
@@ -5502,6 +5504,15 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    {
       min_len = I2.size();
    }
+
+   bool use_errors = is_nonzero_vector( I_errors );
+   cout << 
+      QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
+      .arg( use_errors ? "using" : "no" );
+   if ( use_errors && I_errors.size() <  min_len ) 
+   {
+      min_len = I_errors.size();
+   }
    q.resize(min_len);
 
    vector < double > difference( q.size() );
@@ -5512,6 +5523,10 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
       difference[ i ] = I2[ i ] - I1[ i ];
+      if ( use_errors ) 
+      {
+         difference[ i ] /= I_errors[ i ];
+      }
       log_I1[ i ] = log10( I1[ i ] );
       log_I2[ i ] = log10( I2[ i ] );
       if ( isnan( log_I1[ i ] ) )
@@ -5536,9 +5551,11 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                          I2,
                                          log_difference,
                                          log_I2,
+                                         plot_color,
+                                         use_errors,
                                          false,
                                          true,
-                                         true
+                                         !use_errors
                                          );
    saxs_iqq_residuals_window->show();
 #endif

@@ -1599,13 +1599,33 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &I )
 {
    vector < double > I2;
-   rescale_iqq_curve( scaling_target, q, I, I2 );
+   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
 }
 
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          vector < double > & /* I2 */
+                                          QColor plot_color )
+{
+   vector < double > I2;
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
+}
+
+void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
+                                          vector < double > &q,
+                                          vector < double > &I,
+                                          vector < double > &I2 )
+{
+   QColor plot_color = plot_colors[ plotted_q.size() % plot_colors.size() ];
+   rescale_iqq_curve( scaling_target, q, I, I2, plot_color );
+}
+
+void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
+                                          vector < double > &q,
+                                          vector < double > &I,
+                                          vector < double > &, /* I2 */
+                                          QColor plot_color
                                           )
 {
    if ( !q.size() ||
@@ -1659,6 +1679,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    vector < double > use_q;
    vector < double > use_I;
    vector < double > use_I_error;
+
    for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
    {
       if ( plotted_q[iq_pos][i] >= q_min &&
@@ -1798,7 +1819,10 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    display_iqq_residuals( scaling_target, 
                           use_q,
                           use_I,
-                          use_source_I );
+                          use_source_I,
+                          plot_color,
+                          use_I_error
+                          );
    
    // check this, as I2 may need to be interpolated
    // if ( I2.size() )

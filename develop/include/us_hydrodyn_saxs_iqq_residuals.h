@@ -5,6 +5,7 @@
 
 #include <qlabel.h>
 #include <qstring.h>
+#include <qcolor.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
 #include <qframe.h>
@@ -41,6 +42,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      vector < double > target,
                                      vector < double > log_difference,
                                      vector < double > log_target,
+                                     QColor plot_color,
+                                     bool use_errors,
                                      bool plot_log,
                                      bool plot_difference,
                                      bool plot_as_percent,
@@ -71,6 +74,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+
+      QColor            plot_color;
+      bool              use_errors;
 
       bool              plot_log;
       bool              plot_difference;
