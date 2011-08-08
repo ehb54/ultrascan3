@@ -29,6 +29,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
    Q_OBJECT
 
    public:
+      friend class US_Hydrodyn;
+
       US_Hydrodyn_SaxsOptions(struct saxs_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_SaxsOptions();
 
@@ -153,6 +155,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox   *cb_iq_ask;
 
       QCheckBox   *cb_iq_scale_ask;
+      QCheckBox   *cb_iqq_ask_target_grid;
       QCheckBox   *cb_iq_scale_angstrom;
       QCheckBox   *cb_iq_scale_nm;
       QCheckBox   *cb_iqq_expt_data_contains_variances;
@@ -249,6 +252,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_iq_ask();
 
       void set_iq_scale_ask();
+      void set_iqq_ask_target_grid();
       void set_iq_scale_angstrom();
       void set_iq_scale_nm();
       void set_iqq_expt_data_contains_variances();

@@ -791,12 +791,20 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
 
    cb_iq_scale_ask = new QCheckBox(this);
-   cb_iq_scale_ask->setText(tr("Always ask angstrom or nanometer"));
+   cb_iq_scale_ask->setText(tr("Always ask angstrom or nm"));
    cb_iq_scale_ask->setEnabled(true);
    cb_iq_scale_ask->setChecked((*saxs_options).iq_scale_ask);
    cb_iq_scale_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iq_scale_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_scale_ask, SIGNAL(clicked()), this, SLOT(set_iq_scale_ask()));
+
+   cb_iqq_ask_target_grid = new QCheckBox(this);
+   cb_iqq_ask_target_grid->setText(tr("Calc I(q) ask for grid"));
+   cb_iqq_ask_target_grid->setEnabled(true);
+   cb_iqq_ask_target_grid->setChecked((*saxs_options).iqq_ask_target_grid);
+   cb_iqq_ask_target_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_ask_target_grid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_ask_target_grid, SIGNAL(clicked()), this, SLOT(set_iqq_ask_target_grid()));
 
    cb_iq_scale_angstrom = new QCheckBox(this);
    cb_iq_scale_angstrom->setText(tr("I(q) curves in angstrom"));
@@ -1113,6 +1121,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
    hbl_iq_ask->addWidget(cb_iq_ask);
    hbl_iq_ask->addWidget(cb_iq_scale_ask);
+   hbl_iq_ask->addWidget(cb_iqq_ask_target_grid);
    
    background->addMultiCellLayout(hbl_iq_ask, k, k, 2, 3);
    k++;
@@ -1688,6 +1697,12 @@ void US_Hydrodyn_SaxsOptions::set_iq_ask()
 void US_Hydrodyn_SaxsOptions::set_iq_scale_ask()
 {
    (*saxs_options).iq_scale_ask = cb_iq_scale_ask->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_ask_target_grid()
+{
+   (*saxs_options).iqq_ask_target_grid = cb_iqq_ask_target_grid->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

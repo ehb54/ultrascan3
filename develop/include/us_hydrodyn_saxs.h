@@ -443,6 +443,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_zero_I_error();
       QString Iq_plotted_summary();
 
+      void ask_iq_target_grid();
+
    private slots:
 
       void foxs_readFromStdout();

@@ -2467,6 +2467,12 @@ void saxs_Iq_thr_t::run()
 
 void US_Hydrodyn_Saxs::show_plot_saxs()
 {
+   if ( our_saxs_options->iqq_ask_target_grid &&
+        plotted_q.size() )
+   {
+      ask_iq_target_grid();
+   }
+
    if ( !source && our_saxs_options->saxs_iq_foxs ) 
    {
       // cout << model_filepathname << endl;
@@ -5520,6 +5526,21 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    vector < double > log_I1 ( I1.size() );
    vector < double > log_I2 ( I2.size() );
 
+   cout <<
+      QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
+
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      cout <<
+         QString("%1\t%2\t%3\t%4\t%5\t%6\n")
+         .arg(q[i])
+         .arg(I1[i])
+         .arg(I2[i])
+         .arg(I_errors[i])
+         .arg(I2[i] - I1[i])
+         .arg(I_errors[i] != 0 ? ( I2[i] - I1[i] ) / I_errors[i] : ( I2[i] - I1[i] ) );
+   }
+
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
       difference[ i ] = I2[ i ] - I1[ i ];
@@ -5621,4 +5642,88 @@ QString US_Hydrodyn_Saxs::iqq_suffix()
       ( le_iqq_manual_suffix->text().length() ? "-" : "" ) +
       le_iqq_full_suffix->text();
    return qs.length() ? ( "-" + qs ) : "";
+}
+
+void US_Hydrodyn_Saxs::ask_iq_target_grid()
+{
+   if ( !qsl_plotted_iq_names.size() )
+   {
+      return;
+   }
+
+   // display a list of the plotted grids and choose one or cancel
+
+   bool ok;
+   QString grid_target = QInputDialog::getItem(
+                                               tr("Set I(q) Grid"),
+                                               tr("Select the target plotted data to set the I(q) grid:\n"
+                                                  "or Cancel of you do not wish to change the I(q) grid ")
+                                               , 
+                                               qsl_plotted_iq_names, 
+                                               0, 
+                                               FALSE, 
+                                               &ok,
+                                               this );
+   if ( !ok )
+   {
+      return;
+   }
+   if ( grid_target.isEmpty() ||
+        !plotted_iq_names_to_pos.count( grid_target ) )
+   {
+      QMessageBox::warning( this, "Set I(q) grid",
+                            QString(tr("Error: could not find the grid for target %1")). arg( grid_target ) );
+      return;
+   }
+
+
+   // set the grid
+
+   unsigned int pos = plotted_iq_names_to_pos[ grid_target ];
+
+   if ( plotted_q[ pos ].size() < 2 )
+   {
+      QMessageBox::warning( this, "Set I(q) grid",
+                            QString(tr("Error: Too few data points (%!) to set the grid for target %2"))
+                            .arg( plotted_q[ pos ].size() ) 
+                            .arg( grid_target ) 
+                            );
+      return;
+   }
+
+   float start_q = plotted_q[ pos ][ 0 ];
+   float end_q   = plotted_q[ pos ][ plotted_q[ pos ].size() -1 ];
+   float delta_q = plotted_q[ pos ][ 1 ] - start_q;
+   start_q -= delta_q;
+
+   our_saxs_options->start_q = start_q;
+   our_saxs_options->end_q   = end_q;
+   our_saxs_options->delta_q = delta_q;
+
+   our_saxs_options->start_angle = 
+      floor(
+            (asin(our_saxs_options->wavelength * our_saxs_options->start_q / 
+                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+            ) / SAXS_Q_ROUNDING;
+   
+   our_saxs_options->end_angle = 
+      floor(
+            (asin(our_saxs_options->wavelength * our_saxs_options->end_q / 
+                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+            ) / SAXS_Q_ROUNDING;
+
+   our_saxs_options->delta_angle = 
+      floor(
+            (asin(our_saxs_options->wavelength * our_saxs_options->delta_q / 
+                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+            ) / SAXS_Q_ROUNDING;
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_options_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
+   }
 }

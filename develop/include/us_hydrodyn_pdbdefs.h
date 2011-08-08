@@ -256,6 +256,8 @@ struct saxs_options
    bool    iqq_scale_linear_offset;
    bool    iqq_scale_chi2_fitting;
    bool    iqq_expt_data_contains_variances;
+
+   bool    iqq_ask_target_grid;
 };
 
 struct hybridization
