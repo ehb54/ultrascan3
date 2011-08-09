@@ -66,6 +66,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs_Options;
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
@@ -478,7 +479,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_saxs_sans();
       void show_plot_saxs();
       void load_saxs(QString filename = "");
-      void clear_plot_saxs();
+      void clear_plot_saxs( bool quiet = false );
       void show_plot_sans();
       void load_sans();
       void update_bin_size(double);

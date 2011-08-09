@@ -194,6 +194,10 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void save_csv_saxs_prr();
       QString vector_double_to_csv( vector < double > vd );
       double compute_pr_area( vector < double > vd, vector < double > r );
+
+      // message utility
+      void editor_msg( QString color, QString msg );
+      QString iqq_suffix();
       
    public :
       void add_file( QString filename );

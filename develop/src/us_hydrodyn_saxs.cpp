@@ -3363,7 +3363,7 @@ void US_Hydrodyn_Saxs::print()
 }
 
 
-void US_Hydrodyn_Saxs::clear_plot_saxs()
+void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
 {
    qsl_plotted_iq_names.clear();
    dup_plotted_iq_name_check.clear();
@@ -3406,7 +3406,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
    }
 
    bool close_windows = false;
-   if ( any_to_close )
+   if ( any_to_close && !quiet )
    {
       switch( QMessageBox::information( this, 
                                         tr("Close I(q) vs q residual windows"),
@@ -5662,7 +5662,8 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
 void US_Hydrodyn_Saxs::update_iqq_suffix()
 {
    QString qs = "";
-   // don't forget to update us_hydrodyn_saxs_options update to call this
+   // don't forget to update US_Hydrodyn_Saxs_Options update to call this
+   // don't forget about US_Hydrodyn_Batch::iqq_suffix
 
    // the method:
    if ( rb_saxs->isChecked() )

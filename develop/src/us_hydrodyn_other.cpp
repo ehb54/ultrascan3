@@ -3330,7 +3330,7 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_scale_chi2_fitting = true;
    saxs_options.iqq_expt_data_contains_variances = false;
    saxs_options.iqq_expt_data_contains_variances = false;
-   saxs_options.iqq_ask_target_grid = false;
+   saxs_options.iqq_ask_target_grid = true;
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    default_sidechain_overlap = sidechain_overlap;
@@ -5374,3 +5374,159 @@ QString US_Hydrodyn::list_chainIDs( vector < PDB_model > &mv )
    }
    return qs;
 }
+
+
+void US_Hydrodyn::save_state()
+{
+   state_bead_model = bead_model;
+   state_bead_models = bead_models;
+   state_bead_models_as_loaded = bead_models_as_loaded;
+   state_active_atoms = active_atoms;
+   state_residue_list = residue_list;
+   state_residue_list_no_pbr = residue_list_no_pbr;
+   state_multi_residue_map = multi_residue_map;
+   state_valid_atom_map = valid_atom_map;
+   state_residue_atom_hybrid_map = residue_atom_hybrid_map;
+   state_atom_counts = atom_counts;
+   state_has_OXT = has_OXT;
+   state_bead_exceptions = bead_exceptions;
+   state_save_residue_list = save_residue_list;
+   state_save_residue_list_no_pbr = save_residue_list_no_pbr;
+   state_save_multi_residue_map = save_multi_residue_map;
+   state_new_residues = new_residues;
+   state_molecules_residues_atoms = molecules_residues_atoms;
+   state_molecules_residue_name = molecules_residue_name;
+   state_molecules_idx_seq = molecules_idx_seq;
+   state_molecules_residue_errors = molecules_residue_errors;
+   state_molecules_residue_missing_counts = molecules_residue_missing_counts;
+   state_molecules_residue_missing_atoms = molecules_residue_missing_atoms;
+   state_molecules_residue_missing_atoms_beads = molecules_residue_missing_atoms_beads;
+   state_molecules_residue_missing_atoms_skip = molecules_residue_missing_atoms_skip;
+   state_molecules_residue_min_missing = molecules_residue_min_missing;
+   state_broken_chain_end = broken_chain_end;
+   state_broken_chain_head = broken_chain_head;
+   state_unknown_residues = unknown_residues;
+   state_use_residue = use_residue;
+   state_skip_residue = skip_residue;
+   state_last_abb_msgs = last_abb_msgs;
+   state_model_vector = model_vector;
+   state_model_vector_as_loaded = model_vector_as_loaded;
+   state_somo_processed = somo_processed;
+   state_options_log = options_log;
+   state_pdb_file = pdb_file;
+   state_project = project;
+   state_current_model = current_model;
+
+   state_lbl_pdb_file = lbl_pdb_file->text();
+
+   state_lb_model_rows.clear();
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ )
+   {
+      state_lb_model_rows.push_back(lb_model->text(i));
+   }
+   editor_msg("dark blue", "State saved\n");
+}
+
+void US_Hydrodyn::restore_state()
+{
+   bead_model = state_bead_model;
+   bead_models = state_bead_models;
+   bead_models_as_loaded = state_bead_models_as_loaded;
+   active_atoms = state_active_atoms;
+   residue_list = state_residue_list;
+   residue_list_no_pbr = state_residue_list_no_pbr;
+   multi_residue_map = state_multi_residue_map;
+   valid_atom_map = state_valid_atom_map;
+   residue_atom_hybrid_map = state_residue_atom_hybrid_map;
+   atom_counts = state_atom_counts;
+   has_OXT = state_has_OXT;
+   bead_exceptions = state_bead_exceptions;
+   save_residue_list = state_save_residue_list;
+   save_residue_list_no_pbr = state_save_residue_list_no_pbr;
+   save_multi_residue_map = state_save_multi_residue_map;
+   new_residues = state_new_residues;
+   molecules_residues_atoms = state_molecules_residues_atoms;
+   molecules_residue_name = state_molecules_residue_name;
+   molecules_idx_seq = state_molecules_idx_seq;
+   molecules_residue_errors = state_molecules_residue_errors;
+   molecules_residue_missing_counts = state_molecules_residue_missing_counts;
+   molecules_residue_missing_atoms = state_molecules_residue_missing_atoms;
+   molecules_residue_missing_atoms_beads = state_molecules_residue_missing_atoms_beads;
+   molecules_residue_missing_atoms_skip = state_molecules_residue_missing_atoms_skip;
+   molecules_residue_min_missing = state_molecules_residue_min_missing;
+   broken_chain_end = state_broken_chain_end;
+   broken_chain_head = state_broken_chain_head;
+   unknown_residues = state_unknown_residues;
+   use_residue = state_use_residue;
+   skip_residue = state_skip_residue;
+   last_abb_msgs = state_last_abb_msgs;
+   model_vector = state_model_vector;
+   model_vector_as_loaded = state_model_vector_as_loaded;
+   somo_processed = state_somo_processed;
+   options_log = state_options_log;
+   pdb_file = state_pdb_file;
+   project = state_project;
+   current_model = state_current_model;
+
+   lbl_pdb_file->setText( state_lbl_pdb_file );
+
+   lb_model->clear();
+   for ( unsigned int i = 0; i < state_lb_model_rows.size(); i++ )
+   {
+      lb_model->insertItem(state_lb_model_rows[i]);
+   }
+   if ( state_lb_model_rows.size() )
+   {
+      lb_model->setSelected(0, true);
+   }
+   editor_msg("dark blue", "Saved state restored\n");
+}
+
+void US_Hydrodyn::clear_state()
+{
+   state_bead_model.clear();
+   state_bead_models.clear();
+   state_bead_models_as_loaded.clear();
+   state_active_atoms.clear();
+   state_residue_list.clear();
+   state_residue_list_no_pbr.clear();
+   state_multi_residue_map.clear();
+   state_valid_atom_map.clear();
+   state_residue_atom_hybrid_map.clear();
+   state_atom_counts.clear();
+   state_has_OXT.clear();
+   state_bead_exceptions.clear();
+   state_save_residue_list.clear();
+   state_save_residue_list_no_pbr.clear();
+   state_save_multi_residue_map.clear();
+   state_new_residues.clear();
+   state_molecules_residues_atoms.clear();
+   state_molecules_residue_name.clear();
+   state_molecules_idx_seq.clear();
+   state_molecules_residue_errors.clear();
+   state_molecules_residue_missing_counts.clear();
+   state_molecules_residue_missing_atoms.clear();
+   state_molecules_residue_missing_atoms_beads.clear();
+   state_molecules_residue_missing_atoms_skip.clear();
+   state_molecules_residue_min_missing.clear();
+   state_broken_chain_end.clear();
+   state_broken_chain_head.clear();
+   state_unknown_residues.clear();
+   state_use_residue.clear();
+   state_skip_residue.clear();
+   state_model_vector.clear();
+   state_model_vector_as_loaded.clear();
+   state_somo_processed.clear();
+   state_lb_model_rows.clear();
+
+   state_last_abb_msgs = "";
+   state_options_log = "";
+   state_pdb_file = "";
+   state_project = "";
+
+   state_lbl_pdb_file = "";
+   state_current_model = 0;
+   editor_msg("dark blue", "Saved state cleared\n");
+}
+
+

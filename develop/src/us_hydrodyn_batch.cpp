@@ -1481,10 +1481,25 @@ void US_Hydrodyn_Batch::start()
                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                {
                   // loop through them:
+                  unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+#if defined(USE_H)
+                  // save everything if hydrate on
+                  if ( batch->hydrate )
+                  {
+                     ((US_Hydrodyn *)us_hydrodyn)->save_state();
+                  }
+#endif
+                  
                   for ( unsigned int i = 0;
-                        i < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                        i < lb_model_rows;
                         i++ ) 
                   {
+#if defined(USE_H)
+                     if ( batch->hydrate )
+                     {
+                        ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                     }
+#endif
                      // select only one
                      ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
                      for ( unsigned int j = 0;
@@ -1496,13 +1511,104 @@ void US_Hydrodyn_Batch::start()
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
-                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
+#if defined(USE_H)
+                     if ( batch->hydrate )
+                     {
+                        if ( !pdb_mode )
+                        {
+                           // we should never get here since bead models normally don't contain multiple models
+                           // but possible some sort of DAM model might...
+                           editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
+                        } else {
+                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                        }
+                     }
+                     if ( result )
+                     {
+#endif
+                        if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+                        {
+                           ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs();
+                        }
+
+                        result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
+                                                                        !batch->csv_saxs || batch->create_native_saxs
+                                                                        ) ? false : true;
+                        if ( batch->csv_saxs )
+                        {
+
+#if defined(USE_H)
+                           if ( batch->hydrate )
+                           {
+                              csv_source_name_iqq.push_back( file + " hydrated " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                           } else {
+#endif                              
+                              csv_source_name_iqq.push_back( file + " " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+#if defined(USE_H)
+                           }
+#endif
+                           saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                           saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                           if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                           {
+                              saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                           }
+                           saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                           saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                           saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
+                        }
+#if defined(USE_H)
+                     }
+#endif
+                  }
+#if defined(USE_H)
+                  if ( batch->hydrate )
+                  {
+                     ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                     ((US_Hydrodyn *)us_hydrodyn)->clear_state();
+                  }
+#endif
+               } else {
+#if defined(USE_H)
+                  if ( batch->hydrate )
+                  {
+                     if ( !pdb_mode )
+                     {
+                        // we should never get here since bead models normally don't contain multiple models
+                        // but possible some sort of DAM model might...
+                        editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
+                     } else {
+                        ((US_Hydrodyn *)us_hydrodyn)->save_state();
+                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                     }
+                  }
+                  if ( result )
+                  {
+#endif
+                     if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+                     {
+                        ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs();
+                     }
+
+                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
                                                                      !batch->csv_saxs || batch->create_native_saxs
                                                                      ) ? false : true;
                      if ( batch->csv_saxs )
                      {
-                        csv_source_name_iqq.push_back( file + " " + 
-                                                       ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+#if defined(USE_H)
+                        if ( batch->hydrate )
+                        {
+                           csv_source_name_iqq.push_back( file + " hydrated " + 
+                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                        } else {
+#endif
+                           csv_source_name_iqq.push_back( file + " " + 
+                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+#if defined(USE_H)
+                        }
+#endif
                         saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
                         saxs_header_iqq.replace(QRegExp("from .* by"),"by");
                         if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
@@ -1512,26 +1618,18 @@ void US_Hydrodyn_Batch::start()
                         saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
                         saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
                         saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
+                     }               
+#if defined(USE_H)
+                  }
+                  if ( batch->hydrate )
+                  {
+                     if ( pdb_mode )
+                     {
+                        ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                        ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                      }
                   }
-               } else {
-                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
-                                                                  !batch->csv_saxs || batch->create_native_saxs
-                                                                  ) ? false : true;
-                  if ( batch->csv_saxs )
-                  {
-                     csv_source_name_iqq.push_back( file + " " + 
-                                                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
-                     saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                     saxs_header_iqq.replace(QRegExp("from .* by"),"by");
-                     if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
-                     {
-                        saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
-                     }
-                     saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
-                     saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
-                     saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
-                  }               
+#endif
                }   
                restore_us_hydrodyn_settings();
             } 
@@ -1558,10 +1656,24 @@ void US_Hydrodyn_Batch::start()
                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                {
                   // loop through them:
+                  unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+#if defined(USE_H)
+                  // save everything if hydrate on
+                  if ( batch->hydrate )
+                  {
+                     ((US_Hydrodyn *)us_hydrodyn)->save_state();
+                  }
+#endif
                   for ( unsigned int i = 0;
-                        i < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                        i <  lb_model_rows;
                         i++ ) 
                   {
+#if defined(USE_H)
+                     if ( batch->hydrate )
+                     {
+                        ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                     }
+#endif
                      // select only one
                      ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
                      for ( unsigned int j = 0;
@@ -1573,13 +1685,93 @@ void US_Hydrodyn_Batch::start()
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
+#if defined(USE_H)
+                     if ( batch->hydrate )
+                     {
+                        if ( !pdb_mode )
+                        {
+                           // we should never get here since bead models normally don't contain multiple models
+                           // but possible some sort of DAM model might...
+                           editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
+                        } else {
+                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                        }
+                     }
+                     if ( result )
+                     {
+#endif
+                        result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
+                                                                        !batch->csv_saxs || batch->create_native_saxs
+                                                                        ) ? false : true;
+                        if ( batch->csv_saxs )
+                        {
+#if defined(USE_H)
+                           if ( batch->hydrate )
+                           {
+                              csv_source_name_prr.push_back( file + " hydrated " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                           } else {
+#endif                              
+                              csv_source_name_prr.push_back( file + " " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+#if defined(USE_H)
+                           }
+#endif
+                           saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                           saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                           if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                           {
+                              saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                           }
+                           saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
+                           saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+                           saxs_prr_mw.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw);
+                        }
+#if defined(USE_H)
+                     }
+#endif
+                  }
+#if defined(USE_H)
+                  if ( batch->hydrate )
+                  {
+                     ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                     ((US_Hydrodyn *)us_hydrodyn)->clear_state();
+                  }
+#endif
+               } else {
+#if defined(USE_H)
+                  if ( batch->hydrate )
+                  {
+                     if ( !pdb_mode )
+                     {
+                        // we should never get here since bead models normally don't contain multiple models
+                        // but possible some sort of DAM model might...
+                        editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
+                     } else {
+                        ((US_Hydrodyn *)us_hydrodyn)->save_state();
+                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                     }
+                  }
+                  if ( result )
+                  {
+#endif
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
                                                                      !batch->csv_saxs || batch->create_native_saxs
                                                                      ) ? false : true;
                      if ( batch->csv_saxs )
                      {
-                        csv_source_name_prr.push_back( file + " " + 
-                                                       ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+#if defined(USE_H)
+                        if ( batch->hydrate )
+                        {
+                           csv_source_name_prr.push_back( file + " hydrated " + 
+                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                        } else {
+#endif
+                           csv_source_name_prr.push_back( file + " " + 
+                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+#if defined(USE_H)
+                        }
+#endif
                         saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
                         saxs_header_prr.replace(QRegExp("from .* by"),"by");
                         if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
@@ -1590,26 +1782,18 @@ void US_Hydrodyn_Batch::start()
                         saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
                         saxs_prr_mw.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw);
                      }
+#if defined(USE_H)
                   }
-               } else {
-                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
-                                                                  !batch->csv_saxs || batch->create_native_saxs
-                                                                  ) ? false : true;
-                  if ( batch->csv_saxs )
+                  if ( batch->hydrate )
                   {
-                     csv_source_name_prr.push_back( file + " " + 
-                                                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
-                     saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                     saxs_header_prr.replace(QRegExp("from .* by"),"by");
-                     if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                     if ( pdb_mode )
                      {
-                        saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                        ((US_Hydrodyn *)us_hydrodyn)->restore_state();
+                        ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                      }
-                     saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
-                     saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
-                     saxs_prr_mw.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw);
                   }
-               }                  
+#endif
+               }   
                restore_us_hydrodyn_settings();
             } 
             progress->setProgress( 1 + i * 2 );
@@ -2206,7 +2390,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
 {
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      batch->csv_saxs_name + "_iqq.csv";
+      batch->csv_saxs_name + "_iqq" + iqq_suffix() + ".csv";
    if ( QFile::exists(fname) )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
@@ -2478,4 +2662,62 @@ double US_Hydrodyn_Batch::compute_pr_area( vector < double > vd, vector < double
       delta = r[1] - r[0];
    }
    return sum * delta;
+}
+
+void US_Hydrodyn_Batch::editor_msg( QString color, QString msg )
+{
+   QColor save_color = editor->color();
+   editor->setColor(color);
+   editor->append(msg);
+   editor->setColor(save_color);
+}
+
+QString US_Hydrodyn_Batch::iqq_suffix()
+{
+   QString qs;
+   saxs_options *our_saxs_options = &((US_Hydrodyn *)us_hydrodyn)->saxs_options;
+
+   if ( !our_saxs_options->saxs_sans )
+   {
+      if ( our_saxs_options->saxs_iq_crysol )
+      {
+         qs += "cr";
+         qs += QString("_h%1_g%2_hs%3")
+            .arg( our_saxs_options->crysol_max_harmonics )
+            .arg( our_saxs_options->crysol_fibonacci_grid_order )
+            .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+      } else {
+         if ( our_saxs_options->saxs_iq_foxs )
+         {
+            qs += "fx";
+         } else {
+            if ( our_saxs_options->saxs_iq_native_debye )
+            {
+               qs += "db";
+            }
+            if ( our_saxs_options->saxs_iq_native_fast )
+            {
+               qs += "fd";
+            }
+            if ( our_saxs_options->saxs_iq_native_hybrid )
+            {
+               qs += "hy";
+            }
+            if ( our_saxs_options->saxs_iq_native_hybrid2 )
+            {
+               qs += "h2";
+            }
+            if ( our_saxs_options->scale_excl_vol != 1e0 )
+            {
+               qs += QString("_evs%1")
+                  .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+            }
+            if ( !our_saxs_options->autocorrelate )
+            {
+               qs += "_nac";
+            }
+         }
+      }
+   }
+   return qs.length() ? ( "-" + qs ) : "";
 }

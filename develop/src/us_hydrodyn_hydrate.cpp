@@ -35,7 +35,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                             error_msg );
       return -1;
    } 
-   cout << list_rotamers( false );
+   //   cout << list_rotamers( false );
 
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -1375,11 +1375,11 @@ void US_Hydrodyn::build_to_hydrate()
          {
             to_hydrate[ mapkey ][ this_atom->name ] = this_atom->coordinate;
 
-            cout << QString("adding %1 %2 %3 %4\n")
-               .arg(this_atom->resName)
-               .arg(this_atom->resSeq)
-               .arg(this_atom->chainID)
-               .arg(this_atom->name);
+            // cout << QString("adding %1 %2 %3 %4\n")
+            // .arg(this_atom->resName)
+            // .arg(this_atom->resSeq)
+            // .arg(this_atom->chainID)
+            // .arg(this_atom->name);
          }
 
       }
@@ -1506,13 +1506,13 @@ void US_Hydrodyn::list_exposed()
          if ( this_atom->exposed_code == 1 &&
               this_atom->chain == 1 )
          {
-            // cout << 
-            // QString("%1 %2 %3 %4 %5\n")
-            // .arg(this_atom->serial)
-            // .arg(this_atom->name)
-            // .arg(this_atom->resName)
-            // .arg(this_atom->chainID)
-            // .arg(this_atom->resSeq);
+            cout << 
+               QString("%1 %2 %3 %4 %5\n")
+               .arg(this_atom->serial)
+               .arg(this_atom->name)
+               .arg(this_atom->resName)
+               .arg(this_atom->chainID)
+               .arg(this_atom->resSeq);
             exposed_sc[ QString( "%1~%2~%3" )
                         .arg( this_atom->resName )
                         .arg( this_atom->resSeq )
@@ -1532,7 +1532,7 @@ void US_Hydrodyn::list_exposed()
 void US_Hydrodyn::view_exposed()
 {
    unsigned int i = current_model;
-   cout << "exposed side chain atom list:\n";
+   // cout << "exposed side chain atom list:\n";
    map < QString, bool > exposed_sc;
    map < QString, QString > use_color;
    
@@ -1562,7 +1562,7 @@ void US_Hydrodyn::view_exposed()
          it != exposed_sc.end();
          it++ )
    {
-      cout << it->first << endl;
+      // cout << it->first << endl;
       out += QString("select %1\ncolour %2\n")
          .arg( it->first )
          .arg( use_color[ it->first ] );
@@ -1813,12 +1813,12 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    {
       return false;
    }
-   cout << list_rotamer_dihedrals();
+   // cout << list_rotamer_dihedrals();
    if ( !compute_water_positioning_atoms( error_msg ) )
    {
       return false;
    }
-   cout << list_water_positioning_atoms();
+   // cout << list_water_positioning_atoms();
    return true;
 }
 
@@ -2186,7 +2186,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
       }
 
       // for each water to add:
-      cout << QString( "need to compute best transform matrix for %1:\n" ).arg( it->first );
+      // cout << QString( "need to compute best transform matrix for %1:\n" ).arg( it->first );
       if ( it->second.water_positioning_atoms.size() !=
            it->second.waters.size() )
       {
@@ -2221,22 +2221,22 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
             }
             p2[ j ] = to_hydrate[ it->first ][ it->second.water_positioning_atoms[ i ][ j ] ];
 
-            cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
-               .arg( it->second.water_positioning_atoms[ i ][ j ] )
-               .arg( p1[ j ].axis[ 0 ] )
-               .arg( p1[ j ].axis[ 1 ] )
-               .arg( p1[ j ].axis[ 2 ] )
-               .arg( p2[ j ].axis[ 0 ] )
-               .arg( p2[ j ].axis[ 1 ] )
-               .arg( p2[ j ].axis[ 2 ] );
+            // cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+            // .arg( it->second.water_positioning_atoms[ i ][ j ] )
+            // .arg( p1[ j ].axis[ 0 ] )
+            // .arg( p1[ j ].axis[ 1 ] )
+            // .arg( p1[ j ].axis[ 2 ] )
+            // .arg( p2[ j ].axis[ 0 ] )
+            // .arg( p2[ j ].axis[ 1 ] )
+            // .arg( p2[ j ].axis[ 2 ] );
          }
          vector < point > rotamer_waters;
          rotamer_waters.push_back( it->second.waters[ i ].coordinate );
          vector < point > new_waters;
-         cout << QString( " and apply it to the point [%1,%2,%3]\n")
-            .arg( it->second.waters[ i ].coordinate.axis[ 0 ] )
-            .arg( it->second.waters[ i ].coordinate.axis[ 1 ] )
-            .arg( it->second.waters[ i ].coordinate.axis[ 2 ] );
+         // cout << QString( " and apply it to the point [%1,%2,%3]\n")
+         // .arg( it->second.waters[ i ].coordinate.axis[ 0 ] )
+         // .arg( it->second.waters[ i ].coordinate.axis[ 1 ] )
+         // .arg( it->second.waters[ i ].coordinate.axis[ 2 ] );
          if ( !atom_align( p1, p2, rotamer_waters, new_waters, error_msg ) )
          {
             return false;

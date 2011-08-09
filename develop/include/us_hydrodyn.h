@@ -529,7 +529,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
                        vector < point > transform_to, 
                        vector < point > apply_from, 
                        vector < point > &result,
-                       QString          &error_msg ); 
+                       QString          &error_msg );
 
       QString last_hydrated_pdb_name;
 
@@ -538,6 +538,57 @@ class US_EXTERN US_Hydrodyn : public QFrame
       float mw_to_volume( float mw, float vbar );
 
       QString list_chainIDs( vector < PDB_model > &mv );
+
+      // state copies
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < PDB_atom >                                 state_bead_model;
+      vector < vector < PDB_atom > >                      state_bead_models;
+      vector < vector < PDB_atom > >                      state_bead_models_as_loaded;
+      vector < PDB_atom * >                               state_active_atoms;
+      vector < struct residue >                           state_residue_list;
+      vector < struct residue >                           state_residue_list_no_pbr;
+      map < QString, vector < int > >                     state_multi_residue_map;
+      map < QString, vector < int > >                     state_valid_atom_map;
+      map < QString, QString >                            state_residue_atom_hybrid_map;
+      map < QString, int >                                state_atom_counts;
+      map < QString, int >                                state_has_OXT;
+      map < QString, int >                                state_bead_exceptions;
+      vector <struct residue>                             state_save_residue_list;
+      vector <struct residue>                             state_save_residue_list_no_pbr;
+      map < QString, vector <int> >                       state_save_multi_residue_map;
+      map < QString, int >                                state_new_residues;
+      map < QString, vector < QString > >                 state_molecules_residues_atoms;
+      map < QString, QString >                            state_molecules_residue_name;
+      vector < QString >                                  state_molecules_idx_seq;
+      map < QString, vector < QString > >                 state_molecules_residue_errors;
+      map < QString, vector < int > >                     state_molecules_residue_missing_counts;
+      map < QString, vector < vector < QString > > >      state_molecules_residue_missing_atoms;
+      map < QString, vector < vector < unsigned int > > > state_molecules_residue_missing_atoms_beads;
+      map < QString, bool >                               state_molecules_residue_missing_atoms_skip;
+      map < QString, int >                                state_molecules_residue_min_missing;
+      map < QString, bool >                               state_broken_chain_end;
+      map < QString, bool >                               state_broken_chain_head;
+      map < QString, bool >                               state_unknown_residues;
+      map < QString, int >                                state_use_residue;
+      map < QString, bool >                               state_skip_residue;
+      QString                                             state_last_abb_msgs;
+      vector < PDB_model >                                state_model_vector;
+      vector < PDB_model >                                state_model_vector_as_loaded;
+      vector < int >                                      state_somo_processed;
+      QString                                             state_options_log;
+      QString                                             state_pdb_file;
+      QString                                             state_project;
+
+      QString                                             state_lbl_pdb_file;
+      vector < QString >                                  state_lb_model_rows;
+      unsigned int                                        state_current_model;
+
+      void save_state();
+      void restore_state();
+      void clear_state();
 
    public:
 
