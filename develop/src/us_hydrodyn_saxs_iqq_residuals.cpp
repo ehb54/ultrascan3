@@ -20,69 +20,12 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
 {
    this->saxs_iqq_residuals_widget = saxs_iqq_residuals_widget;
    this->title = title;
-   this->q = q;
-   this->difference = difference;
-   this->target = target;
-   this->log_difference = log_difference;
-   this->log_target = log_target;
-   this->plot_color = plot_color;
+
    this->use_errors = use_errors;
    this->plot_log = plot_log;
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
 
-   // make sure things aren't to big
-
-   unsigned int min_len = q.size();
-   if ( difference.size() <  min_len ) 
-   {
-      min_len = difference.size();
-   }
-   if ( log_difference.size() <  min_len ) 
-   {
-      min_len = log_difference.size();
-   }
-   if ( target.size() <  min_len ) 
-   {
-      min_len = target.size();
-   }
-   if ( log_target.size() <  min_len ) 
-   {
-      min_len = log_target.size();
-   }
-   q.resize(min_len);
-   difference.resize(min_len);
-   log_difference.resize(min_len);
-   target.resize(min_len);
-   log_target.resize(min_len);
-   difference_pct.resize(min_len);
-   log_difference_pct.resize(min_len);
-   double area = 0e0;
-   double log_area = 0e0;
-   for ( unsigned int i = 0; i < target.size(); i++ )
-   {
-      area += fabs(target[i]);
-      log_area += fabs(log_target[i]);
-   }
-   if ( target.size() )
-   {
-      area /= target.size();
-   }
-   if ( log_target.size() )
-   {
-      log_area /= log_target.size();
-   }
-   cout << "area " << area << endl;
-
-   for ( unsigned int i = 0; i < target.size(); i++ )
-   {
-      difference_pct[i] = 100.0 * difference[i] / area;
-   }
-
-   for ( unsigned int i = 0; i < log_target.size(); i++ )
-   {
-      log_difference_pct[i] = 100.0 * log_difference[i] / area;
-   }
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -90,15 +33,113 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, width, 0);
-   update_plot();
+   detached = false;
+
+   // this should be unnecessary:
+   qs.clear();
+   differences.clear();
+   targets.clear();
+   log_differences.clear();
+   log_targets.clear();
+   plot_colors.clear();
+
+   add(
+       width, 
+       q,
+       difference,
+       target,
+       log_difference,
+       log_target,
+       plot_color
+       );
 }
 
 US_Hydrodyn_Saxs_Iqq_Residuals::~US_Hydrodyn_Saxs_Iqq_Residuals()
 {
-   if ( saxs_iqq_residuals_widget )
+   if ( !detached && saxs_iqq_residuals_widget )
    {
       *saxs_iqq_residuals_widget = false;
    }
+}
+
+void US_Hydrodyn_Saxs_Iqq_Residuals::add(
+                                         unsigned int width,
+                                         vector < double > q,
+                                         vector < double > difference,
+                                         vector < double > target,
+                                         vector < double > log_difference,
+                                         vector < double > log_target,
+                                         QColor plot_color
+                                         )
+{
+   unsigned int pos = qs.size();
+
+   this->qs              .push_back(q);
+   this->differences     .push_back(difference);
+   this->targets         .push_back(target);
+   this->log_differences .push_back(log_difference);
+   this->log_targets     .push_back(log_target);
+   this->plot_colors     .push_back(plot_color);
+
+   difference_pcts       .push_back(log_difference);
+   log_difference_pcts   .push_back(log_difference);
+
+   // make sure things aren't to big
+
+   unsigned int min_len = qs[pos].size();
+   if ( differences[pos].size() <  min_len ) 
+   {
+      min_len = differences[pos].size();
+   }
+   if ( log_differences[pos].size() <  min_len ) 
+   {
+      min_len = log_differences[pos].size();
+   }
+   if ( targets[pos].size() <  min_len ) 
+   {
+      min_len = targets[pos].size();
+   }
+   if ( log_targets[pos].size() <  min_len ) 
+   {
+      min_len = log_targets[pos].size();
+   }
+
+   qs                 [pos].resize(min_len);
+   differences        [pos].resize(min_len);
+   log_differences    [pos].resize(min_len);
+   targets            [pos].resize(min_len);
+   log_targets        [pos].resize(min_len);
+   difference_pcts    [pos].resize(min_len);
+   log_difference_pcts[pos].resize(min_len);
+
+   double area = 0e0;
+   double log_area = 0e0;
+   for ( unsigned int i = 0; i < targets[pos].size(); i++ )
+   {
+      area += fabs(targets[pos][i]);
+      log_area += fabs(log_targets[pos][i]);
+   }
+   if ( targets[pos].size() )
+   {
+      area /= targets[pos].size();
+   }
+   if ( log_targets[pos].size() )
+   {
+      log_area /= log_targets[pos].size();
+   }
+
+   for ( unsigned int i = 0; i < targets[pos].size(); i++ )
+   {
+      difference_pcts[pos][i] = 100.0 * differences[pos][i] / area;
+   }
+
+   for ( unsigned int i = 0; i < log_targets[pos].size(); i++ )
+   {
+      log_difference_pcts[pos][i] = 100.0 * log_differences[pos][i] / area;
+   }
+
+   setGeometry(0, 0, width, 0);
+   update_plot();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
@@ -149,18 +190,6 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // QColorGroup qcg_plot_difference = QColorGroup(
-   // QBrush(Qt::yellow), // USglobal->global_colors.cg_normal.foreground(),
-   // USglobal->global_colors.cg_normal.button(), 
-   // USglobal->global_colors.cg_normal.light(), 
-   // USglobal->global_colors.cg_normal.dark(), 
-   // USglobal->global_colors.cg_normal.mid(), 
-   // USglobal->global_colors.cg_normal.text(),
-   // USglobal->global_colors.cg_normal.brightText(), 
-   // USglobal->global_colors.cg_normal.base(), 
-   // QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-   // );
-   // cb_plot_difference->setPalette( QPalette(qcg_plot_difference, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_plot_difference->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    connect(cb_plot_difference, SIGNAL(clicked()), SLOT(set_plot_difference()));
@@ -170,18 +199,6 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_log->setEnabled(true);
    cb_plot_log->setChecked(plot_log);
    cb_plot_log->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // QColorGroup qcg_plot_log = QColorGroup(
-   // QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
-   // USglobal->global_colors.cg_normal.button(), 
-   // USglobal->global_colors.cg_normal.light(), 
-   // USglobal->global_colors.cg_normal.dark(), 
-   // USglobal->global_colors.cg_normal.mid(), 
-   // USglobal->global_colors.cg_normal.text(),
-   // USglobal->global_colors.cg_normal.brightText(), 
-   // USglobal->global_colors.cg_normal.base(), 
-   // QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-   // );
-   // cb_plot_log->setPalette( QPalette(qcg_plot_log, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_plot_log->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    connect(cb_plot_log, SIGNAL(clicked()), SLOT(set_plot_log()));
@@ -191,18 +208,6 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_as_percent->setEnabled(true);
    cb_plot_as_percent->setChecked(plot_as_percent);
    cb_plot_as_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // QColorGroup qcg_plot_as_percent = QColorGroup(
-   // QBrush(Qt::white), //USglobal->global_colors.cg_normal.foreground(),
-   // USglobal->global_colors.cg_normal.button(), 
-   //                                                 USglobal->global_colors.cg_normal.light(), 
-   // USglobal->global_colors.cg_normal.dark(), 
-   // USglobal->global_colors.cg_normal.mid(), 
-   // USglobal->global_colors.cg_normal.text(),
-   // USglobal->global_colors.cg_normal.brightText(), 
-   //                                                  USglobal->global_colors.cg_normal.base(), 
-   //                                                 QBrush(Qt::black) // USglobal->global_colors.cg_normal.background()
-   //);
-   // cb_plot_as_percent->setPalette( QPalette(qcg_plot_as_percent, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_plot_as_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
@@ -261,7 +266,10 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::help()
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::closeEvent( QCloseEvent *e )
 {
-   *saxs_iqq_residuals_widget = false;
+   if ( !detached )
+   {
+      *saxs_iqq_residuals_widget = false;
+   }
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -293,98 +301,102 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 {
    plot->clear();
    plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("I(q)"));
-   if ( plot_log ) 
+   for ( unsigned int pos = 0; pos < qs.size(); pos++ )
    {
-#ifndef QT4
-      long iqq = plot->insertCurve("Log10 I(q) vs q"); 
-      plot->setCurveStyle(iqq, QwtCurve::Lines);
-      plot->setCurveData(iqq, 
-                         (double *)&(q[0]), 
-                         plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
-                         (int)q.size());
-      plot->setCurvePen(iqq, QPen(plot_color, 2, SolidLine));
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
-      curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
-                     (double *)&(q[0]), 
-                     plot_as_percent ? (double *)&(log_difference_pct[0]) : (double *)&(log_difference[0]), 
-                     (int)q.size()
-                     );
-      curve->setPen( QPen(plot_color, 2, SolidLine) );
-      curve->attach( plot );
-#endif
-   }
-   if ( plot_difference ) 
-   {
-#ifndef QT4
-      long iqq = plot->insertCurve("Log10 I(q) vs q"); 
-      plot->setCurveStyle(iqq, QwtCurve::Lines);
-      plot->setCurveData(iqq, 
-                         (double *)&(q[0]), 
-                         plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
-                         (int)q.size());
-      plot->setCurvePen(iqq, QPen(plot_color, 2, SolidLine));
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
-      curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
-                     (double *)&(q[0]), 
-                     plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
-                     (int)q.size()
-                     );
-      curve->setPen( QPen(plot_color, 2, SolidLine) );
-      curve->attach( plot );
-#endif
-      if ( use_errors && !plot_as_percent )
+      if ( plot_log ) 
       {
-         double x[2];
-         double y[2];
-         x[0] = q[0];
-         x[1] = q[q.size() - 1];
-         y[0] = 2;
-         y[1] = 2;
 #ifndef QT4
-         long iqq = plot->insertCurve("+2 sd"); 
+         long iqq = plot->insertCurve("Log10 I(q) vs q"); 
          plot->setCurveStyle(iqq, QwtCurve::Lines);
          plot->setCurveData(iqq, 
-                            (double *)&(x[0]), 
-                            (double *)&(y[0]), 
-                            2);
-         plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+                            (double *)&(qs[pos][0]), 
+                            plot_as_percent ? (double *)&(log_difference_pcts[pos][0]) : (double *)&(log_differences[pos][0]), 
+                            (int)qs[pos].size());
+         plot->setCurvePen(iqq, QPen(plot_colors[pos], 2, SolidLine));
 #else
-         QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
+         QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setData(
-                        (double *)&(x[0]), 
-                        (double *)&(y[0]), 
-                        2
+                        (double *)&(qs[pos][0]), 
+                        plot_as_percent ? (double *)&(log_difference_pcts[pos][0]) : (double *)&(log_differences[pos][0]), 
+                        (int)qs[pos].size()
                         );
-         curve->setPen( QPen(Qt::white, 2, SolidLine) );
-         curve->attach( plot );
-#endif
-         y[0] = -2;
-         y[1] = -2;
-#ifndef QT4
-         iqq = plot->insertCurve("-2 sd"); 
-         plot->setCurveStyle(iqq, QwtCurve::Lines);
-         plot->setCurveData(iqq, 
-                            (double *)&(x[0]), 
-                            (double *)&(y[0]), 
-                            2);
-         plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
-#else
-         QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
-         curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
-                        (double *)&(x[0]), 
-                        (double *)&(y[0]), 
-                        2
-                        );
-         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->setPen( QPen(plot_colors[pos], 2, SolidLine) );
          curve->attach( plot );
 #endif
       }
+      if ( plot_difference ) 
+      {
+#ifndef QT4
+         long iqq = plot->insertCurve("Log10 I(q) vs q"); 
+         plot->setCurveStyle(iqq, QwtCurve::Lines);
+         plot->setCurveData(iqq, 
+                            (double *)&(qs[pos][0]), 
+                            plot_as_percent ? (double *)&(difference_pcts[pos][0]) : (double *)&(differences[pos][0]),
+                            (int)qs[pos].size());
+         plot->setCurvePen(iqq, QPen(plot_colors[pos], 2, SolidLine));
+#else
+         QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(qs[pos][0]), 
+                        plot_as_percent ? (double *)&(difference_pcts[pos][0]) : (double *)&(differences[pos][0]),
+                        (int)qs[pos].size()
+                        );
+         curve->setPen( QPen(plot_colors[pos], 2, SolidLine) );
+         curve->attach( plot );
+#endif
+      }
+   }
+
+   if ( qs.size() && plot_difference && use_errors && !plot_as_percent )
+   {
+      double x[2];
+      double y[2];
+      x[0] = qs[0][0];
+      x[1] = qs[0][qs[0].size() - 1];
+      y[0] = 2;
+      y[1] = 2;
+#ifndef QT4
+      long iqq = plot->insertCurve("+2 sd"); 
+      plot->setCurveStyle(iqq, QwtCurve::Lines);
+      plot->setCurveData(iqq, 
+                         (double *)&(x[0]), 
+                         (double *)&(y[0]), 
+                         2);
+      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setData(
+                     (double *)&(x[0]), 
+                     (double *)&(y[0]), 
+                     2
+                     );
+      curve->setPen( QPen(Qt::white, 2, SolidLine) );
+      curve->attach( plot );
+#endif
+      y[0] = -2;
+      y[1] = -2;
+#ifndef QT4
+      iqq = plot->insertCurve("-2 sd"); 
+      plot->setCurveStyle(iqq, QwtCurve::Lines);
+      plot->setCurveData(iqq, 
+                         (double *)&(x[0]), 
+                         (double *)&(y[0]), 
+                         2);
+      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setData(
+                     (double *)&(x[0]), 
+                     (double *)&(y[0]), 
+                     2
+                     );
+      curve->setPen( QPen(Qt::white, 2, SolidLine) );
+      curve->attach( plot );
+#endif
    }
    plot->replot();
 }

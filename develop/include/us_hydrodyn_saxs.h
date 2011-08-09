@@ -67,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    Q_OBJECT
 
       friend class US_Hydrodyn_Saxs_Options;
+      friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
 
    public:
@@ -301,13 +302,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool                           saxs_residuals_widget;
       US_Hydrodyn_Saxs_Residuals     *saxs_residuals_window;
 
-      bool                           saxs_iqq_residuals_widget;
-#ifndef WIN32
-      US_Hydrodyn_Saxs_Iqq_Residuals *saxs_iqq_residuals_window;
-#endif
 
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
+#endif
+#ifndef WIN32
+      // target indexed iqq residuals windows
+      map < QString, bool >                            saxs_iqq_residuals_widgets;
+      map < QString, US_Hydrodyn_Saxs_Iqq_Residuals *> saxs_iqq_residuals_windows;
 #endif
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;

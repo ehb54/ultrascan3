@@ -32,6 +32,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs;
+
    public:
       US_Hydrodyn_Saxs_Iqq_Residuals(
                                      bool *saxs_iqq_residuals_widget,
@@ -52,6 +54,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      );
       ~US_Hydrodyn_Saxs_Iqq_Residuals();
 
+      void add(
+               unsigned int width,
+               vector < double > q,
+               vector < double > difference,
+               vector < double > target,
+               vector < double > log_difference,
+               vector < double > log_target,
+               QColor plot_color
+               );
+
    private:
 
       QString title;
@@ -60,27 +72,30 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      vector < double > q;
+      vector < vector < double > > qs;
 
-      vector < double > difference;
-      vector < double > log_difference;
+      vector < vector < double > > differences;
+      vector < vector < double > > log_differences;
 
-      vector < double > target;
-      vector < double > log_target;
+      vector < vector < double > > targets;
+      vector < vector < double > > log_targets;
 
-      vector < double > difference_pct;
-      vector < double > log_difference_pct;
+      vector < vector < double > > difference_pcts;
+      vector < vector < double > > log_difference_pcts;
+
+      vector < QColor > plot_colors;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-      QColor            plot_color;
       bool              use_errors;
 
       bool              plot_log;
       bool              plot_difference;
       bool              plot_as_percent;
+
+      bool              detached;
 
       US_Config         *USglobal;
 

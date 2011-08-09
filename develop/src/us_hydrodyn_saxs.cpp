@@ -3392,6 +3392,56 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
    plotted_guinier_b.clear();
    plotted_guinier_x.clear();
    plotted_guinier_y.clear();
+
+   bool any_to_close = false;
+   for ( map < QString, bool >::iterator it = saxs_iqq_residuals_widgets.begin();
+         it != saxs_iqq_residuals_widgets.end();
+         it++ )
+   {
+      if ( it->second == true )
+      {
+         any_to_close = true;
+         break;
+      }
+   }
+
+   bool close_windows = false;
+   if ( any_to_close )
+   {
+      switch( QMessageBox::information( this, 
+                                        tr("Close I(q) vs q residual windows"),
+                                        tr("Do you want to close the I(q) vs q residual window(s)?\n"
+                                           "Note: if you choose not to close them now, they must be manually closed\n"
+                                           ),
+                                        "&Yes",  "&No", 0,
+                                        0,      // Enter == button 0
+                                        1 ) ) { // Escape == button 2
+            case 0: // just go ahead
+               close_windows = true;
+               break;
+            default: // Cancel clicked or Escape pressed
+               break;
+      }
+   }
+
+   for ( map < QString, bool >::iterator it = saxs_iqq_residuals_widgets.begin();
+         it != saxs_iqq_residuals_widgets.end();
+         it++ )
+   {
+      if ( it->second == true )
+      {
+         it->second = false;
+         if ( saxs_iqq_residuals_windows.count(it->first) )
+         {
+            if ( close_windows )
+            {
+               saxs_iqq_residuals_windows[it->first]->close();
+            } else {
+               saxs_iqq_residuals_windows[it->first]->detached = true;
+            }
+         }
+      }
+   }
 }
 
 void US_Hydrodyn_Saxs::show_plot_sans()
@@ -5512,9 +5562,9 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    }
 
    bool use_errors = is_nonzero_vector( I_errors );
-   cout << 
-      QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
-      .arg( use_errors ? "using" : "no" );
+   //   cout << 
+   //      QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
+   //      .arg( use_errors ? "using" : "no" );
    if ( use_errors && I_errors.size() <  min_len ) 
    {
       min_len = I_errors.size();
@@ -5526,20 +5576,20 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    vector < double > log_I1 ( I1.size() );
    vector < double > log_I2 ( I2.size() );
 
-   cout <<
-      QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
+   //   cout <<
+   //      QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
 
-   for ( unsigned int i = 0; i < q.size(); i++ )
-   {
-      cout <<
-         QString("%1\t%2\t%3\t%4\t%5\t%6\n")
-         .arg(q[i])
-         .arg(I1[i])
-         .arg(I2[i])
-         .arg(I_errors[i])
-         .arg(I2[i] - I1[i])
-         .arg(I_errors[i] != 0 ? ( I2[i] - I1[i] ) / I_errors[i] : ( I2[i] - I1[i] ) );
-   }
+   // for ( unsigned int i = 0; i < q.size(); i++ )
+   // {
+   // cout <<
+   // QString("%1\t%2\t%3\t%4\t%5\t%6\n")
+   // .arg(q[i])
+   // .arg(I1[i])
+   // .arg(I2[i])
+   // .arg(I_errors[i])
+   // .arg(I2[i] - I1[i])
+   // .arg(I_errors[i] != 0 ? ( I2[i] - I1[i] ) / I_errors[i] : ( I2[i] - I1[i] ) );
+   // }
 
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
@@ -5562,23 +5612,50 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    }
 
 #ifndef WIN32
-   saxs_iqq_residuals_window = 
-      new US_Hydrodyn_Saxs_Iqq_Residuals(
-                                         &saxs_iqq_residuals_widget,
-                                         plot_saxs->width(),
-                                         tr("Residuals & difference targeting:\n") + title,
-                                         q,
-                                         difference,
-                                         I2,
-                                         log_difference,
-                                         log_I2,
-                                         plot_color,
-                                         use_errors,
-                                         false,
-                                         true,
-                                         !use_errors
-                                         );
-   saxs_iqq_residuals_window->show();
+   if ( saxs_iqq_residuals_widgets.count(title) &&
+        saxs_iqq_residuals_widgets[title] &&
+        saxs_iqq_residuals_windows.count(title)
+        )
+   {
+      // cout << "residuals add\n";
+      saxs_iqq_residuals_windows[title]->add(
+                                             plot_saxs->width(),
+                                             q,
+                                             difference,
+                                             I2,
+                                             log_difference,
+                                             log_I2,
+                                             plot_color
+                                            );
+                                            
+      if (saxs_iqq_residuals_windows[title]->isVisible())
+      {
+         saxs_iqq_residuals_windows[title]->raise();
+      } else {
+         saxs_iqq_residuals_windows[title]->show();
+      }
+
+   } else {
+      // cout << "residuals new\n";
+      saxs_iqq_residuals_widgets[title] = true;
+      saxs_iqq_residuals_windows[title] = 
+         new US_Hydrodyn_Saxs_Iqq_Residuals(
+                                            &saxs_iqq_residuals_widgets[title],
+                                            plot_saxs->width(),
+                                            tr("Residuals & difference targeting:\n") + title,
+                                            q,
+                                            difference,
+                                            I2,
+                                            log_difference,
+                                            log_I2,
+                                            plot_color,
+                                            use_errors,
+                                            false,
+                                            true,
+                                            !use_errors
+                                            );
+      saxs_iqq_residuals_windows[title]->show();
+   }
 #endif
 }
 
@@ -5630,7 +5707,7 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
          }
       }
    }
-   cout << "qs is now " << qs << endl;
+   // cout << "qs is now " << qs << endl;
    le_iqq_full_suffix->setText(qs);
 }
 
