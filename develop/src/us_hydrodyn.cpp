@@ -41,7 +41,7 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
-// #define USE_H
+#define USE_H
 
 // note: this program uses cout and/or cerr and this should be replaced
 

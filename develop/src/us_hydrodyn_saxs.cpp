@@ -443,6 +443,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_saxs_sans, SIGNAL(clicked()), SLOT(load_saxs_sans()));
 
+   pb_load_plot_saxs = new QPushButton(tr("Load Plotted"), this);
+   pb_load_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_plot_saxs->setMinimumHeight(minHeight1);
+   pb_load_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_plot_saxs, SIGNAL(clicked()), SLOT(load_plot_saxs()));
+
    pb_clear_plot_saxs = new QPushButton("", this);
    Q_CHECK_PTR(pb_clear_plot_saxs);
    pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -458,7 +464,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_native_saxs, SIGNAL(clicked()), SLOT(set_create_native_saxs()));
 
-   pb_load_gnom = new QPushButton("Load GNOM file", this);
+   pb_load_gnom = new QPushButton("Load GNOM File", this);
    pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    //   pb_load_gnom->setMinimumHeight(minHeight1);
    pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -636,7 +642,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_contrib->setEnabled(false);
    connect(pb_pr_contrib, SIGNAL(clicked()), SLOT(show_pr_contrib()));
 
-   pb_plot_pr = new QPushButton(tr("Compute P(r) distribution"), this);
+   pb_plot_pr = new QPushButton(tr("Compute P(r) Distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_plot_pr->setMinimumHeight(minHeight1);
@@ -650,7 +656,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
 
-   pb_load_plot_pr = new QPushButton(tr("Load plotted P(r)"), this);
+   pb_load_plot_pr = new QPushButton(tr("Load Plotted P(r)"), this);
    Q_CHECK_PTR(pb_load_plot_pr);
    pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_plot_pr->setMinimumHeight(minHeight1);
@@ -868,8 +874,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(progress_saxs, j, 1);
    j++;
 
-   background->addWidget(pb_load_saxs_sans, j, 0);
-   background->addWidget(pb_clear_plot_saxs, j, 1);
+   
+   QBoxLayout *hbl_load_saxs = new QHBoxLayout(0);
+   hbl_load_saxs->addWidget(pb_load_saxs_sans);
+   hbl_load_saxs->addWidget(pb_load_plot_saxs);
+   hbl_load_saxs->addWidget(pb_clear_plot_saxs);
+   background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
    j++;
 
    background->addWidget(pb_load_gnom, j, 0);
@@ -3362,8 +3372,12 @@ void US_Hydrodyn_Saxs::print()
 #endif
 }
 
+void US_Hydrodyn_Saxs::load_plot_saxs()
+{
+   rb_sans->isChecked() ? load_sans( "", true ) : load_saxs( "", true );
+}
 
-void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
+void US_Hydrodyn_Saxs::clear_plot_saxs_data()
 {
    qsl_plotted_iq_names.clear();
    dup_plotted_iq_name_check.clear();
@@ -3392,7 +3406,47 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
    plotted_guinier_b.clear();
    plotted_guinier_x.clear();
    plotted_guinier_y.clear();
+}
 
+void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
+{
+   // save 1st data experimental data
+
+   vector < vector < double > > qs;
+   vector < vector < double > > Is;
+   vector < vector < double > > I_errors;
+   vector < QString >           names;
+
+   for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+   {
+      if ( is_nonzero_vector( plotted_I_error[ i ] ) )
+      {
+         qs.      push_back( plotted_q           [ i ] );
+         Is.      push_back( plotted_I           [ i ] );
+         I_errors.push_back( plotted_I_error     [ i ] );
+         names.   push_back( qsl_plotted_iq_names[ i ] );
+      }
+   }
+
+   clear_plot_saxs_data();
+
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      puts("replotting");
+      plot_one_iqq( qs[ i ], Is[ i ], I_errors[ i ], names[ i ] );
+   }
+}
+
+void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
+{
+   if ( !quiet &&
+        iq_plot_experimental_and_calculated_present() )
+   {
+      clear_plot_saxs_and_replot_experimental();
+   } else {
+      clear_plot_saxs_data();
+   }
+      
    bool any_to_close = false;
    for ( map < QString, bool >::iterator it = saxs_iqq_residuals_widgets.begin();
          it != saxs_iqq_residuals_widgets.end();
@@ -3405,7 +3459,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
       }
    }
 
-   bool close_windows = false;
+   bool close_windows = quiet;
    if ( any_to_close && !quiet )
    {
       switch( QMessageBox::information( this, 
@@ -3503,7 +3557,7 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
    update_iqq_suffix();
 }
 
-void US_Hydrodyn_Saxs::load_sans()
+void US_Hydrodyn_Saxs::load_sans( QString, bool )
 {
 }
 
@@ -5804,4 +5858,30 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
    }
+}
+
+bool US_Hydrodyn_Saxs::iq_plot_experimental_and_calculated_present()
+{
+   if ( plotted_q.size() <= 1 )
+   {
+      return false;
+   }
+
+   bool any_experimental = false;
+   bool any_calculated   = false;
+
+   for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+   {
+      if ( is_nonzero_vector( plotted_I_error[ i ] ) )
+      {
+         any_experimental = true;
+      } else {
+         any_calculated   = true;
+      }
+      if ( any_experimental && any_calculated )
+      {
+         return true;
+      }
+   }  
+   return false;
 }

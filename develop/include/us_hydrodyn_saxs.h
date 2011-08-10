@@ -149,6 +149,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPushButton *pb_plot_saxs_sans;
       QPushButton *pb_load_saxs_sans;
+      QPushButton *pb_load_plot_saxs;
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
@@ -390,6 +391,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
+      double last_rescaling_multiplier;
+      double last_rescaling_offset;
+
+      void rescale_iqq_curve_using_last_rescaling( vector < double > &I, bool use_offset = false );
 
       void rescale_iqq_curve( QString scaling_target,
                               vector < double > &q,
@@ -448,6 +453,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void ask_iq_target_grid();
 
+      void load_iqq_csv( QString filename, bool just_plotted_curves = false );
+
+      bool iq_plot_experimental_and_calculated_present();
+      void clear_plot_saxs_and_replot_experimental();
+      void clear_plot_saxs_data();
+
    private slots:
 
       void foxs_readFromStdout();
@@ -477,18 +488,19 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_saxs_iq(int);
       void set_sans_iq(int);
       void load_saxs_sans();
+      void load_plot_saxs();
       void show_plot_saxs();
-      void load_saxs(QString filename = "");
+      void load_saxs( QString filename = "", bool just_plotted_curves = false );
       void clear_plot_saxs( bool quiet = false );
       void show_plot_sans();
-      void load_sans();
+      void load_sans( QString filename = "", bool just_plotted_curves = false );
       void update_bin_size(double);
       void update_guinier_cutoff(double);
       void show_pr_contrib();
       void update_pr_contrib_low(const QString &);
       void update_pr_contrib_high(const QString &);
       void set_curve(int);
-      void load_pr(bool just_plotted_curves = false);
+      void load_pr( bool just_plotted_curves = false );
       void load_plot_pr();
       void clear_plot_pr();
       void cancel();

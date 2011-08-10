@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_saxs_util.h"
+#include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 
 #define SLASH "/"
@@ -14,8 +15,919 @@
 # define isnan(x) _isnan(x)
 #endif
 
-void US_Hydrodyn_Saxs::load_saxs(QString filename)
+void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves )
 {
+
+   vector < QString > filenames; // for later use to support multiple csv file loads
+
+   if ( filename.isEmpty() && !just_plotted_curves )
+   {
+      return;
+   }
+   QFile f( filename );
+
+   // attempt to read a csv file
+   QStringList qsl;
+   QStringList qsl_data_lines_plotted;  // for potential later average save
+   if ( !just_plotted_curves )
+   {
+      if ( !f.open(IO_ReadOnly) )
+      {
+         QMessageBox::warning( this, "UltraScan",
+                               QString(tr("Can not open file ")
+                                    + filename ) );
+         return;
+      }
+      QTextStream ts(&f);
+      while ( !ts.atEnd() )
+      {
+         qsl << ts.readLine();
+      }
+      f.close();
+   }
+   
+   QStringList qsl_headers = qsl.grep("\"Name\",\"Type; q:\"");
+   if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
+   {
+      QMessageBox mb(tr("UltraScan Warning"),
+                     tr("The csv file ") + filename + tr(" does not appear to contain a correct header.\n"
+                                                         "Please manually correct the csv file."),
+                     QMessageBox::Critical,
+                     QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+      mb.exec();
+      return;
+   }
+   
+   if ( qsl_headers.size() > 1 ) 
+   {
+      QString ref = qsl_headers[0];
+      for ( unsigned int i = 1; i < (unsigned int)qsl_headers.size(); i++ )
+      {
+         if ( ref != qsl_headers[i] )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" contains multiple different headers\n"
+                                                               "Please manually correct the csv file."),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+      }
+   }
+   
+   vector < double > q;
+   vector < double > I;
+   vector < double > I_errors;
+
+   // get the q values
+   QStringList qsl_q;
+   QString header_tag;
+   
+   if ( just_plotted_curves &&
+        !qsl_plotted_iq_names.size() )
+   {
+         QMessageBox::warning( this, "UltraScan",
+                               QString(tr("There is nothing plotted!")) );
+         return;
+   }      
+
+   if ( !just_plotted_curves )
+   {
+      qsl_q = QStringList::split(",",qsl_headers[0],true);
+      if ( qsl_q.size() < 3 )
+      {
+         QMessageBox mb(tr("UltraScan Warning"),
+                        tr("The csv file ") + filename + tr(" does not appear to contain any q values in the header rows.\n"),
+                        QMessageBox::Critical,
+                        QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         mb.exec();
+         return;
+      }
+      q.push_back(qsl_q[2].toDouble());
+      QStringList::iterator it = qsl_q.begin();
+      it += 3;
+      for ( ; it != qsl_q.end(); it++ )
+      {
+         if ( (*it).toDouble() > q[q.size() - 1] )
+         {
+            q.push_back((*it).toDouble());
+         } else {
+            break;
+         }
+      }
+   } else {
+      q = plotted_q[0];
+      header_tag = "Plotted I(q) curves";
+      QString header = 
+         QString("\"Name\",\"Type; q:\",%1,%2\n")
+         .arg(vector_double_to_csv(q))
+         .arg(header_tag);
+      qsl << header;
+   }
+   
+   // ok, we have a header line
+   
+   // do we have multiple additonal files to plot ?
+   // this needs to be gone over again in detail, since it is a copy of the prr version
+
+   if ( filenames.size() > 1 )
+   {
+      map < QString, bool > interp_msg_done;
+      for ( unsigned int i = 1; i < (unsigned int)filenames.size(); i++ )
+      {
+         cout << QString("trying file %1 %2\n").arg(i).arg(filenames[i]);
+         QFile f2(filenames[i]);
+         if ( !f2.open(IO_ReadOnly) )
+         {
+            QMessageBox::information( this, "UltraScan",
+                                      tr("Can not open the file for reading:\n") +
+                                      f2.name()
+                                      );
+            return;
+         }
+         
+         // append (and possibly interpolate) all the other files
+         QStringList qsl2;
+         QTextStream ts(&f2);
+         while ( !ts.atEnd() )
+         {
+            qsl2 << ts.readLine();
+         }
+         f2.close();
+         QStringList qsl2_headers = qsl2.grep("\"Name\",\"Type; q:\"");
+         
+         qsl2_headers = qsl2.grep("\"Name\",\"Type; q:\"");
+         if ( qsl2_headers.size() == 0 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + f2.name() + tr(" does not appear to contain a correct header.\n"
+                                                                "Please manually correct the csv file."),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+         if ( qsl2_headers.size() > 1 ) 
+         {
+            QString ref = qsl2_headers[0];
+            for ( unsigned int i = 1; i < (unsigned int)qsl2_headers.size(); i++ )
+            {
+               if ( ref != qsl2_headers[i] )
+               {
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The csv file ") + filename + tr(" contains multiple different headers\n"
+                                                                     "Please manually correct the csv file."),
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  return;
+               }
+            }
+         }
+         // get the data
+         map < QString, QString > name_to_errors_map;
+         QStringList qsl_data = qsl2.grep(",\"I(q)\",");
+         if ( qsl_data.size() == 0 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+
+         // get possible errors data
+         QStringList qsl_errors = qsl2.grep(",\"I(q) sd\",");
+         for ( QStringList::iterator it = qsl_errors.begin();
+               it != qsl_errors.end();
+               it++ )
+         {
+            QStringList qsl_iq_errors = QStringList::split(",",*it,true);
+            name_to_errors_map[ qsl_iq_errors[ 0 ] ] = *it;
+         }
+         
+         // get the q values
+         QStringList qsl_q;
+         QString header2_tag;
+         vector < double > q2;
+         
+         qsl_q = QStringList::split(",",qsl2_headers[0],true);
+         if ( qsl_q.size() < 3 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + f2.name() + tr(" does not appear to contain any q values in the header rows.\n"),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+         q2.push_back(qsl_q[2].toDouble());
+         QStringList::iterator it = qsl_q.begin();
+         it += 3;
+         for ( ; it != qsl_q.end(); it++ )
+         {
+            if ( (*it).toDouble() > q2[q2.size() - 1] )
+            {
+               q2.push_back((*it).toDouble());
+            } else {
+               break;
+            }
+         }
+
+         // possibly append more q values ?
+         unsigned int max_size = q2.size();
+         double max_value = q2[max_size - 1];
+         if ( q.size() > 1 && q[q.size() - 1] < max_value )
+         {
+            double q_delta = q[1] - q[0];
+            if ( q_delta > 0e0 )
+            {
+               for ( double value = q[q.size() -1] + q_delta;
+                     value <= max_value;
+                     value += q_delta )
+               {
+                  q.push_back(value);
+               }
+            }
+         }
+         
+         if ( max_size > q.size() )
+         {
+            max_size = q.size();
+         }                  
+         // cout << QString("max size %1\n").arg(max_size);
+         bool all_match = true;
+         for ( unsigned int i = 0; i < max_size; i++ )
+         {
+            if ( q[i] != q2[i] )
+            {
+               all_match = false;
+               break;
+            }
+         }
+         // cout << QString("check all match %1\n").arg(all_match ? "true" : false);
+         
+         for ( QStringList::iterator it = qsl_data.begin();
+               it != qsl_data.end();
+               it++ )
+         {
+            QStringList qsl_iq = QStringList::split(",",*it,true);
+            if ( qsl_iq.size() < 3 )
+            {
+               QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient I(q) values in data row " + qsl_iq[0] + ", skipping\n");
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(msg);
+               editor->setColor(save_color);
+            } else {
+               // build up new row to append to qsl
+               if ( all_match )
+               {
+                  QString qs_tmp = *it;
+                  // optionally? 
+                  if ( qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+                  {
+                     qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                  }
+                  qsl << qs_tmp;
+                  // cout << "yes, all match\nadding:" << qs_tmp << endl;
+               } else {
+                  // cout << "not all match, interpolate\n";
+
+                  if ( !interp_msg_done.count(f2.name()) )
+                  {
+                     interp_msg_done[f2.name()] = true;
+                     QString msg = tr("The csv file ") + f2.name() + tr(" will be interpolated\n");
+                     QColor save_color = editor->color();
+                     editor->setColor("dark red");
+                     editor->append(msg);
+                     editor->setColor(save_color);
+                  }
+                  // the new iq:
+                  QStringList new_iq_fields;
+                  // pull the data values
+                  vector < double > this_iq;
+                  for ( unsigned int i = 0; i < 2; i++ )
+                  {
+                     new_iq_fields.push_back(qsl_iq[i]);
+                  }
+                  {
+                     QStringList::iterator it2 = qsl_iq.begin();
+                     it2 += 2;
+                     for ( ; it2 != qsl_iq.end(); it2++ )
+                     {
+                        this_iq.push_back((*it2).toDouble());
+                     }
+                  }
+                  // interpolate q2, iq to r, reappend to new_iq_fields
+                  vector < double > niq = interpolate(q, q2, this_iq);
+                  QString line = QString("%1,%2\n")
+                     .arg(new_iq_fields.join(","))
+                     .arg(vector_double_to_csv(niq));
+                  if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                  {
+                     line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                  }
+                  qsl << line;
+                  // also check to see if errors need interpolation
+                  if ( name_to_errors_map.count( qsl_iq[ 0 ] ) != 0 )
+                  {
+                     // the new iq:
+                     QStringList qsl_iq_errors = QStringList::split( ",", name_to_errors_map[ qsl_iq[ 0 ] ], true );
+                     QStringList new_iq_errors_fields;
+                     // pull the data values
+                     vector < double > this_iq_errors;
+                     for ( unsigned int i = 0; i < 2; i++ )
+                     {
+                        new_iq_errors_fields.push_back(qsl_iq_errors[i]);
+                     }
+                     {
+                        QStringList::iterator it2 = qsl_iq_errors.begin();
+                        it2 += 2;
+                        for ( ; it2 != qsl_iq_errors.end(); it2++ )
+                        {
+                           this_iq_errors.push_back((*it2).toDouble());
+                        }
+                     }
+                     // interpolate q2, iq to r, reappend to new_iq_fields
+                     vector < double > niq_errors = interpolate(q, q2, this_iq_errors);
+                     QString line = QString("%1,%2\n")
+                        .arg(new_iq_errors_fields.join(","))
+                        .arg(vector_double_to_csv(niq_errors));
+                     if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                     {
+                        line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                     }
+                     qsl << line;
+                  }
+               }
+            }
+         }
+      }            
+   }
+   
+   // append all currently plotted I(q)s to qsl
+   bool added_interpolate_msg = false;
+   QString bin_msg = "";
+   for ( unsigned int i = 0; i < (unsigned int)qsl_plotted_iq_names.size(); i++ )
+   {
+      vector < double > nic = interpolate(q, plotted_q[i], plotted_I[i]);
+      vector < double > nic_errors = interpolate(q, plotted_q[i], plotted_I_error[i]);
+      if ( !added_interpolate_msg && q.size() > 1 )
+      {
+         bin_msg = QString(tr("Plotted I(q) interpolated to delta q of %1")).arg(q[1] - q[0]);
+         if ( plotted_q[i].size() > 1 && 
+              q[1] - q[0] != plotted_q[i][1] - plotted_q[i][0] )
+         {
+            bin_msg +=
+               QString(tr(" which is DIFFERENT from the plotted delta q of %1"))
+               .arg(plotted_q[i][1] - plotted_q[i][0]);
+         }
+         // editor->append(bin_msg + "\n");
+         added_interpolate_msg = true;
+      }
+      QString line = QString("\"%1\",\"I(q)\",%2\n")
+         .arg(qsl_plotted_iq_names[i])
+         .arg(vector_double_to_csv(nic));
+      qsl << line;
+      if ( is_nonzero_vector( nic_errors ) )
+      {
+         QString line = QString("\"%1\",\"I(q) sd\",%2\n")
+            .arg(qsl_plotted_iq_names[i])
+            .arg(vector_double_to_csv(nic_errors));
+         qsl << line;
+      }
+   }
+   
+   if ( filenames.size() > 1 )
+   {
+      QStringList new_qsl;
+      for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
+      {
+         QString qs_tmp = qsl[i];
+         if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+         {
+            new_qsl << qsl[i];
+         }
+      }
+      if ( new_qsl.size() != qsl.size() )
+      {
+         switch( QMessageBox::information( this, 
+                                           tr("UltraScan"),
+                                           tr("There are multiple average and/or standard deviation lines\n") +
+                                           tr("What do you want to do?"),
+                                           tr("&Skip"), 
+                                           tr("&Just averages"),
+                                           tr("&Include"),
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // skip them
+            qsl = new_qsl;
+            break;
+         case 1: // just averages
+            qsl = qsl.grep(QRegExp("(Average|Standard deviation)"));
+            break;
+         case 2: // Cancel clicked or Escape pressed
+            break;
+         }
+      }
+   }
+   
+   QStringList qsl_data = qsl.grep(",\"I(q)\",");
+
+   if ( qsl_data.size() == 0 )
+   {
+      QMessageBox mb(tr("UltraScan Warning"),
+                     tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
+                     QMessageBox::Critical,
+                     QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+      mb.exec();
+      return;
+   }
+   if ( !just_plotted_curves )
+   {
+      header_tag = qsl_q.last();
+   }
+   
+   // get possible errors data
+   map < QString, QString > name_to_errors_map;
+   QStringList qsl_errors = qsl.grep(",\"I(q) sd\",");
+   for ( QStringList::iterator it = qsl_errors.begin();
+         it != qsl_errors.end();
+         it++ )
+   {
+      QStringList qsl_iq_errors = QStringList::split(",",*it,true);
+      name_to_errors_map[ qsl_iq_errors[ 0 ] ] = *it;
+   }
+
+   // build a list of names
+   QStringList qsl_names;
+   for ( QStringList::iterator it = qsl_data.begin();
+         it != qsl_data.end();
+         it++ )
+   {
+      QStringList qsl_tmp = QStringList::split(",",*it,true);
+      qsl_names << qsl_tmp[0];
+   }
+   
+   // ask for the names to load if more than one present (cb list? )
+   QStringList qsl_sel_names;
+   bool create_avg = false;
+   bool create_std_dev = false;
+   bool only_plot_stats = true;
+   save_to_csv = false;
+   csv_filename = "summary";
+   bool save_original_data = false;
+   bool run_nnls = false;
+   bool run_best_fit = false;
+   QString nnls_target = "";
+   
+   US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
+      new US_Hydrodyn_Saxs_Iqq_Load_Csv(
+                                        "Select models to load\n" + header_tag + 
+                                        (bin_msg.isEmpty() ? "" : "\n" + bin_msg),
+                                        &qsl_names,
+                                        &qsl_sel_names,
+                                        &qsl,
+                                        filename,
+                                        &create_avg,
+                                        &create_std_dev,
+                                        &only_plot_stats,
+                                        &save_to_csv,
+                                        &csv_filename,
+                                        &save_original_data,
+                                        &run_nnls,
+                                        &run_best_fit,
+                                        &nnls_target,
+                                        1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
+                                        us_hydrodyn
+                                        );
+   hslc->exec();
+   
+   delete hslc;
+   
+   this->isVisible() ? this->raise() : this->show();
+   
+   // make sure target is selected
+   
+   if ( ( run_nnls || run_best_fit ) &&
+        !qsl_sel_names.grep(nnls_target).size() )
+   {
+      // cout << "had to add target back\n";
+      qsl_sel_names << nnls_target;
+   }
+   
+   // ok, now qsl_sel_names should have the load list
+   // loop through qsl_data and match up 
+   // create a map to avoid a double loop
+   
+   map < QString, bool > map_sel_names;
+   for ( QStringList::iterator it = qsl_sel_names.begin();
+         it != qsl_sel_names.end();
+         it++ )
+   {
+      map_sel_names[*it] = true;
+   }
+
+   // check for scaling target
+
+   QString scaling_target = "";
+   if ( qsl_sel_names.size() &&
+        qsl_plotted_iq_names.size() )
+   {
+      bool ok;
+      scaling_target = QInputDialog::getItem(
+                                             tr("Scale I(q) Curve"),
+                                             tr("Select the target plotted data set for scaling the loaded data:\n"
+                                                "or Cancel of you do not wish to scale")
+                                             , 
+                                             qsl_plotted_iq_names, 
+                                             0, 
+                                             FALSE, 
+                                             &ok,
+                                             this );
+      if ( ok ) {
+         // user selected an item and pressed OK
+      } else {
+         scaling_target = "";
+      }
+   }         
+   
+   // setup for average & stdev
+   vector < double > sum_iq(q.size());
+   vector < double > sum_iq2(q.size());
+   
+   unsigned int sum_count = 0;
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      sum_iq[i] = sum_iq2[i] = 0e0;
+   }
+   
+   // setup for nnls
+   if ( run_nnls || run_best_fit )
+   {
+      if ( run_nnls )
+      {
+         editor->append("NNLS target: " + nnls_target + "\n");
+      }
+      if ( run_best_fit )
+      {
+         editor->append("Best fit target: " + nnls_target + "\n");
+      }
+      nnls_A.clear();
+      nnls_x.clear();
+      nnls_mw.clear();
+      nnls_B.clear();
+      nnls_B_name = nnls_target;
+      nnls_rmsd = 0e0;
+   }
+   
+   bool found_nnls_target = false;
+   bool found_nnls_model = false;
+   
+   // now go through qsl_data and load up any that map_sel_names contains
+   plotted = false;
+   for ( QStringList::iterator it = qsl_data.begin();
+         it != qsl_data.end();
+         it++ )
+   {
+      QStringList qsl_tmp = QStringList::split(",",*it,true);
+      if ( map_sel_names.count(qsl_tmp[0]) )
+      {
+         // cout << "loading: " << qsl_tmp[0] << endl;
+         
+         I.clear();
+         I_errors.clear();
+         
+         // get the Iq values
+         
+         QStringList qsl_iq = QStringList::split(",",*it,true);
+         if ( qsl_iq.size() < 3 )
+         {
+            QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient I(q) values in data row " + qsl_tmp[0] + "\n");
+            QColor save_color = editor->color();
+            editor->setColor("red");
+            editor->append(msg);
+            editor->setColor(save_color);
+            QMessageBox mb(tr("UltraScan Warning"),
+                           msg,
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            break;
+         }
+         qsl_data_lines_plotted << *it;
+
+         QStringList::iterator it = qsl_iq.begin();
+         it += 2;
+         for ( ; it != qsl_iq.end(); it++ )
+         {
+            I.push_back((*it).toDouble());
+         }
+
+         if ( name_to_errors_map.count( qsl_iq[ 0 ] ) != 0 )
+         {
+            QStringList qsl_iq_errors = QStringList::split( ",", name_to_errors_map[ qsl_iq[ 0 ] ], true );
+            QStringList::iterator it = qsl_iq_errors.begin();
+            it += 2;
+            for ( ; it != qsl_iq_errors.end(); it++ )
+            {
+               I_errors.push_back((*it).toDouble());
+            }
+            I_errors.pop_back();
+         }            
+
+         // possible add errors to this (?):
+         if ( run_nnls || run_best_fit )
+         {
+            if ( qsl_tmp[0] == nnls_target )
+            {
+               found_nnls_target = true;
+               nnls_B = I;
+            } else {
+               found_nnls_model = true;
+               nnls_A[qsl_tmp[0]] = I;
+               nnls_x[qsl_tmp[0]] = 0;
+            }
+         }
+
+         // plot it
+         vector < double > this_q = q;
+         // q has the ordinates for the longest data, some will likely be shorter
+         if ( q.size() > I.size() )
+         {
+            this_q.resize(I.size());
+         }
+         // occasionally one may have a zero in the last p(r) position (?) not for I(q)?
+         if ( I.size() > q.size() )
+         {
+            I.resize(q.size());
+         }
+         
+         for ( unsigned int i = 0; i < I.size(); i++ )
+         {
+            sum_iq[i] += I[i];
+            sum_iq2[i] += I[i] * I[i];
+            if ( isnan(I[i]) ) 
+            {
+               cout << QString("WARNING: isnan I[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
+            }
+            if ( isnan(sum_iq[i]) ) 
+            {
+               cout << QString("WARNING: isnan sum_iq[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
+            }
+            if ( isnan(sum_iq2[i]) ) 
+            {
+               cout << QString("WARNING: isnan sum_iq2[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
+            }
+         }
+         sum_count++;
+         
+         if ( !(create_avg && only_plot_stats) && !run_nnls && !run_best_fit )
+         {
+            if ( !scaling_target.isEmpty() && 
+                 plotted_iq_names_to_pos.count(scaling_target) )
+            {
+               rescale_iqq_curve( scaling_target, this_q, I );
+               if ( I_errors.size() )
+               {
+                  rescale_iqq_curve_using_last_rescaling( I_errors );
+               }
+            }
+                  
+            if ( I_errors.size() )
+            {
+               plot_one_iqq(this_q, I, I_errors, QFileInfo(filename).fileName() + " " + qsl_tmp[0]);
+            } else {
+               plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " " + qsl_tmp[0]);
+            }
+         }
+      }
+   }
+   
+   if ( create_avg && sum_count && !run_nnls && !run_best_fit )
+   {
+      I = sum_iq;
+      for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+      {
+         I[i] /= (double)sum_count;
+      }
+      vector < double > this_q = q;
+      if ( q.size() > I.size() )
+      {
+         this_q.resize(I.size());
+      }
+      if ( I.size() > q.size() )
+      {
+         I.resize(q.size());
+      }
+      vector < double > iq_avg = I;
+
+      if ( !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, this_q, iq_avg );
+      }
+      
+      plot_one_iqq(this_q, iq_avg, QFileInfo(filename).fileName() + " Average");
+      
+      vector < double > iq_std_dev;
+      vector < double > iq_avg_minus_std_dev;
+      vector < double > iq_avg_plus_std_dev;
+      
+      if ( create_std_dev && sum_count > 2 )
+      {
+         vector < double > std_dev(sum_iq.size());
+         for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+         {
+            double tmp_std_dev = 
+               sum_iq2[i] - ((sum_iq[i] * sum_iq[i]) / (double)sum_count);
+            std_dev[i] = 
+               tmp_std_dev > 0e0 ?
+               sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
+            if ( isnan(sum_iq[i]) ) 
+            {
+               cout << QString("WARNING when calc'ing std dev: isnan sum_iq[%1]\n").arg(i);
+            }
+            if ( isnan(sum_iq2[i]) ) 
+            {
+               cout << QString("WARNING when calc'ing std dev: isnan sum_iq2[%1]\n").arg(i);
+            }
+            if ( isnan(std_dev[i]) ) 
+            {
+               cout << 
+                  QString("WARNING when calc'ing std dev: isnan std_dev[%1]:\n"
+                          " sum_iq[%2]  == %3\n"
+                          " sum_iq2[%4] == %5\n"
+                          " sum_count   == %6\n"
+                          " sum_iq2 - ((sum_iq * sum_iq) / sum_count)   == %7\n"
+                          )
+                  .arg(i)
+                  .arg(i).arg(sum_iq[i])
+                  .arg(i).arg(sum_iq2[i])
+                  .arg(sum_count)
+                  .arg(sum_iq2[i] - ((sum_iq[i] * sum_iq[i]) / (double)sum_count) )
+                  ;
+            }
+         }
+
+         iq_std_dev = std_dev;
+         
+         I = sum_iq;
+
+         for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+         {
+            I[i] /= (double)sum_count;
+            I[i] -= std_dev[i];
+         }
+         vector < double > this_q = q;
+         if ( q.size() > I.size() )
+         {
+            this_q.resize(I.size());
+         }
+         if ( I.size() > q.size() )
+         {
+            I.resize(q.size());
+         }
+         iq_avg_minus_std_dev = I;
+         
+         if ( !scaling_target.isEmpty() && 
+              plotted_iq_names_to_pos.count(scaling_target) )
+         {
+            rescale_iqq_curve_using_last_rescaling( iq_avg_minus_std_dev );
+         }
+
+         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average minus 1 std dev");
+         
+         I = sum_iq;
+         for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+         {
+            I[i] /= (double)sum_count;
+            I[i] += std_dev[i];
+         }
+         this_q = q;
+         if ( q.size() > I.size() )
+         {
+            this_q.resize(I.size());
+         }
+         if ( I.size() > q.size() )
+         {
+            I.resize(q.size());
+         }
+         iq_avg_plus_std_dev = I;
+         
+         if ( !scaling_target.isEmpty() && 
+              plotted_iq_names_to_pos.count(scaling_target) )
+         {
+            rescale_iqq_curve_using_last_rescaling( iq_avg_minus_std_dev );
+         }
+
+         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average plus 1 std dev");
+      }
+      if ( plotted )
+      {
+         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+         editor->append("I(q) plot done\n");
+         plotted = false;
+      }
+      if ( save_to_csv )
+      {
+         // cout << "save_to_csv\n";
+         QString fname = 
+            ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+            csv_filename + "_iqq.csv";
+         if ( QFile::exists(fname) )
+            // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+         {
+            fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+         }         
+         FILE *of = fopen(fname, "wb");
+         if ( of )
+         {
+            //  header: "name","type",r1,r2,...,rn, header info
+            fprintf(of, "\"Name\",\"Type; q:\",%s,%s\n", 
+                    vector_double_to_csv(q).ascii(),
+                    header_tag.ascii());
+            if ( save_original_data )
+            {
+               fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").ascii());
+            }
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average",
+                    "I(q)",
+                    vector_double_to_csv(iq_avg).ascii());
+            if ( iq_std_dev.size() )
+            {
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       "Standard deviation",
+                       "I(q)",
+                       vector_double_to_csv(iq_std_dev).ascii());
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       "Average minus 1 standard deviation",
+                       "I(q)",
+                       vector_double_to_csv(iq_avg_minus_std_dev).ascii());
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       "Average plus 1 standard deviation",
+                       "I(q)",
+                       vector_double_to_csv(iq_avg_plus_std_dev).ascii());
+            }
+            if ( !save_original_data )
+            {
+               fprintf(of, "\n\n\"%s\"\n", 
+                       QString(" Average of : " + qsl_sel_names.join(";").replace("\"","")).ascii()
+                       );
+            }
+            fclose(of);
+            editor->append(tr("Created file: " + fname + "\n"));
+         } else {
+            QColor save_color = editor->color();
+            editor->setColor("red");
+            editor->append(tr("ERROR creating file: " + fname + "\n"));
+            editor->setColor(save_color);
+         }
+      }
+   } else {
+      if ( run_nnls || run_best_fit )
+      {
+         nnls_r = q;
+         if ( found_nnls_model && found_nnls_target )
+         {
+            nnls_header_tag = header_tag;
+            QString use_csv_filename = save_to_csv ? csv_filename : "";
+            if ( run_nnls )
+            {
+               calc_nnls_fit( nnls_target, use_csv_filename );
+            }
+            if ( run_best_fit )
+            {
+               calc_best_fit( nnls_target, use_csv_filename );
+            }
+         } else {
+            editor->append("NNLS error: could not find target and models in loaded data\n");
+         }
+      }
+      if ( plotted )
+      {
+         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+         editor->append("I(q) plot done\n");
+         plotted = false;
+      }
+   }
+   rescale_plot();
+   return;
+}
+
+
+void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
+{
+   if ( just_plotted_curves )
+   {
+      load_iqq_csv( "", true );
+      return;
+   }
+
    if ( filename.isEmpty() )
    {
       QString use_dir = 
@@ -25,6 +937,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       filename = QFileDialog::getOpenFileName(use_dir, 
                                               "All files (*);;"
                                               "ssaxs files (*.ssaxs);;"
+                                              "csv files (*.csv);;"
                                               "int files [crysol] (*.int);;"
                                               "dat files [foxs / other] (*.dat);;"
                                               "fit files [crysol] (*.fit);;"
@@ -33,7 +946,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                                               , "Open"
                                               , &load_saxs_sans_selected_filter
                                               );
-      if (filename.isEmpty())
+      if ( filename.isEmpty() )
       {
          return;
       }
@@ -43,6 +956,21 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    QFile f(filename);
    our_saxs_options->path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
+
+   if ( ext == "pdb" || ext == "PDB" )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Can not load a PDB file as a curve: ")
+                                    + filename ) );
+      return;
+   }
+
+   if ( ext == "csv" )
+   {
+      load_iqq_csv( filename );
+      return;
+   }
+
    vector < double > I;
    vector < double > I_error;
    vector < double > I2;
@@ -1806,6 +2734,9 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       .arg( fit_msg );
    editor->append(results);
 
+   last_rescaling_multiplier = k;
+   last_rescaling_offset     = 0e0;
+
    for ( unsigned int i = 0; i < I.size(); i++ )
    {
       I[i] = k * I[i];
@@ -1836,4 +2767,16 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    //                             I2,
    //                             save_use_I );
    //   }
+}
+
+void US_Hydrodyn_Saxs::rescale_iqq_curve_using_last_rescaling( vector < double > &I, bool use_offset )
+{
+   for ( unsigned int i = 0; i < I.size(); i++ )
+   {
+      I[ i ] *= last_rescaling_multiplier;
+      if ( use_offset )
+      {
+         I[ i ] += last_rescaling_offset;
+      }
+   }
 }
