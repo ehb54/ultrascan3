@@ -6249,22 +6249,18 @@ void US_Saxs_Util::scaling_fit(
 
    k = 0e0;
 
-   double Sx  = 0e0;
-   double Sy  = 0e0;
    double Sxx = 0e0;
    double Sxy = 0e0;
 
    for ( unsigned int i = 0; i < x.size(); i++ )
    {
-      Sx  += x[i];
-      Sy  += y[i];
       Sxx += x[i] * x[i];
       Sxy += x[i] * y[i];
    }
 
-   if ( Sx != Sxx )
+   if ( Sxx != 0e0 )
    {
-      k = ( Sy - Sxy ) / ( Sx - Sxx );
+      k = Sxy / Sxx;
    } else {
       k = 1e0;
    }
