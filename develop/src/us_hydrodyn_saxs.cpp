@@ -3417,23 +3417,41 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
    vector < vector < double > > I_errors;
    vector < QString >           names;
 
-   for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+   if ( iq_plot_only_experimental_present() )
    {
-      if ( is_nonzero_vector( plotted_I_error[ i ] ) )
+      for ( unsigned int i = 0; i < plotted_I_error.size() - 1; i++ )
       {
          qs.      push_back( plotted_q           [ i ] );
          Is.      push_back( plotted_I           [ i ] );
          I_errors.push_back( plotted_I_error     [ i ] );
          names.   push_back( qsl_plotted_iq_names[ i ] );
       }
+   } else {
+      for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+      {
+         if ( is_nonzero_vector( plotted_I_error[ i ] ) )
+         {
+            qs.      push_back( plotted_q           [ i ] );
+            Is.      push_back( plotted_I           [ i ] );
+            I_errors.push_back( plotted_I_error     [ i ] );
+            names.   push_back( qsl_plotted_iq_names[ i ] );
+         }
+      }
    }
 
    clear_plot_saxs_data();
 
+   plotted = false;
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
       puts("replotting");
       plot_one_iqq( qs[ i ], Is[ i ], I_errors[ i ], names[ i ] );
+   }
+   if ( plotted )
+   {
+      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      editor->append("I(q) plot done\n");
+      plotted = false;
    }
 }
 
@@ -3826,569 +3844,6 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
          ;
    }
    return sum * delta;
-}
-
-void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
-{
-   // setup nnls run:
-   // editor->append("setting up nnls run\n");
-   // unify dimension of nnls_A vectors
-   unsigned int max_pr_len = 0;
-
-   QString tagged_csv_filename = csv_filename;
-
-   if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_nnls", false)) )
-   {
-      tagged_csv_filename += "_nnls";
-   }
-
-   // #define DEBUG_NNLS
-#if defined(DEBUG_NNLS)
-   nnls_A.clear();
-   nnls_A["one"].push_back(1e0);
-   nnls_A["one"].push_back(1e0);
-   nnls_A["one"].push_back(1e0);
-   nnls_A["one"].push_back(1e0);
-   
-   nnls_A["two"].push_back(1e0);
-   nnls_A["two"].push_back(2e0);
-   nnls_A["two"].push_back(2e0);
-   nnls_A["two"].push_back(2e0);
-
-   nnls_A["three"].push_back(1e0);
-   nnls_A["three"].push_back(1e0);
-   nnls_A["three"].push_back(3e0);
-   nnls_A["three"].push_back(3e0);
-   
-   nnls_B.clear();
-   // ideal conc .5 1 2
-   nnls_B.push_back(3.5e0);
-   nnls_B.push_back(4.5e0);
-   nnls_B.push_back(8.5e0);
-   nnls_B.push_back(8.5e0);
-#endif
-
-   for ( map < QString, vector < double > >::iterator it = nnls_A.begin();
-        it != nnls_A.end();
-        it++ )
-   {
-      if ( it->second.size() > max_pr_len ) 
-      {
-         max_pr_len = it->second.size();
-      }
-   }
-
-   // editor->append(QString("a size %1\n").arg(nnls_A.size()));
-   // editor->append(QString("b size %1\n").arg(max_pr_len));
-
-   vector < double > use_A;
-
-   vector < QString > model_names;
-
-   for ( map < QString, vector < double > >::iterator it = nnls_A.begin();
-        it != nnls_A.end();
-        it++ )
-   {
-      unsigned int org_size = it->second.size();
-      it->second.resize(max_pr_len);
-      for ( unsigned int i = org_size; i < max_pr_len; i++ )
-      {
-         it->second[i] = 0e0;
-      }
-      model_names.push_back(it->first);
-      for ( unsigned int i = 0; i < max_pr_len; i++ )
-      {
-         use_A.push_back(it->second[i]);
-#if defined(DEBUG_NNLS)
-         cout << "use_A.push_back " << it->second[i] << endl;
-#endif
-      }
-   }
-
-   unsigned int org_size = nnls_B.size();
-   nnls_B.resize(max_pr_len);
-   for ( unsigned int i = org_size; i < max_pr_len; i++ )
-   {
-      nnls_B[i] = 0e0;
-   }
-   vector < double > use_B = nnls_B;
-   vector < double > use_x(nnls_A.size());
-   vector < double > nnls_wp(nnls_A.size());
-   vector < double > nnls_zzp(use_B.size());
-   vector < int > nnls_indexp(nnls_A.size());
-
-   //   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
-   editor->append("Running NNLS\n");
-#if defined(DEBUG_NNLS)
-   cout << "use A size " << use_A.size() << endl;
-   int a_size = nnls_A.size();
-   int b_size = nnls_B.size();
-   cout << "matrix: \n";
-   for ( int i = 0; i < a_size; i++ )
-   {
-      for ( int j = 0; j < b_size; j++ )
-      {
-         cout << use_A[i * b_size + j] << ",";
-      }
-      cout << endl;
-   }
-   cout << "b: \n";
-   for ( int j = 0; j < b_size; j++ )
-   {
-      cout << use_B[j] << ",";
-   }
-   cout << endl;
-#endif
-   
-   int result =
-      nnls(
-           (double *)&use_A[0],
-           (int) max_pr_len,
-           (int) max_pr_len,
-           (int) nnls_A.size(),
-           (double *)&use_B[0],
-           (double *)&use_x[0],
-           &nnls_rmsd,
-           (double *)&nnls_wp[0],
-           (double *)&nnls_zzp[0],
-           (int *)&nnls_indexp[0]);
-   
-   if ( result != 0 )
-   {
-      editor->append("NNLS error!\n");
-   }
-   
-   editor->append(QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd));
-   
-   vector < double > rescaled_x = rescale(use_x);
-   // list models & concs
-   
-   QColor save_color = editor->color();
-   for ( unsigned int i = 0; i < use_x.size(); i++ )
-   {
-      if ( rescaled_x[i] == 0 )
-      {
-         editor->setColor("gray");
-      } else {
-         if ( rescaled_x[i] < .1 )
-         {
-            editor->setColor("darkCyan");
-         } else {
-            if ( rescaled_x[i] < .2 )
-            {
-               editor->setColor("blue");
-            } else {
-               editor->setColor("darkBlue");
-            }
-         }
-      }
-      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i]));
-   }
-   editor->setColor(save_color);
-   
-   // build model & residuals
-   double model_mw = 0e0;
-   vector < double > model(use_B.size());
-   vector < double > residual(use_B.size());
-   vector < double > difference(use_B.size());
-   
-   for ( unsigned int j = 0; j < rescaled_x.size(); j++ )
-   {
-      model_mw += rescaled_x[j] * nnls_mw[model_names[j]];
-      // cout << QString("model source %1 contrib %2 mw %3\n").arg(j).arg(rescaled_x[j]).arg(nnls_mw[model_names[j]]);
-   }
-   // cout << QString("model mw %1\n").arg(model_mw);
-   (*remember_mw)[csv_filename + " Model"] = model_mw;
-   (*remember_mw_source)[csv_filename + " Model"] = "weighted average from NNLS csv models";
-   
-   for ( unsigned int i = 0; i < use_B.size(); i++ )
-   {
-      model[i] = 0e0;
-      for ( unsigned int j = 0; j < use_x.size(); j++ )
-      {
-         model[i] += use_x[j] * nnls_A[model_names[j]][i];
-      }
-      residual[i] = fabs(model[i] - nnls_B[i]);
-      difference[i] = nnls_B[i] - model[i];
-   }
-   
-   // plot 
-   
-   plot_one_pr(nnls_r, model, csv_filename + " Model");
-   
-   // plot_one_pr(nnls_r, residual, csv_filename + " Residual");
-   
-   plot_one_pr(nnls_r, nnls_B, csv_filename + " Target");
-   
-   if ( plotted )
-   {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("P(r) plot done\n");
-      plotted = false;
-   }
-
-   if ( saxs_residuals_widget )
-   {
-      saxs_residuals_window->close();
-   }
-   
-   saxs_residuals_window = 
-      new US_Hydrodyn_Saxs_Residuals(
-                                     &saxs_residuals_widget,
-                                     plot_pr->width(),
-                                     tr("NNLS residuals & difference targeting:\n") + title,
-                                     nnls_r,
-                                     difference,
-                                     residual,
-                                     nnls_B,
-                                     true,
-                                     true,
-                                     true
-                                     );
-   saxs_residuals_window->show();
-   
-   // save as csv
-   
-   if ( !csv_filename.isEmpty() )
-   {
-      // cout << "save_to_csv\n";
-      QString fname = 
-         ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-         tagged_csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
-      
-      if ( QFile::exists(fname) )
-         // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
-      {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
-      }         
-      FILE *of = fopen(fname, "wb");
-      if ( of )
-      {
-         //  header: "name","type",r1,r2,...,rn, header info
-         fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).ascii(),
-                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).ascii());
-         // original models
-         for ( unsigned int i = 0; i < use_x.size(); i++ )
-         {
-            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).ascii(),
-                    get_mw(model_names[i], false),
-                    compute_pr_area(nnls_A[model_names[i]], nnls_r),
-                    "P(r)",
-                    vector_double_to_csv(nnls_A[model_names[i]]).ascii());
-         }
-         // target
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).ascii(),
-                 get_mw(model_names[0], false),
-                 compute_pr_area(nnls_B, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(nnls_B).ascii());
-         
-         // best fit model
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 "Model",
-                 get_mw(model_names[0], false),
-                 compute_pr_area(model, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(model).ascii());
-         
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 "Residual",
-                 get_mw(model_names[0], false),
-                 compute_pr_area(residual, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(residual).ascii());
-         
-         fclose(of);
-         if ( plotted )
-         {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("P(r) plot done\n");
-            plotted = false;
-         }
-         editor->append(tr("Created file: " + fname + "\n"));
-      } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
-      }
-   }
-}
-
-void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
-{
-   // setup best_fit run, idea:
-   //    use US_Saxs_Util::liner_fit
-   //    give each model a chi^2
-   //    sort by chi^2
-
-   map < QString, vector < double > > best_fit_models = nnls_A;
-   vector < double >                  best_fit_target = nnls_B;
-
-   // editor->append("setting up best fit run\n");
-   // unify dimension of best_fit_models vectors
-
-   unsigned int max_pr_len = 0;
-
-   QString tagged_csv_filename = csv_filename;
-
-   if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_best_fit", false)) )
-   {
-      tagged_csv_filename += "_best_fit";
-   }
-
-   for ( map < QString, vector < double > >::iterator it = best_fit_models.begin();
-        it != best_fit_models.end();
-        it++ )
-   {
-      if ( it->second.size() > max_pr_len ) 
-      {
-         max_pr_len = it->second.size();
-      }
-   }
-
-   vector < QString > model_names;
-
-   for ( map < QString, vector < double > >::iterator it = best_fit_models.begin();
-        it != best_fit_models.end();
-        it++ )
-   {
-      // make sure all models are the same length
-
-      unsigned int org_size = it->second.size();
-      it->second.resize(max_pr_len);
-      for ( unsigned int i = org_size; i < max_pr_len; i++ )
-      {
-         it->second[i] = 0e0;
-      }
-      model_names.push_back(it->first);
-   }
-
-   unsigned int org_size = best_fit_target.size();
-   best_fit_target.resize(max_pr_len);
-   for ( unsigned int i = org_size; i < max_pr_len; i++ )
-   {
-      best_fit_target[i] = 0e0;
-   }
-
-   vector < double > a(best_fit_models.size());
-   vector < double > b(best_fit_models.size());
-   vector < double > siga(best_fit_models.size());
-   vector < double > sigb(best_fit_models.size());
-   vector < unsigned int > df(best_fit_models.size());
-   vector < double > chi2(best_fit_models.size());
-   vector < double > prob(best_fit_models.size());
-
-   vector < double > model(best_fit_models.size());
-   vector < double > rmsds(best_fit_models.size());
-   double lowest_rmsd     = 9e99;
-   int    lowest_rmsd_pos = 0;
-
-   //   editor->append(QString("running best fit %1 %2\n").arg(best_fit_models.size()).arg(best_fit_target.size()));
-   editor->append("Running best fit\n");
-
-   US_Saxs_Util usu;
-
-   double lowest_chi2     = 9e99;
-   int    lowest_chi2_pos = 0;
-
-   for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
-   {
-      usu.linear_fit(
-                     best_fit_models[model_names[i]],
-                     best_fit_target, 
-                     a[i],
-                     b[i],
-                     siga[i],
-                     sigb[i],
-                     chi2[i]
-                     );
-      // rescale model to target, compute rmsd
-      vector < double > tmp_model(best_fit_target.size());
-      for ( unsigned int j = 0; j < best_fit_target.size(); j++ )
-      {
-         tmp_model[j] = a[i] + b[i] * best_fit_models[model_names[i]][j];
-      }
-      rmsds[i] = US_Saxs_Util::calc_nrmsd( tmp_model, best_fit_target );
-      if ( !US_Saxs_Util::calc_chisq2( best_fit_models[model_names[i]],
-                                       best_fit_target, 
-                                       df[i],
-                                       chi2[i],
-                                       prob[i] ) )
-      {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("Internal error computing chi2"));
-         editor->setColor(save_color);
-      }
-
-      if ( !i )
-      {
-         lowest_chi2 = chi2[i];
-         lowest_chi2_pos = 0;
-         lowest_rmsd = rmsds[i];
-         lowest_rmsd_pos = 0;
-         model = tmp_model;
-      } else {
-         if ( lowest_chi2 > chi2[i] )
-         {
-            lowest_chi2 = chi2[i];
-            lowest_chi2_pos = i;
-         }
-         if ( lowest_rmsd > rmsds[i] )
-         {
-            lowest_rmsd = rmsds[i];
-            lowest_rmsd_pos = i;
-            model = tmp_model;
-         }
-      }
-      
-      editor->append(QString("%1 NRMSD %2% Chi^2 %3 nu %4\n")
-                     .arg(model_names[i])
-                     .arg(rmsds[i])
-                     .arg(chi2[i])
-                     .arg(df[i])
-                     // .arg(prob[i])
-                     );
-   }
-      
-   double model_mw = nnls_mw[model_names[lowest_rmsd_pos]];
-
-   // best is model with lowest_rmsd_pos
-   QColor save_color = editor->color();
-   editor->setColor("darkBlue");
-   editor->append(QString("Best fit model: %1 NRMSD %2% Chi^2 %3 nu %4\n")
-                  .arg(model_names[lowest_rmsd_pos])
-                  .arg(rmsds[lowest_rmsd_pos])
-                  .arg(chi2[lowest_rmsd_pos])
-                  .arg(df[lowest_rmsd_pos])
-                  // .arg(prob[lowest_rmsd_pos])
-                  );
-   editor->setColor(save_color);
-
-   vector < double > residual(best_fit_target.size());
-   vector < double > difference(best_fit_target.size());
-   
-   for ( unsigned int i = 0; i < best_fit_target.size(); i++ )
-   {
-      residual[i] = fabs(model[i] - best_fit_target[i]);
-      difference[i] = best_fit_target[i] - model[i];
-   }
-
-   // plot 
-   (*remember_mw)[csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]] = model_mw;
-   (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_rmsd_pos]] = "weight of best fit model";
-   
-   plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]);
-   
-   plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target");
-
-   if ( plotted )
-   {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("P(r) plot done\n");
-      plotted = false;
-   }
-   
-
-   if ( saxs_residuals_widget )
-   {
-      saxs_residuals_window->close();
-   }
-   
-   saxs_residuals_window = 
-      new US_Hydrodyn_Saxs_Residuals(
-                                     &saxs_residuals_widget,
-                                     plot_pr->width(),
-                                     tr("Best fit residuals & difference targeting:\n") + title,
-                                     nnls_r,
-                                     difference,
-                                     residual,
-                                     best_fit_target,
-                                     true,
-                                     true,
-                                     true
-                                     );
-   saxs_residuals_window->show();
-   
-   // save as csv
-   
-   if ( !csv_filename.isEmpty() )
-   {
-      // cout << "save_to_csv\n";
-      QString fname = 
-         ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-         tagged_csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
-      
-      if ( QFile::exists(fname) )
-         // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
-      {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
-      }         
-      FILE *of = fopen(fname, "wb");
-      if ( of )
-      {
-         //  header: "name","type",r1,r2,...,rn, header info
-         fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).ascii(),
-                 QString("Best fit NRMSD %1% Chi^2 %2 : %3")
-                 .arg(rmsds[lowest_rmsd_pos])
-                 .arg(chi2[lowest_rmsd_pos])
-                 .arg(nnls_header_tag).ascii()
-                 );
-         // original models
-         for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
-         {
-            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(rmsds[i]).ascii(),
-                    get_mw(model_names[i], false),
-                    compute_pr_area(best_fit_models[model_names[i]], nnls_r),
-                    "P(r)",
-                    vector_double_to_csv(best_fit_models[model_names[i]]).ascii());
-         }
-         // target
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).ascii(),
-                 model_mw,
-                 compute_pr_area(best_fit_target, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(best_fit_target).ascii());
-         
-         // best fit model
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Best Fit Model " + model_names[lowest_rmsd_pos]).ascii(),
-                 model_mw,
-                 compute_pr_area(model, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(model).ascii());
-         
-         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 "Residual",
-                 model_mw,
-                 compute_pr_area(residual, nnls_r),
-                 "P(r)",
-                 vector_double_to_csv(residual).ascii());
-         
-         fclose(of);
-         if ( plotted )
-         {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("P(r) plot done\n");
-            plotted = false;
-         }
-         editor->append(tr("Created file: " + fname + "\n"));
-      } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
-      }
-   }
 }
 
 
@@ -5883,5 +5338,35 @@ bool US_Hydrodyn_Saxs::iq_plot_experimental_and_calculated_present()
          return true;
       }
    }  
+   if ( any_experimental )
+   {
+      return true;
+   }
+   return false;
+}
+
+bool US_Hydrodyn_Saxs::iq_plot_only_experimental_present()
+{
+   if ( plotted_q.size() <= 1 )
+   {
+      return false;
+   }
+
+   bool any_experimental = false;
+   bool any_calculated   = false;
+
+   for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+   {
+      if ( is_nonzero_vector( plotted_I_error[ i ] ) )
+      {
+         any_experimental = true;
+      } else {
+         any_calculated   = true;
+      }
+   }  
+   if ( any_experimental && !any_calculated )
+   {
+      return true;
+   }
    return false;
 }

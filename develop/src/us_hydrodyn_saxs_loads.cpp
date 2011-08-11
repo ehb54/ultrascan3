@@ -626,6 +626,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          {
             I.push_back((*it).toDouble());
          }
+         I.pop_back();
 
          if ( name_to_errors_map.count( qsl_iq[ 0 ] ) != 0 )
          {
@@ -642,10 +643,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          // possible add errors to this (?):
          if ( run_nnls || run_best_fit )
          {
+            // cout << QString("US_Hydrodyn_Saxs::load_iqq_csv %1 size %2\n").arg(qsl_tmp[0]).arg(I.size());
             if ( qsl_tmp[0] == nnls_target )
             {
                found_nnls_target = true;
                nnls_B = I;
+               nnls_errors = I_errors;
             } else {
                found_nnls_model = true;
                nnls_A[qsl_tmp[0]] = I;
@@ -898,11 +901,11 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             QString use_csv_filename = save_to_csv ? csv_filename : "";
             if ( run_nnls )
             {
-               calc_nnls_fit( nnls_target, use_csv_filename );
+               calc_iqq_nnls_fit( nnls_target, use_csv_filename );
             }
             if ( run_best_fit )
             {
-               calc_best_fit( nnls_target, use_csv_filename );
+               calc_iqq_best_fit( nnls_target, use_csv_filename );
             }
          } else {
             editor->append("NNLS error: could not find target and models in loaded data\n");
@@ -2780,6 +2783,11 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          
    last_rescaling_multiplier = k;
    last_rescaling_offset     = 0e0;
+   last_rescaling_chi2       = chi2;
+   if ( do_chi2_fitting )
+   {
+      last_rescaling_chi2    = sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) );
+   }
 
    for ( unsigned int i = 0; i < I.size(); i++ )
    {

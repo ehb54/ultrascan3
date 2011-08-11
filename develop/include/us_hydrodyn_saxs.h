@@ -267,6 +267,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map < QString,  double >           nnls_x;
       map < QString,  double >           nnls_mw;
       vector < double >                  nnls_B;
+      vector < double >                  nnls_errors;
       vector < double >                  nnls_r;
       double                             nnls_rmsd;
 
@@ -347,6 +348,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        vector < double > pr, 
                        QString name
                        );
+
+      void calc_iqq_nnls_fit( 
+                             QString title, 
+                             QString save_to_csv_name = ""
+                             );
+      void calc_iqq_best_fit( 
+                             QString title, 
+                             QString save_to_csv_name = ""
+                             );
+
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);
       void plot_one_iqq(vector < double > q, vector < double > I, vector < double > I_error, QString name);
       bool plotted;
@@ -393,6 +404,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #endif      
       double last_rescaling_multiplier;
       double last_rescaling_offset;
+      double last_rescaling_chi2;
 
       void rescale_iqq_curve_using_last_rescaling( vector < double > &I, bool use_offset = false );
 
@@ -456,6 +468,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_iqq_csv( QString filename, bool just_plotted_curves = false );
 
       bool iq_plot_experimental_and_calculated_present();
+      bool iq_plot_only_experimental_present();
       void clear_plot_saxs_and_replot_experimental();
       void clear_plot_saxs_data();
 

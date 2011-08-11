@@ -203,6 +203,7 @@ SOURCES += \
   src/us_hydrodyn_save.cpp \
   src/us_hydrodyn_saxs.cpp \
   src/us_hydrodyn_saxs_external.cpp \
+  src/us_hydrodyn_saxs_fits.cpp \
   src/us_hydrodyn_saxs_iqq.cpp \
   src/us_hydrodyn_saxs_iqq_bead_model.cpp \
   src/us_hydrodyn_saxs_iqq_load_csv.cpp \
