@@ -2630,7 +2630,6 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       return;
    }
 
-
    vector < double > use_source_I = interpolate(use_q, q, I);
    
    US_Saxs_Util usu;
@@ -2699,6 +2698,49 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       }
    }
    
+   if ( our_saxs_options->iqq_scale_play ) 
+   {
+      bool ok = true;
+      double ournchi = do_chi2_fitting ?
+         sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ) 
+         :
+         chi2
+         ;
+
+      do {
+         vector < double > mult_source_I = use_source_I;
+         double res = QInputDialog::getDouble(
+                                              "Scaling value:",
+                                              QString(
+                                                      "Current scaling of %1 gives a %2 of %3\n"
+                                                      "Enter a scaling value or press Cancel to finish\n")
+                                              .arg( k )
+                                              .arg( do_chi2_fitting ? "nchi" : "RMSD" )
+                                              .arg( ournchi, 5 ),
+                                              k, 
+                                              1e-50,
+                                              1e99, 
+                                              6, 
+                                              &ok, 
+                                              this );
+         if ( ok ) {
+            k = res;
+            for ( unsigned int i = 0; i < mult_source_I.size(); i++ )
+            {
+               mult_source_I[ i ] *= k;
+            }
+            // compute chi2 or rmsd
+            if ( do_chi2_fitting )
+            {
+               US_Saxs_Util::calc_mychi2( mult_source_I, use_I, use_I_error, chi2 );
+               ournchi = sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) );
+            } else {
+               US_Saxs_Util::calc_myrmsd( mult_source_I, use_I, chi2 );
+            }
+         } 
+      } while( ok );
+   }
+
    QString results = "Scaling ";
 
    if ( our_saxs_options->iqq_scale_minq > 0.0f )
@@ -2713,6 +2755,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 
    // double chi2_prob = 0e0;
    QString fit_msg = "";
+
    if ( do_chi2_fitting )
    {
       // usu.calc_chisq_prob( 0.5 * use_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
@@ -2734,6 +2777,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       .arg( fit_msg );
    editor->append(results);
 
+         
    last_rescaling_multiplier = k;
    last_rescaling_offset     = 0e0;
 

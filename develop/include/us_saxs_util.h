@@ -334,6 +334,15 @@ class US_EXTERN US_Saxs_Util
       static double calc_gammaln( double val );
       static bool calc_chisq_prob( double a, double x, double &prob );
 
+      static bool calc_mychi2( vector < double > x,
+                               vector < double > y,
+                               vector < double > sds,
+                               double            &chi2 );
+
+      static bool calc_myrmsd( vector < double > x,
+                               vector < double > y,
+                               double            &rmsd );
+
 
       bool setup_saxs_maps( QString atom_file, QString hybrid_file, QString saxs_file );
 

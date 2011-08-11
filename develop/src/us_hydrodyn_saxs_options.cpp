@@ -928,6 +928,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_iqq_scale_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_scale_nnls, SIGNAL(clicked()), this, SLOT(set_iqq_scale_nnls()));
 
+   cb_iqq_scale_play = new QCheckBox(this);
+   cb_iqq_scale_play->setText(tr(" Manually adjust scaling"));
+   cb_iqq_scale_play->setEnabled(true);
+   cb_iqq_scale_play->setChecked((*saxs_options).iqq_scale_play);
+   cb_iqq_scale_play->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_scale_play->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_scale_play, SIGNAL(clicked()), this, SLOT(set_iqq_scale_play()));
+
    pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_mw_cache->setMinimumHeight(minHeight1);
@@ -1164,6 +1172,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_various_3 = new QHBoxLayout;
    
    hbl_various_3->addWidget(cb_iqq_scale_nnls);
+   hbl_various_3->addWidget(cb_iqq_scale_play);
    background->addMultiCellLayout(hbl_various_3, k, k, 2, 3);
    k++;
 
@@ -1791,6 +1800,12 @@ void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq( const QString &str )
 void US_Hydrodyn_SaxsOptions::set_iqq_scale_nnls()
 {
    (*saxs_options).iqq_scale_nnls = cb_iqq_scale_nnls->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_scale_play()
+{
+   (*saxs_options).iqq_scale_play = cb_iqq_scale_play->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

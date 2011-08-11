@@ -176,6 +176,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLineEdit   *le_iqq_scale_minq;
 
       QCheckBox   *cb_iqq_scale_nnls;
+      QCheckBox   *cb_iqq_scale_play;
 
       QPushButton *pb_clear_mw_cache;
 
@@ -267,6 +268,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_iqq_scale_minq(const QString &);
       void update_iqq_scale_maxq(const QString &);
       void set_iqq_scale_nnls();
+      void set_iqq_scale_play();
 
       void clear_mw_cache();
 
