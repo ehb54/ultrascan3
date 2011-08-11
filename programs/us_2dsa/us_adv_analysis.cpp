@@ -66,7 +66,7 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
 
    ct_bandload->setStep(  0.1 );
-   ct_bandload->setValue(  15 );
+   ct_bandload->setValue( sparms->band_volume * 1000.0 );
    ct_spoints ->setStep(   10 );
    ct_spoints ->setValue( 200 );
    ct_bandload->setEnabled( rb_bandcp->isChecked() );
@@ -367,6 +367,7 @@ void US_AdvAnalysis::select()
                           cmb_mesh   ->currentIndex();
    sparms->gridType     = (US_SimulationParameters::GridType)
                           cmb_moving ->currentIndex();
+//sparms->firstScanIsConcentration = sparms->band_forming;
 
    accept();
 }

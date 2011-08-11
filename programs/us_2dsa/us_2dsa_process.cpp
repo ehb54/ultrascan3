@@ -655,6 +655,11 @@ DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
    ntcsols   += nrcso;
 if ( taskx < 9 || taskx > (nsubgrid-4) )
 DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols;
+//DBG-CONC
+if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
+ if ( wresult.csolutes[mm].c > 1.0 )
+   DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c; }
+//DBG-CONC
 
    max_rss();
 

@@ -87,10 +87,10 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
 
       MPI_Recv( &size, 
                 3, 
-                MPI_INT2,
+                MPI_INT,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
-                MPI_COMM_WORLD2,
+                MPI_COMM_WORLD,
                 &status);
 
       switch( status.MPI_TAG )
@@ -125,11 +125,9 @@ void US_MPI_Analysis::init_solutes( void )
                                    1 : 0;
    simulation_values.noisflag   += parameters[ "rinoise_option" ].toInt() > 0 ?
                                    2 : 0;
-   simulation_values.dbg_level   = parameters.contains( "debug_level" ) ?
-                                   parameters[ "debug_level"    ].toInt() : 0;
-   simulation_values.dbg_timing  = parameters.contains( "debug_timings" ) &&
-                                   parameters[ "debug_timings"  ].toInt() != 0;
-qDebug() << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   simulation_values.dbg_level   = dbg_level;
+   simulation_values.dbg_timing  = dbg_timing;
+DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    double s_min   = parameters[ "s_min"           ].toDouble() * 1.0e-13;
    double s_max   = parameters[ "s_max"           ].toDouble() * 1.0e-13;
@@ -232,20 +230,20 @@ void US_MPI_Analysis::global_fit( void )
    {
       MPI_Send( &job, 
           sizeof( MPI_Job ), 
-          MPI_BYTE2,
+          MPI_BYTE,
           worker,   
           MPI_Job::MASTER,
-          MPI_COMM_WORLD2 );
+          MPI_COMM_WORLD );
    }
 
    // Get everybody synced up
-   MPI_Barrier( MPI_COMM_WORLD2 );
+   MPI_Barrier( MPI_COMM_WORLD );
 
    MPI_Bcast( scaled_data.data(), 
               scaled_data.size(), 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD2 );
+              MPI_COMM_WORLD );
 
    // Go to the next dataset
    current_dataset++;
@@ -344,20 +342,20 @@ void US_MPI_Analysis::set_monteCarlo( void )
    {
       MPI_Send( &newdata, 
           sizeof( MPI_Job ), 
-          MPI_BYTE2,
+          MPI_BYTE,
           worker,   
           MPI_Job::MASTER,
-          MPI_COMM_WORLD2 );
+          MPI_COMM_WORLD );
    }
 
    // Get everybody synced up
-   MPI_Barrier( MPI_COMM_WORLD2 );
+   MPI_Barrier( MPI_COMM_WORLD );
 
    MPI_Bcast( mc_data.data(), 
               total_points, 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD2 );
+              MPI_COMM_WORLD );
 
    _2dsa_Job job;
    job.mpi_job.dataset_offset = 0;
@@ -513,10 +511,10 @@ void US_MPI_Analysis::shutdown_all( void )
    {
       MPI_Send( &job, 
          sizeof( job ), 
-         MPI_BYTE2,
+         MPI_BYTE,
          i,               // Send to each worker
          MPI_Job::MASTER,
-         MPI_COMM_WORLD2 );
+         MPI_COMM_WORLD );
    }
 }
 
@@ -533,18 +531,18 @@ void US_MPI_Analysis::submit( _2dsa_Job& job, int worker )
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job, 
        sizeof( MPI_Job ), 
-       MPI_BYTE2,
+       MPI_BYTE,
        worker,      // Send to system that needs work
        MPI_Job::MASTER,
-       MPI_COMM_WORLD2 );
+       MPI_COMM_WORLD );
 
    // Send solutes
    MPI_Send( job.solutes.data(), 
        job.mpi_job.length * solute_doubles, 
-       MPI_DOUBLE2,  // Pass solute vector as hw independent values
+       MPI_DOUBLE,   // Pass solute vector as hw independent values
        worker,       // to worker
        MPI_Job::MASTER,
-       MPI_COMM_WORLD2 );
+       MPI_COMM_WORLD );
 }
 
 /////////////////////
@@ -566,7 +564,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD2,
+             MPI_COMM_WORLD,
              &status );
 
    MPI_Recv( &simulation_values.variance,
@@ -574,7 +572,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD2,
+             MPI_COMM_WORLD,
              &status );
    
    MPI_Recv( simulation_values.variances.data(),
@@ -582,7 +580,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD2,
+             MPI_COMM_WORLD,
              &status );
 
    MPI_Recv( simulation_values.ti_noise.data(),
@@ -590,7 +588,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD2,
+             MPI_COMM_WORLD,
              &status );
 
    MPI_Recv( simulation_values.ri_noise.data(),
@@ -598,7 +596,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD2,
+             MPI_COMM_WORLD,
              &status );
 
    worker_status[ worker ] = INIT;

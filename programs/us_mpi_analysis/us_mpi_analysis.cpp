@@ -16,8 +16,11 @@ int main( int argc, char* argv[] )
 // Constructor
 US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 {
-   MPI_Comm_size( MPI_COMM_WORLD2, &node_count );
-   MPI_Comm_rank( MPI_COMM_WORLD2, &my_rank );
+   MPI_Comm_size( MPI_COMM_WORLD, &node_count );
+   MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
+
+   dbg_level    = 0;
+   dbg_timing   = FALSE;
 
    if ( my_rank == 0 ) 
       socket = new QUdpSocket( this );
@@ -46,7 +49,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       foreach( file, files ) output.remove( file );
    }
  
-   MPI_Barrier( MPI_COMM_WORLD2 ); // Sync everybody up
+   MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
 
    QStringList files = d.entryList( QStringList( "hpc*.xml" ) );
    if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
@@ -201,7 +204,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       sd.vbar      = ds->vbartb;
 
 if ( my_rank == 0 )
-   qDebug() << "density/viscosity/comm vbar20/commvbar" << sd.density
+   DbgLv(0) << "density/viscosity/comm vbar20/commvbar" << sd.density
                                                         << sd.viscosity 
                                                         << sd.vbar20 
                                                         << sd.vbar;
@@ -212,7 +215,7 @@ if ( my_rank == 0 )
       ds->D20w_correction = sd.D20w_correction;
 
 if ( my_rank == 0 )
-   qDebug() << "s20w_correction/D20w_correction" << sd.s20w_correction 
+   DbgLv(0) << "s20w_correction/D20w_correction" << sd.s20w_correction 
     << sd.D20w_correction;
 
       // Set up simulation parameters for the data set
@@ -319,7 +322,7 @@ void US_MPI_Analysis::start( void )
       double  maxrssmb = (double)maxrss / 1024.0;
       send_udp( "Finished: maxrss " + QString::number( maxrssmb )
             + " MB,  total run secs. " + QString::number( elapsed ) );
-      qDebug() << "Finished:  maxrss " << maxrssmb
+      DbgLv(0) << "Finished:  maxrss " << maxrssmb
                << "MB,  total run secs. " << elapsed;
    }
 
@@ -355,7 +358,7 @@ long int US_MPI_Analysis::max_rss( void )
 void US_MPI_Analysis::abort( const QString& message, int error )
 {
     send_udp( message );
-    qDebug() << message;
-    MPI_Abort( MPI_COMM_WORLD2, error );
+    DbgLv(0) << message;
+    MPI_Abort( MPI_COMM_WORLD, error );
     exit( error );
 }

@@ -25,7 +25,7 @@ US_SimulationParameters::US_SimulationParameters()
    temperature       = NORMAL_TEMP;
    rotorCalID        = "0";      
    band_forming      = false;   
-   band_volume       = 0.0015;
+   band_volume       = 0.015;
    bottom_position   = 7.2;
    rotorcoeffs[ 0 ]  = 0.0;
    rotorcoeffs[ 1 ]  = 0.0;

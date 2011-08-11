@@ -12,20 +12,12 @@
 #include "us_solve_sim.h"
 #include "us_vector.h"
 
-#ifdef NEED_MPI2
-#define MPI_COMM_WORLD2  (((MPI_Comm)(void*)&(ompi_mpi_comm_world)))
-#define MPI_BYTE2        (((MPI_Datatype)(void*)&(ompi_mpi_byte)))
-#define MPI_DOUBLE2      (((MPI_Datatype)(void *)&(ompi_mpi_double)))
-#define MPI_INT2         (((MPI_Datatype)(void *)&(ompi_mpi_int)))
-#else
-#define MPI_COMM_WORLD2  MPI_COMM_WORLD
-#define MPI_BYTE2        MPI_BYTE
-#define MPI_DOUBLE2      MPI_DOUBLE
-#define MPI_INT2         MPI_INT
-#endif
 #define SOLUTE           US_Solute
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
+
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#define DbTiming if(dbg_timing)qDebug()   //!< debug-timing-conditioned qDebug()
 
 class US_MPI_Analysis : public QObject
 {
@@ -45,6 +37,8 @@ class US_MPI_Analysis : public QObject
     int                 mc_iterations;        // Monte Carlo
     int                 mc_iteration;         // Monte Carlo current iteration
     int                 max_experiment_size;
+    int                 dbg_level;
+    bool                dbg_timing;
 
     int                 current_dataset;      // For global fit
     int                 datasets_to_process;  // For global fit
