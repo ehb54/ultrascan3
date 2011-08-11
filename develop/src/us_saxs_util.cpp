@@ -6911,3 +6911,50 @@ bool US_Saxs_Util::set_excluded_volume(
    scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
    return true;
 }
+
+bool US_Saxs_Util::calc_mychi2( vector < double > x,
+                                vector < double > y,
+                                vector < double > sds,
+                                double            &chi2 )
+{
+   if ( x.size() != y.size() ||
+        x.size() != sds.size() )
+   {
+      return false;
+   }
+
+   chi2 = 0e0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( sds[i] == 0e0 )
+      {
+         return false;
+      }
+
+      double tmp = ( x[i] - y[i] ) / sds[i];
+
+      chi2 += tmp * tmp;
+   }
+   return true;
+}
+
+bool US_Saxs_Util::calc_myrmsd( vector < double > x,
+                                vector < double > y,
+                                double            &rmsd )
+{
+   if ( x.size() != y.size() )
+   {
+      return false;
+   }
+
+   rmsd = 0e0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      double tmp = ( x[i] - y[i] );
+
+      rmsd += tmp * tmp;
+   }
+
+   rmsd = sqrt( rmsd );
+   return true;
+}   
