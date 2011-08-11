@@ -11,7 +11,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
       // Fail quietly - can't use udp yet
-      if ( my_rank == 0 ) qDebug() << "Cannot open file " << xmlfile;
+      if ( my_rank == 0 ) DbgLv(0) << "Cannot open file " << xmlfile;
       printf( "Cannot open file %s\n", xmlfile.toAscii().data() );
       printf( "Aborted" );
       MPI_Finalize();
@@ -115,10 +115,16 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
          }
       }
    }
-//if (!parameters.contains("debug_level")) parameters["debug_level"]="1";
 
    if ( parameters.contains( "debug_level" ) )
-      US_Settings::set_us_debug( parameters[ "debug_level" ].toInt() );
+      dbg_level  = parameters[ "debug_level" ].toInt();
+
+   else
+      dbg_level  = 0;
+
+   US_Settings::set_us_debug( dbg_level );
+   dbg_timing = ( parameters.contains( "debug_timings" )
+              &&  parameters[ "debug_timings" ].toInt() != 0 );
 }
 
 void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,

@@ -788,12 +788,15 @@ DbgLv(2) << "RSA: init_conc() ENTER kk" << kk;
          // Calculate the width of the lamella
          double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
          double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
-DbgLv(0) << "RSA: angle pathlen" << angl << plen;
-DbgLv(0) << "RSA:  bandvol" << simparams.band_volume;
+DbgLv(2) << "RSA: angle pathlen" << angl << plen;
+int nn=CT0.concentration.size();
+DbgLv(1) << "RSA:  bandvol" << simparams.band_volume << " CT0concsz" << nn;
          double base = af_params.current_meniscus * af_params.current_meniscus 
             + simparams.band_volume * 360.0 / ( angl * plen * M_PI );
 
          double lamella_width = sqrt( base ) - af_params.current_meniscus;
+double amen=af_params.current_meniscus;
+DbgLv(1) << "RSA:   menisc base lwid" << amen << base << lamella_width;
             
          // Calculate the spread of the lamella:
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -803,6 +806,9 @@ DbgLv(0) << "RSA:  bandvol" << simparams.band_volume;
             
             CT0.concentration[ j ] += 
                sc->signal_concentration * exp( -pow( base, 4.0 ) );
+int mm=CT0.concentration.size()-1;
+if(j<2||j>(mm-2))
+DbgLv(1) << "RSA:  j base conc" << j << base << CT0.concentration[j];
          }
       }
 

@@ -712,6 +712,7 @@ DbgLv(1) << "Adv ACCEPT";
 DbgLv(1) << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
 DbgLv(1) << "Adv men    par12 " << men    << mepar1 << mepar2;
 DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
+DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume;
    }
 else
 DbgLv(1) << "Adv REJECT";

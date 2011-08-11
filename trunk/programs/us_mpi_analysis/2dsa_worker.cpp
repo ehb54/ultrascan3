@@ -21,7 +21,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_INT,
                 MPI_Job::MASTER,
                 MPI_Job::READY,
-                MPI_COMM_WORLD2 ); // let master know we are ready
+                MPI_COMM_WORLD ); // let master know we are ready
 
       // Blocking -- Wait for instructions
       MPI_Recv( &job, // get masters' response
@@ -29,7 +29,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_BYTE,
                 MPI_Job::MASTER,
                 MPI_Job::TAG0,
-                MPI_COMM_WORLD2,
+                MPI_COMM_WORLD,
                 &status );        // status not used
 
       meniscus_value     = job.meniscus_value;
@@ -47,12 +47,8 @@ void US_MPI_Analysis::_2dsa_worker( void )
                   parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
                simulation_values.noisflag   +=
                   parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0;
-               simulation_values.dbg_level   =
-                  parameters.contains( "debug_level" )
-                  ? parameters[ "debug_level"    ].toInt() : 0;
-               simulation_values.dbg_timing  =
-                  parameters.contains( "debug_timings" ) &&
-                  parameters[ "debug_timings"  ].toInt() != 0;
+               simulation_values.dbg_level   = dbg_level;
+               simulation_values.dbg_timing  = dbg_timing;
 
                simulation_values.solutes.resize( job.length );
 
@@ -61,7 +57,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2,
+                         MPI_COMM_WORLD,
                          &status );
 
                calc_residuals( offset, dataset_count, simulation_values );
@@ -76,7 +72,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                          MPI_INT,
                          MPI_Job::MASTER,
                          MPI_Job::RESULTS,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
 
                // Send back to master all of simulation_values
                MPI_Send( simulation_values.solutes.data(),
@@ -84,35 +80,35 @@ void US_MPI_Analysis::_2dsa_worker( void )
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
 
                MPI_Send( &simulation_values.variance,
                          1,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
 
                MPI_Send( simulation_values.variances.data(),
                          data_sets.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
 
                MPI_Send( simulation_values.ti_noise.data(),
                          simulation_values.ti_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
 
                MPI_Send( simulation_values.ri_noise.data(),
                          simulation_values.ri_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD2 );
+                         MPI_COMM_WORLD );
             }
 
             break;
@@ -121,14 +117,14 @@ void US_MPI_Analysis::_2dsa_worker( void )
             { 
                mc_data.resize( job.length );
 
-               MPI_Barrier( MPI_COMM_WORLD2 );
+               MPI_Barrier( MPI_COMM_WORLD );
 
                // This is a receive
                MPI_Bcast( mc_data.data(),
                           job.length,
                           MPI_DOUBLE,
                           MPI_Job::MASTER,
-                          MPI_COMM_WORLD2 );
+                          MPI_COMM_WORLD );
 
                int index = 0;
 

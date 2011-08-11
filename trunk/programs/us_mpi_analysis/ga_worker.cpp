@@ -34,7 +34,7 @@ void US_MPI_Analysis::ga_worker( void )
    {
       ga_worker_loop();
 
-qDebug() << "Worker send finish message" << my_rank 
+DbgLv(0) << "Worker send finish message" << my_rank 
          << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       MPI_Send( &msg,           // This iteration is finished
@@ -61,7 +61,7 @@ qDebug() << "Worker send finish message" << my_rank
       {
          case FINISHED: 
             finished = true;
-//qDebug() << "Worker fitness hits" << my_rank << fitness_hits;
+DbgLv(1) << "Worker fitness hits" << my_rank << fitness_hits;
             break;
 
          case UPDATE:   
@@ -163,7 +163,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
    for ( generation = 0; generation < generations; generation++ )
    {
-qDebug() << "Worker start generation/rank/elapsed" << generation << my_rank 
+DbgLv(0) << "Worker start generation/rank/elapsed" << generation << my_rank 
          << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
@@ -179,15 +179,15 @@ qDebug() << "Worker start generation/rank/elapsed" << generation << my_rank
       if ( generation == generations - 1 )
       {
 
-qDebug() << "Worker before gsm generation/rank/elapsed" << generation << my_rank 
+DbTiming << "Worker before gsm generation/rank/elapsed" << generation << my_rank
          << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
          fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
                                           fitness[ 0 ].fitness );
       }
 
-//qDebug() << "Worker after gsm generation/rank/elapsed" << generation << my_rank 
-//         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank 
+         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       // Ensure gene is on grid
       align_gene( genes[ fitness[ 0 ].index ] );
@@ -897,11 +897,11 @@ void US_MPI_Analysis::lamm_gsm_df( const US_Vector& v, US_Vector& vd )
 void US_MPI_Analysis::dump_buckets( void )
 {
    if ( my_rank != 1 ) return;
-   qDebug() << "Buckets:";
+   DbgLv(1) << "Buckets:";
    
    for ( int b = 0; b < buckets.size(); b++ )
    {
-      qDebug() << buckets[ b ].s_min
+      DbgLv(1) << buckets[ b ].s_min
                << buckets[ b ].s_max
                << buckets[ b ].ff0_min
                << buckets[ b ].ff0_max
@@ -926,11 +926,11 @@ void US_MPI_Analysis::dump_genes( int gene )
 
       }
 
-      qDebug() << s;
+      DbgLv(1) << s;
    }
    else
    {
-      qDebug() << "Genes:";
+      DbgLv(1) << "Genes:";
       
       for ( int g = 0; g < genes.size(); g++ )
       {
@@ -943,7 +943,7 @@ void US_MPI_Analysis::dump_genes( int gene )
                        .arg( genes[ g ][ b ]. k );
          }
        
-         qDebug() << s;
+         DbgLv(1) << s;
       }
    }
 }
@@ -961,7 +961,7 @@ void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
                f, fitness[ f ].index, fitness[ f ].fitness );
    }
 
-   qDebug() << s;
+   DbgLv(1) << s;
 }
 
 

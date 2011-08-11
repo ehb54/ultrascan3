@@ -6,7 +6,7 @@ void US_MPI_Analysis::ga_master( void )
 {
    startTime       = QDateTime::currentDateTime();
    current_dataset = 0;
-qDebug() << "master start GA" << startTime;
+DbgLv(0) << "master start GA" << startTime;
    // Tell calc_residuals to use the edited data meniscus value
    meniscus_value  = -1.0; 
 
@@ -15,11 +15,9 @@ qDebug() << "master start GA" << startTime;
                                   1 : 0;
    simulation_values.noisflag  += parameters[ "rinoise_option" ].toInt() > 0 ?
                                   2 : 0;
-   simulation_values.dbg_level  = parameters.contains( "debug_level" ) ?
-                                  parameters[ "debug_level"    ].toInt() : 0;
-   simulation_values.dbg_timing = parameters.contains( "debug_timings" ) &&
-                                  parameters[ "debug_timings"  ].toInt() != 0;
-qDebug() << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   simulation_values.dbg_level  = dbg_level;
+   simulation_values.dbg_timing = dbg_timing;
+DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
    best_genes  .reserve( node_count);
@@ -106,7 +104,7 @@ qDebug() << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
-//qDebug() << "master start master loop";
+//DbgLv(1) << "master start master loop";
    int    avg_generation       = -1;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
@@ -114,7 +112,7 @@ void US_MPI_Analysis::ga_master_loop( void )
    int    tag;
    int    workers              = node_count - 1;
 
-//qDebug() << "master before set best fitness" << node_count << best_fitness.size();
+//DbgLv(1) << "master before set best fitness" << node_count << best_fitness.size();
    // Reset best fitness for each worker
    for ( int i = 0; i < node_count; i++ )
    {
@@ -185,7 +183,7 @@ g = "";
 for ( int i = 0; i < buckets.size(); i++ )
     g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 
-//qDebug() << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
+//DbgLv(1) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
 
 
             static const double fitness_threshold = 1.0e-7;
