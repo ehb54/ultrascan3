@@ -449,6 +449,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_plot_saxs, SIGNAL(clicked()), SLOT(load_plot_saxs()));
 
+   pb_set_grid = new QPushButton(tr("Set Grid"), this);
+   pb_set_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_grid->setMinimumHeight(minHeight1);
+   pb_set_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_set_grid, SIGNAL(clicked()), SLOT(set_grid()));
+
    pb_clear_plot_saxs = new QPushButton("", this);
    Q_CHECK_PTR(pb_clear_plot_saxs);
    pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -878,6 +884,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_load_saxs = new QHBoxLayout(0);
    hbl_load_saxs->addWidget(pb_load_saxs_sans);
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
+   hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
    background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
    j++;
@@ -2483,6 +2490,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       ask_iq_target_grid();
    }
 
+
+   if ( our_saxs_options->swh_excl_vol )
+   {
+      editor_msg("dark red", QString("SWH set to %1\n").arg( our_saxs_options->swh_excl_vol ));
+   }
+
    if ( !source && our_saxs_options->saxs_iq_foxs ) 
    {
       // cout << model_filepathname << endl;
@@ -3375,6 +3388,11 @@ void US_Hydrodyn_Saxs::print()
 void US_Hydrodyn_Saxs::load_plot_saxs()
 {
    rb_sans->isChecked() ? load_sans( "", true ) : load_saxs( "", true );
+}
+
+void US_Hydrodyn_Saxs::set_grid()
+{
+   ask_iq_target_grid();
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_data()

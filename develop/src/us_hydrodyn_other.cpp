@@ -3332,6 +3332,7 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_expt_data_contains_variances = false;
    saxs_options.iqq_ask_target_grid = true;
    saxs_options.iqq_scale_play = false;
+   saxs_options.swh_excl_vol = 0.0f;
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    default_sidechain_overlap = sidechain_overlap;

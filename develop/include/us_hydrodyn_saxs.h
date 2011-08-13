@@ -150,6 +150,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_plot_saxs_sans;
       QPushButton *pb_load_saxs_sans;
       QPushButton *pb_load_plot_saxs;
+      QPushButton *pb_set_grid;
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
@@ -502,6 +503,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_sans_iq(int);
       void load_saxs_sans();
       void load_plot_saxs();
+      void set_grid();
       void show_plot_saxs();
       void load_saxs( QString filename = "", bool just_plotted_curves = false );
       void clear_plot_saxs( bool quiet = false );

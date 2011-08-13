@@ -259,6 +259,8 @@ struct saxs_options
 
    bool    iqq_ask_target_grid;
    bool    iqq_scale_play;
+
+   float   swh_excl_vol;
 };
 
 struct hybridization

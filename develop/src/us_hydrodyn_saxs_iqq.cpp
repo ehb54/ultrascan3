@@ -167,6 +167,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             
             // this is probably correct but FoXS uses the saxs table excluded volume
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
@@ -1216,6 +1220,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
@@ -2029,6 +2037,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
             }
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
@@ -2871,6 +2883,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;

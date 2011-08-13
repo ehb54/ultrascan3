@@ -612,7 +612,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_start_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_start_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_start_q= new QwtCounter(this);
+   cnt_start_q = new QwtCounter(this);
    Q_CHECK_PTR(cnt_start_q);
    cnt_start_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_start_q->setValue((*saxs_options).start_q);
@@ -630,7 +630,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_end_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_end_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_end_q= new QwtCounter(this);
+   cnt_end_q = new QwtCounter(this);
    Q_CHECK_PTR(cnt_end_q);
    cnt_end_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_end_q->setValue((*saxs_options).end_q);
@@ -648,7 +648,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_delta_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_delta_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_delta_q= new QwtCounter(this);
+   cnt_delta_q = new QwtCounter(this);
    Q_CHECK_PTR(cnt_delta_q);
    cnt_delta_q->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_q->setValue((*saxs_options).delta_q);
@@ -869,6 +869,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_hybrid_radius_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hybrid_radius_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_hybrid_radius_excl_vol, SIGNAL(clicked()), this, SLOT(set_hybrid_radius_excl_vol()));
+
+   lbl_swh_excl_vol = new QLabel(tr(" Excluded volume SWH [A^3]: "), this);
+   lbl_swh_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_swh_excl_vol->setMinimumHeight(minHeight1);
+   lbl_swh_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_swh_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_swh_excl_vol = new QLineEdit(this, "swh_excl_vol Line Edit");
+   (*saxs_options).swh_excl_vol ? 
+      le_swh_excl_vol->setText(QString("%1").arg((*saxs_options).swh_excl_vol)) :
+      le_swh_excl_vol->setText("");
+   // le_swh_excl_vol->setMinimumHeight(minHeight1);
+   le_swh_excl_vol->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_swh_excl_vol->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_swh_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_swh_excl_vol, SIGNAL(textChanged(const QString &)), SLOT(update_swh_excl_vol(const QString &)));
 
    lbl_scale_excl_vol = new QLabel(tr(" Excluded volume scaling: "), this);
    lbl_scale_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -1155,8 +1171,12 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellLayout(hbl_various_2, k, k, 2, 3);
    k++;
 
-   background->addWidget(lbl_scale_excl_vol, k, 2);
-   background->addWidget(cnt_scale_excl_vol, k, 3);
+   QHBoxLayout *hbl_various_2b = new QHBoxLayout;
+   hbl_various_2b->addWidget(lbl_swh_excl_vol);
+   hbl_various_2b->addWidget(le_swh_excl_vol);
+   hbl_various_2b->addWidget(lbl_scale_excl_vol);
+   hbl_various_2b->addWidget(cnt_scale_excl_vol);
+   background->addMultiCellLayout(hbl_various_2b, k, k, 2, 3);
    k++;
 
    background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
@@ -1785,16 +1805,22 @@ void US_Hydrodyn_SaxsOptions::set_subtract_radius()
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SaxsOptions::update_swh_excl_vol( const QString &str )
+{
+   (*saxs_options).swh_excl_vol = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SaxsOptions::update_iqq_scale_minq( const QString &str )
 {
    (*saxs_options).iqq_scale_minq = str.toFloat();
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq( const QString &str )
 {
    (*saxs_options).iqq_scale_maxq = str.toFloat();
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_iqq_scale_nnls()

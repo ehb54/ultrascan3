@@ -1649,12 +1649,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
       
       progress_saxs->setTotalSteps((int)(as * 2 + 2));
 
-      vector < vector < double > > rik_array(as);
+      // vector < vector < double > > rik_array(as);
 
-      for ( unsigned int i = 0; i < rik_array.size(); i++ )
-      {
-         rik_array[i].resize(atoms.size());
-      }
+      // for ( unsigned int i = 0; i < rik_array.size(); i++ )
+      // {
+      //    rik_array[i].resize(atoms.size());
+      // }
 
       for ( unsigned int i = 0; i < as1; i++ )
       {
@@ -1682,7 +1682,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
                (atoms[i].pos[2] - atoms[k].pos[2]) *
                (atoms[i].pos[2] - atoms[k].pos[2]);
             // rik = sqrt( rik2 );
-            rik_array[i][k] = sqrt(rik2);
+            // rik_array[i][k] = sqrt(rik2);
 
             pos = (unsigned int)floor(rik2 * one_over_delta);
             
@@ -1763,7 +1763,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
          }
          for ( unsigned int k = i + 1; k < as; k++ )
          {
-            rik = rik_array[i][k]; 
+            // rik = rik_array[i][k]; 
+            rik = sqrt(
+                       (atoms[i].pos[0] - atoms[k].pos[0]) *
+                       (atoms[i].pos[0] - atoms[k].pos[0]) +
+                       (atoms[i].pos[1] - atoms[k].pos[1]) *
+                       (atoms[i].pos[1] - atoms[k].pos[1]) +
+                       (atoms[i].pos[2] - atoms[k].pos[2]) *
+                       (atoms[i].pos[2] - atoms[k].pos[2])
+                       );
             for ( unsigned int j = q_start; j < q_points; j++ )
             {
                qrik = rik * q[j];
@@ -2311,12 +2319,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       
       progress_saxs->setTotalSteps((int)(as * 2 + 2));
 
-      vector < vector < double > > rik_array(as);
+      // vector < vector < double > > rik_array(as);
 
-      for ( unsigned int i = 0; i < rik_array.size(); i++ )
-      {
-         rik_array[i].resize(atoms.size());
-      }
+      // for ( unsigned int i = 0; i < rik_array.size(); i++ )
+      // {
+      // rik_array[i].resize(atoms.size());
+      // }
 
       for ( unsigned int i = 0; i < as1; i++ )
       {
@@ -2344,7 +2352,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
                (atoms[i].pos[2] - atoms[k].pos[2]) *
                (atoms[i].pos[2] - atoms[k].pos[2]);
             // rik = sqrt( rik2 );
-            rik_array[i][k] = sqrt(rik2);
+            // rik_array[i][k] = sqrt(rik2);
 
             pos = (unsigned int)floor(rik2 * one_over_delta);
             
@@ -2444,7 +2452,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          }
          for ( unsigned int k = i + 1; k < as; k++ )
          {
-            rik = rik_array[i][k]; 
+            // rik = rik_array[i][k]; 
+            rik = sqrt(
+                       (atoms[i].pos[0] - atoms[k].pos[0]) *
+                       (atoms[i].pos[0] - atoms[k].pos[0]) +
+                       (atoms[i].pos[1] - atoms[k].pos[1]) *
+                       (atoms[i].pos[1] - atoms[k].pos[1]) +
+                       (atoms[i].pos[2] - atoms[k].pos[2]) *
+                       (atoms[i].pos[2] - atoms[k].pos[2])
+                       );
+                       
             for ( unsigned int l = 0; l < use_q_size; l++ )
             {
                unsigned int j = use_q[l];
