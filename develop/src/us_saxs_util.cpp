@@ -6895,6 +6895,10 @@ bool US_Saxs_Util::set_excluded_volume(
    }
 
    double use_vol = atom_map[this_atom.name + "~" + hybrid_name].saxs_excl_vol;
+   if ( this_atom.name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
+   {
+      use_vol = our_saxs_options.swh_excl_vol;
+   }
    vol = use_vol;
    if ( our_saxs_options.hybrid_radius_excl_vol )
    {
