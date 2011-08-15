@@ -473,6 +473,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_plot_saxs_and_replot_experimental();
       void clear_plot_saxs_data();
 
+      bool        select_from_directory_history( QString &dir);
+      void        add_to_directory_history( QString dir );
+
    private slots:
 
       void foxs_readFromStdout();

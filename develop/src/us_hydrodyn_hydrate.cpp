@@ -2326,6 +2326,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       fname = fileNameCheck( fname );
    }
 
+   last_hydrated_pdb_header = "";
+   last_hydrated_pdb_text   = "";
+
    QFile f( fname );
    if ( !f.open( IO_WriteOnly ) )
    {
@@ -2333,11 +2336,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       return false;
    }
 
-   QTextStream ts( &f );
-
-   ts << 
+   last_hydrated_pdb_header +=
       QString( "HEADER  US-SOMO Hydrated pdb file %1\n" ).arg( fname );
-   ts <<
+   last_hydrated_pdb_text +=
       QString( "MODEL %1\n" ).arg( current_model + 1 );
 
    unsigned int i = current_model;
@@ -2350,7 +2351,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
-         ts << 
+         last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
                      "ATOM   %4d%5s%4s %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00               \n",
@@ -2375,7 +2376,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          }
       }
    }
-   ts << "TER\n";
+   last_hydrated_pdb_text +=
+      "TER\n";
 
    QString chainID = "W";
    if ( chains_used.count( chainID ) )
@@ -2417,7 +2419,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    {
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         ts << 
+         last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
                      "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
@@ -2431,8 +2433,16 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
 
       }
    }
-   ts << "TER\nENDMDL\nEND\n";
+
+   last_hydrated_pdb_text +=
+      "TER\nENDMDL\n";
+
+   QTextStream ts( &f );
+   ts << last_hydrated_pdb_header;
+   ts << last_hydrated_pdb_text;
+   ts << "END\n";
    f.close();
+
    last_hydrated_pdb_name = fname;
    editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
    return true;

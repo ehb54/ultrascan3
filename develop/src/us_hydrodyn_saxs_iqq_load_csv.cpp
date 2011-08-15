@@ -554,12 +554,13 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
                                                                 ) )
                               && qsl_sel_names->size() > 1 );
    le_csv_filename->setEnabled(
-                               ( cb_create_avg->isChecked() || ( expert_mode && 
-                                                                ( 
-                                                                 cb_run_nnls->isChecked() ||
-                                                                 cb_run_best_fit->isChecked() 
-                                                                 )
+                               ( cb_create_avg->isChecked() || ( expert_mode &&
+                                                                 (
+                                                                  cb_run_nnls->isChecked() ||
+                                                                  cb_run_best_fit->isChecked() 
+                                                                  ) 
                                                                  ) )
+                               && cb_save_to_csv->isChecked()
                                && qsl_sel_names->size() > 1 );
    cb_save_original_data->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
    if ( expert_mode )

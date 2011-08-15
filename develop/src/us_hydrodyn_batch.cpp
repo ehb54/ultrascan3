@@ -1491,6 +1491,8 @@ void US_Hydrodyn_Batch::start()
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
 #if defined(USE_H)
                   // save everything if hydrate on
+                  QString hydrated_pdb_nmr_text;
+                  QString org_pdb_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
                   if ( batch->hydrate )
                   {
                      ((US_Hydrodyn *)us_hydrodyn)->save_state();
@@ -1532,6 +1534,7 @@ void US_Hydrodyn_Batch::start()
                      }
                      if ( result )
                      {
+                        hydrated_pdb_nmr_text += ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_text;
 #endif
                         if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
                         {
@@ -1541,6 +1544,14 @@ void US_Hydrodyn_Batch::start()
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
                                                                         !batch->csv_saxs || batch->create_native_saxs
                                                                         ) ? false : true;
+#if defined(USE_H)
+                        if ( batch->hydrate && pdb_mode )
+                        {
+                           QDir qd;
+                           cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;
+                           qd.remove(((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name);
+                        }
+#endif
                         if ( batch->csv_saxs )
                         {
 
@@ -1573,6 +1584,24 @@ void US_Hydrodyn_Batch::start()
 #if defined(USE_H)
                   if ( batch->hydrate )
                   {
+                     QString fname = org_pdb_file;
+                     fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+                        + "-h.pdb";
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
+                     {
+                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+                     }
+                     QFile f( fname );
+                     if ( !f.open( IO_WriteOnly ) )
+                     {
+                        editor_msg("red", QString( tr("can not open file %1 for writing" ) ).arg( fname ));
+                     } else {
+                        QTextStream ts( &f );
+                        ts << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_header;
+                        ts << hydrated_pdb_nmr_text;
+                        ts << "END\n";
+                        f.close();
+                     }
                      ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
@@ -1602,6 +1631,14 @@ void US_Hydrodyn_Batch::start()
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
                                                                      !batch->csv_saxs || batch->create_native_saxs
                                                                      ) ? false : true;
+#if defined(USE_H)
+                     if ( batch->hydrate && pdb_mode )
+                     {
+                        QDir qd;
+                        cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;
+                        qd.remove(((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name);
+                     }
+#endif
                      if ( batch->csv_saxs )
                      {
 #if defined(USE_H)
@@ -1666,6 +1703,8 @@ void US_Hydrodyn_Batch::start()
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
 #if defined(USE_H)
                   // save everything if hydrate on
+                  QString hydrated_pdb_nmr_text;
+                  QString org_pdb_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
                   if ( batch->hydrate )
                   {
                      ((US_Hydrodyn *)us_hydrodyn)->save_state();
@@ -1706,6 +1745,7 @@ void US_Hydrodyn_Batch::start()
                      }
                      if ( result )
                      {
+                        hydrated_pdb_nmr_text += ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_text;
 #endif
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
                                                                         !batch->csv_saxs || batch->create_native_saxs
@@ -1741,6 +1781,24 @@ void US_Hydrodyn_Batch::start()
 #if defined(USE_H)
                   if ( batch->hydrate )
                   {
+                     QString fname = org_pdb_file;
+                     fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+                        + "-h.pdb";
+                     if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
+                     {
+                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+                     }
+                     QFile f( fname );
+                     if ( !f.open( IO_WriteOnly ) )
+                     {
+                        editor_msg("red", QString( tr("can not open file %1 for writing" ) ).arg( fname ));
+                     } else {
+                        QTextStream ts( &f );
+                        ts << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_header;
+                        ts << hydrated_pdb_nmr_text;
+                        ts << "END\n";
+                        f.close();
+                     }
                      ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }

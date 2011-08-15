@@ -41,6 +41,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      QString title,
                                      vector < double > q,
                                      vector < double > difference,
+                                     vector < double > difference_no_errors,
                                      vector < double > target,
                                      vector < double > log_difference,
                                      vector < double > log_target,
@@ -58,6 +59,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                unsigned int width,
                vector < double > q,
                vector < double > difference,
+               vector < double > difference_no_errors,
                vector < double > target,
                vector < double > log_difference,
                vector < double > log_target,
@@ -75,12 +77,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       vector < vector < double > > qs;
 
       vector < vector < double > > differences;
+      vector < vector < double > > differences_no_errors;
       vector < vector < double > > log_differences;
 
       vector < vector < double > > targets;
       vector < vector < double > > log_targets;
 
       vector < vector < double > > difference_pcts;
+      vector < vector < double > > differences_no_errors_pcts;
       vector < vector < double > > log_difference_pcts;
 
       vector < QColor > plot_colors;

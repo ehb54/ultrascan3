@@ -458,7 +458,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_saxs = new QPushButton("", this);
    Q_CHECK_PTR(pb_clear_plot_saxs);
    pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_clear_plot_saxs->setMinimumHeight(minHeight0);
+   pb_clear_plot_saxs->setMinimumHeight(minHeight1);
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
 
@@ -472,7 +472,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    pb_load_gnom = new QPushButton("Load GNOM File", this);
    pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   //   pb_load_gnom->setMinimumHeight(minHeight1);
+   pb_load_gnom->setMinimumHeight(minHeight1);
    pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
    
@@ -528,7 +528,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    
    pb_guinier_analysis = new QPushButton("Auto Guinier Analysis", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   //   pb_guinier_analysis->setMinimumHeight(minHeight1);
+   pb_guinier_analysis->setMinimumHeight(minHeight1);
    pb_guinier_analysis->setEnabled(true);
    pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
@@ -790,10 +790,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setCanvasBackground(USglobal->global_colors.plot);
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
+   progress_saxs->setMinimumHeight(minHeight1);
    progress_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress_saxs->reset();
 
    progress_pr = new QProgressBar(this, "P(r) Progress");
+   progress_pr->setMinimumHeight(minHeight1);
    progress_pr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress_pr->reset();
 
@@ -824,7 +826,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
    lbl_core_progress->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-   lbl_core_progress->setMinimumHeight(minHeight1);
+   lbl_core_progress->setMinimumHeight(minHeight0);
    lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
@@ -3471,6 +3473,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
       editor->append("I(q) plot done\n");
       plotted = false;
    }
+   rescale_plot();
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
@@ -3873,11 +3876,15 @@ void US_Hydrodyn_Saxs::load_gnom()
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_gnom;
 
+   select_from_directory_history( use_dir );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.out", this);
    if (filename.isEmpty())
    {
       return;
    }
+   add_to_directory_history( filename );
+
    QFile f(filename);
    our_saxs_options->path_load_gnom = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
@@ -5069,6 +5076,9 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
    bead_model_ok_for_saxs = true;
 }
 
+
+#define DEBUG_RESID
+
 void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               vector < double > q,
                                               vector < double > I1, 
@@ -5089,9 +5099,11 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    }
 
    bool use_errors = is_nonzero_vector( I_errors );
-   //   cout << 
-   //      QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
-   //      .arg( use_errors ? "using" : "no" );
+#if defined( DEBUG_RESID )
+   cout << 
+      QString("US_Hydrodyn_Saxs::display_iqq_residuals %1 errors\n")
+         .arg( use_errors ? "using" : "no" );
+#endif
    if ( use_errors && I_errors.size() <  min_len ) 
    {
       min_len = I_errors.size();
@@ -5099,28 +5111,32 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    q.resize(min_len);
 
    vector < double > difference( q.size() );
+   vector < double > difference_no_errors( q.size() );
    vector < double > log_difference( q.size() );
    vector < double > log_I1 ( I1.size() );
    vector < double > log_I2 ( I2.size() );
 
-   //   cout <<
-   //      QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
+#if defined( DEBUG_RESID )
+   cout <<
+      QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
 
-   // for ( unsigned int i = 0; i < q.size(); i++ )
-   // {
-   // cout <<
-   // QString("%1\t%2\t%3\t%4\t%5\t%6\n")
-   // .arg(q[i])
-   // .arg(I1[i])
-   // .arg(I2[i])
-   // .arg(I_errors[i])
-   // .arg(I2[i] - I1[i])
-   // .arg(I_errors[i] != 0 ? ( I2[i] - I1[i] ) / I_errors[i] : ( I2[i] - I1[i] ) );
-   // }
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      cout <<
+         QString("%1\t%2\t%3\t%4\t%5\t%6\n")
+         .arg(q[i])
+         .arg(I1[i])
+         .arg(I2[i])
+         .arg(I_errors[i])
+         .arg(I2[i] - I1[i])
+         .arg(I_errors[i] != 0 ? ( I2[i] - I1[i] ) / I_errors[i] : ( I2[i] - I1[i] ) );
+   }
+#endif
 
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
       difference[ i ] = I2[ i ] - I1[ i ];
+      difference_no_errors[ i ] = difference[ i ];
       if ( use_errors ) 
       {
          difference[ i ] /= I_errors[ i ];
@@ -5149,6 +5165,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                              plot_saxs->width(),
                                              q,
                                              difference,
+                                             difference_no_errors,
                                              I2,
                                              log_difference,
                                              log_I2,
@@ -5172,6 +5189,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                             tr("Residuals & difference targeting:\n") + title,
                                             q,
                                             difference,
+                                            difference_no_errors,
                                             I2,
                                             log_difference,
                                             log_I2,
@@ -5251,6 +5269,18 @@ QString US_Hydrodyn_Saxs::iqq_suffix()
 
 void US_Hydrodyn_Saxs::ask_iq_target_grid()
 {
+   unsigned int q_points = 
+      (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+   
+   QString gridmsg = 
+      QString(tr("Current grid:"
+                 "q range %1 to %2 with a stepsize of %3 giving %4 q-points.\n") )
+      .arg(our_saxs_options->start_q)
+      .arg(our_saxs_options->end_q)
+      .arg(our_saxs_options->delta_q)
+      .arg(q_points);
+   editor_msg("dark blue", gridmsg);
+      
    if ( !qsl_plotted_iq_names.size() )
    {
       return;
@@ -5281,7 +5311,6 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid()
       return;
    }
 
-
    // set the grid
 
    unsigned int pos = plotted_iq_names_to_pos[ grid_target ];
@@ -5296,32 +5325,97 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid()
       return;
    }
 
-   float start_q = plotted_q[ pos ][ 0 ];
-   float end_q   = plotted_q[ pos ][ plotted_q[ pos ].size() -1 ];
-   float delta_q = plotted_q[ pos ][ 1 ] - start_q;
-   start_q -= delta_q;
+   int last_result = 1;
 
-   our_saxs_options->start_q = start_q;
-   our_saxs_options->end_q   = end_q;
-   our_saxs_options->delta_q = delta_q;
-
-   our_saxs_options->start_angle = 
-      floor(
-            (asin(our_saxs_options->wavelength * our_saxs_options->start_q / 
-                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
-            ) / SAXS_Q_ROUNDING;
+   float save_start_q      = our_saxs_options->start_q;
+   float save_end_q        = our_saxs_options->end_q;
+   float save_delta_q      = our_saxs_options->delta_q;
+   float save_start_angle  = our_saxs_options->start_angle;
+   float save_end_angle    = our_saxs_options->end_angle;
+   float save_delta_angle  = our_saxs_options->delta_angle;
    
-   our_saxs_options->end_angle = 
-      floor(
-            (asin(our_saxs_options->wavelength * our_saxs_options->end_q / 
-                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
-            ) / SAXS_Q_ROUNDING;
+   do {
+      float start_q = plotted_q[ pos ][ 0 ];
+      float end_q   = plotted_q[ pos ][ plotted_q[ pos ].size() -1 ];
+      float delta_q = plotted_q[ pos ][ 1 ] - start_q;
+      start_q -= delta_q;
+      
+      our_saxs_options->start_q = start_q;
+      our_saxs_options->end_q   = end_q;
+      our_saxs_options->delta_q = delta_q * last_result;
+      
+      our_saxs_options->start_angle = 
+         floor(
+               (asin(our_saxs_options->wavelength * our_saxs_options->start_q / 
+                     (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+               ) / SAXS_Q_ROUNDING;
+      
+      our_saxs_options->end_angle = 
+         floor(
+               (asin(our_saxs_options->wavelength * our_saxs_options->end_q / 
+                     (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+               ) / SAXS_Q_ROUNDING;
+      
+      our_saxs_options->delta_angle = 
+         floor(
+               (asin(our_saxs_options->wavelength * our_saxs_options->delta_q / 
+                     (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
+               ) / SAXS_Q_ROUNDING;
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_options_widget )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
+      }
 
-   our_saxs_options->delta_angle = 
-      floor(
-            (asin(our_saxs_options->wavelength * our_saxs_options->delta_q / 
-                  (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
-            ) / SAXS_Q_ROUNDING;
+      unsigned int grid_points = 
+         (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+      int res = QInputDialog::getInteger(
+                                         "SOMO: Confirm grid",
+                                         QString( tr( 
+                                                     "Original number of grid points %1\n"
+                                                     "Target number of grid points using the divisor below is %2\n"
+                                                     "If this is acceptable, press OK\n"
+                                                     "You can enter a divisor below and press OK\n"
+                                                     "Press Cancel to revert to the original grid\n"
+                                                     ) )
+                                         .arg( q_points )
+                                         .arg( grid_points )
+                                         , 
+                                         last_result, 
+                                         1,
+                                         100000, 
+                                         1, 
+                                         &ok, 
+                                         this 
+                                         );
+      if ( ok ) {
+         if ( res != last_result )
+         {
+            ok = false;
+            last_result = res;
+            // recompute grid using n'th values
+         }
+      } else {
+         // resort to original grid
+         our_saxs_options->start_q     = save_start_q;
+         our_saxs_options->end_q       = save_end_q;
+         our_saxs_options->delta_q     = save_delta_q;
+         our_saxs_options->start_angle = save_start_angle;
+         our_saxs_options->end_angle   = save_end_angle;
+         our_saxs_options->delta_angle = save_delta_angle;
+         unsigned int grid_points = 
+            (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+         QMessageBox::message(tr("SOMO: Grid restored"), 
+                              QString(tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         ok = true;
+      }
+   } while ( !ok );
+
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_options_widget )
    {
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
@@ -5330,6 +5424,25 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
       ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
+   }
+
+   if ( 
+        our_saxs_options->start_q != save_start_q ||
+        our_saxs_options->end_q   != save_end_q   ||
+        our_saxs_options->delta_q != save_delta_q
+        )
+   {
+      unsigned int q_points = 
+         (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+      
+      QString gridmsg = 
+         QString(tr("Current grid is now:"
+                    "q range %1 to %2 with a stepsize of %3 giving %4 q-points.\n") )
+         .arg(our_saxs_options->start_q)
+         .arg(our_saxs_options->end_q)
+         .arg(our_saxs_options->delta_q)
+         .arg(q_points);
+      editor_msg("blue", gridmsg);
    }
 }
 

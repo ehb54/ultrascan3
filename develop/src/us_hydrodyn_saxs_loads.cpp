@@ -541,7 +541,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       scaling_target = QInputDialog::getItem(
                                              tr("Scale I(q) Curve"),
                                              tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                "or Cancel of you do not wish to scale")
+                                                "or Cancel if you do not wish to scale")
                                              , 
                                              qsl_plotted_iq_names, 
                                              0, 
@@ -697,8 +697,8 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             if ( !scaling_target.isEmpty() && 
                  plotted_iq_names_to_pos.count(scaling_target) )
             {
-               if ( ( qsl_tmp[0].contains( "\"Average minus 1 standard deviation\"" ) ||
-                      qsl_tmp[0].contains( "\"Average plus 1 standard deviation\"" ) ) )
+               if ( ( qsl_tmp[0].contains( "Average minus 1 standard deviation\"" ) ||
+                      qsl_tmp[0].contains( "Average plus 1 standard deviation\"" ) ) )
                {
                   puts("a 1 sd");
                   if ( avg_rescaling_multiplier != 0e0 )
@@ -725,7 +725,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                {
                   rescale_iqq_curve_using_last_rescaling( I_errors );
                }
-               if ( qsl_tmp[0].contains( "\"Average\"" ) )
+               if ( qsl_tmp[0].contains( "Average\"" ) )
                {
                   puts("avg save");
                   avg_rescaling_multiplier = last_rescaling_multiplier;
@@ -765,10 +765,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
            plotted_iq_names_to_pos.count(scaling_target) )
       {
          puts("a 0001");
-         rescale_iqq_curve( scaling_target, this_q, iq_avg );
+         rescale_iqq_curve( scaling_target, this_q, I );
       }
       
-      plot_one_iqq(this_q, iq_avg, QFileInfo(filename).fileName() + " Average");
+      plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average");
       
       vector < double > iq_std_dev;
       vector < double > iq_avg_minus_std_dev;
@@ -836,7 +836,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             rescale_iqq_curve_using_last_rescaling( I );
          }
 
-         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average minus 1 std dev");
+         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average minus 1 standard deviation");
          
          I = sum_iq;
          for ( unsigned int i = 0; i < sum_iq.size(); i++ )
@@ -861,7 +861,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             rescale_iqq_curve_using_last_rescaling( I );
          }
 
-         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average plus 1 std dev");
+         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average plus 1 standard deviation");
       }
       if ( plotted )
       {
@@ -971,6 +971,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          our_saxs_options->path_load_saxs_curve.isEmpty() ?
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
+      select_from_directory_history( use_dir );
       filename = QFileDialog::getOpenFileName(use_dir, 
                                               "All files (*);;"
                                               "ssaxs files (*.ssaxs);;"
@@ -987,6 +988,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
       {
          return;
       }
+      add_to_directory_history( filename );
    }
 
    plotted = false;
@@ -1399,6 +1401,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
+   select_from_directory_history( use_dir );
+
    QStringList filenames;
    QString filename;
    if ( !just_plotted_curves )
@@ -1417,6 +1421,11 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
    if ( filenames.empty() && !just_plotted_curves )
    {
       return;
+   }
+
+   if ( !filenames.empty() )
+   {
+      add_to_directory_history( filenames[0] );
    }
 
    if ( filenames.size() > 1 &&
@@ -2866,3 +2875,56 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve_using_last_rescaling( vector < double >
       }
    }
 }
+
+bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir )
+{
+   if ( !((US_Hydrodyn *)us_hydrodyn)->directory_history.size() ||
+        ( ((US_Hydrodyn *)us_hydrodyn)->directory_history.size() == 1 && 
+          ((US_Hydrodyn *)us_hydrodyn)->directory_history.contains( dir ) ) )
+   {
+      return false;
+   }
+
+   QStringList use_history;
+
+   int current = 0;
+   for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->directory_history.size(); i++ )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] == dir )
+      {
+         current = i;
+      }
+      // if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] != dir )
+      // {
+      use_history << ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ];
+      // }
+   }
+
+   bool ok;
+   QString res = QInputDialog::getItem(
+                                       tr("Previous directories"),
+                                       QString( tr("Select the directory or Cancel for the default directory of\n%1") )
+                                       .arg( dir )
+                                       , 
+                                       use_history,
+                                       current, 
+                                       FALSE, 
+                                       &ok,
+                                       this );
+   if ( ok ) {
+      dir = res;
+      return true;
+   } 
+   return false;
+}
+   
+void US_Hydrodyn_Saxs::add_to_directory_history( QString filename )
+{
+   QString dir = QFileInfo(filename).dirPath(true);
+   if ( dir.isEmpty() || ((US_Hydrodyn *)us_hydrodyn)->directory_history.contains( dir ) )
+   {
+      return;
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->directory_history << dir;
+}
+

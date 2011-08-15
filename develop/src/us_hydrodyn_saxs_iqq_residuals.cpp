@@ -6,6 +6,7 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              QString title,
                                                              vector < double > q,
                                                              vector < double > difference,
+                                                             vector < double > difference_no_errors,
                                                              vector < double > target,
                                                              vector < double > log_difference,
                                                              vector < double > log_target,
@@ -35,18 +36,11 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    setGeometry(global_Xpos, global_Ypos, width, 0);
    detached = false;
 
-   // this should be unnecessary:
-   qs.clear();
-   differences.clear();
-   targets.clear();
-   log_differences.clear();
-   log_targets.clear();
-   plot_colors.clear();
-
    add(
        width, 
        q,
        difference,
+       difference_no_errors,
        target,
        log_difference,
        log_target,
@@ -66,6 +60,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
                                          unsigned int width,
                                          vector < double > q,
                                          vector < double > difference,
+                                         vector < double > difference_no_errors,
                                          vector < double > target,
                                          vector < double > log_difference,
                                          vector < double > log_target,
@@ -74,15 +69,17 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
 {
    unsigned int pos = qs.size();
 
-   this->qs              .push_back(q);
-   this->differences     .push_back(difference);
-   this->targets         .push_back(target);
-   this->log_differences .push_back(log_difference);
-   this->log_targets     .push_back(log_target);
-   this->plot_colors     .push_back(plot_color);
+   this->qs                        .push_back(q);
+   this->differences               .push_back(difference);
+   this->differences_no_errors     .push_back(difference_no_errors);
+   this->targets                   .push_back(target);
+   this->log_differences           .push_back(log_difference);
+   this->log_targets               .push_back(log_target);
+   this->plot_colors               .push_back(plot_color);
 
-   difference_pcts       .push_back(log_difference);
-   log_difference_pcts   .push_back(log_difference);
+   difference_pcts                 .push_back(log_difference);
+   differences_no_errors_pcts      .push_back(log_difference);
+   log_difference_pcts             .push_back(log_difference);
 
    // make sure things aren't to big
 
@@ -104,13 +101,15 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
       min_len = log_targets[pos].size();
    }
 
-   qs                 [pos].resize(min_len);
-   differences        [pos].resize(min_len);
-   log_differences    [pos].resize(min_len);
-   targets            [pos].resize(min_len);
-   log_targets        [pos].resize(min_len);
-   difference_pcts    [pos].resize(min_len);
-   log_difference_pcts[pos].resize(min_len);
+   qs                           [pos].resize(min_len);
+   differences                  [pos].resize(min_len);
+   differences_no_errors        [pos].resize(min_len);
+   log_differences              [pos].resize(min_len);
+   targets                      [pos].resize(min_len);
+   log_targets                  [pos].resize(min_len);
+   difference_pcts              [pos].resize(min_len);
+   differences_no_errors_pcts   [pos].resize(min_len);
+   log_difference_pcts          [pos].resize(min_len);
 
    double area = 0e0;
    double log_area = 0e0;
@@ -133,12 +132,25 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
       difference_pcts[pos][i] = 100.0 * differences[pos][i] / area;
    }
 
+   for ( unsigned int i = 0; i < targets[pos].size(); i++ )
+   {
+      if ( targets[pos][i] != 0e0 )
+      {
+         differences_no_errors_pcts[pos][i] = 100.0 * differences_no_errors[pos][i] / targets[pos][i];
+      } else {
+         differences_no_errors_pcts[pos][i] = 0e0;
+      }
+   }
+
    for ( unsigned int i = 0; i < log_targets[pos].size(); i++ )
    {
       log_difference_pcts[pos][i] = 100.0 * log_differences[pos][i] / area;
    }
 
-   setGeometry(0, 0, width, 0);
+   QRect qr = geometry();
+   qr.setWidth( width );
+   setGeometry( qr );
+   // setGeometry(0, 0, width, 0);
    update_plot();
 }
 
@@ -332,7 +344,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          plot->setCurveStyle(iqq, QwtCurve::Lines);
          plot->setCurveData(iqq, 
                             (double *)&(qs[pos][0]), 
-                            plot_as_percent ? (double *)&(difference_pcts[pos][0]) : (double *)&(differences[pos][0]),
+                            plot_as_percent ? (double *)&(differences_no_errors_pcts[pos][0]) : (double *)&(differences[pos][0]),
                             (int)qs[pos].size());
          plot->setCurvePen(iqq, QPen(plot_colors[pos], 2, SolidLine));
 #else
@@ -340,7 +352,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setData(
                         (double *)&(qs[pos][0]), 
-                        plot_as_percent ? (double *)&(difference_pcts[pos][0]) : (double *)&(differences[pos][0]),
+                        plot_as_percent ? (double *)&(differences_no_errors_pcts[pos][0]) : (double *)&(differences[pos][0]),
                         (int)qs[pos].size()
                         );
          curve->setPen( QPen(plot_colors[pos], 2, SolidLine) );
