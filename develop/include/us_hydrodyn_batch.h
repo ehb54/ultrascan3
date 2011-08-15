@@ -140,6 +140,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;
+      QPushButton   *pb_open_saxs_options;
       QPushButton   *pb_cancel;
 
       QTextEdit     *editor;
@@ -244,6 +245,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void make_movie();
 
       void cancel();
+      void open_saxs_options();
       void help();
 
       // editor functions:

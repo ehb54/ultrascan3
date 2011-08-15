@@ -465,6 +465,12 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
+   pb_open_saxs_options = new QPushButton(tr("Saxs Options"), this);
+   pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_open_saxs_options->setMinimumHeight(minHeight1);
+   pb_open_saxs_options->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_open_saxs_options, SIGNAL(clicked()), SLOT(open_saxs_options()));
+
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -561,6 +567,7 @@ void US_Hydrodyn_Batch::setupGUI()
    // 4th section - help & cancel
    QHBoxLayout *hbl_help_cancel = new QHBoxLayout;
    hbl_help_cancel->addWidget(pb_help);
+   hbl_help_cancel->addWidget(pb_open_saxs_options);
    hbl_help_cancel->addWidget(pb_cancel);
 
    QVBoxLayout *leftside = new QVBoxLayout();
@@ -1520,7 +1527,7 @@ void US_Hydrodyn_Batch::start()
                            // but possible some sort of DAM model might...
                            editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                         } else {
-                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
                         }
                      }
                      if ( result )
@@ -1581,7 +1588,7 @@ void US_Hydrodyn_Batch::start()
                         editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                      } else {
                         ((US_Hydrodyn *)us_hydrodyn)->save_state();
-                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
                      }
                   }
                   if ( result )
@@ -1694,7 +1701,7 @@ void US_Hydrodyn_Batch::start()
                            // but possible some sort of DAM model might...
                            editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                         } else {
-                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                           result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
                         }
                      }
                      if ( result )
@@ -1749,7 +1756,7 @@ void US_Hydrodyn_Batch::start()
                         editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                      } else {
                         ((US_Hydrodyn *)us_hydrodyn)->save_state();
-                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs() != 0 ? false : true;
+                        result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
                      }
                   }
                   if ( result )
@@ -2399,6 +2406,105 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
    FILE *of = fopen(fname, "wb");
    if ( of )
    {
+
+      // ---------------------------
+
+      // setup for average & stdev
+      vector < double > sum_iq(saxs_q.size());
+      vector < double > sum_iq2(saxs_q.size());
+      vector < double > iq_avg;
+      vector < double > iq_std_dev;
+      vector < double > iq_avg_minus_std_dev;
+      vector < double > iq_avg_plus_std_dev;
+
+      unsigned int sum_count = 0;
+      for ( unsigned int i = 0; i < saxs_q.size(); i++ )
+      {
+         sum_iq[i] = sum_iq2[i] = 0e0;
+      }
+      if ( batch->compute_iq_avg )
+      {
+
+         for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+         {
+            // cout << "model: " << i << " " << vector_double_to_csv(saxs_iqq[i]) << endl;
+            for ( unsigned int j = 0; j < saxs_iqq[i].size(); j++ )
+            {
+               sum_iq[j] += saxs_iqq[i][j];
+               sum_iq2[j] += saxs_iqq[i][j] * saxs_iqq[i][j];
+            }
+         }
+         sum_count = csv_source_name_iqq.size();
+         iq_avg = sum_iq;
+         // cout << "sum: " << vector_double_to_csv(iq_avg) << endl;
+         // cout << "sum2: " << vector_double_to_csv(sum_iq2) << endl;
+         // cout << "sum count " << sum_count << endl;
+
+         if ( sum_count )
+         {
+            for ( unsigned int i = 0; i < iq_avg.size(); i++ )
+            {
+               iq_avg[i] /= (double)sum_count;
+            }
+
+            // cout << "iq_avg: " << vector_double_to_csv(iq_avg) << endl;
+
+            if ( batch->compute_iq_std_dev && sum_count > 2 )
+            {
+               iq_std_dev.resize(sum_iq.size());
+               for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+               {
+                  double tmp_std_dev = 
+                     sum_iq2[i] - ((sum_iq[i] * sum_iq[i]) / (double)sum_count);
+                  iq_std_dev[i] = 
+                     tmp_std_dev > 0e0 ?
+                     sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
+                  // iq_std_dev[i] = sqrt(
+                  // ( 1e0 / ((double)sum_count - 1e0) ) *
+                  //                   ( sum_iq2[i] - ((sum_iq[i] * sum_iq[i]) / (double)sum_count) ) );
+               }
+
+               vector < double > iq;
+               iq = sum_iq;
+               for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+               {
+                  iq[i] /= (double)sum_count;
+                  iq[i] -= iq_std_dev[i];
+               }
+               vector < double > this_q = saxs_q;
+               if ( saxs_q.size() > iq.size() )
+               {
+                  this_q.resize(iq.size());
+               }
+               if ( iq.size() > saxs_q.size() )
+               {
+                  iq.resize(saxs_q.size());
+               }
+               iq_avg_minus_std_dev = iq;
+
+               
+               iq = sum_iq;
+               for ( unsigned int i = 0; i < sum_iq.size(); i++ )
+               {
+                  iq[i] /= (double)sum_count;
+                  iq[i] += iq_std_dev[i];
+               }
+               this_q = saxs_q;
+               if ( saxs_q.size() > iq.size() )
+               {
+                  this_q.resize(iq.size());
+               }
+               if ( iq.size() > saxs_q.size() )
+               {
+                  iq.resize(saxs_q.size());
+               }
+               iq_avg_plus_std_dev = iq;
+            }
+         }
+      }                                 
+
+      // ---------------------------
+
       //  header: "name","type",q1,q2,...,qn, header info
       fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
               vector_double_to_csv(saxs_q).ascii(),
@@ -2437,6 +2543,30 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
                     vector_double_to_csv(saxs_iqqc[i]).ascii());
          }
       }
+
+      if ( batch->compute_iq_avg && sum_count > 1 )
+      {
+         fprintf(of, "\n\"%s\",\"%s\",%s\n", 
+                 "Average",
+                 "I(q)",
+                 vector_double_to_csv(iq_avg).ascii());
+         if ( batch->compute_iq_std_dev && sum_count > 2 )
+         {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Standard deviation",
+                    "I(q)",
+                    vector_double_to_csv(iq_std_dev).ascii());
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average minus 1 standard deviation",
+                    "I(q)",
+                    vector_double_to_csv(iq_avg_minus_std_dev).ascii());
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average plus 1 standard deviation",
+                    "I(q)",
+                    vector_double_to_csv(iq_avg_plus_std_dev).ascii());
+         }
+      }
+
       fclose(of);
       editor->append(tr("Created file: " + fname + "\n"));
    } else {
@@ -2720,4 +2850,9 @@ QString US_Hydrodyn_Batch::iqq_suffix()
       }
    }
    return qs.length() ? ( "-" + qs ) : "";
+}
+
+void US_Hydrodyn_Batch::open_saxs_options()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->show_saxs_options();
 }

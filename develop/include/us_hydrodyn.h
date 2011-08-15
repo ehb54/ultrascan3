@@ -633,7 +633,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void pdb_saxs( bool create_native_saxs = true );
       void bead_saxs( bool create_native_saxs = true );
-      int pdb_hydrate_for_saxs();
+      int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
       void browflex_readFromStdout();

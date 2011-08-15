@@ -25,7 +25,7 @@
 // #define DEBUG_TO_HYDRATE_DIHEDRAL
 #define MAX_WATER_POSITIONING_ATOMS 4
 
-int US_Hydrodyn::pdb_hydrate_for_saxs()
+int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
 {
    QString error_msg;
    if ( !load_rotamer( error_msg ) )
@@ -141,7 +141,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             if ( !any_errors &&
-                 !screen_pdb( last_hydrated_pdb_name, true ) )
+                 !screen_pdb( last_hydrated_pdb_name, !quiet ) )
             {
                QMessageBox::warning( this,
                                      tr( "Error trying to reload hydrated pdb" ),

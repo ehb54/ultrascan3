@@ -585,7 +585,11 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    }
    
    bool found_nnls_target = false;
-   bool found_nnls_model = false;
+   bool found_nnls_model  = false;
+
+   double avg_rescaling_multiplier = 0e0;
+   double avg_rescaling_offset     = 0e0;
+   bool   rescaling_warning_shown  = false;
    
    // now go through qsl_data and load up any that map_sel_names contains
    plotted = false;
@@ -693,10 +697,39 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             if ( !scaling_target.isEmpty() && 
                  plotted_iq_names_to_pos.count(scaling_target) )
             {
-               rescale_iqq_curve( scaling_target, this_q, I );
+               if ( ( qsl_tmp[0].contains( "\"Average minus 1 standard deviation\"" ) ||
+                      qsl_tmp[0].contains( "\"Average plus 1 standard deviation\"" ) ) )
+               {
+                  puts("a 1 sd");
+                  if ( avg_rescaling_multiplier != 0e0 )
+                  {
+                     last_rescaling_multiplier = avg_rescaling_multiplier;
+                     last_rescaling_offset     = avg_rescaling_offset;
+                     rescale_iqq_curve_using_last_rescaling( I );
+                  } else {
+                     if ( !rescaling_warning_shown )
+                     {
+                        QMessageBox::warning( this, "UltraScan",
+                                              QString( tr(
+                                                          "Standard deviation curves require an Average curve to be plotted first for correct rescaling\n"
+                                                          "Since an Average curve was not plotted first, they will simply be scaled as a best fit to the selected target\n"
+                                                          ) ) );
+                        rescaling_warning_shown = true;
+                     }
+                     rescale_iqq_curve( scaling_target, this_q, I );
+                  }
+               } else {
+                  rescale_iqq_curve( scaling_target, this_q, I );
+               }
                if ( I_errors.size() )
                {
                   rescale_iqq_curve_using_last_rescaling( I_errors );
+               }
+               if ( qsl_tmp[0].contains( "\"Average\"" ) )
+               {
+                  puts("avg save");
+                  avg_rescaling_multiplier = last_rescaling_multiplier;
+                  avg_rescaling_offset     = last_rescaling_offset;
                }
             }
                   
@@ -731,6 +764,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       if ( !scaling_target.isEmpty() && 
            plotted_iq_names_to_pos.count(scaling_target) )
       {
+         puts("a 0001");
          rescale_iqq_curve( scaling_target, this_q, iq_avg );
       }
       
@@ -799,7 +833,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          if ( !scaling_target.isEmpty() && 
               plotted_iq_names_to_pos.count(scaling_target) )
          {
-            rescale_iqq_curve_using_last_rescaling( iq_avg_minus_std_dev );
+            rescale_iqq_curve_using_last_rescaling( I );
          }
 
          plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average minus 1 std dev");
@@ -824,7 +858,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          if ( !scaling_target.isEmpty() && 
               plotted_iq_names_to_pos.count(scaling_target) )
          {
-            rescale_iqq_curve_using_last_rescaling( iq_avg_minus_std_dev );
+            rescale_iqq_curve_using_last_rescaling( I );
          }
 
          plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average plus 1 std dev");

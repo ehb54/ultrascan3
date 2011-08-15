@@ -40,7 +40,7 @@ TNT::Array2D<T> transpose(const TNT::Array2D<T>& m) {
    return mt;
 }
 
-#define DEBUG_ALIGN
+// #define DEBUG_ALIGN
 
 bool US_Hydrodyn::atom_align( vector < point > transform_from, 
                               vector < point > transform_to, 
