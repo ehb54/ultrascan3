@@ -249,8 +249,7 @@ w		# solvent acronym
 results		# batch avg hydro name
 690		# batch window last height
 964		# batch window last width
-1		# batch number of files to follow
-/hda4/fibrinogen/runs/done/run49/short1b.pdb
+0		# batch number of files to follow
 49		# save params number of fields to follow
 results.name
 results.total_beads

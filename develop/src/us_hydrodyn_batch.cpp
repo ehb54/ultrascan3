@@ -1538,7 +1538,7 @@ void US_Hydrodyn_Batch::start()
 #endif
                         if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
                         {
-                           ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs();
+                           ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs( true );
                         }
 
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
@@ -1625,7 +1625,7 @@ void US_Hydrodyn_Batch::start()
 #endif
                      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
                      {
-                        ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs();
+                        ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs( true );
                      }
 
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
