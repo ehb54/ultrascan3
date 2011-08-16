@@ -261,6 +261,8 @@ struct saxs_options
    bool    iqq_scale_play;
 
    float   swh_excl_vol;
+
+   QString iqq_default_scaling_target;
 };
 
 struct hybridization

@@ -31,6 +31,7 @@
 # include "us_hydrodyn_saxs_iqq_residuals.h"
 #endif
 #include "us_hydrodyn_saxs_residuals.h"
+#include "us_hydrodyn_comparative.h"
 
 //standard C and C++ defs:
 
@@ -70,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Options;
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Saxs_Search;
 
    public:
 
@@ -157,6 +159,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_load_plot_pr;
       QPushButton *pb_clear_plot_pr;
       QPushButton *pb_load_gnom;
+      QPushButton *pb_saxs_search;
       QPushButton *pb_guinier_analysis;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
@@ -473,8 +476,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_plot_saxs_and_replot_experimental();
       void clear_plot_saxs_data();
 
-      bool        select_from_directory_history( QString &dir);
-      void        add_to_directory_history( QString dir );
+      bool select_from_directory_history( QString &dir);
+      void add_to_directory_history( QString dir );
+      
+      csv  search_csv;
+      void reset_search_csv();
+
+      void set_scaling_target( QString &scaling_target );
 
    private slots:
 
@@ -551,6 +559,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_lowq(const QString &);
       void update_user_highq(const QString &);
       void load_gnom();
+      void saxs_search();
 
    protected slots:
 

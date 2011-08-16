@@ -583,27 +583,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 
       // scaling fields
       QString scaling_target = "";
-
-      if ( !our_saxs_options->disable_iq_scaling &&
-           qsl_plotted_iq_names.size() )
-      {
-         bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                   "or Cancel of you do not wish to scale")
-                                                , 
-                                                qsl_plotted_iq_names, 
-                                                0, 
-                                                FALSE, 
-                                                &ok,
-                                                this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-         } else {
-            scaling_target = "";
-         }
-      }         
+      set_scaling_target( scaling_target );
 
       // crop_iq_data(q, I);
          
@@ -1147,27 +1127,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
 
       // scaling fields
       QString scaling_target = "";
-
-      if ( !our_saxs_options->disable_iq_scaling &&
-           qsl_plotted_iq_names.size() )
-      {
-         bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                   "or Cancel of you do not wish to scale")
-                                                , 
-                                                qsl_plotted_iq_names, 
-                                                0, 
-                                                FALSE, 
-                                                &ok,
-                                                this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-         } else {
-            scaling_target = "";
-         }
-      }         
+      set_scaling_target( scaling_target );
 
       // crop_iq_data(q, I);
          
@@ -1823,27 +1783,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid_bead_model()
 
       // scaling fields
       QString scaling_target = "";
-
-      if ( !our_saxs_options->disable_iq_scaling &&
-           qsl_plotted_iq_names.size() )
-      {
-         bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                   "or Cancel of you do not wish to scale")
-                                                , 
-                                                qsl_plotted_iq_names, 
-                                                0, 
-                                                FALSE, 
-                                                &ok,
-                                                this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-         } else {
-            scaling_target = "";
-         }
-      }         
+      set_scaling_target( scaling_target );
 
       // crop_iq_data(q, I);
          
@@ -2519,27 +2459,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
 
       // scaling fields
       QString scaling_target = "";
-
-      if ( !our_saxs_options->disable_iq_scaling &&
-           qsl_plotted_iq_names.size() )
-      {
-         bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                   "or Cancel of you do not wish to scale")
-                                                , 
-                                                qsl_plotted_iq_names, 
-                                                0, 
-                                                FALSE, 
-                                                &ok,
-                                                this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-         } else {
-            scaling_target = "";
-         }
-      }         
+      set_scaling_target( scaling_target );
 
       // crop_iq_data(q, I);
          

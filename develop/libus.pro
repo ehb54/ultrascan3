@@ -214,6 +214,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_options.cpp \
   src/us_hydrodyn_saxs_plots.cpp \
   src/us_hydrodyn_saxs_residuals.cpp \
+  src/us_hydrodyn_saxs_search.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
@@ -432,6 +433,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_iqq_load_csv.h \
   include/us_hydrodyn_saxs_iqq_residuals.h \
   include/us_hydrodyn_saxs_residuals.h \
+  include/us_hydrodyn_saxs_search.h \
   include/us_hydrodyn_supc.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \

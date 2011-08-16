@@ -1338,8 +1338,7 @@ void US_Hydrodyn_Batch::start()
                                     QString(tr("Please note:\n\n"
                                                "Overwriting of existing files currently off.\n"
                                                "This could cause Batch mode to block during processing.\n"
-                                               "What would you like to do?\n"))
-                                    .arg(((US_Hydrodyn *)us_hydrodyn)->misc.vbar),
+                                               "What would you like to do?\n")),
                                     tr("&Stop"), 
                                     tr("&Turn on overwrite now"),
                                     tr("C&ontinue anyway"),
@@ -1350,7 +1349,7 @@ void US_Hydrodyn_Batch::start()
       case 0 : // stop
          return;
          break;
-      case 1 : // change the vbar setting now
+      case 1 :
          ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
          ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
          overwriteForcedOn = true;
@@ -2903,6 +2902,11 @@ QString US_Hydrodyn_Batch::iqq_suffix()
             if ( !our_saxs_options->autocorrelate )
             {
                qs += "_nac";
+            }
+            if ( our_saxs_options->swh_excl_vol != 1e0 )
+            {
+               qs += QString("_swh%1")
+                  .arg( QString("%1").arg( our_saxs_options->swh_excl_vol ).replace(".", "_" ) );
             }
          }
       }

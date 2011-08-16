@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
+#include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -101,6 +102,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SAXS/SANS Plotting Functions"));
+   reset_search_csv();
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
@@ -475,6 +477,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_gnom->setMinimumHeight(minHeight1);
    pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
+
+   pb_saxs_search = new QPushButton("Search", this);
+   pb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_search->setMinimumHeight(minHeight1);
+   pb_saxs_search->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_saxs_search, SIGNAL(clicked()), SLOT(saxs_search()));
    
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
@@ -891,8 +899,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
    j++;
 
-   background->addWidget(pb_load_gnom, j, 0);
-   background->addWidget(pb_guinier_analysis, j, 1);
+   QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
+   hbl_various_0->addWidget(pb_load_gnom);
+   hbl_various_0->addWidget(pb_saxs_search);
+   hbl_various_0->addWidget(pb_guinier_analysis);
+   background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;
 
    QHBoxLayout *hbl_tools = new QHBoxLayout;
@@ -2492,7 +2503,6 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       ask_iq_target_grid();
    }
 
-
    if ( our_saxs_options->swh_excl_vol )
    {
       editor_msg("dark red", QString("SWH set to %1\n").arg( our_saxs_options->swh_excl_vol ));
@@ -3867,6 +3877,66 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
    return sum * delta;
 }
 
+void US_Hydrodyn_Saxs::saxs_search()
+{
+   US_Hydrodyn_Saxs_Search 
+      *saxs_search_window =
+      new US_Hydrodyn_Saxs_Search(search_csv, us_hydrodyn);
+   saxs_search_window->show();
+}
+
+void US_Hydrodyn_Saxs::reset_search_csv()
+{
+   search_csv.name = "SAXS I(q) Search";
+
+   search_csv.header_map.clear();
+   search_csv.data.clear();
+   search_csv.num_data.clear();
+   search_csv.prepended_names.clear();
+
+   search_csv.header.push_back("Parameter");
+   search_csv.header.push_back("Active");
+   search_csv.header.push_back("Low value");
+   search_csv.header.push_back("High value");
+   search_csv.header.push_back("Points");
+   search_csv.header.push_back("Current value");
+   search_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.push_back("Scaling excluded volume");
+   tmp_data.push_back("N");
+   tmp_data.push_back(".95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("10");
+   tmp_data.push_back(".95");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("SWH excluded volume");
+   tmp_data.push_back("N");
+   tmp_data.push_back("15");
+   tmp_data.push_back("30");
+   tmp_data.push_back("10");
+   tmp_data.push_back("15");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < search_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < search_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(search_csv.data[i][j].toDouble());
+      }
+      search_csv.num_data.push_back(tmp_num_data);
+   }
+}
 
 void US_Hydrodyn_Saxs::load_gnom()
 {
