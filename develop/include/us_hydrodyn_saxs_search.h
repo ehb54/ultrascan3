@@ -101,7 +101,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 
       void setupGUI();
 
-      void sort_column( int );
       void table_updated( int, int );
 
       void replot_saxs();
