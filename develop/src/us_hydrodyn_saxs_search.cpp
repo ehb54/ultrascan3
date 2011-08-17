@@ -2,6 +2,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 
+#define SLASH QDir::separator()
+
 US_Hydrodyn_Saxs_Search::US_Hydrodyn_Saxs_Search(
                                                csv csv1,
                                                void *us_hydrodyn, 
@@ -90,7 +92,12 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    {
       for ( unsigned int j = 0; j < csv1.num_data[i].size(); j++ )
       {
-         t_csv->setText(i, j, csv1.data[i][j]);
+         if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
+         {
+            t_csv->setItem( i, j, new QCheckTableItem( t_csv, "" ) );
+         } else {
+            t_csv->setText( i, j, csv1.data[i][j] );
+         }
       }
    }
 
@@ -112,12 +119,32 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
 
-   connect(t_csv, SIGNAL(currentChanged(int, int)), SLOT(table_updated(int, int)));
+   connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
 
    progress = new QProgressBar(this, "Progress");
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress->reset();
+
+   cb_save_to_csv = new QCheckBox(this);
+   cb_save_to_csv->setText(tr(" Combined I(q) Results File:"));
+   cb_save_to_csv->setChecked(false);
+   cb_save_to_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_to_csv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_save_to_csv, SIGNAL(clicked()), SLOT(save_to_csv()));
+
+   le_csv_filename = new QLineEdit(this, "csv_filename Line Edit");
+   le_csv_filename->setText("search_results");
+   le_csv_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_csv_filename->setMinimumWidth(150);
+   le_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   cb_individual_files = new QCheckBox(this);
+   cb_individual_files->setText(tr(" Create individual SAXS Results Files"));
+   cb_individual_files->setChecked(false);
+   cb_individual_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_individual_files->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_replot_saxs = new QPushButton(tr("Replot SAXS window"), this);
    pb_replot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -194,6 +221,15 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // build layout
+   QHBoxLayout *hbl_csv = new QHBoxLayout(0);
+   hbl_csv->addSpacing(4);
+   hbl_csv->addWidget(cb_save_to_csv);
+   hbl_csv->addSpacing(4);
+   hbl_csv->addWidget(le_csv_filename);
+   hbl_csv->addSpacing(4);
+   hbl_csv->addWidget(cb_individual_files);
+   hbl_csv->addSpacing(4);
+
    QHBoxLayout *hbl_target = new QHBoxLayout(0);
    hbl_target->addSpacing(4);
    hbl_target->addWidget(pb_replot_saxs);
@@ -234,6 +270,8 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    background->addSpacing(4);
    background->addWidget(progress);
    background->addSpacing(4);
+   background->addLayout(hbl_csv);
+   background->addSpacing(4);
    background->addLayout(hbl_target);
    background->addSpacing(4);
    background->addLayout(hbl_controls);
@@ -261,7 +299,7 @@ void US_Hydrodyn_Saxs_Search::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-void US_Hydrodyn_Saxs_Search::table_updated( int , int )
+void US_Hydrodyn_Saxs_Search::table_value( int , int )
 {
    update_enables();
 }
@@ -337,9 +375,16 @@ void US_Hydrodyn_Saxs_Search::start()
 
    unsigned int current_offset = 0;
 
+   if ( cb_save_to_csv->isChecked() )
+   {
+      csv_source_name_iqq.clear();
+      saxs_q.clear();
+      saxs_iqq.clear();
+   }
+
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
       {
          starts    [i]   =  t_csv->text(i, 2).toDouble();
          ends      [i]   =  t_csv->text(i, 3).toDouble();
@@ -377,18 +422,38 @@ void US_Hydrodyn_Saxs_Search::start()
       }
       progress->setProgress(i, total_points);
       unsigned int pos = i;
-      // QString msg = "";
+      QString msg = "";
       for ( map < unsigned int, unsigned int >::iterator it = points.begin();
             it != points.end();
             it++ )
       {
          t_csv->setText(it->first, 5, QString("%1").arg(starts[it->first] + ( pos % it->second ) * increments[it->first]));
          pos /= it->second;
-         // msg += QString("%1 %2; ").arg(t_csv->text(it->first, 0)).arg(t_csv->text(it->first, 5));
+         msg += QString("%1 %2; ").arg(t_csv->text(it->first, 0)).arg(t_csv->text(it->first, 5));
       }
-      // msg += "\n";
-      // editor_msg("black", msg);
       run_one();
+      
+      if ( cb_save_to_csv->isChecked() )
+      {
+         csv_source_name_iqq.push_back( saxs_window->te_filename2->text() + " " +
+                                        ( lbl_current_target->text().isEmpty() ?
+                                          msg : QString("Target: %1 %2 fitness %3")
+                                          .arg(lbl_current_target->text()) 
+                                          .arg(msg) 
+                                          .arg(saxs_window->last_rescaling_chi2)
+                                          ) );
+         saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+         if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+         {
+            saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+         }
+         saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+      }
+   }
+
+   if ( running && cb_save_to_csv->isChecked() )
+   {
+      save_csv_saxs_iqq();
    }
 
    progress->setProgress(1, 1);
@@ -420,7 +485,7 @@ void US_Hydrodyn_Saxs_Search::run_best()
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
       {
          if ( t_csv->text(i, 6).isEmpty() )
          {
@@ -435,7 +500,7 @@ void US_Hydrodyn_Saxs_Search::run_best()
    
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
       {
          t_csv->setText( i, 5, t_csv->text(i, 6) );
       }
@@ -455,6 +520,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
    float     save_scale_excl_vol             = saxs_window->our_saxs_options->scale_excl_vol;
    bool      save_iqq_ask_target_grid        = saxs_window->our_saxs_options->iqq_ask_target_grid;
    QString   save_iqq_default_scaling_target = saxs_window->our_saxs_options->iqq_default_scaling_target;
+   bool      save_create_native_saxs         = saxs_window->create_native_saxs;
 
    // set current values:
    saxs_window->our_saxs_options->iqq_ask_target_grid = false;
@@ -463,14 +529,15 @@ void US_Hydrodyn_Saxs_Search::run_one()
    {
       saxs_window->clear_plot_saxs( true );
    }
+   saxs_window->cb_create_native_saxs        ->setChecked( cb_individual_files->isChecked() );
+   saxs_window->create_native_saxs           = cb_individual_files->isChecked();
    
    QString msg = "";
    bool any = false;
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      // editor_msg("blue", QString("text (%1,1) <%2>\n").arg(i).arg(t_csv->text( i, 1 )));
-      if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
       {
          if ( any )
          {
@@ -510,8 +577,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
             best_fitness = saxs_window->last_rescaling_chi2;
             for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
             {
-               // editor_msg("blue", QString("text (%1,1) <%2>\n").arg(i).arg(t_csv->text( i, 1 )));
-               if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+               if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
                {
                   t_csv->setText(i, 6, t_csv->text(i, 5));
                }
@@ -525,6 +591,10 @@ void US_Hydrodyn_Saxs_Search::run_one()
    saxs_window->our_saxs_options->scale_excl_vol             = save_scale_excl_vol;
    saxs_window->our_saxs_options->iqq_ask_target_grid        = save_iqq_ask_target_grid;
    saxs_window->our_saxs_options->iqq_default_scaling_target = save_iqq_default_scaling_target;
+   saxs_window->create_native_saxs                           = save_create_native_saxs;
+
+   saxs_window->cb_create_native_saxs                        ->setChecked( save_create_native_saxs );
+
 }
 
 void US_Hydrodyn_Saxs_Search::stop()
@@ -543,7 +613,7 @@ void US_Hydrodyn_Saxs_Search::update_enables()
    {
       for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
       {
-         if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+         if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
          {
             any_selected = true;
             if ( t_csv->text(i, 6).isEmpty() )
@@ -553,20 +623,27 @@ void US_Hydrodyn_Saxs_Search::update_enables()
          }
       }
    }
-   pb_start       ->setEnabled( !running && any_selected );
-   pb_run_current ->setEnabled( !running && any_selected );
-   pb_run_best    ->setEnabled( !running && !any_best_empty && any_selected);
-   pb_stop        ->setEnabled( running );
-   pb_replot_saxs ->setEnabled( !running && *saxs_widget && names.size() );
-   pb_set_target  ->setEnabled( !running &&*saxs_widget && saxs_window->qsl_plotted_iq_names.size() );
+   pb_start            ->setEnabled( !running && any_selected );
+   pb_run_current      ->setEnabled( !running && any_selected );
+   pb_run_best         ->setEnabled( !running && !any_best_empty && any_selected);
+   pb_stop             ->setEnabled( running );
+   pb_replot_saxs      ->setEnabled( !running && *saxs_widget && names.size() );
+   pb_set_target       ->setEnabled( !running && *saxs_widget && saxs_window->qsl_plotted_iq_names.size() );
+   cb_save_to_csv      ->setEnabled( !running );
+   le_csv_filename     ->setEnabled( !running && cb_save_to_csv->isChecked() );
+   cb_individual_files ->setEnabled( !running );
+
+   if ( *saxs_widget )
+   {
+      saxs_window->update_iqq_suffix();
+   }
 }
 
 bool US_Hydrodyn_Saxs_Search::any_to_run()
 {
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      // editor_msg("blue", QString("text (%1,1) <%2>\n").arg(i).arg(t_csv->text( i, 1 )));
-      if ( t_csv->text( i, 1 ).contains(QRegExp("^(y|yes)", false)) )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
       {
          return true;
       }
@@ -589,11 +666,6 @@ bool US_Hydrodyn_Saxs_Search::validate()
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( !t_csv->text( i, 1 ).contains( QRegExp("^(y|yes|n|no)", false) ) )
-      {
-         editor_msg("red", QString("Row %1 column \"Active\" must be Y or N\n").arg(i));
-         errors = true;
-      }
       if ( t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
       {
          editor_msg("red", QString("Row %1 column \"Low value\" can not be greater than \"High value\"\n").arg(i));
@@ -642,7 +714,8 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
       return false;
    }
 
-   if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+   if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite &&
+        cb_individual_files->isChecked() )
    {
       switch ( QMessageBox::warning(this, 
                                     tr("UltraScan Warning"),
@@ -672,6 +745,11 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
    return true;
 }
 
+void US_Hydrodyn_Saxs_Search::save_to_csv()
+{
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Search::do_replot_saxs()
 {
    saxs_window->clear_plot_saxs(true);
@@ -694,5 +772,40 @@ void US_Hydrodyn_Saxs_Search::replot_saxs()
    if ( validate_saxs_window() )
    {
       do_replot_saxs();
+   }
+}
+
+void US_Hydrodyn_Saxs_Search::save_csv_saxs_iqq()
+{
+   QString fname = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+      le_csv_filename->text() + "_iqq_search.csv";
+
+   if ( QFile::exists(fname) )
+      // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+   }         
+
+   FILE *of = fopen(fname, "wb");
+   if ( of )
+   {
+      //  header: "name","type",q1,q2,...,qn, header info
+      fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
+              saxs_window->vector_double_to_csv(saxs_q).ascii(),
+              saxs_header_iqq.remove("\n").ascii());
+      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      {
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_iqq[i].ascii(),
+                 "I(q)",
+                 saxs_window->vector_double_to_csv(saxs_iqq[i]).ascii());
+      }
+      fprintf(of, "\n");
+
+      fclose(of);
+      editor->append(tr("Created file: " + fname + "\n"));
+   } else {
+      editor_msg("red",tr("ERROR creating file: " + fname + "\n"));
    }
 }

@@ -5320,6 +5320,11 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             {
                qs += "_nac";
             }
+            if ( our_saxs_options->swh_excl_vol != 0e0 )
+            {
+               qs += QString("_swh%1")
+                  .arg( QString("%1").arg( our_saxs_options->swh_excl_vol ).replace(".", "_" ) );
+            }
          }
       }
    }

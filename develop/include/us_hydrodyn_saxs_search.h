@@ -35,6 +35,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Batch;
+
    public:
       US_Hydrodyn_Saxs_Search(
                               csv csv1,
@@ -56,6 +58,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       QTable        *t_csv;             
 
       QProgressBar  *progress;
+
+      QCheckBox     *cb_save_to_csv;
+      QLineEdit     *le_csv_filename;
+      QCheckBox     *cb_individual_files;
 
       QPushButton   *pb_replot_saxs;
       QPushButton   *pb_set_target;
@@ -92,16 +98,31 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 
       double           best_fitness;
 
+      QString saxs_header_iqq;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
       vector < vector < double > > qs;
       vector < vector < double > > Is;
       vector < vector < double > > I_errors;
       vector < QString >           names;
 
+      vector < QString >           csv_source_name_iqq;
+      vector < double >            saxs_q;
+      vector < vector < double > > saxs_iqq;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      void save_csv_saxs_iqq();
+
    private slots:
 
       void setupGUI();
 
-      void table_updated( int, int );
+      void table_value( int, int );
+
+      void save_to_csv();
 
       void replot_saxs();
       void set_target();

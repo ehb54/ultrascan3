@@ -1809,6 +1809,10 @@ void US_Hydrodyn_SaxsOptions::update_swh_excl_vol( const QString &str )
 {
    (*saxs_options).swh_excl_vol = str.toFloat();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::update_iqq_scale_minq( const QString &str )
