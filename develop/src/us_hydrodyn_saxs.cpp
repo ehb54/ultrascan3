@@ -3879,14 +3879,36 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
 
 void US_Hydrodyn_Saxs::saxs_search()
 {
-   US_Hydrodyn_Saxs_Search 
-      *saxs_search_window =
-      new US_Hydrodyn_Saxs_Search(search_csv, us_hydrodyn);
-   saxs_search_window->show();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_search_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv.name != "__empty__" )
+      {
+         search_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window = new US_Hydrodyn_Saxs_Search( search_csv, us_hydrodyn );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window->show();
+   }
 }
 
 void US_Hydrodyn_Saxs::reset_search_csv()
 {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv.name != "__empty__" )
+   {
+      search_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv;
+      return;
+   } 
+
    search_csv.name = "SAXS I(q) Search";
 
    search_csv.header_map.clear();

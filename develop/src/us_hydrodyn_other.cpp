@@ -3336,6 +3336,8 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_default_scaling_target = "";
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
+   batch.saxs_search = false;
+
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;
    default_buried_overlap = buried_overlap;

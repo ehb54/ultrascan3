@@ -148,6 +148,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
    advanced_config_widget = false;
+   saxs_search_widget = false;
    bd_widget = false;
    bd_options_widget = false;
    dmd_options_widget = false;
@@ -163,6 +164,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bead_model_selected_filter = "";
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
+
+   last_saxs_search_csv.name = "__empty__";
+
    read_residue_file();
 
    bd_ready_to_run = false;

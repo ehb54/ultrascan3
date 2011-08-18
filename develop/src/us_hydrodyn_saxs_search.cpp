@@ -20,6 +20,7 @@ US_Hydrodyn_Saxs_Search::US_Hydrodyn_Saxs_Search(
 
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
+   ((US_Hydrodyn *) us_hydrodyn)->saxs_search_widget = true;
 
    best_fitness = 1e99;
 
@@ -40,7 +41,7 @@ US_Hydrodyn_Saxs_Search::US_Hydrodyn_Saxs_Search(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   unsigned int csv_height = t_csv->rowHeight(0);
+   unsigned int csv_height = t_csv->rowHeight(0) + 30;
    unsigned int csv_width = t_csv->columnWidth(0) + 45;
    for ( int i = 0; i < t_csv->numRows(); i++ )
    {
@@ -66,6 +67,7 @@ US_Hydrodyn_Saxs_Search::US_Hydrodyn_Saxs_Search(
 
 US_Hydrodyn_Saxs_Search::~US_Hydrodyn_Saxs_Search()
 {
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_search_widget = false;
 }
 
 void US_Hydrodyn_Saxs_Search::setupGUI()
@@ -95,6 +97,7 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
             t_csv->setItem( i, j, new QCheckTableItem( t_csv, "" ) );
+            ((QCheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
          } else {
             t_csv->setText( i, j, csv1.data[i][j] );
          }
@@ -294,6 +297,9 @@ void US_Hydrodyn_Saxs_Search::help()
 
 void US_Hydrodyn_Saxs_Search::closeEvent(QCloseEvent *e)
 {
+   ((US_Hydrodyn *)us_hydrodyn)->saxs_search_widget = false;
+   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv = current_csv();
+
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -375,12 +381,9 @@ void US_Hydrodyn_Saxs_Search::start()
 
    unsigned int current_offset = 0;
 
-   if ( cb_save_to_csv->isChecked() )
-   {
-      csv_source_name_iqq.clear();
-      saxs_q.clear();
-      saxs_iqq.clear();
-   }
+   csv_source_name_iqq.clear();
+   saxs_q.clear();
+   saxs_iqq.clear();
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
@@ -433,22 +436,19 @@ void US_Hydrodyn_Saxs_Search::start()
       }
       run_one();
       
-      if ( cb_save_to_csv->isChecked() )
+      csv_source_name_iqq.push_back( saxs_window->te_filename2->text() + " " +
+                                     ( lbl_current_target->text().isEmpty() ?
+                                       msg : QString("Target: %1 %2 fitness %3")
+                                       .arg(lbl_current_target->text()) 
+                                       .arg(msg) 
+                                       .arg(saxs_window->last_rescaling_chi2)
+                                       ) );
+      saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+      if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
       {
-         csv_source_name_iqq.push_back( saxs_window->te_filename2->text() + " " +
-                                        ( lbl_current_target->text().isEmpty() ?
-                                          msg : QString("Target: %1 %2 fitness %3")
-                                          .arg(lbl_current_target->text()) 
-                                          .arg(msg) 
-                                          .arg(saxs_window->last_rescaling_chi2)
-                                          ) );
-         saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-         if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
-         {
-            saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
-         }
-         saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+         saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
       }
+      saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
    }
 
    if ( running && cb_save_to_csv->isChecked() )
@@ -532,7 +532,10 @@ void US_Hydrodyn_Saxs_Search::run_one()
    saxs_window->cb_create_native_saxs        ->setChecked( cb_individual_files->isChecked() );
    saxs_window->create_native_saxs           = cb_individual_files->isChecked();
    
-   QString msg = "";
+   QString msg =  QString("%1 model %1: ")
+      .arg(saxs_window->te_filename2->text())
+      .arg(saxs_window->selected_models[0] + 1);
+
    bool any = false;
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
@@ -692,12 +695,12 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
    if ( !*saxs_widget )
    {
       ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
-   }
-   this->raise();
-   if ( !*saxs_widget )
-   {
-      editor_msg("red", tr("Could not activate SAXS window!\n"));
-      return false;
+      raise();
+      if ( !*saxs_widget )
+      {
+         editor_msg("red", tr("Could not activate SAXS window!\n"));
+         return false;
+      }
    }
 
    if ( !lbl_current_target->text().isEmpty() &&
@@ -712,6 +715,29 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
    {
       editor_msg("red", "No model is currently available in the SAXS window\n");
       return false;
+   }
+
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   {
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+      {
+         if ( 
+             ( t_csv->text( i, 0 ).contains("Scaling excluded volume") ||
+               t_csv->text( i, 0 ).contains("SWH excluded volume") ) 
+             )
+         {
+            if ( saxs_window->our_saxs_options->saxs_iq_crysol ||
+                 saxs_window->our_saxs_options->saxs_iq_foxs )
+            {
+               QMessageBox::warning( this, 
+                                     "US-SOMO Search",
+                                     "Scaling excluded volume and SWH excluded volume\n"
+                                     "are not supported by the FoXS and CRYSOL I(q) functions\n"
+                                     );
+               return false;
+            }
+         }
+      }
    }
 
    if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite &&
@@ -809,3 +835,25 @@ void US_Hydrodyn_Saxs_Search::save_csv_saxs_iqq()
       editor_msg("red",tr("ERROR creating file: " + fname + "\n"));
    }
 }
+
+
+csv US_Hydrodyn_Saxs_Search::current_csv()
+{
+   csv tmp_csv = csv1;
+   
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      {
+         if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
+         {
+            tmp_csv.data[i][j] = ((QCheckTableItem *)(t_csv->item( i, j )))->isChecked() ? "Y" : "N";
+         } else {
+            tmp_csv.data[i][j] = t_csv->text( i, j );
+         }
+         tmp_csv.num_data[i][j] = tmp_csv.data[i][j].toDouble();
+      }
+   }
+   return tmp_csv;
+}
+  

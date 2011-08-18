@@ -61,6 +61,7 @@ struct batch_info
    bool compute_prr_avg;
    bool compute_prr_std_dev;
    bool hydrate;
+   bool saxs_search;
 };
 
 class US_EXTERN US_Hydrodyn_Batch : public QFrame
@@ -121,6 +122,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_grid;
       QCheckBox     *cb_somo;
       QCheckBox     *cb_iqq;
+      QCheckBox     *cb_saxs_search;
       QCheckBox     *cb_prr;
       QCheckBox     *cb_csv_saxs;
       QLineEdit     *le_csv_saxs_name;
@@ -199,6 +201,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       // message utility
       void editor_msg( QString color, QString msg );
       QString iqq_suffix();
+      bool activate_saxs_search_window();
       
    public :
       void add_file( QString filename );
@@ -227,6 +230,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_grid();
       void set_hydro();
       void set_iqq();
+      void set_saxs_search();
       void set_prr();
       void set_avg_hydro();
       void update_avg_hydro_name(const QString &);

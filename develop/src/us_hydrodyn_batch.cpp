@@ -329,14 +329,21 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
    cb_iqq = new QCheckBox(this);
-   cb_iqq->setText(tr("Compute SAXS I(q) vs q curve   "));
+   cb_iqq->setText(tr("Compute SAXS I(q) "));
    cb_iqq->setChecked(batch->iqq);
    cb_iqq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq, SIGNAL(clicked()), this, SLOT(set_iqq()));
 
+   cb_saxs_search = new QCheckBox(this);
+   cb_saxs_search->setText(tr("I(q) search "));
+   cb_saxs_search->setChecked(batch->saxs_search);
+   cb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_search->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_search, SIGNAL(clicked()), this, SLOT(set_saxs_search()));
+
    cb_prr = new QCheckBox(this);
-   cb_prr->setText(tr("Compute SAXS P(r) vs r curve   "));
+   cb_prr->setText(tr("Compute SAXS P(r) "));
    cb_prr->setChecked(batch->prr);
    cb_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_prr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -537,6 +544,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    QHBoxLayout *hbl_iqq_prr = new QHBoxLayout;
    hbl_iqq_prr->addWidget(cb_iqq);
+   hbl_iqq_prr->addWidget(cb_saxs_search);
    hbl_iqq_prr->addWidget(cb_prr);
 #if defined(USE_H)
    hbl_iqq_prr->addWidget(cb_hydrate);
@@ -957,6 +965,7 @@ void US_Hydrodyn_Batch::update_enables()
    cb_grid->setEnabled(any_pdb_in_list);
    cb_prr->setEnabled(lb_files->numRows());
    cb_iqq->setEnabled(lb_files->numRows());
+   cb_saxs_search->setEnabled(lb_files->numRows() && batch->iqq);
    cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
    le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
@@ -1172,6 +1181,33 @@ void US_Hydrodyn_Batch::set_iqq()
    //   batch->prr = cb_prr->isChecked();
    batch->iqq = cb_iqq->isChecked();
    
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_saxs_search()
+{
+   batch->saxs_search = cb_saxs_search->isChecked();
+   if ( batch->saxs_search )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+      raise();
+      if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget )
+      {
+         ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window->lower();
+         ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window->saxs_search();
+         if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_widget )
+         {
+            ((US_Hydrodyn *) us_hydrodyn)->
+               saxs_search_window->
+               editor_msg("blue", tr("Set search parameters for batch mode and then\n"
+                                     "close this window or return to the batch window when done\n"));
+         } else {
+            editor_msg("red", tr("Could not activate SAXS search window!\n"));
+         }
+      } else {
+         editor_msg("red", tr("Could not activate SAXS window!\n"));
+      }
+   }
    update_enables();
 }
 
@@ -1540,9 +1576,21 @@ void US_Hydrodyn_Batch::start()
                            ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs( true );
                         }
 
-                        result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
-                                                                        !batch->csv_saxs || batch->create_native_saxs
-                                                                        ) ? false : true;
+                        if ( batch->saxs_search )
+                        {
+                           if ( activate_saxs_search_window() )
+                           {
+                              ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->start();
+                              result = true; // probably should grab status
+                           } else {
+                              result = false;
+                           }
+                           raise();
+                        } else {
+                           result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
+                                                                           !batch->csv_saxs || batch->create_native_saxs
+                                                                           ) ? false : true;
+                        }
 #if defined(USE_H)
                         if ( batch->hydrate && pdb_mode )
                         {
@@ -1553,28 +1601,47 @@ void US_Hydrodyn_Batch::start()
 #endif
                         if ( batch->csv_saxs )
                         {
-
-#if defined(USE_H)
-                           if ( batch->hydrate )
+                           if ( batch->saxs_search )
                            {
-                              csv_source_name_iqq.push_back( file + " hydrated " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                              if ( result &&  ((US_Hydrodyn *) us_hydrodyn)->saxs_search_widget )
+                              {
+                                 vector < double > null_vector;
+                                 for ( unsigned int i = 0; 
+                                       i < ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->csv_source_name_iqq.size();
+                                       i++ )
+                                 {
+                                    csv_source_name_iqq
+                                       .push_back( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->csv_source_name_iqq[i] );
+                                    saxs_iqq
+                                       .push_back( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->saxs_iqq[i] );
+                                    saxs_iqqa.push_back( null_vector );
+                                    saxs_iqqc.push_back( null_vector );
+                                 }
+                                 saxs_q = ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->saxs_q;
+                              }
                            } else {
-#endif                              
-                              csv_source_name_iqq.push_back( file + " " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
 #if defined(USE_H)
-                           }
+                              if ( batch->hydrate )
+                              {
+                                 csv_source_name_iqq.push_back( file + " hydrated " + 
+                                                                ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                              } else {
+#endif                              
+                                 csv_source_name_iqq.push_back( file + " " + 
+                                                                ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+#if defined(USE_H)
+                              }
 #endif
-                           saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                           saxs_header_iqq.replace(QRegExp("from .* by"),"by");
-                           if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
-                           {
-                              saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                              saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                              saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                              if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                              {
+                                 saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                              }
+                              saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                              saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                              saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
                            }
-                           saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
-                           saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
-                           saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
                         }
 #if defined(USE_H)
                      }
@@ -1627,9 +1694,21 @@ void US_Hydrodyn_Batch::start()
                         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs( true );
                      }
 
-                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
-                                                                     !batch->csv_saxs || batch->create_native_saxs
-                                                                     ) ? false : true;
+                     if ( batch->saxs_search )
+                     {
+                        if ( activate_saxs_search_window() )
+                        {
+                           ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->start();
+                           result = true; // probably should grab status
+                        } else {
+                           result = false;
+                        }
+                        raise();
+                     } else {
+                        result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
+                                                                        !batch->csv_saxs || batch->create_native_saxs
+                                                                        ) ? false : true;
+                     }
 #if defined(USE_H)
                      if ( batch->hydrate && pdb_mode )
                      {
@@ -1640,27 +1719,47 @@ void US_Hydrodyn_Batch::start()
 #endif
                      if ( batch->csv_saxs )
                      {
-#if defined(USE_H)
-                        if ( batch->hydrate )
+                        if ( batch->saxs_search )
                         {
-                           csv_source_name_iqq.push_back( file + " hydrated " + 
-                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                           if ( result &&  ((US_Hydrodyn *) us_hydrodyn)->saxs_search_widget )
+                           {
+                              vector < double > null_vector;
+                              for ( unsigned int i = 0; 
+                                    i < ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->csv_source_name_iqq.size();
+                                    i++ )
+                              {
+                                 csv_source_name_iqq
+                                    .push_back( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->csv_source_name_iqq[i] );
+                                 saxs_iqq
+                                    .push_back( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->saxs_iqq[i] );
+                                 saxs_iqqa.push_back( null_vector );
+                                    saxs_iqqc.push_back( null_vector );
+                              }
+                              saxs_q = ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->saxs_q;
+                           }
                         } else {
-#endif
-                           csv_source_name_iqq.push_back( file + " " + 
-                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
 #if defined(USE_H)
-                        }
+                           if ( batch->hydrate )
+                           {
+                              csv_source_name_iqq.push_back( file + " hydrated " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                           } else {
 #endif
-                        saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                        saxs_header_iqq.replace(QRegExp("from .* by"),"by");
-                        if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
-                        {
-                           saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                              csv_source_name_iqq.push_back( file + " " + 
+                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+#if defined(USE_H)
+                           }
+#endif
+                           saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                           saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                           if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                           {
+                              saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                           }
+                           saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                           saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                           saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
                         }
-                        saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
-                        saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
-                        saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
                      }               
 #if defined(USE_H)
                   }
@@ -2917,4 +3016,24 @@ QString US_Hydrodyn_Batch::iqq_suffix()
 void US_Hydrodyn_Batch::open_saxs_options()
 {
    ((US_Hydrodyn *)us_hydrodyn)->show_saxs_options();
+}
+
+bool US_Hydrodyn_Batch::activate_saxs_search_window()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+   raise();
+   if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window->saxs_search();
+      if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_search_widget )
+      {
+         return true;
+      } else {
+         editor_msg("red", tr("Could not activate SAXS search window!\n"));
+         return false;
+      }
+   } else {
+      editor_msg("red", tr("Could not activate SAXS window!\n"));
+      return false;
+   }
 }

@@ -43,6 +43,7 @@
 #include "us_hydrodyn_pdb_parsing.h"
 #include "us_hydrodyn_saxs_options.h"
 #include "us_hydrodyn_saxs.h"
+#include "us_hydrodyn_saxs_search.h"
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
@@ -594,6 +595,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void clear_state();
 
       QStringList directory_history;
+
+      bool                     saxs_search_widget;
+      US_Hydrodyn_Saxs_Search  *saxs_search_window;
+      csv                      last_saxs_search_csv;
 
    public:
 

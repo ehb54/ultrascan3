@@ -116,6 +116,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 #endif
       void save_csv_saxs_iqq();
 
+      csv  current_csv();
+
    private slots:
 
       void setupGUI();
