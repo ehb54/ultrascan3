@@ -33,7 +33,7 @@ CREATE  TABLE IF NOT EXISTS people (
   activated TINYINT(1) NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
-  clusterAuthorizations VARCHAR(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
+  clusterAuthorizations VARCHAR(255) NOT NULL default 'bcf:bcf-local:alamo:alamo-local:lonestar:ranger',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (personID) )
