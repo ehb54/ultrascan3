@@ -104,7 +104,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
-//DbgLv(1) << "master start master loop";
    int    avg_generation       = -1;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
@@ -112,7 +111,8 @@ void US_MPI_Analysis::ga_master_loop( void )
    int    tag;
    int    workers              = node_count - 1;
 
-//DbgLv(1) << "master before set best fitness" << node_count << best_fitness.size();
+DbgLv(1) << "master start master loop: nodecount fitsize" << node_count
+   << best_fitness.size();
    // Reset best fitness for each worker
    for ( int i = 0; i < node_count; i++ )
    {
@@ -183,7 +183,7 @@ g = "";
 for ( int i = 0; i < buckets.size(); i++ )
     g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 
-//DbgLv(1) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
+DbgLv(2) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
 
 
             static const double fitness_threshold = 1.0e-7;

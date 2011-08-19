@@ -390,7 +390,8 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
             bguid         = bguid.isEmpty() ? "EMPTY" : bguid;
             bdesc         = bdesc.isEmpty() ? "EMPTY" : bdesc;
 
-            if ( bguid == bufGuid  ||  bid == bufId )
+            if ( ( bufGuid != "EMPTY"  &&  bguid == bufGuid )  ||
+                 ( bufGuid == "EMPTY"  &&  bid   == bufId   ) )
             {
                bdens     = ats.value( "density"         ).toString();
                bvisc     = ats.value( "viscosity"       ).toString();

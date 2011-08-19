@@ -47,6 +47,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       QString     file;
 
       foreach( file, files ) output.remove( file );
+      DbgLv(0) << "Start: node_count" << node_count;
    }
  
    MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up

@@ -49,7 +49,7 @@ QwtDoubleInterval US_SpectrogramData::yrange()
 
 // Necessary method to set up raster ranges: resolutions, floor fraction
 void US_SpectrogramData::setRastRanges( double a_xres, double a_yres,
-          double a_reso, double a_zfloor )
+          double a_reso, double a_zfloor, QwtDoubleRect a_drecti )
 {
    xreso    = a_xres;
    yreso    = a_yres;
@@ -59,6 +59,7 @@ void US_SpectrogramData::setRastRanges( double a_xres, double a_yres,
    nxpsc    = qRound( xreso );
    nyscn    = qRound( yreso );
    nxypt    = nxpsc * nyscn;
+   drecti   = a_drecti;
 }
 
 // Method called by QwtPlotSpectrogram for each raster point.
@@ -114,38 +115,61 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    if ( nsol < 1 )
       return;
 
-   xmin        = solu.at( 0 ).s;       // initial minima,maxima
-   ymin        = solu.at( 0 ).k;
-   zmin        = solu.at( 0 ).c;
-   xmax        = xmin;
-   ymax        = ymin;
-   zmax        = zmin;
+   xmin        = drecti.left ();
+   xmax        = drecti.right();
 
-   // scan solute distribution for ranges
+   if ( xmin == xmax )
+   {  // Auto-limits:  calculate x,y ranges
+      xmin        = solu.at( 0 ).s;    // initial minima,maxima
+      ymin        = solu.at( 0 ).k;
+      zmin        = solu.at( 0 ).c;
+      xmax        = xmin;
+      ymax        = ymin;
+      zmax        = zmin;
 
-   for ( int ii = 1; ii < nsol; ii++ )
-   {
-      xval    = solu.at( ii ).s;
-      yval    = solu.at( ii ).k;
-      zval    = solu.at( ii ).c;
+      // scan solute distribution for ranges
 
-      xmin    = ( xval < xmin ) ? xval : xmin;
-      xmax    = ( xval > xmax ) ? xval : xmax;
-      ymin    = ( yval < ymin ) ? yval : ymin;
-      ymax    = ( yval > ymax ) ? yval : ymax;
-      zmin    = ( zval < zmin ) ? zval : zmin;
-      zmax    = ( zval > zmax ) ? zval : zmax;
+      for ( int ii = 1; ii < nsol; ii++ )
+      {
+         xval    = solu.at( ii ).s;
+         yval    = solu.at( ii ).k;
+         zval    = solu.at( ii ).c;
+
+         xmin    = ( xval < xmin ) ? xval : xmin;
+         xmax    = ( xval > xmax ) ? xval : xmax;
+         ymin    = ( yval < ymin ) ? yval : ymin;
+         ymax    = ( yval > ymax ) ? yval : ymax;
+         zmin    = ( zval < zmin ) ? zval : zmin;
+         zmax    = ( zval > zmax ) ? zval : zmax;
+      }
+
+      xrng    = xmax - xmin;          // initial ranges and pixel/data ratios
+      xinc    = ( xreso - 1.0 ) / xrng;
+      yrng    = ymax - ymin;
+      yinc    = ( yreso - 1.0 ) / yrng;
+
+      xmin   -= ( 4.0 / xinc );       // adjust for padding, then recalc ranges
+      xmax   += ( 4.0 / xinc );
+      ymin   -= ( 4.0 / yinc );
+      ymax   += ( 4.0 / yinc );
    }
 
-   xrng    = xmax - xmin;             // initial ranges and pixel/data ratios
-   xinc    = ( xreso - 1.0 ) / xrng;
-   yrng    = ymax - ymin;
-   yinc    = ( yreso - 1.0 ) / yrng;
+   else
+   {  // Given x,y ranges
+      ymin    = drecti.top   ();
+      ymax    = drecti.bottom();
+qDebug() << "xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
+      zmin    = solu.at( 0 ).c;
+      zmax    = zmin;
 
-   xmin   -= ( 4.0 / xinc );          // adjust for padding, then recalc ranges
-   xmax   += ( 4.0 / xinc );
-   ymin   -= ( 4.0 / yinc );
-   ymax   += ( 4.0 / yinc );
+      for ( int ii = 1; ii < nsol; ii++ )
+      {  // Calculate z range
+         zval    = solu.at( ii ).c;
+         zmin    = ( zval < zmin ) ? zval : zmin;
+         zmax    = ( zval > zmax ) ? zval : zmax;
+      }
+   }
+
    xrng    = xmax - xmin;
    yrng    = ymax - ymin;
    xinc    = ( xreso - 1.0 ) / xrng;

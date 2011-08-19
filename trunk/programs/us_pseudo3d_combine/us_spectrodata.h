@@ -54,8 +54,9 @@ public:
        \param a_yres   Y resolution, the real Y extent in pixels.
        \param a_reso   Resolution, the factor used in Gaussian (default=90.0).
        \param a_zfloor Floor percent of Z-range to add below Z-minimum.
+       \param a_drecti Data plot value ranges
    */
-   void setRastRanges( double, double, double, double );
+   void setRastRanges( double, double, double, double, QwtDoubleRect );
 
    /*! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
        \param x  The real X pixel location for which to fetch Z.
@@ -72,6 +73,7 @@ public:
 private:
 
    QList< double > rdata;        // Raster data: z-values at each pixel
+   QwtDoubleRect   drecti;       // Data rectangle for x,y plot ranges
 
    double          xmin;         // X minimum
    double          xmax;         // X maximum
