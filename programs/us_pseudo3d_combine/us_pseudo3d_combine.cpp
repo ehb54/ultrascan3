@@ -165,6 +165,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
    ct_plt_dlay->setValue( (double)( patm_dlay ) / 1000.0 );
 
+   us_checkbox( tr( "Continuous Loop" ), cb_conloop, true );
+   spec->addWidget( cb_conloop, s_row++, 1 );
+   connect( cb_conloop, SIGNAL( clicked() ),
+            this,       SLOT( select_conloop() ) );
+
    QLabel* lb_curr_distr = us_label( tr( "Current Distro:" ) );
    lb_curr_distr->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_curr_distr, s_row, 0 );
@@ -198,7 +203,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( cb_plot_mw, SIGNAL( clicked() ),
             this,       SLOT( select_plot_mw() ) );
 
-   pb_pltall     = us_pushbutton( tr( "Plot All Distros in a Loop" ) );
+   pb_pltall     = us_pushbutton( tr( "Plot All Distros" ) );
    pb_pltall->setEnabled( false );
    spec->addWidget( pb_pltall, s_row, 0 );
    connect( pb_pltall,  SIGNAL( clicked() ),
@@ -321,6 +326,8 @@ void US_Pseudo3D_Combine::reset( void )
 
    auto_lim   = true;
    cb_autolim->setChecked( auto_lim );
+   cont_loop  = false;
+   cb_conloop->setChecked( cont_loop );
 
    plt_fmin   = 1.0;
    plt_fmax   = 4.0;
@@ -390,15 +397,23 @@ void US_Pseudo3D_Combine::plot_data( void )
    int    csum = bg.red() + bg.green() + bg.blue();
    pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
                                            QColor( Qt::white ) ) );
+   bool autlim = ( auto_lim && ! looping );
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
+   QwtDoubleRect drect;
+
+   if ( autlim )
+      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+   else
+      drect = QwtDoubleRect( plt_smin, plt_fmin,
+            ( plt_smax - plt_smin ), ( plt_fmax - plt_fmin ) );
 
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
-   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
+   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setRaster( *sol_d );
 
    d_spectrogram->attach( data_plot );
@@ -525,6 +540,17 @@ void US_Pseudo3D_Combine::select_autolim()
 
    set_limits();
 }
+
+void US_Pseudo3D_Combine::select_conloop()
+{
+   cont_loop  = cb_conloop->isChecked();
+
+   if ( cont_loop )
+      pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
+   else
+      pb_pltall->setText( tr( "Plot All Distros" ) );
+}
+
 void US_Pseudo3D_Combine::select_plot_s()
 {
    plot_s     = cb_plot_s->isChecked();
@@ -651,6 +677,11 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    pb_reset->setEnabled(    true );
    cb_plot_s->setEnabled(   true );
    cb_plot_mw->setEnabled(  true );
+
+   if ( cont_loop )
+      pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
+   else
+      pb_pltall->setText( tr( "Plot All Distros" ) );
 
 }
 
@@ -934,8 +965,14 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
    {   // If still looping, plot the next distribution
       if ( jdistr > maxsiz )
       {
-         jdistr = 0;
-         need_save = false;
+         jdistr     = 0;
+         need_save  = false;
+
+         if ( ! cont_loop )
+         {
+            jdistr  = curr_distr;
+            looping = false;
+         }
       }
       curr_distr = jdistr;
       plot_data();

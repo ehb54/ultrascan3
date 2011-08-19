@@ -2,6 +2,8 @@
 #include "us_math2.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
+#define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime())/1000.0)
+#define DbTimMsg(a) DbTiming << a << generation << my_rank << ELAPSEDNOW;
 
 void US_MPI_Analysis::ga_worker( void )
 {
@@ -34,8 +36,7 @@ void US_MPI_Analysis::ga_worker( void )
    {
       ga_worker_loop();
 
-DbgLv(0) << "Worker send finish message" << my_rank 
-         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+DbgLv(0) << "Worker send finish message" << my_rank << ELAPSEDNOW;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -163,8 +164,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
    for ( generation = 0; generation < generations; generation++ )
    {
-DbgLv(0) << "Worker start generation/rank/elapsed" << generation << my_rank 
-         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+DbTimMsg("Worker start generation/rank/elapsed");
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
       {
@@ -179,18 +179,17 @@ DbgLv(0) << "Worker start generation/rank/elapsed" << generation << my_rank
       if ( generation == generations - 1 )
       {
 
-DbTiming << "Worker before gsm generation/rank/elapsed" << generation << my_rank
-         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+DbTimMsg("Worker before gsm generation/rank/elapsed");
 
          fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
                                           fitness[ 0 ].fitness );
+DbTimMsg("Worker after gsm generation/rank/elapsed");
       }
 
-DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank 
-         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       // Ensure gene is on grid
       align_gene( genes[ fitness[ 0 ].index ] );
+DbTimMsg("Worker after align_gene");
 
       // Send best gene to master
       msg.generation = generation;
@@ -211,6 +210,7 @@ DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank
                 GENE,
                 MPI_COMM_WORLD );
 
+DbTimMsg("Worker after send fitness,genes");
       // Receive instructions from master (continue or finish)
       MPI_Status status;
 
@@ -221,6 +221,7 @@ DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank
                 MPI_ANY_TAG,
                 MPI_COMM_WORLD,
                 &status );
+DbTimMsg("Worker after receive instructions");
 
       if ( status.MPI_TAG == FINISHED ) break;
 
@@ -272,6 +273,7 @@ DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank
          genes[ g ] = old_genes[ fitness[ g ].index ];
 
       int emigrants = migrate_genes();
+DbTimMsg("Worker before elitism loop");
 
       for ( int g = elitism + emigrants; g < population; g++ )
       {
@@ -287,7 +289,9 @@ DbTiming << "Worker after gsm generation/rank/elapsed" << generation << my_rank
 
          genes[ g ] = gene;
       }
+DbTimMsg("Worker after elitism loop");
    }  // End of generation loop
+DbTimMsg("  +++Worker after generation loop");
 }
 
 void US_MPI_Analysis::align_gene( Gene& gene )
@@ -963,5 +967,4 @@ void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
 
    DbgLv(1) << s;
 }
-
 

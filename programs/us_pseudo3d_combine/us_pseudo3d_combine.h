@@ -82,6 +82,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_close;
 
       QCheckBox*    cb_autolim;
+      QCheckBox*    cb_conloop;
       QCheckBox*    cb_plot_s;
       QCheckBox*    cb_plot_mw;
 
@@ -107,6 +108,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          minmax;
       bool          zoom;
       bool          auto_lim;
+      bool          cont_loop;
       bool          plot_s;
       bool          looping;
       bool          need_save;
@@ -131,6 +133,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void plot_data(      int );
       void plot_data(      void );
       void select_autolim( void );
+      void select_conloop( void );
       void select_plot_s(  void );
       void select_plot_mw( void );
       void update_disk_db( bool );
