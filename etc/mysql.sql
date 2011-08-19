@@ -610,7 +610,7 @@ CREATE TABLE `tblAuth` (
   `Signup` datetime NOT NULL default '0000-00-00 00:00:00',
   `LastLogin` datetime NOT NULL default '0000-00-00 00:00:00',
   `Userlevel` tinyint(4) NOT NULL default '0',
-  `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
+  `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:ranger:lonestar',
   `AdvanceLevel` int(11) NOT NULL default 0,
   `account_activity_changed` date default NULL,
   PRIMARY KEY  (`InvestigatorID`),
