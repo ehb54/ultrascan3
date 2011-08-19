@@ -449,12 +449,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString cryson_last_pdb_base;
 
       void calc_saxs_iq_native_debye();
-      void calc_saxs_iq_native_hybrid();
       void calc_saxs_iq_native_hybrid2();
       void calc_saxs_iq_native_fast();
 
       void calc_saxs_iq_native_debye_bead_model();
-      void calc_saxs_iq_native_hybrid_bead_model();
       void calc_saxs_iq_native_hybrid2_bead_model();
       void calc_saxs_iq_native_fast_bead_model();
 

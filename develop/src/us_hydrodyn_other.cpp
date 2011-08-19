@@ -3290,7 +3290,6 @@ void US_Hydrodyn::set_default()
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
 
-   saxs_options.hybrid_q_point = 0.15f;
    saxs_options.hybrid2_q_points = 15;
 
    saxs_options.iq_ask = false;
@@ -3334,6 +3333,7 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_scale_play = false;
    saxs_options.swh_excl_vol = 0.0f;
    saxs_options.iqq_default_scaling_target = "";
+
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    batch.saxs_search = false;

@@ -6954,3 +6954,302 @@ bool US_Saxs_Util::calc_myrmsd( vector < double > x,
    rmsd = sqrt( rmsd );
    return true;
 }   
+
+
+point US_Saxs_Util::minus( point p1, point p2 ) // p1 - p2
+{
+   point result;
+   result.axis[0] = p1.axis[0] - p2.axis[0];
+   result.axis[1] = p1.axis[1] - p2.axis[1];
+   result.axis[2] = p1.axis[2] - p2.axis[2];
+   return result;
+}
+
+point US_Saxs_Util::cross( point p1, point p2) // p1 cross p2
+{
+   point result;
+   result.axis[0] = p1.axis[1] * p2.axis[2] -  p1.axis[2] * p2.axis[1];
+   result.axis[1] = p1.axis[2] * p2.axis[0] -  p1.axis[0] * p2.axis[2];
+   result.axis[2] = p1.axis[0] * p2.axis[1] -  p1.axis[1] * p2.axis[0];
+   return result;
+}
+
+float US_Saxs_Util::dot( point p1, point p2) // p1 dot p2
+{
+   return 
+      p1.axis[0] * p2.axis[0] +
+      p1.axis[1] * p2.axis[1] +
+      p1.axis[2] * p2.axis[2];
+}
+
+point US_Saxs_Util::normal( point p1 )
+{
+   point result = p1;
+   float divisor = sqrt( result.axis[0] * result.axis[0] +
+                         result.axis[1] * result.axis[1] +
+                         result.axis[2] * result.axis[2] );
+   result.axis[0] /= divisor;
+   result.axis[1] /= divisor;
+   result.axis[2] /= divisor;
+   return result;
+}   
+
+float US_Saxs_Util::dist( point p1, point p2) // sqrt( (p1 - p2) dot (p1 - p2) )
+{
+   point p = minus( p1, p2 );
+   return sqrt( dot( p, p ) );
+}
+
+point US_Saxs_Util::plane( PDB_atom *a1, PDB_atom *a2, PDB_atom *a3 )
+{
+   point result = normal ( cross(
+                                 minus(a3->coordinate, a2->coordinate),
+                                 minus(a1->coordinate, a2->coordinate) ) );
+   return result;
+}
+
+point US_Saxs_Util::plane( point p1, point p2, point p3 )
+{
+   point result = normal ( cross(
+                                 minus( p3, p2 ),
+                                 minus( p1, p2 )
+                                 ) );
+   return result;
+}
+
+point US_Saxs_Util::average( vector < point > *v )
+{
+   point result = (*v)[0];
+   for ( unsigned int i = 1; i < v->size(); i++ )
+   {
+      result.axis[0] += (*v)[i].axis[0];
+      result.axis[1] += (*v)[i].axis[1];
+      result.axis[2] += (*v)[i].axis[2];
+   }
+   result.axis[0] /= (float) v->size();
+   result.axis[1] /= (float) v->size();
+   result.axis[2] /= (float) v->size();
+   return result;
+}
+
+point US_Saxs_Util::scale( point p, float m )
+{
+   for ( unsigned int i = 0; i < 3; i++ )
+   {
+      p.axis[i] *= m;
+   }
+   return p;
+}
+   
+bool US_Saxs_Util::get_quadratic_interpolation_coefficients( 
+                                                            vector < double > x, 
+                                                            vector < double > y, 
+                                                            vector < double > &c 
+                                                            )
+{
+   errormsg = "";
+   if ( x.size() != 3 || y.size() != 3 )
+   {
+      errormsg = "US_Saxs_Util::get_quadratic_interpolation_coefficients vector sizes must be 3";
+      return false;
+   }
+
+   point xp[3];
+   point yp;
+
+   for ( unsigned int i = 0; i < 3; i++ )
+   {
+      xp[0].axis[i] = 1e0;
+      xp[1].axis[i] = x[i];
+      xp[2].axis[i] = x[i] * x[i];
+      yp.axis[i] = y[i];
+   }
+
+   // compute determinant
+
+   float det = dot( xp[0], cross( xp[1], xp[2] ) );
+
+   if ( det == 0.0 )
+   {
+      errormsg = "US_Saxs_Util::get_quadratic_interpolation_coefficients linearly dependent";
+      return false;
+   }
+
+   float oneoverdet = 1.0 / det;
+
+   point xi[3];
+
+   xi[0] = scale( cross( xp[1], xp[2] ), oneoverdet );
+   xi[1] = scale( cross( xp[2], xp[0] ), oneoverdet );
+   xi[2] = scale( cross( xp[0], xp[1] ), oneoverdet );
+
+   c.resize(3);
+
+   for ( unsigned int i = 0; i < 3; i++ )
+   {
+      c[i] = dot( xi[i], yp );
+   }
+
+   return true;
+}
+
+
+// takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
+bool US_Saxs_Util::linear_interpolate_iq_curve( 
+                                               vector < double >       & /* q */,
+                                               vector < unsigned int > &use_q,
+                                               vector < double >       &x1, 
+                                               vector < double >       &x2,
+                                               vector < double >       &r
+                                               )
+{
+   errormsg = "";
+   if ( x1.size() != x2.size() )
+   {
+      errormsg = "US_Saxs_Util::linear_interpolate_iq_curve x1 & x2 must be the same size";
+      return false;
+   }
+
+   unsigned int use_q_size = use_q.size();
+   vector < double > deltax( use_q_size );
+
+   for ( unsigned int i = 0; i < use_q_size; i++ )
+   {
+      unsigned int j = use_q[i];
+      deltax[i] = x2[j] - x1[j];
+   }
+
+   r.resize(x1.size());
+
+   for ( unsigned int i = 0; i < use_q_size - 1; i++ )
+   {
+      double one_over_merge_points = 1e0 / (double)(1 + use_q[i + 1] - use_q[i]);
+      for ( unsigned int j = use_q[i]; j < use_q[i + 1]; j++ )
+      {
+         double x = (double)(j - use_q[i]) * one_over_merge_points;
+         r[j] = x1[j] + deltax[i] * (1.0 - x) + deltax[i+1] * x;
+      }
+   }   
+   return true;
+}
+
+// takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
+bool US_Saxs_Util::quadratic_interpolate_iq_curve( 
+                                                  vector < double >       &q,
+                                                  vector < unsigned int > &use_q,
+                                                  vector < double >       &x1, 
+                                                  vector < double >       x2,
+                                                  vector < double >       &r
+                                                  )
+{
+   errormsg = "";
+   if ( x1.size() != x2.size() )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate_iq_curve x1 & x2 must be the same size";
+      return false;
+   }
+
+   if ( use_q.size() < 3 )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate_iq_curve needs at least 3 points";
+      return false;
+   }
+
+   unsigned int use_q_size = use_q.size();
+   vector < double > deltax( use_q_size );
+
+   for ( unsigned int i = 0; i < use_q_size; i++ )
+   {
+      unsigned int j = use_q[i];
+      deltax[i] = x2[j] - x1[j];
+   }
+
+   r.resize(x1.size());
+
+   // special case: front end, take 1st 3 points
+
+   // head, single quadratic
+   {
+      vector < double > x(3);
+      vector < double > y(3);
+      vector < double > c(3);
+
+      unsigned int i = 0;
+      for ( unsigned int k = 0; k < 3; k++ )
+      {
+         x[k] = q[use_q[i + k]];
+         y[k] = deltax [i + k];
+      }
+      if ( !get_quadratic_interpolation_coefficients( x, y, c ) )
+      {
+         cout << errormsg << endl;
+         cout << "resorting to linear interpolation\n";
+         return linear_interpolate_iq_curve(q, use_q, x1, x2, r);
+      }
+      for ( unsigned int j = use_q[i]; j < use_q[i+1]; j++ )
+      {
+         r[j] = x1[j] + c[0] + c[1] * q[j] + c[2] * q[j] * q[j];
+      }
+   }
+
+   // mid, double quadratic
+   {
+      vector < double > xa(3);
+      vector < double > ya(3);
+      vector < double > ca(3);
+
+      vector < double > xb(3);
+      vector < double > yb(3);
+      vector < double > cb(3);
+      
+      for ( unsigned int i = 1; i < use_q_size - 2; i++ )
+      {
+         for ( unsigned int k = 0; k < 3; k++ )
+         {
+            xa[k] = q[use_q[i + k - 1]];
+            ya[k] = deltax [i + k - 1];
+            xb[k] = q[use_q[i + k]];
+            yb[k] = deltax [i + k];
+         }
+         if ( 
+             !get_quadratic_interpolation_coefficients( xa, ya, ca ) ||
+             !get_quadratic_interpolation_coefficients( xb, yb, cb )
+             )
+         {
+            cout << errormsg << endl;
+            cout << "resorting to linear interpolation\n";
+            return linear_interpolate_iq_curve(q, use_q, x1, x2, r);
+         }
+         for ( unsigned int j = use_q[i]; j < use_q[i+1]; j++ )
+         {
+            r[j] = x1[j] + 0.5 * (ca[0] + cb[0] + (ca[1] + cb[1]) * q[j] + (ca[2] + cb[2]) * q[j] * q[j]);
+         }
+      }
+   }
+
+   // tail, single quadratic looking-back
+   {
+      vector < double > x(3);
+      vector < double > y(3);
+      vector < double > c(3);
+
+      unsigned int i = use_q_size - 2;
+      for ( unsigned int k = 0; k < 3; k++ )
+      {
+         x[k] = q[use_q[i + k - 1]];
+         y[k] = deltax [i + k - 1];
+      }
+      if ( !get_quadratic_interpolation_coefficients( x, y, c ) )
+      {
+         cout << errormsg << endl;
+         cout << "resorting to linear interpolation\n";
+         return linear_interpolate_iq_curve(q, use_q, x1, x2, r);
+      }
+      for ( unsigned int j = use_q[i]; j < use_q[i+1]; j++ )
+      {
+         r[j] = x1[j] + c[0] + c[1] * q[j] + c[2] * q[j] * q[j];
+      }
+   }
+
+   return true;
+}

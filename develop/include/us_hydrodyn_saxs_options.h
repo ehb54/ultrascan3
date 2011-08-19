@@ -59,9 +59,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_fast_modulation;
       QwtCounter *cnt_fast_modulation;
 
-      QLabel     *lbl_hybrid_q_point;
-      QwtCounter *cnt_hybrid_q_point;
-
       QLabel     *lbl_hybrid2_q_points;
       QwtCounter *cnt_hybrid2_q_points;
 
@@ -204,7 +201,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_fast_bin_size(double);
       void update_fast_modulation(double);
 
-      void update_hybrid_q_point(double);
       void update_hybrid2_q_points(double);
 
       void update_crysol_max_harmonics(double);

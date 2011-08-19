@@ -2531,12 +2531,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
       return;
    }
-   if ( our_saxs_options->saxs_iq_native_hybrid ) 
-   {
-      source ? calc_saxs_iq_native_hybrid_bead_model() : calc_saxs_iq_native_hybrid();
-      return;
-   }
-   if ( our_saxs_options->saxs_iq_native_hybrid2 ) 
+   if ( our_saxs_options->saxs_iq_native_hybrid ||
+        our_saxs_options->saxs_iq_native_hybrid2 ) 
    {
       source ? calc_saxs_iq_native_hybrid2_bead_model() : calc_saxs_iq_native_hybrid2();
       return;
@@ -4349,6 +4345,33 @@ void US_Hydrodyn_Saxs::rescale_plot()
 void US_Hydrodyn_Saxs::set_user_range()
 {
    cout << Iq_plotted_summary();
+
+#if defined(TEST_GET_QUADRATIC_INTERPOLATION_COEFFICIENTS)
+   // test get_quadratic_interpolation_coefficients
+   {
+
+      US_Saxs_Util usu;
+      vector < double > x(3);
+      vector < double > y(3);
+      vector < double > c(3);
+
+      for ( unsigned int i = 0; i < 3; i++ )
+      {
+         x[i] = i;
+         y[i] = x[i] * x[i]; // simple y=x^2
+      }
+      if ( !usu.get_quadratic_interpolation_coefficients(x, y, c) )
+      {
+         cout << usu.errormsg << endl;
+      } else {
+         for ( unsigned int i = 0; i < 3; i++ )
+         {
+            cout << QString("c[%1] = %2 ").arg(i).arg(c[i]);
+         }
+         cout << endl;
+      }
+   }
+#endif
 
    if ( cb_user_range->isChecked() &&
         cb_guinier->isChecked() )

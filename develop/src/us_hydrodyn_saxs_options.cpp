@@ -159,23 +159,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_fast_modulation->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_fast_modulation, SIGNAL(valueChanged(double)), SLOT(update_fast_modulation(double)));
 
-   lbl_hybrid_q_point = new QLabel(tr(" Hybrid Debye: q cutover"), this);
-   lbl_hybrid_q_point->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_hybrid_q_point->setMinimumHeight(minHeight1);
-   lbl_hybrid_q_point->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_hybrid_q_point->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   cnt_hybrid_q_point = new QwtCounter(this);
-   cnt_hybrid_q_point->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
-   cnt_hybrid_q_point->setValue((*saxs_options).hybrid_q_point);
-   cnt_hybrid_q_point->setMinimumHeight(minHeight1);
-   cnt_hybrid_q_point->setEnabled(true);
-   cnt_hybrid_q_point->setNumButtons(3);
-   cnt_hybrid_q_point->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_hybrid_q_point->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_hybrid_q_point, SIGNAL(valueChanged(double)), SLOT(update_hybrid_q_point(double)));
-
-   lbl_hybrid2_q_points = new QLabel(tr(" Hybrid2 Debye: q points"), this);
+   lbl_hybrid2_q_points = new QLabel(tr(" Hybrid, Hybrid2 Debye: q points"), this);
    lbl_hybrid2_q_points->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid2_q_points->setMinimumHeight(minHeight1);
    lbl_hybrid2_q_points->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -1002,10 +986,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    background->addWidget(lbl_fast_modulation, j, 0);
    background->addWidget(cnt_fast_modulation, j, 1);
-   j++;
-
-   background->addWidget(lbl_hybrid_q_point, j, 0);
-   background->addWidget(cnt_hybrid_q_point, j, 1);
    j++;
 
    background->addWidget(lbl_hybrid2_q_points, j, 0);
@@ -1892,12 +1872,6 @@ void US_Hydrodyn_SaxsOptions::update_fast_bin_size(double val)
 void US_Hydrodyn_SaxsOptions::update_fast_modulation(double val)
 {
    (*saxs_options).fast_modulation = (float) val;
-   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
-
-void US_Hydrodyn_SaxsOptions::update_hybrid_q_point(double val)
-{
-   (*saxs_options).hybrid_q_point = (float) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

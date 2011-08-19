@@ -212,8 +212,6 @@ struct saxs_options
    bool    sans_iq_native_fast_compute_pr;
    bool    sans_iq_cryson;
 
-   float   hybrid_q_point;
-
    unsigned int hybrid2_q_points;
 
    bool    iq_ask;                // ask when "compute saxs curve" is pressed

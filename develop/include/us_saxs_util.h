@@ -403,6 +403,40 @@ class US_EXTERN US_Saxs_Util
                           bool    do_normalize = true
                           );
       
+      point minus( point p1, point p2 );       // returns p1 - p2
+      point cross( point p1, point p2 );       // returns p1 x p2
+      float dot( point p1, point p2);          // p1 dot p2
+      point normal( point p1 );                // normalized point
+      point plane( PDB_atom *a1, PDB_atom *a2, PDB_atom *a3 );  //( a3 - a2 ) x ( a1 - a2 )
+      point plane( point p1, point p2, point p3 );  //( a3 - a2 ) x ( a1 - a2 )
+      point average( vector < point > *v );    // returns an average vector
+      float dist( point p1, point p2);         // sqrt( (p1 - p2) dot (p1 - p2) )
+      point scale( point p, float m);         // sqrt( (p1 - p2) dot (p1 - p2) )
+
+      // computes [1,x,x^2]^-1*y
+      bool get_quadratic_interpolation_coefficients( 
+                                                    vector < double > x, 
+                                                    vector < double > y, 
+                                                    vector < double > &c 
+                                                    );
+
+      // takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
+      bool linear_interpolate_iq_curve( 
+                                       vector < double >       &q,
+                                       vector < unsigned int > &use_q,
+                                       vector < double >       &x1, 
+                                       vector < double >       &x2,
+                                       vector < double >       &r
+                                       );
+
+      bool quadratic_interpolate_iq_curve( 
+                                          vector < double >       &q,
+                                          vector < unsigned int > &use_q,
+                                          vector < double >       &x1, 
+                                          vector < double >       x2,
+                                          vector < double >       &r
+                                          );
+
    private:
 
       bool run_gnom( 
