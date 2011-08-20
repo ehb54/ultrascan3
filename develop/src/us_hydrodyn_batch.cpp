@@ -842,6 +842,11 @@ void US_Hydrodyn_Batch::load_somo()
    {
       if ( lb_files->isSelected(i) )
       {
+         if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
+         {
+            editor_msg("red", lb_files->item(i)->text() );
+            break;
+         }
          bool result;
          QString file = get_file_name(i);
          QColor save_color = editor->color();
@@ -901,6 +906,11 @@ void US_Hydrodyn_Batch::load_saxs()
    {
       if ( lb_files->isSelected(i) )
       {
+         if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
+         {
+            editor_msg("red", lb_files->item(i)->text() );
+            break;
+         }
          bool result;
          QString file = get_file_name(i);
          QColor save_color = editor->color();
@@ -1592,7 +1602,10 @@ void US_Hydrodyn_Batch::start()
                                                                            ) ? false : true;
                         }
 #if defined(USE_H)
-                        if ( batch->hydrate && pdb_mode )
+                        if ( batch->hydrate && 
+                             pdb_mode &&
+                             batch->mm_all &&
+                             (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                         {
                            QDir qd;
                            cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;
@@ -1710,7 +1723,10 @@ void US_Hydrodyn_Batch::start()
                                                                         ) ? false : true;
                      }
 #if defined(USE_H)
-                     if ( batch->hydrate && pdb_mode )
+                     if ( batch->hydrate && 
+                          pdb_mode &&
+                          batch->mm_all &&
+                          (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                      {
                         QDir qd;
                         cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;

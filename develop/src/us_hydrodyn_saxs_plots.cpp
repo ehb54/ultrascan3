@@ -168,6 +168,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    editor->setColor(plot_colors[p % plot_colors.size()]);
    editor->append(name + "\n");
    editor->setColor(save_color);
+   saxs_search_update_enables();
 }
 
 void US_Hydrodyn_Saxs::push_back_zero_I_error()

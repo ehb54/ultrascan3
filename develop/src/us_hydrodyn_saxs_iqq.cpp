@@ -175,7 +175,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
-            new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            if ( this_atom->name != "OW" )
+            {
+               new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
 
@@ -1208,7 +1211,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
-            new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            if ( this_atom->name != "OW" )
+            {
+               new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
 
@@ -2005,7 +2011,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
-            new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            if ( this_atom->name != "OW" )
+            {
+               new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+            }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
 

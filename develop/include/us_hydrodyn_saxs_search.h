@@ -36,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
    Q_OBJECT
 
       friend class US_Hydrodyn_Batch;
+      friend class US_Hydrodyn_Saxs;
 
    public:
       US_Hydrodyn_Saxs_Search(
@@ -64,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       QCheckBox     *cb_individual_files;
 
       QPushButton   *pb_replot_saxs;
+      QPushButton   *pb_save_saxs_plot;
       QPushButton   *pb_set_target;
       QLabel        *lbl_current_target;
 
@@ -82,6 +84,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       bool          order_ascending;
 
       void          editor_msg( QString color, QString msg );
+      void          editor_msg_qc( QColor qcolor, QString msg );
 
       bool          running;
       void          update_enables();
@@ -91,6 +94,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
+      bool             activate_saxs_window();
       bool             validate_saxs_window();
       void             run_one();
 
@@ -118,6 +122,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 
       csv  current_csv();
 
+      void recompute_interval_from_points();
+      void recompute_points_from_interval();
+
+      bool not_active_warning();
+
    private slots:
 
       void setupGUI();
@@ -127,6 +136,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       void save_to_csv();
 
       void replot_saxs();
+      void save_saxs_plot();
       void set_target();
 
       void start();

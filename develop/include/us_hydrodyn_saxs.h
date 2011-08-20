@@ -465,7 +465,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_zero_I_error();
       QString Iq_plotted_summary();
 
-      void ask_iq_target_grid();
+      void ask_iq_target_grid( bool force = false );
+      bool everything_plotted_has_same_grid();
+      bool everything_plotted_has_same_grid_as_set();
 
       void load_iqq_csv( QString filename, bool just_plotted_curves = false );
 
@@ -481,6 +483,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_search_csv();
 
       void set_scaling_target( QString &scaling_target );
+
+      void saxs_search_update_enables();
 
    private slots:
 

@@ -163,6 +163,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    //   plot_colors.push_back(Qt::darkRed);
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
+   saxs_search_update_enables();
 }
 
 US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()
@@ -246,6 +247,7 @@ void US_Hydrodyn_Saxs::refresh(
    model_filename = filename;
    pb_stop->setEnabled(false);
    cb_create_native_saxs->setChecked(create_native_saxs);
+   saxs_search_update_enables();
 }
 
 void US_Hydrodyn_Saxs::setupGUI()
@@ -3400,7 +3402,21 @@ void US_Hydrodyn_Saxs::load_plot_saxs()
 
 void US_Hydrodyn_Saxs::set_grid()
 {
-   ask_iq_target_grid();
+   if ( everything_plotted_has_same_grid_as_set() )
+   {
+      if ( plotted_q.size() )
+      {
+         QMessageBox::information(this, 
+                                  tr("US-SOMO: Set grid"),
+                                  QString(tr("NOTE: Everything plotted already matches the set grid")));
+      } else {
+         QMessageBox::information(this, 
+                                  tr("US-SOMO: Set grid"),
+                                  QString(tr("Nothing plotted")));
+         return;
+      }
+   }
+   ask_iq_target_grid( true );
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_data()
@@ -3541,6 +3557,15 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
          }
       }
    }
+   saxs_search_update_enables();
+}
+
+void US_Hydrodyn_Saxs::saxs_search_update_enables()
+{
+   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_search_widget )
+   {
+      ((US_Hydrodyn*)us_hydrodyn)->saxs_search_window->update_enables();
+   }
 }
 
 void US_Hydrodyn_Saxs::show_plot_sans()
@@ -3559,6 +3584,7 @@ void US_Hydrodyn_Saxs::show_plot_sans()
 void US_Hydrodyn_Saxs::show_plot_saxs_sans()
 {
    rb_sans->isChecked() ? show_plot_sans() : show_plot_saxs();
+   saxs_search_update_enables();
 }
 
 void US_Hydrodyn_Saxs::load_saxs_sans()
@@ -3917,6 +3943,7 @@ void US_Hydrodyn_Saxs::reset_search_csv()
    search_csv.header.push_back("Low value");
    search_csv.header.push_back("High value");
    search_csv.header.push_back("Points");
+   search_csv.header.push_back("Interval");
    search_csv.header.push_back("Current value");
    search_csv.header.push_back("Best value");
 
@@ -3926,7 +3953,8 @@ void US_Hydrodyn_Saxs::reset_search_csv()
    tmp_data.push_back("N");
    tmp_data.push_back(".95");
    tmp_data.push_back("1.05");
-   tmp_data.push_back("10");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
    tmp_data.push_back(".95");
    tmp_data.push_back("");
 
@@ -3938,7 +3966,8 @@ void US_Hydrodyn_Saxs::reset_search_csv()
    tmp_data.push_back("N");
    tmp_data.push_back("15");
    tmp_data.push_back("30");
-   tmp_data.push_back("10");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
    tmp_data.push_back("15");
    tmp_data.push_back("");
 
@@ -5387,8 +5416,13 @@ QString US_Hydrodyn_Saxs::iqq_suffix()
    return qs.length() ? ( "-" + qs ) : "";
 }
 
-void US_Hydrodyn_Saxs::ask_iq_target_grid()
+void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
 {
+   if ( !force && everything_plotted_has_same_grid_as_set() )
+   {
+      return;
+   }
+
    unsigned int q_points = 
       (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
    
@@ -5619,5 +5653,66 @@ bool US_Hydrodyn_Saxs::iq_plot_only_experimental_present()
    {
       return true;
    }
+   return false;
+}
+
+bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid()
+{
+   if ( plotted_q.size() <= 1 )
+   {
+      return true;
+   }
+
+   double start_q = plotted_q[ 0 ][ 0 ];
+   double end_q   = plotted_q[ 0 ][ plotted_q[ 0 ].size() - 1 ];
+   double delta_q = plotted_q[ 0 ][ 1 ] - start_q;
+
+   for ( unsigned int i = 1; i < plotted_q.size(); i++ )
+   {
+      if ( 
+          QString("%1").arg(start_q) != 
+          QString("%1").arg(plotted_q[ i ][ 0 ])
+          ||
+          QString("%1").arg(end_q)   != 
+          QString("%1").arg(plotted_q[ i ][ plotted_q[ i ].size() -1 ])
+          ||
+          QString("%1").arg(delta_q) != 
+          QString("%1").arg(plotted_q[ i ][ 1 ] - plotted_q[ i ][ 0 ]) )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
+{
+   if ( plotted_q.size() == 0 )
+   {
+      return true;
+   }
+
+   if ( !everything_plotted_has_same_grid() )
+   {
+      return false;
+   }
+
+   if ( 
+       QString("%1").arg(our_saxs_options->start_q + our_saxs_options->delta_q) == 
+       QString("%1").arg((float) plotted_q[ 0 ][ 0 ])
+       &&
+       QString("%1").arg(our_saxs_options->end_q)   == 
+       QString("%1").arg((float) plotted_q[ 0 ][ plotted_q[ 0 ].size() - 1 ])
+       &&
+       QString("%1").arg(our_saxs_options->delta_q) == 
+       QString("%1").arg((float) (plotted_q[ 0 ][ 1 ] - plotted_q[ 0 ][ 0 ]) ) )
+   {
+      return true;
+   }
+
+   // puts("ephsgas: false, details:");
+   // cout <<  QString("%1 %2\n").arg(our_saxs_options->start_q + our_saxs_options->delta_q).arg((float) plotted_q[ 0 ][ 0 ]);
+   // cout <<  QString("%1 %2\n").arg(our_saxs_options->end_q).arg((float) plotted_q[ 0 ][ plotted_q[ 0 ].size() - 1 ]);
+   // cout <<  QString("%1 %2\n").arg(our_saxs_options->delta_q).arg((float) (plotted_q[ 0 ][ 1 ] - plotted_q[ 0 ][ 0 ]) );
    return false;
 }

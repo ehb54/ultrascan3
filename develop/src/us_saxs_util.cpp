@@ -6904,7 +6904,12 @@ bool US_Saxs_Util::set_excluded_volume(
    {
       use_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
    }
-   scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
+   if ( this_atom.name == "OW" )
+   {
+      scaled_vol = use_vol;
+   } else {
+      scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
+   } 
    return true;
 }
 
