@@ -395,7 +395,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    if ( plotted )
    {
       editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("P(r) plot done\n");
+      editor->append("I(q) plot done\n");
       plotted = false;
    }
    

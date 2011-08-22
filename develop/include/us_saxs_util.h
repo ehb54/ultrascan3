@@ -255,6 +255,7 @@ class US_EXTERN US_Saxs_Util
 
       int debug;
       QString errormsg;
+      QString noticemsg;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -436,6 +437,33 @@ class US_EXTERN US_Saxs_Util
                                           vector < double >       x2,
                                           vector < double >       &r
                                           );
+
+      bool cubic_spline_interpolate_iq_curve( 
+                                             vector < double >       &q,
+                                             vector < unsigned int > &use_q,
+                                             vector < double >       &x1, 
+                                             vector < double >       x2,
+                                             vector < double >       &r
+                                             );
+      
+      // computes 2nd derivatives on y=f(x) and distributes n points proportionately to abs(f'') and returns in r
+      bool create_adaptive_grid( 
+                                vector < double >       &x,
+                                vector < double >       &y,
+                                unsigned int            n,
+                                vector < unsigned int>  &r
+                                );
+
+      bool apply_natural_spline( vector < double > &xa, 
+                                 vector < double > &ya,
+                                 vector < double > &y2a,
+                                 double            x,
+                                 double            &y );
+         
+
+      void natural_spline( vector < double > &x, 
+                           vector < double > &y,
+                           vector < double > &y2 );
 
    private:
 

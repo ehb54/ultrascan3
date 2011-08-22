@@ -2394,7 +2394,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       }
 
       // -------------------------------
+      vector < unsigned int > r;
+      bool adaptive_ok = false;
 
+      if ( our_saxs_options->saxs_iq_hybrid_adaptive )
+      {
+         US_Saxs_Util usu;
+         if ( !usu.create_adaptive_grid( q, I, our_saxs_options->hybrid2_q_points, r ) )
+         {
+            editor_msg( "red", usu.errormsg );
+         } else {
+            adaptive_ok = true;
+         }
+         if ( !usu.noticemsg.isEmpty() )
+         {
+            editor_msg( "black", usu.noticemsg );
+         }
+      }
 
       unsigned int q_delta = q_points / our_saxs_options->hybrid2_q_points;
       vector < unsigned int > use_q;
@@ -2420,6 +2436,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          use_q.push_back(q_points - 1);
       }
 
+      if ( our_saxs_options->saxs_iq_hybrid_adaptive )
+      {
+         use_q = r;
+      }
       unsigned int use_q_size = use_q.size();
 
       double qrik; // q * rik
@@ -2498,10 +2518,18 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                cout << usu.errormsg << endl;
             }
          } else {
-            if ( !usu.quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+            if ( our_saxs_options->saxs_iq_native_hybrid2 )
             {
-               cout << usu.errormsg << endl;
-            }
+               if ( !usu.quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               {
+                  cout << usu.errormsg << endl;
+               }
+            } else {
+               if ( !usu.cubic_spline_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               {
+                  cout << usu.errormsg << endl;
+               }
+            }               
          }
       }
 

@@ -476,8 +476,15 @@ void US_Hydrodyn_Saxs_Search::start()
    }
 
    progress->setProgress(1, 1);
+   if ( saxs_window->plotted )
+   {
+      saxs_window->editor->append("\n");
+      saxs_window->editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      saxs_window->plotted = false;
+   }
    running = false;
    update_enables();
+
 }
 
 void US_Hydrodyn_Saxs_Search::run_current()
@@ -491,6 +498,12 @@ void US_Hydrodyn_Saxs_Search::run_current()
    running = true;
    update_enables();
    run_one();
+   if ( saxs_window->plotted )
+   {
+      saxs_window->editor->append("\n");
+      saxs_window->editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      saxs_window->plotted = false;
+   }
    running = false;
    update_enables();
 }
@@ -528,6 +541,12 @@ void US_Hydrodyn_Saxs_Search::run_best()
    }
 
    run_one();
+   if ( saxs_window->plotted )
+   {
+      saxs_window->editor->append("\n");
+      saxs_window->editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      saxs_window->plotted = false;
+   }
    running = false;
    update_enables();
 }

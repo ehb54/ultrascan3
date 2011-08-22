@@ -134,6 +134,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_saxs_iq_native_debye;
       QRadioButton *rb_saxs_iq_native_hybrid;
       QRadioButton *rb_saxs_iq_native_hybrid2;
+      QRadioButton *rb_saxs_iq_native_hybrid3;
       QRadioButton *rb_saxs_iq_native_fast;
       QRadioButton *rb_saxs_iq_foxs;
       QRadioButton *rb_saxs_iq_crysol;
@@ -142,6 +143,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_sans_iq_native_debye;
       QRadioButton *rb_sans_iq_native_hybrid;
       QRadioButton *rb_sans_iq_native_hybrid2;
+      QRadioButton *rb_sans_iq_native_hybrid3;
       QRadioButton *rb_sans_iq_native_fast;
       QRadioButton *rb_sans_iq_cryson;
 

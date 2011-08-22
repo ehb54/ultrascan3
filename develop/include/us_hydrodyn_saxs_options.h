@@ -48,6 +48,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox  *cb_saxs_iq_native_debye;
       QCheckBox  *cb_saxs_iq_native_hybrid;
       QCheckBox  *cb_saxs_iq_native_hybrid2;
+      QCheckBox  *cb_saxs_iq_native_hybrid3;
+      QCheckBox  *cb_saxs_iq_hybrid_adaptive;
       QCheckBox  *cb_saxs_iq_native_fast;
       QCheckBox  *cb_saxs_iq_native_fast_compute_pr;
       QCheckBox  *cb_saxs_iq_crysol;
@@ -85,6 +87,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox  *cb_sans_iq_native_debye;
       QCheckBox  *cb_sans_iq_native_hybrid;
       QCheckBox  *cb_sans_iq_native_hybrid2;
+      QCheckBox  *cb_sans_iq_native_hybrid3;
+      QCheckBox  *cb_sans_iq_hybrid_adaptive;
       QCheckBox  *cb_sans_iq_native_fast;
       QCheckBox  *cb_sans_iq_native_fast_compute_pr;
       QCheckBox  *cb_sans_iq_cryson;
@@ -193,6 +197,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_saxs_iq_native_debye();
       void set_saxs_iq_native_hybrid();
       void set_saxs_iq_native_hybrid2();
+      void set_saxs_iq_native_hybrid3();
+      void set_saxs_iq_hybrid_adaptive();
       void set_saxs_iq_native_fast();
       void set_saxs_iq_native_fast_compute_pr();
       void set_saxs_iq_crysol();
@@ -219,6 +225,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_sans_iq_native_debye();
       void set_sans_iq_native_hybrid();
       void set_sans_iq_native_hybrid2();
+      void set_sans_iq_native_hybrid3();
+      void set_sans_iq_hybrid_adaptive();
       void set_sans_iq_native_fast();
       void set_sans_iq_native_fast_compute_pr();
       void set_sans_iq_cryson();

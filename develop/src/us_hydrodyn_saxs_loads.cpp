@@ -1360,7 +1360,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
       if ( plotted )
       {
          editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-         editor->append("I(q) vs q plot done\n");
+         editor->append("I(q) plot done\n");
          plotted = false;
       }
 

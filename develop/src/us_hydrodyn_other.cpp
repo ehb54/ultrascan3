@@ -3277,7 +3277,8 @@ void US_Hydrodyn::set_default()
 
    saxs_options.saxs_iq_native_debye = false;
    saxs_options.saxs_iq_native_hybrid = false;
-   saxs_options.saxs_iq_native_hybrid2 = true;
+   saxs_options.saxs_iq_native_hybrid2 = false;
+   saxs_options.saxs_iq_native_hybrid3 = true;
    saxs_options.saxs_iq_native_fast = false;
    saxs_options.saxs_iq_native_fast_compute_pr = false;
    saxs_options.saxs_iq_foxs = false;
@@ -3286,6 +3287,7 @@ void US_Hydrodyn::set_default()
    saxs_options.sans_iq_native_debye = true;
    saxs_options.sans_iq_native_hybrid = false;
    saxs_options.sans_iq_native_hybrid2 = false;
+   saxs_options.sans_iq_native_hybrid3 = false;
    saxs_options.sans_iq_native_fast = false;
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
@@ -3333,6 +3335,9 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_scale_play = false;
    saxs_options.swh_excl_vol = 0.0f;
    saxs_options.iqq_default_scaling_target = "";
+
+   saxs_options.saxs_iq_hybrid_adaptive = true;
+   saxs_options.sans_iq_hybrid_adaptive = true;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

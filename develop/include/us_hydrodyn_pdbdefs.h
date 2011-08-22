@@ -200,6 +200,7 @@ struct saxs_options
    bool    saxs_iq_native_debye;
    bool    saxs_iq_native_hybrid;
    bool    saxs_iq_native_hybrid2;
+   bool    saxs_iq_native_hybrid3;
    bool    saxs_iq_native_fast;
    bool    saxs_iq_native_fast_compute_pr;
    bool    saxs_iq_crysol;
@@ -208,6 +209,7 @@ struct saxs_options
    bool    sans_iq_native_debye;
    bool    sans_iq_native_hybrid;
    bool    sans_iq_native_hybrid2;
+   bool    sans_iq_native_hybrid3;
    bool    sans_iq_native_fast;
    bool    sans_iq_native_fast_compute_pr;
    bool    sans_iq_cryson;
@@ -261,6 +263,9 @@ struct saxs_options
    float   swh_excl_vol;
 
    QString iqq_default_scaling_target;
+
+   bool    saxs_iq_hybrid_adaptive;
+   bool    sans_iq_hybrid_adaptive;
 };
 
 struct hybridization

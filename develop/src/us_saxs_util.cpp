@@ -7258,3 +7258,265 @@ bool US_Saxs_Util::quadratic_interpolate_iq_curve(
 
    return true;
 }
+
+// takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
+bool US_Saxs_Util::cubic_spline_interpolate_iq_curve( 
+                                                     vector < double >       &q,
+                                                     vector < unsigned int > &use_q,
+                                                     vector < double >       &x1, 
+                                                     vector < double >       x2,
+                                                     vector < double >       &r
+                                                     )
+{
+   errormsg = "";
+   if ( x1.size() != x2.size() )
+   {
+      errormsg = "US_Saxs_Util::linear_interpolate_iq_curve x1 & x2 must be the same size";
+      return false;
+   }
+
+   unsigned int use_q_size = use_q.size();
+   vector < double > deltax( use_q_size );
+   vector < double > x     ( use_q_size );
+   vector < double > y2    ( use_q_size );
+
+   for ( unsigned int i = 0; i < use_q_size; i++ )
+   {
+      unsigned int j = use_q[i];
+      x     [i]      = q[ j ];
+      deltax[i]      = x2[j] - x1[j];
+   }
+
+   r.resize(x1.size());
+
+   natural_spline( x, deltax, y2 );
+
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      if ( !apply_natural_spline( x, deltax, y2, q[ i ], r[ i ] ) )
+      {
+         return false;
+      }
+      r[ i ] += x1[ i ];
+   }
+      
+   return true;
+}
+
+void US_Saxs_Util::natural_spline( vector < double > &x, 
+                                   vector < double > &y,
+                                   vector < double > &y2 )
+{
+   double  p;
+   double  qn;
+   double  sig;
+   double  un;
+   vector < double > u(x.size());
+   
+   y2.resize(x.size());
+   
+   y2[ 0 ] = u [ 0 ] = 0e0;
+   
+   for ( unsigned int i = 1; i < x.size() - 1; i++ ) 
+   {
+      sig     = ( x[ i ] - x[ i - 1 ] ) / ( x[ i + 1 ] - x[ i - 1 ] );
+      p       = sig * y2[ i - 1 ] + 2e0;
+      y2[ i ] = ( sig -1e0 ) / p;
+      u [ i ] = ( y[ i + 1 ] - y[ i ] ) / ( x[ i + 1 ] - x[ i ]) - ( y[ i ] - y[ i - 1 ] ) / ( x[ i ] - x[ i - 1 ]);
+      u [ i ] = ( 6e0 * u[ i ] / ( x[ i + 1 ] - x[ i - 1 ] ) - sig * u[ i - 1 ] ) / p;
+   }
+   
+   qn = un = 0e0;
+   
+   y2[ x.size() - 1 ] = 0e0;
+   
+   for (unsigned int k = x.size() - 2; k >= 1 ; k-- )
+   {
+      y2[ k ] = y2[ k ] * y2[ k + 1 ] + u[ k ];
+   }
+}
+
+
+bool US_Saxs_Util::apply_natural_spline( vector < double > &xa, 
+                                         vector < double > &ya,
+                                         vector < double > &y2a,
+                                         double            x,
+                                         double            &y )
+{
+   unsigned int klo = 0;
+   unsigned int khi = xa.size() - 1;
+
+   while ( khi - klo > 1) {
+      unsigned int k = ( khi + klo ) >> 1;
+      if ( xa[ k ] > x )
+      {
+         khi = k;
+      } else {
+         klo = k;
+      }
+   }
+
+   if ( khi == klo )
+   {
+      errormsg = "US_Saxs_Util::apply_natural_spline error finding point";
+      return false;
+   }
+
+   double h = xa[ khi ] - xa[ klo ];
+
+   if ( h <= 0e0 )
+   {
+      errormsg = "US_Saxs_Util::apply_natural_spline zero or negative interval";
+      return false;
+   }
+
+   double a = ( xa[ khi ] - x ) / h;
+   double b = ( x - xa[ klo ] ) / h;
+
+   y = 
+      a * ya[ klo ] +
+      b * ya[ khi ] + ( ( a * a * a - a ) * y2a[ klo ] + 
+                        ( b * b * b - b ) * y2a[ khi ] ) * ( h * h ) / 6e0;
+
+   return true;
+}
+
+bool US_Saxs_Util::create_adaptive_grid( 
+                                        vector < double >       &x,
+                                        vector < double >       &y,
+                                        unsigned int            n,
+                                        vector < unsigned int>  &r
+                                        )
+{
+   errormsg = "";
+   noticemsg = "";
+
+   if ( y.size() < 4 )
+   {
+      errormsg = "US_Saxs_Util::create_adaptive_grid() too few points";
+      return false;
+   }
+
+   if ( n < 3 )
+   {
+      errormsg = "US_Saxs_Util::create_adaptive_grid() too few points requested points";
+      return false;
+   }
+
+   vector < double > y2;
+   natural_spline( x, y, y2 );
+
+   for ( unsigned int i = 0; i < y2.size(); i++ )
+   {
+      y2[ i ] = y2[ i ] / y[ i ];
+      // cout << QString("%1 %2\n").arg(x[i]).arg(y2[i]);
+   }
+
+   // find fluctuation points
+
+   r.clear();
+   r.push_back(0); // add 1st point
+
+   bool order = y2[ 1 ] > y2[ 0 ];
+   for ( unsigned int i = 1; i < y2.size() - 1; i++ )
+   {
+      bool new_order = y2[ i ] > y2[ i - 1 ];
+      if ( new_order != order ) 
+      {
+         r.push_back( i - 1 );
+      }
+      order = new_order;
+   }
+
+   r.push_back(y2.size() - 1); // add last point
+
+#if defined(DEBUG_ADAPTIVE)
+   cout << "before adding points:\n";
+   for ( unsigned int i = 0; i < r.size(); i++ )
+   {
+      cout << QString("%1 %2 %3\n").arg(i).arg(r[i]).arg(x[r[i]]);
+   }
+#endif
+
+   if ( r.size() < 2 )
+   {
+      errormsg = "US_Saxs_Util::create_adaptive_grid internal error, less than 2 points!";
+      return false;
+   }
+
+   bool   room_left = true;
+   double max_dist  = 1e99;
+   double std_dist  = ( x[ x.size() - 1 ] - x[ 0 ] ) / n;
+
+   while( max_dist > std_dist && room_left )
+   {
+      unsigned int max_dist_pos = 0;
+
+      max_dist  = 0e0;
+      room_left = false;
+
+      for( unsigned int i = 1; i < r.size(); i++ )
+      {
+         double dist = x[ r[ i ] ] - x[ r [ i - 1 ] ];
+         if ( dist > max_dist && r[ i ] != r[ i - 1 ] + 1 )
+         {
+            room_left    = true;
+            max_dist     = dist;
+            max_dist_pos = i - 1;
+         }
+      }
+
+      if ( room_left )
+      {
+#if defined(DEBUG_ADAPTIVE)
+         cout << QString("max dist %1 pos %2\n").arg(max_dist).arg(max_dist_pos);
+#endif
+         unsigned int centerpoint = ( r[ max_dist_pos + 1 ] + r[ max_dist_pos ] ) / 2;
+#if defined(DEBUG_ADAPTIVE)
+         cout << QString("r1 %1 r2 %2 centerpoint %3\n").arg(r[ max_dist_pos + 1 ]).arg(r[ max_dist_pos]).arg(centerpoint);
+#endif
+         if ( centerpoint == r[ max_dist_pos + 1 ] || centerpoint == r[ max_dist_pos ] )
+         {
+            errormsg = "US_Saxs_Util::create_adaptive_grid internal error centerpoint already present!";
+            return false;
+         }
+#if defined(DEBUG_ADAPTIVE)
+         cout << QString("max dist %1 pos %2 adding %3\n").arg(max_dist).arg(max_dist_pos).arg(centerpoint);
+#endif
+         vector < unsigned int > r_new = r;
+         r_new.resize( max_dist_pos + 1 );
+         r_new.push_back( centerpoint );
+         for( unsigned int i = max_dist_pos + 1 ; i < r.size(); i++ )
+         {
+            r_new.push_back( r[ i ] );
+         }
+         r = r_new;
+      }
+   }
+
+#if defined(DEBUG_ADAPTIVE)
+   cout << "after adding points:\n";
+   for ( unsigned int i = 0; i < r.size(); i++ )
+   {
+      cout << QString("%1 %2\n").arg(r[i]).arg(x[r[i]]);
+   }
+#endif
+   int pointsleft = n - r.size();
+   if ( pointsleft < 0 )
+   {
+      noticemsg = QString("Adaptive method forced %1 more points than the requested number (%2) for a total of %3 points")
+         .arg(-pointsleft)
+         .arg(n)
+         .arg(r.size());
+      return true;
+   }
+
+   if ( pointsleft == 0 )
+   {
+      noticemsg = QString("Adaptive method used exactly the requested number %2 of points")
+         .arg(n);
+         return true;
+   }
+
+   return true;
+}

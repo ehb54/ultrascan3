@@ -1791,10 +1791,18 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
                cout << usu.errormsg << endl;
             }
          } else {
-            if ( !usu.quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+            if ( our_saxs_options->saxs_iq_native_hybrid2 )
             {
-               cout << usu.errormsg << endl;
-            }
+               if ( !usu.quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               {
+                  cout << usu.errormsg << endl;
+               }
+            } else {
+               if ( !usu.cubic_spline_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               {
+                  cout << usu.errormsg << endl;
+               }
+            }               
          }
       }
 
