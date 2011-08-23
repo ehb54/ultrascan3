@@ -158,7 +158,6 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    {  // Given x,y ranges
       ymin    = drecti.top   ();
       ymax    = drecti.bottom();
-qDebug() << "xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
       zmin    = solu.at( 0 ).c;
       zmax    = zmin;
 

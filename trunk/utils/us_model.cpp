@@ -189,16 +189,19 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    if ( s != 0.0 )
    {
       s20w           = s;
+      double ssgn    = ( s < 0.0 ) ? -1.0 : 1.0;
 
       // First check s and k (f_f0)
                                                  ///////////////
       if ( f_f0 != 0.0 )                         // s and f_f0
       {                                          ///////////////
          double numer   = 0.02 * s * f_f0 * vbar * VISC_20W;
+         numer         *= ssgn;
          f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
          fv             = f_f0 * f0;
          D              = R * t / ( AVOGADRO * fv );
          mw             = s * R * t / ( D * buoyancyb );
+         mw            *= ssgn;
       }
 
       // Next check s and D
@@ -206,10 +209,12 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       else if ( D != 0.0 )                       // s and D
       {                                          ///////////////
          mw             = s * R * t / ( D * buoyancyb );
+         mw            *= ssgn;
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
          fv             = mw * buoyancyb / ( s20w * AVOGADRO );
+         fv            *= ssgn;
          double ff0sv   = f_f0;
          f_f0           = fv / f0;
          double ffdif   = qAbs( ff0sv - f_f0 );
@@ -221,7 +226,9 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       else if ( mw != 0.0 )                      // s and mw
       {                                          ///////////////
          D              = s * R * t / ( d.buoyancyb * mw );
+         D             *= ssgn;
          fv             = mw * d.buoyancyb / ( s20w * AVOGADRO );
+         fv            *= ssgn;
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
@@ -232,6 +239,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       {                                          ///////////////
          D              = R * t / ( AVOGADRO * fv );
          mw             = s * R * t / ( D * buoyancyb );
+         mw            *= ssgn;
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
