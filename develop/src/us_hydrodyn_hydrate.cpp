@@ -35,7 +35,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                             error_msg );
       return -1;
    } 
-   //   cout << list_rotamers( false );
+   // cout << list_rotamers( false );
+   // cout << list_pointmaps();
 
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -97,7 +98,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
          any_models = true;
          if(!pdb_asa_for_saxs_hydrate())
          {
-            // list_exposed();
+            // cout << list_exposed();
             // view_exposed();
             build_to_hydrate();
             // cout << list_to_hydrate();
@@ -121,7 +122,19 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                any_errors = true;
             }
             // cout << list_best_fit_rotamer();
+
             progress->setProgress(11);
+            qApp->processEvents();
+            if ( !setup_pointmap_rotamers( error_msg ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error setting up pointmaps" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            cout << list_pointmap_rotamers();
+
+            progress->setProgress(12);
             qApp->processEvents();
             if ( !compute_waters_to_add( error_msg ) )
             {
@@ -201,7 +214,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
    editor->append("PDB structure ok\n");
-   int mppos = 12;
+   int mppos = 13;
    progress->setTotalSteps(mppos);
    int ppos = 1;
    progress->setProgress(ppos++); // 1
@@ -1339,17 +1352,27 @@ void US_Hydrodyn::build_to_hydrate()
    // pass 1 identify exposed sc's
 
    map < QString, bool > exposed_sc;
+   map < QString, bool > exposed_for_pointmap;
 
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( this_atom->exposed_code == 1 &&
-              this_atom->chain == 1 )
+         if ( this_atom->exposed_code == 1 )
          {
-            exposed_sc[ QString( "%1~%2~%3" )
-                        .arg( this_atom->resName )
-                        .arg( this_atom->resSeq )
-                        .arg( this_atom->chainID ) ] = true;
+            if ( this_atom->chain == 1 )
+            {
+               exposed_sc[ QString( "%1~%2~%3" )
+                           .arg( this_atom->resName )
+                           .arg( this_atom->resSeq )
+                           .arg( this_atom->chainID ) ] = true;
+            }
+            if ( pointmap_atoms.count( this_atom->resName ) )
+            {
+               exposed_for_pointmap[ QString( "%1~%2~%3" )
+                                     .arg( this_atom->resName )
+                                     .arg( this_atom->resSeq )
+                                     .arg( this_atom->chainID ) ] = true;
+            }
          }
       }
    }
@@ -1381,7 +1404,10 @@ void US_Hydrodyn::build_to_hydrate()
             // .arg(this_atom->chainID)
             // .arg(this_atom->name);
          }
-
+         if ( exposed_for_pointmap.count( mapkey ) )
+         {
+            to_hydrate_pointmaps[ mapkey ][ this_atom->name ] = this_atom->coordinate;
+         }
       }
    }
 }
@@ -1470,7 +1496,7 @@ QString US_Hydrodyn::list_to_hydrate_dihedrals()
 
 QString US_Hydrodyn::list_to_hydrate( bool coords )
 {
-   QString out = "";
+   QString out = "to hydrate via dihedrals:\n";
    for ( map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
          it != to_hydrate.end();
          it++ )
@@ -1491,32 +1517,73 @@ QString US_Hydrodyn::list_to_hydrate( bool coords )
       }
       out += "\n";
    }
+
+   out += "to hydrate via pointmaps:\n";
+   for ( map < QString, map < QString, point > >::iterator it = to_hydrate_pointmaps.begin();
+         it != to_hydrate_pointmaps.end();
+         it++ )
+   {
+      out += QString( "pointmap chains for: %1\n" ).arg( it->first );
+      for ( map < QString, point >::iterator it2 = it->second.begin();
+            it2 != it->second.end();
+            it2++ )
+      {
+         out += QString(" %1").arg( it2->first );
+         if ( coords )
+         {
+            out += QString( " [%1,%2,%3]" )
+               .arg( it2->second.axis[ 0 ] )
+               .arg( it2->second.axis[ 1 ] )
+               .arg( it2->second.axis[ 2 ] );
+         }
+      }
+      out += "\n";
+   }
    return out;
 }         
 
-void US_Hydrodyn::list_exposed()
+QString US_Hydrodyn::list_exposed()
 {
    unsigned int i = current_model;
-   cout << "exposed side chain atom list:\n";
+   QString out = "exposed side chain atom list:\n";
    map < QString, bool > exposed_sc;
+   map < QString, bool > exposed_for_pointmap;
 
-   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+   {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+      {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( this_atom->exposed_code == 1 &&
-              this_atom->chain == 1 )
+         if ( this_atom->exposed_code == 1 )
          {
-            cout << 
-               QString("%1 %2 %3 %4 %5\n")
-               .arg(this_atom->serial)
-               .arg(this_atom->name)
-               .arg(this_atom->resName)
-               .arg(this_atom->chainID)
-               .arg(this_atom->resSeq);
-            exposed_sc[ QString( "%1~%2~%3" )
-                        .arg( this_atom->resName )
-                        .arg( this_atom->resSeq )
-                        .arg( this_atom->chainID ) ] = true;
+            if ( this_atom->chain == 1 )
+            {
+               out +=
+                  QString("%1 %2 %3 %4 %5\n")
+                  .arg(this_atom->serial)
+                  .arg(this_atom->name)
+                  .arg(this_atom->resName)
+                  .arg(this_atom->chainID)
+                  .arg(this_atom->resSeq);
+               exposed_sc[ QString( "%1~%2~%3" )
+                           .arg( this_atom->resName )
+                           .arg( this_atom->resSeq )
+                           .arg( this_atom->chainID ) ] = true;
+            }
+            if ( pointmap_atoms.count( this_atom->resName ) )
+            {
+               out +=
+                  QString("%1 %2 %3 %4 %5 pointmap\n")
+                  .arg(this_atom->serial)
+                  .arg(this_atom->name)
+                  .arg(this_atom->resName)
+                  .arg(this_atom->chainID)
+                  .arg(this_atom->resSeq);
+               exposed_for_pointmap[ QString( "%1~%2~%3" )
+                                     .arg( this_atom->resName )
+                                     .arg( this_atom->resSeq )
+                                     .arg( this_atom->chainID ) ] = true;
+            }
          }
       }
    }
@@ -1525,8 +1592,16 @@ void US_Hydrodyn::list_exposed()
          it != exposed_sc.end();
          it++ )
    {
-      cout << it->first << endl;
+      out += it->first + "\n";
    }
+
+   for ( map < QString,bool >::iterator it = exposed_for_pointmap.begin();
+         it != exposed_for_pointmap.end();
+         it++ )
+   {
+      out += it->first + "\n";
+   }
+   return out;
 }
 
 void US_Hydrodyn::view_exposed()
@@ -1534,23 +1609,30 @@ void US_Hydrodyn::view_exposed()
    unsigned int i = current_model;
    // cout << "exposed side chain atom list:\n";
    map < QString, bool > exposed_sc;
+   map < QString, bool > exposed_for_pointmap;
    map < QString, QString > use_color;
    
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( this_atom->exposed_code == 1 &&
-              this_atom->chain == 1 )
+         if ( this_atom->exposed_code == 1 )
          {
-
             QString mapkey = 
                QString( "%1%2%3" )
                .arg( this_atom->resSeq )
                .arg( this_atom->chainID != "" ? ":" : "" )
                .arg( this_atom->chainID );
-
-            exposed_sc[ mapkey ] = true;
-            use_color[ mapkey ] = rotamers.count( this_atom->resName ) ? "green" : "yellow";
+            
+            if ( this_atom->chain == 1 )
+            {
+               exposed_sc[ mapkey ] = true;
+               use_color[ mapkey ] = rotamers.count( this_atom->resName ) ? "green" : "yellow";
+            }
+            if ( pointmap_atoms.count( this_atom->resName ) )
+            {
+               exposed_for_pointmap[ mapkey ] = true;
+               use_color[ mapkey ] = pointmap_atoms.count( this_atom->resName ) ? "cyan" : "yellow";
+            }
          }
       }
    }
@@ -1560,6 +1642,15 @@ void US_Hydrodyn::view_exposed()
 
    for ( map < QString,bool >::iterator it = exposed_sc.begin();
          it != exposed_sc.end();
+         it++ )
+   {
+      // cout << it->first << endl;
+      out += QString("select %1\ncolour %2\n")
+         .arg( it->first )
+         .arg( use_color[ it->first ] );
+   }
+   for ( map < QString,bool >::iterator it = exposed_for_pointmap.begin();
+         it != exposed_for_pointmap.end();
          it++ )
    {
       // cout << it->first << endl;
@@ -1616,6 +1707,10 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    rotamers.clear();
    dihedral_atoms.clear();
 
+   pointmap_atoms.clear();
+   pointmap_atoms_dest.clear();
+   pointmap_atoms_ref_residue.clear();
+
    QFile f( saxs_options.default_rotamer_filename );
    if ( !f.exists() )
    {
@@ -1661,6 +1756,74 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          qsl[ i ].at( 22 ) = ' ';
       }
       QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      if ( qsl_line[ 0 ] == "pointmap:" )
+      {
+         qsl_line.pop_front();
+         QString res = qsl_line[ 0 ];
+         qsl_line.pop_front();
+         if ( pointmap_atoms.count( res ) )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  %2 was previously defined as a pointmap" ) )
+               .arg( i + 1 )
+               .arg( res );
+            return false;
+         }
+            
+         while ( qsl_line.size() )
+         {
+            unsigned int points = qsl_line[ 0 ].toUInt();
+            qsl_line.pop_front();
+            if ( points < 3 )
+            {
+               error_msg = 
+                  QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of points for a map on pointmap line" ) )
+                  .arg( i + 1 );
+               return false;
+            }
+            vector < QString > atoms;
+            for ( unsigned int j = 0; j < points; j++ )
+            {
+               if ( !qsl_line.size() )
+               {
+                  error_msg = 
+                     QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                     .arg( i + 1 );
+                  return false;
+               }
+               atoms.push_back( qsl_line[ 0 ] );
+               qsl_line.pop_front();
+            }
+            pointmap_atoms[ res ].push_back( atoms );
+
+            if ( !qsl_line.size() )
+            {
+               error_msg = 
+                  QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                  .arg( i + 1 );
+               return false;
+            }
+            pointmap_atoms_ref_residue[ res ].push_back( qsl_line[ 0 ] );
+            qsl_line.pop_front();
+
+            vector < QString > atoms_dest;
+            for ( unsigned int j = 0; j < points; j++ )
+            {
+               if ( !qsl_line.size() )
+               {
+                  error_msg = 
+                     QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                     .arg( i + 1 );
+                  return false;
+               }
+               atoms_dest.push_back( qsl_line[ 0 ] );
+               qsl_line.pop_front();
+            }
+            pointmap_atoms_dest[ res ].push_back( atoms_dest );
+         }
+         continue;
+      }  
+
       if ( qsl_line[ 0 ] == "dihedral:" )
       {
          qsl_line.pop_front();
@@ -1805,6 +1968,8 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       return false;
    }
 
+   cout << validate_pointmap();
+
    editor->append( tr("Done reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamer_changed = false;
@@ -1930,6 +2095,60 @@ QString US_Hydrodyn::list_rotamer_dihedrals()
    return out;
 }
 
+QString US_Hydrodyn::list_pointmaps()
+{
+   QString out;
+
+   out = "pointmaps:\n";
+
+   for (  map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
+          it != pointmap_atoms.end();
+          it++ )
+   {
+      out += 
+         QString( "Pointmaps for residue: %1  number of maps %2\n" )
+         .arg( it->first )
+         .arg( it->second.size() );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += 
+            QString( "    mapping to %1\n" )
+            .arg( pointmap_atoms_ref_residue.count( it->first ) 
+                  ?
+                  ( pointmap_atoms_ref_residue[ it->first ].size() > i 
+                    ?
+                    pointmap_atoms_ref_residue[ it->first ][ i ]
+                    :
+                    "ERROR missing reference residue map" )
+                  :
+                  "ERROR missing reference residue" );
+
+         if ( pointmap_atoms_ref_residue.count( it->first ) &&
+              pointmap_atoms_ref_residue[ it->first ].size() > i )
+         {
+            for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
+            {
+               out += QString("    %1 -> %2\n")
+                  .arg( it->second[ i ][ j ] )
+                  .arg( pointmap_atoms_dest.count( it->first )
+                        ?
+                        ( pointmap_atoms_dest[ it->first ].size() > i 
+                          ?
+                          ( pointmap_atoms_dest[ it->first ][ i ].size() > j 
+                            ?
+                            pointmap_atoms_dest[ it->first ][ i ][ j ] 
+                            :
+                            "ERROR missing destination residue map elememt" )
+                          :
+                          "ERROR missing destination residue map" )
+                        :
+                        "ERROR missing destination residue" );
+            }
+         }
+      }
+   }
+   return out;
+}
 
 QString US_Hydrodyn::list_rotamers( bool coords )
 {
@@ -2066,6 +2285,65 @@ QString US_Hydrodyn::list_best_fit_rotamer()
    return out;
 }
 
+bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
+{
+   pointmap_rotamers.clear();
+
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+
+   for ( map < QString, map < QString, point > >::iterator it = to_hydrate_pointmaps.begin();
+         it != to_hydrate_pointmaps.end();
+         it++ )
+   {
+      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      {
+         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         return false;
+      }
+      QString resName = rx_expand_mapkey.cap( 1 );
+      // for each entry in pointmap_atoms_ref_residue
+      if ( !pointmap_atoms_ref_residue.count( resName ) )
+      {
+         error_msg = QString( tr( "internal error: could not find rotamer for pointmap key %1" ) ).arg( it->first );
+         return false;
+      }
+
+      for ( unsigned int i = 0; i < pointmap_atoms_ref_residue[ resName ].size(); i++ )
+      {
+         if ( !rotamers.count( pointmap_atoms_ref_residue[ resName ][ i ] ) )
+         {
+            error_msg = QString( tr( "No rotamer group found for pointmap key %1 reference residue %2." ) )
+               .arg( it->first )
+               .arg( pointmap_atoms_ref_residue[ resName ][ i ] );
+            return false;
+         }
+         // use first one
+         pointmap_rotamers[ it->first ].push_back( rotamers[ pointmap_atoms_ref_residue[ resName ][ i ] ][ 0 ] );
+      }
+   }
+   return true;
+}
+
+QString US_Hydrodyn::list_pointmap_rotamers()
+{
+   QString out;
+
+   out = "Pointmap rotamers:\n";
+
+   for ( map < QString, vector < rotamer > >::iterator it = pointmap_rotamers.begin();
+         it != pointmap_rotamers.end();
+         it++ )
+   {
+      out += QString( "%1:" ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString( " %1" ).arg( it->second[ i ].name );
+      }
+      out += "\n";
+   }
+   return out;
+}
+
 class sortable_float {
 public:
    float             f;
@@ -2174,6 +2452,8 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
    vector < point > p2;
    waters_to_add.clear();
 
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+
    for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
          it != best_fit_rotamer.end();
          it++ )
@@ -2248,6 +2528,137 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
             waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
          } else {
             count_waters_not_added++;
+         }
+      }
+   }
+
+   for ( map < QString, vector < rotamer > >::iterator it = pointmap_rotamers.begin();
+         it != pointmap_rotamers.end();
+         it++ )
+   {
+      if ( !to_hydrate_pointmaps.count( it->first ) )
+      {
+         error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+            .arg( it->first );
+         return false;
+      }
+
+      // add a waters for each pointmap for this residue
+      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      {
+         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         return false;
+      }
+      QString resName = rx_expand_mapkey.cap( 1 );
+      if ( !pointmap_atoms.count( resName ) ||
+           !pointmap_atoms_dest.count( resName ) ||
+           !pointmap_atoms_ref_residue.count( resName ) )
+      {
+         error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         return false;
+      }
+         
+      if ( it->second.size() != pointmap_atoms[ resName ].size() ||
+           it->second.size() != pointmap_atoms_dest[ resName ].size() ||
+           it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
+      {
+         error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         return false;
+      }
+         
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         // for each water to add:
+         // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
+         // to the pointmap_atoms in the residue and apply to each water in the rotamer
+         // the rotamer's atom_map(equivalently side chain) & waters have the "dest" info
+
+         if ( it->second[ i ].residue != pointmap_atoms_ref_residue[ resName ][ i ] )
+         {
+            error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               .arg( it->first )
+               .arg( i )
+               .arg( it->second[ i ].residue )
+               .arg( pointmap_atoms_ref_residue[ resName ][ i ] );
+            return false;
+         }
+
+         // build up the transformation
+
+         p1.resize( pointmap_atoms     [ resName ][ i ].size() );
+         p2.resize( pointmap_atoms_dest[ resName ][ i ].size() );
+         
+         if ( p1.size() != p2.size() )
+         {
+            error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               .arg( it->first )
+               .arg( i )
+               .arg( pointmap_atoms[ resName ][ i ].size() )
+               .arg( pointmap_atoms_dest[ resName ][ i ].size() );
+            return false;
+         }
+
+         for ( unsigned int j = 0; j < p1.size(); j++ )
+         {
+            cout << QString("mapping: %1 %2 dest %3\n")
+               .arg(it->first)
+               .arg(i)
+               .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
+            if ( !it->second[ i ].atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
+               return false;
+            }
+               
+            p1[ j ] = it->second[ i ].atom_map[ pointmap_atoms_dest[ resName ][ i ][ j ] ].coordinate;
+
+            if ( !to_hydrate_pointmaps[ it->first ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  .arg(  pointmap_atoms[ resName ][ i ][ j ] );
+               return false;
+            }
+            cout << QString("mapping: %1 %2 source %3\n")
+               .arg(it->first)
+               .arg(i)
+               .arg(pointmap_atoms[ resName ][ i ][ j ] );
+
+            p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
+
+            // cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+            // .arg( it->second.water_positioning_atoms[ i ][ j ] )
+            // .arg( p1[ j ].axis[ 0 ] )
+            // .arg( p1[ j ].axis[ 1 ] )
+            // .arg( p1[ j ].axis[ 2 ] )
+            // .arg( p2[ j ].axis[ 0 ] )
+            // .arg( p2[ j ].axis[ 1 ] )
+            // .arg( p2[ j ].axis[ 2 ] );
+         }
+
+         // now we have p1 & p2, apply to all of the waters
+         cout << QString("adding %1 waters for %2 %3\n")
+            .arg( it->second[ i ].waters.size() )
+            .arg( it->first )
+            .arg( resName );
+
+         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         {
+            vector < point > rotamer_waters;
+            rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
+            vector < point > new_waters;
+            if ( !atom_align( p1, p2, rotamer_waters, new_waters, error_msg ) )
+            {
+               return false;
+            }
+            count_waters++;
+            if ( !has_steric_clash( new_waters[ 0 ] ) )
+            {
+               count_waters_added++;
+               waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
+            } else {
+               count_waters_not_added++;
+            }
          }
       }
    }
@@ -2354,7 +2765,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
-                     "ATOM   %4d%5s%4s %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00               \n",
+                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00               \n",
                      this_atom->serial,
                      this_atom->orgName.ascii(),
                      this_atom->resName.ascii(),
@@ -2464,4 +2875,88 @@ bool US_Hydrodyn::selected_models_contain_SWH()
       }
    }
    return false;
+}
+
+QString US_Hydrodyn::validate_pointmap()
+{
+   // make sure all ref_residue's have a rotamer
+
+   QString out = "";
+
+   map < QString, bool > to_erase;
+
+   for ( map < QString, vector < QString > >::iterator it = pointmap_atoms_ref_residue.begin();
+         it != pointmap_atoms_ref_residue.end();
+         it++ )
+   {
+      if ( !to_erase.count( it->first ) )
+      {
+         if ( !pointmap_atoms     .count( it->first ) ||
+              !pointmap_atoms_dest.count( it->first ) ||
+              pointmap_atoms[ it->first ]     .size() != it->second.size() ||
+              pointmap_atoms_dest[ it->first ].size() != it->second.size() )
+         {
+            out += QString( "Internal error: inconsistancy with Pointmap %1\n" )
+               .arg( it->first );
+            to_erase[ it->first ] = true;
+         } else {
+            for ( unsigned int i = 0; i < it->second.size(); i++ )
+            {
+               if ( !rotamers.count( it->second[ i ] ) )
+               {
+                  out += QString( "Pointmap %1 contains invalid target rotamer %2, removing from loaded pointmaps\n" )
+                     .arg( it->first )
+                     .arg( it->second[ i ] );
+                  to_erase[ it->first ] = true;
+               } else {
+                  if ( !rotamers[ it->second[ i ] ].size() )
+                  {
+                     out += QString( "Pointmap %1 contains empty target rotamer %2, removing from loaded pointmaps\n" )
+                        .arg( it->first )
+                        .arg( it->second[ i ] );
+                     to_erase[ it->first ] = true;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   for ( map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms_dest.begin();
+         it != pointmap_atoms_dest.end();
+         it++ )
+   {
+      if ( !to_erase.count( it->first ) )
+      {
+         for ( unsigned int i = 0; i < it->second.size(); i++ )
+         {
+            for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
+            {
+               if ( !rotamers[ pointmap_atoms_ref_residue[ it->first ][ i ] ][ 0 ].atom_map.count( it->second[ i ][ j ] ) )
+               {
+                  out += QString( "Pointmap %1 target rotamer %2 has an invalid atom %3 (not found in rotamer), removing from loaded pointmaps\n" )
+                     .arg( it->first )
+                     .arg( pointmap_atoms_ref_residue[ it->first ][ i ] )
+                     .arg( it->second[ i ][ j ] );
+                  to_erase[ it->first ] = true;
+               }
+            }
+         }
+      }
+   }
+   
+   for ( map < QString, bool >::iterator it = to_erase.begin();
+         it != to_erase.end();
+         it++ )
+   {
+      pointmap_atoms            .erase( it->first );
+      pointmap_atoms_dest       .erase( it->first );
+      pointmap_atoms_ref_residue.erase( it->first );
+   }
+
+   if ( !out.isEmpty() )
+   {
+      editor_msg("red", out);
+   }
+   return out;
 }

@@ -482,23 +482,34 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int pdb_asa_for_saxs_hydrate();
 
-      void list_exposed();
-      void view_exposed();
+      QString list_exposed();
+      void    view_exposed();
+
+      QString validate_pointmap();
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
       map < QString, vector < vector < QString > > > dihedral_atoms;
+
+      map < QString, vector < vector < QString > > > pointmap_atoms;
+      map < QString, vector < vector < QString > > > pointmap_atoms_dest;
+      map < QString, vector < QString > >            pointmap_atoms_ref_residue;
+
       map < QString, vector < rotamer > >            rotamers;
       map < QString, map < QString, point > >        to_hydrate;
+      map < QString, map < QString, point > >        to_hydrate_pointmaps;
       map < QString, vector < float > >              to_hydrate_dihedrals;
       map < QString, rotamer >                       best_fit_rotamer;
+      map < QString, vector < rotamer > >            pointmap_rotamers;
       map < QString, vector < point > >              waters_to_add;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
       bool load_rotamer( QString &error_msg );
       QString list_rotamers( bool coords = false );
+
+      QString list_pointmaps();
 
       bool compute_rotamer_dihedrals( QString &error_msg );
       QString list_rotamer_dihedrals();
@@ -514,6 +525,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool compute_best_fit_rotamer( QString &error_msg );
       QString list_best_fit_rotamer();
+
+      bool setup_pointmap_rotamers( QString &error_msg );
+      QString list_pointmap_rotamers();
 
       bool compute_waters_to_add( QString &error_msg );
       QString list_waters_to_add();
