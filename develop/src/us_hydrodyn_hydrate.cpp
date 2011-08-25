@@ -1347,6 +1347,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 void US_Hydrodyn::build_to_hydrate()
 {
    to_hydrate.clear();
+   to_hydrate_pointmaps.clear();
    unsigned int i = current_model;
 
    // pass 1 identify exposed sc's
