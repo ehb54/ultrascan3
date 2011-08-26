@@ -34,19 +34,21 @@ win32 {
   # due to us3 directory structure
 
   QWT3D       = ../qwtplot3d-qt4
-  OPENSSL     = C:/OpenSSL-Win32
-  MYSQLPATH   = C:/mysql
-  QWTPATH     = C:/qwt-5.2.1
-  SINGLEDIR   = C:/qt/4.7.1/addons/qtsingleapplication-2.5_1-commercial/src/
+  OPENSSL     = C:/openssl
+  MYSQLPATH   = C:/mysql-5.5
+  QTMYSQLPATH = C:/Qt/4.7.3/src/plugins/sqldrivers/mysql/release
+  QTPATH      = c:/Qt/4.7.3
+  QWTPATH     = C:/qwt-5.2.2
+  SINGLEDIR   = C:/Qt/4.7.3/addons/qtsingleapplication-2.5_1-commercial/src/
+  MINGWDIR    = C:/mingw
   
   contains( DEBUGORRELEASE, debug ) {
-    QWTLIB      = $$QWTPATH/lib/qwtd5.lib
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.lib
+    QWTLIB      = $$QWTPATH/lib/libqwtd5.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.a
   } else {
-    QWTLIB      = $$QWTPATH/lib/qwt5.lib
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.lib
+    QWTLIB      = $$QWTPATH/lib/libqwt5.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.a
   }
-
   #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
   DEFINES    += __LCC__
 }

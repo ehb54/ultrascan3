@@ -4,6 +4,8 @@ QT           += xml svg
 
 TARGET        = us_2dsa
 
+win32:LIBS   += -lpsapi
+
 HEADERS       = us_2dsa.h                \
                 us_plot_control.h        \
                 us_resplot.h             \
