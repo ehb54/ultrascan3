@@ -69,7 +69,8 @@ class WorkerThread : public QThread
 
    private:
 
-      void calc_residuals  ( void );
+      void calc_residuals   ( void );
+      void calc_resids_ratio( void );
 
       double  llim_s;        // lower limit in s (UGRID)
       double  llim_k;        // lower limit in k (UGRID)

@@ -408,8 +408,6 @@ void US_ResidPlot::plot_edata()
    {
       points   = edata->x.size();
       rl       = edata->radius( 0 );
-      vh       = edata->value( 0, points - 1 );
-      vh      *= 1.05;
    }
 
    if ( !do_plteda  &&  !do_pltsda )

@@ -111,6 +111,8 @@ class US_FeMatch : public US_Widgets
       US_DataIO2::RawData*        rdata;
       US_DataIO2::RawData*        sdata;
 
+      US_DataIO2::RawData         wsdata;
+
       US_Model                    model;
       US_Model                    model_loaded;
       US_Noise                    ri_noise;

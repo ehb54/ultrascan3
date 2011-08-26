@@ -335,14 +335,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ri_noise.count = 0;
 
    adv_vals[ "simpoints" ] = "200";
-   adv_vals[ "bldvolume" ] = "0.015";
+   adv_vals[ "bndvolume" ] = "0.015";
    adv_vals[ "parameter" ] = "0";
    adv_vals[ "modelnbr"  ] = "0";
    adv_vals[ "meshtype"  ] = "ASTFEM";
    adv_vals[ "gridtype"  ] = "Moving";
    adv_vals[ "modelsim"  ] = "model";
 
-   sdata          = 0;
+   sdata          = &wsdata;
 }
 
 // public function to get pointer to edit data
@@ -1674,7 +1674,7 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
    adjust_model();
 
-   sdata          = new US_DataIO2::RawData();
+   //sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -1688,8 +1688,9 @@ DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
    simparams.bottom            = simparams.bottom_position;
 
-   QString mtyp = adv_vals[ "meshtype" ];
-   QString gtyp = adv_vals[ "gridtype" ];
+   QString mtyp = adv_vals[ "meshtype"  ];
+   QString gtyp = adv_vals[ "gridtype"  ];
+   QString bvol = adv_vals[ "bndvolume" ];
 DbgLv(1) << "  meshtype" << mtyp;
 
    if ( mtyp.contains( "Claverie" ) )
@@ -1705,6 +1706,11 @@ DbgLv(1) << "  meshtype" << mtyp;
       simparams.gridType = US_SimulationParameters::FIXED;
 
    simparams.firstScanIsConcentration = false;
+
+   if ( simparams.band_forming )
+      simparams.band_volume = bvol.toDouble();
+   else
+      simparams.band_volume = 0.0;
 DbgLv(1) << "  duration_hours  " << simparams.speed_step[0].duration_hours;
 DbgLv(1) << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
 DbgLv(1) << "  delay_hours  " << simparams.speed_step[0].delay_hours;

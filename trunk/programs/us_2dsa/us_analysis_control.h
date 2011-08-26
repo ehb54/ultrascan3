@@ -32,6 +32,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           dbg_level;
       int           ncsteps;
       int           nctotal;
+      int           grtype;
 
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;

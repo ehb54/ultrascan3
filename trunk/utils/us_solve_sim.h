@@ -104,6 +104,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     bool               abort;         // Flag to abort at next opportunity
     bool               calc_ti;       // Calculate-TI-noise flag
     bool               calc_ri;       // Calculate-RI-noise flag
+    bool               banddthr;      // Band-forming data threshold peak enhance
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
   private slots:
@@ -155,6 +156,14 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                                          QVector< double >&,
                                           const QVector< double >&,
                                           const QVector< double >& );
+
+    // Limit data to thresholds
+    bool data_threshold    ( US_DataIO2::RawData*,
+                             double, double, double, double );
+
+    // Limit data to thresholds  (experiment data version)
+    bool data_threshold    ( US_DataIO2::EditedData*,
+                             double, double, double, double );
 
     // Output a debug print of time for a labelled event
     void DebugTime         ( QString );
