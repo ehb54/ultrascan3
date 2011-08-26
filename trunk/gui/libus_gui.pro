@@ -1,11 +1,16 @@
 include ( ../library.pri )
 
+QT            += opengl
+
 unix:   TARGET = us_gui
 
 win32 {
         DEFINES += QWT_DLL US_MAKE_GUI_DLL
-        TARGET   = libus_gui
-        LIBS    += ../lib/libus_utils.lib 
+        TARGET   = us_gui
+        LIBS    += -L../lib -lus_utils$${VER} -lqwtplot3d-qt4
+        LIBS    += -L$${QWTPATH}/lib -lqwt5
+        QMAKE_LFLAGS += -shared 
+        # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
 macx {

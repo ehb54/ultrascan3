@@ -11,7 +11,7 @@ macx {
 }
 
 win32 {
-      TARGET   = libus_utils
+      TARGET   = us_utils
       DEFINES += US_MAKE_UTIL_DLL
 }
 

@@ -6,6 +6,7 @@ TEMPLATE     = app
 DESTDIR      = ../../bin
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
+VER          = 10
 
 CONFIG       += $$DEBUGORRELEASE qt thread warn
 
@@ -23,18 +24,26 @@ unix {
 }
 
 win32 {
-  LIBS       += ../../lib/libus_utils.lib
-  LIBS       += ../../lib/libus_gui.lib
-  LIBS       += $$QWTLIB
-  DEFINES     += INTEL
-
-  QMAKE_LFLAGS           += /MACHINE:X86 /INCREMENTAL:NO 
-  QMAKE_CXXFLAGS_DEBUG   += /wd4996
-  QMAKE_CXXFLAGS_RELEASE += /wd4996
-
   DEPENDPATH   += ../../gui ../../utils $$QWTPATH/src ..
+
   INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/src ..
   INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
+  INCLUDEPATH  += $$OPENSSL/include
+  INCLUDEPATH  += $$QTPATH/include
+
+  LIBS       += $$QWTLIB
+  LIBS       += $$MYSQLLIB
+  LIBS       += $$QTMYSQLPATH/libqsqlmysql4.a
+  LIBS       += $$OPENSSL/lib/libeay32.a
+  LIBS       += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
+  LIBS       += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
+  LIBS       += -L../../lib -lus_utils$${VER} -lus_gui$${VER}
+
+  DEFINES     += INTEL
+
+  #QMAKE_LFLAGS           += /MACHINE:X86 /INCREMENTAL:NO 
+  #QMAKE_CXXFLAGS_DEBUG   += /wd4996
+  #QMAKE_CXXFLAGS_RELEASE += /wd4996
 }
 
 macx {

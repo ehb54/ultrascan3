@@ -7,6 +7,7 @@
 TEMPLATE     = lib
 CONFIG      += $$DEBUGORRELEASE qt thread warn
 VERSION      = 10.0
+VER          = 10
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 QT          += xml
@@ -37,14 +38,17 @@ win32 {
 
   LIBS                   += $$QWTLIB
   LIBS                   += $$MYSQLLIB
-  LIBS                   += $${OPENSSL}/lib/libeay32.lib
+  LIBS                   += $$QTMYSQLPATH/libqsqlmysql4.a
+  LIBS                   += $${OPENSSL}/lib/libeay32.a
+  LIBS                   += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
+  LIBS                   += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
 
-  QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
-  QMAKE_CXXFLAGS_DEBUG   += /wd4996
-  QMAKE_CXXFLAGS_RELEASE += /wd4996
+  #QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.a /MACHINE:X86 /INCREMENTAL:NO 
+  #QMAKE_CXXFLAGS_DEBUG   += /wd4996
+  #QMAKE_CXXFLAGS_RELEASE += /wd4996
 
   DEFINES                += INTEL US_MAKE_DLL
-  DESTDIR                 = ../bin
+  DESTDIR                 = ../lib
 }
 
 macx {
