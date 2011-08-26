@@ -83,9 +83,6 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect( pb_stop, SIGNAL( clicked() ), SLOT( stop_simulation() ) );
    buttonbox->addWidget( pb_stop );
 
-   //QPushButton* pb_dcdt = us_pushbutton( tr( "dC/dt Window"), false );
-   //buttonbox->addWidget( pb_dcdt );
-
    pb_saveSim = us_pushbutton( tr( "Save Simulation" ), false );
    connect( pb_saveSim, SIGNAL( clicked() ), SLOT( save_scans() ) );
    buttonbox->addWidget( pb_saveSim );
@@ -348,7 +345,6 @@ void US_Astfem_Sim::start_simulation( void )
 
    pb_stop   ->setEnabled( true  );
    pb_start  ->setEnabled( false );
-   //pb_saveExp->setEnabled( false );
    pb_saveSim->setEnabled( false );
 
    // The astfem/astfvm simulation routines expects a dataset structure that
@@ -586,7 +582,6 @@ void US_Astfem_Sim::finish( void )
 
    pb_stop   ->setEnabled( false  );
    pb_start  ->setEnabled( true );
-   //pb_saveExp->setEnabled( true );
    pb_saveSim->setEnabled( true );
 }
 

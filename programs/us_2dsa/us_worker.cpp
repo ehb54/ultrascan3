@@ -37,6 +37,7 @@ void WorkerThread::define_work( WorkPacket& workin )
    iter        = workin.iter;
    menmcx      = workin.menmcx;
    noisflag    = workin.noisf;
+   typeref     = workin.typeref;
 
    solutes_i   = workin.isolutes;
 
@@ -87,6 +88,12 @@ void WorkerThread::flag_abort()
 // Do the real work of a thread:  solution from solutes set
 void WorkerThread::calc_residuals()
 {
+   if ( typeref == (-2) )
+   {
+      calc_resids_ratio();
+      return;
+   }
+
    solvesim         = new US_SolveSim( dsets, thrn, true );
 
    connect( solvesim, SIGNAL(  work_progress( int ) ),
@@ -115,5 +122,91 @@ void WorkerThread::calc_residuals()
 void WorkerThread::forward_progress( int steps )
 {
    emit work_progress( steps );
+}
+
+// Do thread work for model-ratio:  solution from single model, find ratio
+void WorkerThread::calc_resids_ratio()
+{
+   US_SolveSim::DataSet* dset = dsets[ 0 ];
+
+   solutes_c      .clear();
+   ti_noise.values.clear();
+   ri_noise.values.clear();
+
+   // Create a single model from the solutes
+   int nsolutes  = solutes_i.size();
+DbgLv(1) << "WT:CRR nsolutes" << nsolutes;
+   US_Model wmodel;
+   wmodel.components.resize( nsolutes );
+
+   for ( int ii = 0; ii < nsolutes; ii++ )
+   {
+      wmodel.components[ ii ].s    = solutes_i[ ii ].s;
+      wmodel.components[ ii ].f_f0 = solutes_i[ ii ].k;
+      wmodel.components[ ii ].signal_concentration = solutes_i[ ii ].c;
+      wmodel.components[ ii ].D    = 0.0;
+      wmodel.components[ ii ].mw   = 0.0;
+      wmodel.components[ ii ].f    = 0.0;
+
+      wmodel.calc_coefficients( wmodel.components[ ii ] );
+
+      wmodel.components[ ii ].s   /= dset->s20w_correction;
+      wmodel.components[ ii ].D   /= dset->D20w_correction;
+   }
+
+   US_DataIO2::EditedData* edata = &dset->run_data;
+   US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
+   int nscans    = edata->scanData.size();
+   int npoints   = edata->x.size();
+   int ntotal    = nscans * npoints;
+   QVector< double > nnls_a( ntotal, 0.0 );
+   QVector< double > nnls_b( ntotal, 0.0 );
+   QVector< double > nnls_x( 1,      0.0 );
+
+DbgLv(1) << "WT:CRR ns np nt" << nscans << npoints << ntotal;
+   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+
+   US_Astfem_RSA astfem_rsa( wmodel, dset->simparams );
+
+   astfem_rsa.calculate( *sdata );
+
+   int kk        = 0;
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         nnls_a[ kk   ] = sdata->value( ss, rr );
+         nnls_b[ kk++ ] = edata->value( ss, rr );
+      }
+   }
+
+   US_Math2::nnls( nnls_a.data(), ntotal, ntotal, 1,
+                   nnls_b.data(), nnls_x.data() );
+
+   double cmult = nnls_x[ 0 ];
+DbgLv(1) << "WT:CRR  CMULT" << cmult;
+   solutes_c.resize( nsolutes );
+
+   for ( int ii = 0; ii < nsolutes; ii++ )
+   {
+      wmodel.components[ ii ].s    = solutes_i[ ii ].s;
+      wmodel.components[ ii ].f_f0 = solutes_i[ ii ].k;
+      wmodel.components[ ii ].D    = 0.0;
+      wmodel.components[ ii ].mw   = 0.0;
+      wmodel.components[ ii ].f    = 0.0;
+
+      double cvali    = wmodel.components[ ii ].signal_concentration;
+      double cval     = cvali * cmult;
+      wmodel.components[ ii ].signal_concentration = cval;
+
+      wmodel.calc_coefficients( wmodel.components[ ii ] );
+
+      solutes_c[ ii ]     = solutes_i[ ii ];
+      solutes_c[ ii ].c   = cval;
+DbgLv(1) << "WT:CRR     ii cvali cval" << ii << cvali << cval;
+   }
+
+   return;
 }
 

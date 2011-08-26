@@ -22,6 +22,7 @@
 #else
 #include <windows.h>
 #include <psapi.h>
+#include <process.h>
 #endif
 
 // Class to process 2DSA simulations
@@ -47,6 +48,7 @@ US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
 
    itvaris  .clear();                 // iteration variances
    ical_sols.clear();                 // iteration final calculated solutes
+   simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 }
 
 // Get maximum used memory
@@ -85,8 +87,9 @@ DbgLv(1) << "2P(2dsaProc): usedmem" << usedmem;
    HANDLE hProcess;
    DWORD processID;
    PROCESS_MEMORY_COUNTERS pmc;
-   pmc.dwLength = sizeof( pmc );
+   pmc.cb       = (DWORD)sizeof( pmc );
    processID    = _getpid();
+   long int usedmem = 0;
 
    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, processID );
@@ -95,9 +98,10 @@ DbgLv(1) << "2P(2dsaProc): usedmem" << usedmem;
 
    if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
    {
-      maxrss  = max( maxrss, pmc.PeakWorkingSetSize );
+      usedmem = ( (int64_t)pmc.PeakWorkingSetSize + 512 ) / 1024;
    }
 
+   maxrss = max( maxrss, (int)usedmem );
    CloseHandle( hProcess );
 #endif
 
@@ -117,6 +121,7 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    klolim      = kll;
    kuplim      = kul;
    nksteps     = nks;
+   jgrefine    = ngr;
    ngrefine    = ngr;
    nthreads    = nthr;
    noisflag    = noif;
@@ -127,6 +132,24 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    ntcsols     = 0;
    r_iter      = 0;
    mm_iter     = 0;
+
+   if ( jgrefine < 0 )
+   {  // Special model-grid or model-ratio grid refinement
+      ngrefine    = 1;
+      nthreads    = 1;
+      model       = dsets[ 0 ]->model;
+      slolim      = model.components[ 0 ].s * 1.0e+13;
+      klolim      = model.components[ 0 ].f_f0;
+      nksteps     = model.components.size();
+      int kk      = qMax( 1, nksteps ) - 1;
+      suplim      = model.components[ kk ].s * 1.0e+13;
+      kuplim      = model.components[ kk ].f_f0;
+      nssteps     = qMax( 1, nssteps );
+      nssteps     = (int)sqrt( (double)nksteps );
+      nssteps     = qMax( 1, nssteps );
+      nksteps     = nksteps / nssteps;
+      nksteps     = qMax( 1, nksteps );
+   }
 
    wkstates .resize(  nthreads );
    wkdepths .resize(  nthreads );
@@ -197,7 +220,7 @@ DbgLv(1) << "2P:   gdelta_s gdelta_k" << gdelta_s << gdelta_k
 DbgLv(1) << "2P:   nsubgrid nctotal nthreads maxtsols"
  << nsubgrid << nctotal << nthreads << maxtsols;
    max_rss();
-DbgLv(1) << "2P: (1)maxrss" << maxrss;
+DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
 
    int    ktask = 0;
    int    jdpth = 0;
@@ -207,8 +230,43 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    double ssulim = suplim * 1.0e-13;
 
    // Generate the original sub-grid solutes list
-   US_Solute::init_solutes( ssllim, ssulim, nssteps,
-                            klolim, kuplim, nksteps, ngrefine, orig_sols );
+   if ( jgrefine > 0 )
+   {
+      US_Solute::init_solutes( ssllim, ssulim, nssteps,
+                               klolim, kuplim, nksteps, ngrefine, orig_sols );
+   }
+
+   else if ( jgrefine == (-1) )
+   {  // model-grid
+      QVector< US_Solute > solvec;
+
+      for ( int ii = 0; ii < model.components.size(); ii++ )
+      {
+         US_Solute soli( model.components[ ii ].s,
+                         model.components[ ii ].f_f0,
+                         0.0 );
+DbgLv(0) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+         solvec << soli;
+      }
+
+      orig_sols << solvec;
+   }
+
+   else if ( jgrefine == (-2) )
+   {  // model-ratio
+      QVector< US_Solute > solvec;
+
+      for ( int ii = 0; ii < model.components.size(); ii++ )
+      {
+         US_Solute soli( model.components[ ii ].s,
+                         model.components[ ii ].f_f0,
+                         model.components[ ii ].signal_concentration );
+DbgLv(0) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+         solvec << soli;
+      }
+
+      orig_sols << solvec;
+   }
 
    // Queue all the depth-0 tasks
    for ( int ii = 0; ii < sq( ngrefine ); ii++ )
@@ -412,6 +470,9 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
  << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
    qSort( c_solutes[ maxdepth ] );
+   //double bf_mult     = simparms->band_forming
+   //                   ? simparms->cp_width
+   //                   : 1.0;
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -424,6 +485,8 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
       mcomp.mw     = 0.0;
       mcomp.f      = 0.0;
       mcomp.f_f0   = c_solutes[ maxdepth ][ cc ].k;
+      //mcomp.signal_concentration
+      //             = c_solutes[ maxdepth ][ cc ].c * bf_mult;
       mcomp.signal_concentration
                    = c_solutes[ maxdepth ][ cc ].c;
 
@@ -480,6 +543,11 @@ DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
    int ktimeh = ktimes / 3600;
    int ktimem = ( ktimes - ktimeh * 3600 ) / 60;
+double bvol = dsets[0]->simparams.band_volume;
+bvol=dsets[0]->simparams.band_forming?bvol:0.0;
+DbgLv(1) << "done: vari bvol" << vari << bvol
+ << "slun klun ngr" << slolim << suplim << nssteps << klolim << kuplim
+ << nksteps << ngrefine << "ets" << ktimes;
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
    // compose final iteration status message
@@ -657,8 +725,10 @@ if ( taskx < 9 || taskx > (nsubgrid-4) )
 DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols;
 //DBG-CONC
 if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
- if ( wresult.csolutes[mm].c > 1.0 )
-   DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c; }
+ if ( wresult.csolutes[mm].c > 100.0 ) {
+   DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c
+    << " s,ff0" << wresult.csolutes[mm].s*1.0e+13
+    << wresult.csolutes[mm].k; } }
 //DBG-CONC
 
    max_rss();
@@ -755,12 +825,15 @@ DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[d
 
    // Is anyone working?
    bool no_working = wkstates.indexOf( WORKING ) < 0;
+DbgLv(0) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
+ << maxdepth << c_solutes[depth].size() << wresult.csolutes.size();
 
    // Submit one last time with all solutes if necessary
    if ( depth == maxdepth    &&
         job_queue.isEmpty()  &&
         no_working           &&
-        c_solutes[ depth ].size() > wresult.csolutes.size() )
+        //c_solutes[ depth ].size() > wresult.csolutes.size() )
+        c_solutes[ depth ].size() >= wresult.csolutes.size() )
    {
       final_computes();
       return;
@@ -801,6 +874,9 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    wtask.ll_k     = llsk;          // lower limit k
    wtask.dsets    = dsets;         // pointer to experiment data
    wtask.isolutes = isolutes;      // solutes for calc_residuals task
+
+   if ( jgrefine == (-2) )
+      wtask.typeref  = jgrefine;   // mark if model-ratio grid refinement
 
    wtask.csolutes.clear();         // clear output vectors
    wtask.ti_noise.clear();

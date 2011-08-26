@@ -288,6 +288,22 @@ void US_AnalysisControl::checkUniGrid(  bool checked )
       uncheck_optimize( 1 );
    
    optimize_options();
+   
+   ct_lolimits->setEnabled( checked );
+   ct_uplimits->setEnabled( checked );
+   ct_nstepss ->setEnabled( checked );
+   ct_lolimitk->setEnabled( checked );
+   ct_uplimitk->setEnabled( checked );
+   ct_nstepsk ->setEnabled( checked );
+   ct_thrdcnt ->setEnabled( checked );
+   ck_tinoise ->setEnabled( checked );
+   ck_rinoise ->setEnabled( checked );
+   if ( checked )
+   {
+      int nthr     = US_Settings::threads();
+      nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
+      ct_thrdcnt ->setValue  ( nthr    );
+   }
 }
 
 // handle float meniscus position checkec
@@ -422,6 +438,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    ri_noise->values.clear();
    ti_noise->count = 0;
    ri_noise->count = 0;
+
+   ngrr            = ( grtype < 0 ) ? grtype : ngrr;
 
    nctotal         = 10000;
 
@@ -696,23 +714,53 @@ DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
    US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, this );
    if ( aadiag->exec() == QDialog::Accepted )
    {
-      int    grtype = 0;
+             grtype = US_2dsaProcess::UGRID;
       double grpar1 = 0.0;
       double grpar2 = 0.0;
       double grpar3 = 0.0;
-      bool   men    = false;
-      double mepar1 = 0.0;
-      double mepar2 = 0.0;
       bool   reg    = false;
       double repar1 = 0.0;
+      US_Model modpar;
+
       aadiag->get_parameters( grtype, grpar1, grpar2, grpar3,
-                              men,    mepar1, mepar2,
-                              reg,    repar1 );
+                              modpar, reg,    repar1 );
 DbgLv(1) << "Adv ACCEPT";
 DbgLv(1) << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
-DbgLv(1) << "Adv men    par12 " << men    << mepar1 << mepar2;
+DbgLv(1) << "Adv modpar size  " << modpar.components.size();
 DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
-DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume;
+DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
+      if ( grtype < 0 )
+      {
+         US_2dsa* mainw = (US_2dsa*)parentw;
+         model          = mainw->mw_model();
+         *model         = modpar;
+         dsets[ 0 ]->model = modpar;
+         int     nsol   = model->components.size();
+         QString amsg   = ( grtype == (-1 )
+            ? tr( "Grid from loaded model" )
+            : tr( "Grid and signal ratios from loaded model\n" ) )
+            + "  ( " + QString::number( nsol ) + tr( " solutes )" );
+         te_status  ->setText( amsg );
+
+         if ( nsol > 0 )
+         {
+            uncheck_optimize( 4 );
+            optimize_options();
+            ct_lolimits->setEnabled( false );
+            ct_uplimits->setEnabled( false );
+            ct_nstepss ->setEnabled( false );
+            ct_lolimitk->setEnabled( false );
+            ct_uplimitk->setEnabled( false );
+            ct_nstepsk ->setEnabled( false );
+            ct_thrdcnt ->setEnabled( false );
+            ck_tinoise ->setEnabled( false );
+            ck_rinoise ->setEnabled( false );
+            ct_thrdcnt ->setValue  (  1    );
+         }
+
+         else
+             grtype = US_2dsaProcess::UGRID;
+      }
    }
 else
 DbgLv(1) << "Adv REJECT";

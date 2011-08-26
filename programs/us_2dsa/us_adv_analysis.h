@@ -24,11 +24,11 @@ class US_AdvAnalysis : public US_WidgetsDialog
 
    public slots:
       void get_parameters( int&,  double&, double&, double&,
-                           bool&, double&, double&,
-                           bool&, double& );
+                           US_Model&, bool&, double& );
 
    private:
       US_SimulationParameters* sparms;
+      US_Model                 model;
 
       int           ncsteps;
       int           nctotal;
@@ -62,6 +62,11 @@ class US_AdvAnalysis : public US_WidgetsDialog
       QCheckBox*    ck_menisc;
       QCheckBox*    ck_mcarlo;
       QCheckBox*    ck_regulz;
+      QCheckBox*    ck_mdgrid;
+      QCheckBox*    ck_mdrati;
+
+      QPushButton*  pb_ldmodel;
+      QPushButton*  pb_accept;
 
       QRadioButton* rb_stndcp;
       QRadioButton* rb_bandcp;
@@ -81,10 +86,13 @@ class US_AdvAnalysis : public US_WidgetsDialog
       void checkRandLoc (    bool );
       void checkSoluCoal(    bool );
       void checkClipLow (    bool );
+      void checkMdGrid  (    bool );
+      void checkMdRatios(    bool );
       void checkMeniscus(    bool );
       void checkMonteCar(    bool );
       void checkRegular (    bool );
-      void select(           void );
+      void select       (    void );
+      void load_model   (    void );
 
       void help     ( void )
       { showHelp.show_help( "2dsa_advan.html" ); };

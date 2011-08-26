@@ -11,6 +11,13 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()<<"SS-w:"<<thrnrank<<":"
 #endif
 
+double zerothr = 0.020;
+double linethr = 0.050;
+double maxod   = 1.50;
+double mfactor = 3.00;
+double mfactex = 1.00;
+double minnzsc = 0.005;
+
 // Create a Solve-Simulation object
 US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    bool signal_wanted ) : QObject(), data_sets( data_sets ),
@@ -19,6 +26,45 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    abort        = false;     // Default: no abort
    dbg_level    = 0;         // Default: no debug prints
    dbg_timing   = false;     // Default: no debug timing prints
+   banddthr     = false;     // Default: no bandform data_threshold
+
+   // If band-forming, possibly read in threshold control values
+   if ( data_sets[ 0 ]->simparams.band_forming )
+   {
+      QString bfcname = US_Settings::appBaseDir() + "/etc/bandform.config";
+      QFile   bfcfile( bfcname );
+      if ( bfcfile.open( QIODevice::ReadOnly ) )
+      {
+         QTextStream tsi( &bfcfile );
+         // Read in, in order: zero-thresh, linear-thresh, max-od, min-nz-scale
+         while ( ! tsi.atEnd() )
+         {
+            QString fline  = tsi.readLine();
+            int     cmx    = fline.indexOf( "#" ) - 1;
+            double  val    = cmx > 0
+                             ? fline.left( cmx ).simplified().toDouble() : 0.0;
+            if ( cmx <= 0 )
+               continue;
+            else if ( fline.contains( "zero threshold" ) )
+               zerothr  = val;
+            else if ( fline.contains( "linear threshold" ) )
+               linethr  = val;
+            else if ( fline.contains( "maximum OD" ) )
+               maxod    = val;
+            else if ( fline.contains( "minimum non-zero" ) )
+               minnzsc  = val;
+            else if ( fline.contains( "sim multiply factor" ) )
+               mfactor  = val;
+            else if ( fline.contains( "exp multiply factor" ) )
+               mfactex  = val;
+         }
+         bfcfile.close();
+
+         banddthr    = true;
+      }
+if(thrnrank==1) DbgLv(0) << "CR:zthr lthr mxod mnzc mfac mfex"
+ << zerothr << linethr << maxod << minnzsc << mfactor << mfactex;
+   }
 }
 
 // Create a Simulation object
@@ -48,6 +94,22 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntotal    = 0;                             // Total points count
    int ntinois   = 0;                             // TI noise value count
    int nrinois   = 0;                             // RI noise value count
+
+   if ( banddthr )
+   {
+      mfactor       = data_sets[ 0 ]->simparams.cp_width;
+      if ( mfactor < 0.0 )
+      {
+         mfactor       = 1.0;
+         zerothr       = 0.0;
+         linethr       = 0.0;
+         maxod         = 1.0e+20;
+      }
+if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
+ << zerothr << linethr << maxod << mfactor;
+   }
+
+   US_DataIO2::EditedData wdata;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {  // Count scan,point totals for all data sets
@@ -79,16 +141,23 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    zcomponent.f     = 0.0;
    zcomponent.f_f0  = 0.0;
 
+   if ( banddthr )
+   {  // If band forming, hold data within thresholds
+//mfactex=mfactor;
+      wdata          = data_sets[ 0 ]->run_data;
+      data_threshold( &wdata, zerothr, linethr, maxod, mfactex );
+   }
 
 DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
-   int    kk        = 0;
+   int    kk   = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
       US_DataIO2::EditedData* edata = &data_sets[ ee ]->run_data;
-      int nscans    = edata->scanData.size();
-      int npoints   = edata->x.size();
+      edata       = banddthr ? &wdata : edata;
+      int nscans  = edata->scanData.size();
+      int npoints = edata->x.size();
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -109,6 +178,7 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;                             // Progress step count
           kk      = 0;                             // nnls_a output index
+   int    ksols   = 0;
    qSort( sim_vals.solutes );
 
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -121,6 +191,7 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
          US_DataIO2::EditedData* edata = &dset->run_data;
          US_DataIO2::RawData     simdat;
          US_DataIO2::RawData*    sdata = &simdat;
+         edata       = banddthr ? &wdata : edata;
          int nscans  = edata->scanData.size();
          int npoints = edata->x.size();
 
@@ -148,6 +219,14 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
          astfem_rsa.calculate( *sdata );
          if ( abort ) return;
 
+         if ( banddthr )
+         {  // If band forming, hold data within thresholds; skip if all-zero
+            if ( data_threshold( sdata, zerothr, linethr, maxod, mfactor ) )
+               continue;
+
+            ksols++;
+         }
+
          simulations << *sdata;   // Save simulation (ea. datasets, ea. solute)
 
          // Populate the A matrix for the NNLS routine with the model function
@@ -164,6 +243,10 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
       }
    }   // Each solute
 DbgLv(1) << "   CR:  simulations size" << simulations.size();
+
+   
+DbgLv(1) << "   CR:BF nsol ksol" << nsolutes << ksols;
+   nsolutes   = banddthr ? ksols : nsolutes;
 
    if ( signal_wanted  &&  kstep > 0 )  // If signals and steps done, report
       emit work_progress( kstep );
@@ -347,6 +430,7 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
          {
             DataSet*                dset  = data_sets[ ee ];
             US_DataIO2::EditedData* edata = &dset->run_data;
+            edata       = banddthr ? &wdata : edata;
             int nscans  = edata->scanData.size();
             int npoints = edata->x.size();
             int sim_ix  = cc * dataset_count + ee - offset;
@@ -369,9 +453,16 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
 int ss=nscans/2;
 int rr=npoints/2;
 DbgLv(1) << "CR:   scan_ix ss rr" << scan_ix << ss << rr;
-DbgLv(1) << "CR:     s k sval" << sim_vals.solutes[cc].s
+DbgLv(1) << "CR:     s k sval" << sim_vals.solutes[cc].s*1.0e+13
  << sim_vals.solutes[cc].k << soluval << "idat sdat"
  << idata->value(ss,rr) << sdata->value(ss,rr);
+if (soluval>100.0) {
+ double drval=0.0; double dmax=0.0; double dsum=0.0;
+ for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {
+  drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
+ DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
+  << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum;
+}
          }
       }
    }
@@ -390,6 +481,7 @@ DbgLv(1) << "CR:     s k sval" << sim_vals.solutes[cc].s
       US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
       US_DataIO2::RawData*    resid = &sim_vals.residuals;
       US_AstfemMath::initSimData( *resid, *edata, 0.0 );
+      edata       = banddthr ? &wdata : edata;
       int nscans  = edata->scanData.size();
       int npoints = edata->x.size();
       int index   = ee - offset;
@@ -838,5 +930,113 @@ void US_SolveSim::DebugTime( QString mtext )
       qDebug() << "w" << thrnrank << "TM:" << mtext
          << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
    }
+}
+
+// Modify amplitude of data by thresholds and return flag if all-zero result
+bool US_SolveSim::data_threshold( US_DataIO2::RawData* sdata,
+      double zerothr, double linethr, double maxod, double mfactor )
+{
+   int    nnzro   = 0;
+   int    nzset   = 0;
+   int    nntrp   = 0;
+   int    nclip   = 0;
+   int    nscans  = sdata->scanData.size();
+   int    npoints = sdata->x.size();
+   double clipout = mfactor * maxod;
+   double thrfact = mfactor / (double)( linethr - zerothr );
+double maxs=0.0;
+double maxsi=0.0;
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         double avalue = sdata->value( ss, rr );
+maxsi=qMax(maxsi,avalue);
+
+         if ( avalue < zerothr )
+         {  // Less than zero threshold:  set to zero
+            avalue        = 0.0;
+            nzset++;
+         }
+
+         else if ( avalue < linethr )
+         {  // Between zero and linear threshold:  set to interpolated value
+            avalue       *= ( ( avalue - zerothr ) * thrfact );
+            nntrp++;
+         }
+
+         else if ( avalue < maxod )
+         {  // Under maximum OD:  set to factor times input
+            avalue       *= mfactor;
+         }
+
+         else
+         {  // Over maximum OD;  set to factor times maximum
+            avalue        = clipout;
+            nclip++;
+         }
+
+         if ( avalue != 0.0 )
+            nnzro++;
+maxs=qMax(maxs,avalue);
+
+         sdata->scanData[ ss ].readings[ rr ].value = avalue; 
+      }
+   }
+
+   int lownnz = qRound( minnzsc * (double)( nscans * npoints ) );
+   nnzro      = ( nnzro < lownnz ) ? 0 : nnzro;
+DbgLv(1) << "  CR:THR: nnzro zs nt cl" << nnzro << nzset << nntrp << nclip;
+//if(nnzro>0) {DbgLv(1) << "CR:THR: maxs" << maxs << maxsi << "mfact" << mfactor;}
+//else        {DbgLv(1) << "CR:THz: maxs" << maxs << nnzro << "mfact" << mfactor;}
+
+   return ( nnzro == 0 );
+}
+
+// Modify amplitude by thresholds and flag if all-zero (for experiment data)
+bool US_SolveSim::data_threshold( US_DataIO2::EditedData* edata,
+      double zerothr, double linethr, double maxod, double mfactor )
+{
+   int    nnzro   = 0;
+   int    nscans  = edata->scanData.size();
+   int    npoints = edata->x.size();
+   double clipout = mfactor * maxod;
+   double thrfact = mfactor / (double)( linethr - zerothr );
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         double avalue = edata->value( ss, rr );
+
+         if ( avalue < zerothr )
+         {  // Less than zero threshold:  set to zero
+            avalue        = 0.0;
+         }
+
+         else if ( avalue < linethr )
+         {  // Between zero and linear threshold:  set to interpolated value
+            avalue       *= ( ( avalue - zerothr ) * thrfact );
+         }
+
+         else if ( avalue < maxod )
+         {  // Under maximum OD:  set to factor times input
+            avalue       *= mfactor;
+         }
+
+         else
+         {  // Over maximum OD;  set to factor times maximum
+            avalue        = clipout;
+         }
+
+         if ( avalue != 0.0 )
+            nnzro++;
+
+         edata->scanData[ ss ].readings[ rr ].value = avalue; 
+      }
+   }
+
+   return ( nnzro == 0 );
 }
 

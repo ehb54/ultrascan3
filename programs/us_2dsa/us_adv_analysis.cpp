@@ -41,9 +41,9 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
 
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
    QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
-   QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
-   QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
-   QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
+   //QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
+   //QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
+   //QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
    QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
    QLabel* lb_scfact2      = us_label(  tr( "Scaling Factor 2:" ) );
@@ -55,7 +55,8 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
 
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
-   QPushButton* pb_accept  = us_pushbutton( tr( "Accept" ) );
+   pb_accept               = us_pushbutton( tr( "Accept" ) );
+   pb_ldmodel              = us_pushbutton( tr( "Load Model" ) );
 
    QLayout* lo_stndcp      = us_radiobutton( tr( "Standard Centerpiece"     ),
          rb_stndcp, !sparms->band_forming );
@@ -73,10 +74,10 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
 
    QLayout*  lo_unifgr  =
       us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
-   QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
-   QLayout*  lo_mcarlo  =
-      us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
+   //QLayout*  lo_menisc  =
+   //   us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
+   //QLayout*  lo_mcarlo  =
+   //   us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
    QLayout*  lo_locugr  =
       us_checkbox( tr( "Local Uniform Grid"                ), ck_locugr );
    QLayout*  lo_ranlgr  =
@@ -87,6 +88,10 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
       us_checkbox( tr( "Clip Lowest Concentration Solutes" ), ck_clipcs );
    QLayout*  lo_regulz  =
       us_checkbox( tr( "Regularization"                    ), ck_regulz );
+   QLayout*  lo_mdgrid  =
+      us_checkbox( tr( "Model-Defined Grid"                ), ck_mdgrid );
+   QLayout*  lo_mdrati  =
+      us_checkbox( tr( "Model-Defined Ratios and Grid"     ), ck_mdrati );
 
    ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_repetloc  = us_counter( 2,    1,   20,    1 );
@@ -96,9 +101,9 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    ct_stddevia  = us_counter( 3, 0.01, 10.0,  0.1 );
    ct_coaldist  = us_counter( 3, 0.01, 10.0,  0.1 );
    ct_nbrclips  = us_counter( 2,    1,   20,    1 );
-   ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
-   ct_menispts  = us_counter( 2,    1,   20,   10 );
-   ct_mciters   = us_counter( 3,    1, 2000,   20 );
+   //ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
+   //ct_menispts  = us_counter( 2,    1,   20,   10 );
+   //ct_mciters   = us_counter( 3,    1, 2000,   20 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
 
    ct_grrefine ->setStep(    1 );
@@ -109,9 +114,9 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    ct_stddevia ->setStep( 0.01 );
    ct_coaldist ->setStep( 0.01 );
    ct_nbrclips ->setStep(    1 );
-   ct_menisrng ->setStep( 0.01 );
-   ct_menispts ->setStep(    1 );
-   ct_mciters  ->setStep(    1 );
+   //ct_menisrng ->setStep( 0.01 );
+   //ct_menispts ->setStep(    1 );
+   //ct_mciters  ->setStep(    1 );
    ct_regufact ->setStep( 0.01 );
 
    cmb_mesh     = us_comboBox();
@@ -164,14 +169,17 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    simparmsLayout->addWidget( cmb_mesh,      row++, 0, 1, 6 );
    simparmsLayout->addWidget( cmb_moving,    row++, 0, 1, 6 );
    simparmsLayout->addWidget( lb_refopts,    row++, 0, 1, 6 );
-   simparmsLayout->addLayout( lo_menisc,     row++, 0, 1, 6 );
-   simparmsLayout->addWidget( lb_menisrng,   row,   0, 1, 4 );
-   simparmsLayout->addWidget( ct_menisrng,   row++, 4, 1, 2 );
-   simparmsLayout->addWidget( lb_menispts,   row,   0, 1, 4 );
-   simparmsLayout->addWidget( ct_menispts,   row++, 4, 1, 2 );
-   simparmsLayout->addLayout( lo_mcarlo,     row++, 0, 1, 6 );
-   simparmsLayout->addWidget( lb_mciters,    row,   0, 1, 4 );
-   simparmsLayout->addWidget( ct_mciters,    row++, 4, 1, 2 );
+   //simparmsLayout->addLayout( lo_menisc,     row++, 0, 1, 6 );
+   //simparmsLayout->addWidget( lb_menisrng,   row,   0, 1, 4 );
+   //simparmsLayout->addWidget( ct_menisrng,   row++, 4, 1, 2 );
+   //simparmsLayout->addWidget( lb_menispts,   row,   0, 1, 4 );
+   //simparmsLayout->addWidget( ct_menispts,   row++, 4, 1, 2 );
+   //simparmsLayout->addLayout( lo_mcarlo,     row++, 0, 1, 6 );
+   //simparmsLayout->addWidget( lb_mciters,    row,   0, 1, 4 );
+   //simparmsLayout->addWidget( ct_mciters,    row++, 4, 1, 2 );
+   simparmsLayout->addLayout( lo_mdgrid,     row++, 0, 1, 6 );
+   simparmsLayout->addLayout( lo_mdrati,     row++, 0, 1, 6 );
+   simparmsLayout->addWidget( pb_ldmodel,    row++, 0, 1, 6 );
    simparmsLayout->addLayout( lo_regulz,     row++, 0, 1, 6 );
    simparmsLayout->addWidget( lb_regufact,   row,   0, 1, 4 );
    simparmsLayout->addWidget( ct_regufact,   row++, 4, 1, 2 );
@@ -198,12 +206,18 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
             this,  SLOT( checkSoluCoal( bool ) ) );
    connect( ck_clipcs, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkClipLow(  bool ) ) );
-   connect( ck_menisc, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMonteCar( bool ) ) );
+   //connect( ck_menisc, SIGNAL( toggled( bool ) ),
+   //         this,  SLOT( checkMeniscus( bool ) ) );
+   //connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
+   //         this,  SLOT( checkMonteCar( bool ) ) );
+   connect( ck_mdgrid, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMdGrid  ( bool ) ) );
+   connect( ck_mdrati, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMdRatios( bool ) ) );
    connect( ck_regulz, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkRegular(  bool ) ) );
+   connect( pb_ldmodel, SIGNAL( clicked()    ),
+            this,       SLOT(   load_model() ) );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
@@ -212,19 +226,28 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    connect( pb_accept,  SIGNAL( clicked() ),
             this,       SLOT(   select()  ) );
 
-   ck_menisc->setChecked( false );
-   ck_mcarlo->setChecked( false );
+   //ck_menisc->setChecked( false );
+   //ck_mcarlo->setChecked( false );
    ck_regulz->setChecked( false );
 
-   ct_menisrng->setEnabled( false );
-   ct_menispts->setEnabled( false );
-   ct_mciters ->setEnabled( false );
+   //ct_menisrng->setEnabled( false );
+   //ct_menispts->setEnabled( false );
+   //ct_mciters ->setEnabled( false );
    ct_regufact->setEnabled( false );
+
+   //if ( sparms->band_forming )
+   //{
+   //   double bf_mult = sparms->cp_width;
+   //   bf_mult        = ( bf_mult == 0.0 ) ? 3.00 : bf_mult;
+   //   ck_locugr  ->setChecked( true    );
+   //   ct_scfactor->setValue  ( bf_mult );
+   //}
+   pb_ldmodel ->setEnabled( false );
 
 qDebug() << "Pre-adjust size" << size();
    adjustSize();
 qDebug() << "Post-adjust size" << size();
-   resize( 740, 330 );
+   resize( 780, 330 );
 qDebug() << "Post-resize size" << size();
    qApp->processEvents();
 }
@@ -232,8 +255,7 @@ qDebug() << "Post-resize size" << size();
 // public slot to get dialog parameters
 void US_AdvAnalysis::get_parameters(
    int&  rtype, double& rtpar1, double& rtpar2, double& rtpar3,
-   bool& men,   double& mepar1, double& mepar2,
-   bool& reg,   double& repar1 )
+   US_Model& modpar, bool& reg, double& repar1 )
 {
    rtype   = US_2dsaProcess::UGRID;
    rtpar1  = ct_grrefine->value();
@@ -264,9 +286,18 @@ void US_AdvAnalysis::get_parameters(
       rtpar1  = ct_nbrclips->value();
    }
 
-   men     = ck_menisc->isChecked();
-   mepar1  = ct_menisrng->value();
-   mepar2  = ct_menispts->value();
+   if ( ck_mdgrid->isChecked() )
+   {
+      rtype   = -1;
+      modpar  = model;
+   }
+
+   else if ( ck_mdrati->isChecked() )
+   {
+      rtype   = -2;
+      modpar  = model;
+   }
+
    reg     = ck_regulz->isChecked();
    repar1  = ct_regufact->value();
 }
@@ -275,7 +306,7 @@ void US_AdvAnalysis::get_parameters(
 void US_AdvAnalysis::optimize_options()
 {
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
-   ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
+   //ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
    ct_repetloc->setEnabled( ck_locugr->isChecked() );
    ct_scfactor->setEnabled( ck_locugr->isChecked() );
    ct_scfact2 ->setEnabled( ck_locugr->isChecked() );
@@ -305,7 +336,20 @@ void US_AdvAnalysis::checkBandForm( bool checked )
 // handle uniform grid checked
 void US_AdvAnalysis::checkUniGrid(  bool checked )
 {
-   if ( checked ) { uncheck_optimize( 1 ); optimize_options(); }
+   if ( checked )
+   {
+      uncheck_optimize( 1 );
+      optimize_options();
+      ck_mdgrid  ->setChecked( false );
+      ck_mdrati  ->setChecked( false );
+      pb_ldmodel ->setEnabled( false );
+   }
+
+   else
+   {
+      optimize_options();
+   }
+
 qDebug() << "checkuni size" << size();
 }
 
@@ -351,6 +395,62 @@ void US_AdvAnalysis::checkMonteCar( bool checked )
       ck_menisc  ->setChecked( !checked );
 }
 
+// handle model-defined grid checked
+void US_AdvAnalysis::checkMdGrid( bool checked )
+{
+qDebug() << "SET MdGrid enabled" << checked;
+   int nsol = model.components.size();
+
+   if ( checked )
+   {
+      pb_ldmodel ->setEnabled( true  );
+      ck_unifgr  ->setChecked( false );
+      ck_mdrati  ->setChecked( false );
+      pb_accept  ->setEnabled( nsol > 0 );
+   }
+
+   else if ( ck_mdrati->isChecked() )
+   {
+      pb_ldmodel ->setEnabled( true  );
+      ck_unifgr  ->setChecked( false );
+      pb_accept  ->setEnabled( nsol > 0 );
+   }
+
+   else
+   {
+      pb_ldmodel ->setEnabled( false );
+      pb_accept  ->setEnabled( true  );
+   }
+}
+
+// handle model-defined ratios checked
+void US_AdvAnalysis::checkMdRatios( bool checked )
+{
+qDebug() << "SET MdRatios enabled" << checked;
+   int nsol = model.components.size();
+
+   if ( checked )
+   {
+      pb_ldmodel ->setEnabled( true  );
+      ck_unifgr  ->setChecked( false );
+      ck_mdgrid  ->setChecked( false );
+      pb_accept  ->setEnabled( nsol > 0 );
+   }
+
+   else if ( ck_mdgrid->isChecked() )
+   {
+      pb_ldmodel ->setEnabled( true  );
+      ck_unifgr  ->setChecked( false );
+      pb_accept  ->setEnabled( nsol > 0 );
+   }
+
+   else
+   {
+      pb_ldmodel ->setEnabled( false );
+      pb_accept  ->setEnabled( true  );
+   }
+}
+
 // handle regularization checked
 void US_AdvAnalysis::checkRegular(  bool checked )
 {
@@ -367,8 +467,35 @@ void US_AdvAnalysis::select()
                           cmb_mesh   ->currentIndex();
    sparms->gridType     = (US_SimulationParameters::GridType)
                           cmb_moving ->currentIndex();
-//sparms->firstScanIsConcentration = sparms->band_forming;
+
+   if ( sparms->band_forming  &&  ck_locugr->isChecked() )
+      sparms->cp_width     = ct_scfactor->value();
 
    accept();
+}
+
+// load-model button clicked
+void US_AdvAnalysis::load_model()
+{
+   QString  mdesc  ( "" );
+   QString  mfilter( "" );
+   bool     loadDB = false;
+
+   if ( parentw != NULL )
+   {
+      US_2dsa* mainw = (US_2dsa*)parentw->parent();
+      mfilter        = mainw->mw_editdata()->runID;
+      loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
+   }
+
+   US_ModelLoader dialog( loadDB, mfilter, model, mdesc, "" );
+
+   if ( dialog.exec() == QDialog::Accepted )
+   {
+      int nsol  = model.components.size();
+      pb_accept  ->setEnabled( nsol > 0 );
+   }
+
+   return;
 }
 

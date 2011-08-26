@@ -787,6 +787,13 @@ void US_2dsa::open_fitcntl()
    dset.vbartb             = vbartb;
    dset.s20w_correction    = sd.s20w_correction;
    dset.D20w_correction    = sd.D20w_correction;
+DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
+ << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
+
+   if ( dbP != NULL )
+   {
+      dataList[ drow ].description += "  (DB)";
+   }
 
    if ( analcd != 0 )
    {
