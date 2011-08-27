@@ -343,6 +343,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    adv_vals[ "modelsim"  ] = "model";
 
    sdata          = &wsdata;
+
+   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
 }
 
 // public function to get pointer to edit data

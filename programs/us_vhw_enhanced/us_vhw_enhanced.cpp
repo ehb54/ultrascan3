@@ -100,6 +100,8 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    dataLoaded = false;
    haveZone   = false;
 
+   rightLayout->setStretchFactor( plotLayout1, 3 );
+   rightLayout->setStretchFactor( plotLayout2, 2 );
 }
 
 // load data
@@ -144,8 +146,14 @@ void US_vHW_Enhanced::load( void )
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
-   data_plot1->setMinimumSize( 600, 500 );
-   data_plot2->setMinimumSize( 600, 300 );
+   int mxht = qApp->desktop()->height() - 100;
+   int p1ht = ( mxht * 400 ) / 650;
+   int p2ht = mxht - p1ht;
+   p1ht     = qMin( p1ht, 400 );
+   p2ht     = qMin( p2ht, 250 );
+DbgLv(1) << "mxht p1ht p2ht" << mxht << p1ht << p2ht;
+   data_plot1->setMinimumSize( 600, p1ht );
+   data_plot2->setMinimumSize( 600, p2ht );
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
 

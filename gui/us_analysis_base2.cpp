@@ -227,6 +227,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    dfilter    = "";
    etype_filt = "velocity";
+
+   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+//qDebug() << "AB2: desktop size" << qApp->desktop()->size();
+//qDebug() << "AB2: max main size" << maximumSize();
 }
 
 void US_AnalysisBase2::update_disk_db( bool db )
