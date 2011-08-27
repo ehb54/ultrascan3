@@ -11,12 +11,12 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()<<"SS-w:"<<thrnrank<<":"
 #endif
 
-double zerothr = 0.020;
-double linethr = 0.050;
-double maxod   = 1.50;
-double mfactor = 3.00;
-double mfactex = 1.00;
-double minnzsc = 0.005;
+double zerothr = 0.020;    //!< zero threshold OD value
+double linethr = 0.050;    //!< linear threshold OD value
+double maxod   = 1.50;     //!< maximum OD value
+double mfactor = 3.00;     //!< peak multiplier value
+double mfactex = 1.00;     //!< peak multiplier - experiment
+double minnzsc = 0.005;    //!< minimum non-zero scale factor
 
 // Create a Solve-Simulation object
 US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
