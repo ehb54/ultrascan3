@@ -266,6 +266,8 @@ struct saxs_options
 
    bool    saxs_iq_hybrid_adaptive;
    bool    sans_iq_hybrid_adaptive;
+
+   bool    bead_model_rayleigh;
 };
 
 struct hybridization

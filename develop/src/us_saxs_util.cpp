@@ -6913,6 +6913,64 @@ bool US_Saxs_Util::set_excluded_volume(
    return true;
 }
 
+bool US_Saxs_Util::set_excluded_volume( 
+                                       PDB_atom                 &this_atom, 
+                                       double                   &vol, 
+                                       double                   &scaled_vol, 
+                                       saxs_options             &our_saxs_options, 
+                                       map < QString, QString > &residue_atom_hybrid_map,
+                                       unsigned int             &total_electrons,
+                                       unsigned int             &total_electrons_noh
+                                       )
+{
+   errormsg = "";
+
+   QString mapkey = QString("%1|%2").arg(this_atom.resName).arg(this_atom.name);
+   if ( this_atom.name == "OXT" )
+   {
+      mapkey = "OXT|OXT";
+   }
+   QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+   if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+   {
+      errormsg = QString("error: hybrid name missing for %1|%2").arg(this_atom.resName).arg(this_atom.name);
+      return false;
+   }
+
+   if ( !hybrid_map.count(hybrid_name) )
+   {
+      errormsg = QString("error: hybrid_map name missing for hybrid_name %1").arg(hybrid_name);
+      return false;
+   }
+
+   if ( !atom_map.count(this_atom.name + "~" + hybrid_name) )
+   {
+      errormsg = QString("error: atom_map missing for hybrid_name %1 atom name %2").arg(hybrid_name).arg(this_atom.name);
+      return false;
+   }
+
+   double use_vol  = atom_map[this_atom.name + "~" + hybrid_name].saxs_excl_vol;
+   total_electrons = hybrid_map[ hybrid_name ].num_elect;
+   if ( this_atom.name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
+   {
+      use_vol = our_saxs_options.swh_excl_vol;
+   }
+   vol = use_vol;
+   if ( our_saxs_options.hybrid_radius_excl_vol )
+   {
+      use_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+   }
+   if ( this_atom.name == "OW" )
+   {
+      scaled_vol  = use_vol;
+      total_electrons_noh = hybrid_map[ hybrid_name ].num_elect;
+   } else {
+      scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
+   } 
+   return true;
+}
+
 bool US_Saxs_Util::calc_mychi2( vector < double > x,
                                 vector < double > y,
                                 vector < double > sds,
@@ -7520,3 +7578,35 @@ bool US_Saxs_Util::create_adaptive_grid(
 
    return true;
 }
+
+bool US_Saxs_Util::compute_rayleigh_structure_factors( 
+                                                      double            radius,
+                                                      double            delta_rho,
+                                                      vector < double > &q,
+                                                      vector < double > &F
+                                                      )
+{
+   errormsg = "";
+
+   if ( radius <= 0e0 )
+   {
+      errormsg = "US_Saxs_Util::compute_rayleigh_structure_factors radius must be greater than zero";
+      return false;
+   }
+
+   F.resize( q.size() );
+
+   double v          = ( 4.0 / 3.0 ) * M_PI * radius * radius * radius;
+   double delta_rhov = delta_rho * v;
+   
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      double qradius = q[ i ] * radius;
+
+      F[ i ] = 
+         delta_rhov * 
+         3.0 * ( sin( qradius ) - qradius * cos( qradius ) ) / ( qradius * qradius * qradius );
+   }
+
+   return true;
+}   

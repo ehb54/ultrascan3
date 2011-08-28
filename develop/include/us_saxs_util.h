@@ -359,6 +359,16 @@ class US_EXTERN US_Saxs_Util
                                map < QString, QString > &residue_atom_hybrid_map
                                );
 
+      bool set_excluded_volume( 
+                               PDB_atom                 &this_atom, 
+                               double                   &vol, 
+                               double                   &scaled_vol, 
+                               saxs_options             &our_saxs_options, 
+                               map < QString, QString > &residue_atom_hybrid_map,
+                               unsigned int             &total_electrons,
+                               unsigned int             &total_electrons_noh
+                               );
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -403,6 +413,14 @@ class US_EXTERN US_Saxs_Util
                           double  max_q,
                           bool    do_normalize = true
                           );
+
+      bool compute_rayleigh_structure_factors( 
+                                              double            radius,
+                                              double            delta_rho,
+                                              vector < double > &q,
+                                              vector < double > &F
+                                              );
+
       
       point minus( point p1, point p2 );       // returns p1 - p2
       point cross( point p1, point p2 );       // returns p1 x p2

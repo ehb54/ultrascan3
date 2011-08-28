@@ -844,7 +844,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          new_atom.saxs_name = this_atom->saxs_name;
          new_atom.hybrid_name = this_atom->saxs_data.saxs_name;
          new_atom.hydrogens = 0;
-         
+         new_atom.radius = this_atom->bead_computed_radius;
+
          // this is probably correct but FoXS uses the saxs table excluded volume
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
@@ -935,6 +936,21 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       float vi; // excluded water vol
       float vie; // excluded water * e density
 
+      US_Saxs_Util usu;
+
+      if ( our_saxs_options->bead_model_rayleigh )
+      {
+         editor_msg("blue", "using Rayleigh structure factors\n");
+      }
+
+      bool told_you = false;
+
+      double scaling_root = 1e0;
+      if ( our_saxs_options->scale_excl_vol != 1e0 )
+      {
+         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+      }
+
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
@@ -942,59 +958,89 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          vie = vi * our_saxs_options->water_e_density;
          vi_23_4pi = - pow((double)vi,2.0/3.0) * one_over_4pi;
          
-         for ( unsigned int j = 0; j < q_points; j++ )
+         bool rayleigh_ok = false;
+         if ( our_saxs_options->bead_model_rayleigh )
          {
-            // note: since there are only a few 'saxs' coefficient sets
-            // the saxs.c + saxs.a[i] * exp() can be precomputed
-            // possibly saving time... but this isn't our most computationally intensive step
-            // so I'm holding off for now.
-
-            f[j][i] = 
-               atoms[i].srv * 
-               (
-               saxs.c + 
-               saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-               saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-               saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) );
-            fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
-            fp[j][i] = f[j][i] - fc[j][i];
-#if defined(SAXS_DEBUG_F)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << f[j][i]
-                    << "\n";
+            vector < double > F;
+            if ( usu.compute_rayleigh_structure_factors( 
+                                                        atoms[ i ].radius * scaling_root,
+                                                        ((US_Hydrodyn *)us_hydrodyn)->misc.target_e_density - our_saxs_options->water_e_density,
+                                                        q,
+                                                        F
+                                                        ) )
+            {
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  fp[ j ][ i ] = F[ j ];
+               }
+               rayleigh_ok = true;
+            } else {
+               editor_msg("red", "using Rayleigh structure factors failed:" + usu.errormsg );
             }
+         }
+
+         if ( !rayleigh_ok )
+         {
+            if ( !told_you )
+            {
+               editor_msg("blue", "NOT using Rayleigh structure factors\n");
+               told_you = true;
+            }
+               
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               // note: since there are only a few 'saxs' coefficient sets
+               // the saxs.c + saxs.a[i] * exp() can be precomputed
+               // possibly saving time... but this isn't our most computationally intensive step
+               // so I'm holding off for now.
+               f[j][i] = 
+                  atoms[i].srv * 
+                  (
+                   saxs.c + 
+                   saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+                   saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+                   saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+                   saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) );
+
+               fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
+               fp[j][i] = f[j][i] - fc[j][i];
+#if defined(SAXS_DEBUG_F)
+               if (1 || (q[j] > .0099 && q[j] < .0101)) {
+                  cout << q[j] 
+                       << "\t" 
+                       << q2[j] 
+                       << "\t" 
+                       << f[j][i]
+                       << "\n";
+               }
 #endif
 #if defined(SAXS_DEBUG_FV)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << vi
-                    << "\t" 
-                    << vie
-                    << "\t" 
-                    << m_pi_vi23
-                    << "\t" 
-                    << m_pi_vi23 * q2[j]
-                    << "\t" 
-                    << vie * exp(m_pi_vi23 * q2[j])
-                    << "\t" 
-                    << fp[j][i]
-                    << "\n";
-            }
+               if (1 || (q[j] > .0099 && q[j] < .0101)) {
+                  cout << q[j] 
+                       << "\t" 
+                       << q2[j] 
+                       << "\t" 
+                       << vi
+                       << "\t" 
+                       << vie
+                       << "\t" 
+                       << m_pi_vi23
+                       << "\t" 
+                       << m_pi_vi23 * q2[j]
+                       << "\t" 
+                       << vie * exp(m_pi_vi23 * q2[j])
+                       << "\t" 
+                       << fp[j][i]
+                       << "\n";
+               }
 #endif
 #if defined(ONLY_PHYSICAL_F)
-            if ( fp[j][i] < 0.0f ) 
-            {
-               fp[j][i] = 0.0f;
-            }
+               if ( fp[j][i] < 0.0f ) 
+               {
+                  fp[j][i] = 0.0f;
+               }
 #endif
+            }
          }
 #if defined(SAXS_DEBUG_F)
          cout << endl;

@@ -7149,6 +7149,7 @@ void US_Hydrodyn::calc_mw()
       do_excl_vol = false;
    }
 
+
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
@@ -7160,7 +7161,8 @@ void US_Hydrodyn::calc_mw()
       model_vector[i].mw         = 0.0;
       double tot_excl_vol        = 0.0;
       double tot_scaled_excl_vol = 0.0;
-
+      unsigned int total_e       = 0;
+      // unsigned int total_e_noh   = 0;
       create_beads(&error_string, true);
       if( !error_string.length() ) 
       {
@@ -7169,6 +7171,9 @@ void US_Hydrodyn::calc_mw()
             double chain_excl_vol          = 0.0;
             double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
+            unsigned int chain_total_e     = 0;
+            unsigned int chain_total_e_noh = 0;
+
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -7184,20 +7189,28 @@ void US_Hydrodyn::calc_mw()
                   {
                      double excl_vol;
                      double scaled_excl_vol;
+                     unsigned int this_e;
+                     unsigned int this_e_noh;
                      if ( !usu.set_excluded_volume( *this_atom, 
                                                     excl_vol, 
                                                     scaled_excl_vol, 
                                                     saxs_options, 
-                                                    residue_atom_hybrid_map ) )
+                                                    residue_atom_hybrid_map,
+                                                    this_e,
+                                                    this_e_noh ) )
                      {
                         editor_msg( "dark red", usu.errormsg );
                      } else {
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;
+                        chain_total_e         += this_e;
+                        chain_total_e_noh     += this_e_noh;
+
                         if ( this_atom->resName != "SWH" )
                         {
                            tot_excl_vol          += excl_vol;
                            tot_scaled_excl_vol   += scaled_excl_vol;
+                           total_e               += this_e;
                         }
                      }
                   }
@@ -7213,7 +7226,7 @@ void US_Hydrodyn::calc_mw()
                               .arg(model_vector[i].molecule[j].mw)
                               .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
                               .arg( do_excl_vol ?
-                                    QString(", atomic volume %1 A^3%2")
+                                    QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
                                     .arg( chain_excl_vol )
                                     .arg( chain_excl_vol != chain_scaled_excl_vol ?
                                           QString(", scaled atomic volume %1 A^2")
@@ -7221,6 +7234,7 @@ void US_Hydrodyn::calc_mw()
                                           :
                                           ""
                                           )
+                                    .arg( chain_total_e / chain_excl_vol )
                                     :
                                     ""
                                     )
@@ -7234,7 +7248,7 @@ void US_Hydrodyn::calc_mw()
                      .arg(model_vector[i].mw)
                      .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
                      .arg( do_excl_vol ?
-                           QString(", atomic volume %1 A^3%2")
+                           QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
                            .arg( tot_excl_vol )
                            .arg( tot_excl_vol != tot_scaled_excl_vol ?
                                  QString(", scaled atomic volume %1 A^2")
@@ -7242,13 +7256,76 @@ void US_Hydrodyn::calc_mw()
                                  :
                                  ""
                                  )
+                           .arg( total_e / tot_excl_vol )
                            :
                            ""
                            )
                      );
+
+      if ( do_excl_vol && misc.set_target_on_load_pdb )
+      {
+         misc.target_e_density = total_e / tot_excl_vol;
+         misc.target_volume = tot_excl_vol;
+         editor_msg("blue", tr("Target excluded volume and electron density set"));
+      }
+
       // printf("model %u  mw %g\n",
       //       i, model_vector[i].mw);
    }
    editor->append("\n");
    current_model = save_current_model;
+}
+
+double US_Hydrodyn::total_volume_of_bead_model( vector < PDB_atom > &bead_model )
+{
+   double tot_vol = 0e0;
+
+   double pi43 = M_PI * 4e0 / 3e0;
+
+   for ( unsigned int i = 0; i < bead_model.size(); i++ )
+   {
+      if ( bead_model[ i ].active ) 
+      {
+         tot_vol += bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius;
+      }
+   }
+   return tot_vol * pi43;
+}
+
+unsigned int US_Hydrodyn::number_of_active_beads( vector < PDB_atom > &bead_model )
+{
+   unsigned int number_of_active_beads = 0;
+
+   for ( unsigned int i = 0; i < bead_model.size(); i++ )
+   {
+      if ( bead_model[ i ].active ) 
+      {
+         number_of_active_beads++;
+      }
+   }
+   return number_of_active_beads;
+}
+
+bool US_Hydrodyn::radii_all_equal( vector < PDB_atom > &bead_model )
+{
+   bool  first_found = false;
+   float first_radius;
+
+   for ( unsigned int i = 0; i < bead_model.size(); i++ )
+   {
+      if ( bead_model[ i ].active ) 
+      {
+         if ( !first_found )
+         {
+            first_radius = bead_model[ i ].bead_computed_radius;
+            first_found  = true;
+         } else {
+            if ( first_radius != bead_model[ i ].bead_computed_radius )
+            {
+               return false;
+            }
+         }
+      }
+   }
+   return true;
 }

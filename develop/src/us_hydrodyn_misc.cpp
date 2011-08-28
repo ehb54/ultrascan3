@@ -217,6 +217,59 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_vbar->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_avg_vbar, SIGNAL(valueChanged(double)), SLOT(update_avg_vbar(double)));
 
+   lbl_bead_model_controls = new QLabel(tr("Bead model controls:"), this);
+   lbl_bead_model_controls->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_bead_model_controls->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_bead_model_controls->setMinimumHeight(minHeight1);
+   lbl_bead_model_controls->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_bead_model_controls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_target_e_density = new QLabel(tr(" Target electron density (A^-3): "), this);
+   lbl_target_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_target_e_density->setMinimumWidth(200);
+   lbl_target_e_density->setMinimumHeight(minHeight1);
+   lbl_target_e_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_target_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_target_e_density = new QLineEdit(this, "target_e_density Line Edit");
+   le_target_e_density->setMinimumHeight(minHeight1);
+   le_target_e_density->setEnabled(true);
+   le_target_e_density->setText(QString("%1").arg((*misc).target_e_density));
+   le_target_e_density->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_target_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_target_e_density, SIGNAL(textChanged(const QString &)), SLOT(update_target_e_density(const QString &)));
+
+   lbl_target_volume = new QLabel(tr(" Target volume (A^3): "), this);
+   lbl_target_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_target_volume->setMinimumWidth(200);
+   lbl_target_volume->setMinimumHeight(minHeight1);
+   lbl_target_volume->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_target_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_target_volume = new QLineEdit(this, "target_volume Line Edit");
+   le_target_volume->setMinimumHeight(minHeight1);
+   le_target_volume->setEnabled(true);
+   le_target_volume->setText(QString("%1").arg((*misc).target_volume));
+   le_target_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_target_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_target_volume, SIGNAL(textChanged(const QString &)), SLOT(update_target_volume(const QString &)));
+
+   cb_set_target_on_load_pdb = new QCheckBox(this);
+   cb_set_target_on_load_pdb->setText(tr(" Set targets on load PDB "));
+   cb_set_target_on_load_pdb->setChecked((*misc).set_target_on_load_pdb);
+   cb_set_target_on_load_pdb->setMinimumHeight(minHeight1);
+   cb_set_target_on_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_set_target_on_load_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_set_target_on_load_pdb, SIGNAL(clicked()), SLOT(set_set_target_on_load_pdb()));
+
+   cb_equalize_radii = new QCheckBox(this);
+   cb_equalize_radii->setText(tr(" Equalize radii (constant volume)"));
+   cb_equalize_radii->setChecked((*misc).equalize_radii);
+   cb_equalize_radii->setMinimumHeight(minHeight1);
+   cb_equalize_radii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_equalize_radii->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_equalize_radii, SIGNAL(clicked()), SLOT(set_equalize_radii()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -248,7 +301,7 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(lbl_hydrovol, j, 0);
    background->addWidget(cnt_hydrovol, j, 1);
    j++;
-   background->addWidget(cb_pb_rule_on, j, 0);
+   background->addMultiCellWidget(cb_pb_rule_on, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(lbl_avg_banner, j, j, 0, 1);
    j++;
@@ -267,6 +320,19 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(lbl_avg_vbar, j, 0);
    background->addWidget(cnt_avg_vbar, j, 1);
    j++;
+
+   background->addMultiCellWidget(lbl_bead_model_controls, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_target_e_density, j, 0);
+   background->addWidget(le_target_e_density, j, 1);
+   j++;
+   background->addWidget(lbl_target_volume, j, 0);
+   background->addWidget(le_target_volume, j, 1);
+   j++;
+   background->addWidget(cb_set_target_on_load_pdb, j, 0);
+   background->addWidget(cb_equalize_radii, j, 1);
+   j++;
+
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 }
@@ -330,6 +396,37 @@ void US_Hydrodyn_Misc::set_pb_rule_on()
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
+}
+
+void US_Hydrodyn_Misc::update_target_e_density(const QString &str)
+{
+   (*misc).target_e_density = str.toDouble();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_target_volume(const QString &str)
+{
+   (*misc).target_volume = str.toDouble();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->pb_bead_saxs->isEnabled() &&
+        (*misc).target_volume != 0e0 )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->pb_bead_saxs->setEnabled(true);
+   } else {
+      ((US_Hydrodyn *)us_hydrodyn)->pb_bead_saxs->setEnabled(false);
+   }
+}
+
+void US_Hydrodyn_Misc::set_set_target_on_load_pdb()
+{
+   (*misc).set_target_on_load_pdb = cb_set_target_on_load_pdb->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_equalize_radii()
+{
+   (*misc).equalize_radii = cb_equalize_radii->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::cancel()

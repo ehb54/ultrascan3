@@ -715,6 +715,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_compute_sans_coeff_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_compute_sans_coeff_for_bead_models, SIGNAL(clicked()), this, SLOT(set_compute_sans_coeff_for_bead_models()));
 
+   cb_bead_model_rayleigh = new QCheckBox(this);
+   cb_bead_model_rayleigh->setText(tr(" Use Rayleigh (1911) for structure factors"));
+   cb_bead_model_rayleigh->setEnabled(true);
+   cb_bead_model_rayleigh->setChecked((*saxs_options).bead_model_rayleigh);
+   cb_bead_model_rayleigh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_model_rayleigh->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_bead_model_rayleigh, SIGNAL(clicked()), this, SLOT(set_bead_model_rayleigh()));
+
    pb_default_atom_filename = new QPushButton(tr("Set Atom Definition File"), this);
    pb_default_atom_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_default_atom_filename->setMinimumHeight(minHeight1);
@@ -1136,6 +1144,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_coeff_bead_model = new QHBoxLayout;
    hbl_coeff_bead_model->addWidget(cb_compute_saxs_coeff_for_bead_models);
    hbl_coeff_bead_model->addWidget(cb_compute_sans_coeff_for_bead_models);
+   hbl_coeff_bead_model->addWidget(cb_bead_model_rayleigh);
    background->addMultiCellLayout(hbl_coeff_bead_model, k, k, 2, 3);
    k++;
 
@@ -2031,6 +2040,12 @@ void US_Hydrodyn_SaxsOptions::set_compute_saxs_coeff_for_bead_models()
 void US_Hydrodyn_SaxsOptions::set_compute_sans_coeff_for_bead_models()
 {
    (*saxs_options).compute_sans_coeff_for_bead_models = cb_compute_sans_coeff_for_bead_models->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_bead_model_rayleigh()
+{
+   (*saxs_options).bead_model_rayleigh = cb_bead_model_rayleigh->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

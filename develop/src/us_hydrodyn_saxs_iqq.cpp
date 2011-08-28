@@ -37,7 +37,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
-      double tot_excl_vol = 0e0;
+      double tot_excl_vol      = 0e0;
+      double tot_excl_vol_noh  = 0e0;
+      unsigned int total_e     = 0;
+      unsigned int total_e_noh = 0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -167,6 +170,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             
             // this is probably correct but FoXS uses the saxs table excluded volume
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options->swh_excl_vol;
@@ -178,6 +182,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+               tot_excl_vol_noh  += new_atom.excl_vol;
+               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
@@ -626,6 +632,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       // hist[0] = 0.0;
 
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      if ( tot_excl_vol_noh != tot_excl_vol ||
+           total_e_noh      != total_e )
+      {
+         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+      }
 
       QString name = 
          QString("%1_%2%3")
@@ -1075,7 +1089,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
-      double tot_excl_vol = 0e0;
+      double tot_excl_vol      = 0e0;
+      double tot_excl_vol_noh  = 0e0;
+      unsigned int total_e     = 0;
+      unsigned int total_e_noh = 0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -1203,6 +1220,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options->swh_excl_vol;
@@ -1214,6 +1232,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+               tot_excl_vol_noh  += new_atom.excl_vol;
+               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
@@ -1675,6 +1695,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      if ( tot_excl_vol_noh != tot_excl_vol ||
+           total_e_noh      != total_e )
+      {
+         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+      }
 
       QString name = 
          QString("%1_%2%3")
@@ -1883,7 +1911,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
-      double tot_excl_vol = 0e0;
+      double tot_excl_vol      = 0e0;
+      double tot_excl_vol_noh  = 0e0;
+      unsigned int total_e     = 0;
+      unsigned int total_e_noh = 0;
       current_model = selected_models[i];
 #if defined(SAXS_DEBUG)
       printf("creating sax_atoms %u\n", current_model);
@@ -2003,6 +2034,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options->swh_excl_vol;
@@ -2014,6 +2046,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+               tot_excl_vol_noh  += new_atom.excl_vol;
+               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
@@ -2567,6 +2601,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #endif
 
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      if ( tot_excl_vol_noh != tot_excl_vol ||
+           total_e_noh      != total_e )
+      {
+         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+      }
 
       QString name = 
          QString("%1_%2%3")

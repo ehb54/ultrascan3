@@ -587,6 +587,13 @@ void US_Hydrodyn::setupGUI()
    pb_bead_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bead_saxs, SIGNAL(clicked()), SLOT(bead_saxs()));
 
+   pb_rescale_bead_model = new QPushButton(tr("Rescale/Equalize Bead Model"), this);
+   pb_rescale_bead_model->setMinimumHeight(minHeight1);
+   pb_rescale_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_rescale_bead_model->setEnabled(false);
+   pb_rescale_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_rescale_bead_model, SIGNAL(clicked()), SLOT(rescale_bead_model()));
+
    pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
    Q_CHECK_PTR(pb_grid_pdb);
    pb_grid_pdb->setMinimumHeight(minHeight1);
@@ -892,6 +899,7 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(le_bead_model_file, j, 1);
    j++;
    background->addWidget(pb_bead_saxs, j, 0);
+   background->addWidget(pb_rescale_bead_model, j, 1);
    j++;
    background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
    j++;
@@ -937,6 +945,7 @@ void US_Hydrodyn::set_disabled()
 
    pb_bead_saxs->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
+   pb_rescale_bead_model->setEnabled(false);
 }
 
 void US_Hydrodyn::hybrid()
@@ -1462,6 +1471,7 @@ void US_Hydrodyn::reload_pdb()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
+   pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
@@ -1696,6 +1706,7 @@ void US_Hydrodyn::load_pdb()
    pb_calc_hydro->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
+   pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
@@ -1825,6 +1836,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
+   pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
@@ -1869,6 +1881,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
       pb_calc_hydro->setEnabled(true);
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_pdb_saxs->setEnabled(false);
       bd_anaflex_enables(false);
       return true;
@@ -1877,6 +1890,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    {
       pb_visualize->setEnabled(true);
       pb_bead_saxs->setEnabled(false);
+      pb_rescale_bead_model->setEnabled(false);
       pb_pdb_saxs->setEnabled(true);
       return false;
    }
@@ -2059,6 +2073,7 @@ void US_Hydrodyn::load_bead_model()
          pb_calc_hydro->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
+         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
          pb_pdb_saxs->setEnabled(false);
          bd_anaflex_enables(false);
       }
@@ -2066,6 +2081,7 @@ void US_Hydrodyn::load_bead_model()
       {
          pb_visualize->setEnabled(true);
          pb_bead_saxs->setEnabled(false);
+         pb_rescale_bead_model->setEnabled(false);
          pb_pdb_saxs->setEnabled(true);
       }
       // bead_model_prefix = "";
@@ -2209,6 +2225,7 @@ int US_Hydrodyn::calc_somo()
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
    else
    {
@@ -2590,6 +2607,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      bead_models[current_model] = bead_model;
                   }                     
 
+                  editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
                   progress->setProgress(progress->progress() + 1);
 
                   // write_bead_spt(somo_dir + SLASH + project +
@@ -2623,6 +2641,7 @@ int US_Hydrodyn::calc_grid_pdb()
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
    else
    {
@@ -2869,6 +2888,7 @@ int US_Hydrodyn::calc_grid()
                   bead_models[current_model] = bead_model;
                }
             }
+            editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
             progress->setProgress(progress->progress() + 1);
             // write_bead_spt(somo_dir + SLASH + project +
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
@@ -2898,6 +2918,7 @@ int US_Hydrodyn::calc_grid()
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
    else
    {
@@ -3168,6 +3189,7 @@ int US_Hydrodyn::calc_hydro()
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
       return -1;
@@ -3199,6 +3221,7 @@ int US_Hydrodyn::calc_hydro()
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
       return -1;
@@ -3208,6 +3231,7 @@ int US_Hydrodyn::calc_hydro()
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
+   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    if ( retval )
    {
       editor->append("Calculate hydrodynamics failed\n\n");

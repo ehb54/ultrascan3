@@ -41,6 +41,11 @@ struct misc_options
    double avg_volume;
    double avg_radius;
    double avg_vbar;
+
+   double target_e_density;  // non zero 
+   double target_volume;
+   bool   set_target_on_load_pdb;
+   bool   equalize_radii;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -88,6 +93,14 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QwtCounter *cnt_avg_volume;
       QwtCounter *cnt_avg_vbar;
 
+      QLabel    *lbl_bead_model_controls;
+      QLabel    *lbl_target_e_density;
+      QLineEdit *le_target_e_density;
+      QLabel    *lbl_target_volume;
+      QLineEdit *le_target_volume;
+      QCheckBox *cb_set_target_on_load_pdb;
+      QCheckBox *cb_equalize_radii;
+
    private slots:
 
       void setupGUI();
@@ -103,6 +116,11 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       void update_avg_hydration(double);
       void update_avg_volume(double);
       void update_avg_vbar(double);
+      
+      void update_target_e_density(const QString &);
+      void update_target_volume(const QString &);
+      void set_set_target_on_load_pdb();
+      void set_equalize_radii();
 
       void cancel();
       void help();

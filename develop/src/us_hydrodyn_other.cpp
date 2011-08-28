@@ -1012,6 +1012,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
+         editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          return(overlap_check(true, true, true,
                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
@@ -1156,6 +1157,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
          editor->append(QString("\nMolecular weight: %1 Daltons\n\n").arg(tmp_mw));
+         editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          return(overlap_check(true, true, true,
                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
@@ -1598,6 +1600,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                              QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                              , &bead_model);
          }
+         editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          return(overlap_check(true, true, true,
                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
@@ -3267,6 +3270,11 @@ void US_Hydrodyn::set_default()
    asa.hydrate_probe_radius = 1.4f;
    asa.hydrate_threshold = 10.0f;
 
+   misc.target_e_density       = 0e0;
+   misc.target_volume          = 0e0;
+   misc.set_target_on_load_pdb = false;
+   misc.equalize_radii         = false;
+
    dmd_options.force_chem = true;
    dmd_options.pdb_static_pairs = false;
    dmd_options.threshold_pb_pb = 5;
@@ -3338,6 +3346,8 @@ void US_Hydrodyn::set_default()
 
    saxs_options.saxs_iq_hybrid_adaptive = true;
    saxs_options.sans_iq_hybrid_adaptive = true;
+
+   saxs_options.bead_model_rayleigh = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
@@ -5540,3 +5550,78 @@ void US_Hydrodyn::clear_state()
 }
 
 
+void US_Hydrodyn::rescale_bead_model()
+{
+   for ( current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++ ) 
+   {
+      if ( lb_model->isSelected(current_model) &&
+           somo_processed[current_model] ) 
+      {
+         bead_model = bead_models[current_model];
+         if ( misc.target_volume != 0e0 )
+         {
+            editor->append(QString("Rescaling bead model %1\n").arg(current_model + 1 ) );
+            double current_volume = total_volume_of_bead_model( bead_model );
+            editor_msg("black", 
+                       QString( tr( "Current volume %1 A^3, target volume %2 A^3\n") )
+                       .arg( current_volume )
+                       .arg( misc.target_volume ) );
+            if ( QString("%1").arg( current_volume ) == QString("%1").arg( misc.target_volume ) )
+            {
+               editor_msg("blue", tr("Skipped, volume already equal") );
+            } else {
+               double multiplier = pow( misc.target_volume / current_volume, 1e0 / 3e0 );
+               for ( unsigned int i = 0; i < bead_model.size(); i++ )
+               {
+                  if ( bead_model[ i ].active ) 
+                  {
+                     bead_model[ i ].bead_computed_radius *= multiplier;
+                  }
+               }
+               current_volume = total_volume_of_bead_model( bead_model );
+               editor_msg("black", 
+                          QString( tr( "After rescaling: current volume %1 A^3, target volume %2 A^3\n") )
+                          .arg( current_volume )
+                          .arg( misc.target_volume ) );
+               bead_models[ current_model ] = bead_model;
+            }
+         }
+         if ( misc.equalize_radii )
+         {
+            editor->append(QString("Equalizing radii for bead model %1\n").arg(current_model + 1 ) );
+            if ( radii_all_equal( bead_model ) )
+            {
+               editor_msg("blue", tr("Skipped, radii already equalized") );
+            } else {
+               double current_volume = total_volume_of_bead_model( bead_model );
+               unsigned int beads    = number_of_active_beads( bead_model );
+               double pi43           = M_PI * 4e0 / 3e0;
+               
+               // current volume = beads * pi43 * constant-r^3
+               float radius = (float)pow( current_volume / ( beads * pi43 ), 1e0 / 3e0 );
+               
+               editor_msg("black", 
+                          QString( tr( "Volume %1 A^3, Number of beads %2, Radius %3 A\n" ) )
+                          .arg( current_volume )
+                          .arg( beads )
+                          .arg( radius )
+                          );
+
+               for ( unsigned int i = 0; i < bead_model.size(); i++ )
+               {
+                  if ( bead_model[ i ].active ) 
+                  {
+                     bead_model[ i ].bead_computed_radius = radius;
+                  }
+               }
+            
+               current_volume = total_volume_of_bead_model( bead_model );
+               editor_msg("black", 
+                          QString( tr( "After equalizing: current volume %1 A^3\n" ) )
+                          .arg( current_volume ) );
+               bead_models[ current_model ] = bead_model;
+            }
+         }
+      }
+   }
+}

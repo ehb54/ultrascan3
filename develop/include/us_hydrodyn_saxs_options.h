@@ -139,6 +139,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel      *lbl_bead_model_control;
       QCheckBox   *cb_compute_saxs_coeff_for_bead_models;
       QCheckBox   *cb_compute_sans_coeff_for_bead_models;
+      QCheckBox   *cb_bead_model_rayleigh;
       QPushButton *pb_default_atom_filename;
       QLineEdit   *le_default_atom_filename;
       QPushButton *pb_default_hybrid_filename;
@@ -248,6 +249,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void set_compute_saxs_coeff_for_bead_models();
       void set_compute_sans_coeff_for_bead_models();
+      void set_bead_model_rayleigh();
       void default_atom_filename();
       void default_hybrid_filename();
       void default_saxs_filename();

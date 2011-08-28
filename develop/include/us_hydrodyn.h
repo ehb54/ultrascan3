@@ -78,6 +78,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Search;
+      friend class US_Hydrodyn_Misc;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -282,6 +283,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_pdb_hydrate_for_saxs;
       QPushButton *pb_pdb_saxs;
       QPushButton *pb_bead_saxs;
+      QPushButton *pb_rescale_bead_model;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       QPushButton *pb_somo;
@@ -614,6 +616,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Saxs_Search  *saxs_search_window;
       csv                      last_saxs_search_csv;
 
+      double       total_volume_of_bead_model( vector < PDB_atom > &bead_model );
+      unsigned int number_of_active_beads    ( vector < PDB_atom > &bead_model );
+      bool         radii_all_equal           ( vector < PDB_atom > &bead_model );
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file
@@ -660,6 +666,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
+      void rescale_bead_model();
+
       void browflex_readFromStdout();
       void browflex_readFromStderr();
       void browflex_launchFinished();
