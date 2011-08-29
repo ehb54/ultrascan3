@@ -142,8 +142,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       void update_font();
       void save();
 
-      void show_plot_dist();
-
       void cancel();
       void help();
 
