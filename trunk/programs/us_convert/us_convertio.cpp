@@ -215,6 +215,9 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );
 
+   else if ( readStatus == US_DB2::ERROR )
+      ; // Didn't find any RI Profile data
+
    else if ( readStatus != US_DB2::OK )
       return( db->lastError() );
 
@@ -237,6 +240,10 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    {
       triple.solution.saveToDisk();
    }
+
+   // Verify that RI Profile is on the disk too
+   if ( ExpData.opticalSystem == "RI" )
+      ExpData.saveRIDisk( runID, dir );
 
    // Now try to write the xml file
    int xmlStatus = ExpData.saveToDisk( triples, ExpData.opticalSystem, runID, dir );
@@ -278,7 +285,7 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
    }
 
    if ( rawDataIDs.size() < 1 )
-      return( "There were no auc files found in the databae." );
+      return( "There were no auc files found in the database." );
 
    // Set working directory and create it if necessary
    dir  = US_Settings::resultDir() + "/" + ExpData.runID;
