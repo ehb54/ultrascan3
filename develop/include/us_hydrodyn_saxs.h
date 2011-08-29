@@ -72,6 +72,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Saxs_Search;
+      friend class US_Hydrodyn_Saxs_Screen;
 
    public:
 
@@ -162,6 +163,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_clear_plot_pr;
       QPushButton *pb_load_gnom;
       QPushButton *pb_saxs_search;
+      QPushButton *pb_saxs_screen;
       QPushButton *pb_guinier_analysis;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
@@ -483,6 +485,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       
       csv  search_csv;
       void reset_search_csv();
+      csv  screen_csv;
+      void reset_screen_csv();
 
       void set_scaling_target( QString &scaling_target );
 
@@ -564,6 +568,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_highq(const QString &);
       void load_gnom();
       void saxs_search();
+      void saxs_screen();
 
    protected slots:
 

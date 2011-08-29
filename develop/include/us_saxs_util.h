@@ -414,6 +414,28 @@ class US_EXTERN US_Saxs_Util
                           bool    do_normalize = true
                           );
 
+      bool iqq_sphere_fit( 
+                          QString                       tag,
+                          vector < double >             q,
+                          vector < double >             I,
+                          vector < double >             I_errors,
+                          double                        min_radius,
+                          double                        max_radius,
+                          double                        delta_radius,
+                          double                        min_delta_rho,
+                          double                        max_delta_rho,
+                          double                        delta_delta_rho,
+                          double                        min_q,
+                          double                        max_q,
+                          vector < double >             &by_radius,
+                          vector < double >             &by_delta_rho,
+                          vector < double >             &val_radius,
+                          vector < double >             &val_delta_rho,
+                          map < double, unsigned int >  &index_radius,
+                          map < double, unsigned int >  &index_delta_rho,
+                          bool                          do_normalize = true
+                          );
+
       bool compute_rayleigh_structure_factors( 
                                               double            radius,
                                               double            delta_rho,

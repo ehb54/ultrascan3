@@ -2470,7 +2470,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          use_q.push_back(q_points - 1);
       }
 
-      if ( our_saxs_options->saxs_iq_hybrid_adaptive )
+      if ( our_saxs_options->saxs_iq_hybrid_adaptive && adaptive_ok )
       {
          use_q = r;
       }

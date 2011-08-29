@@ -6797,6 +6797,206 @@ bool US_Saxs_Util::iqq_sphere_fit(
    return true;
 }
 
+bool US_Saxs_Util::iqq_sphere_fit( 
+                                  QString                       tag,
+                                  vector < double >             q,
+                                  vector < double >             I,
+                                  vector < double >             I_errors,
+                                  double                        min_radius,
+                                  double                        max_radius,
+                                  double                        delta_radius,
+                                  double                        min_delta_rho,
+                                  double                        max_delta_rho,
+                                  double                        delta_delta_rho,
+                                  double                        min_q,
+                                  double                        max_q,
+                                  vector < double >             &by_radius,
+                                  vector < double >             &by_delta_rho,
+                                  vector < double >             &val_radius,
+                                  vector < double >             &val_delta_rho,
+                                  map < double, unsigned int >  &index_radius,
+                                  map < double, unsigned int >  &index_delta_rho,
+                                  bool                          do_normalize
+                                  )
+{
+   errormsg = "";
+   noticemsg = "";
+
+   wave[ tag ].clear();
+   wave[ tag ].q = q;
+   wave[ tag ].r = I;
+   wave[ tag ].s = I_errors;
+
+   QString cropped = tag + "_cropped";
+   if ( !crop( cropped, tag, min_q, max_q ) )
+   {
+      return false;
+   }      
+
+   if ( !wave[ cropped ].q.size() )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere_fit cropped data leaves nothing to fit\n";
+      return false;
+   }
+
+   noticemsg +=  QString("US_Saxs_Util::iqq_sphere_fit q points after cropping: %1\n").arg(wave[ cropped ].q.size());
+
+   // build a matrix of the models in A
+
+   vector < vector < double > > A;
+   vector < QString >           A_tag;
+   vector < double >            A_radius;
+   vector < double >            A_delta_rho;
+
+   //   cout << QString("%1 %2 %3 %4 %5 %6\n")
+   //      .arg(min_radius).arg(max_radius).arg(delta_radius)
+   //      .arg(min_delta_rho).arg(max_delta_rho).arg(delta_delta_rho);
+
+   for ( double radius = min_radius; 
+         radius <= max_radius; 
+         radius += delta_radius )
+   {
+      for ( double delta_rho = min_delta_rho;
+            delta_rho <= max_delta_rho; 
+            delta_rho += delta_delta_rho )
+      {
+         QString tag = QString("radius %1 delta_rho %2").arg( radius ).arg( delta_rho );
+         // cout << tag << endl;
+         if ( !iqq_sphere_grid( tag, cropped, radius, delta_rho ) )
+         {
+            return false;
+         }
+         if ( do_normalize )
+         {
+            if ( !normalize( tag, tag ) )
+            {
+               return false;
+            }
+         }
+         A.          push_back( wave[ tag ].r );
+         A_tag.      push_back( tag );
+         A_radius.   push_back( radius );
+         A_delta_rho.push_back( delta_rho );
+      }
+   }
+
+   if ( !A.size() )
+   {
+      errormsg = "US_Saxs_Util::iqq_sphere_fit no models created!\n";
+      return false;
+   }
+      
+   // find single best fit:
+
+   unsigned int best_pos  = 0;
+   double       k;
+   double       best_rmsd;
+
+   nnls_fit(
+            A[ 0 ],
+            wave[ cropped ].r,
+            k,
+            best_rmsd
+            );
+             
+   for ( unsigned int i = 1; i < A.size(); i++ )
+   {
+      double rmsd;
+      nnls_fit(
+            A[ i ],
+            wave[ cropped ].r,
+            k,
+            rmsd
+            );
+      if ( rmsd < best_rmsd )
+      {
+         best_rmsd = rmsd;
+         best_pos = i;
+      }
+   }
+   
+   noticemsg += QString("best single model %1 rmsd %2\n").arg( A_tag[ best_pos ] ).arg( best_rmsd );
+
+   vector < double > x;
+   double            nnls_rmsd;
+
+   bool result = nnls_fit( A, wave[ cropped ].r, x, nnls_rmsd );
+
+   if ( !result )
+   {
+      return false;
+   }
+
+   noticemsg += QString( "nnls rmsd %1\n" ).arg( nnls_rmsd );
+
+   double totconc = 0e0;
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( x[ i ] > 0e0 )
+      {
+         totconc += x[ i ];
+      }
+   }
+
+   if ( totconc == 0e0 )
+   {
+      totconc = 1e0;
+   }
+
+   double oneovertotconc = 1e0 / totconc;
+
+   double avgradius      = 0e0;
+   double avgdelta_rho   = 0e0;
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      if ( x[ i ] > 0e0 )
+      {
+         avgradius    += x[ i ] * oneovertotconc * A_radius[ i ];
+         avgdelta_rho += x[ i ] * oneovertotconc * A_delta_rho[ i ];
+         noticemsg += QString("nnls model %1 conc %2\n").arg( A_tag[ i ] ).arg( x[ i ] * oneovertotconc );
+      }
+   }
+
+   noticemsg += QString("nnls avg radius %1 avg delta_rho %2\n").arg( avgradius ).arg( avgdelta_rho );
+
+   // build output
+   
+   by_radius      .clear();
+   by_delta_rho   .clear();
+   val_radius     .clear();
+   val_delta_rho  .clear();
+   index_radius   .clear();
+   index_delta_rho.clear();
+
+   for ( double radius = min_radius; 
+         radius <= max_radius; 
+         radius += delta_radius )
+   {
+      index_radius[ radius ] = by_radius.size();
+      by_radius .push_back( 0e0 );
+      val_radius.push_back( radius );
+   }
+
+   for ( double delta_rho = min_delta_rho;
+         delta_rho <= max_delta_rho; 
+         delta_rho += delta_delta_rho )
+   {
+      index_delta_rho[ delta_rho ] = by_delta_rho.size();
+      by_delta_rho .push_back( 0e0 );
+      val_delta_rho.push_back( delta_rho );
+   }
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      by_radius   [ index_radius   [ A_radius   [ i ] ] ] += x[ i ] * oneovertotconc;
+      by_delta_rho[ index_delta_rho[ A_delta_rho[ i ] ] ] += x[ i ] * oneovertotconc;
+   }
+
+   return true;
+}
+
 bool US_Saxs_Util::merge( 
                          QString outtag,
                          QString tag1,

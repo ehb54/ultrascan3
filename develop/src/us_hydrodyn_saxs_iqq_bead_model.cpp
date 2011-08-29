@@ -66,6 +66,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          new_atom.saxs_name = this_atom->saxs_name;
          new_atom.hybrid_name = this_atom->saxs_data.saxs_name;
          new_atom.hydrogens = 0;
+         new_atom.radius = this_atom->bead_computed_radius;
          
          // this is probably correct but FoXS uses the saxs table excluded volume
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
@@ -158,24 +159,77 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
       float vie; // excluded water * e density
 
       // compute form factors
+
+      US_Saxs_Util usu;
+
+      double delta_rho = ((US_Hydrodyn *)us_hydrodyn)->misc.target_e_density - our_saxs_options->water_e_density;
+      if ( fabs(delta_rho) < 1e-5 )
+      {
+         delta_rho = 0e0;
+      }
+
+      if ( our_saxs_options->bead_model_rayleigh )
+      {
+         editor_msg("blue", QString("using Rayleigh structure factors, delta_rho %1\n").arg(delta_rho));
+      }
+
+      bool told_you = false;
+
+      double scaling_root = 1e0;
+      if ( our_saxs_options->scale_excl_vol != 1e0 )
+      {
+         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+      }
+
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
 
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
-         
-         f[0][i] = 
-            atoms[i].srv * 
-            ( 
-             atoms[i].saxs_data.c +
-             atoms[i].saxs_data.a[0] +
-             atoms[i].saxs_data.a[1] +
-             atoms[i].saxs_data.a[2] +
-             atoms[i].saxs_data.a[3] );
 
-         fc[0][i] = vie;
-         fp[0][i] = f[0][i] - fc[0][i];
+         bool rayleigh_ok = false;
+         if ( our_saxs_options->bead_model_rayleigh )
+         {
+            vector < double > F;
+            vector < double > q(1);
+            q[ 0 ] = 0;
+
+      
+            if ( usu.compute_rayleigh_structure_factors( 
+                                                        atoms[ i ].radius * scaling_root,
+                                                        delta_rho,
+                                                        q,
+                                                        F
+                                                        ) )
+            {
+               fp[ 0 ][ i ] = F[ 0 ];
+               rayleigh_ok = true;
+            } else {
+               editor_msg("red", "using Rayleigh structure factors failed:" + usu.errormsg );
+            }
+         }
+
+         if ( !rayleigh_ok )
+         {
+            if ( !told_you )
+            {
+               editor_msg("blue", "NOT using Rayleigh structure factors\n");
+               told_you = true;
+            }
+         
+            f[0][i] = 
+               // atoms[i].srv * 
+               ( 
+                atoms[i].saxs_data.c +
+                atoms[i].saxs_data.a[0] +
+                atoms[i].saxs_data.a[1] +
+                atoms[i].saxs_data.a[2] +
+                atoms[i].saxs_data.a[3] );
+            
+            fc[0][i] = vie;
+            fp[0][i] = f[0][i] - fc[0][i];
+         }
       }
 
       // foxs method: compute real space distribution
@@ -936,11 +990,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       float vi; // excluded water vol
       float vie; // excluded water * e density
 
+      // compute form factors
+
       US_Saxs_Util usu;
+
+      double delta_rho = ((US_Hydrodyn *)us_hydrodyn)->misc.target_e_density - our_saxs_options->water_e_density;
+      if ( fabs(delta_rho) < 1e-5 )
+      {
+         delta_rho = 0e0;
+      }
 
       if ( our_saxs_options->bead_model_rayleigh )
       {
-         editor_msg("blue", "using Rayleigh structure factors\n");
+         editor_msg("blue", QString("using Rayleigh structure factors, delta_rho %1\n").arg(delta_rho));
       }
 
       bool told_you = false;
@@ -964,7 +1026,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
             vector < double > F;
             if ( usu.compute_rayleigh_structure_factors( 
                                                         atoms[ i ].radius * scaling_root,
-                                                        ((US_Hydrodyn *)us_hydrodyn)->misc.target_e_density - our_saxs_options->water_e_density,
+                                                        delta_rho,
                                                         q,
                                                         F
                                                         ) )
@@ -994,7 +1056,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
                // possibly saving time... but this isn't our most computationally intensive step
                // so I'm holding off for now.
                f[j][i] = 
-                  atoms[i].srv * 
+                  // atoms[i].srv * 
                   (
                    saxs.c + 
                    saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
@@ -1428,6 +1490,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          new_atom.saxs_name = this_atom->saxs_name;
          new_atom.hybrid_name = this_atom->saxs_data.saxs_name;
          new_atom.hydrogens = 0;
+         new_atom.radius = this_atom->bead_computed_radius;
          
          // this is probably correct but FoXS uses the saxs table excluded volume
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
@@ -1440,7 +1503,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
-         SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
+         SLASH + "somo" + SLASH + "saxs" + SLASH + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
          ".atoms";
 
@@ -1449,12 +1512,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       {
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
-            fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
+            fprintf(fsaxs_atoms, "%s %s %.3f %.3f %.3f %.2f %.2f %.2f\n"
                     , atoms[i].saxs_name.ascii()
+                    , atoms[i].hybrid_name.ascii()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
-                    , atoms[i].excl_vol);
+                    , atoms[i].excl_vol
+                    , atoms[i].srv
+                    , atoms[i].saxs_data.c
+                    );
          }
          fclose(fsaxs_atoms);
       }
@@ -1546,6 +1613,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       cout << endl;
 #endif
       saxs saxsH = saxs_map["H"];
+
+      // compute form factors
+
+      US_Saxs_Util usu;
+
+      double delta_rho = ((US_Hydrodyn *)us_hydrodyn)->misc.target_e_density - our_saxs_options->water_e_density;
+      if ( fabs(delta_rho) < 1e-5 )
+      {
+         delta_rho = 0e0;
+      }
+
+      if ( our_saxs_options->bead_model_rayleigh )
+      {
+         editor_msg("blue", QString("using Rayleigh structure factors, delta_rho %1\n").arg(delta_rho));
+      }
+
+      bool told_you = false;
+
+      double scaling_root = 1e0;
+      if ( our_saxs_options->scale_excl_vol != 1e0 )
+      {
+         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+      }
+
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
@@ -1565,66 +1656,96 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
                                      , saxs.c);
 #endif
          
-         for ( unsigned int j = 0; j < q_points; j++ )
+         bool rayleigh_ok = false;
+         if ( our_saxs_options->bead_model_rayleigh )
          {
-            // note: since there are only a few 'saxs' coefficient sets
-            // the saxs.c + saxs.a[i] * exp() can be precomputed
-            // possibly saving time... but this isn't our most computationally intensive step
-            // so I'm holding off for now.
-
-            f[j][i] = saxs.c + 
-               saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-               saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-               saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-               atoms[i].hydrogens * 
-               ( saxsH.c + 
-                 saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-                 saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-                 saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-                 saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
-            fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
-            fp[j][i] = f[j][i] - fc[j][i];
-#if defined(SAXS_DEBUG_F)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << f[j][i]
-                    << "\n";
+            vector < double > F;
+            if ( usu.compute_rayleigh_structure_factors( 
+                                                        atoms[ i ].radius * scaling_root,
+                                                        delta_rho,
+                                                        q,
+                                                        F
+                                                        ) )
+            {
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  fp[ j ][ i ] = F[ j ];
+               }
+               rayleigh_ok = true;
+            } else {
+               editor_msg("red", "using Rayleigh structure factors failed:" + usu.errormsg );
             }
+         }
+
+         if ( !rayleigh_ok )
+         {
+            if ( !told_you )
+            {
+               editor_msg("blue", "NOT using Rayleigh structure factors\n");
+               told_you = true;
+            }
+               
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               // note: since there are only a few 'saxs' coefficient sets
+               // the saxs.c + saxs.a[i] * exp() can be precomputed
+               // possibly saving time... but this isn't our most computationally intensive step
+               // so I'm holding off for now.
+               
+               f[j][i] = saxs.c + 
+                  saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+                  saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+                  saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+                  saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
+                  atoms[i].hydrogens * 
+                  ( saxsH.c + 
+                    saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
+                    saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
+                    saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
+                    saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+               fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
+               fp[j][i] = f[j][i] - fc[j][i];
+#if defined(SAXS_DEBUG_F)
+               if (1 || (q[j] > .0099 && q[j] < .0101)) {
+                  cout << q[j] 
+                       << "\t" 
+                       << q2[j] 
+                       << "\t" 
+                       << f[j][i]
+                       << "\n";
+               }
 #endif
 #if defined(SAXS_DEBUG_FV)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << vi
-                    << "\t" 
-                    << vie
-                    << "\t" 
-                    << m_pi_vi23
-                    << "\t" 
-                    << m_pi_vi23 * q2[j]
-                    << "\t" 
-                    << vie * exp(m_pi_vi23 * q2[j])
-                    << "\t" 
-                    << fp[j][i]
-                    << "\n";
-            }
+               if (1 || (q[j] > .0099 && q[j] < .0101)) {
+                  cout << q[j] 
+                       << "\t" 
+                       << q2[j] 
+                       << "\t" 
+                       << vi
+                       << "\t" 
+                       << vie
+                       << "\t" 
+                       << m_pi_vi23
+                       << "\t" 
+                       << m_pi_vi23 * q2[j]
+                       << "\t" 
+                       << vie * exp(m_pi_vi23 * q2[j])
+                       << "\t" 
+                       << fp[j][i]
+                       << "\n";
+               }
 #endif
 #if defined(ONLY_PHYSICAL_F)
-            if ( fp[j][i] < 0.0f ) 
-            {
-               fp[j][i] = 0.0f;
+               if ( fp[j][i] < 0.0f ) 
+               {
+                  fp[j][i] = 0.0f;
+               }
+#endif
             }
+#if defined(SAXS_DEBUG_F)
+            cout << endl;
 #endif
          }
-#if defined(SAXS_DEBUG_F)
-         cout << endl;
-#endif
       }
 #if defined(SAXS_DEBUG)
       cout << "f' computed, now compute I\n";
@@ -1739,7 +1860,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       }
 
       // -------------------------------
+      vector < unsigned int > r;
+      bool adaptive_ok = false;
 
+      if ( our_saxs_options->saxs_iq_hybrid_adaptive )
+      {
+         US_Saxs_Util usu;
+         if ( !usu.create_adaptive_grid( q, I, our_saxs_options->hybrid2_q_points, r ) )
+         {
+            editor_msg( "red", usu.errormsg );
+         } else {
+            adaptive_ok = true;
+         }
+         if ( !usu.noticemsg.isEmpty() )
+         {
+            editor_msg( "black", usu.noticemsg );
+         }
+      }
 
       unsigned int q_delta = q_points / our_saxs_options->hybrid2_q_points;
       vector < unsigned int > use_q;
@@ -1763,6 +1900,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       if ( use_q[use_q.size() - 1] != q_points - 1 )
       {
          use_q.push_back(q_points - 1);
+      }
+
+      if ( our_saxs_options->saxs_iq_hybrid_adaptive && adaptive_ok )
+      {
+         use_q = r;
       }
 
       unsigned int use_q_size = use_q.size();
@@ -1827,6 +1969,20 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          I[j] += fp[j][as1] * fp[j][as1];
          deltaI[l] = I[j] - fast_I[j];
       }
+
+#if defined(MAKE_TRIAL_PLOT_FOR_BEAD_MODEL_HYBRID)
+      {
+         vector < double > trialI;
+         vector < double > griduseq;
+         for ( unsigned int l = 0; l < use_q_size; l++ )
+         {
+            unsigned int j = use_q[l];
+            griduseq.push_back(q[j]);
+            trialI.push_back(I[j]);
+         }
+         plot_one_iqq( griduseq, trialI, "trial");
+      }
+#endif
 
       {
          US_Saxs_Util usu;

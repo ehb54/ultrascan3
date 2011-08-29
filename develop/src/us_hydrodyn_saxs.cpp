@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
+#include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
@@ -103,6 +104,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SAXS/SANS Plotting Functions"));
    reset_search_csv();
+   reset_screen_csv();
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
@@ -497,6 +499,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_search->setMinimumHeight(minHeight1);
    pb_saxs_search->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_saxs_search, SIGNAL(clicked()), SLOT(saxs_search()));
+
+   pb_saxs_screen = new QPushButton("Screen", this);
+   pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_screen->setMinimumHeight(minHeight1);
+   pb_saxs_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
    
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
@@ -918,6 +926,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
    hbl_various_0->addWidget(pb_load_gnom);
    hbl_various_0->addWidget(pb_saxs_search);
+   hbl_various_0->addWidget(pb_saxs_screen);
    hbl_various_0->addWidget(pb_guinier_analysis);
    background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;
@@ -3581,6 +3590,10 @@ void US_Hydrodyn_Saxs::saxs_search_update_enables()
    {
       ((US_Hydrodyn*)us_hydrodyn)->saxs_search_window->update_enables();
    }
+   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
+   {
+      ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_window->update_enables();
+   }
 }
 
 void US_Hydrodyn_Saxs::show_plot_sans()
@@ -3997,6 +4010,86 @@ void US_Hydrodyn_Saxs::reset_search_csv()
          tmp_num_data.push_back(search_csv.data[i][j].toDouble());
       }
       search_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::saxs_screen()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv.name != "__empty__" )
+      {
+         screen_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window = new US_Hydrodyn_Saxs_Screen( screen_csv, us_hydrodyn );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->show();
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_screen_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv.name != "__empty__" )
+   {
+      screen_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv;
+      return;
+   } 
+
+   screen_csv.name = "SAXS I(q) Screen";
+
+   screen_csv.header_map.clear();
+   screen_csv.data.clear();
+   screen_csv.num_data.clear();
+   screen_csv.prepended_names.clear();
+
+   screen_csv.header.push_back("Parameter");
+   screen_csv.header.push_back("Active");
+   screen_csv.header.push_back("Low value");
+   screen_csv.header.push_back("High value");
+   screen_csv.header.push_back("Points");
+   screen_csv.header.push_back("Interval");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.push_back("Radius (A)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back(".5");
+   tmp_data.push_back("1000");
+   tmp_data.push_back("1001");
+   tmp_data.push_back("");
+
+   screen_csv.prepended_names.push_back(tmp_data[0]);
+   screen_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Delta rho (A^-3)");
+   tmp_data.push_back("N");
+   tmp_data.push_back(".3");
+   tmp_data.push_back(".8");
+   tmp_data.push_back("101");
+   tmp_data.push_back("");
+
+   screen_csv.prepended_names.push_back(tmp_data[0]);
+   screen_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < screen_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < screen_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(screen_csv.data[i][j].toDouble());
+      }
+      screen_csv.num_data.push_back(tmp_num_data);
    }
 }
 

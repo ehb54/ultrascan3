@@ -203,8 +203,8 @@ struct saxs_options
    bool    saxs_iq_native_hybrid3;
    bool    saxs_iq_native_fast;
    bool    saxs_iq_native_fast_compute_pr;
-   bool    saxs_iq_crysol;
    bool    saxs_iq_foxs;
+   bool    saxs_iq_crysol;
 
    bool    sans_iq_native_debye;
    bool    sans_iq_native_hybrid;
