@@ -129,7 +129,9 @@ US_Reporter::US_Reporter() : US_Widgets()
    rbtn_click        = false;
    change_tree       = true;
    tw_recs           = new QTreeWidget();
-   tw_recs->setPalette( pb_help->palette() );
+   QPalette tpal     = pb_help->palette();
+   tpal.setColor( QPalette::Base, QColor( Qt::white ) );
+   tw_recs->setPalette( tpal );
    tctlLayout->addWidget( tw_recs );
 
    QStringList theads;
