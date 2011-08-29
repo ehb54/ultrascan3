@@ -242,7 +242,8 @@ int US_Experiment::readFromDB( QString runID,
 
       if ( status != US_Convert::OK )
       {
-         // We don't really have a good error code in US_DB2 for this
+         // This isn't exactly an error; data is read but we don't have an
+         // intensity profile
          RIProfile.clear();
          return US_DB2::ERROR;
       }
