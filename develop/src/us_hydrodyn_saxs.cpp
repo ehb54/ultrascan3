@@ -4082,6 +4082,17 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
    screen_csv.prepended_names.push_back(tmp_data[0]);
    screen_csv.data.push_back(tmp_data);
 
+   tmp_data.clear();
+   tmp_data.push_back("Ending q (A^-1)");
+   tmp_data.push_back("N");
+   tmp_data.push_back(".1");
+   tmp_data.push_back("1.0");
+   tmp_data.push_back("101");
+   tmp_data.push_back("");
+
+   screen_csv.prepended_names.push_back(tmp_data[0]);
+   screen_csv.data.push_back(tmp_data);
+
    for ( unsigned int i = 0; i < screen_csv.data.size(); i++ )
    {
       vector < double > tmp_num_data;

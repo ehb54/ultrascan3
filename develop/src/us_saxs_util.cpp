@@ -6816,6 +6816,14 @@ bool US_Saxs_Util::iqq_sphere_fit(
                                   vector < double >             &val_delta_rho,
                                   map < double, unsigned int >  &index_radius,
                                   map < double, unsigned int >  &index_delta_rho,
+                                  double                        &best_fit_radius,
+                                  double                        &best_fit_delta_rho,
+                                  double                        &average_radius,
+                                  double                        &average_delta_rho,
+                                  double                        &start_q,
+                                  double                        &end_q,
+                                  double                        &delta_q,
+                                  unsigned int                  &points_q,
                                   bool                          do_normalize
                                   )
 {
@@ -6833,13 +6841,42 @@ bool US_Saxs_Util::iqq_sphere_fit(
       return false;
    }      
 
-   if ( !wave[ cropped ].q.size() )
+
+   if ( wave[ cropped ].q.size() < 3 )
    {
-      errormsg = "US_Saxs_Util::iqq_sphere_fit cropped data leaves nothing to fit\n";
+      errormsg = "US_Saxs_Util::iqq_sphere_fit cropped data leaves to little to fit\n";
       return false;
    }
 
+   start_q  = wave[ cropped ].q[ 0 ];
+   end_q    = wave[ cropped ].q[ wave[ cropped ].q.size() - 1 ];
+   delta_q  = wave[ cropped ].q[ 1 ] - wave[ cropped ].q[ 0 ];
+   points_q = wave[ cropped ].q.size();
+
+   bool all_nonzero = true;
+   if ( wave[ cropped ].s.size() == wave[ cropped ].q.size() )
+   {
+      for ( unsigned int i = 0; i < wave[ cropped ].s.size(); i++ )
+      {
+         if ( wave[ cropped ].s[ i ] == 0 )
+         {
+            all_nonzero = false;
+         }
+      }
+   } else {
+      all_nonzero = false;
+   }
+
    noticemsg +=  QString("US_Saxs_Util::iqq_sphere_fit q points after cropping: %1\n").arg(wave[ cropped ].q.size());
+
+   if ( all_nonzero )
+   {
+      noticemsg += "Using standard deviations of target in fit\n";
+      for ( unsigned int i = 0; i < wave[ cropped ].r.size(); i++ )
+      {
+         wave[ cropped ].r[ i ] /= wave[ cropped ].s[ i ];
+      }
+   }
 
    // build a matrix of the models in A
 
@@ -6871,6 +6908,13 @@ bool US_Saxs_Util::iqq_sphere_fit(
             if ( !normalize( tag, tag ) )
             {
                return false;
+            }
+         }
+         if ( all_nonzero )
+         {
+            for ( unsigned int i = 0; i < wave[ cropped ].r.size(); i++ )
+            {
+               wave[ tag ].r[ i ] /=  wave[ cropped ].s[ i ];
             }
          }
          A.          push_back( wave[ tag ].r );
@@ -6916,6 +6960,8 @@ bool US_Saxs_Util::iqq_sphere_fit(
    }
    
    noticemsg += QString("best single model %1 rmsd %2\n").arg( A_tag[ best_pos ] ).arg( best_rmsd );
+   best_fit_radius = A_radius[ best_pos ];
+   best_fit_delta_rho = A_delta_rho[ best_pos ];
 
    vector < double > x;
    double            nnls_rmsd;
@@ -6946,20 +6992,22 @@ bool US_Saxs_Util::iqq_sphere_fit(
 
    double oneovertotconc = 1e0 / totconc;
 
-   double avgradius      = 0e0;
-   double avgdelta_rho   = 0e0;
+   average_radius      = 0e0;
+   average_delta_rho   = 0e0;
 
    for ( unsigned int i = 0; i < x.size(); i++ )
    {
       if ( x[ i ] > 0e0 )
       {
-         avgradius    += x[ i ] * oneovertotconc * A_radius[ i ];
-         avgdelta_rho += x[ i ] * oneovertotconc * A_delta_rho[ i ];
-         noticemsg += QString("nnls model %1 conc %2\n").arg( A_tag[ i ] ).arg( x[ i ] * oneovertotconc );
+         average_radius    += x[ i ] * oneovertotconc * A_radius[ i ];
+         average_delta_rho += x[ i ] * oneovertotconc * A_delta_rho[ i ];
+         noticemsg         += QString("nnls model %1 conc %2\n").arg( A_tag[ i ] ).arg( x[ i ] * oneovertotconc );
       }
    }
 
-   noticemsg += QString("nnls avg radius %1 avg delta_rho %2\n").arg( avgradius ).arg( avgdelta_rho );
+   noticemsg += QString("nnls avg radius %1 avg delta_rho %2\n")
+      .arg( average_radius )
+      .arg( average_delta_rho );
 
    // build output
    

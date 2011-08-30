@@ -433,6 +433,14 @@ class US_EXTERN US_Saxs_Util
                           vector < double >             &val_delta_rho,
                           map < double, unsigned int >  &index_radius,
                           map < double, unsigned int >  &index_delta_rho,
+                          double                        &best_fit_radius,
+                          double                        &best_fit_delta_rho,
+                          double                        &average_fit_radius,
+                          double                        &average_fit_delta_rho,
+                          double                        &start_q,
+                          double                        &end_q,
+                          double                        &delta_q,
+                          unsigned int                  &points_q,
                           bool                          do_normalize = true
                           );
 

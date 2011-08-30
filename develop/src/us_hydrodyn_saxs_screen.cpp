@@ -60,6 +60,11 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
       csv_width = 1000;
    }
 
+   t_csv->setMaximumHeight( t_csv->height() );
+   editor->setMaximumWidth( editor->width() + editor->width() / 20 );
+
+   max_y_range = 0e0;
+
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
@@ -73,6 +78,7 @@ US_Hydrodyn_Saxs_Screen::~US_Hydrodyn_Saxs_Screen()
 void US_Hydrodyn_Saxs_Screen::setupGUI()
 {
    int minHeight1 = 30;
+   int minHeight2 = 45;
    int minHeight3 = 30;
 
    lbl_title = new QLabel(csv1.name.left(80), this);
@@ -138,6 +144,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    cb_save_to_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_save_to_csv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_save_to_csv, SIGNAL(clicked()), SLOT(save_to_csv()));
+   cb_save_to_csv->setEnabled(false);
 
    le_csv_filename = new QLineEdit(this, "csv_filename Line Edit");
    le_csv_filename->setText("search_results");
@@ -145,6 +152,12 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    le_csv_filename->setMinimumWidth(150);
    le_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_push = new QPushButton(tr("Clear plot"), this);
+   pb_push->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_push->setMinimumHeight(minHeight1);
+   pb_push->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_push, SIGNAL(clicked()), SLOT(push()));
 
    pb_replot_saxs = new QPushButton(tr("Replot stored I(q)"), this);
    pb_replot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -223,6 +236,38 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    plot_dist->setTitle("");
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
    
+   lbl_pos_range = new QLabel("0 of 0", this);
+   lbl_pos_range->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_pos_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_pos_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_message = new QLabel("", this);
+   lbl_message->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+   lbl_message->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_message->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_message2 = new QLabel("", this);
+   lbl_message2->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+   lbl_message2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_message2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_message3 = new QLabel("", this);
+   lbl_message3->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+   lbl_message3->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_message3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_message4 = new QLabel("", this);
+   lbl_message4->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+   lbl_message4->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_message4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   qwtw_wheel = new QwtWheel( this );
+   qwtw_wheel->setMass         ( 1.0 );
+   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
+   qwtw_wheel->setMinimumHeight( minHeight2 );
+   // qwtw_wheel->setTotalAngle( 3600.0 );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -254,6 +299,8 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_target->addSpacing(4);
    hbl_target->addWidget(lbl_current_target);
    hbl_target->addSpacing(4);
+   hbl_target->addWidget(pb_push);
+   hbl_target->addSpacing(4);
 
    QHBoxLayout *hbl_controls = new QHBoxLayout(0);
    hbl_controls->addSpacing(4);
@@ -273,9 +320,21 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    vbl_editor_group->addWidget(frame);
    vbl_editor_group->addWidget(editor);
 
+   QGridLayout *gbl_messages = new QGridLayout( 0 );
+   gbl_messages->addWidget( lbl_message , 0, 0 );
+   gbl_messages->addWidget( lbl_message2, 0, 1 );
+   gbl_messages->addWidget( lbl_message3, 1, 0 );
+   gbl_messages->addWidget( lbl_message4, 1, 1 );
+
+   QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
+   vbl_plot_group->addWidget(plot_dist);
+   vbl_plot_group->addLayout(gbl_messages);
+   vbl_plot_group->addWidget(qwtw_wheel);
+   vbl_plot_group->addWidget(lbl_pos_range);
+
    QHBoxLayout *hbl_editor_plot = new QHBoxLayout(0);
    hbl_editor_plot->addLayout(vbl_editor_group);
-   hbl_editor_plot->addWidget(plot_dist);
+   hbl_editor_plot->addLayout(vbl_plot_group);
 
    QVBoxLayout *background = new QVBoxLayout(this);
    background->addSpacing(4);
@@ -380,7 +439,48 @@ void US_Hydrodyn_Saxs_Screen::set_target()
          saxs_window->ask_iq_target_grid();
       }
    }
+   
    lbl_current_target->setText( scaling_target );
+   bool target_found = false;
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      if ( names[i] == lbl_current_target->text() )
+      {
+         target_found = true;
+         break;
+      }
+   }
+   if ( !target_found )
+   {
+      save_saxs_plot();
+   }
+
+   target_found = false;
+   unsigned int target_pos;
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      if ( names[i] == lbl_current_target->text() )
+      {
+         target_found = true;
+         target_pos   = i;
+         break;
+      }
+   }
+
+   if ( target_found )
+   {
+      for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+      {
+         if ( t_csv->text( i, 0 ).contains("Ending q (A^-1)") )
+         {
+            t_csv->setText( i, 2, QString("%1").arg( qs[ target_pos ][ 0 ]) );
+            t_csv->setText( i, 3, QString("%1").arg( qs[ target_pos ][ qs[ target_pos ].size() - 1 ] ) );
+            recompute_interval_from_points();
+            break;
+         }
+      }
+   }      
+   
    update_enables();
 }
 
@@ -407,12 +507,19 @@ void US_Hydrodyn_Saxs_Screen::start()
    saxs_q.clear();
    saxs_iqq.clear();
 
-   double min_radius      = 0e0;
-   double max_radius      = 0e0;
-   double delta_radius    = 1e0;
-   double min_delta_rho   = 0e0;
-   double max_delta_rho   = 0e0;
-   double delta_delta_rho = 1e0;
+   double min_radius             = 0e0;
+   double max_radius             = 0e0;
+   double delta_radius           = 1e0;
+   unsigned int points_radius    = 0;
+   double min_delta_rho          = 0e0;
+   double max_delta_rho          = 0e0;
+   double delta_delta_rho        = 1e0;
+   unsigned int points_delta_rho = 0;
+
+   double min_end_q              = 0e0;
+   double max_end_q              = 0e0;
+   double delta_end_q            = 1e0;
+   unsigned int points_q         = 0;
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
@@ -434,9 +541,10 @@ void US_Hydrodyn_Saxs_Screen::start()
 
          if ( t_csv->text( i, 0 ).contains("Radius (A)") )
          {
-            min_radius   = starts[ i ];
-            max_radius   = ends[ i ];
-            delta_radius = increments[ i ];
+            min_radius    = starts[ i ];
+            max_radius    = ends[ i ];
+            delta_radius  = increments[ i ];
+            points_radius = points[ i ];
             editor_msg("dark blue", QString("Radius range %1 to %2 step %3 (A)\n")
                        .arg(min_radius)
                        .arg(max_radius)
@@ -445,28 +553,44 @@ void US_Hydrodyn_Saxs_Screen::start()
          }
          if ( t_csv->text( i, 0 ).contains("Delta rho (A^-3)") )
          {
-            min_delta_rho   = starts[ i ];
-            max_delta_rho   = ends[ i ];
-            delta_delta_rho = increments[ i ];
+            min_delta_rho    = starts[ i ];
+            max_delta_rho    = ends[ i ];
+            delta_delta_rho  = increments[ i ];
+            points_delta_rho = points[ i ];
             editor_msg("dark blue", QString("Delta rho range %1 to %2 step %3 (A^-3)\n")
                        .arg(min_delta_rho)
                        .arg(max_delta_rho)
                        .arg(delta_delta_rho)
                        );
          }
+
+         if ( t_csv->text( i, 0 ).contains("Ending q (A^-1)") )
+         {
+            min_end_q   = starts[ i ];
+            max_end_q   = ends[ i ];
+            delta_end_q = increments[ i ];
+            points_q    = points[ i ];
+            editor_msg("dark blue", QString("End q range %1 to %2 step %3 (A^-3)\n")
+                       .arg(min_end_q)
+                       .arg(max_end_q)
+                       .arg(delta_end_q)
+                       );
+         }
       } else {
          if ( t_csv->text( i, 0 ).contains("Radius (A)") )
          {
-            min_radius   = t_csv->text(i, 2).toDouble();
-            max_radius   = min_radius;
-            delta_radius = 1e0;
+            min_radius    = t_csv->text(i, 2).toDouble();
+            max_radius    = min_radius;
+            delta_radius  = 1e0;
+            points_radius = 1;
             editor_msg("dark red", QString("Using a fixed radius of %1 (A)\n").arg(min_radius));
          }
          if ( t_csv->text( i, 0 ).contains("Delta rho (A^-3)") )
          {
-            min_delta_rho   = t_csv->text(i, 2).toDouble();
-            max_delta_rho   = min_delta_rho;
-            delta_delta_rho = 1e0;
+            min_delta_rho    = t_csv->text(i, 2).toDouble();
+            max_delta_rho    = min_delta_rho;
+            delta_delta_rho  = 1e0;
+            points_delta_rho = 1;
             editor_msg("dark red", QString("Using a fixed delta rho of %1 (A^-3)\n").arg(min_delta_rho));
          }
       }         
@@ -497,7 +621,6 @@ void US_Hydrodyn_Saxs_Screen::start()
       update_enables();
       return;
    }
-
    unsigned int total_points = 1;
    for ( map < unsigned int, unsigned int >::iterator it = points.begin();
          it != points.end();
@@ -506,78 +629,220 @@ void US_Hydrodyn_Saxs_Screen::start()
       total_points *= it->second;
    }
 
-   editor_msg("black", QString("Total spheres tested %1\n").arg(total_points));
-
-   // linearization of an arbitrary number of loops
-   US_Saxs_Util usu;
-
-   vector < double >             by_radius;
-   vector < double >             by_delta_rho;
-   vector < double >             val_radius;
-   vector < double >             val_delta_rho;
-   map < double, unsigned int >  index_radius;
-   map < double, unsigned int >  index_delta_rho;
-
-   if ( !usu.iqq_sphere_fit(
-                            "saxs_screen",
-                            target_q,
-                            target_I,
-                            target_I_errors,
-                            min_radius,
-                            max_radius,
-                            delta_radius,
-                            min_delta_rho,
-                            max_delta_rho,
-                            delta_delta_rho,
-                            (double) saxs_window->our_saxs_options->start_q,
-                            (double) saxs_window->our_saxs_options->end_q,
-                            by_radius,
-                            by_delta_rho,
-                            val_radius,
-                            val_delta_rho,
-                            index_radius,
-                            index_delta_rho,
-                            true // do_normalize = true
-                            ) )
+   if ( !points_q )
    {
-      editor_msg("red", usu.errormsg );
-      running = false;
-      update_enables();
+      points_q = 1;
+      min_end_q = (double) saxs_window->our_saxs_options->end_q;
+      max_end_q = (double) saxs_window->our_saxs_options->end_q;
+   }
+
+   editor_msg("black", QString("Total spheres tested %1\n").arg(total_points / points_q));
+   editor_msg("black", QString("Total q points %1\n").arg(points_q));
+
+   unsigned int pp = 1;
+   for ( double use_q = min_end_q; use_q <= max_end_q; use_q += delta_end_q )
+   {
+      progress->setProgress(pp++, points_q + 1);
+      qApp->processEvents();
+
+      // linearization of an arbitrary number of loops
+      US_Saxs_Util usu;
+      
+      vector < double >             by_radius;
+      vector < double >             by_delta_rho;
+      vector < double >             val_radius;
+      vector < double >             val_delta_rho;
+      map < double, unsigned int >  index_radius;
+      map < double, unsigned int >  index_delta_rho;
+      double                        best_fit_radius;
+      double                        best_fit_delta_rho;
+      double                        average_radius;
+      double                        average_delta_rho;
+      double                        start_q;
+      double                        end_q;
+      double                        delta_q;
+      unsigned int                  use_points_q;
+
+      bool has_error = 
+         !usu.iqq_sphere_fit(
+                             "saxs_screen",
+                             target_q,
+                             target_I,
+                             target_I_errors,
+                             min_radius,
+                             max_radius,
+                             delta_radius,
+                             min_delta_rho,
+                             max_delta_rho,
+                             delta_delta_rho,
+                             (double) saxs_window->our_saxs_options->start_q,
+                             use_q,
+                             by_radius,
+                             by_delta_rho,
+                             val_radius,
+                             val_delta_rho,
+                             index_radius,
+                             index_delta_rho,
+                             best_fit_radius,
+                             best_fit_delta_rho,
+                             average_radius,
+                             average_delta_rho,
+                             start_q,
+                             end_q,
+                             delta_q,
+                             use_points_q,
+                             true
+                             );
+
+      if ( has_error )
+      {
+         editor_msg("red", usu.errormsg );
+      }
+
+      if ( !has_error )
+      {
+         editor_msg("blue", usu.noticemsg );
+         
+         // then plot, summarize results
+         
+         // if ( running && cb_save_to_csv->isChecked() )
+         // {
+         // save_csv_saxs_iqq();
+         // }
+         
+         vector < double > radii;
+         vector < double > intensity;
+         
+         for ( unsigned int i = 0; i < by_radius.size(); i++ )
+         {
+            radii.push_back( val_radius[ i ] );
+            intensity.push_back( by_radius[ i ] );
+         }
+         
+         plot_one( 
+                  QString( " Target %1 " ).arg( lbl_current_target->text() ),
+                  QString( " Radius [ %1 : %2 ] / %3 ( %4 )" )
+                  .arg( min_radius )
+                  .arg( max_radius )
+                  .arg( delta_radius )
+                  .arg( points_radius ),
+                  QString( " Delta rho [ %1 : %2 ] / %3 ( %4 )" )
+                  .arg( min_delta_rho )
+                  .arg( max_delta_rho )
+                  .arg( delta_delta_rho )
+                  .arg( points_delta_rho ),
+                  QString( " q [ %1 : %2 ] / %3 ( %4 )" )
+                  .arg( start_q , 0, 'g',  4 )
+                  .arg( end_q , 0, 'g', 4 )
+                  .arg( delta_q, 0, 'g', 4 )
+                  .arg( use_points_q ),
+                  radii,
+                  intensity,
+                  best_fit_radius,
+                  best_fit_delta_rho,
+                  average_radius,
+                  average_delta_rho
+                  );
+         
+      }
+      if ( !running )
+      {
+         update_enables();
+         return;
+      }
+   }
+      
+   progress->setProgress(1, 1);
+   running = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Screen::plot_one( 
+                                       QString           message,
+                                       QString           message2,
+                                       QString           message3,
+                                       QString           message4,
+                                       vector < double > radii,
+                                       vector < double > intensity,
+                                       double            best_fit_radius,
+                                       double            best_fit_delta_rho,
+                                       double            average_radius,
+                                       double            average_delta_rho
+                                       )
+{
+   messages           .push_back( message );
+   messages2          .push_back( message2 );
+   messages3          .push_back( message3 );
+   messages4          .push_back( message4 );
+   radiis             .push_back( radii );
+   intensitys         .push_back( intensity );
+   best_fit_radiuss   .push_back( best_fit_radius );
+   best_fit_delta_rhos.push_back( best_fit_delta_rho );
+   average_radiuss    .push_back( average_radius );
+   average_delta_rhos .push_back( average_delta_rho );
+
+   for ( unsigned int i = 0; i < intensity.size(); i++ )
+   {
+      if ( max_y_range < intensity[ i ] )
+      {
+         max_y_range = intensity[ i ];
+      }
+   }
+
+   last_plotted_pos = messages.size() - 1;
+   qwtw_wheel->setRange( -0.5, 
+                         (double) last_plotted_pos + 0.5, 
+                         last_plotted_pos * last_plotted_pos * 0.1 < 1.0
+                         ? 
+                         last_plotted_pos * last_plotted_pos * 0.1 
+                         :
+                         1.0 );
+   qwtw_wheel->setValue( (double) last_plotted_pos );
+   plot_pos( last_plotted_pos );
+}
+
+void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
+{
+   if ( messages.size() <= i )
+   {
       return;
    }
 
-   editor_msg("blue", usu.noticemsg );
+   last_plotted_pos = i;
+   lbl_pos_range->setText( QString( "%1 of %2" ).arg( i + 1 ).arg( messages.size() ) );
    
-   // then plot, summarize results
-   
-   // if ( running && cb_save_to_csv->isChecked() )
-   // {
-   // save_csv_saxs_iqq();
-   // }
-
-
-   vector < double > radii;
-   vector < double > intensity;
-
-   for ( unsigned int i = 0; i < by_radius.size(); i++ )
-   {
-      radii.push_back( val_radius[ i ] );
-      intensity.push_back( by_radius[ i ] );
-   }
-
    plot_dist->clear();
    long curvekey = plot_dist->insertCurve("Radii histogram");
    plot_dist->setCurveStyle( curvekey, QwtCurve::Sticks);
    plot_dist->setCurveData ( curvekey, 
-                             (double *)&( radii    [ 0 ] ),
-                             (double *)&( intensity[ 0 ] ), 
-                             radii.size() );
+                             (double *)&( radiis    [ i ][ 0 ] ),
+                             (double *)&( intensitys[ i ][ 0 ] ), 
+                             radiis[ i ].size() );
    plot_dist->setCurvePen  ( curvekey, QPen( "yellow", 2, SolidLine ) );
+
+   long qpmkey = plot_dist->insertMarker();
+   plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
+   plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ i ], 0e0 );
+   plot_dist->setMarkerLabelAlign( qpmkey, AlignRight|AlignTop );
+   plot_dist->setMarkerPen       ( qpmkey, QPen( green, 2, DashDotDotLine));
+   plot_dist->setMarkerFont      ( qpmkey, QFont("Helvetica", 11, QFont::Bold));
+   plot_dist->setMarkerLabelText ( qpmkey, QString("Best individual\nfit at %1").arg( best_fit_radiuss[ i ] ) );
+
+   long qpmkey2 = plot_dist->insertMarker();
+   plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
+   plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ i ], 0e0 );
+   plot_dist->setMarkerLabelAlign( qpmkey2, AlignLeft|AlignCenter );
+   plot_dist->setMarkerPen       ( qpmkey2, QPen( QColor( 255, 141, 0 ), 2, DashLine));
+   plot_dist->setMarkerFont      ( qpmkey2, QFont("Helvetica", 11, QFont::Bold));
+   plot_dist->setMarkerLabelText ( qpmkey2, QString("Average fit\n at %1").arg( average_radiuss[ i ] ) );
+
+   plot_dist->setAxisScale( QwtPlot::yLeft, 0.0, max_y_range );
    plot_dist->replot();
 
-   progress->setProgress(1, 1);
-   running = false;
-   update_enables();
+   lbl_message ->setText( messages [ i ] );
+   lbl_message2->setText( messages2[ i ] );
+   lbl_message3->setText( messages3[ i ] );
+   lbl_message4->setText( messages4[ i ] );
 }
 
 void US_Hydrodyn_Saxs_Screen::stop()
@@ -607,7 +872,7 @@ void US_Hydrodyn_Saxs_Screen::update_enables()
    pb_replot_saxs      ->setEnabled( !running && *saxs_widget && names.size() );
    pb_save_saxs_plot   ->setEnabled( !running && *saxs_widget && saxs_window->qsl_plotted_iq_names.size() );
    pb_set_target       ->setEnabled( !running && *saxs_widget && saxs_window->qsl_plotted_iq_names.size() );
-   cb_save_to_csv      ->setEnabled( !running );
+   // cb_save_to_csv      ->setEnabled( !running );
    le_csv_filename     ->setEnabled( !running && cb_save_to_csv->isChecked() );
 }
 
@@ -615,12 +880,13 @@ bool US_Hydrodyn_Saxs_Screen::any_to_run()
 {
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() &&
+           !t_csv->text( i, 0 ).contains("Ending q (A^-1)") )
       {
          return true;
       }
    }
-   editor_msg("dark red", "Nothing to do: At least one of the rows must have Active set to Y");
+   editor_msg("dark red", "Nothing to do: At least one of the non \"Ending q\" rows must have Active set to Y");
    return false;
 }
 
@@ -646,7 +912,7 @@ bool US_Hydrodyn_Saxs_Screen::validate()
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
-      if ( t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
+      if ( t_csv->text( i, 4 ).toDouble() != 1 && t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
       {
          editor_msg("red", QString("Row %1 column \"Low value\" can not be greater than \"High value\"\n").arg(i));
          errors = true;
@@ -656,12 +922,12 @@ bool US_Hydrodyn_Saxs_Screen::validate()
          editor_msg("red", QString("Row %1 column \"Points\" must be greater or equal to one\n").arg(i));
          errors = true;
       }
-      if ( t_csv->text( i, 4 ).toDouble() == 1  &&
-           t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
-      {
-         editor_msg("red", QString("Row %1 one \"Points\" requires \"Low value\" equals \"High value\"\n").arg(i));
-         errors = true;
-      }
+      // if ( t_csv->text( i, 4 ).toDouble() == 1  &&
+      // t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
+      // {
+      // editor_msg("red", QString("Row %1 one \"Points\" requires \"Low value\" equals \"High value\"\n").arg(i));
+      // errors = true;
+      // }
    }
    errors |= !validate_saxs_window();
    return !errors;
@@ -921,3 +1187,36 @@ void US_Hydrodyn_Saxs_Screen::recompute_points_from_interval()
                      );
    }
 }
+
+void US_Hydrodyn_Saxs_Screen::adjust_wheel( double pos )
+{
+   // cout << QString("pos is now %1\n").arg(pos);
+   if ( last_plotted_pos != (unsigned int) pos )
+   {
+      // cout << "replotting\n";
+      plot_pos( (unsigned int) pos );
+   }
+}
+
+void US_Hydrodyn_Saxs_Screen::push()
+{
+   messages.clear();
+   messages2.clear();
+   messages3.clear();
+   messages4.clear();
+   radiis.clear();
+   intensitys.clear();
+   best_fit_radiuss.clear();
+   best_fit_delta_rhos.clear();
+   average_radiuss.clear();
+   average_delta_rhos.clear();
+   qwtw_wheel->setRange( 0.0, 0.0, 1 );
+   plot_dist->clear();
+   plot_dist->replot();
+   lbl_message->setText("");
+   lbl_message2->setText("");
+   lbl_message3->setText("");
+   lbl_message4->setText("");
+   lbl_pos_range->setText("0 of 0");
+}
+
