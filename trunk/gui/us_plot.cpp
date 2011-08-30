@@ -37,7 +37,7 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
-                  const QString& y_axis ) : QVBoxLayout()
+                  const QString& y_axis ) : QHBoxLayout()
 {
    zoomer = NULL;
    setSpacing( 0 );
@@ -48,6 +48,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    QToolBar* toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( US_GuiSettings::plotColor() );
+   toolBar->setOrientation( Qt::Vertical );
 
    btnZoom = new QToolButton( toolBar );
    btnZoom->setText( "Zoom" );
@@ -91,7 +92,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    p.setColor( QPalette::Window, Qt::black );
    spacer->setPalette( p );
    spacer->setAutoFillBackground( true );
-   spacer->setMaximumHeight( 1 );
+   spacer->setMaximumWidth( 1 );
    addWidget( spacer );
 
    plot        = new QwtPlot;
