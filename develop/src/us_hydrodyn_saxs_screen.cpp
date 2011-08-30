@@ -831,10 +831,10 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    long qpmkey2 = plot_dist->insertMarker();
    plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
    plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ i ], 0e0 );
-   plot_dist->setMarkerLabelAlign( qpmkey2, AlignLeft|AlignCenter );
+   plot_dist->setMarkerLabelAlign( qpmkey2, AlignLeft|AlignTop );
    plot_dist->setMarkerPen       ( qpmkey2, QPen( QColor( 255, 141, 0 ), 2, DashLine));
    plot_dist->setMarkerFont      ( qpmkey2, QFont("Helvetica", 11, QFont::Bold));
-   plot_dist->setMarkerLabelText ( qpmkey2, QString("Average fit\n at %1").arg( average_radiuss[ i ] ) );
+   plot_dist->setMarkerLabelText ( qpmkey2, QString("\n\n\nAverage fit\n at %1").arg( average_radiuss[ i ] ) );
 
    plot_dist->setAxisScale( QwtPlot::yLeft, 0.0, max_y_range );
    plot_dist->replot();
