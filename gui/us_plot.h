@@ -39,7 +39,7 @@ class US_PlotGridConfig;
 class US_PlotCurveConfig;
 
 //class US_GUI_EXTERN US_Plot : public QwtPlot
-class US_GUI_EXTERN US_Plot : public QVBoxLayout
+class US_GUI_EXTERN US_Plot : public QHBoxLayout
 {
    Q_OBJECT
 

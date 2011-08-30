@@ -102,6 +102,8 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 
    rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
+
+   setMaximumSize( qApp->desktop()->size() - QSize( 80, 80 ) );
 }
 
 // load data
@@ -146,7 +148,8 @@ void US_vHW_Enhanced::load( void )
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
-   int mxht = qApp->desktop()->height() - 100;
+   int bord = height() - data_plot1->height() - data_plot2->height() + 12;
+   int mxht = qApp->desktop()->height() - bord;
    int p1ht = ( mxht * 400 ) / 650;
    int p2ht = mxht - p1ht;
    p1ht     = qMin( p1ht, 400 );
