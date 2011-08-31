@@ -231,8 +231,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_bottom = us_label( tr( "Bottom of Cell Position (cm):" ) );
    main->addWidget( lb_bottom, row, 4, 1, 3 );
 
-   cnt_bottom = us_counter( 3, 5.8, 7.5, simparams.bottom );
+   cnt_bottom = us_counter( 3, 3.8, 30.0, simparams.bottom );
    cnt_bottom->setStep    ( 0.001 );
+   cnt_bottom->setValue   ( 7.20  );
    cnt_bottom->setIncSteps( QwtCounter::Button1,   1 );
    cnt_bottom->setIncSteps( QwtCounter::Button2,  10 );
    cnt_bottom->setIncSteps( QwtCounter::Button3, 100 );

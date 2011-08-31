@@ -341,6 +341,7 @@ void US_Astfem_Sim::start_simulation( void )
    double rpm  = simparams.speed_step[ 0 ].rotorspeed;
 
    scanPlot->clear();
+	scanPlot->setAxisAutoScale( QwtPlot::xBottom );
    scanPlot->replot();
 
    pb_stop   ->setEnabled( true  );
@@ -880,6 +881,7 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
       total_c += system.components[ i ].signal_concentration;
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
+	moviePlot->setAxisAutoScale( QwtPlot::xBottom );
    
    double* r = new double [ x->size() ];
    
