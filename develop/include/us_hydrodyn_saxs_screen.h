@@ -61,17 +61,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QTable        *t_csv;             
 
       QProgressBar  *progress;
+      QProgressBar  *progress2;
 
-      QCheckBox     *cb_save_to_csv;
-      QLineEdit     *le_csv_filename;
       QPushButton   *pb_push;
+      QPushButton   *pb_clear_plot_all;
+      QPushButton   *pb_clear_plot_row;
+      QPushButton   *pb_save_plot;
+      QPushButton   *pb_load_plot;
 
       QPushButton   *pb_replot_saxs;
       QPushButton   *pb_save_saxs_plot;
       QPushButton   *pb_set_target;
       QLabel        *lbl_current_target;
+      QCheckBox     *cb_compute_rg;
 
       QPushButton   *pb_start;
+      QPushButton   *pb_run_all_targets;
       QPushButton   *pb_stop;
 
       QFont         ft;
@@ -83,7 +88,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
 
       QwtPlot       *plot_dist;
       QwtWheel      *qwtw_wheel;
+      QwtWheel      *qwtw_wheel2;
       QLabel        *lbl_pos_range;
+      QLabel        *lbl_pos_range2;
       QLabel        *lbl_message;
       QLabel        *lbl_message2;
       QLabel        *lbl_message3;
@@ -123,22 +130,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       vector < double >            saxs_q;
       vector < vector < double > > saxs_iqq;
 
-      vector < QString >           messages;
-      vector < QString >           messages2;
-      vector < QString >           messages3;
-      vector < QString >           messages4;
-      vector < vector < double > > radiis;
-      vector < vector < double > > intensitys;
-      vector < double >            best_fit_radiuss;
-      vector < double >            best_fit_delta_rhos;
-      vector < double >            average_radiuss;
-      vector < double >            average_delta_rhos;
+      vector < vector < QString > >           messages;
+      vector < vector < QString > >           messages2;
+      vector < vector < QString > >           messages3;
+      vector < vector < QString > >           messages4;
+      vector < vector < vector < double > > > radiis;    // [sic]
+      vector < vector < vector < double > > > intensitys;  
+      vector < vector < double > >            best_fit_radiuss;
+      vector < vector < double > >            best_fit_delta_rhos;
+      vector < vector < double > >            average_radiuss;
+      vector < vector < double > >            average_delta_rhos;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
-      void save_csv_saxs_iqq();
-
       csv  current_csv();
 
       void recompute_interval_from_points();
@@ -161,8 +166,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       void plot_pos( unsigned int );
 
       unsigned int last_plotted_pos;
+      unsigned int current_row;
+
+      void plot_row( unsigned int );
+      void clear_plot();
+      void update_wheel_range();
 
       double max_y_range;
+
+      bool        anything_plotted();
+      bool        anything_plotted_since_save;
+      csv         plots_to_csv();
+      void        csv_to_plots( csv plot_csv );
+      QStringList csv_parse_line( QString qs );
+      void        set_target( QString target );
 
    private slots:
 
@@ -170,16 +187,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
 
       void table_value( int, int );
 
-      void save_to_csv();
       void push();
+      void clear_plot_row();
+      void clear_plot_all();
+      void save_plot();
+      void load_plot();
 
       void replot_saxs();
       void save_saxs_plot();
       void set_target();
 
-      void adjust_wheel( double );
+      void adjust_wheel ( double );
+      void adjust_wheel2( double );
 
-      void start();
+      void start( bool already_running = false);
+      void run_all_targets();
       void stop();
 
       void clear_display();

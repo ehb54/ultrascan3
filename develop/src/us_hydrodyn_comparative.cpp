@@ -3350,7 +3350,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
                                QString::null, 0, 1 )
           )
       {
-         csv_error = tr("alread loaded");
+         csv_error = tr("already loaded");
          return csv1;
       }
       // remove old load
