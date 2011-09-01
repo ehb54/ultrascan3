@@ -33,7 +33,7 @@ do
     fi
   fi
   echo "Making in $d"   >> $DIR/build.log
-  (cd $sdir;make -j4 2>&1)  >> $DIR/build.log
+  (cd $sdir;make 2>&1)  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
      echo "  ***ERROR*** building $d"
