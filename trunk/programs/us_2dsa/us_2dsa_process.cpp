@@ -303,7 +303,7 @@ DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
 // Set iteration parameters
 void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
-                                double vtoler, double menrng )
+                                double vtoler, double menrng, double cff0 )
 {
    maxiters   = mxiter;
    mmtype     = ( mniter > 1 ) ? 1 : 0;
@@ -311,6 +311,12 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    mmiters    = ( mmtype == 0 ) ? 0 : max( mciter, mniter );
    varitol    = vtoler;
    menrange   = menrng;
+   cnstff0    = cff0;
+
+   if ( cnstff0 > 0.0 )
+   {
+      dsets[ 0 ]->vbartb = -cnstff0;
+   }
 }
 
 // Abort a fit run
@@ -475,32 +481,73 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
    //                   : 1.0;
 
    // build the final model
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      // Get standard-space solute values (20,W)
-      US_Model::SimulationComponent mcomp;
-      mcomp.vbar20 = vbar20;
-      mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
-      mcomp.D      = 0.0;
-      mcomp.mw     = 0.0;
-      mcomp.f      = 0.0;
-      mcomp.f_f0   = c_solutes[ maxdepth ][ cc ].k;
-      //mcomp.signal_concentration
-      //             = c_solutes[ maxdepth ][ cc ].c * bf_mult;
-      mcomp.signal_concentration
-                   = c_solutes[ maxdepth ][ cc ].c;
 
-      // Complete other coefficients in standard-space
-      model.calc_coefficients( mcomp );
+   if ( cnstff0 == 0.0 )
+   {  // Normal case of varying f/f0
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         // Get standard-space solute values (20,W)
+         US_Model::SimulationComponent mcomp;
+         mcomp.vbar20 = vbar20;
+         mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
+         mcomp.D      = 0.0;
+         mcomp.mw     = 0.0;
+         mcomp.f      = 0.0;
+         mcomp.f_f0   = c_solutes[ maxdepth ][ cc ].k;
+         //mcomp.signal_concentration
+         //             = c_solutes[ maxdepth ][ cc ].c * bf_mult;
+         mcomp.signal_concentration
+                      = c_solutes[ maxdepth ][ cc ].c;
+
+         // Complete other coefficients in standard-space
+         model.calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D;
 
-      // Convert to experiment-space for simulation below
-      mcomp.s     *= sfactor;
-      mcomp.D     *= dfactor;
+         // Convert to experiment-space for simulation below
+         mcomp.s     *= sfactor;
+         mcomp.D     *= dfactor;
 DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
-      model.components[ cc ]  = mcomp;
-   }
+         model.components[ cc ]  = mcomp;
+      }
+   }  // Constant vbar
+
+   else
+   {  // Special case of varying vbar
+      US_Math2::SolutionData sd;
+      sd.viscosity  = dset->viscosity;
+      sd.density    = dset->density;
+      double avtemp = dset->temperature;
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         // Get standard-space solute values (20,W)
+         US_Model::SimulationComponent mcomp;
+         mcomp.vbar20 = c_solutes[ maxdepth ][ cc ].k;
+         mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
+         mcomp.D      = 0.0;
+         mcomp.mw     = 0.0;
+         mcomp.f      = 0.0;
+         mcomp.f_f0   = cnstff0;
+         mcomp.signal_concentration
+                      = c_solutes[ maxdepth ][ cc ].c;
+
+         // Complete other coefficients in standard-space
+         model.calc_coefficients( mcomp );
+DbgLv(1) << " Bcc comp D" << mcomp.D;
+
+         // Convert to experiment-space for simulation below
+         sd.vbar20    = mcomp.vbar20;
+         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+         US_Math2::data_correction( avtemp, sd );
+
+         mcomp.s     /= sd.s20w_correction;
+         mcomp.D     /= sd.D20w_correction;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+
+         model.components[ cc ]  = mcomp;
+      }
+   }  // Constant f/f0
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
  << c_solutes[maxdepth][nsolutes-1].c;

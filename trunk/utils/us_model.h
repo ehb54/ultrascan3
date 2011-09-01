@@ -125,6 +125,14 @@ class US_UTIL_EXTERN US_Model
       //! \returns    - A short text string describing the type of model
       QString typeText( void );
 
+      //! Flag constant f/f0
+      //! \returns - A boolean flag of whether component f/f0's are constant
+      bool constant_ff0( void );
+
+      //! Flag constant vbar
+      //! \returns - A boolean flag of whether component vbar's are constant
+      bool constant_vbar( void );
+
       //! Dump model data for debugging
       void debug( void );
 

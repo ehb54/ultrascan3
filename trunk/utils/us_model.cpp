@@ -403,6 +403,36 @@ QString US_Model::typeText( void )
    return tdesc;                            // return type description text
 }
 
+// Flag whether model component frictional ratios are constant
+bool US_Model::constant_ff0( void )
+{
+   double valmin = components[ 0 ].f_f0;
+   double valmax = components[ 0 ].f_f0;
+
+   for ( int ii = 1; ii < components.size(); ii++ )
+   {
+      valmin = qMin( valmin, components[ ii ].f_f0 );
+      valmax = qMax( valmax, components[ ii ].f_f0 );
+   }
+
+   return ( ( valmax - valmin ) < 1.0e-3 );
+}
+
+// Flag whether model component vbar values are constant
+bool US_Model::constant_vbar( void )
+{
+   double valmin = components[ 0 ].vbar20;
+   double valmax = components[ 0 ].vbar20;
+
+   for ( int ii = 1; ii < components.size(); ii++ )
+   {
+      valmin = qMin( valmin, components[ ii ].vbar20 );
+      valmax = qMax( valmax, components[ ii ].vbar20 );
+   }
+
+   return ( ( valmax - valmin ) < 1.0e-4 );
+}
+
 int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 {
    if ( db_access ) return load_db  ( guid, db );

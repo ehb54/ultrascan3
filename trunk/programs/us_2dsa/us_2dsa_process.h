@@ -63,7 +63,8 @@ class US_2dsaProcess : public QObject
       //! \param mniter  Number of meniscus iterations
       //! \param vtoler  Variance difference tolerance
       //! \param menrng  Meniscus range
-      void set_iters( int, int, int, double, double );
+      //! \param cff0    Constant f/f0 (or 0.0)
+      void set_iters( int, int, int, double, double, double = 0.0 );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -171,6 +172,7 @@ private:
       double     sdelta_k;     // subgrid delta in k
       double     varitol;      // variance difference tolerance
       double     menrange;     // meniscus range
+      double     cnstff0;      // constant f/f0 (or 0.0)
 
       QTime      timer;        // timer for elapsed time measure
 

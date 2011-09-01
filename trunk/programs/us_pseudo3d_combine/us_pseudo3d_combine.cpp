@@ -114,7 +114,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( cb_autolim, SIGNAL( clicked() ),
             this,       SLOT( select_autolim() ) );
 
-   QLabel* lb_plt_fmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
+   lb_plt_fmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
    lb_plt_fmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plt_fmin, s_row, 0 );
 
@@ -124,7 +124,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( ct_plt_fmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_fmin( double ) ) );
 
-   QLabel* lb_plt_fmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
+   lb_plt_fmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
    lb_plt_fmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plt_fmax, s_row, 0 );
 
@@ -263,10 +263,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 
+   ya_title_ff = tr( "Frictional Ratio f/f0" );
+   ya_title_vb = tr( "Vbar at 20" ) + DEGC;
+   ya_title    = ya_title_ff;
    QBoxLayout* plot = new US_Plot( data_plot, 
-      tr( "Pseudo-3D Distribution Data" ),
-      xa_title,
-      tr( "Frictional Ratio f/f0" ) );
+      tr( "Pseudo-3D Distribution Data" ), xa_title, ya_title );
 
    data_plot->setMinimumSize( 600, 600 );
 
@@ -302,8 +303,7 @@ void US_Pseudo3D_Combine::reset( void )
    data_plot->detachItems();
    data_plot->replot();
  
-   minmax     = false;
-   zoom       = false;
+   cnst_vbar  = true;
    plot_s     = true;
    need_save  = true;
    cb_plot_s->setChecked( plot_s );  
@@ -349,7 +349,7 @@ void US_Pseudo3D_Combine::reset( void )
 
    curr_distr = 0;
    ct_curr_distr->setRange( 1.0, 1.0, 1.0 );
-   ct_curr_distr->setValue( curr_distr );
+   ct_curr_distr->setValue( curr_distr + 1 );
    ct_curr_distr->setEnabled( false );
 
    // default to white-cyan-magenta-red-black color map
@@ -358,7 +358,6 @@ void US_Pseudo3D_Combine::reset( void )
    colormap->addColorStop( 0.50, Qt::magenta );
    colormap->addColorStop( 0.80, Qt::red );
    cmapname  = tr( "Default Color Map: w-cyan-magenta-red-black" );
-
 
    stop();
    system.clear();
@@ -429,6 +428,23 @@ void US_Pseudo3D_Combine::plot_data( void )
    data_plot->setAxisScale( QwtPlot::yRight,
       spec_dat.range().minValue(), spec_dat.range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
+   ya_title   = cnst_vbar ? ya_title_ff : ya_title_vb;
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
+   if ( cnst_vbar )
+   {
+      lb_plt_fmin->setText( tr( "Plot Limit f/f0 Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit f/f0 Maximum:" ) );
+      cb_plot_s  ->setText( tr( "Plot f/f0 vs s"  ) );
+      cb_plot_mw ->setText( tr( "Plot f/f0 vs MW" ) );
+   }
+   else
+   {
+      lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
+      cb_plot_s  ->setText( tr( "Plot vbar vs s"  ) );
+      cb_plot_mw ->setText( tr( "Plot vbar vs MW" ) );
+   }
 
    if ( auto_lim  &&  ! looping )
    {   // auto limits
@@ -555,7 +571,7 @@ void US_Pseudo3D_Combine::select_plot_s()
 {
    plot_s     = cb_plot_s->isChecked();
    cb_plot_mw->setChecked( !plot_s );
-   xa_title   = plot_s ? xa_title_s : xa_title_mw;
+   xa_title   = plot_s    ? xa_title_s  : xa_title_mw;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    set_limits();
 
@@ -566,7 +582,7 @@ void US_Pseudo3D_Combine::select_plot_mw()
 {
    plot_s     = !cb_plot_mw->isChecked();
    cb_plot_s->setChecked( plot_s );
-   xa_title   = plot_s ? xa_title_s : xa_title_mw;
+   xa_title   = plot_s    ? xa_title_s  : xa_title_mw;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    set_limits();
 
@@ -628,9 +644,11 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    {
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
+         double ffval = model.components[ jj ].f_f0;
+         double vbval = model.components[ jj ].vbar20;
          sol_s.s  = model.components[ jj ].s * 1.0e13;
          sol_s.c  = model.components[ jj ].signal_concentration;
-         sol_s.k  = model.components[ jj ].f_f0;
+         sol_s.k  = cnst_vbar ? ffval : vbval;
          sol_w.s  = model.components[ jj ].mw;
          sol_w.c  = sol_s.c;
          sol_w.k  = sol_s.k;
@@ -652,10 +670,92 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    ct_curr_distr->setValue( jd );
    ct_curr_distr->setEnabled( true );
 
+   // determine whether Y is f/f0 or vbar
+   if ( curr_distr == 0 )
+   {  // First distribution:  set constant-vbar flag; possibly re-do
+      cnst_vbar  = model.constant_vbar();
+qDebug() << "cd=0  cnst_vbar" << cnst_vbar;
+
+      if ( ! cnst_vbar )
+      {  // Oops!  We need to re-do the distribution using vbar instead of f/f0
+         system        .clear();
+         tsys.s_distro .clear();
+         tsys.mw_distro.clear();
+         double ffmin = model.components[ 0 ].f_f0;
+         double ffmax = ffmin;
+
+         for ( int jj = 0; jj < model.components.size(); jj++ )
+         {
+            double vbval = model.components[ jj ].vbar20;
+            double ffval = model.components[ jj ].f_f0;
+            sol_s.s  = model.components[ jj ].s * 1.0e13;
+            sol_s.c  = model.components[ jj ].signal_concentration;
+            sol_s.k  = cnst_vbar ? ffval : vbval;
+            sol_w.s  = model.components[ jj ].mw;
+            sol_w.c  = sol_s.c;
+            sol_w.k  = sol_s.k;
+            ffmin    = qMin( ffmin, ffval );
+            ffmax    = qMax( ffmax, ffval );
+
+            tsys.s_distro.append(  sol_s );
+            tsys.mw_distro.append( sol_w );
+         }
+
+         // sort and reduce distributions
+         sort_distro( tsys.s_distro,  true );
+         sort_distro( tsys.mw_distro, true );
+
+         ct_plt_fmin->setMinValue( 0.1   );
+         ct_plt_fmin->setMaxValue( 1.5   );
+         ct_plt_fmin->setValue   ( ffmin );
+         ct_plt_fmax->setMinValue( 0.1   );
+         ct_plt_fmax->setMaxValue( 1.5   );
+         ct_plt_fmax->setValue   ( ffmax );
+         lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
+         lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
+         system.append( tsys );
+      }
+   }
+
+   else
+   {  // Beyond first:  verify that models are all of the same type
+      bool    c_vb_dis  = model.constant_vbar();
+      bool    not_same  = false;
+      QString msg;
+
+      if ( c_vb_dis && ! cnst_vbar )
+      {
+         msg = tr( "Model %1 has a constant vbar;\n"
+                   "    while vbars in the initial model vary (constant f/f0)\n"
+                   "Plots will likely be scaled and annotated inconsistently." )
+               .arg( jd );
+         not_same   = true;
+      }
+
+      else if ( ! c_vb_dis && cnst_vbar )
+      {
+         msg = tr( "The initial model has a constant vbar;\n"
+                   "    while vbars in model %1 vary (constant f/f0).\n"
+                   "Plots will likely be scaled and annotated inconsistently." )
+               .arg( jd );
+         not_same   = true;
+      }
+
+      if ( not_same )
+      {
+         qDebug() << "INCONSISTENT DISTRIBUTIONS LOADED!!!";
+         QMessageBox::warning( this, tr( "Inconsistent Distributions" ), msg );
+         curr_distr = 0;
+         ct_curr_distr->setValue( 1 );
+         cb_autolim->setChecked( true  );
+         plot_data();
+         cb_autolim->setChecked( false );
+      }
+   }
+
    if ( auto_lim )
    {
       set_limits();
-
       ct_plt_fmin->setEnabled( false );
       ct_plt_fmax->setEnabled( false );
       ct_plt_smin->setEnabled( false );
@@ -835,21 +935,31 @@ void US_Pseudo3D_Combine::set_limits()
          smin       -= ( ( smax - smin ) / 100.0 );
       }
 
-      fmax       += ( ( fmax - fmin ) / 20.0 );
-      fmin       -= ( ( fmax - fmin ) / 20.0 );
-      fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
-
-      if ( ( fmax - fmin ) < 1.0e-3 )
-         fmax       += ( fmax / 10.0 );
-
       if ( ( smax - smin ) < 1.0e-100 )
       {
          smin       -= ( smin / 30.0 );
          smax       += ( smax / 30.0 );
       }
 
-      fmin        = (double)( (int)( fmin * 10.0 ) ) / 10.0;
-      fmax        = (double)( (int)( fmax * 10.0 + 0.5 ) ) / 10.0;
+      if ( cnst_vbar )
+      {
+         fmax       += ( ( fmax - fmin ) / 20.0 );
+         fmin       -= ( ( fmax - fmin ) / 20.0 );
+         fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
+
+         if ( ( fmax - fmin ) < 1.0e-3 )
+            fmax       += ( fmax / 10.0 );
+
+         fmin        = (double)( (int)( fmin * 10.0 ) ) / 10.0;
+         fmax        = (double)( (int)( fmax * 10.0 + 0.5 ) ) / 10.0;
+      }
+
+      else
+      {
+         fmax       += 0.005;
+         fmin       -= 0.005;
+      }
+
       if ( plot_s )
       {
          smin        = (double)( (int)( smin * 10.0 ) ) / 10.0;

@@ -40,9 +40,10 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QLabel* lb_lolimits     = us_label(  tr( "Lower Limit (s x 1e-13):" ) );
    QLabel* lb_uplimits     = us_label(  tr( "Upper Limit (s):" ) );
    QLabel* lb_nstepss      = us_label(  tr( "Number Grid Points (s):" ) );
-   QLabel* lb_lolimitk     = us_label(  tr( "Lower Limit (f/f0):" ) );
-   QLabel* lb_uplimitk     = us_label(  tr( "Upper Limit (f/f0):" ) );
-   QLabel* lb_nstepsk      = us_label(  tr( "Number Grid Points (f/f0):" ) );
+           lb_lolimitk     = us_label(  tr( "Lower Limit (f/f0):" ) );
+           lb_uplimitk     = us_label(  tr( "Upper Limit (f/f0):" ) );
+           lb_nstepsk      = us_label(  tr( "Number Grid Points (f/f0):" ) );
+           lb_constff0     = us_label(  tr( "Constant f/f0:"      ) );
    QLabel* lb_thrdcnt      = us_label(  tr( "Thread Count:" ) );
    QLabel* lb_estmemory    = us_label(  tr( "Estimated Memory:" ) );
    QLabel* lb_iteration    = us_label(  tr( "Completed Iteration:" ) );
@@ -74,6 +75,8 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
       us_checkbox( tr( "Fit Radially-Invariant Noise" ), ck_rinoise );
    QLayout* lo_autoplt     =
       us_checkbox( tr( "Automatically Plot"           ), ck_autoplt );
+   QLayout* lo_varvbar     =
+      us_checkbox( tr( "Vary Vbar with Constant f/f0" ), ck_varvbar );
 
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
@@ -85,13 +88,15 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk  = us_counter( 3,      2,    10,   4 );
    ct_nstepsk   = us_counter( 3,      1,  1000,  60 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
-   ct_lolimits->setStep( 0.1 );
-   ct_uplimits->setStep( 0.1 );
-   ct_nstepss ->setStep(   1 );
-   ct_lolimitk->setStep( 0.1 );
-   ct_uplimitk->setStep( 0.1 );
-   ct_nstepsk ->setStep(   1 );
-   ct_thrdcnt ->setStep(   1 );
+   ct_constff0  = us_counter( 3,      1,    10,   1  );
+   ct_lolimits->setStep(  0.1 );
+   ct_uplimits->setStep(  0.1 );
+   ct_nstepss ->setStep(    1 );
+   ct_lolimitk->setStep( 0.01 );
+   ct_uplimitk->setStep( 0.01 );
+   ct_nstepsk ->setStep(    1 );
+   ct_thrdcnt ->setStep(    1 );
+   ct_constff0->setStep( 0.01 );
 
    le_estmemory = us_lineedit( "100 MB" );
    le_iteration = us_lineedit( "0" );
@@ -140,7 +145,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
    controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
    controlsLayout->addLayout( lo_rinois,     row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_autoplt,    row++, 0, 1, 2 );
+   controlsLayout->addLayout( lo_autoplt,    row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_varvbar,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_constff0,   row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_constff0,   row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_strtfit,    row,   0, 1, 2 );
    controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
@@ -200,6 +208,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    le_improve  ->setPalette( gray );
    te_status   ->setPalette( gray );
 
+   lb_constff0 ->setVisible( false );
+   ct_constff0 ->setVisible( false );
+
    ck_unifgr->setChecked( true  );
    ck_iters ->setEnabled( true  );
    ct_iters ->setEnabled( false );
@@ -214,6 +225,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkMonteCar( bool ) ) );
    connect( ck_iters,  SIGNAL( toggled( bool ) ),
             this,  SLOT( checkIterate(  bool ) ) );
+   connect( ck_varvbar, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkVaryVbar( bool ) ) );
 
    connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
@@ -361,6 +374,46 @@ void US_AnalysisControl::checkIterate(  bool checked )
    ct_iters->setValue( ( checked ? 3 : 1 ) );
 }
 
+// handle vary-vbar checked
+void US_AnalysisControl::checkVaryVbar(  bool checked )
+{
+   lb_constff0->setVisible( checked );
+   ct_constff0->setVisible( checked );
+
+   if ( checked )
+   {
+      double vblo = dsets[ 0 ]->vbar20 - 0.02;
+      double vbhi = dsets[ 0 ]->vbar20 + 0.02;
+      lb_lolimitk->setText( tr( "Lower Limit (vbar):" ) );
+      lb_uplimitk->setText( tr( "Upper Limit (vbar):" ) );
+      lb_nstepsk ->setText( tr( "Number Grid Points (vbar):" ) );
+      ct_lolimitk->setMinValue( 0.1 );
+      ct_lolimitk->setMaxValue( 1.5 );
+      ct_lolimitk->setStep    ( 0.001 );
+      ct_lolimitk->setValue   ( vblo );
+      ct_uplimitk->setMinValue( 0.1 );
+      ct_uplimitk->setMaxValue( 1.5 );
+      ct_uplimitk->setStep    ( 0.001 );
+      ct_uplimitk->setValue   ( vbhi );
+      ct_constff0->setValue   ( 2.00 );
+   }
+
+   else
+   {
+      lb_lolimitk->setText( tr( "Lower Limit (f/f0):" ) );
+      lb_uplimitk->setText( tr( "Upper Limit (f/f0):" ) );
+      lb_nstepsk ->setText( tr( "Number Grid Points (f/f0):" ) );
+      ct_lolimitk->setMinValue( 1.0 );
+      ct_lolimitk->setMaxValue( 8.0 );
+      ct_lolimitk->setStep    ( 0.01 );
+      ct_lolimitk->setValue   ( 1.0 );
+      ct_uplimitk->setMinValue( 1.0 );
+      ct_uplimitk->setMaxValue( 8.0 );
+      ct_uplimitk->setStep    ( 0.01 );
+      ct_uplimitk->setValue   ( 4.0 );
+   }
+}
+
 // start fit button clicked
 void US_AnalysisControl::start()
 {
@@ -383,10 +436,15 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    if ( ( ct_uplimits->value() - ct_lolimits->value() ) <= 0.0  ||
         ( ct_uplimitk->value() - ct_lolimitk->value() ) <= 0.0 )
    {
-      QMessageBox::critical( this, tr( "Limits Inconsistent!" ),
+      QString msg = 
          tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"
              "Please re-check the limits and correct them\n"
-             "before again clicking \"Start Fit\"." ) );
+             "before again clicking \"Start Fit\"." );
+
+      if ( ck_varvbar->isChecked() )
+         msg = msg.replace( "f/f0", "vbar" );
+
+      QMessageBox::critical( this, tr( "Limits Inconsistent!" ), msg );
       return;
    }
 
@@ -459,9 +517,10 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
                    (int)ct_mciters ->value() : 0;
    double vtoler = 1.0e-12;
    double menrng = ct_menisrng->value();
+   double cff0   = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
 
    // Begin the fit
-   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng );
+   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng, cff0 );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );
