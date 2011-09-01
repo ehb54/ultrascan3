@@ -175,6 +175,34 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    pb_save_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_plot, SIGNAL(clicked()), SLOT(save_plot()));
 
+   cb_plot_average = new QCheckBox(this);
+   cb_plot_average->setText(tr("Average"));
+   cb_plot_average->setChecked(true);
+   cb_plot_average->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_plot_average->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_plot_average, SIGNAL(clicked()), SLOT(replot()));
+
+   cb_plot_best = new QCheckBox(this);
+   cb_plot_best->setText(tr("Best"));
+   cb_plot_best->setChecked(true);
+   cb_plot_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_plot_best->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_plot_best, SIGNAL(clicked()), SLOT(replot()));
+
+   cb_plot_rg = new QCheckBox(this);
+   cb_plot_rg->setText(tr("Rg"));
+   cb_plot_rg->setChecked(true);
+   cb_plot_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_plot_rg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_plot_rg, SIGNAL(clicked()), SLOT(replot()));
+
+   cb_plot_chi2 = new QCheckBox(this);
+   cb_plot_chi2->setText(tr("nchi/nrmsd"));
+   cb_plot_chi2->setChecked(true);
+   cb_plot_chi2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_plot_chi2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_plot_chi2, SIGNAL(clicked()), SLOT(replot()));
+
    pb_replot_saxs = new QPushButton(tr("Replot stored I(q)"), this);
    pb_replot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_replot_saxs->setMinimumHeight(minHeight1);
@@ -199,11 +227,11 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    lbl_current_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_current_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   cb_compute_rg = new QCheckBox(this);
-   cb_compute_rg->setText(tr(" Compute Rg"));
-   cb_compute_rg->setChecked(false);
-   cb_compute_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_rg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_normalize = new QCheckBox(this);
+   cb_normalize->setText(tr(" Normalize"));
+   cb_normalize->setChecked(true);
+   cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_start = new QPushButton(tr("Start"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -334,7 +362,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_target->addSpacing(4);
    hbl_target->addWidget(lbl_current_target);
    hbl_target->addSpacing(4);
-   hbl_target->addWidget(cb_compute_rg);
+   hbl_target->addWidget(cb_normalize);
    hbl_target->addSpacing(4);
 
    QHBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
@@ -349,6 +377,12 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_plot_buttons->addSpacing(4);
    hbl_plot_buttons->addWidget(pb_push);
    // hbl_plot_buttons->addSpacing(4);
+
+   QHBoxLayout *hbl_plot_checks = new QHBoxLayout(0);
+   hbl_plot_checks->addWidget(cb_plot_average);
+   hbl_plot_checks->addWidget(cb_plot_best);
+   hbl_plot_checks->addWidget(cb_plot_rg);
+   hbl_plot_checks->addWidget(cb_plot_chi2);
 
    QHBoxLayout *hbl_controls = new QHBoxLayout(0);
    hbl_controls->addSpacing(4);
@@ -392,6 +426,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
 
    QVBoxLayout *vbl_plot_g2 = new QVBoxLayout(0);
    vbl_plot_g2->addLayout(hbl_plot_g1);
+   vbl_plot_g2->addLayout(hbl_plot_checks);
    vbl_plot_g2->addLayout(hbl_plot_buttons);
 
    QHBoxLayout *hbl_editor_plot = new QHBoxLayout(0);
@@ -516,7 +551,8 @@ void US_Hydrodyn_Saxs_Screen::set_target( QString scaling_target )
       save_saxs_plot();
    }
 
-   target_found = false;
+   target_found      = false;
+   last_target_found = false;
    unsigned int target_pos;
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
@@ -524,6 +560,8 @@ void US_Hydrodyn_Saxs_Screen::set_target( QString scaling_target )
       {
          target_found = true;
          target_pos   = i;
+         last_target_pos   = i;
+         last_target_found = true;
          break;
       }
    }
@@ -785,6 +823,9 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
       double                        delta_q;
       unsigned int                  use_points_q;
 
+      QString                       best_tag;
+      QString                       nnls_tag;
+
       bool has_error = 
          !usu.iqq_sphere_fit(
                              "saxs_screen",
@@ -813,7 +854,9 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
                              end_q,
                              delta_q,
                              use_points_q,
-                             true
+                             best_tag,
+                             nnls_tag,
+                             cb_normalize->isChecked()
                              );
 
       if ( has_error )
@@ -825,6 +868,47 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
       {
          editor_msg("blue", usu.noticemsg );
          
+         double  chi2_best;
+         double  chi2_nnls;
+         double  k;
+         QString target = "saxs_screen_cropped";
+         bool    use_chi2 = saxs_window->is_nonzero_vector( usu.wave[ target ].s );
+
+         if ( use_chi2 )
+         {
+            usu.scaling_fit( 
+                            usu.wave[ best_tag ].r,
+                            usu.wave[ target ].r,
+                            usu.wave[ target ].s,
+                            k, 
+                            chi2_best
+                            );
+            usu.scaling_fit( 
+                            usu.wave[ nnls_tag ].r,
+                            usu.wave[ target ].r,
+                            usu.wave[ target ].s,
+                            k, 
+                            chi2_nnls
+                            );
+            chi2_best = sqrt( chi2_best / ( usu.wave[ target ].r.size() - 1 ) );
+            chi2_nnls = sqrt( chi2_nnls / ( usu.wave[ target ].r.size() - 1 ) );
+         } else {
+            usu.scaling_fit( 
+                            usu.wave[ best_tag ].r,
+                            usu.wave[ target ].r,
+                            k, 
+                            chi2_best
+                            );
+            usu.scaling_fit( 
+                            usu.wave[ best_tag ].r,
+                            usu.wave[ target ].r,
+                            k, 
+                            chi2_nnls
+                            );
+            chi2_best = chi2_best / usu.wave[ target ].r.size();
+            chi2_nnls = chi2_nnls / usu.wave[ target ].r.size();
+         }
+
          // then plot, summarize results
          
          vector < double > radii;
@@ -836,6 +920,9 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
             intensity.push_back( by_radius[ i ] );
          }
          
+         double Rg;
+         get_guinier_rg( lbl_current_target->text(), Rg );
+
          plot_one( 
                   QString( " Target %1 " ).arg( lbl_current_target->text() ),
                   QString( " Radius [ %1 : %2 ] / %3 ( %4 )" )
@@ -858,7 +945,11 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
                   best_fit_radius,
                   best_fit_delta_rho,
                   average_radius,
-                  average_delta_rho
+                  average_delta_rho,
+                  Rg,
+                  use_chi2,
+                  chi2_best,
+                  chi2_nnls
                   );
          
       }
@@ -887,7 +978,11 @@ void US_Hydrodyn_Saxs_Screen::plot_one(
                                        double            best_fit_radius,
                                        double            best_fit_delta_rho,
                                        double            average_radius,
-                                       double            average_delta_rho
+                                       double            average_delta_rho,
+                                       double            rg,
+                                       bool              use_chi2,
+                                       double            chi2_best,
+                                       double            chi2_nnls
                                        )
 {
    anything_plotted_since_save = true;
@@ -902,6 +997,10 @@ void US_Hydrodyn_Saxs_Screen::plot_one(
    best_fit_delta_rhos[ current_row ].push_back( best_fit_delta_rho );
    average_radiuss    [ current_row ].push_back( average_radius );
    average_delta_rhos [ current_row ].push_back( average_delta_rho );
+   target_rgs         [ current_row ].push_back( rg );
+   use_chi2s          [ current_row ].push_back( use_chi2 );
+   chi2_bests         [ current_row ].push_back( chi2_best );
+   chi2_nnlss         [ current_row ].push_back( chi2_nnls );
 
    for ( unsigned int i = 0; i < intensity.size(); i++ )
    {
@@ -915,7 +1014,8 @@ void US_Hydrodyn_Saxs_Screen::plot_one(
    update_wheel_range();
    qwtw_wheel->setValue( (double) last_plotted_pos );
 
-   plot_pos( last_plotted_pos );
+   // plot_pos( last_plotted_pos );
+   replot();
 }
 
 void US_Hydrodyn_Saxs_Screen::update_wheel_range()
@@ -954,10 +1054,10 @@ void US_Hydrodyn_Saxs_Screen::plot_row( unsigned int i )
          clear_plot();
       } else {
          last_plotted_pos = messages[ current_row ].size() - 1;
-         plot_pos( last_plotted_pos );
+         replot(); // plot_pos( last_plotted_pos );
       }
    } else {
-      plot_pos( last_plotted_pos );
+      replot(); // plot_pos( last_plotted_pos );
    }
    if ( messages[ current_row ].size() )
    {
@@ -990,21 +1090,55 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                              radiis[ current_row ][ i ].size() );
    plot_dist->setCurvePen  ( curvekey, QPen( "yellow", 2, SolidLine ) );
 
-   long qpmkey = plot_dist->insertMarker();
-   plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
-   plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ current_row ][ i ], 0e0 );
-   plot_dist->setMarkerLabelAlign( qpmkey, AlignRight|AlignTop );
-   plot_dist->setMarkerPen       ( qpmkey, QPen( green, 2, DashDotDotLine));
-   plot_dist->setMarkerFont      ( qpmkey, QFont("Helvetica", 11, QFont::Bold));
-   plot_dist->setMarkerLabelText ( qpmkey, QString("Best individual\nfit at %1").arg( best_fit_radiuss[ current_row ][ i ] ) );
+   if ( cb_plot_best->isChecked() )
+   {
+      long qpmkey = plot_dist->insertMarker();
+      plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
+      plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ current_row ][ i ], 0e0 );
+      plot_dist->setMarkerLabelAlign( qpmkey, AlignRight|AlignTop );
+      plot_dist->setMarkerPen       ( qpmkey, QPen( green, 2, DashDotDotLine));
+      plot_dist->setMarkerFont      ( qpmkey, QFont("Helvetica", 11, QFont::Bold));
+      plot_dist->setMarkerLabelText ( qpmkey, QString("Best individual\nfit at %1%2")
+                                      .arg( best_fit_radiuss[ current_row ][ i ] )
+                                      .arg( cb_plot_chi2->isChecked() ?
+                                            QString("\n%1 = %2")
+                                            .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
+                                            .arg( chi2_bests[ current_row ][ i ] )
+                                            :
+                                            "" )
+                                      );
+   }
 
-   long qpmkey2 = plot_dist->insertMarker();
-   plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
-   plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ current_row ][ i ], 0e0 );
-   plot_dist->setMarkerLabelAlign( qpmkey2, AlignLeft|AlignTop );
-   plot_dist->setMarkerPen       ( qpmkey2, QPen( QColor( 255, 141, 0 ), 2, DashLine));
-   plot_dist->setMarkerFont      ( qpmkey2, QFont("Helvetica", 11, QFont::Bold));
-   plot_dist->setMarkerLabelText ( qpmkey2, QString("\n\n\nAverage fit\n at %1").arg( average_radiuss[ current_row ][ i ] ) );
+   if ( cb_plot_average->isChecked() )
+   {
+      long qpmkey2 = plot_dist->insertMarker();
+      plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
+      plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ current_row ][ i ], 0e0 );
+      plot_dist->setMarkerLabelAlign( qpmkey2, cb_plot_best->isChecked() ? AlignLeft|AlignTop : AlignRight|AlignTop );
+      plot_dist->setMarkerPen       ( qpmkey2, QPen( QColor( 255, 141, 0 ), 2, DashLine));
+      plot_dist->setMarkerFont      ( qpmkey2, QFont("Helvetica", 11, QFont::Bold));
+      plot_dist->setMarkerLabelText ( qpmkey2, QString("\n\n\nAverage fit\n at %1%2")
+                                      .arg( average_radiuss[ current_row ][ i ] ) 
+                                      .arg( cb_plot_chi2->isChecked() ?
+                                            QString("\nNNLS %2 = %3")
+                                            .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
+                                            .arg( chi2_nnlss[ current_row ][ i ] )
+                                            :
+                                            "" )
+                                      );
+   }
+
+   if ( cb_plot_rg->isChecked() &&
+        target_rgs[ current_row ][ i ] != 0e0 )
+   {
+      long qpmkey3 = plot_dist->insertMarker();
+      plot_dist->setMarkerLineStyle ( qpmkey3, QwtMarker::VLine);
+      plot_dist->setMarkerPos       ( qpmkey3, target_rgs[ current_row ][ i ], 0e0 );
+      plot_dist->setMarkerLabelAlign( qpmkey3, AlignRight|AlignCenter );
+      plot_dist->setMarkerPen       ( qpmkey3, QPen( "blue", 2, DashLine));
+      plot_dist->setMarkerFont      ( qpmkey3, QFont("Helvetica", 11, QFont::Bold));
+      plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
+   }
 
    plot_dist->setAxisScale( QwtPlot::yLeft, 0.0, max_y_range );
    plot_dist->replot();
@@ -1048,7 +1182,10 @@ void US_Hydrodyn_Saxs_Screen::update_enables()
    pb_push             ->setEnabled( !running );
    pb_save_plot        ->setEnabled( !running );
    pb_load_plot        ->setEnabled( !running );
-   cb_compute_rg       ->setEnabled( !running );
+   cb_plot_average     ->setEnabled( !running );
+   cb_plot_best        ->setEnabled( !running );
+   cb_plot_rg          ->setEnabled( !running );
+   cb_normalize        ->setEnabled( !running );
 }
 
 bool US_Hydrodyn_Saxs_Screen::any_to_run()
@@ -1358,6 +1495,10 @@ void US_Hydrodyn_Saxs_Screen::push()
    best_fit_delta_rhos.resize( current_row + 1 );
    average_radiuss    .resize( current_row + 1 );
    average_delta_rhos .resize( current_row + 1 );
+   target_rgs         .resize( current_row + 1 );
+   use_chi2s          .resize( current_row + 1 );
+   chi2_bests         .resize( current_row + 1 );
+   chi2_nnlss         .resize( current_row + 1 );
    
    qwtw_wheel->setRange( 0.0, 0.0, 1 );
    qwtw_wheel2->setRange(
@@ -1396,6 +1537,10 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_row()
       best_fit_delta_rhos[ i - 1 ] = best_fit_delta_rhos[ i ];
       average_radiuss    [ i - 1 ] = average_radiuss    [ i ];
       average_delta_rhos [ i - 1 ] = average_delta_rhos [ i ];
+      target_rgs         [ i - 1 ] = target_rgs         [ i ];
+      use_chi2s          [ i - 1 ] = use_chi2s          [ i ];
+      chi2_bests         [ i - 1 ] = chi2_bests         [ i ];
+      chi2_nnlss         [ i - 1 ] = chi2_nnlss         [ i ];
    }
       
    if ( messages.size() > 1 )
@@ -1410,6 +1555,10 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_row()
       best_fit_delta_rhos.pop_back();
       average_radiuss    .pop_back();
       average_delta_rhos .pop_back();
+      target_rgs         .pop_back();
+      use_chi2s          .pop_back();
+      chi2_bests         .pop_back();
+      chi2_nnlss         .pop_back();
    } else {
       messages           [ 0 ].clear();
       messages2          [ 0 ].clear();
@@ -1421,6 +1570,10 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_row()
       best_fit_delta_rhos[ 0 ].clear();
       average_radiuss    [ 0 ].clear();
       average_delta_rhos [ 0 ].clear();
+      target_rgs         [ 0 ].clear();
+      use_chi2s          [ 0 ].clear();
+      chi2_bests         [ 0 ].clear();
+      chi2_nnlss         [ 0 ].clear();
    }      
 
    if ( current_row >= messages.size() )
@@ -1448,6 +1601,10 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_all()
    best_fit_delta_rhos.resize(1);
    average_radiuss    .resize(1);
    average_delta_rhos .resize(1);
+   target_rgs         .resize(1);
+   use_chi2s          .resize(1);
+   chi2_bests         .resize(1);
+   chi2_nnlss         .resize(1);
 
    messages           [ 0 ].clear();
    messages2          [ 0 ].clear();
@@ -1459,6 +1616,10 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_all()
    best_fit_delta_rhos[ 0 ].clear();
    average_radiuss    [ 0 ].clear();
    average_delta_rhos [ 0 ].clear();
+   target_rgs         [ 0 ].clear();
+   use_chi2s          [ 0 ].clear();
+   chi2_bests         [ 0 ].clear();
+   chi2_nnlss         [ 0 ].clear();
 
    qwtw_wheel ->setRange( 0.0, 0.0, 1 );
    qwtw_wheel2->setRange( 1.0, 1.0, 1 );
@@ -1686,6 +1847,10 @@ csv US_Hydrodyn_Saxs_Screen::plots_to_csv()
    plot_csv.header.push_back("Best fit delta rho");
    plot_csv.header.push_back("Average radius");
    plot_csv.header.push_back("Average delta rho");
+   plot_csv.header.push_back("Rg");
+   plot_csv.header.push_back("Use nchi");
+   plot_csv.header.push_back("Best fit nchi");
+   plot_csv.header.push_back("NNLS nchi");
    plot_csv.header.push_back("Number of points");
    plot_csv.header.push_back("Radius");
    plot_csv.header.push_back("Intensity");
@@ -1705,6 +1870,10 @@ csv US_Hydrodyn_Saxs_Screen::plots_to_csv()
          data.push_back( QString("%1").arg( best_fit_delta_rhos[ i ][ j ] ) );
          data.push_back( QString("%1").arg( average_radiuss[ i ][ j ] ) );
          data.push_back( QString("%1").arg( average_delta_rhos[ i ][ j ] ) );
+         data.push_back( QString("%1").arg( target_rgs[ i ][ j ] ) );
+         data.push_back( QString("%1").arg( use_chi2s[ i ][ j ] ) );
+         data.push_back( QString("%1").arg( chi2_bests[ i ][ j ] ) );
+         data.push_back( QString("%1").arg( chi2_nnlss[ i ][ j ] ) );
          data.push_back( QString("%1").arg( radiis[ i ][ j ].size() ) );
          for ( unsigned int k = 0; k < radiis[ i ][ j ].size(); k++ )
          {
@@ -1747,6 +1916,10 @@ void US_Hydrodyn_Saxs_Screen::csv_to_plots( csv plot_csv )
       best_fit_delta_rhos[ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
       average_radiuss    [ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
       average_delta_rhos [ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
+      target_rgs         [ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
+      use_chi2s          [ current_row ].push_back( (bool) plot_csv.data[ i ][ pos++ ].toInt() );
+      chi2_bests         [ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
+      chi2_nnlss         [ current_row ].push_back( plot_csv.data[ i ][ pos++ ].toDouble() );
 
       unsigned int datapoints = plot_csv.data[ i ][ pos++ ].toUInt();
 
@@ -1778,7 +1951,7 @@ void US_Hydrodyn_Saxs_Screen::csv_to_plots( csv plot_csv )
    }
    update_wheel_range();
    qwtw_wheel->setValue( (double) last_plotted_pos );
-   plot_pos( last_plotted_pos );
+   replot(); // plot_pos( last_plotted_pos );
 }
 
 QStringList US_Hydrodyn_Saxs_Screen::csv_parse_line( QString qs )
@@ -1835,4 +2008,142 @@ QStringList US_Hydrodyn_Saxs_Screen::csv_parse_line( QString qs )
    }
    // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
    return qsl;
+}
+
+bool US_Hydrodyn_Saxs_Screen::get_guinier_rg( QString name, double &Rg )
+{
+   if ( guinier_rgs.count( name ) )
+   {
+      Rg = guinier_rgs[ name ];
+      return true;
+   }
+
+   set_target( name );
+
+   if ( !last_target_found )
+   {
+      Rg = 0e0;
+      return false;
+   }
+
+   US_Saxs_Util usu;
+   usu.wave["data"].q = qs[ last_target_pos ];
+   usu.wave["data"].r = Is[ last_target_pos ];
+   usu.wave["data"].s = I_errors[ last_target_pos ];
+   QString log;
+
+   int pointsmin = saxs_window->our_saxs_options->pointsmin;
+   int pointsmax = saxs_window->our_saxs_options->pointsmax;
+   double sRgmaxlimit = saxs_window->our_saxs_options->qRgmax;
+   double pointweightpower = 3e0;
+   double p_guinier_maxq = saxs_window->our_saxs_options->qend;
+   
+   // these are function output values
+   double a;
+   double b;
+   double siga;
+   double sigb;
+   double chi2;
+   // double Rg;
+   double Io;
+   double smin;
+   double smax;
+   double sRgmin;
+   double sRgmax;
+
+   unsigned int beststart;
+   unsigned int bestend;
+
+   bool too_few_points = qs[ last_target_pos ].size() <= 25;
+
+   if ( !too_few_points )
+   {
+      if ( 
+          !usu.guinier_plot(
+                            "guinier",
+                            "data"
+                            )   ||
+          !usu.guinier_fit2(
+                            log,
+                            "guinier", 
+                            pointsmin,
+                            pointsmax,
+                            sRgmaxlimit,
+                            pointweightpower,
+                            p_guinier_maxq,
+                            a,
+                            b,
+                            siga,
+                            sigb,
+                            chi2,
+                            Rg,
+                            Io,
+                            smax, // don't know why these are flipped
+                            smin,
+                            sRgmin,
+                            sRgmax,
+                            beststart,
+                            bestend
+                            ) )
+      {
+         editor_msg("red", QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                        .arg( name ) );
+         Rg = 0e0;
+         return false;
+      }
+
+      // cout << "guinier siga " << siga << endl;
+      // cout << "guinier sigb " << sigb << endl;
+   
+      // cout << log;
+   }
+
+   if ( too_few_points )
+   {
+      editor_msg("red", 
+                 QString(
+                         "Guinier analysis of %1:\n"
+                         "**** Could not compute Rg, too few data points %2 ****\n"
+                         )
+                 .arg( qs[ last_plotted_pos ].size() ) );
+      Rg = 0e0;
+      return false;
+   } else {
+      if ( isnan(Rg) ||
+           b >= 0e0 )
+      {
+         editor_msg("red", 
+                    QString(
+                            "Guinier analysis of %1:\n"
+                            "**** Could not compute Rg ****\n"
+                            )
+                    .arg( name ) );
+         Rg = 0e0;
+         return false;
+      } else {
+         editor_msg("blue", 
+                    QString("")
+                    .sprintf(
+                             "Guinier analysis of %s:\n"
+                             "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                             
+                             , name.ascii()
+                             , Rg
+                             , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                             , Io
+                             , siga
+                             , sRgmin
+                             , sRgmax
+                             , bestend - beststart + 1
+                             , chi2
+                             ) );
+         guinier_rgs[ name ] = Rg;
+         return true;
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Screen::replot()
+{
+   plot_pos( last_plotted_pos );
 }

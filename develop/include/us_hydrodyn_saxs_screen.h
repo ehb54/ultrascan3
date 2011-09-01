@@ -69,11 +69,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QPushButton   *pb_save_plot;
       QPushButton   *pb_load_plot;
 
+      QCheckBox     *cb_plot_average;
+      QCheckBox     *cb_plot_best;
+      QCheckBox     *cb_plot_rg;
+      QCheckBox     *cb_plot_chi2;
+
       QPushButton   *pb_replot_saxs;
       QPushButton   *pb_save_saxs_plot;
       QPushButton   *pb_set_target;
       QLabel        *lbl_current_target;
-      QCheckBox     *cb_compute_rg;
+      QCheckBox     *cb_normalize;
 
       QPushButton   *pb_start;
       QPushButton   *pb_run_all_targets;
@@ -140,6 +145,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       vector < vector < double > >            best_fit_delta_rhos;
       vector < vector < double > >            average_radiuss;
       vector < vector < double > >            average_delta_rhos;
+      vector < vector < double > >            target_rgs;
+      vector < vector < bool > >              use_chi2s;
+      vector < vector < double > >            chi2_bests;
+      vector < vector < double > >            chi2_nnlss;
+
+      map < QString, double >                 guinier_rgs;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -160,7 +171,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
                     double            best_fit_radius,
                     double            best_fit_delta_rho,
                     double            average_radius,
-                    double            average_delta_rho
+                    double            average_delta_rho,
+                    double            rg,
+                    bool              use_chi2,
+                    double            chi2_best,
+                    double            chi2_nnls
                     );
 
       void plot_pos( unsigned int );
@@ -181,6 +196,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QStringList csv_parse_line( QString qs );
       void        set_target( QString target );
 
+
+      bool        get_guinier_rg( QString name, double &rg );
+      unsigned int last_target_pos;
+      bool         last_target_found;
+
    private slots:
 
       void setupGUI();
@@ -192,6 +212,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       void clear_plot_all();
       void save_plot();
       void load_plot();
+
+      void replot();
 
       void replot_saxs();
       void save_saxs_plot();

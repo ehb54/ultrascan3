@@ -218,7 +218,7 @@ bool US_Saxs_Util::avg(QString outtag, vector < QString > tags)
       for ( unsigned int j = 0; j < wave[outtag].q.size(); j++ )
       {
          wave[outtag].r[j] += wave[tags[i]].r[j];
-         wave[outtag].s[j] += wave[tags[i]].r[j];
+         wave[outtag].s[j] += wave[tags[i]].s[j];
       }
    }
 
@@ -227,6 +227,33 @@ bool US_Saxs_Util::avg(QString outtag, vector < QString > tags)
       wave[outtag].r[j] /= tags.size();
       wave[outtag].s[j] /= tags.size();
    }
+   return true;
+}
+
+bool US_Saxs_Util::scalesum(QString outtag, vector < QString > tags, vector < double > multipliers )
+{
+   errormsg = "";
+   
+   for ( unsigned int i = 1; i < tags.size(); i++ )
+   {
+      if ( !compat(tags[0],tags[i]) )
+      {
+         return false;
+      }
+   }
+      
+   wave[outtag] = wave[tags[0]];
+   wave[outtag].filename = "scalesum";
+
+   for ( unsigned int i = 1; i < tags.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < wave[outtag].q.size(); j++ )
+      {
+         wave[outtag].r[j] += wave[tags[i]].r[j] * multipliers[ i ];
+         wave[outtag].s[j] += wave[tags[i]].s[j] * multipliers[ i ];
+      }
+   }
+
    return true;
 }
 
@@ -6824,6 +6851,8 @@ bool US_Saxs_Util::iqq_sphere_fit(
                                   double                        &end_q,
                                   double                        &delta_q,
                                   unsigned int                  &points_q,
+                                  QString                       &best_tag,
+                                  QString                       &nnls_tag,
                                   bool                          do_normalize
                                   )
 {
@@ -6840,7 +6869,6 @@ bool US_Saxs_Util::iqq_sphere_fit(
    {
       return false;
    }      
-
 
    if ( wave[ cropped ].q.size() < 3 )
    {
@@ -6935,6 +6963,7 @@ bool US_Saxs_Util::iqq_sphere_fit(
    unsigned int best_pos  = 0;
    double       k;
    double       best_rmsd;
+   double       best_k;
 
    nnls_fit(
             A[ 0 ],
@@ -6955,10 +6984,14 @@ bool US_Saxs_Util::iqq_sphere_fit(
       if ( rmsd < best_rmsd )
       {
          best_rmsd = rmsd;
-         best_pos = i;
+         best_pos  = i;
+         best_k    = k;
       }
    }
    
+   best_tag = A_tag[ best_pos ] + "_scaled";
+   scale( best_tag, A_tag[ best_pos ], best_k );
+
    noticemsg += QString("best single model %1 rmsd %2\n").arg( A_tag[ best_pos ] ).arg( best_rmsd );
    best_fit_radius = A_radius[ best_pos ];
    best_fit_delta_rho = A_delta_rho[ best_pos ];
@@ -6972,6 +7005,9 @@ bool US_Saxs_Util::iqq_sphere_fit(
    {
       return false;
    }
+
+   nnls_tag = cropped + "_nnls_model";
+   scalesum( nnls_tag, A_tag, x );
 
    noticemsg += QString( "nnls rmsd %1\n" ).arg( nnls_rmsd );
 

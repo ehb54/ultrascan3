@@ -65,6 +65,7 @@ class US_EXTERN US_Saxs_Util
       bool   write      ( QString filename, QString tag );
       bool   compat     ( QString tag1,     QString tag2 );
       void   scale      ( QString outtag,   QString intag,   double multiplier );
+      bool   scalesum   ( QString outtag,   vector < QString > tags,   vector < double >  multipliers );
       bool   avg        ( QString outtag,   vector < QString > tags );
       bool   crop       ( QString outtag,   QString fromtag, double low,   double high );
       bool   interpolate( QString outtag,   QString totag,   QString fromtag );
@@ -441,6 +442,8 @@ class US_EXTERN US_Saxs_Util
                           double                        &end_q,
                           double                        &delta_q,
                           unsigned int                  &points_q,
+                          QString                       &best_tag,
+                          QString                       &nnls_tag,
                           bool                          do_normalize = true
                           );
 
