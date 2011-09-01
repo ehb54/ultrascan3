@@ -17,6 +17,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    parentw        = p;
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
+   grtype         = US_2dsaProcess::UGRID;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
