@@ -52,6 +52,11 @@ class US_AnalysisControl : public US_WidgetsDialog
       QWidget*                         parentw;
       US_2dsaProcess*                  processor;
 
+      QLabel*       lb_lolimitk;
+      QLabel*       lb_uplimitk;
+      QLabel*       lb_nstepsk;
+      QLabel*       lb_constff0;
+
       QwtCounter*   ct_lolimits;
       QwtCounter*   ct_uplimits;
       QwtCounter*   ct_nstepss;
@@ -71,6 +76,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_nbrclips;
       QwtCounter*   ct_mciters;
       QwtCounter*   ct_iters;
+      QwtCounter*   ct_constff0;
 
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
@@ -83,6 +89,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QCheckBox*    ck_clipcs;
       QCheckBox*    ck_mcarlo;
       QCheckBox*    ck_iters;
+      QCheckBox*    ck_varvbar;
 
       QLineEdit*    le_estmemory;
       QLineEdit*    le_iteration;
@@ -113,6 +120,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void checkClipLow (    bool );
       void checkMonteCar(    bool );
       void checkRegular (    bool );
+      void checkVaryVbar(    bool );
       void grid_change(      void );
       void slim_change(      void );
       void start(            void );

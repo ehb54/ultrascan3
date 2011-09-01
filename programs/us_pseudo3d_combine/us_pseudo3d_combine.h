@@ -46,6 +46,8 @@ class US_Pseudo3D_Combine : public US_Widgets
    private:
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
+      QLabel*       lb_plt_fmin;
+      QLabel*       lb_plt_fmax;
 
       QTextEdit*    te_distr_info;
 
@@ -105,8 +107,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       int           patm_id;
       int           patm_dlay;
 
-      bool          minmax;
-      bool          zoom;
+      bool          cnst_vbar;
       bool          auto_lim;
       bool          cont_loop;
       bool          plot_s;
@@ -116,6 +117,9 @@ class US_Pseudo3D_Combine : public US_Widgets
       QString       xa_title_s;
       QString       xa_title_mw;
       QString       xa_title;
+      QString       ya_title_ff;
+      QString       ya_title_vb;
+      QString       ya_title;
       QString       cmapname;
       QString       mfilter;
 
