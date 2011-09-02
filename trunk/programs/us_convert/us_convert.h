@@ -53,7 +53,7 @@ class US_Convert
       class TripleInfo
       {
          public:
-         int              tripleID;           //!< The ID of this c/c/w combination
+         int              tripleID;           //!< The ID of this c/c/w combination (rawDataID)
          QString          tripleDesc;         //!< The description of this triple ( e.g., "2 / A / 260" )
          QString          description;        //!< A text description of this triple
          char             tripleGUID[16];     //!< The GUID of this triple

@@ -54,6 +54,49 @@ BEGIN
 
 END$$
 
+-- Returns the count of all calibration profiles associated with a given
+--  experiment
+DROP FUNCTION IF EXISTS count_calibration_experiments$$
+CREATE FUNCTION count_calibration_experiments ( p_personGUID CHAR(36),
+                                                p_password   VARCHAR(80),
+                                                p_experimentID INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_profiles    INT;
+  DECLARE count_experiments INT;
+
+  CALL config();
+  SET count_profiles = -1;    -- 0 could be a legitimate count
+
+  SELECT     COUNT(*)
+  INTO       count_experiments
+  FROM       experiment
+  WHERE      experimentID = p_experimentID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_experiments < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No experiment with ID ',
+                                   p_experimentID,
+                                   ' exists' );
+
+    ELSE
+      SELECT    COUNT(*)
+      INTO      count_profiles
+      FROM      rotorCalibration
+      WHERE     calibrationExperimentID = p_experimentID;
+
+    END IF;
+
+  END IF;
+
+  RETURN( count_profiles );
+
+END$$
+
 -- SELECTs names of all rotor calibration profiles associated with a rotor
 DROP PROCEDURE IF EXISTS get_rotor_calibration_profiles$$
 CREATE PROCEDURE get_rotor_calibration_profiles ( p_personGUID CHAR(36),

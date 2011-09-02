@@ -44,5 +44,6 @@ class US_GetDBRun : public US_WidgetsDialog
    private slots:
       void columnClicked ( int );
       void select        ( void );
+      void deleteRun     ( void );
 };
 #endif

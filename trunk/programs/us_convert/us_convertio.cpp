@@ -56,14 +56,14 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
       if ( triple.excluded ) continue;
 
       // Convert uuid's to long form
-      QString triple_uuidc = US_Util::uuid_unparse( (unsigned char*) triple.tripleGUID );
+      QString triple_uuidc = US_Util::uuid_unparse( 
+                             (unsigned char*) triple.tripleGUID );
 
       // Verify solutionID
-      q.clear();
-      q  << "get_solutionID_from_GUID"
-         << triple.solution.solutionGUID;
+      QStringList q ( "get_solutionID_from_GUID" );
+      q  << triple.solution.solutionGUID;
       db->query( q );
-
+      
       status = db->lastErrno();
       triple.solution.solutionID = 0;
       if ( status == US_DB2::OK )
@@ -71,47 +71,52 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
          db->next();
          triple.solution.solutionID = db->value( 0 ).toInt();
       }
-
+      
       else if ( status == US_DB2::NOROWS )
       {
          // Solution is not in db, so try to add it
+         // figure out channelID later ??
          int diskStatus = triple.solution.saveToDB( ExpData.expID, 
-                                                    1,               // figure out channelID later ??
+                                                    1,
                                                     db );
-//qDebug() << "triple.solution.saveToDB db status = " << QString::number( diskStatus );
+      
          if ( diskStatus == US_DB2::NO_BUFFER )
-            error += "Error processing buffer " + triple.solution.buffer.GUID + '\n' +
+            error += "Error processing buffer " + 
+                     triple.solution.buffer.GUID + '\n' +
                      "Buffer was not found in the database";
-
+      
          else if ( diskStatus == US_DB2::NO_ANALYTE )
             error += "Error processing analyte \n" 
                      "An analyte was not found in the database";
-
+      
          else if ( diskStatus == US_DB2::NO_SOLUTION )
-            error += "Error processing solution " + triple.solution.solutionGUID + '\n' +
+            error += "Error processing solution " + 
+                     triple.solution.solutionGUID + '\n' +
                      "Solution was not found in the database";
-
+      
          else if ( diskStatus != US_DB2::OK )
             error += "Error saving solution to DB " + '\n' +
                      db->lastError();
-
+      
       }
-
+      
       if ( triple.solution.solutionID == 0 )
       {
-         // This means that we weren't successful in adding the solution to db
-         error += "Error processing solution " + triple.solution.solutionGUID + '\n' +
+         // This means that we weren't successful in adding it db
+         error += "Error processing solution " + 
+                  triple.solution.solutionGUID + '\n' +
                   "Solution was not found in the database";
       }
 
-      QStringList q( "new_rawData" );
-      q  << triple_uuidc
+      q.clear();
+      q  << "new_rawData"
+         << triple_uuidc
          << ExpData.label
          << triple.tripleFilename       // needs to be base name only
          << ExpData.comments
          << QString::number( ExpData.expID )
          << QString::number( triple.solution.solutionID )
-         << QString::number( triple.channelID );    // only channel 1 implemented
+         << QString::number( triple.channelID ); // only channel 1 implemented
 
       status = db->statusQuery( q );
       int rawDataID = db->lastInsertID();
@@ -181,10 +186,11 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 
    if ( error != QString( "" ) )
    {
-      // Most likely the data is not in a desirable state in the db, for instance
-      // the raw data record might have been written but the blob upload failed.
-      // So let's delete the experiment and rawData. That way, the runID has not
-      // become tainted and we can try again
+      // Most likely the data is not in a desirable state in the db, 
+      // for instance the raw data record might have been written but 
+      // the blob upload failed. So let's delete the experiment and 
+      // rawData. That way, the runID has not become tainted and 
+      // we can try again.
       q.clear();
       q  << "delete_experiment"
          << QString::number( ExpData.expID );
