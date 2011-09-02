@@ -1,2 +1,0 @@
-TODO: implement DLS_fit class
-TODO: implement non-linear fitting algos
