@@ -57,6 +57,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
 
+   last_pdb_filename = "";
+   last_pdb_title = "";
+   last_pdb_header = "";
+
    // no_rr = false;
 
    // int r_stdout = __open(QString(somo_tmp_dir +

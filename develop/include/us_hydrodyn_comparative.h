@@ -47,6 +47,7 @@ struct csv
 
    // for pdb_tool:
 
+   QString filename;
    QString header_text;
    QString title_text;
    

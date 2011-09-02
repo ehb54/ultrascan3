@@ -631,6 +631,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       csv          pdb_to_csv  ( vector < PDB_model > &model );
       void         save_pdb_csv( csv &csv1 );
 
+      QString      last_pdb_title;
+      QString      last_pdb_header;
+      QString      last_pdb_filename;
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file

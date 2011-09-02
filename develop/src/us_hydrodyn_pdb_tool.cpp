@@ -18,6 +18,8 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    this->csv1.selected.resize( this->csv1.selected.size() );
    this->csv1.open.resize( this->csv1.open.size() );
    csv_setup_keys( this->csv1 );
+   selection_since_count_csv1 = true;
+   selection_since_count_csv2 = true;
    update_enables();
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT" );
@@ -449,7 +451,8 @@ void US_Hydrodyn_Pdb_Tool::save()
 
 void US_Hydrodyn_Pdb_Tool::update_enables_csv()
 {
-   bool any_csv_selected = any_selected( lv_csv );
+   bool any_csv_selected  = any_selected( lv_csv );
+   bool any_csv2_selected = any_selected( lv_csv2 );
 
    pb_csv_load      ->setEnabled( false );
    pb_csv_visualize ->setEnabled( false );
@@ -458,12 +461,14 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_cut       ->setEnabled( any_csv_selected );
    pb_csv_copy      ->setEnabled( any_csv_selected );
    pb_csv_paste     ->setEnabled( csv_clipboard.data.size() );
-   pb_csv_merge     ->setEnabled( false );
+   pb_csv_merge     ->setEnabled( any_csv_selected && merge_ok() );
+   pb_csv2_merge    ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv_reseq     ->setEnabled( csv1.data.size() );
 }
 
 void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
 {
+   bool any_csv_selected  = any_selected( lv_csv );
    bool any_csv2_selected = any_selected( lv_csv2 );
 
    pb_csv2_load      ->setEnabled( false );
@@ -473,7 +478,8 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_cut       ->setEnabled( any_csv2_selected );
    pb_csv2_copy      ->setEnabled( any_csv2_selected );
    pb_csv2_paste     ->setEnabled( csv_clipboard.data.size() );
-   pb_csv2_merge     ->setEnabled( false );
+   pb_csv_merge      ->setEnabled( any_csv_selected && merge_ok() );
+   pb_csv2_merge     ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv2_reseq     ->setEnabled( csv2.data.size() );
 }
 
@@ -532,7 +538,13 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
 {
    // lv_csv_undo.push_back( *lv_csv );
    csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
-   csv_clipboard = ( to_csv( lv_csv, csv1, true ) );
+   csv_copy();
+   if ( !csv1.name.contains(QRegExp("^edit of")) )
+   {
+      csv1.name = "edit of " + csv1.name;
+      lbl_csv->setText( csv1.name );
+   }
+
    QListViewItemIterator it( lv_csv );
    while ( it.current() ) {
       if ( lv_csv->isSelected( it.current() ) )
@@ -541,12 +553,14 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
       }
       ++it;
    }
+   selection_since_count_csv1 = true;
    update_enables();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_copy()
 {
-   csv_clipboard = ( to_csv( lv_csv, csv1, true ) );
+   csv_clipboard = to_csv( lv_csv, csv1, true );
+   csv_clipboard.name = "selection of " + csv_clipboard.name;
    update_enables();
 }
 
@@ -578,6 +592,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_dup()
 {
    csv2_undos.push_back( to_csv( lv_csv2, csv2, false ) );
    csv2 = to_csv( lv_csv, csv1 );
+   csv2.name = "duplicate of " + csv2.name;
    csv_to_lv( csv2, lv_csv2 );
    update_enables_csv2();
 }
@@ -599,7 +614,12 @@ void US_Hydrodyn_Pdb_Tool::csv2_cut()
 {
    // lv_csv2_undo.push_back( *lv_csv2 );
    csv2_undos.push_back( to_csv( lv_csv2, csv2, false ) );
-   csv_clipboard = ( to_csv( lv_csv2, csv2, true ) );
+   csv2_copy();
+   if ( !csv2.name.contains(QRegExp("^edit of")) )
+   {
+      csv2.name = "edit of " + csv2.name;
+      lbl_csv2->setText( csv2.name );
+   }
    QListViewItemIterator it( lv_csv2 );
    while ( it.current() ) {
       if ( lv_csv2->isSelected( it.current() ) )
@@ -608,12 +628,14 @@ void US_Hydrodyn_Pdb_Tool::csv2_cut()
       }
       ++it;
    }
+   selection_since_count_csv2 = true;
    update_enables_csv2();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_copy()
 {
-   csv_clipboard = ( to_csv( lv_csv2, csv2, true ) );
+   csv_clipboard = to_csv( lv_csv2, csv2, true );
+   csv_clipboard.name = "selection of " + csv_clipboard.name;
    update_enables();
 }
 
@@ -643,21 +665,61 @@ void US_Hydrodyn_Pdb_Tool::adjust_wheel( double )
 
 unsigned int US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
 {
+   bool lv_is_csv = ( lv == lv_csv );
+
+   if ( lv_is_csv && !selection_since_count_csv1 )
+   {
+      return last_count_csv1;
+   }
+   if ( !lv_is_csv && !selection_since_count_csv2 )
+   {
+      return last_count_csv2;
+   }
    unsigned int number_selected = 0;
+   if ( lv_is_csv )
+   {
+      csv_selected_element_counts.clear();
+   } else {
+      csv2_selected_element_counts.clear();
+   }
+   
    QListViewItemIterator it( lv );
    while ( it.current() ) {
-      // QListViewItem *item = it.current();
-      if ( it.current()->isSelected() )
+      QListViewItem *item = it.current();
+      if ( !item->childCount() && is_selected( item ) )
       {
          number_selected++;
+         if ( lv_is_csv )
+         {
+            csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+         } else {
+            csv2_selected_element_counts[ csv2.data[ csv2.key[ key( item ) ] ][ 13 ] ]++;
+         }
       }
       ++it;
+   }
+   if ( lv_is_csv )
+   {
+      selection_since_count_csv1 = false;
+      last_count_csv1 = number_selected;
+   } else {
+      selection_since_count_csv2 = false;
+      last_count_csv2 = number_selected;
    }
    return number_selected;
 }
 
 bool US_Hydrodyn_Pdb_Tool::any_selected( QListView *lv )
 {
+   if ( lv == lv_csv && !selection_since_count_csv1 )
+   {
+      return last_count_csv1 != 0;
+   }
+   if ( lv == lv_csv2 && !selection_since_count_csv2 )
+   {
+      return last_count_csv2 != 0;
+   }
+
    QListViewItemIterator it( lv );
    while ( it.current() ) {
       // QListViewItem *item = it.current();
@@ -673,12 +735,14 @@ bool US_Hydrodyn_Pdb_Tool::any_selected( QListView *lv )
 void US_Hydrodyn_Pdb_Tool::csv_selection_changed()
 {
    // csv_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv ) ) );
+   selection_since_count_csv1 = true;
    update_enables_csv();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_selection_changed()
 {
    // csv2_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv2 ) ) );
+   selection_since_count_csv2 = true;
    update_enables_csv2();
 }
 
@@ -686,7 +750,11 @@ csv US_Hydrodyn_Pdb_Tool::to_csv( QListView *lv, csv &ref_csv, bool only_selecte
 {
    QListViewItemIterator it( lv );
    csv csv1;
-   csv1.header = ref_csv.header;
+   csv1.header        = ref_csv.header;
+   csv1.name          = ref_csv.name;
+   csv1.filename      = ref_csv.filename;
+   csv1.title_text    = ref_csv.title_text;
+   csv1.header_text   = ref_csv.header_text;
 
    while ( it.current() ) {
       QListViewItem *item = it.current();
@@ -966,4 +1034,37 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
       }
    }
    lv->setCurrentItem( current );
+
+   if ( lv == lv_csv )
+   {
+      lbl_csv->setText( csv1.name );
+      selection_since_count_csv1 = true;
+   } else {
+      lbl_csv2->setText( csv1.name );
+      selection_since_count_csv2 = true;
+   }
+}
+
+bool US_Hydrodyn_Pdb_Tool::merge_ok()
+{
+   unsigned int sel1 = count_selected( lv_csv );
+   unsigned int sel2 = count_selected( lv_csv2 );
+   if ( !sel1 || sel1 != sel2 )
+   {
+      return false;
+   }
+
+   // make sure elements match
+   for ( map < QString, unsigned int >::iterator it = csv_selected_element_counts.begin();
+         it != csv_selected_element_counts.end();
+         it++ )
+   {
+      if ( !csv2_selected_element_counts.count( it->first ) ||
+           it->second != csv2_selected_element_counts[ it->first ] )
+      {
+         return false;
+      }
+   }
+
+   return true;
 }

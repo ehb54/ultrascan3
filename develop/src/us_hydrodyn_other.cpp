@@ -509,6 +509,9 @@ int US_Hydrodyn::read_pdb(const QString &filename)
 
    if (f.open(IO_ReadOnly))
    {
+      last_pdb_header = "";
+      last_pdb_title = "";
+      last_pdb_filename = f.name();
       QTextStream ts(&f);
       while (!ts.atEnd())
       {
@@ -530,8 +533,15 @@ int US_Hydrodyn::read_pdb(const QString &filename)
          if ( str1.left(6) == "HEADER" ||
               str1.left(5) == "TITLE" )
          {
+               
             QString tmp_str = str1.mid(10,62);
             tmp_str.replace(QRegExp("\\s+")," ");
+            if ( str1.left(5) == "TITLE" )
+            {
+               last_pdb_title += tmp_str + "\n";
+            } else {
+               last_pdb_header += tmp_str + "\n";
+            }
             QColor save_color = editor->color();
             editor->setColor("dark green");
             editor->append(QString("PDB %1: %2").arg(str1.left(6)).arg(tmp_str));
@@ -5631,6 +5641,11 @@ csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
 {
    csv csv1;
    
+   csv1.name = last_pdb_filename;
+   csv1.filename = last_pdb_filename;
+   csv1.title_text = last_pdb_title;
+   csv1.header_text = last_pdb_header;
+
    csv1.header.push_back("Model");
    csv1.header.push_back("Chain");
    csv1.header.push_back("Residue");
