@@ -36,14 +36,31 @@ using namespace std;
 struct csv
 {
    QString name;
-   
-   map < QString, int >          header_map;       // maps column names to positions
-   
-   vector < QString >            header;           // the first csv row
-   vector < vector < QString > > data;             // the entire csv past the first row
-   vector < vector < double > >  num_data;         // toDoubles of the csv file
 
-   vector < QString >            prepended_names;  // list of "model names" with QFileInfo(name).baseName(true): 
+   map < QString, int >             header_map;       // maps column names to positions
+   
+   vector < QString >               header;           // the first csv row
+   vector < vector < QString > >    data;             // the entire csv past the first row
+   vector < vector < double > >     num_data;         // toDoubles of the csv file
+
+   vector < QString >               prepended_names;  // list of "model names" with QFileInfo(name).baseName(true): 
+
+   // for pdb_tool:
+
+   QString header_text;
+   QString title_text;
+   
+   map    < QString, unsigned int > key;              // used to map keys to data rows
+   vector < bool >                  visible;
+   vector < bool >                  selected;
+   vector < bool >                  open;
+
+   map    < QString, unsigned int > nd_key;            // used to map parents of data items to below
+   vector < bool >                  nd_visible;
+   vector < bool >                  nd_selected;
+   vector < bool >                  nd_open;
+
+   QString                          current_item_key; 
 };
 
 #include "../include/us_hydrodyn_csv_viewer.h"

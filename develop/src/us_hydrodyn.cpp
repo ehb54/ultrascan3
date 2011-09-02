@@ -41,7 +41,7 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
-// #define USE_H
+#define USE_H
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -495,6 +495,12 @@ void US_Hydrodyn::setupGUI()
    pb_view_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
 
+   pb_pdb_tool = new QPushButton(tr("PDB Editor"), this);
+   pb_pdb_tool->setMinimumHeight(minHeight1);
+   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_tool->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
+
    lb_model = new QListBox(this, "model selection listbox" );
    lb_model->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -846,7 +852,10 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_model, j, 0);
    background->addMultiCellWidget(lb_model, j, j+4, 1, 1);
    j++;
-   background->addWidget(pb_view_pdb, j, 0);
+   QHBoxLayout *hbl_pdb = new QHBoxLayout(0);
+   hbl_pdb->addWidget(pb_view_pdb);
+   hbl_pdb->addWidget(pb_pdb_tool);
+   background->addLayout(hbl_pdb, j, 0);
    j++;
    QHBoxLayout *hbl_pdb_saxs = new QHBoxLayout;
    hbl_pdb_saxs->addWidget(pb_pdb_saxs);

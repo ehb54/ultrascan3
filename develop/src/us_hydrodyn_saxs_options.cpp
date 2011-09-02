@@ -2019,7 +2019,7 @@ void US_Hydrodyn_SaxsOptions::update_hybrid2_q_points(double val)
 
 void US_Hydrodyn_SaxsOptions::update_steric_clash_distance(double val)
 {
-   (*saxs_options).steric_clash_distance = (unsigned int) val;
+   (*saxs_options).steric_clash_distance = val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

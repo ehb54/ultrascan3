@@ -54,6 +54,7 @@
 #include "us_hydrodyn_bd.h"
 #include "us_hydrodyn_batch_movie_opts.h"
 #include "us_hydrodyn_comparative.h"
+#include "us_hydrodyn_pdb_tool.h"
 #include "us_saxs_util.h"
 
 //standard C and C++ defs:
@@ -291,6 +292,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_somo;
       QPushButton *pb_visualize;
       QPushButton *pb_view_pdb;
+      QPushButton *pb_pdb_tool;
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_show_hydro_results;
@@ -626,6 +628,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       unsigned int number_of_active_beads    ( vector < PDB_atom > &bead_model );
       bool         radii_all_equal           ( vector < PDB_atom > &bead_model );
 
+      csv          pdb_to_csv  ( vector < PDB_model > &model );
+      void         save_pdb_csv( csv &csv1 );
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file
@@ -719,6 +724,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_grid(); // show grid options
       void show_advanced_config();
       void view_pdb(); // show pdb file in editor
+      void pdb_tool(); // run pdb tool on current model
       void pdb_parsing(); // pdb parsing options
       void pdb_visualization(); // pdb visualization options
       void view_asa(); // show asa file in editor

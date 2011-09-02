@@ -5625,3 +5625,128 @@ void US_Hydrodyn::rescale_bead_model()
       }
    }
 }
+
+
+csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
+{
+   csv csv1;
+   
+   csv1.header.push_back("Model");
+   csv1.header.push_back("Chain");
+   csv1.header.push_back("Residue");
+   csv1.header.push_back("Residue Number");
+   csv1.header.push_back("Atom");
+   csv1.header.push_back("Atom Number");
+   csv1.header.push_back("Alt");
+   csv1.header.push_back("iC");
+   csv1.header.push_back("X");
+   csv1.header.push_back("Y");
+   csv1.header.push_back("Z");
+   csv1.header.push_back("Occ");
+   csv1.header.push_back("TF");
+   csv1.header.push_back("Ele");
+   // csv1.header.push_back("Charge");
+   // csv1.header.push_back("Accessibility");
+
+   for (unsigned int i = 0; i < model_vector.size(); i++)
+   {
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+      {
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+         {
+            vector < QString > data;
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            
+            data.push_back( QString("%1").arg( i + 1 ) );
+            data.push_back( this_atom->chainID );
+            data.push_back( this_atom->resName );
+            data.push_back( this_atom->resSeq );
+            data.push_back( this_atom->name );
+            data.push_back( QString("%1").arg( this_atom->serial ) );
+            data.push_back( this_atom->altLoc );
+            data.push_back( this_atom->iCode );
+            data.push_back( QString("%1").arg( this_atom->coordinate.axis[ 0 ] ) );
+            data.push_back( QString("%1").arg( this_atom->coordinate.axis[ 1 ] ) );
+            data.push_back( QString("%1").arg( this_atom->coordinate.axis[ 2 ] ) );
+            data.push_back( QString("%1").arg( this_atom->occupancy ) );
+            data.push_back( QString("%1").arg( this_atom->tempFactor ) );
+            data.push_back( this_atom->element );
+            // data.push_back( this_atom->charge );
+            // data.push_back( QString("%1").arg( this_atom->accessibility ) );
+
+            csv1.data.push_back( data );
+         }
+      }
+   }
+   return csv1;
+}
+
+void US_Hydrodyn::save_pdb_csv( csv &csv1 )
+{
+
+   QString use_dir = 
+      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "structures";
+   QString filename = QFileDialog::getSaveFileName(
+                                                   use_dir,
+                                                   "*.pdc *.pdc",
+                                                   this,
+                                                   "save file dialog",
+                                                   tr("Choose a filename to save the pdc") );
+
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !filename.contains(QRegExp(".pdc$",false)) )
+   {
+      filename += ".pdc";
+   }
+
+   if ( QFile::exists(filename) )
+   {
+      filename = fileNameCheck(filename);
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+      return;
+   }
+
+   QTextStream t( &f );
+
+   QString qs;
+
+   for ( unsigned int i = 0; i < csv1.header.size(); i++ )
+   {
+      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv1.header[i]);
+   }
+
+   t << qs << endl;
+
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      qs = "";
+      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      {
+         qs += QString("%1%2").arg(j ? "," : "").arg(csv1.data[i][j]);
+      }
+      t << qs << endl;
+   }
+   f.close();
+}
+
+void US_Hydrodyn::pdb_tool()
+{
+   csv csv1 = pdb_to_csv( model_vector );
+   // save_pdb_csv( csv1 );
+   US_Hydrodyn_Pdb_Tool 
+      *pdb_tool_window =
+      new US_Hydrodyn_Pdb_Tool( csv1, this );
+   pdb_tool_window->show();
+}
