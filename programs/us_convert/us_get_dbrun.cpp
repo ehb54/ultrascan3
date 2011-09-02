@@ -86,6 +86,10 @@ US_GetDBRun::US_GetDBRun( QString& r )
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
    buttons->addWidget( pb_cancel );
 
+   QPushButton* pb_delete = us_pushbutton( tr( "Delete" ) );
+   connect( pb_delete, SIGNAL( clicked() ), SLOT( deleteRun() ) );
+   buttons->addWidget( pb_delete );
+
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
    buttons->addWidget( pb_accept );
@@ -160,4 +164,81 @@ void US_GetDBRun::select( void )
 
    runID = tw ->item( ndx, 2 )->text();
    accept();
+}
+
+// Function to delete the highlighted run when delete button is pressed
+void US_GetDBRun::deleteRun( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "Error making the DB connection.\n" ) );
+      return;
+   }
+
+   int status = QMessageBox::information( this,
+      tr( "Warning" ),
+      tr( "Are you sure you want to delete this run from the DB? " ) +
+      tr( "This action is not reversible. Proceed? "               ),
+      tr( "&OK" ), tr( "&Cancel" ),
+      0, 0, 1 );
+   if ( status != 0 ) return;
+
+   int ndx = tw ->currentRow();
+   QString expID = tw ->item( ndx, 0 )->text();
+
+   // Let's make sure it's not a calibration experiment in use
+   QStringList q( "count_calibration_experiments " );
+   q << expID;
+   int count = db.functionQuery( q );
+
+   if ( count < 0 )
+   {
+      qDebug() << "count_calibration_experiments( "
+               << expID
+               << " ) returned a negative count";
+      return;
+   }
+
+   else if ( count > 0 )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot delete an experiment that is associated "
+                "with a rotor calibration\n" ) );
+      return;
+   }
+
+   tw->removeRow( ndx );
+
+   // Delete links between experiment and solutions
+   q.clear();
+   q << "delete_experiment_solutions"
+     << expID ;
+   status = db.statusQuery( q );
+
+   // Same with cell table
+   q.clear();
+   q  << "delete_cell_experiments"
+      << expID ;
+   status = db.statusQuery( q );
+
+   // Now delete the experiment and all existing rawData, 
+   // because we're starting over 
+   q.clear();
+   q << "delete_experiment"
+     << expID ;
+   status = db.statusQuery( q );
+
+   if ( status != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            db.lastError() + " (" + status + ")\n" );
+   }
 }

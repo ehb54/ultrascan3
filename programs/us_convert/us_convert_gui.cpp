@@ -65,30 +65,30 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    if ( DB.isEmpty() ) DB << "Undefined";
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-   settings->addWidget( lb_DB, row++, 0, 1, 3 );
+   settings->addWidget( lb_DB, row++, 0, 1, 4 );
 
    // Investigator
    if ( US_Settings::us_inv_level() > 2 )
    {
       QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
       connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-      settings->addWidget( pb_investigator, row, 0 );
+      settings->addWidget( pb_investigator, row, 0, 1, 2 );
    }
    else
    {
       QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
-      settings->addWidget( lb_investigator, row, 0 );
+      settings->addWidget( lb_investigator, row, 0, 1, 2 );
    }
       
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
-   settings->addWidget( le_investigator, row++, 1, 1, 2 );
+   settings->addWidget( le_investigator, row++, 2, 1, 2 );
 
    // Radio buttons
    disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
    connect( disk_controls, SIGNAL( changed       ( bool ) ),
                            SLOT  ( source_changed( bool ) ) );
-   settings->addLayout( disk_controls, row++, 0, 1, 2 );
+   settings->addLayout( disk_controls, row++, 0, 1, 4 );
    save_diskDB = US_Disk_DB_Controls::Default;
 
    // Display Run ID
@@ -105,72 +105,77 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
 
    // Load the run
    QLabel* lb_run = us_banner( tr( "Load the Run" ) );
-   settings->addWidget( lb_run, row++, 0, 1, 2 );
+   settings->addWidget( lb_run, row++, 0, 1, 4 );
 
    // Pushbuttons to load and reload data
    pb_import = us_pushbutton( tr( "Import Legacy Run from HD" ) );
    connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
-   settings->addWidget( pb_import, row, 0 );
+   settings->addWidget( pb_import, row, 0, 1, 2 );
 
    // External program to enter experiment information
    pb_editRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
    connect( pb_editRuninfo, SIGNAL( clicked() ), SLOT( editRuninfo() ) );
-   settings->addWidget( pb_editRuninfo, row++, 1 );
+   settings->addWidget( pb_editRuninfo, row++, 2, 1, 2 );
    pb_editRuninfo->setEnabled( false );
 
    // load US3 data ( that perhaps has been done offline )
    pb_loadUS3 = us_pushbutton( tr( "Load US3 Run" ), true );
    connect( pb_loadUS3, SIGNAL( clicked() ), SLOT( loadUS3() ) );
-   settings->addWidget( pb_loadUS3, row, 0 );
+   settings->addWidget( pb_loadUS3, row, 0, 1, 2 );
 
    // Run details
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
-   settings->addWidget( pb_details, row++, 1 );
+   settings->addWidget( pb_details, row++, 2, 1, 2 );
 
    // Set the wavelength tolerance for c/c/w determination
-   QLabel* lb_tolerance = us_label( tr( "Dataset Separation Tolerance:" ) );
-   settings->addWidget( lb_tolerance, row, 0 );
+   QLabel* lb_tolerance = us_label( tr( "Separation Tolerance:" ) );
+   settings->addWidget( lb_tolerance, row, 0, 1, 2 );
 
    ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
    ct_tolerance->setStep( 1 );
    ct_tolerance->setMinimumWidth( 160 );
-   settings->addWidget( ct_tolerance, row++, 1 );
+   settings->addWidget( ct_tolerance, row++, 2, 1, 2 );
    // connect whenever the user has changed it
    connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),
                           SLOT  ( toleranceValueChanged( double ) ) );
 
    // Change Run ID
+   QGridLayout* textBoxes = new QGridLayout();
+
    QLabel* lb_runID2 = us_label( tr( "Run ID:" ) );
-   settings->addWidget( lb_runID2, row, 0 );
+   textBoxes->addWidget( lb_runID2, row, 0 );
 
    le_runID2 = us_lineedit( "", 1 );
    le_runID2 ->setMinimumWidth( 225 );
-   settings->addWidget( le_runID2, row++, 1 );
+   textBoxes->addWidget( le_runID2, row++, 1, 1, 3 );
 
    // Directory
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
-   settings->addWidget( lb_dir, row++, 0, 1, 2 );
+   textBoxes->addWidget( lb_dir, row, 0 );
 
    le_dir = us_lineedit( "", 1 );
-   settings->addWidget( le_dir, row++, 0, 1, 2 );
+   textBoxes->addWidget( le_dir, row++, 1, 1, 3 );
    le_dir ->setPalette ( gray );
    le_dir ->setReadOnly( true );
 
    // Description
    lb_description = us_label( tr( "Description:" ), -1 );
-   settings->addWidget( lb_description, row++, 0, 1, 2 );
+   lb_description ->setMaximumWidth( 175 );
+   textBoxes->addWidget( lb_description, row, 0 );
 
    le_description = us_lineedit( "", 1 );
    connect( le_description, SIGNAL( editingFinished   () ),
                             SLOT  ( changeDescription () ) );
-   settings->addWidget( le_description, row++, 0, 1, 2 );
+   textBoxes->addWidget( le_description, row++, 1, 1, 3 );
+
+   settings->addLayout( textBoxes, row++, 0, 1, 4 );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw = new QGridLayout();
 
    lb_triple = us_banner( tr( "Cell / Channel / Wavelength" ), -1 );
-   ccw->addWidget( lb_triple, row++, 0, 1, 3 );
+   ccw->addWidget( lb_triple, row++, 0, 1, 4 );
 
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
@@ -180,7 +185,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ccw->addWidget( lw_triple, row, 0, 6, 1 );
 
    QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
-   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 2 );
+   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 4 );
 
    // Set up centerpiece drop-down
    cb_centerpiece = new US_SelectBox( this );
@@ -188,7 +193,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    cb_centerpiece -> load();
    connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
-   ccw->addWidget( cb_centerpiece, row++, 1, 1, 2 );
+   ccw->addWidget( cb_centerpiece, row++, 1, 1, 3 );
 
    // External program to enter solution information
    pb_solution = us_pushbutton( tr( "Manage Solutions" ), false );
@@ -233,60 +238,58 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    le_solutionDesc = us_lineedit( "", 1 );
    le_solutionDesc ->setPalette ( gray );
    le_solutionDesc ->setReadOnly( true );
-   ccw->addWidget( le_solutionDesc, row++, 1, 1, 2 );
+   ccw->addWidget( le_solutionDesc, row++, 1, 1, 3 );
 
-   settings->addLayout( ccw, row++, 0, 1, 2 );
+   settings->addLayout( ccw, row++, 0, 1, 4 );
 
    // Scan Controls
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   settings->addWidget( lb_scan, row++, 0, 1, 2 );
+   settings->addWidget( lb_scan, row++, 0, 1, 4 );
 
    // Scan focus from
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   settings->addWidget( lb_from, row, 0 );
+   settings->addWidget( lb_from, row, 0, 1, 2 );
 
    ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
-   settings->addWidget( ct_from, row++, 1 );
+   settings->addWidget( ct_from, row++, 2, 1, 2 );
 
    // Scan focus to
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   settings->addWidget( lb_to, row, 0 );
+   settings->addWidget( lb_to, row, 0, 1, 2 );
 
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
-   settings->addWidget( ct_to, row++, 1 );
+   settings->addWidget( ct_to, row++, 2, 1, 2 );
 
    // Exclude and Include pushbuttons
    pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
-   settings->addWidget( pb_exclude, row, 0 );
+   settings->addWidget( pb_exclude, row, 0, 1, 2 );
 
    pb_include = us_pushbutton( tr( "Include All" ), false );
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   settings->addWidget( pb_include, row++, 1 );
+   settings->addWidget( pb_include, row++, 2, 1, 2 );
    pb_include ->setEnabled( false );
 
    // Standard pushbuttons
-   QBoxLayout* buttons = new QHBoxLayout;
-
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
-   buttons->addWidget( pb_reset );
+   settings->addWidget( pb_reset, row, 0 );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   buttons->addWidget( pb_help );
+   settings->addWidget( pb_help, row, 1 );
 
    pb_saveUS3 = us_pushbutton( tr( "Save" ) );
    connect( pb_saveUS3, SIGNAL( clicked() ), SLOT( saveUS3() ) );
-   buttons->addWidget( pb_saveUS3 );
+   settings->addWidget( pb_saveUS3, row, 2 );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-   buttons->addWidget( pb_close );
+   settings->addWidget( pb_close, row++, 3 );
 
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
@@ -324,7 +327,6 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    QVBoxLayout* left     = new QVBoxLayout;
 
    left->addLayout( settings );
-   left->addLayout( buttons );
    
    QVBoxLayout* right    = new QVBoxLayout;
    
@@ -1994,6 +1996,7 @@ void US_ConvertGui::saveUS3( void )
 
    else
       saveUS3Disk();
+
 }
 
 int US_ConvertGui::saveUS3Disk( void )
@@ -2171,6 +2174,31 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
+   // Ok, let's make sure they know what'll happen
+   if ( saveStatus == BOTH )
+   {
+     int status = QMessageBox::information( this,
+              tr( "Warning" ),
+              tr( "This will overwrite the raw data currently in the " ) +
+              tr( "database, and all existing edit profiles, models "  ) +
+              tr( "and noise data will be deleted too. Proceed? "      ),
+              tr( "&OK" ), tr( "&Cancel" ),
+              0, 0, 1 );
+     if ( status != 0 ) return;
+   }
+
+   else
+   {
+     int status = QMessageBox::information( this,
+              tr( "Warning" ),
+              tr( "Once this data is written to the DB you will not "  ) +
+              tr( "be able to make changes to it without erasing the " ) +
+              tr( "edit profiles, models and noise files too. Proceed? " ),
+              tr( "&OK" ), tr( "&Cancel" ),
+              0, 0, 1 );
+     if ( status != 0 ) return;
+   }
+
    // First check some of the data with the DB
    int status = US_ConvertIO::checkDiskData( ExpData, triples, &db );
 
@@ -2295,6 +2323,11 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
+   // If the data came from the database in the first place,
+   // then this function erases all the edit profiles, models 
+   // and noise files in the database too. However, if one
+   // changes most of the things here ( solution, rotor, etc. )
+   // it would invalidate the data anyway.
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir, &db );
    QApplication::restoreOverrideCursor();

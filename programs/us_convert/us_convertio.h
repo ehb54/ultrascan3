@@ -31,6 +31,17 @@ class US_ConvertIO
                                        QString,
                                        US_DB2* = 0 );
 
+      /*! \brief Writes a new DB rawData record for each triple
+
+          \param ExpData A reference to a structure provided by the calling function
+                         that contains the hardware and other database
+                         connection information provided by the xml file.
+          \param triples A reference to a structure provided by the calling
+                         function that contains all the different
+                         cell/channel/wavelength defined by the xml file.
+          \param dir     Local disk directory where auc files can be found
+          \param db      An open db connection
+      */
       static QString writeRawDataToDB(
                  US_Experiment& , 
                  QList< US_Convert::TripleInfo >& ,
