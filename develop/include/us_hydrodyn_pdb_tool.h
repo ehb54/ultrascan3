@@ -127,7 +127,11 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          list_csv_keys   ( csv &csv1 );
       csv           csv_clipboard;
 
-      bool          merge_ok();
+      bool          merge_ok        ();
+      
+      QString       csv_to_pdb      ( csv &csv1 );
+
+      void          visualize       ( QListView *lv );
 
    private slots:
       

@@ -509,8 +509,8 @@ int US_Hydrodyn::read_pdb(const QString &filename)
 
    if (f.open(IO_ReadOnly))
    {
-      last_pdb_header = "";
-      last_pdb_title = "";
+      last_pdb_header.clear();
+      last_pdb_title .clear();
       last_pdb_filename = f.name();
       QTextStream ts(&f);
       while (!ts.atEnd())
@@ -538,9 +538,9 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             tmp_str.replace(QRegExp("\\s+")," ");
             if ( str1.left(5) == "TITLE" )
             {
-               last_pdb_title += tmp_str + "\n";
+               last_pdb_title << tmp_str;
             } else {
-               last_pdb_header += tmp_str + "\n";
+               last_pdb_header << tmp_str;
             }
             QColor save_color = editor->color();
             editor->setColor("dark green");
@@ -5641,9 +5641,9 @@ csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
 {
    csv csv1;
    
-   csv1.name = last_pdb_filename;
-   csv1.filename = last_pdb_filename;
-   csv1.title_text = last_pdb_title;
+   csv1.name        = last_pdb_filename;
+   csv1.filename    = last_pdb_filename;
+   csv1.title_text  = last_pdb_title;
    csv1.header_text = last_pdb_header;
 
    csv1.header.push_back("Model");
@@ -5676,7 +5676,7 @@ csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
             data.push_back( this_atom->chainID );
             data.push_back( this_atom->resName );
             data.push_back( this_atom->resSeq );
-            data.push_back( this_atom->name );
+            data.push_back( this_atom->orgName );
             data.push_back( QString("%1").arg( this_atom->serial ) );
             data.push_back( this_atom->altLoc );
             data.push_back( this_atom->iCode );

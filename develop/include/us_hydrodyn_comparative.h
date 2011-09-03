@@ -47,9 +47,9 @@ struct csv
 
    // for pdb_tool:
 
-   QString filename;
-   QString header_text;
-   QString title_text;
+   QString                          filename;
+   QStringList                      header_text;
+   QStringList                      title_text;
    
    map    < QString, unsigned int > key;              // used to map keys to data rows
    vector < bool >                  visible;

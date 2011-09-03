@@ -82,6 +82,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Misc;
+      friend class US_Hydrodyn_Pdb_Tool;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -631,9 +632,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       csv          pdb_to_csv  ( vector < PDB_model > &model );
       void         save_pdb_csv( csv &csv1 );
 
-      QString      last_pdb_title;
-      QString      last_pdb_header;
       QString      last_pdb_filename;
+      QStringList  last_pdb_title;
+      QStringList  last_pdb_header;
 
    public:
 

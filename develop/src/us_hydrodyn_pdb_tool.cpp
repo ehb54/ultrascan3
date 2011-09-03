@@ -455,8 +455,8 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    bool any_csv2_selected = any_selected( lv_csv2 );
 
    pb_csv_load      ->setEnabled( false );
-   pb_csv_visualize ->setEnabled( false );
-   pb_csv_save      ->setEnabled( false );
+   pb_csv_visualize ->setEnabled( csv1.data.size() );
+   pb_csv_save      ->setEnabled( csv1.data.size() );
    pb_csv_undo      ->setEnabled( csv_undos.size() );
    pb_csv_cut       ->setEnabled( any_csv_selected );
    pb_csv_copy      ->setEnabled( any_csv_selected );
@@ -472,7 +472,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    bool any_csv2_selected = any_selected( lv_csv2 );
 
    pb_csv2_load      ->setEnabled( false );
-   pb_csv2_visualize ->setEnabled( false );
+   pb_csv2_visualize ->setEnabled( csv1.data.size() );
    pb_csv2_dup       ->setEnabled( csv1.data.size() );
    pb_csv2_undo      ->setEnabled( csv2_undos.size() );
    pb_csv2_cut       ->setEnabled( any_csv2_selected );
@@ -519,6 +519,49 @@ void US_Hydrodyn_Pdb_Tool::csv_load()
 
 void US_Hydrodyn_Pdb_Tool::csv_save()
 {
+   QString use_dir = 
+      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
+      ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
+      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+
+   QString filename = QFileDialog::getSaveFileName(
+                                                   use_dir,
+                                                   "*.pdb *.PDB",
+                                                   this,
+                                                   "save file dialog",
+                                                   tr("Choose a filename to save the pdb") );
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !filename.contains(QRegExp(".pdb$",false)) )
+   {
+      filename += ".pdb";
+   }
+
+   if ( QFile::exists(filename) )
+   {
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+      return;
+   }
+
+   QTextStream t( &f );
+
+   csv csv_to_save = to_csv( lv_csv, csv1 );
+
+   t << csv_to_pdb( csv_to_save );
+   
+   f.close();
+   csv_msg("black", QString("File %1 written\n").arg( filename ) );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_undo()
@@ -582,6 +625,7 @@ void US_Hydrodyn_Pdb_Tool::csv_reseq()
 
 void US_Hydrodyn_Pdb_Tool::csv_visualize()
 {
+   visualize( lv_csv );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_load()
@@ -657,6 +701,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_reseq()
 
 void US_Hydrodyn_Pdb_Tool::csv2_visualize()
 {
+   visualize( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::adjust_wheel( double )
@@ -1067,4 +1112,88 @@ bool US_Hydrodyn_Pdb_Tool::merge_ok()
    }
 
    return true;
+}
+
+QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1 )
+{
+   QString s;
+
+   for ( unsigned int i = 0; i < csv1.header_text.size(); i++ )
+   {
+      s += QString( "HEADER   %1" + csv1.header_text[ i ] + "\n" )
+         .arg( i ? QString("%1").arg(i + 1) : " " );
+   }
+
+   for ( unsigned int i = 0; i < csv1.title_text.size(); i++ )
+   {
+      s += QString( "TITLE    %1" + csv1.title_text[ i ] + "\n" )
+         .arg( i ? QString("%1").arg(i + 1) : " " );
+   }
+
+   QString last_model = "none";
+
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      QString model      = csv1.data[ i ][ 0 ];
+      
+      if ( last_model != model )
+      {
+         if ( last_model != "none" )
+         {
+            s += "ENDMDL\n";
+         }
+         last_model = model;
+         s += "MODEL " + model + "\n";
+      }         
+
+      s +=
+         QString("")
+         .sprintf(     
+                  "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                  csv1.data[ i ][ 5  ].toUInt(),
+                  csv1.data[ i ][ 4  ].ascii(),
+                  csv1.data[ i ][ 2  ].ascii(),
+                  csv1.data[ i ][ 1  ].ascii(),
+                  csv1.data[ i ][ 3  ].toUInt(),
+                  csv1.data[ i ][ 8  ].toFloat(),
+                  csv1.data[ i ][ 9  ].toFloat(),
+                  csv1.data[ i ][ 10 ].toFloat(),
+                  csv1.data[ i ][ 11 ].toFloat(),
+                  csv1.data[ i ][ 12 ].toFloat(),
+                  csv1.data[ i ][ 13 ].ascii()
+                  );
+   }
+   s += "ENDMDL\nEND\n";
+
+   return s;
+}
+
+void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
+{
+   csv tmp_csv;
+
+   if ( lv == lv_csv )
+   {
+      tmp_csv = to_csv( lv, csv1 );
+   } else {
+      tmp_csv = to_csv( lv, csv2 );
+   }
+
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + QDir::separator();
+
+   unsigned int pos = 0;
+   QString filename1;
+   QString filename2;
+   do {
+      filename1 = QString("%1temp%2.pdb").arg( use_dir ).arg( pos );
+      filename2 = QString("%1temp%2.spt").arg( use_dir ).arg( pos );
+      pos++;
+   } while( QFile::exists( filename1 ) ||
+            QFile::exists( filename2 ) );
+
+   QFile fpdb( filename1 );
+   QFile fspt( filename2 );
+
+   cout << filename1 << endl;
+   cout << filename2 << endl;
 }
