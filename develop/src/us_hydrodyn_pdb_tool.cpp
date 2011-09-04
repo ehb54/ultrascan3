@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 
+#define SLASH QDir::separator()
+
 US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                                                csv csv1,
                                                void *us_hydrodyn, 
@@ -236,6 +238,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_dup->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_dup, SIGNAL(clicked()), SLOT(csv2_dup()));
 
+   pb_csv2_save = new QPushButton(tr("Save"), this);
+   pb_csv2_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_save->setMinimumHeight(minHeight1);
+   pb_csv2_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_save, SIGNAL(clicked()), SLOT(csv2_save()));
+
    pb_csv2_undo = new QPushButton(tr("Undo"), this);
    pb_csv2_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_undo->setMinimumHeight(minHeight1);
@@ -366,6 +374,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_dup );
    hbl_right_buttons_row_1->addSpacing( 2 );
+   hbl_right_buttons_row_1->addWidget( pb_csv2_save );
+   hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_undo );
    
    QBoxLayout *hbl_right_buttons_row_2 = new QHBoxLayout;
@@ -472,8 +482,9 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    bool any_csv2_selected = any_selected( lv_csv2 );
 
    pb_csv2_load      ->setEnabled( false );
-   pb_csv2_visualize ->setEnabled( csv1.data.size() );
+   pb_csv2_visualize ->setEnabled( csv2.data.size() );
    pb_csv2_dup       ->setEnabled( csv1.data.size() );
+   pb_csv2_save      ->setEnabled( csv2.data.size() );
    pb_csv2_undo      ->setEnabled( csv2_undos.size() );
    pb_csv2_cut       ->setEnabled( any_csv2_selected );
    pb_csv2_copy      ->setEnabled( any_csv2_selected );
@@ -519,49 +530,7 @@ void US_Hydrodyn_Pdb_Tool::csv_load()
 
 void US_Hydrodyn_Pdb_Tool::csv_save()
 {
-   QString use_dir = 
-      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
-      ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
-      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
-
-   QString filename = QFileDialog::getSaveFileName(
-                                                   use_dir,
-                                                   "*.pdb *.PDB",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the pdb") );
-   if ( filename.isEmpty() )
-   {
-      return;
-   }
-
-   if ( !filename.contains(QRegExp(".pdb$",false)) )
-   {
-      filename += ".pdb";
-   }
-
-   if ( QFile::exists(filename) )
-   {
-      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
-   }
-
-   QFile f(filename);
-
-   if ( !f.open( IO_WriteOnly ) )
-   {
-      QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %1 for writing!")).arg(filename) );
-      return;
-   }
-
-   QTextStream t( &f );
-
-   csv csv_to_save = to_csv( lv_csv, csv1 );
-
-   t << csv_to_pdb( csv_to_save );
-   
-   f.close();
-   csv_msg("black", QString("File %1 written\n").arg( filename ) );
+   save_csv( lv_csv );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_undo()
@@ -639,6 +608,69 @@ void US_Hydrodyn_Pdb_Tool::csv2_dup()
    csv2.name = "duplicate of " + csv2.name;
    csv_to_lv( csv2, lv_csv2 );
    update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_save()
+{
+   save_csv( lv_csv2 );
+}
+
+void US_Hydrodyn_Pdb_Tool::save_csv( QListView *lv )
+{
+   QString use_dir = 
+      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
+      ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
+      ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+
+   QString filename = QFileDialog::getSaveFileName(
+                                                   use_dir,
+                                                   "*.pdb *.PDB",
+                                                   this,
+                                                   "save file dialog",
+                                                   tr("Choose a filename to save the pdb") );
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !filename.contains(QRegExp(".pdb$",false)) )
+   {
+      filename += ".pdb";
+   }
+
+   if ( QFile::exists(filename) )
+   {
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+      return;
+   }
+
+   QTextStream t( &f );
+
+   csv csv_to_save;
+   if ( lv == lv_csv )
+   {
+      csv_to_save = to_csv( lv_csv, csv1 );
+   } else {
+      csv_to_save = to_csv( lv_csv2, csv2 );
+   }
+
+   t << csv_to_pdb( csv_to_save );
+   
+   f.close();
+   if ( lv == lv_csv )
+   {
+      csv_msg("black", QString("File %1 written\n").arg( filename ) );
+   } else {
+      csv2_msg("black", QString("File %1 written\n").arg( filename ) );
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_undo()
@@ -1182,18 +1214,44 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + QDir::separator();
 
    unsigned int pos = 0;
-   QString filename1;
-   QString filename2;
+   QString filename;
+
    do {
-      filename1 = QString("%1temp%2.pdb").arg( use_dir ).arg( pos );
-      filename2 = QString("%1temp%2.spt").arg( use_dir ).arg( pos );
+      filename = QString("%1temp%2.pdb").arg( use_dir ).arg( pos );
       pos++;
-   } while( QFile::exists( filename1 ) ||
-            QFile::exists( filename2 ) );
+   } while( QFile::exists( filename ) );
 
-   QFile fpdb( filename1 );
-   QFile fspt( filename2 );
+   QFile f( filename );
 
-   cout << filename1 << endl;
-   cout << filename2 << endl;
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+      return;
+   }
+
+   QTextStream t( &f );
+   t << csv_to_pdb( tmp_csv );
+   f.close();
+
+   QProcess *rasmol = new QProcess( this );
+
+   QStringList argument;
+#if !defined(WIN32)
+   argument.append("xterm");
+   argument.append("-e");
+#endif
+#if defined(BIN64)
+   argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
+#else
+   argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
+#endif
+   argument.append( QFileInfo( filename ).fileName() );
+   rasmol->setWorkingDirectory(QFileInfo( filename ).dirPath());
+   rasmol->setArguments(argument);
+   if ( !rasmol->start() )
+   {
+      QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                  "Please check to make sure RASMOL is properly installed..."));
+   }
 }

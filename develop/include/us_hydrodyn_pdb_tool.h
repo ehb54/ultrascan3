@@ -80,6 +80,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_load;
       QPushButton   *pb_csv2_visualize;
       QPushButton   *pb_csv2_dup;
+      QPushButton   *pb_csv2_save;
       QPushButton   *pb_csv2_undo;
       QPushButton   *pb_csv2_cut;
       QPushButton   *pb_csv2_copy;
@@ -130,6 +131,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       bool          merge_ok        ();
       
       QString       csv_to_pdb      ( csv &csv1 );
+      void          save_csv        ( QListView *lv );
 
       void          visualize       ( QListView *lv );
 
@@ -155,6 +157,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_selection_changed();
       void csv2_load();
       void csv2_dup();
+      void csv2_save();
       void csv2_undo();
       void csv2_cut();
       void csv2_copy();
