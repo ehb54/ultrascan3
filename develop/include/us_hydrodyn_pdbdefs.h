@@ -33,6 +33,8 @@ struct rotamer_atom
 {
    QString name;
    point   coordinate;
+   // float   occupancy;
+   // QString tempFactor;
 };
 
 struct rotamer

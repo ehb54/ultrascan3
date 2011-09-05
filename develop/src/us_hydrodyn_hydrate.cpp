@@ -1949,9 +1949,11 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       }
       rotamer_atom ra;
       ra.name = qsl_line[ 2 ];
-      ra.coordinate.axis[ 0 ] = qsl_line[ 6 ].toFloat();
-      ra.coordinate.axis[ 1 ] = qsl_line[ 7 ].toFloat();
-      ra.coordinate.axis[ 2 ] = qsl_line[ 8 ].toFloat();
+      ra.coordinate.axis[ 0 ] = qsl_line[ 6  ].toFloat();
+      ra.coordinate.axis[ 1 ] = qsl_line[ 7  ].toFloat();
+      ra.coordinate.axis[ 2 ] = qsl_line[ 8  ].toFloat();
+      // ra.occupancy            = qsl_line[ 9  ].toFloat();
+      // ra.tempFactor           = qsl_line[ 10 ];
             
       if ( in_rotamer_waters )
       {
@@ -2766,7 +2768,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
-                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00               \n",
+                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
                      this_atom->orgName.ascii(),
                      this_atom->resName.ascii(),
@@ -2774,7 +2776,10 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
-                     this_atom->coordinate.axis[ 2 ]
+                     this_atom->coordinate.axis[ 2 ],
+                     this_atom->occupancy,
+                     this_atom->tempFactor,
+                     this_atom->element.ascii()
                      );
          chains_used[ this_atom->chainID ]++;
 
@@ -2834,7 +2839,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
-                     "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
+                     "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
                      chainID.ascii(),
                      ++residue_number,

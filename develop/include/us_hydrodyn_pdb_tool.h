@@ -46,8 +46,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       ~US_Hydrodyn_Pdb_Tool();
 
    private:
-      csv           csv1;
-      csv           csv2;
 
       void          *us_hydrodyn;
 
@@ -95,8 +93,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
 
-      vector < csv >  csv_undos;
-      vector < csv >  csv2_undos;
+      vector < csv >                csv2;
+      vector < csv >                csv_undos;
+      vector < vector < csv > >     csv2_undos;
 
       map < QString, unsigned int > csv_selected_element_counts;
       map < QString, unsigned int > csv2_selected_element_counts;
@@ -104,6 +103,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      csv           csv1;
+      unsigned int  csv2_pos;
 
       void          update_enables();
       void          update_enables_csv();
@@ -136,6 +137,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          visualize       ( QListView *lv );
 
       void          load            ( QListView *lv );
+
+      void          csv2_redisplay  ( unsigned int pos );
+      void          csv2_push       ( bool save_current = false );
 
    private slots:
       
