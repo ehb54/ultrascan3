@@ -464,7 +464,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    bool any_csv_selected  = any_selected( lv_csv );
    bool any_csv2_selected = any_selected( lv_csv2 );
 
-   pb_csv_load      ->setEnabled( false );
+   pb_csv_load      ->setEnabled( true );
    pb_csv_visualize ->setEnabled( csv1.data.size() );
    pb_csv_save      ->setEnabled( csv1.data.size() );
    pb_csv_undo      ->setEnabled( csv_undos.size() );
@@ -481,7 +481,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    bool any_csv_selected  = any_selected( lv_csv );
    bool any_csv2_selected = any_selected( lv_csv2 );
 
-   pb_csv2_load      ->setEnabled( false );
+   pb_csv2_load      ->setEnabled( true );
    pb_csv2_visualize ->setEnabled( csv2.data.size() );
    pb_csv2_dup       ->setEnabled( csv1.data.size() );
    pb_csv2_save      ->setEnabled( csv2.data.size() );
@@ -526,6 +526,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_msg( QString color, QString msg )
 
 void US_Hydrodyn_Pdb_Tool::csv_load()
 {
+   load( lv_csv );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_save()
@@ -599,6 +600,7 @@ void US_Hydrodyn_Pdb_Tool::csv_visualize()
 
 void US_Hydrodyn_Pdb_Tool::csv2_load()
 {
+   load( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_dup()
@@ -766,11 +768,16 @@ unsigned int US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
       if ( !item->childCount() && is_selected( item ) )
       {
          number_selected++;
-         if ( lv_is_csv )
+         if ( !csv1.key.count( key( item ) ) )
          {
-            csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+            editor_msg( "red", QString( tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
          } else {
-            csv2_selected_element_counts[ csv2.data[ csv2.key[ key( item ) ] ][ 13 ] ]++;
+            if ( lv_is_csv )
+            {
+               csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+            } else {
+               csv2_selected_element_counts[ csv2.data[ csv2.key[ key( item ) ] ][ 13 ] ]++;
+            }
          }
       }
       ++it;
@@ -928,12 +935,15 @@ void US_Hydrodyn_Pdb_Tool::csv_setup_keys( csv &csv1 )
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
+      // cout << QString("csv setup keys %1 data size %2\n").arg( i ).arg( csv1.data[ i ].size() );
+      
       csv1.key[ 
                QString( "%1~%2~%3~%4" )
                .arg( csv1.data[ i ][ 0 ] )
                .arg( csv1.data[ i ][ 1 ] )
                .arg( csv1.data[ i ][ 2 ] + " " + csv1.data[ i ][ 3 ] )
                .arg( csv1.data[ i ][ 4 ] + " " + csv1.data[ i ][ 5 ] ) ] = i;
+
    }
 }
 
@@ -1255,3 +1265,182 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
                                                   "Please check to make sure RASMOL is properly installed..."));
    }
 }
+
+void US_Hydrodyn_Pdb_Tool::load( QListView *lv )
+{
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   QFile f( filename );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   csv new_csv;
+
+   new_csv.name     = filename;
+   new_csv.filename = filename;
+
+   new_csv.header.push_back("Model");
+   new_csv.header.push_back("Chain");
+   new_csv.header.push_back("Residue");
+   new_csv.header.push_back("Residue Number");
+   new_csv.header.push_back("Atom");
+   new_csv.header.push_back("Atom Number");
+   new_csv.header.push_back("Alt");
+   new_csv.header.push_back("iC");
+   new_csv.header.push_back("X");
+   new_csv.header.push_back("Y");
+   new_csv.header.push_back("Z");
+   new_csv.header.push_back("Occ");
+   new_csv.header.push_back("TF");
+   new_csv.header.push_back("Ele");
+   // new_csv.header.push_back("Charge");
+   // new_csv.header.push_back("Accessibility");
+
+   QTextStream ts( &f );
+
+   unsigned int model           = 0;
+   unsigned int line_count      = 0;
+   bool         last_was_ENDMDL = true;
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      line_count++;
+
+      QString left6 = qs.left( 6 ).upper();
+
+      if ( left6 == "TITLE " )
+      {
+         new_csv.title_text << qs.mid( 10 );
+         continue;
+      }
+
+      if ( left6 == "HEADER" )
+      {
+         new_csv.header_text << qs.mid( 10 );
+         continue;
+      }
+
+      if ( left6 == "MODEL " )
+      {
+         model++;
+         last_was_ENDMDL = false;
+         continue;
+      }
+
+      if ( left6 == "ENDMDL" )
+      {
+         last_was_ENDMDL = true;
+         continue;
+      }
+
+      if ( ( left6 == "ATOM  " ||
+             left6 == "HETATM" ) && 
+           last_was_ENDMDL )
+      {
+         model++;
+         last_was_ENDMDL = false;
+      }
+
+      if ( left6 != "ATOM  " && left6 != "HETATM" ) 
+      {
+         // not supporting anything else for now
+         // later we should store, save remarks connct's etc
+         continue;
+      }
+
+      /*
+     http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_11.html
+
+     ATOM record:
+     COLUMNS        DATA TYPE       FIELD         DEFINITION
+     ---------------------------------------------------------------------------------
+     1 -  6        Record name     "ATOM  "
+     7 - 11        Integer         serial        Atom serial number.
+     13 - 16        Atom            name          Atom name. (sometimes starts at 12)
+     17             Character       altLoc        Alternate location indicator.
+     18 - 20        Residue name    resName       Residue name.
+     22             Character       chainID       Chain identifier.
+     23 - 26        Integer         resSeq        Residue sequence number.
+     27             AChar           iCode         Code for insertion of residues.
+     31 - 38        Real(8.3)       x             Orthogonal coordinates for X in Angstroms.
+     39 - 46        Real(8.3)       y             Orthogonal coordinates for Y in Angstroms.
+     47 - 54        Real(8.3)       z             Orthogonal coordinates for Z in Angstroms.
+     55 - 60        Real(6.2)       occupancy     Occupancy.
+     61 - 66        Real(6.2)       tempFactor    Temperature factor.
+     73 - 76        LString(4)      segID         Segment identifier, left-justified.
+     77 - 78        LString(2)      element       Element symbol, right-justified.
+     79 - 80        LString(2)      charge        Charge on the atom.
+      */
+      
+      vector < QString > data;
+
+      data.push_back( QString("%1").arg( model ) );
+      data.push_back( qs.mid( 21 , 1 ) );
+      data.push_back( qs.mid( 17 , 3 ) );
+      data.push_back( qs.mid( 22 , 4 ) );
+      data.push_back( qs.mid( 12 , 4 ) );
+      data.push_back( qs.mid( 6  , 5 ) );
+      data.push_back( qs.mid( 16 , 1 ) );
+      data.push_back( qs.mid( 26 , 1 ) );
+      data.push_back( qs.mid( 30 , 8 ) );
+      data.push_back( qs.mid( 38 , 8 ) );
+      data.push_back( qs.mid( 46 , 8 ) );
+      data.push_back( qs.mid( 54 , 6 ) );
+      data.push_back( qs.mid( 60 , 6 ) );
+      data.push_back( qs.mid( 76 , 2 ).stripWhiteSpace() );
+      // data.push_back( qs.mid( 78 , 2 ) );
+
+      new_csv.data.push_back( data );
+   }
+   f.close();
+
+
+   if ( lv == lv_csv )
+   {
+      if ( csv1.data.size() )
+      {
+         csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
+      }
+      csv1 = new_csv;
+      csv_to_lv( csv1, lv );
+      csv_setup_keys( csv1 );
+   } else {
+      if ( csv2.data.size() )
+      {
+         csv2_undos.push_back( to_csv( lv_csv2, csv2, false ) );
+      }
+      csv2 = new_csv;
+      csv_to_lv( csv2, lv );
+      csv_setup_keys( csv2 );
+   }
+}
+

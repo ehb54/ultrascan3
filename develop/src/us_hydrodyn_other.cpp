@@ -5661,7 +5661,7 @@ csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
    csv1.header.push_back("TF");
    csv1.header.push_back("Ele");
    // csv1.header.push_back("Charge");
-   // csv1.header.push_back("Accessibility");
+   // ?? csv1.header.push_back("Accessibility");
 
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
@@ -5687,7 +5687,7 @@ csv US_Hydrodyn::pdb_to_csv( vector < PDB_model > &model_vector )
             data.push_back( QString("%1").arg( this_atom->tempFactor ) );
             data.push_back( this_atom->element );
             // data.push_back( this_atom->charge );
-            // data.push_back( QString("%1").arg( this_atom->accessibility ) );
+            // ?? data.push_back( QString("%1").arg( this_atom->accessibility ) );
 
             csv1.data.push_back( data );
          }

@@ -40,6 +40,8 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    set_target();
    update_enables();
 
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT" );
+
    global_Xpos += 30;
    global_Ypos += 30;
 

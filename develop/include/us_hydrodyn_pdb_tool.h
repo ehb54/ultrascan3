@@ -135,6 +135,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void          visualize       ( QListView *lv );
 
+      void          load            ( QListView *lv );
+
    private slots:
       
       void setupGUI();
