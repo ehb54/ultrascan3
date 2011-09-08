@@ -251,6 +251,7 @@ int US_LoadableNoise::id_list_db()
       noiMoIDs << db.value( 5 ).toString();
    }
 
+DbgLv(2) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
    query << "get_model_desc" << invID;
@@ -267,6 +268,7 @@ int US_LoadableNoise::id_list_db()
          modEdIDs << db.value( 5 ).toString();
       }
    }
+DbgLv(2) << "LaNoi:idlDB: modDescs size" << modDescs.size();
 
    // Loop through models to edit out any extra monteCarlo models
    for ( int ii = modIDs.size() - 1; ii >=0; ii-- )
@@ -298,7 +300,9 @@ int US_LoadableNoise::id_list_db()
    {
       QString moGUID  = noiMoIDs.at( ii );
       int     jj      = modIDs.indexOf( moGUID );
-      QString edGUID  = modEdIDs.at( jj );
+DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
+
+      QString edGUID  = ( jj < 0 ) ? "" : modEdIDs.at( jj );
 
       noiEdIDs << edGUID;
    }
