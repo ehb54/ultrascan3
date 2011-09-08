@@ -841,8 +841,8 @@ void US_FitMeniscus::remove_models()
       QString tripID     = descript.section( '.', -3, -3 );
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0,  0 );
-//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-// << ii << runID << editLabl << tripID;
+DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
+ << ii << runID << editLabl << tripID;
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
@@ -855,6 +855,7 @@ void US_FitMeniscus::remove_models()
 
       // Probably a file from the right set, but let's check for other sets
       int     arTime     = anRunID .section( '_',  1,  1 ).mid( 1 ).toInt();
+DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
 
       if ( arTime > lArTime )
       {  // If first set or new one younger than previous, start lists
@@ -863,6 +864,7 @@ void US_FitMeniscus::remove_models()
          lmodVaris.clear();
          lmodMenis.clear();
          lmodDescs.clear();
+         lMDescrs .clear();
          lArTime            = arTime;
       }
 
@@ -950,6 +952,7 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
             dmodVaris.clear();
             dmodMenis.clear();
             dmodDescs.clear();
+            dMDescrs .clear();
             dArTime            = arTime;
          }
 
