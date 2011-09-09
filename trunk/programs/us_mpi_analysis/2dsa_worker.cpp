@@ -12,7 +12,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
    while ( repeat_loop )
    {
-      // Use 3 here becasue the master will be reading 3 with the
+      // Use 3 here because the master will be reading 3 with the
       // same instruction when reading ::READY or ::RESULTS.
       int x[ 3 ];
 
@@ -35,6 +35,9 @@ void US_MPI_Analysis::_2dsa_worker( void )
       meniscus_value     = job.meniscus_value;
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
+
+      data_sets[ e ]->run_data.meniscus  = meniscus_value;
+      data_sets[ e ]->simparams.meniscus = meniscus_value;
 
       switch( job.command )
       {
