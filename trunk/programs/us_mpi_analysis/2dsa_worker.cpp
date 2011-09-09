@@ -36,8 +36,8 @@ void US_MPI_Analysis::_2dsa_worker( void )
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
 
-      data_sets[ e ]->run_data.meniscus  = meniscus_value;
-      data_sets[ e ]->simparams.meniscus = meniscus_value;
+      data_sets[ 0 ]->run_data.meniscus  = meniscus_value;
+      data_sets[ 0 ]->simparams.meniscus = meniscus_value;
 
       switch( job.command )
       {
