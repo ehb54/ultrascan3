@@ -33,6 +33,7 @@ class US_FitMeniscus : public US_Widgets
             QString   editID;         // Edit parent DB ID
             QString   editGUID;       // Edit parent GUID
             QString   antime;         // Analysis date & time (yymmddHHMM)
+            QDateTime lmtime;         // Record lastmod date & time
             double    variance;       // Variance value
             double    meniscus;       // Meniscus radius value
 
