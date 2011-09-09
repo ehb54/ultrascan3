@@ -563,6 +563,7 @@ void US_FitMeniscus::scan_dbase()
       double  meniscus   = db.value( 4 ).toString().toDouble();
       QString editGUID   = db.value( 5 ).toString();
       QString editID     = db.value( 6 ).toString();
+      QDateTime lmtime   = db.value( 7 ).toDateTime();
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_',  4,  4 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
@@ -589,6 +590,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          mdescr.meniscus    = meniscus;
          mdescr.antime      = descript.section( '.', -2, -2 )
                               .section( '_',  1,  1 ).mid( 1 );
+         mdescr.lmtime      = lmtime;
 
          mDescrs << mdescr;
       }
@@ -655,21 +657,21 @@ DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
       {  // File exists, so we must check the need to replace it
          QString ftfpath    = rdir + ftfname;
          QDateTime fdate    = QFileInfo( ftfile ).lastModified().toUTC();
-         int       jj       = mfnams.indexOf( ftfname );
-         QString   modelID  = mDescrs[ jj ].modelID;
-         query.clear();
-         query << "get_model_info" << modelID;
-         db.next();
-         QDateTime rdate    = db.value( 6 ).toDateTime().toUTC();
+         int       jj       = mfnams.lastIndexOf( ftfname );
+         QDateTime rdate    = mDescrs[ jj ].lmtime;
+DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate
+ << "   ftfname" << ftfname << " jj" << jj;
+DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
+ << "antime meniscus" << mDescrs[jj].antime << mDescrs[jj].meniscus;
 
-         if ( rdate > fdate )
-         {  // DB record is later than file, so must replace file
+         if ( rdate < fdate )
+         {  // DB record is newer than file, so must replace file
             nfrpls++;
             ftfile.remove();
          }
 
          else
-         {  // DB record is younger than file, so leave file as is;
+         {  // DB record is older than file, so leave file as is;
             nfexss++;
             continue;
          }
@@ -978,6 +980,12 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
 
       ndmods         = dMDescrs.size();
       qSort( dMDescrs );
+
+      if ( dArTime > lArTime )      // Don't count any older group
+         nlmods         = 0;
+      else if ( lArTime > dArTime )
+         ndmods         = 0;
+
 DbgLv(1) << "RmvMod: ndmods" << ndmods;
       double minVari = 99e+10;
 
