@@ -1,4 +1,6 @@
 # US_Nnls
+include(../../local.pri)
+
 # Not a gui program
 
 CONFIG      += debug qt thread warn
@@ -28,7 +30,7 @@ LIBS         += -lus_utils -L../../lib
 
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX 
-INCLUDEPATH  += /share/apps64/openmpi/include
-LIBS         += -L/share/apps64/openmpi/lib -lmpi
+INCLUDEPATH  += $${MPIPATH}/include
+LIBS         += -L$${MPIPATH}/lib -lmpi
 
 
