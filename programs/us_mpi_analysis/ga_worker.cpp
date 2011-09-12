@@ -3,7 +3,7 @@
 
 QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime())/1000.0)
-#define DbTimMsg(a) DbTiming << a << generation << my_rank << ELAPSEDNOW;
+#define DbTimMsg(a) DbTiming << my_rank << generation << ELAPSEDNOW << a;
 
 void US_MPI_Analysis::ga_worker( void )
 {
@@ -128,9 +128,9 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
    for ( int i = 0; i < population; i++ ) genes << new_gene();
 
-   // Let calc_residuals get the meniscus directly from the edited data for
-   // each data set
-   meniscus_value = -1.0;
+//   // Let calc_residuals get the meniscus directly from the edited data for
+//   // each data set
+//   meniscus_value = -1.0;
 
    fitness.reserve( population );
 
@@ -164,13 +164,14 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
    for ( generation = 0; generation < generations; generation++ )
    {
-DbTimMsg("Worker start generation/rank/elapsed");
+DbTimMsg("Worker start rank/generation/elapsed");
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
       {
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
+DbTimMsg("Worker after get_fitness loop");
 
       // Sort fitness
       qSort( fitness );
@@ -179,11 +180,11 @@ DbTimMsg("Worker start generation/rank/elapsed");
       if ( generation == generations - 1 )
       {
 
-DbTimMsg("Worker before gsm generation/rank/elapsed");
+DbTimMsg("Worker before gsm rank/generation/elapsed");
 
          fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
                                           fitness[ 0 ].fitness );
-DbTimMsg("Worker after gsm generation/rank/elapsed");
+DbTimMsg("Worker after gsm rank/generation/elapsed");
       }
 
 
@@ -331,7 +332,7 @@ void US_MPI_Analysis::align_gene( Gene& gene )
 
 double US_MPI_Analysis::get_fitness( const Gene& gene )
 {
-   US_SolveSim::Simulation sim;
+   US_SolveSim::Simulation sim = simulation_values;
    sim.solutes = gene;
 
    QString key = "";
@@ -351,7 +352,9 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    for ( int s = 0; s < gene.size(); s++ ) 
       sim.solutes[ s ].s *= 1.0e-13;
 
+DbTimMsg("  ++ call gf calc_residuals");
    calc_residuals( current_dataset, datasets_to_process, sim );
+DbTimMsg("  ++  return calc_residuals");
 
    double fitness      = sim.variance;
    int    solute_count = 0;
@@ -381,6 +384,11 @@ double US_MPI_Analysis::get_fitness_v( const US_Vector& v )
    }
 
    return get_fitness( gene );
+}
+
+double US_MPI_Analysis::random_01( void )
+{
+   return ( (double)qrand() / (double)RAND_MAX );
 }
 
 int US_MPI_Analysis::u_random( int modulo )
@@ -466,7 +474,7 @@ void US_MPI_Analysis::cross_gene( Gene& gene )
    int  gene_index = e_random();
    Gene cross_from = genes[ fitness[ gene_index ].index ]; 
 
-   // Select a random solute.  The number will alwys be between
+   // Select a random solute.  The number will always be between
    // 1 and size - 1.
    int solute_index = u_random( gene.size() - 1 ) + 1;
    

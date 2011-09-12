@@ -304,10 +304,12 @@ void US_MPI_Analysis::set_monteCarlo( void )
 
       total_points += scan_count * radius_points;
    }
+DbgLv(1) << "sMC: totpts" << total_points;
 
    mc_data.resize( total_points );
 
    int index = 0;
+   US_DataIO2::RawData* sim_data = &simulation_values.sim_data;
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -323,7 +325,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
          for ( int r = 0; r < radius_points; r++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            mc_data[ index ] = solution.value( s, r ) + variation;
+            mc_data[ index ] = sim_data->value( s, r ) + variation;
             index++;
          }
       }
@@ -338,6 +340,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
+DbgLv(1) << "sMC: MPI send ncnt" << node_count;
    for ( int worker = 1; worker < node_count; worker++ )
    {
       MPI_Send( &newdata, 
@@ -349,8 +352,10 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
 
    // Get everybody synced up
+DbgLv(1) << "sMC: MPI Barrier";
    MPI_Barrier( MPI_COMM_WORLD );
 
+DbgLv(1) << "sMC: MPI Bcast";
    MPI_Bcast( mc_data.data(), 
               total_points, 
               MPI_DOUBLE, 
@@ -370,6 +375,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
       job_queue << job;
    }
 
+DbgLv(1) << "sMC: worker_depth size" << worker_depth.size();
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -380,12 +386,26 @@ void US_MPI_Analysis::set_monteCarlo( void )
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
+int dbglvsv=dbg_level;
+dbg_level=simulation_values.dbg_level;
+   //US_SolveSim::Simulation sim = simulation_values;
+DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
    simulation_values.solutes = calculated_solutes[ max_depth ];
-   meniscus_value            = -1.0;   // Used edited value
+//   meniscus_value            = -1.0;   // Used edited value
+DbgLv(1) << "sGA:   sol0.s" << simulation_values.solutes[0].s;
+int mm=simulation_values.solutes.size()-1;
+DbgLv(1) << "sGA:   m" << mm << "solM.s" << simulation_values.solutes[mm].s;
+DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
+DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
+US_DataIO2::EditedData *edata = &data_sets[0]->run_data;
+DbgLv(1) << "sGA:    edata scans points" << edata->scanData.size() << edata->x.size();
 
    calc_residuals( 0, data_sets.size(), simulation_values );
 
    sigmas.clear();
+   res_data = &simulation_values.residuals;
+   sim_data = &simulation_values.sim_data;
+DbgLv(1) << "sGA:  resids scans points" << res_data->scanData.size() << res_data->x.size();
 
    for ( int e = 0; e < data_sets.size(); e++ )
    {
@@ -401,7 +421,7 @@ void US_MPI_Analysis::set_gaussians( void )
 
          for ( int r = 0; r < radius_points; r++ )
          {
-            v[ r ] = fabs( residuals.value( s, r ) );
+            v[ r ] = fabs( res_data->value( s, r ) );
          }
 
          // Smooth using 5 points to the left and right of each point
@@ -409,16 +429,17 @@ void US_MPI_Analysis::set_gaussians( void )
          sigmas << v;
       }
    }
+DbgLv(1) << "sGA: sigmas size" << sigmas.size();
+dbg_level=dbglvsv;
 }
-//////////////////
+
 void US_MPI_Analysis::write_output( void )
 {
-   qSort( simulation_values.solutes );
-   
-   US_SolveSim::Simulation sim;
+   US_SolveSim::Simulation sim = simulation_values;
+
    double     save_meniscus = meniscus_value;
    sim.solutes              = calculated_solutes[ max_depth ]; 
-   sim.variance             = simulation_values.variance;
+   //sim.variance             = simulation_values.variance;
    meniscus_value           = meniscus_values[ meniscus_run ];
    qSort( sim.solutes );
 
@@ -427,12 +448,12 @@ void US_MPI_Analysis::write_output( void )
    meniscus_value = save_meniscus;
 
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
-      write_noise( US_Noise::TI, simulation_values.ti_noise );
+      write_noise( US_Noise::TI, sim.ti_noise );
 
    if (  parameters[ "rinoise_option" ].toInt() > 0 )
-      write_noise( US_Noise::RI, simulation_values.ri_noise );
+      write_noise( US_Noise::RI, sim.ri_noise );
 }
-//////////////////
+
 void US_MPI_Analysis::iterate( void )
 {
    // Just return if the number of iterations exceed the max
