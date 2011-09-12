@@ -913,6 +913,7 @@ void US_ModelLoader::compress_list( void )
       if ( kiter > 0  && ( cReqID != pReqID || cEdiID != pEdiID ) )
       {  // previous was end of group:  update the iterations count
          all_model_descrips.last().iterations = kiter;
+//qDebug() << " KITER MC" << kiter;
          kiter = 0;
       }
 
@@ -930,6 +931,12 @@ void US_ModelLoader::compress_list( void )
 
       pReqID  = cReqID;      // save request,edit GUIDs for next pass
       pEdiID  = cEdiID;
+   }
+
+   if ( kiter > 0  )
+   {  // last was end of MC group:  update the iterations count
+      all_model_descrips.last().iterations = kiter;
+//qDebug() << " KITER MC" << kiter;
    }
 }
 

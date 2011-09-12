@@ -140,6 +140,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
    meniscus_points = max( meniscus_points, 1 );
+   meniscus_range  = ( meniscus_points > 1 ) ? meniscus_range : 0.0;
 
    // Do some parameter checking
    bool global_fit = data_sets.size() > 1;
@@ -189,8 +190,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       abort( "Meniscus value extends into data" );
    }
 
+   population              = parameters[ "population"     ].toInt();
+   generations             = parameters[ "generations"    ].toInt();
+   crossover               = parameters[ "crossover"      ].toInt();
+   mutation                = parameters[ "mutation"       ].toInt();
+   plague                  = parameters[ "plague"         ].toInt();
+   migrate_count           = parameters[ "migration"      ].toInt();
+   elitism                 = parameters[ "elitism"        ].toInt();
+   mutate_sigma            = parameters[ "mutate_sigma"   ].toDouble();
+   p_mutate_s              = parameters[ "p_mutate_s"     ].toDouble();
+   p_mutate_k              = parameters[ "p_mutate_k"     ].toDouble();
+   p_mutate_sk             = parameters[ "p_mutate_sk"    ].toDouble();
    regularization          = parameters[ "regularization" ].toDouble();
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
+   beta                    = (double)population / 8.0;
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
    for ( int i = 0; i < data_sets.size(); i++ )

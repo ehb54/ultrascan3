@@ -660,7 +660,7 @@ DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
          int       jj       = mfnams.lastIndexOf( ftfname );
          QDateTime rdate    = mDescrs[ jj ].lmtime;
 DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate
- << "   ftfname" << ftfname << " jj" << jj;
+ << "   ftfname" << ftfname << " (rdate<fdate)" << (rdate<fdate);
 DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
  << "antime meniscus" << mDescrs[jj].antime << mDescrs[jj].meniscus;
 

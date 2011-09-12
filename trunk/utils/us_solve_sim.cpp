@@ -94,6 +94,9 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntotal    = 0;                             // Total points count
    int ntinois   = 0;                             // TI noise value count
    int nrinois   = 0;                             // RI noise value count
+#ifdef NO_DB
+   US_Settings::set_us_debug( dbg_level );
+#endif
 
    if ( banddthr )
    {
@@ -216,7 +219,7 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
 
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
-if (dbg_level>1 && thrnrank==1 && cc==0) {
+if (dbg_level>1 && thrnrank<2 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 
             // Calculate Astfem_RSA solution (Lamm equations)

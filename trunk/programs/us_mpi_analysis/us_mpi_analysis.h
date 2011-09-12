@@ -44,6 +44,20 @@ class US_MPI_Analysis : public QObject
     int                 datasets_to_process;  // For global fit
     int                 count_calc_residuals; // Simple counter
 
+    int                 population;
+    int                 generations;
+    int                 crossover;
+    int                 mutation;
+    int                 plague;
+    int                 migrate_count;
+    int                 elitism;
+
+    double              mutate_sigma;
+    double              p_mutate_s;
+    double              p_mutate_k;
+    double              p_mutate_sk;
+    double              beta;
+
     long int            maxrss;
     static const int    min_experiment_size      = 100;
     static const double min_variance_improvement = 1.0e-100;
@@ -62,8 +76,8 @@ class US_MPI_Analysis : public QObject
     QVector< double >   mc_data;
     QVector< double >   sigmas;
 
-    US_DataIO2::RawData residuals;       // Populated in calc_residuals
-    US_DataIO2::RawData solution;        // Populated in calc_residuals
+    US_DataIO2::RawData *res_data;       // Populated in calc_residuals
+    US_DataIO2::RawData *sim_data;       // Populated in calc_residuals
     US_DataIO2::RawData scaled_data;     // Populated after global fit
 
     QHostAddress        server;
@@ -234,46 +248,6 @@ class US_MPI_Analysis : public QObject
     void     _2dsa_worker      ( void );
 
     void     calc_residuals    ( int, int, SIMULATION& );
-    double   calc_bottom       ( int, double );
-    void     compute_a_tilde   ( QVector< double >& );
-    
-    void     compute_L_tildes  ( int, int, int,
-                                 QVector< double >&, 
-                                 const QVector< double >& );
-    
-    void     compute_L_tilde   ( QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     compute_L         ( int, 
-                                 QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     ri_small_a_and_b  ( int, int,
-                                 QVector< double >&,
-                                 QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     ti_small_a_and_b  ( int, int, 
-                                 QVector< double >&,
-                                 QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     compute_L_bar     ( QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     compute_a_bar     ( QVector< double >&,
-                                 const QVector< double >& );
-    
-    void     compute_L_bars    ( int, int, int, 
-                                 QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
 
     // GA Master
     void ga_master       ( void );
@@ -291,6 +265,7 @@ class US_MPI_Analysis : public QObject
     void   mutate_gene   ( Gene& );
     void   cross_gene    ( Gene& );
     int    migrate_genes ( void );
+    double random_01     ( void );
     int    u_random      ( int = 100 );
     int    e_random      ( void );
     double minimize      ( Gene&, double );

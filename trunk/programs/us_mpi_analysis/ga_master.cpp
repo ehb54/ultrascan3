@@ -1,14 +1,15 @@
 #include "us_mpi_analysis.h"
 #include "us_util.h"
 #include "us_math2.h"
+#include "us_settings.h"
 
 void US_MPI_Analysis::ga_master( void )
 {
    startTime       = QDateTime::currentDateTime();
    current_dataset = 0;
 DbgLv(0) << "master start GA" << startTime;
-   // Tell calc_residuals to use the edited data meniscus value
-   meniscus_value  = -1.0; 
+//   // Tell calc_residuals to use the edited data meniscus value
+//   meniscus_value  = -1.0; 
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -65,24 +66,35 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       qSort( best_fitness );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
 
-      for ( int g = 0; g < buckets.size(); g++ )
+     for ( int g = 0; g < buckets.size(); g++ )
          simulation_values.solutes[ g ].s *= 1.0e-13;
 
+DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
+ << "buck size" << buckets.size();
+DbgLv(1) << "GaMast:   dset size" << data_sets.size();
+DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
+int dbglvsv = simulation_values.dbg_level;
+simulation_values.dbg_level = 2;
       calc_residuals( 0, data_sets.size(), simulation_values );
+simulation_values.dbg_level = dbglvsv;
+DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
 
       write_model( simulation_values, US_Model::GA );
 
+DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( ++mc_iteration < mc_iterations )
       {
          // Set scaled_data the first time
          if ( mc_iteration == 1 ) 
          {
-            scaled_data = solution;
+            scaled_data = simulation_values.sim_data;
          }
 
+DbgLv(1) << "GaMast:    set_gaMC call";
          set_gaMonteCarlo();
+DbgLv(1) << "GaMast:    set_gaMC  return";
       }
       else
          break;
@@ -346,18 +358,25 @@ void US_MPI_Analysis::ga_global_fit( void )
 
 void US_MPI_Analysis::set_gaMonteCarlo( void ) 
 {
+DbgLv(1) << "sgMC: mciter" << mc_iteration;
    // This is almost the same as 2dsa set_monteCarlo
    if ( mc_iteration == 1 )
    {
-      meniscus_values << -1.0;
+//      meniscus_values << -1.0;
       max_depth = 0;  // Make the datasets compatible
       calculated_solutes.clear();
       calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
+DbgLv(1) << "sgMC: bfgenes stored" << calculated_solutes[0].size();
 
-      for ( int i = 0; i < calculated_solutes.size(); i++ )
+      for ( int i = 0; i < calculated_solutes[ 0 ].size(); i++ )
          calculated_solutes[ 0 ][ i ].s *= 1.0e-13;
 
+DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
+int dbglvsv = simulation_values.dbg_level;
+simulation_values.dbg_level = 2;
       set_gaussians();
+simulation_values.dbg_level = dbglvsv;
+DbgLv(1) << "sgMC: gaussians set";
    }
 
    int total_points = 0;
@@ -394,12 +413,15 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
          }
       }
    }
+DbgLv(1) << "sgMC: mc_data set index" << index;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job job;
+   job.command        = MPI_Job::NEWDATA;
    job.length         = total_points;
    job.dataset_offset = 0;
    job.dataset_count  = data_sets.size();
+DbgLv(1) << "sgMC: MPI send ncnt" << node_count;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
@@ -414,8 +436,10 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
    }
 
    // Get everybody synced up
+DbgLv(1) << "sgMC: MPI Barrier";
    MPI_Barrier( MPI_COMM_WORLD );
 
+DbgLv(1) << "sgMC: MPI Bcast";
    MPI_Bcast( mc_data.data(),   // MPI #10
               total_points, 
               MPI_DOUBLE, 
