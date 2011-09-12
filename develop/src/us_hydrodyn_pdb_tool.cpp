@@ -3,6 +3,16 @@
 
 #define SLASH QDir::separator()
 
+class sortable_qli_double {
+public:
+   double         d;
+   QListViewItem  *lvi;
+   bool operator < (const sortable_qli_double& objIn) const
+   {
+      return ( d < objIn.d );
+   }
+};
+
 US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                                                csv csv1,
                                                void *us_hydrodyn, 
@@ -24,7 +34,9 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    this->csv1.open.resize( this->csv1.open.size() );
    csv_setup_keys( this->csv1 );
    selection_since_count_csv1 = true;
+   selection_since_clean_csv1 = true;
    selection_since_count_csv2 = true;
+   selection_since_clean_csv2 = true;
 
    update_enables();
 
@@ -57,7 +69,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 ); // csv_width, 100 + csv_height );
 }
-
+   
 US_Hydrodyn_Pdb_Tool::~US_Hydrodyn_Pdb_Tool()
 {
 }
@@ -181,6 +193,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_paste, SIGNAL(clicked()), SLOT(csv_paste()));
 
+   pb_csv_paste_new = new QPushButton(tr("Paste as new"), this);
+   pb_csv_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_paste_new->setMinimumHeight(minHeight1);
+   pb_csv_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_paste_new, SIGNAL(clicked()), SLOT(csv_paste_new()));
+
    pb_csv_merge = new QPushButton(tr("Merge"), this);
    pb_csv_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv_merge->setMinimumHeight(minHeight1);
@@ -192,6 +210,42 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_reseq->setMinimumHeight(minHeight1);
    pb_csv_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_reseq, SIGNAL(clicked()), SLOT(csv_reseq()));
+
+   pb_csv_sel_clear = new QPushButton(tr("Clear selection"), this);
+   pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_clear->setMinimumHeight(minHeight1);
+   pb_csv_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_clear, SIGNAL(clicked()), SLOT(csv_sel_clear()));
+
+   pb_csv_sel_clean = new QPushButton(tr("Clean"), this);
+   pb_csv_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_clean->setMinimumHeight(minHeight1);
+   pb_csv_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_clean, SIGNAL(clicked()), SLOT(csv_sel_clean()));
+
+   pb_csv_sel_invert = new QPushButton(tr("Invert"), this);
+   pb_csv_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_invert->setMinimumHeight(minHeight1);
+   pb_csv_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
+
+   pb_csv_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
+   pb_csv_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_nearest_atoms->setMinimumHeight(minHeight1);
+   pb_csv_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv_sel_nearest_atoms()));
+
+   pb_csv_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
+   pb_csv_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_nearest_residues->setMinimumHeight(minHeight1);
+   pb_csv_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv_sel_nearest_residues()));
+
+   lbl_csv_sel_msg = new QLabel("", this);
+   lbl_csv_sel_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_csv_sel_msg->setMinimumHeight(minHeight1);
+   lbl_csv_sel_msg->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_csv_sel_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    // right pane
 
@@ -272,6 +326,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_paste, SIGNAL(clicked()), SLOT(csv2_paste()));
 
+   pb_csv2_paste_new = new QPushButton(tr("Paste as new"), this);
+   pb_csv2_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_paste_new->setMinimumHeight(minHeight1);
+   pb_csv2_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_paste_new, SIGNAL(clicked()), SLOT(csv2_paste_new()));
+
    pb_csv2_merge = new QPushButton(tr("Merge"), this);
    pb_csv2_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_merge->setMinimumHeight(minHeight1);
@@ -283,6 +343,42 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_reseq->setMinimumHeight(minHeight1);
    pb_csv2_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_reseq, SIGNAL(clicked()), SLOT(csv2_reseq()));
+
+   pb_csv2_sel_clear = new QPushButton(tr("Clear selection"), this);
+   pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_clear->setMinimumHeight(minHeight1);
+   pb_csv2_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_clear, SIGNAL(clicked()), SLOT(csv2_sel_clear()));
+
+   pb_csv2_sel_clean = new QPushButton(tr("Clean"), this);
+   pb_csv2_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_clean->setMinimumHeight(minHeight1);
+   pb_csv2_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_clean, SIGNAL(clicked()), SLOT(csv2_sel_clean()));
+
+   pb_csv2_sel_invert = new QPushButton(tr("Invert"), this);
+   pb_csv2_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_invert->setMinimumHeight(minHeight1);
+   pb_csv2_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
+
+   pb_csv2_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
+   pb_csv2_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_nearest_atoms->setMinimumHeight(minHeight1);
+   pb_csv2_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv2_sel_nearest_atoms()));
+
+   pb_csv2_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
+   pb_csv2_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_nearest_residues->setMinimumHeight(minHeight1);
+   pb_csv2_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv2_sel_nearest_residues()));
+
+   lbl_csv2_sel_msg = new QLabel("", this);
+   lbl_csv2_sel_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_csv2_sel_msg->setMinimumHeight(minHeight1);
+   lbl_csv2_sel_msg->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_csv2_sel_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setOrientation  ( Qt::Vertical );
@@ -325,6 +421,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    QBoxLayout *vbl_center_top = new QVBoxLayout;
    vbl_center_top->addWidget( lbl_csv );
    vbl_center_top->addWidget( lv_csv );
+   vbl_center_top->addWidget( lbl_csv_sel_msg );
    vbl_center_top->addWidget( te_csv );
 
    gl_panes->addLayout( vbl_center_top, 0, 1 );
@@ -345,13 +442,27 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_paste );
    hbl_center_buttons_row_2->addSpacing( 2 );
+   hbl_center_buttons_row_2->addWidget( pb_csv_paste_new );
+   hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_merge );
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_reseq );
 
+   QBoxLayout *hbl_center_buttons_row_3 = new QHBoxLayout;
+   hbl_center_buttons_row_3->addWidget( pb_csv_sel_clear );
+   hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_sel_clean );
+   hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_sel_invert );
+   hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_sel_nearest_atoms );
+   hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_sel_nearest_residues );
+
    QBoxLayout *vbl_center_buttons = new QVBoxLayout;
    vbl_center_buttons->addLayout( hbl_center_buttons_row_1 );
    vbl_center_buttons->addLayout( hbl_center_buttons_row_2 );
+   vbl_center_buttons->addLayout( hbl_center_buttons_row_3 );
 
    gl_panes->addLayout( vbl_center_buttons, 1, 1 );
 
@@ -367,6 +478,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    QBoxLayout *vbl_right_top = new QVBoxLayout;
    vbl_right_top->addWidget( lbl_csv2 );
    vbl_right_top->addLayout( hbl_csv2_wheel );
+   vbl_right_top->addWidget( lbl_csv2_sel_msg );
    vbl_right_top->addWidget( te_csv2 );
 
    gl_panes->addLayout( vbl_right_top, 0, 2 );
@@ -389,13 +501,27 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_paste );
    hbl_right_buttons_row_2->addSpacing( 2 );
+   hbl_right_buttons_row_2->addWidget( pb_csv2_paste_new );
+   hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_merge );
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_reseq );
 
+   QBoxLayout *hbl_right_buttons_row_3 = new QHBoxLayout;
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sel_clear );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sel_clean );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sel_invert );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sel_nearest_atoms );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sel_nearest_residues );
+
    QBoxLayout *vbl_right_buttons = new QVBoxLayout;
    vbl_right_buttons->addLayout( hbl_right_buttons_row_1 );
    vbl_right_buttons->addLayout( hbl_right_buttons_row_2 );
+   vbl_right_buttons->addLayout( hbl_right_buttons_row_3 );
 
    gl_panes->addLayout( vbl_right_buttons, 1, 2 );
 
@@ -465,37 +591,55 @@ void US_Hydrodyn_Pdb_Tool::save()
 
 void US_Hydrodyn_Pdb_Tool::update_enables_csv()
 {
-   bool any_csv_selected  = any_selected( lv_csv );
-   bool any_csv2_selected = any_selected( lv_csv2 );
+   bool           any_csv_selected  = any_selected  ( lv_csv );
+   bool           any_csv2_selected = any_selected  ( lv_csv2 );
+   pdb_sel_count  counts            = count_selected( lv_csv );
 
-   pb_csv_load      ->setEnabled( true );
-   pb_csv_visualize ->setEnabled( csv1.data.size() );
-   pb_csv_save      ->setEnabled( csv1.data.size() );
-   pb_csv_undo      ->setEnabled( csv_undos.size() );
-   pb_csv_cut       ->setEnabled( any_csv_selected );
-   pb_csv_copy      ->setEnabled( any_csv_selected );
-   pb_csv_paste     ->setEnabled( csv_clipboard.data.size() );
-   pb_csv_merge     ->setEnabled( any_csv_selected && merge_ok() );
-   pb_csv2_merge    ->setEnabled( any_csv2_selected && merge_ok() );
-   pb_csv_reseq     ->setEnabled( csv1.data.size() );
+   pb_csv_load                 ->setEnabled( true );
+   pb_csv_visualize            ->setEnabled( csv1.data.size() );
+   pb_csv_save                 ->setEnabled( csv1.data.size() );
+   pb_csv_undo                 ->setEnabled( csv_undos.size() );
+   pb_csv_cut                  ->setEnabled( any_csv_selected );
+   pb_csv_copy                 ->setEnabled( any_csv_selected );
+   pb_csv_paste                ->setEnabled( csv_clipboard.data.size() && csv1.data.size() );
+   pb_csv_paste_new            ->setEnabled( csv_clipboard.data.size() );
+   pb_csv_merge                ->setEnabled( any_csv_selected && merge_ok() );
+   pb_csv2_merge               ->setEnabled( any_csv2_selected && merge_ok() );
+   pb_csv_reseq                ->setEnabled( csv1.data.size() );
+   pb_csv_sel_clear            ->setEnabled( any_csv_selected );
+   pb_csv_sel_clean            ->setEnabled( selection_since_clean_csv1 && any_csv_selected );
+   pb_csv_sel_invert           ->setEnabled( csv1.data.size() );
+   pb_csv_sel_nearest_atoms    ->setEnabled( any_csv_selected && counts.not_selected_atoms > 1 );
+   pb_csv_sel_nearest_residues ->setEnabled( any_csv_selected && counts.not_selected_atoms > 1 );
+
+   csv_sel_msg();
 }
 
 void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
 {
-   bool any_csv_selected  = any_selected( lv_csv );
-   bool any_csv2_selected = any_selected( lv_csv2 );
+   bool           any_csv_selected  = any_selected  ( lv_csv );
+   bool           any_csv2_selected = any_selected  ( lv_csv2 );
+   pdb_sel_count  counts            = count_selected( lv_csv2 );
 
-   pb_csv2_load      ->setEnabled( true );
-   pb_csv2_visualize ->setEnabled( csv2[ csv2_pos ].data.size() );
-   pb_csv2_dup       ->setEnabled( csv1.data.size() );
-   pb_csv2_save      ->setEnabled( csv2[ csv2_pos ].data.size() );
-   pb_csv2_undo      ->setEnabled( csv2_undos[ csv2_pos ].size() );
-   pb_csv2_cut       ->setEnabled( any_csv2_selected );
-   pb_csv2_copy      ->setEnabled( any_csv2_selected );
-   pb_csv2_paste     ->setEnabled( csv_clipboard.data.size() );
-   pb_csv_merge      ->setEnabled( any_csv_selected && merge_ok() );
-   pb_csv2_merge     ->setEnabled( any_csv2_selected && merge_ok() );
-   pb_csv2_reseq     ->setEnabled( csv2[ csv2_pos ].data.size() );
+   pb_csv2_load                 ->setEnabled( true );
+   pb_csv2_visualize            ->setEnabled( csv2[ csv2_pos ].data.size() );
+   pb_csv2_dup                  ->setEnabled( csv1.data.size() );
+   pb_csv2_save                 ->setEnabled( csv2[ csv2_pos ].data.size() );
+   pb_csv2_undo                 ->setEnabled( csv2_undos[ csv2_pos ].size() );
+   pb_csv2_cut                  ->setEnabled( any_csv2_selected );
+   pb_csv2_copy                 ->setEnabled( any_csv2_selected );
+   pb_csv2_paste                ->setEnabled( csv_clipboard.data.size() && csv2[ csv2_pos ].data.size() );
+   pb_csv2_paste_new            ->setEnabled( csv_clipboard.data.size() );
+   pb_csv_merge                 ->setEnabled( any_csv_selected && merge_ok() );
+   pb_csv2_merge                ->setEnabled( any_csv2_selected && merge_ok() );
+   pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
+   pb_csv2_sel_clear            ->setEnabled( any_csv2_selected );
+   pb_csv2_sel_clean            ->setEnabled( selection_since_clean_csv2 && any_csv2_selected );
+   pb_csv2_sel_invert           ->setEnabled( csv2[ csv2_pos ].data.size()  );
+   pb_csv2_sel_nearest_atoms    ->setEnabled( any_csv2_selected && counts.not_selected_atoms > 1 );
+   pb_csv2_sel_nearest_residues ->setEnabled( any_csv2_selected && counts.not_selected_atoms > 1 );
+
+   csv2_sel_msg();
 }
 
 void US_Hydrodyn_Pdb_Tool::update_enables()
@@ -563,7 +707,8 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
    }
 
    QListViewItemIterator it( lv_csv );
-   while ( it.current() ) {
+   while ( it.current() ) 
+   {
       if ( lv_csv->isSelected( it.current() ) )
       {
          delete it.current();
@@ -582,6 +727,15 @@ void US_Hydrodyn_Pdb_Tool::csv_copy()
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_paste()
+{
+   csv last_csv = to_csv( lv_csv, csv1, false );
+   csv_undos.push_back( last_csv );
+   csv1 = merge_csvs( last_csv, csv_clipboard );
+   csv_to_lv( csv1, lv_csv );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_paste_new()
 {
    csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
    csv1 = csv_clipboard;
@@ -727,6 +881,15 @@ void US_Hydrodyn_Pdb_Tool::csv2_copy()
 
 void US_Hydrodyn_Pdb_Tool::csv2_paste()
 {
+   csv last_csv = to_csv( lv_csv2, csv2[ csv2_pos ], false );
+   csv2_undos[ csv2_pos ].push_back( last_csv );
+   csv2[ csv2_pos ] = merge_csvs( last_csv, csv_clipboard );
+   csv_to_lv( csv2[ csv2_pos ], lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_paste_new()
+{
    csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
    csv2[ csv2_pos ] = csv_clipboard;
    csv_to_lv( csv2[ csv2_pos ], lv_csv2 );
@@ -792,7 +955,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_redisplay( unsigned int pos )
    update_enables_csv2();
 }
 
-unsigned int US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
+pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
 {
    bool lv_is_csv = ( lv == lv_csv );
 
@@ -804,7 +967,6 @@ unsigned int US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
    {
       return last_count_csv2;
    }
-   unsigned int number_selected = 0;
    if ( lv_is_csv )
    {
       csv_selected_element_counts.clear();
@@ -812,51 +974,100 @@ unsigned int US_Hydrodyn_Pdb_Tool::count_selected( QListView *lv )
       csv2_selected_element_counts.clear();
    }
    
+   pdb_sel_count counts;
+
+   counts.models              = 0;
+   counts.chains              = 0;
+   counts.residues            = 0;
+   counts.atoms               = 0;
+   counts.model_partial       = false;
+   counts.chain_partial       = false;
+   counts.residue_partial     = false;
+   counts.not_selected_atoms  = 0;
+
    QListViewItemIterator it( lv );
-   while ( it.current() ) {
+   while ( it.current() ) 
+   {
       QListViewItem *item = it.current();
-      if ( !item->childCount() && is_selected( item ) )
+      if ( item->childCount() )
       {
-         number_selected++;
-         if ( lv_is_csv )
+         if ( is_selected( item ) || child_selected( item ) )
          {
-            if ( !csv1.key.count( key( item ) ) )
+            switch ( item->depth() )
             {
-               editor_msg( "red", QString( tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
+            case 0 : // models
+               counts.models++;
+               if ( !counts.model_partial )
+               {
+                  counts.model_partial = !all_children_selected( item );
+               }
+               break;
+            case 1 : // chains
+               counts.chains++;
+               if ( !counts.chain_partial )
+               {
+                  counts.chain_partial = !all_children_selected( item );
+               }
+               break;
+            case 2 : // residues
+               counts.residues++;
+               if ( !counts.residue_partial )
+               {
+                  counts.residue_partial = !all_children_selected( item );
+               }
+               break;
+            default :
+               editor_msg("red", "internal error: unexpected depth in count_selected()" );
+               break;
+            }
+         }
+      } else {
+         if ( is_selected( item ) )
+         {
+            counts.atoms++;
+            if ( lv_is_csv )
+            {
+               if ( !csv1.key.count( key( item ) ) )
+               {
+                  editor_msg( "red", QString( tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
+               } else {
+                  csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+               }
             } else {
-               csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+               if ( !csv2[ csv2_pos].key.count( key( item ) ) )
+               {
+                  editor_msg( "red", QString( tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
+               } else {
+                  csv2_selected_element_counts[ csv2[ csv2_pos ].data[ csv2[ csv2_pos ].key[ key( item ) ] ][ 13 ] ]++;
+               }
             }
          } else {
-            if ( !csv2[ csv2_pos].key.count( key( item ) ) )
-            {
-               editor_msg( "red", QString( tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
-            } else {
-               csv2_selected_element_counts[ csv2[ csv2_pos ].data[ csv2[ csv2_pos ].key[ key( item ) ] ][ 13 ] ]++;
-            }
+            counts.not_selected_atoms++;
          }
       }
       ++it;
    }
+   
    if ( lv_is_csv )
    {
       selection_since_count_csv1 = false;
-      last_count_csv1 = number_selected;
+      last_count_csv1 = counts;
    } else {
       selection_since_count_csv2 = false;
-      last_count_csv2 = number_selected;
+      last_count_csv2 = counts;
    }
-   return number_selected;
+   return counts;
 }
 
 bool US_Hydrodyn_Pdb_Tool::any_selected( QListView *lv )
 {
    if ( lv == lv_csv && !selection_since_count_csv1 )
    {
-      return last_count_csv1 != 0;
+      return last_count_csv1.atoms != 0;
    }
    if ( lv == lv_csv2 && !selection_since_count_csv2 )
    {
-      return last_count_csv2 != 0;
+      return last_count_csv2.atoms != 0;
    }
 
    QListViewItemIterator it( lv );
@@ -873,15 +1084,19 @@ bool US_Hydrodyn_Pdb_Tool::any_selected( QListView *lv )
 
 void US_Hydrodyn_Pdb_Tool::csv_selection_changed()
 {
-   // csv_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv ) ) );
+   // csv_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv ).atoms ) );
    selection_since_count_csv1 = true;
+   selection_since_clean_csv1 = true;
+   // clean_selection( lv_csv );
    update_enables_csv();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_selection_changed()
 {
-   // csv2_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv2 ) ) );
+   // csv2_msg("black", QString("selection changed # selected %1").arg( count_selected( lv_csv2 ).atoms ) );
    selection_since_count_csv2 = true;
+   selection_since_clean_csv2 = true;
+   // clean_selection( lv_csv2 );
    update_enables_csv2();
 }
 
@@ -973,6 +1188,35 @@ bool US_Hydrodyn_Pdb_Tool::child_selected( QListViewItem *lvi )
    return false;
 }
 
+
+bool US_Hydrodyn_Pdb_Tool::all_children_selected( QListViewItem *lvi )
+{
+   if ( lvi->childCount() )
+   {
+      QListViewItem *myChild = lvi->firstChild();
+      while( myChild ) 
+      {
+         if ( myChild->childCount() )
+         {
+            if ( !all_children_selected( myChild ) )
+            {
+               return false;
+            }
+         } else {
+            if ( !is_selected( myChild ) )
+            {
+               return false;
+            }
+         }
+         myChild = myChild->nextSibling();
+      }
+   } else {
+      return lvi->isSelected();
+   }
+
+   return true;
+}
+
 QString US_Hydrodyn_Pdb_Tool::key( QListViewItem *lvi )
 {
    QString key = lvi->text( 0 );
@@ -984,6 +1228,15 @@ QString US_Hydrodyn_Pdb_Tool::key( QListViewItem *lvi )
    return key;
 }
 
+QString US_Hydrodyn_Pdb_Tool::data_to_key( vector < QString > &data )
+{
+   return QString( "%1~%2~%3~%4" )
+      .arg( data[ 0 ] )
+      .arg( data[ 1 ] )
+      .arg( data[ 2 ] + " " + data[ 3 ] )
+      .arg( data[ 4 ] + " " + data[ 5 ] );
+}
+
 void US_Hydrodyn_Pdb_Tool::csv_setup_keys( csv &csv1 )
 {
    csv1.key.clear();
@@ -992,12 +1245,7 @@ void US_Hydrodyn_Pdb_Tool::csv_setup_keys( csv &csv1 )
    {
       // cout << QString("csv setup keys %1 data size %2\n").arg( i ).arg( csv1.data[ i ].size() );
       
-      csv1.key[ 
-               QString( "%1~%2~%3~%4" )
-               .arg( csv1.data[ i ][ 0 ] )
-               .arg( csv1.data[ i ][ 1 ] )
-               .arg( csv1.data[ i ][ 2 ] + " " + csv1.data[ i ][ 3 ] )
-               .arg( csv1.data[ i ][ 4 ] + " " + csv1.data[ i ][ 5 ] ) ] = i;
+      csv1.key[ data_to_key( csv1.data[ i ] ) ] = i;
    }
 }
 
@@ -1188,8 +1436,8 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
 
 bool US_Hydrodyn_Pdb_Tool::merge_ok()
 {
-   unsigned int sel1 = count_selected( lv_csv );
-   unsigned int sel2 = count_selected( lv_csv2 );
+   unsigned int sel1 = count_selected( lv_csv ).atoms;
+   unsigned int sel2 = count_selected( lv_csv2 ).atoms;
    if ( !sel1 || sel1 != sel2 )
    {
       return false;
@@ -1499,3 +1747,365 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv )
    update_enables();
 }
 
+void US_Hydrodyn_Pdb_Tool::csv_sel_clear()
+{
+   lv_csv->selectAll( false );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sel_clean()
+{
+   clean_selection( lv_csv );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sel_invert()
+{
+   invert_selection( lv_csv );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_atoms()
+{
+   sel_nearest_atoms( lv_csv );
+}
+
+void US_Hydrodyn_Pdb_Tool::sel_nearest_atoms( QListView *lv )
+{
+   editor_msg( "blue", "sel nearest atoms");
+   pdb_sel_count counts = count_selected( lv );
+   bool ok;
+   unsigned int atoms = ( unsigned int )QInputDialog::getInteger(
+                                                                 "US-SOMO: PDB Editor", 
+                                                                 QString( tr( "Enter the of nearest atoms to find (maximum %1):" ) )
+                                                                 .arg( counts.not_selected_atoms )
+                                                                 ,
+                                                                 1,
+                                                                 1, 
+                                                                 counts.not_selected_atoms,
+                                                                 1,
+                                                                 &ok, 
+                                                                 this );
+   if ( !ok ) 
+   {
+      return;
+   }
+
+   map < QListViewItem *, double > distmap;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->childCount() && is_selected( item1 ) )
+      {
+         QListViewItemIterator it2( lv );
+         while ( it2.current() ) 
+         {
+            QListViewItem *item2 = it2.current();
+            if ( item1 != item2 && !item2->childCount() && !is_selected( item2 ) )
+            {
+               double d = pair_dist( item1, item2 );
+               if ( !distmap.count( item2 ) )
+               {
+                  distmap[ item2 ] = d;
+               } else {
+                  if ( distmap[ item2 ] > d )
+                  {
+                     distmap[ item2 ] = d;
+                  }
+               }
+            }
+            ++it2;
+         }
+      }
+      ++it1;
+   }
+
+   list < sortable_qli_double > lsqd;
+
+   for ( map < QListViewItem *, double >::iterator it = distmap.begin(); 
+         it != distmap.end(); 
+         it++ ) 
+   {
+      sortable_qli_double sqd;
+      sqd.lvi = it->first;
+      sqd.d   = it->second;
+      lsqd.push_back( sqd );
+   }
+
+   editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
+   lsqd.sort();
+
+   distmap.clear();
+
+   unsigned int pos = 0;
+   for ( list < sortable_qli_double >::iterator it = lsqd.begin();
+         it != lsqd.end();
+         it++ )
+   {
+      distmap[ it->lvi ] = it->d;
+      pos++;
+      if ( pos >= atoms )
+      {
+         break;
+      }
+   }
+
+   lv->selectAll( false );
+   
+   QListViewItemIterator it( lv );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( distmap.count( item ) )
+      {
+         item->setSelected( true );
+         editor_msg("blue", QString( "size setting for dist %1 key %2" ).arg( distmap[ item ] ).arg( key( item ) ) );
+      }
+      ++it;
+   }
+
+   clean_selection( lv );
+
+   if ( lv == lv_csv )
+   {
+      emit csv_selection_changed();
+   } else {
+      emit csv2_selection_changed();
+   }
+   editor_msg( "blue", "sel nearest atoms done");
+}
+
+double US_Hydrodyn_Pdb_Tool::pair_dist( QListViewItem *item1, QListViewItem *item2 )
+{
+   double dx = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+   double dy = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+   double dz = item1->text( 6 ).toDouble() - item2->text( 6 ).toDouble();
+   return sqrt( dx * dx + dy * dy + dz * dz );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_residues()
+{
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
+{
+   pdb_sel_count counts = count_selected( lv_csv );
+   lbl_csv_sel_msg->setText( pdb_sel_count_msg( counts ) );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_clear()
+{
+   lv_csv2->selectAll( false );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_clean()
+{
+   clean_selection( lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_invert()
+{
+   invert_selection( lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_atoms()
+{
+   sel_nearest_atoms( lv_csv2 );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_residues()
+{
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_msg()
+{
+   pdb_sel_count counts = count_selected( lv_csv2 );
+   lbl_csv2_sel_msg->setText( pdb_sel_count_msg( counts ) );
+}
+
+QString US_Hydrodyn_Pdb_Tool::pdb_sel_count_msg( pdb_sel_count &counts )
+{
+   QString qs = "";
+   if ( counts.models > 1 )
+   {
+      qs += QString( "%1 models%2 " )
+         .arg( counts.models )
+         .arg( counts.model_partial ? "*" : "" );
+   }
+   if ( counts.chains > 1 )
+   {
+      qs += QString( "%1 chains%2 " )
+         .arg( counts.chains )
+         .arg( counts.chain_partial ? "*" : "" );
+   }
+   if ( counts.residues > 1 )
+   {
+      qs += QString( "%1 residues%2 " )
+         .arg( counts.residues )
+         .arg( counts.residue_partial ? "*" : "" );
+   }
+   qs += QString( "%1 atoms selected" ).arg( counts.atoms );
+   return qs;
+}
+
+void US_Hydrodyn_Pdb_Tool::invert_selection( QListView *lv )
+{
+   // make sure atoms are selected
+   clean_selection( lv );
+
+   // turn off parents
+   {
+      QListViewItemIterator it( lv );
+      while ( it.current() ) 
+      {
+         QListViewItem *item = it.current();
+         if ( item->isSelected() && item->childCount() )
+         {
+            item->setSelected( false );
+         }
+         ++it;
+      }
+   }
+   // invert atoms
+   {
+      QListViewItemIterator it( lv );
+      while ( it.current() ) 
+      {
+         QListViewItem *item = it.current();
+         if ( !item->childCount() )
+         {
+            item->setSelected( !item->isSelected() );
+         }
+         ++it;
+      }
+   }
+   clean_selection( lv );
+   if ( lv == lv_csv )
+   {
+      selection_since_count_csv1 = true;
+      csv_sel_msg();
+   } else {
+      selection_since_count_csv2 = true;
+      csv2_sel_msg();
+   }
+}
+
+void US_Hydrodyn_Pdb_Tool::clean_selection( QListView *lv )
+{
+   // if a parent is selected, set selected on all children
+   // & if all children are selected, set parents selected
+
+   QListViewItemIterator it( lv );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( !item->isSelected() )
+      {
+         if ( is_selected( item ) || all_children_selected( item ) )
+         {
+               item->setSelected( true );
+         } 
+      }
+      ++it;
+   }
+
+   lv->triggerUpdate();
+
+   if ( lv == lv_csv )
+   {
+      selection_since_clean_csv1 = false;
+   } else {
+      selection_since_clean_csv2 = false;
+   }
+}
+
+bool US_Hydrodyn_Pdb_Tool::no_dup_keys( csv &csv1, csv &csv2 )
+{
+   for ( map < QString, unsigned int >::iterator it = csv1.key.begin();
+         it != csv1.key.end();
+         it++ )
+   {
+      if ( csv2.key.count( it->first ) )
+      {
+         editor_msg("dark red",QString("dup key %1").arg(it->first));
+         return false;
+      }
+   }
+   for ( map < QString, unsigned int >::iterator it = csv1.nd_key.begin();
+         it != csv1.nd_key.end();
+         it++ )
+   {
+      if ( csv2.nd_key.count( it->first ) )
+      {
+         editor_msg("dark red",QString("dup key %1").arg(it->first));
+         return false;
+      }
+   }
+   return true;
+}
+
+csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
+{
+   // insert csv2 into csv1 at 
+   if ( !no_dup_keys( csv1, csv2 ) )
+   {
+      editor_msg("red","duplicate keys not yet supported");
+      return csv1;
+   }
+      
+   csv merged = csv1;
+   editor_msg("blue",
+              QString("current item key <%1>").arg( csv1.current_item_key ) );
+   if ( merged.current_item_key.isEmpty() ||
+        !merged.key.count( merged.current_item_key ) )
+   {
+      // paste at end
+      for ( unsigned int i = 0; i < csv2.data.size(); i++ )
+      {
+         merged.key[ data_to_key( csv2.data[ i ] ) ] = merged.data.size();
+
+         merged.data    .push_back  ( csv2.data    [ i ] );
+         merged.visible .push_back  ( csv2.visible [ i ] );
+         merged.selected.push_back  ( csv2.selected[ i ] );
+         merged.open    .push_back  ( csv2.open    [ i ] );
+      }
+   } else {
+      unsigned int insert_after = merged.key[ merged.current_item_key ] + 1;
+      merged.data    .resize( insert_after );
+      merged.visible .resize( insert_after );
+      merged.selected.resize( insert_after );
+      merged.open    .resize( insert_after );
+      for ( unsigned int i = 0; i < csv2.data.size(); i++ )
+      {
+         merged.data    .push_back  ( csv2.data    [ i ] );
+         merged.visible .push_back  ( csv2.visible [ i ] );
+         merged.selected.push_back  ( csv2.selected[ i ] );
+         merged.open    .push_back  ( csv2.open    [ i ] );
+      }
+      for ( unsigned int i = insert_after; i < csv1.data.size(); i++ )
+      {
+         merged.data    .push_back  ( csv1.data    [ i ] );
+         merged.visible .push_back  ( csv1.visible [ i ] );
+         merged.selected.push_back  ( csv1.selected[ i ] );
+         merged.open    .push_back  ( csv1.open    [ i ] );
+      }
+   }      
+   
+   for ( map < QString, unsigned int >::iterator it = csv2.nd_key.begin();
+         it != csv2.nd_key.end();
+         it++ )
+   {
+      merged.nd_key[ it->first ] = csv2.nd_visible.size();
+
+      merged.nd_visible .push_back( csv2.nd_visible [ it->second ] );
+      merged.nd_selected.push_back( csv2.nd_selected[ it->second ] );
+      merged.nd_open    .push_back( csv2.nd_open    [ it->second ] );
+   }
+
+   return merged;
+}

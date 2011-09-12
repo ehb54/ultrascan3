@@ -32,8 +32,21 @@
 
 using namespace std;
 
+struct pdb_sel_count
+{
+   unsigned int models;
+   unsigned int chains;
+   unsigned int residues;
+   unsigned int atoms;
+   bool         model_partial;
+   bool         chain_partial;
+   bool         residue_partial;
+   unsigned int not_selected_atoms;
+};
+
 class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 {
+
    Q_OBJECT
 
    public:
@@ -67,8 +80,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_cut;
       QPushButton   *pb_csv_copy;
       QPushButton   *pb_csv_paste;
+      QPushButton   *pb_csv_paste_new;
       QPushButton   *pb_csv_merge;
       QPushButton   *pb_csv_reseq;
+      QPushButton   *pb_csv_sel_clear;
+      QPushButton   *pb_csv_sel_clean;
+      QPushButton   *pb_csv_sel_invert;
+      QPushButton   *pb_csv_sel_nearest_atoms;
+      QPushButton   *pb_csv_sel_nearest_residues;
+      QLabel        *lbl_csv_sel_msg;
 
       QLabel        *lbl_csv2;
       QListView     *lv_csv2;
@@ -83,8 +103,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_cut;
       QPushButton   *pb_csv2_copy;
       QPushButton   *pb_csv2_paste;
+      QPushButton   *pb_csv2_paste_new;
       QPushButton   *pb_csv2_merge;
       QPushButton   *pb_csv2_reseq;
+      QPushButton   *pb_csv2_sel_clear;
+      QPushButton   *pb_csv2_sel_clean;
+      QPushButton   *pb_csv2_sel_invert;
+      QPushButton   *pb_csv2_sel_nearest_atoms;
+      QPushButton   *pb_csv2_sel_nearest_residues;
+      QLabel        *lbl_csv2_sel_msg;
 
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
@@ -106,40 +133,54 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       csv           csv1;
       unsigned int  csv2_pos;
 
-      void          update_enables();
-      void          update_enables_csv();
-      void          update_enables_csv2();
-      void          editor_msg( QString color, QString msg );
-      void          csv_msg   ( QString color, QString msg );
-      void          csv2_msg  ( QString color, QString msg );
+      void          update_enables         ();
+      void          update_enables_csv     ();
+      void          update_enables_csv2    ();
+      void          editor_msg             ( QString color, QString msg );
+      void          csv_msg                ( QString color, QString msg );
+      void          csv2_msg               ( QString color, QString msg );
 
       bool          selection_since_count_csv1;
-      unsigned int  last_count_csv1;
+      bool          selection_since_clean_csv1;
+      pdb_sel_count last_count_csv1;
       bool          selection_since_count_csv2;
-      unsigned int  last_count_csv2;
+      bool          selection_since_clean_csv2;
+      pdb_sel_count last_count_csv2;
 
-      unsigned int  count_selected  ( QListView *lv );
-      bool          any_selected    ( QListView *lv );
-      csv           to_csv          ( QListView *lv, csv &ref_csv, bool only_selected = false );
-      bool          is_selected     ( QListViewItem *lvi );
-      bool          child_selected  ( QListViewItem *lvi );
-      QString       key             ( QListViewItem *lvi );
-      void          csv_to_lv       ( csv &csv1, QListView *lv );
-      void          csv_setup_keys  ( csv &csv1 );
-      void          list_csv_keys   ( csv &csv1 );
+      pdb_sel_count count_selected         ( QListView *lv );
+      bool          any_selected           ( QListView *lv );
+      void          clean_selection        ( QListView *lv );
+      void          invert_selection       ( QListView *lv );
+      QString       pdb_sel_count_msg      ( pdb_sel_count &counts );
+      csv           to_csv                 ( QListView *lv, csv &ref_csv, bool only_selected = false );
+      bool          is_selected            ( QListViewItem *lvi );
+      bool          child_selected         ( QListViewItem *lvi );
+      bool          all_children_selected  ( QListViewItem *lvi );
+      QString       key                    ( QListViewItem *lvi );
+      void          csv_to_lv              ( csv &csv1, QListView *lv );
+      void          csv_setup_keys         ( csv &csv1 );
+      void          list_csv_keys          ( csv &csv1 );
       csv           csv_clipboard;
-
-      bool          merge_ok        ();
+      csv           merge_csvs             ( csv &csv1, csv &csv2 );
+      bool          no_dup_keys            ( csv &csv1, csv &csv2 );
+      bool          merge_ok               ();
       
-      QString       csv_to_pdb      ( csv &csv1 );
-      void          save_csv        ( QListView *lv );
+      QString       csv_to_pdb             ( csv &csv1 );
+      QString       data_to_key            ( vector < QString > &data );
+      void          save_csv               ( QListView *lv );
 
-      void          visualize       ( QListView *lv );
+      void          visualize              ( QListView *lv );
 
-      void          load            ( QListView *lv );
+      void          load                   ( QListView *lv );
 
-      void          csv2_redisplay  ( unsigned int pos );
-      void          csv2_push       ( bool save_current = false );
+      void          csv2_redisplay         ( unsigned int pos );
+      void          csv2_push              ( bool save_current = false );
+
+      void          csv_sel_msg            ();
+      void          csv2_sel_msg           ();
+
+      void          sel_nearest_atoms      ( QListView *lv );
+      double        pair_dist              ( QListViewItem *item1, QListViewItem *item2 );
 
    private slots:
       
@@ -156,9 +197,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_undo();
       void csv_copy();
       void csv_paste();
+      void csv_paste_new();
       void csv_merge();
       void csv_reseq();
       void csv_visualize();
+      void csv_sel_clear();
+      void csv_sel_clean();
+      void csv_sel_invert();
+      void csv_sel_nearest_atoms();
+      void csv_sel_nearest_residues();
 
       void csv2_selection_changed();
       void csv2_load();
@@ -168,9 +215,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_cut();
       void csv2_copy();
       void csv2_paste();
+      void csv2_paste_new();
       void csv2_merge();
       void csv2_reseq();
       void csv2_visualize();
+      void csv2_sel_clear();
+      void csv2_sel_clean();
+      void csv2_sel_invert();
+      void csv2_sel_nearest_atoms();
+      void csv2_sel_nearest_residues();
 
       void adjust_wheel( double );
 
@@ -180,7 +233,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
    protected slots:
 
       void closeEvent(QCloseEvent *);
-   
 };
 
 #endif
