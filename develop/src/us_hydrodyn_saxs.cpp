@@ -5628,7 +5628,17 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       float start_q = plotted_q[ pos ][ 0 ];
       float end_q   = plotted_q[ pos ][ plotted_q[ pos ].size() -1 ];
       float delta_q = plotted_q[ pos ][ 1 ] - start_q;
+      if ( delta_q <= 0e0 )
+      {
+         editor_msg("red", "NOTICE: plotted delta q is negative or zero: delta q set to 1e-6");
+         delta_q = 1e-6;
+      }
+
       start_q -= delta_q;
+      if ( start_q < 0.0 )
+      {
+         start_q += delta_q;
+      }
       
       our_saxs_options->start_q = start_q;
       our_saxs_options->end_q   = end_q;
