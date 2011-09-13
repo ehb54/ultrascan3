@@ -27,9 +27,9 @@
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
-#ifndef WIN32
-# include "us_hydrodyn_saxs_iqq_residuals.h"
-#endif
+// #ifndef WIN32
+#include "us_hydrodyn_saxs_iqq_residuals.h"
+// #endif
 #include "us_hydrodyn_saxs_residuals.h"
 #include "us_hydrodyn_comparative.h"
 
@@ -317,11 +317,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif
-#ifndef WIN32
+      // #ifndef WIN32
       // target indexed iqq residuals windows
       map < QString, bool >                            saxs_iqq_residuals_widgets;
       map < QString, US_Hydrodyn_Saxs_Iqq_Residuals *> saxs_iqq_residuals_windows;
-#endif
+      // #endif
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;
       map < QString, QString > *remember_mw_source;

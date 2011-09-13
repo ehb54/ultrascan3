@@ -5423,7 +5423,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       log_difference[ i ] = log_I2[ i ] - log_I1[ i ];
    }
 
-#ifndef WIN32
+   // #ifndef WIN32
    if ( saxs_iqq_residuals_widgets.count(title) &&
         saxs_iqq_residuals_widgets[title] &&
         saxs_iqq_residuals_windows.count(title)
@@ -5470,7 +5470,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                             );
       saxs_iqq_residuals_windows[title]->show();
    }
-#endif
+   // #endif
 }
 
 void US_Hydrodyn_Saxs::update_iqq_suffix()
@@ -5631,7 +5631,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       if ( delta_q <= 0e0 )
       {
          editor_msg("red", "NOTICE: plotted delta q is negative or zero: delta q set to 1e-6");
-         delta_q = 1e-6;
+         delta_q = (float)1e-6;
       }
 
       start_q -= delta_q;

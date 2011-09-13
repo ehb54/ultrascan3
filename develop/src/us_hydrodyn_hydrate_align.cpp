@@ -99,19 +99,19 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    TNT::Array2D < float > H( 3, 3 );
 
-   for ( unsigned int i = 0; i < 3; i++ )
+   for ( int i = 0; i < 3; i++ )
    {
-      for ( unsigned int j = 0; j < 3; j++ ) 
+      for ( int j = 0; j < 3; j++ ) 
       {
-         H[ i ][ j ] = 0.0;
+         H[ i ][ j ] = 0.0f;
       }
    }
 
    for ( unsigned int i = 0; i < transform_from.size(); i++ ) 
    {
-      for ( unsigned int j = 0; j < 3; j++ ) 
+      for ( int j = 0; j < 3; j++ ) 
       {
-         for ( unsigned int k = 0; k < 3; k++ ) 
+         for ( int k = 0; k < 3; k++ ) 
          {
             H[ j ][ k ] +=  transform_from[ i ].axis[ j ] * transform_to[ i ].axis[ k ];
          }
@@ -147,9 +147,9 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
 #if defined( DEBUG_ALIGN )
    cout << "rotation matrix: ";
-   for ( unsigned int i = 0; i < 3; i++ )
+   for ( int i = 0; i < 3; i++ )
    {
-      for ( unsigned int j = 0; j < 3; j++ )
+      for ( int j = 0; j < 3; j++ )
       {
          cout << QString(" %1").arg( rot[ i ][ j ] );
       }
@@ -162,9 +162,9 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    point trans = center_to;
 
-   for ( unsigned int i = 0; i < 3; i++ )
+   for ( int i = 0; i < 3; i++ )
    {
-      for ( unsigned int j = 0; j < 3; j++ )
+      for ( int j = 0; j < 3; j++ )
       {
          trans.axis[ i ] -= rot[ i ][ j ] * center_from.axis[ j ];
       }
@@ -197,10 +197,10 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    for ( unsigned int i = 0; i < apply_from.size(); i++ )
    {
-      for ( unsigned int j = 0; j < 3; j++ )
+      for ( int j = 0; j < 3; j++ )
       {
          result[ i ].axis[ j ] = trans.axis[ j ];
-         for ( unsigned int k = 0; k < 3; k++ )
+         for ( int k = 0; k < 3; k++ )
          {
             result[ i ].axis[ j ] += rot[ j ][ k ] * apply_from[ i ].axis[ k ];
          }

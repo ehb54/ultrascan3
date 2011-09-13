@@ -178,7 +178,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
       double scaling_root = 1e0;
       if ( our_saxs_options->scale_excl_vol != 1e0 )
       {
-         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+         scaling_root = pow( (double) our_saxs_options->scale_excl_vol, 1e0/3e0 );
       }
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
@@ -1010,7 +1010,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       double scaling_root = 1e0;
       if ( our_saxs_options->scale_excl_vol != 1e0 )
       {
-         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+         scaling_root = pow( (double) our_saxs_options->scale_excl_vol, 1e0/3e0 );
       }
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
@@ -1634,7 +1634,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       double scaling_root = 1e0;
       if ( our_saxs_options->scale_excl_vol != 1e0 )
       {
-         scaling_root = pow( our_saxs_options->scale_excl_vol, 1e0/3e0 );
+         scaling_root = pow( (double) our_saxs_options->scale_excl_vol, 1e0/3e0 );
       }
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )

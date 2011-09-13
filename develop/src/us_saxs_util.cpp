@@ -6103,7 +6103,7 @@ bool US_Saxs_Util::calc_chisq_prob( double a, double x, double &prob )
       c = 1e30;
       h = d = 1.0 / b;
 
-      unsigned int i;
+      int i;
       for ( i = 1; i <= 1000; i++ ) 
       {
          an = -i * ( i - a );

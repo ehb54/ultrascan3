@@ -251,8 +251,8 @@ bool US_Register::read()
   QChar cval;
   concat = register_list.expiration + register_list.email;
   temp_license ="";
-  for (unsigned int i=0; i<concat.length(); i++)
-  {	cval = concat[i];
+  for ( unsigned int i=0; i<concat.length(); i++)
+  {	cval = concat[(int)i];
 		temp_license += str.sprintf("%X", cval.unicode());
   }
   temp_license.truncate(70);
