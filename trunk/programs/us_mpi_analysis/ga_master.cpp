@@ -73,10 +73,7 @@ DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
  << "buck size" << buckets.size();
 DbgLv(1) << "GaMast:   dset size" << data_sets.size();
 DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
-int dbglvsv = simulation_values.dbg_level;
-simulation_values.dbg_level = 2;
       calc_residuals( 0, data_sets.size(), simulation_values );
-simulation_values.dbg_level = dbglvsv;
 DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
@@ -372,10 +369,7 @@ DbgLv(1) << "sgMC: bfgenes stored" << calculated_solutes[0].size();
          calculated_solutes[ 0 ][ i ].s *= 1.0e-13;
 
 DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
-int dbglvsv = simulation_values.dbg_level;
-simulation_values.dbg_level = 2;
       set_gaussians();
-simulation_values.dbg_level = dbglvsv;
 DbgLv(1) << "sgMC: gaussians set";
    }
 
