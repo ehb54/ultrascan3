@@ -29,7 +29,7 @@ unix {
 }
 
 win32 {
-  TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
+  #TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
   CONFIG              += qt warn thread release
   #CONFIG              += qt warn thread debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions

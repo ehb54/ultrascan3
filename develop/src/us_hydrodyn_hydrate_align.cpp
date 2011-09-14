@@ -107,7 +107,7 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
       }
    }
 
-   for ( unsigned int i = 0; i < transform_from.size(); i++ ) 
+   for ( int i = 0; i < transform_from.size(); i++ ) 
    {
       for ( int j = 0; j < 3; j++ ) 
       {
@@ -177,12 +177,12 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    cout << "test on transform_from:\n";
    vector < point > test_to( save_from.size() );
-   for ( unsigned int i = 0; i < save_from.size(); i++ )
+   for ( int i = 0; i < save_from.size(); i++ )
    {
-      for ( unsigned int j = 0; j < 3; j++ )
+      for ( int j = 0; j < 3; j++ )
       {
          test_to[ i ].axis[ j ] = trans.axis[ j ];
-         for ( unsigned int k = 0; k < 3; k++ )
+         for ( int k = 0; k < 3; k++ )
          {
             test_to[ i ].axis[ j ] += rot[ j ][ k ] * save_from[ i ].axis[ k ];
          }
@@ -195,7 +195,7 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    result.resize( apply_from.size() );
 
-   for ( unsigned int i = 0; i < apply_from.size(); i++ )
+   for ( int i = 0; i < apply_from.size(); i++ )
    {
       for ( int j = 0; j < 3; j++ )
       {

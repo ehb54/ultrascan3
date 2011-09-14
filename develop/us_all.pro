@@ -8,7 +8,7 @@ SUBDIRS   = us_equilmc_t \
 TEMPLATE  = subdirs
 }
 
-win32:TEMPLATE=vcsubdirs
+win32:TEMPLATE=subdirs
 
 SUBDIRS += \
     us \

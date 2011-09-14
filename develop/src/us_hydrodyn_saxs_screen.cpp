@@ -7,6 +7,8 @@
 #  define isnan _isnan
 #endif
 
+#define isnan(x) _isnan(x)
+
 US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
                                                csv csv1,
                                                void *us_hydrodyn, 

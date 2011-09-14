@@ -41,14 +41,14 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  TEMPLATE             = vclib
+  TEMPLATE             = lib
   TARGET               = libus
-  #CONFIG              += qt thread warn exceptions dll release
-  CONFIG              += qt thread warn exceptions dll debug
+  CONFIG              += qt thread warn exceptions dll release
+  #CONFIG              += qt thread warn exceptions dll debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
-  QMAKE_LFLAGS_RELEASE = 
+  QMAKE_LFLAGS_RELEASE = /NODEFAULTLIB:"msvcrtd.lib"
   DEFINES             += QT_DLL -GX QWT_USE_DLL US_MAKE_DLL
   LIBS                += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib 
   LIBS                += opengl32.lib glu32.lib glaux.lib
