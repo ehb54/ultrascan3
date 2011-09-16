@@ -4,10 +4,9 @@
 
 #define SLASH QDir::separator()
 #if defined(WIN32)
-#  define isnan _isnan
+#  define isnan(x) _isnan(x)
 #endif
 
-#define isnan(x) _isnan(x)
 
 US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
                                                csv csv1,

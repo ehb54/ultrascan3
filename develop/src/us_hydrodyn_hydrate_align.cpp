@@ -107,7 +107,7 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
       }
    }
 
-   for ( int i = 0; i < transform_from.size(); i++ ) 
+   for ( unsigned int i = 0; i < transform_from.size(); i++ ) 
    {
       for ( int j = 0; j < 3; j++ ) 
       {
@@ -195,7 +195,7 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    result.resize( apply_from.size() );
 
-   for ( int i = 0; i < apply_from.size(); i++ )
+   for ( unsigned int i = 0; i < apply_from.size(); i++ )
    {
       for ( int j = 0; j < 3; j++ )
       {

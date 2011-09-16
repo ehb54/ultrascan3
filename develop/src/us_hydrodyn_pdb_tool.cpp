@@ -105,6 +105,19 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    editor->setWordWrap (QTextEdit::WidgetWidth);
    editor->setMinimumHeight(300);
 
+   pb_split_pdb = new QPushButton(tr("Split"), this);
+   pb_split_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_split_pdb->setMinimumHeight(minHeight1);
+   pb_split_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_split_pdb, SIGNAL(clicked()), SLOT(split_pdb()));
+
+   pb_join_pdbs = new QPushButton(tr("Join"), this);
+   pb_join_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_join_pdbs->setMinimumHeight(minHeight1);
+   pb_join_pdbs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_join_pdbs->setEnabled( false );
+   connect(pb_join_pdbs, SIGNAL(clicked()), SLOT(join_pdbs()));
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -116,6 +129,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+
 
    // center pane
 
@@ -404,16 +418,22 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    gl_panes->addLayout( vbl_editor_group, 0, 0 );
 
    QBoxLayout *hbl_left_buttons_row_1 = new QHBoxLayout;
+   hbl_left_buttons_row_1->addWidget( pb_split_pdb );
    hbl_left_buttons_row_1->addSpacing( 2 );
+   hbl_left_buttons_row_1->addWidget( pb_join_pdbs );
    
    QBoxLayout *hbl_left_buttons_row_2 = new QHBoxLayout;
-   hbl_left_buttons_row_2->addWidget( pb_help );
    hbl_left_buttons_row_2->addSpacing( 2 );
-   hbl_left_buttons_row_2->addWidget( pb_cancel );
+
+   QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
+   hbl_left_buttons_row_3->addWidget( pb_help );
+   hbl_left_buttons_row_3->addSpacing( 2 );
+   hbl_left_buttons_row_3->addWidget( pb_cancel );
 
    QBoxLayout *vbl_left_buttons = new QVBoxLayout;
    vbl_left_buttons->addLayout( hbl_left_buttons_row_1 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_2 );
+   vbl_left_buttons->addLayout( hbl_left_buttons_row_3 );
 
    gl_panes->addLayout( vbl_left_buttons, 1, 0 );
 
@@ -2108,4 +2128,327 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
    }
 
    return merged;
+}
+
+void US_Hydrodyn_Pdb_Tool::split_pdb()
+{
+   // read through a multi model pdb & create a file one per model
+
+   pb_split_pdb->setEnabled( false );
+
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+
+   if ( filename.isEmpty() )
+   {
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
+   QFile f( filename );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
+
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end("^END");
+   QRegExp rx_save_header("^("
+                          "HEADER|"
+                          "TITLE|"
+                          "COMPND|"
+                          "SOURCE|"
+                          "KEYWDS|"
+                          "AUTHOR|"
+                          "REVDAT|"
+                          "JRNL|"
+                          "REMARK|"
+                          "SEQRES|"
+                          "SHEET|"
+                          "HELIX|"
+                          "SSBOND|"
+                          "DBREF|"
+                          "ORIGX|"
+                          "SCALE"
+                          ")\\.*" );
+   
+   unsigned int model_count = 0;
+
+   editor_msg( "dark blue", QString( tr( "Checking file %1" ).arg( f.name() ) ) );
+
+   map    < QString, bool > model_names;
+   vector < QString >       model_name_vector;
+   unsigned int             max_model_name_len = 0;
+   QString                  model_header;
+
+   bool dup_model_name_msg_done = false;
+
+   {
+      QTextStream ts( &f );
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         if ( qs.contains( rx_save_header ) )
+         {
+            model_header += qs + "\n";
+         }
+         
+         if ( qs.contains( rx_model ) )
+         {
+            model_count++;
+            QStringList qsl = QStringList::split( QRegExp("\\s+"), qs.left(20) );
+            QString model_name;
+            if ( qsl.size() == 1 )
+            {
+               model_name = QString("%1").arg( model_count );
+            } else {
+               model_name = qsl[1];
+            }
+            if ( model_names.count( model_name ) )
+            {
+               unsigned int mext = 1;
+               QString use_model_name;
+               do {
+                  use_model_name = model_name + QString("-%1").arg( mext );
+               } while ( model_names.count( use_model_name ) );
+               model_name = use_model_name;
+               if ( !dup_model_name_msg_done )
+               {
+                  dup_model_name_msg_done = true;
+                  editor_msg( "red", tr( "Duplicate or missing model names found, -# extensions added" ) );
+               }
+            }
+            model_names[ model_name ] = true;
+            model_name_vector.push_back ( model_name );
+            if ( model_name.length() > max_model_name_len )
+            {
+               max_model_name_len = model_name.length();
+            }
+         }
+      }
+   }
+
+   f.close();
+
+   if ( model_count == 0 )
+   {
+      model_count = 1;
+   }
+
+   editor_msg( "dark blue", QString( tr( "File %1 contains %2 models" ) ).arg( f.name() ).arg( model_count ) );
+
+   if ( model_count == 1 )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: PDB Editor - Split"),
+                            QString("The file"
+                                    "%1\n"
+                                    "Only appears to contain 1 model\n" )
+                            .arg( f.name() )
+                            );
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
+   // ask how many to split into & then make them
+
+   bool ok;
+   int res = QInputDialog::getInteger(
+                                      "US-SOMO: PDB Editor - Split",
+                                      QString( tr( "File %1 contains %2 models\n"
+                                                   "Enter the sequence increment value\n"
+                                                   "Use 1 to make a pdb of each model, 2 for every other, etc.\n"
+                                                   "Press Cancel to quit\n") )
+                                      .arg( f.name() )
+                                      .arg( model_count )
+                                      , 
+                                      1,
+                                      1,
+                                      model_count, 
+                                      1, 
+                                      &ok, 
+                                      this 
+                                      );
+   if ( !ok ) {
+      pb_split_pdb->setEnabled( true );
+      return;
+   } 
+
+
+   QString ext = "X";
+   while ( ext.length() < max_model_name_len )
+   {
+      ext = "X" + ext;
+   }
+   ext = "-" + ext + ".pdb";
+
+   QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
+
+   fn = QFileDialog::getSaveFileName( fn, 
+                                      "PDB (*.pdb *.PDB)",
+                                      this,
+                                      "save the models",
+                                      "Choose a name to save the files, the X's will be replaced by the model name" );
+   
+   if ( fn.isEmpty() )
+   {
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+   
+   fn.replace(QRegExp(QString("%1$").arg(ext)), "" );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
+   bool overwriteForcedOn = false;
+
+   if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    tr("US-SOMO: PDB Editor - overwrite question"),
+                                    QString(tr("Please note:\n\n"
+                                               "Overwriting of existing files currently off.\n"
+                                               "This could block processing awaiting user input.\n"
+                                               "What would you like to do?\n")),
+                                    tr("&Stop"), 
+                                    tr("&Turn on overwrite now"),
+                                    tr("C&ontinue anyway"),
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // stop
+         pb_split_pdb->setEnabled( true );
+         return;
+         break;
+      case 1 :
+         ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
+         ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
+         overwriteForcedOn = true;
+         break;
+      case 2 : // continue
+         break;
+      }
+   }
+
+   QTextStream ts( &f );
+
+   QString       model_lines;
+   bool          in_model = false;
+   unsigned int  pos = 0;
+
+   if ( !ts.atEnd() )
+   {
+      do 
+      {
+         QString qs = ts.readLine();
+         if ( qs.contains( rx_model ) || qs.contains( rx_end ) || ts.atEnd() )
+         {
+            if ( model_lines.length() )
+            {
+               if ( !( pos % res ) )
+               {
+                  QString use_ext = model_name_vector[ pos ];
+                  while ( use_ext.length() < max_model_name_len )
+                  {
+                     use_ext = "0" + use_ext;
+                  }
+                  
+                  QString use_fn = fn + "-" + use_ext + ".pdb";
+                  
+                  if ( QFile::exists( use_fn ) && 
+                       !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+                  {
+                     use_fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_fn );
+                  }
+                  
+                  QFile fn_out( use_fn );
+                  
+                  if ( !fn_out.open( IO_WriteOnly ) )
+                  {
+                     QMessageBox::warning( this, "US-SOMO: PDB Editor : Split",
+                                           QString(tr("Could not open %1 for writing!")).arg( use_fn ) );
+                     pb_split_pdb->setEnabled( true );
+                     return;
+                  }
+                  
+                  QTextStream tso( &fn_out );
+               
+                  tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.name() ).arg( pos + 1 ).arg( model_count );
+                  tso << model_header;
+                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
+                  tso << model_lines;
+                  tso << "ENDMDL\nEND\n";
+                  
+                  fn_out.close();
+                  editor_msg( "dark blue", QString( tr( "File %1 written" ) ).arg( fn_out.name() ) );
+               } else {
+                  // editor_msg( "dark red", QString("model %1 skipped").arg( model_name_vector[ pos ] ) );
+               }
+               in_model = false;
+               model_lines = "";
+               pos++;
+            }
+            if ( qs.contains( rx_model ) )
+            {
+               in_model = true;
+               model_lines = "";
+            }
+         } else {
+            if ( in_model )
+            {
+               model_lines += qs + "\n";
+            }
+         }
+      } while ( !ts.atEnd() );
+   }
+   f.close();
+
+   if ( overwriteForcedOn )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+   }
+
+   editor_msg( "dark blue", "Split done");
+   pb_split_pdb->setEnabled( true );
+   return;
+}
+
+void US_Hydrodyn_Pdb_Tool::join_pdbs()
+{
 }

@@ -70,6 +70,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QTextEdit     *editor;
       QMenuBar      *m;
 
+      QPushButton   *pb_split_pdb;
+      QPushButton   *pb_join_pdbs;
+
       QLabel        *lbl_csv;
       QListView     *lv_csv;
       QTextEdit     *te_csv;
@@ -189,6 +192,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void clear_display();
       void update_font();
       void save();
+
+      void split_pdb();
+      void join_pdbs();
+
 
       void csv_selection_changed();
       void csv_load();
