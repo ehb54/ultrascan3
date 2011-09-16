@@ -2206,11 +2206,20 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    bool dup_model_name_msg_done = false;
 
+   
    {
       QTextStream ts( &f );
+      unsigned int line_count = 0;
+   
       while ( !ts.atEnd() )
       {
          QString qs = ts.readLine();
+         line_count++;
+         if ( line_count && !(line_count % 100000 ) )
+         {
+            editor_msg( "dark blue", QString( tr( "Lines read %1" ).arg( line_count ) ) );
+            qApp->processEvents();
+         }
          if ( qs.contains( rx_save_header ) )
          {
             model_header += qs + "\n";
@@ -2416,6 +2425,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                   
                   fn_out.close();
                   editor_msg( "dark blue", QString( tr( "File %1 written" ) ).arg( fn_out.name() ) );
+                  qApp->processEvents();
                } else {
                   // editor_msg( "dark red", QString("model %1 skipped").arg( model_name_vector[ pos ] ) );
                }
