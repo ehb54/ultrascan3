@@ -434,8 +434,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
 
    // Make sure that ranges are reasonable
-   if ( ( ct_uplimits->value() - ct_lolimits->value() ) <= 0.0  ||
-        ( ct_uplimitk->value() - ct_lolimitk->value() ) <= 0.0 )
+   if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
+        ( ct_uplimitk->value() - ct_lolimitk->value() ) < 0.0 )
    {
       QString msg = 
          tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"

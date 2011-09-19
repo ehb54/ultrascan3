@@ -17,10 +17,14 @@ void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,
 {
    if ( grid_reps < 1 ) grid_reps = 1;
 
-   double s_step   = fabs( s_max   - s_min   ) / ( ( s_res   / grid_reps ) - 1 );
-   double ff0_step = fabs( ff0_max - ff0_min ) / ( ( ff0_res / grid_reps ) - 1 );
+   int    nprs     = qMax( 1, ( ( s_res   / grid_reps ) - 1 ) );
+   int    nprk     = qMax( 1, ( ( ff0_res / grid_reps ) - 1 ) );
+          s_max    = qMax( s_max,   ( s_min   + 1e-16 ) );
+          ff0_max  = qMax( ff0_max, ( ff0_min + 1e-3  ) );
+   double s_step   = fabs( s_max   - s_min   ) / (double)nprs;
+   double ff0_step = fabs( ff0_max - ff0_min ) / (double)nprk;
    double s_grid   = s_step   / grid_reps;  
-   double ff0_grid = ff0_step / grid_reps;   
+   double ff0_grid = ff0_step / grid_reps;
 
    // Allow a 1% overscan
    s_max   += 0.01 * s_step;
