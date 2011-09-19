@@ -37,6 +37,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    selection_since_clean_csv1 = true;
    selection_since_count_csv2 = true;
    selection_since_clean_csv2 = true;
+   pdb_tool_merge_widget = false;
 
    update_enables();
 
@@ -118,6 +119,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_join_pdbs->setEnabled( false );
    connect(pb_join_pdbs, SIGNAL(clicked()), SLOT(join_pdbs()));
 
+   pb_merge = new QPushButton(tr("Cut/Splice"), this);
+   pb_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_merge->setMinimumHeight(minHeight1);
+   pb_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_merge, SIGNAL(clicked()), SLOT(merge()));
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -165,7 +172,13 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    te_csv->setReadOnly(true);
    te_csv->setMaximumHeight( minHeight1 * 4 );
    
-   pb_csv_load = new QPushButton(tr("Load"), this);
+   pb_csv_load_1 = new QPushButton(tr("Load"), this);
+   pb_csv_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_load_1->setMinimumHeight(minHeight1);
+   pb_csv_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_load_1, SIGNAL(clicked()), SLOT(csv_load_1()));
+
+   pb_csv_load = new QPushButton(tr("Load All"), this);
    pb_csv_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv_load->setMinimumHeight(minHeight1);
    pb_csv_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -292,7 +305,13 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    te_csv2->setReadOnly(true);
    te_csv2->setMaximumHeight( minHeight1 * 4 );
 
-   pb_csv2_load = new QPushButton(tr("Load"), this);
+   pb_csv2_load_1 = new QPushButton(tr("Load"), this);
+   pb_csv2_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_load_1->setMinimumHeight(minHeight1);
+   pb_csv2_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_load_1, SIGNAL(clicked()), SLOT(csv2_load_1()));
+
+   pb_csv2_load = new QPushButton(tr("Load All"), this);
    pb_csv2_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_load->setMinimumHeight(minHeight1);
    pb_csv2_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -423,7 +442,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_left_buttons_row_1->addWidget( pb_join_pdbs );
    
    QBoxLayout *hbl_left_buttons_row_2 = new QHBoxLayout;
-   hbl_left_buttons_row_2->addSpacing( 2 );
+   hbl_left_buttons_row_2->addWidget( pb_merge );
 
    QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
    hbl_left_buttons_row_3->addWidget( pb_help );
@@ -447,6 +466,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    gl_panes->addLayout( vbl_center_top, 0, 1 );
 
    QBoxLayout *hbl_center_buttons_row_1 = new QHBoxLayout;
+   hbl_center_buttons_row_1->addWidget( pb_csv_load_1 );
+   hbl_center_buttons_row_1->addSpacing( 2 );
    hbl_center_buttons_row_1->addWidget( pb_csv_load );
    hbl_center_buttons_row_1->addSpacing( 2 );
    hbl_center_buttons_row_1->addWidget( pb_csv_visualize );
@@ -504,6 +525,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    gl_panes->addLayout( vbl_right_top, 0, 2 );
 
    QBoxLayout *hbl_right_buttons_row_1 = new QHBoxLayout;
+   hbl_right_buttons_row_1->addWidget( pb_csv2_load_1 );
+   hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_load );
    hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_visualize );
@@ -568,6 +591,12 @@ void US_Hydrodyn_Pdb_Tool::closeEvent(QCloseEvent *e)
 {
    global_Xpos -= 30;
    global_Ypos -= 30;
+
+   if ( pdb_tool_merge_widget )
+   {
+      pdb_tool_merge_window->close();
+   }
+
    e->accept();
 }
 
@@ -615,6 +644,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    bool           any_csv2_selected = any_selected  ( lv_csv2 );
    pdb_sel_count  counts            = count_selected( lv_csv );
 
+   pb_csv_load_1               ->setEnabled( true );
    pb_csv_load                 ->setEnabled( true );
    pb_csv_visualize            ->setEnabled( csv1.data.size() );
    pb_csv_save                 ->setEnabled( csv1.data.size() );
@@ -633,6 +663,11 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_sel_nearest_residues ->setEnabled( any_csv_selected && counts.not_selected_atoms > 1 );
 
    csv_sel_msg();
+
+   if ( pdb_tool_merge_widget )
+   {
+      pdb_tool_merge_window->update_enables();
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
@@ -641,6 +676,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    bool           any_csv2_selected = any_selected  ( lv_csv2 );
    pdb_sel_count  counts            = count_selected( lv_csv2 );
 
+   pb_csv2_load_1               ->setEnabled( true );
    pb_csv2_load                 ->setEnabled( true );
    pb_csv2_visualize            ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_dup                  ->setEnabled( csv1.data.size() );
@@ -660,6 +696,11 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_sel_nearest_residues ->setEnabled( any_csv2_selected && counts.not_selected_atoms > 1 );
 
    csv2_sel_msg();
+
+   if ( pdb_tool_merge_widget )
+   {
+      pdb_tool_merge_window->update_enables();
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::update_enables()
@@ -694,7 +735,14 @@ void US_Hydrodyn_Pdb_Tool::csv2_msg( QString color, QString msg )
 
 void US_Hydrodyn_Pdb_Tool::csv_load()
 {
-   load( lv_csv );
+   QString f;
+   load( lv_csv, f );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_load_1()
+{
+   QString f;
+   load( lv_csv, f, true );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_save()
@@ -778,7 +826,14 @@ void US_Hydrodyn_Pdb_Tool::csv_visualize()
 
 void US_Hydrodyn_Pdb_Tool::csv2_load()
 {
-   load( lv_csv2 );
+   QString f;
+   load( lv_csv2, f );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_load_1()
+{
+   QString f;
+   load( lv_csv2, f, true );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_dup()
@@ -1588,10 +1643,14 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
    }
 }
 
-void US_Hydrodyn_Pdb_Tool::load( QListView *lv )
+void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_first_nmr )
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
-   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+
+   if ( filename.isEmpty() )
+   {
+      filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   }
 
    if ( filename.isEmpty() )
    {
@@ -1681,6 +1740,10 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv )
       if ( left6 == "ENDMDL" )
       {
          last_was_ENDMDL = true;
+         if ( only_first_nmr )
+         {
+            break;
+         }
          continue;
       }
 
@@ -2461,4 +2524,25 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
 void US_Hydrodyn_Pdb_Tool::join_pdbs()
 {
+}
+
+void US_Hydrodyn_Pdb_Tool::merge()
+{
+   if ( pdb_tool_merge_widget )
+   {
+      if ( pdb_tool_merge_window->isVisible() )
+      {
+         pdb_tool_merge_window->raise();
+      }
+      else
+      {
+         pdb_tool_merge_window->show();
+      }
+      return;
+   }
+   else
+   {
+      pdb_tool_merge_window = new US_Hydrodyn_Pdb_Tool_Merge( us_hydrodyn, this );
+      pdb_tool_merge_window->show();
+   }
 }

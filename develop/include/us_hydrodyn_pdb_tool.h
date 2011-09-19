@@ -28,26 +28,17 @@
 #include <iostream>
 
 #include "us_hydrodyn_comparative.h"
+#include "us_hydrodyn_pdb_tool_merge.h"
 #include "qwt_wheel.h"
 
 using namespace std;
-
-struct pdb_sel_count
-{
-   unsigned int models;
-   unsigned int chains;
-   unsigned int residues;
-   unsigned int atoms;
-   bool         model_partial;
-   bool         chain_partial;
-   bool         residue_partial;
-   unsigned int not_selected_atoms;
-};
 
 class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 {
 
    Q_OBJECT
+
+      friend class US_Hydrodyn_Pdb_Tool_Merge;
 
    public:
       US_Hydrodyn_Pdb_Tool(
@@ -72,10 +63,12 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       QPushButton   *pb_split_pdb;
       QPushButton   *pb_join_pdbs;
+      QPushButton   *pb_merge;
 
       QLabel        *lbl_csv;
       QListView     *lv_csv;
       QTextEdit     *te_csv;
+      QPushButton   *pb_csv_load_1;
       QPushButton   *pb_csv_load;
       QPushButton   *pb_csv_visualize;
       QPushButton   *pb_csv_save;
@@ -98,6 +91,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QTextEdit     *te_csv2;
       QwtWheel      *qwtw_wheel;
       QLabel        *lbl_pos_range;
+      QPushButton   *pb_csv2_load_1;
       QPushButton   *pb_csv2_load;
       QPushButton   *pb_csv2_visualize;
       QPushButton   *pb_csv2_dup;
@@ -174,7 +168,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void          visualize              ( QListView *lv );
 
-      void          load                   ( QListView *lv );
+      void          load                   ( QListView *lv, QString &filename, bool only_first_nmr = false );
 
       void          csv2_redisplay         ( unsigned int pos );
       void          csv2_push              ( bool save_current = false );
@@ -184,6 +178,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void          sel_nearest_atoms      ( QListView *lv );
       double        pair_dist              ( QListViewItem *item1, QListViewItem *item2 );
+
+      US_Hydrodyn_Pdb_Tool_Merge   *pdb_tool_merge_window;
+      bool          pdb_tool_merge_widget;
 
    private slots:
       
@@ -195,9 +192,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void split_pdb();
       void join_pdbs();
-
+      void merge();
 
       void csv_selection_changed();
+      void csv_load_1();
       void csv_load();
       void csv_save();
       void csv_cut();
@@ -215,6 +213,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_sel_nearest_residues();
 
       void csv2_selection_changed();
+      void csv2_load_1();
       void csv2_load();
       void csv2_dup();
       void csv2_save();
