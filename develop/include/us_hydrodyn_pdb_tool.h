@@ -73,6 +73,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_visualize;
       QPushButton   *pb_csv_save;
       QPushButton   *pb_csv_undo;
+      QPushButton   *pb_csv_clear;
       QPushButton   *pb_csv_cut;
       QPushButton   *pb_csv_copy;
       QPushButton   *pb_csv_paste;
@@ -97,6 +98,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_dup;
       QPushButton   *pb_csv2_save;
       QPushButton   *pb_csv2_undo;
+      QPushButton   *pb_csv2_clear;
       QPushButton   *pb_csv2_cut;
       QPushButton   *pb_csv2_copy;
       QPushButton   *pb_csv2_paste;
@@ -162,13 +164,14 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       bool          no_dup_keys            ( csv &csv1, csv &csv2 );
       bool          merge_ok               ();
       
-      QString       csv_to_pdb             ( csv &csv1 );
+      QString       csv_to_pdb             ( csv &csv1, bool only_atoms = false );
       QString       data_to_key            ( vector < QString > &data );
       void          save_csv               ( QListView *lv );
 
       void          visualize              ( QListView *lv );
 
       void          load                   ( QListView *lv, QString &filename, bool only_first_nmr = false );
+      void          load_from_qsl          ( QListView *lv, QStringList &pdb_text, QString title );
 
       void          csv2_redisplay         ( unsigned int pos );
       void          csv2_push              ( bool save_current = false );
@@ -200,6 +203,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_save();
       void csv_cut();
       void csv_undo();
+      void csv_clear();
       void csv_copy();
       void csv_paste();
       void csv_paste_new();
@@ -218,6 +222,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_dup();
       void csv2_save();
       void csv2_undo();
+      void csv2_clear();
       void csv2_cut();
       void csv2_copy();
       void csv2_paste();

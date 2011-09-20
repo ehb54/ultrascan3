@@ -202,6 +202,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_undo, SIGNAL(clicked()), SLOT(csv_undo()));
 
+   pb_csv_clear = new QPushButton(tr("Clear"), this);
+   pb_csv_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_clear->setMinimumHeight(minHeight1);
+   pb_csv_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_clear, SIGNAL(clicked()), SLOT(csv_clear()));
+
    pb_csv_cut = new QPushButton(tr("Cut"), this);
    pb_csv_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv_cut->setMinimumHeight(minHeight1);
@@ -341,6 +347,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_undo, SIGNAL(clicked()), SLOT(csv2_undo()));
 
+   pb_csv2_clear = new QPushButton(tr("Clear"), this);
+   pb_csv2_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_clear->setMinimumHeight(minHeight1);
+   pb_csv2_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_clear, SIGNAL(clicked()), SLOT(csv2_clear()));
+
    pb_csv2_cut = new QPushButton(tr("Cut"), this);
    pb_csv2_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_cut->setMinimumHeight(minHeight1);
@@ -475,6 +487,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_1->addWidget( pb_csv_save );
    hbl_center_buttons_row_1->addSpacing( 2 );
    hbl_center_buttons_row_1->addWidget( pb_csv_undo );
+   hbl_center_buttons_row_1->addSpacing( 2 );
+   hbl_center_buttons_row_1->addWidget( pb_csv_clear );
    
    QBoxLayout *hbl_center_buttons_row_2 = new QHBoxLayout;
    hbl_center_buttons_row_2->addWidget( pb_csv_cut );
@@ -536,6 +550,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_1->addWidget( pb_csv2_save );
    hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_undo );
+   hbl_right_buttons_row_1->addSpacing( 2 );
+   hbl_right_buttons_row_1->addWidget( pb_csv2_clear );
    
    QBoxLayout *hbl_right_buttons_row_2 = new QHBoxLayout;
    hbl_right_buttons_row_2->addWidget( pb_csv2_cut );
@@ -649,6 +665,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_visualize            ->setEnabled( csv1.data.size() );
    pb_csv_save                 ->setEnabled( csv1.data.size() );
    pb_csv_undo                 ->setEnabled( csv_undos.size() );
+   pb_csv_clear                ->setEnabled( csv1.data.size() );
    pb_csv_cut                  ->setEnabled( any_csv_selected );
    pb_csv_copy                 ->setEnabled( any_csv_selected );
    pb_csv_paste                ->setEnabled( csv_clipboard.data.size() && csv1.data.size() );
@@ -682,6 +699,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_dup                  ->setEnabled( csv1.data.size() );
    pb_csv2_save                 ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_undo                 ->setEnabled( csv2_undos[ csv2_pos ].size() );
+   pb_csv2_clear                ->setEnabled( csv2.size() > 1 || (csv2.size() == 1 && csv2[ 0 ].data.size() ) );
    pb_csv2_cut                  ->setEnabled( any_csv2_selected );
    pb_csv2_copy                 ->setEnabled( any_csv2_selected );
    pb_csv2_paste                ->setEnabled( csv_clipboard.data.size() && csv2[ csv2_pos ].data.size() );
@@ -965,7 +983,11 @@ void US_Hydrodyn_Pdb_Tool::csv2_paste()
 
 void US_Hydrodyn_Pdb_Tool::csv2_paste_new()
 {
-   csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
+   if ( csv2[ csv2_pos ].data.size() )
+   {
+      csv2_push( true );
+   }
+   // csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
    csv2[ csv2_pos ] = csv_clipboard;
    csv_to_lv( csv2[ csv2_pos ], lv_csv2 );
    update_enables_csv2();
@@ -1533,20 +1555,23 @@ bool US_Hydrodyn_Pdb_Tool::merge_ok()
    return true;
 }
 
-QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1 )
+QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
 {
    QString s;
 
-   for ( unsigned int i = 0; i < csv1.header_text.size(); i++ )
+   if ( !only_atoms )
    {
-      s += QString( "HEADER   %1" + csv1.header_text[ i ] + "\n" )
-         .arg( i ? QString("%1").arg(i + 1) : " " );
-   }
-
-   for ( unsigned int i = 0; i < csv1.title_text.size(); i++ )
-   {
-      s += QString( "TITLE    %1" + csv1.title_text[ i ] + "\n" )
-         .arg( i ? QString("%1").arg(i + 1) : " " );
+      for ( unsigned int i = 0; i < csv1.header_text.size(); i++ )
+      {
+         s += QString( "HEADER   %1" + csv1.header_text[ i ] + "\n" )
+            .arg( i ? QString("%1").arg(i + 1) : " " );
+      }
+      
+      for ( unsigned int i = 0; i < csv1.title_text.size(); i++ )
+      {
+         s += QString( "TITLE    %1" + csv1.title_text[ i ] + "\n" )
+            .arg( i ? QString("%1").arg(i + 1) : " " );
+      }
    }
 
    QString last_model = "none";
@@ -1555,15 +1580,18 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1 )
    {
       QString model      = csv1.data[ i ][ 0 ];
       
-      if ( last_model != model )
+      if ( !only_atoms )
       {
-         if ( last_model != "none" )
+         if ( last_model != model )
          {
-            s += "ENDMDL\n";
-         }
-         last_model = model;
-         s += "MODEL " + model + "\n";
-      }         
+            if ( last_model != "none" )
+            {
+               s += "ENDMDL\n";
+            }
+            last_model = model;
+            s += "MODEL " + model + "\n";
+         }         
+      }
 
       s +=
          QString("")
@@ -1582,7 +1610,10 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1 )
                   csv1.data[ i ][ 13 ].ascii()
                   );
    }
-   s += "ENDMDL\nEND\n";
+   if ( !only_atoms )
+   {
+      s += "ENDMDL\nEND\n";
+   }
 
    return s;
 }
@@ -1829,6 +1860,149 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
    }
    update_enables();
 }
+
+void US_Hydrodyn_Pdb_Tool::load_from_qsl( QListView *lv, QStringList &pdb_text, QString title )
+{
+   csv new_csv;
+
+   new_csv.name     = title;
+   new_csv.filename = title;
+
+   new_csv.header.push_back("Model");
+   new_csv.header.push_back("Chain");
+   new_csv.header.push_back("Residue");
+   new_csv.header.push_back("Residue Number");
+   new_csv.header.push_back("Atom");
+   new_csv.header.push_back("Atom Number");
+   new_csv.header.push_back("Alt");
+   new_csv.header.push_back("iC");
+   new_csv.header.push_back("X");
+   new_csv.header.push_back("Y");
+   new_csv.header.push_back("Z");
+   new_csv.header.push_back("Occ");
+   new_csv.header.push_back("TF");
+   new_csv.header.push_back("Ele");
+   // new_csv.header.push_back("Charge");
+   // new_csv.header.push_back("Accessibility");
+
+   unsigned int model           = 0;
+   unsigned int line_count      = 0;
+   bool         last_was_ENDMDL = true;
+
+   for ( unsigned int i = 0; i < pdb_text.size(); i++ )
+   {
+      QString qs = pdb_text[ i ];
+      line_count++;
+
+      QString left6 = qs.left( 6 ).upper();
+
+      if ( left6 == "TITLE " )
+      {
+         new_csv.title_text << qs.mid( 10 );
+         continue;
+      }
+
+      if ( left6 == "HEADER" )
+      {
+         new_csv.header_text << qs.mid( 10 );
+         continue;
+      }
+
+      if ( left6 == "MODEL " )
+      {
+         model++;
+         last_was_ENDMDL = false;
+         continue;
+      }
+
+      if ( left6 == "ENDMDL" )
+      {
+         last_was_ENDMDL = true;
+         continue;
+      }
+
+      if ( ( left6 == "ATOM  " ||
+             left6 == "HETATM" ) && 
+           last_was_ENDMDL )
+      {
+         model++;
+         last_was_ENDMDL = false;
+      }
+
+      if ( left6 != "ATOM  " && left6 != "HETATM" ) 
+      {
+         // not supporting anything else for now
+         // later we should store, save remarks connct's etc
+         continue;
+      }
+
+      /*
+     http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_11.html
+
+     ATOM record:
+     COLUMNS        DATA TYPE       FIELD         DEFINITION
+     ---------------------------------------------------------------------------------
+     1 -  6        Record name     "ATOM  "
+     7 - 11        Integer         serial        Atom serial number.
+     13 - 16        Atom            name          Atom name. (sometimes starts at 12)
+     17             Character       altLoc        Alternate location indicator.
+     18 - 20        Residue name    resName       Residue name.
+     22             Character       chainID       Chain identifier.
+     23 - 26        Integer         resSeq        Residue sequence number.
+     27             AChar           iCode         Code for insertion of residues.
+     31 - 38        Real(8.3)       x             Orthogonal coordinates for X in Angstroms.
+     39 - 46        Real(8.3)       y             Orthogonal coordinates for Y in Angstroms.
+     47 - 54        Real(8.3)       z             Orthogonal coordinates for Z in Angstroms.
+     55 - 60        Real(6.2)       occupancy     Occupancy.
+     61 - 66        Real(6.2)       tempFactor    Temperature factor.
+     73 - 76        LString(4)      segID         Segment identifier, left-justified.
+     77 - 78        LString(2)      element       Element symbol, right-justified.
+     79 - 80        LString(2)      charge        Charge on the atom.
+      */
+      
+      vector < QString > data;
+
+      data.push_back( QString("%1").arg( model ) );
+      data.push_back( qs.mid( 21 , 1 ) );
+      data.push_back( qs.mid( 17 , 3 ) );
+      data.push_back( qs.mid( 22 , 4 ) );
+      data.push_back( qs.mid( 12 , 4 ) );
+      data.push_back( qs.mid( 6  , 5 ) );
+      data.push_back( qs.mid( 16 , 1 ) );
+      data.push_back( qs.mid( 26 , 1 ) );
+      data.push_back( qs.mid( 30 , 8 ) );
+      data.push_back( qs.mid( 38 , 8 ) );
+      data.push_back( qs.mid( 46 , 8 ) );
+      data.push_back( qs.mid( 54 , 6 ) );
+      data.push_back( qs.mid( 60 , 6 ) );
+      data.push_back( qs.mid( 76 , 2 ).stripWhiteSpace() );
+      // data.push_back( qs.mid( 78 , 2 ) );
+
+      new_csv.data.push_back( data );
+   }
+
+   if ( lv == lv_csv )
+   {
+      if ( csv1.data.size() )
+      {
+         csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
+      }
+      csv1 = new_csv;
+      csv_to_lv( csv1, lv );
+      csv_setup_keys( csv1 );
+   } else {
+      if ( csv2[ csv2_pos ].data.size() )
+      {
+         csv2_push( true );
+         // csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
+      }
+      csv2[ csv2_pos ] = new_csv;
+      csv_to_lv( csv2[ csv2_pos ], lv );
+      csv_setup_keys( csv2[ csv2_pos ] );
+   }
+   update_enables();
+}
+
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_clear()
 {
@@ -2236,7 +2410,6 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
       return;
    }
 
-
    QRegExp rx_model("^MODEL");
    QRegExp rx_end("^END");
    QRegExp rx_save_header("^("
@@ -2545,4 +2718,29 @@ void US_Hydrodyn_Pdb_Tool::merge()
       pdb_tool_merge_window = new US_Hydrodyn_Pdb_Tool_Merge( us_hydrodyn, this );
       pdb_tool_merge_window->show();
    }
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_clear()
+{
+   lv_csv->clear();
+   csv new_csv;
+   csv1 = new_csv;
+   csv_to_lv( csv1, lv_csv );
+   csv_undos.clear();
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_clear()
+{
+   lv_csv2->clear();
+   csv new_csv;
+   csv2.resize( 1 );
+   csv2[ 0 ] = new_csv;
+   csv_to_lv( csv2[ 0 ], lv_csv2 );
+   csv2_undos.clear();
+   csv2_pos = 0;
+   qwtw_wheel->setRange( 0.0, 0.0, 1 );
+   lbl_pos_range->setText("1\nof\n1");
+   csv2_redisplay( 0 );
+   update_enables_csv2();
 }

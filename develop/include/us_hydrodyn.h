@@ -83,6 +83,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Misc;
       friend class US_Hydrodyn_Pdb_Tool;
+      friend class US_Hydrodyn_Pdb_Tool_Merge;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
