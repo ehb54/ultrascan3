@@ -101,34 +101,22 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    t_csv->setEnabled(true);
 
-   for ( unsigned int i = 0; i < csv_commands.num_data.size(); i++ )
-   {
-      for ( unsigned int j = 0; j < csv_commands.num_data[i].size(); j++ )
-      {
-         if ( csv_commands.data[i][j] == "Y" || csv_commands.data[i][j] == "N" )
-         {
-            t_csv->setItem( i, j, new QCheckTableItem( t_csv, "" ) );
-            ((QCheckTableItem *)(t_csv->item( i, j )))->setChecked( csv_commands.data[i][j] == "Y" );
-         } else {
-            t_csv->setText( i, j, csv_commands.data[i][j] );
-         }
-      }
-   }
-
    for ( unsigned int i = 0; i < csv_commands.header.size(); i++ )
    {
       t_csv->horizontalHeader()->setLabel(i, csv_commands.header[i]);
    }
 
+   update_t_csv_data();
+
    t_csv->setSorting(false);
    t_csv->setRowMovingEnabled(true);
    t_csv->setColumnMovingEnabled(false);
-   t_csv->setReadOnly(true);
+   // t_csv->setReadOnly(true);
 
    // t_csv->setColumnWidth(0, 200);
    // t_csv->setColumnReadOnly(0, true);
    // t_csv->setColumnReadOnly(t_csv->numCols() - 1, true);
-   t_csv->setSelectionMode( QTable::SingleRow );
+   // t_csv->setSelectionMode( QTable::SingleRow );
 
    // connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
 
@@ -239,6 +227,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
+   pb_pdb_tool = new QPushButton(tr("Pdb_Tool"), this);
+   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_tool->setMinimumHeight(minHeight1);
+   pb_pdb_tool->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
+
    pb_stop = new QPushButton(tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
@@ -311,6 +305,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
    hbl_bottom->addSpacing(4);
    hbl_bottom->addWidget(pb_help);
+   hbl_bottom->addSpacing(4);
+   hbl_bottom->addWidget(pb_pdb_tool);
    hbl_bottom->addSpacing(4);
    hbl_bottom->addWidget(pb_cancel);
    hbl_bottom->addSpacing(4);
@@ -487,15 +483,83 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
 
 void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
 {
+   clear();
+
+   vector < range_entry > from_ranges;
+   vector < range_entry > to_ranges;
+
+   vector < range_entry > new_merge_ranges;
+   vector < range_entry > new_fit_ranges;
+
+   sel_to_range( lv_csv_from, from_ranges, false );
+   sel_to_range( lv_csv_to  , to_ranges  , false );
+
+   map < QString, unsigned int > from_range_pos;
+
+   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   {
+      from_range_pos[ from_ranges[ i ].chain ] = i;
+   }
+
+   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   {
+      if ( from_range_pos.count( to_ranges[ i ].chain ) )
+      {
+         // common chain
+         // only handling one end for now
+         range_entry from_range = from_ranges[ from_range_pos[ to_ranges[ i ].chain ] ];
+         range_entry new_merge_range;
+         range_entry new_fit_range;
+         if ( from_range.start   <  to_ranges[ i ].start && 
+              from_range.end     >  to_ranges[ i ].start + 2 &&
+              to_ranges[ i ].end >= to_ranges[ i ].start + 2 )
+         {
+            // add at front
+            // merge:
+            new_merge_range.chain = to_ranges[ i ].chain;
+            new_merge_range.start = from_range.start;
+            new_merge_range.end   = to_ranges[ i ].start - 1;
+
+            new_fit_range.chain = to_ranges[ i ].chain;
+            new_fit_range.start = to_ranges[ i ].start;
+            new_fit_range.end   = to_ranges[ i ].start + 2;
+
+            new_merge_ranges.push_back( new_merge_range );
+            new_fit_ranges  .push_back( new_fit_range   );
+         } else {
+            if ( from_range.end       >  to_ranges[ i ].end &&
+                 from_range.start     <  to_ranges[ i ].end - 2 &&
+                 to_ranges[ i ].start <= to_ranges[ i ].end - 2 )
+            {
+               // add at end
+               new_merge_range.chain = to_ranges[ i ].chain;
+               new_merge_range.start = to_ranges[ i ].end + 1;
+               new_merge_range.end   = from_range.end;
+               
+               new_fit_range.chain = to_ranges[ i ].chain;
+               new_fit_range.start = to_ranges[ i ].end - 2;
+               new_fit_range.end   = to_ranges[ i ].end;
+
+               new_merge_ranges.push_back( new_merge_range );
+               new_fit_ranges  .push_back( new_fit_range   );
+            }
+         }
+      }
+   }
+
+   update_t_csv_range( new_merge_ranges, 1, 2 );
+   update_t_csv_range( new_fit_ranges  , 3, 4 );
+
+   update_enables();
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_entry > &ranges )
+void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_entry > &ranges, bool just_selected )
 {
    csv csv1 = ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->to_csv( lv, 
                                                                  lv == lv_csv_from ?
                                                                  ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv1 :
                                                                  ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2[ ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_pos ],
-                                                                 true );
+                                                                 just_selected );
    ranges.clear();
 
    range_entry range;
@@ -607,15 +671,239 @@ void US_Hydrodyn_Pdb_Tool_Merge::clear()
    update_enables();
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::load()
-{
-}
 
 void US_Hydrodyn_Pdb_Tool_Merge::validate()
 {
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
+void US_Hydrodyn_Pdb_Tool_Merge::load()
 {
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.csc *.CSC", this);
+   
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   QFile f(filename);
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   QTextStream ts( &f );
+
+   QStringList qsl;
+
+   while( !ts.atEnd() )
+   {
+      qsl << ts.readLine();
+   }
+
+   f.close();
+
+   csv new_csv = csv_commands;
+
+   new_csv.data.clear();
+
+   QStringList qsl_h = csv_parse_line(qsl[0]);
+
+   {
+      QStringList::iterator it = qsl.begin();
+      it++;
+      for ( ;
+            it != qsl.end();
+            it++ )
+      {
+         QStringList qsl_d = csv_parse_line(*it);
+         vector < QString > data;
+         if ( qsl_d.size() )
+         {
+            for ( QStringList::iterator it2 = qsl_d.begin();
+                  it2 != qsl_d.end();
+                  it2++ )
+            {
+               data.push_back(*it2);
+            }
+            new_csv.data.push_back( data );
+         }
+      }
+   }
+
+   csv_commands = new_csv;
+   update_t_csv_data();
+   update_enables();
 }
 
+void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
+{
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir;
+   QString filename = QFileDialog::getSaveFileName(
+                                                   use_dir,
+                                                   "*.csc *.CSC",
+                                                   this,
+                                                   "save file dialog",
+                                                   tr("Choose a filename to save the data") );
+
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !filename.contains(QRegExp(".csc$",false)) )
+   {
+      filename += ".csc";
+   }
+
+   if ( QFile::exists(filename) )
+   {
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+      return;
+   }
+
+   update_csv_commands_from_table();
+
+   QTextStream t( &f );
+
+   QString qs;
+
+   for ( unsigned int i = 0; i < csv_commands.header.size(); i++ )
+   {
+      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv_commands.header[i]);
+   }
+
+   t << qs << endl;
+
+   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   {
+      qs = "";
+      for ( unsigned int j = 0; j < csv_commands.data[i].size(); j++ )
+      {
+         qs += QString("%1%2").arg(j ? "," : "").arg(csv_commands.data[i][j]);
+      }
+      t << qs << endl;
+   }
+   f.close();
+   editor_msg("black", QString("File %1 written\n").arg( filename ) );
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::pdb_tool()
+{
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->raise();   
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::update_csv_commands_from_table()
+{
+   csv_commands.data.clear();
+
+   vector < QString > data( t_csv->numCols() );
+
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      for ( int j = 0; j < t_csv->numCols(); j++ )
+      {
+         data[ j ] = t_csv->text( i, j );
+      }
+      csv_commands.data.push_back( data );
+   }
+}
+
+QStringList US_Hydrodyn_Pdb_Tool_Merge::csv_parse_line( QString qs )
+{
+   // cout << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
+   QStringList qsl;
+   if ( qs.isEmpty() )
+   {
+      // cout << QString("csv_parse_line: empty\n");
+      return qsl;
+   }
+   if ( !qs.contains(",") )
+   {
+      // cout << QString("csv_parse_line: one token\n");
+      qsl << qs;
+      return qsl;
+   }
+
+   QStringList qsl_chars = QStringList::split("", qs);
+   QString token = "";
+
+   bool in_quote = false;
+
+   for ( QStringList::iterator it = qsl_chars.begin();
+         it != qsl_chars.end();
+         it++ )
+   {
+      if ( !in_quote && *it == "," )
+      {
+         qsl << token;
+         token = "";
+         continue;
+      }
+      if ( in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = true;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      token += *it;
+   }
+   if ( !token.isEmpty() )
+   {
+      qsl << token;
+   }
+   // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
+   return qsl;
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_data()
+{
+   t_csv->setNumRows( csv_commands.data.size() );
+
+   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < csv_commands.data[i].size(); j++ )
+      {
+         t_csv->setText( i, j, csv_commands.data[i][j] );
+      }
+   }
+}

@@ -115,6 +115,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       QMenuBar             *m;
 
       QPushButton          *pb_help;
+      QPushButton          *pb_pdb_tool;
       QPushButton          *pb_cancel;
 
       void                 editor_msg( QString color, QString msg );
@@ -132,7 +133,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       QListView            *lv_csv_from;
       QListView            *lv_csv_to;
       void                 sel_to_range( QListView *lv, 
-                                         vector < range_entry > &ranges );
+                                         vector < range_entry > &ranges,
+                                         bool just_selected = true );
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -148,6 +150,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       void update_t_csv_range( vector < range_entry > &ranges,
                                unsigned int col_start,
                                unsigned int col_end );
+
+      void         update_csv_commands_from_table();
+      void         update_t_csv_data();
+      QStringList  csv_parse_line( QString qs );
 
    private slots:
 
@@ -176,6 +182,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       void save();
 
       void cancel();
+      void pdb_tool();
       void help();
 
    protected slots:
