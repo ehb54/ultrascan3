@@ -19,10 +19,10 @@ void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,
 
    int    nprs     = qMax( 1, ( ( s_res   / grid_reps ) - 1 ) );
    int    nprk     = qMax( 1, ( ( ff0_res / grid_reps ) - 1 ) );
-          s_max    = qMax( s_max,   ( s_min   + 1e-16 ) );
-          ff0_max  = qMax( ff0_max, ( ff0_min + 1e-3  ) );
    double s_step   = fabs( s_max   - s_min   ) / (double)nprs;
    double ff0_step = fabs( ff0_max - ff0_min ) / (double)nprk;
+          s_step   = ( s_step    > 0.0 ) ? s_step   : ( s_min   * 1.001 );
+          ff0_step = ( ff0_step  > 0.0 ) ? ff0_step : ( ff0_min * 1.001 );
    double s_grid   = s_step   / grid_reps;  
    double ff0_grid = ff0_step / grid_reps;
 

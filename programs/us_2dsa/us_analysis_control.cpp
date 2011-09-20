@@ -86,7 +86,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits  = us_counter( 3, -10000, 10000 ,10 );
    ct_nstepss   = us_counter( 3,      1,  1000,  60 );
    ct_lolimitk  = us_counter( 3,      1,     8,   1 );
-   ct_uplimitk  = us_counter( 3,      2,    10,   4 );
+   ct_uplimitk  = us_counter( 3,      1,    10,   4 );
    ct_nstepsk   = us_counter( 3,      1,  1000,  60 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_constff0  = us_counter( 3,      1,    10,   1  );
@@ -241,6 +241,10 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,        SLOT(   slim_change()          ) );
    connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   slim_change()          ) );
+   connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   klim_change()          ) );
+   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   kstep_change()         ) );
 
    connect( pb_strtfit, SIGNAL( clicked()   ),
             this,       SLOT(   start()     ) );
@@ -644,6 +648,42 @@ void US_AnalysisControl::slim_change()
          ct_lolimits->setStep( 0.1 );
          ct_uplimits->setStep( 0.1 );
       }
+   }
+}
+
+
+// Set k-upper-limit to lower when k grid points == 1
+void US_AnalysisControl::klim_change()
+{
+   if ( ct_nstepsk->value() == 1.0 )
+   {
+      ct_uplimitk->setValue( ct_lolimitk->value() );
+   }
+}
+
+// Test for k-steps==1 when k-step value changes
+void US_AnalysisControl::kstep_change()
+{
+   if ( ct_nstepsk->value() == 1.0 )
+   {  // Set up for C(s) parameters
+      ct_uplimitk->setValue( ct_lolimitk->value() );
+      ct_thrdcnt ->setValue( 1.0 );
+      ct_grrefine->setValue( 1.0 );
+      ct_uplimitk->setEnabled( false );
+      ct_thrdcnt ->setEnabled( false );
+      ct_grrefine->setEnabled( false );
+   }
+
+   else if ( ct_uplimitk->value() == ct_lolimitk->value() )
+   {  // Set up for normal 2dsa parameters
+      ct_uplimitk->setValue( 4.0 );
+      int nthr     = US_Settings::threads();
+      nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
+      ct_thrdcnt ->setValue( nthr );
+      ct_grrefine->setValue( 6.0  );
+      ct_uplimitk->setEnabled( true );
+      ct_thrdcnt ->setEnabled( true );
+      ct_grrefine->setEnabled( true );
    }
 }
 
