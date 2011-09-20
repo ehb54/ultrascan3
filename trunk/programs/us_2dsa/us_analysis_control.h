@@ -123,6 +123,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       void checkVaryVbar(    bool );
       void grid_change(      void );
       void slim_change(      void );
+      void klim_change(      void );
+      void kstep_change(     void );
       void start(            void );
       void stop_fit(         void );
       void plot(             void );
