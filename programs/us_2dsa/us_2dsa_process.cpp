@@ -559,6 +559,14 @@ DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
    US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
+DbgLv(1) << "FIN_FIN:  sdata   ns nr"
+ << sdata.scanData.size() << sdata.x.size();
+DbgLv(1) << "FIN_FIN:  rdata   ns nr"
+ << rdata.scanData.size() << rdata.x.size();
+DbgLv(1) << "FIN_FIN:  simdat  ns nr"
+ << simdat->scanData.size() << simdat->x.size();
+DbgLv(1) << "FIN_FIN:  resids  ns nr"
+ << resids->scanData.size() << resids->x.size();
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
@@ -1157,7 +1165,11 @@ void US_2dsaProcess::set_monteCarlo()
 DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
    // Set up new data modified by a gaussian distribution (MC iteration 2 start)
    if ( mm_iter == 1 )
-      set_gaussians();
+   {
+      set_gaussians();              // calculate sigmas at 1st mc iteration
+
+      sdata1 = sdata;               // save mc iteration 1 simulation
+   }
 
    // Get a randomized variation of the cencentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -1169,7 +1181,7 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
       {
          double variation = US_Math2::box_muller( 0.0, sigmas[ kk++ ] );
          wdata.scanData[ ss ].readings[ rr ] =
-            US_DataIO2::Reading( sdata.value( ss, rr ) + variation );
+            US_DataIO2::Reading( sdata1.value( ss, rr ) + variation );
       }
    }
 
