@@ -686,6 +686,16 @@ DbgLv(2) << "DT: i_details row" << irow;
       mtext = mtext + 
          tr( "  Content Checks : " ) + cont1 + "\n" +
              "                   "   + cont2 + "\n";
+US_Passwd pw;
+US_DB2* dbP = new US_DB2( pw.getPasswd() );
+US_Model model1;
+US_Model model2;
+model1.load( QString::number(cdesc.recordID), dbP );
+model2.load( cdesc.filename );
+QString fname1="/home/gary/usr/tmp/model1d.xml";
+QString fname2="/home/gary/usr/tmp/model2f.xml";
+model1.write(fname1);
+model2.write(fname2);
    }
 
    // display the text dialog

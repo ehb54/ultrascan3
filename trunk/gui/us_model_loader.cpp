@@ -167,10 +167,10 @@ int US_ModelLoader::load_model( US_Model& model, int index )
       US_Passwd pw;
       US_DB2* dbP = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
-      int nn = model_descriptions[ index ].iterations;
+      int nm = model_descriptions[ index ].iterations;
       int kk = model_descriptions[ index ].asd_index;
 
-      for ( int ii = 1; ii < nn; ii++ )
+      for ( int ii = 1; ii < nm; ii++ )
       {
          US_Model model2;
 
@@ -189,6 +189,53 @@ int US_ModelLoader::load_model( US_Model& model, int index )
          // Append group member's components to the original
          model.components << model2.components;
       }
+
+      double scfactor = 1.0 / (double)nm;
+      QStringList sklist;
+      QStringList skvals;
+      QVector< US_Model::SimulationComponent > comps;
+//qDebug() << "ML: nm scfactor" << nm << scfactor;
+
+      for ( int ii = 0; ii < model.components.size(); ii++ )
+      {
+         comps << model.components[ ii ];
+         QString skval = QString().sprintf( "%9.4e %9.4e",
+               model.components[ ii ].s, model.components[ ii ].f_f0 );
+         sklist << skval;
+
+         if ( ! skvals.contains( skval ) )
+            skvals << skval;
+//qDebug() << "ML:   ii skval" << ii << skval;
+      }
+
+      int nskl = sklist.size();
+      int nskv = skvals.size();
+//qDebug() << "ML:  sizes sklist,skvals" << nskl << nskv;
+      model.components.clear();
+      skvals.sort();
+
+      for ( int ii = 0; ii < nskv; ii++ )
+      {
+         QString skval = skvals[ ii ];
+         double  conc  = 0.0;
+         int nd = 0;
+         int kk = 0;
+
+         for ( int jj = 0; jj < nskl; jj++ )
+         {
+            if ( skval == sklist[ jj ] )
+            {
+               conc += comps[ jj ].signal_concentration;
+               kk    = jj;
+               nd++;
+            }
+         }
+
+         comps[ kk ].signal_concentration = conc * scfactor;
+//qDebug() << "ML:   ii skval" << ii << skval << "nd conc" << nd << conc;
+         model.components << comps[ kk ];
+      }
+
    }
          
    return rc;

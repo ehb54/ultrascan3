@@ -120,6 +120,7 @@ private:
       US_DataIO2::EditedData     wdata;      // work experimental data
 
       US_DataIO2::RawData        sdata;      // simulation data
+      US_DataIO2::RawData        sdata1;     // simulation data (mc iter 1)
 
       US_DataIO2::RawData        rdata;      // residuals data
 

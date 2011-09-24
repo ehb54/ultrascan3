@@ -78,6 +78,7 @@ class US_MPI_Analysis : public QObject
 
     US_DataIO2::RawData *res_data;       // Populated in calc_residuals
     US_DataIO2::RawData *sim_data;       // Populated in calc_residuals
+    US_DataIO2::RawData sim_data1;       // Simulation for mc iteration 1
     US_DataIO2::RawData scaled_data;     // Populated after global fit
 
     QHostAddress        server;

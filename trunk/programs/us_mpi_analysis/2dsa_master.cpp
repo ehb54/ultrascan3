@@ -291,7 +291,12 @@ void US_MPI_Analysis::set_meniscus( void )
 void US_MPI_Analysis::set_monteCarlo( void )
 {
    // Set up new data modified by a gaussian distribution
-   if ( mc_iteration == 1 ) set_gaussians();
+   if ( mc_iteration == 1 )
+   {
+      set_gaussians();
+
+      sim_data1 = simulation_values.sim_data;
+   }
 
    int total_points = 0;
 
@@ -306,10 +311,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
 DbgLv(1) << "sMC: totpts" << total_points;
 
-   mc_data.resize( total_points );
-
    int index = 0;
-   US_DataIO2::RawData* sim_data = &simulation_values.sim_data;
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -320,17 +322,34 @@ DbgLv(1) << "sMC: totpts" << total_points;
       int scan_count    = data->scanData.size();
       int radius_points = data->x.size();
 
+double varisum=0.0;
+double varimin=1.0;
+double varimax=-1.0;
+double datasum=0.0;
       for ( int s = 0; s < scan_count; s++ )
       {
+         US_DataIO2::Scan* scan = &data->scanData[ s ];
+
          for ( int r = 0; r < radius_points; r++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            mc_data[ index ] = sim_data->value( s, r ) + variation;
+            double mcdata    = sim_data1.value( s, r ) + variation;
+if ( index<2 || index>(total_points-3) || index==(total_points/2) )
+DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(s,r)
+ << "sigma" << sigmas[index] << "vari" << variation << "mdat" << mcdata;
+varisum += variation;
+varimin  = qMin(varimin,variation);
+varimax  = qMax(varimax,variation);
+datasum += mcdata;
+            scan->readings[ r ].value = mcdata;
             index++;
          }
       }
+DbgLv(1) << "sMC:   variation sum min max" << varisum << varimin << varimax
+ << "mcdata sum" << datasum;
    }
 
+#if 0
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
@@ -362,6 +381,7 @@ DbgLv(1) << "sMC: MPI Bcast";
               MPI_Job::MASTER, 
               MPI_COMM_WORLD );
 
+#endif
    _2dsa_Job job;
    job.mpi_job.dataset_offset = 0;
    job.mpi_job.dataset_count  = data_sets.size();

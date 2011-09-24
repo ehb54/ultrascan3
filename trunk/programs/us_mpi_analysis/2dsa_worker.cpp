@@ -145,6 +145,8 @@ void US_MPI_Analysis::_2dsa_worker( void )
                      for ( int r = 0; r < radius_points; r++ )
                      {
                         scan->readings[ r ].value = mc_data[ index++ ];
+if ( index<2 || index>(job.length-3) || index==(job.length/2) )
+DbgLv(1) << "newD:  index" << index << "edat" << data->value(s,r);
                      }
                   }
                }
