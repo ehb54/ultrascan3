@@ -202,7 +202,7 @@ bool US_Hydrodyn_Saxs::is_zero_vector( vector < double > &v )
 
 bool US_Hydrodyn_Saxs::is_nonzero_vector( vector < double > &v )
 {
-   bool non_zero = true;
+   bool non_zero = v.size() > 0;
    for ( unsigned int i = 0; i < v.size(); i++ )
    {
       if ( v[ i ] == 0e0 )
