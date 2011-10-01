@@ -1042,21 +1042,21 @@ void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
    int points = array.size();
    
    QVector< double > temp_array( points );
-   QVector< double > x_weights( smooth );
    QVector< double > y_weights( smooth );
+   double            x_weight;
    
    temp_array = array;
    
    // Standard deviation = 1.0, Mean = 0;
-   x_weights[ 0 ]   = 0.0;
-   y_weights[ 0 ]   = normal_distribution( 1.0, 0.0, x_weights[ 0 ] ); 
+   x_weight         = 0.0;
+   y_weights[ 0 ]   = normal_distribution( 1.0, 0.0, x_weight ); 
    double increment = 2.0 / (double)smooth;
    
    // Only calculate half a Gaussian, since the other side is symmetric
    for ( int i = 1; i < smooth; i++ )
    {
-      x_weights[ i ] = x_weights[ i - 1 ] + increment;
-      y_weights[ i ] = normal_distribution( 1.0, 0.0, x_weights[ i ] );
+      x_weight      += increment;
+      y_weights[ i ] = normal_distribution( 1.0, 0.0, x_weight );
    }
 
    // First, take care of the left border, using an "appearing frame" algorithm,

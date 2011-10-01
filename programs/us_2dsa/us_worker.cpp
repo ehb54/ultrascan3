@@ -8,6 +8,7 @@
 #include "us_sleep.h"
 #include "us_math2.h"
 #include "us_constants.h"
+#include "us_memory.h"
 
 
 // construct worker thread
@@ -16,12 +17,17 @@ WorkerThread::WorkerThread( QObject* parent )
 {
    dbg_level  = US_Settings::us_debug();
    abort      = false;
+   solvesim   = NULL;
+   thrn       = -1;
 //DbgLv(1) << "2P(WT): Thread created";
 }
 
 // worker thread destructor
 WorkerThread::~WorkerThread()
 {
+   //if ( solvesim != NULL )
+   //   delete solvesim;
+
    wait();
 //DbgLv(1) << "2P(WT):   Thread destroyed";
 }
@@ -29,6 +35,7 @@ WorkerThread::~WorkerThread()
 // define work for a worker thread
 void WorkerThread::define_work( WorkPacket& workin )
 {
+
    llim_s      = workin.ll_s;
    llim_k      = workin.ll_k;
    thrn        = workin.thrn;
@@ -69,7 +76,6 @@ DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 soln"
 // run the worker thread
 void WorkerThread::run()
 {
-DbgLv(1) << "THR RUN: taskx thrn" << taskx << thrn;
 
    calc_residuals();              // do all the work here
 
@@ -88,6 +94,7 @@ void WorkerThread::flag_abort()
 // Do the real work of a thread:  solution from solutes set
 void WorkerThread::calc_residuals()
 {
+
    if ( typeref == (-2) )
    {
       calc_resids_ratio();
@@ -155,7 +162,6 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes;
    }
 
    US_DataIO2::EditedData* edata = &dset->run_data;
-   US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
    int nscans    = edata->scanData.size();
    int npoints   = edata->x.size();
    int ntotal    = nscans * npoints;
@@ -164,11 +170,11 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes;
    QVector< double > nnls_x( 1,      0.0 );
 
 DbgLv(1) << "WT:CRR ns np nt" << nscans << npoints << ntotal;
-   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+   US_AstfemMath::initSimData( sim_vals.sim_data, *edata, 0.0 );
 
    US_Astfem_RSA astfem_rsa( wmodel, dset->simparams );
 
-   astfem_rsa.calculate( *sdata );
+   astfem_rsa.calculate( sim_vals.sim_data );
 
    int kk        = 0;
 
@@ -176,7 +182,7 @@ DbgLv(1) << "WT:CRR ns np nt" << nscans << npoints << ntotal;
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         nnls_a[ kk   ] = sdata->value( ss, rr );
+         nnls_a[ kk   ] = sim_vals.sim_data.value( ss, rr );
          nnls_b[ kk++ ] = edata->value( ss, rr );
       }
    }

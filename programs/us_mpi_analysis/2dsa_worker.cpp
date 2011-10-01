@@ -10,12 +10,12 @@ void US_MPI_Analysis::_2dsa_worker( void )
    MPI_Job     job;
    MPI_Status  status;
 
+   // Use 3 here because the master will be reading 3 with the
+   // same instruction when reading ::READY or ::RESULTS.
+   int x[ 3 ];
+
    while ( repeat_loop )
    {
-      // Use 3 here because the master will be reading 3 with the
-      // same instruction when reading ::READY or ::RESULTS.
-      int x[ 3 ];
-
       MPI_Send( x, // Basically don't care
                 3,
                 MPI_INT,
@@ -44,7 +44,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
          case MPI_Job::PROCESS:  // Process solutes
             {
-               US_SolveSim::Simulation simulation_values;
+               //US_SolveSim::Simulation simulation_values;
 
                simulation_values.noisflag    =
                   parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
@@ -53,6 +53,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 
+DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.solutes.resize( job.length );
 
                MPI_Recv( simulation_values.solutes.data(), // Get solutes
@@ -70,6 +71,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                                  simulation_values.ti_noise.size(),
                                  simulation_values.ri_noise.size() };
 
+DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
                MPI_Send( &size,
                          3,
                          MPI_INT,
@@ -138,15 +140,17 @@ void US_MPI_Analysis::_2dsa_worker( void )
                   int scan_count    = data->scanData.size();
                   int radius_points = data->x.size();
 
+//int indxh=((scan_count/2)*radius_points)+(radius_points/2);
                   for ( int s = 0; s < scan_count; s++ )
                   {
                      US_DataIO2::Scan* scan = &data->scanData[ s ];
 
                      for ( int r = 0; r < radius_points; r++ )
                      {
-                        scan->readings[ r ].value = mc_data[ index++ ];
-if ( index<2 || index>(job.length-3) || index==(job.length/2) )
-DbgLv(1) << "newD:  index" << index << "edat" << data->value(s,r);
+                        scan->readings[ r ].value = mc_data[ index ];
+//if ( index<5 || index>(job.length-6) || (index>(indxh-4)&&index<(indxh+3)) )
+//DbgLv(1) << "newD:" << my_rank << ":index" << index << "edat" << data->value(s,r);
+                        index++;
                      }
                   }
                }
@@ -169,6 +173,23 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
    US_SolveSim solvesim( data_sets, my_rank, false );
 
+int dbglvsv=simu_values.dbg_level;
+simu_values.dbg_level=0;
+
    solvesim.calc_residuals( offset, dataset_count, simu_values );
+
+simu_values.dbg_level=dbglvsv;
+if ( my_rank == 1 || my_rank == 11 ) {
+ US_DataIO2::EditedData* data = &data_sets[0]->run_data;
+ int nsc=data->scanData.size();
+ int nrp=data->x.size();
+ double d0 = data->scanData[0].readings[0].value;
+ double d1 = data->scanData[0].readings[1].value;
+ double dh = data->scanData[nsc/2].readings[nrp/2].value;
+ double dm = data->scanData[nsc-1].readings[nrp-2].value;
+ double dn = data->scanData[nsc-1].readings[nrp-1].value;
+ DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn;
+}
+ 
 }
 

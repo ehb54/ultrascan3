@@ -39,6 +39,7 @@ HEADERS      = us_analyte.h       \
                us_license_t.h     \
                us_math2.h         \
                us_matrix.h        \
+               us_memory.h        \
                us_model.h         \
                us_noise.h         \
                us_project.h       \
@@ -72,6 +73,7 @@ SOURCES      = us_analyte.cpp       \
                us_license_t.cpp     \
                us_math2.cpp         \
                us_matrix.cpp        \
+               us_memory.cpp        \
                us_model.cpp         \
                us_noise.cpp         \
                us_project.cpp       \

@@ -65,6 +65,7 @@ class US_MPI_Analysis : public QObject
     QVector< int >      worker_status;
     QVector< int >      worker_depth;
     int                 max_depth;
+    int                 worknext;
     enum                WorkerStatus { INIT, READY, WORKING };
                         
     int                 meniscus_points;
