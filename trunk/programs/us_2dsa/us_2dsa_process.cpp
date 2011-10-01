@@ -7,23 +7,7 @@
 #include "us_sleep.h"
 #include "us_math2.h"
 #include "us_constants.h"
-
-#ifdef Q_WS_MAC
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/mach.h>
-#include <mach/vm_statistics.h>
-#include <mach/mach_types.h>
-#include <mach/mach_init.h>
-#include <mach/mach_host.h>
-#endif
-#ifndef Q_WS_WIN
-#include <sys/user.h>
-#else
-#include <windows.h>
-#include <psapi.h>
-#include <process.h>
-#endif
+#include "us_memory.h"
 
 // Class to process 2DSA simulations
 US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
@@ -49,63 +33,18 @@ US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    itvaris  .clear();                 // iteration variances
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
+
+   nscans           = bdata->scanData.size();
+   npoints          = bdata->x.size();
+
+   if ( ( nscans * npoints ) > 50000 )
+      mintsols         = 80;
 }
 
 // Get maximum used memory
 long int US_2dsaProcess::max_rss( void )
 {
-#ifdef Q_WS_X11         // Unix: based on /proc/$PID/stat
-   // Read /proc/$pid/stat
-   QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
-   f.open( QIODevice::ReadOnly );
-   QByteArray ba = f.read( 512 );
-   f.close();
-
-   const static int kk = PAGE_SIZE / 1024;
-
-   maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * kk );
-#endif
-
-#ifdef Q_WS_MAC         // Mac : use task_info call
-   struct task_basic_info task_stats;
-   mach_msg_type_number_t inf_count = TASK_BASIC_INFO_COUNT;
-   task_t   task    = current_task();
-   long int usedmem = 0;
-
-   int stat1 = task_info( task, TASK_BASIC_INFO, (task_info_t)&task_stats, &inf_count );
-   if ( stat1 == KERN_SUCCESS )
-   {
-      usedmem = ( (int64_t)task_stats.resident_size + 512 ) / 1024;
-DbgLv(1) << "2P(2dsaProc): usedmem" << usedmem;
-   }
-
-   maxrss = max( maxrss, usedmem );
-#endif
-
-#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
-//#ifdef NEVER
-   HANDLE hProcess;
-   DWORD processID;
-   PROCESS_MEMORY_COUNTERS pmc;
-   pmc.cb       = (DWORD)sizeof( pmc );
-   processID    = _getpid();
-   long int usedmem = 0;
-
-   hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                           FALSE, processID );
-   if ( hProcess == NULL )
-      return maxrss;
-
-   if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
-   {
-      usedmem = ( (int64_t)pmc.PeakWorkingSetSize + 512 ) / 1024;
-   }
-
-   maxrss = max( maxrss, (int)usedmem );
-   CloseHandle( hProcess );
-#endif
-
-   return maxrss;
+   return US_Memory::rss_max( maxrss );
 }
 
 // Start a specified 2DSA fit run
@@ -415,7 +354,6 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
    emit message_update( pmessage_head() + tr( "Computing final NNLS ..." ),
       false );
 
-DbgLv(1) << "(FC)SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
    wthreads[ thrx ] = wthr;
    wthr->start( );
 }
@@ -428,15 +366,12 @@ void US_2dsaProcess::process_final( WorkerThread* wthrd )
    WorkPacket wresult;
 
    wthrd->get_result( wresult );     // get results of thread task
-DbgLv(1) << "(FF)PROCESS_JOB thrn" << wresult.thrn << "taskx" << wresult.taskx
- << "depth" << wresult.depth;
 
    if ( c_solutes.size() < ( maxdepth + 1 ) )
       c_solutes << QVector< US_Solute >();
 
    c_solutes[ maxdepth ] =  wresult.csolutes;  // final iter calc'd solutes
    int nsolutes = c_solutes[ maxdepth ].size();
-DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
 
    QVector< double > tinvec( npoints,  0.0 );
    QVector< double > rinvec( nscans,   0.0 );
@@ -559,14 +494,6 @@ DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
    US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
-DbgLv(1) << "FIN_FIN:  sdata   ns nr"
- << sdata.scanData.size() << sdata.x.size();
-DbgLv(1) << "FIN_FIN:  rdata   ns nr"
- << rdata.scanData.size() << rdata.x.size();
-DbgLv(1) << "FIN_FIN:  simdat  ns nr"
- << simdat->scanData.size() << simdat->x.size();
-DbgLv(1) << "FIN_FIN:  resids  ns nr"
- << resids->scanData.size() << resids->x.size();
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
@@ -626,8 +553,10 @@ DbgLv(1) << "done: vari bvol" << vari << bvol
    max_rss();
    double memmb  = (double)maxrss / 1024.0;
 
+   //pmsg += tr( "Maximum memory used:  " )
+   //        + QString().sprintf( "%.1f", memmb ) + " MB";
    pmsg += tr( "Maximum memory used:  " )
-           + QString().sprintf( "%.1f", memmb ) + " MB";
+           + QString::number( qRound( memmb ) ) + " MB";
 
    emit message_update( pmsg, false );          // signal final message
 
@@ -880,14 +809,13 @@ DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[d
 
    // Is anyone working?
    bool no_working = wkstates.indexOf( WORKING ) < 0;
-DbgLv(0) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
+DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
  << maxdepth << c_solutes[depth].size() << wresult.csolutes.size();
 
    // Submit one last time with all solutes if necessary
    if ( depth == maxdepth    &&
         job_queue.isEmpty()  &&
         no_working           &&
-        //c_solutes[ depth ].size() > wresult.csolutes.size() )
         c_solutes[ depth ].size() >= wresult.csolutes.size() )
    {
       final_computes();
@@ -1104,6 +1032,21 @@ DbgLv(1) << "ES:  D3ff n1task n1csol" << n1task << n1csol;
 
    // Return estimate of remaining steps
 DbgLv(1) << "ES: returned nsteps ntasks" << (ntasks*ktstep) << ntasks;
+int szscnd = sizeof(US_DataIO2::Scan);
+int szrdng = sizeof(US_DataIO2::Reading);
+int szsols = sizeof(US_Solute);
+int nscns  = dsets[0]->run_data.scanData.size();
+int nrpts  = dsets[0]->run_data.x.size();
+int szdata = sizeof(US_DataIO2::RawData)+(nscns*szscnd)+(nscns*nrpts*szrdng);
+int szsimu = sizeof(US_SolveSim::Simulation)+(2*szdata)+(szsols*ktisol);
+int szdset = sizeof(US_SolveSim::DataSet);
+int szwrkp = sizeof(WorkPacket);
+    szwrkp = szwrkp + szsols*100 + szsimu + szdset;
+DbgLv(1) << "ES: nscns nrpts ktisol" << nscns << nrpts << ktisol;
+DbgLv(1) << "ES:   szscnd szrdng szsols" << szscnd << szrdng << szsols;
+DbgLv(1) << "ES:   szdata szdset szsimu" << szdata << szdset << szsimu;
+DbgLv(1) << "ES:   szwrkp" << szwrkp;
+
    return ( ntasks * ktstep );
 }
 

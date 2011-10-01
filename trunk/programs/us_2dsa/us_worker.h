@@ -71,6 +71,9 @@ class WorkerThread : public QThread
 
       void calc_residuals   ( void );
       void calc_resids_ratio( void );
+      long int max_rss      ( void );
+
+      long int maxrss;
 
       double  llim_s;        // lower limit in s (UGRID)
       double  llim_k;        // lower limit in k (UGRID)

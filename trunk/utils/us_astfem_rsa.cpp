@@ -35,7 +35,8 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
    int           initial_npts = 1000;
    int           current_assoc;
    int           size_cv         = system.components.size();
-   bool*         reacting        = new bool[ size_cv ];
+   QVector< bool >                 reactVec( size_cv );
+   bool*         reacting        = reactVec.data();
 
    double        accel_time;
    double        dr;
@@ -334,12 +335,11 @@ DbgLv(2) << "RSA:     m n rcn" << m << n << as->rcomps[n];
 
       dr = ( af_params.current_bottom - af_params.current_meniscus ) /
            ( initial_npts - 1 );
+
+      QVector< US_AstfemMath::MfemInitial > vC0Vec( num_comp );
+      vC0 = vC0Vec.data();
       
-      if ( vC0 != NULL ) delete [] vC0;
-      
-      vC0 = new US_AstfemMath::MfemInitial[ rg[ group ].GroupComponent.size() ];
-      
-      for ( int j = 0; j < rg[ group ].GroupComponent.size(); j++ )
+      for ( int j = 0; j < num_comp; j++ )
       {
          CT0.radius.clear();
          CT0.concentration.clear();
@@ -487,8 +487,10 @@ DbgLv(2) << "RSA: Speed step OUT";
             double sigma;
             double correction;
 
-            double* xtmp = new double [ nscans ];
-            double* ytmp = new double [ nscans ];
+            QVector< double > xtmpVec( nscans );
+            QVector< double > ytmpVec( nscans );
+            double* xtmp = xtmpVec.data();
+            double* ytmp = ytmpVec.data();
 
             // Only fit the scans that belong to this speed step
             for ( int i = 0; i < nscans; i++ ) 
@@ -504,18 +506,12 @@ DbgLv(2) << "RSA: Speed step OUT";
             
             for ( int i = 0; i < nscans; i++ )
                ed->scan[ i + soff ].time -= correction;
-            
-            delete [] xtmp;
-            delete [] ytmp;
          }
          soff += nscans;
       }
    }
 DbgLv(2) << "RSA: Time Corr OUT";
 
-   if ( vC0 != NULL ) delete [] vC0;
-   delete [] reacting;
- 
    if ( !simout_flag )
       store_mfem_data( exp_data, af_data );    // normal experiment grid
    else
@@ -967,14 +963,17 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    }
 
    // Initial condition
-   C0 = new double [ N ];
-   C1 = new double [ N ];
+   QVector< double > C0Vec( N );
+   QVector< double > C1Vec( N );
+   QVector< double > rhVec( N );
+   C0 = C0Vec.data();
+   C1 = C1Vec.data();
 
    // Interpolate the given C_init vector on the new C0 grid
    US_AstfemMath::interpolate_C0( C_init, C0, x );
 
    // Time evolution
-   double* right_hand_side = new double [ N ];
+   double* right_hand_side = rhVec.data();
 
    // Calculate all time steps 
    for ( int i = 0; i < af_params.time_steps + 1; i++ )
@@ -1092,10 +1091,6 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       C_init.concentration .append( C1[ j ] );
    }
 
-   delete [] right_hand_side;
-   delete [] C0;
-   delete [] C1;
-   
    US_AstfemMath::clear_2d( 3, CA );
    US_AstfemMath::clear_2d( 3, CB );
    
@@ -1991,9 +1986,13 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    
    double** A;
 
-   double*  y0      = new double [ num_comp ];
-   double*  delta_n = new double [ num_comp ];
-   double*  b       = new double [ num_comp ];
+DbgLv(1) << "RSA: newX3 num_comp" << num_comp;
+   QVector< double >  y0Vec( num_comp );
+   QVector< double >  dnVec( num_comp );
+   QVector< double >  bbVec( num_comp );
+   double*  y0      = y0Vec.data();
+   double*  delta_n = dnVec.data();
+   double*  b       = bbVec.data();
    
    US_AstfemMath::initialize_2d( num_comp, num_comp, &A );
    
@@ -2052,10 +2051,6 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    } // End of j (pts)
 
    US_AstfemMath::clear_2d( num_comp, A );
-
-   delete [] b;
-   delete [] delta_n;
-   delete [] y0;
 }
 
 void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
@@ -2063,7 +2058,8 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
     US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
     int     num_comp  = rgp->GroupComponent.size();
     int     num_rule  = rgp->association.size();
-    double* Q         = new double [ num_rule ];
+    QVector< double > qqVec( num_rule );
+    double* Q         = qqVec.data();
 
     for ( int m = 0; m < num_rule; m++ )
     {
@@ -2112,8 +2108,6 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
        // convert molar into signal concentration
        yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
     }
-
-    delete [] Q;
 }
 
 void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
@@ -2379,8 +2373,12 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
    }
    
    // Total concentration at current and next time step
-   double* CT0 = new double [ N ];
-   double* CT1 = new double [ N ];
+DbgLv(1) << "RSA: newX3 N" << N;
+   QVector< double > CT0vec( N );
+   QVector< double > CT1vec( N );
+   QVector< double > rhVec ( N );
+   double* CT0 = CT0vec.data();
+   double* CT1 = CT1vec.data();
    
    for ( int j = 0; j < N; j++ )
    {
@@ -2392,7 +2390,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
    }
 
    // Time evolution
-   double* right_hand_side = new double [N];
+   double* right_hand_side = rhVec.data();
    int     stepinc = 1000;
    int     stepmax = ( NN + 2 ) / stepinc + 1;
    bool    repprog = stepmax > 1;
@@ -2650,10 +2648,6 @@ DbgLv(2) << "RSA:     cra2:  NN" << NN;
         C_init[ i ].concentration .append( C1[ i ][ j ] );
      }
    }
-
-   delete [] CT1;
-   delete [] CT0;
-   delete [] right_hand_side;
 
    US_AstfemMath::clear_2d(Mcomp, C0);
    US_AstfemMath::clear_2d(Mcomp, C1);

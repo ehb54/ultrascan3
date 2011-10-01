@@ -7,6 +7,7 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_gui_settings.h"
+#include "us_memory.h"
 
 #include <qwt_legend.h>
 
@@ -261,9 +262,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_advance, SIGNAL( clicked()   ),
             this,       SLOT(   advanced()  ) );
 
-   grid_change();
-
    edata          = &dsets[ 0 ]->run_data;
+
+   grid_change();
 
 //DbgLv(2) << "Pre-resize AC size" << size();
    resize( 710, 440 );
@@ -596,31 +597,39 @@ void US_AnalysisControl::grid_change()
    int    nstepk = (int)ct_nstepsk ->value();         // # steps k
    int    ngrrep = (int)ct_grrefine->value();         // # repetitions
    int    nthrd  = (int)ct_thrdcnt ->value();         // # threads
-   long   ngstep = nsteps * nstepk;                   // # grid steps
-   long   nsstep = ( nsteps / ngrrep + 1 )
+   int    ngstep = nsteps * nstepk;                   // # grid steps
+   int    nsstep = ( nsteps / ngrrep + 1 )
                  * ( nstepk / ngrrep + 1 );           // # subgrid steps
-   //int    nscan  = edata->scanData.size();            // # scans
-   //int    nconc  = edata->x.size();                   // # concentrations
-   //int    ntconc = nconc * nscan;                     // # total readings
-   long   szsol  = sizeof( US_Solute );               // size Solute
-   long   szval  = sizeof( double );                  // size vector value
+   int    nscan  = edata->scanData.size();            // # scans
+   int    nconc  = edata->x.size();                   // # concentrations
+   int    ntconc = nconc * nscan;                     // # total readings
+   int    szread = sizeof( US_DataIO2::Reading ) * ntconc;
+   int    szscan = sizeof( US_DataIO2::Scan ) * nscan;
+   int    szedat = sizeof( US_DataIO2::EditedData );
+   int    szsol  = sizeof( US_Solute );               // size Solute
+   int    szval  = sizeof( double );                  // size vector value
    long   szgso  = ngstep * szsol;                    // size grid solutes
    long   szsso  = nsstep * szsol * nthrd;            // size subg solutes
-   long   szmat  = sq( nsstep ) * szval * nthrd;      // size matrices
+   long   szdat  = szread + szscan + szedat;          // size data
+   long   szmat  = szval * ( ntconc + 2 );            // size matrix
    if ( ck_tinoise->isChecked() || ck_rinoise->isChecked() )
       szmat        *= 2L;
-//DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
-//DbgLv(1) << "GC:  szsol szval szgso szsso szmat" << szsol << szval << szgso
-//   << szsso << szmat;
-   double mbase  = 80.0;
-   double mgfac  = 4.000 / sq( 1024.0 );
-   double msfac  = 32.00 / sq( 1024.0 );
-   double mmfac  = 32.00 / sq( 1024.0 );
-   double mgrid  = (double)szgso * mgfac;
-   double msubg  = (double)szsso * msfac;
-   double mmatr  = (double)szmat * mmfac;
-   int    megs   = qRound( mbase + mgrid + msubg + mmatr );
-//DbgLv(1) << "GC:  mgrid msubg mmatr megs" << mgrid << msubg << mmatr << megs;
+DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
+DbgLv(1) << "GC:  szsol szval szgso szsso szmat szdat"
+ << szsol << szval << szgso << szsso << szmat << szdat;
+   nsstep        = ( ntconc < 50000 ) ?
+                   qMax( nsstep, 100 ) :
+                   qMax( nsstep,  80 );
+   double stepf  = (double)( nsstep * nthrd );
+   double mbase  = (double)US_Memory::rss_now() / 1024.0;
+   double megas  = sq( 1024.0 );
+   double mgrid  = (double)szgso * 1.0 / megas;
+   double msubg  = (double)szsso * 1.0 / megas;
+   double mmatr  = (double)szmat * 1.1 * stepf / megas;
+   double mdata  = (double)szdat * 1.6 * stepf / megas;
+   int    megs   = qRound( mbase + mgrid + msubg + mmatr + mdata );
+DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
+ << mbase << mgrid << msubg << mmatr << mdata << " megs" << megs;
 
    le_estmemory->setText( QString::number( megs ) + " MB" );
 }

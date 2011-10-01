@@ -1022,6 +1022,9 @@ void US_ModelLoader::msearch( const QString& search_string )
 {
    dsearch  = search_string;
 
+   if ( search_string.endsWith( "=" ) )
+      return;
+
    list_models();
 }
 

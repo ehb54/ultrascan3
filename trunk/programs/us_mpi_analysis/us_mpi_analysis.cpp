@@ -331,13 +331,13 @@ void US_MPI_Analysis::start( void )
    if ( my_rank == 0 )
    {
       max_rss();
-      double  elapsed  = analysisStart.msecsTo( QDateTime::currentDateTime() )
-         / 1000.0;
-      double  maxrssmb = (double)maxrss / 1024.0;
-      send_udp( "Finished: maxrss " + QString::number( maxrssmb )
-            + " MB,  total run secs. " + QString::number( elapsed ) );
+      int  elapsed  = qRound( analysisStart.msecsTo( QDateTime::currentDateTime() )
+         / 1000.0 );
+      int  maxrssmb = qRound( ( (double)maxrss * (double)node_count ) / 1024.0 );
+      send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
+            + " MB,  total run seconds " + QString::number( elapsed ) );
       DbgLv(0) << "Finished:  maxrss " << maxrssmb
-               << "MB,  total run secs. " << elapsed;
+               << "MB,  total run seconds " << elapsed;
    }
 
    MPI_Finalize();

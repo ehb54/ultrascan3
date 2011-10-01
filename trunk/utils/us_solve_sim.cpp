@@ -172,7 +172,6 @@ DebugTime("BEG:calcres");
    }
 
    if ( abort ) return;
-DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
 
    QList< US_DataIO2::RawData > simulations;
 
@@ -218,14 +217,15 @@ DbgLv(1) << "   CR:nnls_b size" << nnls_b.size();
             model.components[ 0 ].D   /= dset->D20w_correction;
 
             // Initialize simulation data with the experiment's grid
-            US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 if (dbg_level>1 && thrnrank<2 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 
-            astfem_rsa.calculate( *sdata );
+            astfem_rsa.calculate( simdat );
+
             if ( abort ) return;
 
             if ( banddthr )
@@ -236,12 +236,12 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
                ksols++;
             }
 
-            simulations << *sdata;   // Save simul. (ea. datasets, ea. solute)
+            simulations << simdat;   // Save simul. (ea. datasets, ea. solute)
 
             // Populate the A matrix for the NNLS routine with simulation
             for ( int ss = 0; ss < nscans; ss++ )
                for ( int rr = 0; rr < npoints; rr++ )
-                  nnls_a[ kk++ ] = sdata->value( ss, rr );
+                  nnls_a[ kk++ ] = simdat.value( ss, rr );
 
          }  // Each data set
 
@@ -327,9 +327,6 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
       }   // Each solute
    }  // Constant f/f0
 
-DbgLv(1) << "   CR:  simulations size" << simulations.size();
-
-   
 DbgLv(1) << "   CR:BF nsol ksol" << nsolutes << ksols;
    nsolutes   = banddthr ? ksols : nsolutes;
 
@@ -464,7 +461,7 @@ DbgLv(1) << "  noise small NNLS";
       // Note:  ti_noise and ri_noise are already zero
 
    }  // End of core calculations
-DbgLv(1) << "CR:  nnls_x size" << nnls_x.size() << nsolutes;
+
 DebugTime("END:clcr-nn");
 
 DbgLv(1) << "CR: kstodo" << kstodo;

@@ -13,16 +13,29 @@ void US_MPI_Analysis::_2dsa_master( void )
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
-QDateTime time = QDateTime::currentDateTime();  // For debug/timing
+//QDateTime time = QDateTime::currentDateTime();  // For debug/timing
 
    while ( true )
    {
       int worker;
+//if ( max_depth > 1 )
+// DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
+//    << "  areWorking?" << worker_status.contains(WORKING);
 
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
-         worker                 = worker_status.indexOf( READY );
+         worker    = worker_status.indexOf( READY, worknext );
+
+         if ( worker < 1 )
+         {
+            worknext  = 1;
+            worker    = worker_status.indexOf( READY, worknext );
+         }
+
+         worknext  = worker + 1;
+         worknext  = ( worknext >= node_count ) ? 1 : worknext;
+
          _2dsa_Job job          = job_queue.takeFirst();
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
@@ -75,6 +88,7 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
          {
             set_monteCarlo(); 
          }
+
          if ( ! job_queue.isEmpty() ) continue;
 
          shutdown_all();  // All done
@@ -93,9 +107,12 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
                 MPI_COMM_WORLD,
                 &status);
 
+//if ( max_depth > 0 )
+// DbgLv(1) << " master loop-BOTTOM:   status TAG" << status.MPI_TAG << MPI_Job::READY << MPI_Job::RESULTS
+//    << "  source" << status.MPI_SOURCE;
       switch( status.MPI_TAG )
       {
-         case MPI_Job::READY: // Ready for work
+         case MPI_Job::READY:   // Ready for work
             worker = status.MPI_SOURCE;
             worker_status[ worker ] = READY;
             break;
@@ -112,7 +129,7 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
       }
 
       max_rss();
-   } 
+   }
 }
 
 
@@ -165,14 +182,15 @@ void US_MPI_Analysis::fill_queue( void )
    worker_status.fill( INIT );
    worker_depth .fill( 0 );
    max_depth           = 0;
-   max_experiment_size = 0;
+   worknext            = 1;
+   max_experiment_size = min_experiment_size;
 
    // Put all jobs in the queue
    job_queue.clear();
 
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
-      max_experiment_size = max( max_experiment_size, orig_solutes[ i ].size());
+      max_experiment_size = max( max_experiment_size, orig_solutes[ i ].size() );
       _2dsa_Job job;
       job.solutes         = orig_solutes[ i ];
       job_queue << job;
@@ -255,6 +273,8 @@ void US_MPI_Analysis::global_fit( void )
       current_dataset     = 0;
    }
 
+   job_queue.clear();
+
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
       _2dsa_Job job;
@@ -267,6 +287,8 @@ void US_MPI_Analysis::global_fit( void )
 
    worker_depth.fill( 0 );
    max_depth = 0;
+   for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+      calculated_solutes[ ii ].clear();
 }
 
 //////////////////
@@ -285,17 +307,30 @@ void US_MPI_Analysis::set_meniscus( void )
 
    worker_depth.fill( 0 );
    max_depth = 0;
+   for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+      calculated_solutes[ ii ].clear();
 }
 
 //////////////////
 void US_MPI_Analysis::set_monteCarlo( void )
 {
+DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solutes[max_depth].size()
+ << "simvsols size" << simulation_values.solutes.size();
+
    // Set up new data modified by a gaussian distribution
    if ( mc_iteration == 1 )
    {
       set_gaussians();
 
-      sim_data1 = simulation_values.sim_data;
+//      sim_data1 = simulation_values.sim_data;
+      US_AstfemMath::initSimData( sim_data1, data_sets[ 0 ]->run_data, 0.0 );
+      int scan_count    = sim_data1.scanData.size();
+      int radius_points = sim_data1.x.size();
+
+      for ( int ss = 0; ss < scan_count; ss++ )
+         for ( int rr = 0; rr < radius_points; rr++ )
+            sim_data1.scanData[ ss ].readings[ rr ].value = 
+               simulation_values.sim_data.value( ss, rr );
    }
 
    int total_points = 0;
@@ -309,8 +344,9 @@ void US_MPI_Analysis::set_monteCarlo( void )
 
       total_points += scan_count * radius_points;
    }
-DbgLv(1) << "sMC: totpts" << total_points;
+DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
 
+   mc_data.resize( total_points );
    int index = 0;
 
    // Get a randomized variation of the concentrations
@@ -321,35 +357,42 @@ DbgLv(1) << "sMC: totpts" << total_points;
 
       int scan_count    = data->scanData.size();
       int radius_points = data->x.size();
+      double varrmsd    = 0.0;
 
 double varisum=0.0;
 double varimin=1.0;
 double varimax=-1.0;
 double datasum=0.0;
+//int indxh=((scan_count/2)*radius_points)+(radius_points/2);
+
       for ( int s = 0; s < scan_count; s++ )
       {
-         US_DataIO2::Scan* scan = &data->scanData[ s ];
 
          for ( int r = 0; r < radius_points; r++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
             double mcdata    = sim_data1.value( s, r ) + variation;
-if ( index<2 || index>(total_points-3) || index==(total_points/2) )
-DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(s,r)
- << "sigma" << sigmas[index] << "vari" << variation << "mdat" << mcdata;
+            varrmsd         += sq( variation );
+
+//if ( index<5 || index>(total_points-6) || (index>(indxh-4)&&index<(indxh+3)) )
+//DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(s,r)
+// << "sigma" << sigmas[index] << "vari" << variation << "mdat" << mcdata;
 varisum += variation;
 varimin  = qMin(varimin,variation);
 varimax  = qMax(varimax,variation);
 datasum += mcdata;
-            scan->readings[ r ].value = mcdata;
-            index++;
+
+            mc_data[ index++ ] = mcdata;
          }
       }
-DbgLv(1) << "sMC:   variation sum min max" << varisum << varimin << varimax
+
+      varrmsd = sqrt( varrmsd / (double)( scan_count * radius_points ) );
+      DbgLv(0) << "Variation RMSD" << varrmsd << "  for MC_Iteration" << mc_iteration + 1;
+
+DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
  << "mcdata sum" << datasum;
    }
 
-#if 0
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
@@ -359,7 +402,7 @@ DbgLv(1) << "sMC:   variation sum min max" << varisum << varimin << varimax
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-DbgLv(1) << "sMC: MPI send ncnt" << node_count;
+DbgLv(1) << "sMC: MPI send   node_count" << node_count;
    for ( int worker = 1; worker < node_count; worker++ )
    {
       MPI_Send( &newdata, 
@@ -381,23 +424,10 @@ DbgLv(1) << "sMC: MPI Bcast";
               MPI_Job::MASTER, 
               MPI_COMM_WORLD );
 
-#endif
-   _2dsa_Job job;
-   job.mpi_job.dataset_offset = 0;
-   job.mpi_job.dataset_count  = data_sets.size();
+   fill_queue();
 
-   // Set up to run the next Monte Carlo iteration
-   for ( int i = 0; i < orig_solutes.size(); i++ )
-   {
-      _2dsa_Job job;
-      job.solutes = orig_solutes[ i ];
-
-      job_queue << job;
-   }
-
-DbgLv(1) << "sMC: worker_depth size" << worker_depth.size();
-   worker_depth.fill( 0 );
-   max_depth = 0;
+   for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+      calculated_solutes[ ii ].clear();
 }
 
 //////////////////
@@ -406,15 +436,13 @@ DbgLv(1) << "sMC: worker_depth size" << worker_depth.size();
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
-int dbglvsv=dbg_level;
-dbg_level=simulation_values.dbg_level;
-   //US_SolveSim::Simulation sim = simulation_values;
 DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
+
    simulation_values.solutes = calculated_solutes[ max_depth ];
-//   meniscus_value            = -1.0;   // Used edited value
-DbgLv(1) << "sGA:   sol0.s" << simulation_values.solutes[0].s;
+
 int mm=simulation_values.solutes.size()-1;
-DbgLv(1) << "sGA:   m" << mm << "solM.s" << simulation_values.solutes[mm].s;
+DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
+ << simulation_values.solutes[mm].s << "  M=" << mm;;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
 US_DataIO2::EditedData *edata = &data_sets[0]->run_data;
@@ -424,7 +452,6 @@ DbgLv(1) << "sGA:    edata scans points" << edata->scanData.size() << edata->x.s
 
    sigmas.clear();
    res_data = &simulation_values.residuals;
-   sim_data = &simulation_values.sim_data;
 DbgLv(1) << "sGA:  resids scans points" << res_data->scanData.size() << res_data->x.size();
 
    for ( int e = 0; e < data_sets.size(); e++ )
@@ -449,8 +476,6 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanData.size() << res_data
          sigmas << v;
       }
    }
-DbgLv(1) << "sGA: sigmas size" << sigmas.size();
-dbg_level=dbglvsv;
 }
 
 void US_MPI_Analysis::write_output( void )
@@ -459,11 +484,11 @@ void US_MPI_Analysis::write_output( void )
 
    double     save_meniscus = meniscus_value;
    sim.solutes              = calculated_solutes[ max_depth ]; 
-   //sim.variance             = simulation_values.variance;
    meniscus_value           = meniscus_values[ meniscus_run ];
    qSort( sim.solutes );
+DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
+ << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
 
-   //write_2dsa();
    write_model( sim, US_Model::TWODSA );
    meniscus_value = save_meniscus;
 
@@ -522,7 +547,7 @@ void US_MPI_Analysis::iterate( void )
       job.solutes = orig_solutes[ i ];
 
       // Add back all non-zero Solutes to each job
-      // Ensure thee are no duplicates
+      // Ensure there are no duplicates
       for ( int s = 0; s < prev_solutes.size(); s++ )
       {
          if ( ! job.solutes.contains( prev_solutes[ s ] ) )
@@ -536,6 +561,9 @@ void US_MPI_Analysis::iterate( void )
 
    worker_depth.fill( 0 );
    max_depth = 0;
+   for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+      calculated_solutes[ ii ].clear();
+
    return;
 }
 
@@ -568,6 +596,11 @@ void US_MPI_Analysis::submit( _2dsa_Job& job, int worker )
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
+int dd=job.mpi_job.depth;
+if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
+ << job.mpi_job.length << "mciter" << mc_iteration << " depth" << dd; }
+else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
+ << job.mpi_job.length << "mciter" << mc_iteration << " depth" << dd; }
 
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job, 
@@ -595,7 +628,7 @@ void US_MPI_Analysis::process_results( int        worker,
    simulation_values.ti_noise.resize( size[ 1 ] );
    simulation_values.ri_noise.resize( size[ 2 ] );
 
-   max_experiment_size = max( min_experiment_size, max_experiment_size );
+   max_experiment_size = qMax( max_experiment_size, size[ 0 ] );
 
    MPI_Status status;
 
@@ -642,6 +675,11 @@ void US_MPI_Analysis::process_results( int        worker,
 
    worker_status[ worker ] = INIT;
    int depth = worker_depth[ worker ];   
+
+if (depth == 0) { DbgLv(1) << "Mast:  process_results: worker" << worker
+ << " solsize" << size[0] << "depth" << depth; }
+else { DbgLv(1) << "Mast:  process_results:      worker" << worker
+ << " solsize" << size[0] << "depth" << depth; }
  
    // This loop should only execute, at most, once per result.
    while ( calculated_solutes.size() < depth + 1 )
@@ -663,6 +701,7 @@ void US_MPI_Analysis::process_results( int        worker,
       qSort( job.solutes );
       job_queue << job;
 
+DbgLv(1) << "Mast:   queue new DEPTH sols" << job.solutes.size() << " d=" << job.mpi_job.depth;
       max_depth = max( depth + 1, max_depth );
       calculated_solutes[ depth ].clear();
    }
@@ -674,8 +713,11 @@ void US_MPI_Analysis::process_results( int        worker,
    // below the current one, if there is nothing in the queue
    // or working and there are calculated solutes left, those
    // need to be submitted.
-   
-   for ( int d = 0; d < depth; d++ )
+ 
+   int dcheck = depth;
+   if ( depth == 0  &&  max_depth > 0 )  dcheck = 1;
+
+   for ( int d = 0; d < dcheck; d++ )
    {
       bool queued = false;
       for ( int q = 0; q < job_queue.size(); q++ )
@@ -708,6 +750,7 @@ void US_MPI_Analysis::process_results( int        worker,
          job.mpi_job.dataset_count  = datasets_to_process;
          qSort( job.solutes );
          job_queue << job;
+DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
          calculated_solutes[ d ].clear();
       }
@@ -737,9 +780,30 @@ void US_MPI_Analysis::process_results( int        worker,
          job.mpi_job.dataset_count  = datasets_to_process;
          qSort( job.solutes );
          job_queue << job;
+DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1 << max_depth
+ << "  nsvs=" << simulation_values.solutes.size();
+if(max_depth>10) calculated_solutes[depth+10].clear();  // Force abort if run-away
 
          calculated_solutes[ depth ].clear();
          max_depth = depth + 1;
+         worker    = worker_status.indexOf( READY, worknext );
+         if ( worker < 1 )
+         {
+            worknext  = 1;
+            worker    = worker_status.indexOf( READY, worknext );
+         }
+         worknext  = worker + 1;
+         worknext  = ( worknext >= node_count ) ? 1 : worknext;
+
+         if ( worker > 0 )
+         {
+            //_2dsa_Job job           = job_queue.takeFirst();
+            _2dsa_Job job2          = job_queue.takeFirst();
+            submit( job, worker );
+            worker_depth [ worker ] = job.mpi_job.depth;
+            worker_status[ worker ] = WORKING;
+         }
+
    }
 }
 
@@ -831,3 +895,4 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    out << fn << "\n";
    f.close();
 }
+
