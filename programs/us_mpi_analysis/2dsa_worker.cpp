@@ -44,7 +44,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
          case MPI_Job::PROCESS:  // Process solutes
             {
-               //US_SolveSim::Simulation simulation_values;
+               US_SolveSim::Simulation simulation_values;
 
                simulation_values.noisflag    =
                   parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
