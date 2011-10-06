@@ -10,10 +10,10 @@ void US_MPI_Analysis::_2dsa_master( void )
    init_solutes();
    fill_queue();
 
+   work_rss.resize( proc_count );
+
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
-
-//QDateTime time = QDateTime::currentDateTime();  // For debug/timing
 
    while ( true )
    {
@@ -34,7 +34,7 @@ void US_MPI_Analysis::_2dsa_master( void )
          }
 
          worknext  = worker + 1;
-         worknext  = ( worknext >= node_count ) ? 1 : worknext;
+         worknext  = ( worknext >= proc_count ) ? 1 : worknext;
 
          _2dsa_Job job          = job_queue.takeFirst();
          submit( job, worker );
@@ -96,11 +96,11 @@ void US_MPI_Analysis::_2dsa_master( void )
       }
 
       // Wait for worker to send a message
-      int        size[ 3 ];
+      int        size[ 4 ];
       MPI_Status status;
 
       MPI_Recv( &size, 
-                3, 
+                4, 
                 MPI_INT,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
@@ -119,6 +119,8 @@ void US_MPI_Analysis::_2dsa_master( void )
 
          case MPI_Job::RESULTS: // Return solute data
             process_results( status.MPI_SOURCE, size );
+            worker = status.MPI_SOURCE;
+            work_rss[ worker ] = size[ 3 ];
             break;
 
          default:  // Should never happen
@@ -176,8 +178,8 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 //////////////////
 void US_MPI_Analysis::fill_queue( void )
 {
-   worker_status.resize( node_count );
-   worker_depth .resize( node_count );
+   worker_status.resize( proc_count );
+   worker_depth .resize( proc_count );
 
    worker_status.fill( INIT );
    worker_depth .fill( 0 );
@@ -244,7 +246,7 @@ void US_MPI_Analysis::global_fit( void )
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-   for ( int worker = 1; worker < node_count; worker++ )
+   for ( int worker = 1; worker < proc_count; worker++ )
    {
       MPI_Send( &job, 
           sizeof( MPI_Job ), 
@@ -402,8 +404,8 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-DbgLv(1) << "sMC: MPI send   node_count" << node_count;
-   for ( int worker = 1; worker < node_count; worker++ )
+DbgLv(1) << "sMC: MPI send   proc_count" << proc_count;
+   for ( int worker = 1; worker < proc_count; worker++ )
    {
       MPI_Send( &newdata, 
           sizeof( MPI_Job ), 
@@ -505,7 +507,7 @@ void US_MPI_Analysis::iterate( void )
    // or if the last two iterations converged and are essentially identical
    if ( ++iterations > max_iterations ) return;
 
-   double diff  = fabs( simulation_values.variance - previous_values.variance );
+   double diff  = qAbs( simulation_values.variance - previous_values.variance );
    bool   ssame = false;
 
    if ( iterations > 1 )
@@ -540,7 +542,7 @@ void US_MPI_Analysis::iterate( void )
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
 
-   QVector< SOLUTE > prev_solutes = simulation_values.solutes;
+   QVector< US_Solute > prev_solutes = simulation_values.solutes;
    
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
@@ -575,8 +577,9 @@ void US_MPI_Analysis::shutdown_all( void )
 {
    MPI_Job job;
    job.command = MPI_Job::SHUTDOWN;
+DbgLv(1) << "2dsa master shutdown : master maxrss" << maxrss;
  
-   for ( int i = 1; i < node_count; i++ )
+   for ( int i = 1; i < proc_count; i++ )
    {
       MPI_Send( &job, 
          sizeof( job ), 
@@ -584,6 +587,10 @@ void US_MPI_Analysis::shutdown_all( void )
          i,               // Send to each worker
          MPI_Job::MASTER,
          MPI_COMM_WORLD );
+
+      maxrss += work_rss[ i ];
+DbgLv(1) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
+ << "  wkrss" << work_rss[ i ];
    }
 }
 
@@ -683,7 +690,7 @@ else { DbgLv(1) << "Mast:  process_results:      worker" << worker
  
    // This loop should only execute, at most, once per result.
    while ( calculated_solutes.size() < depth + 1 )
-      calculated_solutes << QVector< SOLUTE >();
+      calculated_solutes << QVector< US_Solute >();
 
    // How big will our vector be?
    int new_length = calculated_solutes[ depth ].size() + 
@@ -730,7 +737,7 @@ DbgLv(1) << "Mast:   queue new DEPTH sols" << job.solutes.size() << " d=" << job
       }
 
       bool working = false;
-      for ( int w = 1; w < node_count; w++ )
+      for ( int w = 1; w < proc_count; w++ )
       {
          if ( worker_depth[ w ] == d  &&  worker_status[ w ] == WORKING )
          {
@@ -758,7 +765,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
    // Is anyone working?
    bool working = false;
-   for ( int w = 1; w < node_count; w++ )
+   for ( int w = 1; w < proc_count; w++ )
    {
       if ( worker_status[ w ] == WORKING )
       {
@@ -793,7 +800,7 @@ if(max_depth>10) calculated_solutes[depth+10].clear();  // Force abort if run-aw
             worker    = worker_status.indexOf( READY, worknext );
          }
          worknext  = worker + 1;
-         worknext  = ( worknext >= node_count ) ? 1 : worknext;
+         worknext  = ( worknext >= proc_count ) ? 1 : worknext;
 
          if ( worker > 0 )
          {

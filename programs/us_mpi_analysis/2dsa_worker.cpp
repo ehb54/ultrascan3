@@ -64,16 +64,19 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                          MPI_COMM_WORLD,
                          &status );
 
+               max_rss();
+
                calc_residuals( offset, dataset_count, simulation_values );
 
                // Tell master we are sending back results
-               int size[ 3 ] = { simulation_values.solutes.size(),
+               int size[ 4 ] = { simulation_values.solutes.size(),
                                  simulation_values.ti_noise.size(),
-                                 simulation_values.ri_noise.size() };
+                                 simulation_values.ri_noise.size(),
+                                 max_rss() };
 
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
                MPI_Send( &size,
-                         3,
+                         4,
                          MPI_INT,
                          MPI_Job::MASTER,
                          MPI_Job::RESULTS,

@@ -2,7 +2,7 @@
 #include "us_math2.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
-#define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime())/1000.0)
+#define ELAPSEDNOW (elapsed.secsTo(QDateTime::currentDateTime()))
 #define DbTimMsg(a) DbTiming << my_rank << generation << ELAPSEDNOW << a;
 
 void US_MPI_Analysis::ga_worker( void )
@@ -13,8 +13,13 @@ void US_MPI_Analysis::ga_worker( void )
    // Initialize grid values
    QStringList keys = parameters.keys();
 
-   s_grid = ( keys.contains( "s_grid" ) ) ? parameters[ "s_grid" ].toInt() : 100;
-   k_grid = ( keys.contains( "k_grid" ) ) ? parameters[ "k_grid" ].toInt() : 100;
+   s_grid = ( keys.contains( "s_grid" ) )
+      ? parameters[ "s_grid" ].toInt() : 100;
+   k_grid = ( keys.contains( "k_grid" ) )
+      ? parameters[ "k_grid" ].toInt() : 100;
+
+   static const double extn_s  = (double)( s_grid - 1 );
+   static const double extn_k  = (double)( k_grid - 1 );
 
    for ( int b = 0; b < buckets.size(); b++ )
    {
@@ -23,8 +28,8 @@ void US_MPI_Analysis::ga_worker( void )
       double ff0_min = buckets[ b ].ff0_min;
       double ff0_max = buckets[ b ].ff0_max;
       
-      buckets[ b ].ds = ( s_max   - s_min   ) / s_grid;
-      buckets[ b ].dk = ( ff0_max - ff0_min ) / k_grid;
+      buckets[ b ].ds = ( s_max   - s_min   ) / extn_s;
+      buckets[ b ].dk = ( ff0_max - ff0_min ) / extn_k;
    }
 
    MPI_GA_MSG msg;
@@ -36,7 +41,8 @@ void US_MPI_Analysis::ga_worker( void )
    {
       ga_worker_loop();
 
-DbgLv(0) << "Worker send finish message" << my_rank << ELAPSEDNOW;
+      msg.size = max_rss();
+DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDNOW;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -62,7 +68,8 @@ DbgLv(0) << "Worker send finish message" << my_rank << ELAPSEDNOW;
       {
          case FINISHED: 
             finished = true;
-DbgLv(1) << "Worker fitness hits" << my_rank << fitness_hits;
+            DbgLv(0) << "    Deme" << my_rank << ":" << fitness_hits
+               << "fitness hits" << "  maxrss" << maxrss;
             break;
 
          case UPDATE:   
@@ -156,6 +163,8 @@ void US_MPI_Analysis::ga_worker_loop( void )
    fitness_map.clear();
    fitness_hits = 0;
 
+   max_rss();
+
    QDateTime  start = QDateTime::currentDateTime();
    MPI_GA_MSG msg;
 
@@ -164,17 +173,19 @@ void US_MPI_Analysis::ga_worker_loop( void )
 
    for ( generation = 0; generation < generations; generation++ )
    {
-DbTimMsg("Worker start rank/generation/elapsed");
+      max_rss();
+
+DbTimMsg("Worker start rank/generation/elapsed-secs");
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
       {
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
-DbTimMsg("Worker after get_fitness loop");
 
       // Sort fitness
       qSort( fitness );
+DbTimMsg("Worker after get_fitness loop + sort");
 
       // Refine with gradient search method (gsm) on last generation
       if ( generation == generations - 1 )
@@ -187,12 +198,15 @@ DbTimMsg("Worker before gsm rank/generation/elapsed");
 DbTimMsg("Worker after gsm rank/generation/elapsed");
       }
 
+      max_rss();
 
       // Ensure gene is on grid
       align_gene( genes[ fitness[ 0 ].index ] );
 DbTimMsg("Worker after align_gene");
 
       // Send best gene to master
+DbgLv(1) << "Best gene to master: gen" << generation << "worker" << my_rank;
+dump_fitness( fitness );
       msg.generation = generation;
       msg.size       = genes[ fitness[ 0 ].index ].size();
       msg.fitness    = fitness[ 0 ].fitness;
@@ -223,6 +237,8 @@ DbTimMsg("Worker after send fitness,genes");
                 MPI_COMM_WORLD,
                 &status );
 DbTimMsg("Worker after receive instructions");
+
+      max_rss();
 
       if ( status.MPI_TAG == FINISHED ) break;
 
@@ -274,6 +290,7 @@ DbTimMsg("Worker after receive instructions");
          genes[ g ] = old_genes[ fitness[ g ].index ];
 
       int emigrants = migrate_genes();
+
 DbTimMsg("Worker before elitism loop");
 
       for ( int g = elitism + emigrants; g < population; g++ )
@@ -291,12 +308,18 @@ DbTimMsg("Worker before elitism loop");
          genes[ g ] = gene;
       }
 DbTimMsg("Worker after elitism loop");
+
+      max_rss();
+
    }  // End of generation loop
 DbTimMsg("  +++Worker after generation loop");
 }
 
 void US_MPI_Analysis::align_gene( Gene& gene )
 {
+   int grid_es = s_grid - 1;
+   int grid_ek = k_grid - 1;
+
    for ( int i = 0; i < gene.size(); i++ )
    {
       double s     = gene[ i ].s;
@@ -307,8 +330,8 @@ void US_MPI_Analysis::align_gene( Gene& gene )
          s = s_min;
       else
       {
-         int gridpoint = (int)round( ds / buckets[ i ].ds );
-         gridpoint     = min( s_grid - 1, gridpoint );
+         int gridpoint = qRound( ds / buckets[ i ].ds );
+         gridpoint     = qMin( grid_es, gridpoint );
          s             = s_min + gridpoint * buckets[ i ].ds;
       }
 
@@ -320,8 +343,8 @@ void US_MPI_Analysis::align_gene( Gene& gene )
          k = k_min;
       else
       {
-         int gridpoint = (int)round( dk / buckets[ i ].dk );
-         gridpoint     = min( k_grid - 1, gridpoint );
+         int gridpoint = qRound( dk / buckets[ i ].dk );
+         gridpoint     = qMin( grid_ek, gridpoint );
          k             = k_min + gridpoint * buckets[ i ].dk;
       }
 
@@ -386,23 +409,17 @@ double US_MPI_Analysis::get_fitness_v( const US_Vector& v )
    return get_fitness( gene );
 }
 
-double US_MPI_Analysis::random_01( void )
-{
-   return ( (double)qrand() / (double)RAND_MAX );
-}
-
 int US_MPI_Analysis::u_random( int modulo )
 {
    // Returns a uniform random integer between 0 and modulo - 1
    // Default modulo is 100
-   double rand = (double)qrand() / ( (double)RAND_MAX + 1.0 );
-   return (int)floor( modulo * rand );
+   return (int)floor( (double)modulo * US_Math2::ranf() );
 }
 
 int US_MPI_Analysis::e_random( void )
 {
    // Exponential distribution
-   double              rand    = (double)qrand() / ( (double)RAND_MAX + 1.0 );
+   double              rand    = US_Math2::ranf();
    const double        divisor = 8;  // Parameterize?
    static const double beta    = parameters[ "population" ].toDouble() / divisor;
 
@@ -414,27 +431,26 @@ int US_MPI_Analysis::e_random( void )
 
 void US_MPI_Analysis::mutate_gene( Gene& gene )
 {
-   static const double p_mutate_s  = parameters[ "p_mutate_s"  ].toDouble();
-   static const double p_mutate_k  = parameters[ "p_mutate_k"  ].toDouble();
-   static const double p_mutate_sk = parameters[ "p_mutate_sk" ].toDouble();
+   static const int p_mutate_s  = parameters[ "p_mutate_s"  ].toInt();
+   static const int p_mutate_k  = parameters[ "p_mutate_k"  ].toInt();
+   static const int p_mutate_sk = parameters[ "p_mutate_sk" ].toInt();
 
-   static const double p_sk        = 100.0 - p_mutate_sk;  // e.g. 80.0
-   static const double p_k         = p_sk  - p_mutate_k;   // e.g. 60.0
-   static const double p_s         = p_k   - p_mutate_s;   // e.g. 40.0
+   static const int p_k         = p_mutate_s + p_mutate_k;   // e.g., 40
+   static const int p_total     = p_k + p_mutate_sk;         // e.g., 60
 
-   for ( int solute = 0; solute < gene.size(); solute++ )
+   int solute = u_random( gene.size() );
+   int rand   = u_random( p_total );
+
+   if      ( rand < p_mutate_s )
+      mutate_s( gene[ solute ], solute );
+   else if ( rand < p_k )      
+      mutate_k( gene[ solute ], solute );
+   else
    {
-      int rand = u_random();
-
-      if      ( rand < p_s  ) continue;
-      else if ( rand < p_k  ) mutate_s( gene[ solute ], solute );
-      else if ( rand < p_sk ) mutate_k( gene[ solute ], solute );
-      else
-      {
-         mutate_s( gene[ solute ], solute );
-         mutate_k( gene[ solute ], solute );
-      }
+      mutate_s( gene[ solute ], solute );
+      mutate_k( gene[ solute ], solute );
    }
+
 }
 
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
@@ -442,11 +458,12 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
    // Consider paramaterizing the sigma and x calculations
    double s_min = buckets[ b ].s_min;
    double sigma = ( s_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
-   double rand  = (double)qrand() / ( (double)RAND_MAX + 1.0 );
-   double x     = 4.0 * ( rand - 0.5 );  // Random between -2 and +2
-   double delta = round( sigma * x );
+   double x     = US_Math2::box_muller( 0.0, sigma );
+   double delta = qRound( x );
+//DbgLv(1) << "    MUTATE_S x" << x << "sg sigma delta"
+//   << s_grid << sigma << delta;
 
-   // Ensure new value is at a grid point
+   // Ensure new value is at a grid point and within bucket
    solute.s += delta * buckets[ b ].ds;
    solute.s  = qMax( solute.s, s_min );
    solute.s  = qMin( solute.s, s_min + ( s_grid - 1 ) * buckets[ b ].ds );
@@ -454,15 +471,16 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 {
-   static const double mutate_sigma = parameters[ "mutate_sigma" ].toDouble();
+   //static const double mutate_sigma = parameters[ "mutate_sigma" ].toDouble();
 
    double ff0_min = buckets[ b ].ff0_min;
    double sigma   = ( k_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
-   double rand    = (double)qrand() / ( (double)RAND_MAX + 1.0 );
-   double x       = 2.0 * ( rand - 0.5 ) * mutate_sigma;  // +/- std dev
-   double delta   = round( sigma * x );
+   double x       = US_Math2::box_muller( 0.0, sigma );
+   double delta   = qRound( x );
+//DbgLv(1) << "     MUTATE_K x" << x << "kg sigma delta"
+//   << k_grid << sigma << delta;
 
-   // Ensure new value is at a grid point
+   // Ensure new value is at a grid point and within bucket
    solute.k += delta * buckets[ b ].dk;
    solute.k  = qMax( solute.k, ff0_min );
    solute.k  = qMin( solute.k, ff0_min + ( k_grid - 1 ) * buckets[ b ].dk );

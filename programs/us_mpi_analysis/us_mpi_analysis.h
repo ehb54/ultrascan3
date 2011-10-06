@@ -12,7 +12,6 @@
 #include "us_solve_sim.h"
 #include "us_vector.h"
 
-#define SOLUTE           US_Solute
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
 
@@ -30,7 +29,7 @@ class US_MPI_Analysis : public QObject
     void start( void );
      
   private:
-    int                 node_count;
+    int                 proc_count;
     int                 my_rank;
     int                 iterations;           // Master only - Iterative
     int                 max_iterations;       // Master only - Iterative
@@ -76,6 +75,7 @@ class US_MPI_Analysis : public QObject
 
     QVector< double >   mc_data;
     QVector< double >   sigmas;
+    QVector< long >     work_rss;
 
     US_DataIO2::RawData *res_data;       // Populated in calc_residuals
     US_DataIO2::RawData *sim_data;       // Populated in calc_residuals
@@ -131,20 +131,20 @@ class US_MPI_Analysis : public QObject
             };
     };
 
-    QList< QVector< SOLUTE > > orig_solutes;
+    QList< QVector< US_Solute > > orig_solutes;
 
     class _2dsa_Job
     {
        public:
-          MPI_Job           mpi_job;
-          QVector< SOLUTE > solutes;
+          MPI_Job              mpi_job;
+          QVector< US_Solute > solutes;
     };
 
     QList< _2dsa_Job > job_queue;
 
     static const double LARGE          = 9.9e99;
-    static const int    solute_doubles = sizeof( SOLUTE ) / sizeof( double );
-    QList< QVector< SOLUTE > > calculated_solutes;
+    static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
+    QList< QVector< US_Solute > > calculated_solutes;
 
     SIMULATION simulation_values;
     SIMULATION previous_values;
@@ -167,7 +167,7 @@ class US_MPI_Analysis : public QObject
     int                       k_grid;
     int                       fitness_count;
 
-    typedef QVector< SOLUTE > Gene;
+    typedef QVector< US_Solute > Gene;
 
     double                    regularization;
     double                    concentration_threshold;
@@ -262,8 +262,8 @@ class US_MPI_Analysis : public QObject
     void   ga_worker_loop( void );
     Gene   new_gene      ( void );
     void   init_fitness  ( void );
-    void   mutate_s      ( SOLUTE&, int );
-    void   mutate_k      ( SOLUTE&, int );
+    void   mutate_s      ( US_Solute&, int );
+    void   mutate_k      ( US_Solute&, int );
     void   mutate_gene   ( Gene& );
     void   cross_gene    ( Gene& );
     int    migrate_genes ( void );

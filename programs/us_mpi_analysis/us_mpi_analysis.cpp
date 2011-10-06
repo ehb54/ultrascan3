@@ -1,6 +1,7 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 #include "us_tar.h"
+#include "us_memory.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -16,7 +17,7 @@ int main( int argc, char* argv[] )
 // Constructor
 US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 {
-   MPI_Comm_size( MPI_COMM_WORLD, &node_count );
+   MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
    dbg_level    = 0;
@@ -47,7 +48,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       QString     file;
 
       foreach( file, files ) output.remove( file );
-      DbgLv(0) << "Start: node_count" << node_count;
+      DbgLv(0) << "Start:  processor_count" << proc_count;
    }
  
    MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
@@ -333,7 +334,7 @@ void US_MPI_Analysis::start( void )
       max_rss();
       int  elapsed  = qRound( analysisStart.msecsTo( QDateTime::currentDateTime() )
          / 1000.0 );
-      int  maxrssmb = qRound( ( (double)maxrss * (double)node_count ) / 1024.0 );
+      int  maxrssmb = qRound( (double)maxrss / 1024.0 );
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
             + " MB,  total run seconds " + QString::number( elapsed ) );
       DbgLv(0) << "Finished:  maxrss " << maxrssmb
@@ -356,17 +357,7 @@ void US_MPI_Analysis::send_udp( const QString& message )
 
 long int US_MPI_Analysis::max_rss( void )
 {
-   // Read /prod/$pid/stat
-   QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
-   f.open( QIODevice::ReadOnly );
-   QByteArray ba = f.read( 1000 );
-   f.close();
-
-   //The 23rd entry is RSS in 4K pages.  Convert to kilobytes.
-
-   const static int k = PAGE_SIZE / 1024;
-   maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * k );
-   return maxrss;
+   return US_Memory::rss_max( maxrss );
 }
 
 void US_MPI_Analysis::abort( const QString& message, int error )
