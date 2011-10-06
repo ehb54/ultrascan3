@@ -8,8 +8,8 @@ void US_MPI_Analysis::ga_master( void )
    startTime       = QDateTime::currentDateTime();
    current_dataset = 0;
 DbgLv(0) << "master start GA" << startTime;
-//   // Tell calc_residuals to use the edited data meniscus value
-//   meniscus_value  = -1.0; 
+   // // Tell calc_residuals to use the edited data meniscus value
+   //meniscus_value  = -1.0; 
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -21,8 +21,8 @@ DbgLv(0) << "master start GA" << startTime;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
-   best_genes  .reserve( node_count);
-   best_fitness.reserve( node_count);
+   best_genes  .reserve( proc_count );
+   best_fitness.reserve( proc_count );
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
@@ -30,7 +30,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
-   for ( int i = 0; i < node_count; i++ )
+   for ( int i = 0; i < proc_count; i++ )
    {
       best_genes << working_gene;
 
@@ -100,7 +100,7 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
    MPI_Job job;
 
    // Send finish to workers ( in the tag )
-   for ( int worker = 1; worker < node_count; worker++ )
+   for ( int worker = 1; worker < proc_count; worker++ )
    {
       MPI_Send( &job,              // MPI #0
                 sizeof( job ),
@@ -118,21 +118,22 @@ void US_MPI_Analysis::ga_master_loop( void )
    int    fitness_same_count   = 0;
    double best_overall_fitness = 1.0e99;
    int    tag;
-   int    workers              = node_count - 1;
+   int    workers              = proc_count - 1;
 
-DbgLv(1) << "master start master loop: nodecount fitsize" << node_count
+DbgLv(1) << "master start master loop:  proccount fitsize" << proc_count
    << best_fitness.size();
    // Reset best fitness for each worker
-   for ( int i = 0; i < node_count; i++ )
+   for ( int i = 0; i < proc_count; i++ )
    {
       best_fitness[ i ].fitness = LARGE;
       best_fitness[ i ].index   = i;
    }
 
    QList  < Gene > emigres;      // Holds genes passed as emmigrants
-   QVector< int  > generations( node_count, 0 ); 
-   int             sum;
-   int             avg;
+   QVector< int  > generations( proc_count, 0 ); 
+   int             sum = 0;
+   int             avg = 0;
+   long            rsstotal = 0L;
 
 
    while ( workers > 0 )
@@ -154,16 +155,19 @@ DbgLv(1) << "master start master loop: nodecount fitsize" << node_count
 QString g;
 QString s;
 
+      max_rss();
+
       switch ( status.MPI_TAG )
       {
          case GENERATION:
             generations[ worker ] = msg.generation;
 
             sum = 0;
-            for ( int i = 1; i < node_count; i++ ) 
-               sum += generations[ worker ];
+            for ( int i = 1; i < proc_count; i++ ) 
+               //sum += generations[ worker ];
+               sum += generations[ i ];
 
-            avg = qRound( sum / ( node_count - 1 ) );
+            avg = qRound( sum / ( proc_count - 1 ) );
 
             if ( avg > avg_generation )
             {
@@ -192,24 +196,33 @@ g = "";
 for ( int i = 0; i < buckets.size(); i++ )
     g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 
-DbgLv(2) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
+DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
+            max_rss();
 
-            static const double fitness_threshold = 1.0e-7;
+            static const double fitness_threshold = 1.0e-8;
+            static const int    max_same_count    = ( proc_count - 1 ) * 5;
+            static const int    min_generation    = 10;
 
-            if ( fabs( msg.fitness - best_overall_fitness ) < fitness_threshold )
+            best_overall_fitness = qMin( best_overall_fitness, msg.fitness );
+
+            if ( ( msg.fitness - best_overall_fitness ) < fitness_threshold )
                fitness_same_count++;
             else
                fitness_same_count = 0;
 
             if ( ! early_termination )
             {
-               if ( fitness_same_count > ( node_count - 1 ) * 5  &&
-                    avg_generation     > 10 )
+               if ( fitness_same_count > max_same_count  &&
+                    avg_generation     > min_generation )
                {
+                  DbgLv(0) << "Fitness has not improved in the last" << fitness_same_count
+                     << "deme results - Early Termination.";
                   early_termination = true;
                }
             }
+DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_count"
+ << fitness_same_count << " early_term?" << early_termination;
             
             tag = early_termination ? FINISHED : GENERATION; 
 
@@ -223,6 +236,7 @@ DbgLv(2) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
             break;
 
          case FINISHED:
+            rsstotal += (long)msg.size;
             workers--;
             break;
 
@@ -260,6 +274,8 @@ DbgLv(2) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
                emigres << gene;
             }
 
+            max_rss();
+
             // Don't send any back if the pool is too small
             if ( emigres.size() < gene_count * 5 ) doubles_count = 0;
 
@@ -282,6 +298,16 @@ DbgLv(2) << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
             break;
          }
       }
+
+      max_rss();
+   }
+
+DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal;
+   maxrss += rsstotal;
+
+   if ( early_termination )
+   {
+      DbgLv(0) << "Early termination at average generation" << avg;
    }
 }
 
@@ -323,7 +349,7 @@ void US_MPI_Analysis::ga_global_fit( void )
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
 
-   for ( int worker = 1; worker < node_count; worker++ )
+   for ( int worker = 1; worker < proc_count; worker++ )
    {
       MPI_Send( &job,                   // MPI #7
           sizeof( MPI_Job ), 
@@ -359,7 +385,7 @@ DbgLv(1) << "sgMC: mciter" << mc_iteration;
    // This is almost the same as 2dsa set_monteCarlo
    if ( mc_iteration == 1 )
    {
-//      meniscus_values << -1.0;
+      //meniscus_values << -1.0;
       max_depth = 0;  // Make the datasets compatible
       calculated_solutes.clear();
       calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
@@ -415,11 +441,11 @@ DbgLv(1) << "sgMC: mc_data set index" << index;
    job.length         = total_points;
    job.dataset_offset = 0;
    job.dataset_count  = data_sets.size();
-DbgLv(1) << "sgMC: MPI send ncnt" << node_count;
+DbgLv(1) << "sgMC: MPI send proc_count" << proc_count;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-   for ( int worker = 1; worker < node_count; worker++ )
+   for ( int worker = 1; worker < proc_count; worker++ )
    {
       MPI_Send( &job,         // MPI #9
           sizeof( job ), 

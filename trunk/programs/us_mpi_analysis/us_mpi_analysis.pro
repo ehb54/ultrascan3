@@ -29,8 +29,7 @@ DEPENDPATH   += ../../utils
 LIBS         += -lus_utils -L../../lib
 
 # mpi references
-DEFINES      += OMPI_SKIP_MPICXX 
+DEFINES      += OMPI_SKIP_MPICXX
 INCLUDEPATH  += $${MPIPATH}/include
 LIBS         += -L$${MPIPATH}/lib -lmpi
-
 

@@ -72,7 +72,7 @@ US_SolveSim::Simulation::Simulation()
 {
    variance      = 0.0;
    variances.clear();
-   ri_noise .clear();
+   ti_noise .clear();
    ri_noise .clear();
    solutes  .clear();
    dbg_level     = 0;

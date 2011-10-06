@@ -8,7 +8,7 @@
 #include "us_dataIO2.h"
 #include "us_matrix.h"
 
-/*  The function implements the Box-Mueller algorithm for generating
+/*  The function implements the Box-Muller algorithm for generating
  *  pairs of independent standard normally distributed (zero expectation, 
  *  unit variance) random numbers, given a source of uniformly distributed 
  *  random numbers.
@@ -51,10 +51,11 @@ double US_Math2::box_muller( double m, double s )
    return m + y1 * s;
 }
 
-
+// This function returns a randomly distributed double value R
+//  such that 0.0 <= R < 1.0
 double US_Math2::ranf( void )
 {
-   return  (double)rand() / ( (double)RAND_MAX + 1.0 );
+   return  (double)qrand() / ( (double)RAND_MAX + 1.0 );
 }
 
 
@@ -491,7 +492,7 @@ uint US_Math2::randomize( void )
    seed -= getpid();
 #endif
 
-   srand( seed );
+   qsrand( seed );
    return seed;
 }
 
@@ -500,7 +501,7 @@ uint US_Math2::randomize( uint seed )
    if ( seed == 0 ) 
       seed = randomize();
    else
-      srand( seed );
+      qsrand( seed );
 
    return seed;
 }
