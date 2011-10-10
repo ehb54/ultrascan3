@@ -4410,7 +4410,29 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
    }
    return usu.wave["out"].r;
 }
-  
+
+bool US_Hydrodyn_Saxs::natural_spline_interpolate( vector < double > to_grid, 
+                                                   vector < double > from_grid, 
+                                                   vector < double > from_data,
+                                                   vector < double > &to_data )
+{
+   US_Saxs_Util usu;
+
+   vector < double > y2;
+   usu.natural_spline( from_grid, from_data, y2 );
+   to_data.resize( to_grid.size() );
+
+   for ( unsigned int i = 0; i < to_grid.size(); i++ )
+   {
+      if ( !usu.apply_natural_spline( from_grid, from_data, y2, to_grid[ i ], to_data[ i ] ) )
+      {
+         return false;
+      }
+   }
+   
+   return true;
+}
+
 vector < double > US_Hydrodyn_Saxs::rescale( vector < double > x )
 {
    // rescales x to add up to 1
@@ -5179,6 +5201,53 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
    {
       q = new_q;
       I = new_I;
+   }
+}
+
+void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
+                                     vector < double > &I,
+                                     vector < double > &I_errors )
+{
+   vector < double > new_q;
+   vector < double > new_I;
+   vector < double > new_I_errors;
+
+   if ( !q.size() )
+   {
+      return;
+   }
+
+   unsigned int p = 0;
+   if ( q[p] == 0 )
+   {
+      p++;
+   }
+
+   // start copying 1 pt before 1st decrease:
+   
+   for ( p++ ; p < q.size(); p++ )
+   {
+      if ( I[p] < I[p - 1] )
+      {
+         //         p--;
+         break;
+      }
+   }
+
+   for (; p < q.size(); p++ )
+   {
+      if ( I[p] > 0 )
+      {
+         new_q.push_back(q[p]);
+         new_I.push_back(I[p]);
+         new_I_errors.push_back(I_errors[p]);
+      }
+   }
+   if ( new_q.size() > 10 )
+   {
+      q = new_q;
+      I = new_I;
+      I_errors = new_I_errors;
    }
 }
 

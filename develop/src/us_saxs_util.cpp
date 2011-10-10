@@ -7894,3 +7894,274 @@ bool US_Saxs_Util::compute_rayleigh_structure_factors(
 
    return true;
 }   
+
+bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
+{
+   bool non_zero = v.size() > 0;
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] == 0e0 )
+      {
+         non_zero = false;
+         break;
+      }
+   }
+   return non_zero;
+}
+
+// takes from_data with from_errors and places on to_grid resulting in to_data & to_errors
+// for systems without errors, these are assumed to be computed iq curves so a natural spline interpolation
+// is performed
+// for systems with errors, these are assumed to be experimental data it is only acceptible going
+// to a coarser grid, otherwise an error will result with error_msg set
+
+bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
+                                            vector < double > from_data,
+                                            vector < double > from_errors,
+                                            vector < double > to_grid,
+                                            vector < double > &to_data,
+                                            vector < double > &to_errors )
+{
+   errormsg  = "";
+   noticemsg = "";
+
+   if ( to_grid.size() < 3 || from_grid.size() < 3 )
+   {
+      errormsg = "Attempt to interpolate failed, to or from grid too few points (< 3)";
+      return false;
+   }
+
+   if ( to_grid[ 0 ] < from_grid[ 0 ] || 
+        to_grid[ to_grid.size() - 1 ] > from_grid[ from_grid.size() - 1 ] )
+   {
+      errormsg = "Can not extrapolate data";
+      return false;
+   }
+
+   if ( !is_nonzero_vector( from_errors ) ||
+        from_errors.size() != from_data.size() )
+   {
+      if ( is_nonzero_vector( from_errors ) &&
+           from_errors.size() != from_data.size() )
+      {
+         cout << QString("interpolate iqq_by_case, errors size %1 does not match data size %2\n").arg(from_errors.size()).arg(from_data.size());
+      }
+         
+      // calculated curve
+      cout << "interpolate iqq_by_case, computed data so using natural spline\n";
+      vector < double > y2;
+      natural_spline( from_grid, from_data, y2 );
+      to_data  .resize( to_grid.size() );
+      to_errors.resize( to_grid.size() );
+
+      for ( unsigned int i = 0; i < to_grid.size(); i++ )
+      {
+         to_errors[ i ] = 0e0;
+         if ( !apply_natural_spline( from_grid, from_data, y2, to_grid[ i ], to_data[ i ] ) )
+         {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   // experimental data:
+   cout << "interpolate iqq_by_case, experimental data so using mean of all points in range\n";
+
+   if ( from_grid == to_grid )
+   {
+      cout << "identical grids, no interp needed\n";
+      to_data   = from_data;
+      to_errors = from_errors;
+      return true;
+   }
+      
+   if ( to_grid[ 0 ] < from_grid[ 0 ] || 
+        to_grid[ to_grid.size() - 1 ] > from_grid[ from_grid.size() - 1 ] )
+   {
+      errormsg = "Can not extrapolate experimental data";
+      return false;
+   }
+
+   if ( to_grid.size() > from_grid.size() )
+   {
+      errormsg = "Interpolation of experimental data to a finer grid not allowed";
+      return false;
+   }
+
+   // ok, we are in the range so we can interpolate
+
+   to_data  .resize( to_grid.size() );
+   to_errors.resize( to_grid.size() );
+
+   // 1st point
+   cout << QString("iibc from_grid.size() %1, to_grid.size() %2\n").arg(from_grid.size()).arg(to_grid.size());
+   cout << "from grid:\n";
+   for ( unsigned int i = 0; i < from_grid.size(); i++ )
+   {
+      cout << QString("%1, ").arg(from_grid[i]);
+   }
+   cout << endl;
+   cout << "to grid:\n";
+   for ( unsigned int i = 0; i < to_grid.size(); i++ )
+   {
+      cout << QString("%1, ").arg(to_grid[i]);
+   }
+   cout << endl;
+
+   {
+      double sum = 0e0;
+      double err = 0e0;
+      double tot_w = 0e0;
+      unsigned int count = 0;
+      
+      double q_start = to_grid[ 0 ] - ( to_grid[ 1 ] - to_grid[ 0 ] ) / 2;
+      double q_end   = to_grid[ 0 ] + ( to_grid[ 1 ] - to_grid[ 0 ] ) / 2;
+      for ( unsigned int pos = 0; pos < from_grid.size() && q_end >= from_grid[ pos ]; pos++ )
+      {
+         if ( q_start <= from_grid[ pos ] )
+         {
+            double w = 1e0 / from_errors[ pos ];
+            tot_w += w;
+            sum += from_data  [ pos ] * w;
+            err += from_errors[ pos ];
+            count++;
+         }
+      }
+      
+      if ( !count )
+      {
+         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
+            .arg( q_start ).arg( q_end );
+         return false;
+      }
+
+      to_data  [ 0 ] = sum / tot_w;
+      to_errors[ 0 ] = err / count;
+      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      cout << QString("iibc p 0 sum %1 err %2 tot_w %3 count %4\n").arg( sum ).arg( err ).arg( tot_w ).arg( count );
+   }
+
+   for ( unsigned int i = 1; i < to_grid.size() - 1; i++ )
+   {
+      double sum = 0e0;
+      double err = 0e0;
+      double tot_w = 0e0;
+      unsigned int count = 0;
+      
+      double q_start = to_grid[ i - 1 ] + ( to_grid[ i ]     - to_grid[ i - 1 ] ) / 2;
+      double q_end   = to_grid[ i ]     + ( to_grid[ i + 1 ] - to_grid[ i ]     ) / 2;
+
+      for ( unsigned int pos = 0; pos < from_grid.size() && q_end >= from_grid[ pos ]; pos++ )
+      {
+         if ( q_start <= from_grid[ pos ] )
+         {
+            double w = 1e0 / from_errors[ pos ];
+            tot_w += w;
+            sum += from_data  [ pos ] * w;
+            err += from_errors[ pos ];
+            count++;
+         }
+      }
+
+      if ( !count )
+      {
+         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
+            .arg( q_start ).arg( q_end );
+         return false;
+      }
+
+      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( i ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
+
+      to_data  [ i ] = sum / tot_w;
+      to_errors[ i ] = err / count;
+   }
+
+   // last point
+
+   {
+      double sum = 0e0;
+      double err = 0e0;
+      double tot_w = 0e0;
+      unsigned int count = 0;
+      
+      double q_start = to_grid[ to_grid.size() - 2 ] + ( to_grid[ to_grid.size() - 1 ] - to_grid[ to_grid.size() - 2 ] ) / 2;
+      double q_end   = to_grid[ to_grid.size() - 1 ] + ( to_grid[ to_grid.size() - 1 ] - to_grid[ to_grid.size() - 2 ] ) / 2;
+      
+      for ( int pos = from_grid.size() - 1; pos >= 0 && q_start <= from_grid[ pos ]; pos-- )
+      {
+         if ( from_grid[ pos ] <= q_end )
+         {
+            double w = 1e0 / from_errors[ pos ];
+            tot_w += w;
+            sum += from_data  [ pos ] * w;
+            err += from_errors[ pos ];
+            count++;
+         }
+      }
+      
+      if ( !count )
+      {
+         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
+            .arg( q_start ).arg( q_end );
+         return false;
+      }
+
+      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( to_grid.size() - 1 ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
+
+      to_data  [ to_grid.size() - 1 ] = sum / tot_w;
+      to_errors[ to_grid.size() - 1 ] = err / count;
+   }
+
+   return true;
+}
+
+
+bool US_Saxs_Util::crop( vector < double > from_grid,
+                         vector < double > from_data,
+                         vector < double > from_errors,
+                         double            min_q,
+                         double            max_q,
+                         vector < double > &to_data,
+                         vector < double > &to_errors )
+{
+   errormsg = "";
+   noticemsg = "";
+   to_data.clear();
+   to_errors.clear();
+
+   if ( from_grid.size() != from_data.size() )
+   {
+      errormsg = QString("Error: crop: grid size %1  does not equal data size %2").arg( from_grid.size() ).arg( from_data.size() );
+      return false;
+   }
+
+   bool use_errors = ( from_errors.size() == from_data.size() );
+   if ( from_errors.size() && !use_errors )
+   {
+      errormsg = QString("Error: crop: grid size %1  does not equal errors size %2").arg( from_grid.size() ).arg( from_errors.size() );
+      errormsg = "Error: crop: grid size incompatibile";
+      return false;
+   }
+
+   for ( unsigned int i = 0; i < from_grid.size(); i++ )
+   {
+      if ( from_grid[ i ] >= min_q &&
+           from_grid[ i ] <= max_q )
+      {
+         to_data.push_back( from_data[ i ] );
+         if ( use_errors )
+         {
+            to_errors.push_back( from_errors[ i ] );
+         }
+      }
+   }
+   return true;
+}
+            
+
+
+        
+

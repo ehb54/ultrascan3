@@ -510,11 +510,33 @@ class US_EXTERN US_Saxs_Util
                                  vector < double > &y2a,
                                  double            x,
                                  double            &y );
-         
 
-      void natural_spline( vector < double > &x, 
-                           vector < double > &y,
-                           vector < double > &y2 );
+      static void natural_spline( vector < double > &x, 
+                                  vector < double > &y,
+                                  vector < double > &y2 );
+
+      // takes from_data with from_errors and places on to_grid resulting in to_data & to_errors
+      // for systems without errors, these are assumed to be computed iq curves so a natural spline interpolation
+      // is performed
+      // for systems with errors, these are assumed to be experimental data it is only acceptible going
+      // to a coarser grid, otherwise an error will result with error_msg set
+
+      bool is_nonzero_vector( vector < double > &v ); // returns true if all non-zero
+
+      bool interpolate_iqq_by_case( vector < double > from_grid,
+                                    vector < double > from_data,
+                                    vector < double > from_errors,
+                                    vector < double > to_grid,
+                                    vector < double > &to_data,
+                                    vector < double > &to_errors );
+
+      bool crop( vector < double > from_grid,
+                 vector < double > from_data,
+                 vector < double > from_errors,
+                 double            min_q,
+                 double            max_q,
+                 vector < double > &to_data,
+                 vector < double > &to_errors );
 
    private:
 

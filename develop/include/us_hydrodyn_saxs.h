@@ -339,6 +339,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                      vector < double > from_r, 
                                      vector < double > from_pr );
 
+      bool natural_spline_interpolate( vector < double > to_grid, 
+                                       vector < double > from_grid, 
+                                       vector < double > from_data,
+                                       vector < double > &to_data );
+
       vector < double > rescale( vector < double > x );
 
       QString vector_double_to_csv( vector < double > vd );
@@ -379,6 +384,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool guinier_analysis( unsigned int i, QString &csvlog );
       void crop_iq_data( vector < double > &q,
                          vector < double > &I );
+
+      void crop_iq_data( vector < double > &q,
+                         vector < double > &I,
+                         vector < double > &I_errors );
 
 
       // sets lowq & highq based upon current, plot settings (could be q^2 if in guinier)

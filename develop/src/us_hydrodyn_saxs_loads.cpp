@@ -92,8 +92,31 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          return;
    }      
 
+   QString grid_target = "";
+   vector < double > original_q;
+
    if ( !just_plotted_curves )
    {
+      if ( qsl_plotted_iq_names.size() )
+      {
+         bool ok;
+         grid_target = QInputDialog::getItem(
+                                                tr("Set I(q) Grid"),
+                                                tr("Select the target plotted data set for the loaded data grid:\n"
+                                                   "or Cancel if you wish to interpolate the plotted to the loaded data")
+                                                , 
+                                                qsl_plotted_iq_names, 
+                                                0, 
+                                                FALSE, 
+                                                &ok,
+                                                this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+         } else {
+            grid_target = "";
+         }
+      }
+
       qsl_q = QStringList::split(",",qsl_headers[0],true);
       if ( qsl_q.size() < 3 )
       {
@@ -114,6 +137,95 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             q.push_back((*it).toDouble());
          } else {
             break;
+         }
+      }
+
+      // now, reinterpolate the q 
+      if ( !grid_target.isEmpty() )
+      {
+         if ( !plotted_iq_names_to_pos.count( grid_target ) )
+         {
+            editor_msg( "red", QString( tr("Internal error: could not find %1 in plotted data" ) ).arg( grid_target ) );
+            grid_target = "";
+         } else {
+            original_q = q;
+            q = plotted_q[ plotted_iq_names_to_pos[ grid_target ] ];
+            // reset header
+            QStringList qsl_q = QStringList::split(",",qsl_headers[0],true);
+            QString msg = qsl_q[ qsl_q.size() - 1 ];
+            msg.replace("\"", "");
+            qsl[0] = QString("\"Name\",\"Type; q:\",%1,\"%2 reinterpolated to q(%3:%4) step %5\"")
+               .arg( vector_double_to_csv( q ) )
+               .arg( msg )
+               .arg( q.size() ? q[ 0 ] : 0 )
+               .arg( q.size() ? q[ q.size() - 1 ] : 0 )
+               .arg( q.size() > 1 ? q[ 1 ] - q[ 0 ] : 0 );
+            qsl_headers[ 0 ] = qsl[ 0 ];
+            cout << qsl[ 0 ] << endl;
+            QStringList new_qsl;
+            QStringList new_qsl_errors;
+            new_qsl << qsl[ 0 ];
+
+            // also also reinterpolate all the data lines
+            QStringList qsl_data = qsl.grep(",\"I(q)\",");
+            QStringList qsl_sd   = qsl.grep(",\"I(q) sd\",");
+            map < QString, QString > sd_map;
+            for ( unsigned int i = 0; i < qsl_sd.size(); i++ )
+            {
+               QStringList qsl_s = QStringList::split( ",", qsl_sd[i], true );
+               sd_map[ qsl_s[ 0 ] ] = qsl_sd[ i ];
+            }
+               
+            US_Saxs_Util usu;
+
+            for ( unsigned int i = 0; i < qsl_data.size(); i++ )
+            {
+               QStringList qsl_d = QStringList::split( ",", qsl_data[i], true );
+               vector < double > original_i;
+               vector < double > original_i_error;
+               for ( unsigned int j = 2; j < qsl_d.size() - 1; j++ )
+               {
+                  original_i.push_back( qsl_d[j].toDouble() );
+               }
+               if ( sd_map.count( qsl_d[ 0 ] ) )
+               {
+                  QStringList qsl_s = QStringList::split( ",", sd_map[ qsl_d[ 0 ] ], true );
+                  for ( unsigned int j = 2; j < qsl_s.size() - 1; j++ )
+                  {
+                     original_i_error.push_back( qsl_s[j].toDouble() );
+                  }
+               }
+               // now interpolate
+               vector < double > ni;
+               vector < double > ni_error;
+               if ( !usu.interpolate_iqq_by_case( original_q, original_i, original_i_error, q, ni, ni_error ) )
+               {
+                  editor_msg("red", usu.errormsg );
+                  QMessageBox::warning( this, "US-SOMO",
+                                        QString( tr( "There was an error attempting to interpolate\n"
+                                                     "%1 q(%2:%3) to the common grid of q(%4:%5)\n"
+                                                     "Error: \"%6\"" ) )
+                                        .arg( qsl_d[ 0 ] )
+                                        .arg( original_q.size() ? original_q[ 0 ] : 0 )
+                                        .arg( original_q.size() ? original_q[ original_q.size() - 1 ] : 0 )
+                                        .arg( q.size() ? q[ 0 ] : 0 )
+                                        .arg( q.size() ? q[ q.size() - 1 ] : 0 )
+                                        .arg( usu.errormsg )
+                                        );
+                  return;
+               }
+
+               new_qsl << QString( "%1,\"I(q)\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
+               if ( sd_map.count( qsl_d[ 0 ] ) )
+               {
+                  new_qsl_errors << QString( "%1,\"I(q) sd\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
+               }
+            }
+            for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
+            {
+               new_qsl << new_qsl_errors[ i ];
+            }
+            qsl = new_qsl;
          }
       }
    } else {
@@ -368,13 +480,152 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }            
    }
    
+   // find cropping for all plotted curves
+   double crop_min;
+   double crop_max;
+   bool found_cropping = false;
+   
+   for ( unsigned int i = 0; i < (unsigned int)qsl_plotted_iq_names.size(); i++ )
+   {
+      if ( plotted_q.size() )
+      {
+         if ( !found_cropping )
+         {
+            crop_min = plotted_q[ i ][ 0 ];
+            crop_max = plotted_q[ i ][ plotted_q[ i ].size() - 1 ];
+            found_cropping = true;
+         } else {
+            if ( crop_min < plotted_q[ i ][ 0 ] )
+            {
+               crop_min = plotted_q[ i ][ 0 ];
+            }
+            if ( crop_max > plotted_q[ i ][ plotted_q[ i ].size() - 1 ] )
+            {
+               crop_max = plotted_q[ i ][ plotted_q[ i ].size() - 1 ];
+            }
+         }
+      }
+   }
+
+   if ( !just_plotted_curves && found_cropping )
+   {
+      if ( crop_min > q[ 0 ] ||
+           crop_max < q[ q.size() - 1 ] )
+      {
+         editor_msg( "dark red", 
+                     QString("cropping loaded curves to plotted range intersection q(%1:%2)")
+                     .arg( crop_min )
+                     .arg( crop_max ) );
+         
+         US_Saxs_Util usu;
+
+         vector < double > new_q;
+         vector < double > new_I;
+         vector < double > new_I_errors;
+         vector < double > zero;
+
+         if ( !usu.crop( q, q, zero, crop_min, crop_max, new_q, new_I_errors ) )
+         {
+            editor_msg( "red", usu.errormsg );
+            return;
+         }
+         original_q = q;
+         q = new_q;
+
+         // reset header
+         QStringList qsl_q = QStringList::split(",",qsl_headers[0],true);
+         QString msg = qsl_q[ qsl_q.size() - 1 ];
+         msg.replace("\"", "");
+         qsl[0] = QString("\"Name\",\"Type; q:\",%1,\"%2 cropped to q(%3:%4)\"")
+            .arg( vector_double_to_csv( q ) )
+            .arg( msg )
+            .arg( q.size() ? q[ 0 ] : 0 )
+            .arg( q.size() ? q[ q.size() - 1 ] : 0 );
+         qsl_headers[ 0 ] = qsl[ 0 ];
+         cout << qsl[ 0 ] << endl;
+         QStringList new_qsl;
+         QStringList new_qsl_errors;
+         new_qsl << qsl[ 0 ];
+
+         // also crop all the data lines
+         QStringList qsl_data = qsl.grep(",\"I(q)\",");
+         QStringList qsl_sd   = qsl.grep(",\"I(q) sd\",");
+         map < QString, QString > sd_map;
+         for ( unsigned int i = 0; i < qsl_sd.size(); i++ )
+         {
+            QStringList qsl_s = QStringList::split( ",", qsl_sd[i], true );
+            sd_map[ qsl_s[ 0 ] ] = qsl_sd[ i ];
+         }
+
+         for ( unsigned int i = 0; i < qsl_data.size(); i++ )
+         {
+            QStringList qsl_d = QStringList::split( ",", qsl_data[i], true );
+            vector < double > original_i;
+            vector < double > original_i_error;
+            for ( unsigned int j = 2; j < qsl_d.size() - 1; j++ )
+            {
+               original_i.push_back( qsl_d[j].toDouble() );
+            }
+            if ( sd_map.count( qsl_d[ 0 ] ) )
+            {
+               QStringList qsl_s = QStringList::split( ",", sd_map[ qsl_d[ 0 ] ], true );
+               for ( unsigned int j = 2; j < qsl_s.size() - 1; j++ )
+               {
+                  original_i_error.push_back( qsl_s[j].toDouble() );
+               }
+            }
+            // now crop
+            vector < double > ni;
+            vector < double > ni_error;
+            if ( !usu.crop( original_q, original_i, original_i_error, crop_min, crop_max, ni, ni_error ) )
+            {
+               editor_msg("red", usu.errormsg );
+               return;
+            }
+            
+            new_qsl << QString( "%1,\"I(q)\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
+            if ( sd_map.count( qsl_d[ 0 ] ) )
+            {
+               new_qsl_errors << QString( "%1,\"I(q) sd\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
+            }
+         }
+         for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
+         {
+            new_qsl << new_qsl_errors[ i ];
+         }
+         qsl = new_qsl;
+      }
+   }         
+
+
    // append all currently plotted I(q)s to qsl
    bool added_interpolate_msg = false;
    QString bin_msg = "";
    for ( unsigned int i = 0; i < (unsigned int)qsl_plotted_iq_names.size(); i++ )
    {
-      vector < double > nic = interpolate(q, plotted_q[i], plotted_I[i]);
-      vector < double > nic_errors = interpolate(q, plotted_q[i], plotted_I_error[i]);
+      // vector < double > nic = interpolate(q, plotted_q[i], plotted_I[i]);
+      // vector < double > nic_errors = interpolate(q, plotted_q[i], plotted_I_error[i]);
+      US_Saxs_Util usu;
+      vector < double > nic;
+      vector < double > nic_errors;
+
+      if ( !usu.interpolate_iqq_by_case( plotted_q[i], plotted_I[i], plotted_I_error[i], q, nic, nic_errors ) )
+      {
+         editor_msg("red", usu.errormsg );
+         QMessageBox::warning( this, "US-SOMO",
+                               QString( tr( "There was an error attempting to interpolate\n"
+                                            "%1 q(%2:%3) to the common grid of q(%4:%5)\n"
+                                            "Error: \"%6\"" ) )
+                               .arg( qsl_plotted_iq_names[ i ] )
+                               .arg( plotted_q[ i ].size() ? plotted_q[ i ][ 0 ] : 0 )
+                               .arg( plotted_q[ i ].size() ? plotted_q[ i ][ plotted_q[ i ].size() - 1 ] : 0 )
+                               .arg( q.size() ? q[ 0 ] : 0 )
+                               .arg( q.size() ? q[ q.size() - 1 ] : 0 )
+                               .arg( usu.errormsg )
+                               );
+         return;
+      }
+
       if ( !added_interpolate_msg && q.size() > 1 )
       {
          bin_msg = QString(tr("Plotted I(q) interpolated to delta q of %1")).arg(q[1] - q[0]);
@@ -483,7 +734,11 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool run_nnls = false;
    bool run_best_fit = false;
    QString nnls_target = "";
-   
+   if ( !grid_target.isEmpty() )
+   {
+      nnls_target = "\"" + grid_target + "\"";
+   }
+
    US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
       new US_Hydrodyn_Saxs_Iqq_Load_Csv(
                                         "Select models to load\n" + header_tag + 
@@ -645,6 +900,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          }            
 
          // possible add errors to this (?):
+
          if ( run_nnls || run_best_fit )
          {
             // cout << QString("US_Hydrodyn_Saxs::load_iqq_csv %1 size %2\n").arg(qsl_tmp[0]).arg(I.size());
@@ -1318,7 +1574,12 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
             q2 = q;
             crop_iq_data(q2, I2);
          }
-         crop_iq_data(q, I);
+         if ( I_error.size() )
+         {
+            crop_iq_data(q, I, I_error );
+         } else {
+            crop_iq_data(q, I);
+         }
       }
          
       cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;

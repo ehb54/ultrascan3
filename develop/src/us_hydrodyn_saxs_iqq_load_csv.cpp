@@ -153,6 +153,10 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       lbl_nnls_target->setMinimumHeight(minHeight2);
       lbl_nnls_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       lbl_nnls_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+      if ( !nnls_target->isEmpty() )
+      {
+         lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
+      }
    }
 
    pb_select_all = new QPushButton(tr("Select All"), this);

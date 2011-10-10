@@ -238,7 +238,7 @@ QString US_Hydrodyn_Saxs::Iq_plotted_summary()
       bool is_nonzero = is_nonzero_vector( plotted_I_error[ i ] );
          
       qs += 
-         QString( "pos %1 q.size() %2 q2.size() %3 I.size() %4 I_error.size() %5 %6 %7\n" )
+         QString( "pos %1 q.size() %2 q2.size() %3 I.size() %4 I_error.size() %5 %6 %7 q[%8:%9]\n" )
          .arg( i )
          .arg( plotted_q[ i ].size() )
          .arg( plotted_q2[ i ].size() )
@@ -246,7 +246,12 @@ QString US_Hydrodyn_Saxs::Iq_plotted_summary()
          .arg( plotted_I_error[ i ].size() )
          .arg( all_zero ? "zero error" : "contains error" )
          .arg( is_nonzero ? "all nonzero" : "" )
-         ;
+         .arg( plotted_q[ i ].size()
+               ? plotted_q[ i ][ 0 ]
+               : 0 )
+         .arg( plotted_q[ i ].size()
+               ? plotted_q[ i ][ plotted_q[ i ].size() - 1 ] 
+               : 0 );
       if ( !is_nonzero && !all_zero )
       {
          for ( unsigned int j = 0; j < plotted_I_error[i].size(); j++ )
