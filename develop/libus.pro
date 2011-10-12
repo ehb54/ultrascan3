@@ -266,6 +266,7 @@ SOURCES += \
   src/us_stiffbase.cpp \
   src/us_surfracer.cpp \
   src/us_tar.cpp \
+  src/us_timer.cpp \
   src/us_thread.cpp \
   src/us_util.cpp \
   src/us_vbar.cpp \
@@ -489,6 +490,7 @@ HEADERS += \
   include/us_stiffbase.h \
   include/us_surfracer.h \
   include/us_tar.h \
+  include/us_timer.h \
   include/us_thread.h \
   include/us_tnt_jama.h \
   include/us_util.h \
