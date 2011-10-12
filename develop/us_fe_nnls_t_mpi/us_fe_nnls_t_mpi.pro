@@ -14,6 +14,7 @@ SOURCES		+= ../src/us_astfem_rsa.cpp
 SOURCES		+= ../src/us_stiffbase.cpp
 SOURCES		+= ../src/us_ga_interacting.cpp
 SOURCES		+= ../src/us_astfem_math.cpp
+SOURCES		+= ../src/us_timer.cpp
 
 HEADERS		+= ../include/us_fe_nnls_t.h
 HEADERS		+= ../include/us_mfem_test.h
@@ -29,6 +30,7 @@ HEADERS		+= ../include/us_astfem_rsa.h
 HEADERS		+= ../include/us_stiffbase.h
 HEADERS		+= ../include/us_ga_interacting.h
 HEADERS		+= ../include/us_astfem_math.h
+HEADERS		+= ../include/us_timer.h
 
 unix {
  contains(UNAME,x86_64) {

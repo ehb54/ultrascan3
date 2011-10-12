@@ -1,4 +1,5 @@
 // #define RUN_SHORT
+
 #define NO_US
 #include "../include/us_fe_nnls_t.h"
 #include "../include/us_ga.h"
@@ -19,6 +20,11 @@
 #define USE_ALPHA .95
 // USE_ALPHA is for meniscus fitting regularization
 #define VARIANCE_IMPROVEMENT_TOLERANCE 1e-100
+
+#if defined(USE_US_TIMER)
+#  include "../include/us_timer.h"
+   extern US_Timer us_timers;
+#endif
 
 // #define DEBUG_HYDRO
 // #define DEBUG_RA
@@ -1064,6 +1070,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                        int mc_cutoff
                        )
 {
+#if defined(USE_US_TIMER)
+   us_timers.init_timer( "calc residuals" );
+   us_timers.init_timer( "astfem rsa" );
+   us_timers.init_timer( "interpolate" );
+#endif
    // return codes:
    // 0: no error
    // -1: couldn't open data file
@@ -2583,6 +2594,9 @@ static float rmsd2(vector < mfem_data > *m1,
                 (unsigned int) (*m2)[e].scan.size(),
                 (unsigned int) (*m1)[e].radius.size(),
                 (unsigned int) (*m2)[e].radius.size());
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(-702);
       }
@@ -2667,6 +2681,9 @@ void US_fe_nnls_t::match_rmsd(
    {
       printf("s_new (%g) <= s (%g) || k_new (%g) <= k (%g)\n",
              *s_new, s, *k_new, k);
+#if defined(USE_US_TIMER)
+      cout << us_timers.list_times() << flush;
+#endif               
       MPI_Finalize();
       exit(0);
    }
@@ -2705,12 +2722,18 @@ int US_fe_nnls_t::run(int status)
 
       if ( myrank ) 
       {
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
       if ( analysis_type != "2DSA_RA" )
       {
          printf("only 2DSA_RA currently supported\n");
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }        
@@ -2733,6 +2756,9 @@ int US_fe_nnls_t::run(int status)
          vector < mfem_data > m2 = build_model(s_2, ff0_2);
          double rmsd = rmsd2(&m1, &m2);
          printf("rmsd  %.4e\n", rmsd);
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }        
@@ -2933,6 +2959,9 @@ int US_fe_nnls_t::run(int status)
       if ( !fs.open(IO_WriteOnly) )
       {
          cout << "s.txt file create error\n";
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
@@ -2956,6 +2985,9 @@ int US_fe_nnls_t::run(int status)
       if ( !fk.open(IO_WriteOnly) )
       {
          cout << "k.txt file create error\n";
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
@@ -2979,6 +3011,9 @@ int US_fe_nnls_t::run(int status)
       if ( !fsk.open(IO_WriteOnly) )
       {
          cout << "sk.txt file create error\n";
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
@@ -3079,6 +3114,9 @@ int US_fe_nnls_t::run(int status)
       if ( !fg.open(IO_WriteOnly) )
       {
          cout << "g.txt file create error\n";
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
@@ -3107,6 +3145,9 @@ int US_fe_nnls_t::run(int status)
       if ( !fsol.open(IO_WriteOnly) )
       {
          cout << "solnew.dat file create error\n";
+#if defined(USE_US_TIMER)
+         cout << us_timers.list_times() << flush;
+#endif               
          MPI_Finalize();
          exit(0);
       }
@@ -3135,6 +3176,9 @@ int US_fe_nnls_t::run(int status)
       }
       fsol.close();
 
+#if defined(USE_US_TIMER)
+      cout << us_timers.list_times() << flush;
+#endif               
       MPI_Finalize();
       exit(0);
    } // end of gridrmsd
@@ -3166,6 +3210,9 @@ int US_fe_nnls_t::run(int status)
 
    if (status)
    {
+#if defined(USE_US_TIMER)
+      cout << us_timers.list_times() << flush;
+#endif               
       MPI_Finalize();
       exit(0);
    }
@@ -3228,7 +3275,9 @@ int US_fe_nnls_t::run(int status)
                      f.close();
                   }
                }
-
+#if defined(USE_US_TIMER)
+               cout << us_timers.list_times() << flush;
+#endif               
                MPI_Finalize();
                exit(-1);
             }
@@ -3503,6 +3552,9 @@ int US_fe_nnls_t::run(int status)
                   if ((migration_data[mpi_status.MPI_SOURCE] = (char *)malloc(mpi_ga_msg_in.size)) == NULL)
                   {
                      fputs("0: GA migration data malloc failure\r\n", stderr);
+#if defined(USE_US_TIMER)
+                     cout << us_timers.list_times() << flush;
+#endif               
                      MPI_Finalize();
                      exit(-1);
                   }
@@ -4008,6 +4060,9 @@ int US_fe_nnls_t::run(int status)
          }
       }
 #endif
+#if defined(USE_US_TIMER)
+      cout << us_timers.list_times() << flush;
+#endif               
       MPI_Finalize();
       exit(0);
    }
@@ -5605,6 +5660,9 @@ int US_fe_nnls_t::run(int status)
       job_udp_msg_status = "Run finished. ";
       send_udp_msg();
    }
+#if defined(USE_US_TIMER)
+   cout << us_timers.list_times() << flush;
+#endif               
    MPI_Finalize();
    exit(0);
 }
@@ -5631,6 +5689,10 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                                                unsigned int exp_pos)
 {
    //   printf("%d: calc_residuals\n", myrank); fflush(stdout);
+#if defined(USE_US_TIMER)
+   us_timers.start_timer( "calc residuals" );
+#endif               
+
 #if defined(SAVE_SOLUTES)
    save_solutes(solutes);
 #endif
@@ -6969,6 +7031,9 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 #if defined(DEBUG_HYDRO)
    printf("%d: rmsd at end of calc_resid: %f\n", myrank, sqrt(sv.variance)); fflush(stdout);
 #endif
+#if defined(USE_US_TIMER)
+   us_timers.end_timer( "calc residuals" );
+#endif               
    return sv;
 
    // return(residual);

@@ -2,6 +2,11 @@
 #include "../include/us_util.h"
 #include <algorithm>
 
+#if defined(USE_US_TIMER)
+#  include "../include/us_timer.h"
+   US_Timer us_timers;
+#endif
+
 #undef DEBUG
 
 // #define DEBUG_ALLOC
@@ -159,6 +164,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
                              int thread,
                              vector < rotorInfo > *rotor_list)
 {
+#if defined(USE_US_TIMER)
+   us_timers.start_timer( "astfem rsa" );
+#endif
    this->thread = thread;
    vector < rotorInfo > alt_rotor_list;
    if ( !rotor_list ) 
@@ -306,6 +314,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
                   {
                      qApp->processEvents();
                   }
+#if defined(USE_US_TIMER)
+                  us_timers.end_timer( "astfem rsa" );
+#endif
                   return(1); // early termination = 1
                }
             }  // end of for acceleration
@@ -320,6 +331,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
             if (accel_time > duration)
             {
                cerr << "Attention: acceleration time exceeds duration - please check initialization\n";
+#if defined(USE_US_TIMER)
+               us_timers.end_timer( "astfem rsa" );
+#endif
                return (-1);
             }
             else
@@ -358,7 +372,13 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
                    af_params.current_bottom,
                    simparams->bottom);
 #endif
+#if defined(USE_US_TIMER)
+            us_timers.start_timer( "interpolate" );
+#endif
             interpolate(&(*exp_data)[ss], &simdata, use_time);
+#if defined(USE_US_TIMER)
+            us_timers.end_timer( "interpolate" );
+#endif
             // set the current speed to the constant rotor speed of the current speed step
             current_speed = (*simparams).speed_step[ss].rotorspeed;
             if (guiFlag)
@@ -367,6 +387,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
             }
             if (stopFlag)
             {
+#if defined(USE_US_TIMER)
+               us_timers.end_timer( "astfem rsa" );
+#endif
                return(1); // early termination = 1
             }
          } // speed step loop
@@ -516,6 +539,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
                {
                   qApp->processEvents();
                }
+#if defined(USE_US_TIMER)
+               us_timers.end_timer( "astfem rsa" );
+#endif
                return(1); // early termination = 1
             }
          }  // end of for acceleration
@@ -528,6 +554,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
          if (accel_time > duration)
          {
             cerr << "Attention: acceleration time exceeds duration - please check initialization\n";
+#if defined(USE_US_TIMER)
+            us_timers.end_timer( "astfem rsa" );
+#endif
             return (-1);
          }
          else
@@ -560,7 +589,13 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
          current_time = (*simparams).speed_step[ss].duration_hours * 3600
             + (*simparams).speed_step[ss].duration_minutes * 60;
          // interpolate the simulated data onto the experimental time- and radius grid
+#if defined(USE_US_TIMER)
+         us_timers.start_timer( "interpolate" );
+#endif
          interpolate(&(*exp_data)[ss], &simdata, use_time);
+#if defined(USE_US_TIMER)
+         us_timers.end_timer( "interpolate" );
+#endif
          // set the current speed to the constant rotor speed of the current speed step
          current_speed = (*simparams).speed_step[ss].rotorspeed;
          if (guiFlag)
@@ -569,6 +604,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
          }
          if (stopFlag)
          {
+#if defined(USE_US_TIMER)
+            us_timers.end_timer( "astfem rsa" );
+#endif
             return(1); // early termination = 1
          }
       } // speed step loop
@@ -617,6 +655,9 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
 #endif
 #if defined(DEBUG_RSS)
    dm("end   us_astfem_rsa::calculate");
+#endif
+#if defined(USE_US_TIMER)
+   us_timers.end_timer( "astfem rsa" );
 #endif
    return 0;
 }
