@@ -265,7 +265,7 @@ class US_MPI_Analysis : public QObject
     void   mutate_s      ( US_Solute&, int );
     void   mutate_k      ( US_Solute&, int );
     void   mutate_gene   ( Gene& );
-    void   cross_gene    ( Gene& );
+    void   cross_gene    ( Gene&, QList< Gene > );
     int    migrate_genes ( void );
     double random_01     ( void );
     int    u_random      ( int = 100 );

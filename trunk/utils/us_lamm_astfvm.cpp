@@ -648,7 +648,9 @@ int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
        nsteps    -= af_data.scan.size();
     }
 
+#ifndef NO_DB
     emit calc_start( nsteps );
+#endif
 
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ )
@@ -659,7 +661,9 @@ int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
          return rc;
    }
 
+#ifndef NO_DB
    emit calc_done();
+#endif
 
    // populate user's data set from calculated simulation
    store_mfem_data( sim_data, af_data );
@@ -707,7 +711,9 @@ int US_LammAstfvm::solve_component( int compx )
    QVector< double > conc1;
    QVector< double > rads;
 
+#ifndef NO_DB
    emit comp_progress( compx + 1 );
+#endif
 
    if ( nonIdealCaseNo() != 0 )            // set non-ideal case number
    {  // if multiple cases, abort
@@ -819,7 +825,9 @@ DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
       rads[ jj ] = af_data.radius[ jj ];
    }
 
+#ifndef NO_DB
    int    ktinc = 5;                        // signal progress every 5th scan
+#endif
    double ts;
    double u_ttl;
 
@@ -948,11 +956,13 @@ DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
 
          istep++;  // bump progress step
 
+#ifndef NO_DB
          if ( ( ( kt / ktinc ) * ktinc ) == kt  ||  ( kt + 1 ) == nts )
          {  // signal progress at every "ktinc'th" scan or final one
             emit calc_progress( istep );
             qApp->processEvents();
          }
+#endif
 
          kt++;    // bump output time(scan) index
       }

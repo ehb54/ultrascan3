@@ -131,7 +131,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
 {
    // Initialize genes
    genes.clear();
-   int population = parameters[ "population" ].toInt();
+   population = parameters[ "population" ].toInt();
 
    for ( int i = 0; i < population; i++ ) genes << new_gene();
 
@@ -243,7 +243,7 @@ DbTimMsg("Worker after receive instructions");
       if ( status.MPI_TAG == FINISHED ) break;
 
       // See if we are really done
-      if ( generation == generation - 1 ) continue;
+      if ( generation == generations - 1 ) continue;
 
       // Mark duplicate genes 
       int f0 = 0;  // An index into the fitness array
@@ -289,21 +289,21 @@ DbTimMsg("Worker after receive instructions");
       for ( int g = 0; g < elitism; g++ )
          genes[ g ] = old_genes[ fitness[ g ].index ];
 
-      int emigrants = migrate_genes();
+      int immigrants = migrate_genes();
 
 DbTimMsg("Worker before elitism loop");
 
-      for ( int g = elitism + emigrants; g < population; g++ )
+      for ( int g = elitism + immigrants; g < population; g++ )
       {
          // Select a random gene from old population using exponential 
-         // distribution
+         //  distribution
          int  gene_index  = e_random();
          Gene gene        = old_genes[ gene_index ];
-         int  probability = u_random();
+         int  probability = u_random( p_plague );
 
          if      ( probability < p_mutate    ) mutate_gene( gene );
-         else if ( probability < p_crossover ) cross_gene ( gene );
-         else if ( probability < p_plague    ) gene = new_gene();
+         else if ( probability < p_crossover ) cross_gene ( gene, old_genes );
+         else                                  gene = new_gene();
 
          genes[ g ] = gene;
       }
@@ -357,6 +357,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
 {
    US_SolveSim::Simulation sim = simulation_values;
    sim.solutes = gene;
+   qSort( sim.solutes );
 
    QString key = "";
    QString str;
@@ -486,11 +487,11 @@ void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
    solute.k  = qMin( solute.k, ff0_min + ( k_grid - 1 ) * buckets[ b ].dk );
 }
 
-void US_MPI_Analysis::cross_gene( Gene& gene )
+void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
 {
    // Get the crossing gene according to an exponential distribution
    int  gene_index = e_random();
-   Gene cross_from = genes[ fitness[ gene_index ].index ]; 
+   Gene cross_from = old_genes[ fitness[ gene_index ].index ]; 
 
    // Select a random solute.  The number will always be between
    // 1 and size - 1.
@@ -513,21 +514,24 @@ void US_MPI_Analysis::cross_gene( Gene& gene )
 
 int US_MPI_Analysis::migrate_genes( void )
 {
-   static const int migrate_count = parameters[ "migration" ].toInt();
+   static const int migrate_pcent = parameters[ "migration" ].toInt();
    static const int elitism_count = parameters[ "elitism"   ].toInt();
 
-   QVector< US_Solute > emmigrants;
+   QVector< US_Solute > emmigres;
+   int migrate_count = ( migrate_pcent * population + 50 ) / 100;
 
    // Send genes to master
    for ( int i = 0; i < migrate_count; i++ )
    {
       int  gene_index = e_random();
-      emmigrants += genes[ fitness[ gene_index ].index ];
+      emmigres += genes[ fitness[ gene_index ].index ];
    }
 
    // MPI send msg type
    MPI_GA_MSG msg;
    msg.size = migrate_count;
+   int bucket_sols  = buckets.size();
+   int migrate_sols = migrate_count * bucket_sols;
 
    MPI_Send( &msg,               // to MPI #1
              sizeof( msg ),
@@ -537,19 +541,19 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_COMM_WORLD );
 
    // MPI send emmigrants
-   MPI_Send( emmigrants.data(),  // to MPI #4
-             buckets.size() * solute_doubles * migrate_count,
+   MPI_Send( emmigres.data(),  // to MPI #4
+             migrate_sols * solute_doubles,
              MPI_DOUBLE,
              MPI_Job::MASTER,
              EMMIGRATE,
              MPI_COMM_WORLD );
 
    // Get genes from master as concatenated genes
-   QVector< US_Solute > immigrants( migrate_count * buckets.size() );
+   QVector< US_Solute > immigres( migrate_sols );
    MPI_Status        status;
 
-   MPI_Recv( immigrants.data(),  // from MPI #5
-             migrate_count * buckets.size() * solute_doubles,
+   MPI_Recv( immigres.data(),  // from MPI #5
+             migrate_sols * solute_doubles,
              MPI_DOUBLE,
              MPI_Job::MASTER,
              IMMIGRATE,
@@ -558,20 +562,22 @@ int US_MPI_Analysis::migrate_genes( void )
 
    int solutes_sent;
    MPI_Get_count( &status, MPI_DOUBLE, &solutes_sent );
+   solutes_sent    /= solute_doubles;
+   int mgenes_count = solutes_sent / bucket_sols;
 
    // The number returned equals the number sent or zero.
-   if ( solutes_sent > 0 )
+   if ( mgenes_count > 0 )
    {
-      for ( int i = 0; i < migrate_count; i++ )
+DbgLv(1) << "MG:Deme" << my_rank << ": solsent mg_count" << solutes_sent << mgenes_count << " elit" << elitism_count
+   << "sol_dbls" << solute_doubles;
+      for ( int i = 0; i < mgenes_count; i++ )
       {
-         Gene gene = immigrants.mid( i * buckets.size(), buckets.size() );
+         Gene gene = immigres.mid( i * bucket_sols, bucket_sols );
          genes[ elitism_count + i ] = gene;
       }
-
-      return migrate_count;
    }
 
-   return 0;
+   return mgenes_count;
 }
 
 US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )

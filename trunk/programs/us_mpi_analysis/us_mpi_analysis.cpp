@@ -332,8 +332,8 @@ void US_MPI_Analysis::start( void )
    if ( my_rank == 0 )
    {
       max_rss();
-      int  elapsed  = qRound( analysisStart.msecsTo( QDateTime::currentDateTime() )
-         / 1000.0 );
+      int  elapsed  = qRound(
+         analysisStart.msecsTo( QDateTime::currentDateTime() ) / 1000.0 );
       int  maxrssmb = qRound( (double)maxrss / 1024.0 );
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
             + " MB,  total run seconds " + QString::number( elapsed ) );
