@@ -33,13 +33,21 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
    double        duration;
 
    int           initial_npts = 1000;
-   int           current_assoc;
+   int           current_assoc = 0;
    int           size_cv         = system.components.size();
    QVector< bool >                 reactVec( size_cv );
    bool*         reacting        = reactVec.data();
 
    double        accel_time;
    double        dr;
+//*TIMING*
+//QDateTime calcStart = QDateTime::currentDateTime();
+//int totNtrptime=0;
+//static int ncalls=0;
+//static int nicall=0;
+//static int totTC=0;
+//static int totTN=0;
+//*TIMING*
    
    af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed;
    af_params.simpoints   = simparams.simpoints;
@@ -183,8 +191,10 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
                accel_time    = af_params.dt * af_params.time_steps;
                current_time += accel_time;
 
+#ifndef NO_DB
                emit new_time( current_time );
                qApp->processEvents();
+#endif
                
             }  // End of acceleration
 
@@ -236,18 +246,29 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
             
             // Interpolate the simulated data onto the experimental time and 
             // radius grid
+//*TIMING*
+//QDateTime ntrpStart = QDateTime::currentDateTime();
+//*TIMING*
             US_AstfemMath::interpolate( *ed, simdata, use_time );
+//*TIMING*
+//nicall++;
+//totNtrptime+=(ntrpStart.msecsTo(QDateTime::currentDateTime()));
+//*TIMING*
             
             // Set the current speed to the constant rotor speed of the 
             // current speed step
             current_speed = sp->rotorspeed;
 
+#ifndef NO_DB
             qApp->processEvents();
+#endif
 
          } // Speed step loop
 
+#ifndef NO_DB
          emit current_component( k + 1 );
          qApp->processEvents();
+#endif
       }
    }
 
@@ -393,8 +414,10 @@ DbgLv(2) << "RSA: decompose OUT";
             accel_time    = af_params.dt * af_params.time_steps;
             current_time += accel_time;
  
-            //emit new_time( current_time );
-            //qApp->processEvents();
+#ifndef NO_DB
+            emit new_time( current_time );
+            qApp->processEvents();
+#endif
 
             if ( stopFlag ) return 1;
          }  // End of for acceleration
@@ -450,21 +473,33 @@ DbgLv(2) << "RSA:    current_time" << current_time;
          
          // Interpolate the simulated data onto the experimental 
          // time and radius grid
+//*TIMING*
+//QDateTime ntrpStart = QDateTime::currentDateTime();
+//*TIMING*
          US_AstfemMath::interpolate( *ed, simdata, use_time );
+//*TIMING*
+//nicall++;
+//totNtrptime+=(ntrpStart.msecsTo(QDateTime::currentDateTime()));
+//*TIMING*
+            
          
          // Set the current speed to the constant rotor speed of the 
          // current speed step
          current_speed = sp->rotorspeed;
          
+#ifndef NO_DB
          qApp->processEvents();
+#endif
          
          if ( stopFlag ) return 1 ; 
       } // Speed step loop
    }
 DbgLv(2) << "RSA: Speed step OUT";
 
+#ifndef NO_DB
    //emit current_component( -1 );
    qApp->processEvents();
+#endif
 
    if ( time_correction  &&  !simout_flag )
    {
@@ -517,6 +552,15 @@ DbgLv(2) << "RSA: Time Corr OUT";
    else
       store_mfem_data( exp_data, simdata );    // raw simulation grid
 
+//*TIMING*
+//int elapsedCalc = calcStart.msecsTo( QDateTime::currentDateTime() );
+//ncalls++;
+//totTN+=totNtrptime;
+//totTC+=elapsedCalc;
+//if((ncalls%200)<2)
+// DbgLv(0) << "  Elapsed fem-calc,tot-interp ms" << elapsedCalc << totNtrptime
+// << "nn nc totN totC" << nicall << ncalls << totTN << totTC;
+//*TIMING*
    return 0;
 }
 
@@ -647,7 +691,7 @@ void US_Astfem_RSA::initialize_rg( void )
          // Check if any component already present in tmp_rg matches any of the
          // three components in current (*system).associations entry
 
-         bool flag1;
+         bool flag1 = false;
          
          for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
          {
@@ -980,8 +1024,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    {
       double rpm_current = rpm_start + 
          ( rpm_stop - rpm_start ) * ( i + 0.5 ) / af_params.time_steps;
-      
+
+#ifndef NO_DB
       emit current_speed( (int) rpm_current );
+#endif
 
       if ( accel ) // Then we have acceleration
       {
@@ -1069,6 +1115,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       
       for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
 
+#ifndef NO_DB
       //if ( show_movie  &&  (i%4) == 0 )
       if ( show_movie )
       {
@@ -1080,6 +1127,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
          //US_Sleep::msleep( 1 );  // 1 ms to let the display update.
       }
+#endif
    } // time loop
 
    C_init.radius.clear();
@@ -1788,11 +1836,13 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       int    st0 = af_params.association[ 0 ].stoichs[ 0 ];
       int    st1 = af_params.association[ 0 ].stoichs[ 1 ];
       double keq = af_params.association[ 0 ].k_eq;
+#ifndef NO_DB
       emit current_component( -Npts );
+#endif
 
       for ( int j = 0; j < Npts; j++ )
       {
-          double c1;
+          double c1 = 0.0;
           double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
           
@@ -1824,7 +1874,9 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
               C0[ 0 ].concentration[ j ] = c2 ;          // c1=product
               C0[ 1 ].concentration[ j ] = c1 ;
           }
+#ifndef NO_DB
           emit current_component( j + 1 );
+#endif
       }
 DbgLv(2) << "RSA:  decompose NCOMP=2 return";
       return;
@@ -1865,11 +1917,14 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
    double    timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
 
    // time loop
+#ifndef NO_DB
    emit calc_start( time_max );
    emit current_component( -time_max );
+#endif
 
    for ( int ti = 0; ti < time_max; ti++ )
    {
+#ifndef NO_DB
       if ( show_movie  &&  (ti%8) == 0 )
       {
 //DbgLv(2) << "AR: calc_progr ti" << ti;
@@ -1877,6 +1932,7 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
          qApp->processEvents();
          //US_Sleep::msleep( 10 );
       }
+#endif
 
       ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
 
@@ -1893,23 +1949,29 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
          }
       }
 
+#ifndef NO_DB
       emit current_component( ti + 1 );
       qApp->processEvents();
+#endif
 
       if ( diff < 1.0e-5 * ct )
       {
+#ifndef NO_DB
          int step = ti + 1;
          emit current_component( -step );
          emit current_component( step );
+#endif
          break;
       }
    } // end time steps
 
+#ifndef NO_DB
    if ( show_movie )
    {
       emit calc_done();
       qApp->processEvents();
    }
+#endif
 
    for ( int i = 0; i < num_comp; i++ )
    {
@@ -2391,6 +2453,7 @@ DbgLv(1) << "RSA: newX3 N" << N;
 
    // Time evolution
    double* right_hand_side = rhVec.data();
+#ifndef NO_DB
    int     stepinc = 1000;
    int     stepmax = ( NN + 2 ) / stepinc + 1;
    bool    repprog = stepmax > 1;
@@ -2399,13 +2462,16 @@ DbgLv(1) << "RSA: newX3 N" << N;
       emit current_component( -stepmax );
       emit current_component( 0 );
    }
+#endif
 
    for ( int kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
    {
       double rpm_current = rpm_start + 
          ( rpm_stop - rpm_start ) * ( kkk + 0.5 ) / NN;
 
+#ifndef NO_DB
       emit current_speed( (int) rpm_current);
+#endif
 
       simscan.time      = af_params.start_time + kkk * dt;
       simscan.rpm       = (int) rpm_current;
@@ -2617,6 +2683,7 @@ DbgLv(1) << "RSA: newX3 N" << N;
          CT0[ j ] = CT1[ j ];
       }
 
+#ifndef NO_DB
       //if ( show_movie  &&  (kkk%8) == 0 )
       if ( show_movie )
       {
@@ -2633,6 +2700,7 @@ DbgLv(1) << "RSA: newX3 N" << N;
       {
          emit current_component( ( kkk + 1 ) / stepinc );
       }
+#endif
 
    } // time loop
 DbgLv(2) << "RSA:     cra2:  NN" << NN;

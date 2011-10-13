@@ -3,7 +3,7 @@ include(../../local.pri)
 
 # Not a gui program
 
-CONFIG      += debug qt thread warn
+CONFIG      += $${DEBUGORRELEASE} qt thread warn
 TEMPLATE     = app
 QT          -= gui
 QT          += network

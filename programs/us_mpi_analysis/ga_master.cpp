@@ -200,19 +200,26 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             max_rss();
 
-            static const double fitness_threshold = 1.0e-8;
-            static const int    max_same_count    = ( proc_count - 1 ) * 5;
-            static const int    min_generation    = 10;
-
-            best_overall_fitness = qMin( best_overall_fitness, msg.fitness );
-
-            if ( ( msg.fitness - best_overall_fitness ) < fitness_threshold )
-               fitness_same_count++;
-            else
-               fitness_same_count = 0;
+            static const double fit_div        = 1.0e-9;
+            static const double fit_mul        = 1.0e+9;
+            static const int    max_same_count = ( proc_count - 1 ) * 5;
+            static const int    min_generation = 10;
 
             if ( ! early_termination )
             {
+               double fitness_round = (double)qRound( msg.fitness * fit_mul ) * fit_div;
+
+               if ( fitness_round < best_overall_fitness )
+               {
+                  best_overall_fitness = fitness_round;
+                  fitness_same_count   = 0;
+               }
+               else
+               {
+                  fitness_same_count++;
+               }
+
+
                if ( fitness_same_count > max_same_count  &&
                     avg_generation     > min_generation )
                {
@@ -577,3 +584,4 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
              << "\n";
    f.close();
 }
+
