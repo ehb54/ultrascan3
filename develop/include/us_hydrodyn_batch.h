@@ -69,6 +69,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
    Q_OBJECT
 
    public:
+      friend class US_Hydrodyn_Cluster;
+
       US_Hydrodyn_Batch(batch_info *batch, 
                         bool *batch_widget, 
                         void *us_hydrodyn, 
@@ -142,6 +144,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;
+      QPushButton   *pb_cluster;
       QPushButton   *pb_open_saxs_options;
       QPushButton   *pb_cancel;
 
@@ -249,6 +252,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void make_movie();
 
       void cancel();
+      void cluster();
       void open_saxs_options();
       void help();
 

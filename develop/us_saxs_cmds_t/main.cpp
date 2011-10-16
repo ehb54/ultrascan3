@@ -52,6 +52,8 @@ int main (int argc, char **argv)
              "              \toutputs datafiles: outfile-radius.txt, outfile-delta_rho.txt, outfile.txt\n"
              "merge         \toutfile     infile1     weight1     infile2     weight2\n"
              "              \tproduce a weighted merge of the two files\n"
+             "iq            \tcontrolfile\n"
+             "              \tcompute a saxs curve (can be a .tar)\n"
              , argv[0]
              );
       exit(-1);
@@ -1661,6 +1663,32 @@ int main (int argc, char **argv)
                        weight2
                        ) ||
            !usu.write( outfile, outfile ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase - 1 );
+      }
+      exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "iq" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         printf(
+                "usage: %s %s controlfile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString controlfile     = cmds[ p++ ];
+
+      US_Saxs_Util usu;
+      if ( !usu.read_control( controlfile ) )
       {
          cout << usu.errormsg << endl;
          exit( errorbase - 1 );

@@ -180,6 +180,7 @@ SOURCES += \
   src/us_hydrodyn_bd_core.cpp \
   src/us_hydrodyn_bd_options.cpp \
   src/us_hydrodyn_bd_load_results_opts.cpp \
+  src/us_hydrodyn_cluster.cpp \
   src/us_hydrodyn_comparative.cpp \
   src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_csv_viewer.cpp \
@@ -253,6 +254,7 @@ SOURCES += \
   src/us_sa2dbase.cpp \
   src/us_sassoc.cpp \
   src/us_saxs_util.cpp \
+  src/us_saxs_util_iqq.cpp \
   src/us_select_channel.cpp \
   src/us_selectmodel.cpp \
   src/us_selectmodel10.cpp \
@@ -413,6 +415,7 @@ HEADERS += \
   include/us_hydrodyn_bd_options.h \
   include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_bead_output.h \
+  include/us_hydrodyn_cluster.h \
   include/us_hydrodyn_comparative.h \
   include/us_hydrodyn_csv_viewer.h \
   include/us_hydrodyn_dammin_opts.h \

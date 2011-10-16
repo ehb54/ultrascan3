@@ -1642,6 +1642,7 @@ void US_Hydrodyn::update_vbar()
 int US_Hydrodyn::read_config(QFile& f)
 {
    QString str;
+   cout << "read config\n";
    if ( f.name() == QString::null ||
         f.name().isEmpty() )
    {

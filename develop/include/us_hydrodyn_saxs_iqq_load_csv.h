@@ -65,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
       QPushButton *pb_select_all;
       QPushButton *pb_select_target;
       QPushButton *pb_transpose;
+      QPushButton *pb_save_as_dat;
       QPushButton *pb_save_selected;
       QPushButton *pb_ok;
       QPushButton *pb_cancel;
@@ -112,6 +113,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
       void select_all();
       void select_target();
       void transpose();
+      void save_as_dat();
       void save_selected();
       void ok();
       void cancel();

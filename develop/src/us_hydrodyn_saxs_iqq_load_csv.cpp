@@ -171,6 +171,12 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    pb_transpose->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_transpose, SIGNAL(clicked()), SLOT(transpose()));
 
+   pb_save_as_dat = new QPushButton(tr("Save .DAT"), this);
+   pb_save_as_dat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_as_dat->setMinimumHeight(minHeight1);
+   pb_save_as_dat->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_as_dat, SIGNAL(clicked()), SLOT(save_as_dat()));
+
    pb_save_selected = new QPushButton(tr("Save"), this);
    pb_save_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_selected->setMinimumHeight(minHeight1);
@@ -202,6 +208,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    hbl_bottom->addWidget(pb_select_all);
    hbl_bottom->addSpacing(5);
    hbl_bottom->addWidget(pb_transpose);
+   hbl_bottom->addSpacing(5);
+   hbl_bottom->addWidget(pb_save_as_dat);
    hbl_bottom->addSpacing(5);
    hbl_bottom->addWidget(pb_save_selected);
    hbl_bottom->addSpacing(5);
@@ -578,6 +586,120 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
    pb_transpose->setEnabled(qsl_sel_names->size());
    pb_transpose->setText(QString(tr("Transpose") + "%1")
                          .arg(qsl_sel_names->size() > 0 ? QString(" (%1)").arg(qsl_sel_names->size()) : ""));
+   pb_save_as_dat->setEnabled(qsl_sel_names->size() == 1);
    pb_save_selected->setEnabled(qsl_sel_names->size());
+}
+
+void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
+{
+   // find selected one & name it that
+
+   QString sel_name;
+
+   for ( QStringList::iterator it = qsl_sel_names->begin();
+         it != qsl_sel_names->end();
+         it++ )
+   {
+      sel_name = *it;
+   }
+
+   QString save_file = sel_name;
+   cout << sel_name << endl;
+   save_file.replace("\"","");
+   save_file.replace(QRegExp("\\..*$"),"");
+   save_file += ".dat";
+   save_file = QFileInfo( save_file ).fileName();
+   cout << save_file << endl;
+
+   QString fname = QFileDialog::getSaveFileName(
+                                                save_file,
+                                                "*.dat",
+                                                this,
+                                                "save file dialog",
+                                                tr("Choose a filename to save the DAT file") );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !fname.contains(QRegExp(".dat$",false)) )
+   {
+      fname += ".dat";
+   }
+
+   // open
+   if ( QFile::exists(fname) )
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+   }
+
+   FILE *of = fopen(fname, "wb");
+
+   if ( of )
+   {
+      // go through the qsl, find selected...
+      
+      // find data and possible errors and create a .dat file of I(q) & I(q) sd
+
+      // find max length & build a 2d array of values
+      unsigned int max_len = 0;
+      vector < vector < QString > > array2d_to_save;
+      for ( QStringList::iterator it = qsl->begin();
+               it != qsl->end();
+               it++ )
+      {
+         QStringList qsl_tmp = QStringList::split(",",*it,true);
+         if ( qsl_tmp.size() )
+         {
+            if ( qsl_tmp[0] == sel_name || it == qsl->begin() )
+            {
+               vector < QString > array_to_save;
+               // cout << "ok: " << qsl_tmp[0] << endl;
+               if ( max_len < (unsigned int)qsl_tmp.count() )
+               {
+                  max_len = qsl_tmp.count();
+               }
+               for ( QStringList::iterator it2 = qsl_tmp.begin();
+                     it2 != qsl_tmp.end();
+                     it2++ )
+               {
+                  array_to_save.push_back(*it2);
+               }
+               // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
+               array2d_to_save.push_back(array_to_save);
+            }
+         }
+      }
+
+      // write them out
+      //      cout << QString("max len %1\n").arg(max_len);
+
+      for ( unsigned int i = 0; i < max_len; i++ ) 
+      {
+         QString tab = "";
+         for ( unsigned int j = 0; j < array2d_to_save.size(); j++ )
+         {
+            if ( array2d_to_save[j].size() <= i ||
+                 array2d_to_save[j][i].isNull() )
+            {
+               // cout <<  QString("array2d_to_save[%1].size() == %2\n")
+               // .arg(j)
+               // .arg(array2d_to_save[j].size());
+               fprintf(of, tab.ascii());
+            } else {
+               fprintf(of, "%s%s", tab.ascii(), array2d_to_save[j][i].ascii());
+            }
+            tab = "\t";
+         }
+         fprintf(of, "\n");
+      }
+      fclose(of);
+      QMessageBox::information( this, "UltraScan",
+                                QString(tr("Created the output file:\n") + "%1").arg(fname));
+
+   } else {
+      QMessageBox::warning( this, "UltraScan",
+                                QString(tr("Could not create the output file:\n") + "%1").arg(fname));
+   }
 }
 

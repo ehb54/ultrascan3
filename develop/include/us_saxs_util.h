@@ -5,6 +5,7 @@
 
 #include "us_util.h"
 #include "us_math.h"
+#include "us_tar.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include <math.h>
 #include <time.h>
@@ -538,6 +539,8 @@ class US_EXTERN US_Saxs_Util
                  vector < double > &to_data,
                  vector < double > &to_errors );
 
+      bool read_control( QString controlfile );
+
    private:
 
       bool run_gnom( 
@@ -718,6 +721,14 @@ class US_EXTERN US_Saxs_Util
       bool select_atom_file( QString );
       bool select_hybrid_file( QString );
       bool select_saxs_file( QString );
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, QStringList > control_parameters;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 };
 
 #endif

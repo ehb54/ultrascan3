@@ -472,6 +472,12 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
+   pb_cluster = new QPushButton(tr("Cluster"), this);
+   pb_cluster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cluster->setMinimumHeight(minHeight1);
+   pb_cluster->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cluster, SIGNAL(clicked()), SLOT(cluster()));
+
    pb_open_saxs_options = new QPushButton(tr("Saxs Options"), this);
    pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_open_saxs_options->setMinimumHeight(minHeight1);
@@ -575,6 +581,7 @@ void US_Hydrodyn_Batch::setupGUI()
    // 4th section - help & cancel
    QHBoxLayout *hbl_help_cancel = new QHBoxLayout;
    hbl_help_cancel->addWidget(pb_help);
+   hbl_help_cancel->addWidget(pb_cluster);
    hbl_help_cancel->addWidget(pb_open_saxs_options);
    hbl_help_cancel->addWidget(pb_cancel);
 
@@ -1000,6 +1007,17 @@ void US_Hydrodyn_Batch::update_enables()
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
    pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
    cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
+   pb_cluster->setEnabled(
+                          count_selected &&
+                          // later we will add some of these other options,
+                          // right now, just iqq
+                          !cb_somo->isChecked() && 
+                          !cb_grid->isChecked() && 
+                          !cb_hydro->isChecked() && 
+                          !cb_prr->isChecked() && 
+                          cb_iqq->isChecked() &&
+                          !cb_compute_iq_avg->isChecked() 
+                          );
    set_counts();
 }
 
@@ -1317,6 +1335,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    le_avg_hydro_name->setEnabled(false);
    pb_select_save_params->setEnabled(false);
    cb_saveParams->setEnabled(false);
+   pb_cluster->setEnabled(false);
    pb_start->setEnabled(false);
    pb_stop->setEnabled(true);
    stopFlag = false;
@@ -3052,4 +3071,16 @@ bool US_Hydrodyn_Batch::activate_saxs_search_window()
       editor_msg("red", tr("Could not activate SAXS window!\n"));
       return false;
    }
+}
+
+void US_Hydrodyn_Batch::cluster()
+{
+   // create cluster control files for each model & save
+   // check for target file
+   US_Hydrodyn_Cluster *hc = 
+      new US_Hydrodyn_Cluster(
+                              us_hydrodyn,
+                              this );
+   hc->exec();
+   delete hc;
 }

@@ -33,7 +33,7 @@ class US_EXTERN US_Tar
       int     create ( const QString&, const QStringList&, QStringList* = 0 );
       
       int     extract( const QString&, QStringList* = 0 ); 
-      int     list   ( const QString&, QStringList& ); 
+      int     list   ( const QString&, QStringList&, bool brief = false ); 
       QString explain( const int ); 
 
    private:

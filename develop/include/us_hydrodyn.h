@@ -22,6 +22,7 @@
 #include <qprinter.h>
 
 #include "us.h"
+#include "us_timer.h"
 #include "us_extern.h"
 #include "us_util.h"
 #include "us_math.h"
@@ -55,6 +56,7 @@
 #include "us_hydrodyn_batch_movie_opts.h"
 #include "us_hydrodyn_comparative.h"
 #include "us_hydrodyn_pdb_tool.h"
+#include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 
 //standard C and C++ defs:
@@ -78,6 +80,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    public:
       friend class US_Hydrodyn_Batch;
+      friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;

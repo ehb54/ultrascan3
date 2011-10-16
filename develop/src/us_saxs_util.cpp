@@ -6148,12 +6148,13 @@ bool US_Saxs_Util::setup_saxs_maps( QString atom_file, QString hybrid_file, QStr
 
 bool US_Saxs_Util::select_atom_file( QString filename )
 {
+   errormsg = "";
    QString str1;
    QFileInfo fi(filename);
    atom_list.clear();
    atom_map.clear();
    QFile f(filename);
-   if (f.open(IO_ReadOnly|IO_Translate))
+   if ( f.open(IO_ReadOnly ) )
    {
       QTextStream ts(&f);
       while (!ts.atEnd())
@@ -6173,18 +6174,20 @@ bool US_Saxs_Util::select_atom_file( QString filename )
       f.close();
       return true;
    } else {
+      errormsg = QString( "Error can not read atom file %1" ).arg( filename );
       return false;
    }
 }
 
 bool US_Saxs_Util::select_hybrid_file( QString filename )
 {
+   errormsg = "";
    QString str1;
    QFileInfo fi(filename);
    QFile f(filename);
    hybrid_list.clear();
    hybrid_map.clear();
-   if (f.open(IO_ReadOnly|IO_Translate))
+   if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
       while (!ts.atEnd())
@@ -6206,12 +6209,14 @@ bool US_Saxs_Util::select_hybrid_file( QString filename )
       f.close();
       return true;
    } else {
+      errormsg = QString( "Error can not read hybrid file %1" ).arg( filename );
       return false;
    }
 }
 
 bool US_Saxs_Util::select_saxs_file( QString filename )
 {
+   errormsg = "";
    QString str1;
    QFileInfo fi(filename);
    QFile f(filename);
@@ -6256,6 +6261,7 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
       f.close();
       return true;
    } else {
+      errormsg = QString( "Error can not read saxs atom file %1" ).arg( filename );
       return false;
    }
 }
@@ -8161,7 +8167,3 @@ bool US_Saxs_Util::crop( vector < double > from_grid,
    return true;
 }
             
-
-
-        
-
