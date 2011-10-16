@@ -704,7 +704,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 }
 
 /////////////////////////////
-int US_Tar::list( const QString& archive, QStringList& files )
+int US_Tar::list( const QString& archive, QStringList& files, bool brief )
 {
    ifd = open( archive.latin1(), O_RDONLY | O_BINARY );
    if ( ifd < 0 ) return TAR_NOTFOUND;
@@ -773,11 +773,16 @@ int US_Tar::list( const QString& archive, QStringList& files )
          QString s;
 
          // perms user/group size date time filename
-         files << format_permissions( mode, directory ) + " " +
-            uname + "/" + gname                   + " " +
-            s.sprintf( "%10d", fsize )            + " " +
-            format_datetime( mtime )              + " " +
-            filename;
+         if ( !brief )
+         {
+            files << format_permissions( mode, directory ) + " " +
+               uname + "/" + gname                   + " " +
+               s.sprintf( "%10d", fsize )            + " " +
+               format_datetime( mtime )              + " " +
+               filename;
+         } else {
+            files << filename;
+         }
 
          if ( ! directory )
          {
