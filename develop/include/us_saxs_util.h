@@ -12,6 +12,14 @@
 #include <map>
 #include <qregexp.h>
 
+#if defined(WIN32)
+#   include <dos.h>
+#   include <stdlib.h>
+#   include <float.h>
+#   define isnan _isnan
+#   undef SHOW_TIMING
+#endif
+
 using namespace std;
 
 #define SEARCH_DEFAULT     0
@@ -34,7 +42,6 @@ typedef struct _our_matrix {
    int rows, cols;
    double *d;
 } our_matrix;
-
 
 class US_Saxs_Scan
 {
@@ -721,14 +728,47 @@ class US_EXTERN US_Saxs_Util
       bool select_atom_file( QString );
       bool select_hybrid_file( QString );
       bool select_saxs_file( QString );
+      bool select_residue_file( QString );
+      void calc_bead_mw( residue *res );
+      void calc_vbar( PDB_model *);
+      bool read_pdb( QString filename );
+      bool dna_rna_resolve();
+      bool assign_atom( const QString &str1, PDB_chain *temp_chain, QString *last_resSeq );
+      void clear_temp_chain( PDB_chain *temp_chain );
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      map < QString, QStringList > control_parameters;
+      map < QString, QString > control_parameters;
+
+      // residue fields
+
+      vector < residue >                  residue_list;
+      vector < residue >                  residue_list_no_pbr;
+      map < QString, int >                new_residues;    // maps resName|atom_count to {0,1} for duplicate checks
+      map < QString, bool >               unknown_residues;
+      vector < residue >                  save_residue_list;
+      vector < residue >                  save_residue_list_no_pbr;
+      map < QString, vector < int > >     valid_atom_map;    // maps resName|atomName|pos
+      map < QString, vector <int> >       save_multi_residue_map; // maps residue to index of residue_list
+      vector < PDB_model >                model_vector;
+      vector < PDB_model >                model_vector_as_loaded;
+      vector < PDB_atom >                 bead_model;
+      vector < vector < PDB_atom > >      bead_models;
+      vector < vector < PDB_atom > >      bead_models_as_loaded;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      QString      last_pdb_filename;
+      QStringList  last_pdb_title;
+      QStringList  last_pdb_header;
+      residue      current_residue;
+
+      bool set_control_parameters_from_experiment_file( QString filename );
+      bool validate_control_parameters();
+      void validate_control_parameters_set_one( QStringList &checks, 
+                                                QStringList &vals );
 };
 
 #endif
