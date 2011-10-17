@@ -221,21 +221,21 @@ void US_Hydrodyn_Cluster::create()
    // create the output file
    QString filename = QFileDialog::getSaveFileName(QString::null, QString::null,this );
 
-   QString out = 
+   QString base = 
       "# us_saxs_cmds_t iq controlfile\n"
       "# blank lines ok, format token <params>\n"
       "\n";
 
-   out += 
+   base += 
       QString( "ResidueFile     %1\n" ).arg( QFileInfo( ((US_Hydrodyn *)us_hydrodyn)->lbl_table->text() ).fileName() );
-   out += 
+   base += 
       QString( "AtomFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_atom_filename ).fileName() );
-   out += 
+   base += 
       QString( "HybridFile      %1\n" ).arg( QFileInfo( our_saxs_options->default_hybrid_filename ).fileName() );
-   out += 
+   base += 
       QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
 
-   out += 
+   base += 
       QString( "\n%1\n" ).arg( our_saxs_options->saxs_sans ? "Sans" : "Saxs" );
    if ( our_saxs_options->saxs_sans )
    {
@@ -292,48 +292,99 @@ void US_Hydrodyn_Cluster::create()
       }
    }
    
-   out += 
+   base += 
       QString( "IqMethod        %1\n" ).arg( iqmethod );
 
+   base += 
+      QString( "FdBinSize       %1\n" ).arg( our_saxs_options->fast_bin_size );
+   base += 
+      QString( "FdModulation    %1\n" ).arg( our_saxs_options->fast_modulation );
 
-   cout << out;
-   /*   
+   base += 
+      QString( "HyPoints        %1\n" ).arg( our_saxs_options->hybrid2_q_points );
+   base += 
+      QString( "CrysolHarm      %1\n" ).arg( our_saxs_options->crysol_max_harmonics );
+   base += 
+      QString( "CrysolGrid      %1\n" ).arg( our_saxs_options->crysol_fibonacci_grid_order );
+   base += 
+      QString( "CrysolChs       %1\n" ).arg( our_saxs_options->crysol_hydration_shell_contrast );
+   base += 
+      QString( "WaterEDensity   %1\n" ).arg( our_saxs_options->water_e_density );
 
-# FdBinSize   0.5
-# FdModulation 0.23
-# HyPoints    15
-# CrysolHarm  15
-# CrysolGrid  17
-# CrysolChs   0.03
-# WaterEDensity 0.334
 
-# StartQ          0.001
-# EndQ            0.5
-# DeltaQ          0.01
+   if ( !le_target_file->text().isEmpty() )
+   {
+      base += 
+         QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( le_target_file->text() ).fileName() );
+   } else {
+      base += 
+         QString( "StartQ          %1\n" ).arg( our_saxs_options->start_q );
+      base += 
+         QString( "EndQ            %1\n" ).arg( our_saxs_options->end_q );
+      base += 
+         QString( "DeltaQ          %1\n" ).arg( our_saxs_options->delta_q );
+   }
 
-# experimentGrid can be .dat .ssaxs .int .csv
-
-ExperimentGrid  lyzexp.dat
-
-PDBAllModels  # set if all models in NMR style file need computation
-InputFile       1HEL.pdb
-
-# output can be csv, dat and/or ssaxs
-# multiple output formats ok
-# extension will be automatically add
-
-Output          csv
-OutputFile      mystructureiq
-
-Process
-IqMethod        h3
-Process
-
-TarOutput       results.tar
-
-Remark is also a comment
-   */
+   if ( batch_window->cb_mm_all->isChecked() )
+   {
+      base += "PDBAllModels\n";
+   }
       
+   base += QString( "Output          %1\n" )
+      .arg( batch_window->cb_csv_saxs->isChecked() ? "csv" : "ssaxs" );
+
+   base += QString( "OutputFile      %1\n" ).arg( le_output_name->text() );
+
+   cout << base;
+   
+
+   // now loop through selected, jumping every le_jobs_per->text()->toUInt()
+   // for a new extension
+   if ( !le_jobs_per->text().toUInt() )
+   {
+      le_jobs_per->setText( "1" );
+   }
+   
+   QString      out = base;
+   unsigned int write_count = 0;
+   bool         use_extension =  !( le_jobs_per->text().toUInt() == selected_files.size() );
+   unsigned int extension_count = selected_files.size() / le_jobs_per->text().toUInt();
+   unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
+
+   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   {
+      out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+      out += "Process\n";
+      if ( !( ( i + 1 ) % le_jobs_per->text().toUInt() ) )
+      {
+         write_count++;
+         QString ext = "";
+         if ( use_extension )
+         {
+            ext = QString("%1").arg( write_count );
+            while ( ext.length() < extension_count_length )
+            {
+               ext = "0" + ext;
+            }
+         }
+         QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("-%1").arg( ext ) : "" );
+         if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
+         {
+            use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
+         }
+         cout << use_file << endl;
+         QFile f( use_file );
+         if ( f.open( IO_WriteOnly ) )
+         {
+            QTextStream ts( &f );
+            ts << out;
+            ts << QString( "TarOutput       %1.tar\n" ).arg( le_output_name->text() + 
+                                                             ( use_extension ? QString("-%1").arg( ext ) : "" ) );
+            f.close();
+         }
+         out = base;
+      }
+   }
 }
 
 void US_Hydrodyn_Cluster::create_pkg()
