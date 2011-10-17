@@ -2522,6 +2522,8 @@ void saxs_Iq_thr_t::run()
 
 void US_Hydrodyn_Saxs::show_plot_saxs()
 {
+   external_running = false;
+
    if ( our_saxs_options->iqq_ask_target_grid &&
         plotted_q.size() )
    {
@@ -3977,13 +3979,26 @@ void US_Hydrodyn_Saxs::reset_search_csv()
 
    vector < QString > tmp_data;
    
+   tmp_data.push_back("Buffer electron density");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.1");
+   tmp_data.push_back("0.9");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
    tmp_data.push_back("Scaling excluded volume");
    tmp_data.push_back("N");
    tmp_data.push_back(".95");
    tmp_data.push_back("1.05");
    tmp_data.push_back("11");
    tmp_data.push_back("");
-   tmp_data.push_back(".95");
+   tmp_data.push_back("");
    tmp_data.push_back("");
 
    search_csv.prepended_names.push_back(tmp_data[0]);
@@ -3996,7 +4011,7 @@ void US_Hydrodyn_Saxs::reset_search_csv()
    tmp_data.push_back("30");
    tmp_data.push_back("11");
    tmp_data.push_back("");
-   tmp_data.push_back("15");
+   tmp_data.push_back("");
    tmp_data.push_back("");
 
    search_csv.prepended_names.push_back(tmp_data[0]);

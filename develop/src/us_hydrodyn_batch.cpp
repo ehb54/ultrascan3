@@ -3028,6 +3028,17 @@ QString US_Hydrodyn_Batch::iqq_suffix()
             {
                qs += "h2";
             }
+            if ( our_saxs_options->saxs_iq_native_hybrid3 )
+            {
+               qs += "h3";
+            }
+            if ( ( our_saxs_options->saxs_iq_native_hybrid ||
+                   our_saxs_options->saxs_iq_native_hybrid2 ||
+                   our_saxs_options->saxs_iq_native_hybrid3 ) && 
+                 our_saxs_options->saxs_iq_hybrid_adaptive )
+            {
+               qs += "a";
+            }
             if ( our_saxs_options->scale_excl_vol != 1e0 )
             {
                qs += QString("_evs%1")

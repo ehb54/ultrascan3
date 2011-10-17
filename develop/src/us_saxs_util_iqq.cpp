@@ -1,7 +1,17 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_revision.h"
 
 bool US_Saxs_Util::read_control( QString controlfile )
 {
+   output_files          .clear();
+   saxs_inputfile_for_csv.clear();
+   saxs_model_for_csv    .clear();
+   saxs_method_for_csv   .clear();
+   saxs_q_for_csv        .clear();
+   saxs_I_for_csv        .clear();
+   write_output_count     = 0;
+   
+
    QFile f( controlfile );
    errormsg = "";
    if ( !f.exists() )
@@ -81,6 +91,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                        "output|"
                        "outputfile|"
                        "process|"
+                       "taroutput|"
                        "remark)$"
                        );
 
@@ -116,6 +127,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "experimentgrid|"
                       "inputfile|"
                       "output|"
+                      "taroutput|"
                       "outputfile)$"
                       );
 
@@ -132,6 +144,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
                                    // "crysol|"
                                    "fd)$"
                                    );
+
+   QRegExp rx_flush  ( 
+                      "^("
+                      "experimentgrid|"
+                      "startq|"
+                      "endq|"
+                      "deltaq)$"
+                      );
 
    unsigned int line = 0;
 
@@ -184,6 +204,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
                .arg( controlfile )
                .arg( line )
                .arg( qsl[ 0 ] );
+            return false;
+         }
+      }         
+
+      if ( rx_flush.search( option ) != -1 )
+      {
+         if ( !flush_output() )
+         {
             return false;
          }
       }         
@@ -265,6 +293,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }            
 
+
+
       if ( option == "inputfile" )
       {
          // read pdb, needs residue file
@@ -272,7 +302,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
          if ( ext != "pdb" )
          {
-            errormsg = QString( "Error %1 line %2 : only PDB files currently supported" )
+            errormsg = QString( "Error %1 line %2 : only PDB files currently supported <%3>" )
                .arg( controlfile )
                .arg( line )
                .arg( qsl[ 0 ] );
@@ -289,6 +319,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }
 
+      if ( option == "taroutput" )
+      {
+         flush_output();
+         if ( !output_files.size() )
+         {
+            errormsg = QString( "Error %1 line %2 : no output files available to collect in tar file %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( qsl[ 0 ] );
+            return false;
+         }
+         if ( !create_tar_output( qsl[ 0 ] ) )
+         {
+            return false;
+         }
+      }
+
       if ( option == "process" )
       {
          if ( !validate_control_parameters() )
@@ -299,10 +346,20 @@ bool US_Saxs_Util::read_control( QString controlfile )
                .arg( errormsg );
             return false;
          }
+         setup_saxs_options();
+         if ( !run_iqq() )
+         {
+            return false;
+         } 
+         if ( !noticemsg.isEmpty() )
+         {
+            cout << noticemsg;
+         }
       }
-   }      
-      
+   }
+    
    f.close();
+   flush_output();
    return true;
 }
 
@@ -565,5 +622,142 @@ bool US_Saxs_Util::validate_control_parameters()
       validate_control_parameters_set_one( checks, vals );
    }
 
+   return true;
+}
+
+bool US_Saxs_Util::create_tar_output( QString filename )
+{
+   US_Tar ust;
+   int result;
+   QStringList list;
+   result = ust.create( filename, output_files, &list );
+
+   if ( result != TAR_OK )
+   {
+      errormsg = QString("Error: Problem creating tar archive %1").arg( filename );
+      return false;
+   }
+
+   return true;
+}
+
+QString US_Saxs_Util::vector_double_to_csv( vector < double > &vd )
+{
+   QString result;
+   for ( unsigned int i = 0; i < vd.size(); i++ )
+   {
+      result += QString("%1,").arg(vd[i]);
+   }
+   return result;
+}
+
+bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vector < double > &I )
+{
+   cout << "write output\n";
+   if ( control_parameters.count( "output" ) &&
+        control_parameters[ "output" ] == "csv" )
+   {
+      cout << "write output for csv\n";
+      saxs_inputfile_for_csv.push_back( control_parameters[ "inputfile" ] );
+      saxs_model_for_csv.push_back( model );
+      saxs_method_for_csv.push_back( control_parameters[ "iqmethod" ]  );
+      saxs_q_for_csv = q;
+      saxs_I_for_csv.push_back( I );
+   }
+
+   if ( control_parameters.count( "output" ) &&
+        ( control_parameters[ "output" ] == "ssaxs" ||
+          control_parameters[ "output" ] == "dat" ) )
+   {
+      cout << "write output for ssaxs or dat\n";
+      QString fsaxs_name = control_parameters[ "outputfile" ] + iqq_suffix() + "." +  control_parameters[ "output" ];
+
+      FILE *fsaxs = fopen(fsaxs_name, "w");
+      if ( fsaxs ) 
+      {
+         output_files << fsaxs_name;
+         noticemsg += "SAXS curve file: " + fsaxs_name + " created.\n";
+         QString last_saxs_header =
+            QString("")
+            .sprintf(
+                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
+                     , control_parameters[ "inputfile" ].ascii()
+                     , US_Version.ascii()
+                     , REVISION
+                     , our_saxs_options.start_q
+                     , our_saxs_options.end_q
+                     , our_saxs_options.delta_q
+                     );
+         fprintf(fsaxs, "%s",
+                 last_saxs_header.ascii() );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
+         }
+         fclose(fsaxs);
+      } 
+      else
+      {
+         errormsg = "Error: Could not create SAXS curve file: " + fsaxs_name + "\n";
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_Saxs_Util::flush_output()
+{
+   cout << "flush output\n";
+   if ( saxs_inputfile_for_csv.size() &&
+        control_parameters.count( "output" ) &&
+        control_parameters[ "output" ] == "csv" )
+   {
+      QString fname = 
+         control_parameters[ "outputfile" ] + 
+         ( write_output_count ? QString("_%1").arg( write_output_count ) : "" ) +
+         "_iqq" + ".csv";
+
+      write_output_count++;
+
+      FILE *of = fopen(fname, "wb");
+      if ( of )
+      {
+         output_files << fname;
+         QString header = QString("")
+            .sprintf(
+                     "Simulated SAXS data generated by US_SOMO %s %s\n"
+                     , US_Version.ascii()
+                     , REVISION
+                     );
+
+         fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
+                 vector_double_to_csv( saxs_q_for_csv ).ascii(),
+                 header.ascii());
+
+         for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
+         {
+            QString name = QString("%1 Model %2 %3")
+               .arg( saxs_inputfile_for_csv[ i ] )
+               .arg( saxs_model_for_csv[ i ] )
+               .arg( saxs_method_for_csv[ i ] );
+
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    name.ascii(),
+                    "I(q)",
+                    vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+         }            
+         fclose( of );
+         noticemsg += QString("file %1 written\n").arg( fname );
+      } else {
+         errormsg = QString("Error: could not open %1 for writing").arg( fname );
+         return false;
+      }
+      
+      saxs_inputfile_for_csv.clear();
+      saxs_model_for_csv    .clear();
+      saxs_method_for_csv   .clear();
+      saxs_q_for_csv        .clear();
+      saxs_I_for_csv        .clear();
+   }
    return true;
 }

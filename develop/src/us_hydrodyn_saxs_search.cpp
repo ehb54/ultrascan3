@@ -556,6 +556,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
    // assume validated, updates set, this runs one with "current" values
 
    // save current values:
+   float     save_water_e_density            = saxs_window->our_saxs_options->water_e_density;
    float     save_swh_excl_vol               = saxs_window->our_saxs_options->swh_excl_vol;
    float     save_scale_excl_vol             = saxs_window->our_saxs_options->scale_excl_vol;
    bool      save_iqq_ask_target_grid        = saxs_window->our_saxs_options->iqq_ask_target_grid;
@@ -588,6 +589,10 @@ void US_Hydrodyn_Saxs_Search::run_one()
          }
          msg += QString("%1 %2").arg(t_csv->text( i, 0 )).arg(t_csv->text(i, 6));
          any = true;
+         if ( t_csv->text( i, 0 ).contains("Buffer electron density") )
+         {
+            saxs_window->our_saxs_options->water_e_density = t_csv->text(i, 6).toFloat();
+         }
          if ( t_csv->text( i, 0 ).contains("Scaling excluded volume") )
          {
             saxs_window->our_saxs_options->scale_excl_vol = t_csv->text(i, 6).toFloat();
@@ -605,9 +610,37 @@ void US_Hydrodyn_Saxs_Search::run_one()
    
    editor_msg("black", "Running anaysis " + msg + "\n");
    
+   // change to saxs/sans?
+
    saxs_window->show_plot_saxs();
 
    raise();
+
+   if (
+       ( !saxs_window->our_saxs_options->saxs_sans &&
+         ( saxs_window->our_saxs_options->saxs_iq_foxs ||
+           saxs_window->our_saxs_options->saxs_iq_crysol ) ) ||
+       ( saxs_window->our_saxs_options->saxs_sans &&
+         saxs_window->our_saxs_options->saxs_iq_crysol )
+       )
+   {
+      // block until finished, there must be a better way of doing this
+#if !defined(WIN32)
+      timespec ns;
+      timespec ns_ret;
+      ns.tv_sec = 0;
+      ns.tv_nsec = 25000000l;
+#endif
+      while ( saxs_window->external_running )
+      {
+         qApp->processEvents();
+#if defined(WIN32)
+         _sleep( 1 );
+#else
+         nanosleep(&ns, &ns_ret);
+#endif
+      }
+   }
 
    if ( running )
    {
@@ -638,6 +671,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
    }
       
    // restore values
+   saxs_window->our_saxs_options->water_e_density            = save_water_e_density;
    saxs_window->our_saxs_options->swh_excl_vol               = save_swh_excl_vol;
    saxs_window->our_saxs_options->scale_excl_vol             = save_scale_excl_vol;
    saxs_window->our_saxs_options->iqq_ask_target_grid        = save_iqq_ask_target_grid;
@@ -645,7 +679,6 @@ void US_Hydrodyn_Saxs_Search::run_one()
    saxs_window->create_native_saxs                           = save_create_native_saxs;
 
    saxs_window->cb_create_native_saxs                        ->setChecked( save_create_native_saxs );
-
 }
 
 void US_Hydrodyn_Saxs_Search::stop()
@@ -809,7 +842,14 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
    }
 
    if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite &&
-        cb_individual_files->isChecked() )
+        ( cb_individual_files->isChecked() ||
+          ( !saxs_window->our_saxs_options->saxs_sans &&
+            ( saxs_window->our_saxs_options->saxs_iq_foxs ||
+              saxs_window->our_saxs_options->saxs_iq_crysol ) ) ||
+          ( saxs_window->our_saxs_options->saxs_sans &&
+            saxs_window->our_saxs_options->saxs_iq_crysol )
+          )
+        )
    {
       switch ( QMessageBox::warning(this, 
                                     tr("UltraScan Warning"),
@@ -1071,6 +1111,36 @@ bool US_Hydrodyn_Saxs_Search::not_active_warning()
       if ( !((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() &&
            !t_csv->text( i, 6 ).isEmpty() )
       {
+         if ( t_csv->text( i, 0 ).contains("Buffer e density") &&
+              saxs_window->our_saxs_options->water_e_density != t_csv->text(i, 6).toFloat() )
+         {
+            switch ( QMessageBox::warning(this, 
+                                          tr("US-SOMO: I(q) search"),
+                                          QString(tr("Please note:\n\n"
+                                                     "\"Buffer e density\" is inactive, "
+                                                     "yet is has a current value of %1, "
+                                                     "whereas the SAXS options value is set to %1\n"
+                                                     "What would you like to do?\n"))
+                                          .arg(t_csv->text(i, 6).toFloat())
+                                          .arg(saxs_window->our_saxs_options->water_e_density)
+                                          ,
+                                          tr("&Stop"), 
+                                          tr("&Set the SAXS options value to the current value"),
+                                          tr("C&ontinue anyway"),
+                                          0, // Stop == button 0
+                                          0 // Escape == button 0
+                                    ) )
+            {
+            case 0 : // stop
+               return false;
+               break;
+            case 1 :
+               saxs_window->our_saxs_options->water_e_density = t_csv->text(i, 6).toFloat();
+               break;
+            case 2 : // continue
+               break;
+            }
+         }
          if ( t_csv->text( i, 0 ).contains("Scaling excluded volume") &&
               saxs_window->our_saxs_options->scale_excl_vol != t_csv->text(i, 6).toFloat() )
          {

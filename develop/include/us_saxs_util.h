@@ -6,6 +6,7 @@
 #include "us_util.h"
 #include "us_math.h"
 #include "us_tar.h"
+#include "us_gzip.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include <math.h>
 #include <time.h>
@@ -736,6 +737,14 @@ class US_EXTERN US_Saxs_Util
       bool assign_atom( const QString &str1, PDB_chain *temp_chain, QString *last_resSeq );
       void clear_temp_chain( PDB_chain *temp_chain );
 
+      saxs_options our_saxs_options;
+      bool run_iqq();
+      bool calc_saxs_iq_native_fast();
+      bool calc_saxs_iq_native_debye();
+      bool calc_saxs_iq_native_hybrid();
+      QString iqq_suffix();
+      void setup_saxs_options();
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -757,9 +766,16 @@ class US_EXTERN US_Saxs_Util
       vector < vector < PDB_atom > >      bead_models;
       vector < vector < PDB_atom > >      bead_models_as_loaded;
 
+      vector < QString >                  saxs_inputfile_for_csv;
+      vector < unsigned int >             saxs_model_for_csv;
+      vector < QString >                  saxs_method_for_csv;
+      vector < double >                   saxs_q_for_csv;
+      vector < vector < double > >        saxs_I_for_csv;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      QStringList  output_files;
       QString      last_pdb_filename;
       QStringList  last_pdb_title;
       QStringList  last_pdb_header;
@@ -769,6 +785,11 @@ class US_EXTERN US_Saxs_Util
       bool validate_control_parameters();
       void validate_control_parameters_set_one( QStringList &checks, 
                                                 QStringList &vals );
+      bool create_tar_output( QString filename );
+      QString vector_double_to_csv( vector < double > &vd );
+      bool write_output( unsigned int model, vector < double > &q, vector < double > &I );
+      bool flush_output();
+      unsigned int write_output_count;
 };
 
 #endif

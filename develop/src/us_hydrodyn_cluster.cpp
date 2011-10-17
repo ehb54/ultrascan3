@@ -11,9 +11,20 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
                                          ) : QDialog(p, name)
 {
    this->us_hydrodyn = us_hydrodyn;
+   this->batch_window = (US_Hydrodyn_Batch *)p;
+   this->our_saxs_options = &((US_Hydrodyn *)us_hydrodyn)->saxs_options;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: Cluster"));
+
+   selected_files.clear();
+   for ( int i = 0; i < batch_window->lb_files->numRows(); i++ )
+   {
+      if ( batch_window->lb_files->isSelected(i) )
+      {
+         selected_files << batch_window->get_file_name( i );
+      }
+   }
 
    setupGUI();
 
@@ -21,6 +32,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
+
 }
 
 US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
@@ -52,10 +64,39 @@ void US_Hydrodyn_Cluster::setupGUI()
 
    le_target_file = new QLineEdit(this, "csv_filename Line Edit");
    le_target_file->setText("");
+   le_target_file->setReadOnly( true );
    le_target_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_file->setMinimumWidth(150);
    le_target_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   lbl_jobs_per = new QLabel( QString("Jobs per job file maximum %1:").arg( selected_files.size() ), this);
+   lbl_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_jobs_per->setMinimumHeight(minHeight1);
+   lbl_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_jobs_per->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   QValidator *qv = new QIntValidator( 1, selected_files.size(), this );
+   le_jobs_per = new QLineEdit(this, "csv_filename Line Edit");
+   le_jobs_per->setText("1");
+   le_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_jobs_per->setMinimumWidth(150);
+   le_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_jobs_per->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_jobs_per->setValidator( qv );
+
+   lbl_output_name = new QLabel( QString("Jobs per job file maximum %1:").arg( selected_files.size() ), this);
+   lbl_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_output_name->setMinimumHeight(minHeight1);
+   lbl_output_name->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   le_output_name = new QLineEdit(this, "csv_filename Line Edit");
+   le_output_name->setText("cluster_output");
+   le_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_output_name->setMinimumWidth(150);
+   le_output_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    pb_create = new QPushButton(tr("Create cluster job files"), this);
    pb_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -92,12 +133,26 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_target->addWidget ( le_target_file );
    hbl_target->addSpacing( 4 );
 
+   QHBoxLayout *hbl_jobs_per = new QHBoxLayout( 0 );
+   hbl_jobs_per->addSpacing( 4 );
+   hbl_jobs_per->addWidget ( lbl_jobs_per );
+   hbl_jobs_per->addSpacing( 4 );
+   hbl_jobs_per->addWidget ( le_jobs_per );
+   hbl_jobs_per->addSpacing( 4 );
+
+   QHBoxLayout *hbl_output_name = new QHBoxLayout( 0 );
+   hbl_output_name->addSpacing( 4 );
+   hbl_output_name->addWidget ( lbl_output_name );
+   hbl_output_name->addSpacing( 4 );
+   hbl_output_name->addWidget ( le_output_name );
+   hbl_output_name->addSpacing( 4 );
+
    QHBoxLayout *hbl_create = new QHBoxLayout( 0 );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create );
-   hbl_create->addSpacing( 4);
+   hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create_pkg );
-   hbl_create->addSpacing( 4);
+   hbl_create->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addSpacing( 4 );
@@ -111,6 +166,10 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
    background->addLayout ( hbl_target );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_jobs_per );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_output_name );
    background->addSpacing( 4 );
    background->addLayout ( hbl_create );
    background->addSpacing( 4 );
@@ -157,8 +216,124 @@ void US_Hydrodyn_Cluster::set_target()
 
 void US_Hydrodyn_Cluster::create()
 {
+   QString unimplemented;
+
    // create the output file
    QString filename = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+
+   QString out = 
+      "# us_saxs_cmds_t iq controlfile\n"
+      "# blank lines ok, format token <params>\n"
+      "\n";
+
+   out += 
+      QString( "ResidueFile     %1\n" ).arg( QFileInfo( ((US_Hydrodyn *)us_hydrodyn)->lbl_table->text() ).fileName() );
+   out += 
+      QString( "AtomFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_atom_filename ).fileName() );
+   out += 
+      QString( "HybridFile      %1\n" ).arg( QFileInfo( our_saxs_options->default_hybrid_filename ).fileName() );
+   out += 
+      QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
+
+   out += 
+      QString( "\n%1\n" ).arg( our_saxs_options->saxs_sans ? "Sans" : "Saxs" );
+   if ( our_saxs_options->saxs_sans )
+   {
+      unimplemented += "SANS methods currently unimplemented\n";
+   }
+
+   QString iqmethod = "";
+   if ( our_saxs_options->saxs_iq_native_debye || our_saxs_options->sans_iq_native_debye )
+   {
+      iqmethod = "db";
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid || our_saxs_options->sans_iq_native_hybrid )
+   {
+      iqmethod = "hy";
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid2 || our_saxs_options->sans_iq_native_hybrid2 )
+   {
+      iqmethod = "h2";
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid3 || our_saxs_options->sans_iq_native_hybrid3 )
+   {
+      iqmethod = "h3";
+   }
+   if ( our_saxs_options->saxs_iq_hybrid_adaptive &&
+        ( our_saxs_options->saxs_iq_native_hybrid || our_saxs_options->sans_iq_native_hybrid ||
+          our_saxs_options->saxs_iq_native_hybrid2 || our_saxs_options->sans_iq_native_hybrid2 ||
+          our_saxs_options->saxs_iq_native_hybrid3 || our_saxs_options->sans_iq_native_hybrid3 ) )
+   {
+      iqmethod += "a";
+   }
+
+   if ( our_saxs_options->saxs_iq_native_fast || our_saxs_options->sans_iq_native_fast )
+   {
+      iqmethod = "fd";
+   }
+
+   if ( our_saxs_options->saxs_sans )
+   {
+      if ( our_saxs_options->sans_iq_cryson )
+      {
+         unimplemented += "cryson method currently unimplemented\n";
+         iqmethod = "cryson";
+      }
+   } else {
+      if ( our_saxs_options->saxs_iq_foxs )
+      {
+         unimplemented += "foxs method currently unimplemented\n";
+         iqmethod = "foxs";
+      }
+      if ( our_saxs_options->saxs_iq_crysol )
+      {
+         unimplemented += "crysol method currently unimplemented\n";
+         iqmethod = "crysol";
+      }
+   }
+   
+   out += 
+      QString( "IqMethod        %1\n" ).arg( iqmethod );
+
+
+   cout << out;
+   /*   
+
+# FdBinSize   0.5
+# FdModulation 0.23
+# HyPoints    15
+# CrysolHarm  15
+# CrysolGrid  17
+# CrysolChs   0.03
+# WaterEDensity 0.334
+
+# StartQ          0.001
+# EndQ            0.5
+# DeltaQ          0.01
+
+# experimentGrid can be .dat .ssaxs .int .csv
+
+ExperimentGrid  lyzexp.dat
+
+PDBAllModels  # set if all models in NMR style file need computation
+InputFile       1HEL.pdb
+
+# output can be csv, dat and/or ssaxs
+# multiple output formats ok
+# extension will be automatically add
+
+Output          csv
+OutputFile      mystructureiq
+
+Process
+IqMethod        h3
+Process
+
+TarOutput       results.tar
+
+Remark is also a comment
+   */
+      
 }
 
 void US_Hydrodyn_Cluster::create_pkg()

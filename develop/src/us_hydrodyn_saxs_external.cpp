@@ -2,11 +2,7 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 
-#ifndef WIN32
-#   define SLASH "/"
-#else
-#   define SLASH "\\"
-#endif
+#define SLASH QDir::separator()
 
 void US_Hydrodyn_Saxs::editor_msg( QString color, QString msg )
 {
@@ -25,7 +21,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
 #if defined(BIN64)
       "bin64"
 #else
-      "/bin/"
+      "bin"
 #endif
       + SLASH
       + "foxs" 
@@ -84,6 +80,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
 
    editor->append("\n\nStarting FoXS\n");
    foxs->start();
+   external_running = true;
 
    return 0;
 }
@@ -172,6 +169,7 @@ void US_Hydrodyn_Saxs::foxs_processExited()
    // now load & plot this curve
    load_saxs( new_created_dat );
    pb_plot_saxs_sans->setEnabled(true);
+   external_running = false;
 }
    
 void US_Hydrodyn_Saxs::foxs_launchFinished()
@@ -325,6 +323,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
    editor->append("\n\nStarting Crysol\n");
    crysol->start();
+   external_running = true;
 
    return 0;
 }
@@ -406,8 +405,9 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // now load & plot this curve
    load_saxs( new_created_dat );
 
-   pb_plot_saxs_sans->setEnabled(true);
+   pb_plot_saxs_sans->setEnabled( true );
    editor->append("Crysol finished.\n");
+   external_running = false;
 }
    
 void US_Hydrodyn_Saxs::crysol_launchFinished()
@@ -452,6 +452,7 @@ void US_Hydrodyn_Saxs::cryson_processExited()
    disconnect( cryson, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( cryson, SIGNAL(processExited()), 0, 0);
    editor->append("Cryson finished.\n");
+   external_running = false;
 }
    
 void US_Hydrodyn_Saxs::cryson_launchFinished()

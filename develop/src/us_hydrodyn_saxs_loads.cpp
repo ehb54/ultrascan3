@@ -789,25 +789,9 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // check for scaling target
 
    QString scaling_target = "";
-   if ( qsl_sel_names.size() &&
-        qsl_plotted_iq_names.size() )
+   if ( qsl_sel_names.size() )
    {
-      bool ok;
-      scaling_target = QInputDialog::getItem(
-                                             tr("Scale I(q) Curve"),
-                                             tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                "or Cancel if you do not wish to scale")
-                                             , 
-                                             qsl_plotted_iq_names, 
-                                             0, 
-                                             FALSE, 
-                                             &ok,
-                                             this );
-      if ( ok ) {
-         // user selected an item and pressed OK
-      } else {
-         scaling_target = "";
-      }
+      set_scaling_target( scaling_target );
    }         
    
    // setup for average & stdev
@@ -1020,7 +1004,6 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       if ( !scaling_target.isEmpty() && 
            plotted_iq_names_to_pos.count(scaling_target) )
       {
-         puts("a 0001");
          rescale_iqq_curve( scaling_target, this_q, I );
       }
       
@@ -1319,25 +1302,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          cout << "number of fields: " << number_of_fields << endl;
       }
 
-      if ( qsl_plotted_iq_names.size() )
-      {
-         bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
-                                                   "or Cancel of you do not wish to scale")
-                                                , 
-                                                qsl_plotted_iq_names, 
-                                                0, 
-                                                FALSE, 
-                                                &ok,
-                                                this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-         } else {
-            scaling_target = "";
-         }
-      }         
+      set_scaling_target( scaling_target );
 
       if ( ext == "int" ) 
       {
@@ -1612,6 +1577,21 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
             plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
+         }
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+            QString("")
+            .sprintf(
+                     "Saxs curves from %s"
+                     , filename.ascii()
+                     );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
          }
       }
       if ( q2.size() )

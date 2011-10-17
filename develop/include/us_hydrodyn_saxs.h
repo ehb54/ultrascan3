@@ -48,21 +48,6 @@
 
 using namespace std;
 
-struct saxs_atom
-{
-   QString saxs_name;
-   QString hybrid_name;
-   int hydrogens;    
-   float pos[3];
-   float excl_vol;
-   float b;           // scattering factor b for p(r) calcs
-
-   float radius;      // radius of atomic group
-   // for bead models:
-   float srv;         // square root of relative volume
-   saxs saxs_data;    
-};
-
 class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 {
    Q_OBJECT
@@ -500,6 +485,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_scaling_target( QString &scaling_target );
 
       void saxs_search_update_enables();
+
+      bool external_running;
 
    private slots:
 

@@ -1006,7 +1006,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
-                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                            , model_filename.ascii()
                            , US_Version.ascii()
                            , REVISION
@@ -1048,7 +1048,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
-                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                      , model_filename.ascii()
                      , US_Version.ascii()
                      , REVISION
@@ -1832,7 +1832,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
-                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                            , model_filename.ascii()
                            , US_Version.ascii()
                            , REVISION
@@ -1876,7 +1876,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
-                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                      , model_filename.ascii()
                      , US_Version.ascii()
                      , REVISION
@@ -2738,7 +2738,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
-                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                            , model_filename.ascii()
                            , US_Version.ascii()
                            , REVISION
@@ -2780,7 +2780,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
-                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
                      , model_filename.ascii()
                      , US_Version.ascii()
                      , REVISION

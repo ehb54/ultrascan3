@@ -103,7 +103,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
             }
             else
             {
-               noticemsg = "Notice: There was an error reading the selected Residue File. Atom"
+               noticemsg += "Notice: There was an error reading the selected Residue File. Atom"
                   + new_atom.name + " cannot be read and will be deleted from List.\n";
             }
          }
