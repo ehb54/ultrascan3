@@ -70,7 +70,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_target_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lbl_jobs_per = new QLabel( QString("Jobs per job file maximum %1:").arg( selected_files.size() ), this);
+   lbl_jobs_per = new QLabel( QString(tr( "Jobs per job file maximum %1:" )).arg( selected_files.size() ), this);
    lbl_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_jobs_per->setMinimumHeight(minHeight1);
    lbl_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -85,7 +85,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_jobs_per->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_jobs_per->setValidator( qv );
 
-   lbl_output_name = new QLabel( QString("Jobs per job file maximum %1:").arg( selected_files.size() ), this);
+   lbl_output_name = new QLabel(tr("Output base name (job identifier)"), this);
    lbl_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_output_name->setMinimumHeight(minHeight1);
    lbl_output_name->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -110,6 +110,25 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
    
+   editor = new QTextEdit(this);
+   editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   editor->setReadOnly(true);
+
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight1);
+
+   m = new QMenuBar(frame, "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   QPopupMenu * file = new QPopupMenu(editor);
+   m->insertItem( tr("&File"), file );
+   file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
+   file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   editor->setWordWrap (QTextEdit::WidgetWidth);
+   editor->setMinimumHeight(300);
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -161,6 +180,10 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   vbl_editor_group->addWidget(frame);
+   vbl_editor_group->addWidget(editor);
+
    QVBoxLayout *background = new QVBoxLayout( this );
    background->addSpacing( 4);
    background->addWidget ( lbl_title );
@@ -172,6 +195,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addLayout ( hbl_output_name );
    background->addSpacing( 4 );
    background->addLayout ( hbl_create );
+   background->addSpacing( 4 );
+   background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4);
@@ -330,13 +355,18 @@ void US_Hydrodyn_Cluster::create()
       base += "PDBAllModels\n";
    }
       
+   if ( !unimplemented.isEmpty() )
+   {
+      editor_msg( "red", QString( "Can not create job files:\n%1" ).arg( unimplemented ) );
+      return;
+   }
+
    base += QString( "Output          %1\n" )
       .arg( batch_window->cb_csv_saxs->isChecked() ? "csv" : "ssaxs" );
 
    base += QString( "OutputFile      %1\n" ).arg( le_output_name->text() );
 
-   cout << base;
-   
+   // cout << base;
 
    // now loop through selected, jumping every le_jobs_per->text()->toUInt()
    // for a new extension
@@ -381,6 +411,7 @@ void US_Hydrodyn_Cluster::create()
             ts << QString( "TarOutput       %1.tar\n" ).arg( le_output_name->text() + 
                                                              ( use_extension ? QString("-%1").arg( ext ) : "" ) );
             f.close();
+            editor_msg( "blue", QString("Created: %1").arg( use_file ) );
          }
          out = base;
       }
@@ -392,3 +423,51 @@ void US_Hydrodyn_Cluster::create_pkg()
    // create the output file
    QString filename = QFileDialog::getSaveFileName(QString::null, QString::null,this );
 }
+
+void US_Hydrodyn_Cluster::clear_display()
+{
+   editor->clear();
+   editor->append("\n\n");
+}
+
+void US_Hydrodyn_Cluster::update_font()
+{
+   bool ok;
+   QFont newFont;
+   newFont = QFontDialog::getFont( &ok, ft, this );
+   if ( ok )
+   {
+      ft = newFont;
+   }
+   editor->setFont(ft);
+}
+
+void US_Hydrodyn_Cluster::save()
+{
+   QString fn;
+   fn = QFileDialog::getSaveFileName(QString::null, QString::null, this );
+   if(!fn.isEmpty() )
+   {
+      QString text = editor->text();
+      QFile f( fn );
+      if ( !f.open( IO_WriteOnly | IO_Translate) )
+      {
+         return;
+      }
+      QTextStream t( &f );
+      t << text;
+      f.close();
+      editor->setModified( false );
+      setCaption( fn );
+   }
+}
+
+void US_Hydrodyn_Cluster::editor_msg( QString color, QString msg )
+{
+   QColor save_color = editor->color();
+   editor->setColor(color);
+   editor->append(msg);
+   editor->setColor(save_color);
+   editor->scrollToBottom();
+}
+

@@ -55,6 +55,10 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QPushButton   *pb_create;
       QPushButton   *pb_create_pkg;
 
+      QFont         ft;
+      QTextEdit     *editor;
+      QMenuBar      *m;
+
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
       
@@ -64,6 +68,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       saxs_options  *our_saxs_options;
 
+      void          editor_msg( QString color, QString msg );
+
    private slots:
 
       void setupGUI();
@@ -71,6 +77,10 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void set_target();
       void create();
       void create_pkg();
+
+      void clear_display();
+      void update_font();
+      void save();
 
       void cancel();
       void help();
