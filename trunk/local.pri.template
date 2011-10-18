@@ -26,6 +26,7 @@ unix {
   # libmysqlclient and libqca, define the following 
 
   # DEFINES += NO_DB
+  MPIPATH  = /share/apps64/openmpi
 }
 
 win32 {
@@ -34,28 +35,40 @@ win32 {
   # due to us3 directory structure
 
   QWT3D       = ../qwtplot3d-qt4
-  OPENSSL     = C:/openssl
-  MYSQLPATH   = C:/mysql-5.5
-  QTMYSQLPATH = C:/Qt/4.7.3/src/plugins/sqldrivers/mysql/release
-  QTPATH      = c:/Qt/4.7.3
-  QWTPATH     = C:/qwt-5.2.2
-  SINGLEDIR   = C:/Qt/4.7.3/addons/qtsingleapplication-2.5_1-commercial/src/
-  MINGWDIR    = C:/mingw
+  OPENSSL     = C:/OpenSSL-Win32
+  MYSQLPATH   = C:/mysql
+  QWTPATH     = C:/qwt-5.2.1
+  SINGLEDIR   = C:/qt/4.7.1/addons/qtsingleapplication-2.5_1-commercial/src/
   
   contains( DEBUGORRELEASE, debug ) {
-    QWTLIB      = $$QWTPATH/lib/libqwtd5.a
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.a
+    QWTLIB      = $$QWTPATH/lib/qwtd5.lib
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.lib
   } else {
-    QWTLIB      = $$QWTPATH/lib/libqwt5.a
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.a
+    QWTLIB      = $$QWTPATH/lib/qwt5.lib
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.lib
   }
+
   #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
   DEFINES    += __LCC__
 }
 
 macx {
-  QWTPATH     = /usr/local/qwt-5.2.1
-  QWTLIB      = -L$$QWTPATH/lib -lqwt -L../lib -lqwtplot3d
-  SINGLEDIR   = /opt/local/share/qt/qtsingleapplication-2.6_1-opensource/src
-  MYSQLDIR    = /usr/local/lib/mysql
+  BUILDBASE    = /Users/garygorbet/us3
+  QWTPATH      = $$BUILDBASE/ultrascan3/qwt-5.2
+  QWTLIB       = -L$$QWTPATH/lib -lqwt
+  SINGLEDIR    = $$BUILDBASE/qtsingleapplication-2.6_1-opensource/src
+  CONFIG      += x86_64 x86 app_bundle
+  DEFINES     += MAC OSX
+  INCLUDEPATH += /System/Libraries/Frameworks/OpenGL.framework/Headers
+  INCLUDEPATH += ../qwtplot3d-qt4/include
+  INCLUDEPATH += ../Frameworks/QtCore.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtGui.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtOpenGL.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtSvg.framework/Headers
+  INCLUDEPATH += ../Frameworks/QtXml.framework/Headers
+  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
+  LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
+  LIBS        += -framework QtOpenGL
+  MYSQLDIR     = /usr/local/mysql
+  MYSQLPATH    = $$MYSQLDIR
 }

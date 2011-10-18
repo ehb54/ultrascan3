@@ -128,7 +128,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param sw2  The sw2 value
       //! \param Stif The Stif matrix
       //! \param dt   The dt value
-      static void   IntQT1       ( QVector< double >, double, double,
+      static void   IntQT1       ( double* , double, double,
                                    double**, double );
    
       //! \brief Integration on test function
@@ -137,7 +137,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param sw2  The sw2 value
       //! \param Stif The Stif matrix
       //! \param dt   The dt value
-      static void   IntQTm       ( QVector< double >, double, double,
+      static void   IntQTm       ( double* , double, double,
                                    double**, double );
    
       //! \brief Integration on test function
@@ -146,7 +146,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param sw2  The sw2 value
       //! \param Stif The Stif matrix
       //! \param dt   The dt value
-      static void   IntQTn2      ( QVector< double >, double, double,
+      static void   IntQTn2      ( double* , double, double,
                                    double**, double );
    
       //! \brief Integration on test function
@@ -155,7 +155,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param sw2  The sw2 value
       //! \param Stif The Stif matrix
       //! \param dt   The dt value
-      static void   IntQTn1      ( QVector< double >, double, double,
+      static void   IntQTn1      ( double* , double, double,
                                    double**, double );
       //! \brief Define Lamm equation values
       //! \param npts  Order of the equation
@@ -165,7 +165,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \brief Compute the area of a triangle (v1, v2, v3)
       //! \param xv The XV vector
       //! \param yv The YV vector
-      static double AreaT        ( QVector< double >&, QVector< double >& );
+      static double AreaT        ( double*, double* );
 
       //! \brief Computer basis on standard element (TS)
       //! \param xi    The XI constant
@@ -191,7 +191,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param phi  The Phi  vector to fill
       //! \param phix The PhiX vector to fill
       //! \param phiy The PhiY vector to fill
-      static void   BasisTR      ( QVector< double >, QVector< double >,
+      static void   BasisTR      ( double*, double*,
                                    double, double, double*, double*, double* );
    
       //! \brief Computer basis on real element Q at given(xs,ts) point
@@ -202,7 +202,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param phix The PhiX vector to fill
       //! \param phiy The PhiY vector to fill
       //! \param dt   The d-t constant
-      static void   BasisQR      ( QVector< double >, double, double,
+      static void   BasisQR      ( double*, double, double,
                                    double*, double*, double*, double );
 
       //! \brief Integrand for Lamm equation

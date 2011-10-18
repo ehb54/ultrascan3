@@ -95,4 +95,8 @@ SOURCES      = us_analyte.cpp       \
    HEADERS      += us_crypto.h
    SOURCES      += us_crypto.cpp
 }
+contains( DEFINES, NO_DB ) {
+   LIBS         += -L$${MPIPATH}/lib
+   INCLUDE      += -I$${MPIPATH}/include
+}
 

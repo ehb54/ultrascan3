@@ -380,6 +380,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    
    tmp_data.scan  .clear();
    tmp_data.radius.clear();
+   tmp_data.scan  .reserve( expdata.scan  .size() );
+   tmp_data.radius.reserve( simdata.radius.size() );
    
    // Fill tmp_data.radius with radius positions from the simdata array:
 
@@ -450,6 +452,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             double a;
             double b;
             tmp_scan.conc.clear();
+            tmp_scan.conc.reserve( simdata.radius.size() );
             
             // interpolate the concentration points:
             for ( int ii = 0; ii < simdata.radius.size(); ii++ )
@@ -523,6 +526,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             double a;
             double b;
             tmp_scan.conc.clear();
+            tmp_scan.conc.reserve( simdata.radius.size() );
 
             // Interpolate the concentration points:
             for ( int ii = 0; ii < simdata.radius.size(); ii++ )
@@ -642,15 +646,10 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci,
 // i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
 // i=n;  r(i)=a(i)*xs(i-1)+b(i)*xs(i);
 
-   QVector< double > ca; ca.resize( N );
-   QVector< double > cb; cb.resize( N );
-   QVector< double > cc; cc.resize( N );
-   QVector< double > cd; cd.resize( N );
-   
-   ca.clear(); 
-   cb.clear();
-   cc.clear();
-   cd.clear();
+   QVector< double > ca; ca.reserve( N );
+   QVector< double > cb; cb.reserve( N );
+   QVector< double > cc; cc.reserve( N );
+   QVector< double > cd; cd.reserve( N );
 
    for ( int i = 0; i < N; i++ )
    {
@@ -693,7 +692,7 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci,
 // old version: perform integration on supp(test function) separately 
 // on left Q and right T
 
-void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQT1( double* vx, double D, double sw2, 
                             double** Stif, double dt )
 {
    // element to define basis functions
@@ -701,17 +700,12 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    int npts, i, k;
    double x_gauss, y_gauss, dval;
    double hh, slope, xn1, phiC, phiCx;
-   QVector< double > Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
+   double Lx[ 3 ], Ly[ 3 ];
+   double Rx[ 4 ], Ry[ 4 ];
+   double Qx[ 3 ], Qy[ 3 ];
+   double Tx[ 3 ], Ty[ 3 ];
    double *phiL, *phiLx, *phiLy, *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-   Lx.clear();
-   Ly.clear();
-   Rx.clear();
-   Ry.clear();
-   Qx.clear();
-   Qy.clear();
-   Tx.clear();
-   Ty.clear();
    phiL  = new double [3];
    phiLx = new double [3];
    phiLy = new double [3];
@@ -720,23 +714,23 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    phiRy = new double [4];
 
    // elements for define the trial function phi
-   Lx.push_back(vx[0]);    // vertices of left Triangle
-   Lx.push_back(vx[3]);
-   Lx.push_back(vx[2]);
+   Lx[ 0 ] = vx[0];    // vertices of left Triangle
+   Lx[ 1 ] = vx[3];
+   Lx[ 2 ] = vx[2];
 
-   Ly.push_back(0.0);
-   Ly.push_back(dt);
-   Ly.push_back(dt);
+   Ly[ 0 ] = 0.0;
+   Ly[ 1 ] = dt;
+   Ly[ 2 ] = dt;
 
-   Rx.push_back(vx[0]); // vertices of Q on right quadrilateral
-   Rx.push_back(vx[1]);
-   Rx.push_back(vx[4]);
-   Rx.push_back(vx[3]);
+   Rx[ 0 ] = vx[0]; // vertices of Q on right quadrilateral
+   Rx[ 1 ] = vx[1];
+   Rx[ 2 ] = vx[4];
+   Rx[ 3 ] = vx[3];
 
-   Ry.push_back(0.0);
-   Ry.push_back(0.0);
-   Ry.push_back(dt);
-   Ry.push_back(dt);
+   Ry[ 0 ] = 0.0;
+   Ry[ 1 ] = 0.0;
+   Ry[ 2 ] = dt;
+   Ry[ 3 ] = dt;
 
    initialize_2d(3, 2, &StifL);
    initialize_2d(4, 2, &StifR);
@@ -749,13 +743,13 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    //
    // integration over element Q (a triangle):
    //
-   Qx.push_back(vx[0]); // vertices of Q on left
-   Qx.push_back(vx[3]);
-   Qx.push_back(vx[2]);
+   Qx[ 0 ] = vx[0]; // vertices of Q on left
+   Qx[ 1 ] = vx[3];
+   Qx[ 2 ] = vx[2];
 
-   Qy.push_back(0.0);
-   Qy.push_back(dt);
-   Qy.push_back(dt); // vertices of left T
+   Qy[ 0 ] = 0.0;
+   Qy[ 1 ] = dt;
+   Qy[ 2 ] = dt; // vertices of left T
 
    for (k=0; k<npts; k++)
    {
@@ -769,7 +763,7 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
       // find phi, phi_x, phi_y on L and C at (x,y)
       //
 
-      BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
+      BasisTR( Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
       phiC  = ( xn1 - vx[2] )/hh;      // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
       phiCx = 1./hh;
 
@@ -788,13 +782,13 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    //
    // integration over T:
    //
-   Tx.push_back(vx[0]); // vertices of T on right
-   Tx.push_back(vx[5]);
-   Tx.push_back(vx[3]);
+   Tx[ 0 ] = vx[0]; // vertices of T on right
+   Tx[ 1 ] = vx[5];
+   Tx[ 2 ] = vx[3];
 
-   Ty.push_back(0.0);
-   Ty.push_back(0.0);
-   Ty.push_back(dt);
+   Ty[ 0 ] = 0.0;
+   Ty[ 1 ] = 0.0;
+   Ty[ 2 ] = dt;
 
    for ( k = 0; k < npts; k++ )
    {
@@ -810,7 +804,7 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
-      BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
+      BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
       phiC  = ( xn1 - vx[ 2 ] ) / hh;  // hat function on t_n+1, =1 at vx[3];
                                        //  =0 at vx[2]
       phiCx = 1. / hh;
@@ -849,14 +843,18 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    clear_2d( 4, StifR );
 }
 
-void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQTm( double* vx, double D, double sw2, 
                             double** Stif, double dt )
 {
    // element to define basis functions
    //
    int    npts, i, k;
    double x_gauss, y_gauss, dval;
-   QVector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   double Lx[ 4 ], Ly[ 4 ];
+   double Cx[ 4 ], Cy[ 4 ];
+   double Rx[ 4 ], Ry[ 4 ];
+   double Qx[ 4 ], Qy[ 4 ];
+   double Tx[ 3 ], Ty[ 3 ];
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -870,46 +868,36 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
    phiR  = new double [ 4 ];
    phiRx = new double [ 4 ];
    phiRy = new double [ 4 ];
-   Lx.clear();
-   Ly.clear();
-   Cx.clear();
-   Cy.clear();
-   Rx.clear();
-   Ry.clear();
-   Qx.clear();
-   Qy.clear();
-   Tx.clear();
-   Ty.clear();
 
-   Lx.push_back( vx[ 0 ] );
-   Lx.push_back( vx[ 1 ] );
-   Lx.push_back( vx[ 4 ] );
-   Lx.push_back( vx[ 3 ] );
+   Lx[ 0 ] = vx[ 0 ];
+   Lx[ 1 ] = vx[ 1 ];
+   Lx[ 2 ] = vx[ 4 ];
+   Lx[ 3 ] = vx[ 3 ];
 
-   Ly.push_back( 0.0 );
-   Ly.push_back( 0.0 );
-   Ly.push_back( dt );
-   Ly.push_back( dt );          // vertices of left T
+   Ly[ 0 ] = 0.0;
+   Ly[ 1 ] = 0.0;
+   Ly[ 2 ] = dt;
+   Ly[ 3 ] = dt;          // vertices of left T
 
-   Cx.push_back( vx[ 6 ] );
-   Cx.push_back( vx[ 7 ] );
-   Cx.push_back( vx[ 4 ] );
-   Cx.push_back( vx[ 3 ] );
+   Cx[ 0 ] = vx[ 6 ];
+   Cx[ 1 ] = vx[ 7 ];
+   Cx[ 2 ] = vx[ 4 ];
+   Cx[ 3 ] = vx[ 3 ];
  
-   Cy.push_back( 0.0 );
-   Cy.push_back( 0.0 );
-   Cy.push_back( dt );
-   Cy.push_back( dt );
+   Cy[ 0 ] = 0.0;
+   Cy[ 1 ] = 0.0;
+   Cy[ 2 ] = dt;
+   Cy[ 3 ] = dt;
 
-   Rx.push_back( vx[ 1 ] ); // vertices of Q on right
-   Rx.push_back( vx[ 2 ] );
-   Rx.push_back( vx[ 5 ] );
-   Rx.push_back( vx[ 4 ] );
+   Rx[ 0 ] = vx[ 1 ]; // vertices of Q on right
+   Rx[ 1 ] = vx[ 2 ];
+   Rx[ 2 ] = vx[ 5 ];
+   Rx[ 3 ] = vx[ 4 ];
 
-   Ry.push_back( 0.0 );
-   Ry.push_back( 0.0 );
-   Ry.push_back( dt );
-   Ry.push_back( dt );
+   Ry[ 0 ] = 0.0;
+   Ry[ 1 ] = 0.0;
+   Ry[ 2 ] = dt;
+   Ry[ 3 ] = dt;
 
    initialize_2d( 4, 2, &StifL );
    initialize_2d( 4, 2, &StifR );
@@ -917,15 +905,15 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
    //
    // integration over element Q :
    //
-   Qx.push_back( vx[ 6 ] ); // vertices of Q on right
-   Qx.push_back( vx[ 1 ] );
-   Qx.push_back( vx[ 4 ] );
-   Qx.push_back( vx[ 3 ] );
+   Qx[ 0 ] = vx[ 6 ]; // vertices of Q on right
+   Qx[ 1 ] = vx[ 1 ];
+   Qx[ 2 ] = vx[ 4 ];
+   Qx[ 3 ] = vx[ 3 ];
 
-   Qy.push_back( 0.0 );
-   Qy.push_back( 0.0 );
-   Qy.push_back( dt);
-   Qy.push_back( dt ); // vertices of left T
+   Qy[ 0 ] = 0.0;
+   Qy[ 1 ] = 0.0;
+   Qy[ 2 ] = dt;
+   Qy[ 3 ] = dt; // vertices of left T
 
    npts = 5 * 5;
    initialize_2d( npts, 3, &Gs );
@@ -938,7 +926,7 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
 
    for ( k = 0; k < npts; k++ )
    {
-      BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
+      BasisQS( Gs[k][0], Gs[k][1], psi, psi1, psi2 );
 
       x_gauss = 0.0;
       y_gauss = 0.0;
@@ -981,13 +969,13 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
    //
    // integration over T:
    //
-   Tx.push_back( vx[ 1 ] ); // vertices of T on right
-   Tx.push_back( vx[ 7 ] );
-   Tx.push_back( vx[ 4 ] );
+   Tx[ 0 ] = vx[ 1 ]; // vertices of T on right
+   Tx[ 1 ] = vx[ 7 ];
+   Tx[ 2 ] = vx[ 4 ];
 
-   Ty.push_back( 0.0 );
-   Ty.push_back( 0.0 );
-   Ty.push_back( dt );
+   Ty[ 0 ] = 0.0;
+   Ty[ 1 ] = 0.0;
+   Ty[ 2 ] = dt;
 
    npts = 28;
    initialize_2d( npts, 4, &Lam );
@@ -1048,14 +1036,18 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
 }
 
 
-void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2, 
-                                    double** Stif, double dt )
+void US_AstfemMath::IntQTn2( double* vx, double D, double sw2, 
+                             double** Stif, double dt )
 {
    // element to define basis functions
    //
    int    npts, i, k;
    double x_gauss, y_gauss, dval;
-   QVector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   double Lx[ 4 ], Ly[ 4 ];
+   double Cx[ 4 ], Cy[ 4 ];
+   double Rx[ 3 ], Ry[ 3 ];
+   double Qx[ 4 ], Qy[ 4 ];
+   double Tx[ 3 ], Ty[ 3 ];
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -1069,44 +1061,34 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    phiR  = new double [ 3 ];
    phiRx = new double [ 3 ];
    phiRy = new double [ 3 ];
-   Lx.clear();
-   Ly.clear();
-   Cx.clear();
-   Cy.clear();
-   Rx.clear();
-   Ry.clear();
-   Qx.clear();
-   Qy.clear();
-   Tx.clear();
-   Ty.clear();
 
-   Lx.push_back( vx[ 0 ] );
-   Lx.push_back( vx[ 1 ] );
-   Lx.push_back( vx[ 4 ] );
-   Lx.push_back( vx[ 3 ] );
+   Lx[ 0 ] = vx[ 0 ];
+   Lx[ 1 ] = vx[ 1 ];
+   Lx[ 2 ] = vx[ 4 ];
+   Lx[ 3 ] = vx[ 3 ];
 
-   Ly.push_back( 0.0 );
-   Ly.push_back( 0.0 );
-   Ly.push_back( dt );
-   Ly.push_back( dt );          // vertices of left T
+   Ly[ 0 ] = 0.0;
+   Ly[ 1 ] = 0.0;
+   Ly[ 2 ] = dt;
+   Ly[ 3 ] = dt;          // vertices of left T
 
-   Cx.push_back( vx[ 5 ] );
-   Cx.push_back( vx[ 6 ] );
-   Cx.push_back( vx[ 4 ] );
-   Cx.push_back( vx[ 3 ] );
+   Cx[ 0 ] = vx[ 5 ];
+   Cx[ 1 ] = vx[ 6 ];
+   Cx[ 2 ] = vx[ 4 ];
+   Cx[ 3 ] = vx[ 3 ];
 
-   Cy.push_back( 0.0 );
-   Cy.push_back( 0.0 );
-   Cy.push_back( dt );
-   Cy.push_back( dt );
+   Cy[ 0 ] = 0.0;
+   Cy[ 1 ] = 0.0;
+   Cy[ 2 ] = dt;
+   Cy[ 3 ] = dt;
 
-   Rx.push_back( vx[ 1 ] ); // vertices of Q on right
-   Rx.push_back( vx[ 2 ] );
-   Rx.push_back( vx[ 4 ] );
+   Rx[ 0 ] = vx[ 1 ]; // vertices of Q on right
+   Rx[ 1 ] = vx[ 2 ];
+   Rx[ 2 ] = vx[ 4 ];
 
-   Ry.push_back( 0.0 );
-   Ry.push_back( 0.0 );
-   Ry.push_back( dt );
+   Ry[ 0 ] = 0.0;
+   Ry[ 1 ] = 0.0;
+   Ry[ 2 ] = dt;
 
    initialize_2d( 4, 2, &StifL );
    initialize_2d( 4, 2, &StifR );
@@ -1114,15 +1096,15 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    //
    // integration over element Q
    //
-   Qx.push_back( vx[ 5 ] ); // vertices of Q on right
-   Qx.push_back( vx[ 1 ] );
-   Qx.push_back( vx[ 4 ] );
-   Qx.push_back( vx[ 3 ] );
+   Qx[ 0 ] = vx[ 5 ]; // vertices of Q on right
+   Qx[ 1 ] = vx[ 1 ];
+   Qx[ 2 ] = vx[ 4 ];
+   Qx[ 3 ] = vx[ 3 ];
 
-   Qy.push_back( 0.0 );
-   Qy.push_back( 0.0 );
-   Qy.push_back( dt );
-   Qy.push_back( dt );
+   Qy[ 0 ] = 0.0;
+   Qy[ 1 ] = 0.0;
+   Qy[ 2 ] = dt;
+   Qy[ 3 ] = dt;
 
    npts = 5 * 5;
    initialize_2d( npts, 3, &Gs );
@@ -1177,13 +1159,13 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    //
    // integration over T:
    //
-   Tx.push_back( vx[ 1 ] ); // vertices of T on right
-   Tx.push_back( vx[ 6 ] );
-   Tx.push_back( vx[ 4 ] );
+   Tx[ 0 ] = vx[ 1 ]; // vertices of T on right
+   Tx[ 1 ] = vx[ 6 ];
+   Tx[ 2 ] = vx[ 4 ];
 
-   Ty.push_back( 0.0 );
-   Ty.push_back( 0.0 );
-   Ty.push_back( dt  );
+   Ty[ 0 ] = 0.0;
+   Ty[ 1 ] = 0.0;
+   Ty[ 2 ] = dt;
 
    npts = 28;
    initialize_2d( npts, 4, &Lam );
@@ -1241,44 +1223,41 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    clear_2d( 4, StifR );
 }
 
-void US_AstfemMath::IntQTn1( QVector< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQTn1( double* vx, double D, double sw2, 
                              double** Stif, double dt )
 {
    // element to define basis functions
    //
    int    npts, i, k;
    double x_gauss, y_gauss, dval;
-   QVector< double > Lx, Ly, Tx, Ty;
+   double Lx[ 3 ], Ly[ 3 ];
+   double Tx[ 3 ], Ty[ 3 ];
    double **StifR = NULL, **Lam = NULL, DJac;
    double *phiL, *phiLx, *phiLy;
    phiL  = new double [ 4 ];
    phiLx = new double [ 4 ];
    phiLy = new double [ 4 ];
-   Lx.clear();
-   Ly.clear();
-   Tx.clear();
-   Ty.clear();
 
-   Lx.push_back( vx[ 0 ] );
-   Lx.push_back( vx[ 1 ] );
-   Lx.push_back( vx[ 2 ] );
+   Lx[ 0 ] = vx[ 0 ];
+   Lx[ 1 ] = vx[ 1 ];
+   Lx[ 2 ] = vx[ 2 ];
 
-   Ly.push_back( 0.0 );
-   Ly.push_back( 0.0 );
-   Ly.push_back( dt  );
+   Ly[ 0 ] = 0.0;
+   Ly[ 1 ] = 0.0;
+   Ly[ 2 ] = dt;
 
    initialize_2d( 4, 2, &StifR );
 
    //
    // integration over T:
    //
-   Tx.push_back( vx[ 3 ] ); // vertices of T on right
-   Tx.push_back( vx[ 1 ] );
-   Tx.push_back( vx[ 2 ] );
+   Tx[ 0 ] = vx[ 3 ]; // vertices of T on right
+   Tx[ 1 ] = vx[ 1 ];
+   Tx[ 2 ] = vx[ 2 ];
 
-   Ty.push_back( 0.0 );
-   Ty.push_back( 0.0 );
-   Ty.push_back( dt  );
+   Ty[ 0 ] = 0.0;
+   Ty[ 1 ] = 0.0;
+   Ty[ 2 ] = dt;
 
    npts = 28;
    initialize_2d( npts, 4, &Lam );
@@ -1598,7 +1577,7 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
 
 // AreaT: area of a triangle (v1, v2, v3)
 
-double US_AstfemMath::AreaT( QVector< double >& xv, QVector< double >& yv )
+double US_AstfemMath::AreaT( double* xv, double* yv )
 {
    return ( 0.5 * ( ( xv[ 1 ] - xv[ 0 ] ) * ( yv[ 2 ] - yv[ 0 ] )
                   - ( xv[ 2 ] - xv[ 0 ] ) * ( yv[ 1 ] - yv[ 0 ] ) ) );
@@ -1651,43 +1630,35 @@ void US_AstfemMath::BasisQS( double xi, double et, double* phi,
 // phi, phi_x, phi_t at a given (xs,ts) point
 // the triangular is assumed to be (x1,y1), (x2, y2), (x3, y3)
 
-void US_AstfemMath::BasisTR( QVector< double > vx, QVector< double > vy,
+void US_AstfemMath::BasisTR( double* vx, double* vy,
       double xs, double ys, double* phi, double* phix, double* phiy )
 {
    // find (xi,et) corresponding to (xs, ts)
    
    int i;
-   QVector< double > tempv1, tempv2;
+   double tempv1[ 3 ], tempv2[ 3 ];
 
-   tempv1.clear();
-   tempv2.clear();
-
-   tempv1.push_back( xs );
-   tempv1.push_back( vx[ 2 ] );
-   tempv1.push_back( vx[ 0 ] );
-   tempv2.push_back( ys );
-   tempv2.push_back( vy[ 2 ] );
-   tempv2.push_back( vy[ 0 ] );
+   tempv1[ 0 ] = xs;
+   tempv1[ 1 ] = vx[ 2 ];
+   tempv1[ 2 ] = vx[ 0 ];
+   tempv2[ 0 ] = ys;
+   tempv2[ 1 ] = vy[ 2 ];
+   tempv2[ 2 ] = vy[ 0 ];
 
    double AreaK = AreaT( vx, vy );
    double xi    = AreaT( tempv1, tempv2 ) / AreaK;
 
-   tempv1.clear();
-   tempv2.clear();
-
-   tempv1.push_back( xs );
-   tempv1.push_back( vx[ 0 ] );
-   tempv1.push_back( vx[ 1 ] );
-   tempv2.push_back( ys );
-   tempv2.push_back( vy[ 0 ] );
-   tempv2.push_back( vy[ 1 ] );
+   tempv1[ 0 ] = xs;
+   tempv1[ 1 ] = vx[ 0 ];
+   tempv1[ 2 ] = vx[ 1 ];
+   tempv2[ 0 ] = ys;
+   tempv2[ 1 ] = vy[ 0 ];
+   tempv2[ 2 ] = vy[ 1 ];
 
    double et = AreaT( tempv1, tempv2 ) / AreaK;
 
-   double *phi1, *phi2;
-
-   phi1 = new double [ 3 ];
-   phi2 = new double [ 3 ];
+   double phi1[ 3 ];
+   double phi2[ 3 ];
 
    BasisTS( xi, et, phi, phi1, phi2 );
 
@@ -1710,11 +1681,9 @@ void US_AstfemMath::BasisTR( QVector< double > vx, QVector< double > vy,
       phix[ i ] = JacN[ 0 ] * phi1[ i ] + JacN[ 2 ] * phi2[ i ];
       phiy[ i ] = JacN[ 1 ] * phi1[ i ] + JacN[ 3 ] * phi2[ i ];
    }
-   delete [] phi1;
-   delete [] phi2;
 }
 
-void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts,
+void US_AstfemMath::BasisQR( double* vx, double xs, double ts,
       double* phi, double* phix, double* phiy, double dt )
 {
    int    i;
@@ -1725,10 +1694,8 @@ void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts,
    double B  = vx[ 1 ] * ( 1.0 - et ) + vx[ 2 ] * et;
    double xi = ( xs - A ) / ( B - A );
 
-   double *phi1, *phi2;
-
-   phi1 = new double [ 4 ];
-   phi2 = new double [ 4 ];
+   double phi1[ 4 ];
+   double phi2[ 4 ];
 
    BasisQS( xi, et, phi, phi1, phi2 );
 
@@ -1753,8 +1720,6 @@ void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts,
       phix[ i ] = JacN[ 0 ] * phi1[ i ] + JacN[ 2 ] * phi2[ i ];
       phiy[ i ] = JacN[ 1 ] * phi1[ i ] + JacN[ 3 ] * phi2[ i ];
    }
-   delete [] phi1;
-   delete [] phi2;
 }
 
 // Integrand for Lamm equation

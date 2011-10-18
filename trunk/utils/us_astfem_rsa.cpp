@@ -40,14 +40,22 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    double        accel_time;
    double        dr;
-//*TIMING*
-//QDateTime calcStart = QDateTime::currentDateTime();
-//int totNtrptime=0;
-//static int ncalls=0;
-//static int nicall=0;
-//static int totTC=0;
-//static int totTN=0;
-//*TIMING*
+#if 0
+#define TIMING_RA
+#endif
+#ifdef TIMING_RA
+QDateTime calcStart = QDateTime::currentDateTime();
+static int ncalls=0;
+static int totTC=0;
+static int totT1=0;
+static int totT2=0;
+static int totT3=0;
+static int totT4=0;
+static int totT5=0;
+static int totT6=0;
+static int totT7=0;
+static int totT8=0;
+#endif
    
    af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed;
    af_params.simpoints   = simparams.simpoints;
@@ -66,6 +74,9 @@ DbgLv(2) << "RSA:  af_c0size" << initial_npts;
 
    for ( int k = 0; k < size_cv; k++ )
    {
+#ifdef TIMING_RA
+QDateTime clcSt1 = QDateTime::currentDateTime();
+#endif
       US_Model::SimulationComponent* sc = &system.components[ k ];
       US_Model::Association*         as;
       reacting[ k ] = false;
@@ -155,9 +166,15 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
          af_params.s   [ 0 ] = sc->s;
          af_params.D   [ 0 ] = sc->D;
          af_params.kext[ 0 ] = sc->extinction;
+#ifdef TIMING_RA
+totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
+#endif
          
          for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
+#ifdef TIMING_RA
+QDateTime clcSt2 = QDateTime::currentDateTime();
+#endif
             US_SimulationParameters::SpeedProfile* sp =
                &simparams.speed_step[ step ]; 
             US_AstfemMath::MfemData*               ed = &af_data;
@@ -197,6 +214,10 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
 #endif
                
             }  // End of acceleration
+#ifdef TIMING_RA
+QDateTime clcSt3 = QDateTime::currentDateTime();
+totT2+=(clcSt2.msecsTo(clcSt3));
+#endif
 
             duration =sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0;
 
@@ -236,6 +257,10 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
             // the necessary dt:
             af_params.time_steps = (int) ( 1.0 + duration / af_params.dt );
             af_params.start_time = current_time;
+#ifdef TIMING_RA
+QDateTime clcSt4 = QDateTime::currentDateTime();
+totT3+=(clcSt3.msecsTo(clcSt4));
+#endif
             
             calculate_ni( sp->rotorspeed, sp->rotorspeed, CT0, simdata, false );
             if ( stopFlag ) return 1;
@@ -243,17 +268,14 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
             // Set the current time to the last scan of this speed step
             current_time = sp->duration_hours * 3600 +
                            sp->duration_minutes * 60;
+#ifdef TIMING_RA
+QDateTime clcSt5 = QDateTime::currentDateTime();
+totT4+=(clcSt4.msecsTo(clcSt5));
+#endif
             
             // Interpolate the simulated data onto the experimental time and 
             // radius grid
-//*TIMING*
-//QDateTime ntrpStart = QDateTime::currentDateTime();
-//*TIMING*
             US_AstfemMath::interpolate( *ed, simdata, use_time );
-//*TIMING*
-//nicall++;
-//totNtrptime+=(ntrpStart.msecsTo(QDateTime::currentDateTime()));
-//*TIMING*
             
             // Set the current speed to the constant rotor speed of the 
             // current speed step
@@ -261,6 +283,9 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
 
 #ifndef NO_DB
             qApp->processEvents();
+#endif
+#ifdef TIMING_RA
+totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
 #endif
 
          } // Speed step loop
@@ -271,6 +296,9 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
 #endif
       }
    }
+#ifdef TIMING_RA
+QDateTime clcSt6 = QDateTime::currentDateTime();
+#endif
 
    // Resize af_params.local_index
    af_params.local_index.resize( size_cv );
@@ -378,6 +406,9 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
 
       decompose( vC0 );
 DbgLv(2) << "RSA: decompose OUT";
+#ifdef TIMING_RA
+QDateTime clcSt5 = QDateTime::currentDateTime();
+#endif
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
       {
@@ -473,14 +504,7 @@ DbgLv(2) << "RSA:    current_time" << current_time;
          
          // Interpolate the simulated data onto the experimental 
          // time and radius grid
-//*TIMING*
-//QDateTime ntrpStart = QDateTime::currentDateTime();
-//*TIMING*
          US_AstfemMath::interpolate( *ed, simdata, use_time );
-//*TIMING*
-//nicall++;
-//totNtrptime+=(ntrpStart.msecsTo(QDateTime::currentDateTime()));
-//*TIMING*
             
          
          // Set the current speed to the constant rotor speed of the 
@@ -493,8 +517,15 @@ DbgLv(2) << "RSA:    current_time" << current_time;
          
          if ( stopFlag ) return 1 ; 
       } // Speed step loop
+#ifdef TIMING_RA
+totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
+#endif
    }
 DbgLv(2) << "RSA: Speed step OUT";
+#ifdef TIMING_RA
+QDateTime clcSt7 = QDateTime::currentDateTime();
+totT6+=(clcSt6.msecsTo(clcSt7));
+#endif
 
 #ifndef NO_DB
    //emit current_component( -1 );
@@ -546,21 +577,28 @@ DbgLv(2) << "RSA: Speed step OUT";
       }
    }
 DbgLv(2) << "RSA: Time Corr OUT";
+#ifdef TIMING_RA
+QDateTime clcSt8 = QDateTime::currentDateTime();
+totT7+=(clcSt7.msecsTo(clcSt8));
+#endif
 
    if ( !simout_flag )
       store_mfem_data( exp_data, af_data );    // normal experiment grid
    else
       store_mfem_data( exp_data, simdata );    // raw simulation grid
 
-//*TIMING*
-//int elapsedCalc = calcStart.msecsTo( QDateTime::currentDateTime() );
-//ncalls++;
-//totTN+=totNtrptime;
-//totTC+=elapsedCalc;
-//if((ncalls%200)<2)
-// DbgLv(0) << "  Elapsed fem-calc,tot-interp ms" << elapsedCalc << totNtrptime
-// << "nn nc totN totC" << nicall << ncalls << totTN << totTC;
-//*TIMING*
+#ifdef TIMING_RA
+QDateTime clcSt9 = QDateTime::currentDateTime();
+totT8+=(clcSt8.msecsTo(clcSt9));
+int elapsedCalc = calcStart.msecsTo( clcSt9 );
+ncalls++;
+totTC+=elapsedCalc;
+if((ncalls%1000)==0) {
+ DbgLv(0) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC;
+ DbgLv(0) << "   t1 t2 t3 t4 t5 t6 t7 t8"
+  << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
+}
+#endif
    return 0;
 }
 
@@ -923,6 +961,31 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    double** CA2;
    double** CB1;
    double** CB2;
+#if 0
+#define TIMING_NI 1
+#endif
+#ifdef TIMING_NI
+static int nccall=0;
+static int ttTC=0;
+static int ttT1=0;
+static int ttT2=0;
+static int ttT3=0;
+static int ttT4=0;
+static int ttT5=0;
+static int ttT6=0;
+static int ttT7=0;
+static int ttT8=0;
+QDateTime clcSt0 = QDateTime::currentDateTime();
+QDateTime clcSt1 = clcSt0;
+QDateTime clcSt2 = clcSt0;
+QDateTime clcSt3 = clcSt0;
+QDateTime clcSt4 = clcSt0;
+QDateTime clcSt5 = clcSt0;
+QDateTime clcSt6 = clcSt0;
+QDateTime clcSt7 = clcSt0;
+QDateTime clcSt8 = clcSt0;
+QDateTime clcSt9 = clcSt0;
+#endif
 
    simdata.radius.clear();
    simdata.scan.clear();
@@ -975,6 +1038,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    US_AstfemMath::initialize_2d( 3, N, &CA );
    US_AstfemMath::initialize_2d( 3, N, &CB );
    bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
+#ifdef TIMING_NI
+clcSt2 = QDateTime::currentDateTime();
+ttT1+=(clcSt1.msecsTo(clcSt2));
+#endif
 
    if ( ! accel ) // No acceleration
    {
@@ -1005,6 +1072,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA2, CB2 );
    }
+#ifdef TIMING_NI
+clcSt3 = QDateTime::currentDateTime();
+ttT2+=(clcSt2.msecsTo(clcSt3));
+#endif
 
    // Initial condition
    QVector< double > C0Vec( N );
@@ -1018,10 +1089,18 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
 
    // Time evolution
    double* right_hand_side = rhVec.data();
+#ifdef TIMING_NI
+ttT3+=(clcSt3.msecsTo(QDateTime::currentDateTime()));
+clcSt3 = QDateTime::currentDateTime();
+#endif
 
    // Calculate all time steps 
    for ( int i = 0; i < af_params.time_steps + 1; i++ )
    {
+#ifdef TIMING_NI
+clcSt4 = QDateTime::currentDateTime();
+ttT3+=(clcSt3.msecsTo(clcSt4));
+#endif
       double rpm_current = rpm_start + 
          ( rpm_stop - rpm_start ) * ( i + 0.5 ) / af_params.time_steps;
 
@@ -1058,6 +1137,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       for ( int j = 0; j < N; j++ ) simscan.conc .append( C0[ j ] );
 
       simdata.scan .append( simscan );
+#ifdef TIMING_NI
+clcSt5 = QDateTime::currentDateTime();
+ttT4+=(clcSt4.msecsTo(clcSt5));
+#endif
 
       // Sedimentation part:
       // Calculate the right hand side vector 
@@ -1111,7 +1194,15 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          }
       }
 
+#ifdef TIMING_NI
+clcSt6 = QDateTime::currentDateTime();
+ttT5+=(clcSt5.msecsTo(clcSt6));
+#endif
       US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, N );
+#ifdef TIMING_NI
+clcSt7 = QDateTime::currentDateTime();
+ttT6+=(clcSt6.msecsTo(clcSt7));
+#endif
       
       for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
 
@@ -1128,8 +1219,15 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          //US_Sleep::msleep( 1 );  // 1 ms to let the display update.
       }
 #endif
+#ifdef TIMING_NI
+clcSt3 = QDateTime::currentDateTime();
+ttT7+=(clcSt7.msecsTo(clcSt3));
+#endif
    } // time loop
 
+#ifdef TIMING_NI
+clcSt8 = QDateTime::currentDateTime();
+#endif
    C_init.radius.clear();
    C_init.concentration.clear();
    
@@ -1149,6 +1247,31 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       US_AstfemMath::clear_2d( 3, CA2 );
       US_AstfemMath::clear_2d( 3, CB2 );
    }
+#ifdef TIMING_NI
+clcSt9 = QDateTime::currentDateTime();
+ttT8+=(clcSt8.msecsTo(clcSt9));
+int elapsCalc=clcSt0.msecsTo(clcSt9);
+nccall++;
+ttTC+=elapsCalc;
+if((nccall%1000)==0) {
+ int totTK=ttT1+ttT2+ttT3+ttT4+ttT5+ttT6+ttT7+ttT8;
+ qDebug() << "   ++Elapsed calc-ni ms" << elapsCalc << " nc totC totK" << nccall
+  << ttTC << totTK << " N" << N << " acc fixG" << accel << fixedGrid;
+ qDebug() << "     CN: t1 t2 t3 t4 t5 t6 t7 t8" << ttT1 << ttT2 << ttT3 << ttT4
+  << ttT5 << ttT6 << ttT7 << ttT8;
+ int p0=totTK/2;
+ int p1=(ttT1*100+p0)/totTK;
+ int p2=(ttT2*100+p0)/totTK;
+ int p3=(ttT3*100+p0)/totTK;
+ int p4=(ttT4*100+p0)/totTK;
+ int p5=(ttT5*100+p0)/totTK;
+ int p6=(ttT6*100+p0)/totTK;
+ int p7=(ttT7*100+p0)/totTK;
+ int p8=(ttT8*100+p0)/totTK;
+ qDebug() << "      CN: p1 p2 p3 p4 p5 p6 p7 p8" << p1 << p2 << p3 << p4
+  << p5 << p6 << p7 << p8;
+}
+#endif
 
    return 0;
 }
@@ -1604,7 +1727,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( 
       double D, double sw2, double** CA, double** CB )
 {
-   US_StiffBase stfb0 ;
+   //US_StiffBase stfb0 ;
    double***    Stif;   // Local stiffness matrix at each element
    
    US_AstfemMath::initialize_3d( N - 1, 4, 4, &Stif );
@@ -1662,7 +1785,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
       double D, double sw2, double** CA, double** CB )
 {
    // Compute local stiffness matrices
-   US_StiffBase stfb0;
+   //US_StiffBase stfb0;
    double***    Stif;         // Local stiffness matrix at each element
    double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
    
@@ -1744,7 +1867,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
       double D, double sw2, double** CA, double** CB )
 {
    // compute local stiffness matrices
-   US_StiffBase stfb0;
+   //US_StiffBase stfb0;
    double***    Stif;       // Local stiffness matrix at each element
    double       xd[4][2];   // coord for verices of quad elem
 
@@ -2401,7 +2524,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
                                   pow( x[ j + 1 ], ( 1 - alpha) ) );
                }
 
-               GlobalStiff( xb, CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
+               GlobalStiff( xb.data(), CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
             }
          }
          else if ( s_max < 0)    // all components floating
@@ -2733,7 +2856,7 @@ DbgLv(2) << "RSA:     cra2:  NN" << NN;
    return 0;
 }
 
-void US_Astfem_RSA::GlobalStiff( QVector< double >& xb, double** ca,
+void US_Astfem_RSA::GlobalStiff( double* xb, double** ca,
                                  double** cb, double D, double sw2 )
 {
    //  4: global stifness matrix
@@ -2741,53 +2864,49 @@ void US_Astfem_RSA::GlobalStiff( QVector< double >& xb, double** ca,
    // function [CA, CB]=4(x, xb, dt, D, sw2)
 
    double*** Stif = NULL;
-   QVector< double > vx;
+   double vx[ 8 ];
    
    US_AstfemMath::initialize_3d( N, 6, 2, &Stif );
 
    // 1st elem
-   vx.clear();
-   vx .append( x [ 0 ] );
-   vx .append( x [ 1 ] );
-   vx .append( x [ 0 ] );
-   vx .append( x [ 1 ] );
-   vx .append( x [ 2 ] );
-   vx .append( xb[ 1 ] );
+   vx[ 0 ] = x [ 0 ];
+   vx[ 1 ] = x [ 1 ];
+   vx[ 2 ] = x [ 0 ];
+   vx[ 3 ] = x [ 1 ];
+   vx[ 4 ] = x [ 2 ];
+   vx[ 5 ] = xb[ 1 ];
    US_AstfemMath::IntQT1( vx, D, sw2, Stif[ 0 ], af_params.dt );
 
    // elems in middle
    for ( int i = 1; i < N - 2; i++ )
    {
-      vx.clear();
-      vx .append( x [ i - 1 ] );
-      vx .append( x [ i     ] );
-      vx .append( x [ i + 1 ] );
-      vx .append( x [ i     ] );
-      vx .append( x [ i + 1 ] );
-      vx .append( x [ i + 2 ] );
-      vx .append( xb[ i     ] );
-      vx .append( xb[ i + 1 ] );
+      vx[ 0 ] = x [ i - 1 ];
+      vx[ 1 ] = x [ i     ];
+      vx[ 2 ] = x [ i + 1 ];
+      vx[ 3 ] = x [ i     ];
+      vx[ 4 ] = x [ i + 1 ];
+      vx[ 5 ] = x [ i + 2 ];
+      vx[ 6 ] = xb[ i     ];
+      vx[ 7 ] = xb[ i + 1 ];
       US_AstfemMath::IntQTm( vx, D, sw2, Stif[ i ], af_params.dt );
    }
 
    // 2nd last elems
-   vx.clear();
-   vx.append( x [ N - 3 ] );
-   vx.append( x [ N - 2 ] );
-   vx.append( x [ N - 1 ] );
-   vx.append( x [ N - 2 ] );
-   vx.append( x [ N - 1 ] );
-   vx.append( xb[ N - 2 ] );
-   vx.append( xb[ N - 1 ] );
+   vx[ 0 ] = x [ N - 3 ];
+   vx[ 1 ] = x [ N - 2 ];
+   vx[ 2 ] = x [ N - 1 ];
+   vx[ 3 ] = x [ N - 2 ];
+   vx[ 4 ] = x [ N - 1 ];
+   vx[ 5 ] = xb[ N - 2 ];
+   vx[ 6 ] = xb[ N - 1 ];
 
    US_AstfemMath::IntQTn2( vx, D, sw2, Stif[ N - 2 ], af_params.dt );
 
    // last elems
-   vx.clear();
-   vx.append( x [ N - 2 ] );
-   vx.append( x [ N - 1 ] );
-   vx.append( x [ N - 1 ] );
-   vx.append( xb[ N - 1 ] );
+   vx[ 0 ] = x [ N - 2 ];
+   vx[ 1 ] = x [ N - 1 ];
+   vx[ 2 ] = x [ N - 1 ];
+   vx[ 3 ] = xb[ N - 1 ];
    US_AstfemMath::IntQTn1 ( vx, D, sw2, Stif[ N - 1 ], af_params.dt );
    
    // assembly into global stiffness matrix
