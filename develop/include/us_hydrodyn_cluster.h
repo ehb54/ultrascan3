@@ -53,7 +53,6 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLineEdit     *le_output_name;
 
       QPushButton   *pb_create;
-      QPushButton   *pb_create_pkg;
 
       QFont         ft;
       QTextEdit     *editor;
@@ -70,13 +69,18 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void          editor_msg( QString color, QString msg );
 
+      QString       pkg_dir;
+
+      bool          copy_files_to_pkg_dir( QStringList &filenames );
+      bool          remove_files( QStringList &filenames );
+      QString       errormsg;
+
    private slots:
 
       void setupGUI();
    
       void set_target();
       void create();
-      void create_pkg();
 
       void clear_display();
       void update_font();

@@ -28,11 +28,18 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
 
    setupGUI();
 
+   pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
+   QDir dir1( pkg_dir );
+   if ( !dir1.exists() )
+   {
+      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( pkg_dir ) );
+      dir1.mkdir( pkg_dir );
+   }
+
    global_Xpos += 30;
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
-
 }
 
 US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
@@ -70,7 +77,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_target_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lbl_jobs_per = new QLabel( QString(tr( "Jobs per job file maximum %1:" )).arg( selected_files.size() ), this);
+   lbl_jobs_per = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
    lbl_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_jobs_per->setMinimumHeight(minHeight1);
    lbl_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -92,23 +99,17 @@ void US_Hydrodyn_Cluster::setupGUI()
    lbl_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_output_name = new QLineEdit(this, "csv_filename Line Edit");
-   le_output_name->setText("cluster_output");
+   le_output_name->setText("job");
    le_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_output_name->setMinimumWidth(150);
    le_output_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_create = new QPushButton(tr("Create cluster job files"), this);
+   pb_create = new QPushButton(tr("Create cluster job package"), this);
    pb_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create->setMinimumHeight(minHeight1);
    pb_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create, SIGNAL(clicked()), SLOT(create()));
-
-   pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
-   pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_create_pkg->setMinimumHeight(minHeight1);
-   pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
    
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -169,8 +170,6 @@ void US_Hydrodyn_Cluster::setupGUI()
    QHBoxLayout *hbl_create = new QHBoxLayout( 0 );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create );
-   hbl_create->addSpacing( 4 );
-   hbl_create->addWidget ( pb_create_pkg );
    hbl_create->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
@@ -242,9 +241,57 @@ void US_Hydrodyn_Cluster::set_target()
 void US_Hydrodyn_Cluster::create()
 {
    QString unimplemented;
+   QStringList base_source_files;
+
+   if ( !le_jobs_per->text().toUInt() )
+   {
+      le_jobs_per->setText( "1" );
+   }
+   bool use_extension =  le_jobs_per->text().toUInt() != 1;
 
    // create the output file
-   QString filename = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+   QString filename = 
+      le_output_name->text() == QFileInfo( le_output_name->text() ).fileName() ?
+      pkg_dir + SLASH + le_output_name->text() :
+      le_output_name->text();
+
+   if ( use_extension )
+   {
+      QString ext  =  "_p1.tgz";
+      QString targz_filename = filename + ext;
+      if ( QFile::exists( targz_filename ) )
+      {
+         QString path =  QFileInfo( targz_filename ).dirPath() + SLASH;
+         QString name =  QFileInfo( targz_filename ).fileName().replace( QRegExp( "\\_p1.tgz$" ), "" );
+         targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( 
+                                                                      &path, &name, &ext, 0 );
+         filename = targz_filename;
+         filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
+         le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+                                  QFileInfo( filename ).fileName() : 
+                                  filename );
+      }
+   } else {
+      QString targz_filename = filename + ".tgz";
+      if ( QFile::exists( targz_filename ) )
+      {
+         targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename );
+         filename = targz_filename;
+         filename.replace( QRegExp( "\\.tgz$" ), "" );
+         le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+                                  QFileInfo( filename ).fileName() : 
+                                  filename );
+      }
+   }
+
+   QString base_dir = QFileInfo( filename ).dirPath();
+   if ( !QDir::setCurrent( base_dir ) )
+   {
+      editor_msg( "red", QString( tr( "Can not find output directory %1\n" ) ).arg( base_dir ) );
+      return;
+   }
+
+   editor_msg( "black", QString( tr( "Output directory is %1\n" ) ).arg( base_dir ) );
 
    QString base = 
       "# us_saxs_cmds_t iq controlfile\n"
@@ -253,12 +300,17 @@ void US_Hydrodyn_Cluster::create()
 
    base += 
       QString( "ResidueFile     %1\n" ).arg( QFileInfo( ((US_Hydrodyn *)us_hydrodyn)->lbl_table->text() ).fileName() );
+   base_source_files << ((US_Hydrodyn *)us_hydrodyn)->lbl_table->text();
+
    base += 
       QString( "AtomFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_atom_filename ).fileName() );
+   base_source_files << our_saxs_options->default_atom_filename;
    base += 
       QString( "HybridFile      %1\n" ).arg( QFileInfo( our_saxs_options->default_hybrid_filename ).fileName() );
+   base_source_files << our_saxs_options->default_hybrid_filename;
    base += 
       QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
+   base_source_files << our_saxs_options->default_saxs_filename;
 
    base += 
       QString( "\n%1\n" ).arg( our_saxs_options->saxs_sans ? "Sans" : "Saxs" );
@@ -341,6 +393,7 @@ void US_Hydrodyn_Cluster::create()
    {
       base += 
          QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( le_target_file->text() ).fileName() );
+      base_source_files << le_target_file->text();
    } else {
       base += 
          QString( "StartQ          %1\n" ).arg( our_saxs_options->start_q );
@@ -348,6 +401,16 @@ void US_Hydrodyn_Cluster::create()
          QString( "EndQ            %1\n" ).arg( our_saxs_options->end_q );
       base += 
          QString( "DeltaQ          %1\n" ).arg( our_saxs_options->delta_q );
+
+      cout << QString( "startq %1 endq %2 deltaq %3\n")
+         .arg( our_saxs_options->start_q )
+         .arg( our_saxs_options->end_q )
+         .arg( our_saxs_options->delta_q );
+      if ( our_saxs_options->delta_q == 0e0 ||
+           our_saxs_options->start_q == our_saxs_options->delta_q )
+      {
+         unimplemented += QString("Error: saxs q range is empty");
+      }
    }
 
    if ( batch_window->cb_mm_all->isChecked() )
@@ -364,28 +427,42 @@ void US_Hydrodyn_Cluster::create()
    base += QString( "Output          %1\n" )
       .arg( batch_window->cb_csv_saxs->isChecked() ? "csv" : "ssaxs" );
 
-   base += QString( "OutputFile      %1\n" ).arg( le_output_name->text() );
+   if ( batch_window->cb_csv_saxs->isChecked() )
+   {
+      base += QString( "OutputFile      %1\n" ).arg( le_output_name->text() );
+   }
 
    // cout << base;
 
    // now loop through selected, jumping every le_jobs_per->text()->toUInt()
    // for a new extension
-   if ( !le_jobs_per->text().toUInt() )
-   {
-      le_jobs_per->setText( "1" );
-   }
    
    QString      out = base;
    unsigned int write_count = 0;
-   bool         use_extension =  !( le_jobs_per->text().toUInt() == selected_files.size() );
-   unsigned int extension_count = selected_files.size() / le_jobs_per->text().toUInt();
+   unsigned int max_jobs_per = (unsigned int) ceil( selected_files.size() / (double) le_jobs_per->text().toUInt() );
+   cout << "max jobs per " << max_jobs_per << endl;
+   unsigned int extension_count = selected_files.size();
    unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
+
+   if ( !copy_files_to_pkg_dir( base_source_files ) )
+   {
+      editor_msg( "red", errormsg );
+      return;
+   }
+
+   QStringList source_files;
+
 
    for ( unsigned int i = 0; i < selected_files.size(); i++ )
    {
+      if ( !batch_window->cb_csv_saxs->isChecked() )
+      {
+         out += QString( "OutputFile      %1\n" ).arg( QFileInfo( selected_files[ i ] ).baseName() );
+      }
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+      source_files << selected_files[ i ];
       out += "Process\n";
-      if ( !( ( i + 1 ) % le_jobs_per->text().toUInt() ) )
+      if ( !( ( i + 1 ) % max_jobs_per ) )
       {
          write_count++;
          QString ext = "";
@@ -397,31 +474,94 @@ void US_Hydrodyn_Cluster::create()
                ext = "0" + ext;
             }
          }
-         QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("-%1").arg( ext ) : "" );
-         if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
-         {
-            use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
-         }
+         QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
+         // if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
+         // {
+         // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
+         // }
          cout << use_file << endl;
          QFile f( use_file );
          if ( f.open( IO_WriteOnly ) )
          {
             QTextStream ts( &f );
             ts << out;
-            ts << QString( "TarOutput       %1.tar\n" ).arg( le_output_name->text() + 
-                                                             ( use_extension ? QString("-%1").arg( ext ) : "" ) );
+            ts << QString( "TarOutput       %1_out.tar\n" ).arg( le_output_name->text() + 
+                                                                 ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
             f.close();
             editor_msg( "blue", QString("Created: %1").arg( use_file ) );
          }
+
+         // copy ne files to base_dir
+         if ( !copy_files_to_pkg_dir( source_files ) )
+         {
+            editor_msg( "red", errormsg );
+            return;
+         }
+
+         // build tar archive
+         QStringList list;
+         QStringList to_tar_list;
+         QStringList remove_file_list;
+         to_tar_list << QFileInfo( use_file ).fileName();
+         for ( unsigned int i = 0; i <  base_source_files.size(); i++ )
+         {
+            to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
+         }
+         for ( unsigned int i = 0; i < source_files.size(); i++ )
+         {
+            to_tar_list << QFileInfo( source_files[ i ] ).fileName();
+            remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+         }
+         remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
+         US_Tar ust;
+         QString tar_name = use_file + ".tar";
+         int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
+         cout << "tar_name:" << tar_name << endl;
+         cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+
+         if ( result != TAR_OK )
+         {
+            editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1") ).arg( filename ) );
+            return;
+         }
+         editor_msg( "blue", QString("Created: %1").arg( tar_name ) );
+         US_Gzip usg;
+         usg.gzip( tar_name );
+         QDir qd;
+         QString use_targz_filename = tar_name;
+         use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+         qd.remove( use_targz_filename );
+         if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+         {
+            editor_msg( "red", QString("Error renaming %1 to %2")
+                        .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                        .arg( QFileInfo( use_targz_filename ).fileName() ) );
+         }
+            
+         editor_msg( "blue", QString("Gzipped: %1").arg( use_targz_filename ) );
+         // clean up droppings
+         if ( !remove_files( remove_file_list ) )
+         {
+            return;
+         }
+
+         source_files.clear();
+
          out = base;
       }
    }
-}
-
-void US_Hydrodyn_Cluster::create_pkg()
-{
-   // create the output file
-   QString filename = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+   QStringList base_remove_file_list;
+   for ( unsigned int i = 0; i < base_source_files.size(); i++ )
+   {
+      base_remove_file_list << pkg_dir + SLASH + QFileInfo( base_source_files[ i ] ).fileName();
+   }
+   remove_files( base_remove_file_list );
+   cout << "written:" << write_count << endl;
+   if ( write_count != le_jobs_per->text().toUInt() )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: the actually number of jobs created %1 is less than requested %2\n"
+                                           "This is due to the fact that the selected files were evenly distributed among the jobs" ) ).arg( write_count ).arg( le_jobs_per->text().toUInt() ) );
+   }
 }
 
 void US_Hydrodyn_Cluster::clear_display()
@@ -471,3 +611,59 @@ void US_Hydrodyn_Cluster::editor_msg( QString color, QString msg )
    editor->scrollToBottom();
 }
 
+bool US_Hydrodyn_Cluster::remove_files( QStringList &filenames )
+{
+   errormsg = "";
+   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   {
+      if ( !QFile::remove( filenames[ i ] ) )
+      {
+         editor_msg("red", QString(tr("Notice: remove of temporary file %1 failed")).arg( filenames[ i ] ));
+         return false;
+      } else {
+         // editor_msg("black", QString(tr("Removed temporary file %1")).arg( filenames[ i ] ));
+      } 
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Cluster::copy_files_to_pkg_dir( QStringList &filenames )
+{
+   errormsg = "";
+   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   {
+      QString src  = filenames[ i ];
+      QString dest = pkg_dir + SLASH + QFileInfo( src ).fileName();
+      QFile fi( src  );
+      QFile fo( dest );
+
+      if ( !fi.exists() )
+      {
+         errormsg = QString( tr( "Error: requested source file %1 does not exist" ) ).arg( src );
+         return false;
+      }
+
+      if ( !fi.open( IO_ReadOnly ) )
+      {
+         errormsg = QString( tr( "Error: requested source file %1 can not be opened. Check permissions" ) ).arg( src );
+         return false;
+      }
+
+      if ( !fo.open( IO_WriteOnly ) )
+      {
+         errormsg = QString( tr( "Error: output file %1 can not be created." ) ).arg( dest );
+         return false;
+      }
+
+      editor_msg( "black", QString( tr( "Copying %1 to %2\n" ) ).arg( src ).arg( dest ) );
+      QDataStream dsi( &fi );
+      QDataStream dso( &fo );
+      while ( !dsi.atEnd() )
+      {
+         dso << dsi;
+      }
+      fi.close();
+      fo.close();
+   }
+   return true;
+}

@@ -362,6 +362,28 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       editor->setColor(save_color);
       saxs_options.compute_saxs_coeff_for_bead_models = false;
    }
+
+   if ( saxs_options.wavelength == 0 )
+   {
+      saxs_options.start_q = 
+         saxs_options.end_q = 
+         saxs_options.delta_q = 0;
+   }
+   else
+   {
+      saxs_options.start_q = 4.0 * M_PI * 
+         sin(saxs_options.start_angle * M_PI / 360.0) / 
+         saxs_options.wavelength;
+      saxs_options.start_q =  floor(saxs_options.start_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
+      saxs_options.end_q = 4.0 * M_PI * 
+         sin(saxs_options.end_angle * M_PI / 360.0) / 
+         saxs_options.wavelength;
+      saxs_options.end_q =  floor(saxs_options.end_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
+      saxs_options.delta_q = 4.0 * M_PI * 
+         sin(saxs_options.delta_angle * M_PI / 360.0) / 
+         saxs_options.wavelength;
+      saxs_options.delta_q =  floor(saxs_options.delta_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
+   }         
 }
 
 US_Hydrodyn::~US_Hydrodyn()

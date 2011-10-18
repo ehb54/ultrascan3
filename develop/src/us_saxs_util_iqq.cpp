@@ -26,6 +26,65 @@ bool US_Saxs_Util::read_control( QString controlfile )
       return false;
    }
 
+   if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   {
+      f.close();
+      US_Gzip usg;
+      // rename
+      QString dest = controlfile;
+      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      QDir qd;
+      qd.remove( dest );
+      
+      // copy .tgz to .tar.gz
+      QFile fi( controlfile );
+      QFile fo( dest );
+
+      if ( !fi.exists() )
+      {
+         errormsg = QString( "Error: requested source file %1 does not exist" ).arg( controlfile );
+         return false;
+      }
+
+      if ( !fi.open( IO_ReadOnly ) )
+      {
+         errormsg = QString( "Error: requested source file %1 can not be opened. Check permissions" ).arg( controlfile );
+         return false;
+      }
+
+      if ( !fo.open( IO_WriteOnly ) )
+      {
+         errormsg = QString( "Error: output file %1 can not be created." ).arg( dest );
+         return false;
+      }
+
+      QDataStream dsi( &fi );
+      QDataStream dso( &fo );
+      while ( !dsi.atEnd() )
+      {
+         dso << dsi;
+      }
+      fi.close();
+      fo.close();
+
+      controlfile = dest;
+      
+      qd.remove( dest.replace( QRegExp("\\.(gz|GZ)$"), "" ) );
+      int result = usg.gunzip( controlfile );
+      if ( GZIP_OK != result )
+      {
+         errormsg = QString("Error: %1 problem ungzipping (%2)").arg( controlfile ).arg( result );
+         return false;
+      }
+      controlfile.replace( QRegExp("\\.(gz|GZ)$"), "" );
+      f.setName( controlfile );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         errormsg = QString( "Error: %1 can not be opened.  Check permissions" ).arg( controlfile );
+         return false;
+      }
+   }
+
    if ( controlfile.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
    {
       f.close();
