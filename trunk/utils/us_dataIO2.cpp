@@ -397,7 +397,7 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       qint16 scan_count = qFromLittleEndian( si.I );
 
       // Read each scan
-      int valueCount;
+      int valueCount = 0;
       for ( int i = 0 ; i < scan_count; i ++ )
       {
          read( ds, u1.c, 4, crc );
