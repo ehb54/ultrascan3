@@ -763,6 +763,7 @@ float calc_bottom(vector <struct rotorInfo> rotor_list,
    return bottom;
 }
 
+#if !defined(CMDLINE)
 float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
 {
    if (centerpiece < 0)
@@ -834,6 +835,11 @@ double stretch(int rotor, unsigned int rpm)
    rotor_list.clear();
    return (stretch);
 }
+#else
+float calc_bottom(int , int , int , unsigned int ) { return 0; }
+double stretch(int , unsigned int ) { return 0; }
+#endif
+
 
 double stretch_with_rotor_list(int rotor, unsigned int rpm, vector <rotorInfo> *rotor_list)
 {

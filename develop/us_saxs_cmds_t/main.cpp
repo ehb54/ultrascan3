@@ -1,4 +1,11 @@
 #include "../include/us_saxs_cmds_t.h"
+#include "../include/us_revision.h"
+
+// globals to remove dependencies on libus
+// a better job could be done
+QString US_Version = REVISION;
+// vector < QString > modelString;
+
 
 // note: this program uses cout and/or cerr and this should be replaced
 
