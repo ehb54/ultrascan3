@@ -451,7 +451,11 @@ double US_Math2::normal_distribution( double sigma, double mean, double x )
 
 double US_Math2::time_correction( const QVector< US_DataIO2::EditedData >& dataList )
 {
-   int size  = dataList.size() * dataList[ 0 ].scanData.size();
+   int size  = dataList[ 0 ].scanData.size();
+
+   for ( int ii = 1; ii < dataList.size(); ii++ )
+      size += dataList[ ii ].scanData.size();
+
    int count = 0;
 
    QVector< double > vecx( size );
