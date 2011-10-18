@@ -105,11 +105,11 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_output_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_create = new QPushButton(tr("Create cluster job package"), this);
-   pb_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_create->setMinimumHeight(minHeight1);
-   pb_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_create, SIGNAL(clicked()), SLOT(create()));
+   pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
+   pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_create_pkg->setMinimumHeight(minHeight1);
+   pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
    
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -169,7 +169,7 @@ void US_Hydrodyn_Cluster::setupGUI()
 
    QHBoxLayout *hbl_create = new QHBoxLayout( 0 );
    hbl_create->addSpacing( 4 );
-   hbl_create->addWidget ( pb_create );
+   hbl_create->addWidget ( pb_create_pkg );
    hbl_create->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
@@ -238,7 +238,7 @@ void US_Hydrodyn_Cluster::set_target()
    le_target_file->setText( filename );
 }
 
-void US_Hydrodyn_Cluster::create()
+void US_Hydrodyn_Cluster::create_pkg()
 {
    QString unimplemented;
    QStringList base_source_files;

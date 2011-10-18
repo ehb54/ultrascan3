@@ -52,7 +52,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLabel        *lbl_output_name;
       QLineEdit     *le_output_name;
 
-      QPushButton   *pb_create;
+      QPushButton   *pb_create_pkg;
 
       QFont         ft;
       QTextEdit     *editor;
@@ -80,7 +80,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void setupGUI();
    
       void set_target();
-      void create();
+      void create_pkg();
 
       void clear_display();
       void update_font();
