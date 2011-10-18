@@ -236,7 +236,7 @@ void US_StiffBase::SetGauss( void )
        return;
    }
 
-   // Set Gass Quadrature points on Triangular elem [0,1]x[0,1]
+   // Set Gauss Quadrature points on Triangular elem [0,1]x[0,1]
    switch ( n_gaussT ) 
    {
      double lam1;

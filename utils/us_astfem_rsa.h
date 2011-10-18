@@ -8,6 +8,7 @@
 #include "us_simparms.h"
 #include "us_dataIO2.h"
 #include "us_astfem_math.h"
+#include "us_stiffbase.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -107,6 +108,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       
       bool show_movie;
       bool simout_flag;
+      US_StiffBase stfb0;
 
       //! Keep track of time globally for w2t_integral calculation
       double last_time;      
@@ -152,7 +154,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       int    calculate_ra2    ( double, double, US_AstfemMath::MfemInitial*,
                                 US_AstfemMath::MfemData&, bool );         
 
-      void   GlobalStiff      ( QVector< double >&, double**, double**,
+      void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
 
       void   load_mfem_data ( US_DataIO2::RawData&, US_AstfemMath::MfemData& );         
