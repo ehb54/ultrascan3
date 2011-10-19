@@ -549,6 +549,10 @@ class US_EXTERN US_Saxs_Util
 
       bool read_control( QString controlfile );
 
+#if defined( USE_MPI )
+      bool run_iq_mpi  ( QString controlfile );
+#endif
+
    private:
 
       bool run_gnom( 
@@ -797,6 +801,7 @@ class US_EXTERN US_Saxs_Util
       bool         run_saxs_iq_crysol();
       bool         run_sans_iq_cryson();
       bool         load_saxs( QString );
+
 };
 
 #endif
