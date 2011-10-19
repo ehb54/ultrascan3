@@ -173,7 +173,11 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
                      "Notice: Scaled fitting\n" );
          for ( unsigned int i = 0; i < use_A.size(); i++ )
          {
-            use_A[ i ] /= use_B[ i % use_B.size() ];
+            use_A[ i ] *= pow( ( 1e0 * ( i % use_B.size() ) ) / ( 1e0 * use_B.size() ), 6e0 );
+         }
+         for ( unsigned int i = 0; i < use_B.size(); i++ )
+         {
+            use_B[ i ] *= pow( ( 1e0 * i  ) / ( 1e0 * use_B.size() ), 6e0 );
          }
       }
    }
