@@ -107,6 +107,77 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    }         
 
    //   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
+   if ( our_saxs_options->iqq_log_fitting )
+   {
+      // first check for positive
+      bool log_ok = true;
+      for ( unsigned int i = 0; i < use_B.size(); i++ )
+      {
+         if ( use_B[ i ] <= 0 ) 
+         {
+            log_ok = false;
+            break;
+         }
+      }
+
+      if ( log_ok )
+      {
+         for ( unsigned int i = 0; i < use_A.size(); i++ )
+         {
+            if ( use_A[ i ] <= 0 ) 
+            {
+               log_ok = false;
+               break;
+            }
+         }
+      }
+
+      if ( !log_ok )
+      {
+         editor_msg( "red",
+                     "Warning: Log fitting requested but some of the values are less than or equal to zero, so log fitting disabled\n" );
+      } else {
+         // compute log10 on A & B
+         editor_msg( "blue",
+                     "Notice: Log fitting\n" );
+         for ( unsigned int i = 0; i < use_B.size(); i++ )
+         {
+            use_B[ i ] = log10( use_B[ i ] );
+         }
+         for ( unsigned int i = 0; i < use_A.size(); i++ )
+         {
+            use_A[ i ] = log10( use_A[ i ] );
+         }
+      }
+   }
+
+   if ( our_saxs_options->iqq_scaled_fitting )
+   {
+      // first check for non-zero
+      bool ok = true;
+      for ( unsigned int i = 0; i < use_B.size(); i++ )
+      {
+         if ( use_B[ i ] == 0 ) 
+         {
+            ok = false;
+            break;
+         }
+      }
+
+      if ( !ok )
+      {
+         editor_msg( "red",
+                     "Warning: Scaled fitting requested but some of the target values are zero, so scaled fitting disabled\n" );
+      } else {
+         editor_msg( "blue",
+                     "Notice: Scaled fitting\n" );
+         for ( unsigned int i = 0; i < use_A.size(); i++ )
+         {
+            use_A[ i ] /= use_B[ i % use_B.size() ];
+         }
+      }
+   }
+
    editor->append("Running NNLS\n");
    
    int result =

@@ -3359,6 +3359,8 @@ void US_Hydrodyn::set_default()
    saxs_options.sans_iq_hybrid_adaptive = true;
 
    saxs_options.bead_model_rayleigh = true;
+   saxs_options.iqq_log_fitting = false;
+   saxs_options.iqq_scaled_fitting = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

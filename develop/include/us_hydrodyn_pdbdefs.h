@@ -270,6 +270,9 @@ struct saxs_options
    bool    sans_iq_hybrid_adaptive;
 
    bool    bead_model_rayleigh;
+
+   bool    iqq_log_fitting;
+   bool    iqq_scaled_fitting;
 };
 
 struct saxs_atom

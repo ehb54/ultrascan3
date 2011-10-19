@@ -934,7 +934,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_subtract_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_subtract_radius, SIGNAL(clicked()), this, SLOT(set_subtract_radius()));
 
-   lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve scaling q (Angstrom) "), this);
+   lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve q range for scaling, NNLS and best fit (Angstrom) "), this);
    lbl_iqq_scale_min_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_iqq_scale_min_maxq->setMinimumHeight(minHeight1);
    lbl_iqq_scale_min_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -967,6 +967,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_iqq_scale_nnls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq_scale_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_scale_nnls, SIGNAL(clicked()), this, SLOT(set_iqq_scale_nnls()));
+
+   cb_iqq_log_fitting = new QCheckBox(this);
+   cb_iqq_log_fitting->setText(tr(" I(q) NNLS log fit"));
+   cb_iqq_log_fitting->setEnabled(true);
+   cb_iqq_log_fitting->setChecked((*saxs_options).iqq_log_fitting);
+   cb_iqq_log_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_log_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_log_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_log_fitting()));
+
+   cb_iqq_scaled_fitting = new QCheckBox(this);
+   cb_iqq_scaled_fitting->setText(tr(" I(q) NNLS scaled fit"));
+   cb_iqq_scaled_fitting->setEnabled(true);
+   cb_iqq_scaled_fitting->setChecked((*saxs_options).iqq_scaled_fitting);
+   cb_iqq_scaled_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_scaled_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_scaled_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scaled_fitting()));
 
    cb_iqq_scale_play = new QCheckBox(this);
    cb_iqq_scale_play->setText(tr(" Manually adjust scaling"));
@@ -1217,6 +1233,8 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_various_3 = new QHBoxLayout;
    
    hbl_various_3->addWidget(cb_iqq_scale_nnls);
+   hbl_various_3->addWidget(cb_iqq_log_fitting);
+   hbl_various_3->addWidget(cb_iqq_scaled_fitting);
    hbl_various_3->addWidget(cb_iqq_scale_play);
    background->addMultiCellLayout(hbl_various_3, k, k, 2, 3);
    k++;
@@ -1946,6 +1964,18 @@ void US_Hydrodyn_SaxsOptions::update_iqq_scale_maxq( const QString &str )
 void US_Hydrodyn_SaxsOptions::set_iqq_scale_nnls()
 {
    (*saxs_options).iqq_scale_nnls = cb_iqq_scale_nnls->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_log_fitting()
+{
+   (*saxs_options).iqq_log_fitting = cb_iqq_log_fitting->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_scaled_fitting()
+{
+   (*saxs_options).iqq_scaled_fitting = cb_iqq_scaled_fitting->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
