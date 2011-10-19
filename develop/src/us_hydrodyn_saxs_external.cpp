@@ -238,7 +238,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
-   if ( our_saxs_options->crysol_version_26 ||
+   if ( our_saxs_options->crysol_version_26 &&
         QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
    {
       QFile f( pdb );

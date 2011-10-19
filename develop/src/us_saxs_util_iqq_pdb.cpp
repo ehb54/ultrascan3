@@ -1609,7 +1609,6 @@ void US_Saxs_Util::setup_saxs_options()
 
 bool US_Saxs_Util::run_iqq()
 {
-   cout << "runiqq\n";
    errormsg = "";
    noticemsg = "";
    if ( control_parameters.count( "iqmethod" ) )
@@ -1631,18 +1630,24 @@ bool US_Saxs_Util::run_iqq()
       }
       if ( qs == "foxs" )
       {
-         errormsg = "external foxs call not supported";
-         return false;
+         if ( !run_saxs_iq_foxs() )
+         {
+            return false;
+         }
       }
       if ( qs == "crysol" )
       {
-         errormsg = "external crysol call not yet supported";
-         return false;
+         if ( !run_saxs_iq_crysol() )
+         {
+            return false;
+         }
       }
       if ( qs == "cryson" )
       {
-         errormsg = "external cryson call not yet supported";
-         return false;
+         if ( !run_sans_iq_cryson() )
+         {
+            return false;
+         }
       }
    }
    return true;

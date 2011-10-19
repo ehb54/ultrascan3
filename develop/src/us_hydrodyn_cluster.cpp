@@ -400,12 +400,10 @@ void US_Hydrodyn_Cluster::create_pkg()
    } else {
       if ( our_saxs_options->saxs_iq_foxs )
       {
-         unimplemented += "foxs method currently unimplemented\n";
          iqmethod = "foxs";
       }
       if ( our_saxs_options->saxs_iq_crysol )
       {
-         unimplemented += "crysol method currently unimplemented\n";
          iqmethod = "crysol";
       }
    }

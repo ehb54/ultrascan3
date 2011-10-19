@@ -201,8 +201,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                                    "h2a|"
                                    "h3|"
                                    "h3a|"
-                                   // "foxs|"
-                                   // "crysol|"
+                                   "foxs|"
+                                   "crysol|"
                                    "fd)$"
                                    );
 

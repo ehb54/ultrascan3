@@ -52,8 +52,8 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
       .arg( pdb );
 
    cout << "Starting FoXS\n";
-   cout << cmd;
-   system( "cmd" );
+   cout << cmd << endl;
+   system( cmd.ascii() );
    cout << "FoXS finished.\n";
 
    // foxs creates 2 files:
@@ -151,13 +151,15 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
    }
 
    QString crysol_last_pdb = pdb;
+   crysol_last_pdb.replace( QRegExp( "\\.(pdb|PDB)$" ), ".pdb" );
    QString crysol_last_pdb_base = QFileInfo( crysol_last_pdb ).fileName().replace( QRegExp( "\\.(pdb|PDB)$" ), "").left( 6 ) + ".pdb";
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
-   if ( our_saxs_options.crysol_version_26 ||
+   if ( our_saxs_options.crysol_version_26 &&
         QFileInfo( crysol_last_pdb ).fileName() != QFileInfo( crysol_last_pdb_base ).fileName() )
    {
+      cout << QString(  "copying pdb: %1 %2\n" ).arg( crysol_last_pdb ).arg( crysol_last_pdb_base );
       QFile f( pdb );
       if ( !f.open( IO_ReadOnly ) )
       {
@@ -240,8 +242,8 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
       .arg( our_saxs_options.crysol_fibonacci_grid_order );
 
    cout << "Starting Crysol\n";
-   cout << cmd;
-   system( "cmd" );
+   cout << cmd << endl;
+   system( cmd.ascii() );
    cout << "Crysol Finished\n";
    
    // crysol creates 4 files:
@@ -297,8 +299,141 @@ bool US_Saxs_Util::run_sans_iq_cryson()
    return false;
 }
 
-bool US_Saxs_Util::load_saxs( QString /* filename */ )
+bool US_Saxs_Util::load_saxs( QString filename  )
 {
-   errormsg = "load_saxs currently unimplemented";
-   return false;
+   errormsg = "";
+   if ( filename.isEmpty() )
+   {
+      errormsg = "load_saxs() called with empty filename";
+      return false;
+   }
+
+   QFile f(filename);
+   QString ext = QFileInfo( filename ).extension( false ).lower();
+
+   if ( ext == "pdb" || ext == "PDB" )
+   {
+      errormsg = QString( "Error: load_saxs() can not load a PDB file as a curve: %1" ).arg( filename );
+      return false;
+   }
+
+   if ( ext == "csv" || ext == "CSV" )
+   {
+      errormsg = QString( "Error: load_saxs() can not load a csv file as a curve: %1" ).arg( filename );
+      return false;
+   }
+
+   vector < double > I;
+   vector < double > I_error;
+   vector < double > I2;
+   vector < double > q;
+   vector < double > q2;
+   double new_I;
+   double new_q;
+   unsigned int Icolumn = 1;
+   unsigned int I_errorcolumn = 0;
+   bool dolog10 = false;
+   QString res = "";
+   QString tag1;
+   QString tag2;
+
+   bool do_crop = false;
+
+   if ( f.open( IO_ReadOnly ) )
+   {
+      QTextStream ts(&f);
+      vector < QString > qv;
+      QStringList qsl;
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         qv.push_back(qs);
+         qsl << qs;
+      }
+      f.close();
+      if ( !qv.size() )
+      {
+         errormsg = QString( "Error: load_saxs() The file %1 is empty" ).arg( filename );
+         return false;
+      }
+
+      unsigned int number_of_fields = 0;
+      if ( qv.size() > 3 )
+      {
+         QString test_line = qv[2];
+         test_line.replace(QRegExp("^\\s+"),"");
+         test_line.replace(QRegExp("\\s+$"),"");
+         QStringList test_list = QStringList::split(QRegExp("\\s+"), test_line);
+         number_of_fields = test_list.size();
+         // cout << "number of fields: " << number_of_fields << endl;
+      }
+
+      if ( ext == "int" ) 
+      {
+         //         dolog10 = true;
+         Icolumn = 1;
+      }
+      if ( ext == "dat" ) 
+      {
+         // foxs?
+         do_crop = false;
+
+         Icolumn = 1;
+         I_errorcolumn = 2;
+         if ( qsl.grep("exp_intensity").size() )
+         {
+            I_errorcolumn = 0;
+         }
+      }
+      if ( ext == "fit" ) 
+      {
+         do_crop = false;
+
+         Icolumn = 2;
+         I_errorcolumn = 0;
+      }
+      if ( ext == "ssaxs" ) 
+      {
+         Icolumn = 1;
+      }
+      double units = 1.0;
+
+      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setMinimal( true );
+      for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
+      {
+         if ( qv[i].contains(QRegExp("^#")) ||
+              rx_ok_line.search( qv[i] ) == -1 )
+         {
+            // cout << "not ok: " << qv[i] << endl; 
+            continue;
+         }
+         
+         QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         if ( tokens.size() > Icolumn )
+         {
+            new_q = tokens[0].toDouble();
+            new_I = tokens[Icolumn].toDouble();
+            if ( dolog10 )
+            {
+               new_I = log10(new_I);
+            }
+            I.push_back(new_I);
+            q.push_back(new_q * units);
+         }
+      }
+
+      cout << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
+
+      cout << QFileInfo(filename).fileName() << endl;
+
+      if ( q.size() )
+      {
+         if ( !write_output( 0, q, I ) )
+         {
+            return false;
+         }
+      }
+   }
+   return true;
 }
