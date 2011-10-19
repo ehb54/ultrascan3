@@ -166,6 +166,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
    saxs_search_update_enables();
+   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "x" );
+   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "x" );
 }
 
 US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()

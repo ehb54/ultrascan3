@@ -507,7 +507,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }
    }
 
-   if ( !just_plotted_curves && found_cropping )
+   if ( found_cropping )
    {
       if ( crop_min > q[ 0 ] ||
            crop_max < q[ q.size() - 1 ] )
@@ -883,19 +883,17 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             I_errors.pop_back();
          }            
 
-         // possible add errors to this (?):
-
          if ( run_nnls || run_best_fit )
          {
             // cout << QString("US_Hydrodyn_Saxs::load_iqq_csv %1 size %2\n").arg(qsl_tmp[0]).arg(I.size());
             if ( qsl_tmp[0] == nnls_target )
             {
                found_nnls_target = true;
-               nnls_B = I;
-               nnls_errors = I_errors;
+               nnls_B = range_crop( q, I );
+               nnls_errors = range_crop( q, I_errors );
             } else {
                found_nnls_model = true;
-               nnls_A[qsl_tmp[0]] = I;
+               nnls_A[qsl_tmp[0]] = range_crop( q, I );
                nnls_x[qsl_tmp[0]] = 0;
             }
          }
@@ -1167,17 +1165,35 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    } else {
       if ( run_nnls || run_best_fit )
       {
-         nnls_r = q;
+         nnls_r = range_crop( q, q );
          if ( found_nnls_model && found_nnls_target )
          {
             nnls_header_tag = header_tag;
             QString use_csv_filename = save_to_csv ? csv_filename : "";
             if ( run_nnls )
             {
+               if ( our_saxs_options->iqq_scale_minq ||
+                    our_saxs_options->iqq_scale_maxq )
+               {
+                  editor_msg( "dark red", 
+                              QString( tr( "Note: the NNLS fit will be performed over a cropped range q(%1:%2)" ) )
+                              .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
+                              .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" ) );
+               }
+
                calc_iqq_nnls_fit( nnls_target, use_csv_filename );
             }
             if ( run_best_fit )
             {
+               if ( our_saxs_options->iqq_scale_minq ||
+                    our_saxs_options->iqq_scale_maxq )
+               {
+                  editor_msg( "dark red", 
+                              QString( tr( "Note: the fit will be performed over a cropped range q(%1:%2)" ) )
+                              .arg( our_saxs_options->iqq_scale_minq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_minq ) : "" )
+                              .arg( our_saxs_options->iqq_scale_maxq ? QString( "%1" ).arg( our_saxs_options->iqq_scale_maxq ) : "" ) );
+               }
+
                calc_iqq_best_fit( nnls_target, use_csv_filename );
             }
          } else {
@@ -3168,5 +3184,25 @@ void US_Hydrodyn_Saxs::add_to_directory_history( QString filename )
       return;
    }
    ((US_Hydrodyn *)us_hydrodyn)->directory_history << dir;
+}
+
+vector < double > US_Hydrodyn_Saxs::range_crop( vector < double > &q, vector < double > &I )
+{
+   if ( !our_saxs_options->iqq_scale_minq &&
+        !our_saxs_options->iqq_scale_maxq )
+   {
+      return I;
+   }
+
+   vector < double > result;
+   for ( unsigned int i = 0; i < q.size(); i++ )
+   {
+      if ( ( !our_saxs_options->iqq_scale_minq || q[ i ] >= our_saxs_options->iqq_scale_minq ) &&
+           ( !our_saxs_options->iqq_scale_maxq || q[ i ] <= our_saxs_options->iqq_scale_maxq ) )
+      {
+         result.push_back( I[ i ] );
+      }
+   }
+   return result;
 }
 

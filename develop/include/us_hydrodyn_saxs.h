@@ -489,6 +489,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool external_running;
 
       void check_pr_grid( vector < double > &r, vector < double > &pr );
+      vector < double > range_crop( vector < double > &q, vector < double > &I );
 
    private slots:
 

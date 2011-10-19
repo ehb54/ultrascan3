@@ -400,10 +400,27 @@ void US_Hydrodyn_Cluster::create_pkg()
    } else {
       if ( our_saxs_options->saxs_iq_foxs )
       {
+         if ( batch_window->cb_mm_all->isChecked() )
+         {
+            QMessageBox::message( tr( "Please note:" ), 
+                                  tr( "You have selected to process all models in multi-model PDBs with the FoXS external I(q) method.\n"
+                                      "If you are including multi-model PDBs, a single composite curve will be produced.\n"
+                                      "If you wish curves for individual models, either split the multi model PDB\n"
+                                      "or use the \"fast\" Iq method.\n"
+                                      "You can split the multi-model PDB into individual files using the PDB Editor / Split button." ) );
+         }
          iqmethod = "foxs";
       }
       if ( our_saxs_options->saxs_iq_crysol )
       {
+         if ( batch_window->cb_mm_all->isChecked() )
+         {
+            QMessageBox::message( tr( "Please note:" ), 
+                                  tr( "You have selected to process all models in multi-model PDBs with the CRYSOL external I(q) method.\n"
+                                      "If you are including multi-model PDBs, only the first model will actually be computed by CRYSOL.\n"
+                                      "If you wish curves for individual models, split the multi model PDB into individual PDBs.\n"
+                                      "You can split the multi-model PDB into individual files using the PDB Editor / Split button." ) );
+         }
          iqmethod = "crysol";
       }
    }

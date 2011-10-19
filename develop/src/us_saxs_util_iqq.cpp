@@ -378,6 +378,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             cout << noticemsg;
          }
+         if ( model_vector.size() > 1 &&
+              !control_parameters.count( "pdballmodels" ) )
+         {
+            cout << "Notice: an NMR style model was loaded, but \"PDBAllModels\" was not selected, so only the first model will be loaded\n";
+            model_vector.resize( 1 );
+            model_vector_as_loaded = model_vector;
+         }
       }
 
       if ( option == "taroutput" )
@@ -731,7 +738,7 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
           control_parameters[ "output" ] == "dat" ) )
    {
       cout << "write output for ssaxs or dat\n";
-      QString fsaxs_name = control_parameters[ "outputfile" ] + iqq_suffix() + "." +  control_parameters[ "output" ];
+      QString fsaxs_name = control_parameters[ "outputfile" ] + QString("_%1").arg( model + 1 ) + iqq_suffix() + "." +  control_parameters[ "output" ];
 
       FILE *fsaxs = fopen(fsaxs_name, "w");
       if ( fsaxs ) 
