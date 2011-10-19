@@ -58,6 +58,7 @@ int main (int argc, char **argv)
       QString controlfile     = cmds[ p++ ];
 
       US_Saxs_Util usu;
+      cout << QString("%1: starting processing\n" ).arg( myrank ) << flush;
       if ( !usu.run_iq_mpi( controlfile ) )
       {
          if ( !myrank )

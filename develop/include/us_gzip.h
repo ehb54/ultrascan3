@@ -60,6 +60,8 @@ class US_EXTERN US_Gzip
     int     gunzip ( const QString& ); 
       QString explain( const int ); 
 
+      QString last_written_name;
+
   private:
 
       off_t    bytes_in;      /* number of input bytes */

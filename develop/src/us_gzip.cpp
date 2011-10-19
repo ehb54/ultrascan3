@@ -239,6 +239,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
   // Generate output file name. 
   QString oname = make_ofname( iname, decompress );
+
   if ( oname == "" ) return GZIP_NOTGZ;
 
   // Open the input file and determine decompression method.
@@ -354,7 +355,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     // Open the output file but check that it doesn't exist first
     QFileInfo output_file( oname );
-
+    last_written_name = oname;
+    
     if ( output_file.exists() ) return GZIP_OUTFILEEXISTS;
 
     ofd    = open( oname.ascii(), O_CREAT | O_WRONLY | O_BINARY , 0664 );
@@ -415,6 +417,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     // Check output file -- exists? writable?
     QFileInfo filename( oname );
 ////    if ( filename.exists() ) return GZIP_OUTFILEEXISTS;
+    last_written_name = oname;
 
     ofd = open( oname.ascii(), O_CREAT | O_WRONLY | O_BINARY, 0664 );
     if ( ofd < 0 ) return GZIP_WRITEERROR;

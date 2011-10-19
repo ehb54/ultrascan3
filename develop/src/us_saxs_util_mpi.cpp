@@ -28,6 +28,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    if ( myrank )
    {
       // wait until rank 0 process has prepared things;
+      cout << QString("%1: waiting for process 0 to finish\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -35,6 +36,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }         
       errorno--;
 
+      cout << QString("%1: waiting for broadcast of size of list\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Bcast( &sizeoflist, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -44,6 +46,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       char char_files[ sizeoflist + 1 ];
 
+      cout << QString("%1: waiting for broadcast of list data\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Bcast( char_files, sizeoflist + 1, MPI_CHAR, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -113,6 +116,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       char char_files[ sizeoflist + 1 ];
       strncpy( char_files, qs_files, sizeoflist + 1 );
 
+      cout << QString("%1: signaling end of barrier\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -120,6 +124,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }         
       errorno--;
 
+      cout << QString("%1: broadcasting size\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Bcast( &sizeoflist, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -127,6 +132,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }         
       errorno--;
          
+      cout << QString("%1: broadcast list data\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Bcast( char_files, sizeoflist + 1, MPI_CHAR, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -140,11 +146,30 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    cout << QString( "%1: %2\n" ).arg( myrank ).arg( qslt.join( ":" ) ) << flush;
 
+   QString qs_base_dir = QDir::currentDirPath();
+
+   US_Tar ust;
+
    for ( unsigned int i = myrank; i < qslt.size(); i += npes )
    {
-      cout << QString( "%1: I have job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
+      cout << QString( "%1: processing job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
+      // mkdir 
+      QString qs_run_dir = QString( "%1/tmp_%2" ).arg( qs_base_dir ).arg( i );
+      QDir qd( qs_run_dir );
+      if ( !qd.exists() )
+      {
+         qd.mkdir( qs_run_dir );
+      }
+      QDir::setCurrent( qs_run_dir );
+      
+      if ( !read_control( QString( "../%1" ).arg( qslt[ i ] ) ) )
+      {
+         cout << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }         
+      errorno--;
    }      
-
 
    MPI_Finalize();
    exit( 0 );

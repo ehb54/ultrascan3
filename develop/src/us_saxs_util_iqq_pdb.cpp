@@ -924,7 +924,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
       unsigned int total_e     = 0;
       unsigned int total_e_noh = 0;
       unsigned int current_model = i;
-      noticemsg += QString("Preparing file %1 model %2 for SAXS plot.\n").arg(current_model + 1);
+      noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
          
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
