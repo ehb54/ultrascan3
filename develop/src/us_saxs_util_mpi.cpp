@@ -25,6 +25,14 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    unsigned int sizeoflist;
    int errorno = -1;
 
+   cout << QString("%1: initial universal barrier\n" ).arg( myrank ) << flush;
+   if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+   {
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
+
    if ( myrank )
    {
       // wait until rank 0 process has prepared things;
