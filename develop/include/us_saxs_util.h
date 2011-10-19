@@ -786,6 +786,7 @@ class US_EXTERN US_Saxs_Util
       void validate_control_parameters_set_one( QStringList &checks, 
                                                 QStringList &vals );
       bool create_tar_output( QString filename );
+      bool create_tgz_output( QString filename );
       QString vector_double_to_csv( vector < double > &vd );
       bool write_output( unsigned int model, vector < double > &q, vector < double > &I );
       bool flush_output();

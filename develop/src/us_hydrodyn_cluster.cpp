@@ -542,7 +542,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          {
             QTextStream ts( &f );
             ts << out;
-            ts << QString( "TarOutput       %1_out.tar\n" ).arg( le_output_name->text() + 
+            ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
                                                                  ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
             f.close();
             editor_msg( "blue", QString("Created: %1").arg( use_file ) );
@@ -578,12 +578,17 @@ void US_Hydrodyn_Cluster::create_pkg()
 
          if ( result != TAR_OK )
          {
-            editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1") ).arg( filename ) );
+            editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
             return;
          }
          editor_msg( "blue", QString("Created: %1").arg( tar_name ) );
          US_Gzip usg;
-         usg.gzip( tar_name );
+         result = usg.gzip( tar_name );
+         if ( result != GZIP_OK )
+         {
+            editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+            return;
+         }
          QDir qd;
          QString use_targz_filename = tar_name;
          use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );

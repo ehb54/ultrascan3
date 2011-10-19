@@ -153,6 +153,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                        "outputfile|"
                        "process|"
                        "taroutput|"
+                       "tgzoutput|"
                        "remark)$"
                        );
 
@@ -189,6 +190,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "inputfile|"
                       "output|"
                       "taroutput|"
+                      "tgzoutput|"
                       "outputfile)$"
                       );
 
@@ -399,6 +401,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          if ( !create_tar_output( qsl[ 0 ] ) )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "tgzoutput" )
+      {
+         flush_output();
+         if ( !output_files.size() )
+         {
+            errormsg = QString( "Error %1 line %2 : no output files available to collect in gzipped tar file %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( qsl[ 0 ] );
+            return false;
+         }
+         if ( !create_tgz_output( qsl[ 0 ] ) )
          {
             return false;
          }
@@ -695,6 +714,7 @@ bool US_Saxs_Util::validate_control_parameters()
 
 bool US_Saxs_Util::create_tar_output( QString filename )
 {
+   errormsg = "";
    US_Tar ust;
    int result;
    QStringList list;
@@ -703,6 +723,43 @@ bool US_Saxs_Util::create_tar_output( QString filename )
    if ( result != TAR_OK )
    {
       errormsg = QString("Error: Problem creating tar archive %1").arg( filename );
+      return false;
+   }
+
+   return true;
+}
+
+bool US_Saxs_Util::create_tgz_output( QString filename )
+{
+   errormsg = "";
+   US_Tar ust;
+   int result;
+   QStringList list;
+   QString tgz_filename = filename;
+   filename.replace( QRegExp( "\\.(tgz|TGZ))$" ), ".tar" );
+   QString tar_dot_gz_filename = filename + ".gz";
+
+   result = ust.create( filename, output_files, &list );
+
+   if ( result != TAR_OK )
+   {
+      errormsg = QString("Error: Problem creating tar archive %1. %2").arg( filename ).arg( ust.explain( result ) );
+      return false;
+   }
+
+   US_Gzip usg;
+   result = usg.gzip( filename );
+   if ( result != GZIP_OK )
+   {
+      errormsg = QString("Error: Problem gzipping tar archive %1. %2").arg( filename ).arg( usg.explain( result ) );
+      return false;
+   }
+
+   QDir qd;
+   qd.remove( tgz_filename );
+   if ( !qd.rename( tar_dot_gz_filename, tgz_filename ) )
+   {
+      errormsg = QString("Error renaming %1 to %2").arg( tar_dot_gz_filename ).arg( tgz_filename );
       return false;
    }
 
