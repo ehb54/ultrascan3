@@ -216,6 +216,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_mw.cpp \
   src/us_hydrodyn_saxs_options.cpp \
   src/us_hydrodyn_saxs_plots.cpp \
+  src/us_hydrodyn_saxs_pr.cpp \
   src/us_hydrodyn_saxs_residuals.cpp \
   src/us_hydrodyn_saxs_screen.cpp \
   src/us_hydrodyn_saxs_search.cpp \
@@ -254,6 +255,7 @@ SOURCES += \
   src/us_sa2dbase.cpp \
   src/us_sassoc.cpp \
   src/us_saxs_util.cpp \
+  src/us_saxs_util_extern.cpp \
   src/us_saxs_util_iqq.cpp \
   src/us_saxs_util_iqq_pdb.cpp \
   src/us_saxs_util_loads.cpp \

@@ -2805,6 +2805,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          (*remember_mw)[use_filename] = mw;
          (*remember_mw_source)[use_filename] = "loaded from sprr file";
       }         
+      check_pr_grid( r, pr );
       plot_one_pr(r, pr, use_filename);
    }
 }

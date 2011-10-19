@@ -488,6 +488,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool external_running;
 
+      void check_pr_grid( vector < double > &r, vector < double > &pr );
+
    private slots:
 
       void foxs_readFromStdout();

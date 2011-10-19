@@ -1007,17 +1007,7 @@ void US_Hydrodyn_Batch::update_enables()
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
    pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
    cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
-   pb_cluster->setEnabled(
-                          count_selected &&
-                          // later we will add some of these other options,
-                          // right now, just iqq
-                          !cb_somo->isChecked() && 
-                          !cb_grid->isChecked() && 
-                          !cb_hydro->isChecked() && 
-                          !cb_prr->isChecked() && 
-                          cb_iqq->isChecked() &&
-                          !cb_compute_iq_avg->isChecked() 
-                          );
+   pb_cluster->setEnabled( true );
    set_counts();
 }
 

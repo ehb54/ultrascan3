@@ -790,6 +790,12 @@ class US_EXTERN US_Saxs_Util
       bool write_output( unsigned int model, vector < double > &q, vector < double > &I );
       bool flush_output();
       unsigned int write_output_count;
+
+      QString      env_ultrascan;
+      bool         run_saxs_iq_foxs();
+      bool         run_saxs_iq_crysol();
+      bool         run_sans_iq_cryson();
+      bool         load_saxs( QString );
 };
 
 #endif

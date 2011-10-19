@@ -205,6 +205,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void editor_msg( QString color, QString msg );
       QString iqq_suffix();
       bool activate_saxs_search_window();
+
+      QString cluster_no_of_jobs;
+      QString cluster_target_datafile;
       
    public :
       void add_file( QString filename );

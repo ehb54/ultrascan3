@@ -1,6 +1,7 @@
 !include ( ../cmdline.pri ) error( "../cmdline.pri missing.  Aborting..." )
 
 SOURCES		+= ../src/us_saxs_util.cpp
+SOURCES		+= ../src/us_saxs_util_extern.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_iqq.cpp
 SOURCES		+= ../src/us_saxs_util_iqq_pdb.cpp

@@ -11,6 +11,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
    saxs_I_for_csv        .clear();
    write_output_count     = 0;
    
+   env_ultrascan = getenv("ULTRASCAN");
+   cout << "$ULTRASCAN = " << env_ultrascan << endl;
 
    QFile f( controlfile );
    errormsg = "";

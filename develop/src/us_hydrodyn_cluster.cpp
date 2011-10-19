@@ -26,7 +26,37 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       }
    }
 
+   bool create_enabled =
+      selected_files.size() &&
+      // later we will add some of these other options,
+      // right now, just iqq
+      !batch_window->cb_somo->isChecked() && 
+      !batch_window->cb_grid->isChecked() && 
+      !batch_window->cb_hydro->isChecked() && 
+      !batch_window->cb_prr->isChecked() && 
+      batch_window->cb_iqq->isChecked() &&
+      !batch_window->cb_compute_iq_avg->isChecked();
+
    setupGUI();
+
+   pb_set_target->setEnabled( create_enabled );
+   le_no_of_jobs->setEnabled( create_enabled );
+   if ( batch_window->cluster_no_of_jobs.toUInt() &&
+        batch_window->cluster_no_of_jobs.toUInt() <= selected_files.size() )
+   {
+      le_no_of_jobs->setText( batch_window->cluster_no_of_jobs );
+   }
+   le_target_file->setText( batch_window->cluster_target_datafile );
+   
+   le_output_name->setEnabled( create_enabled );
+   pb_create_pkg->setEnabled( create_enabled );
+
+   if ( !create_enabled )
+   {
+      editor_msg( "dark red", tr( "Notice: you must have files selected in batch model\n"
+                                  "and only Compute I(q) selected to create a job.\n"
+                                  "Future updates will provide additional functionality." ) );
+   }
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir dir1( pkg_dir );
@@ -77,20 +107,20 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_target_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lbl_jobs_per = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
-   lbl_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_jobs_per->setMinimumHeight(minHeight1);
-   lbl_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_jobs_per->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   lbl_no_of_jobs = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
+   lbl_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_no_of_jobs->setMinimumHeight(minHeight1);
+   lbl_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_no_of_jobs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    QValidator *qv = new QIntValidator( 1, selected_files.size(), this );
-   le_jobs_per = new QLineEdit(this, "csv_filename Line Edit");
-   le_jobs_per->setText("1");
-   le_jobs_per->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_jobs_per->setMinimumWidth(150);
-   le_jobs_per->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_jobs_per->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_jobs_per->setValidator( qv );
+   le_no_of_jobs = new QLineEdit(this, "csv_filename Line Edit");
+   le_no_of_jobs->setText("1");
+   le_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_no_of_jobs->setMinimumWidth(150);
+   le_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_no_of_jobs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_no_of_jobs->setValidator( qv );
 
    lbl_output_name = new QLabel(tr("Output base name (job identifier)"), this);
    lbl_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -110,6 +140,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_create_pkg->setMinimumHeight(minHeight1);
    pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
+
+   pb_load_results = new QPushButton(tr("Load results"), this);
+   pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_results->setMinimumHeight(minHeight1);
+   pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
    
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -153,12 +189,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_target->addWidget ( le_target_file );
    hbl_target->addSpacing( 4 );
 
-   QHBoxLayout *hbl_jobs_per = new QHBoxLayout( 0 );
-   hbl_jobs_per->addSpacing( 4 );
-   hbl_jobs_per->addWidget ( lbl_jobs_per );
-   hbl_jobs_per->addSpacing( 4 );
-   hbl_jobs_per->addWidget ( le_jobs_per );
-   hbl_jobs_per->addSpacing( 4 );
+   QHBoxLayout *hbl_no_of_jobs = new QHBoxLayout( 0 );
+   hbl_no_of_jobs->addSpacing( 4 );
+   hbl_no_of_jobs->addWidget ( lbl_no_of_jobs );
+   hbl_no_of_jobs->addSpacing( 4 );
+   hbl_no_of_jobs->addWidget ( le_no_of_jobs );
+   hbl_no_of_jobs->addSpacing( 4 );
 
    QHBoxLayout *hbl_output_name = new QHBoxLayout( 0 );
    hbl_output_name->addSpacing( 4 );
@@ -170,6 +206,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    QHBoxLayout *hbl_create = new QHBoxLayout( 0 );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create_pkg );
+   hbl_create->addSpacing( 4 );
+   hbl_create->addWidget ( pb_load_results );
    hbl_create->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
@@ -189,7 +227,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_target );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_jobs_per );
+   background->addLayout ( hbl_no_of_jobs );
    background->addSpacing( 4 );
    background->addLayout ( hbl_output_name );
    background->addSpacing( 4 );
@@ -215,6 +253,9 @@ void US_Hydrodyn_Cluster::help()
 
 void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
 {
+   batch_window->cluster_no_of_jobs      = le_no_of_jobs->text();
+   batch_window->cluster_target_datafile = le_target_file->text();
+
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -243,11 +284,11 @@ void US_Hydrodyn_Cluster::create_pkg()
    QString unimplemented;
    QStringList base_source_files;
 
-   if ( !le_jobs_per->text().toUInt() )
+   if ( !le_no_of_jobs->text().toUInt() )
    {
-      le_jobs_per->setText( "1" );
+      le_no_of_jobs->setText( "1" );
    }
-   bool use_extension =  le_jobs_per->text().toUInt() != 1;
+   bool use_extension =  le_no_of_jobs->text().toUInt() != 1;
 
    // create the output file
    QString filename = 
@@ -434,13 +475,13 @@ void US_Hydrodyn_Cluster::create_pkg()
 
    // cout << base;
 
-   // now loop through selected, jumping every le_jobs_per->text()->toUInt()
+   // now loop through selected, jumping every le_no_of_jobs->text()->toUInt()
    // for a new extension
    
    QString      out = base;
    unsigned int write_count = 0;
-   unsigned int max_jobs_per = (unsigned int) ceil( selected_files.size() / (double) le_jobs_per->text().toUInt() );
-   cout << "max jobs per " << max_jobs_per << endl;
+   unsigned int max_no_of_jobs = (unsigned int) ceil( selected_files.size() / (double) le_no_of_jobs->text().toUInt() );
+   cout << "max jobs per " << max_no_of_jobs << endl;
    unsigned int extension_count = selected_files.size();
    unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
 
@@ -462,7 +503,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       source_files << selected_files[ i ];
       out += "Process\n";
-      if ( !( ( i + 1 ) % max_jobs_per ) )
+      if ( !( ( i + 1 ) % max_no_of_jobs ) )
       {
          write_count++;
          QString ext = "";
@@ -557,11 +598,12 @@ void US_Hydrodyn_Cluster::create_pkg()
    }
    remove_files( base_remove_file_list );
    cout << "written:" << write_count << endl;
-   if ( write_count != le_jobs_per->text().toUInt() )
+   if ( write_count != le_no_of_jobs->text().toUInt() )
    {
       editor_msg( "dark red", QString( tr( "Notice: the actually number of jobs created %1 is less than requested %2\n"
-                                           "This is due to the fact that the selected files were evenly distributed among the jobs" ) ).arg( write_count ).arg( le_jobs_per->text().toUInt() ) );
+                                           "This is due to the fact that the selected files were evenly distributed among the jobs" ) ).arg( write_count ).arg( le_no_of_jobs->text().toUInt() ) );
    }
+   editor_msg( "black", tr( "Package complete" ) );
 }
 
 void US_Hydrodyn_Cluster::clear_display()
@@ -666,4 +708,10 @@ bool US_Hydrodyn_Cluster::copy_files_to_pkg_dir( QStringList &filenames )
       fo.close();
    }
    return true;
+}
+
+void US_Hydrodyn_Cluster::load_results()
+{
+   // open cluster directory and find *_out.tgz
+   // process and make unified csvs etc and load into standard somo/saxs directory
 }

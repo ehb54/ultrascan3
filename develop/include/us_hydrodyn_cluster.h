@@ -29,7 +29,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
    public:
       US_Hydrodyn_Cluster(
-                          void *us_hydrodyn, 
+                          void *us_hydrodyn,
                           QWidget *p = 0, 
                           const char *name = 0
                           );
@@ -46,13 +46,14 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QPushButton   *pb_set_target;
       QLineEdit     *le_target_file;
 
-      QLabel        *lbl_jobs_per;
-      QLineEdit     *le_jobs_per;
+      QLabel        *lbl_no_of_jobs;
+      QLineEdit     *le_no_of_jobs;
 
       QLabel        *lbl_output_name;
       QLineEdit     *le_output_name;
 
       QPushButton   *pb_create_pkg;
+      QPushButton   *pb_load_results;
 
       QFont         ft;
       QTextEdit     *editor;
@@ -80,7 +81,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void setupGUI();
    
       void set_target();
+
       void create_pkg();
+      void load_results();
 
       void clear_display();
       void update_font();
