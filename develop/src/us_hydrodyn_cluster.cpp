@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
+#include "../include/us_hydrodyn_cluster_results.h"
 
 #define SLASH QDir::separator()
 
@@ -729,4 +730,13 @@ void US_Hydrodyn_Cluster::load_results()
 {
    // open cluster directory and find *_out.tgz
    // process and make unified csvs etc and load into standard somo/saxs directory
+   US_Hydrodyn_Cluster_Results *hcr = 
+      new US_Hydrodyn_Cluster_Results(
+                                      us_hydrodyn,
+                                      this );
+   if ( hcr->files.size() )
+   {
+      hcr->exec();
+   }
+   delete hcr;
 }

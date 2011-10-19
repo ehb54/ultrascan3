@@ -181,6 +181,7 @@ SOURCES += \
   src/us_hydrodyn_bd_options.cpp \
   src/us_hydrodyn_bd_load_results_opts.cpp \
   src/us_hydrodyn_cluster.cpp \
+  src/us_hydrodyn_cluster_results.cpp \
   src/us_hydrodyn_comparative.cpp \
   src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_csv_viewer.cpp \
@@ -420,6 +421,7 @@ HEADERS += \
   include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_cluster.h \
+  include/us_hydrodyn_cluster_results.h \
   include/us_hydrodyn_comparative.h \
   include/us_hydrodyn_csv_viewer.h \
   include/us_hydrodyn_dammin_opts.h \
