@@ -191,11 +191,16 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       // collect result files
       for ( unsigned int j = 0; j < job_output_files.size(); j++ )
       {
-         full_output_list << job_output_files[ j ];
+         full_output_list << QString( "tmp_%1/" ).arg( i ) + job_output_files[ j ];
       }
    } 
 
    cout << QString("%1: end of computation barrier\n" ).arg( myrank ) << flush;
+   if ( myrank >= qslt.size() )
+   {
+      full_output_list << "null_remove";
+   }
+
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
       MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -205,7 +210,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    // now collect results
 
-   QString qs_files = full_output_list.gres( QRegExp( "^" ), QString( "tmp_%1/" ).arg( myrank ) ).join( "\n" ).ascii();
+   QString qs_files = full_output_list.join( "\n" ).ascii();
    sizeoflist = qs_files.length();
 
    unsigned int max_individual_size;
@@ -224,6 +229,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    char gathered_output_files[ ( max_individual_size + 1 ) * npes ];
 
+   cout << QString("%1: Gather results\n" ).arg( myrank ) << flush;
    if ( MPI_SUCCESS != MPI_Gather( char_output_files, max_individual_size + 1, MPI_CHAR, 
                                    gathered_output_files, max_individual_size + 1, MPI_CHAR,
                                    0, MPI_COMM_WORLD ) )
@@ -232,6 +238,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       exit( errorno );
    }         
    errorno--;
+   cout << QString("%1: Gather complete\n" ).arg( myrank ) << flush;
    
    // now root should have all the data
    if ( !myrank )
@@ -244,7 +251,10 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                                     .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );
          for ( unsigned int j = 0; j < qslt.size(); j++ )
          {
-            qsl_final_files << qslt[ j ];
+            if ( qslt[ j ] != "null_remove" )
+            {
+               qsl_final_files << qslt[ j ];
+            }
          }
       }
 
