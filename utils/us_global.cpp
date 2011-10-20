@@ -1,5 +1,6 @@
 //! \file us_global.cpp
 #include "us_global.h"
+#include <QtCore>
 #include <QTextStream>
 
 US_Global::US_Global()
@@ -16,21 +17,28 @@ US_Global::US_Global()
 
   sharedMemory.setKey( key );
 
-  if ( ! sharedMemory.attach() )
-  {
-    if ( sharedMemory.create( sizeof global ) )
-    {
-      valid = true;
-      set_global_position( QPoint( 50, 50 ) );
-      setPasswd( "" );
-      // Add an additional global initialization here
-    }
-    else
-      qDebug( "Failure to create shared memory" );
-  }
-  else
+  if ( sharedMemory.attach() )
   { 
     valid = true;
+  }
+
+  else if ( sharedMemory.error() == QSharedMemory::OutOfResources )
+  {
+    qDebug() << "Shared memory out of resources";
+  }
+
+  else if ( sharedMemory.create( sizeof global ) )
+  {
+    valid = true;
+    set_global_position( QPoint( 50, 50 ) );
+    setPasswd( "" );
+    // Add an additional global initialization here
+  }
+
+  else
+  {
+    qDebug( "Failure to create shared memory" );
+    qDebug() << sharedMemory.errorString();
   }
 }
 

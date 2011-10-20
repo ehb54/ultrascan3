@@ -165,6 +165,7 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    {
        db_errno = NOT_CONNECTED;
        error = "US_DB2 error: DB not configured";
+       err = error;
        return false;
    }
 
@@ -200,7 +201,10 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
    catch ( std::exception &e )
    {
+      db_errno = NOT_CONNECTED;
       error = e.what();
+      err = "US_DB2: uncaught exception " + error;
+      return false;
    }
 
    db_errno = OK;
@@ -210,6 +214,8 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    {
       db_errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
+      err = error;
+      return false;
    }
 
    email  = defaultDB.at( 6 );  // Save for later

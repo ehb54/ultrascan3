@@ -71,4 +71,6 @@ macx {
   LIBS        += -framework QtOpenGL
   MYSQLDIR     = /usr/local/mysql
   MYSQLPATH    = $$MYSQLDIR
+  LIBS        += -lmysqlclient -L$$MYSQLDIR/lib
+  INCLUDEPATH += $$MYSQLDIR/include
 }
