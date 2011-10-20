@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
+#include "../include/us_hydrodyn_cluster_submit.h"
 #include "../include/us_hydrodyn_cluster_results.h"
 
 #define SLASH QDir::separator()
@@ -47,10 +48,14 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    {
       le_no_of_jobs->setText( batch_window->cluster_no_of_jobs );
    }
-   le_target_file->setText( batch_window->cluster_target_datafile );
+   le_target_file    ->setText   ( batch_window->cluster_target_datafile );
+   le_output_name    ->setText   ( batch_window->cluster_output_name.isEmpty() ?
+                                   "job" : batch_window->cluster_output_name );
+   cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
    
    le_output_name->setEnabled( create_enabled );
-   pb_create_pkg->setEnabled( create_enabled );
+   pb_create_pkg ->setEnabled( create_enabled );
+   cb_for_mpi    ->setEnabled( create_enabled );
 
    if ( !create_enabled )
    {
@@ -101,7 +106,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    connect(pb_set_target, SIGNAL(clicked()), SLOT(set_target()));
 
    le_target_file = new QLineEdit(this, "csv_filename Line Edit");
-   le_target_file->setText("");
+   le_target_file->setText( "" );
    le_target_file->setReadOnly( true );
    le_target_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_file->setMinimumWidth(150);
@@ -116,7 +121,7 @@ void US_Hydrodyn_Cluster::setupGUI()
 
    QValidator *qv = new QIntValidator( 1, selected_files.size(), this );
    le_no_of_jobs = new QLineEdit(this, "csv_filename Line Edit");
-   le_no_of_jobs->setText("1");
+   le_no_of_jobs->setText( "1" );
    le_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_no_of_jobs->setMinimumWidth(150);
    le_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -130,18 +135,31 @@ void US_Hydrodyn_Cluster::setupGUI()
    lbl_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_output_name = new QLineEdit(this, "csv_filename Line Edit");
-   le_output_name->setText("job");
+   le_output_name->setText( "job" );
    le_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_output_name->setMinimumWidth(150);
    le_output_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect( le_output_name, SIGNAL( textChanged( const QString &) ), SLOT( update_output_name( const QString & ) ) );
 
+   cb_for_mpi = new QCheckBox(this);
+   cb_for_mpi->setText(tr(" Package for parallel job submission"));
+   cb_for_mpi->setEnabled(true);
+   cb_for_mpi->setChecked(false);
+   cb_for_mpi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
    pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_pkg->setMinimumHeight(minHeight1);
    pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
+
+   pb_submit_pkg = new QPushButton(tr("Submit jobs for processing"), this);
+   pb_submit_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_submit_pkg->setMinimumHeight(minHeight1);
+   pb_submit_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_submit_pkg, SIGNAL(clicked()), SLOT(submit_pkg()));
 
    pb_load_results = new QPushButton(tr("Load results"), this);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -209,6 +227,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create_pkg );
    hbl_create->addSpacing( 4 );
+   hbl_create->addWidget ( pb_submit_pkg );
+   hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_load_results );
    hbl_create->addSpacing( 4 );
 
@@ -232,6 +252,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addLayout ( hbl_no_of_jobs );
    background->addSpacing( 4 );
    background->addLayout ( hbl_output_name );
+   background->addSpacing( 4 );
+   background->addWidget ( cb_for_mpi );
    background->addSpacing( 4 );
    background->addLayout ( hbl_create );
    background->addSpacing( 4 );
@@ -257,6 +279,8 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
 {
    batch_window->cluster_no_of_jobs      = le_no_of_jobs->text();
    batch_window->cluster_target_datafile = le_target_file->text();
+   batch_window->cluster_output_name     = le_output_name->text();
+   batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -298,34 +322,48 @@ void US_Hydrodyn_Cluster::create_pkg()
       pkg_dir + SLASH + le_output_name->text() :
       le_output_name->text();
 
-   if ( use_extension )
+   if ( cb_for_mpi->isChecked() )
    {
-      QString ext  =  "_p1.tgz";
-      QString targz_filename = filename + ext;
-      if ( QFile::exists( targz_filename ) )
+      QString tar_filename = filename + ".tar";
+      if ( QFile::exists( tar_filename ) )
       {
-         QString path =  QFileInfo( targz_filename ).dirPath() + SLASH;
-         QString name =  QFileInfo( targz_filename ).fileName().replace( QRegExp( "\\_p1.tgz$" ), "" );
-         targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( 
-                                                                      &path, &name, &ext, 0 );
-         filename = targz_filename;
-         filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
+         tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename );
+         filename = tar_filename;
+         filename.replace( QRegExp( "\\.tar$" ), "" );
          le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
                                   QFileInfo( filename ).fileName() : 
                                   filename );
       }
    } else {
-      QString targz_filename = filename + ".tgz";
-      if ( QFile::exists( targz_filename ) )
+      if ( use_extension )
       {
-         targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename );
-         filename = targz_filename;
-         filename.replace( QRegExp( "\\.tgz$" ), "" );
-         le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
-                                  QFileInfo( filename ).fileName() : 
-                                  filename );
+         QString ext  =  "_p1.tgz";
+         QString targz_filename = filename + ext;
+         if ( QFile::exists( targz_filename ) )
+         {
+            QString path =  QFileInfo( targz_filename ).dirPath() + SLASH;
+            QString name =  QFileInfo( targz_filename ).fileName().replace( QRegExp( "\\_p1.tgz$" ), "" );
+            targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( 
+                                                                         &path, &name, &ext, 0 );
+            filename = targz_filename;
+            filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
+            le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+                                     QFileInfo( filename ).fileName() : 
+                                     filename );
+         }
+      } else {
+         QString targz_filename = filename + ".tgz";
+         if ( QFile::exists( targz_filename ) )
+         {
+            targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename );
+            filename = targz_filename;
+            filename.replace( QRegExp( "\\.tgz$" ), "" );
+            le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+                                     QFileInfo( filename ).fileName() : 
+                                     filename );
+         }
       }
-   }
+   } 
 
    QString base_dir = QFileInfo( filename ).dirPath();
    if ( !QDir::setCurrent( base_dir ) )
@@ -509,7 +547,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    }
 
    QStringList source_files;
-
+   QStringList dest_files;
 
    for ( unsigned int i = 0; i < selected_files.size(); i++ )
    {
@@ -546,7 +584,7 @@ void US_Hydrodyn_Cluster::create_pkg()
             ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
                                                                  ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
             f.close();
-            editor_msg( "blue", QString("Created: %1").arg( use_file ) );
+            editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
          }
 
          // copy ne files to base_dir
@@ -582,7 +620,7 @@ void US_Hydrodyn_Cluster::create_pkg()
             editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
             return;
          }
-         editor_msg( "blue", QString("Created: %1").arg( tar_name ) );
+         editor_msg( "dark gray", QString("Created: %1").arg( tar_name ) );
          US_Gzip usg;
          result = usg.gzip( tar_name );
          if ( result != GZIP_OK )
@@ -600,19 +638,118 @@ void US_Hydrodyn_Cluster::create_pkg()
                         .arg( QFileInfo( tar_name + ".gz" ).fileName() )
                         .arg( QFileInfo( use_targz_filename ).fileName() ) );
          }
-            
-         editor_msg( "blue", QString("Gzipped: %1").arg( use_targz_filename ) );
+
+         dest_files << use_targz_filename;
+
+         editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
          // clean up droppings
          if ( !remove_files( remove_file_list ) )
          {
             return;
          }
+         
 
          source_files.clear();
 
          out = base;
       }
    }
+   if ( source_files.size() )
+   {
+      write_count++;
+      QString ext = "";
+      if ( use_extension )
+      {
+         ext = QString("%1").arg( write_count );
+         while ( ext.length() < extension_count_length )
+         {
+            ext = "0" + ext;
+         }
+      }
+      QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
+      // if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
+      // {
+      // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
+      // }
+      cout << use_file << endl;
+      QFile f( use_file );
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << out;
+         ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
+                                                              ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
+         f.close();
+         editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
+      }
+      
+      // copy ne files to base_dir
+      if ( !copy_files_to_pkg_dir( source_files ) )
+      {
+         editor_msg( "red", errormsg );
+         return;
+      }
+
+      // build tar archive
+      QStringList qsl;
+      QStringList to_tar_list;
+      QStringList remove_file_list;
+      to_tar_list << QFileInfo( use_file ).fileName();
+      for ( unsigned int i = 0; i <  base_source_files.size(); i++ )
+      {
+         to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
+      }
+      for ( unsigned int i = 0; i < source_files.size(); i++ )
+      {
+         to_tar_list << QFileInfo( source_files[ i ] ).fileName();
+         remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+      }
+      remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
+      US_Tar ust;
+      QString tar_name = use_file + ".tar";
+      int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &qsl );
+      cout << "tar_name:" << tar_name << endl;
+      cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+      
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
+         return;
+      }
+      editor_msg( "dark gray", QString("Created: %1").arg( tar_name ) );
+      US_Gzip usg;
+      result = usg.gzip( tar_name );
+      if ( result != GZIP_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+         return;
+      }
+      QDir qd;
+      QString use_targz_filename = tar_name;
+      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      qd.remove( use_targz_filename );
+      if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+      {
+         editor_msg( "red", QString("Error renaming %1 to %2")
+                     .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                     .arg( QFileInfo( use_targz_filename ).fileName() ) );
+      }
+      
+      dest_files << use_targz_filename;
+      
+      editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
+      // clean up droppings
+      if ( !remove_files( remove_file_list ) )
+      {
+         return;
+      }
+      
+      
+      source_files.clear();
+      
+      out = base;
+   }
+
    QStringList base_remove_file_list;
    for ( unsigned int i = 0; i < base_source_files.size(); i++ )
    {
@@ -622,8 +759,31 @@ void US_Hydrodyn_Cluster::create_pkg()
    cout << "written:" << write_count << endl;
    if ( write_count != le_no_of_jobs->text().toUInt() )
    {
-      editor_msg( "dark red", QString( tr( "Notice: the actually number of jobs created %1 is less than requested %2\n"
+      editor_msg( "dark red", QString( tr( "Notice: the actually number of jobs created (%1) is less than requested (%2)\n"
                                            "This is due to the fact that the selected files were evenly distributed among the jobs" ) ).arg( write_count ).arg( le_no_of_jobs->text().toUInt() ) );
+   }
+   if ( cb_for_mpi->isChecked() )
+   {
+      QString tarout = le_output_name->text() + ".tar";
+      US_Tar ust;
+      QStringList qsl;
+      int result = ust.create( QFileInfo( tarout ).filePath(), dest_files, &qsl );
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( tarout ).arg( ust.explain( result ) ) );
+         return;
+      }
+      if ( !remove_files( dest_files ) )
+      {
+         return;
+      }
+      editor_msg( "blue", QString( tr( "Package: %1 created" ) ).arg( tarout ) );
+   } else {
+      editor_msg( "blue", 
+                  dest_files
+                  .gres( QRegExp( "^" ), tr( "Package: " ) )
+                  .gres( QRegExp( "$" ), tr( " created" ) )
+                  .join( "\n" ) );
    }
    editor_msg( "black", tr( "Package complete" ) );
 }
@@ -685,7 +845,7 @@ bool US_Hydrodyn_Cluster::remove_files( QStringList &filenames )
          editor_msg("red", QString(tr("Notice: remove of temporary file %1 failed")).arg( filenames[ i ] ));
          return false;
       } else {
-         // editor_msg("black", QString(tr("Removed temporary file %1")).arg( filenames[ i ] ));
+         // editor_msg("dark gray", QString(tr("Removed temporary file %1")).arg( filenames[ i ] ));
       } 
    }
    return true;
@@ -719,7 +879,7 @@ bool US_Hydrodyn_Cluster::copy_files_to_pkg_dir( QStringList &filenames )
          return false;
       }
 
-      editor_msg( "black", QString( tr( "Copying %1 to %2\n" ) ).arg( src ).arg( dest ) );
+      editor_msg( "dark gray", QString( tr( "Copying %1 to %2\n" ) ).arg( src ).arg( dest ) );
       QDataStream dsi( &fi );
       QDataStream dso( &fo );
       while ( !dsi.atEnd() )
@@ -730,6 +890,21 @@ bool US_Hydrodyn_Cluster::copy_files_to_pkg_dir( QStringList &filenames )
       fo.close();
    }
    return true;
+}
+
+void US_Hydrodyn_Cluster::submit_pkg()
+{
+   // open cluster directory and find *_out.tgz
+   // process and make unified csvs etc and load into standard somo/saxs directory
+   US_Hydrodyn_Cluster_Submit *hcs = 
+      new US_Hydrodyn_Cluster_Submit(
+                                      us_hydrodyn,
+                                      this );
+   if ( hcs->files.size() )
+   {
+      hcs->exec();
+   }
+   delete hcs;
 }
 
 void US_Hydrodyn_Cluster::load_results()

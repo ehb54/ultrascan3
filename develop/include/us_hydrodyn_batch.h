@@ -208,6 +208,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       QString cluster_no_of_jobs;
       QString cluster_target_datafile;
+      QString cluster_output_name;
+      bool    cluster_for_mpi;
       
    public :
       void add_file( QString filename );

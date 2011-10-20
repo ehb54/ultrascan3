@@ -79,6 +79,8 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, batch->width, batch->height);
+   cluster_output_name = "job";
+   cluster_for_mpi = false;
 }
 
 US_Hydrodyn_Batch::~US_Hydrodyn_Batch()

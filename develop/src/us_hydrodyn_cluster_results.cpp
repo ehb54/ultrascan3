@@ -22,8 +22,13 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
 
    // traverse directory and build up files
    QDir qd;
-   files = qd.entryList( "*_out.tgz" );
-
+   QStringList tgz_files = qd.entryList( "*_out.tgz" );
+   QStringList tar_files = qd.entryList( "*_out.tar" );
+   files = QStringList::split( "\n", 
+                               tgz_files.join("\n") + 
+                               ( tgz_files.size() ? "\n" : "" ) +
+                               tar_files.join("\n") );
+   
    if ( !files.size() )
    {
       QMessageBox::information( this, 
