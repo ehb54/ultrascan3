@@ -2734,7 +2734,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
 {
    QString fname = pdb_file;
    fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
-      + QString( "_%1-h.pdb" ).arg( current_model + 1 );
+      + QString( "_%1-c%2-h.pdb" ).arg( current_model + 1 )
+      .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) );
    if ( !overwrite && QFile::exists( fname ) )
    {
       fname = fileNameCheck( fname );
