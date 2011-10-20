@@ -82,6 +82,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
    
       void set_target();
 
+      void update_output_name( const QString & );
+
       void create_pkg();
       void load_results();
 

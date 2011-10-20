@@ -552,6 +552,7 @@ class US_EXTERN US_Saxs_Util
 #if defined( USE_MPI )
       bool run_iq_mpi  ( QString controlfile );
 #endif
+      QStringList      job_output_files;
 
    private:
 

@@ -8,6 +8,8 @@ extern int myrank;
 
 bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 {
+   QString original_controlfile = controlfile;
+
    errormsg = "";
    if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
    {
@@ -24,6 +26,12 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    QStringList qslt;
    unsigned int sizeoflist;
    int errorno = -1;
+
+   // this first barrier seems useless, but there seems to be an issue
+   // where if one process takes awhile to get started, then the barrier
+   // gets stuck
+   // this was noted on mpich2-1.4.1p1 &
+   // openmpi2-1.4.3
 
    cout << QString("%1: initial universal barrier\n" ).arg( myrank ) << flush;
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
@@ -158,6 +166,8 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    US_Tar ust;
 
+   QStringList full_output_list;
+
    for ( unsigned int i = myrank; i < qslt.size(); i += npes )
    {
       cout << QString( "%1: processing job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
@@ -177,7 +187,92 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          exit( errorno );
       }         
       errorno--;
-   }      
+
+      // collect result files
+      for ( unsigned int j = 0; j < job_output_files.size(); j++ )
+      {
+         full_output_list << job_output_files[ j ];
+      }
+   } 
+
+   cout << QString("%1: end of computation barrier\n" ).arg( myrank ) << flush;
+   if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+   {
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
+
+   // now collect results
+
+   QString qs_files = full_output_list.gres( QRegExp( "^" ), QString( "tmp_%1/" ).arg( myrank ) ).join( "\n" ).ascii();
+   sizeoflist = qs_files.length();
+
+   unsigned int max_individual_size;
+
+   cout << QString("%1: All reduce to find max size\n" ).arg( myrank ) << flush;
+   if ( MPI_SUCCESS != MPI_Allreduce( &sizeoflist, &max_individual_size, 1, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD ) )
+   {
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
+   cout << QString("%1: My size %2 max size %3\n" ).arg( myrank ).arg( sizeoflist ).arg( max_individual_size ) << flush;
+
+   char char_output_files[ max_individual_size + 1 ];
+   strncpy( char_output_files, qs_files, sizeoflist + 1 );
+
+   char gathered_output_files[ ( max_individual_size + 1 ) * npes ];
+
+   if ( MPI_SUCCESS != MPI_Gather( char_output_files, max_individual_size + 1, MPI_CHAR, 
+                                   gathered_output_files, max_individual_size + 1, MPI_CHAR,
+                                   0, MPI_COMM_WORLD ) )
+   {
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
+   
+   // now root should have all the data
+   if ( !myrank )
+   {
+      QStringList qsl_final_files;
+      
+      for ( unsigned int i = 0; i < npes; i++ )
+      {
+         qslt = QStringList::split( "\n", QString( "%1" )
+                                    .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );
+         for ( unsigned int j = 0; j < qslt.size(); j++ )
+         {
+            qsl_final_files << qslt[ j ];
+         }
+      }
+
+      cout << QString( "%1: Final output files %2\n" ).arg( myrank ).arg( qsl_final_files.join( ":" ) ) << flush;
+
+      // create results.tar
+
+      QString results_file = original_controlfile;
+      results_file.replace( QRegExp( "\\.(tgz|TGZ)$" ), "" );
+      results_file += "_out.tar";
+
+      QStringList list;
+      
+      QDir::setCurrent( qs_base_dir );
+
+      US_Tar ust;
+      
+      int result = ust.create( results_file, qsl_final_files, &list );
+
+      if ( result != TAR_OK )
+      {
+         cout << QString("Error: Problem creating tar archive %1 %2\n").arg( results_file ).arg( ust.explain( result ) ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      
+      cout << QString( "%1: results file %2\n" ).arg( myrank ).arg( results_file );
+   }
 
    MPI_Finalize();
    exit( 0 );

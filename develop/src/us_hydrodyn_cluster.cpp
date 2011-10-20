@@ -135,6 +135,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    le_output_name->setMinimumWidth(150);
    le_output_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_output_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect( le_output_name, SIGNAL( textChanged( const QString &) ), SLOT( update_output_name( const QString & ) ) );
 
    pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
    pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -744,4 +745,14 @@ void US_Hydrodyn_Cluster::load_results()
       hcr->exec();
    }
    delete hcr;
+}
+
+void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
+{
+   if ( cqs.contains( "_out", false ) )
+   {
+      QString qs = cqs;
+      qs.replace( "_out", "", false );
+      le_output_name->setText( qs );
+   }
 }

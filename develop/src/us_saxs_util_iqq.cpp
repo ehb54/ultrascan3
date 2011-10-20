@@ -4,12 +4,13 @@
 bool US_Saxs_Util::read_control( QString controlfile )
 {
    output_files          .clear();
+   job_output_files      .clear();
    saxs_inputfile_for_csv.clear();
    saxs_model_for_csv    .clear();
    saxs_method_for_csv   .clear();
    saxs_q_for_csv        .clear();
    saxs_I_for_csv        .clear();
-   write_output_count     = 0;
+   write_output_count    = 0;
    
    env_ultrascan = getenv("ULTRASCAN");
    cout << "$ULTRASCAN = " << env_ultrascan << endl;
@@ -706,6 +707,7 @@ bool US_Saxs_Util::create_tar_output( QString filename )
       errormsg = QString("Error: Problem creating tar archive %1").arg( filename );
       return false;
    }
+   job_output_files << filename;
 
    return true;
 }
@@ -743,6 +745,7 @@ bool US_Saxs_Util::create_tgz_output( QString filename )
       errormsg = QString("Error renaming %1 to %2").arg( tar_dot_gz_filename ).arg( tgz_filename );
       return false;
    }
+   job_output_files << tgz_filename;
 
    return true;
 }
