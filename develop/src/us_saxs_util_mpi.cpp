@@ -11,15 +11,15 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    QString original_controlfile = controlfile;
 
    errormsg = "";
-   if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
    {
-      errormsg = QString( "controlfile must be .tgz, was %1" ).arg( controlfile );
+      errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
       return false;
    }
 
    if ( !QFile::exists( controlfile ) )
    {
-      errormsg = "controlfile must be .tgz";
+      errormsg = QString( "controlfile %1 does not exist" ).arg( controlfile );
       return false;
    }
 
@@ -74,34 +74,38 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    } else {
       cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
       
-      // gunzip controlfile, must be renamed for us_gzip
-
-      // rename
       QString dest = controlfile;
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
-      QDir qd;
-      qd.remove( dest );
-      if ( !qd.rename( controlfile, dest ) )
+      int result;
+      if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
       {
-         cout << QString("Error renaming %1 to %2\n").arg( controlfile ).arg( dest );
-         MPI_Abort( MPI_COMM_WORLD, errorno );
-         exit( errorno );
+         // gunzip controlfile, must be renamed for us_gzip
+         
+         // rename
+         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+         QDir qd;
+         qd.remove( dest );
+         if ( !qd.rename( controlfile, dest ) )
+         {
+            cout << QString("Error renaming %1 to %2\n").arg( controlfile ).arg( dest );
+            MPI_Abort( MPI_COMM_WORLD, errorno );
+            exit( errorno );
+         }
+         errorno--;
+         
+         controlfile = dest;
+
+         US_Gzip usg;
+         result = usg.gunzip( controlfile );
+         if ( GZIP_OK != result )
+         {
+            cout << QString("Error: %1 problem gunzipping (%2)\n").arg( controlfile ).arg( usg.explain( result ) );
+            MPI_Abort( MPI_COMM_WORLD, errorno );
+            exit( errorno );
+         }
+         errorno--;
+
+         controlfile.replace( QRegExp( "\\.gz$" ), "" );
       }
-      errorno--;
-
-      controlfile = dest;
-
-      US_Gzip usg;
-      int result = usg.gunzip( controlfile );
-      if ( GZIP_OK != result )
-      {
-         cout << QString("Error: %1 problem gunzipping (%2)\n").arg( controlfile ).arg( usg.explain( result ) );
-         MPI_Abort( MPI_COMM_WORLD, errorno );
-         exit( errorno );
-      }
-      errorno--;
-
-      controlfile.replace( QRegExp( "\\.gz$" ), "" );
 
       // tar open controlfile
       US_Tar ust;

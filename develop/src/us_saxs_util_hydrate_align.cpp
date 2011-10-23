@@ -1,14 +1,14 @@
-#include "../include/us_hydrodyn.h"
+#include "../include/us_saxs_util.h"
 #include "../include/us_tnt_jama.h"
 
 // #define DEBUG_ALIGN
 
-bool US_Hydrodyn::atom_align( vector < point > transform_from, 
-                              vector < point > transform_to, 
-                              vector < point > apply_from, 
-                              vector < point > &result,
-                              QString          &error_msg )
+bool US_Saxs_Util::atom_align( vector < point > transform_from, 
+                               vector < point > transform_to, 
+                               vector < point > apply_from, 
+                               vector < point > &result )
 {
+   errormsg = "";
 #if defined( DEBUG_ALIGN )
    // for testing:
    vector < point > save_from = transform_from; 
@@ -16,17 +16,17 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    if ( transform_from.size() < 3 )
    {
-      error_msg = tr( "At least 3 points are needed to align atoms" );
+      errormsg = "At least 3 points are needed to align atoms";
       return false;
    }
    if ( transform_from.size() != transform_to.size() )
    {
-      error_msg = QString( tr( "Size of transform from (%1) does not equal size of transform to (%2)" ) )
+      errormsg = QString( "Size of transform from (%1) does not equal size of transform to (%2)" )
          .arg( transform_from.size() )
          .arg( transform_to.size() );
       return false;
    }
-
+   
    point center_from = transform_from[ 0 ];
    point center_to = transform_to[ 0 ];
 

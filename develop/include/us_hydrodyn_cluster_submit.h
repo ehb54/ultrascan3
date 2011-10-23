@@ -10,6 +10,7 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qlistbox.h>
+#include <qsocket.h>
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
@@ -49,6 +50,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QTextEdit     *editor;
       QMenuBar      *m;
 
+      QPushButton   *pb_stop;
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
       
@@ -57,16 +59,45 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void          editor_msg( QString color, QString msg );
 
       QString       pkg_dir;
+      QString       submitted_dir;
+      QString       tmp_dir;
+
+      QString       cluster_id;
+      QString       submit_url;
+      QString       submit_url_host;
+      QString       submit_url_port;
+      QString       stage_url;
+      QString       stage_url_path;
+      QString       stage_path;
 
       QString       errormsg;
       bool          disable_updates;
+
+      unsigned int  update_files( bool set_lb_files = true );
+
+      bool          stage( QStringList files );
+      bool          stage( QString     file  );
+      void          *cluster_window;
+
+      bool          run_in_tmp( QString cmd );
+      QStringList   last_stdout;
+      QStringList   last_stderr;
+      bool          submit_xml( QString file, QString &xml );
+      bool          submit_jobs( QStringList files );
+      bool          send_xml( QString xml );
+
+      bool          submit_active;
+      bool          comm_active;
+      QSocket       submit_socket;
+
+      QString       current_xml;
+      QString       current_xml_response;
 
    private slots:
 
       void setupGUI();
    
       void update_enables();
-
       void select_all();
       void submit();
 
@@ -74,8 +105,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void update_font();
       void save();
 
+      void stop();
       void cancel();
       void help();
+
+      void socket_error( int );
+      void socket_connected();
+      void socket_readyRead();
+      void socket_connectionClosed();
+      void socket_delayedCloseFinished();
 
    protected slots:
 

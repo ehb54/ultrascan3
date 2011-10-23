@@ -152,6 +152,7 @@ SOURCES += \
   src/us_fematch.cpp \
   src/us_fematch_ra.cpp \
   src/us_femglobal.cpp \
+  src/us_file_util.cpp \
   src/us_finite1.cpp \
   src/us_finite2.cpp \
   src/us_font.cpp \
@@ -181,6 +182,7 @@ SOURCES += \
   src/us_hydrodyn_bd_options.cpp \
   src/us_hydrodyn_bd_load_results_opts.cpp \
   src/us_hydrodyn_cluster.cpp \
+  src/us_hydrodyn_cluster_config.cpp \
   src/us_hydrodyn_cluster_results.cpp \
   src/us_hydrodyn_cluster_submit.cpp \
   src/us_hydrodyn_comparative.cpp \
@@ -258,6 +260,8 @@ SOURCES += \
   src/us_sassoc.cpp \
   src/us_saxs_util.cpp \
   src/us_saxs_util_extern.cpp \
+  src/us_saxs_util_hydrate.cpp \
+  src/us_saxs_util_hydrate_align.cpp \
   src/us_saxs_util_iqq.cpp \
   src/us_saxs_util_iqq_pdb.cpp \
   src/us_saxs_util_loads.cpp \
@@ -396,6 +400,7 @@ HEADERS += \
   include/us_fematch.h \
   include/us_fematch_ra.h \
   include/us_femglobal.h \
+  include/us_file_util.h \
   include/us_finite1.h \
   include/us_finite2.h \
   include/us_font.h \
@@ -422,6 +427,7 @@ HEADERS += \
   include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_cluster.h \
+  include/us_hydrodyn_cluster_config.h \
   include/us_hydrodyn_cluster_results.h \
   include/us_hydrodyn_cluster_submit.h \
   include/us_hydrodyn_comparative.h \

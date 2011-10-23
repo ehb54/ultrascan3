@@ -112,7 +112,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    QRegExp rx_valid  ( 
                        "^("
                        "residuefile|"
-                       // "hydrationfile|"
+                       "hydrationfile|"
                        "atomfile|"
                        "hybridfile|"
                        "saxsfile|"
@@ -142,7 +142,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    QRegExp rx_file   ( 
                       "^("
                       "residuefile|"
-                      // "hydrationfile|"
+                      "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
                       "saxsfile|"
@@ -153,7 +153,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    QRegExp rx_arg_1  ( 
                       "^("
                       "residuefile|"
-                      // "hydrationfile|"
+                      "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
                       "saxsfile|"
@@ -265,6 +265,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
       {
          cout << QString("read residue %1\n").arg( qsl[ 0 ] );
          if ( !select_residue_file( qsl[ 0 ] ) )
+         {
+            errormsg = QString( "Error %1 line %2 : %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( errormsg );
+            return false;
+         }
+         if ( !noticemsg.isEmpty() )
+         {
+            cout << noticemsg;
+         }
+      }         
+
+      if ( option == "hydrationfile" )
+      {
+         cout << QString("read hydration %1\n").arg( qsl[ 0 ] );
+         if ( !load_rotamer( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
                .arg( controlfile )

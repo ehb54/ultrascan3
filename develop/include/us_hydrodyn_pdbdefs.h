@@ -334,5 +334,15 @@ struct residue
    vector <struct bead> r_bead;  // the beads used to describe the residue
 };
 
+class sortable_float {
+public:
+   float             f;
+   unsigned int      index;
+   bool operator < (const sortable_float& objIn) const
+   {
+      return ( f < objIn.f );
+   }
+};
+
 #endif
 

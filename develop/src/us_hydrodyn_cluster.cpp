@@ -1,8 +1,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
-#include "../include/us_hydrodyn_cluster_submit.h"
-#include "../include/us_hydrodyn_cluster_results.h"
 
 #define SLASH QDir::separator()
 
@@ -71,6 +69,8 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( pkg_dir ) );
       dir1.mkdir( pkg_dir );
    }
+
+   QDir::setCurrent( pkg_dir );
 
    global_Xpos += 30;
    global_Ypos += 30;
@@ -192,6 +192,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+   pb_cluster_config = new QPushButton(tr("Cluster Configuration"), this);
+   pb_cluster_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cluster_config->setMinimumHeight(minHeight1);
+   pb_cluster_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cluster_config, SIGNAL(clicked()), SLOT(cluster_config()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -235,6 +241,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
+   hbl_bottom->addSpacing( 4 );
+   hbl_bottom->addWidget ( pb_cluster_config );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
@@ -767,7 +775,13 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString tarout = le_output_name->text() + ".tar";
       US_Tar ust;
       QStringList qsl;
-      int result = ust.create( QFileInfo( tarout ).filePath(), dest_files, &qsl );
+      QStringList local_dest_files;
+      for ( unsigned int i = 0; i < dest_files.size(); i++ )
+      {
+         local_dest_files << QFileInfo( dest_files[ i ] ).fileName();
+      }
+
+      int result = ust.create( QFileInfo( tarout ).filePath(), local_dest_files, &qsl );
       if ( result != TAR_OK )
       {
          editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( tarout ).arg( ust.explain( result ) ) );
@@ -896,10 +910,15 @@ void US_Hydrodyn_Cluster::submit_pkg()
 {
    // open cluster directory and find *_out.tgz
    // process and make unified csvs etc and load into standard somo/saxs directory
+   if ( !read_config() )
+   {
+      cluster_config();
+   }
+
    US_Hydrodyn_Cluster_Submit *hcs = 
       new US_Hydrodyn_Cluster_Submit(
-                                      us_hydrodyn,
-                                      this );
+                                     us_hydrodyn,
+                                     this );
    if ( hcs->files.size() )
    {
       hcs->exec();
@@ -930,4 +949,96 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( "_out", "", false );
       le_output_name->setText( qs );
    }
+}
+
+
+bool US_Hydrodyn_Cluster::read_config()
+{
+   // read "config" in package dir
+
+   errormsg = "";
+
+   QDir::setCurrent( pkg_dir );
+
+   QString configfile = "config";
+   QFile f( configfile );
+   if ( !f.exists() )
+   {
+      errormsg = "config file does not exist";
+      return false;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = "config file is not readable";
+      return false;
+   }
+
+   QTextStream ts( &f );
+   
+   if ( ts.atEnd() )
+   {
+      errormsg = "config file: premature end of file";
+      f.close();
+      return false;
+   }
+   ts >> cluster_id;
+
+   if ( ts.atEnd() )
+   {
+      errormsg = "config file: premature end of file";
+      f.close();
+      return false;
+   }
+   ts >> submit_url;
+
+   if ( ts.atEnd() )
+   {
+      errormsg = "config file: premature end of file";
+      f.close();
+      return false;
+   }
+   ts >> stage_url;
+   f.close();
+
+   return true;
+}
+
+bool US_Hydrodyn_Cluster::write_config()
+{
+   // write "config" file
+
+   errormsg = "";
+
+   QString configfile = "config";
+   QFile f( configfile );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      errormsg = "can not create config file";
+      return false;
+   }
+
+   QTextStream ts( &f );
+   
+   ts << cluster_id << endl;
+
+   ts << submit_url << endl;
+
+   ts << stage_url << endl;
+
+   f.close();
+
+   return true;
+}
+
+void US_Hydrodyn_Cluster::cluster_config()
+{
+   read_config();
+
+   US_Hydrodyn_Cluster_Config *hcc = 
+      new US_Hydrodyn_Cluster_Config(
+                                     us_hydrodyn,
+                                     this );
+   hcc->exec();
 }

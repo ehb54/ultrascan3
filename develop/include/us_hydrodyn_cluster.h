@@ -13,8 +13,12 @@
 #include <qvalidator.h>
 
 #include "us_util.h"
+#include "us_file_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
+#include "us_hydrodyn_cluster_submit.h"
+#include "us_hydrodyn_cluster_results.h"
+#include "us_hydrodyn_cluster_config.h"
 
 //standard C and C++ defs:
 
@@ -26,6 +30,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Cluster_Submit;
+      friend class US_Hydrodyn_Cluster_Config;
 
    public:
       US_Hydrodyn_Cluster(
@@ -63,6 +69,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QMenuBar      *m;
 
       QPushButton   *pb_help;
+      QPushButton   *pb_cluster_config;
       QPushButton   *pb_cancel;
       
       QStringList   selected_files;
@@ -78,6 +85,16 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       bool          copy_files_to_pkg_dir( QStringList &filenames );
       bool          remove_files( QStringList &filenames );
       QString       errormsg;
+
+
+      // cluster config info
+
+      bool          read_config();
+      bool          write_config();
+
+      QString       cluster_id;
+      QString       submit_url;
+      QString       stage_url;
 
    private slots:
 
@@ -96,6 +113,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void save();
 
       void cancel();
+      void cluster_config();
       void help();
 
    protected slots:

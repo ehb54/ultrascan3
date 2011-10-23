@@ -803,6 +803,40 @@ class US_EXTERN US_Saxs_Util
       bool         run_sans_iq_cryson();
       bool         load_saxs( QString );
 
+      // hydration routines
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, vector < vector < QString > > > dihedral_atoms;
+
+      map < QString, vector < vector < QString > > > pointmap_atoms;
+      map < QString, vector < vector < QString > > > pointmap_atoms_dest;
+      map < QString, vector < QString > >            pointmap_atoms_ref_residue;
+
+      map < QString, vector < rotamer > >            rotamers;
+      map < QString, map < QString, point > >        to_hydrate;
+      map < QString, map < QString, point > >        to_hydrate_pointmaps;
+      map < QString, vector < float > >              to_hydrate_dihedrals;
+      map < QString, rotamer >                       best_fit_rotamer;
+      map < QString, vector < rotamer > >            pointmap_rotamers;
+      map < QString, vector < point > >              waters_to_add;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+      bool         atom_align( vector < point > transform_from, 
+                               vector < point > transform_to, 
+                               vector < point > apply_from, 
+                               vector < point > &result );
+
+      bool         load_rotamer( QString filename );
+      bool         compute_rotamer_dihedrals();
+      QString      list_rotamer_dihedrals();
+      QString      list_pointmaps();
+      QString      list_rotamers( bool coords );
+      bool         compute_water_positioning_atoms();
+      QString      list_water_positioning_atoms();
+      bool         validate_pointmap();
 };
 
 #endif
