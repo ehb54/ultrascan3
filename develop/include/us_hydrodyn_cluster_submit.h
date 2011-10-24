@@ -11,10 +11,15 @@
 #include <qcheckbox.h>
 #include <qlistbox.h>
 #include <qsocket.h>
+#include <qprocess.h>
+#include <qcstring.h>
+#include <qiodevice.h>
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
+
+#include <qhttp.h>
 
 //standard C and C++ defs:
 
@@ -75,25 +80,55 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       unsigned int  update_files( bool set_lb_files = true );
 
-      bool          stage( QStringList files );
-      bool          stage( QString     file  );
+      bool          prepare_stage( QString file );
+      bool          stage( QString file );
+
       void          *cluster_window;
 
-      bool          run_in_tmp( QString cmd );
       QStringList   last_stdout;
       QStringList   last_stderr;
       bool          submit_xml( QString file, QString &xml );
-      bool          submit_jobs( QStringList files );
       bool          send_xml( QString xml );
 
       bool          submit_active;
       bool          comm_active;
       QSocket       submit_socket;
+      QHttp         submit_http;
 
       QString       current_xml;
       QString       current_xml_response;
 
+      // here's the new submit logic:
+      // submit() builds a vector of jobs, sets submit active
+      // processing stages: stage, submit, move
+      // any_to_process checks the vector and updates status
+      // system() commands run with signals, using emit()
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, QString > jobs;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      QString       next_to_process;
+
+      bool          job_submit( QString file );
+      void          process_list();
+      bool          move_file( QString file );
+
+      bool          system_cmd( QStringList cmd );
+
+      bool          system_proc_active;
+      QProcess      *system_proc;
+
    private slots:
+
+      void setup_jobs();
+      void process_next();
+      void process_prepare_stage();
+      void process_stage();
+      void process_submit();
+      void process_move();
 
       void setupGUI();
    
@@ -114,6 +149,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void socket_readyRead();
       void socket_connectionClosed();
       void socket_delayedCloseFinished();
+
+      void system_proc_readFromStdout();
+      void system_proc_readFromStderr();
+      void system_proc_processExited();
+      void system_proc_launchFinished();
 
    protected slots:
 

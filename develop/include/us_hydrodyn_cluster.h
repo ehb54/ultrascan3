@@ -17,6 +17,7 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_cluster_submit.h"
+#include "us_hydrodyn_cluster_status.h"
 #include "us_hydrodyn_cluster_results.h"
 #include "us_hydrodyn_cluster_config.h"
 
@@ -31,6 +32,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Cluster_Submit;
+      friend class US_Hydrodyn_Cluster_Status;
       friend class US_Hydrodyn_Cluster_Config;
 
    public:
@@ -62,6 +64,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       QPushButton   *pb_create_pkg;
       QPushButton   *pb_submit_pkg;
+      QPushButton   *pb_check_status;
       QPushButton   *pb_load_results;
 
       QFont         ft;
@@ -106,6 +109,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void create_pkg();
       void submit_pkg();
+      void check_status();
       void load_results();
 
       void clear_display();

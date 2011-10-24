@@ -161,6 +161,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_submit_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_submit_pkg, SIGNAL(clicked()), SLOT(submit_pkg()));
 
+   pb_check_status = new QPushButton(tr("Check job status"), this);
+   pb_check_status->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_check_status->setMinimumHeight(minHeight1);
+   pb_check_status->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_check_status, SIGNAL(clicked()), SLOT(check_status()));
+
    pb_load_results = new QPushButton(tr("Load results"), this);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_results->setMinimumHeight(minHeight1);
@@ -234,6 +240,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_create->addWidget ( pb_create_pkg );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_submit_pkg );
+   hbl_create->addSpacing( 4 );
+   hbl_create->addWidget ( pb_check_status );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_load_results );
    hbl_create->addSpacing( 4 );
@@ -315,6 +323,8 @@ void US_Hydrodyn_Cluster::set_target()
 
 void US_Hydrodyn_Cluster::create_pkg()
 {
+   // check for prior existing jobs in submitted/completed
+
    QString unimplemented;
    QStringList base_source_files;
 
@@ -949,6 +959,12 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( "_out", "", false );
       le_output_name->setText( qs );
    }
+   if ( cqs.contains( QRegExp( "(\\s+|\\/|\\\\)" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "(\\s+|\\/|\\\\)" ), "" );
+      le_output_name->setText( qs );
+   }
 }
 
 
@@ -1041,4 +1057,15 @@ void US_Hydrodyn_Cluster::cluster_config()
                                      us_hydrodyn,
                                      this );
    hcc->exec();
+}
+
+void US_Hydrodyn_Cluster::check_status()
+{
+   read_config();
+
+   US_Hydrodyn_Cluster_Status *hcs = 
+      new US_Hydrodyn_Cluster_Status(
+                                     us_hydrodyn,
+                                     this );
+   hcs->exec();
 }

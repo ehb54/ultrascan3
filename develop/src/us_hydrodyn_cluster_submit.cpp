@@ -18,6 +18,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
 
    comm_active = false;
    submit_active = false;
+   system_proc_active = false;
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir::setCurrent( pkg_dir );
@@ -78,7 +79,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
 
    setGeometry( global_Xpos, global_Ypos, 700, 600 );
 
-   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT. SUBMISSION CURRENTLY DOES NOT WORK!" );
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 }
 
 US_Hydrodyn_Cluster_Submit::~US_Hydrodyn_Cluster_Submit()
@@ -121,7 +122,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "Manage results from cluster jobs" ), this);
+   lbl_title = new QLabel( tr( "Submit jobs to cluster" ), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
@@ -158,7 +159,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    pb_submit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_submit->setMinimumHeight(minHeight1);
    pb_submit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_submit, SIGNAL(clicked()), SLOT(submit()));
+   connect(pb_submit, SIGNAL(clicked()), SLOT(setup_jobs()));
    
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -349,217 +350,6 @@ void US_Hydrodyn_Cluster_Submit::select_all()
    update_files();
 }
 
-void US_Hydrodyn_Cluster_Submit::submit()
-{
-   submit_active = true;
-   update_enables();
-
-   QStringList qsl_submit;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         qsl_submit << lb_files->item( i )->text();
-      }
-   }
-   
-   if ( !stage( files ) )
-   {
-      submit_active = false;
-      update_enables();
-      return;
-   }
-
-   if ( !submit_jobs( files ) )
-   {
-      submit_active = false;
-      update_enables();
-      editor_msg( "red", errormsg );
-      return;
-   }
-
-   US_File_Util ufu;
-   if ( !ufu.move( qsl_submit, submitted_dir, true ) )
-   {
-      editor_msg( "red", ufu.errormsg );
-   }
-
-   QMessageBox::information( this, 
-                             tr("US-SOMO: Cluster Results"),
-                             QString( tr("%1 jobs submitted for processing" ) ).arg( files.size() ),
-                             0 );
-
-
-   if ( !update_files() )
-   {
-      QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Results"),
-                                tr("No further unsubmitted jobs available"),
-                                0 );
-      close();
-   }
-   submit_active = false;
-   update_enables();
-}
-
-bool US_Hydrodyn_Cluster_Submit::stage( QStringList files )
-{
-   for ( unsigned int i = 0; i < files.size(); i++ )
-   {
-      if ( !stage( files[ i ] ) )
-      {
-         return false;
-      }
-   }
-   return true;
-}
-
-bool US_Hydrodyn_Cluster_Submit::stage( QString file )
-{
-   errormsg = "";
-   if ( !QFile::exists( file ) )
-   {
-      errormsg = QString( tr( "stage: can not find file %1" ) ).arg( file );
-      return false;
-   }
-
-   // right now we are using scp, need to come up with a better method
-
-   // make sure dest dir is made:
-   if ( !QDir::setCurrent( tmp_dir ) )
-   {
-      errormsg = QString( tr( "stage: can not change to directory %1" ) ).arg( tmp_dir );
-      return false;
-   }
-
-   QString cmd;
-
-   cmd = QString( "ssh %1 mkdir -p %2/%3" )
-      .arg( stage_url )
-      .arg( stage_path )
-      .arg( cluster_id );
-
-   editor_msg( "dark gray", QString( tr( "initializing communication with %1" ) ).arg( stage_url ) );
-   if ( !run_in_tmp( cmd ) )
-   {
-      editor_msg( "red", errormsg );
-      return false;
-   }
-   editor_msg( "dark gray", QString( tr( "communication initialized with %1" ) ).arg( stage_url ) );
-
-   cmd = QString( "scp %1%2%3 %4" )
-      .arg( pkg_dir )
-      .arg( QDir::separator() )
-      .arg( file )
-      .arg( stage_url_path );
-
-   editor_msg( "dark gray", QString( tr( "transferring %1" ) ).arg( file ) );
-   if ( !run_in_tmp( cmd ) )
-   {
-      editor_msg( "red", errormsg );
-      return false;
-   }
-   editor_msg( "dark gray", QString( tr( "transfered %1" ) ).arg( file ) );
-   if ( !submit_active )
-   {
-      editor_msg( "red", tr( "Stopped by user request" ) );
-      return false;
-   }
-   return true;
-}
-
-bool US_Hydrodyn_Cluster_Submit::run_in_tmp( QString cmd )
-{
-   errormsg = "";
-   if ( !QDir::setCurrent( tmp_dir ) )
-   {
-      errormsg = QString( tr( "stage: can not change do directory %1" ) ).arg( tmp_dir );
-      return false;
-   }
-
-   QFile::remove( "log1" );
-   QFile::remove( "log2" );
-
-   // assuming bash, probably should check shell
-
-   cmd += " >log1 2>log2";
-
-   cout << cmd << endl;
-   system( cmd );
-   
-   last_stdout.clear();
-   last_stderr.clear();
-
-   QFile f1( "log1" );
-   QFile f2( "log2" );
-
-   if ( !f1.exists() )
-   {
-      errormsg = QString( tr( "stage: no output file found for command %1" ) ).arg( cmd );
-      if ( !QDir::setCurrent( pkg_dir ) )
-      {
-         errormsg += QString( tr( "\nstage: can not change do directory %1" ) ).arg( pkg_dir );
-      }
-      return false;
-   }
-
-   if ( !f2.exists() )
-   {
-      errormsg = QString( tr( "stage: no error output file found for command %1" ) ).arg( cmd );
-      if ( !QDir::setCurrent( pkg_dir ) )
-      {
-         errormsg += QString( tr( "\nstage: can not change do directory %1" ) ).arg( pkg_dir );
-      }
-      return false;
-   }
-
-   if ( !f1.open( IO_ReadOnly ) )
-   {
-      errormsg = QString( tr( "stage: could not open output file for command %1" ) ).arg( cmd );
-      if ( !QDir::setCurrent( pkg_dir ) )
-      {
-         errormsg += QString( tr( "\nstage: can not change do directory %1" ) ).arg( pkg_dir );
-      }
-      return false;
-   }
-
-   QTextStream ts1( &f1 );
-   while( !ts1.atEnd() )
-   {
-      last_stdout << ts1.readLine();
-   };
-   f1.close();
-
-   if ( !f2.open( IO_ReadOnly ) )
-   {
-      errormsg = QString( tr( "stage: could not open error output file for command %1" ) ).arg( cmd );
-      if ( !QDir::setCurrent( pkg_dir ) )
-      {
-         errormsg += QString( tr( "\nstage: can not change do directory %1" ) ).arg( pkg_dir );
-      }
-      return false;
-   }
-
-   QTextStream ts2( &f2 );
-   while( !ts2.atEnd() )
-   {
-      last_stderr << ts2.readLine();
-   };
-   f2.close();
-
-   // after debugging is done, we should remove the droppings
-   // f1.remove();
-   // f2.remove();
-
-   if ( !QDir::setCurrent( pkg_dir ) )
-   {
-      errormsg = QString( tr( "stage: can not change do directory %1" ) ).arg( pkg_dir );
-      return false;
-   }
-
-   return true;
-}
-
 bool US_Hydrodyn_Cluster_Submit::send_xml( QString xml )
 {
    // need to do a post & get to submit_url slash stuff
@@ -568,11 +358,9 @@ bool US_Hydrodyn_Cluster_Submit::send_xml( QString xml )
    comm_active = true;
    cout << "send_xml\n";
 
-   update_enables(); 
-
    QString header = QString( "POST /ogce-rest/job/runjob/async HTTP/1.0\n"
                              "Content-Type: application/xml\n"
-                             "Connection: Keep-Alive\n"
+                             // "Connection: Keep-Alive\n"
                              "Content-Length: %1\n"
                              "\n" ).arg( xml.length() );
 
@@ -584,15 +372,10 @@ bool US_Hydrodyn_Cluster_Submit::send_xml( QString xml )
    cout << "after connect_to_host\n";
 
    connect( &submit_socket, SIGNAL( error( int ) ), this, SLOT( socket_error( int ) ) );
-   cout << "after connect1\n";
    connect( &submit_socket, SIGNAL( connected() ), this, SLOT( socket_connected() ) );
-   cout << "after connect2\n";
    connect( &submit_socket, SIGNAL( readyRead() ), this, SLOT( socket_readyRead() ) );
-   cout << "after connect3\n";
    connect( &submit_socket, SIGNAL( connectionClosed() ), this, SLOT( socket_connectionClosed() ) );
-   cout << "after connect4\n";
-   
-   return false;
+   return true;
 }
 
 void US_Hydrodyn_Cluster_Submit::socket_error( int error_no )
@@ -603,8 +386,8 @@ void US_Hydrodyn_Cluster_Submit::socket_error( int error_no )
    disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
    disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
 
-   comm_active = false;
-   update_enables(); 
+   jobs[ next_to_process ] = "communication failed";
+   emit process_next();
 }
 
 void US_Hydrodyn_Cluster_Submit::socket_connected()
@@ -618,6 +401,7 @@ void US_Hydrodyn_Cluster_Submit::socket_connected()
    //   {
    //      cout << "didn't write the requested length!";
    //   }
+   emit process_next();
    cout << "transferred request:" << current_xml << "\n";
 }
 
@@ -651,7 +435,7 @@ void US_Hydrodyn_Cluster_Submit::socket_connectionClosed()
       disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
       disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
       comm_active = false;
-      update_enables(); 
+      emit process_next();
    }
 }
 
@@ -664,27 +448,13 @@ void US_Hydrodyn_Cluster_Submit::socket_delayedCloseFinished()
    disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
    disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
    comm_active = false;
-   update_enables(); 
-}
-
-bool US_Hydrodyn_Cluster_Submit::submit_jobs( QStringList files )
-{
-   errormsg = "";
-   for ( unsigned int i = 0; i < files.size(); i++ )
-   {
-      QString xml;
-      if ( !submit_xml( files[ i ], xml ) ||
-           !send_xml( xml ) )
-      {
-         return false;
-      }
-   }
-   return true;
+   emit process_next();
 }
 
 bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
 {
    errormsg = "";
+   cout << "submit_xml\n";
    if ( !QFile::exists( file ) )
    {
       errormsg = QString( tr( "submit_xml: File %1 does not exist" ) ).arg( file );
@@ -710,18 +480,21 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    unsigned int host_count      = ( tar_list.size() / 12 ) + 1;
    unsigned int processor_count = host_count * 12;
 
+   // "<hostcount>%4</hostcount>"
+   // .arg( host_count )
+
    xml = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                   "<Message>"
                   "<Header>"
                   "<experimentid>%1</experimentid>"
                   "<hostname>%2</hostname>"
                   "<processorcount>%3</processorcount>"
-                  "<hostcount>%4</hostcount>"
                   "<queuename>normal</queuename>"
-                  "<walltime>%5</walltime>"
+                  "<walltime>%4</walltime>"
+                  "<userdn>%5</userdn>"
                   "</Header>"
                   "<Body>"
-                  "<Method>Run</Method>"
+                  "<Method>run</Method>"
                   "<input>"
                   "<parameters>"
                   "<name>param</name>"
@@ -738,9 +511,9 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( QString( "US-SOMO-%1-%2" ).arg( cluster_id ).arg( file ) )
       .arg( stage_url )
       .arg( processor_count )
-      .arg( host_count )
       .arg( 600 ) // for now, we should determine expected run times
-      .arg( QString( "%1/%2/%3" ).arg( stage_path ).arg( cluster_id ).arg( file ) )
+      .arg( cluster_id )
+      .arg( QString( "%1/%2/%3/%4" ).arg( stage_path ).arg( cluster_id ).arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ).arg( file ) )
       ;
    cout << xml << endl;
    if ( !submit_active )
@@ -763,3 +536,316 @@ void US_Hydrodyn_Cluster_Submit::stop()
    }
    update_enables();
 }
+
+void US_Hydrodyn_Cluster_Submit::setup_jobs()
+{
+   submit_active = true;
+   update_enables();
+   cout << "setup jobs\n";
+   jobs.clear();
+   
+   QStringList qsl_submit;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         jobs[ lb_files->item( i )->text() ] = "prepare stage";
+      }
+   }
+   emit process_next();
+}
+
+void US_Hydrodyn_Cluster_Submit::process_next()
+{
+   if ( !submit_active )
+   {
+      update_enables();
+      editor_msg( "red", "stopped by user request" );
+      return;
+   }
+
+   cout << "process next\n";
+   if ( comm_active || system_proc_active )
+   {
+      cout << "comm or system proc active\n";
+      return;
+   }
+   process_list();
+
+   bool ok = true;
+   for ( map < QString, QString >::iterator it = jobs.begin();
+         it != jobs.end();
+         it++ )
+   {
+      if ( it->second.contains( "failed" ) )
+      {
+         ok = false;
+      }
+      if ( it->second == "prepare stage" )
+      {
+         next_to_process = it->first;
+         emit process_prepare_stage();
+         return;
+      }
+      if ( it->second == "stage" )
+      {
+         next_to_process = it->first;
+         emit process_stage();
+         return;
+      }
+      if ( it->second == "submit" )
+      {
+         next_to_process = it->first;
+         emit process_submit();
+         return;
+      }
+      if ( it->second == "move" )
+      {
+         next_to_process = it->first;
+         emit process_move();
+         return;
+      }
+   }
+
+   if ( ok )
+   {
+      editor_msg( "black", tr( "submission complete" ) );
+   } else {
+      editor_msg( "red", tr( "submission had errors" ) );
+   }
+      
+   submit_active = false;
+
+   if ( !update_files() )
+   {
+      QMessageBox::information( this, 
+                                tr("US-SOMO: Cluster Jobs"),
+                                tr("No further unsubmitted jobs found"),
+                                0 );
+   }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
+{
+   editor_msg( "black", QString( "preparing stage %1" ).arg( next_to_process ) );
+   cout << "process prepare stage\n";
+   if ( prepare_stage( next_to_process ) )
+   {
+      jobs[ next_to_process ] = "stage";
+   } else {
+      editor_msg( "red", errormsg );
+      jobs[ next_to_process ] = "prepare stage failed";
+   }
+   emit process_next();
+}
+
+void US_Hydrodyn_Cluster_Submit::process_stage()
+{
+   editor_msg( "black", QString( "staging %1" ).arg( next_to_process ) );
+   cout << "process stage\n";
+   if ( stage( next_to_process ) )
+   {
+      jobs[ next_to_process ] = "submit";
+   } else {
+      editor_msg( "red", errormsg );
+      jobs[ next_to_process ] = "stage failed";
+   }
+   emit process_next();
+}
+
+void US_Hydrodyn_Cluster_Submit::process_submit()
+{
+   editor_msg( "black", QString( "submitting %1" ).arg( next_to_process ) );
+   cout << "process submit\n";
+   if ( job_submit( next_to_process ) )
+   {
+      jobs[ next_to_process ] = "move";
+   } else {
+      editor_msg( "red", errormsg );
+      jobs[ next_to_process ] = "submit failed";
+   }
+   emit process_next();
+}
+
+void US_Hydrodyn_Cluster_Submit::process_move()
+{
+   editor_msg( "black", QString( "move %1 to submitted/" ).arg( next_to_process ) );
+   cout << "process move\n";
+   if ( move_file( next_to_process ) )
+   {
+      jobs[ next_to_process ] = "complete";
+   } else {
+      editor_msg( "red", errormsg );
+      jobs[ next_to_process ] = "move failed";
+   }
+   emit process_next();
+}
+
+bool US_Hydrodyn_Cluster_Submit::move_file( QString file )
+{
+   US_File_Util ufu;
+   cout << "move file " << file << endl;
+
+   if ( !QDir::setCurrent( pkg_dir ) )
+   {
+      errormsg = QString( tr( "move: can not change to directory %1" ) ).arg( pkg_dir );
+      return false;
+   }
+
+   if ( !ufu.move( file, submitted_dir, true ) )
+   {
+      editor_msg( "red", ufu.errormsg );
+      return false;
+   }
+   return true;
+}
+
+void US_Hydrodyn_Cluster_Submit::process_list()
+{
+   for ( map < QString, QString >::iterator it = jobs.begin();
+         it != jobs.end();
+         it++ )
+   {
+      editor_msg( "blue", QString("%1 %2").arg( it->first ).arg( it->second ) );
+   }
+}
+
+bool US_Hydrodyn_Cluster_Submit::job_submit( QString file )
+{
+   QString xml;
+   if ( !submit_xml( file, xml ) )
+   { 
+      return false;
+   }
+
+   // start comm process
+   
+   return send_xml( xml );
+}
+
+bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
+{
+   errormsg = "";
+   cout << "syscmd: " << cmd.join( " " ) << endl;
+
+   if ( !cmd.size() )
+   {
+      errormsg = tr( "system_cmd called with no command" );
+      return false;
+   }
+
+   system_proc = new QProcess( this );
+
+   system_proc->setArguments( cmd );
+
+   system_proc_active = true;
+
+   connect( system_proc, SIGNAL(readyReadStdout()), this, SLOT(system_proc_readFromStdout()) );
+   connect( system_proc, SIGNAL(readyReadStderr()), this, SLOT(system_proc_readFromStderr()) );
+   connect( system_proc, SIGNAL(processExited()),   this, SLOT(system_proc_processExited()) );
+   connect( system_proc, SIGNAL(launchFinished()),  this, SLOT(system_proc_launchFinished()) );
+
+   return system_proc->start();
+}
+
+void US_Hydrodyn_Cluster_Submit::system_proc_readFromStdout()
+{
+   while ( system_proc->canReadLineStdout() )
+   {
+      editor_msg("brown", system_proc->readLineStdout());
+   }
+}
+   
+void US_Hydrodyn_Cluster_Submit::system_proc_readFromStderr()
+{
+   while ( system_proc->canReadLineStderr() )
+   {
+      editor_msg("red", system_proc->readLineStderr());
+   }
+}
+   
+void US_Hydrodyn_Cluster_Submit::system_proc_processExited()
+{
+   cout << "system_proc exit\n";
+   system_proc_readFromStderr();
+   system_proc_readFromStdout();
+
+   disconnect( system_proc, SIGNAL(readyReadStdout()), 0, 0);
+   disconnect( system_proc, SIGNAL(readyReadStderr()), 0, 0);
+   disconnect( system_proc, SIGNAL(processExited()), 0, 0);
+
+   // editor->append("System_Proc finished.");
+   system_proc_active = false;
+   delete system_proc;
+   emit process_next();
+}
+   
+void US_Hydrodyn_Cluster_Submit::system_proc_launchFinished()
+{
+   editor_msg("brown", "System_Proc launch exited");
+   disconnect( system_proc, SIGNAL(launchFinished()), 0, 0);
+}
+
+bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
+{
+   errormsg = "";
+   if ( !QDir::setCurrent( pkg_dir ) )
+   {
+      errormsg = QString( tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
+      return false;
+   }
+
+   if ( !QFile::exists( file ) )
+   {
+      errormsg = QString( tr( "stage: can not find file %1" ) ).arg( file );
+      return false;
+   }
+
+   // right now we are using scp, need to come up with a better method
+
+   // make sure dest dir is made:
+
+   QStringList cmd;
+   cmd << "ssh";
+   cmd << stage_url;
+   cmd << "mkdir";
+   cmd << "-p";
+   cmd << QString( "%1/%2/%3" )
+      .arg( stage_path )
+      .arg( cluster_id )
+      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) );
+
+   return( system_cmd( cmd ) );
+}
+
+bool US_Hydrodyn_Cluster_Submit::stage( QString file )
+{
+   errormsg = "";
+   if ( !QDir::setCurrent( pkg_dir ) )
+   {
+      errormsg = QString( tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
+      return false;
+   }
+
+   if ( !QFile::exists( file ) )
+   {
+      errormsg = QString( tr( "stage: can not find file %1" ) ).arg( file );
+      return false;
+   }
+
+   QStringList cmd;
+   cmd << "scp";
+   cmd << QString( "%1%2%3" )
+      .arg( pkg_dir )
+      .arg( QDir::separator() )
+      .arg( file );
+
+   cmd << QString( "%1%2/" )
+      .arg( stage_url_path )
+      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) );
+
+   return( system_cmd( cmd ) );
+}
+

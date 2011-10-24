@@ -152,7 +152,7 @@ class US_EXTERN US_Gzip
     int              nice_match; /* Stop searching when current match exceeds this */
 
 #define tab_prefix prev        /* hash link (see deflate.c) */
-#define head ( prev + WSIZE )  /* hash head (see deflate.c) */
+#define gzip_head ( prev + WSIZE )  /* hash head (see deflate.c) */
 
 #define BITS 16
     ush              tab_prefix[ 1L << BITS ];

@@ -1750,8 +1750,8 @@ void US_Gzip::flush_outbuf()
 
 #define INSERT_STRING(s, match_head) \
    ( UPDATE_HASH( ins_h, window[ (s) + MIN_MATCH - 1 ] ), \
-                  prev[ (s) & WMASK ] = match_head = head[ ins_h ], \
-                  head[ ins_h ] = (s) )
+                  prev[ (s) & WMASK ] = match_head = gzip_head[ ins_h ], \
+                  gzip_head[ ins_h ] = (s) )
 
 /* ===========================================================================
  * Flush the current block, with given end-of-file flag.
@@ -1932,7 +1932,7 @@ void US_Gzip::lm_init( void )
 #define pack_level 9
 
   /* Initialize the hash table. */
-  memzero( (char*) head, HASH_SIZE * sizeof( *head ) );
+  memzero( (char*) gzip_head, HASH_SIZE * sizeof( *gzip_head ) );
 
   /* prev will be initialized on the fly */
 
@@ -2034,8 +2034,8 @@ void US_Gzip::fill_window( void )
 
         for ( n = 0; n < HASH_SIZE; n++ ) 
         {
-            m       = head[n];
-            head[n] = (Pos)(m >= WSIZE ? m - WSIZE : 0 );
+            m       = gzip_head[n];
+            gzip_head[n] = (Pos)(m >= WSIZE ? m - WSIZE : 0 );
         }
 
         for ( n = 0; n < WSIZE; n++ ) 
