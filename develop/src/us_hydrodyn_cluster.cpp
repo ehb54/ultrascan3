@@ -70,6 +70,56 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       dir1.mkdir( pkg_dir );
    }
 
+   {
+      submitted_dir = pkg_dir  + SLASH + "submitted";
+      QDir dir1( submitted_dir );
+      if ( !dir1.exists() )
+      {
+         editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( submitted_dir ) );
+         dir1.mkdir( submitted_dir );
+      }
+      
+      QDir::setCurrent( submitted_dir );
+
+      QDir qd;
+
+      QStringList tgz_files = qd.entryList( "*.tgz" );
+      QStringList tar_files = qd.entryList( "*.tar" );
+      QStringList submitted_files = QStringList::split( "\n", 
+                                                        tgz_files.join("\n") + 
+                                                        ( tgz_files.size() ? "\n" : "" ) +
+                                                        tar_files.join("\n") );
+      for ( unsigned int i = 0; i < submitted_files.count(); i++ )
+      {
+         submitted_jobs[ submitted_files[ i ].replace( QRegExp( "\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+      }
+   }
+
+   {
+      completed_dir = pkg_dir  + SLASH + "completed";
+      QDir dir1( completed_dir );
+      if ( !dir1.exists() )
+      {
+         editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( completed_dir ) );
+         dir1.mkdir( completed_dir );
+      }
+
+      QDir::setCurrent( completed_dir );
+
+      QDir qd;
+
+      QStringList tgz_files = qd.entryList( "*.tgz" );
+      QStringList tar_files = qd.entryList( "*.tar" );
+      QStringList completed_files = QStringList::split( "\n", 
+                                            tgz_files.join("\n") + 
+                                            ( tgz_files.size() ? "\n" : "" ) +
+                                            tar_files.join("\n") );
+      for ( unsigned int i = 0; i < completed_files.count(); i++ )
+      {
+         completed_jobs[ completed_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+      }
+   }
+
    QDir::setCurrent( pkg_dir );
 
    global_Xpos += 30;
@@ -148,6 +198,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi->setChecked(false);
    cb_for_mpi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
 
    pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
    pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -324,6 +375,10 @@ void US_Hydrodyn_Cluster::set_target()
 void US_Hydrodyn_Cluster::create_pkg()
 {
    // check for prior existing jobs in submitted/completed
+   if ( dup_in_submitted_or_completed() )
+   {
+      return;
+   }
 
    QString unimplemented;
    QStringList base_source_files;
@@ -382,6 +437,11 @@ void US_Hydrodyn_Cluster::create_pkg()
          }
       }
    } 
+
+   if ( dup_in_submitted_or_completed() )
+   {
+      return;
+   }
 
    QString base_dir = QFileInfo( filename ).dirPath();
    if ( !QDir::setCurrent( base_dir ) )
@@ -1068,4 +1128,50 @@ void US_Hydrodyn_Cluster::check_status()
                                      us_hydrodyn,
                                      this );
    hcs->exec();
+}
+
+bool US_Hydrodyn_Cluster::dup_in_submitted_or_completed()
+{
+   cout << "submitted:\n";
+   for ( map < QString, bool >::iterator it = submitted_jobs.begin();
+         it != submitted_jobs.end();
+         it++ )
+   {
+      cout << it->first << endl;
+   }
+
+   cout << "completed:\n";
+   for ( map < QString, bool >::iterator it = completed_jobs.begin();
+         it != completed_jobs.end();
+         it++ )
+   {
+      cout << it->first << endl;
+   }
+
+   if ( submitted_jobs.count( le_output_name->text() ) )
+   {
+      QMessageBox::message( tr( "Please note:" ), 
+                            tr( "There is a previously submitted job with the same name\n"
+                                "Please change the output base name (job identifier) to a unique value\n"
+                                "or cancel the submitted job\n") );
+      return true;
+   }
+   if ( completed_jobs.count( le_output_name->text() ) )
+   {
+      QMessageBox::message( tr( "Please note:" ), 
+                            tr( "There is previously completed job with the same name\n"
+                                "Please change the output base name (job identifier) to a unique value\n"
+                                "or remove the completed job\n" ) );
+      return true;
+   }
+   return false;
+}
+
+void US_Hydrodyn_Cluster::for_mpi()
+{
+   if ( cb_for_mpi->isChecked() )
+   {
+      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ));
+      disconnect( cb_for_mpi, SIGNAL( clicked() ) );
+   }
 }

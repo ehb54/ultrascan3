@@ -55,6 +55,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    }
 
    setupGUI();
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 
    submitted_dir = pkg_dir + SLASH + "submitted";
    QDir dir1( submitted_dir );
@@ -72,21 +73,20 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
       dir2.mkdir( tmp_dir );
    }
 
+   update_files();
    update_enables();
 
    global_Xpos += 30;
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 700, 600 );
-
-   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 }
 
 US_Hydrodyn_Cluster_Submit::~US_Hydrodyn_Cluster_Submit()
 {
 }
 
-unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lb_files )
+unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
 {
    files.clear();
 
@@ -107,12 +107,14 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lb_files )
       }
    }
    
-   if ( set_lb_files )
+   if ( set_lv_files )
    {
-      lb_files->clear();
-      lb_files->insertStringList( files );
-      lb_files->setCurrentItem(0);
-      lb_files->setSelected(0, false);
+      lv_files->clear();
+      for ( unsigned int i = 0; i < files.size(); i++ )
+      {
+         cout << "files: " << files[ i ] << endl;
+         new QListViewItem( lv_files, files[ i ], QFileInfo( files[ i ] ).created().toString() );
+      }
    }
 
    return files.size();
@@ -135,19 +137,17 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lb_files = new QListBox(this);
-   lb_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lb_files->setMinimumHeight(minHeight1 * 3);
-   lb_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-   lb_files->setEnabled(true);
+   lv_files = new QListView(this);
+   lv_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lv_files->setMinimumHeight(minHeight1 * 3);
+   lv_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lv_files->setEnabled(true);
+   lv_files->setSelectionMode( QListView::Multi );
 
-   lb_files->insertStringList( files );
-   lb_files->setCurrentItem(0);
-   lb_files->setSelected(0, false);
-   lb_files->setSelectionMode(QListBox::Multi);
-
-   connect(lb_files, SIGNAL( selectionChanged()), SLOT( update_enables() ));
+   lv_files->addColumn( tr( "Name" ) );
+   lv_files->addColumn( tr( "Created" ) );
+   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
    pb_select_all = new QPushButton(tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -155,11 +155,17 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
+   pb_remove = new QPushButton(tr("Remove"), this);
+   pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_remove->setMinimumHeight(minHeight1);
+   pb_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_remove, SIGNAL(clicked()), SLOT( remove() ));
+
    pb_submit = new QPushButton(tr("Submit"), this);
    pb_submit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_submit->setMinimumHeight(minHeight1);
    pb_submit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_submit, SIGNAL(clicked()), SLOT(setup_jobs()));
+   connect(pb_submit, SIGNAL(clicked()), SLOT( submit()) );
    
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -205,6 +211,8 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_select_all);
    hbl_buttons1->addSpacing( 4 );
+   hbl_buttons1->addWidget ( pb_remove );
+   hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_submit );
    hbl_buttons1->addSpacing( 4 );
 
@@ -227,7 +235,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( lbl_files );
    background->addSpacing( 4 );
-   background->addWidget ( lb_files );
+   background->addWidget ( lv_files );
    background->addSpacing( 4 );
    background->addLayout ( hbl_buttons1 );
    background->addSpacing( 4 );
@@ -310,22 +318,26 @@ void US_Hydrodyn_Cluster_Submit::update_enables()
    bool running = comm_active || submit_active;
    pb_stop      ->setEnabled( running );
    pb_select_all->setEnabled( !running );
+   pb_remove    ->setEnabled( !running );
    pb_submit    ->setEnabled( !running );
    pb_help      ->setEnabled( !running );
    pb_cancel    ->setEnabled( !running );
-   lb_files     ->setEnabled( !running );
+   lv_files     ->setEnabled( !running );
 
    if ( !running && !disable_updates )
    {
       bool any_selected = false;
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      QListViewItem *lvi = lv_files->firstChild();
+      if ( lvi )
       {
-         if ( lb_files->isSelected(i) )
-         {
-            any_selected = true;
-            break;
-         }
+         do {
+            if ( lvi->isSelected() )
+            {
+               any_selected = true;
+            }
+         } while ( ( lvi = lvi->nextSibling() ) );
       }
+      pb_remove->setEnabled( any_selected );
       pb_submit->setEnabled( any_selected );
    }
 }
@@ -333,21 +345,27 @@ void US_Hydrodyn_Cluster_Submit::update_enables()
 void US_Hydrodyn_Cluster_Submit::select_all()
 {
    bool any_not_selected = false;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
    {
-      if ( !lb_files->isSelected(i) )
-      {
-         any_not_selected = true;
-      }
+      do {
+         if ( !lvi->isSelected() )
+         {
+            any_not_selected = true;
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   lvi = lv_files->firstChild();
+   if ( lvi )
    {
-      lb_files->setSelected(i, any_not_selected);
+      do {
+         lv_files->setSelected( lvi, any_not_selected );
+      } while ( ( lvi = lvi->nextSibling() ) );
    }
    disable_updates = false;
-   update_files();
+   update_enables();
 }
 
 bool US_Hydrodyn_Cluster_Submit::send_xml( QString xml )
@@ -508,7 +526,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "</Body>"
                   "</Message>"
                   "\n" )
-      .arg( QString( "US-SOMO-%1-%2" ).arg( cluster_id ).arg( file ) )
+      .arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
       .arg( stage_url )
       .arg( processor_count )
       .arg( 600 ) // for now, we should determine expected run times
@@ -537,7 +555,7 @@ void US_Hydrodyn_Cluster_Submit::stop()
    update_enables();
 }
 
-void US_Hydrodyn_Cluster_Submit::setup_jobs()
+void US_Hydrodyn_Cluster_Submit::submit()
 {
    submit_active = true;
    update_enables();
@@ -545,14 +563,18 @@ void US_Hydrodyn_Cluster_Submit::setup_jobs()
    jobs.clear();
    
    QStringList qsl_submit;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
    {
-      if ( lb_files->isSelected( i ) )
-      {
-         jobs[ lb_files->item( i )->text() ] = "prepare stage";
-      }
+      do {
+         if ( lvi->isSelected() )
+         {
+            jobs[ lvi ] = "prepare stage";
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+      
+      emit process_next();
    }
-   emit process_next();
 }
 
 void US_Hydrodyn_Cluster_Submit::process_next()
@@ -573,7 +595,7 @@ void US_Hydrodyn_Cluster_Submit::process_next()
    process_list();
 
    bool ok = true;
-   for ( map < QString, QString >::iterator it = jobs.begin();
+   for ( map < QListViewItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
@@ -622,6 +644,7 @@ void US_Hydrodyn_Cluster_Submit::process_next()
                                 tr("US-SOMO: Cluster Jobs"),
                                 tr("No further unsubmitted jobs found"),
                                 0 );
+      close();
    }
 
    update_enables();
@@ -629,9 +652,9 @@ void US_Hydrodyn_Cluster_Submit::process_next()
 
 void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 {
-   editor_msg( "black", QString( "preparing stage %1" ).arg( next_to_process ) );
+   editor_msg( "black", QString( "preparing stage %1" ).arg( next_to_process->text( 0 ) ) );
    cout << "process prepare stage\n";
-   if ( prepare_stage( next_to_process ) )
+   if ( prepare_stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "stage";
    } else {
@@ -643,9 +666,9 @@ void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 
 void US_Hydrodyn_Cluster_Submit::process_stage()
 {
-   editor_msg( "black", QString( "staging %1" ).arg( next_to_process ) );
+   editor_msg( "black", QString( "staging %1" ).arg( next_to_process->text( 0 ) ) );
    cout << "process stage\n";
-   if ( stage( next_to_process ) )
+   if ( stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "submit";
    } else {
@@ -657,9 +680,9 @@ void US_Hydrodyn_Cluster_Submit::process_stage()
 
 void US_Hydrodyn_Cluster_Submit::process_submit()
 {
-   editor_msg( "black", QString( "submitting %1" ).arg( next_to_process ) );
+   editor_msg( "black", QString( "submitting %1" ).arg( next_to_process->text( 0 ) ) );
    cout << "process submit\n";
-   if ( job_submit( next_to_process ) )
+   if ( job_submit( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "move";
    } else {
@@ -671,9 +694,9 @@ void US_Hydrodyn_Cluster_Submit::process_submit()
 
 void US_Hydrodyn_Cluster_Submit::process_move()
 {
-   editor_msg( "black", QString( "move %1 to submitted/" ).arg( next_to_process ) );
+   editor_msg( "black", QString( "move %1 to submitted/" ).arg( next_to_process->text( 0 ) ) );
    cout << "process move\n";
-   if ( move_file( next_to_process ) )
+   if ( move_file( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "complete";
    } else {
@@ -704,11 +727,11 @@ bool US_Hydrodyn_Cluster_Submit::move_file( QString file )
 
 void US_Hydrodyn_Cluster_Submit::process_list()
 {
-   for ( map < QString, QString >::iterator it = jobs.begin();
+   for ( map < QListViewItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
-      editor_msg( "blue", QString("%1 %2").arg( it->first ).arg( it->second ) );
+      editor_msg( "blue", QString("%1 %2").arg( it->first->text( 0 ) ).arg( it->second ) );
    }
 }
 
@@ -728,7 +751,7 @@ bool US_Hydrodyn_Cluster_Submit::job_submit( QString file )
 bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
 {
    errormsg = "";
-   cout << "syscmd: " << cmd.join( " " ) << endl;
+   cout << "syscmd: " << cmd.join( ":" ) << endl;
 
    if ( !cmd.size() )
    {
@@ -805,14 +828,15 @@ bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
 
    // right now we are using scp, need to come up with a better method
 
-   // make sure dest dir is made:
+   // make sure dest dir is made & clean!
 
    QStringList cmd;
    cmd << "ssh";
    cmd << stage_url;
-   cmd << "mkdir";
-   cmd << "-p";
-   cmd << QString( "%1/%2/%3" )
+   cmd << QString( "rm -fr %1/%2/%3; mkdir -p %4/%5/%6" )
+      .arg( stage_path )
+      .arg( cluster_id )
+      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) )
       .arg( stage_path )
       .arg( cluster_id )
       .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) );
@@ -849,3 +873,66 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
    return( system_cmd( cmd ) );
 }
 
+
+void US_Hydrodyn_Cluster_Submit::remove()
+{
+   bool any_selected = false;
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
+   {
+      do {
+         if ( lvi->isSelected() )
+         {
+            any_selected = true;
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+
+   if ( !any_selected )
+   {
+      return;
+   }
+
+   if ( QMessageBox::question(
+                              this,
+                              tr("US-SOMO: Cluster Jobs: Remove"),
+                              tr( "The jobs will be permenantly removed.\n"
+                                  "Are you sure? " ),
+                              tr("&Yes"), tr("&No"),
+                              QString::null, 0, 1 ) )
+   {
+      editor_msg( "black", tr( "Remove canceled by user" ) );
+      return;
+   }
+
+   if ( !QDir::setCurrent( pkg_dir ) )
+   {
+      editor_msg( "red" , QString( tr( "can not change to directory %1" ) ).arg( pkg_dir ) );
+      return;
+   }
+
+   lvi = lv_files->firstChild();
+
+   if ( lvi )
+   {
+      do {
+         if ( lvi->isSelected() )
+         {
+            if ( !QFile::remove( lvi->text( 0 ) ) )
+            {
+               editor_msg( "red" , QString( tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
+            } else {
+               editor_msg( "black" , QString( tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
+            }
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+   if ( !update_files() )
+   {
+      QMessageBox::information( this, 
+                                tr("US-SOMO: Cluster Jobs"),
+                                tr("No further unsubmitted jobs found"),
+                                0 );
+      close();
+   }
+}

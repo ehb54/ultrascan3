@@ -46,6 +46,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QListView     *lv_files;
 
       QPushButton   *pb_refresh;
+      QPushButton   *pb_remove;
       QPushButton   *pb_retrieve;
 
       QFont         ft;
@@ -77,9 +78,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void          *cluster_window;
 
       bool          comm_active;
+      QString       comm_mode;
       QHttp         submit_http;
 
-      unsigned int  update_files( bool set_lb_files = true );
+      unsigned int  update_files( bool set_lv_files = true );
       bool          send_http_get( QString file );
       QString       current_http;
       QString       current_http_response;
@@ -93,6 +95,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 #endif
       QListViewItem *next_to_process;
       void get_status();
+      void cancel_selected();
+      void complete_remove();
 
    private slots:
 
@@ -101,6 +105,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void update_enables();
 
       void refresh();
+      void remove();
       void retrieve();
 
       void clear_display();

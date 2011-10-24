@@ -72,7 +72,7 @@ US_Hydrodyn_Cluster_Status::~US_Hydrodyn_Cluster_Status()
 {
 }
 
-unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lb_files )
+unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
 {
    files.clear();
 
@@ -93,13 +93,13 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lb_files )
       }
    }
    
-   if ( set_lb_files )
+   if ( set_lv_files )
    {
       lv_files->clear();
       for ( unsigned int i = 0; i < files.size(); i++ )
       {
          cout << "files: " << files[ i ] << endl;
-         new QListViewItem( lv_files, files[ i ], "unknown" );
+         new QListViewItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
       }
    }
 
@@ -123,18 +123,27 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    lv_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lv_files->setEnabled(true);
+   lv_files->setSelectionMode( QListView::Multi );
 
    lv_files->addColumn( tr( "Name" ) );
    lv_files->addColumn( tr( "Status" ) );
    lv_files->addColumn( tr( "Additional Info" ) );
+   lv_files->addColumn( tr( "Date created" ) );
+   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
-   pb_refresh = new QPushButton(tr("Refresh"), this);
+   pb_refresh = new QPushButton(tr("Refresh Status"), this);
    pb_refresh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_refresh->setMinimumHeight(minHeight1);
    pb_refresh->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_refresh, SIGNAL( clicked() ), SLOT( refresh() ) );
 
-   pb_retrieve = new QPushButton(tr("Retrieve"), this);
+   pb_remove = new QPushButton(tr("Cancel jobs"), this);
+   pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_remove->setMinimumHeight(minHeight1);
+   pb_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_remove, SIGNAL( clicked() ), SLOT( remove() ) );
+
+   pb_retrieve = new QPushButton( tr("Retrieve results" ), this);
    pb_retrieve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_retrieve->setMinimumHeight(minHeight1);
    pb_retrieve->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -176,6 +185,8 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    QHBoxLayout *hbl_buttons1 = new QHBoxLayout( 0 );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_refresh );
+   hbl_buttons1->addSpacing( 4 );
+   hbl_buttons1->addWidget ( pb_remove );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_retrieve );
    hbl_buttons1->addSpacing( 4 );
@@ -275,13 +286,43 @@ void US_Hydrodyn_Cluster_Status::editor_msg( QString color, QString msg )
    
 void US_Hydrodyn_Cluster_Status::update_enables()
 {
-   pb_retrieve->setEnabled( false );
+   bool any_selected = false;
+   bool any_completed = false;
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
+   {
+      do {
+         if ( lvi->isSelected() )
+         {
+            any_selected = true;
+         }
+         if ( lvi->text( 1 ) == "COMPLETED" )
+         {
+            any_completed = true;
+         }
+         if ( any_selected && any_completed )
+         {
+            break;
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+
+   pb_remove  ->setEnabled( !comm_active && any_selected  );
+   pb_retrieve->setEnabled( !comm_active && any_completed );
 }
 
 void US_Hydrodyn_Cluster_Status::refresh()
 {
    get_status();
+   update_enables();
    //   update_files();
+}
+
+void US_Hydrodyn_Cluster_Status::remove()
+{
+   cancel_selected();
+   // also ask to push back jobs to unsubmitted or completely remove
+   update_enables();
 }
 
 void US_Hydrodyn_Cluster_Status::retrieve()
@@ -289,20 +330,46 @@ void US_Hydrodyn_Cluster_Status::retrieve()
    //   update_files();
 }
 
-void US_Hydrodyn_Cluster_Status::get_status()
+void US_Hydrodyn_Cluster_Status::cancel_selected()
 {
    update_enables();
-   cout << "setup jobs for get status\n";
+   cout << "setup jobs for cancel selected\n";
+   comm_mode = "cancel";
    jobs.clear();
    
    QStringList qsl_submit;
    QListViewItem *lvi = lv_files->firstChild();
-   do {
-      cout << "get status: " << lvi->text( 0 ) << endl;
-      jobs[ lvi ] = "get status";
-   } while ( ( lvi = lvi->nextSibling() ) );
+   if ( lvi )
+   {
+      do {
+         if ( lvi->isSelected() )
+         {
+            cout << "cancel job: " << lvi->text( 0 ) << endl;
+            jobs[ lvi ] = "cancel job";
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+      emit next_status();
+   }
+}
 
-   emit next_status();
+void US_Hydrodyn_Cluster_Status::get_status()
+{
+   update_enables();
+   cout << "setup jobs for get status\n";
+   comm_mode = "status";
+   jobs.clear();
+   
+   QStringList qsl_submit;
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
+   {
+      do {
+         cout << "get status: " << lvi->text( 0 ) << endl;
+         jobs[ lvi ] = "get status";
+      } while ( ( lvi = lvi->nextSibling() ) );
+      
+      emit next_status();
+   }
 }
 
 void US_Hydrodyn_Cluster_Status::next_status()
@@ -323,7 +390,8 @@ void US_Hydrodyn_Cluster_Status::next_status()
       {
          ok = false;
       }
-      if ( it->second == "get status" )
+      if ( it->second == "get status" ||
+           it->second == "cancel job" )
       {
          next_to_process = it->first;
          emit get_next_status();
@@ -333,22 +401,112 @@ void US_Hydrodyn_Cluster_Status::next_status()
 
    if ( ok )
    {
-      editor_msg( "black", tr( "done refreshing job status" ) );
+      if ( comm_mode == "status" )
+      {
+         editor_msg( "black", tr( "done refreshing job status" ) );
+      } 
+      if ( comm_mode == "cancel" )
+      {
+         editor_msg( "black", tr( "done canceling jobs" ) );
+         complete_remove();
+      } 
+         
    } else {
-      editor_msg( "red", tr( "job status refresh had errors" ) );
+      if ( comm_mode == "status" )
+      {
+         editor_msg( "red", tr( "job status refresh had errors" ) );
+      } 
+      if ( comm_mode == "cancel" )
+      {
+         editor_msg( "red", tr( "cancel job had errors" ) );
+      } 
    }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Status::complete_remove()
+{
+   if ( QMessageBox::question(
+                              this,
+                              tr( "US-SOMO: Cluster Status" ),
+                              tr( "What do you want to do with the canceled jobs?" ),
+                              tr( "&Push back to unsubmitted" ),
+                              tr( "&Remove completely" ),
+                              QString::null, 0, 1 ) )
+   {
+      editor_msg( "black", "completely removing" );
+      for ( map < QListViewItem *, QString >::iterator it = jobs.begin();
+            it != jobs.end();
+            it++ )
+      {
+         it->first->setText( 2, "Removing" );
+         editor_msg( "black", QString( tr( "Removing %1" ) ).arg( it->first->text( 0 ) ) );
+         if ( !QFile::remove( it->first->text( 0 ) ) )
+         {
+            editor_msg( "red", QString( tr( "Error removing %1" ) ).arg( it->first->text( 0 ) ) );
+         }
+      }
+      editor_msg( "black", "Removing done" );
+   } else {
+      
+      editor_msg( "black", "Push back to unsubmitted" );
+      
+      US_File_Util ufu;
+      
+      for ( map < QListViewItem *, QString >::iterator it = jobs.begin();
+            it != jobs.end();
+            it++ )
+      {
+         it->first->setText( 2, "Pushing back to unsubmitted" );
+         editor_msg( "black", QString( tr( "Pushing back to unsubmitted %1" ) ).arg( it->first->text( 0 ) ) );
+         if ( !ufu.move( it->first->text( 0 ), pkg_dir + SLASH ) )
+         {
+            editor_msg( "red", QString( tr( "Error pushing back to unsubmitted %1: %2" ) ).arg( it->first->text( 0 ) ).arg( ufu.errormsg ) );
+         }
+      }
+      editor_msg( "black", "Pushing back done" );
+   }
+
+
+   if ( !update_files() )
+   {
+      QMessageBox::information( this, 
+                                tr("US-SOMO: Cluster Status"),
+                                tr("No further unretrieved submitted jobs found"),
+                                0 );
+      close();
+      return;
+   }
+   update_enables();
+   refresh();
 }
 
 void US_Hydrodyn_Cluster_Status::get_next_status()
 {
-   editor_msg( "black", QString( "refreshing status for %1" ).arg( next_to_process->text( 0 ) ) );
    cout << "get next status\n";
+   if ( comm_mode == "cancel" )
+   {
+      next_to_process->setText( 2, "Canceling" );
+   }
+   if ( comm_mode == "status" )
+   {
+      editor_msg( "black", QString( "refreshing status for %1" ).arg( next_to_process->text( 0 ) ) );
+   }
+
    if ( send_http_get( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "complete";
    } else {
       editor_msg( "red", errormsg );
-      jobs[ next_to_process ] = "get status failed";
+      if ( comm_mode == "status" )
+      {
+         jobs[ next_to_process ] = "get status failed";
+      } 
+      if ( comm_mode == "cancel" )
+      {
+         jobs[ next_to_process ] = "cancel job failed";
+      } 
    }
    emit next_status();
 }
@@ -373,10 +531,21 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
    connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
    connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
 
-   submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-   submit_http.get( QString( "/ogce-rest/job/jobstatus/US-SOMO-%1-%2" )
-                    .arg( cluster_id )
-                    .arg( file ) );
+   if ( comm_mode == "status" )
+   {
+      submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+      submit_http.get( QString( "/ogce-rest/job/jobstatus/%1-%2" )
+                       .arg( cluster_id )
+                       .arg( file ) );
+   }
+
+   if ( comm_mode == "cancel" )
+   {
+      submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+      submit_http.get( QString( "/ogce-rest/job/canceljob/%1-%2" )
+                       .arg( cluster_id )
+                       .arg( file ) );
+   }
 
    return true;
 }
@@ -397,19 +566,23 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
    cout << resp.reasonPhrase() << endl;
    current_http_response = QString( "%1" ).arg( submit_http.readAll() );
    cout << current_http_response << endl;
-   QString status = current_http_response;
-   status.replace( QRegExp( "^.*<status>" ), "" );
-   status.replace( QRegExp( "</status>.*$" ), "" );
-   next_to_process->setText( 1, status );
-   QString message = current_http_response;
-   if ( message.contains( "<message>" ) )
+
+   if ( comm_mode == "status" )
    {
-      message.replace( QRegExp( "^.*<message>" ), "" );
-      message.replace( QRegExp( "</message>.*$" ), "" );
-   } else {
-      message = "";
+      QString status = current_http_response;
+      status.replace( QRegExp( "^.*<status>" ), "" );
+      status.replace( QRegExp( "</status>.*$" ), "" );
+      next_to_process->setText( 1, status );
+      QString message = current_http_response;
+      if ( message.contains( "<message>" ) )
+      {
+         message.replace( QRegExp( "^.*<message>" ), "" );
+         message.replace( QRegExp( "</message>.*$" ), "" );
+      } else {
+         message = "";
+      }
+      next_to_process->setText( 2, message );
    }
-   next_to_process->setText( 2, message );
 }
 
 void US_Hydrodyn_Cluster_Status::http_dataSendProgress ( int done, int total )

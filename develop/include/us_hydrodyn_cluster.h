@@ -84,11 +84,12 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void          editor_msg( QString color, QString msg );
 
       QString       pkg_dir;
+      QString       submitted_dir;
+      QString       completed_dir;
 
       bool          copy_files_to_pkg_dir( QStringList &filenames );
       bool          remove_files( QStringList &filenames );
       QString       errormsg;
-
 
       // cluster config info
 
@@ -98,6 +99,17 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QString       cluster_id;
       QString       submit_url;
       QString       stage_url;
+
+      bool          dup_in_submitted_or_completed();
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, bool > submitted_jobs;
+      map < QString, bool > completed_jobs;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
    private slots:
 
@@ -111,6 +123,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void submit_pkg();
       void check_status();
       void load_results();
+
+      void for_mpi();
 
       void clear_display();
       void update_font();

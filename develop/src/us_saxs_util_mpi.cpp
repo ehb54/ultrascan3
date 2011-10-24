@@ -159,7 +159,6 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          exit( errorno );
       }         
       errorno--;
-
    }
 
    // we should all have the same qslt now
@@ -267,7 +266,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       // create results.tar
 
       QString results_file = original_controlfile;
-      results_file.replace( QRegExp( "\\.(tgz|TGZ)$" ), "" );
+      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
       results_file += "_out.tar";
 
       QStringList list;

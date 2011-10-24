@@ -9,7 +9,7 @@
 #include <qpushbutton.h>
 #include <qframe.h>
 #include <qcheckbox.h>
-#include <qlistbox.h>
+#include <qlistview.h>
 #include <qsocket.h>
 #include <qprocess.h>
 #include <qcstring.h>
@@ -46,9 +46,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QLabel        *lbl_title;
 
       QLabel        *lbl_files;
-      QListBox      *lb_files;
+      QListView     *lv_files;
 
       QPushButton   *pb_select_all;
+      QPushButton   *pb_remove;
       QPushButton   *pb_submit;
 
       QFont         ft;
@@ -78,7 +79,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QString       errormsg;
       bool          disable_updates;
 
-      unsigned int  update_files( bool set_lb_files = true );
+      unsigned int  update_files( bool set_lv_files = true );
 
       bool          prepare_stage( QString file );
       bool          stage( QString file );
@@ -106,11 +107,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      map < QString, QString > jobs;
+      map < QListViewItem *, QString > jobs;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
-      QString       next_to_process;
+      QListViewItem *next_to_process;
 
       bool          job_submit( QString file );
       void          process_list();
@@ -123,7 +124,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
    private slots:
 
-      void setup_jobs();
       void process_next();
       void process_prepare_stage();
       void process_stage();
@@ -134,6 +134,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
    
       void update_enables();
       void select_all();
+      void remove();
       void submit();
 
       void clear_display();
