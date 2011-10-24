@@ -113,7 +113,11 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
       for ( unsigned int i = 0; i < files.size(); i++ )
       {
          cout << "files: " << files[ i ] << endl;
-         new QListViewItem( lv_files, files[ i ], QFileInfo( files[ i ] ).created().toString() );
+         new QListViewItem( lv_files, 
+                            files[ i ], 
+                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
+                            QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
+                            );
       }
    }
 
@@ -147,6 +151,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 
    lv_files->addColumn( tr( "Name" ) );
    lv_files->addColumn( tr( "Created" ) );
+   lv_files->addColumn( tr( "Size" ) );
    connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
    pb_select_all = new QPushButton(tr("Select all"), this);

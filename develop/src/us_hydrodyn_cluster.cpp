@@ -1127,7 +1127,11 @@ void US_Hydrodyn_Cluster::check_status()
       new US_Hydrodyn_Cluster_Status(
                                      us_hydrodyn,
                                      this );
-   hcs->exec();
+   if ( hcs->files.size() )
+   {
+      hcs->exec();
+   }
+   delete hcs;
 }
 
 bool US_Hydrodyn_Cluster::dup_in_submitted_or_completed()
