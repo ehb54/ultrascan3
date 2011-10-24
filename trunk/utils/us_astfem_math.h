@@ -27,6 +27,12 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param x     Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
 
+      //! \brief Initialize a 2d matrix in memory to all zeros.
+      //! \param val1   First dimension
+      //! \param val2   Second dimension
+      //! \param matrix Initialized val1 x val2 matrix
+      static void zero_2d      ( int, int, double** );
+
       //! \brief Create a 2d matrix in memory and initilize to all zeros.
       //! \param val1   First dimension
       //! \param val2   Second dimension

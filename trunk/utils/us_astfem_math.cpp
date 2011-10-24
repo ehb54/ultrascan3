@@ -4,36 +4,42 @@
 #include "us_hardware.h"
 
 void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
-      QVector< double >& x )
+      QVector< double >& xvec )
 {
    int ja = 0;
+   double* x    = xvec            .data();
+   double* radi = C0.radius       .data();
+   double* conc = C0.concentration.data();
+   int     rsiz = C0.radius       .size();
    
-   for ( int j = 0; j < x.size(); j++ )
+   for ( int j = 0; j < xvec.size(); j++ )
    {
-      int   i;
+      int    i;
       double xs = x[ j ];
+      double xc = xs + 1.e-12;
       
-      for ( i = ja; i < C0.radius.size(); i++ )
-         if ( C0.radius[ i ] > xs + 1.e-12 ) break; 
+      for ( i = ja; i < rsiz; i++ )
+         if ( radi[ i ] > xc ) break; 
       
 
-      if ( i == 0 )                        // x[j] < C0.radius[0]
-         C1[ j ] = C0.concentration[ 0 ];  // Use the first value
+      if ( i == 0 )                  // x[j] < C0.radius[0]
+         C1[ j ] = conc[ 0 ];        // Use the first value
       
-      else if ( i == C0.radius.size() )    // x[j] > last point in C0.radius[]
-         C1[ j ] = C0.concentration[ i - 1 ];
+      else if ( i == rsiz )          // x[j] > last point in C0.radius[]
+         C1[ j ] = conc[ i - 1 ];
       
       else
       {
-         double a = C0.radius[ i - 1 ];
-         double b = C0.radius[ i ];
+         double a = radi[ i - 1 ];
+         double b = radi[ i ];
 
          double tmp = ( xs - a ) / ( b - a );
 
-         C1[ j ] = C0.concentration[ i - 1 ] * ( 1.0 - tmp ) + 
-                   C0.concentration[ i ] * tmp;
+         ja      = i - 1;
+
+         C1[ j ] = conc[ ja ] * ( 1.0 - tmp ) + 
+                   conc[ i  ] * tmp;
          
-         ja = i - 1;
       }
    }
 }
@@ -42,34 +48,48 @@ void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1,
 void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 ) 
 {
    int ja = 0;
+   double* C0radi = C0.radius       .data();
+   double* C1radi = C1.radius       .data();
+   double* C0conc = C0.concentration.data();
+   double* C1conc = C1.concentration.data();
+   int     r0size = C0.radius       .size();
+   int     r1size = C1.radius       .size();
 
-   for ( int j = 0; j < C1.radius.size(); j++ )
+   for ( int j = 0; j < r1size; j++ )
    {
       int   i;
-      double xs = C1.radius[ j ];
+      double xs = C1radi[ j ];
+      double xc = xs + 1.e-12;
       
-      for ( i = ja; i < C0.radius.size(); i++ )
-         if ( C0.radius[ i ] > xs + 1.e-12 )  break; 
+      for ( i = ja; i < r0size; i++ )
+         if ( C0.radius[ i ] > xc )  break; 
       
 
-      if ( i == 0 )                         // x[j] < C0.radius[0]
-         C1.concentration[ j ] = C0.concentration[ 0 ];   // Use the first value
+      if ( i == 0 )                     // x[j] < C0.radius[0]
+         C1conc[ j ] = C0conc[ 0 ];     // Use the first value
       
-      else if ( i == C0.radius.size() )     // x[j] > last point in C0.radius[]
-         C1.concentration[ j ] = C0.concentration[ i - 1 ];
-      
+      else if ( i == r0size )           // x[j] > last point in C0.radius[]
+         C1conc[ j ] = C0conc[ i - 1 ];
+
       else
       {
-         double a   = C0.radius[ i - 1 ];
-         double b   = C0.radius[ i ];
+         ja = i - 1;
+
+         double a   = C0radi[ ja ];
+         double b   = C0radi[ i  ];
          
          double tmp = ( xs - a ) / ( b - a );
          
-         C1.concentration[ j ] = C0.concentration[ i - 1 ] * ( 1.0 - tmp ) + 
-                                 C0.concentration[ i ] * tmp;
-         ja = i - 1;
+         C1conc[ j ] = C0conc[ ja ] * ( 1.0 - tmp ) + C0conc[ i ] * tmp;
       }
    }
+}
+
+void US_AstfemMath::zero_2d( int val1, int val2, double** matrix )
+{
+   for ( int i = 0; i < val1; i++ )
+      for ( int j = 0; j < val2; j++ )
+         matrix[ i ][ j ] = 0.0;
 }
 
 void US_AstfemMath::initialize_2d( int val1, int val2, double*** matrix )
@@ -95,10 +115,11 @@ void US_AstfemMath::clear_2d( int val1, double** matrix )
 
 double US_AstfemMath::minval( const QVector< double >& value )
 {
+   const double* avalue = value.data();
    double minimum = 1.0e300;
    
    for ( int i = 0; i < value.size(); i++ )
-      minimum = min( minimum, value[ i ] );
+      minimum = qMin( minimum, avalue[ i ] );
 
    return minimum;
 }
@@ -115,10 +136,11 @@ double US_AstfemMath::minval( const QVector< US_Model::SimulationComponent >& va
 
 double US_AstfemMath::maxval( const QVector< double >& value )
 {
+   const double* avalue = value.data();
    double maximum = -1.0e300;
    
-   for ( int i = 0; i <value.size(); i++ )
-      maximum = max( maximum, value[ i ]);
+   for ( int i = 0; i < value.size(); i++ )
+      maximum = qMax( maximum, avalue[ i ]);
   
    return maximum;
 }
@@ -173,10 +195,19 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
                              double* r, double* u, int N )
 {
    double bet = b[ 0 ];
+   //double* gam = new double [ N ];
+   static QVector< double > gamvec;
+   static int Nsave = 0;
 
-   double* gam = new double [ N ];
+   if ( N > Nsave )
+   {
+      Nsave = N;
+      gamvec.resize( N );
+   }
+
+   double* gam = gamvec.data();
    
-   if ( bet == 0.0 ) qDebug() << "Error 1 in tridag";
+   if ( bet == 0.0 ) qDebug() << "Error 1 in tridiag";
 
    u[ 0 ] = r[ 0 ] / bet;
    
@@ -185,7 +216,7 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
       gam[ j ] = c[ j - 1 ] / bet;
       bet = b[ j ] - a[ j ] * gam[ j ];
       
-      if ( bet == 0.0 ) qDebug() << "Error 2 in tridag";
+      if ( bet == 0.0 ) qDebug() << "Error 2 in tridiag";
 
       u[ j ] = ( r[ j ] - a[ j ] * u[ j - 1 ] ) / bet;
    }
@@ -193,7 +224,7 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
    for ( int j = N - 2; j >= 0; j-- )
       u[ j ] -= gam[ j + 1 ] * u[ j + 1 ];
    
-   delete [] gam;
+   //delete [] gam;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -646,17 +677,21 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci,
 // i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
 // i=n;  r(i)=a(i)*xs(i-1)+b(i)*xs(i);
 
-   QVector< double > ca; ca.reserve( N );
-   QVector< double > cb; cb.reserve( N );
-   QVector< double > cc; cc.reserve( N );
-   QVector< double > cd; cd.reserve( N );
+   QVector< double > caVec( N );
+   QVector< double > cbVec( N );
+   QVector< double > ccVec( N );
+   QVector< double > cdVec( N );
+   double* ca = caVec.data();
+   double* cb = cbVec.data();
+   double* cc = ccVec.data();
+   double* cd = cdVec.data();
 
    for ( int i = 0; i < N; i++ )
    {
-      ca.push_back( ai[ i ] );
-      cb.push_back( bi[ i ] );
-      cc.push_back( ci[ i ] );
-      cd.push_back( di[ i ] );
+      ca[ i ] = ai[ i ];
+      cb[ i ] = bi[ i ];
+      cc[ i ] = ci[ i ];
+      cd[ i ] = di[ i ];
    }
 
    for ( int i = 1; i <= N - 2; i++ )
@@ -701,17 +736,19 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    double x_gauss, y_gauss, dval;
    double hh, slope, xn1, phiC, phiCx;
    double Lx[ 3 ], Ly[ 3 ];
-   double Rx[ 4 ], Ry[ 4 ];
+   double Rx[ 4 ];
    double Qx[ 3 ], Qy[ 3 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double *phiL, *phiLx, *phiLy, *phiR, *phiRx, *phiRy;
-   double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-   phiL  = new double [3];
-   phiLx = new double [3];
-   phiLy = new double [3];
-   phiR  = new double [4];
-   phiRx = new double [4];
-   phiRy = new double [4];
+   double StifL[ 3 ][ 2 ];
+   double StifR[ 4 ][ 2 ];
+   double Lam [ 28 ][ 4 ];
+   double DJac;
+   double phiL [ 3 ];
+   double phiLx[ 3 ];
+   double phiLy[ 3 ];
+   double phiR [ 4 ];
+   double phiRx[ 4 ];
+   double phiRy[ 4 ];
 
    // elements for define the trial function phi
    Lx[ 0 ] = vx[0];    // vertices of left Triangle
@@ -727,18 +764,13 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    Rx[ 2 ] = vx[4];
    Rx[ 3 ] = vx[3];
 
-   Ry[ 0 ] = 0.0;
-   Ry[ 1 ] = 0.0;
-   Ry[ 2 ] = dt;
-   Ry[ 3 ] = dt;
-
-   initialize_2d(3, 2, &StifL);
-   initialize_2d(4, 2, &StifR);
+   zero_2d( 3, 2, (double**)StifL );
+   zero_2d( 4, 2, (double**)StifR );
    hh = vx[3] - vx[2];
    slope = (vx[3] - vx[5])/dt;
    npts = 28;
-   initialize_2d(npts, 4, &Lam);
-   DefineFkp(npts, Lam);
+   zero_2d  ( npts, 4, (double**)Lam );
+   DefineFkp( npts,    (double**)Lam );
 
    //
    // integration over element Q (a triangle):
@@ -746,10 +778,6 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    Qx[ 0 ] = vx[0]; // vertices of Q on left
    Qx[ 1 ] = vx[3];
    Qx[ 2 ] = vx[2];
-
-   Qy[ 0 ] = 0.0;
-   Qy[ 1 ] = dt;
-   Qy[ 2 ] = dt; // vertices of left T
 
    for (k=0; k<npts; k++)
    {
@@ -821,8 +849,6 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
       }
    }
 
-   clear_2d( npts, Lam );
-
    for ( i = 0; i < 2; i++ )
    {
       Stif[ 0 ][ i ] = StifL[ 0 ][ i ] + StifR[ 0 ][ i ];
@@ -832,15 +858,6 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
       Stif[ 4 ][ i ] =                   StifR[ 2 ][ i ];
    }
 
-   delete [] phiR;
-   delete [] phiRx;
-   delete [] phiRy;
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
-
-   clear_2d( 3, StifL );
-   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTm( double* vx, double D, double sw2, 
@@ -850,57 +867,43 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    //
    int    npts, i, k;
    double x_gauss, y_gauss, dval;
-   double Lx[ 4 ], Ly[ 4 ];
-   double Cx[ 4 ], Cy[ 4 ];
-   double Rx[ 4 ], Ry[ 4 ];
+   double Lx[ 4 ];
+   double Cx[ 4 ];
+   double Rx[ 4 ];
    double Qx[ 4 ], Qy[ 4 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double *phiR, *phiRx, *phiRy;
-   double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-   double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
-   double **Gs=NULL;
-   phiL  = new double [ 4 ];
-   phiLx = new double [ 4 ];
-   phiLy = new double [ 4 ];
-   phiCx = new double [ 4 ];
-   phiCy = new double [ 4 ];
-   phiC  = new double [ 4 ];
-   phiR  = new double [ 4 ];
-   phiRx = new double [ 4 ];
-   phiRy = new double [ 4 ];
+   double DJac;
+   double StifL[ 4 ][ 2 ];
+   double StifR[ 4 ][ 2 ];
+   double Lam [ 28 ][ 4 ];
+   double Gs  [ 25 ][ 3 ];
+   double phiL [ 4 ];
+   double phiLx[ 4 ];
+   double phiLy[ 4 ];
+   double phiCx[ 4 ];
+   double phiCy[ 4 ];
+   double phiC [ 4 ];
+   double phiR [ 4 ];
+   double phiRx[ 4 ];
+   double phiRy[ 4 ];
 
    Lx[ 0 ] = vx[ 0 ];
    Lx[ 1 ] = vx[ 1 ];
    Lx[ 2 ] = vx[ 4 ];
-   Lx[ 3 ] = vx[ 3 ];
-
-   Ly[ 0 ] = 0.0;
-   Ly[ 1 ] = 0.0;
-   Ly[ 2 ] = dt;
-   Ly[ 3 ] = dt;          // vertices of left T
+   Lx[ 3 ] = vx[ 3 ];      // vertices of left T
 
    Cx[ 0 ] = vx[ 6 ];
    Cx[ 1 ] = vx[ 7 ];
    Cx[ 2 ] = vx[ 4 ];
    Cx[ 3 ] = vx[ 3 ];
  
-   Cy[ 0 ] = 0.0;
-   Cy[ 1 ] = 0.0;
-   Cy[ 2 ] = dt;
-   Cy[ 3 ] = dt;
-
-   Rx[ 0 ] = vx[ 1 ]; // vertices of Q on right
+   Rx[ 0 ] = vx[ 1 ];      // vertices of Q on right
    Rx[ 1 ] = vx[ 2 ];
    Rx[ 2 ] = vx[ 5 ];
    Rx[ 3 ] = vx[ 4 ];
 
-   Ry[ 0 ] = 0.0;
-   Ry[ 1 ] = 0.0;
-   Ry[ 2 ] = dt;
-   Ry[ 3 ] = dt;
-
-   initialize_2d( 4, 2, &StifL );
-   initialize_2d( 4, 2, &StifR );
+   zero_2d( 4, 2, (double**)StifL );
+   zero_2d( 4, 2, (double**)StifR );
 
    //
    // integration over element Q :
@@ -916,8 +919,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Qy[ 3 ] = dt; // vertices of left T
 
    npts = 5 * 5;
-   initialize_2d( npts, 3, &Gs );
-   DefineGaussian( 5, Gs );
+   zero_2d       ( npts, 3, (double**)Gs );
+   DefineGaussian( 5,       (double**)Gs );
 
    double psi[  4 ];
    double psi1[ 4 ];
@@ -964,7 +967,6 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
          StifL[ i ][ 1 ] += Gs[ k ][ 2 ] * DJac * dval;
       }
    }
-   clear_2d( npts, Gs );
 
    //
    // integration over T:
@@ -978,8 +980,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Ty[ 2 ] = dt;
 
    npts = 28;
-   initialize_2d( npts, 4, &Lam );
-   DefineFkp( npts, Lam );
+   zero_2d  ( npts, 4, (double**)Lam );
+   DefineFkp( npts,    (double**)Lam );
 
    for ( k = 0; k < npts; k++ )
    {
@@ -1009,8 +1011,6 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
          StifR[ i ][ 1 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d( npts, Lam );
-
 
    for ( i = 0; i < 2; i++ )
    {
@@ -1021,18 +1021,7 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
       Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 3 ][ i ];
       Stif[ 5 ][ i ] =                   StifR[ 2 ][ i ];
    }
-   delete [] phiR;
-   delete [] phiRx;
-   delete [] phiRy;
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
-   delete [] phiCx;
-   delete [] phiCy;
-   delete [] phiC;
 
-   clear_2d( 4, StifL );
-   clear_2d( 4, StifR );
 }
 
 
@@ -1043,46 +1032,37 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    //
    int    npts, i, k;
    double x_gauss, y_gauss, dval;
-   double Lx[ 4 ], Ly[ 4 ];
-   double Cx[ 4 ], Cy[ 4 ];
+   double Lx[ 4 ];
+   double Cx[ 4 ];
    double Rx[ 3 ], Ry[ 3 ];
    double Qx[ 4 ], Qy[ 4 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double *phiR, *phiRx, *phiRy;
-   double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-   double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
-   double **Gs=NULL;
-   phiL  = new double [ 4 ];
-   phiLx = new double [ 4 ];
-   phiLy = new double [ 4 ];
-   phiCx = new double [ 4 ];
-   phiCy = new double [ 4 ];
-   phiC  = new double [ 4 ];
-   phiR  = new double [ 3 ];
-   phiRx = new double [ 3 ];
-   phiRy = new double [ 3 ];
+   double DJac;
+   double StifL[ 4 ][ 2 ];
+   double StifR[ 4 ][ 2 ];
+   double Gs  [ 25 ][ 3 ];
+   double Lam [ 28 ][ 4 ];
+   double phiL [ 4 ];
+   double phiLx[ 4 ];
+   double phiLy[ 4 ];
+   double phiCx[ 4 ];
+   double phiCy[ 4 ];
+   double phiC [ 4 ];
+   double phiR [ 3 ];
+   double phiRx[ 3 ];
+   double phiRy[ 3 ];
 
    Lx[ 0 ] = vx[ 0 ];
    Lx[ 1 ] = vx[ 1 ];
    Lx[ 2 ] = vx[ 4 ];
-   Lx[ 3 ] = vx[ 3 ];
-
-   Ly[ 0 ] = 0.0;
-   Ly[ 1 ] = 0.0;
-   Ly[ 2 ] = dt;
-   Ly[ 3 ] = dt;          // vertices of left T
+   Lx[ 3 ] = vx[ 3 ];     // vertices of left T
 
    Cx[ 0 ] = vx[ 5 ];
    Cx[ 1 ] = vx[ 6 ];
    Cx[ 2 ] = vx[ 4 ];
    Cx[ 3 ] = vx[ 3 ];
 
-   Cy[ 0 ] = 0.0;
-   Cy[ 1 ] = 0.0;
-   Cy[ 2 ] = dt;
-   Cy[ 3 ] = dt;
-
-   Rx[ 0 ] = vx[ 1 ]; // vertices of Q on right
+   Rx[ 0 ] = vx[ 1 ];    // vertices of Q on right
    Rx[ 1 ] = vx[ 2 ];
    Rx[ 2 ] = vx[ 4 ];
 
@@ -1090,8 +1070,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Ry[ 1 ] = 0.0;
    Ry[ 2 ] = dt;
 
-   initialize_2d( 4, 2, &StifL );
-   initialize_2d( 4, 2, &StifR );
+   zero_2d( 4, 2, (double**)StifL );
+   zero_2d( 4, 2, (double**)StifR );
 
    //
    // integration over element Q
@@ -1107,8 +1087,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Qy[ 3 ] = dt;
 
    npts = 5 * 5;
-   initialize_2d( npts, 3, &Gs );
-   DefineGaussian( 5, Gs );
+   zero_2d       ( npts, 3, (double**)Gs );
+   DefineGaussian( 5,       (double**)Gs );
 
    double psi[ 4 ], psi1[ 4 ], psi2[ 4 ], jac[ 4 ];
 
@@ -1154,7 +1134,6 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
          StifL[ i ][ 1 ] += Gs[ k ][ 2 ] * DJac * dval;
       }
    }
-   clear_2d( npts, Gs );
 
    //
    // integration over T:
@@ -1168,8 +1147,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Ty[ 2 ] = dt;
 
    npts = 28;
-   initialize_2d( npts, 4, &Lam );
-   DefineFkp(     npts, Lam );
+   zero_2d  ( npts, 4, (double**)Lam );
+   DefineFkp( npts,    (double**)Lam );
 
    for ( k = 0; k < npts; k++ )
    {
@@ -1199,7 +1178,6 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
          StifR[ i ][ 1 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d( npts, Lam );
 
    for ( i = 0; i < 2; i++ )
    {
@@ -1209,18 +1187,7 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
       Stif[ 3 ][ i ] = StifL[ 3 ][ i ];
       Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 2 ][ i ];
    }
-   delete [] phiR;
-   delete [] phiRx;
-   delete [] phiRy;
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
-   delete [] phiCx;
-   delete [] phiCy;
-   delete [] phiC;
 
-   clear_2d( 4, StifL );
-   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTn1( double* vx, double D, double sw2, 
@@ -1232,11 +1199,12 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    double x_gauss, y_gauss, dval;
    double Lx[ 3 ], Ly[ 3 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double **StifR = NULL, **Lam = NULL, DJac;
-   double *phiL, *phiLx, *phiLy;
-   phiL  = new double [ 4 ];
-   phiLx = new double [ 4 ];
-   phiLy = new double [ 4 ];
+   double StifR[ 4 ][ 2 ];
+   double Lam [ 28 ][ 4 ];
+   double DJac;
+   double phiL [ 4 ];
+   double phiLx[ 4 ];
+   double phiLy[ 4 ];
 
    Lx[ 0 ] = vx[ 0 ];
    Lx[ 1 ] = vx[ 1 ];
@@ -1246,7 +1214,7 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    Ly[ 1 ] = 0.0;
    Ly[ 2 ] = dt;
 
-   initialize_2d( 4, 2, &StifR );
+   zero_2d( 4, 2, (double**)StifR );
 
    //
    // integration over T:
@@ -1260,8 +1228,8 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    Ty[ 2 ] = dt;
 
    npts = 28;
-   initialize_2d( npts, 4, &Lam );
-   DefineFkp(     npts, Lam );
+   zero_2d  ( npts, 4, (double**)Lam );
+   DefineFkp( npts,    (double**)Lam );
 
    for ( k = 0; k < npts; k++ )
    {
@@ -1285,7 +1253,6 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
          StifR[ i ][ 0 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d( npts, Lam );
 
    for ( i = 0; i < 2; i++ )
    {
@@ -1293,11 +1260,7 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
       Stif[ 1 ][ i ] = StifR[ 1 ][ i ];
       Stif[ 2 ][ i ] = StifR[ 2 ][ i ];
    }
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
 
-   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::DefineFkp( int npts, double** Lam )
@@ -1995,11 +1958,10 @@ void IntQT1_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
    double x_gauss, y_gauss, dval;
    QVector <double>  Rx, Ry, Qx, Qy;
    double **StifR=NULL, DJac;
-   double *phiR, *phiRx, *phiRy;
    double hh, slope, xn1, phiC, phiCx;
-   phiR = new double [4];
-   phiRx = new double [4];
-   phiRy = new double [4];
+   double phiR [4];
+   double phiRx[4];
+   double phiRy[4];
 
    Rx.clear();
    Ry.clear();
@@ -2048,7 +2010,7 @@ void IntQT1_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
           // find phi, phi_x, phi_y on R and C at (x,y)
           //
 
-          BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
+          BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt );
 
           xn1 = x_gauss + slope * ( dt - y_gauss );   // trace-forward point at t_n+1 from (x_g, y_g)
           phiC  = ( xn1 - vx[2] )/hh;     // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
@@ -2110,7 +2072,7 @@ void IntQT1_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
          //
          // find phi, phi_x, phi_y on L and C at (x,y)
          //
-         BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
+         BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt );
          xn1 = x_gauss + slope * ( dt - y_gauss ); // trace-forward point at t_n+1 from (x_g, y_g)
          phiC  = ( xn1 - vx[2] )/hh;      // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
          phiCx = 1./hh;
@@ -2131,9 +2093,7 @@ void IntQT1_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
       Stif[2][i] = StifR[3][i];
       Stif[3][i] = StifR[2][i];
    }
-   delete [] phiR;
-   delete [] phiRx;
-   delete [] phiRy;
+
    clear_2d(4, StifR);
 }
 
@@ -2148,15 +2108,15 @@ void IntQTm_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
    double **Gs=NULL;
-   phiL = new double [4];
-   phiLx = new double [4];
-   phiLy = new double [4];
-   phiCx = new double [4];
-   phiCy = new double [4];
-   phiC = new double [4];
-   phiR = new double [4];
-   phiRx = new double [4];
-   phiRy = new double [4];
+   double phiL [4];
+   double phiLx[4];
+   double phiLy[4];
+   double phiCx[4];
+   double phiCy[4];
+   double phiC [4];
+   double phiR [4];
+   double phiRx[4];
+   double phiRy[4];
    Lx.clear();
    Ly.clear();
    Cx.clear();
@@ -2229,8 +2189,8 @@ void IntQTm_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
-      BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt);
-      BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
+      BasisQR( Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt );
+      BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
 
       for (i=0; i<4; i++)
       {
@@ -2271,8 +2231,8 @@ void IntQTm_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
           // find phi, phi_x, phi_y on R and C at (x,y)
           //
 
-          BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
-          BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
+          BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt );
+          BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
           for (i=0; i<4; i++)
           {
              dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
@@ -2329,8 +2289,8 @@ void IntQTm_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
           // find phi, phi_x, phi_y on L and C at (x,y)
           //
 
-          BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
-          BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
+          BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt );
+          BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
           for (i=0; i<4; i++)
           {
              dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
@@ -2354,15 +2314,6 @@ void IntQTm_ellam(QVector <double> vx, double D, double sw2, double **Stif, doub
       Stif[4][i] = StifL[2][i] + StifR[3][i];
       Stif[5][i] =               StifR[2][i];
    }
-   delete [] phiR;
-   delete [] phiRx;
-   delete [] phiRy;
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
-   delete [] phiCx;
-   delete [] phiCy;
-   delete [] phiC;
 
    clear_2d(4, StifL);
    clear_2d(4, StifR);
@@ -2377,10 +2328,9 @@ void IntQTn1_ellam(QVector <double> vx, double D, double sw2, double **Stif, dou
    double x_gauss, y_gauss, dval;
    QVector <double> Lx, Ly, Tx, Ty;
    double **StifL=NULL, **Lam=NULL, DJac;
-   double *phiL, *phiLx, *phiLy;
-   phiL = new double [4];
-   phiLx = new double [4];
-   phiLy = new double [4];
+   double phiL [4];
+   double phiLx[4];
+   double phiLy[4];
    Lx.clear();
    Ly.clear();
    Tx.clear();
@@ -2425,7 +2375,7 @@ void IntQTn1_ellam(QVector <double> vx, double D, double sw2, double **Stif, dou
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
-      BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt);
+      BasisQR( Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt );
 
       for (i=0; i<4; i++)
       {
@@ -2443,9 +2393,6 @@ void IntQTn1_ellam(QVector <double> vx, double D, double sw2, double **Stif, dou
       Stif[2][i] = StifL[3][i];
       Stif[3][i] = StifL[2][i];
    }
-   delete [] phiL;
-   delete [] phiLx;
-   delete [] phiLy;
 
    clear_2d(4, StifL);
 }
