@@ -963,11 +963,13 @@ bool US_Hydrodyn_Cluster_Submit::send_http_post( QString xml )
    connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
 
    QHttpRequestHeader header("POST", "/ogce-rest/job/runjob/async" );
-   // header.setValue( "Host", submit_url_host );
+   header.setValue( "Host", submit_url_host );
    header.setContentType( "application/xml" );
-
    submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-   submit_http.request( header, xml.utf8() );
+   // without the qba below, QHttp:request will send a null
+   QByteArray qba = xml.utf8();
+   qba.resize( qba.size() - 1 );
+   submit_http.request( header, qba );
 
    return true;
 }
