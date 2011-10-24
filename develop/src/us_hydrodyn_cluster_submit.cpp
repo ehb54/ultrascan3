@@ -523,7 +523,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "<name>param</name>"
                   "<value>iq</value>"
                   "</parameters>"
-                  "<parameters>  "
+                  "<parameters>"
                   "<name>inputfile</name>"
                   "<value>%6</value>"
                   "</parameters>"
@@ -750,7 +750,7 @@ bool US_Hydrodyn_Cluster_Submit::job_submit( QString file )
 
    // start comm process
    
-   return send_xml( xml );
+   return send_http_post( xml );
 }
 
 bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
@@ -940,4 +940,104 @@ void US_Hydrodyn_Cluster_Submit::remove()
                                 0 );
       close();
    }
+}
+
+bool US_Hydrodyn_Cluster_Submit::send_http_post( QString xml )
+{
+   // need to do a post & get to submit_url slash stuff
+   // its going to require opening a socket etc
+   // 
+   comm_active = true;
+   cout << "http_get\n";
+   // editor_msg( "black", "updating status" );
+
+   current_http_response = "";
+
+   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
+   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
+   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
+   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+
+   QHttpRequestHeader header("POST", "/ogce-rest/job/runjob/async" );
+   // header.setValue( "Host", submit_url_host );
+   header.setContentType( "application/xml" );
+
+   submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+   submit_http.request( header, xml.utf8() );
+
+   return true;
+}
+
+void US_Hydrodyn_Cluster_Submit::http_stateChanged ( int /* estate */ )
+{
+   // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
+}
+
+void US_Hydrodyn_Cluster_Submit::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
+{
+   cout << resp.reasonPhrase() << endl;
+}
+
+void US_Hydrodyn_Cluster_Submit::http_readyRead( const QHttpResponseHeader & resp )
+{
+   cout << "http: readyRead\n";
+   cout << resp.reasonPhrase() << endl;
+   current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   cout << current_http_response << endl;
+
+   /*   if ( comm_mode == "status" )
+   {
+      QString status = current_http_response;
+      status.replace( QRegExp( "^.*<status>" ), "" );
+      status.replace( QRegExp( "</status>.*$" ), "" );
+      next_to_process->setText( 1, status );
+      QString message = current_http_response;
+      if ( message.contains( "<message>" ) )
+      {
+         message.replace( QRegExp( "^.*<message>" ), "" );
+         message.replace( QRegExp( "</message>.*$" ), "" );
+      } else {
+         message = "";
+      }
+      next_to_process->setText( 2, message );
+      } */
+}
+
+void US_Hydrodyn_Cluster_Submit::http_dataSendProgress ( int done, int total )
+{
+   cout << "http: datasendprogress " << done << " " << total << "\n";
+
+}
+void US_Hydrodyn_Cluster_Submit::http_dataReadProgress ( int done, int total )
+{
+   cout << "http: datareadprogress " << done << " " << total << "\n";
+}
+
+void US_Hydrodyn_Cluster_Submit::http_requestStarted ( int id )
+{
+   cout << "http: requestStarted " << id << "\n";
+}
+
+void US_Hydrodyn_Cluster_Submit::http_requestFinished ( int id, bool error )
+{
+   cout << "http: requestFinished " << id << " " << error << "\n";
+}
+
+void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
+{
+   cout << "http: done " << error << "\n";
+   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
+   comm_active = false;
+   emit process_next();
 }

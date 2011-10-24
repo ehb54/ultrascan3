@@ -90,6 +90,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QStringList   last_stderr;
       bool          submit_xml( QString file, QString &xml );
       bool          send_xml( QString xml );
+      bool          send_http_post( QString xml );
 
       bool          submit_active;
       bool          comm_active;
@@ -99,10 +100,13 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QString       current_xml;
       QString       current_xml_response;
 
-      // here's the new submit logic:
-      // submit() builds a vector of jobs, sets submit active
+      QString       current_http;
+      QString       current_http_response;
+
+      // here's the submit logic:
+      // submit() builds a map of jobs, sets submit active
       // processing stages: stage, submit, move
-      // any_to_process checks the vector and updates status
+      // any_to_process checks the map and updates status
       // system() commands run with signals, using emit()
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -150,6 +154,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void socket_readyRead();
       void socket_connectionClosed();
       void socket_delayedCloseFinished();
+
+      void http_stateChanged ( int state );
+      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
+      void http_readyRead ( const QHttpResponseHeader & resp );
+      void http_dataSendProgress ( int done, int total );
+      void http_dataReadProgress ( int done, int total );
+      void http_requestStarted ( int id );
+      void http_requestFinished ( int id, bool error );
+      void http_done ( bool error );
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();
