@@ -40,6 +40,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    double        accel_time;
    double        dr;
+#define TIMING_RA_INC 500
 #if 0
 #define TIMING_RA
 #endif
@@ -106,6 +107,8 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
       
       CT0.radius       .clear();
       CT0.concentration.clear();
+      CT0.radius       .reserve( initial_npts );
+      CT0.concentration.reserve( initial_npts );
       
       dr = ( af_params.current_bottom - af_params.current_meniscus ) / 
            ( initial_npts - 1 );
@@ -141,10 +144,12 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
       
       if ( simparams.firstScanIsConcentration )
       {
-         US_AstfemMath::MfemInitial scan1;
-         scan1.radius.clear();
-         scan1.concentration.clear();
          US_AstfemMath::MfemScan*   scan0 = &af_data.scan[ 0 ];
+         US_AstfemMath::MfemInitial scan1;
+         scan1.radius       .clear();
+         scan1.concentration.clear();
+         scan1.radius       .reserve( af_data.radius.size() );
+         scan1.concentration.reserve( af_data.radius.size() );
 
          for ( int j = 0; j < af_data.radius.size(); j++ )
          {
@@ -390,8 +395,10 @@ DbgLv(2) << "RSA:     m n rcn" << m << n << as->rcomps[n];
       
       for ( int j = 0; j < num_comp; j++ )
       {
-         CT0.radius.clear();
+         CT0.radius       .clear();
          CT0.concentration.clear();
+         CT0.radius       .reserve( initial_npts );
+         CT0.concentration.reserve( initial_npts );
 DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
 
          for ( int i = 0; i < initial_npts; i++ )
@@ -593,8 +600,8 @@ totT8+=(clcSt8.msecsTo(clcSt9));
 int elapsedCalc = calcStart.msecsTo( clcSt9 );
 ncalls++;
 totTC+=elapsedCalc;
-if((ncalls%1000)==0) {
- DbgLv(0) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC;
+if((ncalls%TIMING_RA_INC)<1) {
+ DbgLv(0) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC << "  size_cv" << size_cv;
  DbgLv(0) << "   t1 t2 t3 t4 t5 t6 t7 t8"
   << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
 }
@@ -857,8 +864,6 @@ DbgLv(2) << "RSA: init_conc() ENTER kk" << kk;
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
-//DbgLv(2) << "size(af_c0)" << af_c0.concentration.size();
-   //if ( sc->c0.concentration.size() == 0 ) 
    if ( af_c0.concentration.size() == 0 ) 
    {
       if ( simparams.band_forming )
@@ -867,14 +872,12 @@ DbgLv(2) << "RSA: init_conc() ENTER kk" << kk;
          double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
          double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
 DbgLv(2) << "RSA: angle pathlen" << angl << plen;
-int nn=CT0.concentration.size();
-DbgLv(2) << "RSA:  bandvol" << simparams.band_volume << " CT0concsz" << nn;
+DbgLv(2) << "RSA:  bandvol" << simparams.band_volume << " CT0concsz" << CT0.concentration.size();
          double base = af_params.current_meniscus * af_params.current_meniscus 
             + simparams.band_volume * 360.0 / ( angl * plen * M_PI );
 
          double lamella_width = sqrt( base ) - af_params.current_meniscus;
-double amen=af_params.current_meniscus;
-DbgLv(2) << "RSA:   menisc base lwid" << amen << base << lamella_width;
+DbgLv(2) << "RSA:   menisc base lwid" << af_params.current_meniscus << base << lamella_width;
             
          // Calculate the spread of the lamella:
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -884,9 +887,8 @@ DbgLv(2) << "RSA:   menisc base lwid" << amen << base << lamella_width;
             
             CT0.concentration[ j ] += 
                sc->signal_concentration * exp( -pow( base, 4.0 ) );
-int mm=CT0.concentration.size()-1;
-if(j<2||j>(mm-2))
-DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
+//if(j<2||j>(Ct0.concentration.size()-3))
+//DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
          }
       }
 
@@ -905,8 +907,10 @@ DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
          // temporary CT0 vector: needs rubber band to make sure meniscus and
          // bottom equal current_meniscus and current_bottom
          
-         CT0.radius.clear();
+         CT0.radius       .clear();
          CT0.concentration.clear();
+         CT0.radius       .reserve( af_c0.radius.size() );
+         CT0.concentration.reserve( af_c0.radius.size() );
          //CT0 = system.components[ k ].c0;
          for ( int jj = 0; jj < af_c0.radius.size(); jj++ )
          {
@@ -918,8 +922,10 @@ DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
       else // interpolation
       {
          US_AstfemMath::MfemInitial C;
-         C.radius.clear();
+         C.radius       .clear();
          C.concentration.clear();
+         C.radius       .reserve( CT0.concentration.size() );
+         C.concentration.reserve( CT0.concentration.size() );
          
          double dr  = ( af_params.current_bottom - af_params.current_meniscus )
                      / ( CT0.concentration.size() - 1 );
@@ -947,20 +953,37 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       US_AstfemMath::MfemInitial& C_init, US_AstfemMath::MfemData& simdata,
       bool accel )
 {
-   double** CA = NULL;     // stiffness matrix on left hand side
-                           // CA[0...Ms-1][0...N-1][4]
+#ifdef NO_DB
+   static int      Nsave  = 0;
+   static int      Nsavea = 0;
+   static double** CA = NULL;     // stiffness matrix on left hand side
+                                  // CA[0...Ms-1][0...N-1][4]
    
-   double** CB = NULL;     // stiffness matrix on right hand side
-                           // CB[0...Ms-1][0...N-1][4]
+   static double** CB = NULL;     // stiffness matrix on right hand side
+                                  // CB[0...Ms-1][0...N-1][4]
    
-   double*  C0 = NULL;     // C[m][j]: current/next concentration of
-                           // m-th component at x_j
-   double*  C1 = NULL;     // C[0...Ms-1][0....N-1]:
+   static double** CA1;           // for matrices used in acceleration
+   static double** CA2;
+   static double** CB1;
+   static double** CB2;
+#else
+   double** CA = NULL;            // stiffness matrix on left hand side
+                                  // CA[0...Ms-1][0...N-1][4]
    
-   double** CA1;           // for matrices used in acceleration
+   double** CB = NULL;            // stiffness matrix on right hand side
+                                  // CB[0...Ms-1][0...N-1][4]
+
+   
+   double** CA1;                  // for matrices used in acceleration
    double** CA2;
    double** CB1;
    double** CB2;
+#endif
+
+   double*         C0 = NULL;     // C[m][j]: current/next concentration of
+                                  // m-th component at x_j
+   double*         C1 = NULL;     // C[0...Ms-1][0....N-1]:
+
 #if 0
 #define TIMING_NI 1
 #endif
@@ -988,7 +1011,10 @@ QDateTime clcSt9 = clcSt0;
 #endif
 
    simdata.radius.clear();
-   simdata.scan.clear();
+   simdata.scan  .clear();
+   simdata.radius.reserve( N );
+   simdata.scan  .reserve( N );
+
    US_AstfemMath::MfemScan simscan;
 
    // Generate the adaptive mesh
@@ -1017,7 +1043,7 @@ QDateTime clcSt9 = clcSt0;
               sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
          
          for ( j = 0; j < N - 3; j++ )
-            if ( x[ j ] > xc ) break; 
+            if ( xA[ j ] > xc ) break; 
       }
       else
       {
@@ -1025,18 +1051,34 @@ QDateTime clcSt9 = clcSt0;
               sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
 
          for ( j = 0; j < N - 3; j++ )
-            if ( x[ N - j - 1 ] < xc ) break;
+            if ( xA[ N - j - 1 ] < xc ) break;
       }
 
       mesh_gen_RefL( j + 1, 4 * j );
    }
 
-   for ( int i = 0; i < N; i++ ) simdata.radius .append( x[ i ] );
+   for ( int i = 0; i < N; i++ ) simdata.radius .append( xA[ i ] );
 
    // Initialize the coefficient matrices
 
+#ifdef NO_DB
+   if ( N > Nsave )
+   {
+      if ( Nsave > 0 )
+      {
+         US_AstfemMath::clear_2d( 3, CA );
+         US_AstfemMath::clear_2d( 3, CB );
+      }
+
+      Nsave = N;
+      US_AstfemMath::initialize_2d( 3, Nsave, &CA );
+      US_AstfemMath::initialize_2d( 3, Nsave, &CB );
+   }
+#else
    US_AstfemMath::initialize_2d( 3, N, &CA );
    US_AstfemMath::initialize_2d( 3, N, &CB );
+#endif
+
    bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
 #ifdef TIMING_NI
 clcSt2 = QDateTime::currentDateTime();
@@ -1061,10 +1103,29 @@ ttT1+=(clcSt1.msecsTo(clcSt2));
    }
    else // For acceleration
    {
+#ifdef NO_DB
+      if ( N > Nsavea )
+      {
+         if ( Nsavea > 0 )
+         {
+            US_AstfemMath::clear_2d( 3, CA1 );
+            US_AstfemMath::clear_2d( 3, CB1 );
+            US_AstfemMath::clear_2d( 3, CA2 );
+            US_AstfemMath::clear_2d( 3, CB2 );
+         }
+
+         US_AstfemMath::initialize_2d( 3, N, &CA1 );
+         US_AstfemMath::initialize_2d( 3, N, &CA2 );
+         US_AstfemMath::initialize_2d( 3, N, &CB1 );
+         US_AstfemMath::initialize_2d( 3, N, &CB2 );
+         Nsavea = N;
+      }
+#else
       US_AstfemMath::initialize_2d( 3, N, &CA1 );
       US_AstfemMath::initialize_2d( 3, N, &CA2 );
       US_AstfemMath::initialize_2d( 3, N, &CB1 );
       US_AstfemMath::initialize_2d( 3, N, &CB2 );
+#endif
 
       sw2 = 0.0;
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1 );
@@ -1110,15 +1171,22 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
 
       if ( accel ) // Then we have acceleration
       {
+         double rpm_ratio = sq( rpm_current / rpm_stop );
+
          for ( int j1 = 0; j1 < 3; j1++ )
          {
+            double* CAj  = CA[ j1 ];
+            double* CBj  = CB[ j1 ];
+            double* CA1j = CA1[ j1 ];
+            double* CA2j = CA2[ j1 ];
+            double* CB1j = CB1[ j1 ];
+            double* CB2j = CB2[ j1 ];
+
             for ( int j2 = 0; j2 < N; j2++ )
             {
-               CA[ j1 ][ j2 ] = CA1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop )
-                  * ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
+               CAj[ j2 ] = CA1j[ j2 ] + rpm_ratio * ( CA2j[ j2 ] - CA1j[ j2 ] );
                
-               CB[ j1 ][ j2 ] = CB1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop )
-                  * ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ] );
+               CBj[ j2 ] = CB1j[ j2 ] + rpm_ratio * ( CB2j[ j2 ] - CB1j[ j2 ] );
             }
          }
       }
@@ -1133,10 +1201,11 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       simscan.omega_s_t = w2t_integral;
 
       simscan.conc.clear();
+      simscan.conc.reserve( N );
 
       for ( int j = 0; j < N; j++ ) simscan.conc .append( C0[ j ] );
 
-      simdata.scan .append( simscan );
+      simdata.scan.append( simscan );
 #ifdef TIMING_NI
 clcSt5 = QDateTime::currentDateTime();
 ttT4+=(clcSt4.msecsTo(clcSt5));
@@ -1228,8 +1297,10 @@ ttT7+=(clcSt7.msecsTo(clcSt3));
 #ifdef TIMING_NI
 clcSt8 = QDateTime::currentDateTime();
 #endif
-   C_init.radius.clear();
+   C_init.radius       .clear();
    C_init.concentration.clear();
+   C_init.radius       .reserve( N );
+   C_init.concentration.reserve( N );
    
    for ( int j = 0; j < N; j++ )
    {
@@ -1237,9 +1308,10 @@ clcSt8 = QDateTime::currentDateTime();
       C_init.concentration .append( C1[ j ] );
    }
 
+#ifndef NO_DB
    US_AstfemMath::clear_2d( 3, CA );
    US_AstfemMath::clear_2d( 3, CB );
-   
+
    if ( accel )
    {
       US_AstfemMath::clear_2d( 3, CA1 );
@@ -1247,6 +1319,8 @@ clcSt8 = QDateTime::currentDateTime();
       US_AstfemMath::clear_2d( 3, CA2 );
       US_AstfemMath::clear_2d( 3, CB2 );
    }
+#endif
+
 #ifdef TIMING_NI
 clcSt9 = QDateTime::currentDateTime();
 ttT8+=(clcSt8.msecsTo(clcSt9));
@@ -1298,12 +1372,12 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 // generate the mesh
 ////////////////////%
 
-   x.clear();
-
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
    int    NN = af_params.simpoints;
 
+   x.clear();
+   x.reserve( NN * 2 + 2 );
    
    switch ( MeshOpt )
    {
@@ -1313,18 +1387,24 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
       case (int)US_SimulationParameters::ASTFEM:
          // Adaptive Space Time FE Mesh without left hand refinement
-         qSort( nu.begin(), nu.end() );   // put nu in ascending order
+         qSort( nu );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
             mesh_gen_s_pos( nu );
 
          else if ( nu[ nu.size() - 1 ] < 0 )
             mesh_gen_s_neg( nu );
-         
+
          else       // Some species with s < 0 and some with s > 0
          {
+            double bmval  = m;
+            double deltbm = ( b - m ) / (double)( NN - 1 );
+
             for ( int i = 0; i < NN; i++ ) 
-               x .append( m + ( b - m ) * i / ( NN - 1 ) );
+            {
+               x .append( bmval );
+               bmval += deltbm;
+            }
          }
          break;
       
@@ -1363,13 +1443,13 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
                
                f.close();
 
-               if ( fabs( x[ 0 ] - m ) > 1.0e7 )
+               if ( fabs( xA[ 0 ] - m ) > 1.0e7 )
                {
                   qDebug() << "The meniscus from the mesh file does not"
                      " match the set meniscus - using Claverie Mesh instead\n";
                }
 
-               if ( fabs( x[ x.size() - 1 ] - b ) > 1.0e7 )
+               if ( fabs( xA[ x.size() - 1 ] - b ) > 1.0e7 )
                {
                   qDebug() << "The cell bottom from the mesh file does not"
                      " match the set cell bottom - using Claverie Mesh"
@@ -1389,7 +1469,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
       
       case (int)US_SimulationParameters::ASTFVM:
          // Adaptive Space Time Finite Volume Method
-         qSort( nu.begin(), nu.end() );   // put nu in ascending order
+         qSort( nu );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
             mesh_gen_s_pos( nu );
@@ -1410,7 +1490,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
    }
 
-   N = x.size();
+   N  = x.size();
+   xA = x.data();
 }
 
 //////////////////////////////////////////////////////////////%
@@ -1418,17 +1499,21 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 // Generate exponential mesh and refine cell bottom (for s>0)
 //
 //////////////////////////////////////////////////////////////%
-void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
+void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 {
    double            tmp_Hstar;
    QVector< double > xc;
    QVector< double > Hstar;
    QVector< double > y;
    QVector< int >    Nf;
+   const double*     nu = nuvec.data();
    
-   xc.clear();
+   xc   .clear();
    Hstar.clear();
-   Nf.clear();
+   Nf   .clear();
+   xc   .reserve( af_params.s.size() * 2 );
+   Hstar.reserve( af_params.s.size() );
+   Nf   .reserve( af_params.s.size() );
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
@@ -1436,21 +1521,31 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 
    int    IndLayer = 0;         // number of layers for grids in steep region
    double uth      = 1.0 / NN;  // threshold of u for steep region
+   double bmsqd    = sq( b ) - sq( m );
+   double uth2     = uth * 2.0;
+   double NNm1     = (double)( NN - 1 );
+   double NNm2     = NNm1 - 1.0;
+   double NNrat    = NNm2 / NNm1;
+   double bmrat    = b / m;
+   double bmrlog   = log( bmrat );
+   double k2log    = log( 2.0   );
+   double bmNpow   = pow( bmrat, NNrat );
+   double bmdiff   = b - m * bmNpow;
+   const double PIhalf   = M_PI / 2.0;
 
    for ( int i = 0; i < af_params.s.size(); i++ ) // Markers for steep regions
    {
       double tmp_xc = b - ( 1.0 / ( nu[ i ] * b ) ) * 
-         log( nu[ i ] * ( sq( b ) - sq( m ) ) ) / ( 2.0 * uth );
+         log( nu[ i ] * bmsqd ) / uth2;
       
       // # of pts for i-th layer
-      int tmp_Nf = (int) ( M_PI / 2.0 * ( b - tmp_xc )
+      int tmp_Nf = (int) ( PIhalf * ( b - tmp_xc )
             * nu[ i ] * b / 2.0 + 0.5 ) + 1; 
       
       // Step required by Pac(i) < 1
-      tmp_Hstar = ( b - tmp_xc ) / tmp_Nf * M_PI / 2.0;
+      tmp_Hstar = ( b - tmp_xc ) / tmp_Nf * PIhalf;
       
-      if ( ( tmp_xc > m ) &&
-           ( b - m * pow( b / m, ( NN - 2.0 ) /  ( NN - 1.0 ) ) > tmp_Hstar ) )
+      if ( ( tmp_xc > m ) && ( bmdiff > tmp_Hstar ) )
       {
          xc    .append( tmp_xc );
          Nf    .append( tmp_Nf );
@@ -1468,7 +1563,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
       // Add one more point to Schuck's grids
       for ( int i = 1; i < NN - 1 ; i++ ) 
       { // Schuck's mesh
-         x .append( m * pow( b / m, (double) i / ( NN - 1 ) ) );
+         x .append( m * pow( bmrat, (double) i / NNm1 ) );
       }
 
       x .append( b );
@@ -1481,66 +1576,71 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
       
       for ( int i = 0; i < IndLayer; i++ )  // Consider i-th steep region
       {
+         double xci  = xc[ i ];
+
          if ( i < IndLayer - 1 )  // Linear distribution for step size distrib
          {
+            double xcip = xc[ i + 1 ];
             double HL = Hstar[ i ];
             double HR = Hstar[ i + 1 ];
-            int Mp = (int) ( ( xc[ i + 1 ] - xc[ i ] ) * 2.0 / ( HL + HR ) );
+            int Mp = (int) ( ( xcip - xci ) * 2.0 / ( HL + HR ) );
             
             if ( Mp > 1 ) 
             {
-               double beta  = ( ( HR - HL ) / 2.0 ) * Mp ;
-               double alpha = ( xc[ i + 1 ] - xc[ i ] ) - beta;
+               double beta  = ( ( HR - HL ) / 2.0 ) * Mp;
+               double alpha = xcip - xci - beta;
 
                for ( int j = 0; j <= Mp - 1; j++ )
                {
                   double xi = (double) j / (double) Mp;
-                  y .append( xc[ i ] + alpha * xi + beta * sq( xi )  );
+                  y .append( xci + alpha * xi + beta * sq( xi ) );
                   indp++;
                }
             }
          }
          else     // Last layer, use sine distribution for grids
          {
+            double xcip = xc[ qMin( i + 1, xc.size() - 1 ) ];
+
             for ( int j = 0; j <= Nf[ i ] - 1; j++ )
             {
                indp++;
-               y .append( xc[ i ] + ( b - xc[ i ] ) * 
-                    sin( j / ( Nf[ i ] - 1.0 ) * M_PI / 2.0 ) );
+               y .append( xci + ( b - xci ) * 
+                    sin( j / ( Nf[ i ] - 1.0 ) * PIhalf ) );
                
-               if ( y[ indp - 1 ] > xc[ i + 1 ] ) break; 
+               if ( y[ indp - 1 ] > xcip )   break;
             }
          }
       }
 
       int NfTotal = indp;
       
-      QVector< double > ytmp;
-      ytmp.clear();
-
       // Reverse the order of y
-      int j = NfTotal;
-      
-      do { ytmp .append( y[ --j ] ); } while ( j != 0 );
-      
-      y.clear();
-      y = ytmp;
-      
+      int jj = 0;
+      int kk = NfTotal - 1;
+      double* yary = y.data();
+
+      while ( jj < kk )
+      {
+         double ysav  = yary[ jj ];
+         yary[ jj++ ] = yary[ kk ];
+         yary[ kk-- ] = ysav;
+      }
+
       // Transition region
       // Smallest step size in transit region
       double Hf = y[ NfTotal - 2 ] - y[ NfTotal - 1 ];
 
       // Number of pts in trans region
-      int Nm = (int) 
-          ( log( b / ( ( NN - 1 ) * Hf ) * log( b / m ) ) / log( 2.0 ) ) + 1;
+      int Nm = (int)( log( b / ( NNm1 * Hf ) * bmrlog ) / k2log ) + 1;
           
       
       double xa = y[ NfTotal - 1 ] - Hf * ( pow( 2.0, (double) Nm ) - 1.0 );
       
-      int Js = (int) ( ( NN - 1 ) * log( xa / m ) / log( b / m ) );
+      int Js = (int) ( NNm1 * log( xa / m ) / bmrlog );
       
       // xa is  modified so that y[ NfTotal - Nm ] matches xa exactly
-      xa = m * pow( b / m, Js / ( NN - 1.0 ) );
+      xa = m * pow( bmrat, Js / NNm1 );
       
       double tmp_xc = y[ NfTotal - 1 ];
       double HL     = xa * ( 1.0 - m / b );
@@ -1564,13 +1664,16 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 
       // Regular region
       x .append( m );
+      yary = y.data();
       
       for ( int j = 1; j <= Js; j++ )
-         x .append( m * pow( b / m, j / ( NN - 1.0 ) ) );
+         x .append( m * pow( bmrat, (double)j / NNm1 ) );
 
-      for ( int j = 0; j < NfTotal + Nm - 1; j++ )
-         x .append( y[ NfTotal + Nm - j - 2 ] );
+      for ( int j = NfTotal + Nm - 2; j >=0; j-- )
+         x .append( yary[ j ] );
    }
+
+   xA = x.data();
 }
 
 //////////////////////////////////////////////////////////////%
@@ -1581,11 +1684,14 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 {
    
+   const double PIhalf   = M_PI / 2.0;
+   const double PIquar   = M_PI / 4.0;
+   const double k2log    = log( 2.0 );
    int               j, Js, Nf, Nm;
    double            xc, xa, Hstar;
    QVector< double > yr, ys, yt;
 
-   x.clear();
+   x .clear();
    yr.clear();
    ys.clear();
    yt.clear();
@@ -1594,22 +1700,28 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
    double b  = af_params.current_bottom;
    int    NN = af_params.simpoints;
 
-   double uth = 1.0 / NN;   // Threshold of u for steep region
-   double nu0 = nu[ 0 ];
+   double uth    = 1.0 / NN;   // Threshold of u for steep region
+   double nu0    = qAbs( nu[ 0 ] );
+   double bmrlog = log( b / m );
+   double mbrat  = m / b;
+   double NNm1   = (double)( NN - 1 );
+
+   x .reserve( NN );
+   yr.reserve( NN );
+   ys.reserve( NN );
+   yt.reserve( NN );
+
+   xc = m + 1. / ( nu0 * m ) * log( ( sq( b ) - sq( m ) ) * nu0 / ( 2. * uth ) );
    
-   xc = m + 1.0 /  ( fabs( nu0 ) * m ) * 
-                   log( ( sq( b ) - sq( m ) ) * fabs( nu0 ) / ( 2.0 * uth ) );
+   Nf = 1 + (int)( ( xc - m ) * nu0 * m * PIquar );
    
-   Nf = 1 + (int)( ( xc - m ) * fabs( nu0 ) * m * M_PI / 4.0 );
+   Hstar = ( xc - m ) / Nf * PIhalf;
    
-   Hstar = ( xc - m ) / Nf * M_PI / 2.0;
-   
-   Nm = 1 + (int) 
-        ( log( m / ( ( NN - 1.0 ) * Hstar ) * log( b / m ) ) / log( 2.0 ) );
+   Nm = 1 + (int)( log( m / ( NNm1 * Hstar ) * bmrlog ) / k2log );
    
    xa = xc + ( pow( 2.0, (double) Nm ) - 1.0 ) * Hstar;
    
-   Js = (int) ( ( NN - 1) * log( b / xa ) / log( b / m ) + 0.5 );
+   Js = (int) ( NNm1 * log( b / xa ) / bmrlog + 0.5 );
 
 
    // All grid points at exponentials
@@ -1618,48 +1730,57 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
    // Is there a difference between simparams.meniscus and 
    // af_params.current_meniscus??
    for( j = 1; j < NN; j++ )    // Add one more point to Schuck's grids
-      yr .append( b * pow( simparams.meniscus / b, 
-                              ( j - 0.5 ) / ( NN - 1.0 ) ) );
+      yr .append( b * pow( simparams.meniscus / b, ( j - 0.5 ) / NNm1 ) );
    
    yr .append( m );
    
-   if ( b * ( pow( m / b, ( NN - 3.5 ) / ( NN - 1.0 ) )
-            - pow( m / b, ( NN - 2.5 ) / ( NN - 1.0 ) ) ) < Hstar || Nf <= 2 )
+   if ( b * ( pow( mbrat, ( NN - 3.5 ) / NNm1 )
+            - pow( mbrat, ( NN - 2.5 ) / NNm1 ) ) < Hstar || Nf <= 2 )
    {
+      double* yrA = yr.data();
+
       // No need for steep region
-      for ( j = 0; j < NN; j++ )
+      for ( j = NN - 1; j >= 0; j-- )
       {
-         x .append( yr[ NN - 1 - j ] );
+         x .append( yrA[ j ] );
       }
-      
-      qDebug() << "use exponential grid only!\n" << endl;
-      
+
+      xA           = x.data();
+
+      qDebug() << "Use exponential grid only!  NN Nf b m" << NN << Nf << b << m;
    }
    else
    {
       // Nf > 2
-      for ( j = 1; j < Nf; j++ )
-         ys .append( xc - ( xc - m ) * sin(( j - 1.0 ) / 
-                        ( Nf - 1.0 ) * M_PI / 2.0 ) );
+      double xcm  = xc - m;
+      double Nfm1 = (double)( Nf - 1 );
+      for ( j = 0; j < Nf - 1; j++ )
+         ys .append( xc - xcm * sin( (double)j / Nfm1 * PIhalf ) );
       
       ys .append( m );
 
       for ( j = 0; j < Nm; j++ )
          yt .append( xc + ( pow( 2.0, (double) j ) - 1.0 ) * Hstar );
 
+      double* ysA = ys.data();
+      double* ytA = yt.data();
+      double* yrA = yr.data();
+
       // set x:
-      for ( j = 0; j < Nf; j++ )
-         x .append( ys[ Nf - 1 - j ] );
+      for ( j = Nf - 1; j >= 0; j-- )
+         x .append( ysA[ j ] );
       
       for ( j = 1; j < Nm; j++ )
-         x .append( yt[ j ] );
+         x .append( ytA[ j ] );
       
-      for ( j = Js + 1; j > 0; j-- )
-         x .append( yr[ j - 1 ] );
+      for ( j = Js; j >= 0; j-- )
+         x .append( yrA[ j ] );
 
       // Smooth out
-      x[ Nf + Nm     ] = ( x[ Nf + Nm - 1 ] + x[Nf + Nm + 1 ] ) / 2.0;
-      x[ Nf + Nm + 1 ] = ( x[ Nf + Nm     ] + x[Nf + Nm + 2 ] ) / 2.0;
+      xA           = x.data();
+      int jj       = Nf + Nm;
+      xA[ jj     ] = ( xA[ jj - 1 ] + xA[ jj + 1 ] ) / 2.0;
+      xA[ jj + 1 ] = ( xA[ jj     ] + xA[ jj + 2 ] ) / 2.0;
    } // if
 }
 
@@ -1675,51 +1796,66 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
 void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 {
+   const double PIhalf   = M_PI / 2.0;
    QVector< double > zz;  // temporary array for adaptive grids
+   double*           zA;
+
    zz.clear();
-   
+   zz.reserve( x.size() );
+   xA = x.data();
+
    if ( US_AstfemMath::minval( af_params.s ) > 0 ) // All species with s>0
    {
       // Refine around the meniscus for acceleration
       for ( int j = 0; j < M0; j++ )
       {
-         double tmp = (double) j / M0;
-         tmp        = 1.0 - cos( tmp * M_PI / 2 );
-         zz .append( x[ 0 ] * ( 1.0 - tmp ) + x[ N0 ] * tmp );
+         double tmp = (double) j / (double)M0;
+         tmp        = 1.0 - cos( tmp * PIhalf );
+         zz .append( xA[ 0 ] * ( 1.0 - tmp ) + xA[ N0 ] * tmp );
       }
 
       for ( int j = N0; j < x.size(); j++ ) 
-         zz .append( x[ j ] );
+         zz .append( xA[ j ] );
 
       x.clear();
+      x.reserve( zz.size() );
+      zA = zz.data();
 
       for ( int j = 0; j < zz.size(); j++ ) 
-         x .append( zz[ j ] );
+         x .append( zA[ j ] );
    }
    else if ( US_AstfemMath::maxval( af_params.s ) < 0 ) //  All species with s<0
    {
       for ( int j = 0; j < x.size() - N0; j++ ) 
-         zz .append( x[ j ] );
+         zz .append( xA[ j ] );
       
       // Refine around the bottom for acceleration
+      int    kk = x.size() - 1;
+      double x1 = xA[ kk - N0 ];
+      double x2 = xA[ kk ];
+      double tinc = PIhalf / (double)M0;
+      double tval = 0.0;
+
       for ( int j = 1; j <= M0; j++ )
       {
-         double tmp = (double) j / M0;
-         tmp        = sin( tmp * M_PI / 2 );
-         zz .append( x[ x.size() - N0 - 1 ] * ( 1.0 - tmp ) + 
-                        x[ x.size()      - 1 ] * tmp );
+         tval      += tinc;
+         double tmp = sin( tval );
+         zz .append( x1 * ( 1.0 - tmp ) + x2 * tmp );
       }
       
       x.clear();
+      x.reserve( zz.size() );
+      zA = zz.data();
       
       for ( int j = 0; j < zz.size(); j++ ) 
-         x .append( zz[ j ] );
+         x .append( zA[ j ] );
    }
    else                  // Sedimentation and floating mixed up
       qDebug() << "No refinement at ends since sedimentation "
                   "and floating mixed ...\n" ;
 
-   N = x.size();
+   N  = x.size();
+   xA = x.data();
 }
 
 // Compute the coefficient matrices based on fixed mesh
@@ -1727,22 +1863,36 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( 
       double D, double sw2, double** CA, double** CB )
 {
-   //US_StiffBase stfb0 ;
-   double***    Stif;   // Local stiffness matrix at each element
-   
-   US_AstfemMath::initialize_3d( N - 1, 4, 4, &Stif );
+#ifdef NO_DB
+   static int       Nsave = 0;
+   static double*** Stif  = NULL;
+   xA = x.data();
+
+   if ( N > Nsave )
+   {
+      if ( Nsave > 0 )
+         US_AstfemMath::clear_3d( Nsave, 4, Stif );
+
+      Nsave = N + 200;
+      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
+//qDebug() << "FixedMesh   Nsave" << Nsave;
+   }
+#else
+   double*** Stif  = NULL;
+   US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
+#endif
 
    double xd[ 4 ][ 2 ];     // coord for verices of quad elem
    
    for ( int k = 0; k < N - 1; k++ )
    {  // loop for all elem
-      xd[ 0 ][ 0 ] = x[ k ];
+      xd[ 0 ][ 0 ] = xA[ k ];
       xd[ 0 ][ 1 ] = 0.0;
-      xd[ 1 ][ 0 ] = x[ k + 1 ];
+      xd[ 1 ][ 0 ] = xA[ k + 1 ];
       xd[ 1 ][ 1 ] = 0.0;
-      xd[ 2 ][ 0 ] = x[ k + 1 ];
+      xd[ 2 ][ 0 ] = xA[ k + 1 ];
       xd[ 2 ][ 1 ] = af_params.dt;
-      xd[ 3 ][ 0 ] = x[ k ];
+      xd[ 3 ][ 0 ] = xA[ k ];
       xd[ 3 ][ 1 ] = af_params.dt;
       
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
@@ -1777,40 +1927,57 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
    CA[ 1 ][ k ]  = Stif[ k-1 ][ 2 ][ 1 ] + Stif[ k-1 ][ 2 ][ 2 ];  // j=2;
    CB[ 0 ][ k ]  = Stif[ k-1 ][ 0 ][ 1 ] + Stif[ k-1 ][ 0 ][ 2 ];  // j=0;
    CB[ 1 ][ k ]  = Stif[ k-1 ][ 1 ][ 1 ] + Stif[ k-1 ][ 1 ][ 2 ];  // j=1;
-   
-   US_AstfemMath::clear_3d( N - 1, 4, Stif );
+
+#ifndef NO_DB
+   US_AstfemMath::clear_3d( N, 4, Stif );
+#endif
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
       double D, double sw2, double** CA, double** CB )
 {
    // Compute local stiffness matrices
-   //US_StiffBase stfb0;
-   double***    Stif;         // Local stiffness matrix at each element
    double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
+   xA = x.data();
    
+#ifdef NO_DB
+   static int       Nsave = 0;
+   static double*** Stif  = NULL;
+
+   if ( N > Nsave )
+   {
+      if ( Nsave > 0 )
+         US_AstfemMath::clear_3d( Nsave, 4, Stif );
+
+      Nsave = N + 200;
+      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
+//qDebug() << "MovMeshR   Nsave" << Nsave;
+   }
+#else
+   double*** Stif  = NULL;
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
+#endif
 
    // elem[0]: triangle
-   xd[ 0 ][ 0 ] = x[ 0 ];  xd[ 0 ][ 1 ] = 0.;
-   xd[ 1 ][ 0 ] = x[ 1 ];  xd[ 1 ][ 1 ] = af_params.dt;
-   xd[ 2 ][ 0 ] = x[ 0 ];  xd[ 2 ][ 1 ] = af_params.dt;
+   xd[ 0 ][ 0 ] = xA[ 0 ];  xd[ 0 ][ 1 ] = 0.;
+   xd[ 1 ][ 0 ] = xA[ 1 ];  xd[ 1 ][ 1 ] = af_params.dt;
+   xd[ 2 ][ 0 ] = xA[ 0 ];  xd[ 2 ][ 1 ] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ 0 ] );
 
    // elem[k]: k=1..(N-2), quadrilateral
    for ( int k = 1; k < N - 1; k++ ) // loop for all elem
    {  
-      xd[ 0 ][ 0 ] = x[ k - 1 ];   xd[ 0 ][ 1 ] = 0.0;
-      xd[ 1 ][ 0 ] = x[ k     ];   xd[ 1 ][ 1 ] = 0.0;
-      xd[ 2 ][ 0 ] = x[ k + 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
-      xd[ 3 ][ 0 ] = x[ k     ];   xd[ 3 ][ 1 ] = af_params.dt;
+      xd[ 0 ][ 0 ] = xA[ k - 1 ];   xd[ 0 ][ 1 ] = 0.0;
+      xd[ 1 ][ 0 ] = xA[ k     ];   xd[ 1 ][ 1 ] = 0.0;
+      xd[ 2 ][ 0 ] = xA[ k + 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
+      xd[ 3 ][ 0 ] = xA[ k     ];   xd[ 3 ][ 1 ] = af_params.dt;
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
    }
 
    // elem[N-1]: triangle
-   xd[ 0 ][ 0 ] = x[ N - 2 ];   xd[ 0 ][ 1 ] = 0.0;
-   xd[ 1 ][ 0 ] = x[ N - 1 ];   xd[ 1 ][ 1 ] = 0.0;
-   xd[ 2 ][ 0 ] = x[ N - 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
+   xd[ 0 ][ 0 ] = xA[ N - 2 ];   xd[ 0 ][ 1 ] = 0.0;
+   xd[ 1 ][ 0 ] = xA[ N - 1 ];   xd[ 1 ][ 1 ] = 0.0;
+   xd[ 2 ][ 0 ] = xA[ N - 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ N - 1 ] );
 
    // assembly coefficient matrices
@@ -1859,40 +2026,57 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    CA[ 1 ][ k ] += Stif[ k  ][2][0] + Stif[ k  ][2][1] + Stif[ k ][2][2];
    CB[ 1 ][ k ] += Stif[ k  ][0][0] + Stif[ k  ][0][1] + Stif[ k ][0][2];
    CB[ 2 ][ k ]  = Stif[ k  ][1][0] + Stif[ k  ][1][1] + Stif[ k ][1][2];
-   
+ 
+#ifndef NO_DB
    US_AstfemMath::clear_3d( N, 4, Stif );
+#endif
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
       double D, double sw2, double** CA, double** CB )
 {
    // compute local stiffness matrices
-   //US_StiffBase stfb0;
-   double***    Stif;       // Local stiffness matrix at each element
    double       xd[4][2];   // coord for verices of quad elem
+   xA = x.data();
 
+#ifdef NO_DB
+   static int       Nsave = 0;
+   static double*** Stif  = NULL;
+
+   if ( N > Nsave )
+   {
+      if ( Nsave > 0 )
+         US_AstfemMath::clear_3d( Nsave, 4, Stif );
+
+      Nsave = N + 200;
+      US_AstfemMath::initialize_3d( Nsave, 4, 4, &Stif );
+   }
+#else
+   double*** Stif  = NULL;
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
+#endif
+
    // elem[0]: triangle
-   xd[0][0] = x[0];
+   xd[0][0] = xA[0];
    xd[0][1] = 0.0;
-   xd[1][0] = x[1];  xd[1][1] = 0.0;
-   xd[2][0] = x[0];  xd[2][1] = af_params.dt;
+   xd[1][0] = xA[1];  xd[1][1] = 0.0;
+   xd[2][0] = xA[0];  xd[2][1] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ 0 ] );
 
    // elem[k]: k=1..(N-2), quadrilateral
    for ( int k = 1; k < N - 1; k++ )
    {  // loop for all elem
-      xd[0][0] = x[k  ];   xd[0][1] = 0.0;
-      xd[1][0] = x[k+1];   xd[1][1] = 0.0;
-      xd[2][0] = x[k  ];   xd[2][1] = af_params.dt;
-      xd[3][0] = x[k-1];   xd[3][1] = af_params.dt;
+      xd[0][0] = xA[k  ];   xd[0][1] = 0.0;
+      xd[1][0] = xA[k+1];   xd[1][1] = 0.0;
+      xd[2][0] = xA[k  ];   xd[2][1] = af_params.dt;
+      xd[3][0] = xA[k-1];   xd[3][1] = af_params.dt;
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
    }
 
    // elem[N-1]: triangle
-   xd[0][0] = x[N-1];   xd[0][1] = 0.0;
-   xd[1][0] = x[N-1];   xd[1][1] = af_params.dt;
-   xd[2][0] = x[N-2];   xd[2][1] = af_params.dt;
+   xd[0][0] = xA[N-1];   xd[0][1] = 0.0;
+   xd[1][0] = xA[N-1];   xd[1][1] = af_params.dt;
+   xd[2][0] = xA[N-2];   xd[2][1] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ N - 1 ] );
 
    // assembly coefficient matrices
@@ -1939,8 +2123,10 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    CA[0][k]  = Stif[k  ][2][1] ;
    CA[1][k]  = Stif[k  ][1][1] ;
    CB[0][k]  = Stif[k  ][0][1] ;
-   
+ 
+#ifndef NO_DB
    US_AstfemMath::clear_3d( N, 4, Stif );
+#endif
 }
 
 // Given total concentration of a group of components involved,
@@ -2387,12 +2573,16 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    int Mcomp = af_params.s.size();
 
    simdata.radius.clear();
-   simdata.scan.clear();
+   simdata.scan  .clear();
+   simdata.radius.reserve( N );
+   simdata.scan  .reserve( N );
+
    US_AstfemMath::MfemScan simscan;
 
    // Generate the adaptive mesh
    QVector< double > nu;
    nu.clear();
+   nu.reserve( Mcomp );
 
 DbgLv(2) << "RSA:     cra2: Mcomp" << Mcomp;
    for ( int i = 0; i < Mcomp; i++ )
@@ -2429,7 +2619,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
 
          for ( j = 0; j < N - 3; j++ )
          {
-            if ( x[ j ] > xc ) break; 
+            if ( xA[ j ] > xc ) break; 
          }
          
          mesh_gen_RefL( j + 1, 4 * j );
@@ -2444,7 +2634,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
 
          for ( j = 0; j < N - 3; j++ )
          {
-            if ( x[ N - j - 1 ] < xc )  break; 
+            if ( xA[ N - j - 1 ] < xc )  break; 
          }
 
          mesh_gen_RefL( j + 1, 4 * j );
@@ -2456,7 +2646,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
       }
    }
 
-   for ( int i = 0; i < N; i++ ) simdata.radius .append( x[ i ] );
+   for ( int i = 0; i < N; i++ ) simdata.radius .append( xA[ i ] );
 
    // Stiffness matrix on left hand side
    // CA[0...Ms-1][4][0...N-1]
@@ -2504,27 +2694,31 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
       {
          if ( s_min > 0)      // All components sedimenting
          {
+            double stop_fact = sq( rpm_stop * M_PI / 30.0 );
+
             for ( int i = 0; i < Mcomp; i++ )
             {
-               double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
+               double            sw2  = af_params.s[ i ] * stop_fact;
+               double            sw2D = sw2 / af_params.D[ i ];
 
                // Grid for moving adaptive FEM for faster sedimentation
                
-               QVector< double > xb;   
-               xb.clear();
-               xb .append( m );
+               QVector< double > xbvec( N );
+               double*           xb  = xbvec.data();
+               double            sqb = sq( b );
+               xb[ 0 ] = m;
                
-               for ( int j = 0; j < N - 1; j++ )
+               for ( int j = 1; j < N; j++ )
                {
-                  double dval = 0.1 * exp( sw2 / af_params.D[ i ] * 
-                        ( sq( 0.5 * (x[ j ] + x[ j + 1 ] ) ) - sq( b ) ) / 2 );
+                  double dval  = 0.1 * exp( sw2D *
+                     ( sq( 0.5 * ( xA[ j - 1 ] + xA[ j ] ) ) - sqb ) / 2.0 );
                   
                   double alpha = af_params.s[ i ] / s_max * ( 1 - dval ) + dval;
-                  xb .append(  pow( x[ j ]    , alpha ) * 
-                                  pow( x[ j + 1 ], ( 1 - alpha) ) );
+                  xb[ j ]      = ( pow( xA[ j - 1 ], alpha ) * 
+                                   pow( xA[ j     ], ( 1 - alpha) ) );
                }
 
-               GlobalStiff( xb.data(), CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
+               GlobalStiff( xb, CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
             }
          }
          else if ( s_max < 0)    // all components floating
@@ -2603,6 +2797,7 @@ DbgLv(1) << "RSA: newX3 N" << N;
       simscan.omega_s_t = w2t_integral;
     
       simscan.conc.clear();
+      simscan.conc.reserve( N );
       
       for ( int j = 0; j < N; j++ ) simscan.conc .append( CT0[ j ] );
       
@@ -2830,12 +3025,14 @@ DbgLv(2) << "RSA:     cra2:  NN" << NN;
 
    for ( int i = 0; i < Mcomp; i++ )
    {
-     C_init[ i ].radius.clear();
+     C_init[ i ].radius       .clear();
      C_init[ i ].concentration.clear();
+     C_init[ i ].radius       .reserve( N );
+     C_init[ i ].concentration.reserve( N );
      
      for ( int j = 0; j < N; j++ )
      {
-        C_init[ i ].radius        .append( x[ j ] );
+        C_init[ i ].radius        .append( xA[ j ] );
         C_init[ i ].concentration .append( C1[ i ][ j ] );
      }
    }

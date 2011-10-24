@@ -53,19 +53,18 @@ long int US_Memory::rss_now( void )
    PROCESS_MEMORY_COUNTERS pmc;
    pmc.cb       = (DWORD)sizeof( pmc );
    processID    = _getpid();
-   long int usedmem = 0;
 
    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, processID );
-   if ( hProcess == NULL )
-      return maxrss;
-
-   if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
+   if ( hProcess != NULL )
    {
-      rssnow  = ( (int64_t)pmc.PeakWorkingSetSize + 512 ) / 1024;
-   }
+      if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
+      {
+         rssnow  = ( (int64_t)pmc.PeakWorkingSetSize + 512 ) / 1024;
+      }
 
-   CloseHandle( hProcess );
+      CloseHandle( hProcess );
+   }
 #endif
 
    return rssnow;

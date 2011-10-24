@@ -390,18 +390,20 @@ void US_AnalysisControl::checkVaryVbar(  bool checked )
    {
       double vblo = dsets[ 0 ]->vbar20 - 0.02;
       double vbhi = dsets[ 0 ]->vbar20 + 0.02;
+      vblo        = (double)( (int)( vblo * 1000.0 )     ) * 0.001;
+      vbhi        = (double)( (int)( vblo * 1000.0 ) + 1 ) * 0.001;
       lb_lolimitk->setText( tr( "Lower Limit (vbar):" ) );
       lb_uplimitk->setText( tr( "Upper Limit (vbar):" ) );
       lb_nstepsk ->setText( tr( "Number Grid Points (vbar):" ) );
-      ct_lolimitk->setMinValue( 0.05 );
-      ct_lolimitk->setMaxValue( 1.50 );
+      ct_lolimitk->setMinValue( 0.025 );
+      ct_lolimitk->setMaxValue( 1.500 );
       ct_lolimitk->setStep    ( 0.001 );
-      ct_lolimitk->setValue   ( vblo );
-      ct_uplimitk->setMinValue( 0.05 );
-      ct_uplimitk->setMaxValue( 1.50 );
+      ct_lolimitk->setValue   ( vblo  );
+      ct_uplimitk->setMinValue( 0.025 );
+      ct_uplimitk->setMaxValue( 1.500 );
       ct_uplimitk->setStep    ( 0.001 );
-      ct_uplimitk->setValue   ( vbhi );
-      ct_constff0->setValue   ( 2.00 );
+      ct_uplimitk->setValue   ( vbhi  );
+      ct_constff0->setValue   ( 2.000 );
    }
 
    else
