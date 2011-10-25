@@ -12,7 +12,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
                                          ) : QDialog(p, name)
 {
    this->us_hydrodyn = us_hydrodyn;
-   setCaption(tr("US-SOMO: Cluster Results"));
+   setCaption(tr("US-SOMO: Cluster Submit"));
    cluster_window = (void *)p;
    USglobal = new US_Config();
 
@@ -91,6 +91,7 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
    files.clear();
 
    // traverse directory and build up files
+   QDir::setCurrent( pkg_dir );
    QDir qd;
    QStringList tgz_files = qd.entryList( "*.tgz" );
    QStringList tar_files = qd.entryList( "*.tar" );
@@ -152,6 +153,8 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lv_files->addColumn( tr( "Name" ) );
    lv_files->addColumn( tr( "Created" ) );
    lv_files->addColumn( tr( "Size" ) );
+   lv_files->addColumn( tr( "Status" ) );
+
    connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
    pb_select_all = new QPushButton(tr("Select all"), this);
@@ -373,107 +376,6 @@ void US_Hydrodyn_Cluster_Submit::select_all()
    update_enables();
 }
 
-bool US_Hydrodyn_Cluster_Submit::send_xml( QString xml )
-{
-   // need to do a post & get to submit_url slash stuff
-   // its going to require opening a socket etc
-   // 
-   comm_active = true;
-   cout << "send_xml\n";
-
-   QString header = QString( "POST /ogce-rest/job/runjob/async HTTP/1.0\n"
-                             "Content-Type: application/xml\n"
-                             // "Connection: Keep-Alive\n"
-                             "Content-Length: %1\n"
-                             "\n" ).arg( xml.length() );
-
-   current_xml = header + xml;
-   current_xml_response = "";
-
-   cout << "connect_to_host\n";
-   submit_socket.connectToHost( submit_url_host, submit_url_port.toUInt() );
-   cout << "after connect_to_host\n";
-
-   connect( &submit_socket, SIGNAL( error( int ) ), this, SLOT( socket_error( int ) ) );
-   connect( &submit_socket, SIGNAL( connected() ), this, SLOT( socket_connected() ) );
-   connect( &submit_socket, SIGNAL( readyRead() ), this, SLOT( socket_readyRead() ) );
-   connect( &submit_socket, SIGNAL( connectionClosed() ), this, SLOT( socket_connectionClosed() ) );
-   return true;
-}
-
-void US_Hydrodyn_Cluster_Submit::socket_error( int error_no )
-{
-   cout << "socket error: " << error_no << "\n";
-   disconnect( &submit_socket, SIGNAL( error( int ) ), 0, 0 );
-   disconnect( &submit_socket, SIGNAL( connected() ),0, 0 );
-   disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
-   disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
-
-   jobs[ next_to_process ] = "communication failed";
-   emit process_next();
-}
-
-void US_Hydrodyn_Cluster_Submit::socket_connected()
-{
-   cout << "socket connected\n";
-   // transfer the request
-   QTextStream os( &submit_socket );
-   os << current_xml;
-   //    if ( current_xml.length() != 
-   //         (unsigned int)submit_socket.writeBlock( current_xml, current_xml.length() ) )
-   //   {
-   //      cout << "didn't write the requested length!";
-   //   }
-   emit process_next();
-   cout << "transferred request:" << current_xml << "\n";
-}
-
-void US_Hydrodyn_Cluster_Submit::socket_readyRead()
-{
-   cout << "socket: readyRead\n";
-   while ( submit_socket.canReadLine() )
-   {
-      current_xml_response += submit_socket.readLine();
-   }
-   sleep(1);
-   while ( submit_socket.canReadLine() )
-   {
-      current_xml_response += submit_socket.readLine();
-   }
-   cout << "response: " << current_xml_response << endl;
-   // submit_socket.close();
-}
-
-void US_Hydrodyn_Cluster_Submit::socket_connectionClosed()
-{
-   cout << "socket connection closed\n";
-   if ( submit_socket.state() == QSocket::Closing ) 
-   {
-      cout << "socked delayed close\n";
-      connect( &submit_socket, SIGNAL( connectionClosed() ), this, SLOT( socket_connectionClosed() ) );
-      connect( &submit_socket, SIGNAL( delayedCloseFinished() ), this, SLOT( socket_delayedCloseFinished() ) );
-   } else {
-      disconnect( &submit_socket, SIGNAL( error( int ) ), 0, 0 );
-      disconnect( &submit_socket, SIGNAL( connected() ),0, 0 );
-      disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
-      disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
-      comm_active = false;
-      emit process_next();
-   }
-}
-
-void US_Hydrodyn_Cluster_Submit::socket_delayedCloseFinished()
-{
-   cout << "socket delayed close finished\n";
-   disconnect( &submit_socket, SIGNAL( delayedCloseFinished() ), 0, 0 );
-   disconnect( &submit_socket, SIGNAL( error( int ) ), 0, 0 );
-   disconnect( &submit_socket, SIGNAL( connected() ),0, 0 );
-   disconnect( &submit_socket, SIGNAL( readyRead() ), 0, 0 );
-   disconnect( &submit_socket, SIGNAL( connectionClosed() ), 0, 0 );
-   comm_active = false;
-   emit process_next();
-}
-
 bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
 {
    errormsg = "";
@@ -555,7 +457,7 @@ void US_Hydrodyn_Cluster_Submit::stop()
    }
    if ( comm_active )
    {
-      submit_socket.close();
+      submit_http.abort();
    }
    update_enables();
 }
@@ -658,12 +560,14 @@ void US_Hydrodyn_Cluster_Submit::process_next()
 void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 {
    editor_msg( "black", QString( "preparing stage %1" ).arg( next_to_process->text( 0 ) ) );
+   next_to_process->setText( 3, tr( "Preparing to stage" ) );
    cout << "process prepare stage\n";
    if ( prepare_stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "stage";
    } else {
       editor_msg( "red", errormsg );
+      next_to_process->setText( 3, tr( "Error: Prepare to stage failed" ) );
       jobs[ next_to_process ] = "prepare stage failed";
    }
    emit process_next();
@@ -672,12 +576,14 @@ void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 void US_Hydrodyn_Cluster_Submit::process_stage()
 {
    editor_msg( "black", QString( "staging %1" ).arg( next_to_process->text( 0 ) ) );
+   next_to_process->setText( 3, tr( "Staging" ) );
    cout << "process stage\n";
    if ( stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "submit";
    } else {
       editor_msg( "red", errormsg );
+      next_to_process->setText( 3, tr( "Error: Staging failed" ) );
       jobs[ next_to_process ] = "stage failed";
    }
    emit process_next();
@@ -686,12 +592,14 @@ void US_Hydrodyn_Cluster_Submit::process_stage()
 void US_Hydrodyn_Cluster_Submit::process_submit()
 {
    editor_msg( "black", QString( "submitting %1" ).arg( next_to_process->text( 0 ) ) );
+   next_to_process->setText( 3, tr( "Submitting" ) );
    cout << "process submit\n";
    if ( job_submit( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "move";
    } else {
       editor_msg( "red", errormsg );
+      next_to_process->setText( 3, tr( "Error: Submit failed" ) );
       jobs[ next_to_process ] = "submit failed";
    }
    emit process_next();
@@ -699,6 +607,7 @@ void US_Hydrodyn_Cluster_Submit::process_submit()
 
 void US_Hydrodyn_Cluster_Submit::process_move()
 {
+   next_to_process->setText( 3, tr( "Moving to submitted" ) );
    editor_msg( "black", QString( "move %1 to submitted/" ).arg( next_to_process->text( 0 ) ) );
    cout << "process move\n";
    if ( move_file( next_to_process->text( 0 ) ) )
@@ -706,6 +615,7 @@ void US_Hydrodyn_Cluster_Submit::process_move()
       jobs[ next_to_process ] = "complete";
    } else {
       editor_msg( "red", errormsg );
+      next_to_process->setText( 3, tr( "Error: Moving to submitted failed" ) );
       jobs[ next_to_process ] = "move failed";
    }
    emit process_next();

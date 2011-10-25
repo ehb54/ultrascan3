@@ -62,6 +62,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       QString       pkg_dir;
       QString       submitted_dir;
+      QString       completed_dir;
       QString       tmp_dir;
 
       QString       cluster_id;
@@ -94,9 +95,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
   #pragma warning ( default: 4251 )
 #endif
       QListViewItem *next_to_process;
-      void get_status();
-      void cancel_selected();
-      void complete_remove();
+      void          get_status();
+      void          cancel_selected();
+      void          complete_remove();
+      void          complete_retrieve();
+
+      bool          system_cmd( QStringList cmd );
+      bool          system_proc_active;
+      QProcess      *system_proc;
+      bool          schedule_retrieve( QString file );
 
    private slots:
 
@@ -117,6 +124,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       void next_status();
       void get_next_status();
+      void get_next_retrieve();
 
       void http_stateChanged ( int state );
       void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
@@ -126,6 +134,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void http_requestStarted ( int id );
       void http_requestFinished ( int id, bool error );
       void http_done ( bool error );
+
+      void system_proc_readFromStdout();
+      void system_proc_readFromStderr();
+      void system_proc_processExited();
+      void system_proc_launchFinished();
 
    protected slots:
 

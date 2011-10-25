@@ -9,7 +9,7 @@
 #include <qpushbutton.h>
 #include <qframe.h>
 #include <qcheckbox.h>
-#include <qlistbox.h>
+#include <qlistview.h>
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
@@ -40,9 +40,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
       QLabel        *lbl_title;
 
       QLabel        *lbl_files;
-      QListBox      *lb_files;
+      QListView     *lv_files;
 
       QPushButton   *pb_select_all;
+      QPushButton   *pb_purge;
       QPushButton   *pb_load_results;
 
       QFont         ft;
@@ -57,9 +58,12 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
       void          editor_msg( QString color, QString msg );
 
       QString       pkg_dir;
+      QString       completed_dir;
 
       QString       errormsg;
       bool          disable_updates;
+
+      unsigned int  update_files( bool set_lv_files = true );
 
    private slots:
 
@@ -68,6 +72,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
       void update_enables();
 
       void select_all();
+      void purge();
       void load_results();
 
       void clear_display();

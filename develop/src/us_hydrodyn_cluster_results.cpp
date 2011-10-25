@@ -16,20 +16,14 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
    USglobal = new US_Config();
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
-   QDir::setCurrent( pkg_dir );
+   completed_dir = pkg_dir + SLASH + "completed";
+   QDir::setCurrent( completed_dir );
 
    files.clear();
 
    // traverse directory and build up files
-   QDir qd;
-   QStringList tgz_files = qd.entryList( "*_out.tgz" );
-   QStringList tar_files = qd.entryList( "*_out.tar" );
-   files = QStringList::split( "\n", 
-                               tgz_files.join("\n") + 
-                               ( tgz_files.size() ? "\n" : "" ) +
-                               tar_files.join("\n") );
-   
-   if ( !files.size() )
+
+   if ( !update_files( false ) )
    {
       QMessageBox::information( this, 
                                 tr("US-SOMO: Cluster Results"),
@@ -38,12 +32,15 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
    }
 
    setupGUI();
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
+
+   update_files();
    update_enables();
 
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 0, 0 );
+   setGeometry( global_Xpos, global_Ypos, 700, 600 );
 }
 
 US_Hydrodyn_Cluster_Results::~US_Hydrodyn_Cluster_Results()
@@ -67,25 +64,30 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lb_files = new QListBox(this);
-   lb_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lb_files->setMinimumHeight(minHeight1 * 3);
-   lb_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-   lb_files->setEnabled(true);
+   lv_files = new QListView(this);
+   lv_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lv_files->setMinimumHeight(minHeight1 * 3);
+   lv_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lv_files->setEnabled(true);
+   lv_files->setSelectionMode( QListView::Multi );
 
-   lb_files->insertStringList( files );
-   lb_files->setCurrentItem(0);
-   lb_files->setSelected(0, false);
-   lb_files->setSelectionMode(QListBox::Multi);
-
-   connect(lb_files, SIGNAL( selectionChanged()), SLOT( update_enables() ));
+   lv_files->addColumn( tr( "Name" ) );
+   lv_files->addColumn( tr( "Date created" ) );
+   lv_files->addColumn( tr( "Size" ) );
+   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
    pb_select_all = new QPushButton(tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
+
+   pb_purge = new QPushButton(tr("Purge results"), this);
+   pb_purge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_purge->setMinimumHeight(minHeight1);
+   pb_purge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_purge, SIGNAL(clicked()), SLOT(purge()));
 
    pb_load_results = new QPushButton(tr("Load results"), this);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -131,6 +133,8 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_select_all);
    hbl_buttons1->addSpacing( 4 );
+   hbl_buttons1->addWidget ( pb_purge );
+   hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_load_results );
    hbl_buttons1->addSpacing( 4 );
 
@@ -146,19 +150,19 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    vbl_editor_group->addWidget(editor);
 
    QVBoxLayout *background = new QVBoxLayout( this );
-   background->addSpacing( 4);
+   background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
    background->addWidget ( lbl_files );
    background->addSpacing( 4 );
-   background->addWidget ( lb_files );
+   background->addWidget ( lv_files );
    background->addSpacing( 4 );
    background->addLayout ( hbl_buttons1 );
    background->addSpacing( 4 );
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
-   background->addSpacing( 4);
+   background->addSpacing( 4 );
 }
 
 void US_Hydrodyn_Cluster_Results::cancel()
@@ -233,33 +237,49 @@ void US_Hydrodyn_Cluster_Results::update_enables()
    if ( !disable_updates )
    {
       bool any_selected = false;
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      QListViewItem *lvi = lv_files->firstChild();
+      if ( lvi )
       {
-         if ( lb_files->isSelected(i) )
-         {
-            any_selected = true;
-            break;
-         }
+         do {
+            if ( lvi->isSelected() )
+            {
+               any_selected = true;
+            }
+
+         } while ( ( lvi = lvi->nextSibling() ) );
       }
+      pb_purge->setEnabled( any_selected );
       pb_load_results->setEnabled( any_selected );
+   } else {
+      pb_purge->setEnabled( false );
    }
+}
+
+void US_Hydrodyn_Cluster_Results::purge()
+{
 }
 
 void US_Hydrodyn_Cluster_Results::select_all()
 {
    bool any_not_selected = false;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
    {
-      if ( !lb_files->isSelected(i) )
-      {
-         any_not_selected = true;
-      }
+      do {
+         if ( !lvi->isSelected() )
+         {
+            any_not_selected = true;
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   lvi = lv_files->firstChild();
+   if ( lvi )
    {
-      lb_files->setSelected(i, any_not_selected);
+      do {
+         lv_files->setSelected( lvi, any_not_selected );
+      } while ( ( lvi = lvi->nextSibling() ) );
    }
    disable_updates = false;
    update_enables();
@@ -267,4 +287,35 @@ void US_Hydrodyn_Cluster_Results::select_all()
 
 void US_Hydrodyn_Cluster_Results::load_results()
 {
+}
+
+unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
+{
+   files.clear();
+
+   // traverse directory and build up files
+   QDir::setCurrent( completed_dir );
+   QDir qd;
+   QStringList tgz_files = qd.entryList( "*_out.tgz" );
+   QStringList tar_files = qd.entryList( "*_out.tar" );
+   files = QStringList::split( "\n", 
+                               tgz_files.join("\n") + 
+                               ( tgz_files.size() ? "\n" : "" ) +
+                               tar_files.join("\n") );
+   
+   if ( set_lv_files )
+   {
+      lv_files->clear();
+      for ( unsigned int i = 0; i < files.size(); i++ )
+      {
+         cout << "files: " << files[ i ] << endl;
+         new QListViewItem( lv_files, 
+                            files[ i ], 
+                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
+                            QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
+                            );
+      }
+   }
+
+   return files.size();
 }

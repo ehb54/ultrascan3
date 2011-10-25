@@ -10,7 +10,6 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qlistview.h>
-#include <qsocket.h>
 #include <qprocess.h>
 #include <qcstring.h>
 #include <qiodevice.h>
@@ -89,12 +88,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QStringList   last_stdout;
       QStringList   last_stderr;
       bool          submit_xml( QString file, QString &xml );
-      bool          send_xml( QString xml );
       bool          send_http_post( QString xml );
 
       bool          submit_active;
       bool          comm_active;
-      QSocket       submit_socket;
       QHttp         submit_http;
 
       QString       current_xml;
@@ -148,12 +145,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void stop();
       void cancel();
       void help();
-
-      void socket_error( int );
-      void socket_connected();
-      void socket_readyRead();
-      void socket_connectionClosed();
-      void socket_delayedCloseFinished();
 
       void http_stateChanged ( int state );
       void http_responseHeaderReceived ( const QHttpResponseHeader & resp );

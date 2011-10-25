@@ -212,7 +212,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_submit_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_submit_pkg, SIGNAL(clicked()), SLOT(submit_pkg()));
 
-   pb_check_status = new QPushButton(tr("Check job status"), this);
+   pb_check_status = new QPushButton(tr("Check job status / Retrieve results"), this);
    pb_check_status->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_check_status->setMinimumHeight(minHeight1);
    pb_check_status->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
