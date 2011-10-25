@@ -11,6 +11,7 @@
 #include <qcheckbox.h>
 #include <qtextedit.h>
 #include <qvalidator.h>
+#include <qtimer.h>
 
 #include "us_util.h"
 #include "us_file_util.h"
@@ -86,6 +87,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QString       pkg_dir;
       QString       submitted_dir;
       QString       completed_dir;
+      QString       results_dir;
 
       bool          copy_files_to_pkg_dir( QStringList &filenames );
       bool          remove_files( QStringList &filenames );
@@ -107,6 +109,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 #endif
       map < QString, bool > submitted_jobs;
       map < QString, bool > completed_jobs;
+      map < QString, bool > results_jobs;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

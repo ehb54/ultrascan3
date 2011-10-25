@@ -16,8 +16,11 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    cluster_window = (void *)p;
    USglobal = new US_Config();
 
+   stopFlag = false;
    comm_active = false;
    system_proc_active = false;
+   processing_active = false;
+   disable_updates = false;
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    submitted_dir = pkg_dir + SLASH + "submitted";
@@ -32,8 +35,6 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
 
    submit_url_host.replace( QRegExp( ":.*$" ), "" );
    submit_url_port.replace( QRegExp( "^.*:" ), "" );
-   cout << submit_url_host << endl;
-   cout << submit_url_port << endl;
 
    stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
    stage_path      = stage_url;
@@ -42,10 +43,6 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    stage_url     .replace( QRegExp( ":.*$" ), "" );
    stage_path    .replace( QRegExp( "^.*:" ), "" );
    stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
-
-   cout << stage_url << endl;
-   cout << stage_path << endl;
-   cout << stage_url_path << endl;
 
    if ( !update_files( false ) )
    {
@@ -75,7 +72,7 @@ US_Hydrodyn_Cluster_Status::~US_Hydrodyn_Cluster_Status()
 
 unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
 {
-   cout << "update files\n";
+   disable_updates = true;
    files.clear();
 
    // traverse directory and build up files
@@ -101,12 +98,11 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
       lv_files->clear();
       for ( unsigned int i = 0; i < files.size(); i++ )
       {
-         cout << "files: " << files[ i ] << endl;
          new QListViewItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
       }
    }
 
-   cout << "done update files\n";
+   disable_updates = false;
    return files.size();
 }
 
@@ -172,6 +168,13 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    editor->setWordWrap (QTextEdit::WidgetWidth);
    editor->setMinimumHeight(100);
 
+   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setMinimumHeight(minHeight1);
+   pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
+   pb_stop->setEnabled( false );
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -196,6 +199,8 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    hbl_buttons1->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
+   hbl_bottom->addSpacing( 4 );
+   hbl_bottom->addWidget ( pb_stop );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -234,6 +239,15 @@ void US_Hydrodyn_Cluster_Status::help()
 
 void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
+   }
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -285,41 +299,48 @@ void US_Hydrodyn_Cluster_Status::editor_msg( QString color, QString msg )
    editor->append(msg);
    editor->setColor(save_color);
    editor->scrollToBottom();
-   qApp->processEvents();
+   // qApp->processEvents();
 }
    
 void US_Hydrodyn_Cluster_Status::update_enables()
 {
-   bool any_selected = false;
-   bool any_completed = false;
-   QListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
+   if ( !disable_updates )
    {
-      do {
-         if ( lvi->isSelected() )
-         {
-            any_selected = true;
-         }
-         if ( lvi->text( 1 ) == "COMPLETED" )
-         {
-            any_completed = true;
-         }
-         if ( any_selected && any_completed )
-         {
-            break;
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
+      bool any_selected = false;
+      bool any_completed = false;
+      QListViewItem *lvi = lv_files->firstChild();
+      if ( lvi )
+      {
+         do {
+            if ( lvi->isSelected() )
+            {
+               any_selected = true;
+            }
+            if ( lvi->text( 1 ) == "COMPLETED" )
+            {
+               any_completed = true;
+            }
+            if ( any_selected && any_completed )
+            {
+               break;
+            }
+         } while ( ( lvi = lvi->nextSibling() ) );
+      }
+      pb_refresh  ->setEnabled( !processing_active && !comm_active && !system_proc_active );
+      pb_remove  ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected  );
+      pb_retrieve->setEnabled( !processing_active && !comm_active && !system_proc_active && any_completed );
+   } 
+   if ( processing_active )
+   {
+      pb_refresh ->setEnabled( false );
+      pb_remove  ->setEnabled( false );
+      pb_retrieve->setEnabled( false );
    }
-
-   pb_remove  ->setEnabled( !comm_active && !system_proc_active && any_selected  );
-   pb_retrieve->setEnabled( !comm_active && !system_proc_active && any_completed );
 }
 
 void US_Hydrodyn_Cluster_Status::refresh()
 {
-   cout << "refresh\n";
    get_status();
-   update_enables();
    //   update_files();
 }
 
@@ -343,18 +364,24 @@ void US_Hydrodyn_Cluster_Status::retrieve()
       do {
          if ( lvi->text( 1 ) == "COMPLETED" )
          {
-            cout << "retrieve job: " << lvi->text( 0 ) << endl;
             jobs[ lvi ] = "retrieve results";
          }
       } while ( ( lvi = lvi->nextSibling() ) );
+      processing_active = true;
+      stopFlag = false;
+      pb_stop->setEnabled( true );
+      editor_msg( "black", tr( "retrieving results" ) );
+      update_enables();
       emit next_status();
+   } else {
+      stopFlag = false;
+      pb_stop->setEnabled( false );
    }
 }
 
 void US_Hydrodyn_Cluster_Status::cancel_selected()
 {
    update_enables();
-   cout << "setup jobs for cancel selected\n";
    comm_mode = "cancel";
    jobs.clear();
    
@@ -365,7 +392,6 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
       do {
          if ( lvi->isSelected() )
          {
-            cout << "cancel job: " << lvi->text( 0 ) << endl;
             jobs[ lvi ] = "cancel job";
          }
       } while ( ( lvi = lvi->nextSibling() ) );
@@ -375,8 +401,7 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
 
 void US_Hydrodyn_Cluster_Status::get_status()
 {
-   update_enables();
-   cout << "setup jobs for get status\n";
+   // update_enables();
    comm_mode = "status";
    jobs.clear();
    
@@ -385,7 +410,6 @@ void US_Hydrodyn_Cluster_Status::get_status()
    if ( lvi )
    {
       do {
-         cout << "get status: " << lvi->text( 0 ) << endl;
          jobs[ lvi ] = "get status";
       } while ( ( lvi = lvi->nextSibling() ) );
       
@@ -395,15 +419,21 @@ void US_Hydrodyn_Cluster_Status::get_status()
 
 void US_Hydrodyn_Cluster_Status::next_status()
 {
-   cout << "next status\n";
+   if ( stopFlag )
+   {
+      editor_msg( "red", tr( "stopped by user request" ) );
+      stopFlag = false;
+      update_files();
+      refresh();
+      return;
+   }
+
    if ( comm_active )
    {
-      cout << "comm active\n";
       return;
    }
    if ( system_proc_active )
    {
-      cout << "system proc active\n";
       return;
    }
 
@@ -435,7 +465,7 @@ void US_Hydrodyn_Cluster_Status::next_status()
    {
       if ( comm_mode == "status" )
       {
-         editor_msg( "black", tr( "done refreshing job status" ) );
+         // editor_msg( "black", tr( "done refreshing job status" ) );
       } 
       if ( comm_mode == "cancel" )
       {
@@ -462,6 +492,7 @@ void US_Hydrodyn_Cluster_Status::next_status()
       } 
    }
 
+   processing_active = false;
    update_enables();
 }
 
@@ -517,7 +548,6 @@ void US_Hydrodyn_Cluster_Status::complete_remove()
       close();
       return;
    }
-   update_enables();
    refresh();
 }
 
@@ -565,15 +595,17 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
       return;
    }
 
-   update_enables();
-   // refresh();
+   refresh();
 }
 
 void US_Hydrodyn_Cluster_Status::get_next_retrieve()
 {
-   editor_msg( "black", QString( "retrieving %1" ).arg( next_to_process->text( 0 ) ) );
+   if ( system_proc_active )
+   {
+      return;
+   }
+   // editor_msg( "black", QString( "retrieving %1" ).arg( next_to_process->text( 0 ) ) );
    next_to_process->setText( 2 , "Retrieving results" );
-   cout << "process retrieve\n";
    if ( schedule_retrieve( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "completed";
@@ -608,14 +640,14 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
 
 void US_Hydrodyn_Cluster_Status::get_next_status()
 {
-   cout << "get next status\n";
    if ( comm_mode == "cancel" )
    {
       next_to_process->setText( 2, "Canceling" );
    }
    if ( comm_mode == "status" )
    {
-      editor_msg( "black", QString( "refreshing status for %1" ).arg( next_to_process->text( 0 ) ) );
+      // editor_msg( "black", QString( "refreshing status for %1" ).arg( next_to_process->text( 0 ) ) );
+      next_to_process->setText( 2, tr( "refreshing status" ) );
    }
 
    if ( send_http_get( next_to_process->text( 0 ) ) )
@@ -641,7 +673,6 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
    // its going to require opening a socket etc
    // 
    comm_active = true;
-   cout << "http_get\n";
    // editor_msg( "black", "updating status" );
 
    current_http_response = "";
@@ -674,7 +705,7 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
    return true;
 }
 
-void US_Hydrodyn_Cluster_Status::http_stateChanged ( int /* estate */ )
+void US_Hydrodyn_Cluster_Status::http_stateChanged ( int /* state */ )
 {
    // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
 }
@@ -712,7 +743,6 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
 void US_Hydrodyn_Cluster_Status::http_dataSendProgress ( int done, int total )
 {
    cout << "http: datasendprogress " << done << " " << total << "\n";
-
 }
 void US_Hydrodyn_Cluster_Status::http_dataReadProgress ( int done, int total )
 {
@@ -724,14 +754,13 @@ void US_Hydrodyn_Cluster_Status::http_requestStarted ( int id )
    cout << "http: requestStarted " << id << "\n";
 }
 
-void US_Hydrodyn_Cluster_Status::http_requestFinished ( int id, bool error )
+void US_Hydrodyn_Cluster_Status::http_requestFinished ( int id, bool error  )
 {
    cout << "http: requestFinished " << id << " " << error << "\n";
 }
 
-void US_Hydrodyn_Cluster_Status::http_done ( bool error )
+void US_Hydrodyn_Cluster_Status::http_done ( bool /* error */ )
 {
-   cout << "http: done " << error << "\n";
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
@@ -766,13 +795,11 @@ bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
    connect( system_proc, SIGNAL(processExited()),   this, SLOT(system_proc_processExited()) );
    connect( system_proc, SIGNAL(launchFinished()),  this, SLOT(system_proc_launchFinished()) );
 
-   // cout << "system_proc start\n";
    return system_proc->start();
 }
 
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStdout()
 {
-   // cout << "system_proc readstdout\n";
    while ( system_proc->canReadLineStdout() )
    {
       editor_msg("brown", system_proc->readLineStdout());
@@ -781,7 +808,6 @@ void US_Hydrodyn_Cluster_Status::system_proc_readFromStdout()
    
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStderr()
 {
-   // cout << "system_proc readstderr\n";
    while ( system_proc->canReadLineStderr() )
    {
       editor_msg("red", system_proc->readLineStderr());
@@ -790,13 +816,12 @@ void US_Hydrodyn_Cluster_Status::system_proc_readFromStderr()
    
 void US_Hydrodyn_Cluster_Status::system_proc_processExited()
 {
-   // cout << "system_proc exit\n";
    system_proc_readFromStderr();
    system_proc_readFromStdout();
 
-   disconnect( system_proc, SIGNAL(readyReadStdout()), 0, 0);
-   disconnect( system_proc, SIGNAL(readyReadStderr()), 0, 0);
-   disconnect( system_proc, SIGNAL(processExited()), 0, 0);
+   // disconnect( system_proc, SIGNAL(readyReadStdout()), 0, 0);
+   // disconnect( system_proc, SIGNAL(readyReadStderr()), 0, 0);
+   // disconnect( system_proc, SIGNAL(processExited()), 0, 0);
 
    // editor->append("System_Proc finished.");
    
@@ -819,7 +844,6 @@ void US_Hydrodyn_Cluster_Status::system_proc_processExited()
                              :
                              tr( "Error: no results retrieved" )
                              );
-   qApp->processEvents();
    emit next_status();
 }
    
@@ -827,4 +851,20 @@ void US_Hydrodyn_Cluster_Status::system_proc_launchFinished()
 {
    // neditor_msg("brown", "System_Proc launch exited");
    disconnect( system_proc, SIGNAL(launchFinished()), 0, 0);
+}
+
+void US_Hydrodyn_Cluster_Status::stop()
+{
+   stopFlag = true;
+   pb_stop->setEnabled( false );
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
+   }
+   update_enables();
 }

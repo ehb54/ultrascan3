@@ -120,6 +120,26 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       }
    }
 
+   {
+      results_dir = pkg_dir  + SLASH + "results";
+      QDir dir1( results_dir );
+      if ( !dir1.exists() )
+      {
+         editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( results_dir ) );
+         dir1.mkdir( results_dir );
+      }
+
+      QDir::setCurrent( results_dir );
+
+      QDir qd;
+
+      QStringList results_files = qd.entryList( "*" );
+      for ( unsigned int i = 0; i < results_files.count(); i++ )
+      {
+         results_jobs[ results_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+      }
+   }
+
    QDir::setCurrent( pkg_dir );
 
    global_Xpos += 30;
@@ -218,7 +238,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_check_status->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_check_status, SIGNAL(clicked()), SLOT(check_status()));
 
-   pb_load_results = new QPushButton(tr("Load results"), this);
+   pb_load_results = new QPushButton(tr("Extract results"), this);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_results->setMinimumHeight(minHeight1);
    pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1025,6 +1045,12 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( QRegExp( "(\\s+|\\/|\\\\)" ), "" );
       le_output_name->setText( qs );
    }
+   if ( cqs.contains( QRegExp( "^(tmp|TMP)_" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "^(tmp|TMP)_" ), "" );
+      le_output_name->setText( qs );
+   }
 }
 
 
@@ -1160,10 +1186,11 @@ bool US_Hydrodyn_Cluster::dup_in_submitted_or_completed()
                                 "or cancel the submitted job\n") );
       return true;
    }
-   if ( completed_jobs.count( le_output_name->text() ) )
+   if ( completed_jobs.count( le_output_name->text() ) ||
+        results_jobs.count( le_output_name->text() ) )
    {
       QMessageBox::message( tr( "Please note:" ), 
-                            tr( "There is previously completed job with the same name\n"
+                            tr( "There is a previously completed job with the same name\n"
                                 "Please change the output base name (job identifier) to a unique value\n"
                                 "or remove the completed job\n" ) );
       return true;

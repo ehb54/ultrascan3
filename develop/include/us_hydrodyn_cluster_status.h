@@ -53,6 +53,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QTextEdit     *editor;
       QMenuBar      *m;
 
+      QPushButton   *pb_stop;
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
       
@@ -102,6 +103,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       bool          system_cmd( QStringList cmd );
       bool          system_proc_active;
+      bool          processing_active;
+      bool          stopFlag;
       QProcess      *system_proc;
       bool          schedule_retrieve( QString file );
 
@@ -119,6 +122,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void update_font();
       void save();
 
+      void stop();
       void cancel();
       void help();
 

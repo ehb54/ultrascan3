@@ -59,11 +59,20 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
 
       QString       pkg_dir;
       QString       completed_dir;
+      QString       tmp_dir;
+      QString       results_dir;
 
       QString       errormsg;
       bool          disable_updates;
 
       unsigned int  update_files( bool set_lv_files = true );
+
+      bool          clean_dir( QString dir );
+
+      bool          load_one_result( QString file );
+      bool          merge_csvs( QStringList &final_results );
+      bool          move_to_results( QString jobname, QStringList final_results );
+      bool          merge_this_csv( QString dest, vector < QString > csvs );
 
    private slots:
 

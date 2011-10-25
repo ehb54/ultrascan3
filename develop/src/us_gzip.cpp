@@ -240,6 +240,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   // Generate output file name. 
   QString oname = make_ofname( iname, decompress );
 
+  // cout << "us_gzip: oname is :" << oname << ":\n";
+
   if ( oname == "" ) return GZIP_NOTGZ;
 
   // Open the input file and determine decompression method.
@@ -351,6 +353,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       } 
 
       oname = embedded_name;
+      // cout << "us_gzip: embedded oname makes oname now:" << oname << ":\n";
+      
     }
 
     // Open the output file but check that it doesn't exist first
@@ -537,7 +541,6 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   timep.actime  = ifstat.st_atime;
   timep.modtime = filetime;
   utime( oname.ascii(), &timep );
-
   // Now delete the input file
   unlink( iname.ascii() );
 

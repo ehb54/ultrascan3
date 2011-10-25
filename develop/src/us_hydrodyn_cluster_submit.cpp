@@ -199,6 +199,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
+   pb_stop->setEnabled( false );
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -267,6 +268,15 @@ void US_Hydrodyn_Cluster_Submit::help()
 
 void US_Hydrodyn_Cluster_Submit::closeEvent(QCloseEvent *e)
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
+   }
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -318,7 +328,6 @@ void US_Hydrodyn_Cluster_Submit::editor_msg( QString color, QString msg )
    editor->append(msg);
    editor->setColor(save_color);
    editor->scrollToBottom();
-   qApp->processEvents();
 }
    
 void US_Hydrodyn_Cluster_Submit::update_enables()
@@ -444,6 +453,8 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    if ( !submit_active )
    {
       errormsg = tr( "Stopped by user request" );
+      update_files();
+      update_enables();
       return false;
    }
    return true;
@@ -458,6 +469,11 @@ void US_Hydrodyn_Cluster_Submit::stop()
    if ( comm_active )
    {
       submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    update_enables();
 }
@@ -488,8 +504,9 @@ void US_Hydrodyn_Cluster_Submit::process_next()
 {
    if ( !submit_active )
    {
-      update_enables();
       editor_msg( "red", "stopped by user request" );
+      update_files();
+      update_enables();
       return;
    }
 
@@ -612,6 +629,7 @@ void US_Hydrodyn_Cluster_Submit::process_move()
    cout << "process move\n";
    if ( move_file( next_to_process->text( 0 ) ) )
    {
+      next_to_process->setText( 3, tr( "Moved to submitted" ) );
       jobs[ next_to_process ] = "complete";
    } else {
       editor_msg( "red", errormsg );
