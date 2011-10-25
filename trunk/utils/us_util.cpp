@@ -151,14 +151,14 @@ QString US_Util::uuid_unparse( unsigned char* uu )
          uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
 }
 
-// A helper fiunction to convert a character hex digit to decimal
+// A helper function to convert a character hex digit to decimal
 unsigned char US_Util::hex2int( unsigned char c )
 {
    if ( c <= '9' )
-      return c - '0';
+      return (unsigned char)( c - '0' );
 
    c &= 0x5f;  // Make upper case if necessary
-   return c - 'A' + 10;
+   return (unsigned char)( c - 'A' + 10 );
 }
 
 // Convert a QString uuid into a 16-byte binary array
@@ -171,8 +171,8 @@ void US_Util::uuid_parse( const QString& in, unsigned char* uu )
    {
       while ( *p == '-' ) p++;
 
-      char n = hex2int( *p++ ) << 4;
-      n |=  hex2int( *p++ );
+      char n = (char)( hex2int( *p++ ) << 4 );
+      n =  (char)( (int)n | hex2int( *p++ ) );
 
       uu[ i ] = n;
    }

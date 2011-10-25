@@ -73,7 +73,7 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
       {
          a      = xml.attributes();
          server = QHostAddress( a.value( "server" ).toString() );
-         port   = a.value( "port" ).toString().toInt();
+         port   = (quint16)a.value( "port" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "request" )

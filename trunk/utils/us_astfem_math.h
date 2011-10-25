@@ -24,7 +24,7 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \brief Interpolate starting concentration QVector MfemInitial onto C0
       //! \param C0    Input MfemInitial
       //! \param C1    First scan with interpolated concentrations
-      //! \param x     Start x (radius) values for each scan
+      //! \param xvec  Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
 
       //! \brief Initialize a 2d matrix in memory to all zeros.

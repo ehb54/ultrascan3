@@ -40,8 +40,8 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    double        accel_time;
    double        dr;
-#define TIMING_RA_INC 500
 #if 0
+#define TIMING_RA_INC 500
 #define TIMING_RA
 #endif
 #ifdef TIMING_RA
@@ -1012,13 +1012,12 @@ QDateTime clcSt9 = clcSt0;
 
    simdata.radius.clear();
    simdata.scan  .clear();
-   simdata.radius.reserve( N );
-   simdata.scan  .reserve( N );
 
    US_AstfemMath::MfemScan simscan;
 
    // Generate the adaptive mesh
   
+   xA         = x.data();
    double sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
    QVector< double > nu;
    nu.clear();
@@ -1056,6 +1055,9 @@ QDateTime clcSt9 = clcSt0;
 
       mesh_gen_RefL( j + 1, 4 * j );
    }
+
+   simdata.radius.reserve( N );
+   simdata.scan  .reserve( N );
 
    for ( int i = 0; i < N; i++ ) simdata.radius .append( xA[ i ] );
 
@@ -2571,6 +2573,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       bool accel )
 {
    int Mcomp = af_params.s.size();
+   xA        = x.data();
 
    simdata.radius.clear();
    simdata.scan  .clear();
