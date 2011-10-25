@@ -2,7 +2,8 @@
 #include "us_math2.h"
 
 QDateTime elapsed = QDateTime::currentDateTime();
-#define ELAPSEDNOW (elapsed.secsTo(QDateTime::currentDateTime()))
+#define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime()))
+#define ELAPSEDSEC (elapsed.secsTo(QDateTime::currentDateTime()))
 #define DbTimMsg(a) DbTiming << my_rank << generation << ELAPSEDNOW << a;
 
 void US_MPI_Analysis::ga_worker( void )
@@ -42,7 +43,7 @@ void US_MPI_Analysis::ga_worker( void )
       ga_worker_loop();
 
       msg.size = max_rss();
-DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDNOW;
+DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDSEC;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
