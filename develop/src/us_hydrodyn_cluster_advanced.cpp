@@ -25,7 +25,6 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
    setupGUI();
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
-   editor_msg("red", "Options selected here will not yet be utilized for job package createion." );
 
    global_Xpos += 30;
    global_Ypos += 30;
