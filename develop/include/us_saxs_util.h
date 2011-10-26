@@ -773,6 +773,7 @@ class US_EXTERN US_Saxs_Util
 
       vector < QString >                  saxs_inputfile_for_csv;
       vector < unsigned int >             saxs_model_for_csv;
+      vector < QString >                  saxs_tag_for_csv;
       vector < QString >                  saxs_method_for_csv;
       vector < double >                   saxs_q_for_csv;
       vector < vector < double > >        saxs_I_for_csv;
@@ -795,6 +796,7 @@ class US_EXTERN US_Saxs_Util
       QString vector_double_to_csv( vector < double > &vd );
       bool write_output( unsigned int model, vector < double > &q, vector < double > &I );
       bool flush_output();
+
       unsigned int write_output_count;
 
       QString      env_ultrascan;

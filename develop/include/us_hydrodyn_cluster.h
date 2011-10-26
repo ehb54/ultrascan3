@@ -117,7 +117,10 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
-      csv          csv_advanced;
+      csv           csv_advanced;
+      bool          any_advanced();
+      QString       advanced_addition( QString outputfile );
+      QString       advanced_addition_methods();
 
    private slots:
 

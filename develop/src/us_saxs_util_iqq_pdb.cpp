@@ -1502,6 +1502,16 @@ void US_Saxs_Util::setup_saxs_options()
       our_saxs_options.water_e_density = control_parameters[ "wateredensity" ].toFloat();
    }
 
+   if ( control_parameters.count( "swhexclvol" ) )
+   {
+      our_saxs_options.swh_excl_vol = control_parameters[ "swhexclvol" ].toFloat();
+   }
+
+   if ( control_parameters.count( "scaleexclvol" ) )
+   {
+      our_saxs_options.scale_excl_vol = control_parameters[ "scaleexclvol" ].toFloat();
+   }
+
    if ( control_parameters.count( "startq" ) )
    {
       our_saxs_options.start_q = control_parameters[ "startq" ].toFloat();

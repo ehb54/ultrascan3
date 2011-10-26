@@ -20,6 +20,7 @@
 #include <qdragobject.h>
 
 #include "us_util.h"
+#include "us_hydrodyn_comparative.h"
 #include "us_hydrodyn_pdb_parsing.h"
 
 //standard C and C++ defs:
@@ -210,6 +211,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QString cluster_target_datafile;
       QString cluster_output_name;
       bool    cluster_for_mpi;
+      csv     cluster_csv_advanced;
       
    public :
       void add_file( QString filename );

@@ -143,11 +143,11 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    editor->setWordWrap (QTextEdit::WidgetWidth);
    editor->setMinimumHeight( 50 );
    
-   pb_ok = new QPushButton( tr("Ok"), this);
-   pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_ok->setMinimumHeight(minHeight1);
-   pb_ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
+   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -155,11 +155,11 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+   pb_ok = new QPushButton( tr("Close"), this);
+   pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_ok->setMinimumHeight(minHeight1);
+   pb_ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
 
    // build layout
 
@@ -169,11 +169,11 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
    hbl_bottom->addSpacing( 4 );
-   hbl_bottom->addWidget ( pb_ok );
+   hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
-   hbl_bottom->addWidget ( pb_cancel );
+   hbl_bottom->addWidget ( pb_ok );
    hbl_bottom->addSpacing( 4 );
 
 
@@ -365,7 +365,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("I(q) full debye");
+   tmp_data.push_back("I(q) Full Debye");
    tmp_data.push_back("N");
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -375,7 +375,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("I(q) hybrid");
+   tmp_data.push_back("I(q) Hybrid");
    tmp_data.push_back("N");
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -385,7 +385,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("I(q) hybrid2");
+   tmp_data.push_back("I(q) Hybrid2");
    tmp_data.push_back("N");
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -395,7 +395,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("I(q) hybrid3");
+   tmp_data.push_back("I(q) Hybrid3");
    tmp_data.push_back("N");
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -477,7 +477,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    tmp_data.clear();
    tmp_data.push_back("I(q) Crysol: contrast of hydration shell");
    tmp_data.push_back("N");
-   tmp_data.push_back("-0.1");
+   tmp_data.push_back("0.0");
    tmp_data.push_back("0.5");
    tmp_data.push_back("11");
    

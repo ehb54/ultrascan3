@@ -50,6 +50,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    le_output_name    ->setText   ( batch_window->cluster_output_name.isEmpty() ?
                                    "job" : batch_window->cluster_output_name );
    cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
+   csv_advanced = batch_window->cluster_csv_advanced;
    
    le_output_name->setEnabled( create_enabled );
    pb_create_pkg ->setEnabled( create_enabled );
@@ -382,6 +383,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    batch_window->cluster_target_datafile = le_target_file->text();
    batch_window->cluster_output_name     = le_output_name->text();
    batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
+   batch_window->cluster_csv_advanced    = csv_advanced;
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -661,15 +663,25 @@ void US_Hydrodyn_Cluster::create_pkg()
    QStringList source_files;
    QStringList dest_files;
 
+   if ( any_advanced() )
+   {
+      editor_msg( "blue", tr( "Note: using Advanced Options" ) );
+   }
+
    for ( unsigned int i = 0; i < selected_files.size(); i++ )
    {
+      out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       if ( !batch_window->cb_csv_saxs->isChecked() )
       {
          out += QString( "OutputFile      %1\n" ).arg( QFileInfo( selected_files[ i ] ).baseName() );
       }
-      out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       source_files << selected_files[ i ];
-      out += "Process\n";
+      if ( any_advanced() )
+      {
+         out += advanced_addition( QFileInfo( selected_files[ i ] ).baseName() );
+      } else {
+         out += "Process\n";
+      }
       if ( !( ( i + 1 ) % max_no_of_jobs ) )
       {
          write_count++;
@@ -1230,4 +1242,192 @@ void US_Hydrodyn_Cluster::advanced()
                                        this );
    hca->exec();
    delete hca;
+}
+
+bool US_Hydrodyn_Cluster::any_advanced()
+{
+   cout << "any_advanced()\n";
+   if ( !csv_advanced.data.size() )
+   {
+      cout << "any_advanced() false: no data\n";
+      return false;
+   }
+
+   for ( unsigned int i = 0; i < csv_advanced.data.size(); i++ )
+   {
+      if ( csv_advanced.data[ i ].size() > 1 &&
+           csv_advanced.data[ i ][ 1 ] == "Y" )
+      {
+         cout << "any_advanced() true: found active\n";
+         return true;
+      }
+   }
+   cout << "any_advanced() false: no active\n";
+   return false;
+}
+
+QString US_Hydrodyn_Cluster::advanced_addition_methods()
+{
+   QString out;
+   QString adaptive = "";
+   if ( our_saxs_options->saxs_iq_hybrid_adaptive &&
+        ( our_saxs_options->saxs_iq_native_hybrid || our_saxs_options->sans_iq_native_hybrid ||
+          our_saxs_options->saxs_iq_native_hybrid2 || our_saxs_options->sans_iq_native_hybrid2 ||
+          our_saxs_options->saxs_iq_native_hybrid3 || our_saxs_options->sans_iq_native_hybrid3 ) )
+   {
+      adaptive = "a";
+   }
+
+   for ( unsigned int i = 0; i < csv_advanced.data.size(); i++ )
+   {
+      if ( csv_advanced.data[ i ].size() > 1 &&
+           csv_advanced.data[ i ][ 1 ] == "Y" )
+      {
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Full Debye" )
+         {
+            out += 
+               "IqMethod        db\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid" )
+         {
+            out += 
+               "IqMethod        hy" + adaptive + "\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid2" )
+         {
+            out += 
+               "IqMethod        h2" + adaptive + "\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid3" )
+         {
+            out += 
+               "IqMethod        h3" + adaptive + "\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Fast" )
+         {
+            out += 
+               "IqMethod        fd\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) FoXS" )
+         {
+            out += 
+               "IqMethod        foxs\n"
+               "Process\n";
+         }
+         if ( csv_advanced.data[ i ][ 0 ] == "I(q) Crysol" )
+         {
+            out += 
+               "IqMethod        crysol\n"
+               "Process\n";
+         }
+      }
+   }
+
+   return out;
+}
+
+QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
+{
+   QString out;
+
+   map < unsigned int, double >       starts;
+   map < unsigned int, double >       ends;
+   map < unsigned int, unsigned int > points;
+   map < unsigned int, double >       increments;
+   map < unsigned int, unsigned int > offsets;
+   map < unsigned int, unsigned int > next_offsets;
+   map < unsigned int, double >       run_value;
+
+   unsigned int current_offset = 0;
+
+   for ( unsigned int i = 0; i < csv_advanced.data.size(); i++ )
+   {
+      for ( unsigned int i = 0; i < csv_advanced.data.size(); i++ )
+      {
+         if ( csv_advanced.data[ i ].size() > 4 &&
+              csv_advanced.data[ i ][ 1 ] == "Y" &&
+              !csv_advanced.data[ i ][ 2 ].isEmpty() )
+
+         {
+            starts    [i]   =  csv_advanced.data[ i ][ 2 ].toDouble();
+            ends      [i]   =  csv_advanced.data[ i ][ 3 ].toDouble();
+            points    [i]   =  csv_advanced.data[ i ][ 4 ].toUInt();
+            offsets   [i]   =  current_offset;
+            current_offset +=  points[i];
+            next_offsets[i] =  current_offset;
+
+            if ( points[i] > 1 )
+            {
+               increments[i] = (ends[i] - starts[i]) / ( points[i] - 1 );
+            } else {
+               increments[i] = 0;
+            }
+         }
+      }
+   }
+   
+   unsigned int total_points = 1;
+   for ( map < unsigned int, unsigned int >::iterator it = points.begin();
+         it != points.end();
+         it++ )
+   {
+      total_points *= it->second;
+   }
+
+   // linearization of an arbitrary number of loops
+
+   for ( unsigned int i = 0; i < total_points; i++ )
+   {
+      unsigned int pos = i;
+      QString msg = "";
+      QString tag;
+
+      for ( map < unsigned int, unsigned int >::iterator it = points.begin();
+            it != points.end();
+            it++ )
+      {
+         run_value[ it->first ] = starts[ it->first ] + ( pos % it->second ) * increments[ it->first ];
+         pos /= it->second;
+         bool ok = false;
+         tag += "_";
+         if ( csv_advanced.data[ it->first ][ 0 ] == "Buffer electron density" )
+         {
+            tag += "bed";
+            out += "WaterEDensity   ";
+            ok = true;
+         }
+         if ( csv_advanced.data[ it->first ][ 0 ] == "Scaling excluded volume" )
+         {
+            tag += "evs";
+            out += "ScaleExclVol    ";
+            ok = true;
+         }
+         if ( csv_advanced.data[ it->first ][ 0 ] == "SWH excluded volume" )
+         {
+            tag += "swh";
+            out += "SwhExclVol      ";
+            ok = true;
+         }
+         if ( csv_advanced.data[ it->first ][ 0 ] == "I(q) Crysol: contrast of hydration shell" )
+         {
+            tag += "hs";
+            out += "CrysolChs       ";
+            ok = true;
+         }
+         if ( ok )
+         {
+            tag += QString( "%1" ).arg( run_value[ it->first ] ).replace( ".", "_" );
+            out += QString( "%1\n" ).arg( run_value[ it->first ] );
+         }
+      }
+
+      out += "Tag             " + tag + "\n";
+      out += advanced_addition_methods();
+   }
+   return out;
 }
