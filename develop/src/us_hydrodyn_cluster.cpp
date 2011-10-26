@@ -220,6 +220,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
 
+   pb_advanced = new QPushButton(tr("Advanced options"), this);
+   pb_advanced->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_advanced->setMinimumHeight(minHeight1);
+   pb_advanced->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_advanced, SIGNAL(clicked()), SLOT(advanced()));
+
    pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
    pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_pkg->setMinimumHeight(minHeight1);
@@ -306,6 +312,14 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_output_name->addWidget ( le_output_name );
    hbl_output_name->addSpacing( 4 );
 
+   QHBoxLayout *hbl_mpi_etc = new QHBoxLayout( 0 );
+   hbl_mpi_etc->addSpacing( 4 );
+   hbl_mpi_etc->addWidget ( cb_for_mpi );
+   hbl_mpi_etc->addSpacing( 4 );
+   hbl_mpi_etc->addWidget ( pb_advanced );
+   hbl_mpi_etc->addSpacing( 4 );
+   
+
    QHBoxLayout *hbl_create = new QHBoxLayout( 0 );
    hbl_create->addSpacing( 4 );
    hbl_create->addWidget ( pb_create_pkg );
@@ -340,7 +354,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_output_name );
    background->addSpacing( 4 );
-   background->addWidget ( cb_for_mpi );
+   background->addLayout ( hbl_mpi_etc );
    background->addSpacing( 4 );
    background->addLayout ( hbl_create );
    background->addSpacing( 4 );
@@ -1205,4 +1219,15 @@ void US_Hydrodyn_Cluster::for_mpi()
       le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ));
       disconnect( cb_for_mpi, SIGNAL( clicked() ) );
    }
+}
+
+void US_Hydrodyn_Cluster::advanced()
+{
+   US_Hydrodyn_Cluster_Advanced *hca = 
+      new US_Hydrodyn_Cluster_Advanced(
+                                       csv_advanced,
+                                       us_hydrodyn,
+                                       this );
+   hca->exec();
+   delete hca;
 }

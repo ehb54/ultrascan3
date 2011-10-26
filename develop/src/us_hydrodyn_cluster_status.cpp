@@ -727,12 +727,19 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
       QString status = current_http_response;
       status.replace( QRegExp( "^.*<status>" ), "" );
       status.replace( QRegExp( "</status>.*$" ), "" );
+      status.replace( QRegExp( "\n|\r" ), " " );
+      status.replace( QRegExp( "\\s+" ), " " );
+      status.replace( QRegExp( "\\s+$" ), "" );
       next_to_process->setText( 1, status );
       QString message = current_http_response;
       if ( message.contains( "<message>" ) )
       {
          message.replace( QRegExp( "^.*<message>" ), "" );
          message.replace( QRegExp( "</message>.*$" ), "" );
+         message.replace( QRegExp( "\n|\r" ), " " ) ;
+         message.replace( QRegExp( "\\s+" ), " " );
+         message.replace( QRegExp( "\\s+$" ), "" );
+         cout << "message: " << message << endl;
       } else {
          message = "";
       }

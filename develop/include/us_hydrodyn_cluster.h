@@ -17,10 +17,12 @@
 #include "us_file_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
+#include "us_hydrodyn_comparative.h"
 #include "us_hydrodyn_cluster_submit.h"
 #include "us_hydrodyn_cluster_status.h"
 #include "us_hydrodyn_cluster_results.h"
 #include "us_hydrodyn_cluster_config.h"
+#include "us_hydrodyn_cluster_advanced.h"
 
 //standard C and C++ defs:
 
@@ -35,6 +37,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       friend class US_Hydrodyn_Cluster_Submit;
       friend class US_Hydrodyn_Cluster_Status;
       friend class US_Hydrodyn_Cluster_Config;
+      friend class US_Hydrodyn_Cluster_Advanced;
 
    public:
       US_Hydrodyn_Cluster(
@@ -62,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLineEdit     *le_output_name;
 
       QCheckBox     *cb_for_mpi;
+      QPushButton   *pb_advanced;
 
       QPushButton   *pb_create_pkg;
       QPushButton   *pb_submit_pkg;
@@ -113,6 +117,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      csv          csv_advanced;
 
    private slots:
 
@@ -128,6 +133,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void load_results();
 
       void for_mpi();
+      void advanced();
 
       void clear_display();
       void update_font();
