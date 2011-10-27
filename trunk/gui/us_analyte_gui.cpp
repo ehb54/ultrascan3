@@ -1381,7 +1381,7 @@ void US_AnalyteGui::list_from_db( void )
    while ( db.next() )
    {
       QString               a_type = db.value( 2 ).toString();
-      US_Analyte::analyte_t current;
+      US_Analyte::analyte_t current = US_Analyte::PROTEIN;
 
 
            if ( a_type == "Protein" ) current = US_Analyte::PROTEIN;
