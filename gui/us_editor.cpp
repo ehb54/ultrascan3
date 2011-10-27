@@ -27,8 +27,13 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
    }
 
    filename = "";
-   
-   QMenu* fileMenu = menuBar()->addMenu( tr( "&File" ) );
+
+#ifndef Q_WS_MAC
+   edMenuBar       = menuBar();
+#else
+   edMenuBar       = new QMenuBar( 0 );
+#endif
+   QMenu* fileMenu = edMenuBar->addMenu( tr( "&File" ) );
    fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
                                US_GuiSettings::fontSize() - 1 ) );
 

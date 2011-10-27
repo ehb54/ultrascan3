@@ -39,6 +39,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       QString    filename;
       QString    file_extension;
       QString    file_directory;
+      QMenuBar*  edMenuBar;
    
       void saveFile   ( void );
 
