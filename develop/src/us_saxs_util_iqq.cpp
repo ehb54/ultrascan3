@@ -10,6 +10,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    saxs_method_for_csv   .clear();
    saxs_q_for_csv        .clear();
    saxs_I_for_csv        .clear();
+   file_write_count      .clear();
    write_output_count    = 0;
    
    env_ultrascan = getenv("ULTRASCAN");
@@ -198,10 +199,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
    QRegExp rx_flush  ( 
                       "^("
-                      "experimentgrid|"
-                      "startq|"
-                      "endq|"
-                      "deltaq)$"
+                      // "experimentgrid|"
+                      // "startq|"
+                      // "endq|"
+                      // "deltaq)$"
+                      "noflush)$"
                       );
 
    unsigned int line = 0;
@@ -439,6 +441,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          setup_saxs_options();
+         cout << QString("Grid before run_iqq q(%1:%2) deltaq %3\n")
+            .arg( control_parameters[ "startq" ] )
+            .arg( control_parameters[ "endq" ] )
+            .arg( control_parameters[ "deltaq" ] );
          if ( !run_iqq() )
          {
             return false;
@@ -575,12 +581,47 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 
    control_parameters[ "startq" ] = QString("%1").arg( q[ 0 ] );
    control_parameters[ "endq" ]   = QString("%1").arg( q[ q.size() - 1 ] );
-   control_parameters[ "deltaq" ] = QString("%1").arg( q[ 1 ] - q[ 0 ] );
+   control_parameters[ "deltaq" ] = QString("%1").arg( ( q[ ( q.size() - 1 ) ] - q[ 0 ] ) / ( q.size() - 1 ));
 
    if ( control_parameters[ "deltaq" ].toDouble() <= 0e0 )
    {
       errormsg = QString("Error: the file %1 q grid apparent deltaq is zero or negative %2").arg( filename ).arg( control_parameters[ "deltaq" ] );
       return false;
+   }
+
+   // spacing computation
+   double min_delta_q = q[ 1 ] - q[ 0 ];
+   double max_delta_q = q[ 1 ] - q[ 0 ];
+   double avg_delta_q = q[ 1 ] - q[ 0 ];
+
+   for ( unsigned int i = 1; i < q.size() - 1; i++ )
+   {
+      double this_delta_q = q[ i + 1 ] - q[ i ];
+      if ( this_delta_q < min_delta_q )
+      {
+         min_delta_q = this_delta_q;
+      }
+      if ( this_delta_q > max_delta_q )
+      {
+         max_delta_q = this_delta_q;
+      }
+      avg_delta_q += this_delta_q;
+   }
+
+   avg_delta_q /= q.size() - 1;
+
+   if ( max_delta_q - min_delta_q > 2e-7 )
+   {
+      cout << 
+         QString( "Warning: the file %1 q grid appears to have a somewhat irregular grid with an average spacing of %2\n"
+                  "Warning: the experimental grid has a minimum spacing of %3, max %4 and average %5\n"
+                  "Warning: computations will occur on a regular grid with an equal range and number of points\n" )
+         .arg( filename )
+         .arg( control_parameters[ "deltaq" ] )
+         .arg( min_delta_q )
+         .arg( max_delta_q )
+         .arg( avg_delta_q )
+         ;
    }
 
    cout << QString("Grid from file %1 q(%2:%3) deltaq %4\n")
@@ -800,7 +841,7 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
       saxs_tag_for_csv.push_back( control_parameters.count( "tag" ) ?
                                   control_parameters[ "tag" ] : "" );
       saxs_method_for_csv.push_back( control_parameters[ "iqmethod" ]  );
-      saxs_q_for_csv = q;
+      saxs_q_for_csv.push_back( q );
       saxs_I_for_csv.push_back( I );
    }
 
@@ -809,12 +850,30 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
           control_parameters[ "output" ] == "dat" ) )
    {
       cout << "write output for ssaxs or dat\n";
-      QString fsaxs_name = 
+      QString fsaxs_part_1_name = 
          control_parameters[ "outputfile" ] +
-         QString("_%1").arg( model + 1 ) + 
+         QString("_%1").arg( model + 1 );
+
+      QString fsaxs_part_2_name =
          ( control_parameters.count( "tag" ) ? control_parameters[ "tag" ] : "" ) +
          iqq_suffix() + "." + 
          control_parameters[ "output" ];
+
+      QString fsaxs_name;
+      do {
+         if ( file_write_count.count( fsaxs_part_1_name + fsaxs_part_2_name ) )
+         {
+            // need to increment count
+            fsaxs_name = QString( "%1_mp%2%3" )
+               .arg( fsaxs_part_1_name )
+               .arg( file_write_count[ fsaxs_part_1_name + fsaxs_part_2_name ] )
+               .arg( fsaxs_part_2_name );
+            file_write_count[ fsaxs_part_1_name + fsaxs_part_2_name ]++;
+         } else {
+            file_write_count[ fsaxs_part_1_name + fsaxs_part_2_name ] = 1;
+            fsaxs_name = fsaxs_part_1_name + fsaxs_part_2_name;
+         }
+      } while ( QFile::exists( fsaxs_name ) );
 
       FILE *fsaxs = fopen(fsaxs_name, "w");
       if ( fsaxs ) 
@@ -858,8 +917,14 @@ bool US_Saxs_Util::flush_output()
    {
       map < QString, unsigned int > methods_used;
       bool multi_models_per_method = false;
+      bool external_programs_included = false;
       for ( unsigned int i = 0; i < saxs_method_for_csv.size(); i++ )
       {
+         if ( saxs_method_for_csv[ i ] == "crysol" ||
+              saxs_method_for_csv[ i ] == "foxs" )
+         {
+            external_programs_included = true;
+         }
          if (  methods_used.count( saxs_method_for_csv[ i ] ) )
          {
             methods_used[ saxs_method_for_csv[ i ] ]++;
@@ -869,59 +934,139 @@ bool US_Saxs_Util::flush_output()
          }
       }
       
-      if ( !multi_models_per_method )
+      if ( !multi_models_per_method && 
+           !external_programs_included && 
+           methods_used.size() > 1 )
       {
          methods_used.clear();
          methods_used[ "mm" ] = true;
       }
 
+      map < QString, map < vector < double >, unsigned int > > method_q_pieces;
+
       for ( map < QString, unsigned int >::iterator it = methods_used.begin();
             it != methods_used.end();
             it++ )
       {
-         QString fname = 
-            control_parameters[ "outputfile" ] + 
-            ( write_output_count ? QString("_%1").arg( write_output_count ) : "" ) +
-            "_" + it->first + "_iqq" + ".csv";
-         
-         write_output_count++;
-
-         FILE *of = fopen(fname, "wb");
-         if ( of )
+         for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
          {
-            output_files << fname;
-            QString header = QString("")
-               .sprintf(
-                        "Simulated SAXS data generated by US_SOMO %s\n"
-                        , QString( "%1" ).replace( "\n", "" ).arg( US_Version ).ascii()
-                        );
-            
-            fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-                    vector_double_to_csv( saxs_q_for_csv ).ascii(),
-                    header.ascii());
-            
-            for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
+            if ( it->first == "mm" ||
+                 it->first == saxs_method_for_csv[ i ] )
             {
-               if ( it->first == "mm" ||
-                    it->first == saxs_method_for_csv[ i ] )
+               if ( method_q_pieces.count( it->first ) )
                {
-                  QString name = QString("%1 Model %2 %3 %4")
-                     .arg( saxs_inputfile_for_csv[ i ] )
-                     .arg( saxs_model_for_csv[ i ] )
-                     .arg( saxs_tag_for_csv[ i ] )
-                     .arg( saxs_method_for_csv[ i ] );
-                  
-                  fprintf(of, "\"%s\",\"%s\",%s\n", 
-                          name.ascii(),
-                          "I(q)",
-                          vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+                  if ( method_q_pieces[ it->first ].count( saxs_q_for_csv[ i ] ) )
+                  {
+                     cout << QString( "multiple pieces for %1 q(%2:%3)\n" )
+                        .arg( it->first )
+                        .arg( saxs_q_for_csv[ i ][ 0 ] )
+                        .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                     method_q_pieces[ it->first ][ saxs_q_for_csv[ i ] ]++;
+                  } else {
+                     cout << QString( "additional pieces for %1 q(%2:%3)\n" )
+                        .arg( it->first )
+                        .arg( saxs_q_for_csv[ i ][ 0 ] )
+                        .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                     method_q_pieces[ it->first ][ saxs_q_for_csv[ i ] ] = 1;
+                  }
+               } else {
+                  cout << QString( "first piece for %1 q(%2:%3)\n" )
+                     .arg( it->first )
+                     .arg( saxs_q_for_csv[ i ][ 0 ] )
+                     .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                  map < vector < double >, unsigned int > tmp_q_map;
+                  tmp_q_map[ saxs_q_for_csv[ i ] ] = 1;
+                  method_q_pieces[ it->first ] = tmp_q_map;
                }
-            }            
-            fclose( of );
-            noticemsg += QString("file %1 written\n").arg( fname );
-         } else {
-            errormsg = QString("Error: could not open %1 for writing").arg( fname );
-            return false;
+            }
+         }
+      }               
+
+      map < QString, unsigned int > method_piece_pos;
+
+      for ( map < QString, unsigned int >::iterator it = methods_used.begin();
+            it != methods_used.end();
+            it++ )
+      {
+         method_piece_pos[ it->first ] = 0;
+
+         cout << QString( "number of pieces of %1 %2\n")
+            .arg( it->first )
+            .arg( method_q_pieces[ it->first ].size() );
+
+         for (  map < vector < double >, unsigned int >::iterator it2 = method_q_pieces[ it->first ].begin();
+               it2 != method_q_pieces[ it->first ].end();
+               it2++ )
+         {
+
+            QString fname_part_1 = 
+               control_parameters[ "outputfile" ];
+
+            QString fname_part_2 = 
+               ( method_q_pieces[ it->first ].size() > 1 ?
+                 QString( "_mg%1" ).arg( ++method_piece_pos[ it->first ] ) : "" ) +
+               "_" + it->first + "_iqq" + ".csv";
+            
+            QString fname;
+            do {
+               if ( file_write_count.count( fname_part_1 + fname_part_2 ) )
+               {
+                  // need to increment count
+                  fname = QString( "%1_mp%2%3" )
+                     .arg( fname_part_1 )
+                     .arg( file_write_count[ fname_part_1 + fname_part_2 ] )
+                     .arg( fname_part_2 );
+                  file_write_count[ fname_part_1 + fname_part_2 ]++;
+               } else {
+                  file_write_count[ fname_part_1 + fname_part_2 ] = 1;
+                  fname = fname_part_1 + fname_part_2;
+               }
+            } while ( QFile::exists( fname ) );
+
+            write_output_count++;
+            
+            FILE *of = fopen(fname, "wb");
+            if ( of )
+            {
+               output_files << fname;
+               QString header = QString("")
+                  .sprintf(
+                           "Simulated SAXS data generated by US_SOMO %s"
+                           , US_Version.ascii()
+                           );
+               
+               bool q_data_added = false;
+               for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
+               {
+                  if ( ( it->first == "mm" ||
+                         it->first == saxs_method_for_csv[ i ] ) &&
+                       it2->first == saxs_q_for_csv[ i ] )
+                  {
+                     if ( !q_data_added )
+                     {
+                        fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
+                                vector_double_to_csv( saxs_q_for_csv[ i ] ).ascii(),
+                                header.ascii());
+                        q_data_added = true;
+                     }
+                     QString name = QString("%1 Model %2 %3 %4")
+                        .arg( saxs_inputfile_for_csv[ i ] )
+                        .arg( saxs_model_for_csv[ i ] )
+                        .arg( saxs_tag_for_csv[ i ] )
+                        .arg( saxs_method_for_csv[ i ] );
+                     
+                     fprintf(of, "\"%s\",\"%s\",%s\n", 
+                             name.ascii(),
+                             "I(q)",
+                             vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+                  }
+               }            
+               fclose( of );
+               noticemsg += QString("file %1 written\n").arg( fname );
+            } else {
+               errormsg = QString("Error: could not open %1 for writing").arg( fname );
+               return false;
+            }
          }
       }
       

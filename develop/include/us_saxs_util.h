@@ -775,7 +775,7 @@ class US_EXTERN US_Saxs_Util
       vector < unsigned int >             saxs_model_for_csv;
       vector < QString >                  saxs_tag_for_csv;
       vector < QString >                  saxs_method_for_csv;
-      vector < double >                   saxs_q_for_csv;
+      vector < vector < double > >        saxs_q_for_csv;
       vector < vector < double > >        saxs_I_for_csv;
 
 #ifdef WIN32
@@ -822,6 +822,7 @@ class US_EXTERN US_Saxs_Util
       map < QString, rotamer >                       best_fit_rotamer;
       map < QString, vector < rotamer > >            pointmap_rotamers;
       map < QString, vector < point > >              waters_to_add;
+      map < QString, unsigned int >                  file_write_count;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

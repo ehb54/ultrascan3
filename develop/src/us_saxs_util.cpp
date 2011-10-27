@@ -7810,7 +7810,7 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
    }
 
    if ( to_grid[ 0 ] < from_grid[ 0 ] || 
-        to_grid[ to_grid.size() - 1 ] > from_grid[ from_grid.size() - 1 ] )
+        to_grid[ to_grid.size() - 1 ] > from_grid[ from_grid.size() - 1 ] + 1e-4 )
    {
       errormsg = "Can not extrapolate data";
       return false;
