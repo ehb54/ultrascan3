@@ -116,7 +116,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
                        "hydrationfile|"
                        "atomfile|"
                        "hybridfile|"
+                       "hydrationfile|"
+                       "pbruleon|"
+                       "pdbmissingatoms|"
+                       "pdbmissingresidues|"
+                       "hydrate|"
                        "saxsfile|"
+                       "hydrationscd|"
                        "saxs|"
                        "iqmethod|"
                        "fdbinsize|"
@@ -149,6 +155,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
+                      "hydrationfile|"
                       "saxsfile|"
                       "experimentgrid|"
                       "inputfile)$"
@@ -160,7 +167,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
+                      "hydrationfile|"
+                      "pdbmissingatoms|"
+                      "pdbmissingresidues|"
                       "saxsfile|"
+                      "hydrationscd|"
                       "iqmethod|"
                       "fdbinsize|"
                       "fdmodulation|"
@@ -286,6 +297,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }         
 
+#if defined( CMDLINE )
       if ( option == "hydrationfile" )
       {
          cout << QString("read hydration %1\n").arg( qsl[ 0 ] );
@@ -302,6 +314,19 @@ bool US_Saxs_Util::read_control( QString controlfile )
             cout << noticemsg;
          }
       }         
+
+      if ( option == "hydrate" )
+      {
+         if ( !control_parameters.count( "" ) ||
+              !control_parameters.count( "" ) )
+         {
+            errormsg = QString( "Error %1 line %2 : Hydrate requires PdbMissingAtoms and PdbMissingResidues to be defined" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+      }
+#endif
 
       if ( option == "atomfile" )
       {
@@ -363,8 +388,6 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }            
 
-
-
       if ( option == "inputfile" )
       {
          // read pdb, needs residue file
@@ -379,13 +402,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
 
+         misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+
          if ( !read_pdb( qsl[ 0 ] ) )
          {
             return false;
          }
          if ( !noticemsg.isEmpty() )
          {
-            cout << noticemsg;
+            cout << noticemsg << endl;
          }
          if ( model_vector.size() > 1 &&
               !control_parameters.count( "pdballmodels" ) )

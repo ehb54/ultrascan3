@@ -390,6 +390,15 @@ bool US_Saxs_Util::read_pdb( QString filename )
    errormsg = "";
    noticemsg = "";
 
+   if ( misc_pb_rule_on )
+   {
+      residue_list = save_residue_list;
+   }
+   else
+   {
+      residue_list = save_residue_list_no_pbr;
+   }
+
    QString str;
    QString str1;
    QString str2;

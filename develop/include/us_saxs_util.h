@@ -8,6 +8,7 @@
 #include "us_tar.h"
 #include "us_gzip.h"
 #include "us_hydrodyn_pdbdefs.h"
+#include "us_hydrodyn_asa.h"
 #include <math.h>
 #include <time.h>
 #include <map>
@@ -770,6 +771,51 @@ class US_EXTERN US_Saxs_Util
       vector < PDB_atom >                 bead_model;
       vector < vector < PDB_atom > >      bead_models;
       vector < vector < PDB_atom > >      bead_models_as_loaded;
+      map < QString, int >                atom_counts;     // maps molecule #|resName|resSeq to count
+      //                                       counts how many atoms are in each residue
+      map < QString, int >                has_OXT;         // maps molecule #|resName|resSeq to {0,1}
+      map < QString, int >                bead_exceptions; // maps molecule #|resName|resSeq to count
+      //                                       1 == ok
+      //                                       2 == skip
+      //                                       3 == use automatic bead builder for residue
+      //                                       4 == use automatic bead builder for missing atom
+      //                                       5 == not ok, duplicate or non-coded atom
+      map < QString, bool >               broken_chain_end;
+      //                                  maps molecule #|resSeq to flag indicating broken end of chain
+      map < QString, bool >               broken_chain_head;
+      //                                  maps molecule #|resSeq to flag indicating broken head of chain
+      map < QString, vector < QString > > molecules_residues_atoms;
+      //                                  maps molecule #|resSeq to vector of atom names
+      map < QString, QString > molecules_residue_name;
+      //                                  maps molecule #|resSeq to residue name
+      vector < QString > molecules_idx_seq; // vector of idx's
+      map < QString, vector < QString > > molecules_residue_errors;
+      //                                  maps molecule #|resSeq to vector of errors
+      //                                  each element in the vector corresponds to
+      //                                  the dup_residue_map pos for the residue
+      map < QString, vector < int > >     molecules_residue_missing_counts;
+      //                                  maps molecule #|resSeq to vector of missing count
+      //                                  if any atoms errors that are "non-missing" i.e.
+      //                                  duplicate or non-coded, then the value is set to -1
+      map < QString, vector < vector < QString > > > molecules_residue_missing_atoms;
+      //                                  maps molecule #|resSeq to vector of vector of missing atoms
+      //                                  each vector in the vector corresponds to
+      //                                  the dup_residue_map pos for the residue
+      map < QString, vector < vector < unsigned int > > > molecules_residue_missing_atoms_beads;
+      //                                  maps molecule #|resSeq to vector of vector of missing atoms beads
+      //                                  each vector in the vector corresponds to
+      //                                  the dup_residue_map pos for the residue
+      map < QString, bool >               molecules_residue_missing_atoms_skip;
+      //                                  maps molecule #|resSeq|multiresmappos|atom_no to flag
+      //                                  if true, the atom should be skipped
+      map < QString, int  >               use_residue;
+      //                                  maps molecule #|resSeq to correct residue in residue_list to use
+      map < QString, bool  >              skip_residue;
+      //                                  flags molecule "#|resSeq|residue_list entry" to be ignored
+      map < QString, int >                molecules_residue_min_missing;
+      //                                  maps molecule #|resSeq to pos of entry with minimum missing count
+      QString last_abb_msgs; // automatic bead builder message log
+      vector < PDB_atom * >               active_atoms;
 
       vector < QString >                  saxs_inputfile_for_csv;
       vector < unsigned int >             saxs_model_for_csv;
@@ -840,6 +886,40 @@ class US_EXTERN US_Saxs_Util
       bool         compute_water_positioning_atoms();
       QString      list_water_positioning_atoms();
       bool         validate_pointmap();
+      bool         selected_models_contain_SWH();
+      bool         write_pdb_with_waters();
+      QString      last_hydrated_pdb_header;
+      QString      last_hydrated_pdb_text;
+      QString      last_hydrated_pdb_name;
+      bool         has_steric_clash( point p );
+      bool         compute_waters_to_add();
+      bool         compute_best_fit_rotamer();
+      QString      list_best_fit_rotamer();
+      bool         setup_pointmap_rotamers();
+      QString      list_pointmap_rotamers();
+      QString      list_waters_to_add();
+      QString      list_exposed();
+      QString      list_to_hydrate( bool coords );
+      QString      list_to_hydrate_dihedrals();
+      bool         compute_to_hydrate_dihedrals();
+      void         build_to_hydrate();
+      bool         pdb_asa_for_saxs_hydrate();
+      bool         check_for_missing_atoms( PDB_model *model );
+      void         get_atom_map( PDB_model *model );
+      // various parameters to get bead stuff working
+      bool         misc_pb_rule_on;
+      // need to define in us_saxs_util_iqq.cpp/ hydrate / control_params
+      double       misc_avg_volume;
+      double       misc_avg_vbar;
+      double       misc_avg_mass;
+      double       misc_avg_hydration;
+      double       misc_avg_radius;
+      double       misc_hydrovol;
+      void         build_molecule_maps( PDB_model *model );
+      bool         create_beads();
+      point        last_molecular_cog;
+      bool         create_beads_normally;
+      asa_options  asa;
 };
 
 #endif

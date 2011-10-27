@@ -1615,6 +1615,11 @@ void US_Saxs_Util::setup_saxs_options()
    {
       our_saxs_options.crysol_hydration_shell_contrast = control_parameters[ "crysolchs" ].toFloat();
    }
+
+   if ( control_parameters.count( "hydrationscd" ) )
+   {
+      our_saxs_options.steric_clash_distance = control_parameters[ "hydrationscd" ].toFloat();
+   }
 }
 
 bool US_Saxs_Util::run_iqq()
