@@ -64,8 +64,8 @@ BEGIN
   SET @US3_USER       = 0;
   SET @US3_PRIV       = 1;
   SET @US3_ANALYST    = 2;
-  SET @US3_SUPER      = 3;
-  SET @US3_ADMIN      = 4;
+  SET @US3_ADMIN      = 3;
+  SET @US3_SUPER      = 4;
   
 END$$
 
