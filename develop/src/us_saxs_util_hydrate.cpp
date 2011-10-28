@@ -12,142 +12,162 @@
 // #define DEBUG_TO_HYDRATE_DIHEDRAL
 #define MAX_WATER_POSITIONING_ATOMS 4
 
-#if defined(FINISHED_PORTING)
-
-bool US_Saxs_Util::pdb_hydrate_for_saxs()
+bool US_Saxs_Util::pdb_hydrate()
 {
-   if ( !load_rotamer() )
+
+   // validate required parameters
+   QStringList qsl_required;
+   QString missing_required;
+
+   // we don't need all of these for external crysol & foxs (fix later)
    {
+      qsl_required << "hydrationfile";
+      qsl_required << "residuefile";
+      qsl_required << "atomfile";
+      qsl_required << "hybridfile";
+      qsl_required << "saxsfile";
+      qsl_required << "inputfile";
+      qsl_required << "asahydratethresh";
+      qsl_required << "asathreshpct";
+      qsl_required << "asahydrateproberadius";
+      qsl_required << "asastep";
+      qsl_required << "asacalculation";
+      
+      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      {
+         if ( !control_parameters.count( qsl_required[ i ] ) )
+         {
+            missing_required += " " + qsl_required[ i ];
+         }
+      }
+   }
+
+   asa.hydrate_probe_radius  = control_parameters[ "asahydrateproberadius" ].toFloat();
+   asa.asab1_step            = control_parameters[ "asastep"               ].toFloat();
+   asa.threshold_percent     = control_parameters[ "asathreshpct"          ].toFloat();
+
+   our_saxs_options.steric_clash_distance = 1.4f;
+
+   if ( control_parameters.count( "hydrationscd" ) )
+   {
+      our_saxs_options.steric_clash_distance = control_parameters[ "hydrationscd" ].toFloat();
+   }
+
+   cout << QString(
+                   "asa.hydrate_probe_radius %1\n"
+                   "asa.asab1_step           %2\n"
+                   "asa.threshold_percent    %3\n"
+                   )
+      .arg( control_parameters[ "asahydrateproberadius" ].toFloat() )
+      .arg( control_parameters[ "asastep"               ].toFloat() )
+      .arg( control_parameters[ "asathreshpct"          ].toFloat() );
+
+   if ( !missing_required.isEmpty() )
+   {
+      errormsg = QString( "Error: Hydrate requires prior definition of:%1" )
+         .arg( missing_required );
       return false;
-   } 
-   // ADD TO CLUSTER!
+   }
+
+   // if certain parameters are not set, set them to defaults
+
    misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+
+   QStringList checks;
+   QStringList vals;
+
+   checks << "pdbmissingatoms";
+   vals   << "0";
+   checks << "pdbmissingresidues";
+   vals   << "0";
+   checks << "asamethod";
+   vals   << "1";
+   
+   validate_control_parameters_set_one( checks, vals );
 
    // cout << list_rotamers( false );
    // cout << list_pointmaps();
 
-   vector < unsigned int > selected_models;
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
-   {
-      if ( lb_model->isSelected(i) ) 
-      {
-         selected_models.push_back(i);
-      }
-   }
-   if ( selected_models.size() != 1 )
-   {
-      QMessageBox::message( "Please note:",
-                            "You must select exactly one model to hydrate." );
-      return -1;
-   } 
-
-   options_log = "";
    model_vector = model_vector_as_loaded;
 
-   if (!residue_list.size() ||
-       !model_vector.size())
+   if ( !residue_list.size() ||
+        !model_vector.size() )
    {
-      fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
-      return -1;
+      errormsg = "Calculations can not be run until residue & pdb files are read!";
+      return false;
    }
 
-   bool any_errors = false;
-   bool any_models = false;
-
-   QString msg = QString("\n%1 models selected:").arg(project);
-
-   for(int i = 0; i < lb_model->numRows(); i++) {
-      if (lb_model->isSelected(i)) {
-         current_model = i;
-         msg += QString(" %1").arg(i+1);
-      }
-   }
-   msg += "\n";
-   editor->append(msg);
-
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
+   for ( current_model = 0; current_model < model_vector.size(); current_model++ )
    {
-      if (!any_errors && lb_model->isSelected(current_model))
+      cout << QString( "Hydrating model: %1\n" ).arg( current_model );
+      if( !pdb_asa_for_saxs_hydrate() )
       {
-         any_models = true;
-         if(!pdb_asa_for_saxs_hydrate())
-         {
-            // cout << list_exposed();
-            // view_exposed();
-            build_to_hydrate();
-            // cout << list_to_hydrate();
-            if ( !compute_to_hydrate_dihedrals( errormsg ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error computing dihedrals of exposed side chain",
-                                     errormsg );
-               any_errors = true;
-            }
-            // cout << list_to_hydrate_dihedrals();
-            if ( !compute_best_fit_rotamer( errormsg ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error finding best fit rotamer",
-                                     errormsg );
-               any_errors = true;
-            }
-            // cout << list_best_fit_rotamer();
-
-            if ( !setup_pointmap_rotamers( errormsg ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error setting up pointmaps",
-                                     errormsg );
-               any_errors = true;
-            }
-            cout << list_pointmap_rotamers();
-
-            if ( !compute_waters_to_add( errormsg ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error trying to add waters",
-                                     errormsg );
-               any_errors = true;
-            }
-            // cout << list_waters_to_add();
-            if ( !write_pdb_with_waters( errormsg ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error trying to write pdb with waters",
-                                     errormsg );
-               any_errors = true;
-            }
-            if ( !any_errors &&
-                 !screen_pdb( last_hydrated_pdb_name, !quiet ) )
-            {
-               QMessageBox::warning( this,
-                                     "Error trying to reload hydrated pdb",
-                                     errormsg );
-               any_errors = true;
-            }
-            if ( !any_errors )
-            {
-               pdb_saxs();
-            }
-         }
-         else
-         {
-            any_errors = true;
-         }
+         return false;
+      }
+      // cout << list_exposed();
+      // view_exposed();
+      build_to_hydrate();
+      // cout << list_to_hydrate();
+      if ( !compute_to_hydrate_dihedrals() )
+      {
+         errormsg = "Error computing dihedrals of exposed side chain: " + errormsg;
+         return false;
+      }
+      // cout << list_to_hydrate_dihedrals();
+      if ( !compute_best_fit_rotamer() )
+      {
+         errormsg =  "Error finding best fit rotamer: " + errormsg;
+         return false;
+      }
+      // cout << list_best_fit_rotamer();
+      
+      if ( !setup_pointmap_rotamers() )
+      {
+         errormsg = "Error setting up pointmaps: " + errormsg;
+         return false;
+      }
+      // cout << list_pointmap_rotamers();
+      
+      if ( !compute_waters_to_add() )
+      {
+         errormsg = "Error trying to add waters: " + errormsg;
+         return false;
+      }
+      // cout << list_waters_to_add();
+      if ( !buffer_pdb_with_waters() )
+      {
+         errormsg = "Error trying to write pdb with waters: " + errormsg;
+         return false;
       }
    }
-   if (any_models && !any_errors)
+   if ( !flush_pdb() )
    {
-   }
-   else
-   {
-      editor->append("Errors encountered\n");
+      return false;
    }
 
-   return 0;
+   // reload as input:
+   control_parameters[ "inputfile" ] = last_hydrated_pdb_name;
+
+   misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+
+   if ( !read_pdb( last_hydrated_pdb_name ) )
+   {
+      return false;
+   }
+   if ( !noticemsg.isEmpty() )
+   {
+      cout << noticemsg << endl;
+   }
+   if ( model_vector.size() > 1 &&
+        !control_parameters.count( "pdballmodels" ) )
+   {
+      cout << "Notice: an NMR style model was loaded, but \"PDBAllModels\" was not selected, so only the first model will be loaded\n";
+      model_vector.resize( 1 );
+      model_vector_as_loaded = model_vector;
+   }
+
+   return true;
 }
-
-#endif
 
 bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
 {
@@ -157,17 +177,14 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
       return false;
    }
 
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
-
    cout << QString( "Hydrating the pdb for %1 model %2\n" )
       .arg( control_parameters[ "inputfile "] )
       .arg( current_model + 1 );
    cout << "Checking the pdb structure\n";
 
-   if ( check_for_missing_atoms( &model_vector[current_model] ) ) 
+   if ( !check_for_missing_atoms( &model_vector[current_model] ) ) 
    {
-      errormsg = "Encountered errors with your PDB structure";
+      errormsg = "Encountered errors with your PDB structure" + errormsg;
       return false;
    }
 
@@ -201,7 +218,7 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
       return false;
    }
 
-   if( asa.method == 0 ) 
+   if( control_parameters[ "asamethod" ].toUInt() == 0 ) 
    {
       // surfracer
       errormsg = "Vornoi tesselation not currently implemented";
@@ -256,13 +273,17 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
 #endif
    }
 
-   if( asa.method == 1 ) 
+   if( control_parameters[ "asamethod" ].toUInt() == 1 ) 
    {
       cout << "Computing ASA via ASAB1\n";
+
+      float save_radius = asa.probe_radius;
+      asa.probe_radius  = asa.hydrate_probe_radius; 
       int retval = us_saxs_util_asab1_main( active_atoms,
                                             &asa,
                                             &results,
                                             false );
+      asa.probe_radius  = save_radius;
 
       cout << "Return from Computing ASA\n";
       if ( retval )
@@ -497,7 +518,6 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
    for (unsigned int m = 0; m < 3; m++) {
       last_molecular_cog.axis[m] = molecular_cog[m];
    }
-
 
    // pass 2b move bead_ref_volume, ref_mw, computed_radius from
    // next main chain back one including adjustments for GLY, PRO, OXT
@@ -765,11 +785,12 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                   return false;
                   break;
                }
-               this_atom->visibility = (this_atom->bead_asa >= asa.hydrate_threshold);
+               this_atom->visibility = 
+                  ( this_atom->bead_asa >= control_parameters[ "asahydratethresh" ].toDouble() );
 
                if (!create_beads_normally ||
                    this_atom->visibility ||
-                   !asa.calculation) {
+                   !control_parameters[ "asacalculation" ].toUInt() ) {
                   this_atom->exposed_code = 1;  // exposed
                }
                else 
@@ -797,8 +818,6 @@ void US_Saxs_Util::build_to_hydrate()
 {
    to_hydrate.clear();
    to_hydrate_pointmaps.clear();
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
    unsigned int i = current_model;
 
    // pass 1 identify exposed sc's
@@ -864,7 +883,7 @@ void US_Saxs_Util::build_to_hydrate()
    }
 }
 
-bool US_Saxs_Util::compute_to_hydrate_dihedrals( )
+bool US_Saxs_Util::compute_to_hydrate_dihedrals()
 {
    puts("computing to hydrate dihedrals");
    to_hydrate_dihedrals.clear();
@@ -996,8 +1015,6 @@ QString US_Saxs_Util::list_to_hydrate( bool coords )
 
 QString US_Saxs_Util::list_exposed()
 {
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
    unsigned int i = current_model;
    QString out = "exposed side chain atom list:\n";
    map < QString, bool > exposed_sc;
@@ -2035,8 +2052,6 @@ QString US_Saxs_Util::list_waters_to_add()
 
 bool US_Saxs_Util::has_steric_clash( point p )
 {
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
    unsigned int i = current_model;
 
    // check structure:
@@ -2066,25 +2081,14 @@ bool US_Saxs_Util::has_steric_clash( point p )
    return false;
 }
 
-bool US_Saxs_Util::write_pdb_with_waters()
+bool US_Saxs_Util::flush_pdb()
 {
-   if ( !control_parameters.count( "inputfile" ) )
-   {
-      errormsg = "No input file found";
-      return false;
-   }
-
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
 
    QString fname = control_parameters[ "inputfile" ];
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
-      + QString( "_%1-c%2-h.pdb" ).arg( current_model + 1 )
+
+   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) +
+      QString( "-c%2-h.pdb" )
       .arg( QString( "%1" ).arg( our_saxs_options.steric_clash_distance ).replace( ".", "_" ) );
-
-   last_hydrated_pdb_header = "";
-   last_hydrated_pdb_text   = "";
-
    QFile f( fname );
    if ( !f.open( IO_WriteOnly ) )
    {
@@ -2094,8 +2098,29 @@ bool US_Saxs_Util::write_pdb_with_waters()
 
    output_files << fname;
 
-   last_hydrated_pdb_header +=
+   last_hydrated_pdb_header =
       QString( "HEADER  US-SOMO Hydrated pdb file %1\n" ).arg( fname );
+
+   QTextStream ts( &f );
+   ts << last_hydrated_pdb_header;
+   ts << last_hydrated_pdb_text;
+   ts << "END\n";
+   f.close();
+
+   last_hydrated_pdb_name = fname;
+   last_hydrated_pdb_text   = "";
+
+   return true;
+}
+
+bool US_Saxs_Util::buffer_pdb_with_waters()
+{
+   if ( !control_parameters.count( "inputfile" ) )
+   {
+      errormsg = "No input file found";
+      return false;
+   }
+
    last_hydrated_pdb_text +=
       QString( "MODEL %1\n" ).arg( current_model + 1 );
 
@@ -2198,13 +2223,6 @@ bool US_Saxs_Util::write_pdb_with_waters()
    last_hydrated_pdb_text +=
       "TER\nENDMDL\n";
 
-   QTextStream ts( &f );
-   ts << last_hydrated_pdb_header;
-   ts << last_hydrated_pdb_text;
-   ts << "END\n";
-   f.close();
-
-   last_hydrated_pdb_name = fname;
    return true;
 }
 
@@ -3830,8 +3848,6 @@ public:
 
 bool US_Saxs_Util::create_beads()
 {
-   // FIX THIS *************** 
-   unsigned int current_model = 0;
    create_beads_normally = true;
 
    active_atoms.clear();

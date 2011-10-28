@@ -328,6 +328,9 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       min_asa = asa_opts->threshold_percent;
    }
 
+   cout << QString(" rprobe %1\n" ).arg( rprobe );
+   cout << QString(" min_asa %1\n" ).arg( min_asa );
+
    if (check_asa != 1)
       dt[nat - 1].m = 17;   /* 17 is assigned as mass for OXT - WARNING, good for single-chain structures only!!  */
 
@@ -916,7 +919,9 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
 
       for (l = 0; l < nat; l++)
       {
+#if defined( DEBUG_ASA )
          printf("%d %.2f\n", l, asa[l]);
+#endif
          float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
 
@@ -938,11 +943,13 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
                    sapp,
                    sa);
          } else {
+#if defined( DEBUG_ASA )
             printf("ASA: atom %u asa %f sapp %f sa %f\n",
                    l,
                    asa[l],
                    sapp,
                    sa);
+#endif
          }            
 
          if (!recheck) 

@@ -887,7 +887,8 @@ class US_EXTERN US_Saxs_Util
       QString      list_water_positioning_atoms();
       bool         validate_pointmap();
       bool         selected_models_contain_SWH();
-      bool         write_pdb_with_waters();
+      bool         buffer_pdb_with_waters();
+      bool         flush_pdb();
       QString      last_hydrated_pdb_header;
       QString      last_hydrated_pdb_text;
       QString      last_hydrated_pdb_name;
@@ -920,6 +921,8 @@ class US_EXTERN US_Saxs_Util
       point        last_molecular_cog;
       bool         create_beads_normally;
       asa_options  asa;
+      unsigned int current_model;
+      bool         pdb_hydrate();
 };
 
 #endif

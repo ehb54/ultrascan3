@@ -111,48 +111,51 @@ bool US_Saxs_Util::read_control( QString controlfile )
    QRegExp rx_blank  ( "^\\s*$" );
    QRegExp rx_comment( "#.*$" );
    QRegExp rx_valid  ( 
-                       "^("
-                       "residuefile|"
-                       "hydrationfile|"
-                       "atomfile|"
-                       "hybridfile|"
-                       "hydrationfile|"
-                       "pbruleon|"
-                       "pdbmissingatoms|"
-                       "pdbmissingresidues|"
-                       "hydrate|"
-                       "saxsfile|"
-                       "hydrationscd|"
-                       "saxs|"
-                       "iqmethod|"
-                       "fdbinsize|"
-                       "fdmodulation|"
-                       "hypoints|"
-                       "crysolharm|"
-                       "crysolgrid|"
-                       "crysolchs|"
-                       "wateredensity|"
-                       "swhexclvol|"
-                       "scaleexclvol|"
-                       "startq|"
-                       "endq|"
-                       "deltaq|"
-                       "pdballmodels|"
-                       "experimentgrid|"
-                       "inputfile|"
-                       "tag|"
-                       "output|"
-                       "outputfile|"
-                       "process|"
-                       "taroutput|"
-                       "tgzoutput|"
-                       "remark)$"
-                       );
+                      "^("
+                      "residuefile|"
+                      "atomfile|"
+                      "hybridfile|"
+                      "hydrationfile|"
+                      "pbruleon|"
+                      "pdbmissingatoms|"
+                      "pdbmissingresidues|"
+                      "asahydratethresh|"
+                      "asathreshpct|"
+                      "asahydrateproberadius|"
+                      "asacalculation|"
+                      "asastep|"
+                      "hydrate|"
+                      "saxsfile|"
+                      "hydrationscd|"
+                      "saxs|"
+                      "iqmethod|"
+                      "fdbinsize|"
+                      "fdmodulation|"
+                      "hypoints|"
+                      "crysolharm|"
+                      "crysolgrid|"
+                      "crysolchs|"
+                      "wateredensity|"
+                      "swhexclvol|"
+                      "scaleexclvol|"
+                      "startq|"
+                      "endq|"
+                      "deltaq|"
+                      "pdballmodels|"
+                      "experimentgrid|"
+                      "inputfile|"
+                      "tag|"
+                      "output|"
+                      "outputfile|"
+                      "process|"
+                      "taroutput|"
+                      "tgzoutput|"
+                      "remark)$"
+                      );
 
    QRegExp rx_file   ( 
                       "^("
                       "residuefile|"
-                      "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
                       "hydrationfile|"
@@ -164,12 +167,16 @@ bool US_Saxs_Util::read_control( QString controlfile )
    QRegExp rx_arg_1  ( 
                       "^("
                       "residuefile|"
-                      "hydrationfile|"
                       "atomfile|"
                       "hybridfile|"
                       "hydrationfile|"
                       "pdbmissingatoms|"
                       "pdbmissingresidues|"
+                      "asahydratethresh|"
+                      "asathreshpct|"
+                      "asahydrateproberadius|"
+                      "asacalculation|"
+                      "asastep|"
                       "saxsfile|"
                       "hydrationscd|"
                       "iqmethod|"
@@ -317,12 +324,12 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "hydrate" )
       {
-         if ( !control_parameters.count( "" ) ||
-              !control_parameters.count( "" ) )
+         if ( !pdb_hydrate() )
          {
-            errormsg = QString( "Error %1 line %2 : Hydrate requires PdbMissingAtoms and PdbMissingResidues to be defined" )
+            errormsg = QString( "Error %1 line %2 : %3" )
                .arg( controlfile )
-               .arg( line );
+               .arg( line )
+               .arg( errormsg );
             return false;
          }
       }
@@ -726,6 +733,10 @@ bool US_Saxs_Util::validate_control_parameters()
       vals   << "0.0";
       checks << "scaleexclvol";
       vals   << "1.0";
+      checks << "pdbmissingatoms";
+      vals   << "0";
+      checks << "pdbmissingresidues";
+      vals   << "0";
 
       validate_control_parameters_set_one( checks, vals );
    }

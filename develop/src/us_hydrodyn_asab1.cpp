@@ -466,6 +466,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    }
    em("s7");
 
+   cout << QString(" rprobe %1\n" ).arg( rprobe );
+   cout << QString(" min_asa %1\n" ).arg( min_asa );
+
    if (check_asa != 1)
       dt[nat - 1].m = 17;   /* 17 is assigned as mass for OXT - WARNING, good for single-chain structures only!!  */
 

@@ -465,8 +465,8 @@ bool US_Saxs_Util::read_pdb( QString filename )
          {
             last_was_ENDMDL = true;
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
-            noticemsg += "Residue sequence from model " +
-                           QString("%1").arg( model_vector.size() + 1 ) + ": \n";
+            // noticemsg += "Residue sequence from model " +
+            // QString("%1").arg( model_vector.size() + 1 ) + ": \n";
             str = "";
             
             // the residue list is wrong if there are unknown residues
@@ -486,7 +486,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
             // {
             //   str += temp_model.residue[m].name + " ";
             // }
-            noticemsg += str + "\n";
+            // noticemsg += str + "\n";
             
             // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
             calc_vbar(&temp_model); // update the calculated vbar for this model

@@ -363,6 +363,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       {
          return -1;
       }
+      float save_radius = asa.probe_radius;
+      asa.probe_radius  = asa.hydrate_probe_radius; 
       int retval = us_hydrodyn_asab1_main(active_atoms,
                                           &asa,
                                           &results,
@@ -371,7 +373,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                                           editor,
                                           this
                                           );
-
+      asa.probe_radius  = save_radius;
       progress->setProgress(ppos++); // 2
       qApp->processEvents();
       editor->append("Return from Computing ASA\n");

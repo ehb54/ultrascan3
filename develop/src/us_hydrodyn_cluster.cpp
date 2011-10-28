@@ -506,6 +506,12 @@ void US_Hydrodyn_Cluster::create_pkg()
    base += 
       QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
    base_source_files << our_saxs_options->default_saxs_filename;
+   if ( batch_window->cb_hydrate->isChecked() )
+   {
+      base += 
+         QString( "HydrationFile    %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
+      base_source_files << our_saxs_options->default_rotamer_filename;
+   }
 
    base += 
       QString( "\n%1\n" ).arg( our_saxs_options->saxs_sans ? "Sans" : "Saxs" );
@@ -586,7 +592,6 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString( "FdBinSize       %1\n" ).arg( our_saxs_options->fast_bin_size );
    base += 
       QString( "FdModulation    %1\n" ).arg( our_saxs_options->fast_modulation );
-
    base += 
       QString( "HyPoints        %1\n" ).arg( our_saxs_options->hybrid2_q_points );
    base += 
@@ -597,7 +602,16 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString( "CrysolChs       %1\n" ).arg( our_saxs_options->crysol_hydration_shell_contrast );
    base += 
       QString( "WaterEDensity   %1\n" ).arg( our_saxs_options->water_e_density );
-
+   base += 
+      QString( "AsaHydrateThresh      %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.hydrate_threshold );
+   base += 
+      QString( "AsaThreshPct          %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.threshold_percent );
+   base += 
+      QString( "AsaHydrateProbeRadius %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.hydrate_probe_radius );
+   base += 
+      QString( "AsaStep               %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.asab1_step );
+   base += 
+      QString( "AsaCalculation        %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.calculation ? 1 : 0 );
 
    if ( !le_target_file->text().isEmpty() )
    {
@@ -671,14 +685,20 @@ void US_Hydrodyn_Cluster::create_pkg()
    for ( unsigned int i = 0; i < selected_files.size(); i++ )
    {
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+      QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
+      if ( batch_window->cb_hydrate->isChecked() )
+      {
+         out += "Hydrate\n";
+         use_output_name += "-h";
+      }
       if ( !batch_window->cb_csv_saxs->isChecked() )
       {
-         out += QString( "OutputFile      %1\n" ).arg( QFileInfo( selected_files[ i ] ).baseName() );
+         out += QString( "OutputFile      %1\n" ).arg( use_output_name );
       }
       source_files << selected_files[ i ];
       if ( any_advanced() )
       {
-         out += advanced_addition( QFileInfo( selected_files[ i ] ).baseName() );
+         out += advanced_addition( use_output_name );
       } else {
          out += "Process\n";
       }
@@ -984,40 +1004,11 @@ bool US_Hydrodyn_Cluster::remove_files( QStringList &filenames )
 bool US_Hydrodyn_Cluster::copy_files_to_pkg_dir( QStringList &filenames )
 {
    errormsg = "";
-   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   US_File_Util ufu;
+   if ( !ufu.copy( filenames, pkg_dir, true ) )
    {
-      QString src  = filenames[ i ];
-      QString dest = pkg_dir + SLASH + QFileInfo( src ).fileName();
-      QFile fi( src  );
-      QFile fo( dest );
-
-      if ( !fi.exists() )
-      {
-         errormsg = QString( tr( "Error: requested source file %1 does not exist" ) ).arg( src );
-         return false;
-      }
-
-      if ( !fi.open( IO_ReadOnly ) )
-      {
-         errormsg = QString( tr( "Error: requested source file %1 can not be opened. Check permissions" ) ).arg( src );
-         return false;
-      }
-
-      if ( !fo.open( IO_WriteOnly ) )
-      {
-         errormsg = QString( tr( "Error: output file %1 can not be created." ) ).arg( dest );
-         return false;
-      }
-
-      editor_msg( "dark gray", QString( tr( "Copying %1 to %2\n" ) ).arg( src ).arg( dest ) );
-      QDataStream dsi( &fi );
-      QDataStream dso( &fo );
-      while ( !dsi.atEnd() )
-      {
-         dso << dsi;
-      }
-      fi.close();
-      fo.close();
+      errormsg = ufu.errormsg;
+      return false;
    }
    return true;
 }
@@ -1246,10 +1237,10 @@ void US_Hydrodyn_Cluster::advanced()
 
 bool US_Hydrodyn_Cluster::any_advanced()
 {
-   cout << "any_advanced()\n";
+   // cout << "any_advanced()\n";
    if ( !csv_advanced.data.size() )
    {
-      cout << "any_advanced() false: no data\n";
+      // cout << "any_advanced() false: no data\n";
       return false;
    }
 
@@ -1258,11 +1249,11 @@ bool US_Hydrodyn_Cluster::any_advanced()
       if ( csv_advanced.data[ i ].size() > 1 &&
            csv_advanced.data[ i ][ 1 ] == "Y" )
       {
-         cout << "any_advanced() true: found active\n";
+         // cout << "any_advanced() true: found active\n";
          return true;
       }
    }
-   cout << "any_advanced() false: no active\n";
+   // cout << "any_advanced() false: no active\n";
    return false;
 }
 
