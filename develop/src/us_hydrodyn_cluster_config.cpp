@@ -81,11 +81,12 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_stage_url->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_stage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_save_config = new QPushButton(tr("Save"), this);
-   pb_save_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_save_config->setMinimumHeight(minHeight1);
-   pb_save_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_save_config, SIGNAL(clicked()), SLOT(save_config()));
+   pb_cancel = new QPushButton(tr("Cancel"), this);
+   Q_CHECK_PTR(pb_cancel);
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -93,12 +94,13 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
-   Q_CHECK_PTR(pb_cancel);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+   pb_save_config = new QPushButton(tr("Close"), this);
+   pb_save_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_config->setMinimumHeight(minHeight1);
+   pb_save_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_config, SIGNAL(clicked()), SLOT(save_config()));
+
+
 
    // build layout
 
@@ -125,11 +127,11 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addSpacing( 4 );
-   hbl_bottom->addWidget ( pb_save_config );
+   hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
-   hbl_bottom->addWidget ( pb_cancel );
+   hbl_bottom->addWidget ( pb_save_config );
    hbl_bottom->addSpacing( 4 );
 
    QVBoxLayout *background = new QVBoxLayout( this );

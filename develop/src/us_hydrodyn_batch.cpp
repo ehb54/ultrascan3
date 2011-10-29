@@ -52,6 +52,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    this->batch_widget = batch_widget;
    this->batch = batch;
    this->us_hydrodyn = us_hydrodyn;
+   cb_hydrate = (QCheckBox *)0;
    *batch_widget = true;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));

@@ -720,9 +720,11 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
    cout << "http: readyRead\n" << endl << flush;
    cout << resp.reasonPhrase() << endl;
    current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   cout << "http response:";
    cout << current_http_response << endl;
 
-   if ( comm_mode == "status" )
+   if ( comm_mode == "status" &&
+        current_http_response.contains( "<status>" ) )
    {
       QString status = current_http_response;
       status.replace( QRegExp( "^.*<status>" ), "" );
@@ -730,6 +732,7 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
       status.replace( QRegExp( "\n|\r" ), " " );
       status.replace( QRegExp( "\\s+" ), " " );
       status.replace( QRegExp( "\\s+$" ), "" );
+      cout << "status:" << status << endl;
       next_to_process->setText( 1, status );
       QString message = current_http_response;
       if ( message.contains( "<message>" ) )
@@ -739,6 +742,8 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
          message.replace( QRegExp( "\n|\r" ), " " ) ;
          message.replace( QRegExp( "\\s+" ), " " );
          message.replace( QRegExp( "\\s+$" ), "" );
+         message.replace( QRegExp( "RSL =.*" ), "" );
+         message.replace( QRegExp( "Finished launching job, Host = " ), "" );
          cout << "message: " << message << endl;
       } else {
          message = "";

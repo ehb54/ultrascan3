@@ -170,6 +170,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    lbl_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
+   pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
+   pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_create_pkg->setMinimumHeight(minHeight1);
+   pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
+
    pb_set_target = new QPushButton(tr("Set experimental data file"), this);
    pb_set_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_target->setMinimumHeight(minHeight1);
@@ -226,12 +232,6 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_advanced->setMinimumHeight(minHeight1);
    pb_advanced->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_advanced, SIGNAL(clicked()), SLOT(advanced()));
-
-   pb_create_pkg = new QPushButton(tr("Create cluster job package"), this);
-   pb_create_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_create_pkg->setMinimumHeight(minHeight1);
-   pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
 
    pb_submit_pkg = new QPushButton(tr("Submit jobs for processing"), this);
    pb_submit_pkg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -506,7 +506,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    base += 
       QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
    base_source_files << our_saxs_options->default_saxs_filename;
-   if ( batch_window->cb_hydrate->isChecked() )
+   if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
    {
       base += 
          QString( "HydrationFile    %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
@@ -686,7 +686,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    {
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
-      if ( batch_window->cb_hydrate->isChecked() )
+      if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
          out += "Hydrate\n";
          use_output_name += "-h";
