@@ -445,5 +445,6 @@ bool US_Saxs_Util::dmd_strip_pdb()
    fol.close();
    output_files << pdb_stripped;
    output_files << stripped_log;
+   control_parameters[ "inputfile" ] = pdb_stripped;
    return true;
 }
