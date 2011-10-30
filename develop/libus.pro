@@ -261,6 +261,7 @@ SOURCES += \
   src/us_sa2dbase.cpp \
   src/us_sassoc.cpp \
   src/us_saxs_util.cpp \
+  src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
   src/us_saxs_util_hydrate.cpp \
   src/us_saxs_util_hydrate_align.cpp \

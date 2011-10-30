@@ -923,6 +923,11 @@ class US_EXTERN US_Saxs_Util
       asa_options  asa;
       unsigned int current_model;
       bool         pdb_hydrate();
+
+      bool         dmd_findSS();
+      bool         dmd_prepare();
+      bool         dmd_run();
+      bool         input_dimensions( point &range );
 };
 
 #endif

@@ -150,6 +150,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "process|"
                       "taroutput|"
                       "tgzoutput|"
+                      "dmdsupportfile|"
+                      "dmdboxspacing|"
+                      "dmdfindss|"
+                      "dmdprepare|"
+                      "dmdtime|"
+                      "dmdtemp|"
+                      "dmdrelax|"
+                      "dmdrun|"
                       "remark)$"
                       );
 
@@ -161,6 +169,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrationfile|"
                       "saxsfile|"
                       "experimentgrid|"
+                      "dmdsupportfile|"
                       "inputfile)$"
                       );
 
@@ -198,6 +207,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "output|"
                       "taroutput|"
                       "tgzoutput|"
+                      "dmdboxspacing|"
+                      "dmdsupportfile|"
+                      "dmdtime|"
+                      "dmdtemp|"
                       "outputfile)$"
                       );
 
@@ -457,6 +470,22 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          if ( !create_tgz_output( qsl[ 0 ] ) )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "dmdfindss" )
+      {
+         if ( !dmd_findSS() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "dmdprepare" )
+      {
+         if ( !dmd_prepare() )
          {
             return false;
          }
