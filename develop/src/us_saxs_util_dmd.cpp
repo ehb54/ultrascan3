@@ -83,18 +83,18 @@ bool US_Saxs_Util::dmd_findSS()
          return false;
       }
 
-      control_parameters[ "DMD:SS" ] = "";
+      control_parameters[ "dmd:ss" ] = "";
       QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
          QString qs = ts.readLine();
-         control_parameters[ "DMD:SS" ] += qs + "\n";
+         control_parameters[ "dmd:ss" ] += qs + "\n";
       }
       f.close();
    }
    // QFile::remove( constraints_file );
    output_files << constraints_file;
-   cout << "DMD:SS:\n" << control_parameters[ "dmd:ss" ] << endl;
+   cout << "dmd:ss:\n" << control_parameters[ "dmd:ss" ] << endl;
    return true;
 }
 
@@ -335,7 +335,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
          } else {
             for ( unsigned int m = 0; m < 3; m++ ) 
             {
-               range.axis[ m ] = rx_cap_3.cap( m ).toFloat();
+               range.axis[ m ] = rx_cap_3.cap( m + 1 ).toFloat();
             }
          }
       }            
