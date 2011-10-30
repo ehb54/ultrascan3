@@ -514,7 +514,16 @@ DbgLv(1) << "EDITFILT" << edtfilt;
    }
 
    else
-   {  // Could not find edit file, so try the database
+   {  // Could not find edit file, so inform the user
+      QMessageBox::warning( this,
+            tr( "Missing Local Edit" ),
+            tr( "Update Edit is not possible without a local copy\n"
+                "of the Edit file corresponding to FM models.\n"
+                "Use\n     Convert Legacy Data\nand\n     Manage Data\n"
+                "to create a local copy of an Edit file for\n     " )
+            + fname_load );
+
+      pb_update->setEnabled( false );
    }
 DbgLv(1) << " fname_edit" << fname_edit;
 
@@ -533,6 +542,9 @@ void US_FitMeniscus::scan_dbase()
    QStringList mfnams;             // List of FM model fit file names
    QStringList ufnams;             // List of unique model fit file names
    QStringList uantms;             // List of unique model fit analysis times
+   QStringList tmodels;            // List: IDs of models with truncated descrs
+   QStringList tedGIDs;            // List: edit GUIDs of models w/ trunc descrs
+   QStringList tedIDs;             // List: edit IDs of models w/ trunc descrs
 
    int         nfmods = 0;         // Number of fit-meniscus models
    int         nfsets = 0;         // Number of fit-meniscus analysis sets
@@ -559,10 +571,20 @@ void US_FitMeniscus::scan_dbase()
       QString modelID    = db.value( 0 ).toString();
       QString modelGUID  = db.value( 1 ).toString();
       QString descript   = db.value( 2 ).toString();
-      double  variance   = db.value( 3 ).toString().toDouble();
-      double  meniscus   = db.value( 4 ).toString().toDouble();
       QString editGUID   = db.value( 5 ).toString();
       QString editID     = db.value( 6 ).toString();
+
+      if ( descript.length() == 80 )
+      {  // Truncated description:  save ID and skip update for now
+//DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID;
+         tmodels << modelID;
+         tedGIDs << editGUID;
+         tedIDs  << editID;
+         continue;
+      }
+
+      double  variance   = db.value( 3 ).toString().toDouble();
+      double  meniscus   = db.value( 4 ).toString().toDouble();
       QDateTime lmtime   = db.value( 7 ).toDateTime();
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_',  4,  4 );
@@ -571,6 +593,69 @@ DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
       if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
 DbgLv(1) << "DbSc:    *FIT* " << descript;
+
+         // Format and save the potential fit table file name
+         QString runID      = descript.section( '.',  0, -4 );
+         QString tripleID   = descript.section( '.', -3, -3 );
+         QString editLabel  = ansysID .section( '_',  0,  0 );
+         QString ftfname    = runID + "/2dsa-fm." + editLabel +
+                              "-" + tripleID + ".fit.dat";
+         mdescr.description = descript;
+         mdescr.baseDescr   = runID + "." + tripleID + "."
+                              + ansysID.section( "-", 0, 3 );
+         mdescr.fitfname    = ftfname;
+         mdescr.modelID     = modelID;
+         mdescr.modelGUID   = modelGUID;
+         mdescr.editID      = editID;
+         mdescr.editGUID    = editGUID;
+         mdescr.variance    = variance;
+         mdescr.meniscus    = meniscus;
+         mdescr.antime      = descript.section( '.', -2, -2 )
+                              .section( '_',  1,  1 ).mid( 1 );
+         mdescr.lmtime      = lmtime;
+
+         mDescrs << mdescr;
+      }
+   }
+
+   for ( int ii = 0; ii < tmodels.size(); ii++ )
+   {  // Review models with truncated descriptions
+      QString modelID    = tmodels[ ii ];
+      query.clear();
+      query << "get_model_info" << modelID;
+      db.query( query );
+
+      if ( db.lastErrno() != US_DB2::OK )  continue;
+
+      db.next();
+
+      QString modelGUID  = db.value( 0 ).toString();
+      QString descript1  = db.value( 1 ).toString();
+      QString contents   = db.value( 2 ).toString();
+      int     jdtx       = contents.indexOf( "description=" );
+//DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
+//   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
+
+      if ( jdtx < 1 )  continue;
+
+      int     jdx        = contents.indexOf( "\"", jdtx ) + 1;
+      int     lend       = contents.indexOf( "\"", jdx  ) - jdx;
+//DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
+      QString descript   = contents.mid( jdx, lend );
+      double  variance   = db.value( 3 ).toString().toDouble();
+      double  meniscus   = db.value( 4 ).toString().toDouble();
+      QString editGUID   = tedGIDs[ ii ];
+      QString editID     = tedIDs [ ii ];
+
+      QDateTime lmtime   = db.value( 6 ).toDateTime();
+      QString ansysID    = descript.section( '.', -2, -2 );
+      QString iterID     = ansysID .section( '_',  4,  4 );
+//DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
+
+      if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
+      {  // Model from meniscus fit, so save information
+DbgLv(1) << "DbSc:    *FIT* " << descript;
+         ModelDesc mdescr;
 
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
@@ -907,6 +992,7 @@ DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << lmodd.variance
       }
    }
 DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Make a list of f-m models that match for DB, if possible
    if ( dkdb_cntrls->db() )
@@ -916,6 +1002,7 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query;
+      QStringList modIDs;
 
       query << "get_model_desc" << invID;
       db.query( query );
@@ -923,8 +1010,35 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
       while( db.next() )
       {
          QString modelID    = db.value( 0 ).toString();
-         QString modelGUID  = db.value( 1 ).toString();
          QString descript   = db.value( 2 ).toString();
+         QString runID      = descript.section( '.',  0, 0 );
+         if ( runID == srchRun )
+         {
+            modIDs << modelID;
+         }
+      }
+
+      for ( int ii = 0; ii < modIDs.size(); ii++ )
+      {
+         QString modelID    = modIDs.at( ii );
+         query.clear();
+         query << "get_model_info" << modelID;
+         db.query( query );
+
+         if ( db.lastErrno() != US_DB2::OK )  continue;
+
+         db.next();
+
+         QString modelGUID  = db.value( 0 ).toString();
+         QString descript1  = db.value( 1 ).toString();
+         QString contents   = db.value( 2 ).toString();
+         int     jdtx       = contents.indexOf( "description=" );
+
+         if ( jdtx < 1 )  continue;
+
+         int     jdx        = contents.indexOf( "\"", jdtx ) + 1;
+         int     lend       = contents.indexOf( "\"", jdx  ) - jdx;
+         QString descript   = contents.mid( jdx, lend );
          double  variance   = db.value( 3 ).toString().toDouble();
          double  meniscus   = db.value( 4 ).toString().toDouble();
          QString runID      = descript.section( '.',  0, -4 );
@@ -1172,11 +1286,12 @@ DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
             }
          }
       }
+      QApplication::restoreOverrideCursor();
 
       nlnois             = nlrnoi + ( nlrnoi > nlrmod ? 2 : 1 );
       ndnois             = ndrnoi + ( ndrnoi > ndrmod ? 2 : 1 );
-DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
- << nlrmod << ndrmod << nlrnoi << ndrnoi;
+DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi nlnois ndnois"
+ << nlrmod << ndrmod << nlrnoi << ndrnoi << nlnois << ndnois;
       QString msg = tr( "%1 local model files;\n"
                         "%2 database model files;\n"
                         "%3 local noise files;\n"
@@ -1192,8 +1307,10 @@ DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
       if ( response == QMessageBox::Yes )
       {
          US_Passwd pw;
-         US_DB2* dbP;
+         US_DB2* dbP = NULL;
+
          if ( dkdb_cntrls->db() )  dbP = new US_DB2( pw.getPasswd() );
+
          QStringList query;
          QString recID;
          QString recFname;
@@ -1218,7 +1335,7 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
                else { qDebug() << "*ERROR* does not exist:" << recFname; }
             }
 
-            if ( recID != "-1" )
+            if ( recID != "-1"  &&  dbP != NULL )
             {  // Delete model (and any child noise) from DB
                query.clear();
                query << "delete_model" << recID;
@@ -1256,6 +1373,7 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
    else
    {  // No models were found!!! (huh!!!)
 DbgLv(1) << "**NO local/dbase models-to-remove were found!!!!";
+      QApplication::restoreOverrideCursor();
    }
 
    return;
