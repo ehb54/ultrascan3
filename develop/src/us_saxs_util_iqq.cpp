@@ -154,6 +154,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdboxspacing|"
                       "dmdfindss|"
                       "dmdprepare|"
+                      "dmdstrippdb|"
                       "dmdtime|"
                       "dmdtemp|"
                       "dmdrelax|"
@@ -470,6 +471,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          if ( !create_tgz_output( qsl[ 0 ] ) )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "dmdstrippdb" )
+      {
+         if ( !dmd_strip_pdb() )
          {
             return false;
          }

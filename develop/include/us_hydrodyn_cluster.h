@@ -65,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLineEdit     *le_output_name;
 
       QCheckBox     *cb_for_mpi;
+      QCheckBox     *cb_dmd;
       QPushButton   *pb_advanced;
 
       QPushButton   *pb_create_pkg;
@@ -121,6 +122,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       bool          any_advanced();
       QString       advanced_addition( QString outputfile );
       QString       advanced_addition_methods();
+
+      QString       dmd_base_addition( QStringList &base_source_files );
+      QString       dmd_file_addition( QString outputfile );
 
    private slots:
 

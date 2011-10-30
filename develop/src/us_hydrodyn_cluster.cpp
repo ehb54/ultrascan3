@@ -50,11 +50,13 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    le_output_name    ->setText   ( batch_window->cluster_output_name.isEmpty() ?
                                    "job" : batch_window->cluster_output_name );
    cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
+   cb_dmd            ->setChecked( batch_window->cluster_dmd );
    csv_advanced = batch_window->cluster_csv_advanced;
    
    le_output_name->setEnabled( create_enabled );
    pb_create_pkg ->setEnabled( create_enabled );
    cb_for_mpi    ->setEnabled( create_enabled );
+   cb_dmd        ->setEnabled( create_enabled );
 
    if ( !create_enabled )
    {
@@ -227,6 +229,13 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
 
+   cb_dmd = new QCheckBox(this);
+   cb_dmd->setText(tr(" DMD"));
+   cb_dmd->setEnabled(true);
+   cb_dmd->setChecked(false);
+   cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_dmd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_advanced = new QPushButton(tr("Advanced options"), this);
    pb_advanced->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_advanced->setMinimumHeight(minHeight1);
@@ -317,6 +326,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( cb_for_mpi );
    hbl_mpi_etc->addSpacing( 4 );
+   hbl_mpi_etc->addWidget ( cb_dmd );
+   hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_advanced );
    hbl_mpi_etc->addSpacing( 4 );
    
@@ -383,6 +394,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    batch_window->cluster_target_datafile = le_target_file->text();
    batch_window->cluster_output_name     = le_output_name->text();
    batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
+   batch_window->cluster_dmd             = cb_dmd->isChecked();
    batch_window->cluster_csv_advanced    = csv_advanced;
 
    global_Xpos -= 30;
@@ -641,6 +653,11 @@ void US_Hydrodyn_Cluster::create_pkg()
    {
       base += "PDBAllModels\n";
    }
+
+   if ( cb_dmd->isChecked() )
+   {
+      base += dmd_base_addition( base_source_files );
+   }
       
    if ( !unimplemented.isEmpty() )
    {
@@ -700,6 +717,10 @@ void US_Hydrodyn_Cluster::create_pkg()
       {
          out += advanced_addition( use_output_name );
       } else {
+         if ( cb_dmd->isChecked() )
+         {
+            out += dmd_file_addition( use_output_name );
+         }
          out += "Process\n";
       }
       if ( !( ( i + 1 ) % max_no_of_jobs ) )
@@ -1179,22 +1200,6 @@ void US_Hydrodyn_Cluster::check_status()
 
 bool US_Hydrodyn_Cluster::dup_in_submitted_or_completed()
 {
-   cout << "submitted:\n";
-   for ( map < QString, bool >::iterator it = submitted_jobs.begin();
-         it != submitted_jobs.end();
-         it++ )
-   {
-      cout << it->first << endl;
-   }
-
-   cout << "completed:\n";
-   for ( map < QString, bool >::iterator it = completed_jobs.begin();
-         it != completed_jobs.end();
-         it++ )
-   {
-      cout << it->first << endl;
-   }
-
    if ( submitted_jobs.count( le_output_name->text() ) )
    {
       QMessageBox::message( tr( "Please note:" ), 
@@ -1422,3 +1427,43 @@ QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
    }
    return out;
 }
+
+QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files )
+{
+   QStringList files;
+   QString dmd_base_dir = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "dmd" + SLASH;
+
+   files 
+      << "DMD_NA_allatom.par"
+      << "PRO_RNA_MOL.DMDParam"
+      << "allatom.par"
+      << "medutop.pro";
+
+   QString out;
+   for ( unsigned int i = 0; i < files.size(); i++ )
+   {
+      out += QString( "DMDSupportFile  %1\n" )
+         .arg( files[ i ] );
+   }
+
+   files.gres( QRegExp( "^" ), dmd_base_dir );
+   for ( unsigned int i = 0; i < files.size(); i++ )
+   {
+      base_source_files << files[ i ];
+   }
+
+   return out;
+}
+
+QString US_Hydrodyn_Cluster::dmd_file_addition( QString /* outputfile */ )
+{
+   QString out;
+
+   out += 
+      "DMDStripPdb\n"
+      "DMDFindSS\n"
+      "DMDPrepare\n";
+
+   return out;
+}
+

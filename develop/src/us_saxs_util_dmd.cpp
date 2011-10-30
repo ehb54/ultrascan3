@@ -342,3 +342,108 @@ bool US_Saxs_Util::input_dimensions( point &range )
    }            
    return true;
 }
+
+bool US_Saxs_Util::dmd_strip_pdb()
+{
+   // remove dmd unrecognized atoms from pdb
+   // add -stripped to name
+   if ( !control_parameters.count( "inputfile" ) )
+   {
+      errormsg = "DMDStrip: InputFile must be defined";
+      return false;
+   }
+
+   QString pdb = control_parameters[ "inputfile" ];
+   QString base_pdb = QFileInfo( pdb ).baseName();
+   QString pdb_stripped = base_pdb + "_stripped";
+
+   unsigned int ext = 0;
+   while ( QFile::exists( pdb_stripped + ".pdb" ) )
+   {
+      pdb_stripped = base_pdb + "_stripped" + QString( "%1" ).arg( ++ext );
+   }
+   QString stripped_log = pdb_stripped + ".log";
+   pdb_stripped +=  ".pdb";
+   
+   QFile fi( pdb );
+   if ( !fi.open( IO_ReadOnly ) )
+   {
+      errormsg =  QString( "Error: can not read file %1" )
+         .arg( pdb );
+      return false;
+   }
+
+   QFile fo( pdb_stripped );
+   if ( !fo.open( IO_WriteOnly ) )
+   {
+      errormsg =  QString( "Error: can not create file %1" )
+         .arg( pdb_stripped );
+      fi.close();
+      return false;
+   }
+
+   QFile fol( stripped_log );
+   if ( !fol.open( IO_WriteOnly ) )
+   {
+      errormsg =  QString( "Error: can not create file %1" )
+         .arg( stripped_log );
+      fi.close();
+      fo.close();
+      return false;
+   }
+   
+   // don't know everything yet, but will modify as necessarry
+
+   // first off: HOH
+
+   QStringList exclude_atoms_list;
+   QStringList exclude_residues_list;
+   exclude_residues_list
+      << "HOH";
+   
+   map < QString, bool > exclude_atoms;
+   map < QString, bool > exclude_residues;
+
+   for ( unsigned int i = 0; i < exclude_atoms_list.size(); i++ )
+   {
+      exclude_atoms[ exclude_atoms_list[ i ] ] = true;
+   }
+
+   for ( unsigned int i = 0; i < exclude_residues_list.size(); i++ )
+   {
+      exclude_residues[ exclude_residues_list[ i ] ] = true;
+   }
+
+   QTextStream tsi ( &fi );
+   QTextStream tso ( &fo );
+   QTextStream tsol( &fol );
+
+   QRegExp rx_check_line( "^(ATOM|HETATM)" );
+   while ( !tsi.atEnd() )
+   {
+      QString qs = tsi.readLine();
+      bool keep = true;
+      if ( rx_check_line.search( qs ) != -1 )
+      {
+         QString residue = qs.mid( 17, 3 );
+         QString atom    = qs.mid( 12, 4 );
+         if ( exclude_atoms.count( atom ) ||
+              exclude_residues.count( residue ) )
+         {
+            keep = false;
+         }
+      }
+      if ( keep )
+      {
+         tso << qs << endl;
+      } else {
+         tsol << qs << endl;
+      }
+   }
+   fi.close();
+   fo.close();
+   fol.close();
+   output_files << pdb_stripped;
+   output_files << stripped_log;
+   return true;
+}
