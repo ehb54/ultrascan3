@@ -95,5 +95,6 @@ class US_DataTree : public QObject
       QString action_text    ( QString, QString  );
       void    action_result  ( int,     QString  );
       QString record_state   ( int               );
+      bool  significant_diffs( US_DataModel::DataDesc );
 };
 #endif

@@ -160,7 +160,7 @@ void US_DataTree::build_dtree( )
          {
             QString cont1 = cdesc.contents.section( " ", 0, 1 ).simplified();
             QString cont2 = cdesc.contents.section( " ", 2, 4 ).simplified();
-            if ( cont1 != cont2 )
+            if ( cont1 != cont2  &&  significant_diffs( cdesc ) )
             {
                fbru    = QBrush( colorRed );
                rsrc    = "Conflict";
@@ -686,16 +686,25 @@ DbgLv(2) << "DT: i_details row" << irow;
       mtext = mtext + 
          tr( "  Content Checks : " ) + cont1 + "\n" +
              "                   "   + cont2 + "\n";
+if (cdesc.recType==3 && cont1!=cont2) {
 US_Passwd pw;
 US_DB2* dbP = new US_DB2( pw.getPasswd() );
 US_Model model1;
 US_Model model2;
+QString tmpdir=US_Settings::tmpDir();
 model1.load( QString::number(cdesc.recordID), dbP );
 model2.load( cdesc.filename );
-QString fname1="/home/gary/usr/tmp/model1d.xml";
-QString fname2="/home/gary/usr/tmp/model2f.xml";
+QString fname1=tmpdir+"/model1d.xml";
+QString fname2=tmpdir+"/model2f.xml";
 model1.write(fname1);
 model2.write(fname2);
+QString fname3=tmpdir+"/model3d.xml";
+QString fname4=tmpdir+"/model4f.xml";
+model1.update_coefficients();
+model2.update_coefficients();
+model1.write(fname3);
+model2.write(fname4);
+}
    }
 
    // display the text dialog
@@ -1021,5 +1030,144 @@ DbgLv(1) << "acrow:    jrow jtyp" << jrow << ddesc.recType;
 DbgLv(1) << "acrow:  narows nrrows" << actrows.size() << rawrows.size();
 
    return actrows.size();
+}
+
+// Check model or noise for significant differences
+bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc )
+{
+   bool differs = true;   // Assume significant differences unless model,noise
+   const double dtoler = 5.0e-5;
+
+   // If model, check for differences beyond tolerance in component values
+   if ( ddesc.recType == 3 )
+   {
+      US_Model dmodel;
+      US_Model fmodel;
+      double   difmax = 0.0;
+      US_Passwd pw;
+      US_DB2* dbP = new US_DB2( pw.getPasswd() );
+
+      dmodel.load( QString::number( ddesc.recordID ), dbP );
+      fmodel.load( ddesc.filename );
+
+      if ( dmodel == fmodel )
+         differs = false;          // Differences only in formatting
+
+      else if ( ( dmodel.monteCarlo    == fmodel.monteCarlo    ) &&
+                ( dmodel.description   == fmodel.description   ) &&
+                ( dmodel.modelGUID     == fmodel.modelGUID     ) &&
+                ( dmodel.editGUID      == fmodel.editGUID      ) &&
+                ( dmodel.wavelength    == fmodel.wavelength    ) &&
+                ( dmodel.variance      == fmodel.variance      ) &&
+                ( dmodel.meniscus      == fmodel.meniscus      ) &&
+                ( dmodel.optics        == fmodel.optics        ) &&
+                ( dmodel.analysis      == fmodel.analysis      ) &&
+                ( dmodel.global        == fmodel.global        ) &&
+                ( dmodel.coSedSolute   == fmodel.coSedSolute   ) &&
+                ( dmodel.components.size() == fmodel.components.size() ) )
+      {  // Difference can only be in component values
+         for ( int ii = 0; ii < dmodel.components.size(); ii++ )
+         {
+            if ( dmodel.components[ ii ] != fmodel.components[ ii ] )
+            {  // There is a components difference, so measure it
+               US_Model::SimulationComponent* dcomp = &dmodel.components[ ii ];
+               US_Model::SimulationComponent* fcomp = &fmodel.components[ ii ];
+               double dcvalu = qAbs( dcomp->signal_concentration );
+               double fcvalu = qAbs( fcomp->signal_concentration );
+               double valmin = qMin( dcvalu, fcvalu );
+                      valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               double difrat = qAbs( dcvalu - fcvalu ) / valmin;
+                      difmax = qMax( difrat, difmax );
+
+               dcvalu = qAbs( dcomp->molar_concentration );
+               fcvalu = qAbs( fcomp->molar_concentration );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+
+               dcvalu = qAbs( dcomp->vbar20 );
+               fcvalu = qAbs( fcomp->vbar20 );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+
+               dcvalu = qAbs( dcomp->mw );
+               fcvalu = qAbs( fcomp->mw );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+
+               dcvalu = qAbs( dcomp->s );
+               fcvalu = qAbs( fcomp->s );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+
+               dcvalu = qAbs( dcomp->D );
+               fcvalu = qAbs( fcomp->D );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+DbgLv(1) << "   CONFLICT? D dcv fcv dr" << dcvalu << fcvalu << difrat;
+
+               dcvalu = qAbs( dcomp->f_f0 );
+               fcvalu = qAbs( fcomp->f_f0 );
+               valmin = qMin( dcvalu, fcvalu );
+               valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+               difrat = qAbs( dcvalu - fcvalu ) / valmin;
+               difmax = qMax( difrat, difmax );
+            }
+         }
+
+         differs = ( difmax > dtoler );
+DbgLv(1) << " CONFLICT? model difmax differs" << difmax << differs;
+      }
+
+   }
+
+   // if noise, check for differences beyond tolerance in noise values
+   else if ( ddesc.recType == 4)
+   {
+      US_Noise dnoise;
+      US_Noise fnoise;
+      double   difmax = 0.0;
+      US_Passwd pw;
+      US_DB2* dbP = new US_DB2( pw.getPasswd() );
+
+      dnoise.load( QString::number( ddesc.recordID ), dbP );
+      fnoise.load( ddesc.filename );
+
+      if ( dnoise == fnoise )
+         differs = false;          // Differences only in formatting
+
+      else if ( ( dnoise.type          == fnoise.type          ) &&
+                ( dnoise.description   == fnoise.description   ) &&
+                ( dnoise.noiseGUID     == fnoise.noiseGUID     ) &&
+                ( dnoise.modelGUID     == fnoise.modelGUID     ) &&
+                ( dnoise.minradius     == fnoise.minradius     ) &&
+                ( dnoise.maxradius     == fnoise.maxradius     ) &&
+                ( dnoise.values.size() == fnoise.values.size() ) )
+      {  // Difference can only be in noise values
+         for ( int ii = 0; ii < dnoise.values.size(); ii++ )
+         {
+            double dnvalu = qAbs( dnoise.values[ ii ] );
+            double fnvalu = qAbs( fnoise.values[ ii ] );
+            double valmin = qMin( dnvalu, fnvalu );
+                   valmin = ( valmin == 0.0 ) ? dtoler : valmin;
+            double difrat = qAbs( dnvalu - fnvalu ) / valmin;
+                   difmax = qMax( difrat, difmax );
+         }
+
+         differs = ( difmax > dtoler );
+DbgLv(1) << " CONFLICT? model difmax differs" << difmax << differs;
+      }
+   }
+
+   return differs;
 }
 

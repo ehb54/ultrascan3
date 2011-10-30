@@ -362,6 +362,8 @@ DbgLv(2) << "BrDb:     edt  id eGID rGID label date"
    }
 
    // get model IDs
+   QStringList  tmodels;
+   QList< int > tmodnxs;
    lb_status->setText( tr( "Reading Models" ) );
    query.clear();
    query << "get_model_desc" << invID;
@@ -376,9 +378,17 @@ DbgLv(2) << "BrDb:     edt  id eGID rGID label date"
       QString modelGUID = db->value( 1 ).toString();
       QString descript  = db->value( 2 ).toString();
       modDescs << descript;
+
+      if ( descript.length() == 80 )
+      {  // Truncated description?  save for later testing/replacement
+         tmodels << recID;
+         tmodnxs << ddescs.size();
+      }
+
       QString editGUID  = db->value( 5 ).toString();
       QString editID    = db->value( 6 ).toString();
 DbgLv(2) << "BrDb: MOD id" << recID << " edID" << editID << " edGID" << editGUID;
+DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
       QString date      = US_Util::toUTCDatetimeText( db->value( 7 )
                           .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 8 ).toString();
@@ -418,6 +428,8 @@ DbgLv(2) << "BrDb: MOD id" << recID << " edID" << editID << " edGID" << editGUID
    }
 
    // get noise IDs
+   QStringList  tnoises;
+   QList< int > tnoinxs;
    lb_status->setText( tr( "Reading Noises" ) );
    query.clear();
    query << "get_noise_desc" << invID;
@@ -444,6 +456,13 @@ DbgLv(2) << "BrDb: NOI id" << recID << " edID" << editID << " moID" << modelID;
       if ( jmod >= 0 )
       {
          descript = modDescs.at( jmod );
+
+         if ( descript.length() == 80 )
+         {  // Truncated description?  Save for later review/replace
+            tnoises << recID;
+            tnoinxs << ddescs.size();
+         }
+
          descript = descript.replace( ".model", "." + noiseType );
       }
 //DbgLv(3) << "BrDb: contents================================================";
@@ -481,6 +500,47 @@ DbgLv(2) << "BrDb:       noi id nGID dsc typ noityp"
       ddescs << cdesc;
       progress->setValue( ++istep );
    }
+
+   for ( int ii = 0; ii < tmodels.size(); ii++ )
+   {  // Change truncated model descriptions
+      recID    = tmodels[ ii ];
+      int jdsc = tmodnxs[ ii ];
+      cdesc    = ddescs.at( jdsc );
+      US_Model model1;
+      model1.load( recID, db );
+      QString descript  = model1.description;
+      QString label     = descript.section( ".", 0, -2 );
+
+      if ( label.length() > 40 )
+         label = label.left( 13 ) + "..." + label.right( 24 );
+
+DbgLv(1) << "BrDb:   ii jdsc" << ii << jdsc << "dsc1" << cdesc.description
+ << "dsc2" << descript;
+      cdesc.description = descript;
+      cdesc.label       = label;
+      ddescs.replace( jdsc, cdesc );
+   }
+
+   for ( int ii = 0; ii < tnoises.size(); ii++ )
+   {  // Change truncated noise descriptions
+      recID    = tnoises[ ii ];
+      int jdsc = tnoinxs[ ii ];
+      cdesc    = ddescs.at( jdsc );
+      US_Noise noise1;
+      noise1.load( recID, db );
+      QString descript  = noise1.description;
+      QString label     = descript.section( ".", 0, -2 );
+
+      if ( label.length() > 40 )
+         label = label.left( 13 ) + "..." + label.right( 24 );
+
+DbgLv(1) << "BrDb:   ii jdsc" << ii << jdsc << "dsc1" << cdesc.description
+ << "dsc2" << descript;
+      cdesc.description = descript;
+      cdesc.label       = label;
+      ddescs.replace( jdsc, cdesc );
+   }
+
 
    progress->setMaximum( nstep );
 DbgLv(1) << "BrDb: kr ke km kn"
