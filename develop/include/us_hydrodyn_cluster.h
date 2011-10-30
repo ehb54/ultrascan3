@@ -23,6 +23,7 @@
 #include "us_hydrodyn_cluster_results.h"
 #include "us_hydrodyn_cluster_config.h"
 #include "us_hydrodyn_cluster_advanced.h"
+#include "us_hydrodyn_cluster_dmd.h"
 
 //standard C and C++ defs:
 
@@ -38,6 +39,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       friend class US_Hydrodyn_Cluster_Status;
       friend class US_Hydrodyn_Cluster_Config;
       friend class US_Hydrodyn_Cluster_Advanced;
+      friend class US_Hydrodyn_Cluster_Dmd;
 
    public:
       US_Hydrodyn_Cluster(
@@ -66,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       QCheckBox     *cb_for_mpi;
       QCheckBox     *cb_dmd;
+      QPushButton   *pb_dmd;
       QPushButton   *pb_advanced;
 
       QPushButton   *pb_create_pkg;
@@ -123,6 +126,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QString       advanced_addition( QString outputfile );
       QString       advanced_addition_methods();
 
+      csv           csv_dmd;
       QString       dmd_base_addition( QStringList &base_source_files );
       QString       dmd_file_addition( QString outputfile );
 
@@ -140,6 +144,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void load_results();
 
       void for_mpi();
+      void set_dmd();
+      void dmd();
       void advanced();
 
       void clear_display();

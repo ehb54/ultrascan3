@@ -52,6 +52,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
    cb_dmd            ->setChecked( batch_window->cluster_dmd );
    csv_advanced = batch_window->cluster_csv_advanced;
+   csv_dmd      = batch_window->cluster_csv_dmd;
    
    le_output_name->setEnabled( create_enabled );
    pb_create_pkg ->setEnabled( create_enabled );
@@ -235,6 +236,13 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_dmd->setChecked(false);
    cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_dmd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_dmd, SIGNAL( clicked() ), SLOT( set_dmd() ) );
+
+   pb_dmd = new QPushButton(tr("DMD settings"), this);
+   pb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_dmd->setMinimumHeight(minHeight1);
+   pb_dmd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_dmd, SIGNAL( clicked() ), SLOT( dmd() ) );
 
    pb_advanced = new QPushButton(tr("Advanced options"), this);
    pb_advanced->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -328,6 +336,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( cb_dmd );
    hbl_mpi_etc->addSpacing( 4 );
+   hbl_mpi_etc->addWidget ( pb_dmd );
+   hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_advanced );
    hbl_mpi_etc->addSpacing( 4 );
    
@@ -396,6 +406,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
    batch_window->cluster_dmd             = cb_dmd->isChecked();
    batch_window->cluster_csv_advanced    = csv_advanced;
+   batch_window->cluster_csv_dmd         = csv_dmd;
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -1238,6 +1249,25 @@ void US_Hydrodyn_Cluster::advanced()
                                        this );
    hca->exec();
    delete hca;
+}
+
+void US_Hydrodyn_Cluster::set_dmd()
+{
+   if ( cb_dmd->isChecked() && !csv_dmd.data.size() )
+   {
+      dmd();
+   }
+}
+
+void US_Hydrodyn_Cluster::dmd()
+{
+   US_Hydrodyn_Cluster_Dmd *hcd = 
+      new US_Hydrodyn_Cluster_Dmd(
+                                  csv_dmd,
+                                  us_hydrodyn,
+                                  this );
+   hcd->exec();
+   delete hcd;
 }
 
 bool US_Hydrodyn_Cluster::any_advanced()

@@ -71,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
    public:
       friend class US_Hydrodyn_Cluster;
+      friend class US_Hydrodyn_Cluster_Dmd;
 
       US_Hydrodyn_Batch(batch_info *batch, 
                         bool *batch_widget, 
@@ -213,6 +214,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool    cluster_for_mpi;
       bool    cluster_dmd;
       csv     cluster_csv_advanced;
+      csv     cluster_csv_dmd;
       
    public :
       void add_file( QString filename );
