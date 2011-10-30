@@ -13,6 +13,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    this->csv1 = csv1;
    this->original_csv1 = &csv1;
    cluster_window = (void *)p;
+   disable_updates = false;
 
    if ( !csv1.data.size() )
    {
@@ -53,6 +54,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 400 + csv_height );
+   update_enables();
 }
 
 US_Hydrodyn_Cluster_Dmd::~US_Hydrodyn_Cluster_Dmd()
@@ -78,32 +80,9 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    t_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    t_csv->setEnabled(true);
-   t_csv->setSelectionMode( QTable::NoSelection );
+   t_csv->setSelectionMode( QTable::SingleRow );
 
-   interval_starting_row = 0;
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
-   {
-      if ( csv1.data[ i ].size() < 3 || csv1.data[ i ][ 2 ].isEmpty() )
-      {
-         interval_starting_row = i + 1;
-      }
-      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
-      {
-         if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
-         {
-            t_csv->setItem( i, j, new QCheckTableItem( t_csv, "" ) );
-            ((QCheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
-         } else {
-            t_csv->setText( i, j, csv1.data[i][j] );
-         }
-      }
-      if ( csv1.data[ i ].size() < 3 ||
-           ( csv1.data[ i ][ 1 ].isEmpty() &&
-             csv1.data[ i ][ 2 ].isEmpty() ) )
-      {
-         t_csv->setRowReadOnly( i, true );
-      }
-   }
+   reload_csv();
 
    QValueList < unsigned int > column_widths;
    column_widths 
@@ -118,7 +97,6 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       << 108
       << 100
       << 200;
-
       
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
@@ -136,9 +114,54 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
 
-   recompute_interval_from_points();
+   recompute_interval_from_points( 3 );
+   recompute_interval_from_points( 7 );
 
-   connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
+   connect( t_csv, SIGNAL( valueChanged(int, int) ), SLOT( table_value( int, int ) ) );
+   connect( t_csv, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+
+
+   //   pb_select_all = new QPushButton(tr("Select all"), this);
+   //   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_select_all->setMinimumHeight(minHeight1);
+   //   pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
+
+   pb_copy = new QPushButton(tr("Copy values"), this);
+   pb_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_copy->setMinimumHeight(minHeight1);
+   pb_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_copy, SIGNAL(clicked()), SLOT(copy()));
+
+   pb_paste = new QPushButton(tr("Paste values"), this);
+   pb_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_paste->setMinimumHeight(minHeight1);
+   pb_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_paste, SIGNAL(clicked()), SLOT(paste()));
+
+   pb_dup = new QPushButton(tr("Duplicate row"), this);
+   pb_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_dup->setMinimumHeight(minHeight1);
+   pb_dup->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_dup, SIGNAL(clicked()), SLOT(dup()));
+
+   pb_delete = new QPushButton(tr("Delete row"), this);
+   pb_delete->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_delete->setMinimumHeight(minHeight1);
+   pb_delete->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_delete, SIGNAL(clicked()), SLOT(delete_rows()));
+
+   pb_load = new QPushButton(tr("Load"), this);
+   pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load->setMinimumHeight(minHeight1);
+   pb_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load, SIGNAL(clicked()), SLOT(load()));
+
+   pb_save_csv = new QPushButton(tr("Save"), this);
+   pb_save_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_csv->setMinimumHeight(minHeight1);
+   pb_save_csv->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_csv, SIGNAL(clicked()), SLOT(save_csv()));
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -179,6 +202,23 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 
    // build layout
 
+   QHBoxLayout *hbl_ctls = new QHBoxLayout(0);
+   hbl_ctls->addSpacing( 4 );
+   //   hbl_ctls->addWidget ( pb_select_all );
+   //   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_copy );
+   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_paste );
+   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_dup );
+   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_delete );
+   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_load );
+   hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_save_csv );
+   hbl_ctls->addSpacing( 4 );
+
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
    vbl_editor_group->addWidget( frame );
    vbl_editor_group->addWidget( editor );
@@ -198,6 +238,8 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
    background->addWidget ( t_csv );
+   background->addLayout ( hbl_ctls );
+   background->addSpacing( 4 );
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
@@ -229,23 +271,26 @@ void US_Hydrodyn_Cluster_Dmd::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-void US_Hydrodyn_Cluster_Dmd::table_value( int row, int col )
+void US_Hydrodyn_Cluster_Dmd::table_value( int /* row */, int col )
 {
-   if ( (unsigned int) row < interval_starting_row && col > 1 )
+   if ( col == 3 || col == 4 )
    {
-      t_csv->setText( row, col, "" );
-      return;
+      recompute_interval_from_points( 3 );
    }
-
-   if ( col == 4 || col == 2 || col == 3 )
-   {
-      recompute_interval_from_points();
-   }
-
    if ( col == 5 )
    {
-      recompute_points_from_interval();
+      recompute_points_from_interval( 3 );
    }
+
+   if ( col == 7 || col == 8 )
+   {
+      recompute_interval_from_points( 7 );
+   }
+   if ( col == 9 )
+   {
+      recompute_points_from_interval( 7 );
+   }
+
 }
 
 void US_Hydrodyn_Cluster_Dmd::clear_display()
@@ -306,40 +351,37 @@ csv US_Hydrodyn_Cluster_Dmd::current_csv()
    return tmp_csv;
 }
   
-void US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points()
+void US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points( unsigned int basecol )
 {
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
       t_csv->setText(
-                     i, 5, 
+                     i, basecol + 2, 
                      ( 
-                      t_csv->text(i, 4).toDouble() == 0e0 ?
+                      t_csv->text(i, basecol + 1 ).toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( ( t_csv->text(i, 3).toDouble() -
-                              t_csv->text(i, 2).toDouble() )
-                             / ( t_csv->text(i, 4).toDouble() - 1e0 ) ) 
+                      .arg( t_csv->text(i, basecol ).toDouble() 
+                             / ( t_csv->text( i, basecol + 1 ).toDouble() ) ) 
                       )
                      );
    }
 }
 
-void US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval()
+void US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval( unsigned int basecol )
 {
    for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
    {
       t_csv->setText(
-                     i, 4, 
+                     i, basecol + 1, 
                      ( 
-                      t_csv->text(i, 5).toDouble() == 0e0 ?
+                      t_csv->text( i, basecol + 2 ).toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( 1 + (unsigned int)(( t_csv->text(i, 3).toDouble() -
-                                                 t_csv->text(i, 2).toDouble() )
-                                               / t_csv->text(i, 5).toDouble() + 0.5) ) 
-                      )
+                      .arg( (unsigned int)( t_csv->text( i, basecol ).toDouble()
+                                            / t_csv->text( i, basecol + 2 ).toDouble() ) ) ) 
                      );
    }
 }
@@ -364,12 +406,12 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
 
    csv1.header.push_back("PDB file");
    csv1.header.push_back("Active");
-   csv1.header.push_back("Relax time\n* 50fs");
    csv1.header.push_back("Relax temp\nkcal/mol/kB");
+   csv1.header.push_back("Relax time\n* 50fs");
    csv1.header.push_back("Relax PDB\noutput\ntimestep");
    csv1.header.push_back("Relax PDB\noutput\ncount");
-   csv1.header.push_back("Run time\n* 50fs)");
    csv1.header.push_back("Run temp\nkcal/mol/kB");
+   csv1.header.push_back("Run time\n* 50fs)");
    csv1.header.push_back("Run PDB\noutput\ntimestep");
    csv1.header.push_back("Run PDB\noutput\ncount");
    csv1.header.push_back("Static range");
@@ -405,4 +447,183 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       }
       csv1.num_data.push_back(tmp_num_data);
    }
+}
+
+void US_Hydrodyn_Cluster_Dmd::copy()
+{
+   csv_copy = current_csv();
+   csv_copy.data.clear();
+   csv_copy.num_data.clear();
+   csv_copy.prepended_names.clear();
+
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      if ( t_csv->isRowSelected( i ) )
+      {
+         editor_msg( "black", QString( "copying row %1" ).arg( i) );
+         csv_copy.data           .push_back( csv1.data           [ i ] );
+         csv_copy.num_data       .push_back( csv1.num_data       [ i ] );
+         csv_copy.prepended_names.push_back( csv1.prepended_names[ i ] );
+      }
+   }
+   editor_msg( "black", QString( "csv copy has %1 rows" ).arg( csv_copy.data.size() ) );
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Dmd::paste()
+{
+   csv1 = current_csv();
+   unsigned int pos = 0;
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      if ( t_csv->isRowSelected( i ) )
+      {
+         for ( unsigned int j = 1; j < csv1.data.size(); j++ )
+         {
+            editor_msg( "black", QString( "setting data to row %1 from pos %2 %3 val %4 j %5" )
+                        .arg( i )
+                        .arg( pos )
+                        .arg( pos % csv_copy.data.size() ) 
+                        .arg( csv_copy.data    [ pos % csv_copy.data.size() ][ j ] )
+                        .arg( j )
+                        );
+            csv1.data    [ i ][ j ] = csv_copy.data    [ pos % csv_copy.data.size() ][ j ];
+            csv1.num_data[ i ][ j ] = csv_copy.num_data[ pos % csv_copy.data.size() ][ j ];
+         }
+         pos++;
+      }
+   }
+   reload_csv();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Dmd::dup()
+{
+   csv1 = current_csv();
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      if ( t_csv->isRowSelected( i ) )
+      {
+         csv1.data           .push_back( csv1.data           [ i ] );
+         csv1.num_data       .push_back( csv1.num_data       [ i ] );
+         csv1.prepended_names.push_back( csv1.prepended_names[ i ] );
+      }
+   }
+   reload_csv();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Dmd::load()
+{
+}
+
+void US_Hydrodyn_Cluster_Dmd::save_csv()
+{
+}
+
+void US_Hydrodyn_Cluster_Dmd::update_enables()
+{
+   if ( !disable_updates )
+   {
+      editor_msg( "black", "-------------" );
+      disable_updates = true;
+      unsigned int selected = 0;
+      vector < int > selected_rows;
+      for ( int i = 0; i < t_csv->numRows(); i++ )
+      {
+         if ( t_csv->isRowSelected( i ) )
+         {
+            selected++;
+            selected_rows.push_back( i );
+            editor_msg( "black", QString( "row selected %1" ).arg( i ) );
+         }
+      }
+
+      // t_csv->clearSelection();
+      // for ( unsigned int i = 0; i < selected_rows.size(); i++ )
+      // {
+      // t_csv->selectRow( selected_rows[ i ] );
+      // }
+
+      pb_copy    ->setEnabled( selected == 1 );
+      pb_dup     ->setEnabled( selected );
+      pb_paste   ->setEnabled( selected && csv_copy.data.size() );
+      pb_delete  ->setEnabled( selected );
+      pb_save_csv->setEnabled( csv1.data.size() );
+      disable_updates = false;
+   }
+}
+
+void US_Hydrodyn_Cluster_Dmd::reload_csv()
+{
+   interval_starting_row = 0;
+   t_csv->setNumRows( csv1.data.size() );
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      if ( csv1.data[ i ].size() < 3 || csv1.data[ i ][ 2 ].isEmpty() )
+      {
+         interval_starting_row = i + 1;
+      }
+      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      {
+         if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
+         {
+            t_csv->setItem( i, j, new QCheckTableItem( t_csv, "" ) );
+            ((QCheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
+         } else {
+            t_csv->setText( i, j, csv1.data[i][j] );
+         }
+      }
+   }
+   t_csv->clearSelection();
+}
+
+void US_Hydrodyn_Cluster_Dmd::delete_rows()
+{
+   csv csv_new = current_csv();
+   csv_new.data.clear();
+   csv_new.num_data.clear();
+   csv_new.prepended_names.clear();
+   
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      if ( !t_csv->isRowSelected( i ) )
+      {
+         csv_new.data           .push_back( csv1.data           [ i ] );
+         csv_new.num_data       .push_back( csv1.num_data       [ i ] );
+         csv_new.prepended_names.push_back( csv1.prepended_names[ i ] );
+      }
+   }
+   csv1 = csv_new;
+   reload_csv();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Dmd::select_all()
+{
+   disable_updates = true;
+   int selected = 0;
+   vector < int > selected_rows;
+
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      if ( t_csv->isRowSelected( i ) )
+      {
+         selected++;
+         selected_rows.push_back( i );
+      }
+   }
+   
+   if ( selected != t_csv->numRows() )
+   {
+      // select all
+      for ( int i = 0; i < t_csv->numRows(); i++ )
+      {
+         t_csv->selectRow( selected_rows[ i ] );
+      }
+   } else {
+      t_csv->clearSelection();
+   }
+   disable_updates = false;
+   update_enables();
 }

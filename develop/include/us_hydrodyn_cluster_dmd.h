@@ -48,6 +48,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
    private:
       csv           csv1;
       csv           *original_csv1;
+      csv           csv_copy;
 
       void          *us_hydrodyn;
       void          *cluster_window;
@@ -57,6 +58,14 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       QLabel        *lbl_title;
 
       QTable        *t_csv;             
+
+      QPushButton   *pb_select_all;
+      QPushButton   *pb_copy;
+      QPushButton   *pb_paste;
+      QPushButton   *pb_dup;
+      QPushButton   *pb_delete;
+      QPushButton   *pb_load;
+      QPushButton   *pb_save_csv;
 
       QFont         ft;
       QTextEdit     *editor;
@@ -69,16 +78,28 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       void          editor_msg( QString color, QString msg );
 
       csv           current_csv();
-      void          recompute_interval_from_points();
-      void          recompute_points_from_interval();
+      void          recompute_interval_from_points( unsigned int );
+      void          recompute_points_from_interval( unsigned int );
       unsigned int  interval_starting_row;
       void          reset_csv();
+      void          reload_csv();
+
+      bool          disable_updates;
 
    private slots:
 
       void setupGUI();
 
       void table_value( int, int );
+      void update_enables();
+
+      void select_all();
+      void copy();
+      void paste();
+      void dup();
+      void delete_rows();
+      void load();
+      void save_csv();
 
       void clear_display();
       void update_font();
