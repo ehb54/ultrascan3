@@ -72,10 +72,10 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->compute_prr_avg = false;
    batch->compute_prr_std_dev = false;
    batch->hydrate = false;
-   if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq )
-   {
-      batch->somo = true;
-   }
+   // if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq && !batch->dmd )
+   // {
+   // batch->somo = true;
+   // }
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -317,6 +317,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_mm_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_mm_all->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_mm_all, SIGNAL(clicked()), this, SLOT(set_mm_all()));
+
+   cb_dmd = new QCheckBox(this);
+   cb_dmd->setText(tr(" Run DMD "));
+   cb_dmd->setChecked(batch->dmd);
+   cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_dmd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_dmd, SIGNAL(clicked()), this, SLOT(set_dmd()));
 
    cb_somo = new QCheckBox(this);
    cb_somo->setText(tr(" Build SoMo Bead Model "));
@@ -601,6 +608,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(lbl_process);
    leftside->addWidget(cb_mm_first);
    leftside->addWidget(cb_mm_all);
+   leftside->addWidget(cb_dmd);
    leftside->addLayout(hbl_somo_grid);
    leftside->addLayout(hbl_iqq_prr);
    leftside->addLayout(hbl_csv_saxs);
@@ -982,6 +990,7 @@ void US_Hydrodyn_Batch::update_enables()
 
    cb_mm_first->setEnabled(any_pdb_in_list);
    cb_mm_all->setEnabled(any_pdb_in_list);
+   cb_dmd->setEnabled(any_pdb_in_list);
    cb_somo->setEnabled(any_pdb_in_list);
    cb_grid->setEnabled(any_pdb_in_list);
    cb_prr->setEnabled(lb_files->numRows());
@@ -997,7 +1006,7 @@ void US_Hydrodyn_Batch::update_enables()
    cb_compute_iq_std_dev->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs && batch->compute_iq_avg);
    cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
    cb_compute_prr_std_dev->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs && batch->compute_prr_avg);
-   pb_start->setEnabled(count_selected);
+
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
@@ -1012,6 +1021,16 @@ void US_Hydrodyn_Batch::update_enables()
    pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
    cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
    pb_cluster->setEnabled( true );
+
+   bool anything_to_do =
+      ( cb_somo->isEnabled()  && cb_somo->isChecked()  ) ||
+      ( cb_grid->isEnabled()  && cb_grid->isChecked()  ) ||
+      ( cb_prr->isEnabled()   && cb_prr->isChecked()   ) ||
+      ( cb_iqq->isEnabled()   && cb_iqq->isChecked()   ) ||
+      ( cb_hydro->isEnabled() && cb_hydro->isChecked() )
+      ;
+   pb_start->setEnabled(count_selected && !cb_dmd->isChecked() && anything_to_do );
+
    set_counts();
 }
 
@@ -1144,65 +1163,43 @@ void US_Hydrodyn_Batch::set_mm_all()
    batch->mm_all = cb_mm_all->isChecked();
 }
 
+void US_Hydrodyn_Batch::set_dmd()
+{
+   batch->dmd = cb_somo->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::set_somo()
 {
-   if ( cb_somo->isChecked() ||
-        !( batch->iqq || batch->prr ) )
-   {
-      cb_grid->setChecked(!cb_somo->isChecked());
-   }
    batch->somo = cb_somo->isChecked();
-   batch->grid = cb_grid->isChecked();
+   if ( cb_grid->isChecked() )
+   {
+      cb_grid->setChecked( false );
+      batch->grid = cb_grid->isChecked();
+   }
    update_enables();
 }
 
 void US_Hydrodyn_Batch::set_grid()
 {
-   if ( cb_grid->isChecked() ||
-        !( batch->iqq || batch->prr ) )
-   {
-      cb_somo->setChecked(!cb_grid->isChecked());
-   }
-   batch->somo = cb_somo->isChecked();
    batch->grid = cb_grid->isChecked();
+   if ( cb_somo->isChecked() )
+   {
+      cb_somo->setChecked( false );
+      batch->somo = cb_somo->isChecked();
+   }
    update_enables();
 }
 
 void US_Hydrodyn_Batch::set_prr()
 {
-   if ( !cb_iqq->isChecked() && 
-        !cb_prr->isChecked() &&
-        !cb_grid->isChecked() &&
-        !cb_somo->isChecked() )
-   {
-      cb_somo->setChecked(true);
-      batch->somo = cb_somo->isChecked();      
-   }
-   //   cb_grid->setChecked(false);
-   //   cb_somo->setChecked(false);
-   // batch->somo = cb_somo->isChecked();
-   //   batch->grid = cb_grid->isChecked();
    batch->prr = cb_prr->isChecked();
-   //   batch->iqq = cb_iqq->isChecked();
    update_enables();
 }
 
 void US_Hydrodyn_Batch::set_iqq()
 {
-   //   cb_grid->setChecked(false);
-   if ( !cb_iqq->isChecked() && 
-        !cb_prr->isChecked() &&
-        !cb_grid->isChecked() &&
-        !cb_somo->isChecked() )
-   {
-      cb_somo->setChecked(true);
-      batch->somo = cb_somo->isChecked();      
-   }
-
-   //   batch->grid = cb_grid->isChecked();
-   //   batch->prr = cb_prr->isChecked();
    batch->iqq = cb_iqq->isChecked();
-   
    update_enables();
 }
 

@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    if ( !csv1.data.size() )
    {
       reset_csv();
-   }
+   } 
 
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
@@ -26,6 +26,8 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    setCaption(tr("US-SOMO: Cluster DMD Setup"));
 
    setupGUI();
+
+   sync_csv_with_selected();
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 
@@ -103,6 +105,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       t_csv->horizontalHeader()->setLabel(i, csv1.header[i]);
       t_csv->setColumnWidth( i, column_widths[ i ] );
    }
+
    t_csv->setSorting(false);
    t_csv->setRowMovingEnabled(true);
    t_csv->setColumnMovingEnabled(false);
@@ -133,11 +136,17 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    pb_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_copy, SIGNAL(clicked()), SLOT(copy()));
 
-   pb_paste = new QPushButton(tr("Paste values"), this);
+   pb_paste = new QPushButton(tr("Paste values to selected"), this);
    pb_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_paste->setMinimumHeight(minHeight1);
    pb_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_paste, SIGNAL(clicked()), SLOT(paste()));
+
+   pb_paste_all = new QPushButton(tr("Paste values to all"), this);
+   pb_paste_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_paste_all->setMinimumHeight(minHeight1);
+   pb_paste_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_paste_all, SIGNAL(clicked()), SLOT(paste_all()));
 
    pb_dup = new QPushButton(tr("Duplicate row"), this);
    pb_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -156,6 +165,12 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    pb_load->setMinimumHeight(minHeight1);
    pb_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
+
+   pb_reset = new QPushButton(tr("Reset"), this);
+   pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_reset->setMinimumHeight(minHeight1);
+   pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
 
    pb_save_csv = new QPushButton(tr("Save"), this);
    pb_save_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -210,14 +225,21 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_ctls->addSpacing( 4 );
    hbl_ctls->addWidget ( pb_paste );
    hbl_ctls->addSpacing( 4 );
+   hbl_ctls->addWidget ( pb_paste_all );
+   hbl_ctls->addSpacing( 4 );
    hbl_ctls->addWidget ( pb_dup );
    hbl_ctls->addSpacing( 4 );
    hbl_ctls->addWidget ( pb_delete );
    hbl_ctls->addSpacing( 4 );
-   hbl_ctls->addWidget ( pb_load );
-   hbl_ctls->addSpacing( 4 );
-   hbl_ctls->addWidget ( pb_save_csv );
-   hbl_ctls->addSpacing( 4 );
+
+   QHBoxLayout *hbl_load_save = new QHBoxLayout(0);
+   hbl_load_save->addSpacing( 4 );
+   hbl_load_save->addWidget ( pb_load );
+   hbl_load_save->addSpacing( 4 );
+   hbl_load_save->addWidget ( pb_reset );
+   hbl_load_save->addSpacing( 4 );
+   hbl_load_save->addWidget ( pb_save_csv );
+   hbl_load_save->addSpacing( 4 );
 
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
    vbl_editor_group->addWidget( frame );
@@ -239,6 +261,8 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( t_csv );
    background->addLayout ( hbl_ctls );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_load_save );
    background->addSpacing( 4 );
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
@@ -395,26 +419,34 @@ void US_Hydrodyn_Cluster_Dmd::editor_msg( QString color, QString msg )
    editor->scrollToBottom();
 }
 
+void US_Hydrodyn_Cluster_Dmd::reset()
+{
+   reset_csv();
+   reload_csv();
+   update_enables();
+}
+   
 void US_Hydrodyn_Cluster_Dmd::reset_csv()
 {
    csv1.name = "Cluster DMD setup";
 
+   csv1.header.clear();
    csv1.header_map.clear();
    csv1.data.clear();
    csv1.num_data.clear();
    csv1.prepended_names.clear();
 
-   csv1.header.push_back("PDB file");
-   csv1.header.push_back("Active");
-   csv1.header.push_back("Relax temp\nkcal/mol/kB");
-   csv1.header.push_back("Relax time\n* 50fs");
-   csv1.header.push_back("Relax PDB\noutput\ntimestep");
-   csv1.header.push_back("Relax PDB\noutput\ncount");
-   csv1.header.push_back("Run temp\nkcal/mol/kB");
-   csv1.header.push_back("Run time\n* 50fs)");
-   csv1.header.push_back("Run PDB\noutput\ntimestep");
-   csv1.header.push_back("Run PDB\noutput\ncount");
-   csv1.header.push_back("Static range");
+   csv1.header.push_back("PDB file");                         // 0
+   csv1.header.push_back("Active");                           // 1
+   csv1.header.push_back("Relax temp\nkcal/mol/kB");          // 2
+   csv1.header.push_back("Relax time\n* 50fs");               // 3
+   csv1.header.push_back("Relax PDB\noutput\ntimestep");      // 4
+   csv1.header.push_back("Relax PDB\noutput\ncount");         // 5
+   csv1.header.push_back("Run temp\nkcal/mol/kB");            // 6
+   csv1.header.push_back("Run time\n* 50fs)");                // 7
+   csv1.header.push_back("Run PDB\noutput\ntimestep");        // 8
+   csv1.header.push_back("Run PDB\noutput\ncount");           // 9
+   csv1.header.push_back("Static range");                     // 10
 
    for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
@@ -506,6 +538,23 @@ void US_Hydrodyn_Cluster_Dmd::paste()
    update_enables();
 }
 
+void US_Hydrodyn_Cluster_Dmd::paste_all()
+{
+   csv1 = current_csv();
+   unsigned int pos = 0;
+   for ( int i = 0; i < t_csv->numRows(); i++ )
+   {
+      for ( unsigned int j = 1; j < csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
+      {
+         csv1.data    [ i ][ j ] = csv_copy.data    [ pos % csv_copy.data.size() ][ j ];
+         csv1.num_data[ i ][ j ] = csv_copy.num_data[ pos % csv_copy.data.size() ][ j ];
+      }
+      pos++;
+   }
+   reload_csv();
+   update_enables();
+}
+
 void US_Hydrodyn_Cluster_Dmd::dup()
 {
    csv1 = current_csv();
@@ -554,11 +603,12 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
       // t_csv->selectRow( selected_rows[ i ] );
       // }
 
-      pb_copy    ->setEnabled( selected == 1 );
-      pb_dup     ->setEnabled( selected );
-      pb_paste   ->setEnabled( selected && csv_copy.data.size() );
-      pb_delete  ->setEnabled( selected );
-      pb_save_csv->setEnabled( csv1.data.size() );
+      pb_copy     ->setEnabled( selected == 1 );
+      pb_dup      ->setEnabled( selected );
+      pb_paste    ->setEnabled( selected && csv_copy.data.size() );
+      pb_paste_all->setEnabled( csv_copy.data.size() );
+      pb_delete   ->setEnabled( selected );
+      pb_save_csv ->setEnabled( csv1.data.size() );
       disable_updates = false;
    }
 }
@@ -668,3 +718,70 @@ void US_Hydrodyn_Cluster_Dmd::row_header_released( int row )
    t_csv->addSelection( qts );
    update_enables();
 }
+
+void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
+{
+   csv1 = current_csv();
+   csv csv_new = csv1;
+   csv_new.data.clear();
+   csv_new.num_data.clear();
+   csv_new.prepended_names.clear();
+
+   map < QString, bool > selected_map;
+   map < QString, bool > present_map;
+   
+   for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
+   {
+      selected_map[ QFileInfo( ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ] ).fileName() ] = true;
+   }
+
+   // add existing ones
+   for ( unsigned int i = 0; i < csv1.prepended_names.size(); i++ )
+   {
+      if ( selected_map.count( csv1.prepended_names[ i ] ) )
+      {
+         present_map[ csv1.prepended_names[ i ] ] = true;
+         csv_new.data           .push_back( csv1.data           [ i ] );
+         csv_new.num_data       .push_back( csv1.num_data       [ i ] );
+         csv_new.prepended_names.push_back( csv1.prepended_names[ i ] );
+      }
+   }
+
+   // now go thru selected and find not present and add as new
+   for ( map < QString, bool >::iterator it = selected_map.begin();
+         it != selected_map.end();
+         it++ )
+   {
+      if ( !present_map.count( it->first ) )
+      {
+         vector < QString > tmp_data;
+         
+         // FIX THIS: read to see if fileName.dmd_info exists (?)
+         
+         tmp_data.push_back( it->first );
+         tmp_data.push_back( "Y" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         tmp_data.push_back( "" );
+         
+         csv_new.prepended_names.push_back( tmp_data[ 0 ] );
+         csv_new.data.push_back( tmp_data );
+         
+         vector < double > tmp_num_data;
+         for ( unsigned int i = 0; i < tmp_data.size(); i++ )
+         {
+            tmp_num_data.push_back( tmp_data[ i ].toDouble() );
+         }
+         csv_new.num_data.push_back( tmp_num_data );
+      }
+   }
+   csv1 = csv_new;
+   reload_csv();
+}
+

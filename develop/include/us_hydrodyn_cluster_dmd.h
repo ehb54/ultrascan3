@@ -62,9 +62,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       QPushButton   *pb_select_all;
       QPushButton   *pb_copy;
       QPushButton   *pb_paste;
+      QPushButton   *pb_paste_all;
       QPushButton   *pb_dup;
       QPushButton   *pb_delete;
       QPushButton   *pb_load;
+      QPushButton   *pb_reset;
       QPushButton   *pb_save_csv;
 
       QFont         ft;
@@ -81,12 +83,14 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       void          recompute_interval_from_points( unsigned int );
       void          recompute_points_from_interval( unsigned int );
       unsigned int  interval_starting_row;
-      void          reset_csv();
       void          reload_csv();
 
       bool          disable_updates;
 
       QString       csv_to_qstring( csv &from_csv );
+
+      void          sync_csv_with_selected();
+      void          reset_csv();
 
    private slots:
 
@@ -99,9 +103,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       void select_all();
       void copy();
       void paste();
+      void paste_all();
       void dup();
       void delete_rows();
       void load();
+      void reset();
       void save_csv();
 
       void clear_display();

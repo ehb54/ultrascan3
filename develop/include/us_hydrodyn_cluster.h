@@ -67,7 +67,6 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLineEdit     *le_output_name;
 
       QCheckBox     *cb_for_mpi;
-      QCheckBox     *cb_dmd;
       QPushButton   *pb_dmd;
       QPushButton   *pb_advanced;
 
@@ -100,6 +99,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       bool          copy_files_to_pkg_dir( QStringList &filenames );
       bool          remove_files( QStringList &filenames );
       QString       errormsg;
+      QString       noticemsg;
 
       // cluster config info
 
@@ -130,6 +130,12 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QString       dmd_base_addition( QStringList &base_source_files );
       QString       dmd_file_addition( QString outputfile );
 
+      bool          validate_csv_dmd( unsigned int &number_active );
+
+      void          update_enables();
+      bool          create_enabled;
+      QString       options_summary();
+
    private slots:
 
       void setupGUI();
@@ -144,7 +150,6 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void load_results();
 
       void for_mpi();
-      void set_dmd();
       void dmd();
       void advanced();
 

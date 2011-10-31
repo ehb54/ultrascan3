@@ -26,7 +26,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       }
    }
 
-   bool create_enabled =
+   create_enabled =
       selected_files.size() &&
       // later we will add some of these other options,
       // right now, just iqq
@@ -34,7 +34,9 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       !batch_window->cb_grid->isChecked() && 
       !batch_window->cb_hydro->isChecked() && 
       !batch_window->cb_prr->isChecked() && 
-      batch_window->cb_iqq->isChecked() &&
+      ( batch_window->cb_iqq->isChecked() ||
+        batch_window->cb_dmd->isChecked() ) 
+      &&
       !batch_window->cb_compute_iq_avg->isChecked();
 
    setupGUI();
@@ -50,19 +52,22 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    le_output_name    ->setText   ( batch_window->cluster_output_name.isEmpty() ?
                                    "job" : batch_window->cluster_output_name );
    cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
-   cb_dmd            ->setChecked( batch_window->cluster_dmd );
    csv_advanced = batch_window->cluster_csv_advanced;
    csv_dmd      = batch_window->cluster_csv_dmd;
+   if ( cb_for_mpi->isChecked() )
+   {
+      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ) );
+   }
    
    le_output_name->setEnabled( create_enabled );
    pb_create_pkg ->setEnabled( create_enabled );
    cb_for_mpi    ->setEnabled( create_enabled );
-   cb_dmd        ->setEnabled( create_enabled );
+   pb_dmd        ->setEnabled( batch_window->cb_dmd->isChecked() );
 
    if ( !create_enabled )
    {
       editor_msg( "dark red", tr( "Notice: you must have files selected in batch model\n"
-                                  "and only Compute I(q) selected to create a job.\n"
+                                  "and only Compute I(q) or Run DMD selected to create a job.\n"
                                   "Future updates will provide additional functionality." ) );
    }
 
@@ -150,6 +155,16 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
+
+   editor_msg( "dark blue", options_summary() );
+   unsigned int number_active;
+   if ( batch_window->cb_dmd->isChecked() &&
+        validate_csv_dmd( number_active ) )
+   {
+      dmd();
+   } else {
+      update_enables();
+   }
 }
 
 US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
@@ -229,14 +244,6 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
-
-   cb_dmd = new QCheckBox(this);
-   cb_dmd->setText(tr(" DMD"));
-   cb_dmd->setEnabled(true);
-   cb_dmd->setChecked(false);
-   cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_dmd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect( cb_dmd, SIGNAL( clicked() ), SLOT( set_dmd() ) );
 
    pb_dmd = new QPushButton(tr("DMD settings"), this);
    pb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -334,8 +341,6 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( cb_for_mpi );
    hbl_mpi_etc->addSpacing( 4 );
-   hbl_mpi_etc->addWidget ( cb_dmd );
-   hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_dmd );
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_advanced );
@@ -404,7 +409,6 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    batch_window->cluster_target_datafile = le_target_file->text();
    batch_window->cluster_output_name     = le_output_name->text();
    batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
-   batch_window->cluster_dmd             = cb_dmd->isChecked();
    batch_window->cluster_csv_advanced    = csv_advanced;
    batch_window->cluster_csv_dmd         = csv_dmd;
 
@@ -665,7 +669,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       base += "PDBAllModels\n";
    }
 
-   if ( cb_dmd->isChecked() )
+   if ( batch_window->cb_dmd->isChecked() )
    {
       base += dmd_base_addition( base_source_files );
    }
@@ -728,7 +732,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       {
          out += advanced_addition( use_output_name );
       } else {
-         if ( cb_dmd->isChecked() )
+         if ( batch_window->cb_dmd->isChecked() )
          {
             out += dmd_file_addition( use_output_name );
          }
@@ -1251,14 +1255,6 @@ void US_Hydrodyn_Cluster::advanced()
    delete hca;
 }
 
-void US_Hydrodyn_Cluster::set_dmd()
-{
-   if ( cb_dmd->isChecked() && !csv_dmd.data.size() )
-   {
-      dmd();
-   }
-}
-
 void US_Hydrodyn_Cluster::dmd()
 {
    US_Hydrodyn_Cluster_Dmd *hcd = 
@@ -1268,6 +1264,7 @@ void US_Hydrodyn_Cluster::dmd()
                                   this );
    hcd->exec();
    delete hcd;
+   update_enables();
 }
 
 bool US_Hydrodyn_Cluster::any_advanced()
@@ -1497,3 +1494,227 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString /* outputfile */ )
    return out;
 }
 
+bool US_Hydrodyn_Cluster::validate_csv_dmd( unsigned int &number_active )
+{
+   // make sure syncs up with selected files & 
+   errormsg = "";
+   noticemsg = "";
+   number_active = 0;
+   map < QString, bool > selected_map;
+   map < QString, bool > present_map;
+   
+   // build map of selected files:
+
+   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   {
+      selected_map[ QFileInfo( selected_files[ i ] ).fileName() ] = true;
+   }
+
+   // see what's in csv_dmd
+   for ( unsigned int i = 0; i < csv_dmd.prepended_names.size(); i++ )
+   {
+      present_map[ csv_dmd.prepended_names[ i ] ] = true;
+      if ( !selected_map.count( csv_dmd.prepended_names[ i ] ) )
+      {
+         // somethings present that isn't selected
+         if ( csv_dmd.data[ i ].size() > 1 &&
+              csv_dmd.data[ i ][ 1 ] == "Y" )
+         {
+            errormsg += QString( tr( "Error: %1 is marked as Active in the DMD settings, "
+                                     "but the file is not present in the batch selected files\n" ) )
+               .arg( csv_dmd.prepended_names[ i ] );
+         } else {
+            noticemsg += QString( tr( "Notice: %1 is in the DMD settings and is not Active, "
+                                      "but the file is not present in the batch selected files\n" ) )
+               .arg( csv_dmd.prepended_names[ i ] );
+         }
+      } else {
+         if ( csv_dmd.data[ i ].size() > 1 &&
+              csv_dmd.data[ i ][ 1 ] == "Y" )
+         {
+            number_active++;
+            if ( csv_dmd.data[ i ].size() < 6 )
+            {
+               errormsg += QString( tr( "Error: %1 is marked as Active but has insufficient DMD settings, "
+                                        "at least a Relax temp, time & output count must be specified\n" ) )
+                  .arg( csv_dmd.prepended_names[ i ] );
+            } else {
+               bool run_ok = true;
+               bool run_is_on = false;
+
+               bool relax_ok = true;
+               bool relax_is_on =
+                  ( csv_dmd.data[ i ][ 3 ].toFloat() > 0 ||
+                    csv_dmd.data[ i ][ 5 ].toFloat() > 0 );
+               
+               if ( relax_is_on && csv_dmd.data[ i ][ 2 ].toFloat() <= 0 )
+               {
+                  errormsg += QString( tr( "Error: %1 is Active and does not have a positive Relax temp\n" ) )
+                     .arg( csv_dmd.prepended_names[ i ] );
+                  relax_ok = false;
+               }
+               if ( relax_is_on && csv_dmd.data[ i ][ 3 ].toFloat() <= 0 )
+               {
+                  errormsg += QString( tr( "Error: %1 is Active and does not have a positive Relax time\n" ) )
+                     .arg( csv_dmd.prepended_names[ i ] );
+                  relax_ok = false;
+               }
+               if ( csv_dmd.data[ i ][ 5 ].toFloat() <= 0 &&
+                    csv_dmd.data[ i ].size() > 9 &&
+                    csv_dmd.data[ i ][ 9 ].toFloat() <= 0 )
+               {
+                  errormsg += QString( tr( "Error: %1 is Active and the Relax output count and the Run output count are not positive\n" ) )
+                     .arg( csv_dmd.prepended_names[ i ] );
+                  relax_ok = false;
+               }
+               if ( csv_dmd.data[ i ].size() > 9 )
+               {
+                  run_ok = true;
+                  run_is_on =
+                     ( csv_dmd.data[ i ][ 7 ].toFloat() > 0 ||
+                       csv_dmd.data[ i ][ 9 ].toFloat() > 0 );
+                  
+                  if ( run_is_on && csv_dmd.data[ i ][ 6 ].toFloat() <= 0 )
+                  {
+                     errormsg += QString( tr( "Error: %1 is Active and does not have a positive Run temp\n" ) )
+                        .arg( csv_dmd.prepended_names[ i ] );
+                     run_ok = false;
+                  }
+                  if ( run_is_on && csv_dmd.data[ i ][ 3 ].toFloat() <= 0 )
+                  {
+                     errormsg += QString( tr( "Error: %1 is Active and does not have a positive Run time\n" ) )
+                        .arg( csv_dmd.prepended_names[ i ] );
+                     run_ok = false;
+                  }
+                  if ( run_is_on && csv_dmd.data[ i ][ 9 ].toFloat() <= 0 )
+                  {
+                     errormsg += QString( tr( "Error: %1 is Active and the Run output count is not positive\n" ) )
+                        .arg( csv_dmd.prepended_names[ i ] );
+                     run_ok = false;
+                  }
+               }
+               if ( !run_ok &&
+                    !relax_ok )
+               {
+                  errormsg += QString( tr( "Error: %1 is Active neither the Relax or Run is ok\n" ) )
+                                       .arg( csv_dmd.prepended_names[ i ] );
+               }
+            }
+         }
+      }
+   }
+
+   // now go thru selected and find what is not not present 
+   for ( map < QString, bool >::iterator it = selected_map.begin();
+         it != selected_map.end();
+         it++ )
+   {
+      if ( !present_map.count( it->first ) )
+      {
+         noticemsg += QString( tr( "Notice: %1 is a batch selected file but is not "
+                                   "present in the DMD settings.\n" ) )
+            .arg( it->first );
+      }
+   }
+
+   return errormsg.isEmpty();
+}
+
+void US_Hydrodyn_Cluster::update_enables()
+{
+   unsigned int number_active;
+   if ( batch_window->cb_dmd->isChecked() )
+   {
+      editor_msg( "black", tr( "\nChecking DMD settings:" ) );
+      bool dmd_ok = validate_csv_dmd( number_active );
+      if ( !noticemsg.isEmpty() )
+      {
+         editor_msg( "dark red", noticemsg );
+      }
+      if ( !dmd_ok )
+      {
+         editor_msg( "red", errormsg );
+         pb_create_pkg->setEnabled( false );
+         return;
+      }
+      if ( number_active < selected_files.size() &&
+           !batch_window->cb_somo->isChecked() && 
+           !batch_window->cb_grid->isChecked() && 
+           !batch_window->cb_hydro->isChecked() && 
+           !batch_window->cb_prr->isChecked() && 
+           !batch_window->cb_iqq->isChecked() )
+      {
+         editor_msg( "red", tr( "For DMD only runs, all batch selected files must be accounted for and active in the DMD settings" ) );
+         pb_create_pkg->setEnabled( false );
+         return;
+      }         
+      editor_msg( "black", tr( "DMD settings ok." ) );
+      pb_create_pkg->setEnabled( false );
+   } 
+   pb_create_pkg->setEnabled( create_enabled );
+}
+
+QString US_Hydrodyn_Cluster::options_summary()
+{
+   QString prefix =
+      QString( tr( "Number of selected files: %1\n"
+                   "Options summary:" ) )
+      .arg( selected_files.size() );
+
+   QString qs;
+   if ( batch_window->cb_dmd->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "DMD";
+   }
+
+   if ( batch_window->cb_somo->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "SOMO bead models";
+   }
+
+   if ( batch_window->cb_grid->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "A2B Grid bead models";
+   }
+
+   if ( batch_window->cb_iqq->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "I(q) curves";
+   }
+
+   if ( batch_window->cb_prr->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "P(r) curves";
+   }
+
+   if ( batch_window->cb_hydro->isChecked() )
+   {
+      if ( !qs.isEmpty() )
+      {
+         qs += ", ";
+      }
+      qs += "Hydrodynamic parameter calculations";
+   }
+
+   return prefix + qs;
+}

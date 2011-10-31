@@ -45,6 +45,7 @@ struct batch_info
                            // 2 = use automatic bead builder (approximate method, default)
    bool mm_first;
    bool mm_all;
+   bool dmd;
    bool somo;
    bool grid;
    bool iqq;
@@ -70,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
    Q_OBJECT
 
    public:
+      friend class US_Hydrodyn;
       friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Cluster_Dmd;
 
@@ -123,6 +125,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QLabel        *lbl_process;
       QCheckBox     *cb_mm_first;
       QCheckBox     *cb_mm_all;
+      QCheckBox     *cb_dmd;
       QCheckBox     *cb_grid;
       QCheckBox     *cb_somo;
       QCheckBox     *cb_iqq;
@@ -239,6 +242,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void start();
       void set_mm_first();
       void set_mm_all();
+      void set_dmd();
       void set_somo();
       void set_grid();
       void set_hydro();

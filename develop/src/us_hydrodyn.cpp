@@ -722,7 +722,7 @@ void US_Hydrodyn::setupGUI()
    pb_dmd_run = new QPushButton(tr("Run DMD"), this);
    pb_dmd_run->setMinimumHeight(minHeight1);
    pb_dmd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_dmd_run->setEnabled(false);
+   pb_dmd_run->setEnabled( true );
    pb_dmd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
 
@@ -4122,6 +4122,100 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
 
 void US_Hydrodyn::dmd_run()
 {
+   if ( pdb_file.isEmpty() )
+   {
+      QMessageBox::information( this,
+                                "US-SOMO: Run DMD",
+                                tr( "You must load a PDB file before Run DMD" ) );
+      return;
+   }
+      
+   // save current batch_files
+   batch_info save_batch_info = batch;
+   batch.file.clear();
+   batch.file.push_back( pdb_file );
+   batch.mm_all = true;
+   batch.dmd = true;
+   batch.somo = false;
+   batch.grid = false;
+   batch.iqq = false;
+   batch.prr = false;
+   batch.hydro = false;
+   bool created_batch = false;
+   if ( !batch_widget )
+   {
+      created_batch = true;
+      batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      batch_window->lb_files->setSelected( 0, true );
+   } else {
+      batch_window->lb_files->clear();
+      batch_window->lb_files->insertItem(batch.file[0]);
+      batch_window->lb_files->setSelected( 0, true );
+   }
+   batch_window->cb_mm_first->setChecked( !batch.mm_all );
+   batch_window->cb_mm_all  ->setChecked( batch.mm_all );
+   batch_window->cb_dmd     ->setChecked( batch.dmd );
+   batch_window->cb_somo    ->setChecked( batch.somo );
+   batch_window->cb_grid    ->setChecked( batch.grid );
+   batch_window->cb_iqq     ->setChecked( batch.iqq );
+   batch_window->cb_prr     ->setChecked( batch.prr );
+   batch_window->cb_hydro   ->setChecked( batch.hydro );
+
+   US_Hydrodyn_Cluster *hc = 
+      new US_Hydrodyn_Cluster(
+                              this,
+                              batch_window );
+   hc->exec();
+   delete hc;
+   batch = save_batch_info;
+   if ( created_batch )
+   {
+      batch_window->close();
+   } else {
+      batch_window->lb_files->clear();
+      QString load_errors;
+      for ( unsigned int i = 0; i < batch.file.size(); i++ ) 
+      {
+         if ( batch.file[i].contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+         {
+            bool dup = false;
+            if ( i ) 
+            {
+               for ( unsigned int j = 0; j < i; j++ )
+               {
+                  if ( batch.file[i] == batch.file[j] )
+                  {
+                     dup = true;
+                     break;
+                  }
+               }
+            }
+            if ( !dup )
+            {
+               batch_window->lb_files->insertItem(batch.file[i]);
+            } else {
+               load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch.file[i]);
+            }
+         } else {
+            load_errors += QString(tr("File skipped: %1 (not a valid file name)\n")).arg(batch.file[i]);
+         }
+      }
+      if ( load_errors != "" ) 
+      {
+         QColor save_color = batch_window->editor->color();
+         batch_window->editor->setColor("dark red");
+         batch_window->editor->append(load_errors);
+         batch_window->editor->setColor(save_color);
+      }
+      batch_window->cb_mm_first->setChecked( !batch.mm_all );
+      batch_window->cb_mm_all  ->setChecked( batch.mm_all );
+      batch_window->cb_dmd     ->setChecked( batch.dmd );
+      batch_window->cb_somo    ->setChecked( batch.grid );
+      batch_window->cb_grid    ->setChecked( batch.somo );
+      batch_window->cb_iqq     ->setChecked( batch.iqq );
+      batch_window->cb_prr     ->setChecked( batch.prr );
+      batch_window->cb_hydro   ->setChecked( batch.hydro );
+   }
 }
 
 void US_Hydrodyn::run_us_config()
