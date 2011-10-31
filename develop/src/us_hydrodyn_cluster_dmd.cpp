@@ -104,7 +104,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       t_csv->setColumnWidth( i, column_widths[ i ] );
    }
    t_csv->setSorting(false);
-   t_csv->setRowMovingEnabled(false);
+   t_csv->setRowMovingEnabled(true);
    t_csv->setColumnMovingEnabled(false);
    t_csv->setReadOnly(false);
 
@@ -119,7 +119,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 
    connect( t_csv, SIGNAL( valueChanged(int, int) ), SLOT( table_value( int, int ) ) );
    connect( t_csv, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
-
+   connect( t_csv->verticalHeader(), SIGNAL( released( int ) ), SLOT( row_header_released( int ) ) );
 
    //   pb_select_all = new QPushButton(tr("Select all"), this);
    //   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -451,6 +451,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
 
 void US_Hydrodyn_Cluster_Dmd::copy()
 {
+   csv1 = current_csv();
    csv_copy = current_csv();
    csv_copy.data.clear();
    csv_copy.num_data.clear();
@@ -460,13 +461,17 @@ void US_Hydrodyn_Cluster_Dmd::copy()
    {
       if ( t_csv->isRowSelected( i ) )
       {
-         editor_msg( "black", QString( "copying row %1" ).arg( i) );
+         // editor_msg( "black", QString( "copying row %1" ).arg( i ) );
          csv_copy.data           .push_back( csv1.data           [ i ] );
          csv_copy.num_data       .push_back( csv1.num_data       [ i ] );
          csv_copy.prepended_names.push_back( csv1.prepended_names[ i ] );
       }
    }
-   editor_msg( "black", QString( "csv copy has %1 rows" ).arg( csv_copy.data.size() ) );
+   // editor_msg( "black", QString( "csv copy has %1 rows" ).arg( csv_copy.data.size() ) );
+
+   // cout << "csv1 after copy():\n" << csv_to_qstring( csv1 ) << endl;
+   // cout << "csv_copy after copy():\n" << csv_to_qstring( csv_copy ) << endl;
+
    update_enables();
 }
 
@@ -476,23 +481,27 @@ void US_Hydrodyn_Cluster_Dmd::paste()
    unsigned int pos = 0;
    for ( int i = 0; i < t_csv->numRows(); i++ )
    {
+      // editor_msg( "black", QString( "checking row %1" ).arg( i ) );
       if ( t_csv->isRowSelected( i ) )
       {
-         for ( unsigned int j = 1; j < csv1.data.size(); j++ )
+         // editor_msg( "black", QString( "pasting into row %1" ).arg( i ) );
+         for ( unsigned int j = 1; j < csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
          {
-            editor_msg( "black", QString( "setting data to row %1 from pos %2 %3 val %4 j %5" )
-                        .arg( i )
-                        .arg( pos )
-                        .arg( pos % csv_copy.data.size() ) 
-                        .arg( csv_copy.data    [ pos % csv_copy.data.size() ][ j ] )
-                        .arg( j )
-                        );
+            // editor_msg( "black", QString( "setting data to row %1 from pos %2 %3 val %4 j %5" )
+            // .arg( i )
+            // .arg( pos )
+            // .arg( pos % csv_copy.data.size() ) 
+            // .arg( csv_copy.data    [ pos % csv_copy.data.size() ][ j ] )
+            // .arg( j )
+            // );
             csv1.data    [ i ][ j ] = csv_copy.data    [ pos % csv_copy.data.size() ][ j ];
             csv1.num_data[ i ][ j ] = csv_copy.num_data[ pos % csv_copy.data.size() ][ j ];
          }
          pos++;
       }
    }
+   // cout << "csv1 after paste():\n" << csv_to_qstring( csv1 ) << endl;
+   // cout << "csv_copy after paste():\n" << csv_to_qstring( csv_copy ) << endl;
    reload_csv();
    update_enables();
 }
@@ -525,7 +534,7 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
 {
    if ( !disable_updates )
    {
-      editor_msg( "black", "-------------" );
+      // editor_msg( "black", "-------------" );
       disable_updates = true;
       unsigned int selected = 0;
       vector < int > selected_rows;
@@ -535,7 +544,7 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
          {
             selected++;
             selected_rows.push_back( i );
-            editor_msg( "black", QString( "row selected %1" ).arg( i ) );
+            // editor_msg( "black", QString( "row selected %1" ).arg( i ) );
          }
       }
 
@@ -575,7 +584,7 @@ void US_Hydrodyn_Cluster_Dmd::reload_csv()
          }
       }
    }
-   t_csv->clearSelection();
+   // t_csv->clearSelection();
 }
 
 void US_Hydrodyn_Cluster_Dmd::delete_rows()
@@ -596,6 +605,7 @@ void US_Hydrodyn_Cluster_Dmd::delete_rows()
    }
    csv1 = csv_new;
    reload_csv();
+   t_csv->clearSelection();
    update_enables();
 }
 
@@ -625,5 +635,36 @@ void US_Hydrodyn_Cluster_Dmd::select_all()
       t_csv->clearSelection();
    }
    disable_updates = false;
+   update_enables();
+}
+
+QString US_Hydrodyn_Cluster_Dmd::csv_to_qstring( csv &from_csv )
+{
+   QString qs;
+
+   for ( unsigned int i = 0; i < from_csv.header.size(); i++ )
+   {
+      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(from_csv.header[i]);
+   }
+   qs += "\n";
+   for ( unsigned int i = 0; i < from_csv.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
+      {
+         qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j]);
+      }
+      qs += "\n";
+   }
+
+   return qs;
+}
+
+void US_Hydrodyn_Cluster_Dmd::row_header_released( int row )
+{
+   // cout << QString( "row_header_released %1\n" ).arg( row );
+   t_csv->clearSelection();
+   QTableSelection qts( row, 0, row, 12 );
+   
+   t_csv->addSelection( qts );
    update_enables();
 }

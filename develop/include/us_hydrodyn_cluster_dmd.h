@@ -86,12 +86,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 
       bool          disable_updates;
 
+      QString       csv_to_qstring( csv &from_csv );
+
    private slots:
 
       void setupGUI();
 
       void table_value( int, int );
       void update_enables();
+      void row_header_released( int );
 
       void select_all();
       void copy();
