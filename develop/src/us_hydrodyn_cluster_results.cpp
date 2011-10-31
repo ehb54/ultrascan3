@@ -757,7 +757,7 @@ bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 
    for ( unsigned int i = 0; i < final_results.size(); i++ )
    {
-      if ( !csvs_merged.count( QFileInfo( csvs[ i ] ).fileName() ) )
+      if ( !csvs_merged.count( QFileInfo( final_results[ i ] ).fileName() ) )
       {
          new_results << final_results[ i ];
       }
@@ -834,7 +834,6 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
 {
    QString output_dir = results_dir + SLASH + QString( "%1" )
       .arg( jobname ).replace( QRegExp( "_(out|OUT).*$" ), "" );
-   cout << "move to results output dir is:" << output_dir << endl;
    QDir qd( output_dir );
    if ( qd.exists() )
    {
@@ -928,7 +927,6 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
       lv_files->clear();
       for ( unsigned int i = 0; i < files.size(); i++ )
       {
-         cout << "files: " << files[ i ] << endl;
          new QListViewItem( lv_files, 
                             files[ i ], 
                             QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
