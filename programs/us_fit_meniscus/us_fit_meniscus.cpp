@@ -515,15 +515,15 @@ DbgLv(1) << "EDITFILT" << edtfilt;
 
    else
    {  // Could not find edit file, so inform the user
+      pb_update->setEnabled( false );
+
       QMessageBox::warning( this,
             tr( "Missing Local Edit" ),
             tr( "Update Edit is not possible without a local copy\n"
                 "of the Edit file corresponding to FM models.\n"
                 "Use\n     Convert Legacy Data\nand\n     Manage Data\n"
                 "to create a local copy of an Edit file for\n     " )
-            + fname_load );
-
-      pb_update->setEnabled( false );
+            + fname_load + tr( "\nof run\n     " ) + runID );
    }
 DbgLv(1) << " fname_edit" << fname_edit;
 

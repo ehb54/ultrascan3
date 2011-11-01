@@ -95,6 +95,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       double        plt_smax;
       double        plt_fmin;
       double        plt_fmax;
+      double        plt_zmin;
+      double        plt_zmax;
       double        k_range;
       double        s_range;
       double        xreso;

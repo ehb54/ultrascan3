@@ -292,6 +292,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->setStretchFactor( plot, 5 );
 
    mfilter    = "";
+   plt_zmin   = 1e+8;
+   plt_zmax   = -1e+8;
 
    // Set up variables and initial state of GUI
 
@@ -420,13 +422,10 @@ void US_Pseudo3D_Combine::plot_data( void )
    // set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
-   rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
    QwtText zTitle( "Partial Concentration" );
    zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
       US_GuiSettings::fontSize(), QFont::Bold ) );
    data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
-   data_plot->setAxisScale( QwtPlot::yRight,
-      spec_dat.range().minValue(), spec_dat.range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
    ya_title   = cnst_vbar ? ya_title_ff : ya_title_vb;
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
@@ -447,16 +446,22 @@ void US_Pseudo3D_Combine::plot_data( void )
    }
 
    if ( auto_lim  &&  ! looping )
-   {   // auto limits
+   {   // auto limits and not looping
+      rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
       data_plot->setAxisScale( QwtPlot::yLeft,
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
       data_plot->setAxisScale( QwtPlot::xBottom,
          spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
+      data_plot->setAxisScale( QwtPlot::yRight,
+         spec_dat.range() .minValue(), spec_dat.range() .maxValue() );
    }
    else
-   {   // manual limits
+   {   // manual limits or looping
+      rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
+         d_spectrogram->colorMap() );
       data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
+      data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
    }
 
    data_plot->replot();
@@ -655,6 +660,9 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 
          tsys.s_distro.append(  sol_s );
          tsys.mw_distro.append( sol_w );
+
+         plt_zmin = qMin( plt_zmin, sol_s.c );
+         plt_zmax = qMax( plt_zmax, sol_s.c );
       }
 
       // sort and reduce distributions
