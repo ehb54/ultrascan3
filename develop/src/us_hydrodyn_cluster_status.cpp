@@ -227,6 +227,15 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
 
 void US_Hydrodyn_Cluster_Status::cancel()
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
+   }
    close();
 }
 
