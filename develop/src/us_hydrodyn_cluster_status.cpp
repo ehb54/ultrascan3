@@ -349,6 +349,15 @@ void US_Hydrodyn_Cluster_Status::update_enables()
 
 void US_Hydrodyn_Cluster_Status::refresh()
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
+   if ( system_proc_active )
+   {
+      system_proc->tryTerminate();
+      QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
+   }
    get_status();
    //   update_files();
 }
