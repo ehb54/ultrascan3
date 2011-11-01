@@ -47,6 +47,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QLabel        *lbl_files;
       QListView     *lv_files;
 
+      QLabel        *lbl_systems;
+      QListBox      *lb_systems;
+
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove;
       QPushButton   *pb_submit;
@@ -109,9 +112,13 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
   #pragma warning ( disable: 4251 )
 #endif
       map < QListViewItem *, QString > jobs;
+
+      map < QString, QString >         selected_system;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      QString       selected_system_name;
+
       QListViewItem *next_to_process;
 
       bool          job_submit( QString file );
@@ -124,6 +131,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QProcess      *system_proc;
 
    private slots:
+
+      void systems();
 
       void process_next();
       void process_prepare_stage();

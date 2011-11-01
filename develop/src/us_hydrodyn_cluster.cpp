@@ -17,6 +17,9 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: Cluster"));
 
+   cluster_config[ "userid" ] = "";
+   cluster_config[ "server" ] = "";
+
    selected_files.clear();
    for ( int i = 0; i < batch_window->lb_files->numRows(); i++ )
    {
@@ -304,7 +307,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_cluster_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cluster_config->setMinimumHeight(minHeight1);
    pb_cluster_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_cluster_config, SIGNAL(clicked()), SLOT(cluster_config()));
+   connect(pb_cluster_config, SIGNAL(clicked()), SLOT(config()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -1055,7 +1058,7 @@ void US_Hydrodyn_Cluster::submit_pkg()
    // process and make unified csvs etc and load into standard somo/saxs directory
    if ( !read_config() )
    {
-      cluster_config();
+      config();
    }
 
    US_Hydrodyn_Cluster_Submit *hcs = 
@@ -1106,88 +1109,7 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
    }
 }
 
-
-bool US_Hydrodyn_Cluster::read_config()
-{
-   // read "config" in package dir
-
-   errormsg = "";
-
-   QDir::setCurrent( pkg_dir );
-
-   QString configfile = "config";
-   QFile f( configfile );
-   if ( !f.exists() )
-   {
-      errormsg = "config file does not exist";
-      return false;
-   }
-
-   if ( !f.open( IO_ReadOnly ) )
-   {
-      errormsg = "config file is not readable";
-      return false;
-   }
-
-   QTextStream ts( &f );
-   
-   if ( ts.atEnd() )
-   {
-      errormsg = "config file: premature end of file";
-      f.close();
-      return false;
-   }
-   ts >> cluster_id;
-
-   if ( ts.atEnd() )
-   {
-      errormsg = "config file: premature end of file";
-      f.close();
-      return false;
-   }
-   ts >> submit_url;
-
-   if ( ts.atEnd() )
-   {
-      errormsg = "config file: premature end of file";
-      f.close();
-      return false;
-   }
-   ts >> stage_url;
-   f.close();
-
-   return true;
-}
-
-bool US_Hydrodyn_Cluster::write_config()
-{
-   // write "config" file
-
-   errormsg = "";
-
-   QString configfile = "config";
-   QFile f( configfile );
-
-   if ( !f.open( IO_WriteOnly ) )
-   {
-      errormsg = "can not create config file";
-      return false;
-   }
-
-   QTextStream ts( &f );
-   
-   ts << cluster_id << endl;
-
-   ts << submit_url << endl;
-
-   ts << stage_url << endl;
-
-   f.close();
-
-   return true;
-}
-
-void US_Hydrodyn_Cluster::cluster_config()
+void US_Hydrodyn_Cluster::config()
 {
    read_config();
 
@@ -1717,4 +1639,256 @@ QString US_Hydrodyn_Cluster::options_summary()
    }
 
    return prefix + qs;
+}
+
+bool US_Hydrodyn_Cluster::read_config()
+{
+   // read "config.new" in package dir
+
+   errormsg = "";
+
+   QDir::setCurrent( pkg_dir );
+
+   QString configfile = "config";
+   QFile f( configfile );
+   if ( !f.exists() )
+   {
+      errormsg = "config file does not exist";
+      return false;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = "config file is not readable";
+      return false;
+   }
+
+   QTextStream ts( &f );
+   
+   if ( ts.atEnd() )
+   {
+      errormsg = "config file: premature end of file";
+      f.close();
+      return false;
+   }
+
+   cluster_config.clear();
+   cluster_systems.clear();
+   cluster_stage_to_system.clear();
+   QRegExp rx_blank  ( "^\\s*$" );
+   QRegExp rx_comment( "#.*$" );
+   QRegExp rx_valid  ( 
+                      "^("
+                      "userid|"
+                      "server|"
+                      "system|"
+                      "type|"
+                      "corespernode|"
+                      "maxcores|"
+                      "runtime|"
+                      "maxruntime|"
+                      "stage"
+                      ")$"
+                      );
+   QRegExp rx_config ( 
+                      "^("
+                      "userid|"
+                      "server"
+                      ")$"
+                      );
+
+   QRegExp rx_systems( 
+                      "^("
+                      "type|"
+                      "corespernode|"
+                      "maxcores|"
+                      "runtime|"
+                      "maxruntime|"
+                      "stage"
+                      ")$"
+                      );
+
+   QString last_system;
+   unsigned int line = 0;
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine().replace( rx_comment, "" ).replace( "^\\s+", "" ).replace( "\\s+$", "" );
+
+      line++;
+
+      if ( qs.contains( rx_blank ) )
+      {
+         continue;
+      }
+
+      QStringList qsl = QStringList::split( QRegExp("\\s+"), qs );
+
+      if ( !qsl.size() )
+      {
+         continue;
+      }
+
+      QString option = qsl[ 0 ].lower();
+
+      if ( rx_valid.search( option ) == -1 )
+      {
+         errormsg = QString( "Error reading %1 line %2 : Unrecognized token %3" )
+            .arg( configfile )
+            .arg( line )
+            .arg( qsl[ 0 ] );
+         return false;
+      }
+
+      if ( qsl.size() < 1 )
+      {
+         errormsg = QString( "Error reading %1 line %2 : Missing argument " )
+            .arg( configfile )
+            .arg( line );
+         return false;
+      }
+
+      qsl.pop_front();
+
+      if ( rx_config.search( option ) != -1 )
+      {
+         cluster_config[ option ] = qsl[ 0 ];
+         continue;
+      }
+
+      if ( option == "system" )
+      {
+         last_system = qsl[ 0 ];
+         if ( cluster_systems.count( last_system ) )
+         {
+            errormsg = QString( "Error reading %1 line %2 : system %3 multiply defined." )
+               .arg( configfile )
+               .arg( line )
+               .arg( qsl[ 0 ] );
+            return false;
+         }
+
+         map < QString, QString > tmp_system;
+         cluster_systems[ last_system ] = tmp_system;
+         continue;
+      }
+
+      if ( rx_systems.search( option ) != -1 )
+      {
+         if ( last_system.isEmpty() )
+         {
+            errormsg = QString( "Error reading %1 line %2 : system must be specified before %3 " )
+               .arg( configfile )
+               .arg( line )
+               .arg( option );
+            return false;
+         }
+
+         cluster_systems[ last_system ][ option ] = qsl[ 0 ];
+         if ( option == "stage" )
+         {
+            QString system = qsl[ 0 ];
+            system.replace( QRegExp( ":.*$" ), "" );
+            cluster_stage_to_system[ system ] = last_system;
+         }
+         continue;
+      }
+      
+      errormsg = QString( "Error reading %1 line %2: unknown option %3" )
+         .arg( configfile )
+         .arg( line )
+         .arg( option );
+      return false;
+   }
+   f.close();
+
+   cout << list_config();
+
+   return true;
+}
+
+QString US_Hydrodyn_Cluster::list_config()
+{
+   QString qs;
+
+   qs += "cluster config info:\n";
+
+   for ( map < QString, QString >::iterator it = cluster_config.begin();
+         it != cluster_config.end();
+         it++ )
+   {
+      qs +=
+         QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );
+   }
+
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
+         it++ )
+   {
+      for ( map < QString, QString >::iterator it2 = it->second.begin();
+            it2 != it->second.end();
+            it2++ )
+      {
+         qs +=
+            QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it2->first ).arg( it2->second );
+      }
+   }
+
+   qs += "\nstage to systems:\n";
+
+   for ( map < QString, QString >::iterator it = cluster_stage_to_system.begin();
+         it != cluster_stage_to_system.end();
+         it++ )
+   {
+      qs +=
+         QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );
+   }
+
+   return qs;
+}
+
+bool US_Hydrodyn_Cluster::write_config()
+{
+   QString out;
+
+   for ( map < QString, QString >::iterator it = cluster_config.begin();
+         it != cluster_config.end();
+         it++ )
+   {
+      out +=
+         QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );
+   }
+
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
+         it++ )
+   {
+      out += QString( "system\t%1\n" ).arg( it->first );
+      for ( map < QString, QString >::iterator it2 = it->second.begin();
+            it2 != it->second.end();
+            it2++ )
+      {
+         out +=
+            QString( "%1\t%2\n" ).arg( it2->first ).arg( it2->second );
+      }
+   }
+
+   errormsg = "";
+
+   QString configfile = "config";
+   QFile f( configfile );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      errormsg = "can not create config file";
+      return false;
+   }
+
+   QTextStream ts( &f );
+   
+   ts << out;
+
+   f.close();
+
+   return true;
 }

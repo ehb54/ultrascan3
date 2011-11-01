@@ -2774,7 +2774,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      this_atom->tempFactor,
                      this_atom->element.ascii()
                      );
-         chains_used[ this_atom->chainID ]++;
+         chains_used[ this_atom->chainID ] = true;
 
          if ( atom_number < this_atom->serial )
          {

@@ -2150,7 +2150,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
                      this_atom->tempFactor,
                      this_atom->element.ascii()
                      );
-         chains_used[ this_atom->chainID ]++;
+         chains_used[ this_atom->chainID ] = true;
 
          if ( atom_number < this_atom->serial )
          {

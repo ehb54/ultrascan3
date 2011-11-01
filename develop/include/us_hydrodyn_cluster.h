@@ -22,6 +22,7 @@
 #include "us_hydrodyn_cluster_status.h"
 #include "us_hydrodyn_cluster_results.h"
 #include "us_hydrodyn_cluster_config.h"
+#include "us_hydrodyn_cluster_config_server.h"
 #include "us_hydrodyn_cluster_advanced.h"
 #include "us_hydrodyn_cluster_dmd.h"
 
@@ -40,6 +41,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       friend class US_Hydrodyn_Cluster_Config;
       friend class US_Hydrodyn_Cluster_Advanced;
       friend class US_Hydrodyn_Cluster_Dmd;
+      friend class US_Hydrodyn_Cluster_Config_Server;
 
    public:
       US_Hydrodyn_Cluster(
@@ -105,16 +107,17 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       bool          read_config();
       bool          write_config();
-
-      QString       cluster_id;
-      QString       submit_url;
-      QString       stage_url;
+      QString       list_config();
 
       bool          dup_in_submitted_or_completed();
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
+      map < QString, QString >                  cluster_config;
+      map < QString, map < QString, QString > > cluster_systems;
+      map < QString, QString >                  cluster_stage_to_system;
+
       map < QString, bool > submitted_jobs;
       map < QString, bool > completed_jobs;
       map < QString, bool > results_jobs;
@@ -158,7 +161,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void save();
 
       void cancel();
-      void cluster_config();
+      void config();
       void help();
 
    protected slots:

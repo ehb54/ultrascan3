@@ -92,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
   #pragma warning ( disable: 4251 )
 #endif
       map < QListViewItem *, QString > jobs;
+      map < QString, QString >         job_hostname;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

@@ -27,22 +27,23 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    completed_dir = pkg_dir  + SLASH + "completed";
    QDir::setCurrent( submitted_dir );
 
-   cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_id;
+   cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userid" ];
 
-   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->submit_url;
+   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
    submit_url_host = submit_url;
    submit_url_port = submit_url;
 
    submit_url_host.replace( QRegExp( ":.*$" ), "" );
    submit_url_port.replace( QRegExp( "^.*:" ), "" );
 
-   stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
-   stage_path      = stage_url;
-   stage_url_path  = stage_url;
+   // staging is now job specific (ugh)
+   // stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
+   // stage_path      = stage_url;
+   // stage_url_path  = stage_url;
 
-   stage_url     .replace( QRegExp( ":.*$" ), "" );
-   stage_path    .replace( QRegExp( "^.*:" ), "" );
-   stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+   // stage_url     .replace( QRegExp( ":.*$" ), "" );
+   // stage_path    .replace( QRegExp( "^.*:" ), "" );
+   // stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
 
    if ( !update_files( false ) )
    {
@@ -429,6 +430,7 @@ void US_Hydrodyn_Cluster_Status::get_status()
    {
       do {
          jobs[ lvi ] = "get status";
+         lvi->setText( 2, "" );
       } while ( ( lvi = lvi->nextSibling() ) );
       
       emit next_status();
@@ -581,6 +583,10 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
          it != jobs.end();
          it++ )
    {
+      cout << QString( "In complete retrieve: job %1 message %2\n" )
+         .arg( it->first->text( 0 ) )
+         .arg( it->first->text( 2 ) );
+
       if ( !it->first->text( 2 ).contains( tr( "Error" ) ) )
       {
          it->first->setText( 2, "Moving jobs to completed" );
@@ -641,6 +647,147 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    {
       errormsg = QString( tr( "retrieve: can not change to directory %1" ) ).arg( completed_dir );
       return false;
+   }
+
+   cout << QString( "schedule retrieve <%1> <%2>\n" )
+      .arg( next_to_process->text( 0 ) )
+      .arg( job_hostname.count( next_to_process->text( 0 ) ) ?
+            job_hostname[ next_to_process->text( 0 ) ] :
+            "unknown"
+            );
+
+   if ( !job_hostname.count( next_to_process->text( 0 ) ) )
+   {
+      errormsg = QString( tr( "Error: can not determine system host for job %1" ) ).arg( next_to_process->text( 0 ) );
+      return false;
+   }
+
+   if ( !((US_Hydrodyn_Cluster *) cluster_window )->cluster_stage_to_system.count( job_hostname[ next_to_process->text( 0 ) ] ) )
+   {
+      errormsg = QString( tr( "Error: no configured hosts for job %1 running on %2" ) )
+         .arg( next_to_process->text( 0 ) )
+         .arg( job_hostname[ next_to_process->text( 0 ) ] );
+      return false;
+   }
+
+   QString selected_system_name =  ((US_Hydrodyn_Cluster *) cluster_window )->cluster_stage_to_system[ job_hostname[ next_to_process->text( 0 ) ] ];
+
+   cout << 
+      QString( tr( "hosts for job %1 running on %2 is %3\n" ) )
+      .arg( next_to_process->text( 0 ) )
+      .arg( job_hostname[ next_to_process->text( 0 ) ] )
+      .arg( selected_system_name );
+
+   if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
+   {
+      map < QString, QString > selected_system = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ selected_system_name ];
+      if ( selected_system.count( "stage" ) )
+      {
+         stage_url       = selected_system[ "stage" ];
+         stage_path      = stage_url;
+         stage_url_path  = stage_url;
+         stage_url       .replace( QRegExp( ":.*$" ), "" );
+         stage_path      .replace( QRegExp( "^.*:" ), "" );
+         stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+      } else {
+         errormsg = QString( tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
+         return false;
+      }
+   } else {
+      errormsg = QString( tr( "The system %1 does not seem to have any information" ) ).arg( selected_system_name );
+      return false;
+   }            
+
+   // move any previously retrieved results
+   {
+      // are there any?
+      QDir::setCurrent( completed_dir );
+      QDir qd;
+      QStringList previously_retrieved = qd.entryList( QString( "%1_out.t??" )
+                                                       .arg( QString( "%1" )
+                                                             .arg( next_to_process->text( 0 ) )
+                                                             .replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
+      if ( previously_retrieved.size() )
+      {
+         switch ( QMessageBox::question(
+                                        this,
+                                        tr( "US-SOMO: Cluster Status: Retrieve Results" ),
+                                        QString(
+                                                tr( "Results for %1 already exist\n"
+                                                    "What to you want to do?" ) ).arg( next_to_process->text( 0 ) ),
+                                        tr( "&Rename previous results" ),
+                                        tr( "&Delete previous results" ),
+                                        tr( "&Stop" ),
+                                        0 ) )
+         {
+         case 0:
+            {
+               // find unique extension
+               unsigned int ext = 1;
+               bool any_exist;
+               do 
+               {
+                  any_exist = false;
+                  for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+                  {
+                     QString test_base = previously_retrieved[ i ];
+                     QString test_ext  = test_base;
+                     test_base.replace( QRegExp( "_out\\.t..$" ), "" );
+                     test_ext .replace( QRegExp( "^.*_out\\." ), "_out." );
+                     cout << QString( "test base <%1> text num %2 ext <%3>\n" )
+                        .arg( test_base )
+                        .arg( ext )
+                        .arg( test_ext );
+                     QString test_file = test_base + QString( "-%1" ).arg( ext ) + test_ext;
+                     cout << "test_file: " << test_file << endl;
+                     if ( QFile::exists( test_file ) )
+                     {
+                        any_exist = true;
+                        ext++;
+                     }
+                  }
+               } while ( any_exist );
+               // now rename them
+               for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+               {
+                  QString test_base = previously_retrieved[ i ];
+                  QString test_ext  = test_base;
+                  test_base.replace( QRegExp( "_out\\.t..$" ), "" );
+                  test_ext .replace( QRegExp( "^.*_out\\." ), "_out." );
+                  QString test_file = test_base + QString( "-%1" ).arg( ext ) + test_ext;
+                  QDir qd2;
+                  if ( !qd2.rename( previously_retrieved[ i ], test_file ) )
+                  {
+                     errormsg = QString( tr( "Error: failed renaming %1 to %2" ) )
+                        .arg( previously_retrieved[ i ] )
+                        .arg( test_file );
+                     return false;
+                  }
+               }
+               editor_msg( "dark red", QString( tr( "Notice: previous results files renamed to %1-%2_out" ) )
+                           .arg( QFileInfo( next_to_process->text( 0 ) ).baseName() )
+                           .arg( ext ) );
+            }
+            break;
+         case 1:
+            {
+               // delete previous results
+               for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+               {
+                  if ( !QFile::remove( previously_retrieved[ i ] ) )
+                  {
+                     errormsg = QString( tr( "Error: failed to remove %1" ) )
+                        .arg( previously_retrieved[ i ] );
+                     return false;
+                  }
+               }
+            }
+            break;
+         case 2:
+            errormsg = tr( "Stopped by user request" );
+            return false;
+         }
+      }
    }
 
    QStringList cmd;
@@ -762,7 +909,9 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
          message.replace( QRegExp( "\\s+$" ), "" );
          message.replace( QRegExp( "RSL =.*" ), "" );
          message.replace( QRegExp( "Finished launching job, Host = " ), "" );
+         message.replace( QRegExp( "\\s+$" ), "" );
          cout << "message: " << message << endl;
+         job_hostname[ next_to_process->text( 0 ) ] = message;
       } else {
          message = "";
       }

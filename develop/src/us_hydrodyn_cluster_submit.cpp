@@ -23,9 +23,9 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir::setCurrent( pkg_dir );
 
-   cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_id;
+   cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userid" ];
 
-   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->submit_url;
+   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
    submit_url_host = submit_url;
    submit_url_port = submit_url;
 
@@ -34,17 +34,13 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    cout << submit_url_host << endl;
    cout << submit_url_port << endl;
 
-   stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
-   stage_path      = stage_url;
-   stage_url_path  = stage_url;
+   // stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
+   // stage_path      = stage_url;
+   // stage_url_path  = stage_url;
 
-   stage_url     .replace( QRegExp( ":.*$" ), "" );
-   stage_path    .replace( QRegExp( "^.*:" ), "" );
-   stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
-
-   cout << stage_url << endl;
-   cout << stage_path << endl;
-   cout << stage_url_path << endl;
+   // stage_url     .replace( QRegExp( ":.*$" ), "" );
+   // stage_path    .replace( QRegExp( "^.*:" ), "" );
+   // stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
 
    if ( !update_files( false ) )
    {
@@ -157,6 +153,33 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 
    connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
+   lbl_systems = new QLabel(tr("Systems"), this);
+   lbl_systems->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_systems->setMinimumHeight(minHeight1);
+   lbl_systems->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lb_systems = new QListBox(this);
+   lb_systems->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lb_systems->setMinimumHeight(minHeight1 * 3);
+   lb_systems->setMinimumWidth( 500 );
+   lb_systems->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lb_systems->setEnabled(true);
+
+   for ( map < QString, map < QString, QString > >::iterator it = 
+            ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.begin();
+         it != ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.end();
+         it++ )
+   {
+      lb_systems->insertItem( it->first );
+   }
+
+   lb_systems->setCurrentItem(0);
+   lb_systems->setSelected(0, false);
+   lb_systems->setSelectionMode( QListBox::Single );
+   connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
+
    pb_select_all = new QPushButton(tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
@@ -246,12 +269,58 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( lv_files );
    background->addSpacing( 4 );
+   background->addWidget ( lbl_systems );
+   background->addSpacing( 4 );
+   background->addWidget ( lb_systems );
+   background->addSpacing( 4 );
    background->addLayout ( hbl_buttons1 );
    background->addSpacing( 4 );
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4);
+}
+
+void US_Hydrodyn_Cluster_Submit::systems()
+{
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected(i) )
+      {
+         selected_system_name = lb_systems->text( i );
+         cout << "run config systems for " << selected_system_name << "\n";
+         
+         if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
+         {
+            selected_system = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ selected_system_name ];
+            if ( selected_system.count( "stage" ) &&
+                 selected_system.count( "type" ) &&
+                 selected_system.count( "corespernode" ) &&
+                 selected_system.count( "maxcores" ) &&
+                 selected_system.count( "runtime" ) )
+            {
+               stage_url       = selected_system[ "stage" ];
+               stage_path      = stage_url;
+               stage_url_path  = stage_url;
+               stage_url       .replace( QRegExp( ":.*$" ), "" );
+               stage_path      .replace( QRegExp( "^.*:" ), "" );
+               stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+            } else {
+               QMessageBox::warning( this, 
+                                     tr( "US-SOMO: Cluster config" ), 
+                                     QString( tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( lb_systems->text( i ) ) );
+               lb_systems->clearSelection();
+            } 
+         } else {
+            QMessageBox::warning( this, 
+                                  tr( "US-SOMO: Cluster config" ), 
+                                  QString( tr( "The system %1 does not seem to have any information" ) ).arg( lb_systems->text( i ) ) );
+            lb_systems->clearSelection();
+         }            
+      }
+   }
+
+   update_enables();
 }
 
 void US_Hydrodyn_Cluster_Submit::cancel()
@@ -332,6 +401,17 @@ void US_Hydrodyn_Cluster_Submit::editor_msg( QString color, QString msg )
    
 void US_Hydrodyn_Cluster_Submit::update_enables()
 {
+   bool any_systems = false;
+
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected( i ) )
+      {
+         cout << lb_systems->text( i ) << endl;
+         any_systems = true;
+      }
+   }
+
    bool running = comm_active || submit_active;
    pb_stop      ->setEnabled( running );
    pb_select_all->setEnabled( !running );
@@ -355,7 +435,7 @@ void US_Hydrodyn_Cluster_Submit::update_enables()
          } while ( ( lvi = lvi->nextSibling() ) );
       }
       pb_remove->setEnabled( any_selected );
-      pb_submit->setEnabled( any_selected );
+      pb_submit->setEnabled( any_selected && any_systems );
    }
 }
 
@@ -410,12 +490,34 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       }
    }
 
-   // right now, just lonestar 12 ppn
-   unsigned int host_count      = ( tar_list.size() / 12 ) + 1;
-   unsigned int processor_count = host_count * 12;
+   if ( !selected_system[ "corespernode" ].toUInt() )
+   {
+      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive cores per node defined" ) )
+         .arg( selected_system_name );
+      return false;
+   }
 
-   // "<hostcount>%4</hostcount>"
-   // .arg( host_count )
+   if ( !selected_system[ "maxcores" ].toUInt() )
+   {
+      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive max cores defined" ) )
+         .arg( selected_system_name );
+      return false;
+   }
+
+   if ( !selected_system[ "runtime" ].toUInt() )
+   {
+      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive run time defined" ) )
+         .arg( selected_system_name );
+      return false;
+   }
+
+   unsigned int host_count      = ( tar_list.size() / selected_system[ "corespernode" ].toUInt() ) + 1;
+   unsigned int processor_count = host_count * selected_system[ "corespernode" ].toUInt();
+   if ( processor_count > selected_system[ "maxcores" ].toUInt() )
+   {
+      processor_count = selected_system[ "maxcores" ].toUInt();
+      host_count      = processor_count / selected_system[ "corespernode" ].toUInt();
+   }
 
    xml = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                   "<Message>"
@@ -445,7 +547,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
       .arg( stage_url )
       .arg( processor_count )
-      .arg( 600 ) // for now, we should determine expected run times
+      .arg( selected_system[ "runtime" ].toUInt() )
       .arg( cluster_id )
       .arg( QString( "%1/%2/%3/%4" ).arg( stage_path ).arg( cluster_id ).arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ).arg( file ) )
       ;

@@ -21,6 +21,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
 {
    Q_OBJECT
       friend class US_Hydrodyn_Cluster;
+      friend class US_Hydrodyn_Cluster_Config_Server;
 
    public:
      US_Hydrodyn_Cluster_Config(
@@ -43,8 +44,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QLabel        *lbl_submit_url;
       QLineEdit     *le_submit_url;
 
-      QLabel        *lbl_stage_url;
-      QLineEdit     *le_stage_url;
+      QLabel        *lbl_systems;
+      QListBox      *lb_systems;
 
       QPushButton   *pb_save_config;
       QPushButton   *pb_help;
@@ -56,6 +57,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
 
       void setupGUI();
 
+      void systems();
       void save_config();
       void cancel();
       void help();

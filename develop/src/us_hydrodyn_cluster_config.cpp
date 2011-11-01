@@ -2,6 +2,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_config.h"
+#include "../include/us_hydrodyn_cluster_config_server.h"
 
 #define SLASH QDir::separator()
 
@@ -49,7 +50,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    lbl_cluster_id->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_cluster_id = new QLineEdit(this, "csv_filename Line Edit");
-   le_cluster_id->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_id );
+   le_cluster_id->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid" ] );
    le_cluster_id->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_cluster_id->setMinimumWidth(150);
    le_cluster_id->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -62,24 +63,38 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    lbl_submit_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_submit_url = new QLineEdit(this, "csv_filename Line Edit");
-   le_submit_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->submit_url );
+   le_submit_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server" ] );
    le_submit_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_submit_url->setMinimumWidth(150);
    le_submit_url->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_submit_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lbl_stage_url = new QLabel(tr("File staging URL"), this);
-   lbl_stage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_stage_url->setMinimumHeight(minHeight1);
-   lbl_stage_url->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_stage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   lbl_systems = new QLabel(tr("Systems"), this);
+   lbl_systems->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_systems->setMinimumHeight(minHeight1);
+   lbl_systems->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   le_stage_url = new QLineEdit(this, "csv_filename Line Edit");
-   le_stage_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->stage_url );
-   le_stage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_stage_url->setMinimumWidth( 400 );
-   le_stage_url->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_stage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lb_systems = new QListBox(this);
+   lb_systems->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lb_systems->setMinimumHeight(minHeight1 * 3);
+   lb_systems->setMinimumWidth( 500 );
+   lb_systems->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lb_systems->setEnabled(true);
+
+   for ( map < QString, map < QString, QString > >::iterator it = 
+            ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.begin();
+         it != ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.end();
+         it++ )
+   {
+      lb_systems->insertItem( it->first );
+   }
+
+   lb_systems->setCurrentItem(0);
+   lb_systems->setSelected(0, false);
+   lb_systems->setSelectionMode( QListBox::Single );
+   connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
 
    pb_cancel = new QPushButton(tr("Cancel"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -100,8 +115,6 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    pb_save_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_config, SIGNAL(clicked()), SLOT(save_config()));
 
-
-
    // build layout
 
    QHBoxLayout *hbl_cluster_id = new QHBoxLayout( 0 );
@@ -117,13 +130,6 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    hbl_submit_url->addSpacing( 4 );
    hbl_submit_url->addWidget ( le_submit_url );
    hbl_submit_url->addSpacing( 4 );
-
-   QHBoxLayout *hbl_stage_url = new QHBoxLayout( 0 );
-   hbl_stage_url->addSpacing( 4 );
-   hbl_stage_url->addWidget ( lbl_stage_url );
-   hbl_stage_url->addSpacing( 4 );
-   hbl_stage_url->addWidget ( le_stage_url );
-   hbl_stage_url->addSpacing( 4 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addSpacing( 4 );
@@ -142,11 +148,11 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_submit_url );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_stage_url );
+   background->addWidget ( lbl_systems );
+   background->addWidget ( lb_systems );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4 );
-
 }
 
 void US_Hydrodyn_Cluster_Config::cancel()
@@ -170,9 +176,9 @@ void US_Hydrodyn_Cluster_Config::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster_Config::save_config()
 {
-   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_id = le_cluster_id->text();
-   ((US_Hydrodyn_Cluster *)cluster_window)->submit_url = le_submit_url->text();
-   ((US_Hydrodyn_Cluster *)cluster_window)->stage_url  = le_stage_url->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid" ] = le_cluster_id->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server" ] = le_submit_url->text();
+   // ((US_Hydrodyn_Cluster *)cluster_window)->stage_url  = le_stage_url->text();
    if ( !((US_Hydrodyn_Cluster *)cluster_window)->write_config() )
    {
       QMessageBox::warning( this, 
@@ -181,4 +187,31 @@ void US_Hydrodyn_Cluster_Config::save_config()
    } else {
       close();
    }
+}
+
+void US_Hydrodyn_Cluster_Config::systems()
+{
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected(i) )
+      {
+         cout << "run config systems for " << lb_systems->text( i ) << "\n";
+         if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( lb_systems->text( i ) ) )
+         {
+            US_Hydrodyn_Cluster_Config_Server *hccs = 
+               new US_Hydrodyn_Cluster_Config_Server(
+                                                ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ lb_systems->text( i ) ],
+                                                lb_systems->text( i ),
+                                                us_hydrodyn,
+                                                this );
+            hccs->exec();
+            delete hccs;
+         } else {
+            QMessageBox::warning( this, 
+                                  tr( "US-SOMO: Cluster config" ), 
+                                  QString( tr( "The system %1 does not seem to have any information" ) ).arg( lb_systems->text( i ) ) );
+         }
+      }
+   }
+   lb_systems->clearSelection();
 }
