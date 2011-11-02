@@ -443,7 +443,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
    csv1.header.push_back("Relax PDB\noutput\ntimestep");      // 4
    csv1.header.push_back("Relax PDB\noutput\ncount");         // 5
    csv1.header.push_back("Run temp\nkcal/mol/kB");            // 6
-   csv1.header.push_back("Run time\n* 50fs)");                // 7
+   csv1.header.push_back("Run time\n* 50fs");                 // 7
    csv1.header.push_back("Run PDB\noutput\ntimestep");        // 8
    csv1.header.push_back("Run PDB\noutput\ncount");           // 9
    csv1.header.push_back("Static range");                     // 10

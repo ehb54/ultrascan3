@@ -720,6 +720,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    for ( unsigned int i = 0; i < selected_files.size(); i++ )
    {
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+      QString use_file_name = QFileInfo( selected_files[ i ] ).fileName();
       QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
       if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
@@ -737,9 +738,10 @@ void US_Hydrodyn_Cluster::create_pkg()
       } else {
          if ( batch_window->cb_dmd->isChecked() )
          {
-            out += dmd_file_addition( use_output_name );
+            out += dmd_file_addition( use_file_name, use_output_name );
+         } else {
+            out += "Process\n";
          }
-         out += "Process\n";
       }
       if ( !( ( i + 1 ) % max_no_of_jobs ) )
       {
@@ -1404,15 +1406,109 @@ QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files )
    return out;
 }
 
-QString US_Hydrodyn_Cluster::dmd_file_addition( QString /* outputfile */ )
+QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* outputfile */ )
 {
    QString out;
+
+   // find matching files in csv_dmd and compare with selected files
+   // for current file, create DMDTime/Temp/Relax/Run commands
+   
+   vector < unsigned int > active_csv_rows;
+   bool ok = false;
+   for ( unsigned int i = 0; i < csv_dmd.prepended_names.size(); i++ )
+   {
+      if ( inputfile == csv_dmd.prepended_names[ i ] &&
+           csv_dmd.data[ i ].size() > 5 &&
+           csv_dmd.data[ i ][ 1 ] == "Y" )
+      {
+         active_csv_rows.push_back( i );
+         ok = true;
+      }
+   }
+   if ( !ok )
+   {
+      return "";
+   }
 
    out += 
       "DMDStripPdb\n"
       "DMDFindSS\n"
       "DMDPrepare\n";
 
+   for ( unsigned int j = 0; j < active_csv_rows.size(); j++ )
+   {
+      unsigned int i = active_csv_rows[ j ];
+
+      bool run_ok = true;
+      bool run_is_on = false;
+      
+      bool relax_ok = true;
+      bool relax_is_on =
+         ( csv_dmd.data[ i ][ 3 ].toFloat() > 0 ||
+           csv_dmd.data[ i ][ 5 ].toFloat() > 0 );
+               
+      if ( relax_is_on && csv_dmd.data[ i ][ 2 ].toFloat() <= 0 )
+      {
+         relax_ok = false;
+      }
+      if ( relax_is_on && csv_dmd.data[ i ][ 3 ].toFloat() <= 0 )
+      {
+         relax_ok = false;
+      }
+      if ( csv_dmd.data[ i ][ 5 ].toFloat() <= 0 &&
+           csv_dmd.data[ i ].size() > 9 &&
+           csv_dmd.data[ i ][ 9 ].toFloat() <= 0 )
+      {
+         relax_ok = false;
+      }
+      if ( csv_dmd.data[ i ].size() > 9 )
+      {
+         run_ok = true;
+         run_is_on =
+            ( csv_dmd.data[ i ][ 7 ].toFloat() > 0 ||
+              csv_dmd.data[ i ][ 9 ].toFloat() > 0 );
+                  
+         if ( run_is_on && csv_dmd.data[ i ][ 6 ].toFloat() <= 0 )
+         {
+            run_ok = false;
+         }
+         if ( run_is_on && csv_dmd.data[ i ][ 3 ].toFloat() <= 0 )
+         {
+            run_ok = false;
+         }
+         if ( run_is_on && csv_dmd.data[ i ][ 9 ].toFloat() <= 0 )
+         {
+            run_ok = false;
+         }
+      }
+      if ( relax_is_on && relax_ok )
+      {
+         out += QString( "DMDTime        %1\n"
+                         "DMDTemp        %2\n" )
+            .arg( csv_dmd.data[ i ][ 3 ] )
+            .arg( csv_dmd.data[ i ][ 2 ] );
+         if ( csv_dmd.data[ i ][ 4 ].toUInt() )
+         {
+            out += QString( "DMDTimeStep    %1\n" ).arg( csv_dmd.data[ i ][ 4 ] );
+         }
+         out += "DMDRun          relax\n";
+      }
+      if ( run_is_on && run_ok )
+      {
+         out += QString( "DMDTime        %1\n"
+                         "DMDTemp        %2\n" )
+            .arg( csv_dmd.data[ i ][ 7 ] )
+            .arg( csv_dmd.data[ i ][ 6 ] );
+         if ( csv_dmd.data[ i ][ 8 ].toUInt() )
+         {
+            out += QString( "DMDTimeStep    %1\n" ).arg( csv_dmd.data[ i ][ 8 ] );
+         }
+         out += "DMDRun          equi\n";
+      }
+   }
+   // FIX THIS:
+   // also need to add "Process" and any intermediates
+   // to split / & reload the pdbs / creating a set of input files
    return out;
 }
 

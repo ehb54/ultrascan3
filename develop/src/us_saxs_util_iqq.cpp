@@ -157,7 +157,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdstrippdb|"
                       "dmdtime|"
                       "dmdtemp|"
-                      "dmdrelax|"
+                      "dmdtimestep|"
                       "dmdrun|"
                       "remark)$"
                       );
@@ -212,6 +212,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdsupportfile|"
                       "dmdtime|"
                       "dmdtemp|"
+                      "dmdtimestep|"
+                      "dmdrun|"
                       "outputfile)$"
                       );
 
@@ -495,6 +497,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "dmdprepare" )
       {
          if ( !dmd_prepare() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "dmdrun" )
+      {
+         if ( !dmd_run( qsl[0] ) )
          {
             return false;
          }

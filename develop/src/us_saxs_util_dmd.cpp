@@ -48,6 +48,8 @@ bool US_Saxs_Util::dmd_findSS()
    QString base_pdb = QFileInfo( pdb ).baseName();
    QString constraints_file = base_pdb + ".SS";
 
+   // outputs
+   // FIX THIS: should be renamed ? and renamed in output_files
    QFile::remove( constraints_file );
 
    QString cmd = 
@@ -182,6 +184,7 @@ bool US_Saxs_Util::dmd_prepare()
    cout << "range string: " << qs_range << endl;
 
    // outputs
+   // FIX THIS: should be renamed ? and renamed in output_files
    QString param_file = base_pdb + ".param";
    QString state_file = base_pdb + ".state";
    QString const_file = base_pdb + ".const";
@@ -373,6 +376,9 @@ bool US_Saxs_Util::dmd_strip_pdb()
       return false;
    }
 
+   // outputs
+   // FIX THIS: should be renamed ? and renamed in output_files
+
    QFile fo( pdb_stripped );
    if ( !fo.open( IO_WriteOnly ) )
    {
@@ -446,5 +452,307 @@ bool US_Saxs_Util::dmd_strip_pdb()
    output_files << pdb_stripped;
    output_files << stripped_log;
    control_parameters[ "inputfile" ] = pdb_stripped;
+   return true;
+}
+
+bool US_Saxs_Util::dmd_run( QString run_description )
+{
+   if ( !control_parameters.count( "dmdtime" ) )
+   {
+      errormsg = "dmd run: DMDTime must be specified";
+      return false;
+   }
+
+   if ( !control_parameters.count( "dmdtemp" ) )
+   {
+      errormsg = "dmd run: DMDTemp must be specified";
+      return false;
+   }
+
+   if ( !control_parameters.count( "inputfile" ) )
+   {
+      errormsg = "dmd findSS: InputFile must be defined";
+      return false;
+   }
+      
+   QString pdb = control_parameters[ "inputfile" ];
+
+   QString prog = 
+      env_ultrascan + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "bin"
+#endif
+      + SLASH
+      + "xDMD.linux" 
+      ;     
+
+   {
+      QFileInfo qfi( prog );
+      if ( !qfi.exists() )
+      {
+         errormsg = QString( "DMD program '%1' does not exist\n" ).arg( prog );
+         return false;
+      }
+      if ( !qfi.isExecutable() )
+      {
+         errormsg = QString( "DMD program '%1' is not executable\n" ).arg( prog );
+         return false;
+      }
+   }
+
+   QFileInfo fi( pdb );
+   if ( !fi.exists() )
+   {
+      errormsg = QString( "InputFile file '%1' does not exist\n" ).arg( pdb );
+      return false;
+   }
+
+   QString base_pdb     = QFileInfo( pdb ).baseName();
+
+   // required input files:
+
+   QString param_file   = base_pdb + ".param";
+   QString state_file   = base_pdb + ".state";
+   QString const_file   = base_pdb + ".const";
+
+   if ( !QFile::exists( param_file ) )
+   {
+      errormsg =  QString( "Error: dmd_run: file %1 does not exist" )
+         .arg( param_file );
+      return false;
+   }
+
+   if ( !QFile::exists( state_file ) )
+   {
+      errormsg =  QString( "Error: dmd_run: file %1 does not exist" )
+         .arg( state_file );
+      return false;
+   }
+
+   if ( !QFile::exists( const_file ) )
+   {
+      errormsg =  QString( "Error: dmd_run: file %1 does not exist" )
+         .arg( const_file );
+      return false;
+   }
+
+   // outputs
+   // FIX THIS: should be renamed ? and renamed in output_files
+   run_description += 
+      QString( "_temp%1_time%2" )
+      .arg( control_parameters[ "dmdtemp" ] )
+      .arg( control_parameters[ "dmdtime" ] ).replace( ".", "_" );
+   last_dmd_description = run_description;
+
+   QString task_file    = base_pdb + "." + run_description + "_task";
+   QString restart_file = base_pdb + "." + run_description + "_restart";
+   QString echo_file    = base_pdb + "." + run_description + "_echo";
+   QString movie_file   = base_pdb + "." + run_description + "_movie";
+
+   QFile::remove( task_file    );
+   QFile::remove( restart_file );
+   QFile::remove( echo_file    );
+   QFile::remove( movie_file   );
+
+   // create task file
+   {
+      QFile f( task_file );
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         errormsg =  QString( "Error: %1 can not create file %2" )
+            .arg( prog )
+            .arg( task_file );
+         return false;
+      }
+         
+      QString task;
+      
+      task +=
+         QString( 
+                 "#THIS IS THE EXAMPLE INPUT FILE FOR xDMD SIMULATIONS.\n"
+                 "#THE COMMENT LINE starts with the 1st non whitespace character as \"#\" or \"//\".\n"
+                 "#\n"
+                 "#THERMOSTAT: ANDERSON or BERENDSON, right now BERENDSON is not implemented yet\n"
+                 "#\n"
+                 "#T_NEW is the instant temperature at the moment of simulation. If specified, the\n"
+                 "# velocities of input state/restart willbe re-scaled\n"
+                 "#\n"
+                 "#T_LIMIT is the targeting temprature\n"
+                 "#\n"
+                 "#HEAT_X_C determines how often the exchange takes place betwen IMAGINARY\n"
+                 "# solvent and system atoms: dT = 1/HEAT_X_C.\n"
+                 "#\n"
+                 "THERMOSTAT              ANDERSON\n"
+                 "T_NEW                   %1\n"
+                 "T_LIMIT                 %2\n"
+                 "HEAT_X_C                10.0\n"
+                 )
+         .arg( control_parameters[ "dmdtemp" ] )
+         .arg( control_parameters[ "dmdtemp" ] );
+      
+      task +=
+         QString( 
+                 "#\n"
+                 "#RESTART_FILE specifies the name of the OUTPUT restart file, DEFAULT \"dmd_restart\"\n"
+                 "#\n"
+                 "#RESTART_DT specifies the delta-time to save each restart file, the file will be\n"
+                 "# overwritten, DEFAULT 1000\n"
+                 "#\n"
+                 "RESTART_FILE            %1\n"
+                 "RESTART_DT              10\n"
+                 "#\n"
+                 "#ECHO_FILE specifies the name of the output file to write the output\n"
+                 "# parameters(energy,pressure,tempeature etc.)\n"
+                 "#\n"
+                 "#ECHO_DT specifies the delta-time to save the output parameters\n"
+                 "#\n"
+                 "ECHO_FILE               %2\n"
+                 "ECHO_DT                 0.1\n"
+                 )
+         .arg( restart_file )
+         .arg( echo_file )
+         ;
+      
+      task += 
+         QString(
+                 "#\n"
+                 "#MOVIE_FILE specifies the movie output file\n"
+                 "#\n"
+                 "#MOVIE_DT specifies the delta time to save the snapshort\n"
+                 "#\n"
+                 "#MOVIE_SAVE_START specifies the starting atom to be saved, DEFAULT 1\n"
+                 "#\n"
+                 "#MOVIE_SAVE_END specifies the endinig atom to be saveed, DEAULT the last atom in the system\n"
+                 "#if you has no idea of the system, PLEASE do not specify MOVIE_SAVE_START and MOVIE_SAVE_END\n"
+                 "#\n"
+                 "MOVIE_FILE              %1\n"
+                 "MOVIE_DT                10\n"
+                 "#MOVIE_SAVE_START       1\n"
+                 "#MOVIE_SAVE_END         100\n"
+                 )
+         .arg( movie_file )
+         .arg( control_parameters.count( "dmdtimestep" ) ?
+               control_parameters[ "dmdtimestep" ] :  
+               control_parameters[ "dmdtime" ] )
+         ;
+
+      task += 
+         QString(
+                 "#\n"
+                 "#START_TIME specifies the initial time when the simulation starts, DEFAULT 0\n"
+                 "#\n"
+                 "#MAX_TIME specifies the maximum time for the simulation to last\n"
+                 "#\n"
+                 "START_TIME              0\n"
+                 "MAX_TIME                %1\n"
+                 )
+         .arg( control_parameters[ "dmdtime" ] );
+      
+      QTextStream ts( &f );
+      ts << task;
+      f.close();
+   }
+
+   // $DMD/bin/xDMD.linux -p xxx.param -s xxx.state -c xxx.const -i relax.task
+
+   QString cmd = 
+      QString( "%1 -p %2 -s %3 -c %4 -i %5" )
+      .arg( prog )
+      .arg( param_file )
+      .arg( state_file )
+      .arg( const_file )
+      .arg( task_file )
+      ;
+   
+   cout << "Starting " + prog + "\n";
+   cout << cmd << endl;
+   system( cmd.ascii() );
+   cout << "Finished " + prog + "\n";
+
+
+   if ( !QFile::exists( restart_file ) )
+   {
+      errormsg =  QString( "Error: %1 did not create file %2" )
+         .arg( prog )
+         .arg( restart_file );
+      return false;
+   }
+
+   if ( !QFile::exists( echo_file ) )
+   {
+      errormsg =  QString( "Error: %1 did not create file %2" )
+         .arg( prog )
+         .arg( echo_file );
+      return false;
+   }
+
+   if ( !QFile::exists( movie_file ) )
+   {
+      errormsg =  QString( "Error: %1 did not create file %2" )
+         .arg( prog )
+         .arg( movie_file );
+      return false;
+   }
+   output_files << restart_file;
+   output_files << echo_file;
+   output_files << movie_file;
+
+   // we are going to go ahead and combine the extraction:
+   if ( control_parameters.count( "dmdtimestep" ) )
+   {
+      prog =
+         env_ultrascan + SLASH +
+#if defined(BIN64)
+         "bin64"
+#else
+         "bin"
+#endif
+         + SLASH
+         + "complex_M2P.linux"
+         ;     
+      
+      {
+         QFileInfo qfi( prog );
+         if ( !qfi.exists() )
+         {
+            errormsg = QString( "DMD program '%1' does not exist\n" ).arg( prog );
+            return false;
+         }
+         if ( !qfi.isExecutable() )
+         {
+            errormsg = QString( "DMD program '%1' is not executable\n" ).arg( prog );
+            return false;
+         }
+      }
+      
+      // $DMD/bin/complex_M2P.linux $DMD/param/ xxx.pdb /dev/null relax.dmd_movie relax.pdbs
+      
+      QString pdb_out_file = base_pdb + run_description + ".pdb";
+      
+      cmd = 
+         QString( "%1 . %2 /dev/null %3 %4" )
+         .arg( prog )
+         .arg( pdb )
+         .arg( movie_file )
+         .arg( pdb_out_file )
+         ;
+      
+      cout << "Starting " + prog + "\n";
+      cout << cmd << endl;
+      system( cmd.ascii() );
+      cout << "Finished " + prog + "\n";
+      
+      if ( !QFile::exists( pdb_out_file ) )
+      {
+         errormsg =  QString( "Error: %1 did not create file %2" )
+            .arg( prog )
+            .arg( pdb_out_file );
+         return false;
+      }
+      output_files << pdb_out_file;
+   }
+      
    return true;
 }
