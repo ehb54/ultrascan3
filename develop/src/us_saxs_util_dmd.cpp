@@ -3,6 +3,15 @@
 
 #define SLASH QDir::separator()
 
+// TO FIX:
+// chain DMD runs (output from last needs to be input to next
+// i.e. prepare sets it up and then multi runs chain
+// fix PDB output file
+// If nmr pdb all, try to reload the pdb, but if it's too big ...
+// otherwise, make a bunch of individuals
+// and load as a "stack" ?
+// also, potential renumbering of pdb
+
 bool US_Saxs_Util::dmd_findSS()
 {
    if ( !control_parameters.count( "inputfile" ) )
@@ -342,7 +351,13 @@ bool US_Saxs_Util::input_dimensions( point &range )
             }
          }
       }            
-   }            
+   } else {
+      cout << "Warning: no dmdboxspacing defined, using a default of +10\n";
+      for ( unsigned int m = 0; m < 3; m++ ) 
+      {
+         range.axis[ m ] += 10;
+      }
+   }
    return true;
 }
 
@@ -363,7 +378,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
    unsigned int ext = 0;
    while ( QFile::exists( pdb_stripped + ".pdb" ) )
    {
-      pdb_stripped = base_pdb + "_stripped" + QString( "%1" ).arg( ++ext );
+      pdb_stripped = base_pdb + "_stripped" + QString( "_%1" ).arg( ++ext );
    }
    QString stripped_log = pdb_stripped + ".log";
    pdb_stripped +=  ".pdb";
