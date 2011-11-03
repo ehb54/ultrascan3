@@ -539,7 +539,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
    {
       base += 
-         QString( "HydrationFile    %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
+         QString( "HydrationFile   %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
 
@@ -1432,7 +1432,7 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* ou
    }
 
    // we should probably parameterize this, maybe system dependent
-   out += "DMDBoxSpacing  +10\n";
+   out += "DMDBoxSpacing   +10\n";
 
    out += 
       "DMDStripPdb\n"
