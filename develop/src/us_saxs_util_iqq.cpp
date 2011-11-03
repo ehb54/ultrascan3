@@ -340,13 +340,49 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "hydrate" )
       {
-         if ( !pdb_hydrate() )
+         if ( output_dmd_pdbs.size() )
          {
-            errormsg = QString( "Error %1 line %2 : %3" )
-               .arg( controlfile )
-               .arg( line )
-               .arg( errormsg );
-            return false;
+            QString save_input_file = control_parameters[ "inputfile" ];
+            QString save_output_file = 
+               ( control_parameters.count( "outputfile" ) ?
+                 control_parameters[ "outputfile" ] : "" );
+               
+            for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+            {
+               control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
+               control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();
+               misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+
+               if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+               {
+                  return false;
+               }
+               if ( !pdb_hydrate() )
+               {
+                  errormsg = QString( "Error %1 line %2 : %3" )
+                     .arg( controlfile )
+                     .arg( line )
+                     .arg( errormsg );
+                  return false;
+               }
+               output_dmd_pdbs[ i ] = control_parameters[ "inputfile" ];
+            }
+            control_parameters[ "inputfile" ] = save_input_file;
+            if ( save_output_file.isEmpty() )
+            {
+               control_parameters.erase( "outputfile" );
+            } else {
+               control_parameters[ "outputfile" ] = save_output_file;
+            }
+         } else {
+            if ( !pdb_hydrate() )
+            {
+               errormsg = QString( "Error %1 line %2 : %3" )
+                  .arg( controlfile )
+                  .arg( line )
+                  .arg( errormsg );
+               return false;
+            }
          }
       }
 #endif
@@ -413,6 +449,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "inputfile" )
       {
+         // restating inputfile clears the previous dmd run files
+         output_dmd_pdbs.clear();
          // read pdb, needs residue file
          QString ext = QFileInfo( qsl[ 0 ] ).extension( false ).lower();
 
@@ -525,13 +563,48 @@ bool US_Saxs_Util::read_control( QString controlfile )
             .arg( control_parameters[ "startq" ] )
             .arg( control_parameters[ "endq" ] )
             .arg( control_parameters[ "deltaq" ] );
-         if ( !run_iqq() )
+         if ( output_dmd_pdbs.size() )
          {
-            return false;
-         } 
-         if ( !noticemsg.isEmpty() )
-         {
-            cout << noticemsg;
+            QString save_input_file = control_parameters[ "inputfile" ];
+            QString save_output_file = 
+               ( control_parameters.count( "outputfile" ) ?
+                 control_parameters[ "outputfile" ] : "" );
+               
+            for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+            {
+               control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
+               control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();
+               misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+
+               if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+               {
+                  return false;
+               }
+               if ( !run_iqq() )
+               {
+                  return false;
+               } 
+               if ( !noticemsg.isEmpty() )
+               {
+                  cout << noticemsg;
+               }
+            }
+            control_parameters[ "inputfile" ] = save_input_file;
+            if ( save_output_file.isEmpty() )
+            {
+               control_parameters.erase( "outputfile" );
+            } else {
+               control_parameters[ "outputfile" ] = save_output_file;
+            }
+         } else {
+            if ( !run_iqq() )
+            {
+               return false;
+            } 
+            if ( !noticemsg.isEmpty() )
+            {
+               cout << noticemsg;
+            }
          }
       }
    }

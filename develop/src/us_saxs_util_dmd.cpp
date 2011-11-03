@@ -103,8 +103,8 @@ bool US_Saxs_Util::dmd_findSS()
       }
       f.close();
    }
-   // QFile::remove( constraints_file );
-   output_files << constraints_file;
+   QFile::remove( constraints_file );
+   // output_files << constraints_file;
    cout << "dmd:ss:\n" << control_parameters[ "dmd:ss" ] << endl;
    return true;
 }
@@ -241,8 +241,8 @@ bool US_Saxs_Util::dmd_prepare()
          .arg( const_file );
       return false;
    }
-   output_files << param_file;
-   output_files << state_file;
+   // output_files << param_file;
+   // output_files << state_file;
    output_files << const_file;
    last_state_file = state_file;
    return true;
@@ -371,16 +371,18 @@ bool US_Saxs_Util::dmd_strip_pdb()
       return false;
    }
 
+   QString strip_tag = "_s";
+
    QString pdb = control_parameters[ "inputfile" ];
    QString base_pdb = QFileInfo( pdb ).baseName();
-   QString pdb_stripped = base_pdb + "_stripped";
+   QString pdb_stripped = base_pdb + strip_tag;
 
    unsigned int ext = 0;
    while ( QFile::exists( pdb_stripped + ".pdb" ) )
    {
-      pdb_stripped = base_pdb + "_stripped" + QString( "_%1" ).arg( ++ext );
+      pdb_stripped = base_pdb + strip_tag + QString( "_%1" ).arg( ++ext );
    }
-   QString stripped_log = pdb_stripped + ".log";
+   QString stripped_log = pdb_stripped + "-removed.pdb";
    pdb_stripped +=  ".pdb";
    
    QFile fi( pdb );
@@ -556,7 +558,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    // outputs
    // FIX THIS: should be renamed ? and renamed in output_files
    run_description += 
-      QString( "_temp%1_time%2" )
+      QString( "_tp%1_tm%2" )
       .arg( control_parameters[ "dmdtemp" ] )
       .arg( control_parameters[ "dmdtime" ] ).replace( ".", "_" );
    last_dmd_description = run_description;
@@ -643,7 +645,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                  "#if you has no idea of the system, PLEASE do not specify MOVIE_SAVE_START and MOVIE_SAVE_END\n"
                  "#\n"
                  "MOVIE_FILE              %1\n"
-                 "MOVIE_DT                10\n"
+                 "MOVIE_DT                %2\n"
                  "#MOVIE_SAVE_START       1\n"
                  "#MOVIE_SAVE_END         100\n"
                  )
@@ -709,9 +711,9 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          .arg( movie_file );
       return false;
    }
-   output_files << restart_file;
-   output_files << echo_file;
-   output_files << movie_file;
+   // output_files << restart_file;
+   // output_files << echo_file;
+   // output_files << movie_file;
 
    last_state_file = restart_file;
 
@@ -745,8 +747,8 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
       // $DMD/bin/complex_M2P.linux $DMD/param/ xxx.pdb /dev/null relax.dmd_movie relax.pdbs
       
-      QString pdb_out_file        = base_pdb + run_description + ".pdb";
-      QString pdb_out_to_fix_file = base_pdb + run_description + ".pdb-to-fix";
+      QString pdb_out_file        = base_pdb + "_" + run_description + ".pdb";
+      QString pdb_out_to_fix_file = base_pdb + "_" + run_description + ".pdb-to-fix";
       
       cmd = 
          QString( "%1 . %2 /dev/null %3 %4" )
@@ -786,7 +788,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          {
             cout << "keeping as nmr style pdb\n";
          } else {
-            pdb_out_file = base_pdb + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+            pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
          }
          
          QFile *fo;
@@ -805,7 +807,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          QTextStream *tso;
          tso = new QTextStream( fo );
 
-         *tso << QString( "MODEL        %1\n" ).arg( models++ );
+         *tso << QString( "MODEL        %1\n" ).arg( models );
          
          while ( !tsi.atEnd() )
          {
@@ -824,7 +826,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                   delete fo;
                   output_dmd_pdbs << pdb_out_file;
                   output_files << pdb_out_file;
-                  pdb_out_file = base_pdb + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+                  pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
                   fo = new QFile( pdb_out_file );
                   if ( !fo->open( IO_WriteOnly ) )
                   {
@@ -849,18 +851,15 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          QFile::remove( pdb_out_to_fix_file );
       }
 
-      if ( control_parameters.count( "pdballmodels" ) )
+      if ( !QFile::exists( pdb_out_file ) )
       {
-         if ( !QFile::exists( pdb_out_file ) )
-         {
-            errormsg =  QString( "Error: %1 did not create file %2" )
-               .arg( prog )
-               .arg( pdb_out_file );
-            return false;
-         }
-         output_dmd_pdbs << pdb_out_file;
-         output_files << pdb_out_file;
+         errormsg =  QString( "Error: %1 did not create file %2" )
+            .arg( prog )
+            .arg( pdb_out_file );
+         return false;
       }
+      output_dmd_pdbs << pdb_out_file;
+      output_files << pdb_out_file;
    }
       
    return true;

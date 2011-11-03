@@ -722,7 +722,8 @@ void US_Hydrodyn_Cluster::create_pkg()
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       QString use_file_name = QFileInfo( selected_files[ i ] ).fileName();
       QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
-      if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
+      if ( !batch_window->cb_dmd->isChecked()
+           && batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
          out += "Hydrate\n";
          use_output_name += "-h";
@@ -1430,6 +1431,9 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* ou
       return "";
    }
 
+   // we should probably parameterize this, maybe system dependent
+   out += "DMDBoxSpacing  +10\n";
+
    out += 
       "DMDStripPdb\n"
       "DMDFindSS\n"
@@ -1505,10 +1509,15 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* ou
          }
          out += "DMDRun          equi\n";
       }
+      if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
+      {
+         out += "Hydrate\n";
+      }
+      if ( batch_window->cb_iqq->isChecked() )
+      {
+         out += "Process\n";
+      }
    }
-   // FIX THIS:
-   // also need to add "Process" and any intermediates
-   // to split / & reload the pdbs / creating a set of input files
    return out;
 }
 
