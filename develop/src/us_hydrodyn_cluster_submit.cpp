@@ -178,7 +178,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lb_systems->setCurrentItem(0);
    lb_systems->setSelected(0, false);
    lb_systems->setSelectionMode( QListBox::Single );
-   lb_systems->setColumnMode( QListBox::FitToWidth );
+   // lb_systems->setColumnMode( QListBox::FitToWidth );
    connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
 
    pb_select_all = new QPushButton(tr("Select all"), this);

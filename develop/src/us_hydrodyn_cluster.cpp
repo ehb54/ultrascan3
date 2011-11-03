@@ -1483,25 +1483,25 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* ou
       }
       if ( relax_is_on && relax_ok )
       {
-         out += QString( "DMDTime        %1\n"
-                         "DMDTemp        %2\n" )
+         out += QString( "DMDTime         %1\n"
+                         "DMDTemp         %2\n" )
             .arg( csv_dmd.data[ i ][ 3 ] )
             .arg( csv_dmd.data[ i ][ 2 ] );
          if ( csv_dmd.data[ i ][ 4 ].toUInt() )
          {
-            out += QString( "DMDTimeStep    %1\n" ).arg( csv_dmd.data[ i ][ 4 ] );
+            out += QString( "DMDTimeStep     %1\n" ).arg( csv_dmd.data[ i ][ 4 ] );
          }
          out += "DMDRun          relax\n";
       }
       if ( run_is_on && run_ok )
       {
-         out += QString( "DMDTime        %1\n"
-                         "DMDTemp        %2\n" )
+         out += QString( "DMDTime         %1\n"
+                         "DMDTemp         %2\n" )
             .arg( csv_dmd.data[ i ][ 7 ] )
             .arg( csv_dmd.data[ i ][ 6 ] );
          if ( csv_dmd.data[ i ][ 8 ].toUInt() )
          {
-            out += QString( "DMDTimeStep    %1\n" ).arg( csv_dmd.data[ i ][ 8 ] );
+            out += QString( "DMDTimeStep     %1\n" ).arg( csv_dmd.data[ i ][ 8 ] );
          }
          out += "DMDRun          equi\n";
       }
