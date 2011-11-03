@@ -298,6 +298,7 @@ void US_Hydrodyn_Cluster_Submit::systems()
                  selected_system.count( "type" ) &&
                  selected_system.count( "corespernode" ) &&
                  selected_system.count( "maxcores" ) &&
+                 selected_system.count( "queue" ) &&
                  selected_system.count( "runtime" ) )
             {
                stage_url       = selected_system[ "stage" ];
@@ -526,9 +527,9 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "<experimentid>%1</experimentid>"
                   "<hostname>%2</hostname>"
                   "<processorcount>%3</processorcount>"
-                  "<queuename>normal</queuename>"
-                  "<walltime>%4</walltime>"
-                  "<userdn>%5</userdn>"
+                  "%4"
+                  "<walltime>%5</walltime>"
+                  "<userdn>%6</userdn>"
                   "</Header>"
                   "<Body>"
                   "<Method>run</Method>"
@@ -539,7 +540,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "</parameters>"
                   "<parameters>"
                   "<name>inputfile</name>"
-                  "<value>%6</value>"
+                  "<value>%7</value>"
                   "</parameters>"
                   "</input>"
                   "</Body>"
@@ -548,6 +549,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
       .arg( stage_url )
       .arg( processor_count )
+      .arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "<queuename>%1</queuename>" ).arg( selected_system[ "queue" ] ) )
       .arg( selected_system[ "runtime" ].toUInt() )
       .arg( cluster_id )
       .arg( QString( "%1/%2/%3/%4" ).arg( stage_path ).arg( cluster_id ).arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ).arg( file ) )

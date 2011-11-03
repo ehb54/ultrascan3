@@ -1679,6 +1679,8 @@ QString US_Hydrodyn_Cluster::options_summary()
                    "Options summary:" ) )
       .arg( selected_files.size() );
 
+   bool any_options = false;
+
    QString qs;
    if ( batch_window->cb_dmd->isChecked() )
    {
@@ -1687,6 +1689,7 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "DMD";
+      any_options = true;
    }
 
    if ( batch_window->cb_somo->isChecked() )
@@ -1696,6 +1699,7 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "SOMO bead models";
+      any_options = true;
    }
 
    if ( batch_window->cb_grid->isChecked() )
@@ -1705,6 +1709,7 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "A2B Grid bead models";
+      any_options = true;
    }
 
    if ( batch_window->cb_iqq->isChecked() )
@@ -1714,6 +1719,7 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "I(q) curves";
+      any_options = true;
    }
 
    if ( batch_window->cb_prr->isChecked() )
@@ -1723,6 +1729,7 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "P(r) curves";
+      any_options = true;
    }
 
    if ( batch_window->cb_hydro->isChecked() )
@@ -1732,6 +1739,12 @@ QString US_Hydrodyn_Cluster::options_summary()
          qs += ", ";
       }
       qs += "Hydrodynamic parameter calculations";
+      any_options = true;
+   }
+
+   if ( !any_options )
+   {
+      qs += "None selected";
    }
 
    return prefix + qs;
@@ -1783,6 +1796,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       "maxcores|"
                       "runtime|"
                       "maxruntime|"
+                      "queue|"
                       "stage"
                       ")$"
                       );
@@ -1800,6 +1814,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       "maxcores|"
                       "runtime|"
                       "maxruntime|"
+                      "queue|"
                       "stage"
                       ")$"
                       );

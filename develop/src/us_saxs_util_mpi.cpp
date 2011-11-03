@@ -8,24 +8,28 @@ extern int myrank;
 
 bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 {
+   int errorno = -1;
    QString original_controlfile = controlfile;
 
    errormsg = "";
    if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
    {
       errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
-      return false;
-   }
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
 
    if ( !QFile::exists( controlfile ) )
    {
       errormsg = QString( "controlfile %1 does not exist" ).arg( controlfile );
-      return false;
-   }
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   errorno--;
 
    QStringList qslt;
    unsigned int sizeoflist;
-   int errorno = -1;
 
    // this first barrier seems useless, but there seems to be an issue
    // where if one process takes awhile to get started, then the barrier
