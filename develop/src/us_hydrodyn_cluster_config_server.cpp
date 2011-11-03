@@ -130,6 +130,10 @@ void US_Hydrodyn_Cluster_Config_Server::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster_Config_Server::save_config()
 {
+   for ( unsigned int i = 0; i < lbls.size(); i++ )
+   {
+      our_system_map[ lbls[ i ]->text() ] = les[ i ]->text();
+   }
    *system_map = our_system_map;
    close();
 }

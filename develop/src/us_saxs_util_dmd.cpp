@@ -3,9 +3,9 @@
 
 #define SLASH QDir::separator()
 
-// TO FIX:
 // chain DMD runs (output from last needs to be input to next
 // i.e. prepare sets it up and then multi runs chain
+// this is done via last_state_file
 // fix PDB output file
 // If nmr pdb all, try to reload the pdb, but if it's too big ...
 // otherwise, make a bunch of individuals
@@ -244,7 +244,7 @@ bool US_Saxs_Util::dmd_prepare()
    output_files << param_file;
    output_files << state_file;
    output_files << const_file;
-
+   last_state_file = state_file;
    return true;
 }
 
@@ -529,7 +529,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    // required input files:
 
    QString param_file   = base_pdb + ".param";
-   QString state_file   = base_pdb + ".state";
+   QString state_file   = last_state_file;;
    QString const_file   = base_pdb + ".const";
 
    if ( !QFile::exists( param_file ) )
@@ -686,7 +686,6 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    system( cmd.ascii() );
    cout << "Finished " + prog + "\n";
 
-
    if ( !QFile::exists( restart_file ) )
    {
       errormsg =  QString( "Error: %1 did not create file %2" )
@@ -713,6 +712,8 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    output_files << restart_file;
    output_files << echo_file;
    output_files << movie_file;
+
+   last_state_file = restart_file;
 
    // we are going to go ahead and combine the extraction:
    if ( control_parameters.count( "dmdtimestep" ) )
@@ -744,14 +745,15 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
       // $DMD/bin/complex_M2P.linux $DMD/param/ xxx.pdb /dev/null relax.dmd_movie relax.pdbs
       
-      QString pdb_out_file = base_pdb + run_description + ".pdb";
+      QString pdb_out_file        = base_pdb + run_description + ".pdb";
+      QString pdb_out_to_fix_file = base_pdb + run_description + ".pdb-to-fix";
       
       cmd = 
          QString( "%1 . %2 /dev/null %3 %4" )
          .arg( prog )
          .arg( pdb )
          .arg( movie_file )
-         .arg( pdb_out_file )
+         .arg( pdb_out_to_fix_file )
          ;
       
       cout << "Starting " + prog + "\n";
@@ -759,14 +761,106 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       system( cmd.ascii() );
       cout << "Finished " + prog + "\n";
       
-      if ( !QFile::exists( pdb_out_file ) )
+      if ( !QFile::exists( pdb_out_to_fix_file ) )
       {
          errormsg =  QString( "Error: %1 did not create file %2" )
             .arg( prog )
-            .arg( pdb_out_file );
+            .arg( pdb_out_to_fix_file );
          return false;
       }
-      output_files << pdb_out_file;
+
+      // fix pdb file, count actual models produced, possibly split into individual pdbs
+
+      unsigned int models = 1;
+      {
+         QFile fi( pdb_out_to_fix_file );
+         if ( !fi.open( IO_ReadOnly ) )
+         {
+            errormsg =  QString( "Error: %1 can not open file %2 for reading" )
+            .arg( prog )
+            .arg( pdb_out_to_fix_file );
+            return false;
+         }
+
+         if ( control_parameters.count( "pdballmodels" ) )
+         {
+            cout << "keeping as nmr style pdb\n";
+         } else {
+            pdb_out_file = base_pdb + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+         }
+         
+         QFile *fo;
+         fo = new QFile( pdb_out_file );
+         if ( !fo->open( IO_WriteOnly ) )
+         {
+            errormsg =  QString( "Error: %1 can not open file %2 for writing" )
+               .arg( prog )
+               .arg( pdb_out_file );
+            fi.close();
+            delete fo;
+            return false;
+         }
+
+         QTextStream tsi( &fi );
+         QTextStream *tso;
+         tso = new QTextStream( fo );
+
+         *tso << QString( "MODEL        %1\n" ).arg( models++ );
+         
+         while ( !tsi.atEnd() )
+         {
+            QString qs = tsi.readLine();
+            *tso << qs << endl;
+            if ( qs.contains( QRegExp( "^ENDMDL" ) ) &&
+                 !tsi.atEnd() )
+            {
+               models++;
+               if ( control_parameters.count( "pdballmodels" ) )
+               {
+                  *tso << QString( "MODEL        %1\n" ).arg( models );
+               } else {
+                  fo->close();
+                  delete tso;
+                  delete fo;
+                  output_dmd_pdbs << pdb_out_file;
+                  output_files << pdb_out_file;
+                  pdb_out_file = base_pdb + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+                  fo = new QFile( pdb_out_file );
+                  if ( !fo->open( IO_WriteOnly ) )
+                  {
+                     errormsg =  QString( "Error: %1 can not open file %2 for writing" )
+                        .arg( prog )
+                        .arg( pdb_out_file );
+                     fi.close();
+                     delete fo;
+                     return false;
+                  }
+                  tso = new QTextStream( fo );
+                  *tso << QString( "MODEL        %1\n" ).arg( models );
+               }
+            }
+         }
+
+         fi.close();
+         fo->close();
+         delete tso;
+         delete fo;
+
+         QFile::remove( pdb_out_to_fix_file );
+      }
+
+      if ( control_parameters.count( "pdballmodels" ) )
+      {
+         if ( !QFile::exists( pdb_out_file ) )
+         {
+            errormsg =  QString( "Error: %1 did not create file %2" )
+               .arg( prog )
+               .arg( pdb_out_file );
+            return false;
+         }
+         output_dmd_pdbs << pdb_out_file;
+         output_files << pdb_out_file;
+      }
    }
       
    return true;

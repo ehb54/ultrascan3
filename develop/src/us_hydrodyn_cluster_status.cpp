@@ -132,24 +132,30 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    lv_files->addColumn( tr( "Date created" ) );
    connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
-   pb_refresh = new QPushButton(tr("Refresh Status"), this);
+   pb_refresh = new QPushButton(tr("Refresh status"), this);
    pb_refresh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_refresh->setMinimumHeight(minHeight1);
    pb_refresh->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_refresh, SIGNAL( clicked() ), SLOT( refresh() ) );
 
-   pb_remove = new QPushButton(tr("Cancel jobs"), this);
+   pb_remove = new QPushButton(tr("Cancel selected jobs"), this);
    pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_remove, SIGNAL( clicked() ), SLOT( remove() ) );
 
-   pb_retrieve = new QPushButton( tr("Retrieve results" ), this);
+   pb_retrieve_selected = new QPushButton( tr("Retrieve selected results" ), this);
+   pb_retrieve_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_retrieve_selected->setMinimumHeight(minHeight1);
+   pb_retrieve_selected->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_retrieve_selected, SIGNAL( clicked() ), SLOT( retrieve_selected() ) );
+
+   pb_retrieve = new QPushButton( tr("Retrieve all results" ), this);
    pb_retrieve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_retrieve->setMinimumHeight(minHeight1);
    pb_retrieve->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_retrieve, SIGNAL( clicked() ), SLOT( retrieve() ) );
-   
+
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    editor->setReadOnly(true);
@@ -195,6 +201,8 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    hbl_buttons1->addWidget ( pb_refresh );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_remove );
+   hbl_buttons1->addSpacing( 4 );
+   hbl_buttons1->addWidget ( pb_retrieve_selected );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_retrieve );
    hbl_buttons1->addSpacing( 4 );
@@ -318,6 +326,7 @@ void US_Hydrodyn_Cluster_Status::update_enables()
    {
       bool any_selected = false;
       bool any_completed = false;
+      bool any_selected_completed = false;
       QListViewItem *lvi = lv_files->firstChild();
       if ( lvi )
       {
@@ -329,22 +338,28 @@ void US_Hydrodyn_Cluster_Status::update_enables()
             if ( lvi->text( 1 ) == "COMPLETED" )
             {
                any_completed = true;
+               if ( lvi->isSelected() )
+               {
+                  any_selected_completed = true;
+               }
             }
-            if ( any_selected && any_completed )
+            if ( any_selected_completed )
             {
                break;
             }
          } while ( ( lvi = lvi->nextSibling() ) );
       }
-      pb_refresh  ->setEnabled( !processing_active && !comm_active && !system_proc_active );
-      pb_remove  ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected  );
-      pb_retrieve->setEnabled( !processing_active && !comm_active && !system_proc_active && any_completed );
+      pb_refresh          ->setEnabled( !processing_active && !comm_active && !system_proc_active );
+      pb_remove           ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected  );
+      pb_retrieve_selected->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected_completed );
+      pb_retrieve         ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_completed );
    } 
    if ( processing_active )
    {
-      pb_refresh ->setEnabled( false );
-      pb_remove  ->setEnabled( false );
-      pb_retrieve->setEnabled( false );
+      pb_refresh          ->setEnabled( false );
+      pb_remove           ->setEnabled( false );
+      pb_retrieve_selected->setEnabled( false );
+      pb_retrieve         ->setEnabled( false );
    }
 }
 
@@ -382,6 +397,34 @@ void US_Hydrodyn_Cluster_Status::retrieve()
    {
       do {
          if ( lvi->text( 1 ) == "COMPLETED" )
+         {
+            jobs[ lvi ] = "retrieve results";
+         }
+      } while ( ( lvi = lvi->nextSibling() ) );
+      processing_active = true;
+      stopFlag = false;
+      pb_stop->setEnabled( true );
+      editor_msg( "black", tr( "retrieving results" ) );
+      update_enables();
+      emit next_status();
+   } else {
+      stopFlag = false;
+      pb_stop->setEnabled( false );
+   }
+}
+
+void US_Hydrodyn_Cluster_Status::retrieve_selected()
+{
+   //   update_files();
+   comm_mode = "retrieve";
+   jobs.clear();
+   
+   QStringList qsl_submit;
+   QListViewItem *lvi = lv_files->firstChild();
+   if ( lvi )
+   {
+      do {
+         if ( lvi->text( 1 ) == "COMPLETED" && lvi->isSelected() )
          {
             jobs[ lvi ] = "retrieve results";
          }

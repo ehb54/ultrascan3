@@ -203,7 +203,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    } 
 
    cout << QString("%1: end of computation barrier\n" ).arg( myrank ) << flush;
-   if ( myrank >= qslt.size() )
+   if ( (unsigned int) myrank >= qslt.size() )
    {
       full_output_list << "null_remove";
    }
@@ -252,7 +252,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    {
       QStringList qsl_final_files;
       
-      for ( unsigned int i = 0; i < npes; i++ )
+      for ( unsigned int i = 0; i < (unsigned int) npes; i++ )
       {
          qslt = QStringList::split( "\n", QString( "%1" )
                                     .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );

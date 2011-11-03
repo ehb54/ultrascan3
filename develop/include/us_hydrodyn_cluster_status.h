@@ -47,6 +47,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       QPushButton   *pb_refresh;
       QPushButton   *pb_remove;
+      QPushButton   *pb_retrieve_selected;
       QPushButton   *pb_retrieve;
 
       QFont         ft;
@@ -118,6 +119,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void refresh();
       void remove();
       void retrieve();
+      void retrieve_selected();
 
       void clear_display();
       void update_font();

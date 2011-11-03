@@ -929,7 +929,9 @@ class US_EXTERN US_Saxs_Util
       bool         dmd_prepare();
       bool         dmd_run( QString run_description );
       QString      last_dmd_description;
+      QString      last_state_file;
       bool         input_dimensions( point &range );
+      QStringList  output_dmd_pdbs;
 };
 
 #endif

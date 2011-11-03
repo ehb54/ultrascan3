@@ -47,17 +47,34 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QLabel        *lbl_systems;
       QListBox      *lb_systems;
 
+      QPushButton   *pb_edit;
+      QPushButton   *pb_add_new;
+      QPushButton   *pb_delete_system;
+      
       QPushButton   *pb_save_config;
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
 
       void          *cluster_window;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, map < QString, QString > > cluster_systems;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
       
    private slots:
 
       void setupGUI();
 
       void systems();
+
+      void edit();
+      void add_new();
+      void delete_system();
+
       void save_config();
       void cancel();
       void help();

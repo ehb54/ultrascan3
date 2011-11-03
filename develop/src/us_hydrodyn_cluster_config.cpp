@@ -17,6 +17,7 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    USglobal = new US_Config();
    cluster_window = (void *)p;
 
+   cluster_systems = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems;
    QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir::setCurrent( pkg_dir );
 
@@ -26,6 +27,9 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
+
+   pb_edit         ->setEnabled( false );
+   pb_delete_system->setEnabled( false );
 }
 
 US_Hydrodyn_Cluster_Config::~US_Hydrodyn_Cluster_Config()
@@ -77,15 +81,14 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
 
    lb_systems = new QListBox(this);
    lb_systems->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lb_systems->setMinimumHeight(minHeight1 * 3);
+   lb_systems->setMinimumHeight(minHeight1 * 10);
    lb_systems->setMinimumWidth( 500 );
    lb_systems->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lb_systems->setEnabled(true);
 
-   for ( map < QString, map < QString, QString > >::iterator it = 
-            ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.begin();
-         it != ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.end();
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
          it++ )
    {
       lb_systems->insertItem( it->first );
@@ -95,6 +98,24 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    lb_systems->setSelected(0, false);
    lb_systems->setSelectionMode( QListBox::Single );
    connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
+
+   pb_add_new = new QPushButton(tr("Add new system"), this);
+   pb_add_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_add_new->setMinimumHeight(minHeight1);
+   pb_add_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_add_new, SIGNAL(clicked()), SLOT(add_new()));
+
+   pb_edit = new QPushButton(tr("Edit system details"), this);
+   pb_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_edit->setMinimumHeight(minHeight1);
+   pb_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_edit, SIGNAL(clicked()), SLOT(edit()));
+
+   pb_delete_system = new QPushButton(tr("Delete system"), this);
+   pb_delete_system->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_delete_system->setMinimumHeight(minHeight1);
+   pb_delete_system->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_delete_system, SIGNAL(clicked()), SLOT(delete_system()));
 
    pb_cancel = new QPushButton(tr("Cancel"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -131,6 +152,15 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    hbl_submit_url->addWidget ( le_submit_url );
    hbl_submit_url->addSpacing( 4 );
 
+   QHBoxLayout *hbl_add_del = new QHBoxLayout( 0 );
+   hbl_add_del->addSpacing( 4 );
+   hbl_add_del->addWidget ( pb_add_new );
+   hbl_add_del->addSpacing( 4 );
+   hbl_add_del->addWidget ( pb_edit );
+   hbl_add_del->addSpacing( 4 );
+   hbl_add_del->addWidget ( pb_delete_system );
+   hbl_add_del->addSpacing( 4 );
+
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
@@ -150,6 +180,8 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( lbl_systems );
    background->addWidget ( lb_systems );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_add_del );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4 );
@@ -176,31 +208,219 @@ void US_Hydrodyn_Cluster_Config::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster_Config::save_config()
 {
+   // check for  stage to system inconsistancies
+   // i.e. systems with identical staging domain names's 
+   // have different staging directories
+
+   map < QString, QString > domain_to_dir;
+
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
+         it++ )
+   {
+      if ( it->second.count( "stage" ) )
+      {
+         QString domain = it->second[ "stage" ];
+         QString dir    = domain;
+         domain.replace( QRegExp( ":.*$" ), "" );
+         dir   .replace( QRegExp( "^.*:" ), "" );
+         if ( domain_to_dir.count( domain ) &&
+              domain_to_dir[ domain ] != dir )
+         {
+            QMessageBox::warning( this, 
+                                  tr( lbl_title->text() ),
+                                  QString( tr( "Staging locations for duplicate physical servers must be identical\n"
+                                               "There is an inconsistancy with stage '%1' found with server '%2'\n"
+                                                "Can not save unless this is corrected\n" ) )
+                                  .arg( it->second[ "stage" ] )
+                                  .arg( it->first ) );
+            return;
+         } else {
+            domain_to_dir[ domain ] = dir;
+         }
+      }
+   }
+
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid" ] = le_cluster_id->text();
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server" ] = le_submit_url->text();
-   // ((US_Hydrodyn_Cluster *)cluster_window)->stage_url  = le_stage_url->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems = cluster_systems;
+
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system.clear();
+
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
+         it++ )
+   {
+      if ( it->second.count( "stage" ) )
+      {
+         QString system = it->second[ "stage" ];
+         system.replace( QRegExp( ":.*$" ), "" );
+         ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system[ system ] = it->first;
+      }
+   }
+
    if ( !((US_Hydrodyn_Cluster *)cluster_window)->write_config() )
    {
       QMessageBox::warning( this, 
                             tr( lbl_title->text() ),
                             tr( ((US_Hydrodyn_Cluster *)cluster_window)->errormsg ) );
    } else {
+      cout << ((US_Hydrodyn_Cluster *)cluster_window)->list_config();
       close();
    }
 }
 
 void US_Hydrodyn_Cluster_Config::systems()
 {
+   bool any_selected = false;
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected(i) )
+      {
+         any_selected = true;
+         break;
+      }
+   }
+
+   pb_edit         ->setEnabled( any_selected );
+   pb_delete_system->setEnabled( any_selected );
+
+}
+
+void US_Hydrodyn_Cluster_Config::add_new()
+{
+   bool ok;
+   QString text = QInputDialog::getText(
+                                        tr( "US-SOMO: Cluster Config: Add new system" ),
+                                        tr( "Enter the unique system name:" ), 
+                                        QLineEdit::Normal,
+                                        QString::null, 
+                                        &ok, 
+                                        this );
+   if ( !ok )
+   {
+      return;
+   }
+
+   // check to see if it already exists
+   if ( cluster_systems.count( text ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: Cluster config: Add new" ),
+                            QString( tr( "The system %1 already exists" ) ).arg( text ) );
+      return;
+   }
+    
+   bool any_selected = false;
+   unsigned int pos;
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected(i) )
+      {
+         pos = i;
+         any_selected = true;
+         break;
+      }
+   }
+
+   bool do_blank = true;
+   if ( any_selected && 
+        cluster_systems.count( lb_systems->text( pos ) ) )
+   {
+      switch ( QMessageBox::question(
+                                     this,
+                                     tr( "US-SOMO: Cluster config: Add new" ),
+                                     QString(
+                                             tr( "Do you want to copy system data from the selected system '%1?'" )
+                                             ).arg( lb_systems->text( pos ) ),
+                                     tr( "&Yes" ),
+                                     tr( "&No" ),
+                                     QString::null,
+                                     0,
+                                     1
+                                     ) )
+      {
+      case 0 : 
+         cluster_systems[ text ] = cluster_systems[ lb_systems->text( pos ) ];
+         do_blank = false;
+         break;
+
+      case 1 : 
+         do_blank = true;
+         break;
+      }
+   } 
+      
+   if ( do_blank )
+   {
+      // setup a blank system
+      map < QString, QString > tmp_system;
+      QStringList params;
+      params 
+         << "corespernode"
+         << "maxcores"
+         << "maxruntime"
+         << "runtime"
+         << "stage"
+         << "type"
+         << "queue";
+      
+      for ( unsigned int i = 0; i < params.size(); i++ )
+      {
+         tmp_system[ params[ i ] ] = "";
+      }
+      cluster_systems[ text ] = tmp_system;
+   }
+
+   lb_systems->clear();
+   
+   for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+         it != cluster_systems.end();
+         it++ )
+   {
+      lb_systems->insertItem( it->first );
+   }
+}
+
+void US_Hydrodyn_Cluster_Config::delete_system()
+{
+   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   {
+      if ( lb_systems->isSelected(i) )
+      {
+         if ( cluster_systems.count( lb_systems->text( i ) ) )
+         {
+            cluster_systems.erase( lb_systems->text( i ) );
+            lb_systems->clear();
+            
+            for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
+                  it != cluster_systems.end();
+                  it++ )
+            {
+               lb_systems->insertItem( it->first );
+            }
+         } else {
+            QMessageBox::warning( this, 
+                                  tr( "US-SOMO: Cluster config" ), 
+                                  QString( tr( "Internal error: The system %1 does not seem to exist?" ) ).arg( lb_systems->text( i ) ) );
+         }
+      }
+   }
+   systems();
+}
+
+void US_Hydrodyn_Cluster_Config::edit()
+{
    for ( int i = 0; i < lb_systems->numRows(); i++ )
    {
       if ( lb_systems->isSelected(i) )
       {
          cout << "run config systems for " << lb_systems->text( i ) << "\n";
-         if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( lb_systems->text( i ) ) )
+         if ( cluster_systems.count( lb_systems->text( i ) ) )
          {
             US_Hydrodyn_Cluster_Config_Server *hccs = 
                new US_Hydrodyn_Cluster_Config_Server(
-                                                ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ lb_systems->text( i ) ],
+                                                cluster_systems[ lb_systems->text( i ) ],
                                                 lb_systems->text( i ),
                                                 us_hydrodyn,
                                                 this );
@@ -213,5 +433,4 @@ void US_Hydrodyn_Cluster_Config::systems()
          }
       }
    }
-   lb_systems->clearSelection();
 }

@@ -161,7 +161,9 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 
    lb_systems = new QListBox(this);
    lb_systems->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lb_systems->setMinimumHeight(minHeight1 * 3);
+   lb_systems->setMinimumHeight(minHeight1 * 
+                                ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() > 8 ?
+                                  8 : ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() ) );
    lb_systems->setMinimumWidth( 500 );
    lb_systems->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -181,19 +183,19 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    // lb_systems->setColumnMode( QListBox::FitToWidth );
    connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
 
-   pb_select_all = new QPushButton(tr("Select all"), this);
+   pb_select_all = new QPushButton(tr("Select all jobs"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_remove = new QPushButton(tr("Remove"), this);
+   pb_remove = new QPushButton(tr("Remove selected jobs"), this);
    pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_remove, SIGNAL(clicked()), SLOT( remove() ));
 
-   pb_submit = new QPushButton(tr("Submit"), this);
+   pb_submit = new QPushButton(tr("Submit selected jobs"), this);
    pb_submit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_submit->setMinimumHeight(minHeight1);
    pb_submit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
