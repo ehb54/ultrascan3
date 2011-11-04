@@ -586,6 +586,7 @@ void US_FitMeniscus::scan_dbase()
       double  variance   = db.value( 3 ).toString().toDouble();
       double  meniscus   = db.value( 4 ).toString().toDouble();
       QDateTime lmtime   = db.value( 7 ).toDateTime();
+      lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_',  4,  4 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
@@ -632,22 +633,21 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       QString modelGUID  = db.value( 0 ).toString();
       QString descript1  = db.value( 1 ).toString();
       QString contents   = db.value( 2 ).toString();
-      int     jdtx       = contents.indexOf( "description=" );
+      int     jdx        = contents.indexOf( "description=" );
 //DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
 //   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
 
-      if ( jdtx < 1 )  continue;
+      if ( jdx < 1 )  continue;
 
-      int     jdx        = contents.indexOf( "\"", jdtx ) + 1;
-      int     lend       = contents.indexOf( "\"", jdx  ) - jdx;
 //DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
-      QString descript   = contents.mid( jdx, lend );
+      QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
       double  variance   = db.value( 3 ).toString().toDouble();
       double  meniscus   = db.value( 4 ).toString().toDouble();
       QString editGUID   = tedGIDs[ ii ];
       QString editID     = tedIDs [ ii ];
 
       QDateTime lmtime   = db.value( 6 ).toDateTime();
+      lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_',  4,  4 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
@@ -744,19 +744,19 @@ DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
          QDateTime fdate    = QFileInfo( ftfile ).lastModified().toUTC();
          int       jj       = mfnams.lastIndexOf( ftfname );
          QDateTime rdate    = mDescrs[ jj ].lmtime;
-DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate
- << "   ftfname" << ftfname << " (rdate<fdate)" << (rdate<fdate);
+DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate << "   ftfname"
+   << ftfname << "  fdate.msecsTo(rdate)" << fdate.msecsTo(rdate);
 DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
  << "antime meniscus" << mDescrs[jj].antime << mDescrs[jj].meniscus;
 
-         if ( rdate < fdate )
-         {  // DB record is newer than file, so must replace file
+         if ( fdate.msecsTo( rdate ) > 0 )
+         {  // DB record date is later than file date, so must replace file
             nfrpls++;
             ftfile.remove();
          }
 
          else
-         {  // DB record is older than file, so leave file as is;
+         {  // DB record date is not later than file date, so leave file as is
             nfexss++;
             continue;
          }

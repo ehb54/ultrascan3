@@ -97,6 +97,7 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
          break;
    }
 
+
    MPI_Job job;
 
    // Send finish to workers ( in the tag )
@@ -552,7 +553,10 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    }
 
    QString fn = data->runID + "." + id + "." + model.modelGUID + ".xml";
-   model.write( fn );
+
+   model.write( fn );                // Output the model to a file
+
+   data_sets[ 0 ]->model = model;    // Save the model in case needed for noise
 
    // Add the file name of the model file to the output list
    QFile f( "analysis_files.txt" );

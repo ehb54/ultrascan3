@@ -53,17 +53,20 @@ void US_MPI_Analysis::_2dsa_master( void )
                  QString( " (Run %1 of %2)" ).arg( meniscus_run + 1 )
                                              .arg( meniscus_values.size() )  +
             "; MonteCarlo: " + QString::number( mc_iteration );
-         
+
          send_udp( progress );
 
          // Iterative refinement
-         if ( iterations < max_iterations + 1 )
-         {   
+         if ( max_iterations > 1 )
+         {
+            qDebug() << "Iteration:" << iterations << " Variance:"
+               << simulation_values.variance;
+
             iterate();
          }
-         
+
          if ( ! job_queue.isEmpty() ) continue;
-           
+
          iterations = 1;
 
          // Manage multiple data sets
@@ -82,7 +85,7 @@ void US_MPI_Analysis::_2dsa_master( void )
          }
 
          if ( ! job_queue.isEmpty() ) continue;
-         
+
          // Monte Carlo
          if ( ++mc_iteration < mc_iterations )
          {
@@ -503,14 +506,14 @@ DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols si
 
 void US_MPI_Analysis::iterate( void )
 {
-   // Just return if the number of iterations exceed the max
+   // Just return if the number of iterations exceeds the max
    // or if the last two iterations converged and are essentially identical
    if ( ++iterations > max_iterations ) return;
 
    double diff  = qAbs( simulation_values.variance - previous_values.variance );
    bool   ssame = false;
 
-   if ( iterations > 1 )
+   if ( iterations > 2 )
    {
       if ( diff < min_variance_improvement )  return;
 
@@ -536,14 +539,14 @@ void US_MPI_Analysis::iterate( void )
    // Save the most recent variance for the next time
    previous_values.variance = simulation_values.variance;
    previous_values.solutes  = simulation_values.solutes;
-   
+
    // Set up for another round at depth 0
    _2dsa_Job job;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
 
    QVector< US_Solute > prev_solutes = simulation_values.solutes;
-   
+
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
       job.solutes = orig_solutes[ i ];
@@ -839,8 +842,8 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
    // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
-   // runID.tripleID.analysisID.recordType
-   //    analysisID = editID_analysisDate_analysisType_requestID_iterID (underscores)
+   // runID.tripleID.analysID.recordType
+   //    analysID = editID_analysisDate_analysisType_requestID_iterID (underscores)
    //       editID:     
    //       requestID: from lims or 'local' 
    //       analysisType : 2DSA GA others
@@ -848,24 +851,26 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    //      
    //       recordType: ri_noise, ti_noise, model
 
-   QString tripleID = data->cell + data->channel + data->wavelength;
-   QString dates    = "e" + data->editID + "_a" + analysisDate;
+   QString tripleID   = data->cell + data->channel + data->wavelength;
+   QString dates      = "e" + data->editID + "_a" + analysisDate;
+   QString anType     = "_" + data_sets[ 0 ]->model.typeText() + "_";
 
    QString iterID;
 
-   if ( mc_iterations > 1 )  // Will not happen
+   if ( mc_iterations > 1 )           // MonteCarlo iteration
       iterID.sprintf( "mc%04d", mc_iteration + 1 );
 
-   else if (  meniscus_points > 1 )
-      iterID.sprintf( "i%02d-m%05d", 
-              meniscus_run + 1,
+   else if (  meniscus_points > 1 )   // Fit meniscus
+      iterID.sprintf( "i%02d-m%05d", meniscus_run + 1,
               (int)(meniscus_values[ meniscus_run ] * 10000 ) );
-   else
+
+   else                               // Non-iterative single
       iterID = "i01";
 
-   QString analysisID = dates + "_2DSA_" + requestID + "_" + iterID;
+   QString analysID  = dates + anType + requestID + "_" + iterID;
 
-   noise.description = data->runID + "." + tripleID + "." + analysisID + "." + type_name + "_noise";
+   noise.description = data->runID + "." + tripleID + "." + analysID
+      + "." + type_name + "_noise";
 
    noise.type        = type;
    noise.noiseGUID   = US_Util::new_guid();

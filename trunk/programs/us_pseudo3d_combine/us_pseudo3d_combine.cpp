@@ -331,9 +331,9 @@ void US_Pseudo3D_Combine::reset( void )
    cont_loop  = false;
    cb_conloop->setChecked( cont_loop );
 
-   plt_fmin   = 1.0;
-   plt_fmax   = 4.0;
-   ct_plt_fmin->setRange( 1, 50, 0.01 );
+   plt_fmin   = 0.8;
+   plt_fmax   = 4.2;
+   ct_plt_fmin->setRange( 0.1, 50, 0.01 );
    ct_plt_fmin->setValue( plt_fmin );
    ct_plt_fmin->setEnabled( false );
    ct_plt_fmax->setRange( 1, 50, 0.01 );
@@ -539,6 +539,16 @@ void US_Pseudo3D_Combine::update_plot_smin( double dval )
 void US_Pseudo3D_Combine::update_plot_smax( double dval )
 {
    plt_smax = dval;
+
+   // Use logarithmic steps if MW
+   if ( ! plot_s )
+   {
+      double rinc = qMax( pow( 10.0, qRound( log10( dval ) ) - 2.0 ), 10.0 );
+
+      ct_plt_smin->setRange( 0.0, 1.e+5, rinc );
+      ct_plt_smax->setRange( 0.0, 1.e+8, rinc );
+//qDebug() << "plt_smax" << plt_smax << " rinc" << rinc;
+   }
 }
 
 void US_Pseudo3D_Combine::update_plot_fmin( double dval )
@@ -784,7 +794,6 @@ qDebug() << "cd=0  cnst_vbar" << cnst_vbar;
    pb_refresh->setEnabled(  true );
    pb_reset->setEnabled(    true );
    cb_plot_s->setEnabled(   true );
-   cb_plot_mw->setEnabled(  true );
 
    if ( cont_loop )
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
@@ -918,12 +927,12 @@ void US_Pseudo3D_Combine::set_limits()
    rdif      = ( fmax - fmin ) / 10.0;
    fmin     -= rdif;
    fmax     += rdif;
+   double rmin = smax * 10.0;
+   double rinc = pow( 10.0, qRound( log10( smax ) ) - 2.0 );
 
    if ( auto_lim )
    {
       // set auto limits
-      double rmin = smax * 10.0;
-      double rinc = pow( 1.0, (double)( (int)( log10( rmin - 3.0 ) ) ) );
 
       if ( plot_s )
       {
@@ -953,7 +962,7 @@ void US_Pseudo3D_Combine::set_limits()
       {
          fmax       += ( ( fmax - fmin ) / 20.0 );
          fmin       -= ( ( fmax - fmin ) / 20.0 );
-         fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
+         fmin        = qMax( fmin, 0.1 );
 
          if ( ( fmax - fmin ) < 1.0e-3 )
             fmax       += ( fmax / 10.0 );
@@ -996,6 +1005,8 @@ void US_Pseudo3D_Combine::set_limits()
       plt_smax    = ct_plt_smax->value();
       plt_fmin    = ct_plt_fmin->value();
       plt_fmax    = ct_plt_fmax->value();
+      ct_plt_smax->setRange( 0.0, rmin, rinc );
+      ct_plt_smin->setRange( 0.0, rmin, rinc );
    }
 }
 

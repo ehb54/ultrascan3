@@ -13,6 +13,8 @@
     label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
     <application name="fem_2dsa"
     label="Finite Element Match to 2-D Spectrum Analysis" />
+    <application name="fem_ga"
+    label="Finite Element Match to Genetic Algorithm" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="ga" label="Genetic Algorithm Analysis" />

@@ -451,19 +451,23 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
       QString cksum     = db->value( 7 ).toString();
       QString recsize   = db->value( 8 ).toString();
 DbgLv(2) << "BrDb: NOI id" << recID << " edID" << editID << " moID" << modelID;
-      QString descript  = "";
-      int     jmod      = modIDs.indexOf( modelID );
-      if ( jmod >= 0 )
+      QString descript  = db->value( 9 ).toString();
+
+      if ( descript.isEmpty()  ||  descript.length() == 80 )
       {
-         descript = modDescs.at( jmod );
+         int     jmod      = modIDs.indexOf( modelID );
+         if ( jmod >= 0 )
+         {
+            descript = modDescs.at( jmod );
 
-         if ( descript.length() == 80 )
-         {  // Truncated description?  Save for later review/replace
-            tnoises << recID;
-            tnoinxs << ddescs.size();
+            if ( descript.length() == 80 )
+            {  // Truncated description?  Save for later review/replace
+               tnoises << recID;
+               tnoinxs << ddescs.size();
+            }
+
+            descript = descript.replace( ".model", "." + noiseType );
          }
-
-         descript = descript.replace( ".model", "." + noiseType );
       }
 //DbgLv(3) << "BrDb: contents================================================";
 //DbgLv(3) << contents.left( 200 );
