@@ -405,9 +405,10 @@ void US_ModelLoader::list_models()
             desc.description = db.value( 2 ).toString();
             desc.editGUID    = db.value( 5 ).toString();
             desc.filename.clear();
-            desc.reqGUID     = "needed";
-            desc.iterations  = 0;
-
+            desc.reqGUID     = desc.description.section( ".", -2, -2 )
+                                               .section( "_",  0,  3 );
+            desc.iterations  = ( desc.description.contains( "-MC" )
+                              && desc.description.contains( "_mc" ) ) ? 1: 0;
 
             if ( desc.description.simplified().length() < 2 )
             {
@@ -418,6 +419,7 @@ void US_ModelLoader::list_models()
             all_model_descrips << desc;   // add to full models list
          }
 
+#if 0
          for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
          {  // loop to get requestID and flag if monte carlo
             ModelDesc desc = all_model_descrips[ ii ];
@@ -452,6 +454,7 @@ void US_ModelLoader::list_models()
 
             all_model_descrips[ ii ] = desc;
          }
+#endif
 
          if ( !listsing )
             compress_list();          // default: compress MC groups
@@ -734,6 +737,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
    QString dtext;
    QString lblid;
    QString mdlid;
+   QString anlid;
 
    int     row    = 0;
    int     mdx    = 0;
@@ -786,6 +790,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       tdesc    = model.typeText();
       iters    = !model.monteCarlo ? 0 :
                  model_descriptions[ mdx ].iterations;
+      anlid    = model_descriptions[ mdx ].reqGUID;
       runid    = mdesc.section( ".", 0, 0 );
       int jts  = runid.indexOf( "_" + tdesc );
       runid    = jts > 0 ? runid.left( jts ) : runid;
@@ -809,6 +814,8 @@ void US_ModelLoader::show_model_info( QPoint pos )
          + tr( "\n  Iterations:            " ) + QString::number( iters )
          + tr( "\n  Components Count:      " ) + QString::number( ncomp )
          + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
+         + tr( "\n  List Row:              " ) + QString::number( row )
+         + tr( "\n  Analysis Run ID:       " ) + anlid
          + "";
    }
 
@@ -834,6 +841,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       aruni    = runid;                           // potential common values
       atype    = tdesc;
       aegid    = model.editGUID;
+      anlid    = model_descriptions[ mdx ].reqGUID;
 
       // make a pass to see if runID and type are common
 
@@ -902,6 +910,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
             mdlid.left( 23 ) + "..." + mdlid.right( 24 );     // short filename
          iters    = !model.monteCarlo ? 0 :
                     model_descriptions[ mdx ].iterations;
+         anlid    = model_descriptions[ mdx ].reqGUID;
 
          dtext    = dtext + tr( "\n\nModel Information: (" )
             + QString::number( ( jj + 1 ) ) + "):"
@@ -918,6 +927,8 @@ void US_ModelLoader::show_model_info( QPoint pos )
             + tr( "\n  Iterations:            " ) + QString::number( iters )
             + tr( "\n  Components Count:      " ) + QString::number( ncomp )
             + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
+            + tr( "\n  List Row:              " ) + QString::number( row )
+            + tr( "\n  Analysis Run ID:       " ) + anlid
             + "";
       }
    }

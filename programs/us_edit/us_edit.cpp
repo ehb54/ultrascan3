@@ -525,7 +525,7 @@ void US_Edit::gap_check( void )
 
       int maxGap    = 0;
       int gapLength = 0;
-      int location;
+      int location  = 0;
 
       int leftPoint  = US_DataIO2::index( s, data.x, range_left  );
       int rightPoint = US_DataIO2::index( s, data.x, range_right );
@@ -1127,7 +1127,7 @@ void US_Edit::replot( void )
 // Handle a mouse click according to the current pick step
 void US_Edit::mouse( const QwtDoublePoint& p )
 {
-   double maximum;
+   double maximum = -1.0e99;
 
    switch ( step )
    {
@@ -2652,20 +2652,31 @@ void US_Edit::write_triple( void )
    }
 
    // Ask for editID if not yet defined
-   if ( editID.isEmpty() )
+   while ( editID.isEmpty() )
    {
       QString now =  QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
       bool ok;
       editID = QInputDialog::getText( this, 
          tr( "Input a unique Edit ID for this edit session" ),
-         tr( "Use alphanumeric characters, underscores, or hyphens (no spaces)" ),
+         tr( "Use alphanumeric characters, underscores, or hyphens"
+             " (no spaces).\nLimit total characters to 20." ),
          QLineEdit::Normal,
          now, &ok);
       
       if ( ! ok ) return;
 
       editID.remove( QRegExp( "[^\\w\\d_-]" ) );
+
+      if ( editID.length() > 20 )
+      {
+         QMessageBox::critical( this,
+            tr( "Text length error" ),
+            tr( "You entered %1 characters for the Edit ID.\n"
+                "Re-enter, limiting length to 20 characters." )
+            .arg( editID.length() ) );
+         editID.clear();
+      }
    }
 
    // Determine file name

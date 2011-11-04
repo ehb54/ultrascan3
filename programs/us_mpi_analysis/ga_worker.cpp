@@ -458,7 +458,6 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 {
    // Consider paramaterizing the sigma and x calculations
-   double s_min = buckets[ b ].s_min;
    double sigma = ( s_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    double x     = US_Math2::box_muller( 0.0, sigma );
    double delta = qRound( x );
@@ -467,15 +466,14 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 
    // Ensure new value is at a grid point and within bucket
    solute.s += delta * buckets[ b ].ds;
-   solute.s  = qMax( solute.s, s_min );
-   solute.s  = qMin( solute.s, s_min + ( s_grid - 1 ) * buckets[ b ].ds );
+   solute.s  = qMax( solute.s, buckets[ b ].s_min );
+   solute.s  = qMin( solute.s, buckets[ b ].s_max );
 }
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 {
    //static const double mutate_sigma = parameters[ "mutate_sigma" ].toDouble();
 
-   double ff0_min = buckets[ b ].ff0_min;
    double sigma   = ( k_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    double x       = US_Math2::box_muller( 0.0, sigma );
    double delta   = qRound( x );
@@ -484,8 +482,8 @@ void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 
    // Ensure new value is at a grid point and within bucket
    solute.k += delta * buckets[ b ].dk;
-   solute.k  = qMax( solute.k, ff0_min );
-   solute.k  = qMin( solute.k, ff0_min + ( k_grid - 1 ) * buckets[ b ].dk );
+   solute.k  = qMax( solute.k, buckets[ b ].ff0_min );
+   solute.k  = qMin( solute.k, buckets[ b ].ff0_max );
 }
 
 void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
