@@ -150,7 +150,7 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    pb_retrieve_selected->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_retrieve_selected, SIGNAL( clicked() ), SLOT( retrieve_selected() ) );
 
-   pb_retrieve = new QPushButton( tr("Retrieve all results" ), this);
+   pb_retrieve = new QPushButton( tr("Retrieve all available results" ), this);
    pb_retrieve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_retrieve->setMinimumHeight(minHeight1);
    pb_retrieve->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));

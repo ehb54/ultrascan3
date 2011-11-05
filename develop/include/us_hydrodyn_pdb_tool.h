@@ -17,6 +17,7 @@
 #include <qlistview.h>
 
 #include "us_util.h"
+#include "us_saxs_util.h"
 
 //standard C and C++ defs:
 
@@ -80,6 +81,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_paste_new;
       QPushButton   *pb_csv_merge;
       QPushButton   *pb_csv_reseq;
+      QPushButton   *pb_csv_check;
+      QPushButton   *pb_csv_find_alt;
       QPushButton   *pb_csv_sel_clear;
       QPushButton   *pb_csv_sel_clean;
       QPushButton   *pb_csv_sel_invert;
@@ -105,6 +108,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_paste_new;
       QPushButton   *pb_csv2_merge;
       QPushButton   *pb_csv2_reseq;
+      QPushButton   *pb_csv2_check;
+      QPushButton   *pb_csv2_find_alt;
       QPushButton   *pb_csv2_sel_clear;
       QPushButton   *pb_csv2_sel_clean;
       QPushButton   *pb_csv2_sel_invert;
@@ -161,11 +166,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          list_csv_keys          ( csv &csv1 );
       csv           csv_clipboard;
       csv           merge_csvs             ( csv &csv1, csv &csv2 );
+      csv           merge_csvs_dup_keys    ( csv &csv1, csv &csv2 );
       bool          no_dup_keys            ( csv &csv1, csv &csv2 );
+      QString       list_keys              ( csv &csv1 );
       bool          merge_ok               ();
       
       QString       csv_to_pdb             ( csv &csv1, bool only_atoms = false );
+      QStringList   csv_to_pdb_qsl         ( csv &csv1, bool only_atoms = false );
       QString       data_to_key            ( vector < QString > &data );
+      QString       key_to_bottom_key      ( csv &csv1 );
       void          save_csv               ( QListView *lv );
 
       void          visualize              ( QListView *lv );
@@ -184,6 +193,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       US_Hydrodyn_Pdb_Tool_Merge   *pdb_tool_merge_window;
       bool          pdb_tool_merge_widget;
+
+      QString       check_csv( csv &csv1 );
+      QString       errormsg;
+      US_Saxs_Util  *usu;
 
    private slots:
       
@@ -209,6 +222,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_paste_new();
       void csv_merge();
       void csv_reseq();
+      void csv_check();
+      void csv_find_alt();
       void csv_visualize();
       void csv_sel_clear();
       void csv_sel_clean();
@@ -229,6 +244,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_paste_new();
       void csv2_merge();
       void csv2_reseq();
+      void csv2_check();
+      void csv2_find_alt();
       void csv2_visualize();
       void csv2_sel_clear();
       void csv2_sel_clean();

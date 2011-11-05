@@ -385,6 +385,208 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
    }
 }
 
+bool US_Saxs_Util::read_pdb( QStringList &qsl )
+{
+   errormsg = "";
+   noticemsg = "";
+
+   if ( misc_pb_rule_on )
+   {
+      residue_list = save_residue_list;
+   }
+   else
+   {
+      residue_list = save_residue_list_no_pbr;
+   }
+
+   QString str;
+   QString str1;
+   QString str2;
+   QString temp;
+   model_vector.clear();
+   bead_model.clear();
+   QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
+   PDB_chain temp_chain;
+   struct PDB_model temp_model;
+   bool chain_flag = false;
+   bool model_flag = false;
+   temp_model.molecule.clear();
+   temp_model.residue.clear();
+   clear_temp_chain(&temp_chain);
+   bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
+   bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
+
+   last_pdb_header.clear();
+   last_pdb_title .clear();
+   last_pdb_filename = "FromQStringList";
+
+   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   {
+      str1 = qsl[ i ];
+      if ( str1.left(3) == "TER" )
+      {
+         // push back previous chain if it exists
+         if ( chain_flag )
+         {
+            temp_model.molecule.push_back(temp_chain);
+            clear_temp_chain(&temp_chain);
+            chain_flag = true;
+         }
+      }
+      if ( str1.left(6) == "HEADER" ||
+           str1.left(5) == "TITLE" )
+      {
+         
+         QString tmp_str = str1.mid(10,62);
+         tmp_str.replace(QRegExp("\\s+")," ");
+         if ( str1.left(5) == "TITLE" )
+         {
+            last_pdb_title << tmp_str;
+         } else {
+            last_pdb_header << tmp_str;
+         }
+      }
+      if (str1.left(5) == "MODEL" ||
+          (str1.left(4) == "ATOM" && last_was_ENDMDL) ) // we have a new model in a multi-model file
+      {
+         last_was_ENDMDL = false;
+         model_flag = true; // we are using model descriptions (possibly multiple models)
+         str2 = str1.mid(6, 15);
+         temp_model.model_id = str2.toUInt();
+         chain_flag = false; // we are starting a new molecule
+         temp_model.molecule.clear();
+         temp_model.residue.clear();
+         clear_temp_chain(&temp_chain);
+      }
+      if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
+      {
+         last_was_ENDMDL = true;
+         temp_model.molecule.push_back(temp_chain); // add the last chain of this model
+         // noticemsg += "Residue sequence from model " +
+         // QString("%1").arg( model_vector.size() + 1 ) + ": \n";
+         str = "";
+         
+         // the residue list is wrong if there are unknown residues
+         for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
+         {
+            QString lastResSeq = "";
+            for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
+            {
+               if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
+               {
+                  str += temp_model.molecule[i].atom[j].resName + " ";
+                  lastResSeq = temp_model.molecule[i].atom[j].resSeq;
+               }
+            }
+         }
+         // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+         // {
+         //   str += temp_model.residue[m].name + " ";
+         // }
+         // noticemsg += str + "\n";
+         
+         // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
+         calc_vbar(&temp_model); // update the calculated vbar for this model
+         model_vector.push_back(temp_model); // save the model in the model vector.
+         clear_temp_chain(&temp_chain); // we are done with this molecule and can delete it
+      }
+      
+      if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
+      {
+         if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
+            str1.mid(17,3) != "HOH")
+         {                  
+            if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
+            {
+               if (str1.mid(16,1) == "A")
+               {
+                  noticemsg += QString("Atom %1 conformation A selected\n").arg(str1.mid(6,5));
+               }
+               if (!chain_flag)    // at the first time we encounter the word ATOM
+               {             // we don't have a chain yet, so let's start a new one
+                  temp_chain.chainID = str1.mid(21, 1);
+                  str2 = str1.mid(72, 4);
+                  temp_chain.segID = str2.stripWhiteSpace();
+                  chain_flag = true;
+               }
+               else // we have a chain, let's make sure the chain is still the same
+               {
+                  bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
+                  QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                  bool known_residue = ( multi_residue_map.count(thisResName) );
+                  bool this_is_aa =  ( known_residue &&
+                                       residue_list[multi_residue_map[thisResName][0]].type == 0 );
+                  if ( !break_chain  && 
+                       currently_aa_chain &&
+                       known_residue &&
+                       !this_is_aa )
+                  {
+                     break_chain = true;
+                  } 
+                  if ( break_chain )
+                  {
+                     if ( temp_chain.atom.size() ) 
+                     {
+                        temp_model.molecule.push_back(temp_chain);
+                     }
+                     clear_temp_chain(&temp_chain);
+                     temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
+                     str2 = str1.mid(72, 4);
+                     temp_chain.segID = str2.stripWhiteSpace();
+                  }
+                  currently_aa_chain = (!known_residue || this_is_aa);
+               }
+               if (assign_atom(str1, &temp_chain, &last_resSeq)) // parse the current line and add it to temp_chain
+               { // if true, we have new residue and need to add it to the residue vector
+                  temp_model.residue.push_back(current_residue); // add the next residue of this model
+               }
+            }
+         }
+      }
+   }
+   if(!model_flag)   // there were no model definitions, just a single molecule,
+   {                  // we still need to save the results
+      temp_model.molecule.push_back(temp_chain);
+      noticemsg += "Residue sequence:";
+      str = "";
+      // the residue list is wrong if there are unknown residues
+      for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
+      {
+         QString lastResSeq = "";
+         for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
+         {
+            if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
+            {
+               str += temp_model.molecule[i].atom[j].resName + " ";
+               lastResSeq = temp_model.molecule[i].atom[j].resSeq;
+            }
+         }
+      }
+      // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+      // {
+      //   str += temp_model.residue[m].name + " ";
+      // }
+      noticemsg += str;
+      temp_model.model_id = 1;
+      // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
+      calc_vbar(&temp_model); // update the calculated vbar for this model
+      model_vector.push_back(temp_model);
+      clear_temp_chain(&temp_chain);
+   }
+   for (unsigned int i=0; i<model_vector.size(); i++)
+   {
+      str1.sprintf("Model: %d", model_vector[i].model_id);
+   }
+   if ( !dna_rna_resolve() )
+   {
+      return false;
+   }
+   model_vector_as_loaded = model_vector;
+   // cout << list_chainIDs(model_vector);
+   // cout << list_chainIDs(model_vector_as_loaded);
+   return true;
+}
+
 bool US_Saxs_Util::read_pdb( QString filename )
 {
    errormsg = "";

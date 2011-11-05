@@ -68,6 +68,8 @@ class US_EXTERN US_Saxs_Util
 {
    public:
 
+      friend class US_Hydrodyn_Pdb_Tool;
+
       US_Saxs_Util();
 
       void   clear      ();
@@ -739,6 +741,7 @@ class US_EXTERN US_Saxs_Util
       void calc_bead_mw( residue *res );
       void calc_vbar( PDB_model *);
       bool read_pdb( QString filename );
+      bool read_pdb( QStringList &qsl );
       bool dna_rna_resolve();
       bool assign_atom( const QString &str1, PDB_chain *temp_chain, QString *last_resSeq );
       void clear_temp_chain( PDB_chain *temp_chain );
