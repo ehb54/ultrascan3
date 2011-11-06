@@ -923,11 +923,14 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
    temp_atom.altLoc = str1.mid(16, 1);
 
    str2 = str1.mid(17, 3);
+   temp_atom.orgResName = str2;
    temp_atom.resName = str2.stripWhiteSpace();
 
    temp_atom.chainID = str1.mid(20, 2).stripWhiteSpace();
+   temp_atom.orgChainID = str1.mid(21, 1);
 
    temp_atom.resSeq = str1.mid(22, 5);
+   temp_atom.orgResSeq = str1.mid(22, 4);
    temp_atom.resSeq.replace(QRegExp(" *"),"");
    if ( temp_atom.resSeq == *last_resSeq )
    {

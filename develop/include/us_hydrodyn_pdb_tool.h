@@ -194,9 +194,12 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       US_Hydrodyn_Pdb_Tool_Merge   *pdb_tool_merge_window;
       bool          pdb_tool_merge_widget;
 
-      QString       check_csv( csv &csv1 );
+      QString       check_csv              ( csv &csv1, vector < QString > &error_keys );
+      QString       check_csv_for_alt      ( csv &csv1, QStringList &alt_residues );
       QString       errormsg;
       US_Saxs_Util  *usu;
+
+      void          select_these           ( QListView *lv, vector < QString > &error_keys );
 
    private slots:
       

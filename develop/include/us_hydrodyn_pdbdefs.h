@@ -57,8 +57,11 @@ struct PDB_atom
    QString orgName;
    QString altLoc;
    QString resName;
+   QString orgResName;
    QString chainID;
+   QString orgChainID;
    QString resSeq;
+   QString orgResSeq;
    QString iCode;
    point coordinate;
    float occupancy;

@@ -2952,12 +2952,19 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
    use_residue.clear();
    skip_residue.clear();
 
+   map < QString, QString > chains;
+   map < QString, QString > resseqs;
+   map < QString, QString > resnames;
+
    // pass 1 setup molecule basic maps
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
       for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
       {
          QString idx = QString("%1|%2").arg(j).arg(model->molecule[j].atom[k].resSeq);
+         chains[ idx ] = model->molecule[j].atom[k].orgChainID;
+         resseqs[ idx ] = model->molecule[j].atom[k].orgResSeq;
+         resnames[ idx ] = model->molecule[j].atom[k].orgResName;
          molecules_residues_atoms[idx].push_back(model->molecule[j].atom[k].name);
          if ( !molecules_residue_name.count(idx) )
          {
@@ -3016,6 +3023,7 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
                   error_msg += QString("%1coded atom %2. ")
                      .arg(any ? "Duplicate " : "Non-")
                      .arg(molecules_residues_atoms[idx][k]);
+                  residue_errors[ chains[ idx ] + "~" + resnames[ idx ] + " " + resseqs[ idx ] ] = true;
                }
             }
             // now check for missing atoms
@@ -3066,6 +3074,7 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
          molecules_residue_missing_counts[idx].push_back(-1);
          molecules_residue_min_missing[idx] = -1;
          unknown_residues[resName] = true;
+         residue_errors[ chains[ idx ] + "~" + resnames[ idx ] + " " + resseqs[ idx ] ] = true;
       }
       {
          int k = molecules_residue_min_missing[idx];
@@ -3096,9 +3105,16 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
 
 bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
 {
+   QStringList qsl;
+   return check_for_missing_atoms( model, qsl );
+}
+
+bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
+{
    // go through molecules, build vector of residues
    // expand vector of residues to atom list from residue file
    // compare expanded list of residues to model ... list missing atoms missing
+   residue_errors.clear();
    int errors_found = 0;
    get_atom_map(model);
 
@@ -3107,9 +3123,17 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
    {
       misc_pb_rule_on = false;
       cout << "Notice: Broken chain turns off Peptide Bond Rule.\n";
-      if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+      if ( qsl.size() )
       {
-         return false;
+         if ( !read_pdb( qsl ) )
+         {
+            return false;
+         }
+      } else {
+         if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+         {
+            return false;
+         }
       }
       get_atom_map( model );
    }
@@ -3135,6 +3159,10 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
+      QString lastOrgResSeq = "";
+      QString lastOrgResName = "";
+      QString lastOrgChainID = "";
+
       QString lastResSeq = "";
       int lastResPos = -1;
       QString lastChainID = " ";
@@ -3257,6 +3285,10 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                                  .arg(residue_list[lastResPos].name)
                                  .arg(lastResSeq);
                               QString idx = QString("%1|%2").arg(j).arg(lastResSeq);
+                              residue_errors[ lastOrgChainID + "~" + 
+                                              lastOrgResName
+                                              + " " +
+                                              lastOrgResSeq ] = true;
                               switch (molecules_residue_errors[idx].size())
                               {
                               case 0: 
@@ -3294,6 +3326,9 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                   lastChainID = this_atom->chainID;
                   lastResPos = (int) m;
                   last_count_idx = count_idx;
+                  lastOrgResSeq  = this_atom->orgResSeq;
+                  lastOrgChainID = this_atom->orgChainID;
+                  lastOrgResName = this_atom->orgResName;
                }
 
                if (residue_list[m].name == "N1")
@@ -3315,6 +3350,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
             {
                QString msg_tag;
                bool do_error_msg = true;
+               residue_errors[ this_atom->orgChainID + "~" + this_atom->orgResName + " " + this_atom->orgResSeq ] = true;
                if (control_parameters[ "pdbmissingresidues" ].toUInt() == 0 &&
                    control_parameters[ "pdbmissingatoms" ].toUInt() == 0)
                {
@@ -3476,6 +3512,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
             }
             if (atompos == -1)
             {
+               residue_errors[ this_atom->orgChainID + "~" + this_atom->orgResName + " " + this_atom->orgResSeq ] = true;
                errors_found++;
                // valid residue, but non-coded atom
                switch ( control_parameters[ "pdbmissingatoms" ].toUInt() )
@@ -3561,6 +3598,10 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
             if ( !residue_list[lastResPos].r_atom[l].tmp_flag &&
                  !(misc_pb_rule_on && residues_found == 1 && N1s_placed == 1) )
             {
+               residue_errors[ lastOrgChainID + "~" + 
+                               lastOrgResName
+                               + " " +
+                               lastOrgResSeq ] = true;
                errors_found++;
                QString count_idx =
                   QString("%1|%2|%3")
@@ -3653,6 +3694,10 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
             QString lastResSeq = "";
             QString lastResName = "";
 
+            QString lastOrgResSeq = "";
+            QString lastOrgResName = "";
+            QString lastOrgChainID = "";
+            
             bool auto_bb_aa = false;             // are we doing special amino acid handling?
             map < QString, int > aa_main_chain;  // to make sure we have a good main chain
             int current_bead_assignment = 0;
@@ -3680,6 +3725,10 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                      lastResSeq = org_model.molecule[j].atom[k].resSeq;
                      lastResName = org_model.molecule[j].atom[k].resName;
                      model->residue.push_back(residue_list[multi_residue_map[lastResName][0]]);
+
+                     lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
+                     lastOrgChainID = org_model.molecule[j].atom[k].orgChainID;
+                     lastOrgResName = org_model.molecule[j].atom[k].orgResName;
                   }
                   break;
                case 2:
@@ -3719,8 +3768,11 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                            aa_main_chain["C"] = 0;
                            aa_main_chain["O"] = 0;
                         }
-                        lastResSeq = org_model.molecule[j].atom[k].resSeq;
-                        lastResName = org_model.molecule[j].atom[k].resName;
+                        lastResSeq     = org_model.molecule[j].atom[k].resSeq;
+                        lastResName    = org_model.molecule[j].atom[k].resName;
+                        lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
+                        lastOrgChainID = org_model.molecule[j].atom[k].orgChainID;
+                        lastOrgResName = org_model.molecule[j].atom[k].orgResName;
                         // this is a new unknown residue
                         // each instance of the residue gets a unique name, so we don't have
                         // to worry about duplicates and alternate duplicates
@@ -3760,6 +3812,9 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
+                        lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
+                        lastOrgChainID = org_model.molecule[j].atom[k].orgChainID;
+                        lastOrgResName = org_model.molecule[j].atom[k].orgResName;
                      }
                      else
                      {
@@ -3882,6 +3937,9 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                         current_bead_assignment = 0;
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;
+                        lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
+                        lastOrgChainID = org_model.molecule[j].atom[k].orgChainID;
+                        lastOrgResName = org_model.molecule[j].atom[k].orgResName;
                         // setup how many atoms are missing from each bead
                         vector < int > beads_missing_atom_count;
                         printf("orgrespos %d\n", orgrespos);
@@ -4161,6 +4219,9 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model )
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
+                        lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
+                        lastOrgChainID = org_model.molecule[j].atom[k].orgChainID;
+                        lastOrgResName = org_model.molecule[j].atom[k].orgResName;
                      }
                      else
                      {

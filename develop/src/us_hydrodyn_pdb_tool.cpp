@@ -837,8 +837,8 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
       lbl_csv->setText( csv1.name );
    }
 
-   cout << "before cut:\n";
-   cout << list_keys( csv_undos[ csv_undos.size() - 1 ] );
+   // cout << "before cut:\n";
+   // cout << list_keys( csv_undos[ csv_undos.size() - 1 ] );
 
    QListViewItemIterator it( lv_csv );
    while ( it.current() ) 
@@ -851,9 +851,9 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
    }
    selection_since_count_csv1 = true;
    update_enables();
-   cout << "after cut:\n";
+   // cout << "after cut:\n";
    csv tmp_csv = to_csv( lv_csv, csv1, false );
-   cout << list_keys( tmp_csv );
+   // cout << list_keys( tmp_csv );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_copy()
@@ -1059,7 +1059,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_visualize()
 
 void US_Hydrodyn_Pdb_Tool::adjust_wheel( double pos )
 {
-   cout << QString("wheel %1\n").arg(pos);
+   // cout << QString("wheel %1\n").arg(pos);
    csv2_redisplay( (unsigned int) pos );
 }
 
@@ -2440,10 +2440,10 @@ bool US_Hydrodyn_Pdb_Tool::no_dup_keys( csv &csv1, csv &csv2 )
 
 csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
 {
-   cout << "csv1 keys:\n";
-   cout << list_keys( csv1 );
-   cout << "csv2 keys:\n";
-   cout << list_keys( csv2 );
+   // cout << "csv1 keys:\n";
+   // cout << list_keys( csv1 );
+   // cout << "csv2 keys:\n";
+   // cout << list_keys( csv2 );
 
    // insert csv2 into csv1 at 
    // if ( !no_dup_keys( csv1, csv2 ) )
@@ -2458,10 +2458,10 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
    
    // first merge data
 
-   cout << QString( "current item key <%1> merged.key.count() %2\n" )
-      .arg( merged.current_item_key )
-      .arg( merged.key.count( merged.current_item_key ) )
-      ;
+   // cout << QString( "current item key <%1> merged.key.count() %2\n" )
+   // .arg( merged.current_item_key )
+   // .arg( merged.key.count( merged.current_item_key ) )
+   // ;
 
    merged.current_item_key = key_to_bottom_key( merged );
 
@@ -2471,7 +2471,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
         !merged.key.count( merged.current_item_key ) )
    {
       // paste at end
-      cout << "paste at end\n";
+      // cout << "paste at end\n";
       for ( unsigned int i = 0; i < csv2.data.size(); i++ )
       {
          if ( merged.key.count( data_to_key( csv2.data[ i ] ) ) )
@@ -2489,7 +2489,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
          }
       }
    } else {
-      cout << "paste inbetween\n";
+      // cout << "paste inbetween\n";
       unsigned int insert_after = merged.key[ merged.current_item_key ] + 1;
       merged.data    .resize( insert_after );
       merged.visible .resize( insert_after );
@@ -2536,8 +2536,8 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
       }
    }
 
-   cout << "after_merge keys:\n";
-   cout << list_keys( merged );
+   // cout << "after_merge keys:\n";
+   // cout << list_keys( merged );
    if ( !dups_msg.isEmpty() )
    {
       editor_msg( "red", dups_msg );
@@ -2956,35 +2956,230 @@ void US_Hydrodyn_Pdb_Tool::csv_check()
 {
    csv_msg( "black", tr( "Checking structure against residue file" ) );
    csv tmp_csv = to_csv( lv_csv, csv1, any_selected( lv_csv ) );
-   csv_msg( "dark blue", check_csv( tmp_csv ) );
+   vector < QString > error_keys;
+   csv_msg( "dark blue", check_csv( tmp_csv, error_keys ) );
    if ( !errormsg.isEmpty() )
    {
       csv_msg( "red", errormsg );
    }
    csv_msg( "black", tr( "Finished checking structure" ) );
+   if ( error_keys.size() )
+   {
+      select_these( lv_csv, error_keys );
+      selection_since_count_csv1 = true;
+   }
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::select_these( QListView *lv, vector < QString > &error_keys )
+{
+   lv->selectAll( false );
+   map < QString, bool > error_map;
+   for ( unsigned int i = 0; i < error_keys.size(); i++ )
+   {
+      error_map[ error_keys[ i ] ] = true;
+      // cout << QString( "error map <%1>\n" ).arg( error_keys[ i ] );
+   }
+
+   {
+      QListViewItemIterator it( lv );
+      while ( it.current() ) 
+      {
+         QListViewItem *item = it.current();
+         
+         if ( error_map.count( key( item ) ) )
+         {
+            // cout << QString( "selecting <%1>\n" ).arg( item->text( 0 ) );
+            item->setSelected( true  );
+            item->setVisible ( true  );
+            item->setOpen    ( false );
+            // open parents
+            {
+               QListViewItem *p = item;
+               while ( ( p = p->parent() ) )
+               {
+                  p->setOpen( true );
+               }
+            }
+         } else {
+            // cout << QString( "NOT selecting <%1>\n" ).arg( item->text( 0 ) );
+         }
+         ++it;
+      }
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_find_alt()
 {
+   csv tmp_csv = to_csv( lv_csv, csv1, true );
+   if ( !tmp_csv.data.size() )
+   {
+      return;
+   }
+   QStringList alt_residues;
+   check_csv_for_alt( tmp_csv, alt_residues );
+   if ( !alt_residues.size() )
+   {
+      csv_msg( "red" , tr( "No matching residues found" ) );
+      return;
+   }
+   cout << QString( "compare: <%1> <%2>\n" ).arg( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() ).arg( alt_residues[ 0 ] );
+   if ( alt_residues.size() == 1 &&
+        tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() != alt_residues[ 0 ] )
+   {
+      if ( !QMessageBox::question(
+                                  this,
+                                  tr( "US-SOMO: PDB Editor" ),
+                                  tr( "One matching residue was found\n"
+                                      "Do you want to change it in the loaded pdb?" ),
+                                  tr( "&Yes" ),
+                                  tr( "&No" ),
+                                  QString::null, 0, 1 ) )
+      {
+         cout << "fix it\n";
+      }
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_check()
 {
    csv2_msg( "black", tr( "Checking structure against residue file" ) );
    csv tmp_csv = to_csv( lv_csv2, csv2[ csv2_pos ], any_selected( lv_csv2 ) );
-   csv2_msg( "dark blue", check_csv( tmp_csv ) );
+   vector < QString > error_keys;
+   csv2_msg( "dark blue", check_csv( tmp_csv, error_keys ) );
    if ( !errormsg.isEmpty() )
    {
       csv2_msg( "red", errormsg );
    }
    csv2_msg( "black", tr( "Finished checking structure" ) );
+   if ( error_keys.size() )
+   {
+      select_these( lv_csv2, error_keys );
+      selection_since_count_csv2 = true;
+   }
+   update_enables_csv2();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
 {
+   csv tmp_csv = to_csv( lv_csv2, csv2[ csv2_pos ], true );
+   if ( !tmp_csv.data.size() )
+   {
+      return;
+   }
+   QStringList alt_residues;
+   check_csv_for_alt( tmp_csv, alt_residues );
+   if ( !alt_residues.size() )
+   {
+      csv2_msg( "red" , tr( "No matching residues found" ) );
+      return;
+   }
+   csv2_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( "\n" ) );
+   cout << QString( "compare: <%1> <%2>\n" ).arg( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() ).arg( alt_residues[ 0 ] );
+   if ( alt_residues.size() == 1 &&
+        tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() != alt_residues[ 0 ] )
+   {
+      if ( !QMessageBox::question(
+                                  this,
+                                  tr( "US-SOMO: PDB Editor" ),
+                                  tr( "One matching residue was found\n"
+                                      "Do you want to change it in the loaded pdb?" ),
+                                  tr( "&Yes" ),
+                                  tr( "&No" ),
+                                  QString::null, 0, 1 ) )
+      {
+         cout << "fix it\n";
+      }
+   }
 }
 
-QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1 )
+QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_residues )
+{
+   alt_residues.clear();
+   if ( !usu->select_residue_file( ((US_Hydrodyn *)us_hydrodyn)->residue_filename ) )
+   {
+      errormsg = usu->errormsg;
+      return "";
+   }
+   // try each residue name:
+   QRegExp rx_skip(
+                   "^("
+                   "NPBR-OXT|"
+                   "OXT-P|"
+                   "PBR-G|"
+                   "PBR-N|"
+                   "PBR-NO-OXT|"
+                   "PBR-OXT|"
+                   "PBR-P"
+                   ")$" );
+                   
+
+   map < QString, bool > residue_names;
+   for ( unsigned int i = 0; i < usu->residue_list.size(); i++ )
+   {
+      if ( rx_skip.search( usu->residue_list[ i ].name ) == -1 )
+      {
+         residue_names[ usu->residue_list[ i ].name ] = true;
+         // cout << QString( "residue_list: %1 %2\n" ).arg( i ).arg( usu->residue_list[ i ].name );
+      }
+   }
+
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      if ( csv1.data[ i ].size() < 3 )
+      {
+         editor_msg( "red", tr( "Internal error: unexpected data length" ) );
+         return "";
+      }
+   }
+
+   usu->control_parameters[ "pdbmissingatoms" ] = "0";
+   usu->control_parameters[ "pdbmissingresidues" ] = "0";
+
+   vector < QString > error_keys;
+
+   for ( map < QString, bool >::iterator it = residue_names.begin();
+         it != residue_names.end();
+         it++ )
+   {
+      csv tmp_csv = csv1;
+      // cout << QString( "trying residue %1\n" ).arg( it->first );
+      for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+      {
+         tmp_csv.data[ i ][ 2 ] = it->first;
+      }
+      // now check it 
+
+      QStringList qsl = csv_to_pdb_qsl( tmp_csv );
+      // cout << QString( "read pdb qsl size %1\n" ).arg( qsl.size() );
+
+      if ( !usu->read_pdb( qsl ) )
+      {
+         // cout << "can't read qsl: errormsg:" << usu->errormsg << endl;
+         // errormsg = usu->errormsg;
+         continue;
+      }
+      // cout << "read pdb:\n";
+      // cout << usu->noticemsg << endl;
+      // cout << QString( "model vector size %1\n" ).arg( usu->model_vector.size() );
+
+      error_keys.clear();
+      
+      for ( unsigned int i = 0; i < usu->model_vector.size(); i++ )
+      {
+         usu->errormsg = "";
+         if ( usu->check_for_missing_atoms( &usu->model_vector[ i ], qsl ) 
+              && usu->errormsg.isEmpty() )
+         {
+            alt_residues << it->first;
+         }         
+      }
+   }
+   // cout << "alt residues:" << alt_residues.join( " " ) << endl;
+   return "";
+}
+
+QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_keys )
 {
    errormsg = "";
    QString qs;
@@ -2996,32 +3191,61 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1 )
 
    // if this is a very large pdb, it should probably go to a disk file
    QStringList qsl = csv_to_pdb_qsl( csv1 );
-   cout << QString( "read pdb qsl size %1\n" ).arg( qsl.size() );
+   // cout << QString( "read pdb qsl size %1\n" ).arg( qsl.size() );
    
    if ( !usu->read_pdb( qsl ) )
    {
       errormsg = usu->errormsg;
       return "";
    }
-   cout << "read pdb:\n";
-   cout << usu->noticemsg << endl;
-   cout << QString( "model vector size %1\n" ).arg( usu->model_vector.size() );
+   // cout << "read pdb:\n";
+   // cout << usu->noticemsg << endl;
+   // cout << QString( "model vector size %1\n" ).arg( usu->model_vector.size() );
 
    errormsg += usu->noticemsg;
 
    usu->control_parameters[ "pdbmissingatoms" ] = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms );
    usu->control_parameters[ "pdbmissingresidues" ] = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues );
 
+   error_keys.clear();
+
    for ( unsigned int i = 0; i < usu->model_vector.size(); i++ )
    {
-      if ( !usu->check_for_missing_atoms( &usu->model_vector[ i ] ) )
+      if ( !usu->check_for_missing_atoms( &usu->model_vector[ i ], qsl ) )
       {
          errormsg += QString( tr( "Model %1: Errors with your PDB structure %2\n" ) )
             .arg( i + 1 ).arg( usu->errormsg );
       } else {
          qs += QString( tr( "Model %1: ok\n" ) ).arg( i + 1 );
       }         
+      for ( map < QString, bool >::iterator it = usu->residue_errors.begin();
+            it != usu->residue_errors.end();
+            it++ )
+      {
+         // cout << "residue error key: " << it->first << endl;
+         error_keys.push_back( QString( "%1~%2" ).arg( i + 1 ).arg( it->first ) );
+      }
    }
 
+   // for ( unsigned int i = 0; i < error_keys.size(); i++ )
+   // {
+   // cout << "error key:" << error_keys[ i ] << endl;
+   // }
+   if ( error_keys.size() )
+   {
+      if ( QMessageBox::question(
+                                  this,
+                                  tr( "US-SOMO: PDB Editor" ),
+                                  tr( "Errors were found\n"
+                                      "Do you want to select the residues with errors?" ),
+                                  tr( "&Yes" ),
+                                  tr( "&No" ),
+                                  QString::null, 0, 1 ) )
+      {
+         // cout << "clearing error keys\n";
+         error_keys.clear();
+      }
+   }
+      
    return qs;
 }

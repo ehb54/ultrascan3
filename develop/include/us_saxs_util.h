@@ -819,6 +819,8 @@ class US_EXTERN US_Saxs_Util
       //                                  maps molecule #|resSeq to pos of entry with minimum missing count
       QString last_abb_msgs; // automatic bead builder message log
       vector < PDB_atom * >               active_atoms;
+      map < QString, bool >               residue_errors;         // maps pdb_tool style csv keys
+      map < QString, bool >               global_residue_errors;  // chain indepdendent
 
       vector < QString >                  saxs_inputfile_for_csv;
       vector < unsigned int >             saxs_model_for_csv;
@@ -908,6 +910,7 @@ class US_EXTERN US_Saxs_Util
       bool         compute_to_hydrate_dihedrals();
       void         build_to_hydrate();
       bool         pdb_asa_for_saxs_hydrate();
+      bool         check_for_missing_atoms( PDB_model *model, QStringList &qsl );
       bool         check_for_missing_atoms( PDB_model *model );
       void         get_atom_map( PDB_model *model );
       // various parameters to get bead stuff working
