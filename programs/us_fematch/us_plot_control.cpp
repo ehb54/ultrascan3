@@ -197,7 +197,10 @@ void US_PlotControl::do_3dplot()
 // public slot to return a pointer to the 3D plot data widget
 QGLWidget* US_PlotControl::data_3dplot( void )
 {
-   plot3_btn();
+   if ( plot3d_w == 0 )
+      return (QGLWidget*)0;
+
+   //plot3_btn();
 
    return plot3d_w->dataWidgetP();
 }
@@ -321,6 +324,7 @@ void US_PlotControl::plot3_btn()
    int typex = dimensionType( xCheck );
    int typey = dimensionType( yCheck );
    int typez = 1;
+//qDebug() << "PC: p3btn type x,y" << typex << typey;
 
    if ( plot3d_w == 0 )
    {

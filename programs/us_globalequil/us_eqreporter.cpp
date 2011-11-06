@@ -800,7 +800,7 @@ DbgLv(1) << "  EqRep:FITREP: nfruns" << runfit.nbr_runs;
    if ( wrreport )
    {
       filename = US_Settings::reportDir() + "/" + dataList[ 0 ].runID
-         + "/globeq." + runfit.projname + ".fit.rpt";
+         + "/globeq." + runfit.projname + ".eqfit.rpt";
       QFile drf( filename );
 
       if ( ! drf.open( QIODevice::WriteOnly | QIODevice::Text ) )

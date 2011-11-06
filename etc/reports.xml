@@ -11,10 +11,6 @@
     label="2-D Spectrum Analysis with Molec. Weight constraints" />
     <application name="2dsa-mw-mc"
     label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
-    <application name="fem_2dsa"
-    label="Finite Element Match to 2-D Spectrum Analysis" />
-    <application name="fem_ga"
-    label="Finite Element Match to Genetic Algorithm" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="ga" label="Genetic Algorithm Analysis" />
@@ -53,6 +49,7 @@
     <report name="2ndmoment" label="Second Moment" />
     <report name="diagnostics" label="Scan Diagnostics" />
     <report name="scan_check" label="Scan Fit Check" />
-    <report name="fit" label="Equilibrium Fit Analysis" />
-    <report name="equilfit" label="Equilibrium Fit Analysis" />
+    <report name="fitmen" label="Fit Meniscus Results" />
+    <report name="fit" label="Fit Meniscus Results" />
+    <report name="eqfit" label="Equilibrium Fit Analysis" />
 </US_Reports>
