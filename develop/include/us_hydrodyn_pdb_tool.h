@@ -201,6 +201,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void          select_these           ( QListView *lv, vector < QString > &error_keys );
 
+      void          replace_selected_residues ( QListView *lv, csv &csv_use, QString from, QString to );
+
    private slots:
       
       void setupGUI();

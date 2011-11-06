@@ -3023,22 +3023,75 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
       csv_msg( "red" , tr( "No matching residues found" ) );
       return;
    }
-   cout << QString( "compare: <%1> <%2>\n" ).arg( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() ).arg( alt_residues[ 0 ] );
-   if ( alt_residues.size() == 1 &&
-        tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() != alt_residues[ 0 ] )
+   csv_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( " " ) );
+   
+   bool self_included = false;
+   unsigned int self_pos;
+
+   QStringList alt_residues_no_self;
+   for ( unsigned int i = 0; i < alt_residues.size(); i++ )
    {
-      if ( !QMessageBox::question(
-                                  this,
-                                  tr( "US-SOMO: PDB Editor" ),
-                                  tr( "One matching residue was found\n"
-                                      "Do you want to change it in the loaded pdb?" ),
-                                  tr( "&Yes" ),
-                                  tr( "&No" ),
-                                  QString::null, 0, 1 ) )
+      if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
-         cout << "fix it\n";
+         self_included = true;
+         self_pos = i;
+      } else {
+         alt_residues_no_self << alt_residues[ i ];
       }
    }
+
+   if ( self_included && alt_residues.size() == 1 )
+   {
+      QMessageBox::information(
+                               this,
+                               tr( "US-SOMO: PDB Editor" ),
+                               tr( "The only matching residue is the one already set" ),
+                               QMessageBox::Ok );
+      return;
+   } 
+
+   if ( self_included )
+   {
+      if ( QMessageBox::question(
+                                 this,
+                                 tr( "US-SOMO: PDB Editor" ),
+                                 tr ( QString( "The current residue is ok, but there %1\n"
+                                               "Do you want to change the residue in the loaded pdb?" ) 
+                                      .arg( alt_residues.size() > 2 ? "are alternatives" : "is an alternative" ) ),
+                                 tr( "&Yes" ),
+                                 tr( "&No" ),
+                                 QString::null, 0, 1 ) )
+      {
+         return;
+      } else {
+         if ( alt_residues.size() == 2 )
+         {
+            csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
+            csv_msg( "black", QString( tr( "Residue %1 replaced with %2" ) ).arg( tmp_csv.data[ 0 ][ 2 ] ).arg( alt_residues_no_self[ 0 ] ) );
+            replace_selected_residues( lv_csv, csv1, tmp_csv.data[ 0 ][ 2 ], alt_residues_no_self[ 0 ] );
+            update_enables_csv();
+            return;
+         }
+      } 
+   }
+
+   bool ok;
+   QString res = QInputDialog::getItem(
+                                       tr( "US-SOMO: PDB Editor" ),
+                                       tr( "Select a replacement residue\n"
+                                           "or press Cancel\n" ),
+                                       alt_residues_no_self, 
+                                       0, 
+                                       TRUE,
+                                       &ok,
+                                       this );
+   if ( ok ) {
+      csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
+      replace_selected_residues( lv_csv, csv1, tmp_csv.data[ 0 ][ 2 ], res );
+      csv_msg( "black", QString( tr( "Residue %1 replaced with %2" ) ).arg( tmp_csv.data[ 0 ][ 2 ] ).arg( res ) );
+   }
+
+   update_enables_csv();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_check()
@@ -3074,23 +3127,150 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
       csv2_msg( "red" , tr( "No matching residues found" ) );
       return;
    }
-   csv2_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( "\n" ) );
-   cout << QString( "compare: <%1> <%2>\n" ).arg( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() ).arg( alt_residues[ 0 ] );
-   if ( alt_residues.size() == 1 &&
-        tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() != alt_residues[ 0 ] )
+   csv2_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( " " ) );
+   
+   bool self_included = false;
+   unsigned int self_pos;
+
+   QStringList alt_residues_no_self;
+   for ( unsigned int i = 0; i < alt_residues.size(); i++ )
    {
-      if ( !QMessageBox::question(
-                                  this,
-                                  tr( "US-SOMO: PDB Editor" ),
-                                  tr( "One matching residue was found\n"
-                                      "Do you want to change it in the loaded pdb?" ),
-                                  tr( "&Yes" ),
-                                  tr( "&No" ),
-                                  QString::null, 0, 1 ) )
+      if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
-         cout << "fix it\n";
+         self_included = true;
+         self_pos = i;
+      } else {
+         alt_residues_no_self << alt_residues[ i ];
       }
    }
+
+   if ( self_included && alt_residues.size() == 1 )
+   {
+      QMessageBox::information(
+                               this,
+                               tr( "US-SOMO: PDB Editor" ),
+                               tr( "The only matching residue is the one already set" ),
+                               QMessageBox::Ok );
+      return;
+   } 
+
+   if ( self_included )
+   {
+      if ( QMessageBox::question(
+                                 this,
+                                 tr( "US-SOMO: PDB Editor" ),
+                                 tr ( QString( "The current residue is ok, but there %1\n"
+                                               "Do you want to change the residue in the loaded pdb?" ) 
+                                      .arg( alt_residues.size() > 2 ? "are alternatives" : "is an alternative" ) ),
+                                 tr( "&Yes" ),
+                                 tr( "&No" ),
+                                 QString::null, 0, 1 ) )
+      {
+         return;
+      } else {
+         if ( alt_residues.size() == 2 )
+         {
+            csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
+            replace_selected_residues( lv_csv2, csv2[ csv2_pos ], tmp_csv.data[ 0 ][ 2 ], alt_residues_no_self[ 0 ] );
+            csv2_msg( "black", QString( tr( "Residue %1 replaced with %2" ) ).arg( tmp_csv.data[ 0 ][ 2 ] ).arg( alt_residues_no_self[ 0 ] ) );
+            update_enables_csv2();
+            return;
+         }
+      } 
+   }
+
+   bool ok;
+   QString res = QInputDialog::getItem(
+                                       tr( "US-SOMO: PDB Editor" ),
+                                       tr( "Select a replacement residue\n"
+                                           "or press Cancel\n" ),
+                                       alt_residues_no_self, 
+                                       0, 
+                                       TRUE,
+                                       &ok,
+                                       this );
+   if ( ok ) {
+      csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
+      replace_selected_residues( lv_csv2, csv2[ csv2_pos ], tmp_csv.data[ 0 ][ 2 ], res );
+      csv2_msg( "black", QString( tr( "Residue %1 replaced with %2" ) ).arg( tmp_csv.data[ 0 ][ 2 ] ).arg( res ) );
+   }
+
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QListView *lv, csv &csv_use, QString from, QString to )
+{
+   QListViewItemIterator it( lv );
+   while ( from.length() < 3 )
+   {
+      from += " ";
+   }
+   while ( to.length() < 3 )
+   {
+      to += " ";
+   }
+
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( item->isSelected() &&
+           // this  makes sure we are a residue
+           item->depth() == 2 )
+      {
+         map < QListViewItem *, QString > previous_keys;
+
+         if ( item->childCount() )
+         {
+            QListViewItem *myChild = item->firstChild();
+            while ( myChild )
+            {
+               previous_keys[ myChild ] = key( myChild );
+               myChild = myChild->nextSibling();
+            }
+         }
+
+         QString org_key = key( item );
+         item->setText( 0, 
+                        QString( "%1" )
+                        .arg( item->text( 0 ) )
+                        .replace( QRegExp( QString( "^%1" ).arg( from ) ), to ) 
+                        );
+         if ( csv_use.nd_key.count( org_key ) )
+         {
+            csv_use.nd_key[ key( item ) ] = csv_use.nd_key[ org_key ];
+            csv_use.nd_key.erase( org_key );
+         } 
+
+         if ( item->childCount() )
+         {
+            QListViewItem *myChild = item->firstChild();
+            while ( myChild )
+            {
+               if ( csv_use.key.count( previous_keys[ myChild ] ) )
+               {
+                  if ( csv_use.data[ csv_use.key[ previous_keys[ myChild ] ] ].size() < 3 )
+                  {
+                     editor_msg( "red", QString( tr( "Internal error: insufficient data for %1" ) )
+                                 .arg( previous_keys[ myChild ] ) );
+                  } else {
+                     csv_use.data[ csv_use.key[ previous_keys[ myChild ] ] ][ 2 ] = to;
+                  }
+                  csv_use.key[ key( myChild ) ] = csv_use.key[ previous_keys[ myChild ] ];
+                  csv_use.key.erase( previous_keys[ myChild ] );
+               } else {
+                  cout << QString( "child org key:<%1> new_key:<%2>\n" ).arg( previous_keys[ myChild ] )
+                     .arg( key( myChild ) );
+                  editor_msg( "red", tr( "Internal error: expected key match 2" ) );
+               }
+               myChild = myChild->nextSibling();
+            }
+         }
+
+      }
+      ++it;
+   }
+
+   return;
 }
 
 QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_residues )
@@ -3175,7 +3355,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
          }         
       }
    }
-   // cout << "alt residues:" << alt_residues.join( " " ) << endl;
+   cout << "alt residues:" << alt_residues.join( " " ) << endl;
    return "";
 }
 

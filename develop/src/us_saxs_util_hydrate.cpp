@@ -3309,7 +3309,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                                  break;
                               }
                               errormsg += this_error;
-                              cout << QString("dbg 1: idx <%1> msg <%2>\n").arg(last_count_idx).arg(this_error);
+                              // cout << QString("dbg 1: idx <%1> msg <%2>\n").arg(last_count_idx).arg(this_error);
                               error_shown[last_count_idx] = true;
                            }
                         }
@@ -3479,7 +3479,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         break;
                      }
                      errormsg += this_error;
-                     cout << QString("dbg 2: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
+                     // cout << QString("dbg 2: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
                      error_shown[count_idx] = true;
                   }
                }
@@ -3583,7 +3583,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                      break;
                   }
                   errormsg += this_error;
-                  cout << QString("dbg 3: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
+                  // cout << QString("dbg 3: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
                   error_shown[count_idx] = true;
                }
             }
@@ -3654,7 +3654,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                      break;
                   }
                   errormsg += this_error;
-                  cout << QString("dbg 4: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
+                  // cout << QString("dbg 4: idx <%1> msg <%2>\n").arg(count_idx).arg(this_error);
                   error_shown[count_idx] = true;
                }
             }
@@ -3668,8 +3668,8 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
       vector < QString > unknown_aa_residues_to_check; 
       if ( failure_errors > 0 ) 
       {
-         cout << "check for miss atms ( failure errors ):\n";
-         cout << errormsg << endl;
+         // cout << "check for miss atms ( failure errors ):\n";
+         // cout << errormsg << endl;
          return false;
       }
       else 
@@ -4303,7 +4303,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
          }
       }
    }
-   cout << "check for miss atms:\n";
-   cout << errormsg << endl;
+   // cout << "check for miss atms:\n";
+   // cout << errormsg << endl;
    return true;
 }
