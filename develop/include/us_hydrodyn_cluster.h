@@ -59,8 +59,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLabel        *lbl_title;
 
       QLabel        *lbl_target;
-      QPushButton   *pb_set_target;
-      QLineEdit     *le_target_file;
+      QPushButton   *pb_add_target;
+      QPushButton   *pb_clear_target;
+      QListBox      *lb_target_files;
 
       QLabel        *lbl_no_of_jobs;
       QLineEdit     *le_no_of_jobs;
@@ -143,7 +144,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void setupGUI();
    
-      void set_target();
+      void add_target();
+      void clear_target();
 
       void update_output_name( const QString & );
 

@@ -211,13 +211,13 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QString iqq_suffix();
       bool activate_saxs_search_window();
 
-      QString cluster_no_of_jobs;
-      QString cluster_target_datafile;
-      QString cluster_output_name;
-      bool    cluster_for_mpi;
-      bool    cluster_dmd;
-      csv     cluster_csv_advanced;
-      csv     cluster_csv_dmd;
+      QString      cluster_no_of_jobs;
+      QStringList  cluster_target_datafiles;
+      QString      cluster_output_name;
+      bool         cluster_for_mpi;
+      bool         cluster_dmd;
+      csv          cluster_csv_advanced;
+      csv          cluster_csv_dmd;
       
    public :
       void add_file( QString filename );

@@ -143,6 +143,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "deltaq|"
                       "pdballmodels|"
                       "experimentgrid|"
+                      "additionalexperimentgrid|"
                       "inputfile|"
                       "tag|"
                       "output|"
@@ -170,6 +171,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrationfile|"
                       "saxsfile|"
                       "experimentgrid|"
+                      "additionalexperimentgrid|"
                       "dmdsupportfile|"
                       "inputfile)$"
                       );
@@ -203,6 +205,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "endq|"
                       "deltaq|"
                       "experimentgrid|"
+                      "additionalexperimentgrid|"
                       "inputfile|"
                       "tag|"
                       "output|"
@@ -441,11 +444,18 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "experimentgrid" )
       {
+         experimental_grids.clear();
+         experimental_grids << qsl[ 0 ];
          if ( !set_control_parameters_from_experiment_file( qsl[ 0 ] ) )
          {
             return false;
          }
       }            
+
+      if ( option == "additionalexperimentgrid" )
+      {
+         experimental_grids << qsl[ 0 ];
+      }
 
       if ( option == "inputfile" )
       {
@@ -550,60 +560,44 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "process" )
       {
-         if ( !validate_control_parameters() )
+         if ( experimental_grids.size() < 2 )
          {
-            errormsg = QString( "Error %1 line %2 : %3" )
-               .arg( controlfile )
-               .arg( line )
-               .arg( errormsg );
-            return false;
-         }
-         setup_saxs_options();
-         cout << QString("Grid before run_iqq q(%1:%2) deltaq %3\n")
-            .arg( control_parameters[ "startq" ] )
-            .arg( control_parameters[ "endq" ] )
-            .arg( control_parameters[ "deltaq" ] );
-         if ( output_dmd_pdbs.size() )
-         {
-            QString save_input_file = control_parameters[ "inputfile" ];
-            QString save_output_file = 
-               ( control_parameters.count( "outputfile" ) ?
-                 control_parameters[ "outputfile" ] : "" );
-               
-            for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+            if ( !process_one_iqq() )
             {
-               control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
-               control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();
-               misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
-
-               if ( !read_pdb( control_parameters[ "inputfile" ] ) )
-               {
-                  return false;
-               }
-               if ( !run_iqq() )
-               {
-                  return false;
-               } 
-               if ( !noticemsg.isEmpty() )
-               {
-                  cout << noticemsg;
-               }
-            }
-            control_parameters[ "inputfile" ] = save_input_file;
-            if ( save_output_file.isEmpty() )
-            {
-               control_parameters.erase( "outputfile" );
-            } else {
-               control_parameters[ "outputfile" ] = save_output_file;
+               errormsg = QString( "Error %1 line %2 : %3" )
+                  .arg( controlfile )
+                  .arg( line )
+                  .arg( errormsg );
+               return false;
             }
          } else {
-            if ( !run_iqq() )
+            map < QString, bool > tag_names;
+            for ( unsigned int i = 0; i < experimental_grids.size(); i++ )
             {
-               return false;
-            } 
-            if ( !noticemsg.isEmpty() )
-            {
-               cout << noticemsg;
+               unsigned ext = 0;
+               QString grid_tag_base = "_g" + QFileInfo( experimental_grids[ i ] ).baseName();
+               QString grid_tag = grid_tag_base;
+               while ( tag_names.count( grid_tag ) )
+               {
+                  grid_tag = QString( "%1-%2" ).arg( grid_tag_base ).arg( ++ext );
+               }
+               control_parameters[ "grid_tag" ] = grid_tag;
+               if ( !set_control_parameters_from_experiment_file( experimental_grids[ i ] ) )
+               {
+                  errormsg = QString( "Error %1 line %2 : %3" )
+                     .arg( controlfile )
+                     .arg( line )
+                     .arg( errormsg );
+                  return false;
+               }
+               if ( !process_one_iqq() )
+               {
+                  errormsg = QString( "Error %1 line %2 : %3" )
+                     .arg( controlfile )
+                     .arg( line )
+                     .arg( errormsg );
+                  return false;
+               }
             }
          }
       }
@@ -614,6 +608,63 @@ bool US_Saxs_Util::read_control( QString controlfile )
    return true;
 }
 
+bool US_Saxs_Util::process_one_iqq()
+{
+   if ( !validate_control_parameters() )
+   {
+      return false;
+   }
+   setup_saxs_options();
+   cout << QString("Grid before run_iqq q(%1:%2) deltaq %3\n")
+      .arg( control_parameters[ "startq" ] )
+      .arg( control_parameters[ "endq" ] )
+      .arg( control_parameters[ "deltaq" ] );
+   if ( output_dmd_pdbs.size() )
+   {
+      QString save_input_file = control_parameters[ "inputfile" ];
+      QString save_output_file = 
+         ( control_parameters.count( "outputfile" ) ?
+           control_parameters[ "outputfile" ] : "" );
+      
+      for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+      {
+         control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
+         control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();
+         misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
+         
+         if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+         {
+            return false;
+         }
+         if ( !run_iqq() )
+         {
+            return false;
+         } 
+         if ( !noticemsg.isEmpty() )
+         {
+            cout << noticemsg;
+         }
+      }
+      control_parameters[ "inputfile" ] = save_input_file;
+      if ( save_output_file.isEmpty() )
+      {
+         control_parameters.erase( "outputfile" );
+      } else {
+         control_parameters[ "outputfile" ] = save_output_file;
+      }
+   } else {
+      if ( !run_iqq() )
+      {
+         return false;
+      } 
+      if ( !noticemsg.isEmpty() )
+      {
+         cout << noticemsg;
+      }
+   }
+   return true;
+}
+   
 bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename )
 {
    errormsg = "";
@@ -997,6 +1048,8 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
       saxs_model_for_csv.push_back( model );
       saxs_tag_for_csv.push_back( control_parameters.count( "tag" ) ?
                                   control_parameters[ "tag" ] : "" );
+      saxs_grid_tag_for_csv.push_back( control_parameters.count( "grid_tag" ) ?
+                                       control_parameters[ "grid_tag" ] : "" );
       saxs_method_for_csv.push_back( control_parameters[ "iqmethod" ]  );
       saxs_q_for_csv.push_back( q );
       saxs_I_for_csv.push_back( I );
@@ -1012,6 +1065,7 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
          QString("_%1").arg( model + 1 );
 
       QString fsaxs_part_2_name =
+         ( control_parameters.count( "grid_tag" ) ? control_parameters[ "grid_tag" ] : "" ) +
          ( control_parameters.count( "tag" ) ? control_parameters[ "tag" ] : "" ) +
          iqq_suffix() + "." + 
          control_parameters[ "output" ];
@@ -1067,6 +1121,50 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
 
 bool US_Saxs_Util::flush_output()
 {
+   if ( experimental_grids.size() < 2 )
+   {
+      control_parameters.erase( "this_grid_tag" );
+      if ( !flush_output_one() )
+      {
+         return false;
+      }
+      saxs_inputfile_for_csv.clear();
+      saxs_model_for_csv    .clear();
+      saxs_tag_for_csv      .clear();
+      saxs_grid_tag_for_csv .clear();
+      saxs_method_for_csv   .clear();
+      saxs_q_for_csv        .clear();
+      saxs_I_for_csv        .clear();
+   }
+   map < QString, bool > tag_names;
+   for ( unsigned int i = 0; i < saxs_grid_tag_for_csv.size(); i++ )
+   {
+      tag_names[ saxs_grid_tag_for_csv[ i ] ] = true;
+   }
+
+   for ( map < QString, bool >::iterator it = tag_names.begin();
+         it != tag_names.end();
+         it++ )
+   {
+      control_parameters[ "this_grid_tag" ] = it->first;
+      if ( !flush_output_one() )
+      {
+         return false;
+      }
+   }
+   saxs_inputfile_for_csv.clear();
+   saxs_model_for_csv    .clear();
+   saxs_tag_for_csv      .clear();
+   saxs_grid_tag_for_csv .clear();
+   saxs_method_for_csv   .clear();
+   saxs_q_for_csv        .clear();
+   saxs_I_for_csv        .clear();
+   control_parameters.erase( "this_grid_tag" );
+   return true;
+}
+   
+bool US_Saxs_Util::flush_output_one()
+{
    cout << "flush output\n";
    if ( saxs_inputfile_for_csv.size() &&
         control_parameters.count( "output" ) &&
@@ -1077,12 +1175,17 @@ bool US_Saxs_Util::flush_output()
       bool external_programs_included = false;
       for ( unsigned int i = 0; i < saxs_method_for_csv.size(); i++ )
       {
+         if ( control_parameters.count( "this_grid_tag" ) &&
+              saxs_grid_tag_for_csv[ i ] != control_parameters[ "this_grid_tag" ] )
+         {
+            continue;
+         }
          if ( saxs_method_for_csv[ i ] == "crysol" ||
               saxs_method_for_csv[ i ] == "foxs" )
          {
             external_programs_included = true;
          }
-         if (  methods_used.count( saxs_method_for_csv[ i ] ) )
+         if ( methods_used.count( saxs_method_for_csv[ i ] ) )
          {
             methods_used[ saxs_method_for_csv[ i ] ]++;
             multi_models_per_method = true;
@@ -1107,6 +1210,11 @@ bool US_Saxs_Util::flush_output()
       {
          for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
          {
+            if ( control_parameters.count( "this_grid_tag" ) &&
+                 saxs_grid_tag_for_csv[ i ] != control_parameters[ "this_grid_tag" ] )
+            {
+               continue;
+            }
             if ( it->first == "mm" ||
                  it->first == saxs_method_for_csv[ i ] )
             {
@@ -1162,7 +1270,10 @@ bool US_Saxs_Util::flush_output()
             QString fname_part_2 = 
                ( method_q_pieces[ it->first ].size() > 1 ?
                  QString( "_mg%1" ).arg( ++method_piece_pos[ it->first ] ) : "" ) +
-               "_" + it->first + "_iqq" + ".csv";
+               ( control_parameters.count( "this_grid_tag" ) ? 
+                 control_parameters[ "this_grid_tag" ] : "" ) +
+               "_" + it->first +
+               "_iqq" + ".csv";
             
             QString fname;
             do {
@@ -1180,59 +1291,77 @@ bool US_Saxs_Util::flush_output()
                }
             } while ( QFile::exists( fname ) );
 
-            write_output_count++;
-            
-            FILE *of = fopen(fname, "wb");
-            if ( of )
+            bool any_for_this = false;
+            for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
             {
-               output_files << fname;
-               QString header = QString("")
-                  .sprintf(
-                           "Simulated SAXS data generated by US_SOMO %s"
-                           , US_Version.ascii()
-                           );
-               
-               bool q_data_added = false;
-               for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
+               if ( ( it->first == "mm" ||
+                      it->first == saxs_method_for_csv[ i ] ) &&
+                    it2->first == saxs_q_for_csv[ i ] )
                {
-                  if ( ( it->first == "mm" ||
-                         it->first == saxs_method_for_csv[ i ] ) &&
-                       it2->first == saxs_q_for_csv[ i ] )
+                  if ( control_parameters.count( "this_grid_tag" ) &&
+                       saxs_grid_tag_for_csv[ i ] != control_parameters[ "this_grid_tag" ] )
                   {
-                     if ( !q_data_added )
-                     {
-                        fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-                                vector_double_to_csv( saxs_q_for_csv[ i ] ).ascii(),
-                                header.ascii());
-                        q_data_added = true;
-                     }
-                     QString name = QString("%1 Model %2 %3 %4")
-                        .arg( saxs_inputfile_for_csv[ i ] )
-                        .arg( saxs_model_for_csv[ i ] )
-                        .arg( saxs_tag_for_csv[ i ] )
-                        .arg( saxs_method_for_csv[ i ] );
-                     
-                     fprintf(of, "\"%s\",\"%s\",%s\n", 
-                             name.ascii(),
-                             "I(q)",
-                             vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+                     continue;
                   }
-               }            
-               fclose( of );
-               noticemsg += QString("file %1 written\n").arg( fname );
-            } else {
-               errormsg = QString("Error: could not open %1 for writing").arg( fname );
-               return false;
+                  any_for_this = true;
+               }
+            }
+
+            if ( any_for_this )
+            {
+               write_output_count++;
+            
+               FILE *of = fopen(fname, "wb");
+               if ( of )
+               {
+                  output_files << fname;
+                  QString header = QString("")
+                     .sprintf(
+                              "Simulated SAXS data generated by US_SOMO %s"
+                              , US_Version.ascii()
+                              );
+                  
+                  bool q_data_added = false;
+                  for ( unsigned int i = 0; i < saxs_inputfile_for_csv.size(); i++ )
+                  {
+                     if ( control_parameters.count( "this_grid_tag" ) &&
+                          saxs_grid_tag_for_csv[ i ] != control_parameters[ "this_grid_tag" ] )
+                     {
+                        continue;
+                     }
+                     
+                     if ( ( it->first == "mm" ||
+                            it->first == saxs_method_for_csv[ i ] ) &&
+                          it2->first == saxs_q_for_csv[ i ] )
+                     {
+                        if ( !q_data_added )
+                        {
+                           fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
+                                   vector_double_to_csv( saxs_q_for_csv[ i ] ).ascii(),
+                                   header.ascii());
+                           q_data_added = true;
+                        }
+                        QString name = QString("%1 Model %2 %3 %4")
+                           .arg( saxs_inputfile_for_csv[ i ] )
+                           .arg( saxs_model_for_csv[ i ] )
+                           .arg( saxs_tag_for_csv[ i ] )
+                           .arg( saxs_method_for_csv[ i ] );
+                        
+                        fprintf(of, "\"%s\",\"%s\",%s\n", 
+                                name.ascii(),
+                                "I(q)",
+                                vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+                     }
+                  }            
+                  fclose( of );
+                  noticemsg += QString("file %1 written\n").arg( fname );
+               } else {
+                  errormsg = QString("Error: could not open %1 for writing").arg( fname );
+                  return false;
+               }
             }
          }
       }
-      
-      saxs_inputfile_for_csv.clear();
-      saxs_model_for_csv    .clear();
-      saxs_tag_for_csv      .clear();
-      saxs_method_for_csv   .clear();
-      saxs_q_for_csv        .clear();
-      saxs_I_for_csv        .clear();
    }
    return true;
 }

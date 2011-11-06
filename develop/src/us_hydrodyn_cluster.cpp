@@ -44,17 +44,18 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
 
    setupGUI();
 
-   pb_set_target->setEnabled( create_enabled );
-   le_no_of_jobs->setEnabled( create_enabled );
+   pb_add_target  ->setEnabled( create_enabled && batch_window->cb_iqq->isChecked() );
+   pb_clear_target->setEnabled( create_enabled && batch_window->cb_iqq->isChecked() );
+   le_no_of_jobs  ->setEnabled( create_enabled );
    if ( batch_window->cluster_no_of_jobs.toUInt() &&
         batch_window->cluster_no_of_jobs.toUInt() <= selected_files.size() )
    {
       le_no_of_jobs->setText( batch_window->cluster_no_of_jobs );
    }
-   le_target_file    ->setText   ( batch_window->cluster_target_datafile );
-   le_output_name    ->setText   ( batch_window->cluster_output_name.isEmpty() ?
-                                   "job" : batch_window->cluster_output_name );
-   cb_for_mpi        ->setChecked( batch_window->cluster_for_mpi );
+   lb_target_files   ->insertStringList  ( batch_window->cluster_target_datafiles );
+   le_output_name    ->setText           ( batch_window->cluster_output_name.isEmpty() ?
+                                           "job" : batch_window->cluster_output_name );
+   cb_for_mpi        ->setChecked        ( batch_window->cluster_for_mpi );
    csv_advanced = batch_window->cluster_csv_advanced;
    csv_dmd      = batch_window->cluster_csv_dmd;
    if ( cb_for_mpi->isChecked() )
@@ -66,13 +67,6 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    pb_create_pkg ->setEnabled( create_enabled );
    cb_for_mpi    ->setEnabled( create_enabled );
    pb_dmd        ->setEnabled( batch_window->cb_dmd->isChecked() );
-
-   if ( !create_enabled )
-   {
-      editor_msg( "dark red", tr( "Notice: you must have files selected in batch model\n"
-                                  "and only Compute I(q) or Run DMD selected to create a job.\n"
-                                  "Future updates will provide additional functionality." ) );
-   }
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir dir1( pkg_dir );
@@ -168,6 +162,13 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    } else {
       update_enables();
    }
+
+   if ( !create_enabled )
+   {
+      editor_msg( "dark red", tr( "Notice: you must have files selected in batch model\n"
+                                  "and only Compute I(q) or Run DMD selected to create a job.\n"
+                                  "Future updates will provide additional functionality." ) );
+   }
 }
 
 US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
@@ -197,19 +198,23 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_create_pkg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create_pkg, SIGNAL(clicked()), SLOT(create_pkg()));
 
-   pb_set_target = new QPushButton(tr("Set experimental data file"), this);
-   pb_set_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_set_target->setMinimumHeight(minHeight1);
-   pb_set_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_set_target, SIGNAL(clicked()), SLOT(set_target()));
+   pb_add_target = new QPushButton(tr("Add experimental data files"), this);
+   pb_add_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_add_target->setMinimumHeight(minHeight1);
+   pb_add_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_add_target, SIGNAL(clicked()), SLOT(add_target()));
 
-   le_target_file = new QLineEdit(this, "csv_filename Line Edit");
-   le_target_file->setText( "" );
-   le_target_file->setReadOnly( true );
-   le_target_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_target_file->setMinimumWidth(150);
-   le_target_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_target_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_clear_target = new QPushButton(tr("Clear experimental data files"), this);
+   pb_clear_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_target->setMinimumHeight(minHeight1);
+   pb_clear_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear_target, SIGNAL(clicked()), SLOT(clear_target()));
+
+   lb_target_files = new QListBox(this, "target files listbox" );
+   lb_target_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lb_target_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   lb_target_files->setEnabled(false);
+   lb_target_files->setMinimumHeight( minHeight1 * 2 );
 
    lbl_no_of_jobs = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
    lbl_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -317,14 +322,11 @@ void US_Hydrodyn_Cluster::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // build layout
-   QHBoxLayout *hbl_target = new QHBoxLayout( 0 );
-   hbl_target->addSpacing( 4 );
-   hbl_target->addWidget ( lbl_target );
-   hbl_target->addSpacing( 4);
-   hbl_target->addWidget ( pb_set_target );
-   hbl_target->addSpacing( 4 );
-   hbl_target->addWidget ( le_target_file );
-   hbl_target->addSpacing( 4 );
+   QGridLayout *gl_target = new QGridLayout( 0 );
+   gl_target->addMultiCellWidget( lbl_target      , 0, 1, 0, 0 );
+   gl_target->addWidget         ( pb_add_target   , 0, 1 );
+   gl_target->addWidget         ( pb_clear_target , 1, 1 );
+   gl_target->addMultiCellWidget( lb_target_files , 0, 1, 2, 2 );
 
    QHBoxLayout *hbl_no_of_jobs = new QHBoxLayout( 0 );
    hbl_no_of_jobs->addSpacing( 4 );
@@ -378,7 +380,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    background->addSpacing( 4);
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_target );
+   background->addLayout ( gl_target );
    background->addSpacing( 4 );
    background->addLayout ( hbl_no_of_jobs );
    background->addSpacing( 4 );
@@ -408,34 +410,60 @@ void US_Hydrodyn_Cluster::help()
 
 void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
 {
-   batch_window->cluster_no_of_jobs      = le_no_of_jobs->text();
-   batch_window->cluster_target_datafile = le_target_file->text();
-   batch_window->cluster_output_name     = le_output_name->text();
-   batch_window->cluster_for_mpi         = cb_for_mpi->isChecked();
-   batch_window->cluster_csv_advanced    = csv_advanced;
-   batch_window->cluster_csv_dmd         = csv_dmd;
+   batch_window->cluster_no_of_jobs       = le_no_of_jobs->text();
+   QStringList target_files;
+   for ( int i = 0; i < lb_target_files->numRows(); i++ )
+   {
+      target_files << lb_target_files->text( i );
+   }
+   batch_window->cluster_target_datafiles = target_files;
+   batch_window->cluster_output_name      = le_output_name->text();
+   batch_window->cluster_for_mpi          = cb_for_mpi->isChecked();
+   batch_window->cluster_csv_advanced     = csv_advanced;
+   batch_window->cluster_csv_dmd          = csv_dmd;
 
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
 }
 
-void US_Hydrodyn_Cluster::set_target()
+void US_Hydrodyn_Cluster::clear_target()
 {
-   QString filename = QFileDialog::getOpenFileName(
-                                                   ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs",
+   lb_target_files->clear();
+}
+
+void US_Hydrodyn_Cluster::add_target()
+{
+   map < QString, bool > existing_items;
+   for ( int i = 0; i < lb_target_files->numRows(); i++ )
+   {
+      existing_items[ lb_target_files->text( i ) ] = true;
+   }
+
+   QStringList filenames = QFileDialog::getOpenFileNames(
                                                    "All files (*);;"
                                                    "ssaxs files (*.ssaxs);;"
                                                    "csv files (*.csv);;"
                                                    "int files [crysol] (*.int);;"
                                                    "dat files [foxs / other] (*.dat);;"
                                                    "fit files [crysol] (*.fit);;"
+                                                   , ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs"
                                                    , this
                                                    , "open file dialog"
-                                                   , "Set file for grid target"
+                                                   , "Set files for grid target"
                                                    );
 
-   le_target_file->setText( filename );
+   QStringList add_filenames;
+
+   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   {
+      if ( !existing_items.count( filenames[ i ] ) )
+      {
+         add_filenames << filenames[ i ];
+      }
+   }
+
+   lb_target_files->insertStringList( add_filenames );
 }
 
 void US_Hydrodyn_Cluster::create_pkg()
@@ -643,11 +671,17 @@ void US_Hydrodyn_Cluster::create_pkg()
    base += 
       QString( "AsaCalculation        %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.calculation ? 1 : 0 );
 
-   if ( !le_target_file->text().isEmpty() )
+   if ( lb_target_files->numRows() )
    {
       base += 
-         QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( le_target_file->text() ).fileName() );
-      base_source_files << le_target_file->text();
+         QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( 0 ) ).fileName() );
+      base_source_files << lb_target_files->text( 0 );
+      for ( int i = 1; i < lb_target_files->numRows(); i++ )
+      {
+         base += 
+            QString( "AdditionalExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( i ) ).fileName() );
+         base_source_files << lb_target_files->text( i );
+      }
    } else {
       base += 
          QString( "StartQ          %1\n" ).arg( our_saxs_options->start_q );
