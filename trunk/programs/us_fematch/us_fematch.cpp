@@ -785,12 +785,56 @@ DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
 
 // save the report and image data
 void US_FeMatch::save_data( void )
-{ 
+{
+   if ( eplotcd == 0  ||  eplotcd->data_3dplot() == 0 )
+   {  // if no 3d plot control up,  ask what user wants for 3d plot save
+      if ( eplotcd == 0 )
+         eplotcd = new US_PlotControl( this, &model );
+      eplotcd->move( epd_pos );
+      eplotcd->show();
+      eplotcd->do_3dplot();
+
+      QMessageBox mBox;
+      mBox.addButton( tr( "Save" ), QMessageBox::RejectRole );
+      QPushButton* bSkip = mBox.addButton( tr( "Skip" ),
+            QMessageBox::NoRole );
+      QPushButton* bEdit = mBox.addButton( tr( "Edit" ),
+            QMessageBox::YesRole    );
+      mBox.setDefaultButton( bEdit );
+      mBox.setWindowTitle  ( tr( "3D Plot Save?" ) );
+      mBox.setTextFormat   ( Qt::RichText );
+      mBox.setText         ( tr(
+         "You selected Save Data without a 3D Plot already displayed.<br>"
+         "Do you want a 3D Plot to be saved with the other reports?<ul>"
+         "<li><b>Save</b> to include the 3D Plot in the report (AS IS);</li>"
+         "<li><b>Skip</b> to exclude the 3D Plot from report saves;</li>"
+         "<li><b>Edit</b> to abort save for now so that you can edit<br>"
+         "the 3D Plot and re-select Save Data when ready.</li></ul>" ) );
+      mBox.setIcon         ( QMessageBox::Information );
+
+      mBox.exec();
+
+      if ( mBox.clickedButton() == bEdit )
+      {
+         QMessageBox::information( this, tr( "Edit 3D Plot" ),
+            tr( "You may now edit the 3D Plot.\n"
+                "When it is ready, re-select 'Save Data'" ) );
+         eplotcd->do_3dplot();
+         return;
+      }
+
+      else if ( mBox.clickedButton() == bSkip )
+      {
+         eplotcd->close();
+         eplotcd = NULL;
+      }
+   }
+
    QStringList files;
    int drow = lw_triples->currentRow();
    mkdir( US_Settings::reportDir(), edata->runID );
    QString tripnode = QString( triples.at( drow ) ).replace( " / ", "" );
-   QString basename = US_Settings::reportDir() + "/" + edata->runID + "/fem_"
+   QString basename = US_Settings::reportDir() + "/" + edata->runID + "/"
       + text_model( model, 0 ) + "." + tripnode + ".";
    QString htmlFile = basename + "report.html";
    QFile rep_f( htmlFile );
@@ -860,8 +904,11 @@ void US_FeMatch::save_data( void )
    distrib_plot_resids();
 
    // save 3-d plot
-   write_plot( img10File, NULL );
-   files << img10File;
+   if ( eplotcd != 0 )
+   {
+      write_plot( img10File, NULL );
+      files << img10File;
+   }
 
    // save residual bitmap
    write_plot( img11File, NULL );
@@ -2438,9 +2485,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
          eplotcd = new US_PlotControl( this, &model );
          eplotcd->move( epd_pos );
          eplotcd->show();
+         eplotcd->do_3dplot();
       }
-
-      eplotcd->do_3dplot();
 
       QGLWidget* dataw = eplotcd->data_3dplot();
 

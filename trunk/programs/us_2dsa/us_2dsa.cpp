@@ -605,15 +605,17 @@ void US_2dsa::save( void )
 //rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
 //DbgLv(1) << "  Post-sum tno rno" << tino << rino;
 
-   QString filebase  = reppath + "/" + runID + "/"
+   reppath           = reppath + "/" + runID + "/";
+   respath           = respath + "/" + runID + "/";
+   QString filebase  = reppath
                     + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )
                     + dext + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
-   QString fitFile   = filebase + "fit.dat";
-   QString fresFile  = respath + "/" + runID + "/2dsa-fm" + dext2 + ".fit.dat";
+   QString fitFile   = filebase + "fitmen.dat";
+   QString fresFile  = respath + "2dsa-fm" + dext2 + ".fitmen.dat";
 
    // Write HTML report file
    QFile rep_f( htmlFile );
