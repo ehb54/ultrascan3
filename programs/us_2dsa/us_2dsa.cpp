@@ -389,7 +389,7 @@ void US_2dsa::view( void )
    if ( te_results == NULL )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 700, 600 );
+      te_results->resize( 740, 700 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -832,6 +832,10 @@ QString US_2dsa::distrib_info()
    double sum_s   = 0.0;
    double sum_D   = 0.0;
    double sum_c   = 0.0;
+   double mink    = 1e+99;
+   double maxk    = -1e+99;
+   double minv    = 1e+99;
+   double maxv    = -1e+99;
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
@@ -840,7 +844,14 @@ QString US_2dsa::distrib_info()
       sum_mw     += model.components[ ii ].mw * conc;
       sum_s      += model.components[ ii ].s  * conc;
       sum_D      += model.components[ ii ].D  * conc;
+      mink        = qMin( mink, model.components[ ii ].f_f0   );
+      maxk        = qMax( maxk, model.components[ ii ].f_f0   );
+      minv        = qMin( minv, model.components[ ii ].vbar20 );
+      maxv        = qMax( maxv, model.components[ ii ].vbar20 );
    }
+
+   bool cnstvb    = ( ( maxk - mink ) / qAbs( maxk )
+                    > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
                       QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
@@ -850,23 +861,70 @@ QString US_2dsa::distrib_info()
                       QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString().sprintf( "%6.4e", sum_c ) );
+
+   if ( cnstvb )
+      mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
+                         QString().number( maxv ) );
+   else
+      mstr += table_row( tr( "Constant f/f0:" ),
+                         QString().number( maxk ) );
+
    mstr += indent( 4 ) + "</table>\n\n";
 
    mstr += indent( 4 ) + tr( "<h3>Distribution Information:</h3>\n" )
       + indent( 4 ) + "<table>\n";
-   mstr += table_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
-                      tr( "f / f0" ), tr( "Concentration" ) );
+
+   if ( cnstvb )
+      mstr += table_row( tr( "Molecular Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),        tr( "D Apparent" ),
+                         tr( "D 20,W" ),        tr( "f / f0" ),
+                         tr( "Concentration" ) );
+   else
+      mstr += table_row( tr( "Molecular Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),        tr( "D Apparent" ),
+                         tr( "D 20,W" ),        tr( "Vbar20" ),
+                         tr( "Concentration" ) );
+
+   int    drow     = lw_triples->currentRow();
+   edata           = &dataList[ drow ];
+   double avTemp   = edata->average_temperature();
+   double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
+   double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
+   US_Math2::SolutionData sd;
+   sd.density      = density;
+   sd.viscosity    = viscosity;
+   sd.vbar20       = vbar20;
+   sd.vbar         = vbartb;
+   US_Math2::data_correction( avTemp, sd );
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
       double conc = model.components[ ii ].signal_concentration;
       double perc = 100.0 * conc / sum_c;
+      double s_ap = model.components[ ii ].s;
+      double D_ap = model.components[ ii ].D;
+      double f_f0 = model.components[ ii ].f_f0;
+
+      if ( !cnstvb )
+      {
+         vbar20      = model.components[ ii ].vbar20;
+         f_f0        = vbar20;
+         sd.vbar20   = vbar20;
+         sd.vbar     = US_Math2::adjust_vbar( vbar20, avTemp );
+         US_Math2::data_correction( avTemp, sd );
+      }
+
+      s_ap       /= sd.s20w_correction;
+      D_ap       /= sd.D20w_correction;
+
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw   ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s    ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D    ),
-            QString().sprintf( "%10.4e", model.components[ ii ].f_f0 ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
+            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
+            QString().sprintf( "%10.4e", s_ap                      ),
+            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
+            QString().sprintf( "%10.4e", D_ap                      ),
+            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
+            QString().sprintf( "%10.4e", f_f0                      ),
+            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";

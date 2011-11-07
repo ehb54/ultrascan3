@@ -4,6 +4,7 @@
 #include "us_plot_control.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_constants.h"
 
 #include <qwt_legend.h>
 
@@ -179,6 +180,15 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    lb_sedcoeff ->adjustSize();
    ct_zscalefac->setMinimumWidth( lb_sedcoeff->width() );
    adjustSize();
+
+   int kk = model->components.size() - 1;
+
+   if ( model->components[ 0 ].vbar20 != model->components[ kk ].vbar20 )
+   {  // Vbar varies, so change "f/f0" to "Vbar"
+      ck_xfra->setText( "x=vb" );
+      ck_yfra->setText( "y=vb" );
+      lb_fricratio->setText( tr( "Vbar at 20" ) + DEGC + ":" );
+   }
 }
 
 // mw x box checked
@@ -331,6 +341,10 @@ int US_PlotControl::dimensionType( QVector< QCheckBox* >& xycheck )
       if ( xycheck[ ii ]->isChecked() )
       {
          dimType = ii + 1;
+
+         if ( xycheck[ ii ]->text().contains( "=vb" ) )
+            dimType++;
+
          break;
       }
    }
