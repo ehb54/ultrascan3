@@ -40,6 +40,8 @@
     <report name="D_vs_mw" label="D-vs-mw 2-d Model" />
     <report name="ff0_vs_s" label="f/f0-vs-s 2-d Model" />
     <report name="ff0_vs_mw" label="f/f0-vs-mw 2-d Model" />
+    <report name="vbar_vs_s" label="vbar-vs-s 2-d Model" />
+    <report name="vbar_vs_mw" label="vbar-vs-mw 2-d Model" />
     <report name="x-to-radius" label="G*(s)-to-radius" />
     <report name="x-to-S" label="G*(s)-to-s" />
     <report name="average-S" label="average-G*(s)-to-s" />

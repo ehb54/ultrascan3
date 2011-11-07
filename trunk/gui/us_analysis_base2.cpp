@@ -1001,6 +1001,17 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
             + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
 }
 
+// Table row HTML with 7 columns
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
+                                     const QString& s3, const QString& s4, 
+                                     const QString& s5, const QString& s6, 
+                                     const QString& s7 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+}
+
 // Compose HTML header string
 QString US_AnalysisBase2::html_header( const QString& title,
       const QString& head1, US_DataIO2::EditedData* edata ) const

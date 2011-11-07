@@ -865,6 +865,13 @@ void US_FeMatch::save_data( void )
    QString img12File = basename + "tinoise"    + svgext;
    QString img13File = basename + "rinoise"    + svgext;
 
+   if ( !cnstvb )
+   {
+      img06File.replace( "ff0", "vbar" );
+      img07File.replace( "ff0", "vbar" );
+   }
+DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
+
    // save image files from main window
    write_plot( img01File, data_plot2 );
    files << img01File;
@@ -885,19 +892,19 @@ void US_FeMatch::save_data( void )
    write_plot( img05File, data_plot1 );
    files << img05File;
 
-   distrib_plot_2d(    3 );
+   distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
    write_plot( img06File, data_plot1 );
    files << img06File;
 
-   distrib_plot_2d(    4 );
+   distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
    write_plot( img07File, data_plot1 );
    files << img07File;
 
-   distrib_plot_2d(    5 );
+   distrib_plot_2d(    7 );
    write_plot( img08File, data_plot1 );
    files << img08File;
 
-   distrib_plot_2d(    6 );
+   distrib_plot_2d(    8 );
    write_plot( img09File, data_plot1 );
    files << img09File;
 
@@ -972,7 +979,7 @@ void US_FeMatch::view_report( )
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
    editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 600, 700 );
+   editd->resize( 740, 700 );
    editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() ) );
    editd->e->setHtml( mtext );
@@ -1053,6 +1060,8 @@ void US_FeMatch::distrib_type( )
       "D20,w distribution",
       "f_f0 vs s20,w",
       "f_f0 vs MW",
+      "vbar vs s20,w",
+      "vbar vs MW",
       "D20,w vs s20,w",
       "D20,w vs MW",
       "Residuals"
@@ -1077,6 +1086,8 @@ void US_FeMatch::distrib_type( )
    // set push button text to next type
    int ii  = itype + 1;
    ii      = ( ii == ndptyp ) ? 0 : ii;
+   ii      = (  cnstvb && ii == 5 ) ? 7 : ii;
+   ii      = ( !cnstvb && ii == 3 ) ? 5 : ii;
    pb_distrib->setText( QString( dptyp[ ii ] ) );
  
    switch( itype )
@@ -1088,11 +1099,13 @@ void US_FeMatch::distrib_type( )
          break;
       case 3:     // f_f0 vs s20,w
       case 4:     // f_f0 vs MW
-      case 5:     // D20,w vs s20,w
-      case 6:     // D20,w vs MW
+      case 5:     // vbar vs s20,w
+      case 6:     // vbar vs MW
+      case 7:     // D20,w vs s20,w
+      case 8:     // D20,w vs MW
          distrib_plot_2d(    itype );  // 2-d plot
          break;
-      case 7:     // Residuals
+      case 9:     // Residuals
          distrib_plot_resids();        // residuals plot
          break;
    }
@@ -1104,7 +1117,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
       + edata->cell + " (" + edata->wavelength + " nm)";
    QString xatitle;
-   QString yatitle = tr( "Relative Concentration" );
+   QString yatitle = tr( "Rel. Concentr." );
 
    if ( type == 0 )
    {
@@ -1211,15 +1224,29 @@ void US_FeMatch::distrib_plot_2d( int type )
 
    else if ( type == 5 )
    {
-      pltitle = pltitle + tr( "\nDiff. Coeff. vs Sed. Coeff." );
-      yatitle = tr( "Diffusion Coefficent D20,W" );
+      pltitle = pltitle + tr( "\nVbar vs Sed. Coeff." );
+      yatitle = tr( "Vbar at 20" ) + DEGC;
       xatitle = tr( "Sedimentation Coefficient s20,W" );
    }
 
    else if ( type == 6 )
    {
+      pltitle = pltitle + tr( "\nVbar vs Mol. Weight" );
+      yatitle = tr( "Vbar at 20" ) + DEGC;
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   else if ( type == 7 )
+   {
+      pltitle = pltitle + tr( "\nDiff. Coeff. vs Sed. Coeff." );
+      yatitle = tr( "Diff. Coeff. D20,W" );
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 8 )
+   {
       pltitle = pltitle + tr( "\nDiff. Coeff. vs Molecular Weight" );
-      yatitle = tr( "Diffusion Coefficent D20,W" );
+      yatitle = tr( "Diff. Coeff. D20,W" );
       xatitle = tr( "Molecular Weight" );
    }
 
@@ -1251,8 +1278,11 @@ void US_FeMatch::distrib_plot_2d( int type )
    {
       xval     = ( ( type & 1 ) == 1 ) ? model_loaded.components[ jj ].s :
                                          model_loaded.components[ jj ].mw;
-      yval     = ( type < 5          ) ? model_loaded.components[ jj ].f_f0 :
-                                         model_loaded.components[ jj ].D;
+
+      if ( type < 5 )             yval = model_loaded.components[ jj ].f_f0;
+      else if ( type < 7 )        yval = model_loaded.components[ jj ].vbar20;
+      else                        yval = model_loaded.components[ jj ].D;
+
       xx[ jj ] = xval;
       yy[ jj ] = yval;
       xmin     = min( xval, xmin );
@@ -1500,23 +1530,33 @@ void US_FeMatch::adjust_model()
 
    double scorrec  = 1.0 / solution.s20w_correction;
    double dcorrec  = 1.0 / solution.D20w_correction;
+   double mink     = 1e+99;
+   double maxk     = -1e+99;
+   double minv     = 1e+99;
+   double maxv     = -1e+99;
 
    // fill out components values and adjust s,D based on buffer
 
    for ( int jj = 0; jj < model.components.size(); jj++ )
    {
       US_Model::SimulationComponent* sc = &model.components[ jj ];
-double s0_k = sc->f_f0;
+      double s0_k = sc->f_f0;
 double s0_s = sc->s;
 double s0_D = sc->D;
 double s0_w = sc->mw;
-double s0_b = sc->vbar20;
 
-      sc->vbar20  = vbar20;
+      if ( sc->vbar20 == 0.0 )
+         sc->vbar20  = vbar20;
+
+      double s0_b = sc->vbar20;
       sc->mw      = 0.0;
       sc->f       = 0.0;
-      //sc->f_f0    = 0.0;
       sc->D       = 0.0;
+
+      mink        = qMin( mink, s0_k );
+      maxk        = qMax( maxk, s0_k );
+      minv        = qMin( minv, s0_b );
+      maxv        = qMax( maxv, s0_b );
 
       model.calc_coefficients( *sc );
 if ( jj < 2 ) {
@@ -1550,6 +1590,10 @@ double s2_b = sc->vbar20;
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
    }
+
+   // Set constant-vbar flag
+   cnstvb         = ( ( maxk - mink ) / qAbs( maxk )
+                    > ( maxv - minv ) / qAbs( maxv ) );
 }
 
 // compress and average monte carlo model components
@@ -2191,6 +2235,17 @@ QString US_FeMatch::table_row( const QString& s1, const QString& s2,
             + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
 }
 
+// Table row HTML with 7 columns
+QString US_FeMatch::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4,
+                               const QString& s5, const QString& s6,
+                               const QString& s7 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+}
+
 QString US_FeMatch::html_header( QString title, QString head1,
       US_DataIO2::EditedData* edata )
 {
@@ -2402,6 +2457,10 @@ QString US_FeMatch::distrib_info() const
    double sum_s   = 0.0;
    double sum_D   = 0.0;
    double sum_c   = 0.0;
+   double mink    = 1e+99;
+   double maxk    = -1e+99;
+   double minv    = 1e+99;
+   double maxv    = -1e+99;
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
@@ -2410,6 +2469,10 @@ QString US_FeMatch::distrib_info() const
       sum_mw     += ( model_loaded.components[ ii ].mw * conc );
       sum_s      += ( model_loaded.components[ ii ].s  * conc );
       sum_D      += ( model_loaded.components[ ii ].D  * conc );
+      mink        = qMin( model_loaded.components[ ii ].f_f0,   mink );
+      maxk        = qMax( model_loaded.components[ ii ].f_f0,   maxk );
+      minv        = qMin( model_loaded.components[ ii ].vbar20, minv );
+      maxv        = qMax( model_loaded.components[ ii ].vbar20, maxv );
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
@@ -2420,23 +2483,72 @@ QString US_FeMatch::distrib_info() const
                       QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString().sprintf( "%6.4e", sum_c ) );
+
+   if ( cnstvb )
+      mstr += table_row( tr( "Constant vbar20:" ),
+                         QString::number( minv ) );
+   else
+      mstr += table_row( tr( "Constant f/f0:" ),
+                         QString::number( mink ) );
    mstr += indent( 4 ) + "</table>\n";
 
    mstr += "\n" + indent( 4 ) + tr( "<h3>Distribution Information:</h3>\n" );
    mstr += indent( 4 ) + "<table>\n";
-   mstr += table_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
-                      tr( "f / f0" ), tr( "Concentration" ) );
 
-   for ( int ii = 0; ii < ncomp; ii++ )
-   {
-      double conc = model_loaded.components[ ii ].signal_concentration;
-      double perc = 100.0 * conc / sum_c;
-      mstr       += table_row(
-            QString().sprintf( "%10.4e", model_loaded.components[ ii ].mw   ),
-            QString().sprintf( "%10.4e", model_loaded.components[ ii ].s    ),
-            QString().sprintf( "%10.4e", model_loaded.components[ ii ].D    ),
-            QString().sprintf( "%10.4e", model_loaded.components[ ii ].f_f0 ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
+   if ( cnstvb )
+   {  // Normal constant-vbar distribution
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D Apparent" ),
+                         tr( "D 20,W" ),     tr( "f / f0" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_loaded.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].mw   ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s    ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].s    ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].D    ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].D    ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].f_f0 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   else
+   {  // Constant-f/f0, varying vbar
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D Apparent" ),
+                         tr( "D 20,W" ),     tr( "Vbar20" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_loaded.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].mw     ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].vbar20 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
    }
 
    mstr += indent( 4 ) + "</table>\n";

@@ -727,6 +727,7 @@ bool US_Reporter::write_report()
    if ( !changed )
       return true;
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    load_ok    = false;
 
    // Count checked items:  reports, runs, triples, htmls, plots
@@ -736,6 +737,7 @@ bool US_Reporter::write_report()
    {
       QMessageBox::warning( this, tr( "Select Error" ),
             tr( "No reports have been selected" ) );
+      QApplication::restoreOverrideCursor();
       return false;
    }
 
@@ -758,6 +760,7 @@ bool US_Reporter::write_report()
       {
          QMessageBox::warning( this, tr( "File Error" ),
                tr( "Could not create the directory:\n" ) + pagepath );
+         QApplication::restoreOverrideCursor();
          return false;
       }
    }
@@ -1047,6 +1050,7 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
    write_pdf();                 // Create the PDF version of the web view
 
    changed = false;
+   QApplication::restoreOverrideCursor();
 
    return load_ok;
 }
