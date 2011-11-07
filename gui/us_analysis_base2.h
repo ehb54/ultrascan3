@@ -180,6 +180,12 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
                                   const QString&, const QString&, 
                                   const QString& )                 const;
       
+      //! Returns an html string of a seven column table row.
+      QString      table_row    ( const QString&, const QString&, 
+                                  const QString&, const QString&, 
+                                  const QString&, const QString&, 
+                                  const QString& )                 const;
+      
       //! Calculate the 11 point average of the last point in the current
       //! dataset boundary.  Assumes that there are at least 5 points
       //! available above the boundary.

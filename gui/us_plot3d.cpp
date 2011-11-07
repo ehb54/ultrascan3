@@ -374,6 +374,7 @@ DbgLv(2) << "P3D:sR:  zmin zmax" << zmin << zmax;
    y_norm  = pow( 10.0, (double)powry );
    z_norm  = pow( 10.0, (double)powrz );
 
+
    if ( ( xmax * x_norm ) > 9.99 )
    {
       x_norm  *= 0.1;
@@ -392,6 +393,8 @@ DbgLv(2) << "P3D:sR:  zmin zmax" << zmin << zmax;
       powrz--;
    }
 
+   if ( typex == 6 ) x_norm *= 10.0;
+   if ( typey == 6 ) y_norm *= 10.0;
 //z_norm=1.0;
 //z_norm=2.0/zmax;
 DbgLv(2) << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
@@ -703,6 +706,9 @@ QString US_Plot3D::xyAxisTitle( int type, double sclnorm )
       case 5:
          atitle   = tr( "f/f0" );
          break;
+      case 6:
+         atitle   = tr( "vbar" );
+         break;
    }
 
    if ( sclnorm != 1.0 )
@@ -995,6 +1001,10 @@ double US_Plot3D::comp_value( US_Model::SimulationComponent* sc, int type,
 
       case 5:                         // x,y value is f/f0
          xyval    = sc->f_f0 * normscl;
+         break;
+
+      case 6:                         // x,y value is vbar20
+         xyval    = sc->vbar20 * normscl;
          break;
 
       case -1:                        // z value is signal concentration

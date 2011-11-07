@@ -94,6 +94,7 @@ class US_FeMatch : public US_Widgets
       bool          haveSim;
       bool          dataLatest;
       bool          buffLoaded;
+      bool          cnstvb;
 
       QString       run_name;
       QString       cell;
@@ -171,6 +172,10 @@ class US_FeMatch : public US_Widgets
       QString table_row( const QString&, const QString&,
                          const QString& )                 const;
       QString table_row( const QString&, const QString&,
+                         const QString&, const QString&,
+                         const QString& )                 const;
+      QString table_row( const QString&, const QString&,
+                         const QString&, const QString&,
                          const QString&, const QString&,
                          const QString& )                 const;
       QString html_header   ( QString, QString, US_DataIO2::EditedData* );
