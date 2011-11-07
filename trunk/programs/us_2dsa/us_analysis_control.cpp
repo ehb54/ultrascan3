@@ -391,7 +391,7 @@ void US_AnalysisControl::checkVaryVbar(  bool checked )
       double vblo = dsets[ 0 ]->vbar20 - 0.02;
       double vbhi = dsets[ 0 ]->vbar20 + 0.02;
       vblo        = (double)( (int)( vblo * 1000.0 )     ) * 0.001;
-      vbhi        = (double)( (int)( vblo * 1000.0 ) + 1 ) * 0.001;
+      vbhi        = (double)( (int)( vbhi * 1000.0 ) + 1 ) * 0.001;
       lb_lolimitk->setText( tr( "Lower Limit (vbar):" ) );
       lb_uplimitk->setText( tr( "Upper Limit (vbar):" ) );
       lb_nstepsk ->setText( tr( "Number Grid Points (vbar):" ) );
