@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_saxs_mw.h"
 #include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
+#include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -105,6 +106,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    setCaption(tr("SAXS/SANS Plotting Functions"));
    reset_search_csv();
    reset_screen_csv();
+   reset_buffer_csv();
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
@@ -166,6 +168,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
    saxs_search_update_enables();
+   saxs_buffer_update_enables();
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "x" );
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "x" );
 }
@@ -252,6 +255,7 @@ void US_Hydrodyn_Saxs::refresh(
    pb_stop->setEnabled(false);
    cb_create_native_saxs->setChecked(create_native_saxs);
    saxs_search_update_enables();
+   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::setupGUI()
@@ -558,7 +562,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
    
-   pb_guinier_analysis = new QPushButton("Auto Guinier Analysis", this);
+   pb_saxs_buffer = new QPushButton("Buffer", this);
+   pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_buffer->setMinimumHeight(minHeight1);
+   pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
+
+
+   pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_guinier_analysis->setMinimumHeight(minHeight1);
    pb_guinier_analysis->setEnabled(true);
@@ -929,6 +940,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_various_0->addWidget(pb_load_gnom);
    hbl_various_0->addWidget(pb_saxs_search);
    hbl_various_0->addWidget(pb_saxs_screen);
+   hbl_various_0->addWidget(pb_saxs_buffer);
    hbl_various_0->addWidget(pb_guinier_analysis);
    background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;
@@ -3505,6 +3517,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
       }
    }
    saxs_search_update_enables();
+   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::saxs_search_update_enables()
@@ -3512,6 +3525,18 @@ void US_Hydrodyn_Saxs::saxs_search_update_enables()
    if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_search_widget )
    {
       ((US_Hydrodyn*)us_hydrodyn)->saxs_search_window->update_enables();
+   }
+   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
+   {
+      ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_window->update_enables();
+   }
+}
+
+void US_Hydrodyn_Saxs::saxs_buffer_update_enables()
+{
+   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_buffer_widget )
+   {
+      ((US_Hydrodyn*)us_hydrodyn)->saxs_buffer_window->update_enables();
    }
    if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
    {
@@ -3536,6 +3561,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs_sans()
 {
    rb_sans->isChecked() ? show_plot_sans() : show_plot_saxs();
    saxs_search_update_enables();
+   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::load_saxs_sans()
@@ -4037,6 +4063,80 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
          tmp_num_data.push_back(screen_csv.data[i][j].toDouble());
       }
       screen_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::saxs_buffer()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
+      {
+         buffer_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window = new US_Hydrodyn_Saxs_Buffer( buffer_csv, us_hydrodyn );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_buffer_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
+   {
+      buffer_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv;
+      return;
+   } 
+
+   buffer_csv.name = "SAXS I(q) Buffer";
+
+   buffer_csv.header_map.clear();
+   buffer_csv.data.clear();
+   buffer_csv.num_data.clear();
+   buffer_csv.prepended_names.clear();
+
+   buffer_csv.header.push_back("Parameter");
+   buffer_csv.header.push_back("Active");
+   buffer_csv.header.push_back("Low value");
+   buffer_csv.header.push_back("High value");
+   buffer_csv.header.push_back("Points");
+   buffer_csv.header.push_back("Interval");
+   buffer_csv.header.push_back("Current value");
+   buffer_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear();
+   tmp_data.push_back("Alpha");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.1");
+   tmp_data.push_back("0.9");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   buffer_csv.prepended_names.push_back(tmp_data[0]);
+   buffer_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < buffer_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < buffer_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(buffer_csv.data[i][j].toDouble());
+      }
+      buffer_csv.num_data.push_back(tmp_num_data);
    }
 }
 
@@ -5784,4 +5884,3 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
    // cout <<  QString("%1 %2\n").arg(our_saxs_options->delta_q).arg((float) (plotted_q[ 0 ][ 1 ] - plotted_q[ 0 ][ 0 ]) );
    return false;
 }
-   

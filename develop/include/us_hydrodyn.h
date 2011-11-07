@@ -46,6 +46,7 @@
 #include "us_hydrodyn_saxs.h"
 #include "us_hydrodyn_saxs_screen.h"
 #include "us_hydrodyn_saxs_search.h"
+#include "us_hydrodyn_saxs_buffer.h"
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
@@ -84,6 +85,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
+      friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Misc;
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Pdb_Tool_Merge;
@@ -628,6 +630,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool                     saxs_screen_widget;
       US_Hydrodyn_Saxs_Screen  *saxs_screen_window;
       csv                      last_saxs_screen_csv;
+
+      bool                     saxs_buffer_widget;
+      US_Hydrodyn_Saxs_Buffer  *saxs_buffer_window;
+      csv                      last_saxs_buffer_csv;
 
       double       total_volume_of_bead_model( vector < PDB_atom > &bead_model );
       unsigned int number_of_active_beads    ( vector < PDB_atom > &bead_model );

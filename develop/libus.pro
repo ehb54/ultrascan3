@@ -228,6 +228,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_residuals.cpp \
   src/us_hydrodyn_saxs_screen.cpp \
   src/us_hydrodyn_saxs_search.cpp \
+  src/us_hydrodyn_saxs_buffer.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
@@ -467,6 +468,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_residuals.h \
   include/us_hydrodyn_saxs_screen.h \
   include/us_hydrodyn_saxs_search.h \
+  include/us_hydrodyn_saxs_buffer.h \
   include/us_hydrodyn_supc.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \

@@ -13,4 +13,3 @@
 
 #include <stdlib.h>
 
-#include "us_cluster_server_config.h"

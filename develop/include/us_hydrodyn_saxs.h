@@ -58,6 +58,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Screen;
+      friend class US_Hydrodyn_Saxs_Buffer;
 
    public:
 
@@ -149,6 +150,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_load_gnom;
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
+      QPushButton *pb_saxs_buffer;
       QPushButton *pb_guinier_analysis;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
@@ -481,10 +483,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_search_csv();
       csv  screen_csv;
       void reset_screen_csv();
+      csv  buffer_csv;
+      void reset_buffer_csv();
 
       void set_scaling_target( QString &scaling_target );
 
       void saxs_search_update_enables();
+      void saxs_buffer_update_enables();
 
       bool external_running;
 
@@ -554,6 +559,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                          vector < double > *, 
                          double mw = 1e0 );
       void update_saxs_sans();
+
       void run_guinier_analysis();
       QString saxs_filestring();
       QString sprr_filestring();
@@ -568,6 +574,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_gnom();
       void saxs_search();
       void saxs_screen();
+      void saxs_buffer();
 
    protected slots:
 
