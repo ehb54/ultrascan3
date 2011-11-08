@@ -30,6 +30,8 @@
 #include "us_hydrodyn_saxs.h"
 
 #include "qwt_wheel.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 
 using namespace std;
 
@@ -92,6 +94,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
+      ScrollZoomer  *plot_dist_zoomer;
       QwtWheel      *qwtw_wheel;
       QwtWheel      *qwtw_wheel2;
       QLabel        *lbl_pos_range;
@@ -187,6 +190,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       void clear_plot();
       void update_wheel_range();
 
+      double max_x_range;
       double max_y_range;
 
       bool        anything_plotted();

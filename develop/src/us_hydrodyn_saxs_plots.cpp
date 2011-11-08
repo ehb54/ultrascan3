@@ -57,6 +57,14 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    {
       delete plot_pr_zoomer;
    }
+   double minx;
+   double maxx;
+   double miny;
+   double maxy;
+   set_plot_pr_range( minx, maxx, miny, maxy );
+   plot_pr->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
+
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
@@ -78,6 +86,85 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    // don't forget to make target part of it even if it isn't selected.
 }
 
+void US_Hydrodyn_Saxs::set_plot_pr_range( double &minx, 
+                                          double &maxx,
+                                          double &miny,
+                                          double &maxy )
+{
+   minx = 0e0;
+   maxx = 1e0;
+   miny = 0e0;
+   maxy = 1e0;
+
+   bool any_x_set = false;
+   bool any_y_set = false;
+
+   if ( plotted_r.size() &&
+        plotted_r[ 0 ].size() )
+   {
+      minx = plotted_r[ 0 ][ 0 ];
+      maxx = plotted_r[ 0 ][ plotted_r[ 0 ].size() - 1 ];
+      any_x_set = true;
+   }
+
+   for ( unsigned int i = 1; i < plotted_r.size(); i++ )
+   {
+      if ( plotted_r[ i ].size() )
+      {
+         if ( any_x_set )
+         {
+            if ( minx > plotted_r[ i ][ 0 ] )
+            {
+               minx = plotted_r[ i ][ 0 ];
+            }
+            if ( maxx < plotted_r[ i ][ plotted_r[ i ].size() - 1 ] )
+            {
+               maxx = plotted_r[ i ][ plotted_r[ i ].size() - 1 ];
+            }
+         } else {
+            minx = plotted_r[ i ][ 0 ];
+            maxx = plotted_r[ i ][ plotted_r[ i ].size() - 1 ];
+            any_x_set = true;
+         }            
+      }
+   }
+
+   for ( unsigned int i = 0; i < plotted_pr.size(); i++ )
+   {
+      if ( plotted_pr[ i ].size() )
+      {
+         double this_miny = plotted_pr[ i ][ 0 ];
+         double this_maxy = plotted_pr[ i ][ 0 ];
+         for ( unsigned int j = 1; j < plotted_pr[ i ].size(); j++ )
+         {
+            if ( this_miny > plotted_pr[ i ][ j ] )
+            {
+               this_miny = plotted_pr[ i ][ j ];
+            }
+            if ( this_maxy < plotted_pr[ i ][ j ] )
+            {
+               this_maxy = plotted_pr[ i ][ j ];
+            }
+         }
+         if ( any_y_set )
+         {
+            if ( miny > this_miny )
+            {
+               miny = this_miny;
+            }
+            if ( maxy < this_maxy )
+            {
+               maxy = this_maxy;
+            }
+         } else {
+            miny = this_miny;
+            maxy = this_maxy;
+            any_y_set = true;
+         }
+      }
+   }
+   maxy *= 1.05e0;
+}
 
 void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q, 
                                      vector < double > I, 

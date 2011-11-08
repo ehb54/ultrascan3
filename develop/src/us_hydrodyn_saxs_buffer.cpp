@@ -14,7 +14,6 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
-   plot_dist_zoomer = (ScrollZoomer *)0;
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: SAXS Buffer Subtraction Utility"));
    order_ascending = false;
@@ -22,6 +21,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_buffer_widget = true;
+   plot_dist_zoomer = (ScrollZoomer *)0;
 
    best_fitness = 1e99;
    disable_updates = false;

@@ -25,6 +25,8 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
 
+   plot_zoomer = (ScrollZoomer *)0;
+
    // make sure things aren't to big
 
    unsigned int min_len = r.size();
@@ -285,6 +287,16 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 {
    plot->clear();
    plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("Frequency"));
+
+   double minx;
+   double maxx;
+   double miny = 0e0;
+   double maxy = 1e0;
+   bool any_set = false;
+
+   minx = r[ 0 ];
+   maxx = r[ r.size() - 1 ];
+
    if ( plot_residuals ) 
    {
 #ifndef QT4
@@ -306,6 +318,36 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
       curve->setPen( QPen(Qt::green, 2, SolidLine) );
       curve->attach( plot );
 #endif
+      double this_miny = plot_as_percent ? residuals_pct[ 0 ] : residuals[ 0 ];
+      double this_maxy = this_miny;
+
+      for ( unsigned int i = 1; i < r.size(); i++ )
+      {
+         double val = plot_as_percent ? residuals_pct[ i ] : residuals[ i ];
+         if ( this_miny > val )
+         {
+            this_miny = val;
+         }
+         if ( this_maxy < val )
+         {
+            this_maxy = val;
+         }
+      }
+      if ( any_set )
+      {
+         if ( miny > this_miny )
+         {
+            miny = this_miny;
+         } 
+         if ( maxy < this_maxy )
+         {
+            maxy = this_maxy;
+         }
+      } else {
+         miny = this_miny;
+         maxy = this_maxy;
+         any_set = true;
+      }
    }
    if ( plot_difference ) 
    {
@@ -328,6 +370,50 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
       curve->setPen( QPen(Qt::yellow, 2, SolidLine) );
       curve->attach( plot );
 #endif
+      double this_miny = plot_as_percent ? difference_pct[ 0 ] : difference[ 0 ];
+      double this_maxy = this_miny;
+
+      for ( unsigned int i = 1; i < r.size(); i++ )
+      {
+         double val = plot_as_percent ? difference_pct[ i ] : difference[ i ];
+         if ( this_miny > val )
+         {
+            this_miny = val;
+         }
+         if ( this_maxy < val )
+         {
+            this_maxy = val;
+         }
+      }
+      if ( any_set )
+      {
+         if ( miny > this_miny )
+         {
+            miny = this_miny;
+         } 
+         if ( maxy < this_maxy )
+         {
+            maxy = this_maxy;
+         }
+      } else {
+         miny = this_miny;
+         maxy = this_maxy;
+         any_set = true;
+      }
    }
+
+   // enable zooming
+   if ( plot_zoomer )
+   {
+      delete plot_zoomer;
+   }
+   
+   plot->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
+   
+   plot_zoomer = new ScrollZoomer(plot->canvas());
+   plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot->replot();
 }

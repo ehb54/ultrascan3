@@ -25,6 +25,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_screen_widget = true;
+   plot_dist_zoomer = (ScrollZoomer *)0;
 
    best_fitness = 1e99;
 
@@ -277,9 +278,9 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    editor->setMinimumHeight(300);
 
    plot_dist = new QwtPlot(this);
-   plot_dist->enableOutline(true);
-   plot_dist->setOutlinePen(Qt::white);
-   plot_dist->setOutlineStyle(Qwt::VLine);
+   // plot_dist->enableOutline(true);
+   // plot_dist->setOutlinePen(Qt::white);
+   // plot_dist->setOutlineStyle(Qwt::VLine);
    plot_dist->enableGridXMin();
    plot_dist->enableGridYMin();
    plot_dist->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
@@ -1015,12 +1016,14 @@ void US_Hydrodyn_Saxs_Screen::plot_one(
          max_y_range = intensity[ i ];
       }
    }
+   max_x_range = radii[ radii.size() - 1 ];
 
    last_plotted_pos = messages[ current_row ].size() - 1;
    update_wheel_range();
    qwtw_wheel->setValue( (double) last_plotted_pos );
 
    // plot_pos( last_plotted_pos );
+
    replot();
 }
 
@@ -1146,7 +1149,18 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
    }
 
-   plot_dist->setAxisScale( QwtPlot::yLeft, 0.0, max_y_range );
+   plot_dist->setAxisScale( QwtPlot::xBottom, 0.0, max_x_range );
+   plot_dist->setAxisScale( QwtPlot::yLeft  , 0.0, max_y_range );
+
+   // enable zooming
+   
+   if ( !plot_dist_zoomer )
+   {
+      plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+      plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+   }
+
    plot_dist->replot();
 
    lbl_message ->setText( messages [ current_row ][ i ] );
@@ -1522,6 +1536,11 @@ void US_Hydrodyn_Saxs_Screen::clear_plot()
 {
    plot_dist->clear();
    plot_dist->replot();
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
    lbl_message->setText("");
    lbl_message2->setText("");
    lbl_message3->setText("");

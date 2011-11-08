@@ -2225,6 +2225,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    {
       delete plot_pr_zoomer;
    }
+   double minx;
+   double maxx;
+   double miny;
+   double maxy;
+   set_plot_pr_range( minx, maxx, miny, maxy );
+   plot_pr->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
+
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));

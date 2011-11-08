@@ -298,6 +298,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private:
 
+      void set_plot_pr_range( double &minx, 
+                              double &maxx,
+                              double &miny,
+                              double &maxy );
+
       QProcess *rasmol;
 
       bool bead_model_ok_for_saxs;
