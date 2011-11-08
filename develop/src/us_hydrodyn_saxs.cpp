@@ -63,6 +63,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    guinier_cutoff = 0.2;
    last_used_mw = 0.0;
 
+   plot_pr_zoomer   = (ScrollZoomer *)0;
+   plot_saxs_zoomer = (ScrollZoomer *)0;
+
    saxs_residuals_widget = false;
 
    // note changes to this section should be updated in US_Hydrodyn_SaxsOptions::update_q()
@@ -749,7 +752,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_saxs = new QwtPlot(this);
 #ifndef QT4
-   plot_saxs->enableOutline(true);
+   // plot_saxs->enableOutline(true);
    plot_saxs->setOutlinePen(Qt::white);
    plot_saxs->setOutlineStyle(Qwt::VLine);
    plot_saxs->enableGridXMin();
@@ -794,7 +797,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_pr = new QwtPlot(this);
 #ifndef QT4
-   plot_pr->enableOutline(true);
+   // plot_pr->enableOutline(true);
    plot_pr->setOutlinePen(Qt::white);
    plot_pr->setOutlineStyle(Qwt::VLine);
    plot_pr->enableGridXMin();
@@ -2217,6 +2220,15 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
    curve->attach( plot_pr );
 #endif
+
+   if ( plot_pr_zoomer )
+   {
+      delete plot_pr_zoomer;
+   }
+   plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
+   plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot_pr->replot();
 
    progress_pr->setTotalSteps(1);
@@ -4545,6 +4557,15 @@ void US_Hydrodyn_Saxs::rescale_plot()
 
    plot_saxs->setAxisScale(QwtPlot::xBottom, lowq, highq);
    plot_saxs->setAxisScale(QwtPlot::yLeft, lowI, highI);
+
+   if ( plot_saxs_zoomer )
+   {
+      delete plot_saxs_zoomer;
+   }
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot_saxs->replot();
 }
 
@@ -4697,6 +4718,14 @@ void US_Hydrodyn_Saxs::set_guinier()
 #endif
    }
    plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
+   if ( plot_saxs_zoomer )
+   {
+      delete plot_saxs_zoomer;
+   }
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot_saxs->replot();
 }
 

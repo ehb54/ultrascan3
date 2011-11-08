@@ -19,6 +19,9 @@
 #include <qprinter.h>
 #include <qregexp.h>
 
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
+
 #include <qwt_plot.h>
 #ifdef QT4
 # include "qwt_plot_grid.h"
@@ -193,8 +196,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QMenuBar *m;
 
-      QwtPlot *plot_pr;
-      QwtPlot *plot_saxs;
+      QwtPlot       *plot_pr;
+      ScrollZoomer  *plot_pr_zoomer;
+      QwtPlot       *plot_saxs;
+      ScrollZoomer  *plot_saxs_zoomer;
 #ifdef QT4
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;

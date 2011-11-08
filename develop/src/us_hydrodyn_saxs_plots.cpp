@@ -52,6 +52,15 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
    curve->attach( plot_pr );
 #endif
+
+   if ( plot_pr_zoomer )
+   {
+      delete plot_pr_zoomer;
+   }
+   plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
+   plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot_pr->replot();
                   
    if ( !plotted )
@@ -155,6 +164,14 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 #endif
 
    // figure out how to plot points for guinier plots
+   if ( plot_saxs_zoomer )
+   {
+      delete plot_saxs_zoomer;
+   }
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+
    plot_saxs->replot();
 
    if ( !plotted )
