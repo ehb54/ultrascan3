@@ -72,6 +72,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_save_avg;
 
+      QPushButton   *pb_set_buffer;
+      QLabel        *lbl_buffer;
+
+      QPushButton   *pb_set_signal;
+      QLabel        *lbl_signal;
+
+      QLabel        *lbl_created_files;
+      QListBox      *lb_created_files;
+
+      QPushButton   *pb_select_all_created;
+      QPushButton   *pb_save_created;
+
       QCheckBox     *cb_save_to_csv;
       QLineEdit     *le_csv_filename;
       QCheckBox     *cb_individual_files;
@@ -117,7 +129,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       double           best_fitness;
 
-      QString saxs_header_iqq;
+      QString          saxs_header_iqq;
 
       QString          errormsg;
 
@@ -126,10 +138,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 #endif
       vector < QColor >                  plot_colors;
 
-      map < QString, vector < double > > f_qs;
-      map < QString, vector < double > > f_Is;
-      map < QString, vector < double > > f_errors;
-      map < QString, unsigned int >      f_pos;
+      map < QString, vector < QString > > f_qs_string;
+      map < QString, vector < double > >  f_qs;
+      map < QString, vector < double > >  f_Is;
+      map < QString, vector < double > >  f_errors;
+      map < QString, unsigned int >       f_pos;
 
       vector < vector < double > >       qs;
       vector < vector < double > >       Is;
@@ -139,6 +152,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < QString >                 csv_source_name_iqq;
       vector < double >                  saxs_q;
       vector < vector < double > >       saxs_iqq;
+      map < QString, bool >              created_files_not_saved;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -160,16 +174,33 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       bool disable_updates;
 
+      QString qstring_common_head( QString s1, 
+                                   QString s2 );
+      QString qstring_common_tail( QString s1, 
+                                   QString s2 );
+
+      QString qstring_common_head( QStringList qsl );
+      QString qstring_common_tail( QStringList qsl );
+
+      QString last_load_dir;
+      bool    save_files( QStringList files );
+      bool    save_file( QString file );
+
    private slots:
 
       void setupGUI();
 
       void update_files();
+      void update_created_files();
       void add_files();
       void clear_files();
       void select_all();
       void invert();
       void save_avg();
+      void set_buffer();
+      void set_signal();
+      void select_all_created();
+      void save_created();
 
       void table_value( int, int );
 
