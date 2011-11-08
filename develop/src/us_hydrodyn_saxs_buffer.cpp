@@ -14,6 +14,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
+   plot_dist_zoomer = (ScrollZoomer *)0;
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: SAXS Buffer Subtraction Utility"));
    order_ascending = false;
@@ -245,7 +246,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    
    plot_dist = new QwtPlot(this);
 #ifndef QT4
-   plot_dist->enableOutline(true);
+   // plot_dist->enableOutline(true);
    plot_dist->setOutlinePen(Qt::white);
    plot_dist->setOutlineStyle(Qwt::VLine);
    plot_dist->enableGridXMin();
@@ -1021,29 +1022,101 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
 {
    plot_dist->clear();
    bool any_selected = false;
+   double minx = 0e0;
+   double maxx = 1e0;
+   double miny = 0e0;
+   double maxy = 1e0;
+
+   double file_minx;
+   double file_maxx;
+   double file_miny;
+   double file_maxy;
+   
+   bool first = true;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
       {
          any_selected = true;
-         plot_file( lb_files->text( i ) );
+         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
       }
    }
-   if ( !any_selected )
+
+   // cout << QString( "plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
+   plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
+
+   // enable zooming
+   
+   if ( plot_dist_zoomer )
    {
-      plot_dist->replot();
+      delete plot_dist_zoomer;
    }
+   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+   
+   plot_dist->replot();
 }
 
-void US_Hydrodyn_Saxs_Buffer::plot_file( QString file )
+bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
+                                         double &minx,
+                                         double &maxx,
+                                         double &miny,
+                                         double &maxy )
 {
    if ( !f_qs .count( file ) ||
         !f_Is .count( file ) ||
         !f_pos.count( file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
-      return;
+      return false;
    }
+
+   minx = f_qs[ file ][ 0 ];
+   maxx = f_qs[ file ][ f_qs[ file ].size() - 1 ];
+
+   miny = f_Is[ file ][ 0 ];
+   maxy = f_Is[ file ][ 0 ];
+   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+   {
+      if ( miny > f_Is[ file ][ i ] )
+      {
+         miny = f_Is[ file ][ i ];
+      }
+      if ( maxy < f_Is[ file ][ i ] )
+      {
+         maxy = f_Is[ file ][ i ];
+      }
+   }
+
 
 #ifndef QT4
    long Iq = plot_dist->insertCurve( "I(q) vs q" );
@@ -1075,7 +1148,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_file( QString file )
    curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 2, Qt::SolidLine ) );
    curve->attach( plot_dist );
 #endif
-   plot_dist->replot();
+   return true;
 }
 
 void US_Hydrodyn_Saxs_Buffer::save_avg()

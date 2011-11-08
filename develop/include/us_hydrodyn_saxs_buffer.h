@@ -15,6 +15,7 @@
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qtable.h>
+#include <qwt_plot_zoomer.h>
 
 #include "us_util.h"
 
@@ -28,6 +29,8 @@
 #include <iostream>
 
 #include "us_hydrodyn_saxs.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 
 using namespace std;
 
@@ -91,6 +94,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
+      ScrollZoomer  *plot_dist_zoomer;
 
       bool          order_ascending;
 
@@ -148,7 +152,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool load_file( QString file );
 
       void plot_files();
-      void plot_file( QString file );
+      bool plot_file( QString file,
+                      double &minx,
+                      double &maxx,
+                      double &miny,
+                      double &maxy );
+
       bool disable_updates;
 
    private slots:

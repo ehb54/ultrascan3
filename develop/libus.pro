@@ -296,7 +296,9 @@ SOURCES += \
   src/us_viewmwl.cpp \
   src/us_widgets.cpp \
   src/us_win.cpp \
-  src/us_write_config.cpp 
+  src/us_write_config.cpp \
+  src/qwt/scrollbar.cpp \
+  src/qwt/scrollzoomer.cpp
 
 #  src/us_db_rst_channel.cpp \
 #  src/us_db_rst_equil.cpp \
@@ -532,7 +534,9 @@ HEADERS += \
   include/us_viewmwl.h \
   include/us_widgets.h \
   include/us_win.h \
-  include/us_write_config.h
+  include/us_write_config.h \
+  include/qwt/scrollbar.h \
+  include/qwt/scrollzoomer.h
 
 #  include/us_db_rst_channel.h \
 #  include/us_db_rst_equil.h \
