@@ -201,6 +201,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_select_all_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all_created, SIGNAL(clicked()), SLOT(select_all_created()));
 
+   pb_save_created_csv = new QPushButton(tr("Save as CSV"), this);
+   pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_created_csv->setMinimumHeight(minHeight1);
+   pb_save_created_csv->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_created_csv, SIGNAL(clicked()), SLOT(save_created_csv()));
+
    pb_save_created = new QPushButton(tr("Save"), this);
    pb_save_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_created->setMinimumHeight(minHeight1);
@@ -256,19 +262,19 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_current_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_current_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   pb_start = new QPushButton(tr("Start"), this);
+   pb_start = new QPushButton(tr("Start buffer subtraction"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   pb_run_current = new QPushButton(tr("Run Current"), this);
+   pb_run_current = new QPushButton(tr("Current buffer subtraction"), this);
    pb_run_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_run_current->setMinimumHeight(minHeight1);
    pb_run_current->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_run_current, SIGNAL(clicked()), SLOT(run_current()));
 
-   pb_run_best = new QPushButton(tr("Run Best"), this);
+   pb_run_best = new QPushButton(tr("Best buffer subtraction"), this);
    pb_run_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_run_best->setMinimumHeight(minHeight1);
    pb_run_best->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -424,6 +430,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    QBoxLayout *hbl_created = new QHBoxLayout( 0 );
    hbl_created->addWidget( pb_select_all_created );
+   hbl_created->addWidget( pb_save_created_csv );
    hbl_created->addWidget( pb_save_created );
 
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
@@ -635,13 +642,17 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    }
 
    unsigned int files_created_selected_not_saved_count = 0;
+   unsigned int files_created_selected_count           = 0;
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) &&
-           created_files_not_saved.count( lb_created_files->text( i ) ) )
+      if ( lb_created_files->isSelected( i ) )
       {
-         files_created_selected_not_saved_count++;
+         files_created_selected_count++;
+         if ( created_files_not_saved.count( lb_created_files->text( i ) ) )
+         {
+            files_created_selected_not_saved_count++;
+         }
       }
    }
 
@@ -658,9 +669,11 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
+   pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
 
    bool any_best_empty = false;
+   bool any_current_empty  = false;
    bool any_selected   = false;
    if ( !running )
    {
@@ -673,12 +686,25 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
             {
                any_best_empty = true;
             }
+            if ( t_csv->text(i, 6).isEmpty() )
+            {
+               any_current_empty = true;
+            }
          }
       }
    }
-   pb_start            ->setEnabled( !running && any_selected );
-   pb_run_current      ->setEnabled( !running && any_selected );
-   pb_run_best         ->setEnabled( !running && !any_best_empty && any_selected);
+   pb_start            ->setEnabled( !running && any_selected &&
+                                     !lbl_buffer->text().isEmpty() &&
+                                     !lbl_signal->text().isEmpty() );
+   pb_run_current      ->setEnabled( !running && any_selected &&
+                                     !lbl_buffer->text().isEmpty() &&
+                                     !lbl_signal->text().isEmpty() &&
+                                     !any_current_empty
+                                     );
+   pb_run_best         ->setEnabled( !running && 
+                                     !lbl_buffer->text().isEmpty() &&
+                                     !lbl_signal->text().isEmpty() &&
+                                     !any_best_empty && any_selected);
    pb_stop             ->setEnabled( running );
    pb_replot_saxs      ->setEnabled( !running && *saxs_widget && names.size() );
    pb_save_saxs_plot   ->setEnabled( !running && *saxs_widget && saxs_window->qsl_plotted_iq_names.size() );
@@ -1073,8 +1099,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
       switch ( QMessageBox::warning(this, 
                                     tr( "US-SOMO: SAXS Buffer Subtraction Utility Remove Files" ),
                                     QString( tr( "Please note:\n\n"
-                                                 "These files were created but not saved:\n"
-                                                 "%1\n"
+                                                 "These files were created but not saved as .dat files:\n"
+                                                 "%1\n\n"
                                                  "What would you like to do?\n" ) )
                                     .arg( created_not_saved_list.join( "\n" ) ),
                                     tr( "&Save them now" ), 
@@ -1120,6 +1146,10 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
          {
             lbl_buffer->setText( "" );
          }
+         if ( lbl_signal->text() == lb_files->text( i ) )
+         {
+            lbl_signal->setText( "" );
+         }
          f_qs_string.erase( lb_files->text( i ) );
          f_qs       .erase( lb_files->text( i ) );
          f_Is       .erase( lb_files->text( i ) );
@@ -1142,6 +1172,8 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
 
 void US_Hydrodyn_Saxs_Buffer::add_files()
 {
+
+
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -1214,6 +1246,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    }
 
    lb_files->insertStringList( add_filenames );
+   if ( add_filenames.size() && plot_dist_zoomer )
+   {
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+      plot_files();
+   }
    update_enables();
 }
 
@@ -1265,6 +1304,35 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
                }
             }
          }
+      } else {
+         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
       }
    }
 
@@ -1276,8 +1344,6 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    {
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-      //      delete plot_dist_zoomer;
-      //   }
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
@@ -1336,7 +1402,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                             (double *)&( f_Is[ file ][ 0 ] ),
                             q_points
                             );
-   plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 2, SolidLine));
+   plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
    curve->setData(
                   /* cb_guinier->isChecked() ?
@@ -1346,7 +1412,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                   q_points
                   );
 
-   curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
    curve->attach( plot_dist );
 #endif
    return true;
@@ -1360,6 +1426,40 @@ void US_Hydrodyn_Saxs_Buffer::update_files()
       plot_files();
       update_enables();
    }
+}
+
+bool US_Hydrodyn_Saxs_Buffer::get_min_max( QString file,
+                                           double &minx,
+                                           double &maxx,
+                                           double &miny,
+                                           double &maxy )
+{
+   if ( !f_qs_string .count( file ) ||
+        !f_qs        .count( file ) ||
+        !f_Is        .count( file ) ||
+        !f_pos       .count( file ) )
+   {
+      // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+      return false;
+   }
+
+   minx = f_qs[ file ][ 0 ];
+   maxx = f_qs[ file ][ f_qs[ file ].size() - 1 ];
+
+   miny = f_Is[ file ][ 0 ];
+   maxy = f_Is[ file ][ 0 ];
+   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+   {
+      if ( miny > f_Is[ file ][ i ] )
+      {
+         miny = f_Is[ file ][ i ];
+      }
+      if ( maxy < f_Is[ file ][ i ] )
+      {
+         maxy = f_Is[ file ][ i ];
+      }
+   }
+   return true;
 }
 
 void US_Hydrodyn_Saxs_Buffer::invert()
@@ -1748,6 +1848,26 @@ void US_Hydrodyn_Saxs_Buffer::save_created()
       }
    }
    save_files( created_not_saved_list );
+}
+
+void US_Hydrodyn_Saxs_Buffer::save_created_csv()
+{
+   QStringList           created_not_saved_list;
+
+   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   {
+      if ( lb_created_files->isSelected( i ) && 
+           created_files_not_saved.count( lb_created_files->text( i ) ) )
+      {
+         created_not_saved_list << lb_created_files->text( i );
+      }
+   }
+   save_files_csv( created_not_saved_list );
+}
+
+bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList /* files */ )
+{
+   return false;
 }
 
 bool US_Hydrodyn_Saxs_Buffer::save_files( QStringList files )

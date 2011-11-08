@@ -4138,10 +4138,10 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
    
    tmp_data.clear();
    tmp_data.push_back("Alpha");
-   tmp_data.push_back("N");
-   tmp_data.push_back("0.1");
-   tmp_data.push_back("0.9");
-   tmp_data.push_back("11");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.00");
+   tmp_data.push_back("51");
    tmp_data.push_back("");
    tmp_data.push_back("");
    tmp_data.push_back("");

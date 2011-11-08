@@ -82,6 +82,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QListBox      *lb_created_files;
 
       QPushButton   *pb_select_all_created;
+      QPushButton   *pb_save_created_csv;
       QPushButton   *pb_save_created;
 
       QCheckBox     *cb_save_to_csv;
@@ -172,6 +173,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
                       double &miny,
                       double &maxy );
 
+      bool get_min_max( QString file,
+                        double &minx,
+                        double &maxx,
+                        double &miny,
+                        double &maxy );
+
       bool disable_updates;
 
       QString qstring_common_head( QString s1, 
@@ -185,6 +192,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString last_load_dir;
       bool    save_files( QStringList files );
       bool    save_file( QString file );
+      bool    save_files_csv( QStringList files );
 
    private slots:
 
@@ -200,6 +208,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void set_buffer();
       void set_signal();
       void select_all_created();
+      void save_created_csv();
       void save_created();
 
       void table_value( int, int );
