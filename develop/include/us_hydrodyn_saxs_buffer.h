@@ -29,6 +29,7 @@
 #include <iostream>
 
 #include "us_hydrodyn_saxs.h"
+#include "us_hydrodyn_saxs_buffer_conc.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
@@ -40,6 +41,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
+      friend class US_Hydrodyn_Saxs_Buffer_Conc;
 
    public:
       US_Hydrodyn_Saxs_Buffer(
@@ -65,15 +67,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QLabel        *lbl_files;
       QPushButton   *pb_add_files;
+      QPushButton   *pb_conc;
+      QPushButton   *pb_clear_files;
+
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
-      QPushButton   *pb_clear_files;
       QListBox      *lb_files;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_save_avg;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
+
+      QPushButton   *pb_set_empty;
+      QLabel        *lbl_empty;
 
       QPushButton   *pb_set_signal;
       QLabel        *lbl_signal;
@@ -154,6 +161,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < double >                  saxs_q;
       vector < vector < double > >       saxs_iqq;
       map < QString, bool >              created_files_not_saved;
+
+      map < QString, double >            current_concs();
+      map < QString, double >            window_concs();
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -194,6 +205,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool    save_file( QString file );
       bool    save_files_csv( QStringList files );
 
+      csv                          csv_conc;
+      US_Hydrodyn_Saxs_Buffer_Conc *conc_window;
+      bool                         conc_widget;
+      void                         update_csv_conc();
+      
+
    private slots:
 
       void setupGUI();
@@ -201,11 +218,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void update_files();
       void update_created_files();
       void add_files();
+      void conc();
       void clear_files();
       void select_all();
       void invert();
       void save_avg();
       void set_buffer();
+      void set_empty();
       void set_signal();
       void select_all_created();
       void save_created_csv();

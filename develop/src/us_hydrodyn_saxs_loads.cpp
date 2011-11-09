@@ -3179,11 +3179,22 @@ bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir )
 void US_Hydrodyn_Saxs::add_to_directory_history( QString filename )
 {
    QString dir = QFileInfo(filename).dirPath(true);
-   if ( dir.isEmpty() || ((US_Hydrodyn *)us_hydrodyn)->directory_history.contains( dir ) )
+   if ( dir.isEmpty() )
    {
       return;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->directory_history << dir;
+
+   // push to top
+   QStringList new_dir_history;
+   new_dir_history << dir;
+   for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->directory_history.size(); i++ )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] != dir )
+      {
+         new_dir_history << ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ];
+      }
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->directory_history = new_dir_history;
 }
 
 vector < double > US_Hydrodyn_Saxs::range_crop( vector < double > &q, vector < double > &I )

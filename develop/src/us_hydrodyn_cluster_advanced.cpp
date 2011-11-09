@@ -340,6 +340,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
 {
    csv1.name = "Advanced cluster options";
 
+   csv1.header.clear();
    csv1.header_map.clear();
    csv1.data.clear();
    csv1.num_data.clear();

@@ -3930,6 +3930,7 @@ void US_Hydrodyn_Saxs::reset_search_csv()
 
    search_csv.name = "SAXS I(q) Search";
 
+   search_csv.header.clear();
    search_csv.header_map.clear();
    search_csv.data.clear();
    search_csv.num_data.clear();
@@ -4029,6 +4030,7 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
 
    screen_csv.name = "SAXS I(q) Screen";
 
+   screen_csv.header.clear();
    screen_csv.header_map.clear();
    screen_csv.data.clear();
    screen_csv.num_data.clear();
@@ -4120,6 +4122,7 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
 
    buffer_csv.name = "SAXS I(q) Buffer";
 
+   buffer_csv.header.clear();
    buffer_csv.header_map.clear();
    buffer_csv.data.clear();
    buffer_csv.num_data.clear();
@@ -4137,13 +4140,39 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
    vector < QString > tmp_data;
    
    tmp_data.clear();
-   tmp_data.push_back("Alpha");
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
    tmp_data.push_back("Y");
    tmp_data.push_back("0.95");
-   tmp_data.push_back("1.00");
+   tmp_data.push_back("1");
    tmp_data.push_back("51");
    tmp_data.push_back("");
    tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   buffer_csv.prepended_names.push_back(tmp_data[0]);
+   buffer_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   buffer_csv.prepended_names.push_back(tmp_data[0]);
+   buffer_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
    tmp_data.push_back("");
 
    buffer_csv.prepended_names.push_back(tmp_data[0]);

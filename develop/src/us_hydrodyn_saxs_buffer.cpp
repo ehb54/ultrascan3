@@ -17,6 +17,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: SAXS Buffer Subtraction Utility"));
    order_ascending = false;
+   conc_widget     = false;
+
+   QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );
 
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
@@ -44,7 +47,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    global_Ypos += 30;
 
    unsigned int csv_height = 45; // header height
-   unsigned int csv_width = t_csv->columnWidth(0) + 45;
+   unsigned int csv_width = t_csv->columnWidth(0) + 49;
    for ( int i = 0; i < t_csv->numRows(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
@@ -53,13 +56,13 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    {
       csv_width += t_csv->columnWidth(i);
    }
-   if ( csv_height > 700 )
+   if ( csv_height > 800 )
    {
-      csv_height = 700;
+      csv_height = 800;
    }
-   if ( csv_width > 1000 )
+   if ( csv_width > 1100 )
    {
-      csv_width = 1000;
+      csv_width = 1100;
    }
 
    t_csv->setMinimumHeight( csv_height );
@@ -71,8 +74,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
 
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
-   pb_set_buffer->setMaximumWidth ( pb_select_all->width() );
-   pb_set_signal->setMaximumWidth ( pb_select_all->width() );
+   pb_set_buffer->setMaximumWidth ( pb_select_all->width() + 10 );
+   pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
+   pb_set_signal->setMaximumWidth ( pb_select_all->width() + 10 );
 
    plot_colors.clear();
    plot_colors.push_back(Qt::yellow);
@@ -118,6 +122,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_add_files->setMinimumHeight(minHeight1);
    pb_add_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
+
+   pb_conc = new QPushButton(tr("Concentrations"), this);
+   pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_conc->setMinimumHeight(minHeight1);
+   pb_conc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_conc, SIGNAL(clicked()), SLOT(conc()));
 
    pb_clear_files = new QPushButton(tr("Remove files"), this);
    pb_clear_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -169,7 +179,19 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_buffer->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_set_signal = new QPushButton(tr("Set signal"), this);
+   pb_set_empty = new QPushButton(tr("Set blank"), this);
+   pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_empty->setMinimumHeight(minHeight1);
+   pb_set_empty->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_set_empty, SIGNAL(clicked()), SLOT(set_empty()));
+
+   lbl_empty = new QLabel("", this );
+   lbl_empty->setMinimumHeight(minHeight1);
+   lbl_empty->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_empty->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_set_signal = new QPushButton(tr("Set solution"), this);
    pb_set_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_signal->setMinimumHeight(minHeight1);
    pb_set_signal->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -383,7 +405,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    t_csv->setColumnMovingEnabled(false);
    t_csv->setReadOnly(false);
 
-   t_csv->setColumnWidth(0, 230);
+   t_csv->setColumnWidth(0, 330);
    t_csv->setColumnReadOnly(0, true);
    t_csv->setColumnReadOnly(t_csv->numCols() - 1, true);
 
@@ -412,6 +434,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // build layout
    QBoxLayout *hbl_file_buttons = new QHBoxLayout( 0 );
    hbl_file_buttons->addWidget ( pb_add_files );
+   hbl_file_buttons->addWidget ( pb_conc);
    hbl_file_buttons->addWidget ( pb_clear_files );
 
    QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout( 0 );
@@ -423,6 +446,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    QBoxLayout *hbl_buffer = new QHBoxLayout( 0 );
    hbl_buffer->addWidget( pb_set_buffer );
    hbl_buffer->addWidget( lbl_buffer );
+
+   QBoxLayout *hbl_empty = new QHBoxLayout( 0 );
+   hbl_empty->addWidget( pb_set_empty );
+   hbl_empty->addWidget( lbl_empty );
 
    QBoxLayout *hbl_signal = new QHBoxLayout( 0 );
    hbl_signal->addWidget( pb_set_signal );
@@ -443,6 +470,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addWidget( lb_files );
    vbl_files->addLayout( hbl_file_buttons_2 );
    vbl_files->addLayout( hbl_buffer );
+   vbl_files->addLayout( hbl_empty );
    vbl_files->addLayout( hbl_signal );
    vbl_files->addWidget( lbl_created_files );
    vbl_files->addWidget( lb_created_files );
@@ -527,15 +555,59 @@ void US_Hydrodyn_Saxs_Buffer::help()
 
 void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 {
+   QStringList created_not_saved_list;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( created_files_not_saved.count( lb_files->text( i ) ) )
+      {
+         created_not_saved_list << lb_files->text( i );
+      }
+   }
+
+   if ( created_not_saved_list.size() )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                    QString( tr( "Please note:\n\n"
+                                                 "These files were created but not saved as .dat files:\n"
+                                                 "%1\n\n"
+                                                 "What would you like to do?\n" ) )
+                                    .arg( created_not_saved_list.join( "\n" ) ),
+                                    tr( "&Save them now" ), 
+                                    tr( "&Close the window anyway" ), 
+                                    tr( "&Quit from closing" ), 
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // save them now
+         // set the ones listed to selected
+         if ( !save_files( created_not_saved_list ) )
+         {
+            return;
+         }
+      case 1 : // just ignore them
+         break;
+      case 2 : // quit
+         return;
+         break;
+      }
+   }
+
    ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_widget = false;
    ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv = current_csv();
+   if ( conc_widget )
+   {
+      conc_window->close();
+   }
 
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
 }
 
-void US_Hydrodyn_Saxs_Buffer::table_value( int /* row */, int col )
+void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
 {
    if ( col == 4 || col == 2 || col == 3 )
    {
@@ -544,6 +616,26 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int /* row */, int col )
    if ( col == 5 )
    {
       recompute_points_from_interval();
+   }
+   if ( col == 1 )
+   {
+      if ( ( row == 1 || row == 2 ) &&
+           ((QCheckTableItem *)(t_csv->item( row, 1 )))->isChecked() &&
+           ((QCheckTableItem *)(t_csv->item( 0, 1 )))->isChecked()  )
+      {
+         ((QCheckTableItem *)(t_csv->item( 0, 1 )))->setChecked( false );
+      }
+      if ( row == 0 && ((QCheckTableItem *)(t_csv->item( row, 1 )))->isChecked() )
+      {
+         if ( ((QCheckTableItem *)(t_csv->item( 1, 1 )))->isChecked() )
+         {
+            ((QCheckTableItem *)(t_csv->item( 1, 1 )))->setChecked( false );
+         }
+         if ( ((QCheckTableItem *)(t_csv->item( 2, 1 )))->isChecked() )
+         {
+            ((QCheckTableItem *)(t_csv->item( 2, 1 )))->setChecked( false );
+         }
+      }
    }
    update_enables();
 }
@@ -656,14 +748,21 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
       }
    }
 
+   pb_conc               ->setEnabled( lb_files->numRows() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
    pb_save_avg           ->setEnabled( files_selected_count > 1 );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_signal->text() 
+                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
+                                       lb_files->text( last_selected_pos ) != lbl_signal->text()
                                        );
    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
+                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
+                                       lb_files->text( last_selected_pos ) != lbl_signal->text() );
+   pb_set_empty          ->setEnabled( files_selected_count == 1 && 
+                                       lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
+                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
@@ -672,16 +771,20 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
 
-   bool any_best_empty = false;
-   bool any_current_empty  = false;
-   bool any_selected   = false;
+   bool any_best_empty    = false;
+   bool any_current_empty = false;
+   bool any_selected      = 
+      ( ((QCheckTableItem *)(t_csv->item( 0, 1 )))->isChecked() ||
+        ( ((QCheckTableItem *)(t_csv->item( 1, 1 )))->isChecked() &&
+          ( ((QCheckTableItem *)(t_csv->item( 2, 1 )))->isChecked() ||
+            !t_csv->text( 2, 6 ).isEmpty() ) )
+        );
    if ( !running )
    {
       for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
       {
          if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
          {
-            any_selected = true;
             if ( t_csv->text(i, 7).isEmpty() )
             {
                any_best_empty = true;
@@ -949,7 +1052,7 @@ void US_Hydrodyn_Saxs_Buffer::save_saxs_plot()
       if ( !add_target )
       {
          QMessageBox::warning(this, 
-                              "US_SOMO: I(q) search",
+                              tr("US-SOMO: SAXS Buffer Subtraction Utility"),
                               tr("Target not found, clearing"));
          lbl_current_target->setText("");
       }
@@ -1105,7 +1208,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
                                     .arg( created_not_saved_list.join( "\n" ) ),
                                     tr( "&Save them now" ), 
                                     tr( "&Remove them anyway" ), 
-                                    tr( "&Quit" ), 
+                                    tr( "&Quit from removing files" ), 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1150,6 +1253,10 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
          {
             lbl_signal->setText( "" );
          }
+         if ( lbl_empty->text() == lb_files->text( i ) )
+         {
+            lbl_empty->setText( "" );
+         }
          f_qs_string.erase( lb_files->text( i ) );
          f_qs       .erase( lb_files->text( i ) );
          f_Is       .erase( lb_files->text( i ) );
@@ -1167,20 +1274,28 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      if ( lb_files->numRows() )
+      {
+         conc_window->refresh( csv_conc );
+      } else {
+         conc_window->cancel();
+      }
+   }
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::add_files()
 {
-
-
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       existing_items[ lb_files->text( i ) ] = true;
    }
 
-   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs";
+   QString use_dir = QDir::currentDirPath();
    
    if ( !*saxs_widget )
    {
@@ -1189,16 +1304,17 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 
    if ( *saxs_widget )
    {
-      saxs_window->select_from_directory_history( use_dir );
+      QString dir = QDir::currentDirPath();
+      saxs_window->select_from_directory_history( dir );
    }
 
    QStringList filenames = QFileDialog::getOpenFileNames(
-                                                         "All files (*);;"
-                                                         "ssaxs files (*.ssaxs);;"
-                                                         "csv files (*.csv);;"
-                                                         "int files [crysol] (*.int);;"
                                                          "dat files [foxs / other] (*.dat);;"
-                                                         "fit files [crysol] (*.fit);;"
+                                                         "All files (*);;"
+                                                         // "ssaxs files (*.ssaxs);;"
+                                                         // "csv files (*.csv);;"
+                                                         // "int files [crysol] (*.int);;"
+                                                         // "fit files [crysol] (*.fit);;"
                                                          , use_dir
                                                          , this
                                                          , "open file dialog"
@@ -1210,6 +1326,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    if ( filenames.size() )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
+      QDir::setCurrent( last_load_dir );
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -1222,7 +1339,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          saxs_window->add_to_directory_history( filenames[ i ] );
       }
 
-      QString basename = QFileInfo( filenames[ i ] ).baseName();
+      QString basename = QFileInfo( filenames[ i ] ).baseName( true );
       if ( !existing_items.count( basename ) )
       {
          if ( !load_file( filenames[ i ] ) )
@@ -1252,6 +1369,11 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
       plot_files();
+   }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
    }
    update_enables();
 }
@@ -1590,7 +1712,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       }
    }
 
-   QString basename = QFileInfo( filename ).baseName();
+   QString basename = QFileInfo( filename ).baseName( true );
    f_pos       [ basename ] = f_qs.size();
    f_qs_string [ basename ] = q_string;
    f_qs        [ basename ] = q;
@@ -1608,6 +1730,11 @@ void US_Hydrodyn_Saxs_Buffer::set_buffer()
          lbl_buffer->setText( lb_files->text( i ) );
       }
    }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
    update_enables();
 }
 
@@ -1619,6 +1746,23 @@ void US_Hydrodyn_Saxs_Buffer::set_signal()
       {
          lbl_signal->setText( lb_files->text( i ) );
       }
+   }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::set_empty()
+{
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         lbl_empty->setText( lb_files->text( i ) );
+      }
+   }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
    }
    update_enables();
 }
@@ -1646,6 +1790,10 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
 
    unsigned int selected_count = 0;
 
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+   double avg_conc;
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       QString this_file = lb_files->text( i );
@@ -1666,6 +1814,10 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
             {
                avg_Is2[ j ] = f_Is[ this_file ][ j ] * f_Is[ this_file ][ j ];
             }
+            avg_conc = 
+               concs.count( this_file ) ?
+               concs[ this_file ] :
+               0e0;
          } else {
             if ( avg_qs.size() != f_qs[ this_file ].size() )
             {
@@ -1682,6 +1834,10 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
                avg_Is [ j ] += f_Is[ this_file ][ j ];
                avg_Is2[ j ] += f_Is[ this_file ][ j ] * f_Is[ this_file ][ j ];
             }
+            avg_conc +=
+               concs.count( this_file ) ?
+               concs[ this_file ] :
+               0e0;
          }            
       }
    }
@@ -1705,6 +1861,8 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
               * dsc_times_dsc_minus_one_inv 
               );
    }
+
+   avg_conc *= dsc_inv;
 
    // determine name
    // find common header & tail substrings
@@ -1746,6 +1904,22 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    
+   update_csv_conc();
+   // cout << QString( "trying to set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == avg_name )
+      {
+         csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( avg_conc );
+         // cout << QString( "Found & set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
+      }
+   }
+
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
    update_enables();
 }
 
@@ -1950,3 +2124,169 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
    created_files_not_saved.erase( file );
    return true;
 }
+
+void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
+{
+   map < QString, bool > skip;
+   if ( !lbl_buffer->text().isEmpty() )
+   {
+      skip[ lbl_buffer->text() ] = true;
+   }
+   if ( !lbl_empty->text().isEmpty() )
+   {
+      skip[ lbl_empty->text() ] = true;
+   }
+
+   if ( !csv_conc.data.size() )
+   {
+      // setup & add all
+      csv_conc.name = "Solution Concentrations ";
+
+      csv_conc.header.clear();
+      csv_conc.header_map.clear();
+      csv_conc.data.clear();
+      csv_conc.num_data.clear();
+      csv_conc.prepended_names.clear();
+      
+      csv_conc.header.push_back("File");
+      csv_conc.header.push_back("Concentration\nmg/ml");
+      
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( !skip.count( lb_files->text( i ) ) )
+         {
+            vector < QString > tmp_data;
+            tmp_data.push_back( lb_files->text( i ) );
+            tmp_data.push_back( "" );
+            
+            csv_conc.prepended_names.push_back(tmp_data[0]);
+            csv_conc.data.push_back(tmp_data);
+         }
+      }
+   } else {
+      map < QString, bool > current_files;
+      map < QString, bool > csv_files;
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( !skip.count( lb_files->text( i ) ) )
+         {
+            current_files[ lb_files->text( i ) ] = true;
+         }
+      }
+      csv new_csv = csv_conc;
+      new_csv.data.clear();
+      new_csv.num_data.clear();
+      new_csv.prepended_names.clear();
+      for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+      {
+         csv_files[ csv_conc.data[ i ][ 0 ] ] = true;
+         if ( current_files.count( csv_conc.data[ i ][ 0 ] ) )
+         {
+            new_csv.data.push_back( csv_conc.data[ i ] );
+            new_csv.prepended_names.push_back( csv_conc.data[ i ][ 0 ] );
+         }
+      }
+      // add new ones
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( !skip.count( lb_files->text( i ) ) &&
+              !csv_files.count( lb_files->text( i ) ) )
+         {
+            vector < QString > tmp_data;
+            tmp_data.push_back( lb_files->text( i ) );
+            tmp_data.push_back( "" );
+            
+            new_csv.prepended_names.push_back(tmp_data[0]);
+            new_csv.data.push_back(tmp_data);
+         }
+      }
+      csv_conc = new_csv;
+   }      
+
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < csv_conc.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(csv_conc.data[i][j].toDouble());
+      }
+      csv_conc.num_data.push_back(tmp_num_data);
+   }
+}   
+
+void US_Hydrodyn_Saxs_Buffer::conc()
+{
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      if ( conc_window->isVisible() )
+      {
+         conc_window->raise();
+      } else {
+         conc_window->show();
+      }
+   } else {
+      conc_window = new US_Hydrodyn_Saxs_Buffer_Conc( csv_conc,
+                                                      this );
+      conc_window->show();
+   }
+}
+
+map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs()
+{
+   map < QString, double > concs;
+   map < QString, double > concs_in_widget;
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 )
+      {
+         concs[ csv_conc.data[ i ][ 0 ] ] =  csv_conc.data[ i ][ 1 ].toDouble();
+      }
+   }
+   if ( conc_widget )
+   {
+      csv tmp_csv = conc_window->current_csv();
+      bool any_different = false;
+      for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+      {
+         if ( tmp_csv.data[ i ].size() > 1 )
+         {
+            if ( concs.count( tmp_csv.data[ i ][ 0 ] ) &&
+                 concs[ tmp_csv.data[ i ][ 0 ] ] != tmp_csv.data[ i ][ 1 ].toDouble() )
+            {
+               any_different = true;
+               break;
+            }
+         }
+      }
+      if ( any_different )
+      {
+         QMessageBox::warning( this, 
+                              tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                              tr( "There are unsaved updates in the open Solution Concentration window\n"
+                                  "This will cause the average values shown in the window to reflect the saved solution concentrations,\n"
+                                  "not necessarily the values reflected in the Solution Concentration window itself.\n"
+                                  "You probably want to save the values in the Solution Concentration window and repeat computing the average."
+                                  ) );
+      }
+   }
+   return concs;
+}
+
+map < QString, double > US_Hydrodyn_Saxs_Buffer::window_concs()
+{
+   map < QString, double > concs;
+   if ( conc_widget )
+   {
+      csv tmp_csv = conc_window->current_csv();
+      for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+      {
+         if ( tmp_csv.data[ i ].size() > 1 )
+         {
+            concs[ tmp_csv.data[ i ][ 0 ] ] = tmp_csv.data[ i ][ 1 ].toDouble();
+         }
+      }
+   }
+   return concs;
+}
+   

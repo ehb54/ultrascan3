@@ -70,6 +70,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 {
    csv_commands.name = "PDB Editor Cut/Splice Control";
 
+   csv_commands.header.clear();
    csv_commands.header_map.clear();
    csv_commands.data.clear();
    csv_commands.num_data.clear();
