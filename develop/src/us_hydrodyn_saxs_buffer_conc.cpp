@@ -2,13 +2,14 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_conc.h"
+#include "../include/us_hydrodyn_saxs_buffer_conc_load.h"
 
 US_Hydrodyn_Saxs_Buffer_Conc::US_Hydrodyn_Saxs_Buffer_Conc(
-                                               csv &csv1,
-                                               void *saxs_buffer_window,
-                                               QWidget *p, 
-                                               const char *name
-                                               ) : QFrame(p, name)
+                                                           csv &csv1,
+                                                           void *saxs_buffer_window,
+                                                           QWidget *p, 
+                                                           const char *name
+                                                           ) : QFrame(p, name)
 {
    org_csv = &csv1;
    this->csv1 = csv1;
@@ -430,7 +431,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
 
    QString fname = QFileDialog::getOpenFileName(
                                                 use_dir,
-                                                "*.sbc *.SBC",
+                                                "Concentration files (*.sbc *.SBC);;"
+                                                "Text files (*.txt *.TXT);;"
+                                                "All Files (*)",
                                                 this
                                                 );
    if ( fname.isEmpty() )
@@ -457,26 +460,55 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
    }
 
    csv1 = current_csv();
-
+   
    map < QString, unsigned int > our_files;
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
       our_files[ csv1.data[ i ][ 0 ] ] = i;
    }
-
+      
    QTextStream ts( &f );
 
+   QStringList qsl_lines;
+      
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      QStringList qsl = csv_parse_line( qs );
-      if ( qsl.size() > 1 &&
-           our_files.count( qsl[ 0 ] ) )
-      {
-         csv1.data[ our_files[ qsl[ 0 ] ] ][ 1 ] = qsl[ 1 ];
-      }
+      qsl_lines << qs;
    }
    f.close();
+      
+   if ( QFileInfo( fname ).extension( false ).contains( QRegExp( "^(sbc|SBC)$" ) ) )
+   {
+      for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+      {
+         QString qs = qsl_lines[ i ];
+         QStringList qsl = csv_parse_line( qs );
+         if ( qsl.size() > 1 &&
+              our_files.count( qsl[ 0 ] ) )
+         {
+            csv1.data[ our_files[ qsl[ 0 ] ] ][ 1 ] = qsl[ 1 ];
+         }
+      }
+   } else {
+      US_Hydrodyn_Saxs_Buffer_Conc_Load *hbscl = 
+         new US_Hydrodyn_Saxs_Buffer_Conc_Load(
+                                               qsl_lines,
+                                               csv1,
+                                               this );
+      if ( hbscl->disp_csv.data.size() )
+      {
+         hbscl->exec();
+      } else {
+         QMessageBox::warning( this, 
+                               tr( "US-SOMO: SAXS Buffer: File Concentrations"),
+                               tr( "The file does not seem to contain data the this program understands" ) );
+         delete hbscl;
+         return;
+      }
+      delete hbscl;
+   }
+
    reload_csv();
    update_enables();
 }
