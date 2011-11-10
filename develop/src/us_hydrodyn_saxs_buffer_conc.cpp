@@ -14,6 +14,7 @@ US_Hydrodyn_Saxs_Buffer_Conc::US_Hydrodyn_Saxs_Buffer_Conc(
    this->csv1 = csv1;
    this->saxs_buffer_window = saxs_buffer_window;
    ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->conc_widget = true;
+   us_hydrodyn = ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->us_hydrodyn;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: SAXS Buffer: File Concentrations"));
@@ -255,6 +256,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::cancel()
 void US_Hydrodyn_Saxs_Buffer_Conc::set_ok()
 {
    *org_csv = current_csv();
+   ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->update_enables();
    close();
 }
 
@@ -387,9 +389,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc::update_enables()
       pb_copy     ->setEnabled( selected == 1 );
       pb_paste    ->setEnabled( selected && csv_copy.data.size() );
       pb_paste_all->setEnabled( csv_copy.data.size() );
-      // pb_save     ->setEnabled( csv1.data.size() );
-      pb_save     ->setEnabled( false );
-      pb_load     ->setEnabled( false );
+      pb_save     ->setEnabled( csv1.data.size() );
+      pb_load     ->setEnabled( true );
       disable_updates = false;
    }
 }
@@ -419,9 +420,190 @@ void US_Hydrodyn_Saxs_Buffer_Conc::reload_csv()
 
 void US_Hydrodyn_Saxs_Buffer_Conc::load()
 {
+
+   QString use_dir = QDir::currentDirPath();
+
+   if ( *(((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget) )
+   {
+      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+   }
+
+   QString fname = QFileDialog::getOpenFileName(
+                                                use_dir,
+                                                "*.sbc *.SBC",
+                                                this
+                                                );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !QFile::exists( fname ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: SAXS Buffer Subtraction Utility: Concentrations" ),
+                            QString( tr( "File %1 does not exist" ) ).arg( fname ) );
+      return;
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: SAXS Buffer Subtraction Utility: Concentrations" ),
+                            QString( tr( "Can not open file %1 for reading" ) ).arg( fname ) );
+      return;
+   }
+
+   csv1 = current_csv();
+
+   map < QString, unsigned int > our_files;
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      our_files[ csv1.data[ i ][ 0 ] ] = i;
+   }
+
+   QTextStream ts( &f );
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      QStringList qsl = csv_parse_line( qs );
+      if ( qsl.size() > 1 &&
+           our_files.count( qsl[ 0 ] ) )
+      {
+         csv1.data[ our_files[ qsl[ 0 ] ] ][ 1 ] = qsl[ 1 ];
+      }
+   }
+   f.close();
+   reload_csv();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer_Conc::save()
 {
+   QString use_dir = QDir::currentDirPath();
+
+   if ( ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget )
+   {
+      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+   }
+
+   QString fname = QFileDialog::getSaveFileName(
+                                                use_dir,
+                                                "*.sbc *.SBC",
+                                                this,
+                                                "save file dialog",
+                                                tr("Choose a filename to save the concentrations") );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !fname.contains(QRegExp(".sbc$",false)) )
+   {
+      fname += ".sbc";
+   }
+   
+   if ( QFile::exists( fname ) )
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: SAXS Buffer Subtraction Utility: Concentrations" ),
+                            QString( tr( "Can not open file %1 for writing" ) ).arg( fname ) );
+      return;
+   }
+
+   if ( ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget )
+   {
+      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->add_to_directory_history( fname );
+   }
+
+   csv tmp_csv = current_csv();
+
+   QTextStream ts( &f );
+   ts << csv_to_qstring( tmp_csv );
+   f.close();
+   QMessageBox::information( this, 
+                             tr( "US-SOMO: SAXS Buffer Subtraction Utility: Concentrations" ),
+                             QString( tr( "File %1 saved" ) ).arg( fname ) );
 }
 
+QString US_Hydrodyn_Saxs_Buffer_Conc::csv_to_qstring( csv from_csv )
+{
+   QString qs;
+
+   for ( unsigned int i = 0; i < from_csv.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
+      {
+         qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j]);
+      }
+      qs += "\n";
+   }
+
+   return qs;
+}
+
+QStringList US_Hydrodyn_Saxs_Buffer_Conc::csv_parse_line( QString qs )
+{
+   // cout << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
+   QStringList qsl;
+   if ( qs.isEmpty() )
+   {
+      // cout << QString("csv_parse_line: empty\n");
+      return qsl;
+   }
+   if ( !qs.contains(",") )
+   {
+      // cout << QString("csv_parse_line: one token\n");
+      qsl << qs;
+      return qsl;
+   }
+
+   QStringList qsl_chars = QStringList::split("", qs);
+   QString token = "";
+
+   bool in_quote = false;
+
+   for ( QStringList::iterator it = qsl_chars.begin();
+         it != qsl_chars.end();
+         it++ )
+   {
+      if ( !in_quote && *it == "," )
+      {
+         qsl << token;
+         token = "";
+         continue;
+      }
+      if ( in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = true;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      token += *it;
+   }
+   if ( !token.isEmpty() )
+   {
+      qsl << token;
+   }
+   // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
+   return qsl;
+}

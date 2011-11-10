@@ -167,6 +167,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_save_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_avg, SIGNAL(clicked()), SLOT(save_avg()));
 
+   pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
+   pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_conc_avg->setMinimumHeight(minHeight1);
+   pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
+
    pb_set_buffer = new QPushButton(tr("Set buffer"), this);
    pb_set_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_buffer->setMinimumHeight(minHeight1);
@@ -469,6 +475,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_file_buttons );
    vbl_files->addWidget( lb_files );
    vbl_files->addLayout( hbl_file_buttons_2 );
+   vbl_files->addWidget( pb_conc_avg );
    vbl_files->addLayout( hbl_buffer );
    vbl_files->addLayout( hbl_empty );
    vbl_files->addLayout( hbl_signal );
@@ -751,6 +758,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_conc               ->setEnabled( lb_files->numRows() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
    pb_save_avg           ->setEnabled( files_selected_count > 1 );
+   pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
@@ -1299,13 +1307,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    
    if ( !*saxs_widget )
    {
+      // try and activate
       ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
    }
 
    if ( *saxs_widget )
    {
-      QString dir = QDir::currentDirPath();
-      saxs_window->select_from_directory_history( dir );
+      saxs_window->select_from_directory_history( use_dir );
    }
 
    QStringList filenames = QFileDialog::getOpenFileNames(
@@ -1854,12 +1862,13 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
    double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
    for ( unsigned int i = 0; i < avg_qs.size(); i++ )
    {
-      avg_Is[ i ] *= dsc_inv;
       avg_sd[ i ] =
          sqrt( 
               ( dsc * avg_Is2[ i ] - avg_Is[ i ] * avg_Is[ i ] ) 
               * dsc_times_dsc_minus_one_inv 
               );
+
+      avg_Is[ i ] *= dsc_inv;
    }
 
    avg_conc *= dsc_inv;
@@ -1904,8 +1913,12 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
    update_csv_conc();
-   // cout << QString( "trying to set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
    for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
    {
       if ( csv_conc.data[ i ].size() > 1 &&
@@ -2232,7 +2245,7 @@ void US_Hydrodyn_Saxs_Buffer::conc()
    }
 }
 
-map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs()
+map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
 {
    map < QString, double > concs;
    map < QString, double > concs_in_widget;
@@ -2259,7 +2272,7 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs()
             }
          }
       }
-      if ( any_different )
+      if ( !quiet && any_different )
       {
          QMessageBox::warning( this, 
                               tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
@@ -2290,3 +2303,233 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::window_concs()
    return concs;
 }
    
+void US_Hydrodyn_Saxs_Buffer::conc_avg()
+{
+   // create average of selected
+   bool first = true;
+
+   vector < QString > avg_qs_string;
+   vector < double >  avg_qs;
+   vector < double >  avg_Is;
+   vector < double >  avg_Is2;
+
+   QStringList selected_files;
+   map < QString, bool > current_files;
+
+   unsigned int selected_count = 0;
+
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+   map < QString, double > inv_concs;
+
+   for ( map < QString, double >::iterator it = concs.begin();
+         it != concs.end();
+         it++ )
+   {
+      if ( it->second != 0e0 )
+      {
+         inv_concs[ it->first ] = /* 1e0 / */ it->second;
+      }
+   }
+
+   double avg_conc;
+   vector < double > nIs;
+
+   double tot_conc;
+   double tot_conc2;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      QString this_file = lb_files->text( i );
+      current_files[ this_file ] = true;
+
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_count++;
+         selected_files << this_file;
+         if ( !inv_concs.count( this_file ) )
+         {
+            editor_msg( "red", QString( tr( "Error: found zero or no concentration for %1" ) ).arg( this_file ) );
+            return;
+         }
+         cout << QString( "inv conc for %1 is %2\n" ).arg( this_file ).arg( inv_concs[ this_file ] );
+         if ( first )
+         {
+            first = false;
+            tot_conc  = inv_concs[ this_file ];
+            tot_conc2 = tot_conc * tot_conc;
+            avg_qs_string = f_qs_string[ this_file ];
+            avg_qs        = f_qs       [ this_file ];
+            nIs           = f_Is       [ this_file ];
+            for ( unsigned int j = 0; j < nIs.size(); j++ )
+            {
+               nIs[ j ] *= inv_concs[ this_file ];
+            }
+
+            avg_Is        = nIs;
+            avg_Is2       .resize( nIs.size() );
+            for ( unsigned int j = 0; j < nIs.size(); j++ )
+            {
+               avg_Is2[ j ] = nIs[ j ] * nIs[ j ];
+            }
+            avg_conc = 
+               concs.count( this_file ) ?
+               concs[ this_file ] :
+               0e0;
+         } else {
+            if ( avg_qs.size() != f_qs[ this_file ].size() )
+            {
+               editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+               return;
+            }
+            tot_conc  += inv_concs[ this_file ];
+            tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
+            nIs       = f_Is     [ this_file ];
+            for ( unsigned int j = 0; j < nIs.size(); j++ )
+            {
+               if ( fabs( avg_qs[ j ] - f_qs[ this_file ][ j ] ) > 5e-6 )
+               {
+                  editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+                  return;
+               }
+               nIs[ j ] *= inv_concs[ this_file ];
+               avg_Is [ j ] += nIs[ j ];
+               avg_Is2[ j ] =  nIs[ j ] * nIs[ j ];
+            }
+            avg_conc +=
+               concs.count( this_file ) ?
+               concs[ this_file ] :
+               0e0;
+         }            
+      }
+   }
+
+   if ( selected_count < 2 )
+   {
+      editor_msg( "red", tr( "Error: not at least 2 files selected so there is nothing to average" ) );
+      return;
+   }      
+
+   vector < double > avg_sd( avg_qs.size() );
+   double dsc = tot_conc;
+   double dsc_inv = 1e0 / dsc;
+   // double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
+   for ( unsigned int i = 0; i < avg_qs.size(); i++ )
+   {
+      if ( !i )
+      {
+         cout << QString( "points %1 avg %1 sum2 %1\n" )
+            .arg( selected_count )
+            .arg( avg_Is[ i ] )
+            .arg( avg_Is2[ i ] );
+      }
+
+      avg_Is[ i ] *= dsc_inv;
+
+      avg_sd[ i ] = 0e0;
+      
+      for ( unsigned int j = 0; j < selected_files.size(); j++ )
+      {
+         QString this_file = selected_files[ j ];
+         avg_sd[ i ] += inv_concs[ this_file ] * 
+            ( f_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( f_Is[ this_file ][ i ] - avg_Is[ i ] );
+      }
+      avg_sd[ i ] *= ( tot_conc / ( tot_conc * tot_conc - tot_conc2 ) );
+   }
+
+   avg_conc *= dsc_inv;
+
+   // determine name
+   // find common header & tail substrings
+
+   QString head = qstring_common_head( selected_files );
+   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   {
+      selected_files[ i ] = selected_files[ i ].right( selected_files[ i ].length() - head.length() );
+   }
+   QString tail = qstring_common_tail( selected_files );
+
+   unsigned int ext = 0;
+
+   if ( !head.isEmpty() )
+   {
+      head += "_";
+   }
+   if ( !tail.isEmpty() )
+   {
+      tail = "_" + tail;
+   }
+
+   QString avg_name = head + "cnavg" + tail;
+
+   while ( current_files.count( avg_name ) )
+   {
+      avg_name = head + QString( "cnavg-%1" ).arg( ++ext ) + tail;
+   }
+
+   lb_created_files->insertItem( avg_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( avg_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ avg_name ] = true;
+   
+   f_pos       [ avg_name ] = f_qs.size();
+   f_qs_string [ avg_name ] = avg_qs_string;
+   f_qs        [ avg_name ] = avg_qs;
+   f_Is        [ avg_name ] = avg_Is;
+   f_errors    [ avg_name ] = avg_sd;
+   
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   update_csv_conc();
+   // cout << QString( "trying to set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == avg_name )
+      {
+         csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( avg_conc );
+         // cout << QString( "Found & set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
+      }
+   }
+
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+   update_enables();
+}
+
+bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
+{
+   map < QString, double > concs = current_concs( true );
+   map < QString, double > nonzero_concs;
+
+   for ( map < QString, double >::iterator it = concs.begin();
+         it != concs.end();
+         it++ )
+   {
+      if ( it->second != 0e0 )
+      {
+         nonzero_concs[ it->first ] = it->second;
+      }
+   }
+
+   unsigned int selected_count = 0;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_count++;
+         if ( !nonzero_concs.count( lb_files->text( i ) ) )
+         {
+            return false;
+         }
+      }
+   }
+
+   return selected_count > 1;
+}

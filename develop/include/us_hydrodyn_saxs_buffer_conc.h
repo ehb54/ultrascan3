@@ -79,6 +79,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Conc : public QFrame
       bool          disable_updates;
       void          reload_csv();
 
+      QString       csv_to_qstring( csv from_csv);
+      QStringList   csv_parse_line( QString qs );
+      void          *us_hydrodyn;
+
    private slots:
 
       void update_enables();

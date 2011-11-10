@@ -75,6 +75,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QListBox      *lb_files;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_save_avg;
+      QPushButton   *pb_conc_avg;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
@@ -162,7 +163,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < vector < double > >       saxs_iqq;
       map < QString, bool >              created_files_not_saved;
 
-      map < QString, double >            current_concs();
+      map < QString, double >            current_concs( bool quiet = false );
       map < QString, double >            window_concs();
 
 #ifdef WIN32
@@ -209,7 +210,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       US_Hydrodyn_Saxs_Buffer_Conc *conc_window;
       bool                         conc_widget;
       void                         update_csv_conc();
-      
+      bool                         all_selected_have_nonzero_conc();
 
    private slots:
 
@@ -223,6 +224,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_all();
       void invert();
       void save_avg();
+      void conc_avg();
       void set_buffer();
       void set_empty();
       void set_signal();

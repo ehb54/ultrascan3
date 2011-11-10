@@ -3714,7 +3714,8 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_hybrid_file()
 {
    QString old_filename = hybrid_filename;
-   hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.hybrid *.HYBRID", this);
+   hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", 
+                                                  "*.hybrid *.HYBRID", this);
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
