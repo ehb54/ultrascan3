@@ -71,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_conc;
       QPushButton   *pb_clear_files;
 
+      QLabel        *lbl_selected;
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
       QListBox      *lb_files;
@@ -94,12 +95,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QRadioButton  *rb_np_ignore;
       QRadioButton  *rb_np_ask;
 
+      QCheckBox     *cb_multi_sub;
+
       QLabel        *lbl_created_files;
       QListBox      *lb_created_files;
 
       QPushButton   *pb_select_all_created;
       QPushButton   *pb_save_created_csv;
       QPushButton   *pb_save_created;
+      QPushButton   *pb_show_created;
+      QPushButton   *pb_show_only_created;
 
       QCheckBox     *cb_save_to_csv;
       QLineEdit     *le_csv_filename;
@@ -131,7 +136,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void          editor_msg_qc( QColor qcolor, QString msg );
 
       bool          running;
-      void          update_enables();
 
       bool          validate();
       bool          any_to_run();
@@ -226,6 +230,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       void setupGUI();
 
+      void update_enables();
       void update_files();
       void update_created_files();
       void add_files();
@@ -241,6 +246,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_all_created();
       void save_created_csv();
       void save_created();
+      void show_created();
+      void show_only_created();
 
       void table_value( int, int );
 

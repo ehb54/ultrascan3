@@ -71,13 +71,14 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    lb_files        ->setMaximumWidth( csv_width / 3 );
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
-
+   // progress        ->setMaximumWidth( csv_width / 3 );
+   pb_help         ->setMinimumWidth( csv_width / 3 );
+   pb_cancel       ->setMinimumWidth( csv_width / 3 );
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
    pb_set_buffer->setMaximumWidth ( pb_select_all->width() + 10 );
    pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
    pb_set_signal->setMaximumWidth ( pb_select_all->width() + 10 );
-
    plot_colors.clear();
    plot_colors.push_back(Qt::yellow);
    plot_colors.push_back(Qt::green);
@@ -101,80 +102,85 @@ US_Hydrodyn_Saxs_Buffer::~US_Hydrodyn_Saxs_Buffer()
 
 void US_Hydrodyn_Saxs_Buffer::setupGUI()
 {
-   int minHeight1 = 26;
-   int minHeight3 = 27;
+   int minHeight1 = 24;
+   int minHeight3 = 25;
 
    lbl_title = new QLabel(csv1.name.left(80), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_files = new QLabel("Data files", this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    pb_add_files = new QPushButton(tr("Add files"), this);
-   pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_add_files->setMinimumHeight(minHeight1);
    pb_add_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
    pb_conc = new QPushButton(tr("Concentrations"), this);
-   pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc->setMinimumHeight(minHeight1);
    pb_conc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_conc, SIGNAL(clicked()), SLOT(conc()));
 
    pb_clear_files = new QPushButton(tr("Remove files"), this);
-   pb_clear_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_clear_files->setMinimumHeight(minHeight1);
    pb_clear_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_files, SIGNAL(clicked()), SLOT(clear_files()));
 
    lb_files = new QListBox(this, "files files listbox" );
    lb_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_files->setEnabled(true);
    lb_files->setSelectionMode( QListBox::Multi );
    lb_files->setMinimumHeight( minHeight1 * 8 );
    connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files() ) );
 
+   lbl_selected = new QLabel("0 files selected", this );
+   lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
    pb_select_all = new QPushButton(tr("Select all"), this);
-   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
    pb_invert = new QPushButton(tr("Invert"), this);
-   pb_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_invert->setMinimumHeight(minHeight1);
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
    // pb_plot_files = new QPushButton(tr("Plot"), this);
-   // pb_plot_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   // pb_plot_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_plot_files->setMinimumHeight(minHeight1);
    // pb_plot_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
    pb_save_avg = new QPushButton(tr("Average"), this);
-   pb_save_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_save_avg->setMinimumHeight(minHeight1);
    pb_save_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_avg, SIGNAL(clicked()), SLOT(save_avg()));
 
    pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
-   pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc_avg->setMinimumHeight(minHeight1);
    pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
    pb_set_buffer = new QPushButton(tr("Set buffer"), this);
-   pb_set_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_set_buffer->setMinimumHeight(minHeight1);
    pb_set_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_set_buffer, SIGNAL(clicked()), SLOT(set_buffer()));
@@ -186,7 +192,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    pb_set_empty = new QPushButton(tr("Set blank"), this);
-   pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_set_empty->setMinimumHeight(minHeight1);
    pb_set_empty->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_set_empty, SIGNAL(clicked()), SLOT(set_empty()));
@@ -198,7 +204,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    pb_set_signal = new QPushButton(tr("Set solution"), this);
-   pb_set_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_set_signal->setMinimumHeight(minHeight1);
    pb_set_signal->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_set_signal, SIGNAL(clicked()), SLOT(set_signal()));
@@ -213,43 +219,56 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_created_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_created_files->setMinimumHeight(minHeight1);
    lbl_created_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lb_created_files = new QListBox(this, "created_files created_files listbox" );
    lb_created_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lb_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   lb_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_created_files->setEnabled(true);
    lb_created_files->setSelectionMode( QListBox::Multi );
    lb_created_files->setMinimumHeight( minHeight1 * 2 );
    connect( lb_created_files, SIGNAL( selectionChanged() ), SLOT( update_created_files() ) );
 
    pb_select_all_created = new QPushButton(tr("Select all"), this);
-   pb_select_all_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_all_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  - 1));
    pb_select_all_created->setMinimumHeight(minHeight1);
    pb_select_all_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all_created, SIGNAL(clicked()), SLOT(select_all_created()));
 
    pb_save_created_csv = new QPushButton(tr("Save as CSV"), this);
-   pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_save_created_csv->setMinimumHeight(minHeight1);
    pb_save_created_csv->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_created_csv, SIGNAL(clicked()), SLOT(save_created_csv()));
 
    pb_save_created = new QPushButton(tr("Save"), this);
-   pb_save_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_save_created->setMinimumHeight(minHeight1);
    pb_save_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_created, SIGNAL(clicked()), SLOT(save_created()));
 
+   pb_show_created = new QPushButton(tr("Show"), this);
+   pb_show_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_show_created->setMinimumHeight(minHeight1);
+   pb_show_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_show_created, SIGNAL(clicked()), SLOT(show_created()));
+
+   pb_show_only_created = new QPushButton(tr("Show only"), this);
+   pb_show_only_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_show_only_created->setMinimumHeight(minHeight1);
+   pb_show_only_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_show_only_created, SIGNAL(clicked()), SLOT(show_only_created()));
+
    progress = new QProgressBar(this, "Progress");
-   progress->setMinimumHeight(minHeight1);
+   // progress->setMinimumHeight(minHeight1);
    progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    progress->reset();
 
    cb_save_to_csv = new QCheckBox(this);
    cb_save_to_csv->setText(tr(" Combined I(q) Results File:"));
    cb_save_to_csv->setChecked(false);
-   cb_save_to_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_to_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_save_to_csv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_save_to_csv, SIGNAL(clicked()), SLOT(save_to_csv()));
 
@@ -263,23 +282,23 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    cb_individual_files = new QCheckBox(this);
    cb_individual_files->setText(tr(" Create individual SAXS Results Files"));
    cb_individual_files->setChecked(false);
-   cb_individual_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_individual_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_individual_files->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_replot_saxs = new QPushButton(tr("Replot stored I(q)"), this);
-   pb_replot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_replot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_replot_saxs->setMinimumHeight(minHeight1);
    pb_replot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_replot_saxs, SIGNAL(clicked()), SLOT(replot_saxs()));
 
    pb_save_saxs_plot = new QPushButton(tr("Store current I(q) plot"), this);
-   pb_save_saxs_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_saxs_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_save_saxs_plot->setMinimumHeight(minHeight1);
    pb_save_saxs_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_save_saxs_plot, SIGNAL(clicked()), SLOT(save_saxs_plot()));
 
    pb_set_target = new QPushButton(tr("Set Target"), this);
-   pb_set_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_set_target->setMinimumHeight(minHeight1);
    pb_set_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_set_target, SIGNAL(clicked()), SLOT(set_target()));
@@ -291,25 +310,25 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_current_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    pb_start = new QPushButton(tr("Start buffer subtraction"), this);
-   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
    pb_run_current = new QPushButton(tr("Current buffer subtraction"), this);
-   pb_run_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_run_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_current->setMinimumHeight(minHeight1);
    pb_run_current->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_run_current, SIGNAL(clicked()), SLOT(run_current()));
 
    pb_run_best = new QPushButton(tr("Best buffer subtraction"), this);
-   pb_run_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_run_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_best->setMinimumHeight(minHeight1);
    pb_run_best->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_run_best, SIGNAL(clicked()), SLOT(run_best()));
 
    pb_stop = new QPushButton(tr("Stop"), this);
-   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
@@ -384,7 +403,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    t_csv->setMaximumHeight(minHeight1 * ( 2 + csv1.data.size() ) );
    // t_csv->setMinimumWidth(minWidth1);
    t_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    t_csv->setEnabled(true);
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
@@ -426,7 +445,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_np = new QLabel( "Buffer subtraction non-positive:    ", this );
    lbl_np->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_np->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_np->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   lbl_np->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
 
    rb_np_crop = new QRadioButton( tr("Crop "), this);
    rb_np_crop->setEnabled(true);
@@ -456,15 +475,21 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    bg_np->insert(rb_np_ask);
    rb_np_crop->setChecked( true );
 
+   cb_multi_sub = new QCheckBox(this);
+   cb_multi_sub->setText(tr(" Subtract buffer from every selected file (exepting set buffer and set blank) " ) );
+   cb_multi_sub->setChecked(false);
+   cb_multi_sub->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_multi_sub->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_multi_sub, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    pb_help = new QPushButton(tr("Help"), this);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
-   Q_CHECK_PTR(pb_cancel);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
@@ -478,34 +503,38 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
-   // hbl_file_buttons_2->addWidget ( pb_plot_files );
    hbl_file_buttons_2->addWidget ( pb_save_avg );
 
    QBoxLayout *hbl_buffer = new QHBoxLayout( 0 );
-   hbl_buffer->addWidget( pb_set_buffer );
-   hbl_buffer->addWidget( lbl_buffer );
+   hbl_buffer->addWidget ( pb_set_buffer );
+   hbl_buffer->addWidget ( lbl_buffer );
 
    QBoxLayout *hbl_empty = new QHBoxLayout( 0 );
-   hbl_empty->addWidget( pb_set_empty );
-   hbl_empty->addWidget( lbl_empty );
+   hbl_empty->addWidget ( pb_set_empty );
+   hbl_empty->addWidget ( lbl_empty );
 
    QBoxLayout *hbl_signal = new QHBoxLayout( 0 );
-   hbl_signal->addWidget( pb_set_signal );
-   hbl_signal->addWidget( lbl_signal );
+   hbl_signal->addWidget ( pb_set_signal );
+   hbl_signal->addWidget ( lbl_signal );
 
    QBoxLayout *hbl_created = new QHBoxLayout( 0 );
-   hbl_created->addWidget( pb_select_all_created );
-   hbl_created->addWidget( pb_save_created_csv );
-   hbl_created->addWidget( pb_save_created );
+   hbl_created->addWidget ( pb_select_all_created );
+   hbl_created->addWidget ( pb_save_created_csv );
+   hbl_created->addWidget ( pb_save_created );
+
+   QBoxLayout *hbl_created_2 = new QHBoxLayout( 0 );
+   hbl_created_2->addWidget ( pb_show_created );
+   hbl_created_2->addWidget ( pb_show_only_created );
 
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
-   vbl_editor_group->addWidget(frame);
-   vbl_editor_group->addWidget(editor);
+   vbl_editor_group->addWidget (frame);
+   vbl_editor_group->addWidget (editor);
 
    QBoxLayout *vbl_files = new QVBoxLayout( 0 );
    vbl_files->addWidget( lbl_files );
    vbl_files->addLayout( hbl_file_buttons );
    vbl_files->addWidget( lb_files );
+   vbl_files->addWidget( lbl_selected );
    vbl_files->addLayout( hbl_file_buttons_2 );
    vbl_files->addWidget( pb_conc_avg );
    vbl_files->addLayout( hbl_buffer );
@@ -514,79 +543,87 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addWidget( lbl_created_files );
    vbl_files->addWidget( lb_created_files );
    vbl_files->addLayout( hbl_created );
+   vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
-   vbl_plot_group->addWidget( plot_dist );
+   vbl_plot_group->addWidget ( plot_dist );
 
    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
    hbl_files_plot->addLayout( vbl_files );
    hbl_files_plot->addLayout( vbl_plot_group );
 
    QHBoxLayout *hbl_csv = new QHBoxLayout(0);
-   hbl_csv->addSpacing(4);
-   hbl_csv->addWidget(cb_save_to_csv);
-   hbl_csv->addSpacing(4);
-   hbl_csv->addWidget(le_csv_filename);
-   hbl_csv->addSpacing(4);
-   hbl_csv->addWidget(cb_individual_files);
-   hbl_csv->addSpacing(4);
+   hbl_csv->addSpacing( 2 );
+   hbl_csv->addWidget ( cb_save_to_csv );
+   hbl_csv->addSpacing( 2 );
+   hbl_csv->addWidget ( le_csv_filename );
+   hbl_csv->addSpacing( 2 );
+   hbl_csv->addWidget ( cb_individual_files );
+   hbl_csv->addSpacing( 2 );
 
    QHBoxLayout *hbl_np = new QHBoxLayout(0);
-   hbl_np->addWidget( lbl_np );
-   hbl_np->addWidget( rb_np_crop );
-   hbl_np->addWidget( rb_np_min );
-   hbl_np->addWidget( rb_np_ignore );
-   hbl_np->addWidget( rb_np_ask );
+   hbl_np->addWidget ( lbl_np );
+   hbl_np->addWidget ( rb_np_crop );
+   hbl_np->addWidget ( rb_np_min );
+   hbl_np->addWidget ( rb_np_ignore );
+   hbl_np->addWidget ( rb_np_ask );
 
    QHBoxLayout *hbl_target = new QHBoxLayout(0);
-   hbl_target->addSpacing(4);
-   hbl_target->addWidget(pb_replot_saxs);
-   hbl_target->addSpacing(4);
-   hbl_target->addWidget(pb_save_saxs_plot);
-   hbl_target->addSpacing(4);
-   hbl_target->addWidget(pb_set_target);
-   hbl_target->addSpacing(4);
-   hbl_target->addWidget(lbl_current_target);
-   hbl_target->addSpacing(4);
+   hbl_target->addSpacing( 2 );
+   hbl_target->addWidget (pb_replot_saxs);
+   hbl_target->addSpacing( 2 );
+   hbl_target->addWidget (pb_save_saxs_plot);
+   hbl_target->addSpacing( 2 );
+   hbl_target->addWidget (pb_set_target);
+   hbl_target->addSpacing( 2 );
+   hbl_target->addWidget (lbl_current_target);
+   hbl_target->addSpacing( 2 );
 
    QHBoxLayout *hbl_controls = new QHBoxLayout(0);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_start);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_run_current);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_run_best);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_stop);
-   hbl_controls->addSpacing(4);
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget (pb_start);
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget (pb_run_current);
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget (pb_run_best);
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget (pb_stop);
+   hbl_controls->addSpacing( 2 );
 
-   QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
-   hbl_bottom->addSpacing(4);
-   hbl_bottom->addWidget(pb_help);
-   hbl_bottom->addSpacing(4);
-   hbl_bottom->addWidget(pb_cancel);
-   hbl_bottom->addSpacing(4);
-
+   // QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
+   // hbl_bottom->addSpacing( 2 );
+   // hbl_bottom->addWidget ( pb_help );
+   // hbl_bottom->addSpacing( 2 );
+   // hbl_bottom->addWidget ( progress );
+   // hbl_bottom->addSpacing( 2 );
+   // hbl_bottom->addWidget ( pb_cancel );
+   // hbl_bottom->addSpacing( 2 );
+   QGridLayout *gl_bottom = new QGridLayout( 0 );
+   gl_bottom->addWidget( pb_help  , 0, 0 );
+   gl_bottom->addWidget( progress , 0, 1 );
+   gl_bottom->addWidget( pb_cancel, 0, 2 );
+   
    QVBoxLayout *background = new QVBoxLayout(this);
-   background->addSpacing(4);
-   background->addWidget(lbl_title);
-   background->addSpacing(4);
-   background->addLayout(hbl_files_plot);
-   background->addWidget(t_csv);
-   background->addSpacing(4);
-   background->addWidget(progress);
-   background->addSpacing(4);
-   background->addLayout(hbl_np);
-   background->addSpacing(2);
-   background->addLayout(hbl_csv);
-   background->addSpacing(4);
-   background->addLayout(hbl_target);
-   background->addSpacing(4);
-   background->addLayout(hbl_controls);
-   background->addSpacing(4);
-   background->addLayout(hbl_bottom);
-   background->addSpacing(4);
+   background->addSpacing( 2 );
+   background->addWidget ( lbl_title );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_files_plot );
+   background->addWidget ( t_csv );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_np );
+   background->addSpacing( 2 );
+   background->addWidget ( cb_multi_sub );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_csv );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_target );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_controls );
+   background->addSpacing( 2 );
+   // background->addLayout ( hbl_bottom );
+   background->addLayout ( gl_bottom );
+   background->addSpacing( 2 );
 }
 
 void US_Hydrodyn_Saxs_Buffer::cancel()
@@ -810,9 +847,63 @@ void US_Hydrodyn_Saxs_Buffer::start()
 
    running = false;
    progress->setProgress(1, 1);
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::run_current()
+{
+   if ( cb_multi_sub->isChecked() )
+   {
+      bool is_running = running;
+      if ( !is_running )
+      {
+         running = true;
+         update_enables();
+      }
+
+      QString save_signal = lbl_signal->text();
+      map < QString, bool > selected_non_buffer_non_empty;
+      
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( lb_files->isSelected( i ) && 
+              lb_files->text( i ) != lbl_buffer->text() &&
+              lb_files->text( i ) != lbl_empty->text() )
+         {
+            selected_non_buffer_non_empty[ lb_files->text( i ) ] = true;
+         }
+      }
+      unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
+      unsigned int pos = 1;
+      for ( map < QString, bool >::iterator it = selected_non_buffer_non_empty.begin();
+            it != selected_non_buffer_non_empty.end();
+            it++ )
+      {
+         if ( !is_running )
+         {
+            progress->setProgress( pos++ , total_points );
+         }
+         lbl_signal->setText( it->first );
+         qApp->processEvents();
+         run_one();
+         if ( !running )
+         {
+            lbl_signal->setText( save_signal );
+            return;
+         }
+      }
+      if ( !is_running )
+      {
+         running = false;
+         update_enables();
+         progress->setProgress(1, 1);
+      }
+   } else {
+      run_one();
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::run_one()
 {
    // subtract buffer
    QString buffer   = lbl_buffer  ->text();
@@ -1101,10 +1192,6 @@ void US_Hydrodyn_Saxs_Buffer::run_best()
 {
 }
 
-void US_Hydrodyn_Saxs_Buffer::run_one()
-{
-}
-
 void US_Hydrodyn_Saxs_Buffer::stop()
 {
    running = false;
@@ -1118,30 +1205,61 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    // cout << "US_Hydrodyn_Saxs_Buffer::update_enables()\n";
    // cout << QString("saxs_window->qsl_plotted_iq_names.size() %1\n").arg(saxs_window->qsl_plotted_iq_names.size());
 
-   unsigned int files_selected_count = 0;
+   unsigned int files_selected_count                      = 0;
+   unsigned int non_buffer_non_empty_files_selected_count = 0;
    unsigned int last_selected_pos;
+
+   map < QString, bool > selected_map;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
       {
+         selected_map[ lb_files->text( i ) ] = true;
          last_selected_pos = i;
          files_selected_count++;
+         if ( lb_files->text( i ) != lbl_buffer->text() &&
+              lb_files->text( i ) != lbl_empty->text() )
+         {
+            non_buffer_non_empty_files_selected_count++;
+         }
       }
    }
 
+   lbl_selected->setText( QString( tr( "%1 of %2 files selected" ) )
+                          .arg( files_selected_count )
+                          .arg( lb_files->numRows() ) );
+
    unsigned int files_created_selected_not_saved_count = 0;
    unsigned int files_created_selected_count           = 0;
+   unsigned int files_created_selected_not_shown_count = 0;
+   map < QString, bool > created_selected_map;
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
    {
       if ( lb_created_files->isSelected( i ) )
       {
+         created_selected_map[ lb_created_files->text( i ) ] = true;
          files_created_selected_count++;
+         if ( !selected_map.count( lb_created_files->text( i ) ) )
+         {
+            files_created_selected_not_shown_count++;
+         } 
          if ( created_files_not_saved.count( lb_created_files->text( i ) ) )
          {
             files_created_selected_not_saved_count++;
          }
+      }
+   }
+
+   unsigned int files_selected_not_created           = 0;
+   for ( map < QString, bool >::iterator it = selected_map.begin();
+         it != selected_map.end();
+         it++ )
+   {
+      if ( !created_selected_map.count( it->first ) )
+      {
+         files_selected_not_created++;
       }
    }
 
@@ -1169,6 +1287,10 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
 
+   pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
+   pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
+                                       files_selected_not_created > 0 );
+
    bool any_best_empty    = false;
    bool any_current_empty = false;
    bool any_selected      = 
@@ -1195,16 +1317,22 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
       }
    }
    pb_start            ->setEnabled( !running && any_selected &&
-                                     !lbl_buffer->text().isEmpty() &&
-                                     !lbl_signal->text().isEmpty() );
+                                     ( !lbl_signal->text().isEmpty() ||
+                                       ( cb_multi_sub->isChecked() && 
+                                         non_buffer_non_empty_files_selected_count > 0 ) ) &&
+                                     !lbl_buffer->text().isEmpty() );
    pb_run_current      ->setEnabled( !running && any_selected &&
+                                     ( !lbl_signal->text().isEmpty() ||
+                                       ( cb_multi_sub->isChecked() && 
+                                         non_buffer_non_empty_files_selected_count > 0 ) ) &&
                                      !lbl_buffer->text().isEmpty() &&
-                                     !lbl_signal->text().isEmpty() &&
                                      !any_current_empty
                                      );
    pb_run_best         ->setEnabled( !running && 
+                                     ( !lbl_signal->text().isEmpty() ||
+                                       ( cb_multi_sub->isChecked() && 
+                                         non_buffer_non_empty_files_selected_count > 0 ) ) &&
                                      !lbl_buffer->text().isEmpty() &&
-                                     !lbl_signal->text().isEmpty() &&
                                      !any_best_empty && any_selected);
    pb_stop             ->setEnabled( running );
    pb_replot_saxs      ->setEnabled( !running && *saxs_widget && names.size() );
@@ -1761,6 +1889,12 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    }
 
    lb_files->insertStringList( add_filenames );
+
+   if ( add_filenames.size() )
+   {
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+   }
+
    if ( add_filenames.size() && plot_dist_zoomer )
    {
       // we should only do this if the ranges are changed
@@ -2929,5 +3063,39 @@ bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
 
 void US_Hydrodyn_Saxs_Buffer::delete_zoomer_if_ranges_changed()
 {
+}
+
+void US_Hydrodyn_Saxs_Buffer::show_created()
+{
+   map < QString, bool > created_selected;
+
+   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   {
+      if ( lb_created_files->isSelected( i ) )
+      {
+         created_selected[ lb_created_files->text( i ) ] = true;
+      }
+   }
+
+   disable_updates = true;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( !lb_files->isSelected( i ) && 
+           created_selected.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+   disable_updates = false;
+   plot_files();
+   update_enables();
+      
+}
+
+void US_Hydrodyn_Saxs_Buffer::show_only_created()
+{
+   disable_updates = true;
+   lb_files->clearSelection();
+   show_created();
 }
 
