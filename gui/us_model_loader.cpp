@@ -962,9 +962,9 @@ void US_ModelLoader::compress_list( void )
       QString cReqID  = desc.reqGUID;             // current request GUID
       QString cEdiID  = desc.editGUID;            // current edit GUID
       // protect against missing or dummy GUIDs causing false grouping
-      cReqID  = ( cReqID.length() != 36  ||  cReqID.startsWith( "000" ) ) ?
+      cReqID  = ( cReqID.length() < 16  ||  cReqID.startsWith( "000" ) ) ?
                 QString::number( ii ) : cReqID;
-      cEdiID  = ( cEdiID.length() != 36  ||  cEdiID.startsWith( "000" ) ) ?
+      cEdiID  = ( cEdiID.length() < 36  ||  cEdiID.startsWith( "000" ) ) ?
                 QString::number( ii ) : cEdiID;
 //qDebug() << " c_l ii desc" << ii << desc.description << " kiter" << kiter;
 

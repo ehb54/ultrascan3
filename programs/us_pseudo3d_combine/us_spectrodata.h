@@ -58,6 +58,12 @@ public:
    */
    void setRastRanges( double, double, double, double, QwtDoubleRect );
 
+   /*! \brief Set constant Z range for manual scale
+       \param a_zmin   Z minimum constant value.
+       \param a_zmax   Z maximum constant value.
+   */
+   void setZRange( double, double );
+
    /*! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
        \param x  The real X pixel location for which to fetch Z.
        \param y  The real Y pixel location for which to fetch Z.
@@ -85,7 +91,7 @@ private:
    double          yinc;         // Y increment (yreso-1)/xrng
    double          zmin;         // Z minimum
    double          zmax;         // Z maximum
-   double          zrng;         // Z data values range
+   double          zminr;        // Z minimum in raster w floor adjust
    double          xreso;        // number of X pixels per scan
    double          yreso;        // number of Y scans
    double          resol;        // resolution parameter for Gaussian

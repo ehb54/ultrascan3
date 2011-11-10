@@ -415,6 +415,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
+   spec_dat.setZRange( plt_zmin, plt_zmax );
    spec_dat.setRaster( *sol_d );
 
    d_spectrogram->attach( data_plot );
@@ -611,11 +612,13 @@ void US_Pseudo3D_Combine::load_distro()
    QStringList       mdescs;
    bool              loadDB = dkdb_cntrls->db();
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, models, mdescs );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
    connect( &dialog, SIGNAL(   changed( bool ) ),
             this, SLOT( update_disk_db( bool ) ) );
+   QApplication::restoreOverrideCursor();
 
    if ( dialog.exec() != QDialog::Accepted )
       return;  // no selection made
@@ -1071,8 +1074,10 @@ sc = 1.0;
          }
 
          listsols = reduced;
+qDebug() << " reduced-size" << reduced.size();
       }
    }
+qDebug() << " sol-size" << listsols.size();
    return;
 }
 
