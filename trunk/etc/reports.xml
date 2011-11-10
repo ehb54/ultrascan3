@@ -32,9 +32,9 @@
     <report name="rbitmap" label="Residuals Bit Map" />
     <report name="rinoise" label="Radially-Invariant Noise" />
     <report name="tinoise" label="Time-Invariant Noise" />
-    <report name="s-distrib" label="Sedimentation Coefficient Bar Plot" />
-    <report name="mw-distrib" label="Molecular Weight Bar Plot" />
-    <report name="D-distrib" label="Diffusion Coefficient Bar Plot" />
+    <report name="s_distrib" label="Sedimentation Coefficient Bar Plot" />
+    <report name="mw_distrib" label="Molecular Weight Bar Plot" />
+    <report name="D_distrib" label="Diffusion Coefficient Bar Plot" />
     <report name="3dplot" label="3-Dimensional Model Plot" />
     <report name="D_vs_s" label="D-vs-s 2-d Model" />
     <report name="D_vs_mw" label="D-vs-mw 2-d Model" />
