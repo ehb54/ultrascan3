@@ -14,6 +14,7 @@
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
+#include <qradiobutton.h>
 #include <qtable.h>
 #include <qwt_plot_zoomer.h>
 
@@ -85,6 +86,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QPushButton   *pb_set_signal;
       QLabel        *lbl_signal;
+
+      QLabel        *lbl_np;
+      QButtonGroup  *bg_np;
+      QRadioButton  *rb_np_crop;
+      QRadioButton  *rb_np_min;
+      QRadioButton  *rb_np_ignore;
+      QRadioButton  *rb_np_ask;
 
       QLabel        *lbl_created_files;
       QListBox      *lb_created_files;
@@ -211,6 +219,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool                         conc_widget;
       void                         update_csv_conc();
       bool                         all_selected_have_nonzero_conc();
+
+      void                         delete_zoomer_if_ranges_changed();
 
    private slots:
 

@@ -423,6 +423,38 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
 
+   lbl_np = new QLabel( "Buffer subtraction non-positive:    ", this );
+   lbl_np->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_np->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_np->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   rb_np_crop = new QRadioButton( tr("Crop "), this);
+   rb_np_crop->setEnabled(true);
+   rb_np_crop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   rb_np_crop->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_np_min = new QRadioButton( tr("Set to minimum "), this);
+   rb_np_min->setEnabled(true);
+   rb_np_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   rb_np_min->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_np_ignore = new QRadioButton( tr("Ignore (log of negative not defined)"), this);
+   rb_np_ignore->setEnabled(true);
+   rb_np_ignore->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   rb_np_ignore->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_np_ask = new QRadioButton( tr("Ask (blocks mass processing) "), this);
+   rb_np_ask->setEnabled(true);
+   rb_np_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_np_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_np = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_np->setRadioButtonExclusive(true);
+   bg_np->insert(rb_np_crop);
+   bg_np->insert(rb_np_min);
+   bg_np->insert(rb_np_ignore);
+   bg_np->insert(rb_np_ask);
+   rb_np_crop->setChecked( true );
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -500,6 +532,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_csv->addWidget(cb_individual_files);
    hbl_csv->addSpacing(4);
 
+   QHBoxLayout *hbl_np = new QHBoxLayout(0);
+   hbl_np->addWidget( lbl_np );
+   hbl_np->addWidget( rb_np_crop );
+   hbl_np->addWidget( rb_np_min );
+   hbl_np->addWidget( rb_np_ignore );
+   hbl_np->addWidget( rb_np_ask );
+
    QHBoxLayout *hbl_target = new QHBoxLayout(0);
    hbl_target->addSpacing(4);
    hbl_target->addWidget(pb_replot_saxs);
@@ -534,10 +573,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    background->addWidget(lbl_title);
    background->addSpacing(4);
    background->addLayout(hbl_files_plot);
-   background->addSpacing(4);
    background->addWidget(t_csv);
+   background->addSpacing(4);
    background->addWidget(progress);
    background->addSpacing(4);
+   background->addLayout(hbl_np);
+   background->addSpacing(2);
    background->addLayout(hbl_csv);
    background->addSpacing(4);
    background->addLayout(hbl_target);
@@ -594,6 +635,7 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
          {
             return;
          }
+         break;
       case 1 : // just ignore them
          break;
       case 2 : // quit
@@ -701,10 +743,358 @@ void US_Hydrodyn_Saxs_Buffer::set_target()
 
 void US_Hydrodyn_Saxs_Buffer::start()
 {
+   running = true;
+   update_enables();
+
+   map < unsigned int, double >       starts;
+   map < unsigned int, double >       ends;
+   map < unsigned int, unsigned int > points;
+   map < unsigned int, double >       increments;
+   map < unsigned int, unsigned int > offsets;
+   map < unsigned int, unsigned int > next_offsets;
+
+   unsigned int current_offset = 0;
+
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   {
+      if ( ((QCheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+      {
+         starts    [i]   =  t_csv->text(i, 2).toDouble();
+         ends      [i]   =  t_csv->text(i, 3).toDouble();
+         points    [i]   =  t_csv->text(i, 4).toUInt();
+         offsets   [i]   =  current_offset;
+         current_offset +=  points[i];
+         next_offsets[i] =  current_offset;
+
+         if ( points[i] > 1 )
+         {
+            increments[i] = (ends[i] - starts[i]) / ( points[i] - 1 );
+         } else {
+            increments[i] = 0;
+         }
+      }
+   }
+   
+   unsigned int total_points = 1;
+   for ( map < unsigned int, unsigned int >::iterator it = points.begin();
+         it != points.end();
+         it++ )
+   {
+      total_points *= it->second;
+   }
+
+   editor_msg("black", QString( tr( "Total points %1\n").arg( total_points ) ) );
+
+   // linearization of an arbitrary number of loops
+
+   for ( unsigned int i = 0; i < total_points; i++ )
+   {
+      if ( !running )
+      {
+         break;
+      }
+      progress->setProgress(i, total_points);
+      unsigned int pos = i;
+      QString msg = "";
+      for ( map < unsigned int, unsigned int >::iterator it = points.begin();
+            it != points.end();
+            it++ )
+      {
+         t_csv->setText(it->first, 6, QString("%1").arg(starts[it->first] + ( pos % it->second ) * increments[it->first]));
+         pos /= it->second;
+         msg += QString("%1 %2; ").arg(t_csv->text(it->first, 0)).arg(t_csv->text(it->first, 6));
+      }
+      editor_msg( "black", tr( "Running:" ) + msg );
+      run_current();
+   }
+
+   running = false;
+   progress->setProgress(1, 1);
 }
 
 void US_Hydrodyn_Saxs_Buffer::run_current()
 {
+   // subtract buffer
+   QString buffer   = lbl_buffer  ->text();
+   QString solution = lbl_signal  ->text();
+   QString empty    = lbl_empty   ->text();
+
+   map < QString, bool > current_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      QString this_file = lb_files->text( i );
+      current_files[ this_file ] = true;
+   }
+
+   if ( !current_files.count( buffer ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
+      return;
+   } 
+
+   if ( !current_files.count( solution ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for solution %1" ) ).arg( solution ) );
+      return;
+   } 
+
+   if ( !empty.isEmpty() && !current_files.count( empty ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for blank %1" ) ).arg( empty ) );
+      return;
+   } 
+
+   if ( f_qs[ buffer ].size() != f_qs[ solution ].size() ||
+        ( !empty.isEmpty() && f_qs[ buffer ].size() != f_qs[ empty ].size() ) )
+   {
+      editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+      return;
+   }
+
+   vector < QString > bsub_q_string = f_qs_string [ solution ];
+   vector < double >  bsub_q        = f_qs        [ solution ];
+   vector < double >  bsub_I        = f_Is        [ solution ];
+   vector < double >  bsub_error    = f_errors    [ solution ];
+
+   bool solution_has_errors = f_errors[ solution ].size();
+   bool buffer_has_errors   = f_errors[ buffer   ].size();
+   bool empty_has_errors    = !empty.isEmpty() && f_errors[ empty ].size();
+
+   for ( unsigned int j = 0; j < f_Is[ buffer ].size(); j++ )
+   {
+      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > 5e-6 ||
+           ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
+      {
+         editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+         return;
+      }
+   }
+   
+   // determine parameters
+   bool use_alpha = ((QCheckTableItem *)(t_csv->item( 0, 1 )))->isChecked();
+   bool use_psv   = ((QCheckTableItem *)(t_csv->item( 1, 1 )))->isChecked();
+
+   if ( ( !use_alpha && !use_psv ) || ( use_alpha && use_psv ) )
+   {
+      editor_msg( "red", tr( "Internal error: both alpha & psv methods active" ) );
+      return;
+   }
+
+   if ( ( use_alpha && t_csv->text( 0, 6 ).isEmpty() ) ||
+        ( use_psv && ( t_csv->text( 1, 6 ).isEmpty() ||
+                       t_csv->text( 2, 6 ).isEmpty() ) ) )
+   {
+      editor_msg( "red", tr( "Internal error: method selected does not have current values" ) );
+      return;
+   }
+      
+   double alpha  = t_csv->text( 0, 6 ).toDouble();
+   double psv    = t_csv->text( 1, 6 ).toDouble();
+   double gamma  = t_csv->text( 2, 6 ).toDouble();
+
+   map < QString, double > concs;
+
+   QString msg;
+   QString tag;
+
+   if ( use_psv )
+   {
+      concs = current_concs();
+      double this_conc;
+      if ( !concs.count( solution ) || concs[ solution ] == 0e0 )
+      {
+         editor_msg( "dark red", tr( "Warning: the solution has zero concentration" ) );
+         this_conc = 0e0;
+      } else {
+         this_conc = concs[ solution ];
+      }
+         
+      alpha = 1e0 - gamma * this_conc * psv / 1000;
+      msg = QString( tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
+         .arg( alpha )
+         .arg( gamma )
+         .arg( this_conc )
+         .arg( psv );
+   } else {
+      msg = QString( tr( "alpha %1" ) ).arg( alpha );
+   }
+
+   // assuming zero covariance for now
+   if ( buffer_has_errors && !solution_has_errors )
+   {
+      editor_msg( "dark red", tr( "Warning: the buffer has errors defined but not the solution" ) );
+      
+      bsub_error = f_errors[ buffer ];
+   } else {
+      if ( !buffer_has_errors && !solution_has_errors && empty_has_errors )
+      {
+         // this is a strange case
+         editor_msg( "dark red", tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
+         bsub_error = f_errors[ empty ];
+      }
+   }
+
+   for ( unsigned int i = 0; i < bsub_q.size(); i++ )
+   {
+      bsub_I[ i ] -= alpha * f_Is[ buffer ][ i ];
+      if ( solution_has_errors && buffer_has_errors )
+      {
+         bsub_error[ i ] = sqrt( bsub_error[ i ] * bsub_error[ i ] +
+                                 alpha * alpha * f_errors[ buffer ][ i ] * f_errors[ buffer ][ i ] );
+      } else {
+         if ( buffer_has_errors )
+         {
+            bsub_error[ i ] *= alpha;
+         }
+      }
+            
+      if ( !empty.isEmpty() )
+      {
+         bsub_I[ i ] -= ( 1e0 - alpha ) * f_Is[ empty ][ i ];
+         if ( ( buffer_has_errors || solution_has_errors ) && empty_has_errors )
+         {
+            bsub_error[ i ] = sqrt( bsub_error[ i ] * bsub_error[ i ] +
+                                    ( 1e0 - alpha ) * ( 1e0 - alpha )
+                                    * f_errors[ empty ][ i ] * f_errors[ empty ][ i ] );
+         }
+      }
+   }         
+
+   // ok now we have a bsub!
+   bool         any_negative   = false;
+   unsigned int negative_pos;
+   unsigned int negative_count = 0;
+   double       minimum_positive = bsub_I[ 0 ];
+
+   for ( unsigned int i = 0; i < bsub_I.size(); i++ )
+   {
+      if ( minimum_positive > bsub_I[ i ] )
+      {
+         minimum_positive = bsub_I[ i ];
+      }
+      if ( bsub_I[ i ] <= 0e0 )
+      {
+         negative_count++;
+         if ( !any_negative )
+         {
+            negative_pos = i;
+            any_negative = true;
+         }
+      }
+   }
+
+   if ( any_negative )
+   {
+      int result;
+      if ( rb_np_crop->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
+         result = 0;
+      }
+      if ( rb_np_min->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
+         result = 1;
+      }
+      if ( rb_np_ignore->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
+         result = 2;
+      }
+      if ( rb_np_ask->isChecked() )
+      {
+         result = QMessageBox::warning(this, 
+                                       tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                       QString( tr( "Please note:\n\n"
+                                                    "The buffer subtraction causes %1 points be non-positive\n"
+                                                    "Starting at a q value of %2\n\n"
+                                                    "What would you like to do?\n" ) )
+                                       .arg( negative_count )
+                                       .arg( bsub_q[ negative_pos ] ),
+                                       tr( "&Crop the data" ), 
+                                       tr( "&Set to the minimum positive value" ), 
+                                       tr( "&Leave them negative or zero" ), 
+                                       0, // Stop == button 0
+                                       0 // Escape == button 0
+                                       );
+      }
+         
+      switch( result )
+      {
+      case 0 : // crop
+         {
+            if ( negative_pos < 2 )
+            {
+               if ( rb_np_ask->isChecked() )
+               {
+                  QMessageBox::warning(this, 
+                                       tr("US-SOMO: SAXS Buffer Subtraction Utility"),
+                                       tr("Insufficient data left after cropping"));
+               } else {
+                  editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
+               }
+               return;
+            }
+               
+            bsub_q_string.resize( negative_pos );
+            bsub_q       .resize( negative_pos );
+            bsub_I       .resize( negative_pos );
+            if ( bsub_error.size() )
+            {
+               bsub_error.resize( negative_pos );
+            }
+         }            
+      case 1 : // use absolute value
+         for ( unsigned int i = 0; i < bsub_I.size(); i++ )
+         {
+            if ( bsub_I[ i ] <= 0e0 )
+            {
+               bsub_I[ i ] = minimum_positive;
+            }
+         }
+         break;
+      case 2 : // ignore
+         break;
+      }
+   }
+
+   QString head = solution + QString( "_bsub_a%1" ).arg( alpha );
+   unsigned int ext = 0;
+
+   QString bsub_name = head;
+
+   while ( current_files.count( bsub_name ) )
+   {
+      bsub_name = head + QString( "-%1" ).arg( ++ext );
+   }
+
+   lb_created_files->insertItem( bsub_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( bsub_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ bsub_name ] = true;
+   
+   f_pos       [ bsub_name ] = f_qs.size();
+   f_qs_string [ bsub_name ] = bsub_q_string;
+   f_qs        [ bsub_name ] = bsub_q;
+   f_Is        [ bsub_name ] = bsub_I;
+   f_errors    [ bsub_name ] = bsub_error;
+   
+   // we could check if it has changed and then delete
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
+
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::run_best()
@@ -1373,6 +1763,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    lb_files->insertStringList( add_filenames );
    if ( add_filenames.size() && plot_dist_zoomer )
    {
+      // we should only do this if the ranges are changed
       plot_dist_zoomer->zoom ( 0 );
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
@@ -1913,11 +2304,12 @@ void US_Hydrodyn_Saxs_Buffer::save_avg()
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    
-   if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // we could check if it has changed and then delete
+   // if ( plot_dist_zoomer )
+   // {
+   // delete plot_dist_zoomer;
+   // plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    update_csv_conc();
    for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
    {
@@ -2277,9 +2669,9 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
          QMessageBox::warning( this, 
                               tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
                               tr( "There are unsaved updates in the open Solution Concentration window\n"
-                                  "This will cause the average values shown in the window to reflect the saved solution concentrations,\n"
-                                  "not necessarily the values reflected in the Solution Concentration window itself.\n"
-                                  "You probably want to save the values in the Solution Concentration window and repeat computing the average."
+                                  "This will cause the concentration values used by the current calculation\n"
+                                  "to differ from those shown in the Solution Concentration window\n"
+                                  "You probably want to save the values in the Solution Concentration window and repeat the computation."
                                   ) );
       }
    }
@@ -2479,11 +2871,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg()
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    
-   if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // we could check if it has changed and then delete
+   // if ( plot_dist_zoomer )
+   // {
+   // delete plot_dist_zoomer;
+   // plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    update_csv_conc();
    // cout << QString( "trying to set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
    for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
@@ -2533,3 +2926,8 @@ bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
 
    return selected_count > 1;
 }
+
+void US_Hydrodyn_Saxs_Buffer::delete_zoomer_if_ranges_changed()
+{
+}
+
