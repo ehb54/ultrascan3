@@ -1180,7 +1180,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = max( xmin, 0.0 );
+   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
    ymin   = max( ymin, 0.0 );
 
    data_grid->enableYMin( true );
@@ -1297,7 +1297,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = max( xmin, 0.0 );
+   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
    ymin   = max( ymin, 0.0 );
 
    data_grid->enableYMin( true );
@@ -1559,7 +1559,7 @@ double s0_w = sc->mw;
       maxv        = qMax( maxv, s0_b );
 
       model.calc_coefficients( *sc );
-if ( jj < 2 ) {
+if ( dbg_level > 0 && jj < 2 ) {
  DbgLv(1) << "AdjMo: 0) s" << s0_s << "k" << s0_k << "D" << s0_D
   << "mw" << s0_w << "vbar20" << s0_b << "  jj" << jj;
  double s1_k = sc->f_f0;
@@ -1571,7 +1571,7 @@ if ( jj < 2 ) {
   << "mw" << s1_w << "vbar20" << s1_b;
  double D20w = R * K20 / ( AVOGADRO * 18.0 * M_PI *
    pow(s0_k * VISC_20W / 100.0, 3.0 / 2.0) * 
-   sqrt(s0_s * s1_b / (2.0 * (1.0 - s1_b * DENS_20W))));
+   sqrt(qAbs(s0_s) * s1_b / (2.0 * (1.0 - s1_b * DENS_20W))));
  sc->mw = sc->f = sc->f_f0 = 0.0;
  sc->D = D20w;
  model.calc_coefficients( *sc );
