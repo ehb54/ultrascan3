@@ -62,6 +62,13 @@ void US_SpectrogramData::setRastRanges( double a_xres, double a_yres,
    drecti   = a_drecti;
 }
 
+// Set constant Z range for use with manual or looping displays
+void US_SpectrogramData::setZRange( double a_zmin, double a_zmax )
+{
+   zmin     = a_zmin;
+   zmax     = a_zmax;
+}
+
 // Method called by QwtPlotSpectrogram for each raster point.
 // This version gets or interpolates a point from the raster buffer.
 double US_SpectrogramData::value(double x, double y) const
@@ -119,7 +126,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    xmax        = drecti.right();
 
    if ( xmin == xmax )
-   {  // Auto-limits:  calculate x,y ranges
+   {  // Auto-limits:  calculate x,y,z ranges
       xmin        = solu.at( 0 ).s;    // initial minima,maxima
       ymin        = solu.at( 0 ).k;
       zmin        = solu.at( 0 ).c;
@@ -133,14 +140,13 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
       {
          xval    = solu.at( ii ).s;
          yval    = solu.at( ii ).k;
-         zval    = solu.at( ii ).c;
-
-         xmin    = ( xval < xmin ) ? xval : xmin;
-         xmax    = ( xval > xmax ) ? xval : xmax;
-         ymin    = ( yval < ymin ) ? yval : ymin;
-         ymax    = ( yval > ymax ) ? yval : ymax;
-         zmin    = ( zval < zmin ) ? zval : zmin;
-         zmax    = ( zval > zmax ) ? zval : zmax;
+         zval    = solu.at( ii ).c; 
+         xmin    = qMin( xval, xmin );
+         xmax    = qMax( xval, xmax );
+         ymin    = qMin( yval, ymin );
+         ymax    = qMax( yval, ymax );
+         zmin    = qMin( zval, zmin );
+         zmax    = qMax( zval, zmax );
       }
 
       xrng    = xmax - xmin;          // initial ranges and pixel/data ratios
@@ -155,26 +161,16 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    }
 
    else
-   {  // Given x,y ranges
+   {  // Given x,y,z ranges
       ymin    = drecti.top   ();
       ymax    = drecti.bottom();
-      zmin    = solu.at( 0 ).c;
-      zmax    = zmin;
-
-      for ( int ii = 1; ii < nsol; ii++ )
-      {  // Calculate z range
-         zval    = solu.at( ii ).c;
-         zmin    = ( zval < zmin ) ? zval : zmin;
-         zmax    = ( zval > zmax ) ? zval : zmax;
-      }
    }
 
    xrng    = xmax - xmin;
    yrng    = ymax - ymin;
    xinc    = ( xreso - 1.0 ) / xrng;
    yinc    = ( yreso - 1.0 ) / yrng;
-   zmin   -= ( ( zmax - zmin ) * zfloor );
-   zrng    = zmax - zmin;
+   zminr   = zmin - ( ( zmax - zmin ) * zfloor );
 
    // set bounding rectangle for raster plot
    setBoundingRect( QwtDoubleRect( xmin, ymin, xrng, yrng ) );
@@ -184,7 +180,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
 
    for ( int ii = 0; ii < nxypt; ii++ )
    {
-      rdata.append( zmin );
+      rdata.append( zminr );
    }
 
    // Populate raster with z values derived from a Gaussian distribution
@@ -212,7 +208,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
       {   // spread z values for each distribution point
          xval    = solu.at( kk ).s;                    // x,y,z
          yval    = solu.at( kk ).k;
-         zval    = solu.at( kk ).c - zmin;             // use z in 0,zrng range
+         zval    = solu.at( kk ).c - zminr;            // use z in 0,zrng range
 
          int rx  = (int)( ( xval - xmin ) * xinc );    // x index of this point
          int fx  = rx - nxd;                           // first reasonable x
@@ -246,7 +242,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
                // value that is really:
                //   zval * exp( -pow( xdif, 2.0 ) / pow( 2 * ssigma, 2.0 ) )
                //        * exp( -pow( ydif, 2.0 ) / pow( 2 * fsigma, 2.0 ) )
-               double zout   = zmin + zterm * xterm;
+               double zout   = zminr + zterm * xterm;
 
                // only replace input if new value is greater
                if ( zout > zin )
