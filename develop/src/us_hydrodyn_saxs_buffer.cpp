@@ -167,6 +167,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
+   pb_to_saxs = new QPushButton(tr("S"), this);
+   pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_to_saxs->setMinimumHeight(minHeight1);
+   pb_to_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
+
    pb_rescale = new QPushButton(tr("Rescale"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
@@ -540,6 +546,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
+   hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
@@ -1378,6 +1385,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
+   pb_to_saxs            ->setEnabled( files_selected_count );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
@@ -3467,7 +3475,9 @@ bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
    unsigned int selected_count = 0;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->isSelected( i )  && 
+           lb_files->text( i ) != lbl_buffer->text() &&
+           lb_files->text( i ) != lbl_empty->text() )
       {
          selected_count++;
          if ( !nonzero_concs.count( lb_files->text( i ) ) )
@@ -3764,5 +3774,35 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       }
       disable_updates = false;
       update_files();
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::to_saxs()
+{
+   // copy selected to saxs window
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            if ( f_errors.count( this_file ) &&
+                 f_errors[ this_file ].size() )
+            {
+               saxs_window->plot_one_iqq( f_qs    [ this_file ],
+                                          f_Is    [ this_file ],
+                                          f_errors[ this_file ],
+                                          this_file );
+            } else {
+               saxs_window->plot_one_iqq( f_qs    [ this_file ],
+                                          f_Is    [ this_file ],
+                                          this_file );
+            }
+         } else {
+            editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
+         }
+      }
    }
 }

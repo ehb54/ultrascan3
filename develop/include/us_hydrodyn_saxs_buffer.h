@@ -73,6 +73,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_adjacent;
+      QPushButton   *pb_to_saxs;
       QPushButton   *pb_invert;
       QPushButton   *pb_rescale;
 
@@ -252,6 +253,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void clear_files();
       void select_all();
       void adjacent();
+      void to_saxs();
       void invert();
       void rescale();
       void avg();
