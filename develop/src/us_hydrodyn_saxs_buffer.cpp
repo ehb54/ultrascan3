@@ -3653,6 +3653,8 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
 
    cout << "rx: " << rx.pattern() << endl;
 
+   unsigned int newly_set = 0;
+
    if ( found )
    {
       disable_updates = true;
@@ -3662,6 +3664,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
          if ( lb_files->text( i ).contains( rx ) )
          {
             lb_files->setSelected( i, true );
+            newly_set++;
          }
       }
       
@@ -3670,9 +3673,14 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
          if ( lb_files->text( i ).contains( rx ) )
          {
             lb_files->setSelected( i, true );
+            newly_set++;
          }
       }
       
+      if ( !newly_set )
+      {
+         // for later, loosen up and try again
+      }
       disable_updates = false;
       update_files();
    }
@@ -3726,6 +3734,8 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 
    cout << "rx: " << rx.pattern() << endl;
 
+   unsigned int newly_set = 0;
+
    if ( found )
    {
       disable_updates = true;
@@ -3735,6 +3745,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
          if ( lb_created_files->text( i ).contains( rx ) )
          {
             lb_created_files->setSelected( i, true );
+            newly_set++;
          }
       }
       
@@ -3743,9 +3754,14 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
          if ( lb_created_files->text( i ).contains( rx ) )
          {
             lb_created_files->setSelected( i, true );
+            newly_set++;
          }
       }
-      
+
+      if ( !newly_set )
+      {
+         // for later, loosen up and try again
+      }
       disable_updates = false;
       update_files();
    }
