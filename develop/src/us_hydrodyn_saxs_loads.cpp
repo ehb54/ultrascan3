@@ -3134,7 +3134,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve_using_last_rescaling( vector < double >
    }
 }
 
-bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir )
+bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir, QWidget *parent )
 {
    if ( !((US_Hydrodyn *)us_hydrodyn)->directory_history.size() ||
         ( ((US_Hydrodyn *)us_hydrodyn)->directory_history.size() == 1 && 
@@ -3168,7 +3168,7 @@ bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir )
                                        current, 
                                        FALSE, 
                                        &ok,
-                                       this );
+                                       parent ? parent : this );
    if ( ok ) {
       dir = res;
       return true;

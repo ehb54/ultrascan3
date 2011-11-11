@@ -71,14 +71,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_conc;
       QPushButton   *pb_clear_files;
 
-      QLabel        *lbl_selected;
       QPushButton   *pb_select_all;
+      QPushButton   *pb_adjacent;
       QPushButton   *pb_invert;
       QPushButton   *pb_rescale;
 
       QListBox      *lb_files;
+      QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
-      QPushButton   *pb_save_avg;
+      QPushButton   *pb_avg;
       QPushButton   *pb_conc_avg;
 
       QPushButton   *pb_set_buffer;
@@ -98,11 +99,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QRadioButton  *rb_np_ask;
 
       QCheckBox     *cb_multi_sub;
+      QCheckBox     *cb_multi_sub_avg;
+      QCheckBox     *cb_multi_sub_conc_avg;
 
       QLabel        *lbl_created_files;
       QListBox      *lb_created_files;
+      QLabel        *lbl_selected_created;
 
       QPushButton   *pb_select_all_created;
+      QPushButton   *pb_adjacent_created;
       QPushButton   *pb_save_created_csv;
       QPushButton   *pb_save_created;
       QPushButton   *pb_show_created;
@@ -229,6 +234,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         delete_zoomer_if_ranges_changed();
       QString                      vector_double_to_csv( vector < double > vd );
 
+      bool                         adjacent_ok( QString name );
+
+      void                         avg     ( QStringList files );
+      void                         conc_avg( QStringList files );
+      QString                      last_created_file;
+
    private slots:
 
       void setupGUI();
@@ -240,14 +251,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void conc();
       void clear_files();
       void select_all();
+      void adjacent();
       void invert();
       void rescale();
-      void save_avg();
+      void avg();
       void conc_avg();
       void set_buffer();
       void set_empty();
       void set_signal();
       void select_all_created();
+      void adjacent_created();
       void save_created_csv();
       void save_created();
       void show_created();

@@ -426,7 +426,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
 
    if ( *(((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget) )
    {
-      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir, this );
       raise();
    }
 
@@ -520,7 +520,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
 
    if ( ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget )
    {
-      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir, this );
       raise();
    }
 
