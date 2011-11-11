@@ -74,6 +74,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QLabel        *lbl_selected;
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
+      QPushButton   *pb_rescale;
+
       QListBox      *lb_files;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_save_avg;
@@ -210,8 +212,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString qstring_common_tail( QString s1, 
                                    QString s2 );
 
-      QString qstring_common_head( QStringList qsl );
-      QString qstring_common_tail( QStringList qsl );
+      QString qstring_common_head( QStringList qsl, bool strip_digits = false );
+      QString qstring_common_tail( QStringList qsl, bool strip_digits = false );
 
       QString last_load_dir;
       bool    save_files( QStringList files );
@@ -225,6 +227,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool                         all_selected_have_nonzero_conc();
 
       void                         delete_zoomer_if_ranges_changed();
+      QString                      vector_double_to_csv( vector < double > vd );
 
    private slots:
 
@@ -238,6 +241,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void clear_files();
       void select_all();
       void invert();
+      void rescale();
       void save_avg();
       void conc_avg();
       void set_buffer();
