@@ -93,7 +93,6 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    //   plot_colors.push_back(Qt::darkRed);
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
-   cout << "p4\n";
 }
 
 US_Hydrodyn_Saxs_Buffer::~US_Hydrodyn_Saxs_Buffer()
@@ -2451,7 +2450,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    vector < double >  avg_Is2;
 
    QStringList selected_files;
-   map < QString, bool > current_files;
 
    unsigned int selected_count = 0;
 
@@ -2517,10 +2515,11 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }
 
    first = true;
+
+
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
       QString this_file = files[ i ];
-      current_files[ this_file ] = true;
 
       selected_count++;
       selected_files << this_file;
@@ -2605,6 +2604,12 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }
 
    QString avg_name = head + "avg" + tail;
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
 
    while ( current_files.count( avg_name ) )
    {
@@ -3199,7 +3204,6 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    vector < double >  avg_Is2;
 
    QStringList selected_files;
-   map < QString, bool > current_files;
 
    unsigned int selected_count = 0;
 
@@ -3282,7 +3286,6 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
       QString this_file = files[ i ];
-      current_files[ this_file ] = true;
 
       selected_count++;
       selected_files << this_file;
@@ -3397,6 +3400,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    }
 
    QString avg_name = head + "cnavg" + tail;
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
 
    while ( current_files.count( avg_name ) )
    {
