@@ -427,6 +427,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
    if ( *(((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget) )
    {
       ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+      raise();
    }
 
    QString fname = QFileDialog::getOpenFileName(
@@ -520,6 +521,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
    if ( ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget )
    {
       ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir );
+      raise();
    }
 
    QString fname = QFileDialog::getSaveFileName(
@@ -541,6 +543,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
    if ( QFile::exists( fname ) )
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+      raise();
    }
 
    QFile f( fname );

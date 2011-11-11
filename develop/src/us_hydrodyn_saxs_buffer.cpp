@@ -666,13 +666,24 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
    if ( created_not_saved_list.size() )
    {
+      QStringList qsl;
+      for ( unsigned int i = 0; i < created_not_saved_list.size() && i < 15; i++ )
+      {
+         qsl << created_not_saved_list[ i ];
+      }
+
+      if ( qsl.size() < created_not_saved_list.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
+      }
+
       switch ( QMessageBox::warning(this, 
                                     tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
                                                  "What would you like to do?\n" ) )
-                                    .arg( created_not_saved_list.join( "\n" ) ),
+                                    .arg( qsl.join( "\n" ) ),
                                     tr( "&Save them now" ), 
                                     tr( "&Close the window anyway" ), 
                                     tr( "&Quit from closing" ), 
@@ -784,6 +795,7 @@ void US_Hydrodyn_Saxs_Buffer::set_target()
    if ( *saxs_widget ) 
    { 
       saxs_window->set_scaling_target( scaling_target );
+      raise();
       if ( !scaling_target.isEmpty() )
       {
          saxs_window->ask_iq_target_grid();
@@ -1160,7 +1172,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
       }
    }
 
-   QString head = solution + QString( "_bsub_a%1" ).arg( alpha );
+   QString head = solution + QString( "_bsub_a%1" ).arg( alpha ).replace( ".", "_" );
    unsigned int ext = 0;
 
    QString bsub_name = head;
@@ -1637,6 +1649,7 @@ void US_Hydrodyn_Saxs_Buffer::save_csv_saxs_iqq()
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      raise();
    }         
 
    FILE *of = fopen(fname, "wb");
@@ -1745,13 +1758,24 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
 
    if ( created_not_saved_list.size() )
    {
+      QStringList qsl;
+      for ( unsigned int i = 0; i < created_not_saved_list.size() && i < 15; i++ )
+      {
+         qsl << created_not_saved_list[ i ];
+      }
+
+      if ( qsl.size() < created_not_saved_list.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
+      }
+
       switch ( QMessageBox::warning(this, 
                                     tr( "US-SOMO: SAXS Buffer Subtraction Utility Remove Files" ),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
                                                  "What would you like to do?\n" ) )
-                                    .arg( created_not_saved_list.join( "\n" ) ),
+                                    .arg( qsl.join( "\n" ) ),
                                     tr( "&Save them now" ), 
                                     tr( "&Remove them anyway" ), 
                                     tr( "&Quit from removing files" ), 
@@ -1847,11 +1871,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    {
       // try and activate
       ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+      raise();
    }
 
    if ( *saxs_widget )
    {
       saxs_window->select_from_directory_history( use_dir );
+      raise();
    }
 
    QStringList filenames = QFileDialog::getOpenFileNames(
@@ -2693,6 +2719,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    if ( QFile::exists( use_filename ) )
    {
       use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename );
+      raise();
    }
 
    QFile f( use_filename );
@@ -2846,6 +2873,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
    if ( QFile::exists( use_filename ) )
    {
       use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename );
+      raise();
    }
 
    QFile f( use_filename );
