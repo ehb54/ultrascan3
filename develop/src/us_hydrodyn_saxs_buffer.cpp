@@ -427,6 +427,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 #endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
+   connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+
    t_csv = new QTable(csv1.data.size(), csv1.header.size(), this);
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    t_csv->setMinimumHeight(minHeight1 * ( 1 + csv1.data.size() ) );
@@ -471,6 +473,41 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    recompute_interval_from_points();
 
    connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
+
+   pb_select_vis = new QPushButton(tr("Select Visible"), this);
+   pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_select_vis->setMinimumHeight(minHeight1);
+   pb_select_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_vis, SIGNAL(clicked()), SLOT(select_vis()));
+
+   pb_remove_vis = new QPushButton(tr("Remove Visible"), this);
+   pb_remove_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_remove_vis->setMinimumHeight(minHeight1);
+   pb_remove_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_remove_vis, SIGNAL(clicked()), SLOT(remove_vis()));
+
+   pb_crop_left = new QPushButton(tr("Crop Left"), this);
+   pb_crop_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_left->setMinimumHeight(minHeight1);
+   pb_crop_left->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_left, SIGNAL(clicked()), SLOT(crop_left()));
+
+   lbl_crop_points = new QLabel( "", this );
+   lbl_crop_points->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_crop_points->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_crop_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+
+   cb_guinier = new QCheckBox(this);
+   cb_guinier->setText(tr(" Guinier"));
+   cb_guinier->setChecked(false);
+   cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier, SIGNAL(clicked()), SLOT(guinier()));
+
+   lbl_guinier = new QLabel( "", this );
+   lbl_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_guinier->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
 
    lbl_np = new QLabel( "Buffer subtraction non-positive:    ", this );
    lbl_np->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -596,8 +633,18 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
 
+
+   QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
+   hbl_plot_buttons->addWidget( pb_select_vis );
+   hbl_plot_buttons->addWidget( pb_remove_vis );
+   hbl_plot_buttons->addWidget( pb_crop_left );
+   hbl_plot_buttons->addWidget( lbl_crop_points );
+   hbl_plot_buttons->addWidget( cb_guinier );
+   hbl_plot_buttons->addWidget( lbl_guinier );
+
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
+   vbl_plot_group->addLayout ( hbl_plot_buttons );
 
    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
    hbl_files_plot->addLayout( vbl_files );
@@ -761,6 +808,24 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
 {
+   cout << "table value\n";
+   if ( col == 2 || col == 3 || col == 5 || col == 6 )
+   {
+      if ( !t_csv->text( row, col ).isEmpty() &&
+           t_csv->text( row, col ) != QString( "%1" ).arg(  t_csv->text( row, col ).toDouble() ) )
+      {
+         t_csv->setText( row, col , QString( "%1" ).arg(  t_csv->text( row, col ).toDouble() ) );
+      }
+   }
+   if ( col == 4 )
+   {
+      if ( !t_csv->text( row, col ).isEmpty() &&
+           t_csv->text( row, col ) != QString( "%1" ).arg(  t_csv->text( row, col ).toUInt() ) )
+      {
+         t_csv->setText( row, col , QString( "%1" ).arg(  t_csv->text( row, col ).toUInt() ) );
+      }
+   }
+
    if ( col == 4 || col == 2 || col == 3 )
    {
       recompute_interval_from_points();
@@ -1452,6 +1517,24 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    cb_multi_sub_avg      ->setEnabled( !running && cb_multi_sub->isChecked() );
    cb_multi_sub_conc_avg ->setEnabled( !running && cb_multi_sub->isChecked() );
 
+
+   pb_select_vis       ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
+                                    );
+   pb_remove_vis       ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
+                                    );
+   pb_crop_left        ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   cb_guinier          ->setEnabled( files_selected_count );
+
    if ( *saxs_widget )
    {
       saxs_window->update_iqq_suffix();
@@ -1815,22 +1898,33 @@ void US_Hydrodyn_Saxs_Buffer::recompute_points_from_interval()
 
 void US_Hydrodyn_Saxs_Buffer::clear_files()
 {
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         files << lb_files->text( i );
+      }
+   }
+   clear_files( files );
+   update_enables();
+}
+void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
+{
    disable_updates = true;
 
    QStringList           created_not_saved_list;
    map < QString, bool > created_not_saved_map;
    map < QString, bool > selected_map;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( unsigned int i = 0; i < files.size(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      QString this_file = files[ i ];
+      selected_map[ this_file ] = true;
+      if ( created_files_not_saved.count( this_file ) )
       {
-         selected_map[ lb_files->text( i ) ] = true;
-         if ( created_files_not_saved.count( lb_files->text( i ) ) )
-         {
-            created_not_saved_list << lb_files->text( i );
-            created_not_saved_map[ lb_files->text( i ) ] = true;
-         }
+         created_not_saved_list << this_file;
+         created_not_saved_map[ this_file ] = true;
       }
    }
 
@@ -1887,10 +1981,9 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
       }
    }
 
-
    for ( int i = lb_files->numRows() - 1; i >= 0; i-- )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( selected_map.count( lb_files->text( i ) ) )
       {
          editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
          if ( lbl_buffer->text() == lb_files->text( i ) )
@@ -1932,7 +2025,6 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
          conc_window->cancel();
       }
    }
-   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::add_files()
@@ -2127,6 +2219,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+      connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    }
    
    plot_dist->replot();
@@ -3600,6 +3693,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+   connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    
    plot_dist->replot();
 }
@@ -3805,4 +3899,308 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
          }
       }
    }
+}
+
+void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect &rect )
+{
+   cout << QString( "zoomed: %1 %2 %3 %4\n" )
+      .arg( rect.x1() )
+      .arg( rect.x2() )
+      .arg( rect.y1() )
+      .arg( rect.y2() );
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::zoom_info()
+{
+   if ( plot_dist_zoomer )
+   {
+      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
+         .arg( plot_dist_zoomer->zoomRect().x1() )
+         .arg( plot_dist_zoomer->zoomRect().x2() )
+         .arg( plot_dist_zoomer->zoomRect().y1() )
+         .arg( plot_dist_zoomer->zoomRect().y2() );
+      cout << QString( "zoombase: %1 %2 %3 %4\n" )
+         .arg( plot_dist_zoomer->zoomBase().x1() )
+         .arg( plot_dist_zoomer->zoomBase().x2() )
+         .arg( plot_dist_zoomer->zoomBase().y1() )
+         .arg( plot_dist_zoomer->zoomBase().y2() );
+   } else {
+      cout << "no current zoomer\n";
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::plot_mouse( const QMouseEvent & /* me */ )
+{
+   cout << "mouse event\n";
+   zoom_info();
+   if ( plot_dist_zoomer )
+   {
+      cout << QString( "is base %1\n" ).arg( plot_dist_zoomer->zoomBase() == 
+                                             plot_dist_zoomer->zoomRect() ? "yes" : "no" );
+      update_enables();
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::select_vis()
+{
+   // find curves within zoomRect & select only them
+   map < QString, bool > selected_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_qs[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().x1() &&
+                    f_qs[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().x2() &&
+                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
+                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+               {
+                  selected_files[ this_file ] = true;
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   disable_updates = true;
+   lb_files->clearSelection();
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( selected_files.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+   disable_updates = false;
+   update_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::remove_vis()
+{
+   // find curves within zoomRect & select only them
+   cout << "select visible\n";
+   QStringList selected_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_qs[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().x1() &&
+                    f_qs[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().x2() &&
+                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
+                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+               {
+                  selected_files << this_file;
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   clear_files( selected_files );
+   update_files();
+   if ( plot_dist_zoomer &&
+        plot_dist_zoomer->zoomRectIndex() )
+   {
+      plot_dist_zoomer->zoom( -1 );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::crop_left()
+{
+   // first make left visible,
+   // of no left movement needed, then start cropping points
+   // potential undo?
+   
+   // find selected curves & their left most position:
+   bool all_lefts_visible = true;
+   map < QString, bool > selected_files;
+
+   double minx;
+   double maxx;
+   double miny;
+   double maxy;
+
+   bool first = true;
+
+   unsigned show_pts = 5;
+   // unsigned show_pts_min = show_pts - 3;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) &&
+              f_qs[ this_file ].size() > show_pts - 1 &&
+              f_Is[ this_file ].size() )
+         {
+            selected_files[ this_file ] = true;
+            double this_minx = f_qs[ this_file ][ 0 ];
+            double this_maxx = f_qs[ this_file ][ show_pts - 1 ];
+            double this_miny = f_Is[ this_file ][ 0 ];
+            double this_maxy = f_Is[ this_file ][ 0 ];
+
+            for ( unsigned int j = 1; j < show_pts; j++ )
+            {
+               if ( this_miny > f_Is[ this_file ][ j ] )
+               {
+                  this_miny = f_Is[ this_file ][ j ];
+               }
+               if ( this_maxy < f_Is[ this_file ][ j ] )
+               {
+                  this_maxy = f_Is[ this_file ][ j ];
+               }
+            }
+
+            if ( first )
+            {
+               first = false;
+               minx = this_minx;
+               maxx = this_maxx;
+               miny = this_miny;
+               maxy = this_maxy;
+            } else {
+               if ( minx > this_minx )
+               {
+                  minx = this_minx;
+               }
+               if ( maxx < this_maxx )
+               {
+                  maxx = this_maxx;
+               }
+               if ( miny > this_miny )
+               {
+                  miny = this_miny;
+               }
+               if ( maxy < this_maxy )
+               {
+                  maxy = this_maxy;
+               }
+            }
+         } else {
+            editor_msg( "red", QString( tr( "Crop left: curves need at least %1 points to crop" ) ).arg( show_pts ) );
+            return;
+         }            
+      }
+   }
+
+   // is the rectangle contained?
+   if ( 
+       minx < plot_dist_zoomer->zoomRect().x1() ||
+       maxx > plot_dist_zoomer->zoomRect().x2() ||
+       miny < plot_dist_zoomer->zoomRect().y1() ||
+       maxy > plot_dist_zoomer->zoomRect().y2() )
+   {
+      all_lefts_visible = false;
+   }
+
+   if ( !all_lefts_visible )
+   {
+      editor_msg( "black", tr( "Crop left: press again to crop one point" ) );
+      // will our current zoom rectangle show all the points?
+      // if so, simply move it
+      double dx = maxx - minx;
+      double dy = maxy - miny;
+
+      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
+      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+      if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
+      {
+         // we can fit
+         double newx = minx - .05 * dx;
+         double newy = miny - .05 * dy;
+         if ( newx < 0e0 )
+         {
+            newx = 0e0;
+         }
+         if ( newy < 0e0 )
+         {
+            newy = 0e0;
+         }
+         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
+         plot_dist_zoomer->move( newx, newy );
+         return;
+      }
+
+      // ok, we are going to have to make a rectangle
+      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
+
+      double newminx = minx - .05 * dx;
+      double newminy = miny - .05 * dy;
+      if ( newminx < 0e0 )
+      {
+         newminx = 0e0;
+      }
+      if ( newminy < 0e0 )
+      {
+         newminy = 0e0;
+      }
+      dr.setX1( newminx );
+      dr.setY1( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setX2( newminx + zdx );
+      } else {         
+         dr.setX2( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setY2( newminy + zdy );
+      } else {         
+         dr.setY2( newminy + dy * 1.1 );
+      }
+
+      plot_dist_zoomer->zoom( dr );
+      return;
+   }
+   // remove the first point from each of and replot
+
+   editor_msg( "blue", tr( "Crop left: cropped 1 point" ) );
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      unsigned int org_len = f_qs[ it->first ].size();
+      for ( unsigned int i = 1; i < f_qs[ it->first ].size(); i++ )
+      {
+         f_qs_string[ it->first ][ i - 1 ] = f_qs_string[ it->first ][ i ];
+         f_qs       [ it->first ][ i - 1 ] = f_qs       [ it->first ][ i ];
+         f_Is       [ it->first ][ i - 1 ] = f_Is       [ it->first ][ i ];
+         if ( f_errors.count( it->first ) &&
+              f_errors[ it->first ].size() )
+         {
+            f_errors[ it->first ][ i - 1 ] = f_errors[ it->first ][ i ];
+         }
+      }
+
+      f_qs_string[ it->first ].resize( org_len - 1 );
+      f_qs       [ it->first ].resize( org_len - 1 );
+      f_Is       [ it->first ].resize( org_len - 1 );
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ].resize( org_len - 1 );
+      }
+   }
+   update_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::guinier()
+{
 }

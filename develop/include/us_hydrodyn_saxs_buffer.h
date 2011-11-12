@@ -138,6 +138,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QwtPlot       *plot_dist;
       ScrollZoomer  *plot_dist_zoomer;
 
+      QPushButton   *pb_select_vis;
+      QPushButton   *pb_remove_vis;
+      QPushButton   *pb_crop_left;
+      QLabel        *lbl_crop_points;
+
+      QCheckBox     *cb_guinier;
+      QLabel        *lbl_guinier;
+
       bool          order_ascending;
 
       void          editor_msg( QString color, QString msg );
@@ -240,6 +248,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         avg     ( QStringList files );
       void                         conc_avg( QStringList files );
       QString                      last_created_file;
+      void                         zoom_info();
+      void                         clear_files( QStringList files );
 
    private slots:
 
@@ -287,6 +297,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       void cancel();
       void help();
+
+      void plot_zoomed( const QwtDoubleRect &rect );
+      void plot_mouse ( const QMouseEvent &me );
+
+      void select_vis();
+      void remove_vis();
+      void crop_left();
+      void guinier();
 
    protected slots:
 
