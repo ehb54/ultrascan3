@@ -36,6 +36,23 @@
 
 using namespace std;
 
+struct crop_undo_data
+{
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+   bool               is_left;
+   vector < QString > files;
+   vector < QString > q_string;
+   vector < double >  q;
+   vector < double >  I;
+   vector < bool >    has_e;
+   vector < double >  e;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+};
+
 class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 {
    Q_OBJECT
@@ -141,7 +158,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
       QPushButton   *pb_crop_left;
-      QLabel        *lbl_crop_points;
+      QPushButton   *pb_crop_undo;
+      QPushButton   *pb_crop_right;
+
 
       QCheckBox     *cb_guinier;
       QLabel        *lbl_guinier;
@@ -193,6 +212,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       map < QString, double >            current_concs( bool quiet = false );
       map < QString, double >            window_concs();
+
+      vector < crop_undo_data >          crop_undos;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -304,6 +325,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_vis();
       void remove_vis();
       void crop_left();
+      void crop_undo();
+      void crop_right();
       void guinier();
 
    protected slots:

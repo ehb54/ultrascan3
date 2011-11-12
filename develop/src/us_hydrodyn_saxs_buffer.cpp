@@ -492,10 +492,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_crop_left->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_left, SIGNAL(clicked()), SLOT(crop_left()));
 
-   lbl_crop_points = new QLabel( "", this );
-   lbl_crop_points->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_crop_points->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_crop_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_undo = new QPushButton(tr("Undo"), this);
+   pb_crop_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_undo->setMinimumHeight(minHeight1);
+   pb_crop_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_undo, SIGNAL(clicked()), SLOT(crop_undo()));
+
+   pb_crop_right = new QPushButton(tr("Crop Right"), this);
+   pb_crop_right->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_right->setMinimumHeight(minHeight1);
+   pb_crop_right->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_right, SIGNAL(clicked()), SLOT(crop_right()));
 
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier"));
@@ -638,13 +645,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_left );
-   hbl_plot_buttons->addWidget( lbl_crop_points );
-   hbl_plot_buttons->addWidget( cb_guinier );
-   hbl_plot_buttons->addWidget( lbl_guinier );
+   hbl_plot_buttons->addWidget( pb_crop_undo );
+   hbl_plot_buttons->addWidget( pb_crop_right );
+
+   QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout(0);
+   hbl_plot_buttons_2->addWidget( cb_guinier );
+   hbl_plot_buttons_2->addWidget( lbl_guinier );
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
+   vbl_plot_group->addLayout ( hbl_plot_buttons_2 );
 
    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
    hbl_files_plot->addLayout( vbl_files );
@@ -1529,6 +1540,12 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
                                     );
    pb_crop_left        ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_undo        ->setEnabled( crop_undos.size() );
+   pb_crop_right       ->setEnabled( 
                                     files_selected_count &&
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
@@ -3901,13 +3918,13 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
    }
 }
 
-void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect &rect )
+void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect & /* rect */ )
 {
-   cout << QString( "zoomed: %1 %2 %3 %4\n" )
-      .arg( rect.x1() )
-      .arg( rect.x2() )
-      .arg( rect.y1() )
-      .arg( rect.y2() );
+   //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
+   // .arg( rect.x1() )
+   // .arg( rect.x2() )
+   // .arg( rect.y1() )
+   // .arg( rect.y2() );
 }
 
 
@@ -3932,12 +3949,12 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
 
 void US_Hydrodyn_Saxs_Buffer::plot_mouse( const QMouseEvent & /* me */ )
 {
-   cout << "mouse event\n";
-   zoom_info();
+   // cout << "mouse event\n";
+   // zoom_info();
    if ( plot_dist_zoomer )
    {
-      cout << QString( "is base %1\n" ).arg( plot_dist_zoomer->zoomBase() == 
-                                             plot_dist_zoomer->zoomRect() ? "yes" : "no" );
+      // cout << QString( "is base %1\n" ).arg( plot_dist_zoomer->zoomBase() == 
+      // plot_dist_zoomer->zoomRect() ? "yes" : "no" );
       update_enables();
    }
 }
@@ -4171,14 +4188,31 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
    }
    // remove the first point from each of and replot
 
-   editor_msg( "blue", tr( "Crop left: cropped 1 point" ) );
+   crop_undo_data cud;
+   cud.is_left = true;
+
    for ( map < QString, bool >::iterator it = selected_files.begin();
          it != selected_files.end();
          it++ )
    {
       unsigned int org_len = f_qs[ it->first ].size();
+      cud.files   .push_back( it->first );
+      cud.q_string.push_back( f_qs_string[ it->first ][ 0 ] );
+      cud.q       .push_back( f_qs       [ it->first ][ 0 ] );
+      cud.I       .push_back( f_Is       [ it->first ][ 0 ] );
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.has_e   .push_back( true );
+         cud.e       .push_back( f_errors   [ it->first ][ 0 ] );
+      } else {
+         cud.has_e   .push_back( false );
+         cud.e       .push_back( 0 );
+      }
+
       for ( unsigned int i = 1; i < f_qs[ it->first ].size(); i++ )
       {
+
          f_qs_string[ it->first ][ i - 1 ] = f_qs_string[ it->first ][ i ];
          f_qs       [ it->first ][ i - 1 ] = f_qs       [ it->first ][ i ];
          f_Is       [ it->first ][ i - 1 ] = f_Is       [ it->first ][ i ];
@@ -4197,6 +4231,266 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       {
          f_errors[ it->first ].resize( org_len - 1 );
       }
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", tr( "Crop left: cropped 1 point" ) );
+
+   update_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::crop_right()
+{
+   // find selected curves & their right most position:
+   bool all_rights_visible = true;
+   map < QString, bool > selected_files;
+
+   double minx;
+   double maxx;
+   double miny;
+   double maxy;
+
+   bool first = true;
+
+   unsigned show_pts = 5;
+   // unsigned show_pts_min = show_pts - 3;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) &&
+              f_qs[ this_file ].size() > show_pts - 1 &&
+              f_Is[ this_file ].size() )
+         {
+            selected_files[ this_file ] = true;
+            unsigned int size = f_qs[ this_file ].size();
+            double this_minx = f_qs[ this_file ][ size - show_pts - 1 ];
+            double this_maxx = f_qs[ this_file ][ size - 1 ];
+            double this_miny = f_Is[ this_file ][ size - show_pts - 1 ];
+            double this_maxy = f_Is[ this_file ][ size - show_pts - 1 ];
+
+            for ( unsigned int j = size - show_pts; j < size; j++ )
+            {
+               if ( this_miny > f_Is[ this_file ][ j ] )
+               {
+                  this_miny = f_Is[ this_file ][ j ];
+               }
+               if ( this_maxy < f_Is[ this_file ][ j ] )
+               {
+                  this_maxy = f_Is[ this_file ][ j ];
+               }
+            }
+
+            if ( first )
+            {
+               first = false;
+               minx = this_minx;
+               maxx = this_maxx;
+               miny = this_miny;
+               maxy = this_maxy;
+            } else {
+               if ( minx > this_minx )
+               {
+                  minx = this_minx;
+               }
+               if ( maxx < this_maxx )
+               {
+                  maxx = this_maxx;
+               }
+               if ( miny > this_miny )
+               {
+                  miny = this_miny;
+               }
+               if ( maxy < this_maxy )
+               {
+                  maxy = this_maxy;
+               }
+            }
+         } else {
+            editor_msg( "red", QString( tr( "Crop right: curves need at least %1 points to crop" ) ).arg( show_pts ) );
+            return;
+         }            
+      }
+   }
+
+   // is the rectangle contained?
+   if ( 
+       minx < plot_dist_zoomer->zoomRect().x1() ||
+       maxx > plot_dist_zoomer->zoomRect().x2() ||
+       miny < plot_dist_zoomer->zoomRect().y1() ||
+       maxy > plot_dist_zoomer->zoomRect().y2() )
+   {
+      all_rights_visible = false;
+   }
+
+   if ( !all_rights_visible )
+   {
+      editor_msg( "black", tr( "Crop right: press again to crop one point" ) );
+      // will our current zoom rectangle show all the points?
+      // if so, simply move it
+      double dx = maxx - minx;
+      double dy = maxy - miny;
+
+      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
+      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+      if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
+      {
+         // we can fit
+         double newx = minx - .05 * dx;
+         double newy = miny - .05 * dy;
+         if ( newx < 0e0 )
+         {
+            newx = 0e0;
+         }
+         if ( newy < 0e0 )
+         {
+            newy = 0e0;
+         }
+         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
+         plot_dist_zoomer->move( newx, newy );
+         return;
+      }
+
+      // ok, we are going to have to make a rectangle
+      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
+
+      double newminx = minx - .05 * dx;
+      double newminy = miny - .05 * dy;
+      if ( newminx < 0e0 )
+      {
+         newminx = 0e0;
+      }
+      if ( newminy < 0e0 )
+      {
+         newminy = 0e0;
+      }
+      dr.setX1( newminx );
+      dr.setY1( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setX2( newminx + zdx );
+      } else {         
+         dr.setX2( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setY2( newminy + zdy );
+      } else {         
+         dr.setY2( newminy + dy * 1.1 );
+      }
+
+      plot_dist_zoomer->zoom( dr );
+      return;
+   }
+   // remove the first point from each of and replot
+
+   crop_undo_data cud;
+   cud.is_left = false;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      unsigned int org_len = f_qs[ it->first ].size();
+      cud.files   .push_back( it->first );
+      cud.q_string.push_back( f_qs_string[ it->first ][ org_len - 1 ] );
+      cud.q       .push_back( f_qs       [ it->first ][ org_len - 1 ] );
+      cud.I       .push_back( f_Is       [ it->first ][ org_len - 1 ] );
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.has_e   .push_back( true );
+         cud.e       .push_back( f_errors   [ it->first ][ org_len - 1 ] );
+      } else {
+         cud.has_e   .push_back( false );
+         cud.e       .push_back( 0 );
+      }
+
+      f_qs_string[ it->first ].pop_back();
+      f_qs       [ it->first ].pop_back();
+      f_Is       [ it->first ].pop_back();
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ].pop_back();
+      }
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", tr( "Crop right: cropped 1 point" ) );
+
+   update_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::crop_undo()
+{
+   if ( !crop_undos.size() )
+   {
+      return;
+   }
+
+   map < QString, bool > current_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   crop_undo_data cud = crop_undos.back();
+   crop_undos.pop_back();
+
+   for ( unsigned int i = 0; i < cud.files.size(); i++ )
+   {
+      if ( !current_files.count( cud.files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( cud.files[ i ] ) );
+      } else {
+         if ( cud.is_left )
+         {
+            unsigned int org_len = f_qs[ cud.files[ i ] ].size();
+            f_qs_string[ cud.files[ i ] ].resize( org_len + 1 );
+            f_qs       [ cud.files[ i ] ].resize( org_len + 1 );
+            f_Is       [ cud.files[ i ] ].resize( org_len + 1 );
+            if ( f_errors.count( cud.files[ i ] ) &&
+                 f_errors[ cud.files[ i ] ].size() )
+            {
+               f_errors[ cud.files[ i ] ].resize( org_len + 1 );
+            }
+            
+            for ( int j = org_len - 1; j >= 0; j-- )
+            {
+               f_qs_string[ cud.files[ i ] ][ j + 1 ] = f_qs_string[ cud.files[ i ] ][ j ];
+               f_qs       [ cud.files[ i ] ][ j + 1 ] = f_qs       [ cud.files[ i ] ][ j ];
+               f_Is       [ cud.files[ i ] ][ j + 1 ] = f_Is       [ cud.files[ i ] ][ j ];
+               if ( f_errors.count( cud.files[ i ] ) &&
+                    f_errors[ cud.files[ i ] ].size() )
+               {
+                  f_errors[ cud.files[ i ] ][ j + 1 ] = f_errors[ cud.files[ i ] ][ j ];
+               }
+            }
+            
+            f_qs_string[ cud.files[ i ] ][ 0 ] = cud.q_string[ i ];
+            f_qs       [ cud.files[ i ] ][ 0 ] = cud.q       [ i ];
+            f_Is       [ cud.files[ i ] ][ 0 ] = cud.I       [ i ];
+            if ( f_errors.count( cud.files[ i ] ) &&
+                 f_errors[ cud.files[ i ] ].size() )
+            {
+               f_errors[ cud.files[ i ] ][ 0 ] = cud.e       [ i ];
+            }
+         } else {
+            f_qs_string[ cud.files[ i ] ].push_back( cud.q_string[ i ] );
+            f_qs       [ cud.files[ i ] ].push_back( cud.q       [ i ] );
+            f_Is       [ cud.files[ i ] ].push_back( cud.I       [ i ] );
+            if ( f_errors.count( cud.files[ i ] ) &&
+                 f_errors[ cud.files[ i ] ].size() )
+            {
+               f_errors[ cud.files[ i ] ].push_back( cud.e       [ i ] );
+            }
+         }
+      }
+      editor_msg( "blue", tr( "Crop undo: restored 1 point" ) );
    }
    update_files();
 }
