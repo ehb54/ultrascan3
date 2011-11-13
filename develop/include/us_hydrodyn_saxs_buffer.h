@@ -131,15 +131,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_show_created;
       QPushButton   *pb_show_only_created;
 
-      QCheckBox     *cb_save_to_csv;
-      QLineEdit     *le_csv_filename;
-      QCheckBox     *cb_individual_files;
-
-      QPushButton   *pb_replot_saxs;
-      QPushButton   *pb_save_saxs_plot;
-      QPushButton   *pb_set_target;
-      QLabel        *lbl_current_target;
-
       QPushButton   *pb_start;
       QPushButton   *pb_run_current;
       QPushButton   *pb_run_best;
@@ -178,7 +169,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
       bool             activate_saxs_window();
-      bool             validate_saxs_window();
       void             run_one();
 
       void             do_replot_saxs();
@@ -200,20 +190,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, vector < double > >  f_errors;
       map < QString, unsigned int >       f_pos;
 
-      vector < vector < double > >       qs;
-      vector < vector < double > >       Is;
-      vector < vector < double > >       I_errors;
-      vector < QString >                 names;
+      map < QString, bool >               created_files_not_saved;
 
-      vector < QString >                 csv_source_name_iqq;
-      vector < double >                  saxs_q;
-      vector < vector < double > >       saxs_iqq;
-      map < QString, bool >              created_files_not_saved;
+      map < QString, double >             current_concs( bool quiet = false );
+      map < QString, double >             window_concs();
 
-      map < QString, double >            current_concs( bool quiet = false );
-      map < QString, double >            window_concs();
-
-      vector < crop_undo_data >          crop_undos;
+      vector < crop_undo_data >           crop_undos;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -300,12 +282,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void show_only_created();
 
       void table_value( int, int );
-
-      void save_to_csv();
-
-      void replot_saxs();
-      void save_saxs_plot();
-      void set_target();
 
       void start();
       void run_current();

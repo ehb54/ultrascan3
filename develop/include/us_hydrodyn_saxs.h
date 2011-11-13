@@ -500,7 +500,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_scaling_target( QString &scaling_target );
 
       void saxs_search_update_enables();
-      void saxs_buffer_update_enables();
 
       bool external_running;
 

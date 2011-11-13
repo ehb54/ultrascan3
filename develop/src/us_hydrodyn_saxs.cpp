@@ -171,7 +171,6 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
    saxs_search_update_enables();
-   saxs_buffer_update_enables();
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "x" );
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "x" );
 }
@@ -258,7 +257,6 @@ void US_Hydrodyn_Saxs::refresh(
    pb_stop->setEnabled(false);
    cb_create_native_saxs->setChecked(create_native_saxs);
    saxs_search_update_enables();
-   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::setupGUI()
@@ -570,7 +568,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_buffer->setMinimumHeight(minHeight1);
    pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
-
 
    pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -3537,7 +3534,6 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
       }
    }
    saxs_search_update_enables();
-   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::saxs_search_update_enables()
@@ -3545,18 +3541,6 @@ void US_Hydrodyn_Saxs::saxs_search_update_enables()
    if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_search_widget )
    {
       ((US_Hydrodyn*)us_hydrodyn)->saxs_search_window->update_enables();
-   }
-   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
-   {
-      ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_window->update_enables();
-   }
-}
-
-void US_Hydrodyn_Saxs::saxs_buffer_update_enables()
-{
-   if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_buffer_widget )
-   {
-      ((US_Hydrodyn*)us_hydrodyn)->saxs_buffer_window->update_enables();
    }
    if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
    {
@@ -3581,7 +3565,6 @@ void US_Hydrodyn_Saxs::show_plot_saxs_sans()
 {
    rb_sans->isChecked() ? show_plot_sans() : show_plot_saxs();
    saxs_search_update_enables();
-   saxs_buffer_update_enables();
 }
 
 void US_Hydrodyn_Saxs::load_saxs_sans()
