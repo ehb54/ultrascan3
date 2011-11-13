@@ -12,6 +12,10 @@
 #include <qwt_plot_panner.h>
 #include <qwt_plot_layout.h>
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+#endif
+
 //! \brief Structure for values of each solution distribution point
 typedef struct solute_s
 {
@@ -19,6 +23,7 @@ typedef struct solute_s
    double k;
    double c;
    double d;
+   double w;
 } Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data
@@ -55,8 +60,9 @@ public:
        \param a_yres   Y resolution, the real Y extent in pixels.
        \param a_reso   Resolution, the factor used in Gaussian (default=90.0).
        \param a_zfloor Floor percent of Z-range to add below Z-minimum.
+       \param a_drecti Rectangle giving x,y min,max.
    */
-   void setRastRanges( double, double, double, double );
+   void setRastRanges( double, double, double, double, QwtDoubleRect );
 
    /*! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
        \param x  The real X pixel location for which to fetch Z.
@@ -73,6 +79,7 @@ public:
 private:
 
    QList< double > rdata;        // Raster data: z-values at each pixel
+   QwtDoubleRect   drecti;       // Data rectange for x,y plot ranges
 
    double          xmin;         // X minimum
    double          xmax;         // X maximum
@@ -93,6 +100,7 @@ private:
    int             nxpsc;        // integral number of X pixels per scan
    int             nyscn;        // integral number of Y scans
    int             nxypt;        // total number of X,Y points in raster
+   int             dbg_level;    // debug level
 };
 
 #endif

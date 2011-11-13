@@ -127,6 +127,7 @@ class US_GA_Initialize : public US_Widgets
       int           distro_type;
       int           sxset;
       int           psdsiz;
+      int           dbg_level;
 
       bool          minmax;
       bool          zoom;
