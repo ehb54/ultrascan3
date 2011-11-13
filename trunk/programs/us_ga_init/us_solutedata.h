@@ -109,7 +109,7 @@ class US_SoluteData : public QObject
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
     int      saveGAdata( QString& );
-    int      buildDataMC( bool, SoluteList*, SoluteList* );
+    int      buildDataMC( bool );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, bool, QString ); 
     void     limitBucket( bucket& );
@@ -124,6 +124,7 @@ class US_SoluteData : public QObject
     QString  btitle;
 
     int      bndx;
+    int      dbg_level;
 
     QRectF   brecmin;
     QRectF   brecmax;

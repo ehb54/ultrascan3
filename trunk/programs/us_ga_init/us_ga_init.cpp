@@ -33,7 +33,7 @@ bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
-const double epsilon = 0.005;    // equivalence magnitude ratio radius
+const double epsilon = 0.0005;   // equivalence magnitude ratio radius
 
 // US_GA_Initialize class constructor
 US_GA_Initialize::US_GA_Initialize() : US_Widgets()
@@ -58,6 +58,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rght->setContentsMargins( 0, 1, 0, 1 );
 
    int s_row = 0;
+   dbg_level = US_Settings::us_debug();
 
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
@@ -150,7 +151,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plfmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plfmin, s_row, 0 );
 
-   ct_plfmin     = us_counter( 3, 1.0, 50.0, 0.0 );
+   ct_plfmin     = us_counter( 3, 0.5, 50.0, 0.0 );
    ct_plfmin->setStep( 1 );
    spec->addWidget( ct_plfmin, s_row++, 1 );
    connect( ct_plfmin, SIGNAL( valueChanged( double ) ),
@@ -171,7 +172,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plsmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plsmin, s_row, 0 );
 
-   ct_plsmin     = us_counter( 3, -10.0, 10000.0, 0.0 );
+   ct_plsmin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
    ct_plsmin->setStep( 1 );
    spec->addWidget( ct_plsmin, s_row++, 1 );
    connect( ct_plsmin, SIGNAL( valueChanged( double ) ),
@@ -219,7 +220,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_lddistr, SIGNAL( clicked() ),
             this,       SLOT(   load_distro() ) );
 
-   us_checkbox( tr( "1-Dimensional Plot" ), cb_1dplot, true );
+   us_checkbox( tr( "1-Dimensional Plot" ), cb_1dplot, false );
    spec->addWidget( cb_1dplot, s_row++, 1 );
    connect( cb_1dplot,  SIGNAL( clicked() ),
             this,       SLOT(   select_plot1d() ) );
@@ -241,7 +242,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_refresh, SIGNAL( clicked() ),
             this,       SLOT(   replot_data() ) );
 
-   us_checkbox( tr( "Pseudo 3-D Plot" ),    cb_3dplot, false );
+   us_checkbox( tr( "Pseudo 3-D Plot" ),    cb_3dplot, true  );
    spec->addWidget( cb_3dplot, s_row++, 1 );
    connect( cb_3dplot, SIGNAL( clicked() ),
             this,       SLOT(  select_plot3d() ) );
@@ -368,7 +369,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
    sdistro    = &s_distro;
-   plot_dim   = 2;          // default plot dimension
+   plot_dim   = 3;          // default plot dimension
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
    mfilter    = "";         // default model list filter
@@ -425,10 +426,10 @@ void US_GA_Initialize::reset( void )
 
    plfmin     = 1.0;
    plfmax     = 4.0;
-   ct_plfmin->setRange( 1, 50, 0.01 );
+   ct_plfmin->setRange( 0.5, 50, 0.01 );
    ct_plfmin->setValue( plfmin );
    ct_plfmin->setEnabled( false );
-   ct_plfmax->setRange( 1, 50, 0.01 );
+   ct_plfmax->setRange( 1.0, 50, 0.01 );
    ct_plfmax->setValue( plfmax );
    ct_plfmax->setEnabled( false );
 
@@ -471,26 +472,49 @@ void US_GA_Initialize::save( void )
       return;
    }
 
-   QString filter = tr( "GA data files (*.gadistro.dat);;" )
-      + tr( "Any files (*)" );
+   QString filter = tr( "GA data files (*.gadistro.dat);;"
+                        "Any files (*)" );
    QString fsufx = ".gadistro.dat";
+   QString mtitl = tr( "Save GA Data File" );
+
+   if ( !plot_s )
+   {  // MW plot:  only statistics file might be output
+      if ( monte_carlo )
+      {  // Monte Carlo:  set up to ask for output statistics file
+         filter = tr( "GA statistics files (*.stats.dat);;"
+                      "Any files (*)" );
+         fsufx  = ".ga.stats";
+         mtitl  = tr( "Save GA Statistics File" );
+      }
+
+      else
+      {  // MW & not Monte Carlo:  there can be no output file
+         QMessageBox::information( this,
+            tr( "No Files Output" ),
+            tr( "No files will be saved, since buckets are not s vs. f/f0\n"
+                "and input models were not Monte Carlo.\n\n"
+                "To output a gadistro file, pick buckets in s vs. f/f0." ) );
+         return;
+      }
+   }
    QString fname = run_name + fsufx;
-   fname         = QFileDialog::getSaveFileName( this,
-      tr( "Save GA Data File" ),
+   fname         = QFileDialog::getSaveFileName( this, mtitl,
       US_Settings::resultDir() + "/" + fname,
       filter,
       0, 0 );
-   soludata->saveGAdata( fname );
+
+   if ( plot_s )
+      soludata->saveGAdata( fname );
 
    if ( monte_carlo )
    {  // if Monte Carlo, build up and analyze data, then report
 
-      soludata->buildDataMC( plot_s, &s_distro, &w_distro );  // build it
+      soludata->buildDataMC( plot_s );             // build it
 
       int jj        = fname.lastIndexOf( fsufx );
       fname         = ( ( jj > 0 ) ? fname.left( jj ) : fname ) + ".ga.stats";
 
-      soludata->reportDataMC( fname, mc_iters );              // report it
+      soludata->reportDataMC( fname, mc_iters );   // report it
    }
 }
 
@@ -526,6 +550,7 @@ void US_GA_Initialize::manDrawSb( void )
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
+   hfbuck       = qMax( hfbuck, 0.1 );
    double rmax  = wsbuck * 10.0;
    double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
    ct_wsbuck->disconnect( );
@@ -643,8 +668,10 @@ void US_GA_Initialize::plot_1dim( void )
    sdistro       = plot_s ? &s_distro : &w_distro;
 
    int     dsize = sdistro->size();
-   double* x     = new double[ dsize ];
-   double* y     = new double[ dsize ];
+   QVector< double > xvec( dsize );
+   QVector< double > yvec( dsize );
+   double* x     = xvec.data();
+   double* y     = yvec.data();
    double  sval  = sdistro->at( 0 ).s;
    double  smin  = sval;
    double  smax  = sval;
@@ -702,8 +729,6 @@ void US_GA_Initialize::plot_1dim( void )
    data_curv->setPen( QPen( Qt::yellow, 3, Qt::SolidLine ) );
    data_curv->setStyle( QwtPlotCurve::Sticks );
 
-   delete [] x;
-   delete [] y;
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->enableAxis( QwtPlot::yRight, false );
@@ -826,8 +851,16 @@ void US_GA_Initialize::plot_3dim( void )
 
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
+   QwtDoubleRect drect;
+
+   if ( auto_lim )
+      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+   else
+      drect = QwtDoubleRect( plsmin, plfmin,
+            ( plsmax - plsmin ), ( plfmax - plfmin ) );
+
    sdistro       = plot_s ? &s_distro : &w_distro;
-   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
+   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setRaster( sdistro );
 
    d_spectrogram->attach( data_plot );
@@ -945,7 +978,7 @@ void US_GA_Initialize::select_autolim()
 
    else if ( plot_s )
    {
-      ct_plsmin->setRange( -10.0, 10000.0, 0.01 );
+      ct_plsmin->setRange( -10000.0, 10000.0, 0.01 );
       ct_plsmax->setRange( 0.0, 10000.0, 0.01 );
    }
 
@@ -1121,7 +1154,7 @@ void US_GA_Initialize::load_distro()
       return;
 
 
-//qDebug() << "LOAD ACCEPT  Description:\n " << mdesc;
+DbgLv(1) << "LOAD ACCEPT  Description:\n " << mdesc;
    sep       = mdesc.left( 1 );
    mfnam     = mdesc.section( sep, 2, 2 );
    aiters    = mdesc.section( sep, 6, 6 );
@@ -1138,14 +1171,14 @@ void US_GA_Initialize::load_distro()
 
    if ( model.components.size() < 1 )
    {
-qDebug() << "  NO Model components";
+DbgLv(0) << "  NO Model components";
       return;
    }
 
    // insure all model coefficient properties are set
    if ( ! model.update_coefficients() )
    {
-      qDebug() << "*** Unable to recalculate coefficient values ***";
+      DbgLv(0) << "*** Unable to recalculate coefficient values ***";
    }
 
    // parse model information from its description
@@ -1158,7 +1191,7 @@ qDebug() << "  NO Model components";
 
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
-qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
+DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
    s_distro.clear();
    w_distro.clear();
@@ -1171,15 +1204,20 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
    {
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
+         US_Model::calc_coefficients( model.components[ jj ] );
+
          sol_s.s  = model.components[ jj ].s * 1.0e13;
          sol_s.c  = model.components[ jj ].signal_concentration;
          sol_s.k  = model.components[ jj ].f_f0;
          sol_s.d  = model.components[ jj ].D;
-         sol_w.s  = model.components[ jj ].mw;
+         sol_s.w  = model.components[ jj ].mw;
+         sol_w.s  = sol_s.w;
          sol_w.c  = sol_s.c;
          sol_w.k  = sol_s.k;
          sol_w.d  = sol_s.d;
-//qDebug() << "Solute jj s c k d" << jj << sol_s.s << sol_s.c << sol_s.k << sol_s.d;
+         sol_w.w  = sol_s.s;
+//DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
+//   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
 
          s_distro.append( sol_s );
          w_distro.append( sol_w );
@@ -1189,6 +1227,12 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
       psdsiz    = s_distro.size();
       sort_distro( s_distro, true );
       sort_distro( w_distro, true );
+DbgLv(1) << "Solute psdsiz sdsiz wdsiz" << psdsiz << s_distro.size()
+ << w_distro.size();
+for ( int jj=0;jj<qMin(s_distro.size(),w_distro.size());jj++ ) {
+ DbgLv(2) << " jj" << jj << " s k d w" << s_distro[jj].s << s_distro[jj].k
+    << s_distro[jj].d << s_distro[jj].w << " w k d s" << w_distro[jj].s
+    << w_distro[jj].k << w_distro[jj].d << w_distro[jj].w; }
    }
 
    if ( auto_lim )
@@ -1206,9 +1250,10 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
       plsmax    = ct_plsmax->value();
       plfmin    = ct_plfmin->value();
       plfmax    = ct_plfmax->value();
+
       if ( plot_s )
       {
-         ct_plsmin->setRange( -10.0, 10000.0, 0.01 );
+         ct_plsmin->setRange( -10000.0, 10000.0, 0.01 );
          ct_plsmax->setRange( 0.0, 10000.0, 0.01 );
       }
       else
@@ -1329,6 +1374,27 @@ void US_GA_Initialize::set_limits()
    smax     += rdif;
    smin      = ( smin < 0.0 ) ? 0.0 : smin;
    rdif      = ( fmax - fmin ) / 10.0;
+
+   if ( rdif == 0.0 )
+   {
+      QMessageBox::warning( this,
+         tr( "Constant f/f0 ; Varying Vbar" ),
+         tr( "NOTE: This model has constant f/f0 values.\n"
+             "It cannot currently be used for GA." ) );
+
+      rdif      = 0.5;
+      update_plfmin( fmin - rdif );
+      update_plfmax( fmax + rdif );
+      update_plsmin( smin );
+      update_plsmax( smax );
+
+      auto_lim  = false;
+      cb_autlim->setChecked( auto_lim );
+      select_autolim();
+
+      return;
+   }
+
    fmin     -= rdif;
    fmax     += rdif;
 
@@ -1348,7 +1414,7 @@ void US_GA_Initialize::set_limits()
       smin       -= ( ( smax - smin ) / 20.0 );
       fmax       += ( ( fmax - fmin ) / 20.0 );
       fmin       -= ( ( fmax - fmin ) / 20.0 );
-      fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
+      fmin        = ( fmin < 0.1 ) ? 0.1 : fmin;
 
       if ( ( fmax - fmin ) < 1.0e-3 )
          fmax       += ( fmax / 10.0 );
@@ -1410,18 +1476,16 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
       Solute sol1;
       Solute sol2;
       QList< Solute > reduced;
-      QList< Solute >::iterator jj = listsols.begin();
-      sol1     = *jj;
-      reduced.append( *jj );     // output first entry
+      sol1     = listsols.at( 0 );
+      reduced.append( sol1 );    // output first entry
       int kdup = 0;
       int jdup = 0;
 
-      while ( (++jj) != listsols.end() )
+      for ( int jj = 1; jj < sizi; jj++ )
       {     // loop to compare each entry to previous
-          sol2    = *jj;         // solute entry
+          sol2    = listsols.at( jj );  // solute entry
 
-          if ( !equivalent( sol1.s, sol2.s, epsilon )  ||
-               !equivalent( sol1.k, sol2.k, epsilon ) )
+          if ( sol1.s != sol2.s  ||  sol1.k != sol2.k )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
              jdup    = 0;
@@ -1429,11 +1493,13 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
 
           else
           {   // duplicate:  sum c value
-             sol2.c += sol1.c;   // sum c value
-             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
-             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
-             reduced.replace( reduced.size()-1, sol2 );
+DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
              kdup    = max( kdup, ++jdup );
+             qreal f = (qreal)( jdup + 1 );
+             sol2.c += sol1.c;   // sum c value
+             sol2.s  = ( sol1.s * jdup + sol2.s ) / f;  // average s,k
+             sol2.k  = ( sol1.k * jdup + sol2.k ) / f;
+             reduced.replace( reduced.size() - 1, sol2 );
           }
 
           sol1    = sol2;        // save entry for next iteration

@@ -3,6 +3,7 @@
 #include "us_solutedata.h"
 #include "us_defines.h"
 #include "us_math2.h"
+#include "us_settings.h"
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -17,6 +18,7 @@ US_SoluteData::US_SoluteData( const QString& title ) : QObject()
    bndx   = -1;
    btitle = title;
    allbucks.clear();
+   dbg_level = US_Settings::us_debug();
 }
 
 US_SoluteData::US_SoluteData( ) : QObject()
@@ -432,7 +434,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(px2,cx2);
                      buk.s_max    = FMAX(cx2,px2);
@@ -450,14 +452,14 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(px2,cx2);
                      buk.s_max    = FMAX(cx2,px2);
                      buk.ff0_min  = FMIN(cy1,py2);
                      buk.ff0_max  = FMAX(py2,cy1);
                   }
-//qDebug() << "  LL OVL: novls " << novls;
+DbgLv(2) << "  LL OVL: novls " << novls;
                   break;
                }
 
@@ -478,7 +480,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(px2,cx2);
                      buk.s_max    = FMAX(cx2,px2);
@@ -496,14 +498,14 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(cx1,cx2);
                      buk.s_max    = FMAX(cx2,cx1);
                      buk.ff0_min  = FMIN(cy1,py1);
                      buk.ff0_max  = FMAX(py1,cy1);
                   }
-//qDebug() << "  UL OVL: novls " << novls;
+DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
                }
 
@@ -513,7 +515,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                   buk.status   = 1;
                   buk.s_min    = FMIN(px2,cx2);
                   buk.s_max    = FMAX(cx2,px2);
-//qDebug() << "  UL OVL: novls " << novls;
+DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
                }
 
@@ -534,7 +536,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk2.ff0_min = FMIN(cy1,py1);  // bottom
                      buk2.ff0_max = FMAX(py1,cy1);
@@ -542,7 +544,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(px2,cx2);  // right
                      buk.s_max    = FMAX(cx2,px2);
@@ -560,7 +562,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk2.ff0_min = FMIN(cy1,py1);  // bottom
                      buk2.ff0_max = FMAX(py1,cy1);
@@ -568,14 +570,14 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                      vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
                      buk.s_min    = FMIN(px2,cx2);  // middle
                      buk.s_max    = FMAX(cx2,px2);
                      buk.ff0_min  = FMIN(py1,py2);
                      buk.ff0_max  = FMAX(py2,py1);
                   }
-//qDebug() << "  UL OVL: novls " << novls;
+DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
                }
 
@@ -590,7 +592,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                   buk.status   = 1;
                   buk.ff0_min  = FMIN(cy1,py1);
                   buk.ff0_max  = FMAX(py1,cy1);
-//qDebug() << "   UV OVL: novls " << novls;
+DbgLv(2) << "   UV OVL: novls " << novls;
                   break;
                }
             }
@@ -599,7 +601,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
          vertr        = ( buk.ff0_max - buk.ff0_min ) / hfbuck;
          if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
             buks2->append( buk );
-//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
       }
       // get new bucket count; flip-flop input,output lists
       nssols      = buks2->size();
@@ -678,9 +680,8 @@ int US_SoluteData::saveGAdata( QString& fname )
 
 
 // build the data lists for Monte Carlo analysis
-int US_SoluteData::buildDataMC( bool plot_s, SoluteList* ssl, SoluteList* wsl )
+int US_SoluteData::buildDataMC( bool plot_s )
 {
-#define _VERY_SMALL_ 1.0E-16
    int         rc   = 0;
    int         nsol = distro->size();
    int         nbuk = allbucks.size();
@@ -692,11 +693,8 @@ int US_SoluteData::buildDataMC( bool plot_s, SoluteList* ssl, SoluteList* wsl )
    qreal       bsmax;
    qreal       bfmin;
    qreal       bfmax;
-   qreal       ssval;        // component s,w,f,c,d values
-   qreal       swval;
+   qreal       ssval;        // component s,f_f0 values
    qreal       sfval;
-   qreal       scval;
-   qreal       sdval;
 
    // build component list from solute lists
    component.clear();
@@ -705,36 +703,14 @@ int US_SoluteData::buildDataMC( bool plot_s, SoluteList* ssl, SoluteList* wsl )
    {
       for ( int jj = 0; jj < nsol; jj++ )
       {
-         d_sol    = distro->at( jj ); // get solute record ("x" is "s")
-         ssval    = d_sol.s;
-         swval    = ssval;
-         sfval    = d_sol.k;
-         scval    = d_sol.c;
-         sdval    = d_sol.d;
+         d_sol    = distro->at( jj );    // get solute record ("x" is "s")
 
-         // find matching mw_distro
-         for ( int kk = 0; kk < nsol; kk++ )
-         {
-            qreal diffc = scval - wsl->at( kk ).c;
-            diffc       = ( diffc < 0.0 ) ? -diffc : diffc;
-            if ( sfval == wsl->at( kk ).k  &&  diffc < _VERY_SMALL_ )
-            {  // mw distro with same k,c:  get "mw" value
-               swval    = wsl->at( kk ).s;
-               break;
-            }
-         }
+         simc.s   = d_sol.s * 1e-13;     // compose simulation component
+         simc.w   = d_sol.w;
+         simc.f   = d_sol.k;
+         simc.c   = d_sol.c;
+         simc.d   = d_sol.d;
 
-         if ( swval == ssval )
-         {
-            qDebug() << "No matching MW solute found for S=" << ssval;
-         }
-
-         ssval   *= 1.0e-13;
-         simc.s   = ssval;               // compose simulation component
-         simc.w   = swval;
-         simc.f   = sfval;
-         simc.c   = scval;
-         simc.d   = sdval;
          component.append( simc );       // and add it to list
       }
    }
@@ -743,30 +719,14 @@ int US_SoluteData::buildDataMC( bool plot_s, SoluteList* ssl, SoluteList* wsl )
    {
       for ( int jj = 0; jj < nsol; jj++ )
       {
-         d_sol    = distro->at( jj ); // get solute record ("x" is "mw")
-         swval    = d_sol.s;
-         ssval    = swval;
-         sfval    = d_sol.k;
-         scval    = d_sol.c;
-         sdval    = d_sol.d;
+         d_sol    = distro->at( jj );    // get solute record ("x" is "mw")
 
-         // find matching s_distro
-         for ( int kk = 0; kk < nsol; kk++ )
-         {
-            qreal diffc = scval - ssl->at( kk ).c;
-            diffc       = ( diffc < 0.0 ) ? -diffc : diffc;
-            if ( sfval == ssl->at( kk ).k  &&  diffc < _VERY_SMALL_ )
-            {  // s distro with same k,c:  get "s" value
-               ssval    = ssl->at( kk ).s;
-               break;
-            }
-         }
-         ssval   *= 1.0e-13;
-         simc.s   = ssval;               // compose simulation component
-         simc.w   = swval;
-         simc.f   = sfval;
-         simc.c   = scval;
-         simc.d   = sdval;
+         simc.s   = d_sol.w * 1e-13;     // compose simulation component
+         simc.w   = d_sol.s;
+         simc.f   = d_sol.k;
+         simc.c   = d_sol.c;
+         simc.d   = d_sol.d;
+
          component.append( simc );       // and add it to list
       }
    }
@@ -1009,8 +969,12 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    qreal   binsz      = 50.0;
    qreal   vlo        = 9.9e30;
    qreal   vhi        = -9.9e30;
-   qreal   *xplot     = new qreal[ nvals ];
-   qreal   *yplot     = new qreal[ nvals ];
+
+   QVector< qreal > xpvec( qMax( nvals, nbins ) );
+   QVector< qreal > ypvec( qMax( nvals, nbins ) );
+
+   qreal   *xplot     = xpvec.data();
+   qreal   *yplot     = ypvec.data();
    qreal   vsum       = 0.0;
    qreal   vm2        = 0.0;
    qreal   vm3        = 0.0;
@@ -1081,8 +1045,6 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    vari      = vm2;
    area      = 0.0;
 
-   xplot     = new qreal[ nbins ];
-   yplot     = new qreal[ nbins ];
    bininc    = ( vhi - vlo ) / binsz;
 
    // mode and confidence
@@ -1179,9 +1141,6 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
             modecen, cnf95lo, cnf95hi );
    }
-
-   delete [] xplot;
-   delete [] yplot;
 }
 
 // Insure vertexes of a bucket do not exceed physically possible limits
