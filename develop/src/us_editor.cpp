@@ -475,10 +475,14 @@ void TextEdit::load( const QString & f, QString title, bool ourfmt, TextFormat f
    filenames.replace( edit, f );
 }
 
-void TextEdit::load_text( QString text )
+void TextEdit::load_text( QString text, QString title )
 {
    QTextEdit *edit = new QTextEdit( tabWidget );
-
+   if ( !title.isEmpty() )
+   {
+      this->title = title;
+   }
+      
    // edit->setTextFormat( RichText );
    edit->setWordWrap( QTextEdit::WidgetWidth );
    tabWidget->addTab( edit, "Notes:" );

@@ -160,9 +160,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    pb_to_saxs = new QPushButton(tr("S"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_to_saxs->setMinimumHeight(minHeight1);
+   pb_to_saxs->setMinimumHeight( minHeight1 );
+   pb_to_saxs->setMaximumWidth ( minHeight1 * 2 );
    pb_to_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
+
+   pb_view = new QPushButton(tr("View"), this);
+   pb_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_view->setMinimumHeight( minHeight1 );
+   pb_view->setMaximumWidth ( minHeight1 * 4 );
+   pb_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_view, SIGNAL(clicked()), SLOT( view() ));
 
    pb_rescale = new QPushButton(tr("Rescale"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -433,6 +441,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_remove_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_remove_vis, SIGNAL(clicked()), SLOT(remove_vis()));
 
+   pb_crop_common = new QPushButton(tr("Crop Common"), this);
+   pb_crop_common->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_common->setMinimumHeight(minHeight1);
+   pb_crop_common->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_common, SIGNAL(clicked()), SLOT(crop_common()));
+
    pb_crop_left = new QPushButton(tr("Crop Left"), this);
    pb_crop_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_left->setMinimumHeight(minHeight1);
@@ -538,6 +552,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
+   hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
@@ -591,6 +606,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
+   hbl_plot_buttons->addWidget( pb_crop_common );
    hbl_plot_buttons->addWidget( pb_crop_left );
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
@@ -1367,6 +1383,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count );
+   pb_view               ->setEnabled( files_selected_count );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
@@ -1436,6 +1453,11 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     files_selected_count &&
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
+                                    );
+   pb_crop_common      ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
    pb_crop_left        ->setEnabled( 
                                     files_selected_count &&
@@ -2124,6 +2146,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    vector < QString > q_string;
    vector < double >  q;
    vector < double >  I;
+   vector < double >  e;
 
    QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setMinimal( true );
@@ -2142,6 +2165,11 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          QString this_q_string = tokens[ 0 ];
          double this_q         = tokens[ 0 ].toDouble();
          double this_I         = tokens[ 1 ].toDouble();
+         double this_e;
+         if ( tokens.size() > 2 )
+         {
+            this_e = tokens[ 2 ].toDouble();
+         }
          if ( q.size() && this_q <= q[ q.size() - 1 ] )
          {
             cout << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
@@ -2150,6 +2178,10 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          q_string.push_back( this_q_string );
          q       .push_back( this_q );
          I       .push_back( this_I );
+         if ( tokens.size() > 2 )
+         {
+            e.push_back( this_e );
+         }
       }
    }
 
@@ -2158,7 +2190,12 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    f_qs_string [ basename ] = q_string;
    f_qs        [ basename ] = q;
    f_Is        [ basename ] = I;
-   f_errors    .erase( basename );
+   if ( e.size() )
+   {
+      f_errors        [ basename ] = e;
+   } else {
+      f_errors    .erase( basename );
+   }
    return true;
 }
 
@@ -2776,9 +2813,9 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
 
    if ( use_errors )
    {
-      ts << "q\tI(q)\tsd\n";
+      ts << "q                 \tI(q)         \tsd\n";
    } else {
-      ts << "q\tI(q)\n";
+      ts << "q                 \tI(q)\n";
    }
 
    for ( unsigned int i = 0; i < f_qs[ file ].size(); i++ )
@@ -2786,12 +2823,12 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
       if ( use_errors &&
            f_errors[ file ].size() > i )
       {
-         ts << QString("").sprintf( "%s\t%.6e\t%.6e\n",
+         ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
                                     f_qs_string[ file ][ i ].ascii(),
                                     f_Is       [ file ][ i ],
                                     f_errors   [ file ][ i ] );
       } else {
-         ts << QString("").sprintf( "%s\t%.6e\n",
+         ts << QString("").sprintf( "%-18s\t%.6e\n",
                                     f_qs_string[ file ][ i ].ascii(),
                                     f_Is       [ file ][ i ] );
       }
@@ -3382,6 +3419,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    
    plot_dist->replot();
+   update_enables();
 }
 
 bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
@@ -3709,7 +3747,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
 {
    // first make left visible,
    // of no left movement needed, then start cropping points
-   // potential undo?
    
    // find selected curves & their left most position:
    bool all_lefts_visible = true;
@@ -3858,7 +3895,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
    // remove the first point from each of and replot
 
    crop_undo_data cud;
-   cud.is_left = true;
+   cud.is_left   = true;
+   cud.is_common = false;
 
    for ( map < QString, bool >::iterator it = selected_files.begin();
          it != selected_files.end();
@@ -4057,7 +4095,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
    // remove the first point from each of and replot
 
    crop_undo_data cud;
-   cud.is_left = false;
+   cud.is_left   = false;
+   cud.is_common = false;
 
    for ( map < QString, bool >::iterator it = selected_files.begin();
          it != selected_files.end();
@@ -4110,52 +4149,80 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
    crop_undo_data cud = crop_undos.back();
    crop_undos.pop_back();
 
-   for ( unsigned int i = 0; i < cud.files.size(); i++ )
+   if ( cud.is_common )
    {
-      if ( !current_files.count( cud.files[ i ] ) )
+      // full restore
+      for ( map < QString, vector < double > >::iterator it = cud.f_qs.begin();
+            it != cud.f_qs.end();
+            it++ )
       {
-         editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( cud.files[ i ] ) );
-      } else {
-         if ( cud.is_left )
+         if ( !f_qs.count( it->first ) )
          {
-            unsigned int org_len = f_qs[ cud.files[ i ] ].size();
-            f_qs_string[ cud.files[ i ] ].resize( org_len + 1 );
-            f_qs       [ cud.files[ i ] ].resize( org_len + 1 );
-            f_Is       [ cud.files[ i ] ].resize( org_len + 1 );
-            if ( f_errors.count( cud.files[ i ] ) &&
-                 f_errors[ cud.files[ i ] ].size() )
+            editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( it->first ) );
+         } else {
+            f_qs_string[ it->first ] = cud.f_qs_string[ it->first ];
+            f_qs       [ it->first ] = cud.f_qs       [ it->first ];
+            f_Is       [ it->first ] = cud.f_Is       [ it->first ];
+            if ( cud.f_errors.count( it->first ) && cud.f_errors[ it->first ].size() )
             {
-               f_errors[ cud.files[ i ] ].resize( org_len + 1 );
+               f_errors   [ it->first ] = cud.f_errors   [ it->first ];
+            } else {
+               if ( f_errors.count( it->first ) && f_errors[ it->first ].size() )
+               {
+                  editor_msg( "dark red", QString( tr( "Warning: file %1 had no errors before crop common but somehow has errors now (?), removing them" ) ).arg( it->first ) );
+                  f_errors.erase( it->first );
+               }
             }
-            
-            for ( int j = org_len - 1; j >= 0; j-- )
+         }
+      }
+   } else {
+      for ( unsigned int i = 0; i < cud.files.size(); i++ )
+      {
+         if ( !current_files.count( cud.files[ i ] ) )
+         {
+            editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( cud.files[ i ] ) );
+         } else {
+            if ( cud.is_left )
             {
-               f_qs_string[ cud.files[ i ] ][ j + 1 ] = f_qs_string[ cud.files[ i ] ][ j ];
-               f_qs       [ cud.files[ i ] ][ j + 1 ] = f_qs       [ cud.files[ i ] ][ j ];
-               f_Is       [ cud.files[ i ] ][ j + 1 ] = f_Is       [ cud.files[ i ] ][ j ];
+               unsigned int org_len = f_qs[ cud.files[ i ] ].size();
+               f_qs_string[ cud.files[ i ] ].resize( org_len + 1 );
+               f_qs       [ cud.files[ i ] ].resize( org_len + 1 );
+               f_Is       [ cud.files[ i ] ].resize( org_len + 1 );
                if ( f_errors.count( cud.files[ i ] ) &&
                     f_errors[ cud.files[ i ] ].size() )
                {
-                  f_errors[ cud.files[ i ] ][ j + 1 ] = f_errors[ cud.files[ i ] ][ j ];
+                  f_errors[ cud.files[ i ] ].resize( org_len + 1 );
                }
-            }
-            
-            f_qs_string[ cud.files[ i ] ][ 0 ] = cud.q_string[ i ];
-            f_qs       [ cud.files[ i ] ][ 0 ] = cud.q       [ i ];
-            f_Is       [ cud.files[ i ] ][ 0 ] = cud.I       [ i ];
-            if ( f_errors.count( cud.files[ i ] ) &&
-                 f_errors[ cud.files[ i ] ].size() )
-            {
-               f_errors[ cud.files[ i ] ][ 0 ] = cud.e       [ i ];
-            }
-         } else {
-            f_qs_string[ cud.files[ i ] ].push_back( cud.q_string[ i ] );
-            f_qs       [ cud.files[ i ] ].push_back( cud.q       [ i ] );
-            f_Is       [ cud.files[ i ] ].push_back( cud.I       [ i ] );
-            if ( f_errors.count( cud.files[ i ] ) &&
-                 f_errors[ cud.files[ i ] ].size() )
-            {
-               f_errors[ cud.files[ i ] ].push_back( cud.e       [ i ] );
+               
+               for ( int j = org_len - 1; j >= 0; j-- )
+               {
+                  f_qs_string[ cud.files[ i ] ][ j + 1 ] = f_qs_string[ cud.files[ i ] ][ j ];
+                  f_qs       [ cud.files[ i ] ][ j + 1 ] = f_qs       [ cud.files[ i ] ][ j ];
+                  f_Is       [ cud.files[ i ] ][ j + 1 ] = f_Is       [ cud.files[ i ] ][ j ];
+                  if ( f_errors.count( cud.files[ i ] ) &&
+                       f_errors[ cud.files[ i ] ].size() )
+                  {
+                     f_errors[ cud.files[ i ] ][ j + 1 ] = f_errors[ cud.files[ i ] ][ j ];
+                  }
+               }
+               
+               f_qs_string[ cud.files[ i ] ][ 0 ] = cud.q_string[ i ];
+               f_qs       [ cud.files[ i ] ][ 0 ] = cud.q       [ i ];
+               f_Is       [ cud.files[ i ] ][ 0 ] = cud.I       [ i ];
+               if ( f_errors.count( cud.files[ i ] ) &&
+                    f_errors[ cud.files[ i ] ].size() )
+               {
+                  f_errors[ cud.files[ i ] ][ 0 ] = cud.e       [ i ];
+               }
+            } else {
+               f_qs_string[ cud.files[ i ] ].push_back( cud.q_string[ i ] );
+               f_qs       [ cud.files[ i ] ].push_back( cud.q       [ i ] );
+               f_Is       [ cud.files[ i ] ].push_back( cud.I       [ i ] );
+               if ( f_errors.count( cud.files[ i ] ) &&
+                    f_errors[ cud.files[ i ] ].size() )
+               {
+                  f_errors[ cud.files[ i ] ].push_back( cud.e       [ i ] );
+               }
             }
          }
       }
@@ -4166,4 +4233,306 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
 
 void US_Hydrodyn_Saxs_Buffer::guinier()
 {
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::crop_common()
+{
+   // first make curves visible,
+   // of no movement needed, then start cropping points
+   // potential undo?
+   
+   // find selected curves & their left most position:
+   bool all_lefts_visible = true;
+   map < QString, bool > selected_files;
+
+   double minx;
+   double maxx;
+   double miny;
+   double maxy;
+
+   double maxminx;
+   double minmaxx;
+
+   bool first = true;
+
+   bool any_differences = false;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) &&
+              f_qs[ this_file ].size() &&
+              f_Is[ this_file ].size() )
+         {
+            selected_files[ this_file ] = true;
+            double this_minx = f_qs[ this_file ][ 0 ];
+            double this_maxx = f_qs[ this_file ][ f_qs[ this_file ].size() - 1 ];
+            double this_miny = f_Is[ this_file ][ 0 ];
+            double this_maxy = f_Is[ this_file ][ 0 ];
+
+            for ( unsigned int j = 1; j < f_qs[ this_file ].size(); j++ )
+            {
+               if ( this_miny > f_Is[ this_file ][ j ] )
+               {
+                  this_miny = f_Is[ this_file ][ j ];
+               }
+               if ( this_maxy < f_Is[ this_file ][ j ] )
+               {
+                  this_maxy = f_Is[ this_file ][ j ];
+               }
+            }
+
+            if ( first )
+            {
+               first = false;
+               minx = this_minx;
+               maxx = this_maxx;
+               miny = this_miny;
+               maxy = this_maxy;
+               maxminx = minx;
+               minmaxx = maxx;
+            } else {
+               if ( minx != this_minx || maxx != this_maxx )
+               {
+                  any_differences = true;
+                  if ( maxminx < this_minx )
+                  {
+                     maxminx = this_minx;
+                  }
+                  if ( minmaxx > this_maxx )
+                  {
+                     minmaxx = this_maxx;
+                  }
+               }
+               if ( minx > this_minx )
+               {
+                  minx = this_minx;
+               }
+               if ( maxx < this_maxx )
+               {
+                  maxx = this_maxx;
+               }
+               if ( miny > this_miny )
+               {
+                  miny = this_miny;
+               }
+               if ( maxy < this_maxy )
+               {
+                  maxy = this_maxy;
+               }
+            }
+         } else {
+            editor_msg( "red", QString( tr( "Crop common: curves need at least 1 point to crop" ) ) );
+            return;
+         }            
+      }
+   }
+
+   editor_msg( "black", 
+               QString( tr( "Crop common:\n"
+                            "Current selected files have a maximal q-range of (%1:%2)\n"
+                            "Current selected files have a common  q-range of (%3:%4)" ) )
+               .arg( minx )
+               .arg( maxx )
+               .arg( maxminx )
+               .arg( minmaxx ) );
+
+   if ( !any_differences )
+   {
+      editor_msg( "black", tr( "Crop common: no differences between selected grids" ) );
+   }         
+
+   // is the rectangle contained?
+   if ( 
+       minx < plot_dist_zoomer->zoomRect().x1() ||
+       maxx > plot_dist_zoomer->zoomRect().x2() ||
+       miny < plot_dist_zoomer->zoomRect().y1() ||
+       maxy > plot_dist_zoomer->zoomRect().y2() )
+   {
+      all_lefts_visible = false;
+   }
+
+   if ( !all_lefts_visible )
+   {
+      if ( any_differences )
+      {
+         editor_msg( "black", tr( "Crop common: press again to crop" ) );
+      } 
+      // will our current zoom rectangle show all the points?
+      // if so, simply move it
+      double dx = maxx - minx;
+      double dy = maxy - miny;
+
+      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
+      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+      if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
+      {
+         // we can fit
+         double newx = minx - .05 * dx;
+         double newy = miny - .05 * dy;
+         if ( newx < 0e0 )
+         {
+            newx = 0e0;
+         }
+         if ( newy < 0e0 )
+         {
+            newy = 0e0;
+         }
+         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
+         plot_dist_zoomer->move( newx, newy );
+         return;
+      }
+
+      // ok, we are going to have to make a rectangle
+      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
+
+      double newminx = minx - .05 * dx;
+      double newminy = miny - .05 * dy;
+      if ( newminx < 0e0 )
+      {
+         newminx = 0e0;
+      }
+      if ( newminy < 0e0 )
+      {
+         newminy = 0e0;
+      }
+      dr.setX1( newminx );
+      dr.setY1( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setX2( newminx + zdx );
+      } else {         
+         dr.setX2( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setY2( newminy + zdy );
+      } else {         
+         dr.setY2( newminy + dy * 1.1 );
+      }
+
+      plot_dist_zoomer->zoom( dr );
+      return;
+   }
+
+   if ( !any_differences )
+   {
+      return;
+   }
+
+   // rescale to common region
+
+   crop_undo_data cud;
+   cud.is_left   = false;
+   cud.is_common = true;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      // save undo data
+      cud.f_qs_string[ it->first ] = f_qs_string[ it->first ];
+      cud.f_qs       [ it->first ] = f_qs       [ it->first ];
+      cud.f_Is       [ it->first ] = f_Is       [ it->first ];
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.f_errors   [ it->first ] = f_errors   [ it->first ];
+      }
+
+      vector < QString > new_q_string;
+      vector < double  > new_q;
+      vector < double  > new_I;
+      vector < double  > new_e;
+
+      for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
+      {
+         if ( f_qs[ it->first ][ i ] >= maxminx &&
+              f_qs[ it->first ][ i ] <= minmaxx )
+         {
+            new_q_string.push_back( f_qs_string[ it->first ][ i ] );
+            new_q       .push_back( f_qs       [ it->first ][ i ] );
+            new_I       .push_back( f_Is       [ it->first ][ i ] );
+
+            if ( f_errors.count( it->first ) &&
+                 f_errors[ it->first ].size() )
+            {
+               new_e       .push_back( f_errors   [ it->first ][ i ] );
+            }
+         }
+
+      }
+
+      f_qs_string[ it->first ] = new_q_string;
+      f_qs       [ it->first ] = new_q;
+      f_Is       [ it->first ] = new_I;
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ] = new_e;
+      }
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", tr( "Crop common: done" ) );
+
+   update_files();
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::view()
+{
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString file = lb_files->text( i );
+
+         QString text;
+
+         text += QString( tr( "US-SOMO Buffer Subtraction utility output: %1\n" ) ).arg( file );
+
+         bool use_errors = ( f_errors.count( file ) && 
+                             f_errors[ file ].size() > 0 );
+         
+         if ( use_errors )
+         {
+            text += "q                  \tI(q)         \tsd\n";
+         } else {
+            text += "q                  \tI(q)\n";
+         }
+
+         for ( unsigned int i = 0; i < f_qs[ file ].size(); i++ )
+         {
+            if ( use_errors &&
+                 f_errors[ file ].size() > i )
+            {
+               text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
+                                          f_qs_string[ file ][ i ].ascii(),
+                                          f_Is       [ file ][ i ],
+                                          f_errors   [ file ][ i ] );
+            } else {
+               text += QString("").sprintf( "%-18s\t%.6e\n",
+                                          f_qs_string[ file ][ i ].ascii(),
+                                          f_Is       [ file ][ i ] );
+            }
+         }
+
+         TextEdit *edit;
+         edit = new TextEdit( this, file );
+         edit->setFont    ( QFont( "Courier" ) );
+         edit->setPalette ( QPalette( USglobal->global_colors.cg_normal, 
+                                     USglobal->global_colors.cg_normal, 
+                                     USglobal->global_colors.cg_normal ) );
+         edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
+         // edit->setTitle( file );
+         edit->load_text( text );
+         //   edit->setTextFormat( PlainText );
+         edit->show();
+      }
+   }
 }

@@ -977,7 +977,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_iqq_log_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_log_fitting()));
 
    cb_iqq_scaled_fitting = new QCheckBox(this);
-   cb_iqq_scaled_fitting->setText(tr(" I(q) NNLS scaled fit"));
+   cb_iqq_scaled_fitting->setText(tr(" I(q) NNLS q^2*I fit"));
    cb_iqq_scaled_fitting->setEnabled(true);
    cb_iqq_scaled_fitting->setChecked((*saxs_options).iqq_scaled_fitting);
    cb_iqq_scaled_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

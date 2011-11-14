@@ -890,6 +890,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             {
                found_nnls_target = true;
                nnls_B = range_crop( q, I );
+               nnls_q = range_crop( q, q );
                nnls_errors = range_crop( q, I_errors );
             } else {
                found_nnls_model = true;

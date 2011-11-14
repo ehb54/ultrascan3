@@ -89,6 +89,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
               tr( "NOT using standard deviations to compute NNLS\n" ) );
 
    vector < double > use_B = nnls_B;
+   vector < double > use_q = nnls_q;
    vector < double > use_x(nnls_A.size());
    vector < double > nnls_wp(nnls_A.size());
    vector < double > nnls_zzp(use_B.size());
@@ -154,31 +155,16 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    if ( our_saxs_options->iqq_scaled_fitting )
    {
       // first check for non-zero
-      bool ok = true;
+      editor_msg( "blue",
+                  "Notice: q^2*I Scaled fitting\n" );
+      for ( unsigned int i = 0; i < use_A.size(); i++ )
+      {
+         double q2 = use_q[ i % use_B.size() ] * use_q[ i % use_B.size() ];
+         use_A[ i ] *= q2;
+      }
       for ( unsigned int i = 0; i < use_B.size(); i++ )
       {
-         if ( use_B[ i ] == 0 ) 
-         {
-            ok = false;
-            break;
-         }
-      }
-
-      if ( !ok )
-      {
-         editor_msg( "red",
-                     "Warning: Scaled fitting requested but some of the target values are zero, so scaled fitting disabled\n" );
-      } else {
-         editor_msg( "blue",
-                     "Notice: Scaled fitting\n" );
-         for ( unsigned int i = 0; i < use_A.size(); i++ )
-         {
-            use_A[ i ] *= pow( ( 1e0 * ( i % use_B.size() ) ) / ( 1e0 * use_B.size() ), 6e0 );
-         }
-         for ( unsigned int i = 0; i < use_B.size(); i++ )
-         {
-            use_B[ i ] *= pow( ( 1e0 * i  ) / ( 1e0 * use_B.size() ), 6e0 );
-         }
+         use_B[ i ] *= use_q[ i ] * use_q[ i ];
       }
    }
 

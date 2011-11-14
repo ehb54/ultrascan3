@@ -90,7 +90,7 @@ public:
     TextEdit( QWidget *parent = 0, const char *name = 0 );
     TextEdit(int id, QWidget *parent = 0, const char *name = 0);
     void load( const QString &f, QString title = "", bool ourfmt = false, TextFormat fmt = RichText );
-    void load_text(QString);
+    void load_text( QString text, QString title = "" );
     int tableID;
    
 private:

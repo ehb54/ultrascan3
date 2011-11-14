@@ -48,6 +48,13 @@ struct crop_undo_data
    vector < double >  I;
    vector < bool >    has_e;
    vector < double >  e;
+
+   bool               is_common;
+
+   map < QString, vector < QString > > f_qs_string;
+   map < QString, vector < double > >  f_qs;
+   map < QString, vector < double > >  f_Is;
+   map < QString, vector < double > >  f_errors;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -91,6 +98,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_select_all;
       QPushButton   *pb_adjacent;
       QPushButton   *pb_to_saxs;
+      QPushButton   *pb_view;
       QPushButton   *pb_invert;
       QPushButton   *pb_rescale;
 
@@ -148,6 +156,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
+      QPushButton   *pb_crop_common;
       QPushButton   *pb_crop_left;
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
@@ -267,6 +276,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_all();
       void adjacent();
       void to_saxs();
+      void view();
       void invert();
       void rescale();
       void avg();
@@ -301,6 +311,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void select_vis();
       void remove_vis();
       void crop_left();
+      void crop_common();
       void crop_undo();
       void crop_right();
       void guinier();

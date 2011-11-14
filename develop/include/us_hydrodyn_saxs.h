@@ -270,6 +270,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < double >                  nnls_B;
       vector < double >                  nnls_errors;
       vector < double >                  nnls_r;
+      vector < double >                  nnls_q;
       double                             nnls_rmsd;
 
 #ifdef WIN32
