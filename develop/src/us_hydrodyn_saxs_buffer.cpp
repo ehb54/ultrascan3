@@ -2980,7 +2980,6 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg()
            lb_files->text( i ) != lbl_empty->text() )
       {
          files << lb_files->text( i );
-         files << lb_files->text( i );
       }
    }
    conc_avg( files );
@@ -3008,7 +3007,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    {
       if ( it->second != 0e0 )
       {
-         inv_concs[ it->first ] = /* 1e0 / */ it->second;
+         inv_concs[ it->first ] = 1e0 / it->second;
       }
    }
 
@@ -3127,7 +3126,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
             }
             nIs[ j ] *= inv_concs[ this_file ];
             avg_Is [ j ] += nIs[ j ];
-            avg_Is2[ j ] =  nIs[ j ] * nIs[ j ];
+            avg_Is2[ j ] += nIs[ j ] * nIs[ j ];
          }
          avg_conc +=
             concs.count( this_file ) ?
@@ -3143,33 +3142,30 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    }      
 
    vector < double > avg_sd( avg_qs.size() );
-   double dsc = tot_conc;
+   double dsc = /* tot_conc; */ ( double ) selected_count;
    double dsc_inv = 1e0 / dsc;
-   // double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
-   for ( unsigned int i = 0; i < avg_qs.size(); i++ )
-   {
-      if ( !i )
-      {
-         cout << QString( "points %1 avg %1 sum2 %1\n" )
-            .arg( selected_count )
-            .arg( avg_Is[ i ] )
-            .arg( avg_Is2[ i ] );
-      }
-
-      avg_Is[ i ] *= dsc_inv;
-
-      avg_sd[ i ] = 0e0;
-      
-      for ( unsigned int j = 0; j < selected_files.size(); j++ )
-      {
-         QString this_file = selected_files[ j ];
-         avg_sd[ i ] += inv_concs[ this_file ] * 
-            ( t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( t_Is[ this_file ][ i ] - avg_Is[ i ] );
-      }
-      avg_sd[ i ] *= ( tot_conc / ( tot_conc * tot_conc - tot_conc2 ) );
-   }
+   double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
 
    avg_conc *= dsc_inv;
+
+   for ( unsigned int i = 0; i < avg_qs.size(); i++ )
+   {
+      // if ( i )
+      // {
+      // cout << QString( "points %1 avg %1 sum2 %1\n" )
+      // .arg( selected_count )
+      // .arg( avg_Is[ i ] )
+      // .arg( avg_Is2[ i ] );
+      // }
+
+      avg_sd[ i ] =
+         sqrt( 
+              ( dsc * avg_Is2[ i ] - avg_Is[ i ] * avg_Is[ i ] ) 
+              * dsc_times_dsc_minus_one_inv 
+              ) * avg_conc;
+
+      avg_Is[ i ] *= dsc_inv * avg_conc;
+   }
 
    // determine name
    // find common header & tail substrings
