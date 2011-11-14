@@ -2394,7 +2394,9 @@ void US_Edit::undo( void )
 {
    // Copy from allData to data
    int index = cb_triple->currentIndex();
-   data = allData[ index ];
+
+   if ( step < PLATEAU )
+      data      = allData[ index ];
 
    // Redo some things depending on type
    if ( dataType == "IP" )
@@ -2406,8 +2408,6 @@ void US_Edit::undo( void )
       edits.rangeLeft    = range_left;
       edits.rangeRight   = range_right;
       edits.gapTolerance = ct_gaps->value();
-      
-      QList< int > excludes;
       
       for ( int i = 0; i < data.scanData.size(); i++ )
          if ( ! includes.contains( i ) ) edits.excludes << i;
