@@ -1540,12 +1540,14 @@ bool US_Hydrodyn_Saxs_Buffer::activate_saxs_window()
    {
       ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
       raise();
+      setFocus();
       if ( !*saxs_widget )
       {
          editor_msg("red", tr("Could not activate SAXS window!\n"));
          return false;
       }
    }
+   saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    return true;
 }
 
@@ -3707,6 +3709,10 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 void US_Hydrodyn_Saxs_Buffer::to_saxs()
 {
    // copy selected to saxs window
+   if ( !activate_saxs_window() )
+   {
+      return;
+   }
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )

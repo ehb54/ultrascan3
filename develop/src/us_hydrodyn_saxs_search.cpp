@@ -788,12 +788,14 @@ bool US_Hydrodyn_Saxs_Search::activate_saxs_window()
    {
       ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
       raise();
+      setFocus();
       if ( !*saxs_widget )
       {
          editor_msg("red", tr("Could not activate SAXS window!\n"));
          return false;
       }
    }
+   saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    return true;
 }
 
