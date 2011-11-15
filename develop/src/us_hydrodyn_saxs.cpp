@@ -3462,7 +3462,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
    plotted = false;
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
-      puts("replotting");
+      // puts("replotting");
       plot_one_iqq( qs[ i ], Is[ i ], I_errors[ i ], names[ i ] );
    }
    if ( plotted )
