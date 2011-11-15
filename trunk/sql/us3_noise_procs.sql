@@ -134,6 +134,7 @@ CREATE PROCEDURE new_noise ( p_personGUID    CHAR(36),
                              p_modelID       INT(11),
                              p_modelGUID     CHAR(36),
                              p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
+                             p_description   TEXT,
                              p_xml           TEXT )         -- an xml file
   MODIFIES SQL DATA
 
@@ -218,6 +219,7 @@ BEGIN
       modelID      = l_modelID,
       modelGUID    = l_modelGUID,
       noiseType    = p_noiseType,
+      description  = p_description,
       xml          = p_xml,
       timeEntered  = NOW();
 
@@ -250,6 +252,7 @@ CREATE PROCEDURE update_noise ( p_personGUID    CHAR(36),
                                 p_modelID       INT(11),
                                 p_modelGUID     CHAR(36),
                                 p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
+                                p_description   TEXT,
                                 p_xml           TEXT )         -- an xml file
   MODIFIES SQL DATA
 
@@ -334,6 +337,7 @@ BEGIN
       modelID      = l_modelID,
       modelGUID    = l_modelGUID,
       noiseType    = p_noiseType,
+      description  = p_description,
       xml          = p_xml,
       timeEntered  = NOW()
     WHERE noiseID  = p_noiseID;
@@ -433,7 +437,7 @@ BEGIN
       IF ( p_ID > 0 ) THEN
         SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
                  timestamp2UTC( timeEntered ) AS UTC_timeEntered,
-                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
         FROM     modelPerson, noise
         WHERE    modelPerson.modelID  = noise.modelID
         AND      modelPerson.personID = p_ID
@@ -442,7 +446,7 @@ BEGIN
       ELSE
         SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
                  timestamp2UTC( timeEntered ) AS UTC_timeEntered,
-                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
         FROM     modelPerson, noise
         WHERE    modelPerson.modelID  = noise.modelID
         ORDER BY timeEntered DESC;
@@ -471,7 +475,7 @@ BEGIN
 
       SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
                timestamp2UTC( timeEntered ) AS UTC_timeEntered,
-               MD5( xml ) AS checksum, LENGTH( xml ) AS size
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
       FROM     modelPerson, noise
       WHERE    modelPerson.modelID  = noise.modelID
       AND      modelPerson.personID = @US3_ID
@@ -514,7 +518,7 @@ BEGIN
 
       SELECT   noiseGUID, editedDataID, modelID, modelGUID, noiseType, xml,
                timestamp2UTC( timeEntered ) AS UTC_timeEntered,
-               MD5( xml ) AS checksum, LENGTH( xml ) AS size
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
       FROM     noise 
       WHERE    noiseID = p_noiseID;
 

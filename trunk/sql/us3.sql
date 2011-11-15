@@ -756,7 +756,7 @@ CREATE  TABLE IF NOT EXISTS model (
   meniscus double NOT NULL default '0',
   MCIteration int(11) NOT NULL DEFAULT 1,
   variance double NOT NULL default 0,
-  description VARCHAR(80) NULL DEFAULT NULL,
+  description VARCHAR(160) NULL DEFAULT NULL, -- includes 80 for runID and 80 for other
   xml LONGTEXT NULL DEFAULT NULL ,
   globalType ENUM( 'NORMAL', 'MENISCUS', 'GLOBAL', 'SUPERGLOBAL' ) DEFAULT 'NORMAL',
   lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
@@ -805,6 +805,7 @@ CREATE TABLE IF NOT EXISTS noise (
   modelID int(11) NOT NULL ,
   modelGUID CHAR(36) NULL ,
   noiseType enum('ri_noise', 'ti_noise') default 'ti_noise',
+  description VARCHAR(160) NULL DEFAULT NULL, -- includes 80 for runID and 80 for other
   xml LONGTEXT ,
   timeEntered TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY ( noiseID ) ,
