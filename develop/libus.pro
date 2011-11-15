@@ -265,6 +265,7 @@ SOURCES += \
   src/us_sa2d_control.cpp \
   src/us_sa2dbase.cpp \
   src/us_sassoc.cpp \
+  src/us_saxs_gp.cpp \
   src/us_saxs_util.cpp \
   src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
@@ -510,6 +511,7 @@ HEADERS += \
   include/us_sa2d_control.h \
   include/us_sa2dbase.h \
   include/us_sassoc.h \
+  include/us_saxs_gp.h \
   include/us_saxs_util.h \
   include/us_select_channel.h \
   include/us_selectmodel.h \

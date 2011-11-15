@@ -1,5 +1,6 @@
 !include ( ../cmdline.pri ) error( "../cmdline.pri missing.  Aborting..." )
 
+SOURCES		+= ../src/us_saxs_gp.cpp
 SOURCES		+= ../src/us_saxs_util.cpp
 SOURCES		+= ../src/us_saxs_util_asab1.cpp
 SOURCES		+= ../src/us_saxs_util_dmd.cpp
@@ -20,6 +21,7 @@ HEADERS         += ../include/us_math.h
 HEADERS         += ../include/us_tar.h
 HEADERS         += ../include/us_gzip.h
 HEADERS         += ../include/us_hydrodyn_pdbdefs.h
+HEADERS         += ../include/us_saxs_gp.h
 HEADERS         += ../include/us_saxs_util.h
 HEADERS		+= ../include/us_saxs_util_asab1.h
 HEADERS         += ../include/us_tnt_jama.h

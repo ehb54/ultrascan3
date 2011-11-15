@@ -1680,6 +1680,9 @@ int main (int argc, char **argv)
 
    if ( cmds[0].lower() == "iq" ) 
    {
+      // sgp_node testsgp;
+      // testsgp.test();
+
       if ( cmds.size() != 2 ) 
       {
          printf(

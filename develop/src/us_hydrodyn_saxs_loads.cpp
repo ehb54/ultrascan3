@@ -4,15 +4,10 @@
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 
-#define SLASH "/"
-#if defined(WIN32)
-#  undef SLASH
-#  define SLASH "\\"
-#endif
+#define SLASH QDir::separator()
 
 #ifdef WIN32
 # include <float.h>
-# define isnan(x) _isnan(x)
 #endif
 
 void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves )

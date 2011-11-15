@@ -3,10 +3,6 @@
 #include "../include/us_hydrodyn_saxs_screen.h"
 
 #define SLASH QDir::separator()
-#if defined(WIN32)
-#  define isnan(x) _isnan(x)
-#endif
-
 
 US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
                                                csv csv1,

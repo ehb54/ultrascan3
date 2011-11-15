@@ -251,9 +251,10 @@ bool US_Register::read()
   QChar cval;
   concat = register_list.expiration + register_list.email;
   temp_license ="";
-  for ( int i=0; i<concat.length(); i++)
-  {	cval = concat[i];
-		temp_license += str.sprintf("%X", cval.unicode());
+  for ( int i = 0; i < (int) concat.length(); i++ )
+  {
+     cval = concat[i];
+     temp_license += str.sprintf("%X", cval.unicode());
   }
   temp_license.truncate(70);
   if ( QString::compare(temp_license, register_list.license) == 0 )

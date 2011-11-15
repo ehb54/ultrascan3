@@ -13,6 +13,7 @@
 #include <time.h>
 #include <map>
 #include <qregexp.h>
+#include "us_saxs_gp.h"
 
 #if defined(WIN32)
 #   include <dos.h>
