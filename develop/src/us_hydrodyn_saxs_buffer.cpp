@@ -2296,6 +2296,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    bool crop  = false;
    unsigned int min_q_len = 0;
 
+   bool all_nonzero_errors = true;
+
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
       QString this_file = files[ i ];
@@ -2303,10 +2305,13 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       t_qs_string[ this_file ] = f_qs_string[ this_file ];
       t_qs       [ this_file ] = f_qs       [ this_file ];
       t_Is       [ this_file ] = f_Is       [ this_file ];
-      if ( t_errors[ this_file ].size() )
+      if ( f_errors[ this_file ].size() )
       {
-         t_errors   [ this_file ].resize( min_q_len );
+         t_errors [ this_file ] = f_errors[ this_file ];
+      } else {
+         all_nonzero_errors = false;
       }
+
       if ( first )
       {
          first = false;
@@ -2338,12 +2343,44 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
          if ( t_errors[ it->first ].size() )
          {
             t_errors   [ it->first ].resize( min_q_len );
-         }
+         } 
       }
+   } 
+
+   if ( all_nonzero_errors )
+   {
+      for ( map < QString, vector < double > >::iterator it = t_qs.begin();
+            it != t_qs.end();
+            it++ )
+      {
+         if ( t_errors[ it->first ].size() )
+         {
+            if ( all_nonzero_errors &&
+                 !is_nonzero_vector ( t_errors[ it->first ] ) )
+            {
+               all_nonzero_errors = false;
+               break;
+            }
+         } else {
+            all_nonzero_errors = false;
+            break;
+         }
+      }      
    }
 
    first = true;
 
+   vector < double > sum_weight;
+   vector < double > sum_weight2;
+
+   if ( all_nonzero_errors )
+   {
+      editor_msg( "black" ,
+                  tr( "Notice: using standard deviation in mean calculation" ) );
+   } else {
+      editor_msg( "black" ,
+                  tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
+   }
 
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
@@ -2351,6 +2388,14 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
       selected_count++;
       selected_files << this_file;
+      if ( all_nonzero_errors )
+      {
+         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         {
+            t_Is[ this_file ][ j ] /= t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ];
+         }
+      }         
+
       if ( first )
       {
          first = false;
@@ -2358,9 +2403,14 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
          avg_qs        = t_qs       [ this_file ];
          avg_Is        = t_Is       [ this_file ];
          avg_Is2       .resize( t_Is[ this_file ].size() );
+         sum_weight    .resize( avg_qs.size() );
+         sum_weight2   .resize( avg_qs.size() );
          for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
          {
-            avg_Is2[ j ] = t_Is[ this_file ][ j ] * t_Is[ this_file ][ j ];
+            double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
+            sum_weight[ j ]  = weight;
+            sum_weight2[ j ] = weight * weight;
+            avg_Is2[ j ]     = t_Is[ this_file ][ j ] * t_Is[ this_file ][ j ];
          }
          avg_conc = 
             concs.count( this_file ) ?
@@ -2379,8 +2429,11 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
                editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
                return;
             }
-            avg_Is [ j ] += t_Is[ this_file ][ j ];
-            avg_Is2[ j ] += t_Is[ this_file ][ j ] * t_Is[ this_file ][ j ];
+            avg_Is [ j ]     += t_Is[ this_file ][ j ];
+            double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
+            sum_weight[ j ]  += weight;
+            sum_weight2[ j ] += weight * weight;
+            avg_Is2[ j ]     += t_Is[ this_file ][ j ] * t_Is[ this_file ][ j ];
          }
          avg_conc +=
             concs.count( this_file ) ?
@@ -2396,21 +2449,23 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }      
 
    vector < double > avg_sd( avg_qs.size() );
-   double dsc = ( double ) selected_count;
-   double dsc_inv = 1e0 / dsc;
-   double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
    for ( unsigned int i = 0; i < avg_qs.size(); i++ )
    {
-      avg_sd[ i ] =
-         sqrt( 
-              ( dsc * avg_Is2[ i ] - avg_Is[ i ] * avg_Is[ i ] ) 
-              * dsc_times_dsc_minus_one_inv 
-              );
+      avg_Is[ i ] /= sum_weight[ i ];
 
-      avg_Is[ i ] *= dsc_inv;
+      double sum = 0e0;
+      for ( unsigned int j = 0; j < files.size(); j++ )
+      {
+         QString this_file = files[ j ];
+         double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+         double invweight  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+         sum += weight * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] );
+      }
+      sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
+      avg_sd[ i ] = sqrt( sum );
    }
 
-   avg_conc *= dsc_inv;
+   avg_conc /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -2469,7 +2524,6 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
            csv_conc.data[ i ][ 0 ] == avg_name )
       {
          csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( avg_conc );
-         // cout << QString( "Found & set csv_conc to conc %1 for %2\n" ).arg( avg_conc ).arg( avg_name );
       }
    }
 
@@ -3066,13 +3120,21 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    bool crop  = false;
    unsigned int min_q_len = 0;
 
+   bool all_nonzero_errors = true;
+
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
       QString this_file = files[ i ];
       t_qs_string[ this_file ] = f_qs_string[ this_file ];
       t_qs       [ this_file ] = f_qs       [ this_file ];
       t_Is       [ this_file ] = f_Is       [ this_file ];
-      t_errors   [ this_file ] = f_errors   [ this_file ];
+      if ( f_errors[ this_file ].size() )
+      {
+         t_errors [ this_file ] = f_errors[ this_file ];
+      } else {
+         all_nonzero_errors = false;
+      }
+
       if ( first )
       {
          first = false;
@@ -3108,7 +3170,40 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       }
    }
 
+   if ( all_nonzero_errors )
+   {
+      for ( map < QString, vector < double > >::iterator it = t_qs.begin();
+            it != t_qs.end();
+            it++ )
+      {
+         if ( t_errors[ it->first ].size() )
+         {
+            if ( all_nonzero_errors &&
+                 !is_nonzero_vector ( t_errors[ it->first ] ) )
+            {
+               all_nonzero_errors = false;
+               break;
+            }
+         } else {
+            all_nonzero_errors = false;
+            break;
+         }
+      }      
+   }
+
    first = true;
+
+   vector < double > sum_weight;
+   vector < double > sum_weight2;
+
+   if ( all_nonzero_errors )
+   {
+      editor_msg( "black" ,
+                  tr( "Notice: using standard deviation in mean calculation" ) );
+   } else {
+      editor_msg( "black" ,
+                  tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
+   }
 
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
@@ -3116,12 +3211,20 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
       selected_count++;
       selected_files << this_file;
+
+      if ( all_nonzero_errors )
+      {
+         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         {
+            t_Is[ this_file ][ j ] /= t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ];
+         }
+      }         
+
       if ( !inv_concs.count( this_file ) )
       {
          editor_msg( "red", QString( tr( "Error: found zero or no concentration for %1" ) ).arg( this_file ) );
          return;
       }
-      // cout << QString( "inv conc for %1 is %2\n" ).arg( this_file ).arg( inv_concs[ this_file ] );
       if ( first )
       {
          first = false;
@@ -3130,6 +3233,8 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          avg_qs_string = t_qs_string[ this_file ];
          avg_qs        = t_qs       [ this_file ];
          nIs           = t_Is       [ this_file ];
+         sum_weight    .resize( avg_qs.size() );
+         sum_weight2   .resize( avg_qs.size() );
          for ( unsigned int j = 0; j < nIs.size(); j++ )
          {
             nIs[ j ] *= inv_concs[ this_file ];
@@ -3139,6 +3244,9 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          avg_Is2       .resize( nIs.size() );
          for ( unsigned int j = 0; j < nIs.size(); j++ )
          {
+            double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
+            sum_weight[ j ]  = weight;
+            sum_weight2[ j ] = weight * weight;
             avg_Is2[ j ] = nIs[ j ] * nIs[ j ];
          }
          avg_conc = 
@@ -3163,6 +3271,9 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
             }
             nIs[ j ] *= inv_concs[ this_file ];
             avg_Is [ j ] += nIs[ j ];
+            double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
+            sum_weight[ j ]  += weight;
+            sum_weight2[ j ] += weight * weight;
             avg_Is2[ j ] += nIs[ j ] * nIs[ j ];
          }
          avg_conc +=
@@ -3179,29 +3290,27 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    }      
 
    vector < double > avg_sd( avg_qs.size() );
-   double dsc = /* tot_conc; */ ( double ) selected_count;
-   double dsc_inv = 1e0 / dsc;
-   double dsc_times_dsc_minus_one_inv = 1e0 / ( dsc * ( dsc - 1e0 ) );
 
-   avg_conc *= dsc_inv;
+   avg_conc /= files.size();
 
    for ( unsigned int i = 0; i < avg_qs.size(); i++ )
    {
-      // if ( i )
-      // {
-      // cout << QString( "points %1 avg %1 sum2 %1\n" )
-      // .arg( selected_count )
-      // .arg( avg_Is[ i ] )
-      // .arg( avg_Is2[ i ] );
-      // }
+      avg_Is[ i ] /= sum_weight[ i ];
 
-      avg_sd[ i ] =
-         sqrt( 
-              ( dsc * avg_Is2[ i ] - avg_Is[ i ] * avg_Is[ i ] ) 
-              * dsc_times_dsc_minus_one_inv 
-              ) * avg_conc;
+      double sum = 0e0;
+      for ( unsigned int j = 0; j < files.size(); j++ )
+      {
+         QString this_file = files[ j ];
+         double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+         double invweight = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+         sum += weight 
+            * ( invweight * inv_concs[ this_file ] * t_Is[ this_file ][ i ] - avg_Is[ i ] ) 
+            * ( invweight * inv_concs[ this_file ] * t_Is[ this_file ][ i ] - avg_Is[ i ] );
+      }
+      sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
+      avg_sd[ i ] = sqrt( sum ) * avg_conc;
 
-      avg_Is[ i ] *= dsc_inv * avg_conc;
+      avg_Is[ i ] *= avg_conc;
    }
 
    // determine name
@@ -4530,9 +4639,28 @@ void US_Hydrodyn_Saxs_Buffer::view()
                                      USglobal->global_colors.cg_normal ) );
          edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
          // edit->setTitle( file );
-         edit->load_text( text );
+         if ( QFile::exists( file + ".dat" ) )
+         {
+            edit->load( file + ".dat", file );
+         } else {
+            edit->load_text( text );
+         }
          //   edit->setTextFormat( PlainText );
          edit->show();
       }
    }
+}
+
+bool US_Hydrodyn_Saxs_Buffer::is_nonzero_vector( vector < double > &v )
+{
+   bool non_zero = v.size() > 0;
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] == 0e0 )
+      {
+         non_zero = false;
+         break;
+      }
+   }
+   return non_zero;
 }
