@@ -177,10 +177,12 @@ int US_Noise::write( US_DB2* db )
       
       q.clear();
      
+      QString description = "";
+
       if ( db->lastErrno() != US_DB2::OK )
       {
          q << "new_noise" << noiseGUID << editID << modelID << modelGUID
-           << typen << contents;
+           << typen << description << contents;
          message = QObject::tr( "created" );
 //qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
       }
@@ -189,7 +191,7 @@ int US_Noise::write( US_DB2* db )
          db->next();
          QString noiseID = db->value( 0 ).toString();
          q << "update_noise" << noiseID << noiseGUID << editID << modelID
-           << modelGUID << typen << contents;
+           << modelGUID << typen << description << contents;
          message = QObject::tr( "updated" );
 //qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
       }
