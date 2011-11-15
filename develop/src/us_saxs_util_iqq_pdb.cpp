@@ -3,7 +3,6 @@
 #define SAXS_MIN_Q 1e-6
 #define SLASH QDir::separator();
 
-
 static bool save_calc_to_csv = false;
 
 bool US_Saxs_Util::calc_saxs_iq_native_fast()

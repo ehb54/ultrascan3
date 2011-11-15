@@ -9,6 +9,7 @@ SOURCES		+= ../src/us_saxs_util_hydrate_align.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_iqq.cpp
 SOURCES		+= ../src/us_saxs_util_iqq_pdb.cpp
+SOURCES		+= ../src/us_saxs_util_iqq_bead_model.cpp
 SOURCES		+= ../src/us_tar.cpp
 SOURCES		+= ../src/us_gzip.cpp
 SOURCES		+= ../src/us_math.cpp

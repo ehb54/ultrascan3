@@ -942,6 +942,11 @@ class US_EXTERN US_Saxs_Util
       QStringList  output_dmd_pdbs;
       QStringList  experimental_grids;
       bool         process_one_iqq();
+
+      bool         calc_saxs_iq_native_fast_bead_model();
+      bool         calc_saxs_iq_native_debye_bead_model();
+      bool         calc_saxs_iq_native_hybrid_bead_model();
+      bool         run_iqq_bead_model();
 };
 
 #endif
