@@ -705,6 +705,11 @@ bool US_Saxs_Util::process_one_iqq()
 bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename )
 {
    errormsg = "";
+
+   sgp_exp_q.clear();
+   sgp_exp_I.clear();
+   sgp_exp_e.clear();
+
    QFile f( filename );
    if ( !f.exists() )
    {
@@ -752,6 +757,8 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    }
 
    vector < double > q;
+   vector < double > I;
+   vector < double > e;
 
    if ( ext == "csv" )
    {
@@ -810,6 +817,13 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
                break;
             }
             q.push_back( this_q );
+            double this_I = tokens[ 1 ].toDouble();
+            I.push_back( this_I );
+            if ( tokens.size() > 2  )
+            {
+               double this_e = tokens[ 2 ].toDouble();
+               e.push_back( this_e );
+            }
          }
       }
 
@@ -819,6 +833,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
          return false;
       }
    }
+
+   sgp_exp_q = q;
+   sgp_exp_I = I;
+   sgp_exp_e = e;
 
    control_parameters[ "startq" ] = QString("%1").arg( q[ 0 ] );
    control_parameters[ "endq" ]   = QString("%1").arg( q[ q.size() - 1 ] );
@@ -870,6 +888,35 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       .arg( control_parameters[ "startq" ] )
       .arg( control_parameters[ "endq" ] )
       .arg( control_parameters[ "deltaq" ] );
+
+   // put sgp_exp_I onto regular grid:
+   vector < double > rq;
+   for ( double d = control_parameters[ "startq" ].toDouble(); 
+         d <= control_parameters[ "endq" ].toDouble(); 
+         d += control_parameters[ "deltaq" ].toDouble() )
+   {
+      rq.push_back( d );
+   }
+   vector < double > org_I = sgp_exp_I;
+   vector < double > org_e = sgp_exp_e;
+
+   cout << QString( "exp q [%1:%2] rq [%3:%4]\n" )
+      .arg( sgp_exp_q[ 0 ] )
+      .arg( sgp_exp_q[ sgp_exp_q.size() - 1 ] )
+      .arg( rq[ 0 ] )
+      .arg( rq[ rq.size() - 1 ] );
+
+   if ( !interpolate_iqq_by_case( sgp_exp_q,
+                                  org_I,
+                                  org_e,
+                                  rq,
+                                  sgp_exp_I,
+                                  sgp_exp_e ) )
+   {
+      return false;
+   }
+   sgp_exp_q = rq;
+
    return true;
 }
 
@@ -890,7 +937,7 @@ void US_Saxs_Util::validate_control_parameters_set_one( QStringList &checks,
 }
 
 
-bool US_Saxs_Util::validate_control_parameters()
+bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
 {
    errormsg = "";
    noticemsg = "";
@@ -911,8 +958,14 @@ bool US_Saxs_Util::validate_control_parameters()
       qsl_required << "endq";
       qsl_required << "deltaq";
       qsl_required << "iqmethod";
-      qsl_required << "inputfile";
-      qsl_required << "output";
+      if ( !for_sgp )
+      {
+         qsl_required << "inputfile";
+         qsl_required << "output";
+      } else {
+         qsl_required << "experimentgrid";
+      }         
+
       qsl_required << "outputfile";
       
       for ( unsigned int i = 0; i < qsl_required.size(); i++ )
@@ -1076,11 +1129,18 @@ QString US_Saxs_Util::vector_double_to_csv( vector < double > &vd )
 
 bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vector < double > &I )
 {
-   cout << "write output\n";
+   // cout << "write output\n";
+   if ( control_parameters.count( "sgp_running" ) )
+   {
+      sgp_last_q = q;
+      sgp_last_I = I;
+      return true;
+   }
+
    if ( control_parameters.count( "output" ) &&
         control_parameters[ "output" ] == "csv" )
    {
-      cout << "write output for csv\n";
+      // cout << "write output for csv\n";
       saxs_inputfile_for_csv.push_back( control_parameters[ "inputfile" ] );
       saxs_model_for_csv.push_back( model );
       saxs_tag_for_csv.push_back( control_parameters.count( "tag" ) ?
@@ -1096,7 +1156,7 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
         ( control_parameters[ "output" ] == "ssaxs" ||
           control_parameters[ "output" ] == "dat" ) )
    {
-      cout << "write output for ssaxs or dat\n";
+      // cout << "write output for ssaxs or dat\n";
       QString fsaxs_part_1_name = 
          control_parameters[ "outputfile" ] +
          QString("_%1").arg( model + 1 );

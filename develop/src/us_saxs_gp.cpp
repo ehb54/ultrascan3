@@ -486,8 +486,8 @@ sgp_node* sgp_node::random( unsigned int size )
              fabs ( n.axis[ 1 ] ) < 1e-5 &&
              fabs ( n.axis[ 2 ] ) < 1e-5 );
 
-   unsigned int dist = sgp_params[ "distancemin" ] + ( unsigned int )( drand48() * ( sgp_params[ "distancemax" ] - sgp_params[ "distancemin" ] ) );
-   unsigned int rad  = sgp_params[ "radiusmin"   ] + ( unsigned int )( drand48() * ( sgp_params[ "radiusmax"   ] - sgp_params[ "radiusmin"   ] ) );
+   unsigned int dist = ( unsigned int )( sgp_params[ "distancemin" ] + drand48() * ( sgp_params[ "distancemax" ] - sgp_params[ "distancemin" ] ) );
+   unsigned int rad  = ( unsigned int )( sgp_params[ "radiusmin"   ] + drand48() * ( sgp_params[ "radiusmax"   ] - sgp_params[ "radiusmin"   ] ) );
 
    // we could remove overlap by forcing distance to be adjacent, but we want
    // arbitrary electron densities for now

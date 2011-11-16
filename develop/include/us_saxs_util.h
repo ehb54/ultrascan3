@@ -841,7 +841,7 @@ class US_EXTERN US_Saxs_Util
       residue      current_residue;
 
       bool set_control_parameters_from_experiment_file( QString filename );
-      bool validate_control_parameters();
+      bool validate_control_parameters( bool for_sgp = false );
       void validate_control_parameters_set_one( QStringList &checks, 
                                                 QStringList &vals );
       bool create_tar_output( QString filename );
@@ -956,15 +956,24 @@ class US_EXTERN US_Saxs_Util
 #endif
 
       vector < sgp_node * > population;
+      vector < double >     sgp_last_q;       // we don't really need this, do we?
+      vector < double >     sgp_last_I;
+      vector < double >     sgp_exp_q;       
+      vector < double >     sgp_exp_I;
+      vector < double >     sgp_exp_e;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      bool                  sgp_use_e;
+
       sgp_node              sgp;
       bool                  sgp_run();
       bool                  sgp_validate();
       bool                  sgp_init();
       double                sgp_fitness( sgp_node *node );
+      void                  sgp_calculate_population_fitness();
+      void                  sgp_sort_population();
 };
 
 #endif

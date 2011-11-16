@@ -45,6 +45,7 @@ class sgp_node
 
    unsigned int                    distance;
    unsigned int                    radius;
+   double                          fitness;
 
    QString                         contents    ( bool include_children = true );
    QString                         contents_by_pos ();
@@ -98,6 +99,15 @@ class sgp_node
    point                           norm  ( point p1 );
    point                           scale ( point p, float m );
 
+};
+
+class sortable_sgp_node {
+public:
+   sgp_node *node;
+   bool operator < (const sortable_sgp_node& objIn) const
+   {
+      return node->fitness < objIn.node->fitness;
+   }
 };
 
 #endif

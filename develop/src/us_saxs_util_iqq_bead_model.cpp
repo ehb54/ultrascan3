@@ -8,7 +8,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast_bead_model()
    errormsg = "";
    noticemsg = "";
 
-   for ( unsigned int i = 0; i < model_vector.size(); i++ )
+   for ( unsigned int i = 0; i < bead_models.size(); i++ )
    {
       double tot_excl_vol = 0e0;
       current_model = i;
@@ -77,8 +77,6 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast_bead_model()
 
       // compute form factors
 
-      US_Saxs_Util usu;
-
       double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
       if ( fabs(delta_rho) < 1e-5 )
       {
@@ -111,20 +109,21 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast_bead_model()
             vector < double > F;
             vector < double > q(1);
             q[ 0 ] = 0;
-
       
-            if ( usu.compute_rayleigh_structure_factors( 
-                                                        atoms[ i ].radius * scaling_root,
-                                                        delta_rho,
-                                                        q,
-                                                        F
-                                                        ) )
+            QString save_errormsg = errormsg;
+            if ( compute_rayleigh_structure_factors( 
+                                                    atoms[ i ].radius * scaling_root,
+                                                    delta_rho,
+                                                    q,
+                                                    F
+                                                    ) )
             {
                fp[ 0 ][ i ] = F[ 0 ];
                rayleigh_ok = true;
             } else {
-               noticemsg += "using Rayleigh structure factors failed:" + usu.errormsg;
+               noticemsg += "using Rayleigh structure factors failed:" + errormsg;
             }
+            errormsg = save_errormsg;
          }
 
          if ( !rayleigh_ok )
@@ -253,7 +252,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
    errormsg = "";
    noticemsg = "";
 
-   for ( unsigned int i = 0; i < model_vector.size(); i++ )
+   for ( unsigned int i = 0; i < bead_models.size(); i++ )
    {
       double tot_excl_vol = 0e0;
       current_model = i;
@@ -329,8 +328,6 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
 
       // compute form factors
 
-      US_Saxs_Util usu;
-
       double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
       if ( fabs(delta_rho) < 1e-5 )
       {
@@ -361,12 +358,13 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
          if ( our_saxs_options.bead_model_rayleigh )
          {
             vector < double > F;
-            if ( usu.compute_rayleigh_structure_factors( 
-                                                        atoms[ i ].radius * scaling_root,
-                                                        delta_rho,
-                                                        q,
-                                                        F
-                                                        ) )
+            QString save_errormsg = errormsg;
+            if (compute_rayleigh_structure_factors( 
+                                                   atoms[ i ].radius * scaling_root,
+                                                   delta_rho,
+                                                   q,
+                                                   F
+                                                   ) )
             {
                for ( unsigned int j = 0; j < q_points; j++ )
                {
@@ -374,8 +372,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
                }
                rayleigh_ok = true;
             } else {
-               noticemsg += "using Rayleigh structure factors failed:" + usu.errormsg;
+               noticemsg += "using Rayleigh structure factors failed:" + errormsg;
             }
+            errormsg = save_errormsg;
+            
          }
 
          if ( !rayleigh_ok )
@@ -484,7 +484,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
    errormsg = "";
    noticemsg = "";
 
-   for ( unsigned int i = 0; i < model_vector.size(); i++ )
+   for ( unsigned int i = 0; i < bead_models.size(); i++ )
    {
       double tot_excl_vol = 0e0;
       current_model = i;
@@ -562,8 +562,6 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
 
       // compute form factors
 
-      US_Saxs_Util usu;
-
       double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
       if ( fabs(delta_rho) < 1e-5 )
       {
@@ -595,12 +593,13 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
          if ( our_saxs_options.bead_model_rayleigh )
          {
             vector < double > F;
-            if ( usu.compute_rayleigh_structure_factors( 
-                                                        atoms[ i ].radius * scaling_root,
-                                                        delta_rho,
-                                                        q,
-                                                        F
-                                                        ) )
+            QString save_errormsg = errormsg;
+            if ( compute_rayleigh_structure_factors( 
+                                                    atoms[ i ].radius * scaling_root,
+                                                    delta_rho,
+                                                    q,
+                                                    F
+                                                    ) )
             {
                for ( unsigned int j = 0; j < q_points; j++ )
                {
@@ -608,8 +607,9 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
                }
                rayleigh_ok = true;
             } else {
-               noticemsg += "using Rayleigh structure factors failed:" + usu.errormsg;
+               noticemsg += "using Rayleigh structure factors failed:" + errormsg;
             }
+            errormsg = save_errormsg;
          }
 
          if ( !rayleigh_ok )
@@ -708,14 +708,12 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
          for ( unsigned int j = 0; j < hist.size(); j++, d += delta )
          {
             dist[j] = sqrt( d );
-            // cout << QString("dist[%1] = %2\n").arg(j).arg(dist[j]);
          }
       }
 
       double x;
       for ( unsigned int i = 0; i < q.size(); i++ )
       {
-         // cout << "q[i] " << q[i] << endl;
          
          for ( unsigned int j = 0; j < hist.size(); j++ )
          {
@@ -731,17 +729,21 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
 
       if ( our_saxs_options.saxs_iq_hybrid_adaptive )
       {
-         US_Saxs_Util usu;
-         if ( !usu.create_adaptive_grid( q, I, our_saxs_options.hybrid2_q_points, r ) )
+         QString save_errormsg = errormsg;
+         QString save_noticemsg = noticemsg;
+
+         if ( !create_adaptive_grid( q, I, our_saxs_options.hybrid2_q_points, r ) )
          {
-            noticemsg += usu.errormsg;
+            noticemsg += errormsg;
          } else {
             adaptive_ok = true;
          }
-         if ( !usu.noticemsg.isEmpty() )
+         if ( !noticemsg.isEmpty() )
          {
-            noticemsg += usu.noticemsg;
+            save_noticemsg += noticemsg;
          }
+         errormsg = save_errormsg;
+         noticemsg = save_noticemsg;
       }
 
       unsigned int q_delta = q_points / our_saxs_options.hybrid2_q_points;
@@ -814,27 +816,29 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
       }
       
       {
-         US_Saxs_Util usu;
+         QString save_errormsg = errormsg;
+
          if ( our_saxs_options.saxs_iq_native_hybrid )
          {
-            if ( !usu.linear_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+            if ( !linear_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
             {
-               cout << usu.errormsg << endl;
+               cout << errormsg << endl;
             }
          } else {
             if ( our_saxs_options.saxs_iq_native_hybrid2 )
             {
-               if ( !usu.quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               if ( !quadratic_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
                {
-                  cout << usu.errormsg << endl;
+                  cout << errormsg << endl;
                }
             } else {
-               if ( !usu.cubic_spline_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
+               if ( !cubic_spline_interpolate_iq_curve( q, use_q, fast_I, I, I ) )
                {
-                  cout << usu.errormsg << endl;
+                  cout << errormsg << endl;
                }
             }            
          }
+         errormsg = save_errormsg;
       }
 
       noticemsg += "I(q) computed.\n";
