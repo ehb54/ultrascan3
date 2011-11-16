@@ -687,7 +687,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                // .arg(array2d_to_save[j].size());
                fprintf(of, tab.ascii());
             } else {
-               fprintf(of, "%s%s", tab.ascii(), array2d_to_save[j][i].ascii());
+               fprintf(of, "%s%s", tab.ascii(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).ascii() );
             }
             tab = "\t";
          }
