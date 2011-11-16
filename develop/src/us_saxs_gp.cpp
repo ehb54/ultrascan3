@@ -466,3 +466,39 @@ QString sgp_node::qs_bead_model()
    }
    return qs;
 }
+
+vector < PDB_atom > sgp_node::bead_model()
+{
+   vector < sgp_sphere > spheres = sgp_spheres();
+   
+   vector < PDB_atom > result;
+
+   for ( unsigned int i = 0; i < spheres.size(); i++ )
+   {
+      PDB_atom tmp_atom;
+      tmp_atom.bead_coordinate.axis[0] = spheres[ i ].coordinate.axis[ 0 ];
+      tmp_atom.bead_coordinate.axis[1] = spheres[ i ].coordinate.axis[ 1 ];
+      tmp_atom.bead_coordinate.axis[2] = spheres[ i ].coordinate.axis[ 2 ];
+      tmp_atom.bead_computed_radius    = spheres[ i ].radius;
+      tmp_atom.bead_actual_radius      = spheres[ i ].radius;
+      tmp_atom.radius                  = spheres[ i ].radius;
+      tmp_atom.bead_mw                 = 20;
+      tmp_atom.mw                      = 20;
+      tmp_atom.bead_ref_volume         = 0;
+      tmp_atom.bead_color              = 1;
+      tmp_atom.serial                  = i + 1;
+      tmp_atom.exposed_code            = 1;
+      tmp_atom.all_beads               .clear();
+      tmp_atom.name                    = "SGP";
+      tmp_atom.resName                 = "SGP";
+      tmp_atom.iCode                   = "";
+      tmp_atom.chainID                 = "";
+      tmp_atom.chain                   = 1;
+      tmp_atom.active                  = 1;
+      tmp_atom.normalized_ot_is_valid  = false;
+
+      result.push_back( tmp_atom );
+   }
+
+   return result;
+}
