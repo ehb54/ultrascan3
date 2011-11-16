@@ -97,6 +97,7 @@ class US_MPI_Analysis : public QObject
 
     QMap< QString, QString > parameters;
   
+    QDateTime           submitTime;
     QDateTime           startTime;
 
     int                 set_count;
@@ -245,6 +246,7 @@ class US_MPI_Analysis : public QObject
     void     set_gaussians     ( void );
     void     global_fit        ( void );
     void     write_model       ( const SIMULATION&, US_Model::AnalysisType );
+    void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
 
     // Worker
     void     _2dsa_worker      ( void );
