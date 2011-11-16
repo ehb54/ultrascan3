@@ -59,9 +59,46 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    t_csv->setMinimumHeight( csv_height );
 
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
+#if defined(DOES_WORK)
+   lb_files        ->setMaximumWidth( 3 * csv_width / 7 );
+   lb_created_files->setMaximumWidth( 3 * csv_width / 7 );
+   editor          ->setMaximumWidth( 3 * csv_width / 7 );
+   plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
+#endif
    lb_files        ->setMaximumWidth( csv_width / 3 );
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
+
+   int percharwidth = 7;
+   {
+      vector < QPushButton * > pbs;
+      // pbs.push_back( pb_add_files );
+      // pbs.push_back( pb_conc );
+      // pbs.push_back( pb_clear_files );
+
+      // pbs.push_back( pb_select_all );
+      // pbs.push_back( pb_invert );
+      pbs.push_back( pb_adjacent );
+      pbs.push_back( pb_to_saxs );
+      pbs.push_back( pb_view );
+      pbs.push_back( pb_rescale );
+
+      // pbs.push_back( pb_avg );
+      // pbs.push_back( pb_conc_avg );
+      // pbs.push_back( pb_select_all_created );
+      // pbs.push_back( pb_adjacent_created );
+      // pbs.push_back( pb_save_created_csv );
+      // pbs.push_back( pb_save_created );
+      // pbs.push_back( pb_show_created );
+      // pbs.push_back( pb_show_only_created );
+        
+      for ( unsigned int i = 0; i < pbs.size(); i++ )
+      {
+         pbs[ i ]->setMaximumWidth( percharwidth * ( pbs[ i ]->text().length() + 2 ) );
+      }
+   }
+
+
    // progress        ->setMaximumWidth( csv_width / 3 );
    pb_help         ->setMinimumWidth( csv_width / 3 );
    pb_cancel       ->setMinimumWidth( csv_width / 3 );
