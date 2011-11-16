@@ -218,12 +218,20 @@ sgp_node* sgp_node::random(
 
    point n;
 
-   n.axis[ 0 ] = drand48();
-   n.axis[ 1 ] = drand48();
-   n.axis[ 2 ] = drand48();
+   // we are going do be making lots of these, so lets make sure we don't have a zero vector:
+
+   do {
+      n.axis[ 0 ] = drand48() - 0.5;      
+      n.axis[ 1 ] = drand48() - 0.5;
+      n.axis[ 2 ] = drand48() - 0.5;
+   } while ( fabs ( n.axis[ 0 ] ) < 1e-5 &&
+             fabs ( n.axis[ 1 ] ) < 1e-5 &&
+             fabs ( n.axis[ 2 ] ) < 1e-5 );
 
    unsigned int dist = min_distance + ( unsigned int )( drand48() * ( max_distance - min_distance ) );
    unsigned int rad  = min_radius   + ( unsigned int )( drand48() * ( max_radius   - min_radius   ) );
+   // we could remove overlap by forcing distance to be adjacent, but we want
+   // arbitrary electron densities for now
 
    sgp_node *new_sgp = new sgp_node( n, dist, rad );
 
@@ -240,6 +248,96 @@ sgp_node* sgp_node::random(
       new_sgp->ref( pos )->children.push_back( tmp_sgp );
    }
    return new_sgp;
+}
+
+
+point sgp_node::get_coordinate()
+{
+   point p1;
+   if ( !parent )
+   {
+      p1.axis[ 0 ] = 1.0;
+      p1.axis[ 1 ] = 0.0;
+      p1.axis[ 2 ] = 0.0;
+   } else {
+      p1 = parent->normal;
+   }
+   if ( dot( p1, normal ) )
+   {
+      p1 = cross( p1, normal );
+   } else {
+      p1 = normal;
+   }
+
+   p1 = scale( norm( p1 ), (float) distance );
+   if ( parent )
+   {
+      p1 = plus( p1, parent->get_coordinate() );
+   } // else: rooted at 0,0,0
+   return p1;
+}
+
+vector < sgp_sphere > sgp_node::sgp_spheres()
+{
+   vector < sgp_sphere > result;
+
+   for ( unsigned int i = 0; i < size(); i++ )
+   {
+      sgp_sphere tmp_sphere;
+      tmp_sphere.radius     = ref( i )->radius;
+      tmp_sphere.coordinate = ref( i )->get_coordinate();
+      
+      result.push_back( tmp_sphere );
+   }
+
+   return result;
+}
+
+point sgp_node::cross( point p1, point p2) // p1 cross p2
+{
+   point result;
+   result.axis[0] = p1.axis[1] * p2.axis[2] -  p1.axis[2] * p2.axis[1];
+   result.axis[1] = p1.axis[2] * p2.axis[0] -  p1.axis[0] * p2.axis[2];
+   result.axis[2] = p1.axis[0] * p2.axis[1] -  p1.axis[1] * p2.axis[0];
+   return result;
+}
+
+float sgp_node::dot( point p1, point p2) // p1 dot p2
+{
+   return 
+      p1.axis[0] * p2.axis[0] +
+      p1.axis[1] * p2.axis[1] +
+      p1.axis[2] * p2.axis[2];
+}
+
+point sgp_node::norm( point p1 )
+{
+   point result = p1;
+   float divisor = sqrt( result.axis[0] * result.axis[0] +
+                         result.axis[1] * result.axis[1] +
+                         result.axis[2] * result.axis[2] );
+   result.axis[0] /= divisor;
+   result.axis[1] /= divisor;
+   result.axis[2] /= divisor;
+   return result;
+}   
+
+point sgp_node::plus( point p1, point p2 ) 
+{
+   point result;
+   result.axis[0] = p1.axis[0] + p2.axis[0];
+   result.axis[1] = p1.axis[1] + p2.axis[1];
+   result.axis[2] = p1.axis[2] + p2.axis[2];
+   return result;
+}
+
+point sgp_node::scale( point p, float m )
+{
+   for ( unsigned int i = 0; i < 3; i++ )
+   {
+      p.axis[i] *= m;
+   }
+   return p;
 }
 
 void sgp_node::test()
@@ -261,7 +359,8 @@ void sgp_node::test()
 
    cout << "Current size(): " << our_sgp->size() << endl;
    cout << "Initial node:\n" << our_sgp->contents();
-
+   vector < sgp_sphere > spheres = our_sgp->sgp_spheres();
+   
    n.axis[ 0 ] = drand48();
    n.axis[ 1 ] = drand48();
    n.axis[ 2 ] = drand48();
@@ -309,12 +408,56 @@ void sgp_node::test()
       cout << "contents:\n" << our_sgp->contents();
       
       cout << "List by pos:\n";
-      for ( unsigned int i = 0; i < our_sgp->size(); i++ )
+      for ( unsigned int k = 0; k < our_sgp->size(); k++ )
       {
-         cout << i << " : " << ( our_sgp->ref( i ) ? our_sgp->ref( i )->contents( false ) : "null pos\n" );
+         cout << k << " : " << ( our_sgp->ref( k ) ? our_sgp->ref( k )->contents( false ) : "null pos\n" );
       }
+      vector < sgp_sphere > spheres = our_sgp->sgp_spheres();
+      for ( unsigned int j = 0; j < spheres.size(); j++ )
+      {
+         cout << 
+            QString( "%1: [%2,%3,%4] r %5\n" )
+            .arg( j )
+            .arg( spheres[ j ].coordinate.axis[ 0 ] )
+            .arg( spheres[ j ].coordinate.axis[ 1 ] )
+            .arg( spheres[ j ].coordinate.axis[ 2 ] )
+            .arg( spheres[ j ].radius );
+      }
+
+      cout <<  "trying to write\n";
+      QFile f( QString( "sgp_%1.bead_model" ).arg( i ) );
+
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << our_sgp->qs_bead_model();
+         f.close();
+         cout << QString( "written: %1\n" ).arg( f.name() );
+      }
+               
       cout << "now delete\n";
       delete our_sgp;
+      cout << QString( "current creates %1 deletes %2\n" ).arg( sgp_creates ).arg( sgp_deletes );
    }
-   cout << QString( "current creates %1 deletes %2\n" ).arg( sgp_creates ).arg( sgp_deletes );
+}
+
+
+QString sgp_node::qs_bead_model()
+{
+   vector < sgp_sphere > spheres = sgp_spheres();
+
+   QString qs;
+
+   qs += QString( "%1 %2\n" ).arg( spheres.size() ).arg( .7 );
+
+   for ( unsigned int i = 0; i < spheres.size(); i++ )
+   {
+      qs +=
+         QString( "%1 %2 %3 %4  20 8 Unk 10\n")
+         .arg( spheres[ i ].coordinate.axis[ 0 ] )
+         .arg( spheres[ i ].coordinate.axis[ 1 ] )
+         .arg( spheres[ i ].coordinate.axis[ 2 ] )
+         .arg( spheres[ i ].radius );
+   }
+   return qs;
 }

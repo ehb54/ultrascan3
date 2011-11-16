@@ -1,6 +1,8 @@
 #ifndef US_SAXS_GP_H
 #define US_SAXS_GP_H
 
+#include "us_hydrodyn_pdbdefs.h"
+
 // structs/classes for saxs bead GP
 
 // notable control_parameters:
@@ -9,6 +11,13 @@
 //  all sphere sizes discretize to this
 
 // the basic tree node:
+
+class sgp_sphere
+{
+ public:
+   point               coordinate;
+   double              radius;
+};
 
 class sgp_node
 {
@@ -44,6 +53,29 @@ class sgp_node
                                     );
 
    void                test        ();
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+   vector < sgp_sphere > sgp_spheres ();  // minimal structure for now
+   vector < PDB_atom >   bead_model  ();
+   QString               qs_bead_model ();
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+   point              get_coordinate();
+
+ private:
+
+   point              cross ( point p1, point p2 );
+   float              dot   ( point p1, point p2 ); 
+   point              plus  ( point p1, point p2 ); 
+   point              norm  ( point p1 );
+   point              scale ( point p, float m );
+
 };
 
 #endif
