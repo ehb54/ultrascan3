@@ -273,6 +273,7 @@ SOURCES += \
   src/us_saxs_util_hydrate_align.cpp \
   src/us_saxs_util_iqq.cpp \
   src/us_saxs_util_iqq_pdb.cpp \
+  src/us_saxs_util_iqq_bead_model.cpp \
   src/us_saxs_util_loads.cpp \
   src/us_saxs_util_sgp.cpp \
   src/us_select_channel.cpp \

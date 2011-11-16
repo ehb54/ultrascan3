@@ -152,14 +152,14 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast_bead_model()
 
       unsigned int as = atoms.size();
       unsigned int as1 = as - 1;
-      double rik; // distance from atom i to k 
+      // double rik; // distance from atom i to k 
       double rik2; // square distance from atom i to k 
       float delta = our_saxs_options.fast_bin_size;
       float one_over_delta = 1.0 / delta;
-      float delta_pr = our_saxs_options.bin_size;
-      float one_over_delta_pr = 1.0 / delta_pr;
+      // float delta_pr = our_saxs_options.bin_size;
+      // float one_over_delta_pr = 1.0 / delta_pr;
       unsigned int pos;
-      unsigned int pos_pr;
+      // unsigned int pos_pr;
       vector < float > hist;
       vector < float > hist_pr;
       
