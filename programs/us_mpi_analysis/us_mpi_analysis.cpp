@@ -55,8 +55,14 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 
    QStringList files = d.entryList( QStringList( "hpc*.xml" ) );
    if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
-   
+
    QString xmlfile = files[ 0 ];
+
+   if ( my_rank == 0 )
+   {
+      submitTime      = QFileInfo( xmlfile ).lastModified();
+DbgLv(0) << "submitTime " << submitTime;
+   }
 
    maxrss         = 0;
    set_count      = 0;
@@ -318,6 +324,22 @@ void US_MPI_Analysis::start( void )
    // Pack results
    if ( my_rank == 0 )
    {
+      max_rss();
+      QDateTime endTime = QDateTime::currentDateTime();
+
+      int  walltime = qRound(
+         submitTime   .msecsTo( endTime ) / 1000.0 );
+      int  cputime  = qRound(
+         analysisStart.msecsTo( endTime ) / 1000.0 );
+      int  maxrssmb = qRound( (double)maxrss / 1024.0 );
+      send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
+            + " MB,  total run seconds " + QString::number( cputime ) );
+      DbgLv(0) << "Finished:  maxrss " << maxrssmb
+               << "MB,  total run seconds " << cputime;
+
+      stats_output( walltime, cputime, maxrssmb,
+            submitTime, analysisStart, endTime );
+
       QDir        d( "." );
       QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
 
@@ -327,18 +349,6 @@ void US_MPI_Analysis::start( void )
       // Remove the files we just put into the tar archive
       QString file;
       foreach( file, files ) d.remove( file );
-   }
-
-   if ( my_rank == 0 )
-   {
-      max_rss();
-      int  elapsed  = qRound(
-         analysisStart.msecsTo( QDateTime::currentDateTime() ) / 1000.0 );
-      int  maxrssmb = qRound( (double)maxrss / 1024.0 );
-      send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
-            + " MB,  total run seconds " + QString::number( elapsed ) );
-      DbgLv(0) << "Finished:  maxrss " << maxrssmb
-               << "MB,  total run seconds " << elapsed;
    }
 
    MPI_Finalize();
@@ -367,3 +377,61 @@ void US_MPI_Analysis::abort( const QString& message, int error )
     MPI_Abort( MPI_COMM_WORLD, error );
     exit( error );
 }
+
+// Create output statistics file
+void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
+      QDateTime submitTime, QDateTime startTime, QDateTime endTime )
+{
+   QString fname = "job_statistics.xml";
+   QFile   file( fname );
+
+   if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QString sSubmitTime = submitTime.toString( Qt::ISODate ).replace( "T", " " );
+   QString sStartTime  = startTime .toString( Qt::ISODate ).replace( "T", " " );
+   QString sEndTime    = endTime   .toString( Qt::ISODate ).replace( "T", " " );
+      
+   QXmlStreamWriter xml( &file );
+
+   xml.setAutoFormatting( true );
+   xml.writeStartDocument();
+   xml.writeDTD          ( "<!DOCTYPE US_Statistics>" );
+   xml.writeStartElement ( "US_JobStatistics" );
+   xml.writeAttribute    ( "version", "1.0" );
+   xml.writeStartElement ( "statistics" );
+   xml.writeAttribute    ( "walltime",     QString::number( walltime   ) );
+   xml.writeAttribute    ( "cputime",      QString::number( cputime    ) );
+   xml.writeAttribute    ( "cpucount",     QString::number( proc_count ) );
+   xml.writeAttribute    ( "maxmemory",    QString::number( maxrssmb   ) );
+   xml.writeAttribute    ( "cluster",      cluster                     );
+   xml.writeAttribute    ( "analysistype", analysis_type               );
+   xml.writeEndElement   ();  // statistics
+
+   xml.writeStartElement ( "id" );
+   xml.writeAttribute    ( "requestguid",  requestGUID );
+   xml.writeAttribute    ( "dbname",       db_name     );
+   xml.writeAttribute    ( "requestid",    requestID   );
+   xml.writeAttribute    ( "submittime",   sSubmitTime );
+   xml.writeAttribute    ( "starttime",    sStartTime  );
+   xml.writeAttribute    ( "endtime",      sEndTime    );
+   xml.writeEndElement   ();  // id
+   xml.writeEndElement   ();  // US_JobStatistics
+   xml.writeEndDocument  ();
+
+   file.close();
+
+   // Add the file name of the statistics file to the output list
+   QFile f( "analysis_files.txt" );
+   if ( ! f.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   {
+      abort( "Could not open 'analysis_files.txt' for writing", -1 );
+      return;
+   }
+
+   QTextStream out( &f );
+   out << fname << "\n";
+   f.close();
+   return;
+}
+
