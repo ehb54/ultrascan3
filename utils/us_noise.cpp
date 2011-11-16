@@ -177,8 +177,6 @@ int US_Noise::write( US_DB2* db )
       
       q.clear();
      
-      QString description = "";
-
       if ( db->lastErrno() != US_DB2::OK )
       {
          q << "new_noise" << noiseGUID << editID << modelID << modelGUID
