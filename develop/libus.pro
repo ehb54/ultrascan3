@@ -274,6 +274,7 @@ SOURCES += \
   src/us_saxs_util_iqq.cpp \
   src/us_saxs_util_iqq_pdb.cpp \
   src/us_saxs_util_loads.cpp \
+  src/us_saxs_util_sgp.cpp \
   src/us_select_channel.cpp \
   src/us_selectmodel.cpp \
   src/us_selectmodel10.cpp \

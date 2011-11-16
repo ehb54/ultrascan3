@@ -948,6 +948,23 @@ class US_EXTERN US_Saxs_Util
       bool         calc_saxs_iq_native_debye_bead_model();
       bool         calc_saxs_iq_native_hybrid_bead_model();
       bool         run_iqq_bead_model();
+
+      // gp stuff
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      vector < sgp_node * > population;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      sgp_node              sgp;
+      bool                  sgp_run();
+      bool                  sgp_validate();
+      bool                  sgp_init();
+      double                sgp_fitness( sgp_node *node );
 };
 
 #endif

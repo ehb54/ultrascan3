@@ -6,11 +6,19 @@
 // structs/classes for saxs bead GP
 
 // notable control_parameters:
-// "sbgpquantum" : distance quantum in angstrom
+// "distancequantum" : distance quantum in angstrom
 //  all distances discretize to this
 //  all sphere sizes discretize to this
 
-// the basic tree node:
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+extern  map < QString, double > sgp_params;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 class sgp_sphere
 {
@@ -19,62 +27,76 @@ class sgp_sphere
    double              radius;
 };
 
+// the basic tree node:
+
 class sgp_node
 {
  public:
-   sgp_node            ();
-   sgp_node            ( point normal, unsigned int distance, unsigned int radius );
-   ~sgp_node           ();
+   sgp_node                        ();
+   sgp_node                        ( point normal, unsigned int distance, unsigned int radius );
+   ~sgp_node                       ();
 
-   sgp_node *          parent;
-   list < sgp_node * > children;
+   sgp_node *                      parent;
+   list < sgp_node * >             children;
 
-   point               normal;
+   point                           normal;
 
    // these are scaled via control_parameters[ "sbgpquantum" ]:
 
-   unsigned int        distance;
-   unsigned int        radius;
+   unsigned int                    distance;
+   unsigned int                    radius;
 
-   QString             contents    ( bool include_children = true );
-   unsigned int        size        ();
-   unsigned int        depth       ();
-   sgp_node *          ref         ( unsigned int pos );
-   sgp_node *          copy        ( sgp_node *node );
-   bool                insert_copy ( unsigned int pos, sgp_node *node );
-   bool                prune       ( unsigned int pos );
+   QString                         contents    ( bool include_children = true );
+   QString                         contents_by_pos ();
+   unsigned int                    size        ();
+   unsigned int                    depth       ();
+   sgp_node *                      ref         ( unsigned int pos );
+   sgp_node *                      copy        ( sgp_node *node );
+   bool                            insert_copy ( unsigned int pos, sgp_node *node );
 
-   sgp_node *          random      ( 
-                                    unsigned int size,
-                                    unsigned int min_distance,
-                                    unsigned int max_distance,
-                                    unsigned int min_radius,
-                                    unsigned int max_radius
-                                    );
-
-   void                test        ();
+   sgp_node *                      random      ( unsigned int size );
+   
+   void                            test        ();
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
 
-   vector < sgp_sphere > sgp_spheres ();  // minimal structure for now
-   vector < PDB_atom >   bead_model  ();
-   QString               qs_bead_model ();
+   vector < sgp_sphere >           sgp_spheres ();  // minimal structure for now
+   vector < PDB_atom >             bead_model  ();
+   QString                         qs_bead_model ();
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-   point              get_coordinate();
+   point                           get_coordinate();
+
+   bool                            mutate       ( unsigned int pos = 0 );
+   bool                            crossover    ( sgp_node *&result, 
+                                                  sgp_node *node1,
+                                                  sgp_node *node2 );                                     
+
+   static void                     random_normal(
+                                                 double &r1,
+                                                 double &r2,
+                                                 double mean1, 
+                                                 double sd1, 
+                                                 double mean2, 
+                                                 double sd2
+                                                 );
+
+   static QString                  validate_params ();
+   static QString                  default_params  ();
+   static QString                  list_params     ();
 
  private:
 
-   point              cross ( point p1, point p2 );
-   float              dot   ( point p1, point p2 ); 
-   point              plus  ( point p1, point p2 ); 
-   point              norm  ( point p1 );
-   point              scale ( point p, float m );
+   point                           cross ( point p1, point p2 );
+   float                           dot   ( point p1, point p2 ); 
+   point                           plus  ( point p1, point p2 ); 
+   point                           norm  ( point p1 );
+   point                           scale ( point p, float m );
 
 };
 

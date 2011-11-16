@@ -161,6 +161,18 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdtemp|"
                       "dmdtimestep|"
                       "dmdrun|"
+
+                      "sgppopulation|"
+                      "sgpgenerations|"
+                      "sgpdistancequantum|"
+                      "sgpdistancemin|"
+                      "sgpdistancemax|"
+                      "sgpradiusmin|"
+                      "sgpradiusmax|"
+                      "sgpbranchmax|"
+                      "sgprun|"
+                      "sgptest|"
+
                       "remark)$"
                       );
 
@@ -219,6 +231,16 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdtemp|"
                       "dmdtimestep|"
                       "dmdrun|"
+
+                      "sgppopulation|"
+                      "sgpgenerations|"
+                      "sgpdistancequantum|"
+                      "sgpdistancemin|"
+                      "sgpdistancemax|"
+                      "sgpradiusmin|"
+                      "sgpradiusmax|"
+                      "sgpbranchmax|"
+
                       "outputfile)$"
                       );
 
@@ -558,6 +580,19 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             return false;
          }
+      }
+
+      if ( option == "sgprun" )
+      {
+         if ( !sgp_run() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "sgptest" )
+      {
+         sgp.test();
       }
 
       if ( option == "process" )
