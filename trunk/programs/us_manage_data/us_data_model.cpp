@@ -450,8 +450,9 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
                           .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 7 ).toString();
       QString recsize   = db->value( 8 ).toString();
-DbgLv(2) << "BrDb: NOI id" << recID << " edID" << editID << " moID" << modelID;
       QString descript  = db->value( 9 ).toString();
+DbgLv(2) << "BrDb: NOI id" << recID << " edID" << editID << " moID" << modelID
+ << " descript" << descript;
 
       if ( descript.isEmpty()  ||  descript.length() == 80 )
       {
@@ -467,6 +468,7 @@ DbgLv(2) << "BrDb: NOI id" << recID << " edID" << editID << " moID" << modelID;
             }
 
             descript = descript.replace( ".model", "." + noiseType );
+DbgLv(2) << "BrDb:     jmod" << jmod << " descript" << descript;
          }
       }
 //DbgLv(3) << "BrDb: contents================================================";

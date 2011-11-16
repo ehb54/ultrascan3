@@ -282,7 +282,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
 void US_License::help( void )
 {
-  online_help.show_help( "manual/license.html" );
+  online_help.show_help( "manual/register.html" );
 }
 
 QString US_License::titleCase( const QString& phrase )
