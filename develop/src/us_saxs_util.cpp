@@ -7916,8 +7916,8 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
 
       to_data  [ 0 ] = sum / tot_w;
       to_errors[ 0 ] = err / count;
-      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
-      cout << QString("iibc p 0 sum %1 err %2 tot_w %3 count %4\n").arg( sum ).arg( err ).arg( tot_w ).arg( count );
+      // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      // cout << QString("iibc p 0 sum %1 err %2 tot_w %3 count %4\n").arg( sum ).arg( err ).arg( tot_w ).arg( count );
    }
 
    for ( unsigned int i = 1; i < to_grid.size() - 1; i++ )
@@ -7949,8 +7949,8 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
          return false;
       }
 
-      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
-      cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( i ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
+      // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      // cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( i ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
 
       to_data  [ i ] = sum / tot_w;
       to_errors[ i ] = err / count;
@@ -7986,8 +7986,8 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
          return false;
       }
 
-      cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
-      cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( to_grid.size() - 1 ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
+      // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
+      // cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( to_grid.size() - 1 ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
 
       to_data  [ to_grid.size() - 1 ] = sum / tot_w;
       to_errors[ to_grid.size() - 1 ] = err / count;

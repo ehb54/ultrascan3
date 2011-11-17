@@ -45,7 +45,16 @@ class sgp_node
 
    unsigned int                    distance;
    unsigned int                    radius;
+
+   // utility fields not maintained internally:
+   // could be kept separately, as they really only belong to the root node of an individual
+   // and would save a a bit of wasted memory
+
    double                          fitness;
+   bool                            fitness_ok;
+   bool                            is_dead;
+
+   // end utility fields
 
    QString                         contents    ( bool include_children = true );
    QString                         contents_by_pos ();
@@ -90,6 +99,7 @@ class sgp_node
    static QString                  validate_params ();
    static QString                  default_params  ();
    static QString                  list_params     ();
+   static QString                  usage           ();
 
  private:
 

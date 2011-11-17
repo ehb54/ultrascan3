@@ -3296,7 +3296,7 @@ int pop_selection()
    };
    if(pos < 0)
    {
-      fprintf(stderr, "ransom pop_selection less than zero, ugh!\n");
+      fprintf(stderr, "random pop_selection less than zero, ugh!\n");
       exit(-1);
    }
    return pos;

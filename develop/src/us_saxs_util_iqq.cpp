@@ -164,6 +164,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "sgppopulation|"
                       "sgpgenerations|"
+                      "sgpelitism|"
+                      "sgpcrossover|"
+                      "sgpmutate|"
+                      "sgpplague|"
                       "sgpdistancequantum|"
                       "sgpdistancemin|"
                       "sgpdistancemax|"
@@ -234,6 +238,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "sgppopulation|"
                       "sgpgenerations|"
+                      "sgpelitism|"
+                      "sgpcrossover|"
+                      "sgpmutate|"
+                      "sgpplague|"
                       "sgpdistancequantum|"
                       "sgpdistancemin|"
                       "sgpdistancemax|"
@@ -958,10 +966,10 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
       qsl_required << "endq";
       qsl_required << "deltaq";
       qsl_required << "iqmethod";
+      qsl_required << "output";
       if ( !for_sgp )
       {
          qsl_required << "inputfile";
-         qsl_required << "output";
       } else {
          qsl_required << "experimentgrid";
       }         

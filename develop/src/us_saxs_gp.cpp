@@ -182,6 +182,8 @@ sgp_node::sgp_node()
    normal.axis[ 2 ] = 0.0;
    distance         = 0;
    radius           = 0;
+   is_dead          = false;
+   fitness_ok       = false;
 }
 
 sgp_node::sgp_node( point normal, unsigned int distance, unsigned int radius )
@@ -192,6 +194,8 @@ sgp_node::sgp_node( point normal, unsigned int distance, unsigned int radius )
    this->normal     = normal;
    this->distance   = distance;
    this->radius     = radius;
+   is_dead          = false;
+   fitness_ok       = false;
 }
 
 sgp_node::~sgp_node()
@@ -741,4 +745,12 @@ void sgp_node::test()
    delete our_sgp2;
 
    cout << QString( "current creates %1 deletes %2\n" ).arg( sgp_creates ).arg( sgp_deletes );
+}
+
+QString sgp_node::usage()
+{
+   return QString( "current creates %1 deletes %2 open %3\n" )
+      .arg( sgp_creates )
+      .arg( sgp_deletes )
+      .arg( sgp_creates - sgp_deletes );
 }
