@@ -50,7 +50,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    // Lay out the meniscus,rmsd text box
    te_data = new US_Editor( US_Editor::LOAD, false,
-         "results/2dsa-fm*.dat;;*.dat;;*.*" );
+         "results/*-fm*.fit.dat;;*.dat;;*.*" );
    connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
                      SLOT  ( file_loaded(           QString ) ) );
    
@@ -519,8 +519,9 @@ DbgLv(1) << "EDITFILT" << edtfilt;
 
       QMessageBox::warning( this,
             tr( "Missing Local Edit" ),
-            tr( "Update Edit is not possible without a local copy\n"
-                "of the Edit file corresponding to FM models.\n"
+            tr( "Update Edit is not possible\n"
+                "without a local copy of the Edit file\n"
+                "corresponding to the FM models.\n"
                 "Use\n     Convert Legacy Data\nand\n     Manage Data\n"
                 "to create a local copy of an Edit file for\n     " )
             + fname_load + tr( "\nof run\n     " ) + runID );
