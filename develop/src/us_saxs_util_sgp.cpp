@@ -116,7 +116,7 @@ bool US_Saxs_Util::sgp_run()
             do {
                sgp.random_normal( r1, r2, pop_size_avg, pop_size_sd, pop_size_avg, pop_size_sd );
             } while ( r1 < 2.0 );
-            sgp_node * node = sgp.random( r1 );
+            sgp_node * node = sgp.random( ( unsigned int ) r1 );
             node->fitness_ok = false;
             node->check_normal( "plague/random" );
             new_population.push_back( node );
@@ -133,7 +133,7 @@ bool US_Saxs_Util::sgp_run()
             do {
                sgp.random_normal( r1, r2, pop_size_avg, pop_size_sd, pop_size_avg, pop_size_sd );
             } while ( r1 < 2.0 );
-            sgp_node * node = sgp.random( r1 );
+            sgp_node * node = sgp.random( ( unsigned int ) r1 );
             node->fitness_ok = false;
             node->check_normal( "duplicate/random" );
             new_population.push_back( node );
