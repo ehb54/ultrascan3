@@ -12,6 +12,8 @@
 #include <qwt_plot_panner.h>
 #include <qwt_plot_layout.h>
 
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+
 //! \brief Structure for values of each solution distribution point
 typedef struct solute_s
 {
@@ -100,6 +102,7 @@ private:
    int             nxpsc;        // integral number of X pixels per scan
    int             nyscn;        // integral number of Y scans
    int             nxypt;        // total number of X,Y points in raster
+   int             dbg_level;
 };
 
 #endif
