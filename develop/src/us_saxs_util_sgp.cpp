@@ -1,6 +1,11 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 
+#ifdef WIN32
+# define drand48() ((double)rand()/RAND_MAX)
+# define srand48(x) srand(x)
+#endif
+
 bool US_Saxs_Util::sgp_run()
 {
    if ( !sgp_validate() )
@@ -283,6 +288,15 @@ unsigned int US_Saxs_Util::sgp_pop_selection()
 
 bool US_Saxs_Util::sgp_init()
 {
+   if ( control_parameters.count( "sgprandomseed" ) )
+   {
+      srand48( ( long int )control_parameters[ "sgprandomseed" ].toInt() );
+   } else {
+      long int li = ( long int )QTime::currentTime().msec();
+      cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+      srand48( li );
+   }
+   
    errormsg = "";
    noticemsg = "";
 
@@ -523,55 +537,3 @@ void US_Saxs_Util::sgp_sort_population()
       cout << QString( "sgp_fitness for %1 %2\n" ).arg( i ).arg( population[ i ]->fitness );
    }
 }
-
-QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
-{
-   vector < PDB_atom > bm = node->bead_model();
-
-   if ( !bm.size() )
-   {
-      return "empty model\n";
-   }
-
-   // also compute intersection volumes & subtract?
-
-   double volume = 0e0;
-   point pmin;
-   point pmax;
-
-   for ( unsigned int i = 0; i < bm.size(); i++ )
-   {
-      if ( i )
-      {
-         for ( unsigned int j = 0; j < 3; j++ )
-         {
-            if ( pmin.axis[ j ] > bm[ i ].coordinate.axis[ j ] )
-            {
-               pmin.axis[ j ] = bm[ i ].coordinate.axis[ j ];
-            }
-            if ( pmax.axis[ j ] < bm[ i ].coordinate.axis[ j ] )
-            {
-               pmax.axis[ j ] = bm[ i ].coordinate.axis[ j ];
-            }
-         }
-      } else {
-         pmin = bm[ i ].coordinate;
-         pmax = bm[ i ].coordinate;
-      }
-
-      volume += ( 4e0 / 3e0 ) * M_PI * bm[ i ].radius * bm[ i ].radius * bm[ i ].radius;
-   }
-
-   QString qs;
-
-   qs += QString( "total volume (A^3) %1\n"
-                  "bounding box size (A) %2 %3 %4\n" )
-      .arg( volume )
-      .arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] )
-      .arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] )
-      .arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
-
-   return qs;
-}
-
-         

@@ -13,11 +13,13 @@ SOURCES		+= ../src/us_saxs_util_iqq_pdb.cpp
 SOURCES		+= ../src/us_saxs_util_iqq_bead_model.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_sgp.cpp
+SOURCES		+= ../src/us_saxs_util_sgp_phys.cpp
 SOURCES		+= ../src/us_saxs_util_mpi.cpp
 SOURCES		+= ../src/us_tar.cpp
 SOURCES		+= ../src/us_gzip.cpp
 SOURCES		+= ../src/us_math.cpp
 SOURCES		+= ../src/us_file_util.cpp
+SOURCES		+= ../src/us_hydrodyn_pat.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_math.h

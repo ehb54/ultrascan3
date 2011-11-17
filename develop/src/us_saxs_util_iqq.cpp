@@ -176,6 +176,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgpradiusmin|"
                       "sgpradiusmax|"
                       "sgpbranchmax|"
+                      "sgprandomseed|"
                       "sgprun|"
                       "sgptest|"
 
@@ -251,6 +252,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgpradiusmin|"
                       "sgpradiusmax|"
                       "sgpbranchmax|"
+                      "sgprandomseed|"
 
                       "outputfile)$"
                       );

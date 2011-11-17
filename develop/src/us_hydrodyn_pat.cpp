@@ -155,8 +155,8 @@ us_hydrodyn_pat_main(int                 use_nmax,
 #endif
       if ( i < 3 ) 
       {
-         printf("reading in coords in_dt bead %d @ %f %f %f %f %f %d\n", i, in_dt[i].x,in_dt[i].y,in_dt[i].z,in_dt[i].r, in_dt[i].m, in_dt[i].col);
-         printf("reading in coords dt bead %d @ %f %f %f %f %f %d\n", i, dt[i].x,dt[i].y,dt[i].z,dt[i].r, dt[i].m, dt[i].col);
+         // printf("reading in coords in_dt bead %d @ %f %f %f %f %f %d\n", i, in_dt[i].x,in_dt[i].y,in_dt[i].z,in_dt[i].r, in_dt[i].m, in_dt[i].col);
+         // printf("reading in coords dt bead %d @ %f %f %f %f %f %d\n", i, dt[i].x,dt[i].y,dt[i].z,dt[i].r, dt[i].m, dt[i].col);
       }
    }
 #if defined(OLD_WAY_CHECK)
@@ -190,7 +190,7 @@ us_hydrodyn_pat_main(int                 use_nmax,
    contatore = 0;
    max = dt[0].m;
 
-   printf("pat: nmax %d nat %d\n", nmax, nat);
+   // printf("pat: nmax %d nat %d\n", nmax, nat);
 
    for (i = 1; i < nat; i++)
       if (dt[i].m > max)
@@ -467,10 +467,10 @@ us_hydrodyn_pat_main(int                 use_nmax,
       *out_nat = nat;
       for (i = 0; i < nat; i++)
       {
-         if ( i < 3 ) 
-         {
-            printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
-         }
+         // if ( i < 3 ) 
+         // {
+         // printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+         // }
          out_dt[i].x = dtn[i].x;
          out_dt[i].y = dtn[i].y;
          out_dt[i].z = dtn[i].z;
@@ -512,10 +512,10 @@ us_hydrodyn_pat_main(int                 use_nmax,
          *out_nat = nat;
          for (i = 0; i < nat; i++)
          {
-            if ( i < 3 ) 
-            {
-               printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
-            }
+            // if ( i < 3 ) 
+            // {
+            // printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+            // }
             out_dt[i].x = dtn[i].x;
             out_dt[i].y = dtn[i].y;
             out_dt[i].z = dtn[i].z;
