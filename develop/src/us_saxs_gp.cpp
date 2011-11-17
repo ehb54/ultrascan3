@@ -370,8 +370,19 @@ bool sgp_node::insert_copy( unsigned int pos, sgp_node* node )
 point sgp_node::get_coordinate()
 {
    point p1;
-   if ( !parent )
+   if ( !parent || 
+        ( parent->normal.axis[ 0 ] == 0.0 &&
+          parent->normal.axis[ 1 ] == 0.0 &&          
+          parent->normal.axis[ 2 ] == 0.0 ) )
    {
+      if ( parent && 
+           ( parent->normal.axis[ 0 ] == 0.0 &&
+             parent->normal.axis[ 1 ] == 0.0 &&          
+             parent->normal.axis[ 2 ] == 0.0 ) ) 
+      {
+         cout << "nan in parent's normal coordinate, reverting to 1,0,0\n";
+      }
+         
       p1.axis[ 0 ] = 1.0;
       p1.axis[ 1 ] = 0.0;
       p1.axis[ 2 ] = 0.0;
@@ -381,10 +392,46 @@ point sgp_node::get_coordinate()
    if ( dot( p1, normal ) )
    {
       p1 = cross( p1, normal );
+      if ( isnan( p1.axis[ 0 ] ) ||
+           isnan( p1.axis[ 1 ] ) ||
+           isnan( p1.axis[ 2 ] ) )
+      {
+         cout << "nan in coordinate, reverting to normal\n";
+         p1 = normal;
+      }
    } else {
       p1 = normal;
    }
 
+   if ( p1.axis[ 0 ] == 0.0 &&
+        p1.axis[ 1 ] == 0.0 &&
+        p1.axis[ 2 ] == 0.0 )
+   {
+      cout << "unexpected zero p1, nan in coordinate, reverting to normal\n";
+      p1.axis[ 0 ] = 1.0;
+   }
+
+   point ptest = norm( p1 );
+
+   if ( isnan( ptest.axis[ 0 ] ) ||
+        isnan( ptest.axis[ 1 ] ) ||
+        isnan( ptest.axis[ 2 ] ) )
+   {
+      cout << "nan in normal!\n";
+      cout << QString( "normal %1 %2 %3\n" )
+         .arg( normal.axis[ 0 ] )
+         .arg( normal.axis[ 1 ] )
+         .arg( normal.axis[ 2 ] );
+      cout << QString( "p1 %1 %2 %3\n" )
+         .arg( p1.axis[ 0 ] )
+         .arg( p1.axis[ 1 ] )
+         .arg( p1.axis[ 2 ] );
+      cout << QString( "ptest %1 %2 %3\n" )
+         .arg( ptest.axis[ 0 ] )
+         .arg( ptest.axis[ 1 ] )
+         .arg( ptest.axis[ 2 ] );
+   }
+      
    p1 = scale( norm( p1 ), (float) distance );
    if ( parent )
    {
@@ -482,13 +529,19 @@ sgp_node* sgp_node::random( unsigned int size )
 
    // we are going do be making lots of these, so lets make sure we don't have a zero vector:
 
+   point nn;
    do {
       n.axis[ 0 ] = drand48() - 0.5;      
       n.axis[ 1 ] = drand48() - 0.5;
       n.axis[ 2 ] = drand48() - 0.5;
-   } while ( fabs ( n.axis[ 0 ] ) < 1e-5 &&
-             fabs ( n.axis[ 1 ] ) < 1e-5 &&
-             fabs ( n.axis[ 2 ] ) < 1e-5 );
+      nn = norm( n );
+   } while ( ( fabs ( n.axis[ 0 ] ) < 1e-5 &&
+               fabs ( n.axis[ 1 ] ) < 1e-5 &&
+               fabs ( n.axis[ 2 ] ) < 1e-5 )
+             || isnan( nn.axis[ 0 ] )
+             || isnan( nn.axis[ 1 ] )
+             || isnan( nn.axis[ 2 ] )
+             );
 
    unsigned int dist = ( unsigned int )( sgp_params[ "distancemin" ] + drand48() * ( sgp_params[ "distancemax" ] - sgp_params[ "distancemin" ] ) );
    unsigned int rad  = ( unsigned int )( sgp_params[ "radiusmin"   ] + drand48() * ( sgp_params[ "radiusmax"   ] - sgp_params[ "radiusmin"   ] ) );
@@ -591,6 +644,19 @@ bool sgp_node::crossover( sgp_node *&result,
 }
 
 // --------------------------- test ------------------------------------
+
+void sgp_node::check_normal( QString qs )
+{
+   for ( unsigned int i = 0; i < size(); i++ )
+   {
+      if ( ref( i )->normal.axis[ 0 ] == 0.0 &&
+           ref( i )->normal.axis[ 1 ] == 0.0 &&
+           ref( i )->normal.axis[ 2 ] == 0.0 )
+      {
+         cout << QString( "Error %1: found zero zero zero normal at pos %2\n" ).arg( qs ).arg( i );
+      }
+   }
+}
 
 void sgp_node::test()
 {

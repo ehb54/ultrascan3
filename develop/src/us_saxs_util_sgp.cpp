@@ -53,6 +53,7 @@ bool US_Saxs_Util::sgp_run()
          {
             // cout << "elitism\n";
             population[ i ]->fitness_ok = true;
+            population[ i ]->check_normal( "elitism" );
             new_population.push_back( population[ i ] );
             elitism_count++;
             continue;
@@ -65,6 +66,7 @@ bool US_Saxs_Util::sgp_run()
             sgp_node * node = sgp.copy( population[ sgp_pop_selection() ] );
             node->mutate( ( unsigned int )( node->size() * drand48() ) );
             node->fitness_ok = false;
+            node->check_normal( "mutate" );
             new_population.push_back( node );
             mutate_count++;
             continue;
@@ -78,7 +80,10 @@ bool US_Saxs_Util::sgp_run()
             sgp_node * node2 = sgp.copy( population[ sgp_pop_selection() ] );
             sgp_node * node;
             sgp.crossover( node, node1, node2 );
+            delete node1;
+            delete node2;
             node->fitness_ok = false;
+            node->check_normal( "crossover" );
             new_population.push_back( node );
             crossover_count++;
             continue;
@@ -99,6 +104,7 @@ bool US_Saxs_Util::sgp_run()
             } while ( r1 < 2.0 );
             sgp_node * node = sgp.random( r1 );
             node->fitness_ok = false;
+            node->check_normal( "plague/random" );
             new_population.push_back( node );
             plague_count++;
             continue;
@@ -115,6 +121,7 @@ bool US_Saxs_Util::sgp_run()
             } while ( r1 < 2.0 );
             sgp_node * node = sgp.random( r1 );
             node->fitness_ok = false;
+            node->check_normal( "duplicate/random" );
             new_population.push_back( node );
             random_count++;
             continue;
@@ -124,6 +131,7 @@ bool US_Saxs_Util::sgp_run()
             sgp_node * node  = sgp.copy( node1 );
             node->fitness    = node1->fitness;
             node->fitness_ok = true;
+            node->check_normal( "duplicate" );
             new_population.push_back( node );
             duplicate_count++;
          }
@@ -171,6 +179,12 @@ bool US_Saxs_Util::sgp_run()
       cout << "Usage:" << sgp.usage();
    } // g
       
+   for ( unsigned int i = 0; i < population.size(); i++ )
+   {
+      delete population[ i ];
+   }
+   cout << "Final usage:" << sgp.usage();
+   
    control_parameters.erase( "sgp_running" );
    return false;
 }

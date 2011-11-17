@@ -101,6 +101,8 @@ class sgp_node
    static QString                  list_params     ();
    static QString                  usage           ();
 
+   void                            check_normal    ( QString qs = "" );
+
  private:
 
    point                           cross ( point p1, point p2 );
