@@ -37,8 +37,6 @@ bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
-const double epsilon = 0.005;  // equivalence magnitude ratio radius
-
 // US_Pseudo3D_Combine class constructor
 US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 {
@@ -59,6 +57,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->setContentsMargins( 0, 0, 0, 0 );
 
    int s_row = 0;
+   dbg_level = US_Settings::us_debug();
 
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Pseudo-3D Plotting Controls" ) );
@@ -548,7 +547,7 @@ void US_Pseudo3D_Combine::update_plot_smax( double dval )
 
       ct_plt_smin->setRange( 0.0, 1.e+5, rinc );
       ct_plt_smax->setRange( 0.0, 1.e+8, rinc );
-//qDebug() << "plt_smax" << plt_smax << " rinc" << rinc;
+//DbgLv(1) << "plt_smax" << plt_smax << " rinc" << rinc;
    }
 }
 
@@ -695,7 +694,7 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    if ( curr_distr == 0 )
    {  // First distribution:  set constant-vbar flag; possibly re-do
       cnst_vbar  = model.constant_vbar();
-qDebug() << "cd=0  cnst_vbar" << cnst_vbar;
+DbgLv(1) << "cd=0  cnst_vbar" << cnst_vbar;
 
       if ( ! cnst_vbar )
       {  // Oops!  We need to re-do the distribution using vbar instead of f/f0
@@ -1043,8 +1042,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
       {     // loop to compare each entry to previous
           sol2    = *jj;         // solute entry
 
-          if ( ! equivalent( sol1.s, sol2.s, epsilon )  ||
-               ! equivalent( sol1.k, sol2.k, epsilon ) )
+          if ( sol1.s != sol2.s  ||  sol1.k != sol2.k )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
              jdup    = 0;
@@ -1065,8 +1063,8 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
       if ( kdup > 0 )
       {   // if some reduction happened, replace list with reduced version
          double sc = 1.0 / (double)( kdup + 1 );
-qDebug() << "KDUP" << kdup;
-sc = 1.0;
+DbgLv(1) << "KDUP" << kdup;
+//sc = 1.0;
 
          for ( int ii = 0; ii < reduced.size(); ii++ )
          {  // first scale c values by reciprocal of maximum replicate count
@@ -1074,10 +1072,10 @@ sc = 1.0;
          }
 
          listsols = reduced;
-qDebug() << " reduced-size" << reduced.size();
+DbgLv(1) << " reduced-size" << reduced.size();
       }
    }
-qDebug() << " sol-size" << listsols.size();
+DbgLv(1) << " sol-size" << listsols.size();
    return;
 }
 
@@ -1119,12 +1117,6 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
       curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
    }
    ct_curr_distr->setValue( curr_distr + 1 );
-}
-
-// Flag whether two values are effectively equal within a given epsilon
-bool US_Pseudo3D_Combine::equivalent( double a, double b, double eps )
-{
-   return ( qAbs( ( a - b ) / a ) <= eps );
 }
 
 // Reset Disk_DB control whenever data source is changed in any dialog

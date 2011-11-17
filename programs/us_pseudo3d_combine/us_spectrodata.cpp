@@ -2,6 +2,7 @@
 
 #include "us_spectrodata.h"
 #include "us_defines.h"
+#include "us_settings.h"
 
 #define LO_DTERM 0.2500    // low decay-term point (1/4)
 
@@ -16,6 +17,7 @@ US_SpectrogramData::US_SpectrogramData() : QwtRasterData()
    nxpsc    = qRound( xreso );
    nyscn    = qRound( yreso );
    nxypt    = nxpsc * nyscn;
+   dbg_level = US_Settings::us_debug();
 }
 
 QwtRasterData* US_SpectrogramData::copy() const
@@ -161,7 +163,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    }
 
    else
-   {  // Given x,y,z ranges
+   {  // Given x,y ranges
       ymin    = drecti.top   ();
       ymax    = drecti.bottom();
    }
@@ -242,7 +244,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
                // value that is really:
                //   zval * exp( -pow( xdif, 2.0 ) / pow( 2 * ssigma, 2.0 ) )
                //        * exp( -pow( ydif, 2.0 ) / pow( 2 * fsigma, 2.0 ) )
-               double zout   = zminr + zterm * xterm;
+               double zout   = zmin + zterm * xterm;
 
                // only replace input if new value is greater
                if ( zout > zin )
