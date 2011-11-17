@@ -491,6 +491,9 @@ vector < PDB_atom > sgp_node::bead_model()
    for ( unsigned int i = 0; i < spheres.size(); i++ )
    {
       PDB_atom tmp_atom;
+      tmp_atom.coordinate.axis[0]      = spheres[ i ].coordinate.axis[ 0 ] * sgp_params[ "distancequantum" ];
+      tmp_atom.coordinate.axis[1]      = spheres[ i ].coordinate.axis[ 1 ] * sgp_params[ "distancequantum" ];
+      tmp_atom.coordinate.axis[2]      = spheres[ i ].coordinate.axis[ 2 ] * sgp_params[ "distancequantum" ];
       tmp_atom.bead_coordinate.axis[0] = spheres[ i ].coordinate.axis[ 0 ] * sgp_params[ "distancequantum" ];
       tmp_atom.bead_coordinate.axis[1] = spheres[ i ].coordinate.axis[ 1 ] * sgp_params[ "distancequantum" ];
       tmp_atom.bead_coordinate.axis[2] = spheres[ i ].coordinate.axis[ 2 ] * sgp_params[ "distancequantum" ];

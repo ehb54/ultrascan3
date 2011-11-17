@@ -975,6 +975,8 @@ class US_EXTERN US_Saxs_Util
       void                  sgp_calculate_population_fitness();
       void                  sgp_sort_population();
       unsigned int          sgp_pop_selection();
+
+      QString               sgp_physical_stats( sgp_node *node );
 };
 
 #endif
