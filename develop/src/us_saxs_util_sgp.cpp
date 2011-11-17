@@ -19,6 +19,9 @@ bool US_Saxs_Util::sgp_run()
 
    sgp_node sgp;
 
+   double       last_best_fitness = population[ 0 ]->fitness;
+   unsigned int gens_with_no_improvement = 0;
+
    for ( unsigned int g = 1; g <= control_parameters[ "sgpgenerations" ].toUInt(); g++ )
    {
       vector < sgp_node * >      new_population;
@@ -54,7 +57,10 @@ bool US_Saxs_Util::sgp_run()
             // cout << "elitism\n";
             population[ i ]->fitness_ok = true;
             population[ i ]->check_normal( "elitism" );
-            new_population.push_back( population[ i ] );
+            sgp_node * node = sgp.copy( population[ sgp_pop_selection() ] );
+            node->fitness    = population[ i ]->fitness;;
+            node->fitness_ok = true;
+            new_population.push_back( node );
             elitism_count++;
             continue;
          }
@@ -93,7 +99,15 @@ bool US_Saxs_Util::sgp_run()
               drand48() < control_parameters[ "sgpplague" ].toDouble() )
          {
             // cout << "plague\n";
-            sgp_node * node1 = population[ sgp_pop_selection() ];
+            unsigned int pos;
+            do 
+            {
+               pos = sgp_pop_selection();
+            } while ( control_parameters.count( "sgpelitism" ) &&
+                      pos < control_parameters[ "sgpelitism" ].toUInt() );
+
+            // cout << QString( "plague selected %1\n" ).arg( pos );
+            sgp_node * node1 = population[ pos ];
             node1->is_dead = true;
 
             // add 1 to keep population size
@@ -163,6 +177,43 @@ bool US_Saxs_Util::sgp_run()
 
       sgp_calculate_population_fitness();
       
+      if ( control_parameters.count( "sgpremoveduplicates" ) )
+      {
+         map < sgp_node *, bool > dup_nodes;
+
+         for ( unsigned int i = 1; i < population.size(); i++ )
+         {
+            if ( population[ i - 1 ]->fitness    == population[ i ]->fitness &&
+                 population[ i - 1 ]->size()     == population[ i ]->size() )
+            {
+               point p0 = population[ i - 1 ]->checksum();
+               point p1 = population[ i ]->checksum();
+               if ( p0.axis[ 0 ] == p1.axis[ 0 ] &&
+                    p0.axis[ 1 ] == p1.axis[ 1 ] &&
+                    p0.axis[ 2 ] == p1.axis[ 2 ] )
+               {
+                  // they are probably might be the same
+                  dup_nodes[ population[ i ] ] = true;
+               }
+            }
+         }
+
+         // now really remove them:
+         cout << QString( "Duplicates found %1\n" ).arg( dup_nodes.size() );
+         
+         new_population.clear();
+         for ( unsigned int i = 0; i < population.size(); i++ )
+         {
+            if ( !dup_nodes.count( population[ i ] ) )
+            {
+               new_population.push_back( population[ i ] );
+            } else {
+               delete population[ i ];
+            }
+         }
+         population = new_population;
+      }
+
       // save best member:
 
       QFile f( QString( "sgp_g%1_best.bead_model" ).arg( g ) );
@@ -177,6 +228,23 @@ bool US_Saxs_Util::sgp_run()
       sgp_fitness( population[ 0 ] );
       control_parameters[ "sgp_running" ] = "yes";
       cout << "Usage:" << sgp.usage();
+
+      if ( last_best_fitness > population[ 0 ]->fitness )
+      {
+         last_best_fitness = population[ 0 ]->fitness;
+         gens_with_no_improvement = 0;
+      } else {
+         gens_with_no_improvement++;
+         cout << QString( "generations without improvement %1\n" ).arg( gens_with_no_improvement );
+      }
+
+      if ( control_parameters.count( "sgpearlytermination" ) &&
+           gens_with_no_improvement >= control_parameters[ "sgpearlytermination" ].toUInt() )
+      {
+         cout << "early termination\n";
+         break;
+      }
+
    } // g
       
    for ( unsigned int i = 0; i < population.size(); i++ )

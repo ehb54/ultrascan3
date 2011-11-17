@@ -164,6 +164,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "sgppopulation|"
                       "sgpgenerations|"
+                      "sgpearlytermination|"
+                      "sgpremoveduplicates|"
                       "sgpelitism|"
                       "sgpcrossover|"
                       "sgpmutate|"
@@ -238,6 +240,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "sgppopulation|"
                       "sgpgenerations|"
+                      "sgpearlytermination|"
                       "sgpelitism|"
                       "sgpcrossover|"
                       "sgpmutate|"

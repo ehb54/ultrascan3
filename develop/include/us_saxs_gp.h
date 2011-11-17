@@ -67,6 +67,8 @@ class sgp_node
    sgp_node *                      random      ( unsigned int size );
    
    void                            test        ();
+   sgp_node *                      root        ();
+   point                           checksum    ();
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

@@ -300,6 +300,30 @@ unsigned int sgp_node::depth()
    return i;
 }
 
+sgp_node * sgp_node::root()
+{
+   if ( !parent )
+   {
+      return this;
+   }
+   return parent->root();
+}
+
+point sgp_node::checksum()
+{
+   point p = scale( normal, distance + radius );
+   for ( list < sgp_node * >::iterator it = children.begin();
+         it != children.end();
+         it++ )
+   {
+      point p0 = (*it)->checksum();
+      p.axis[ 0 ] += p0.axis[ 0 ];
+      p.axis[ 1 ] += p0.axis[ 1 ];
+      p.axis[ 2 ] += p0.axis[ 2 ];
+   }
+   return p;
+}
+
 sgp_node * sgp_node::ref( unsigned int pos )
 {
    // cout << QString( "ref called pos %1 size %2\n" ).arg( pos ).arg( size() );
@@ -375,63 +399,45 @@ point sgp_node::get_coordinate()
           parent->normal.axis[ 1 ] == 0.0 &&          
           parent->normal.axis[ 2 ] == 0.0 ) )
    {
-      if ( parent && 
-           ( parent->normal.axis[ 0 ] == 0.0 &&
-             parent->normal.axis[ 1 ] == 0.0 &&          
-             parent->normal.axis[ 2 ] == 0.0 ) ) 
-      {
-         cout << "nan in parent's normal coordinate, reverting to 1,0,0\n";
-      }
-         
       p1.axis[ 0 ] = 1.0;
       p1.axis[ 1 ] = 0.0;
       p1.axis[ 2 ] = 0.0;
    } else {
-      p1 = parent->normal;
-   }
-   if ( dot( p1, normal ) )
-   {
-      p1 = cross( p1, normal );
-      if ( isnan( p1.axis[ 0 ] ) ||
-           isnan( p1.axis[ 1 ] ) ||
-           isnan( p1.axis[ 2 ] ) )
+      // if parallel, go up towards root
+      sgp_node * use = parent;
+      do 
       {
-         cout << "nan in coordinate, reverting to normal\n";
-         p1 = normal;
-      }
-   } else {
-      p1 = normal;
-   }
+         p1 = cross( use->normal, normal );
+         use = use->parent;
+      } while ( use &&
+                p1.axis[ 0 ] == 0.0 &&
+                p1.axis[ 1 ] == 0.0 &&
+                p1.axis[ 2 ] == 0.0 );
 
-   if ( p1.axis[ 0 ] == 0.0 &&
-        p1.axis[ 1 ] == 0.0 &&
-        p1.axis[ 2 ] == 0.0 )
-   {
-      cout << "unexpected zero p1, nan in coordinate, reverting to normal\n";
-      p1.axis[ 0 ] = 1.0;
+      // if parallel to root's normal:
+
+      if ( p1.axis[ 0 ] == 0.0 &&
+           p1.axis[ 1 ] == 0.0 &&
+           p1.axis[ 2 ] == 0.0 )
+      {
+         // just set to normal direction when parallel
+         point p0;
+         p0.axis[ 0 ] = 1.0;
+         p0.axis[ 2 ] = 0.0;
+         p0.axis[ 3 ] = 0.0;
+         p1 = cross( p0,  normal );
+         if ( p1.axis[ 0 ] == 0.0 &&
+              p1.axis[ 1 ] == 0.0 &&
+              p1.axis[ 2 ] == 0.0 )
+         {
+            // normal must be 1,0,0, just keep it
+            p1 = normal;
+         }
+      }
    }
 
    point ptest = norm( p1 );
 
-   if ( isnan( ptest.axis[ 0 ] ) ||
-        isnan( ptest.axis[ 1 ] ) ||
-        isnan( ptest.axis[ 2 ] ) )
-   {
-      cout << "nan in normal!\n";
-      cout << QString( "normal %1 %2 %3\n" )
-         .arg( normal.axis[ 0 ] )
-         .arg( normal.axis[ 1 ] )
-         .arg( normal.axis[ 2 ] );
-      cout << QString( "p1 %1 %2 %3\n" )
-         .arg( p1.axis[ 0 ] )
-         .arg( p1.axis[ 1 ] )
-         .arg( p1.axis[ 2 ] );
-      cout << QString( "ptest %1 %2 %3\n" )
-         .arg( ptest.axis[ 0 ] )
-         .arg( ptest.axis[ 1 ] )
-         .arg( ptest.axis[ 2 ] );
-   }
-      
    p1 = scale( norm( p1 ), (float) distance );
    if ( parent )
    {
