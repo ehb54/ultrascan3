@@ -266,7 +266,7 @@ unsigned int US_Saxs_Util::sgp_pop_selection()
    do 
    {
       pos = ( int )( - log(1e0 - drand48() ) * beta );
-      if( pos >= population.size() )
+      if( pos >= (int) population.size() )
       {
          pos = population.size() - 1;
       }
