@@ -1093,9 +1093,11 @@ void US_Hydrodyn_Cluster::submit_pkg()
 {
    // open cluster directory and find *_out.tgz
    // process and make unified csvs etc and load into standard somo/saxs directory
-   if ( !read_config() )
+   if ( !read_config() ||
+        !cluster_systems.size() )
    {
       config();
+      return;
    }
 
    US_Hydrodyn_Cluster_Submit *hcs = 

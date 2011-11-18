@@ -851,6 +851,8 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    sgp_exp_I = I;
    sgp_exp_e = e;
 
+   cout << QString( "experiment grid sizes %1 %2 %3\n" ).arg( q.size() ).arg( I.size() ).arg( e.size() );
+
    control_parameters[ "startq" ] = QString("%1").arg( q[ 0 ] );
    control_parameters[ "endq" ]   = QString("%1").arg( q[ q.size() - 1 ] );
    control_parameters[ "deltaq" ] = QString("%1").arg( ( q[ ( q.size() - 1 ) ] - q[ 0 ] ) / ( q.size() - 1 ));
@@ -929,7 +931,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       return false;
    }
    sgp_exp_q = rq;
-
+   if ( !org_e.size() )
+   {
+      sgp_exp_e = org_e;
+   }
    return true;
 }
 

@@ -419,6 +419,8 @@ bool US_Saxs_Util::sgp_validate()
       return false;
    }
 
+   cout << QString( "setup experiment grid sizes %1 %2 %3\n" ).arg( sgp_exp_q.size() ).arg( sgp_exp_I.size() ).arg( sgp_exp_e.size() );
+
    if ( sgp_exp_e.size() && 
         sgp_exp_e.size() == sgp_exp_q.size() &&
         is_nonzero_vector( sgp_exp_q ) )

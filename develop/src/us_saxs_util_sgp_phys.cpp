@@ -63,6 +63,9 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
    point pmin;
    point pmax;
 
+   // subtract each radius from min add to max?
+   // possible alternate bounding box ...
+
    for ( unsigned int i = 0; i < bm.size(); i++ )
    {
       if ( i )
@@ -135,6 +138,13 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
       .arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] )
       .arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] )
       .arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
+
+   qs += QString( 
+                  "axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
+                  )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) )
+      .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
 
    return qs;
 }
