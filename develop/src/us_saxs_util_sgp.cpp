@@ -232,7 +232,7 @@ bool US_Saxs_Util::sgp_run()
       cout << sgp_physical_stats( population[ 0 ] );
 
       control_parameters.erase( "sgp_running" );
-      sgp_fitness( population[ 0 ] );
+      population[ 0 ]->fitness = sgp_fitness( population[ 0 ] );
       control_parameters[ "sgp_running" ] = "yes";
       cout << "Usage:" << sgp.usage();
 
@@ -286,20 +286,8 @@ unsigned int US_Saxs_Util::sgp_pop_selection()
    return ( unsigned int ) pos;
 }
 
-bool US_Saxs_Util::sgp_init()
+bool US_Saxs_Util::sgp_init_sgp()
 {
-   if ( control_parameters.count( "sgprandomseed" ) )
-   {
-      srand48( ( long int )control_parameters[ "sgprandomseed" ].toInt() );
-   } else {
-      long int li = ( long int )QTime::currentTime().msec();
-      cout << QString( "to reproduce use random seed %1\n" ).arg( li );
-      srand48( li );
-   }
-   
-   errormsg = "";
-   noticemsg = "";
-
    QStringList param;
    QStringList sgp_param;
    param 
@@ -326,6 +314,27 @@ bool US_Saxs_Util::sgp_init()
    if ( !sgp_node::validate_params().isEmpty() )
    {
       errormsg = sgp_node::validate_params();
+      return false;
+   }
+   return true;
+}
+
+bool US_Saxs_Util::sgp_init()
+{
+   if ( control_parameters.count( "sgprandomseed" ) )
+   {
+      srand48( ( long int )control_parameters[ "sgprandomseed" ].toInt() );
+   } else {
+      long int li = ( long int )QTime::currentTime().msec();
+      cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+      srand48( li );
+   }
+   
+   errormsg = "";
+   noticemsg = "";
+
+   if ( !sgp_init_sgp() )
+   {
       return false;
    }
 
@@ -363,7 +372,7 @@ bool US_Saxs_Util::sgp_validate()
 
    QStringList qsl_required;
 
-    {
+   {
       qsl_required << "sgpgenerations";
       qsl_required << "sgppopulation";
       qsl_required << "targetedensity";

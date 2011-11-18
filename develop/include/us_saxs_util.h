@@ -971,12 +971,18 @@ class US_EXTERN US_Saxs_Util
       bool                  sgp_run();
       bool                  sgp_validate();
       bool                  sgp_init();
+      bool                  sgp_init_sgp();
       double                sgp_fitness( sgp_node *node );
       void                  sgp_calculate_population_fitness();
       void                  sgp_sort_population();
       unsigned int          sgp_pop_selection();
 
       QString               sgp_physical_stats( sgp_node *node );
+
+
+      bool                  nsa_validate();
+      bool                  nsa_run();
+
 };
 
 #endif

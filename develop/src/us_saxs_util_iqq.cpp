@@ -180,6 +180,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgprun|"
                       "sgptest|"
 
+                      "nsarun|"
+
                       "remark)$"
                       );
 
@@ -253,6 +255,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgpradiusmax|"
                       "sgpbranchmax|"
                       "sgprandomseed|"
+
+                      "nsarun|"
 
                       "outputfile)$"
                       );
@@ -598,6 +602,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "sgprun" )
       {
          if ( !sgp_run() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "nsarun" )
+      {
+         if ( !nsa_run() )
          {
             return false;
          }
