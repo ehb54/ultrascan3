@@ -181,6 +181,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgptest|"
 
                       "nsarun|"
+                      "nsaga|"
+                      "nsaiterations|"
+                      "nsaepsilon|"
+                      "nsagsm|"
 
                       "remark)$"
                       );
@@ -257,6 +261,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgprandomseed|"
 
                       "nsarun|"
+                      "nsaiterations|"
+                      "nsaepsilon|"
+                      "nsagsm|"
 
                       "outputfile)$"
                       );

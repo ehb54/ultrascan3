@@ -38,6 +38,7 @@ US_Saxs_Util::US_Saxs_Util()
 {
    debug = 0;
    wgsbs_gsm_setup = false;
+   nsa_gsm_setup = false;
    this_rank = 0;
 }
 

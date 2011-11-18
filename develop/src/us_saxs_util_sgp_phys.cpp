@@ -20,12 +20,12 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
       {
          dati1_supc dt;
 
-         dt.x  = bm[ i ].coordinate.axis[ 0 ];
-         dt.y  = bm[ i ].coordinate.axis[ 1 ];
-         dt.z  = bm[ i ].coordinate.axis[ 2 ];
-         dt.r  = bm[ i ].radius;
-         dt.ru = bm[ i ].radius;
-         dt.m  = ( 4.0 / 3.0 ) * M_PI * bm[ i ].radius * bm[ i ].radius * bm[ i ].radius;
+         dt.x  = bm[ i ].bead_coordinate.axis[ 0 ];
+         dt.y  = bm[ i ].bead_coordinate.axis[ 1 ];
+         dt.z  = bm[ i ].bead_coordinate.axis[ 2 ];
+         dt.r  = bm[ i ].bead_computed_radius;
+         dt.ru = bm[ i ].bead_computed_radius;
+         dt.m  = ( 4.0 / 3.0 ) * M_PI * bm[ i ].bead_computed_radius * bm[ i ].bead_computed_radius * bm[ i ].bead_computed_radius;
 
          in_dt.push_back( dt );
       }
@@ -42,11 +42,11 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
          // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
          for ( unsigned int i = 0; i < bm.size(); i++ )
          {
-            bm[ i ].coordinate.axis[ 0 ] = out_dt[ i ].x;
-            bm[ i ].coordinate.axis[ 1 ] = out_dt[ i ].y;
-            bm[ i ].coordinate.axis[ 2 ] = out_dt[ i ].z;
-            bm[ i ].bead_coordinate      = bm[ i ].coordinate;
-            // bm[ i ].radius               = out_dt[ i ].r;
+            bm[ i ].bead_coordinate.axis[ 0 ] = out_dt[ i ].x;
+            bm[ i ].bead_coordinate.axis[ 1 ] = out_dt[ i ].y;
+            bm[ i ].bead_coordinate.axis[ 2 ] = out_dt[ i ].z;
+            bm[ i ].bead_coordinate      = bm[ i ].bead_coordinate;
+            // bm[ i ].bead_computed_radius               = out_dt[ i ].r;
             // bm[ i ].bead_actual_radius   = out_dt[ i ].r;
             // bm[ i ].bead_computed_radius = out_dt[ i ].r;
          }
@@ -62,6 +62,8 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
    double volume_intersection = 0e0;
    point pmin;
    point pmax;
+   point prmin;
+   point prmax;
 
    // subtract each radius from min add to max?
    // possible alternate bounding box ...
@@ -72,32 +74,48 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
       {
          for ( unsigned int j = 0; j < 3; j++ )
          {
-            if ( pmin.axis[ j ] > bm[ i ].coordinate.axis[ j ] )
+            if ( pmin.axis[ j ] > bm[ i ].bead_coordinate.axis[ j ] )
             {
-               pmin.axis[ j ] = bm[ i ].coordinate.axis[ j ];
+               pmin.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ];
             }
-            if ( pmax.axis[ j ] < bm[ i ].coordinate.axis[ j ] )
+            if ( pmax.axis[ j ] < bm[ i ].bead_coordinate.axis[ j ] )
             {
-               pmax.axis[ j ] = bm[ i ].coordinate.axis[ j ];
+               pmax.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ];
+            }
+
+            if ( prmin.axis[ j ] > bm[ i ].bead_coordinate.axis[ j ] - bm[ i ].bead_computed_radius )
+            {
+               prmin.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ] - bm[ i ].bead_computed_radius;
+            }
+            if ( prmax.axis[ j ] < bm[ i ].bead_coordinate.axis[ j ] + bm[ i ].bead_computed_radius )
+            {
+               prmax.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ] + bm[ i ].bead_computed_radius;
             }
          }
       } else {
-         pmin = bm[ i ].coordinate;
-         pmax = bm[ i ].coordinate;
+         pmin  = bm[ i ].bead_coordinate;
+         pmax  = bm[ i ].bead_coordinate;
+         prmin = bm[ i ].bead_coordinate;
+         prmax = bm[ i ].bead_coordinate;
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            prmin.axis[ j ] -= bm[ i ].bead_computed_radius;
+            prmax.axis[ j ] += bm[ i ].bead_computed_radius;
+         }
       }
 
-      volume += ( 4e0 / 3e0 ) * M_PI * bm[ i ].radius * bm[ i ].radius * bm[ i ].radius;
+      volume += ( 4e0 / 3e0 ) * M_PI * bm[ i ].bead_computed_radius * bm[ i ].bead_computed_radius * bm[ i ].bead_computed_radius;
    }
 
    for ( unsigned int i = 0; i < bm.size(); i++ )
    {
       for ( unsigned int j = i + 1; j < bm.size(); j++ )
       {
-         float d = dist( bm[ i ].coordinate , bm[ j ].coordinate );
-         if ( d < bm[ i ].radius + bm[ j ].radius )
+         float d = dist( bm[ i ].bead_coordinate , bm[ j ].bead_coordinate );
+         if ( d < bm[ i ].bead_computed_radius + bm[ j ].bead_computed_radius )
          {
-            float r1 = bm[ i ].radius;
-            float r  = bm[ j ].radius;
+            float r1 = bm[ i ].bead_computed_radius;
+            float r  = bm[ j ].bead_computed_radius;
             if ( d > 0.0 )
             {
                volume_intersection +=
@@ -133,18 +151,32 @@ QString US_Saxs_Util::sgp_physical_stats( sgp_node *node )
       .arg( volume - volume_intersection );
 
    qs += QString( 
-                  "bounding box size (A) %1 %2 %2\n" 
+                  "centers bounding box size (A) %1 %2 %2\n" 
                   )
       .arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] )
       .arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] )
       .arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
 
    qs += QString( 
-                  "axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
+                  "centers axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
                   )
       .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) )
       .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) )
       .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+
+   qs += QString( 
+                  "radial extent bounding box size (A) %1 %2 %2\n" 
+                  )
+      .arg( prmax.axis[ 0 ] - prmin.axis[ 0 ] )
+      .arg( prmax.axis[ 1 ] - prmin.axis[ 1 ] )
+      .arg( prmax.axis[ 2 ] - prmin.axis[ 2 ] );
+
+   qs += QString( 
+                  "radial extent axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
+                  )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) )
+      .arg( ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
 
    return qs;
 }

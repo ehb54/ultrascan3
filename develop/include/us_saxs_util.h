@@ -962,6 +962,10 @@ class US_EXTERN US_Saxs_Util
       vector < double >     sgp_exp_I;
       vector < double >     sgp_exp_e;
 
+      vector                < float * > nsa_var_ref;
+      vector                < float   > nsa_var_min;
+      vector                < float   > nsa_var_max;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -983,6 +987,39 @@ class US_EXTERN US_Saxs_Util
       bool                  nsa_validate();
       bool                  nsa_run();
 
+      // nsa gsm:
+      bool                  nsa_gsm_setup;
+
+      bool                  nsa_gsm              ( double &nrmsd, our_vector *vi = ( our_vector *)0 );
+
+      long                  nsa_min_gsm_5_1      (
+                                                  our_vector *i,
+                                                  double epsilon,
+                                                  long max_iter
+                                                  );
+
+      long                  nsa_min_fr_pr_cgd    (
+                                                  our_vector *i,
+                                                  double epsilon,
+                                                  long max_iter
+                                                 );
+
+      long                  nsa_min_hessian_bfgs (
+                                                  our_vector *ip,
+                                                  double epsilon,
+                                                  long max_iter
+                                                  );
+
+      bool                  nsa_fitness_setup    ( unsigned int size );
+      double                nsa_fitness          ();
+      double                nsa_delta_rho;
+      double                nsa_gsm_delta;
+      double                nsa_gsm_delta2_r;
+      double                nsa_gsm_f            ( our_vector *v );
+      void                  nsa_gsm_df           ( our_vector *vd, our_vector *v );
+      QString               nsa_qs_bead_model    ();
+      QString               nsa_physical_stats   ();
+      bool                  nsa_ga               ( double &nrmsd );
 };
 
 #endif
