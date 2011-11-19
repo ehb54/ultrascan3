@@ -14,6 +14,7 @@
 #include <map>
 #include <qregexp.h>
 #include "us_saxs_gp.h"
+#include "us_saxs_util_nsa.h"
 
 #if defined(WIN32)
 #   include <dos.h>
@@ -990,7 +991,9 @@ class US_EXTERN US_Saxs_Util
       // nsa gsm:
       bool                  nsa_gsm_setup;
 
-      bool                  nsa_gsm              ( double &nrmsd, our_vector *vi = ( our_vector *)0 );
+      bool                  nsa_gsm              ( double &nrmsd, 
+                                                   our_vector *vi = ( our_vector *)0,
+                                                   QString method = "" );
 
       long                  nsa_min_gsm_5_1      (
                                                   our_vector *i,
@@ -1020,6 +1023,8 @@ class US_EXTERN US_Saxs_Util
       QString               nsa_qs_bead_model    ();
       QString               nsa_physical_stats   ();
       bool                  nsa_ga               ( double &nrmsd );
+      double                nsa_ga_fitness       ( nsa_ga_individual & individual );
+      unsigned int          nsa_pop_selection    ( unsigned int size );
 };
 
 #endif

@@ -186,7 +186,11 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
             }
             if(x < 0) { /* ugh we're in the wrong direction! */
                printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
-               exit(-1);
+               // exit(-1);
+               if(s1 < 0) {
+                  s1 = 0;
+               }
+               x = 0;
             } 
             /* ok, take x, s1, s2 */
             v_tmp = v_s3;

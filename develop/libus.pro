@@ -276,6 +276,7 @@ SOURCES += \
   src/us_saxs_util_iqq_bead_model.cpp \
   src/us_saxs_util_loads.cpp \
   src/us_saxs_util_nsa.cpp \
+  src/us_saxs_util_nsa_ga.cpp \
   src/us_saxs_util_nsa_gsm.cpp \
   src/us_saxs_util_sgp.cpp \
   src/us_saxs_util_sgp_phys.cpp \
@@ -518,6 +519,7 @@ HEADERS += \
   include/us_sassoc.h \
   include/us_saxs_gp.h \
   include/us_saxs_util.h \
+  include/us_saxs_util_nsa.h \
   include/us_select_channel.h \
   include/us_selectmodel.h \
   include/us_selectmodel10.h \

@@ -21,6 +21,11 @@ bool US_Saxs_Util::nsa_validate()
 
    {
       qsl_required << "targetedensity";
+      if ( control_parameters.count( "nsaga" ) )
+      {
+         qsl_required << "nsagenerations";
+         qsl_required << "nsapopulation";
+      }
       qsl_required << "nsaiterations";
       qsl_required << "nsaepsilon";
       qsl_required << "nsagsm";
@@ -58,6 +63,11 @@ bool US_Saxs_Util::nsa_validate()
       vals   << "5.0";
       checks << "sgpbranchmax";
       vals   << "4.0";
+
+      checks << "nsamutate";
+      vals   << "0.1";
+      checks << "nsacrossover";
+      vals   << "0.3";
 
       validate_control_parameters_set_one( checks, vals );
    }
@@ -108,11 +118,21 @@ bool US_Saxs_Util::nsa_run()
       }
       cout << QString( "running nsa for size %1\n" ).arg( i );
       control_parameters[ "sgp_running" ] = "yes";
-      if ( !nsa_gsm( nrmsd ) )
+      if ( control_parameters.count( "nsaga" ) )
       {
-         control_parameters.erase( "sgp_running" );
-         return false;
+         if ( !nsa_ga( nrmsd ) )
+         {
+            control_parameters.erase( "sgp_running" );
+            return false;
+         }
+      } else {
+         if ( !nsa_gsm( nrmsd ) )
+         {
+            control_parameters.erase( "sgp_running" );
+            return false;
+         }
       }
+
       control_parameters.erase( "sgp_running" );
 
       QString outname = 
@@ -185,7 +205,7 @@ double US_Saxs_Util::nsa_fitness()
    {
       run_iqq_bead_model();
    } else {
-      cout << "single sphere fit\n";
+      // cout << "single sphere fit\n";
       double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
       if ( fabs(delta_rho) < 1e-5 )
       {
@@ -381,29 +401,7 @@ void US_Saxs_Util::nsa_gsm_df( our_vector *vd, our_vector *v )
    }
 }
 
-bool US_Saxs_Util::nsa_ga( double &/* nrmsd */ )
-{
-   // mini ga to run
-   // random population of starting points
-   // add results to population etc
-   // repeat until no improvement
-   // random methods 
-
-   // start with no vi, then save
-   our_vector *vi = new_our_vector( nsa_var_ref.size() );
-   // start at midpoint
-   for ( int i = 0; i < vi->len; i++ )
-   {
-      vi->d[ i ] = nsa_var_min[ i ] + ( nsa_var_max[ i ] - nsa_var_min[ i ] ) / 2.0;
-   }
-
-   // while "gens" of improvement
-   // repeat nsa_gsm random rotation of methods and random variable position adjustments
-   errormsg = "not yet";
-   return false;
-}
-
-bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi )
+bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
 {
    errormsg = "";
    global_iter = 0;
@@ -432,15 +430,20 @@ bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi )
 
    int gsm_method = -1;
 
-   if ( control_parameters[ "nsagsm" ] == "cg" )
+   if ( method.isEmpty() )
+   {
+      method = control_parameters[ "nsagsm" ];
+   }
+   
+   if ( method == "cg" )
    {
       gsm_method = CONJUGATE_GRADIENT;
    }
-   if ( control_parameters[ "nsagsm" ] == "sd" )
+   if ( method == "sd" )
    {
       gsm_method = STEEPEST_DESCENT;
    }
-   if ( control_parameters[ "nsagsm" ] == "ih" )
+   if ( method == "ih" )
    {
       gsm_method = INVERSE_HESSIAN;
    }

@@ -288,6 +288,15 @@ unsigned int US_Saxs_Util::sgp_pop_selection()
 
 bool US_Saxs_Util::sgp_init_sgp()
 {
+   if ( control_parameters.count( "sgprandomseed" ) )
+   {
+      srand48( ( long int )control_parameters[ "sgprandomseed" ].toInt() );
+   } else {
+      long int li = ( long int )QTime::currentTime().msec();
+      cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+      srand48( li );
+   }
+
    QStringList param;
    QStringList sgp_param;
    param 
@@ -321,14 +330,6 @@ bool US_Saxs_Util::sgp_init_sgp()
 
 bool US_Saxs_Util::sgp_init()
 {
-   if ( control_parameters.count( "sgprandomseed" ) )
-   {
-      srand48( ( long int )control_parameters[ "sgprandomseed" ].toInt() );
-   } else {
-      long int li = ( long int )QTime::currentTime().msec();
-      cout << QString( "to reproduce use random seed %1\n" ).arg( li );
-      srand48( li );
-   }
    
    errormsg = "";
    noticemsg = "";
@@ -459,7 +460,7 @@ double US_Saxs_Util::sgp_fitness( sgp_node *node )
    {
       run_iqq_bead_model();
    } else {
-      cout << "single sphere fit\n";
+      // cout << "single sphere fit\n";
       double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
       if ( fabs(delta_rho) < 1e-5 )
       {

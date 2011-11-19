@@ -186,6 +186,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaepsilon|"
                       "nsagsm|"
 
+                      "nsaga|"
+                      "nsagenerations|"
+                      "nsapopulation|"
+                      "nsaelitism|"
+                      "nsamutate|"
+                      "nsacrossover|"
+                      "nsaearlytermination|"
+
                       "remark)$"
                       );
 
@@ -264,6 +272,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaiterations|"
                       "nsaepsilon|"
                       "nsagsm|"
+
+                      "nsagenerations|"
+                      "nsapopulation|"
+                      "nsaelitism|"
+                      "nsamutate|"
+                      "nsacrossover|"
+                      "nsaearlytermination|"
 
                       "outputfile)$"
                       );

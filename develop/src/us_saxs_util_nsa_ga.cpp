@@ -1,0 +1,213 @@
+#include "../include/us_saxs_util.h"
+
+double US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
+{
+   our_vector *vi = new_our_vector( nsa_var_ref.size() );
+   for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
+   {
+      vi->d[ i ] = individual.v[ i ];
+   }
+
+   double selection = drand48();
+   QString method = "cg";
+   if ( selection > .333 )
+   {
+      method = "sd";
+   } 
+   if ( selection > .667 )
+   {
+      method = "ih";
+   }
+
+   nsa_gsm( individual.fitness, 
+            vi,
+            method );
+
+   for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
+   {
+       individual.v[ i ] = vi->d[ i ];
+   }
+
+   free_our_vector( vi );
+   return true;
+}
+
+bool US_Saxs_Util::nsa_ga( double & nrmsd )
+{
+   list < nsa_ga_individual > nsa_pop;
+   nsa_ga_individual          individual;
+
+   individual.v.resize( nsa_var_ref.size() );
+
+   // init population
+   for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
+   {
+      for ( unsigned int j = 0; j < nsa_var_ref.size(); j++ )
+      {
+         individual.v[ j ] = nsa_var_min[ j ] + ( nsa_var_max[ j ] - nsa_var_min[ j ] ) * drand48();
+      }
+      nsa_ga_fitness( individual );
+      nsa_pop.push_back( individual );
+   }
+
+   // sort by fitness
+   double       last_best_fitness;
+   unsigned int gens_with_no_improvement = 0;
+
+   for ( unsigned int g = 0; g < control_parameters[ "nsagenerations" ].toUInt(); g++ )
+   {
+      nsa_pop.sort();
+      nsa_pop.unique();
+      
+      map < unsigned int, bool > has_been_duplicated;
+
+      if ( !g )
+      {
+         last_best_fitness = nsa_pop.front().fitness;
+      } else {
+         if ( last_best_fitness > nsa_pop.front().fitness )
+         {
+            last_best_fitness = nsa_pop.front().fitness;
+            gens_with_no_improvement = 0;
+         } else {
+            gens_with_no_improvement++;
+            if ( control_parameters.count( "nsaearlytermination" ) &&
+                 gens_with_no_improvement >= control_parameters[ "nsaearlytermination" ].toUInt() )
+            {
+               cout << "early termination\n";
+               break;
+            }
+         }
+      }
+            
+      cout << QString( "nsa: gen %1 best individual fitness %1\n" )
+         .arg( g )
+         .arg( nsa_pop.front().fitness );
+
+      unsigned int elitism_count   = 0;
+      unsigned int crossover_count = 0;
+      unsigned int mutate_count    = 0;
+      unsigned int duplicate_count = 0;
+      unsigned int random_count    = 0;
+
+      vector < nsa_ga_individual > last_pop;
+      for ( list < nsa_ga_individual >::iterator it = nsa_pop.begin();
+            it != nsa_pop.end();
+            it++ )
+      {
+         last_pop.push_back( *it );
+      }
+
+      cout << QString( "start: nsa_pop.size() %1\n" ).arg( last_pop.size() );
+
+      nsa_pop.clear();
+
+      for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
+      {
+         if ( control_parameters.count( "nsaelitism" ) &&
+              i < control_parameters[ "nsaelitism" ].toUInt() )
+         {
+            // cout << "elitism\n";
+            nsa_ga_fitness( last_pop[ i ] );
+            nsa_pop.push_back( last_pop[ i ] );
+            elitism_count++;
+            continue;
+         }
+
+         if ( control_parameters.count( "nsamutate" ) &&
+              drand48() < control_parameters[ "nsamutate" ].toDouble() )
+         {
+            // cout << "mutate\n";
+            individual = last_pop[ nsa_pop_selection( last_pop.size() ) ];
+            unsigned int pos = ( unsigned int )( drand48() * nsa_var_ref.size() );
+            individual.v[ pos ] = nsa_var_min[ pos ] + ( nsa_var_max[ pos ] - nsa_var_min[ pos ] ) * drand48();
+            nsa_ga_fitness( individual );
+            nsa_pop.push_back( individual );
+            mutate_count++;
+            continue;
+         }
+      
+         if ( control_parameters.count( "nsacrossover" ) &&
+              drand48() < control_parameters[ "nsacrossover" ].toDouble() )
+         {
+            // cout << "crossover\n";
+            individual                    = last_pop[ nsa_pop_selection( last_pop.size() ) ];
+            nsa_ga_individual individual2 = last_pop[ nsa_pop_selection( last_pop.size() ) ];
+            unsigned int pos = ( unsigned int )( drand48() * nsa_var_ref.size() );
+            for ( unsigned int j = pos; j < nsa_var_ref.size() ; j++ )
+            {
+               individual.v[ j ] = individual2.v[ j ];
+            }
+            nsa_ga_fitness( individual );
+            nsa_pop.push_back( individual );
+            crossover_count++;
+            continue;
+         }
+
+         unsigned int pos = nsa_pop_selection( last_pop.size() );
+         if ( has_been_duplicated.count( pos ) )
+         {
+            for ( unsigned int j = 0; j < nsa_var_ref.size(); j++ )
+            {
+               individual.v[ j ] = nsa_var_min[ j ] + ( nsa_var_max[ j ] - nsa_var_min[ j ] ) * drand48();
+            }
+            nsa_ga_fitness( individual );
+            nsa_pop.push_back( individual );
+            random_count++;
+         } else {
+            has_been_duplicated[ pos ] = true;
+            individual = last_pop[ nsa_pop_selection( last_pop.size() ) ];
+            nsa_ga_fitness( individual );
+            nsa_pop.push_back( individual );
+            duplicate_count++;
+         }
+      }
+
+      cout << QString( 
+                      "summary counts:\n"
+                      " elitism   %1\n"
+                      " mutate    %2\n"
+                      " crossover %3\n"
+                      " duplicate %4\n" 
+                      " random    %5\n" 
+                      " total     %6\n" 
+                      )
+         .arg( elitism_count )
+         .arg( mutate_count )
+         .arg( crossover_count )
+         .arg( duplicate_count )
+         .arg( random_count )
+         .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
+   }
+
+   nsa_pop.sort();
+   nsa_pop.unique();
+
+   for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
+   {
+      *( nsa_var_ref[ i ] ) = nsa_pop.front().v[ i ];
+   }
+
+   nrmsd = nsa_fitness();
+
+   return true;
+}
+
+unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
+{
+   // exponential ranking selection
+   int pos;
+   double beta = size / 8e0;
+
+   pos = ( int )( - log(1e0 - drand48() ) * beta );
+   if ( pos >= ( int ) size )
+   {
+      pos = size - 1;
+   }
+   if ( pos < 0 )
+   {
+      pos = 0;
+   }
+
+   return ( unsigned int ) pos;
+}
