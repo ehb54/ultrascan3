@@ -423,8 +423,8 @@ point sgp_node::get_coordinate()
          // just set to normal direction when parallel
          point p0;
          p0.axis[ 0 ] = 1.0;
+         p0.axis[ 1 ] = 0.0;
          p0.axis[ 2 ] = 0.0;
-         p0.axis[ 3 ] = 0.0;
          p1 = cross( p0,  normal );
          if ( p1.axis[ 0 ] == 0.0 &&
               p1.axis[ 1 ] == 0.0 &&

@@ -241,7 +241,7 @@ bool US_Saxs_Util::nsa_ga_worker()
 
 bool US_Saxs_Util::nsa_ga_close_workers()
 {
-   unsigned int errorno = -22000;
+   int errorno = -22000;
    vector < double > message_sent    ( nsa_var_ref.size() + 2 );
    message_sent[ 0 ] = 0.0;
 
@@ -263,6 +263,7 @@ bool US_Saxs_Util::nsa_ga_close_workers()
       }
    }
    // cout << QString( "%1: finished closing workers\n" ).arg( myrank ) << flush;
+   return true;
 }
 
 bool US_Saxs_Util::nsa_ga_process_queue()
