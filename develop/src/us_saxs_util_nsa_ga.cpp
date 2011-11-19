@@ -1,6 +1,25 @@
 #include "../include/us_saxs_util.h"
 
-double US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
+unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
+{
+   // exponential ranking selection
+   int pos;
+   double beta = size / 8e0;
+
+   pos = ( int )( - log(1e0 - drand48() ) * beta );
+   if ( pos >= ( int ) size )
+   {
+      pos = size - 1;
+   }
+   if ( pos < 0 )
+   {
+      pos = 0;
+   }
+
+   return ( unsigned int ) pos;
+}
+
+bool US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
 {
    our_vector *vi = new_our_vector( nsa_var_ref.size() );
    for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
@@ -193,21 +212,109 @@ bool US_Saxs_Util::nsa_ga( double & nrmsd )
    return true;
 }
 
-unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
+#if !defined( USE_MPI )
+
+bool US_Saxs_Util::nsa_run()
 {
-   // exponential ranking selection
-   int pos;
-   double beta = size / 8e0;
-
-   pos = ( int )( - log(1e0 - drand48() ) * beta );
-   if ( pos >= ( int ) size )
+   QString save_outputfile = control_parameters[ "outputfile" ];
+   if ( !nsa_validate() )
    {
-      pos = size - 1;
+      return false;
    }
-   if ( pos < 0 )
+   setup_saxs_options();
+   if ( !sgp_init_sgp() )
    {
-      pos = 0;
+      return false;
    }
 
-   return ( unsigned int ) pos;
+   double nrmsd;
+      
+   for ( unsigned int i = 1; i <= control_parameters[ "nsarun" ].toUInt(); i++ )
+   {
+      if ( !nsa_fitness_setup( i ) )
+      {
+         return false;
+      }
+      cout << QString( "running nsa for size %1\n" ).arg( i );
+      control_parameters[ "sgp_running" ] = "yes";
+      if ( control_parameters.count( "nsaga" ) )
+      {
+         if ( !nsa_ga( nrmsd ) )
+         {
+            control_parameters.erase( "sgp_running" );
+            return false;
+         }
+      } else {
+         if ( !nsa_gsm( nrmsd ) )
+         {
+            control_parameters.erase( "sgp_running" );
+            return false;
+         }
+      }
+
+      control_parameters.erase( "sgp_running" );
+
+      QString outname = 
+         QString( "%1sa-%2%3" )
+         .arg( i )
+         .arg( control_parameters.count( "nsaga" ) ?
+               "" : (control_parameters[ "nsagsm" ] + "-" ) )
+         .arg( control_parameters[ "nsaiterations" ] );
+
+      QFile f( QString( "%1.bead_model" ).arg( outname ) );
+
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << nsa_qs_bead_model();
+         ts << nsa_physical_stats();
+         ts << 
+            QString(
+                    "\n"
+                    "nsa parameters:\n"
+                    " gsm method       %1\n"
+                    " max iterations   %2\n"
+                    " epsilon          %3\n"
+                    )
+            .arg( control_parameters[ "nsagsm" ] )
+            .arg( control_parameters[ "nsaiterations" ] )
+            .arg( control_parameters[ "nsaepsilon" ] )
+            ;
+
+         ts <<
+            QString( 
+                    " distance quantum %1\n"
+                    " distance range   %2 %3\n"
+                    " radius range     %4 %5\n"
+                    )
+            .arg( sgp_params[ "distancequantum" ] )
+            .arg( sgp_params[ "distancemin" ] * sgp_params[ "distancequantum" ] )
+            .arg( sgp_params[ "distancemax" ] * sgp_params[ "distancequantum" ] )
+            .arg( sgp_params[ "radiusmin" ]   * sgp_params[ "distancequantum" ] )
+            .arg( sgp_params[ "radiusmax" ]   * sgp_params[ "distancequantum" ] )
+            ;
+
+         ts << 
+            QString( 
+                    " target curve     %1\n" 
+                    " target curve sd  %2\n" 
+                    " fitness          %3\n" )
+            .arg( control_parameters[ "experimentgrid" ] )
+            .arg( sgp_use_e ? "present" : "not present or not useable" )
+            .arg( nrmsd )
+            ;
+
+         f.close();
+         cout << QString( "written: %1\n" ).arg( f.name() );
+         output_files << f.name();
+      }
+      control_parameters[ "outputfile" ] = outname;
+      nsa_fitness();
+      control_parameters[ "outputfile" ] = save_outputfile;
+   }      
+
+   return true;
 }
+
+#endif
+

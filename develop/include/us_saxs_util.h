@@ -556,6 +556,7 @@ class US_EXTERN US_Saxs_Util
 
 #if defined( USE_MPI )
       bool run_iq_mpi  ( QString controlfile );
+      bool run_nsa_mpi ( QString controlfile );
 #endif
       QStringList      job_output_files;
 
@@ -1023,8 +1024,23 @@ class US_EXTERN US_Saxs_Util
       QString               nsa_qs_bead_model    ();
       QString               nsa_physical_stats   ();
       bool                  nsa_ga               ( double &nrmsd );
-      double                nsa_ga_fitness       ( nsa_ga_individual & individual );
+#if defined( USE_MPI )
+      bool                  nsa_ga_master_test   ( double &nrmsd );
+      bool                  nsa_ga_master        ( double &nrmsd );
+      bool                  nsa_ga_worker        ();
+      bool                  nsa_ga_process_queue ();
+      bool                  nsa_ga_close_workers ();
+
+      list < nsa_ga_individual >                 queued_requests;
+      list < nsa_ga_individual >                 received_results;
+      map < int, bool >                          waiting_workers;
+      map < int, bool >                          busy_workers;
+      map < int, bool >                          registered_workers;
+
+#endif
+      bool                  nsa_ga_fitness       ( nsa_ga_individual & individual );
       unsigned int          nsa_pop_selection    ( unsigned int size );
+      bool                  nsa_mpi;
 };
 
 #endif

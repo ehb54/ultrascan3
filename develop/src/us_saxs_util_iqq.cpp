@@ -1,6 +1,10 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_revision.h"
 
+#if defined( USE_MPI )
+    extern int myrank;
+#endif
+
 bool US_Saxs_Util::read_control( QString controlfile )
 {
    output_files          .clear();
@@ -13,8 +17,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
    file_write_count      .clear();
    write_output_count    = 0;
    
-   env_ultrascan = getenv("ULTRASCAN");
+   env_ultrascan = getenv( "ULTRASCAN" );
+#if !defined( USE_MPI )
    cout << "$ULTRASCAN = " << env_ultrascan << endl;
+#else
+   if ( !nsa_mpi || !myrank )
+   {
+      cout << "$ULTRASCAN = " << env_ultrascan << endl << flush;
+   }
+#endif
 
    QFile f( controlfile );
    errormsg = "";
@@ -371,7 +382,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "residuefile" )
       {
+#if !defined( USE_MPI )
          cout << QString("read residue %1\n").arg( qsl[ 0 ] );
+#endif
          if ( !select_residue_file( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
@@ -389,7 +402,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 #if defined( CMDLINE )
       if ( option == "hydrationfile" )
       {
+#if !defined( USE_MPI )
          cout << QString("read hydration %1\n").arg( qsl[ 0 ] );
+#endif
          if ( !load_rotamer( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
@@ -455,7 +470,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "atomfile" )
       {
+#if !defined( USE_MPI )
          cout << QString("read atom %1\n").arg( qsl[ 0 ] );
+#endif
          if ( !select_atom_file( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
@@ -468,7 +485,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "hybridfile" )
       {
+#if !defined( USE_MPI )
          cout << QString("read hybrid %1\n").arg( qsl[ 0 ] );
+#endif
          if ( !select_hybrid_file( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
@@ -481,7 +500,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "saxsfile" )
       {
+#if !defined( USE_MPI )
          cout << QString("read saxs atom %1\n").arg( qsl[ 0 ] );
+#endif
          if ( !select_saxs_file( qsl[ 0 ] ) )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
@@ -557,6 +578,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "taroutput" )
       {
+#if defined( USE_MPI )
+         if ( !nsa_mpi || !myrank )
+         {
+#endif
          flush_output();
          if ( !output_files.size() )
          {
@@ -570,10 +595,17 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             return false;
          }
+#if defined( USE_MPI )
+         }
+#endif
       }
 
       if ( option == "tgzoutput" )
       {
+#if defined( USE_MPI )
+         if ( !nsa_mpi || !myrank )
+         {
+#endif
          flush_output();
          if ( !output_files.size() )
          {
@@ -587,6 +619,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             return false;
          }
+#if defined( USE_MPI )
+         }
+#endif
       }
 
       if ( option == "dmdstrippdb" )
@@ -920,6 +955,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 
    if ( max_delta_q - min_delta_q > 2e-7 )
    {
+#if defined( USE_MPI )
+      if ( !nsa_mpi || !myrank )
+      {
+#endif
       cout << 
          QString( "Warning: the file %1 q grid appears to have a somewhat irregular grid with an average spacing of %2\n"
                   "Warning: the experimental grid has a minimum spacing of %3, max %4 and average %5\n"
@@ -930,6 +969,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
          .arg( max_delta_q )
          .arg( avg_delta_q )
          ;
+#if defined( USE_MPI )
+      }
+#endif
+
    }
 
    cout << QString("Grid from file %1 q(%2:%3) deltaq %4\n")
@@ -980,7 +1023,13 @@ void US_Saxs_Util::validate_control_parameters_set_one( QStringList &checks,
       if ( !control_parameters.count( checks[ i ] ) )
       {
          control_parameters[ checks[ i ] ] = vals [ i ];
+#if defined( USE_MPI ) 
+         if ( !nsa_mpi || !myrank ) {
+#endif
          cout << QString("Notice: %1 set to default of %2\n").arg( checks[ i ] ).arg( vals[ i ] );
+#if defined( USE_MPI ) 
+         }
+#endif
       }
    }
 

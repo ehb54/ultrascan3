@@ -47,11 +47,13 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 #if defined(DEBUG_GSM)
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
              iter, fitness = nsa_gsm_f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(i);
       fflush(stdout);
+#endif
       if(!fitness) {
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -81,8 +83,10 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
       g_s2 = nsa_gsm_f(v_s2);
 
       /* cut down interval until we have a decrease */
+#if defined(PRINT_GSM_INFO)
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -97,7 +101,9 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
          /* ugh, no decrease */
+#if defined(PRINT_GSM_INFO)
          printf("%d: no initial decrease, terminating pos = ", this_rank);
+#endif
          /*      print_our_vector(i); */
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -124,8 +130,10 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -153,9 +161,11 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 
          if(fabs(a) < MIN_A) {
             /* maybe we should switch to a bisection method? */
+#if defined(PRINT_GSM_INFO)
             printf("%d: a limit reached\n", this_rank);
             printf("%d: done iter %ld, i = ", this_rank, iter); 
             print_our_vector(i); fflush(stdout);
+#endif
             free_our_vector(v_s1);
             free_our_vector(v_s2);
             free_our_vector(v_s3);
@@ -185,7 +195,9 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
                }
             }
             if(x < 0) { /* ugh we're in the wrong direction! */
+#if defined(PRINT_GSM_INFO)
                printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+#endif
                // exit(-1);
                if(s1 < 0) {
                   s1 = 0;
@@ -274,7 +286,9 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
          }
       
          if(fabs(prev_g_s2 - g_s2) < epsilon) {
+#if defined(PRINT_GSM_INFO)
             printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+#endif
             break;
          }
          /*      puts(""); */
@@ -311,8 +325,10 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
+#endif
       nsa_gsm_df(u, i);
       /*    mult_our_vector_vs(u, 1e0 / l2norm_our_vector(u, zero)); */
 #if defined(DEBUG_GSM)
@@ -348,8 +364,10 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 #endif
    }
 
+#if defined(PRINT_GSM_INFO)
    printf("%d: done iter %ld, i = ", this_rank, iter);
    print_our_vector(i);
+#endif
    free_our_vector(v_s1);
    free_our_vector(v_s2);
    free_our_vector(v_s3);
@@ -383,7 +401,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
    /*  printf("initial position: ");
        print_our_vector(i); */
 
-   puts("fr.1");
+   //   puts("fr.1");
    zero = new_our_vector(i->len);
    set_our_vector(zero, 0e0);
 
@@ -406,10 +424,12 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 
    while(l2norm_our_vector(u, zero) >= epsilon && iter++ < max_iter) {
       this_iterations++;
+#if defined(PRINT_GSM_INFO)
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
              iter, fitness = nsa_gsm_f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(i);
+#endif
 #if defined(DEBUG_GSM)
       print_our_vector(u);
 #endif
@@ -446,9 +466,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       g_s2 = nsa_gsm_f(v_s2);
 
       /* cut down interval until we have a decrease */
+#if defined(PRINT_GSM_INFO)
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
-
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -466,7 +487,9 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
          /* ugh, no decrease */
+#if defined(PRINT_GSM_INFO)
          printf("%d: no initial decrease, terminating pos = ", this_rank);
+#endif
          /*      print_our_vector(i); */
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -495,8 +518,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -525,9 +550,11 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 
          if(fabs(a) < MIN_A) {
             /* maybe we should switch to a bisection method? */
+#if defined(PRINT_GSM_INFO)
             printf("%d: a limit reached", this_rank);
             printf("done iter %ld, i = ", iter);
             print_our_vector(i);
+#endif
             free_our_vector(v_s1);
             free_our_vector(v_s2);
             free_our_vector(v_s3);
@@ -559,7 +586,9 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
                }
             }
             if(x < 0) { /* ugh we're in the wrong direction! */
+#if defined(PRINT_GSM_INFO)
                printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+#endif
                //     exit(-1);
                if(s1 < 0) {
                   s1 = 0;
@@ -648,7 +677,9 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
          }
       
          if(fabs(prev_g_s2 - g_s2) < epsilon) {
+#if defined(PRINT_GSM_INFO)
             printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+#endif
             break;
          }
          /*      puts(""); */
@@ -686,8 +717,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
+#endif
       nsa_gsm_df(u, i);
       puts("conj dir start");
       fflush(stdout);
@@ -720,8 +753,8 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
-#endif
       fflush(stdout);
+#endif
 
 #if defined(PSV_OUTPUT)
       if(!(global_iter % 5)) {
@@ -753,8 +786,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 #endif
    }
 
+#if defined(PRINT_GSM_INFO)
    printf("%d: done iter %ld, i = ", this_rank, iter);
    print_our_vector(i);
+#endif
    free_our_vector(v_s1);
    free_our_vector(v_s2);
    free_our_vector(v_s3);
@@ -830,12 +865,14 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 #if defined(DEBUG_GSM)
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
              iter, fitness = nsa_gsm_f(ip), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(ip);
       /*    print_our_vector(u); */
       fflush(stdout);
+#endif
       /*    printf("ip : ");
             print_our_vector(ip); */
       /* find minimum of nsa_gsm_f(ip - t u) */
@@ -871,8 +908,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
       g_s2 = nsa_gsm_f(v_s2);
 
       /* cut down interval until we have a decrease */
+#if defined(PRINT_GSM_INFO)
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -886,7 +925,9 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
          /* ugh, no decrease */
+#if defined(PRINT_GSM_INFO)
          printf("%d: no initial decrease, terminating pos = ", this_rank);
+#endif
          /*      print_our_vector(ip); */
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -920,8 +961,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -950,8 +993,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 
          if(fabs(a) < MIN_A) {
             /* maybe we should switch to a bisection method? */
+#if defined(PRINT_GSM_INFO)
             printf("%d: a limit reached", this_rank);
             printf("done iter %ld, i = ", iter);
+#endif
             print_our_vector(ip);
             free_our_vector(v_s1);
             free_our_vector(v_s2);
@@ -988,7 +1033,9 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
                }
             }
             if(x < 0) { /* ugh we're in the wrong direction! */
+#if defined(PRINT_GSM_INFO)
                printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+#endif
                if(s1 < 0) {
                   s1 = 0;
                }
@@ -1115,10 +1162,14 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
 #endif
+#if defined(PRINT_GSM_INFO)
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
+#endif
       nsa_gsm_df(v_g, v_p);                 /* new gradient in v_g (old in u) */
+#if defined(PRINT_GSM_INFO)
       printf("%d: hessian start\n", this_rank);
+#endif
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -1208,8 +1259,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 #endif
    }
 
+#if defined(PRINT_GSM_INFO)
    printf("%d done iter %ld, i = ", this_rank, iter);
    print_our_vector(ip);
+#endif
    free_our_vector(v_s1);
    free_our_vector(v_s2);
    free_our_vector(v_s3);

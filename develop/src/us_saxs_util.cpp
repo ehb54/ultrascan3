@@ -40,6 +40,7 @@ US_Saxs_Util::US_Saxs_Util()
    wgsbs_gsm_setup = false;
    nsa_gsm_setup = false;
    this_rank = 0;
+   nsa_mpi = false;
 }
 
 void US_Saxs_Util::clear()

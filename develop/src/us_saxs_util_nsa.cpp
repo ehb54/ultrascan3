@@ -2,6 +2,10 @@
 #include "../include/us_saxs_gp.h"
 #include "../include/us_hydrodyn_pat.h"
 
+#if defined( USE_MPI )
+    extern int myrank;
+#endif
+
 bool US_Saxs_Util::nsa_validate()
 {
    errormsg = "";
@@ -79,118 +83,36 @@ bool US_Saxs_Util::nsa_validate()
       return false;
    }
 
+#if defined( USE_MPI )
+   if ( !nsa_mpi || !myrank ) {
+#endif
    cout << QString( "setup experiment grid sizes %1 %2 %3\n" ).arg( sgp_exp_q.size() ).arg( sgp_exp_I.size() ).arg( sgp_exp_e.size() );
+#if defined( USE_MPI )
+      }
+#endif
 
    if ( sgp_exp_e.size() && 
         sgp_exp_e.size() == sgp_exp_q.size() &&
         is_nonzero_vector( sgp_exp_q ) )
    {
       sgp_use_e = true;
+#if defined( USE_MPI )
+      if ( !nsa_mpi || !myrank ) {
+#endif
       cout << "Notice: nsa using sd's for fitting\n";
+#if defined( USE_MPI )
+      }
+#endif
    } else {
       sgp_use_e = false;
+#if defined( USE_MPI )
+      if ( !nsa_mpi || !myrank ) {
+#endif
       cout << "Notice: nsa NOT using sd's for fitting\n";
-   }
-
-   return true;
-}
-
-bool US_Saxs_Util::nsa_run()
-{
-   QString save_outputfile = control_parameters[ "outputfile" ];
-   if ( !nsa_validate() )
-   {
-      return false;
-   }
-   setup_saxs_options();
-   if ( !sgp_init_sgp() )
-   {
-      return false;
-   }
-
-   double nrmsd;
-      
-   for ( unsigned int i = 1; i <= control_parameters[ "nsarun" ].toUInt(); i++ )
-   {
-      if ( !nsa_fitness_setup( i ) )
-      {
-         return false;
+#if defined( USE_MPI )
       }
-      cout << QString( "running nsa for size %1\n" ).arg( i );
-      control_parameters[ "sgp_running" ] = "yes";
-      if ( control_parameters.count( "nsaga" ) )
-      {
-         if ( !nsa_ga( nrmsd ) )
-         {
-            control_parameters.erase( "sgp_running" );
-            return false;
-         }
-      } else {
-         if ( !nsa_gsm( nrmsd ) )
-         {
-            control_parameters.erase( "sgp_running" );
-            return false;
-         }
-      }
-
-      control_parameters.erase( "sgp_running" );
-
-      QString outname = 
-         QString( "%1sa-%2-%3" )
-               .arg( i )
-               .arg( control_parameters[ "nsagsm" ] )
-         .arg( control_parameters[ "nsaiterations" ] );
-
-      QFile f( QString( "%1.bead_model" ).arg( outname ) );
-
-      if ( f.open( IO_WriteOnly ) )
-      {
-         QTextStream ts( &f );
-         ts << nsa_qs_bead_model();
-         ts << nsa_physical_stats();
-         ts << 
-            QString(
-                    "\n"
-                    "nsa parameters:\n"
-                    " gsm method       %1\n"
-                    " max iterations   %2\n"
-                    " epsilon          %3\n"
-                    )
-            .arg( control_parameters[ "nsagsm" ] )
-            .arg( control_parameters[ "nsaiterations" ] )
-            .arg( control_parameters[ "nsaepsilon" ] )
-            ;
-
-         ts <<
-            QString( 
-                    " distance quantum %1\n"
-                    " distance range   %2 %3\n"
-                    " radius range     %4 %5\n"
-                    )
-            .arg( sgp_params[ "distancequantum" ] )
-            .arg( sgp_params[ "distancemin" ] * sgp_params[ "distancequantum" ] )
-            .arg( sgp_params[ "distancemax" ] * sgp_params[ "distancequantum" ] )
-            .arg( sgp_params[ "radiusmin" ]   * sgp_params[ "distancequantum" ] )
-            .arg( sgp_params[ "radiusmax" ]   * sgp_params[ "distancequantum" ] )
-            ;
-
-         ts << 
-            QString( 
-                    " target curve     %1\n" 
-                    " target curve sd  %2\n" 
-                    " fitness          %3\n" )
-            .arg( control_parameters[ "experimentgrid" ] )
-            .arg( sgp_use_e ? "present" : "not present or not useable" )
-            .arg( nrmsd )
-            ;
-
-         f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
-      }
-      control_parameters[ "outputfile" ] = outname;
-      nsa_fitness();
-      control_parameters[ "outputfile" ] = save_outputfile;
-   }      
+#endif
+   }
 
    return true;
 }
@@ -352,14 +274,14 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    }
 
    nsa_gsm_setup = true;
-   cout << "Variable limits setup:\n";
-   for ( unsigned int i = 0; i < nsa_var_min.size(); i++ )
-   {
-      cout << QString( "%1 [%2:%3]\n" )
-         .arg( i )
-         .arg( nsa_var_min[ i ] )
-         .arg( nsa_var_max[ i ] );
-   }
+   // cout << "Variable limits setup:\n";
+   // for ( unsigned int i = 0; i < nsa_var_min.size(); i++ )
+   // {
+   // cout << QString( "%1 [%2:%3]\n" )
+   // .arg( i )
+   // .arg( nsa_var_min[ i ] )
+   // .arg( nsa_var_max[ i ] );
+   // }
 
    return true;
 }
@@ -423,10 +345,12 @@ bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
       }
    }
 
+#if defined( PRINT_GSM_INFO )
    for ( int i = 0; i < v->len; i++ )
    {
       cout << QString( "gsm initial v[ %1 ] = %2\n" ).arg( i ).arg( v->d[ i ] );
    }
+#endif
 
    int gsm_method = -1;
 
