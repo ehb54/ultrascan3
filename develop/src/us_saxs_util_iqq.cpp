@@ -192,6 +192,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgptest|"
 
                       "nsaess|"
+                      "nsaexcl|"
                       "nsarun|"
                       "nsaga|"
                       "nsaiterations|"

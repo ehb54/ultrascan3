@@ -470,6 +470,7 @@ class US_EXTERN US_Saxs_Util
 
       
       point minus( point p1, point p2 );       // returns p1 - p2
+      point plus ( point p1, point p2 );       // returns p1 + p2
       point cross( point p1, point p2 );       // returns p1 x p2
       float dot( point p1, point p2);          // p1 dot p2
       point normal( point p1 );                // normalized point
@@ -1042,6 +1043,7 @@ class US_EXTERN US_Saxs_Util
       unsigned int          nsa_pop_selection    ( unsigned int size );
       bool                  nsa_mpi;
       bool                  nsa_ess;
+      bool                  nsa_excl;
 };
 
 #endif

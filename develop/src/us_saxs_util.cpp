@@ -7192,6 +7192,15 @@ point US_Saxs_Util::minus( point p1, point p2 ) // p1 - p2
    return result;
 }
 
+point US_Saxs_Util::plus( point p1, point p2 ) // p1 + p2
+{
+   point result;
+   result.axis[0] = p1.axis[0] + p2.axis[0];
+   result.axis[1] = p1.axis[1] + p2.axis[1];
+   result.axis[2] = p1.axis[2] + p2.axis[2];
+   return result;
+}
+
 point US_Saxs_Util::cross( point p1, point p2) // p1 cross p2
 {
    point result;

@@ -130,6 +130,71 @@ double US_Saxs_Util::nsa_fitness()
       }
    }
 
+   if ( nsa_excl )
+   {
+      // cout << "nsa_excl checking for overlaps\n";
+      // move out each bead until non-overlap with all previous beads
+      unsigned int overlap_count = 0;
+      for ( unsigned int i = 1; i < bead_models[ 0 ].size(); i++ )
+      {
+         bool overlaps_found;
+         float r1 = bead_models[ 0 ][ i ].bead_computed_radius;
+         point p1;
+         p1.axis[ 0 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ];
+         p1.axis[ 1 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ];
+         p1.axis[ 2 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ];
+         
+         float r2;
+         point p2;
+         do {
+            bool overlaps_found = false;
+            for ( unsigned int j = 0; j < i; j++ )
+            {
+               r2 = bead_models[ 0 ][ i ].bead_computed_radius;
+               p2.axis[ 0 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 0 ];
+               p2.axis[ 1 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 1 ];
+               p2.axis[ 2 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 2 ];
+               float d = dist( p1, p2 );
+               if ( d < r1 + r2 )
+               {
+                  overlap_count++;
+                  if ( overlap_count > 100 & 
+                       !(overlap_count % 100 ) )
+                  {
+                     cout << QString( "overlap check count %1\n" ).arg( overlap_count );
+                  }
+                     
+                  overlaps_found = true;
+                  // overlap exists
+                  // expand along the axis from p2 to p1
+                  point pn = minus( p1, p2 );
+                  if ( pn.axis[ 0 ] == 0.0 &&
+                       pn.axis[ 1 ] == 0.0 &&
+                       pn.axis[ 2 ] == 0.0 )
+                  {
+                     // expand out in p1's coordinate
+                     pn = p1;
+                     if ( pn.axis[ 0 ] == 0.0 &&
+                          pn.axis[ 1 ] == 0.0 &&
+                          pn.axis[ 2 ] == 0.0 )
+                     {
+                        // ouch, still zero?
+                        pn.axis[ 0 ] = 1.0;
+                     }
+                  }
+                  float overlap = r1 + r2 - d;
+                  pn = scale( normal( pn ), overlap );
+                  p1 = plus( p1, pn );
+                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ] = p1.axis[ 0 ];
+                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ] = p1.axis[ 1 ];
+                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ] = p1.axis[ 2 ];
+               }
+            }
+         } while ( overlaps_found );
+      }
+      // cout << "overlaps fixed\n";
+   }
+
    if ( bead_models[ 0 ].size() > 1 )
    {
       run_iqq_bead_model();
@@ -188,7 +253,8 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    }
 
    nsa_delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
-   nsa_ess = control_parameters.count( "nsaess" ) ? true : false;
+   nsa_ess       = control_parameters.count( "nsaess" ) ? true : false;
+   nsa_excl      = control_parameters.count( "nsaexcl" ) ? true : false;
 
    // probably want to setup nsa_gsm_delta as a parameter or somehow optimize:
    // also may be variable dependent ( i.e. coordinate vs radius etc )

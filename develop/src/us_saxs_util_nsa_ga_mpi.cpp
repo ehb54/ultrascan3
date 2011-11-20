@@ -73,12 +73,14 @@ bool US_Saxs_Util::nsa_run()
       if ( !nsa_mpi || !myrank )
       {
          QString outname = 
-            QString( "%1sa-%2%3%4" )
+            QString( "%1sa-%2%3%4%5" )
             .arg( i )
             .arg( control_parameters.count( "nsaga" ) ?
                   "" : (control_parameters[ "nsagsm" ] + "-" ) )
             .arg( control_parameters.count( "nsaess" ) ?
                   "ess-" : "" )
+            .arg( control_parameters.count( "nsaexcl" ) ?
+                  "excl-" : "" )
             .arg( control_parameters[ "nsaiterations" ] );
 
          QFile f( QString( "%1.bead_model" ).arg( outname ) );
