@@ -122,6 +122,13 @@ double US_Saxs_Util::nsa_fitness()
    // take node & run current bead model iq on its bead model and compute chi2 (if errors present) or rmsd & return
 
    // compute iq:
+   if ( nsa_ess )
+   {
+      for ( unsigned int i = 1; i < bead_models[ 0 ].size(); i++ )
+      {
+         bead_models[ 0 ][ i ].bead_computed_radius = bead_models[ 0 ][ 0 ].bead_computed_radius;
+      }
+   }
 
    if ( bead_models[ 0 ].size() > 1 )
    {
@@ -181,6 +188,7 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    }
 
    nsa_delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
+   nsa_ess = control_parameters.count( "nsaess" ) ? true : false;
 
    // probably want to setup nsa_gsm_delta as a parameter or somehow optimize:
    // also may be variable dependent ( i.e. coordinate vs radius etc )
@@ -232,19 +240,25 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
 
    if ( size > 1 )
    {
-      nsa_var_ref.push_back( & ( bead_models[ 0 ][ 1 ].bead_computed_radius ) );
-      nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
-      nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
-
+      if ( !nsa_ess )
+      {
+         nsa_var_ref.push_back( & ( bead_models[ 0 ][ 1 ].bead_computed_radius ) );
+         nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
+         nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
+      }
+         
       nsa_var_ref.push_back( & ( bead_models[ 0 ][ 1 ].bead_coordinate.axis[ 0 ] ) );
       nsa_var_min.push_back( sgp_params[ "distancemin" ] * sgp_params[ "distancequantum" ] );
       nsa_var_max.push_back( sgp_params[ "distancemax" ] * sgp_params[ "distancequantum" ] );
    }
    if ( size > 2 )
    {
-      nsa_var_ref.push_back( & ( bead_models[ 0 ][ 2 ].bead_computed_radius ) );
-      nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
-      nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
+      if ( !nsa_ess )
+      {
+         nsa_var_ref.push_back( & ( bead_models[ 0 ][ 2 ].bead_computed_radius ) );
+         nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
+         nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
+      }
 
       nsa_var_ref.push_back( & ( bead_models[ 0 ][ 2 ].bead_coordinate.axis[ 0 ] ) );
       nsa_var_min.push_back( sgp_params[ "distancemin" ] * sgp_params[ "distancequantum" ] );
@@ -256,9 +270,12 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    }
    for ( unsigned int j = 3; j < size; j++ )
    {
-      nsa_var_ref.push_back( & ( bead_models[ 0 ][ j ].bead_computed_radius ) );
-      nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
-      nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
+      if ( !nsa_ess )
+      {
+         nsa_var_ref.push_back( & ( bead_models[ 0 ][ j ].bead_computed_radius ) );
+         nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
+         nsa_var_max.push_back( sgp_params[ "radiusmax" ] * sgp_params[ "distancequantum" ] );
+      }
 
       nsa_var_ref.push_back( & ( bead_models[ 0 ][ j ].bead_coordinate.axis[ 0 ] ) );
       nsa_var_min.push_back( sgp_params[ "distancemin" ] * sgp_params[ "distancequantum" ] );

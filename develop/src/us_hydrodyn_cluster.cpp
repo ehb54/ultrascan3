@@ -1128,6 +1128,12 @@ void US_Hydrodyn_Cluster::load_results()
 
 void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
 {
+   if ( cqs.contains( QRegExp( "^nsa_" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "^nsa_" ), "" );
+      le_output_name->setText( qs );
+   }
    if ( cqs.contains( "_out", false ) )
    {
       QString qs = cqs;

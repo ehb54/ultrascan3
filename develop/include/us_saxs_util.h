@@ -1041,6 +1041,7 @@ class US_EXTERN US_Saxs_Util
       bool                  nsa_ga_fitness       ( nsa_ga_individual & individual );
       unsigned int          nsa_pop_selection    ( unsigned int size );
       bool                  nsa_mpi;
+      bool                  nsa_ess;
 };
 
 #endif

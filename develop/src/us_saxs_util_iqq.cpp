@@ -191,6 +191,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgprun|"
                       "sgptest|"
 
+                      "nsaess|"
                       "nsarun|"
                       "nsaga|"
                       "nsaiterations|"
