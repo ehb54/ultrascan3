@@ -150,7 +150,7 @@ double US_Saxs_Util::nsa_fitness()
             bool overlaps_found = false;
             for ( unsigned int j = 0; j < i; j++ )
             {
-               r2 = bead_models[ 0 ][ i ].bead_computed_radius;
+               r2 = bead_models[ 0 ][ j ].bead_computed_radius;
                p2.axis[ 0 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 0 ];
                p2.axis[ 1 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 1 ];
                p2.axis[ 2 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 2 ];
