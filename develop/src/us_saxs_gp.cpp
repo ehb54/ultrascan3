@@ -3,11 +3,6 @@
 static unsigned int sgp_creates;
 static unsigned int sgp_deletes;
 
-#ifdef WIN32
-# define drand48() ((double)rand()/RAND_MAX)
-# define srand48(x) srand(x)
-#endif
-
 // ---------------------- parameters --------------------------
 
 map < QString, double > sgp_params;

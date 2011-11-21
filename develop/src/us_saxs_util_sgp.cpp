@@ -1,11 +1,6 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 
-#ifdef WIN32
-# define drand48() ((double)rand()/RAND_MAX)
-# define srand48(x) srand(x)
-#endif
-
 bool US_Saxs_Util::sgp_run()
 {
    if ( !sgp_validate() )

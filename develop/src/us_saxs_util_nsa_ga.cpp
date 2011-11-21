@@ -237,18 +237,27 @@ bool US_Saxs_Util::nsa_run()
       }
       cout << QString( "running nsa for size %1\n" ).arg( i );
       control_parameters[ "sgp_running" ] = "yes";
-      if ( control_parameters.count( "nsaga" ) )
+      if ( control_parameters.count( "nsasga" ) )
       {
-         if ( !nsa_ga( nrmsd ) )
+         if ( !nsa_sga( nrmsd ) )
          {
             control_parameters.erase( "sgp_running" );
             return false;
          }
       } else {
-         if ( !nsa_gsm( nrmsd ) )
+         if ( control_parameters.count( "nsaga" ) )
          {
-            control_parameters.erase( "sgp_running" );
-            return false;
+            if ( !nsa_ga( nrmsd ) )
+            {
+               control_parameters.erase( "sgp_running" );
+               return false;
+            }
+         } else {
+            if ( !nsa_gsm( nrmsd ) )
+            {
+               control_parameters.erase( "sgp_running" );
+               return false;
+            }
          }
       }
 

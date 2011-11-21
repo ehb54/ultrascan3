@@ -22,6 +22,8 @@
 #   include <float.h>
 #   define isnan _isnan
 #   undef SHOW_TIMING
+#   define drand48() ((double)rand()/RAND_MAX)
+#   define srand48(x) srand(x)
 #endif
 
 using namespace std;
@@ -986,9 +988,8 @@ class US_EXTERN US_Saxs_Util
 
       QString               sgp_physical_stats( sgp_node *node );
 
-
-      bool                  nsa_validate();
-      bool                  nsa_run();
+      bool                  nsa_validate         ();
+      bool                  nsa_run              ();
 
       // nsa gsm:
       bool                  nsa_gsm_setup;
@@ -1044,6 +1045,12 @@ class US_EXTERN US_Saxs_Util
       bool                  nsa_mpi;
       bool                  nsa_ess;
       bool                  nsa_excl;
+
+      bool                  nsa_sga_validate     ();
+      bool                  nsa_sga_run          ();
+      bool                  nsa_sga              ( double &nrmsd );
+      double                nsa_sga_fitness      ( nsa_sga_individual individual );
+      nsa_sga_individual    nsa_sga_last_individual;
 };
 
 #endif

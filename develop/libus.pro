@@ -278,6 +278,7 @@ SOURCES += \
   src/us_saxs_util_nsa.cpp \
   src/us_saxs_util_nsa_ga.cpp \
   src/us_saxs_util_nsa_gsm.cpp \
+  src/us_saxs_util_nsa_sga.cpp \
   src/us_saxs_util_sgp.cpp \
   src/us_saxs_util_sgp_phys.cpp \
   src/us_select_channel.cpp \

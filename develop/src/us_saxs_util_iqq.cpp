@@ -195,6 +195,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaexcl|"
                       "nsarun|"
                       "nsaga|"
+                      "nsasga|"
                       "nsaiterations|"
                       "nsaepsilon|"
                       "nsagsm|"
@@ -206,6 +207,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsamutate|"
                       "nsacrossover|"
                       "nsaearlytermination|"
+
+                      "nsasgaincrement|"
 
                       "remark)$"
                       );
@@ -292,6 +295,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsamutate|"
                       "nsacrossover|"
                       "nsaearlytermination|"
+
+                      "nsasgaincrement|"
 
                       "outputfile)$"
                       );
@@ -669,6 +674,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "nsarun" )
       {
          if ( !nsa_run() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "nsasga" )
+      {
+         if ( !nsa_sga_run() )
          {
             return false;
          }
