@@ -1,5 +1,9 @@
 #include "../include/us_saxs_util.h"
 
+#if defined( USE_MPI )
+    extern int myrank;
+#endif
+
 bool US_Saxs_Util::nsa_sga_validate()
 {
    errormsg = "";
