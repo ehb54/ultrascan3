@@ -135,19 +135,19 @@ double US_Saxs_Util::nsa_fitness()
       // cout << "nsa_excl checking for overlaps\n";
       // move out each bead until non-overlap with all previous beads
       unsigned int overlap_count = 0;
-      for ( unsigned int i = 1; i < bead_models[ 0 ].size(); i++ )
-      {
-         bool overlaps_found;
-         float r1 = bead_models[ 0 ][ i ].bead_computed_radius;
-         point p1;
-         p1.axis[ 0 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ];
-         p1.axis[ 1 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ];
-         p1.axis[ 2 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ];
-         
-         float r2;
-         point p2;
-         do {
-            bool overlaps_found = false;
+      bool overlaps_found;
+      do {
+         bool overlaps_found = false;
+         for ( unsigned int i = 1; i < bead_models[ 0 ].size(); i++ )
+         {
+            float r1 = bead_models[ 0 ][ i ].bead_computed_radius;
+            point p1;
+            p1.axis[ 0 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ];
+            p1.axis[ 1 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ];
+            p1.axis[ 2 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ];
+            
+            float r2;
+            point p2;
             for ( unsigned int j = 0; j < i; j++ )
             {
                r2 = bead_models[ 0 ][ j ].bead_computed_radius;
@@ -190,8 +190,8 @@ double US_Saxs_Util::nsa_fitness()
                   bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ] = p1.axis[ 2 ];
                }
             }
-         } while ( overlaps_found );
-      }
+         }
+      } while ( overlaps_found );
       // cout << "overlaps fixed\n";
    }
 
