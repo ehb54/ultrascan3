@@ -177,17 +177,16 @@ double US_Saxs_Util::nsa_fitness()
       unsigned int overlap_count = 0;
       bool overlaps_found;
       do {
-         bool overlaps_found = false;
+         overlaps_found = false;
          for ( unsigned int i = 1; i < bead_models[ 0 ].size(); i++ )
          {
             float r1 = bead_models[ 0 ][ i ].bead_computed_radius;
-            point p1;
+            point p1 = bead_models[ 0 ][ i ].bead_coordinate;
             
             float r2;
             point p2;
             for ( unsigned int j = 0; j < i; j++ )
             {
-               p1 = bead_models[ 0 ][ i ].bead_coordinate;
 
                r2 = bead_models[ 0 ][ j ].bead_computed_radius;
                p2 = bead_models[ 0 ][ j ].bead_coordinate;
@@ -220,7 +219,7 @@ double US_Saxs_Util::nsa_fitness()
                         pn.axis[ 0 ] = 1.0;
                      }
                   }
-                  float overlap = r1 + r2 - d + 1e-5;
+                  float overlap = r1 + r2 - d + 1e-7;
                   pn = scale( normal( pn ), overlap );
                   p1 = plus( p1, pn );
                   bead_models[ 0 ][ i ].bead_coordinate = p1;
