@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_pat.h"
 
 #if defined( USE_MPI )
+#   include <mpi.h>
     extern int myrank;
 #endif
 
@@ -117,6 +118,45 @@ bool US_Saxs_Util::nsa_validate()
    return true;
 }
 
+bool US_Saxs_Util::check_overlap( vector < PDB_atom > &bm, bool quiet )
+{
+   bool overlaps_found = false;
+   for ( unsigned int i = 0; i < bm.size() - 1; i++ )
+   {
+      for ( unsigned int j = i + 1; j < bm.size() - 1; j++ )
+      {
+         if ( 
+             bm[ i ].bead_computed_radius + bm[ j ].bead_computed_radius >
+             dist( bm[ i ].bead_coordinate , bm[ j ].bead_coordinate ) )
+         {
+            if ( quiet )
+            {
+               return true;
+            }
+            overlaps_found = true;
+            cout << QString( "overlap found between beads %1 %2 with distance of %3 and overlap of %4\n" )
+               .arg( i + 1 )
+               .arg( j + 1 )
+               .arg( dist( bm[ i ].bead_coordinate , bm[ j ].bead_coordinate ) )
+               .arg( bm[ i ].bead_computed_radius + bm[ j ].bead_computed_radius - dist( bm[ i ].bead_coordinate , bm[ j ].bead_coordinate ) );
+            cout << QString( "        %1: (%2,%3,%4) r %5\n" )
+               .arg( i )
+               .arg( bm[ i ].bead_coordinate.axis[ 0 ] )
+               .arg( bm[ i ].bead_coordinate.axis[ 1 ] )
+               .arg( bm[ i ].bead_coordinate.axis[ 2 ] )
+               .arg( bm[ i ].bead_computed_radius );
+            cout << QString( "        %1: (%2,%3,%4) r %5\n" )
+               .arg( j )
+               .arg( bm[ j ].bead_coordinate.axis[ 0 ] )
+               .arg( bm[ j ].bead_coordinate.axis[ 1 ] )
+               .arg( bm[ j ].bead_coordinate.axis[ 2 ] )
+               .arg( bm[ j ].bead_computed_radius );
+         }
+      }
+   }
+   return overlaps_found;
+}
+
 double US_Saxs_Util::nsa_fitness()
 {
    // take node & run current bead model iq on its bead model and compute chi2 (if errors present) or rmsd & return
@@ -142,21 +182,20 @@ double US_Saxs_Util::nsa_fitness()
          {
             float r1 = bead_models[ 0 ][ i ].bead_computed_radius;
             point p1;
-            p1.axis[ 0 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ];
-            p1.axis[ 1 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ];
-            p1.axis[ 2 ] = bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ];
             
             float r2;
             point p2;
             for ( unsigned int j = 0; j < i; j++ )
             {
+               p1 = bead_models[ 0 ][ i ].bead_coordinate;
+
                r2 = bead_models[ 0 ][ j ].bead_computed_radius;
-               p2.axis[ 0 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 0 ];
-               p2.axis[ 1 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 1 ];
-               p2.axis[ 2 ] = bead_models[ 0 ][ j ].bead_coordinate.axis[ 2 ];
+               p2 = bead_models[ 0 ][ j ].bead_coordinate;
+
                float d = dist( p1, p2 );
                if ( d < r1 + r2 )
                {
+                  overlaps_found = true;
                   overlap_count++;
                   if ( overlap_count > 100 & 
                        !(overlap_count % 100 ) )
@@ -164,7 +203,6 @@ double US_Saxs_Util::nsa_fitness()
                      cout << QString( "overlap check count %1\n" ).arg( overlap_count );
                   }
                      
-                  overlaps_found = true;
                   // overlap exists
                   // expand along the axis from p2 to p1
                   point pn = minus( p1, p2 );
@@ -182,16 +220,24 @@ double US_Saxs_Util::nsa_fitness()
                         pn.axis[ 0 ] = 1.0;
                      }
                   }
-                  float overlap = r1 + r2 - d;
+                  float overlap = r1 + r2 - d + 1e-5;
                   pn = scale( normal( pn ), overlap );
                   p1 = plus( p1, pn );
-                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 0 ] = p1.axis[ 0 ];
-                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 1 ] = p1.axis[ 1 ];
-                  bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ] = p1.axis[ 2 ];
+                  bead_models[ 0 ][ i ].bead_coordinate = p1;
                }
             }
          }
       } while ( overlaps_found );
+
+      if ( check_overlap( bead_models[ 0 ], false ) )
+      {
+         cout << QString( "argh, overlaps found after fix attempt!\n" ) << flush;
+#if defined( USE_MPI )
+         MPI_Abort( MPI_COMM_WORLD, -55001 );
+#endif 
+         exit( -55001 );
+      }
+
       // cout << "overlaps fixed\n";
    }
 

@@ -1051,6 +1051,7 @@ class US_EXTERN US_Saxs_Util
       bool                  nsa_sga              ( double &nrmsd );
       double                nsa_sga_fitness      ( nsa_sga_individual individual );
       nsa_sga_individual    nsa_sga_last_individual;
+      bool                  check_overlap     ( vector < PDB_atom > &bm, bool quiet = true );
 };
 
 #endif

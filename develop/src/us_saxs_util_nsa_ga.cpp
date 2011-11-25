@@ -229,7 +229,20 @@ bool US_Saxs_Util::nsa_run()
 
    double nrmsd;
       
-   for ( unsigned int i = 1; i <= control_parameters[ "nsarun" ].toUInt(); i++ )
+   unsigned int startloop = 1;
+   unsigned int endloop   = control_parameters[ "nsarun" ].toUInt();
+
+   {
+      QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
+      if ( rx.search( control_parameters[ "nsarun" ] ) != -1 )
+      {
+         startloop = rx.cap( 1 ).toUInt();
+         endloop   = rx.cap( 2 ).toUInt();
+      }
+   }
+   cout << QString( "nsa run: %1 to %2\n" ).arg( startloop ).arg( endloop );
+
+   for ( unsigned int i = startloop; i <= endloop; i++ )
    {
       if ( !nsa_fitness_setup( i ) )
       {
