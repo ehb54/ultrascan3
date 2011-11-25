@@ -120,7 +120,7 @@ nsa_sga_individual nsa_sga_individual::random( unsigned int size /* in char's */
       for ( unsigned int j = 0; j < 8; j++ )
       {
          val |= drand48() > .5;
-         val == val << 1;
+         val = val << 1;
       }
       sga.v.push_back( val );
    }
@@ -467,6 +467,7 @@ bool US_Saxs_Util::nsa_sga( double & nrmsd )
    nsa_pop.unique();
 
    nsa_sga_last_individual = nsa_pop.front();
+   nrmsd = nsa_sga_last_individual.fitness;
    
    return true;
 }

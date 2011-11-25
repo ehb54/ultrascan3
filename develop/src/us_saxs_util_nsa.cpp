@@ -196,7 +196,7 @@ double US_Saxs_Util::nsa_fitness()
                {
                   overlaps_found = true;
                   overlap_count++;
-                  if ( overlap_count > 100 & 
+                  if ( ( overlap_count > 100 ) &&
                        !(overlap_count % 100 ) )
                   {
                      cout << QString( "overlap check count %1\n" ).arg( overlap_count );

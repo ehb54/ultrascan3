@@ -54,6 +54,10 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
       print_our_vector(i);
       fflush(stdout);
 #endif
+#if !defined(PRINT_GSM_INFO)
+      global_iter++;
+      fitness = nsa_gsm_f( i );
+#endif
       if(!fitness) {
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -433,7 +437,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 #if defined(DEBUG_GSM)
       print_our_vector(u);
 #endif
-      fflush(stdout);
+#if !defined(PRINT_GSM_INFO)
+      global_iter++;
+      fitness = nsa_gsm_f( i );
+#endif
       if(!fitness) {
          free_our_vector(v_s1);
          free_our_vector(v_s2);
@@ -877,6 +884,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
             print_our_vector(ip); */
       /* find minimum of nsa_gsm_f(ip - t u) */
       /* alg 5_2 */
+#if !defined(PRINT_GSM_INFO)
+      global_iter++;
+      fitness = nsa_gsm_f( ip );
+#endif
       if(!fitness) {
          free_our_vector(v_s1);
          free_our_vector(v_s2);
