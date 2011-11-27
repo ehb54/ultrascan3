@@ -5,7 +5,7 @@
 
 static bool save_calc_to_csv = false;
 
-bool US_Saxs_Util::calc_saxs_iq_native_fast()
+bool US_Saxs_Util::calc_saxs_iq_native_fast( )
 {
    errormsg = "";
    noticemsg = "";
@@ -564,7 +564,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
 }
 
 //  ------------------------------------------------------------------------------------------------------
-bool US_Saxs_Util::calc_saxs_iq_native_debye()
+bool US_Saxs_Util::calc_saxs_iq_native_debye( )
 {
    errormsg = "";
    noticemsg = "";
@@ -635,13 +635,12 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                continue;
             }
 
-            cout << QString("atom %1 hybrid %1 excl vol %1 by hybrid radius %1\n")
-               .arg(this_atom->name)
-               .arg(this_atom->hybrid_name)
-               .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
-               .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
-               ;
-
+            // cout << QString("atom %1 hybrid %1 excl vol %1 by hybrid radius %1\n")
+            // .arg(this_atom->name)
+            // .arg(this_atom->hybrid_name)
+            // .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
+            // .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
+            // ;
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
             total_e += hybrid_map[ hybrid_name ].num_elect;
@@ -907,7 +906,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
 }
 
 //  ------------------------------------------------------------------------------------------------------
-bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
+bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
 {
    errormsg = "";
    noticemsg = "";

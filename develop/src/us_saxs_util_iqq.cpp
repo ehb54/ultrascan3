@@ -210,6 +210,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "nsasgaincrement|"
 
+                      "bsplinetest|"
+
+                      "a2sbrun|"
+                      "a2sbcubeside|"
+
                       "remark)$"
                       );
 
@@ -297,6 +302,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaearlytermination|"
 
                       "nsasgaincrement|"
+
+                      "a2sbcubeside|"
 
                       "outputfile)$"
                       );
@@ -687,6 +694,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }
 
+      if ( option == "bsplinetest" )
+      {
+         if ( !bspline_test() )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "a2sbrun" )
+      {
+         if ( !a2sb_run() )
+         {
+            return false;
+         }
+         cout << "back from a2sbrun\n" << flush;
+      }
+
       if ( option == "sgptest" )
       {
          sgp.test();
@@ -738,6 +762,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    }
     
    f.close();
+   cout << "before flush\n" << endl;
    flush_output();
    return true;
 }
@@ -803,9 +828,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 {
    errormsg = "";
 
-   sgp_exp_q.clear();
-   sgp_exp_I.clear();
-   sgp_exp_e.clear();
+   sgp_exp_q      .clear();
+   sgp_exp_q_index.clear();
+   sgp_exp_I      .clear();
+   sgp_exp_e      .clear();
 
    QFile f( filename );
    if ( !f.exists() )
@@ -934,6 +960,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    sgp_exp_q = q;
    sgp_exp_I = I;
    sgp_exp_e = e;
+   for ( unsigned int i = 0; i < sgp_exp_q.size(); i++ )
+   {
+      sgp_exp_q_index[ sgp_exp_q[ i ] ] = i;
+   }
 
    cout << QString( "experiment grid sizes %1 %2 %3\n" ).arg( q.size() ).arg( I.size() ).arg( e.size() );
 
@@ -1246,7 +1276,8 @@ QString US_Saxs_Util::vector_double_to_csv( vector < double > &vd )
 bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vector < double > &I )
 {
    // cout << "write output\n";
-   if ( control_parameters.count( "sgp_running" ) )
+   if ( control_parameters.count( "sgp_running" ) ||
+        control_parameters.count( "a2sb_running" ) )
    {
       sgp_last_q = q;
       sgp_last_I = I;

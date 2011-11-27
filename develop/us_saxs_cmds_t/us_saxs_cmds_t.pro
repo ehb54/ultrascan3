@@ -2,11 +2,13 @@
 
 SOURCES		+= ../src/us_saxs_gp.cpp
 SOURCES		+= ../src/us_saxs_util.cpp
+SOURCES		+= ../src/us_saxs_util_a2sb.cpp
 SOURCES		+= ../src/us_saxs_util_asab1.cpp
 SOURCES		+= ../src/us_saxs_util_dmd.cpp
 SOURCES		+= ../src/us_saxs_util_extern.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate_align.cpp
+SOURCES		+= ../src/us_saxs_util_ift.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_nsa.cpp
 SOURCES		+= ../src/us_saxs_util_nsa_ga.cpp

@@ -469,7 +469,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
             print_our_vector(v_s2); */
       /*    printf("i : "); */
       add_our_vector_vv(v_s2, i);
-      print_our_vector(v_s2);
+      // print_our_vector(v_s2);
       g_s2 = nsa_gsm_f(v_s2);
 
       /* cut down interval until we have a decrease */
@@ -727,10 +727,10 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 #if defined(PRINT_GSM_INFO)
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
-#endif
-      nsa_gsm_df(u, i);
       puts("conj dir start");
       fflush(stdout);
+#endif
+      nsa_gsm_df(u, i);
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
@@ -809,7 +809,6 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 }
   
 /* inverse hessian */
-
 
 long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max_iter) 
 {
@@ -959,12 +958,10 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
       add_our_vector_vv(v_s3, ip);
       g_s3 = nsa_gsm_f(v_s3);
 
-
 #if defined(DEBUG_GSM)
       printf("pre\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3); 
 #endif
 
-    
       reps = 0;
 
 #if defined(SHOW_TIMING)
@@ -1007,8 +1004,8 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 #if defined(PRINT_GSM_INFO)
             printf("%d: a limit reached", this_rank);
             printf("done iter %ld, i = ", iter);
-#endif
             print_our_vector(ip);
+#endif
             free_our_vector(v_s1);
             free_our_vector(v_s2);
             free_our_vector(v_s3);
@@ -1135,7 +1132,9 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
          }
       
          if(fabs(prev_g_s2 - g_s2) < epsilon) {
+#if defined(PRINT_GSM_INFO)
             printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+#endif
             break;
          }
          /*      puts(""); */

@@ -6149,7 +6149,10 @@ void US_Saxs_Util::scaling_fit(
 {
    if ( x.size() != y.size() )
    {
-      cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
+      cerr << 
+         QString( "US_Saxs_Util::scaling_fit() incompatible vector sizes %1 %2\n" )
+         .arg( x.size() )
+         .arg( y.size() );
       k = 1e0;
       rmsd = 9e99;
    }
@@ -6191,7 +6194,11 @@ void US_Saxs_Util::scaling_fit(
    if ( x.size() != y.size() ||
         x.size() != sd.size() )
    {
-      cerr << "US_Saxs_Util::scaling_fit() incompatible vector sizes\n";
+      cerr << 
+         QString( "US_Saxs_Util::scaling_fit() incompatible vector sizes %1 %2 %3\n" )
+         .arg( x.size() )
+         .arg( y.size() )
+         .arg( sd.size() );
       k = 1e0;
       chi2 = 9e99;
    }

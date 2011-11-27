@@ -267,10 +267,12 @@ SOURCES += \
   src/us_sassoc.cpp \
   src/us_saxs_gp.cpp \
   src/us_saxs_util.cpp \
+  src/us_saxs_util_a2sb.cpp \
   src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
   src/us_saxs_util_hydrate.cpp \
   src/us_saxs_util_hydrate_align.cpp \
+  src/us_saxs_util_ift.cpp \
   src/us_saxs_util_iqq.cpp \
   src/us_saxs_util_iqq_pdb.cpp \
   src/us_saxs_util_iqq_bead_model.cpp \

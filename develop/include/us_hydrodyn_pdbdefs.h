@@ -13,6 +13,16 @@ class point
  public:
    float axis[3];
    friend ostream& operator<<(ostream&, const point&);
+   bool operator < ( const point & objIn ) const
+   {
+      return 
+         axis[ 0 ] < objIn.axis[ 0 ] ||
+         ( axis[ 0 ] == objIn.axis[ 0 ] &&
+           axis[ 1 ] <  objIn.axis[ 1 ] ) ||
+         ( axis[ 0 ] == objIn.axis[ 0 ] &&
+           axis[ 1 ] == objIn.axis[ 1 ] &&
+           axis[ 2 ] <  objIn.axis[ 2 ] );
+   }
 };
 
 struct matrix

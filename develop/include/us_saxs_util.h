@@ -949,8 +949,8 @@ class US_EXTERN US_Saxs_Util
       QStringList  experimental_grids;
       bool         process_one_iqq();
 
-      bool         calc_saxs_iq_native_fast_bead_model();
-      bool         calc_saxs_iq_native_debye_bead_model();
+      bool         calc_saxs_iq_native_fast_bead_model  ();
+      bool         calc_saxs_iq_native_debye_bead_model ();
       bool         calc_saxs_iq_native_hybrid_bead_model();
       bool         run_iqq_bead_model();
 
@@ -960,16 +960,32 @@ class US_EXTERN US_Saxs_Util
   #pragma warning ( disable: 4251 )
 #endif
 
-      vector < sgp_node * > population;
-      vector < double >     sgp_last_q;       // we don't really need this, do we?
-      vector < double >     sgp_last_I;
-      vector < double >     sgp_exp_q;       
-      vector < double >     sgp_exp_I;
-      vector < double >     sgp_exp_e;
+      vector < sgp_node * >          population;
+      vector < double >              sgp_last_q;       // we don't really need this, do we?
+      vector < double >              sgp_last_I;
+      vector < double >              sgp_exp_q;       
+      map < double, unsigned int >   sgp_exp_q_index;
+      vector < double >              sgp_exp_I;
+      vector < double >              sgp_exp_e;
 
-      vector                < float * > nsa_var_ref;
-      vector                < float   > nsa_var_min;
-      vector                < float   > nsa_var_max;
+      vector < float * >             nsa_var_ref;
+      vector < float   >             nsa_var_min;
+      vector < float   >             nsa_var_max;
+
+      // stuff for computing a2sb
+
+      // here, a point defines the center of cublet
+      // each atom is assigned to one cubelet and then saxs curves are computed on each,
+      // then 1sa spheres are created for each which becomes the a2sb model
+      map < point, vector < PDB_atom > > a2sb_map;
+
+
+      // ift stuff
+
+      vector < double >               bspline_net;
+      vector < vector < double > >    bspline_omega;
+      unsigned int                    bspline_degree;
+      unsigned int                    bspline_basis_functions;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -1051,7 +1067,27 @@ class US_EXTERN US_Saxs_Util
       bool                  nsa_sga              ( double &nrmsd );
       double                nsa_sga_fitness      ( nsa_sga_individual individual );
       nsa_sga_individual    nsa_sga_last_individual;
-      bool                  check_overlap     ( vector < PDB_atom > &bm, bool quiet = true );
+      bool                  check_overlap        ( vector < PDB_atom > &bm, bool quiet = true );
+
+
+      // a2sb:
+      bool                  a2sb_validate        ();
+      float                 a2sb_cube_side;
+      // convert a point to its cubelet point
+      point                 a2sb_cubelet         ( point p1 ); 
+      point                 a2sb_cubelet         ( PDB_atom &this_atom ); 
+      bool                  a2sb_run             ();
+      
+      // ift:
+
+      // compute a b-spline on the curent grid (sgp_exp_q)
+      bool                  bspline_basis        ( unsigned int basis, 
+                                                   double q, 
+                                                   double &value );
+      // prepare the net for bspline calcs
+      bool                  bspline_prepare      ( unsigned int knots, 
+                                                   unsigned int degree );
+      bool                  bspline_test         ();
 };
 
 #endif
