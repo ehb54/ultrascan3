@@ -199,6 +199,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaiterations|"
                       "nsaepsilon|"
                       "nsagsm|"
+                      "nsascale|"
 
                       "nsaga|"
                       "nsagenerations|"
@@ -214,6 +215,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "a2sbrun|"
                       "a2sbcubeside|"
+                      "a2sbequalize|"
+                      "a2sbcubesize|"
 
                       "remark)$"
                       );

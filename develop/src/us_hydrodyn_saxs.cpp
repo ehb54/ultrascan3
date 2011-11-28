@@ -539,13 +539,22 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_guinier_highq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_highq2(const QString &)));
 
    cb_user_range = new QCheckBox(this);
-   cb_user_range->setText(tr(" Standard plot    q range:"));
+   cb_user_range->setText(tr(" Standard"));
    // cb_user_range->setMinimumHeight(minHeight1);
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
    cb_user_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_user_range->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_user_range, SIGNAL(clicked()), SLOT(set_user_range()));
+
+   cb_kratky = new QCheckBox(this);
+   cb_kratky->setText(tr(" Kratky plot  q range:"));
+   // cb_kratky->setMinimumHeight(minHeight1);
+   cb_kratky->setEnabled(true);
+   cb_kratky->setChecked(false);
+   cb_kratky->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_kratky->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_kratky, SIGNAL(clicked()), SLOT(set_kratky()));
 
    le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
    le_user_lowq->setText("");
@@ -768,8 +777,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
 #endif
-   plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
-   plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
+   plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -962,7 +971,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_guinier->addWidget(cnt_guinier_cutoff);
 #endif
 
-   background->addWidget(cb_user_range, j, 0);
+   QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
+   hbl_cb_std_kratky->addWidget( cb_user_range );
+   hbl_cb_std_kratky->addWidget( cb_kratky );
+   background->addLayout( hbl_cb_std_kratky, j, 0 );
    QHBoxLayout *hbl_user_range = new QHBoxLayout;
    hbl_user_range->addWidget(le_user_lowq);
    hbl_user_range->addWidget(le_user_highq);
@@ -4590,6 +4602,26 @@ void US_Hydrodyn_Saxs::rescale_plot()
    plot_saxs->replot();
 }
 
+void US_Hydrodyn_Saxs::set_kratky()
+{
+
+   if ( cb_kratky->isChecked() &&
+        cb_user_range->isChecked() )
+   {
+      cb_user_range->setChecked( false );
+   }
+
+   if ( cb_kratky->isChecked() &&
+        cb_guinier->isChecked() )
+   {
+      cb_guinier->setChecked( false );
+      set_guinier();
+   } else {
+      plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+      rescale_plot();
+   }
+}
+
 void US_Hydrodyn_Saxs::set_user_range()
 {
    cout << Iq_plotted_summary();
@@ -4621,12 +4653,19 @@ void US_Hydrodyn_Saxs::set_user_range()
    }
 #endif
 
+   if ( cb_kratky->isChecked() &&
+        cb_user_range->isChecked() )
+   {
+      cb_kratky->setChecked( false );
+   }
+
    if ( cb_user_range->isChecked() &&
         cb_guinier->isChecked() )
    {
       cb_guinier->setChecked(false);
       set_guinier();
    } else {
+      plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
       rescale_plot();
    }
 }
@@ -4643,6 +4682,7 @@ void US_Hydrodyn_Saxs::set_guinier()
    if ( cb_guinier->isChecked() )
    {
       cb_user_range->setChecked(false);
+      cb_kratky    ->setChecked(false);
    }
 
    rescale_plot();
@@ -4738,7 +4778,10 @@ void US_Hydrodyn_Saxs::set_guinier()
                                     );
 #endif
    }
-   plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
+
+   plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;

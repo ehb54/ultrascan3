@@ -1056,6 +1056,8 @@ class US_EXTERN US_Saxs_Util
       map < int, bool >                          registered_workers;
 
 #endif
+      bool                  nsa_use_scaling_fit;
+
       bool                  nsa_ga_fitness       ( nsa_ga_individual & individual );
       unsigned int          nsa_pop_selection    ( unsigned int size );
       bool                  nsa_mpi;

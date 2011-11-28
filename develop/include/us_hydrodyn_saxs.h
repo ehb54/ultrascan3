@@ -175,6 +175,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLineEdit *le_guinier_highq2;
 
       QCheckBox *cb_user_range;
+      QCheckBox *cb_kratky;
       QLineEdit *le_user_lowq;
       QLineEdit *le_user_highq;
 
@@ -578,6 +579,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_guinier();
       void set_pr_contrib();
       void set_user_range();
+      void set_kratky();
       void update_guinier_lowq2(const QString &);
       void update_guinier_highq2(const QString &);
       void update_user_lowq(const QString &);

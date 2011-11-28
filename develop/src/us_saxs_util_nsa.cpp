@@ -115,6 +115,27 @@ bool US_Saxs_Util::nsa_validate()
 #endif
    }
 
+   if ( control_parameters.count( "nsascale" ) )
+   {
+      nsa_use_scaling_fit = true;
+#if defined( USE_MPI )
+      if ( !nsa_mpi || !myrank ) {
+#endif
+      cout << "Notice: nsa using scaling fits\n";
+#if defined( USE_MPI )
+      }
+#endif
+   } else {
+      nsa_use_scaling_fit = false;
+#if defined( USE_MPI )
+      if ( !nsa_mpi || !myrank ) {
+#endif
+      cout << "Notice: nsa NOT using scaling fits\n";
+#if defined( USE_MPI )
+      }
+#endif
+   }
+
    return true;
 }
 
@@ -196,8 +217,8 @@ double US_Saxs_Util::nsa_fitness()
                {
                   overlaps_found = true;
                   overlap_count++;
-                  if ( ( overlap_count > 100 ) &&
-                       !(overlap_count % 100 ) )
+                  if ( ( overlap_count > 1000 ) &&
+                       !(overlap_count % 1000 ) )
                   {
                      cout << QString( "overlap check count %1\n" ).arg( overlap_count );
                   }
@@ -226,11 +247,18 @@ double US_Saxs_Util::nsa_fitness()
                }
             }
          }
-      } while ( overlaps_found );
+      } while ( overlaps_found && overlap_count < 2000 );
 
       if ( check_overlap( bead_models[ 0 ], false ) )
       {
          cout << QString( "argh, overlaps found after fix attempt!\n" ) << flush;
+         QFile f( "overlap_error__model.bead_model" );
+         if ( f.open( IO_WriteOnly ) )
+         {
+            QTextStream ts( &f );
+            ts << nsa_qs_bead_model();
+            f.close();
+         }
 #if defined( USE_MPI )
          MPI_Abort( MPI_COMM_WORLD, -55001 );
 #endif 
@@ -268,11 +296,21 @@ double US_Saxs_Util::nsa_fitness()
    // values stored in last_q, last_I, experiment in sgp_exp_q,I,e
    double k;
    double chi2;
-   if ( sgp_use_e )
+   if ( nsa_use_scaling_fit )
    {
-      scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, k, chi2 );
+      if ( sgp_use_e )
+      {
+         scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, k, chi2 );
+      } else {
+         scaling_fit( sgp_last_I, sgp_exp_I, k, chi2 );
+      }
    } else {
-      scaling_fit( sgp_last_I, sgp_exp_I, k, chi2 );
+      if ( sgp_use_e )
+      {
+         calc_mychi2( sgp_last_I, sgp_exp_I, sgp_exp_e, chi2 );
+      } else {
+         calc_myrmsd( sgp_last_I, sgp_exp_I, chi2 );
+      }
    }
 
    if ( isnan( chi2 ) )

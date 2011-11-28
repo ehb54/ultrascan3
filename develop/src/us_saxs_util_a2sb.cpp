@@ -151,10 +151,13 @@ bool US_Saxs_Util::a2sb_run()
 
       a2sb_map.clear();
 
+      unsigned int tot_atoms = 0;
+
       for (unsigned int j = 0; j < model_vector[ 0 ].molecule.size(); j++)
       {
          for (unsigned int k = 0; k < model_vector[ 0 ].molecule[ j ].atom.size(); k++)
          {
+            tot_atoms++;
             PDB_atom *this_atom = &(model_vector[ 0 ].molecule[ j ].atom[ k ] );
             a2sb_map[ a2sb_cubelet( *this_atom ) ].push_back( *this_atom );
          }
@@ -231,15 +234,49 @@ bool US_Saxs_Util::a2sb_run()
       {
          break;
       }
+
       // write out 1sa model ( ? with difference to saxs curve of original model )
+
+      a2sb_map.clear();
 
       bead_models[ 0 ] = a2sb_model;
 
+      if ( control_parameters.count( "a2sbequalize" ) )
+      {
+         // equalize bead sizes:
+         double avg_size = 0e0;
+         
+         for ( unsigned int i = 0; i < bead_models[ 0 ].size(); i++ )
+         {
+            avg_size += bead_models[ 0 ][ i ].bead_computed_radius;
+         }
+
+         avg_size /= bead_models[ 0 ].size();
+
+         for ( unsigned int i = 0; i < bead_models[ 0 ].size(); i++ )
+         {
+            bead_models[ 0 ][ i ].bead_computed_radius = avg_size;
+         }
+      }         
+
+      if ( control_parameters.count( "a2sbcubesize" ) )
+      {
+         // make each bead the size of a cube
+         for ( unsigned int i = 0; i < bead_models[ 0 ].size(); i++ )
+         {
+            bead_models[ 0 ][ i ].bead_computed_radius = a2sb_cube_side * 0.5;
+         }
+      }         
+
       QString outname = 
-         QString( "%1%2-%3-a2sb" )
+         QString( "%1%2-%3-%4%5%6-a2sb" )
          .arg( QFileInfo( control_parameters[ "inputfile" ] ).baseName( true ) )
          .arg( model_vector_as_loaded.size() ? QString( "-%1" ).arg( current_model + 1 ) : "" )
-         .arg( control_parameters[ "nsagsm" ] );
+         .arg( control_parameters[ "nsagsm" ] )
+         .arg( QString( "cs%1" ).arg( a2sb_cube_side ).replace( ".", "_" ) )
+         .arg( control_parameters.count( "a2sbequalize" ) ? "-eq" : "" )
+         .arg( control_parameters.count( "a2sbcubesize" ) ? "-es" : "" )
+         ;
 
       // compute saxs curve:
       
@@ -253,6 +290,10 @@ bool US_Saxs_Util::a2sb_run()
          QTextStream ts( &f );
          ts << nsa_qs_bead_model();
          ts << nsa_physical_stats();
+         ts << QString( "original atoms in structure %1\n"
+                        "number of beads             %2\n" )
+            .arg( tot_atoms )
+            .arg( bead_models[ 0 ].size() );
          f.close();
          cout << QString( "written: %1\n" ).arg( f.name() );
          output_files << f.name();
@@ -261,7 +302,7 @@ bool US_Saxs_Util::a2sb_run()
          failed = true;
          break;
       }
-   }            
+   }
 
    cout << "done calcs\n" << flush;
 
