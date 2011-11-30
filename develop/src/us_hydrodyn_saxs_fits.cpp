@@ -263,7 +263,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       if ( QFile::exists(fname) )
          // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
       {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
       }         
       FILE *of = fopen(fname, "wb");
       if ( of )
@@ -472,7 +472,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
       if ( QFile::exists(fname) )
          // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
       {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
       }         
       FILE *of = fopen(fname, "wb");
       if ( of )
@@ -763,7 +763,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       if ( QFile::exists(fname) )
          // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
       {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
       }         
       FILE *of = fopen(fname, "wb");
       if ( of )
@@ -1031,7 +1031,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       if ( QFile::exists(fname) )
          // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
       {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
       }         
       FILE *of = fopen(fname, "wb");
       if ( of )

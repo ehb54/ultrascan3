@@ -1019,7 +1019,7 @@ void US_Hydrodyn_Saxs_Search::save_csv_saxs_iqq()
    if ( QFile::exists(fname) )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }         
 
    FILE *of = fopen(fname, "wb");

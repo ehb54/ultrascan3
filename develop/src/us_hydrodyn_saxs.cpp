@@ -2044,7 +2044,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
               !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
          {
 
-            fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name);
+            fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name, 0, this);
             ok_to_write = true;
 #if defined(OLD_WAY)
 
@@ -3247,7 +3247,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)
@@ -4393,7 +4393,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                QString fname = filename;
                if ( QFile::exists(fname) )
                {
-                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
                }
                QFile f(fname);
                if ( !f.open( IO_WriteOnly ) )

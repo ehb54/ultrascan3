@@ -2727,7 +2727,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
    if ( QFile::exists( use_filename ) )
    {
-      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename );
+      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
       raise();
    }
 
@@ -2886,7 +2886,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
 
    if ( QFile::exists( use_filename ) )
    {
-      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename );
+      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
       raise();
    }
 

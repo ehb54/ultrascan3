@@ -542,7 +542,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
    
    if ( QFile::exists( fname ) )
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
       raise();
    }
 

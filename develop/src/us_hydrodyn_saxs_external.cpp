@@ -150,7 +150,7 @@ void US_Hydrodyn_Saxs::foxs_processExited()
       {
          editor_msg("red", QString(tr("Notice: overwriting %1")).arg( new_created_dat ));
       } else {
-         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat );
+         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat, 0, this );
       }
       QFile::remove( new_created_dat );
    }
@@ -386,7 +386,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
          editor_msg("red", QString(tr("Notice: overwriting %1")).arg( new_created_dat ));
          // windows requires removing previous file
       } else {
-         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat );
+         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat, 0, this );
       }
       QFile::remove( new_created_dat );
    }

@@ -663,7 +663,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                  !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
             {
                
-               fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name);
+               fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name, 0, this);
                ok_to_write = true;
             }
             
@@ -965,7 +965,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)
@@ -1791,7 +1791,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)
@@ -2697,7 +2697,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)

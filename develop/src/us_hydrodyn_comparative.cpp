@@ -2531,7 +2531,7 @@ void US_Hydrodyn_Comparative::save_param()
    
    if ( QFile::exists(fname) )
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
 
    QFile f(fname);
@@ -3721,7 +3721,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
 {
    if ( QFile::exists(filename) )
    {
-      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
    }
 
    QFile f(filename);

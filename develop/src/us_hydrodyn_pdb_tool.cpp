@@ -948,7 +948,7 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QListView *lv )
 
    if ( QFile::exists(filename) )
    {
-      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
    }
 
    QFile f(filename);
@@ -2816,7 +2816,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                   if ( QFile::exists( use_fn ) && 
                        !((US_Hydrodyn *)us_hydrodyn)->overwrite )
                   {
-                     use_fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_fn );
+                     use_fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_fn, 0, this );
                   }
                   
                   QFile fn_out( use_fn );

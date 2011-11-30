@@ -1706,7 +1706,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
 
    if ( QFile::exists(filename) )
    {
-      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
    }
 
    QFile f(filename);

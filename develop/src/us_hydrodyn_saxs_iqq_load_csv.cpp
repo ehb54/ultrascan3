@@ -309,7 +309,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
    // open
    if ( QFile::exists(fname) )
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
    FILE *of = fopen(fname, "wb");
    if ( of )
@@ -407,7 +407,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
    // open
    if ( QFile::exists(fname) )
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
    FILE *of = fopen(fname, "wb");
    if ( of )
@@ -630,7 +630,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
    // open
    if ( QFile::exists(fname) )
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
 
    FILE *of = fopen(fname, "wb");

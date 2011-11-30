@@ -443,7 +443,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
                  !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
             {
                
-               fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name);
+               fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name, 0, this);
                ok_to_write = true;
             }
             
@@ -745,7 +745,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)
@@ -1342,7 +1342,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)
@@ -2140,7 +2140,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
-            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
             ok_to_write = true;
             
 #if defined(OLD_WAY)

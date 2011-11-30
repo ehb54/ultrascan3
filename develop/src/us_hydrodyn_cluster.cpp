@@ -494,7 +494,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString tar_filename = filename + ".tar";
       if ( QFile::exists( tar_filename ) )
       {
-         tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename );
+         tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename, 0, this );
          filename = tar_filename;
          filename.replace( QRegExp( "\\.tar$" ), "" );
          le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
@@ -511,7 +511,7 @@ void US_Hydrodyn_Cluster::create_pkg()
             QString path =  QFileInfo( targz_filename ).dirPath() + SLASH;
             QString name =  QFileInfo( targz_filename ).fileName().replace( QRegExp( "\\_p1.tgz$" ), "" );
             targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( 
-                                                                         &path, &name, &ext, 0 );
+                                                                         &path, &name, &ext, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
             le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
@@ -522,7 +522,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          QString targz_filename = filename + ".tgz";
          if ( QFile::exists( targz_filename ) )
          {
-            targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename );
+            targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\.tgz$" ), "" );
             le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
@@ -793,7 +793,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
          // if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
          // {
-         // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
+         // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file, 0, this );
          // }
          cout << use_file << endl;
          QFile f( use_file );
@@ -889,7 +889,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
       // if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( use_file ) )
       // {
-      // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file );
+      // use_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_file, 0, this );
       // }
       cout << use_file << endl;
       QFile f( use_file );

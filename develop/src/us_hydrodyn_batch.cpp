@@ -1678,7 +1678,7 @@ void US_Hydrodyn_Batch::start()
                         + "-h.pdb";
                      if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
                      {
-                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
                      }
                      QFile f( fname );
                      if ( !f.open( IO_WriteOnly ) )
@@ -1910,7 +1910,7 @@ void US_Hydrodyn_Batch::start()
                         + "-h.pdb";
                      if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
                      {
-                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname );
+                        fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
                      }
                      QFile f( fname );
                      if ( !f.open( IO_WriteOnly ) )
@@ -2583,7 +2583,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
    if ( QFile::exists(fname) )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
    }         
    FILE *of = fopen(fname, "wb");
    if ( of )
@@ -2768,7 +2768,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
    if ( QFile::exists(fname) ) 
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
-      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }         
    FILE *of = fopen(fname, "wb");
    if ( of )

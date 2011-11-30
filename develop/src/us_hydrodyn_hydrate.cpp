@@ -2730,7 +2730,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) );
    if ( !overwrite && QFile::exists( fname ) )
    {
-      fname = fileNameCheck( fname );
+      fname = fileNameCheck( fname, 0, this );
    }
 
    last_hydrated_pdb_header = "";

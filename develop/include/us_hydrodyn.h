@@ -139,8 +139,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_table;
       void do_reset();
       unsigned int numThreads; // local copy of USglobal->config_list.numThreads
-      static QString fileNameCheck( QString filename, int mode = 0 ); 
-      static QString fileNameCheck( QString *path, QString *base, QString *ext, int mode = 0 ); 
+      static QString fileNameCheck( QString filename, int mode = 0, QWidget *p = 0 ); 
+      static QString fileNameCheck( QString *path, QString *base, QString *ext, int mode = 0, QWidget *p = 0 ); 
       // checks to see if file name exists, and if it does, according to 'mode'
       // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo

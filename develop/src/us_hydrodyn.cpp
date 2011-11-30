@@ -4049,7 +4049,7 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
 }
 
 
-QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
+QString US_Hydrodyn::fileNameCheck( QString filename, int mode, QWidget *p )
 {
    // checks to see if file name exists, and if it does, according to 'mode'
    // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
@@ -4067,11 +4067,11 @@ QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
    QString base = fi.baseName(true);
    QString ext = fi.extension(false);
    ext = ext.length() ? "." + ext : ext;
-   fileNameCheck( &path, &base, &ext, mode);
+   fileNameCheck( &path, &base, &ext, mode, p);
    return path + base + ext;
 }
 
-QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, int mode )
+QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, int mode, QWidget *p )
 {
    if ( !QFile::exists(*path + *base + *ext) )
    {
@@ -4102,7 +4102,7 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
 
    int result;
 
-   US_Hydrodyn_File *hf = new US_Hydrodyn_File(path, base, ext, &result);
+   US_Hydrodyn_File *hf = new US_Hydrodyn_File( path, base, ext, &result, p );
 
    do 
    {
