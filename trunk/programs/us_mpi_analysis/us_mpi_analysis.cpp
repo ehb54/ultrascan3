@@ -2,6 +2,7 @@
 #include "us_math2.h"
 #include "us_tar.h"
 #include "us_memory.h"
+#include "us_sleep.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -324,9 +325,11 @@ void US_MPI_Analysis::start( void )
    // Pack results
    if ( my_rank == 0 )
    {
-      max_rss();
+      // Get job end time (after waiting so it has greatest time stamp)
+      US_Sleep::msleep( 900 );
       QDateTime endTime = QDateTime::currentDateTime();
 
+      // Send message and build file with run-time statistics
       int  walltime = qRound(
          submitTime   .msecsTo( endTime ) / 1000.0 );
       int  cputime  = qRound(
@@ -340,6 +343,7 @@ void US_MPI_Analysis::start( void )
       stats_output( walltime, cputime, maxrssmb,
             submitTime, analysisStart, endTime );
 
+      // Build list and archive of output files
       QDir        d( "." );
       QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
 

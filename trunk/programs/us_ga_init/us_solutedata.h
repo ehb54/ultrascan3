@@ -111,7 +111,8 @@ class US_SoluteData : public QObject
     int      saveGAdata( QString& );
     int      buildDataMC( bool );
     int      reportDataMC( QString&, int );
-    void     outputStats( QTextStream&, QList< qreal >&, bool, QString ); 
+    void     outputStats( QTextStream&, QList< qreal >&, QList< qreal >&,
+                          bool, QString ); 
     void     limitBucket( bucket& );
     int      countOverlaps();
 
