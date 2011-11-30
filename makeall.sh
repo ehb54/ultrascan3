@@ -42,6 +42,18 @@ do
   popd
 done
 
+d=doc/manual
+pushd $d
+sdir=`pwd`
+echo "Making in $d"   >> $DIR/build.log
+(cd $sdir;make 2>&1)  >> $DIR/build.log
+stat=$?
+if [ $stat -gt 0 ]; then
+   echo "  ***ERROR*** building $d"
+   NBERR=`expr ${NBERR} + 1`
+fi
+popd
+
 if [ $ISMAC -eq 0 ]; then
   doxygen >> $DIR/build.log
 else

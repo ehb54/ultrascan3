@@ -157,6 +157,7 @@ void US_DataModel::scan_dbase( )
    }
 
    lb_status->setText( tr( "Reading DataBase Data..." ) );
+   qApp->processEvents();
    ddescs.clear();
 
    if ( dbg_level > 1 )
@@ -177,6 +178,7 @@ DbgLv(2) << " expID runID type" << expID << runID << etype;
 
       lb_status->setText( tr( "Reading Experiments" ) );
 DbgLv(2) << "  expID expGUID runID label comment date";
+      qApp->processEvents();
 
       for ( int ii = 0; ii < expIDs.size(); ii++ )
       {
@@ -220,6 +222,7 @@ DbgLv(2) << "BrDb: count_noise err" << db->lastError();
    int nstep   = nraws + nedts + nmods + nnois;
 nstep=(nstep<1)?1000:nstep;
    progress->setMaximum( nstep );
+   qApp->processEvents();
 DbgLv(1) << "BrDb: # steps raws edts mods nois" << nstep << nraws << nedts
  << nmods << nnois; 
 DbgLv(1) << "BrDb:  count time:"
@@ -234,6 +237,7 @@ DbgLv(1) << "BrDb:  count time:"
 
    // get raw data IDs
    lb_status->setText( tr( "Reading Raws" ) );
+   qApp->processEvents();
    query.clear();
    query << "all_rawDataIDs" << invID;
    db->query( query );
@@ -295,10 +299,12 @@ DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
 
       ddescs << cdesc;
       progress->setValue( ++istep );
+      qApp->processEvents();
    }
 
    // get edited data IDs
    lb_status->setText( tr( "Reading Edits" ) );
+   qApp->processEvents();
    query.clear();
    query << "all_editedDataIDs" << invID;
    db->query( query );
@@ -359,12 +365,14 @@ DbgLv(2) << "BrDb:     edt  id eGID rGID label date"
 
       ddescs << cdesc;
       progress->setValue( ++istep );
+      qApp->processEvents();
    }
 
    // get model IDs
    QStringList  tmodels;
    QList< int > tmodnxs;
    lb_status->setText( tr( "Reading Models" ) );
+   qApp->processEvents();
    query.clear();
    query << "get_model_desc" << invID;
    db->query( query );
@@ -425,12 +433,14 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
 
       ddescs << cdesc;
       progress->setValue( ++istep );
+      qApp->processEvents();
    }
 
    // get noise IDs
    QStringList  tnoises;
    QList< int > tnoinxs;
    lb_status->setText( tr( "Reading Noises" ) );
+   qApp->processEvents();
    query.clear();
    query << "get_noise_desc" << invID;
    db->query( query );
@@ -505,6 +515,7 @@ DbgLv(2) << "BrDb:       noi id nGID dsc typ noityp"
 
       ddescs << cdesc;
       progress->setValue( ++istep );
+      qApp->processEvents();
    }
 
    for ( int ii = 0; ii < tmodels.size(); ii++ )
@@ -549,6 +560,7 @@ DbgLv(1) << "BrDb:   ii jdsc" << ii << jdsc << "dsc1" << cdesc.description
 
 
    progress->setMaximum( nstep );
+   qApp->processEvents();
 DbgLv(1) << "BrDb: kr ke km kn"
  << rawIDs.size() << edtIDs.size() << modIDs.size() << noiIDs.size();
 DbgLv(1) << "BrDb:  scan time:"
@@ -556,6 +568,7 @@ DbgLv(1) << "BrDb:  scan time:"
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Database Review Complete" ) );
+   qApp->processEvents();
 }
 
 // scan the local disk for R/E/M/N data sets
@@ -592,6 +605,7 @@ DbgLv(1) << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
    rdir    = rdir + "/";
    lb_status->setText( tr( "Reading Local-Disk Data..." ) );
    progress->setMaximum( nstep );
+   qApp->processEvents();
 
    for ( int ii = 0; ii < naucd; ii++ )
    {  // loop thru potential data directories
@@ -692,11 +706,16 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
             ldescs << cdesc;
          }
          if ( ii == ( naucd / 2 )  &&  jj == ( naucf / 2 ) )
+         {
             progress->setValue( ++ktask );
+            qApp->processEvents();
+         }
       }
       progress->setValue( ++ktask );
+      qApp->processEvents();
    }
    progress->setValue( ++ktask );
+   qApp->processEvents();
 
    for ( int ii = 0; ii < nmodf; ii++ )
    {  // loop thru potential model files
@@ -735,6 +754,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       ldescs << cdesc;
 
       progress->setValue( ++ktask );
+      qApp->processEvents();
    }
 
    for ( int ii = 0; ii < nnoif; ii++ )
@@ -773,10 +793,12 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       ldescs << cdesc;
 
       progress->setValue( ++ktask );
+      qApp->processEvents();
    }
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Local Data Review Complete" ) );
+   qApp->processEvents();
 }
 
 // merge the database and local description vectors into a single combined
@@ -797,6 +819,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
 
    lb_status->setText( tr( "Merging Data ..." ) );
    progress->setMaximum( nstep );
+   qApp->processEvents();
 
    while ( jdr < nddes  &&  jlr < nldes )
    {  // main loop to merge records until one is exhausted
@@ -808,6 +831,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
          nstep = ( kar * 9 ) / 8;
          progress->setMaximum( nstep );
       }
+      qApp->processEvents();
 
       while ( descd.dataGUID == descl.dataGUID )
       {  // records match in GUID:  merge them into one
@@ -928,14 +952,15 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
    // source (db/local) or the other.
    nstep += ( nddes - jdr + nldes - jlr );
    progress->setMaximum( nstep );
+   qApp->processEvents();
 
    while ( jdr < nddes )
    {
       adescs << ddescs.at( jdr++ );
 //descd=ddescs.at(jlr-1);
 //DbgLv(2) << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
-      kar++;
-      progress->setValue( kar );
+      progress->setValue( ++kar );
+      qApp->processEvents();
    }
 
    while ( jlr < nldes )
@@ -943,8 +968,8 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
       adescs << ldescs.at( jlr++ );
 //descl=ldescs.at(jlr-1);
 //DbgLv(2) << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
-      kar++;
-      progress->setValue( kar );
+      progress->setValue( ++kar );
+      qApp->processEvents();
    }
 
 //DbgLv(2) << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
@@ -952,6 +977,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Data Merge Complete" ) );
+   qApp->processEvents();
 }
 
 // sort a data-set description vector
@@ -965,6 +991,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
    QStringList         sortn;
    int                 nrecs = descs.size();  // number of descr. records
 
+   lb_status->setText( tr( "Sorting Descriptions..." ) );
+   qApp->processEvents();
 DbgLv(1) << "sort_desc: nrecs" << nrecs;
    if ( nrecs == 0 )
       return;
@@ -993,27 +1021,39 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
 
       tdess[ ii ]  = desct;
    }
+DbgLv(2) << "SrtD:  nrecs" << nrecs << QDateTime::currentDateTime();
 
    // sort the string lists for each type
    sortr.sort();
    sorte.sort();
    sortm.sort();
    sortn.sort();
+DbgLv(2) << "SrtD:  sort[remn]" << QDateTime::currentDateTime();
 
+   lb_status->setText( tr( "Finding Duplicates..." ) );
+   qApp->processEvents();
    // review each type for duplicate GUIDs
    if ( review_descs( sortr, tdess ) )
       return;
+DbgLv(2) << "SrtD:  RD(r)" << QDateTime::currentDateTime();
    if ( review_descs( sorte, tdess ) )
       return;
+DbgLv(2) << "SrtD:  RD(e)" << QDateTime::currentDateTime();
    if ( review_descs( sortm, tdess ) )
       return;
+DbgLv(2) << "SrtD:  RD(m)" << QDateTime::currentDateTime();
    if ( review_descs( sortn, tdess ) )
       return;
+DbgLv(2) << "SrtD:  RD(n)" << QDateTime::currentDateTime();
+
+   lb_status->setText( tr( "Finding Orphans..." ) );
+   qApp->processEvents();
 
    // create list of noise,model,edit orphans
    QStringList orphn = list_orphans( sortn, sortm );
    QStringList orphm = list_orphans( sortm, sorte );
    QStringList orphe = list_orphans( sorte, sortr );
+DbgLv(2) << "SrtD:  Orph(nme)" << QDateTime::currentDateTime();
 
    QString dmyGUID = "00000000-0000-0000-0000-000000000000";
    QString dsorts;
@@ -1026,6 +1066,20 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
    int jndx;
    int kk;
    int ndmy = 0;     // flag of duplicate dummies
+
+   // Create lists of parent GUIDs
+   QStringList guidsr;
+   QStringList guidse;
+   QStringList guidsm;
+
+   for ( int ii = 0; ii < sortr.size(); ii++ )
+      guidsr << sortr.at( ii ).section( ":", 2, 2 ).simplified();
+
+   for ( int ii = 0; ii < sorte.size(); ii++ )
+      guidse << sorte.at( ii ).section( ":", 2, 2 ).simplified();
+
+   for ( int ii = 0; ii < sortm.size(); ii++ )
+      guidsm << sortm.at( ii ).section( ":", 2, 2 ).simplified();
 
    // create dummy records to parent each orphan
 
@@ -1063,8 +1117,8 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
-      // if this record is no longer an orphan, skip creating new parent
-      if ( index_substring( dpGUID, 2, sortm ) >= 0 )
+      // If this record is no longer an orphan, skip creating new parent
+      if ( guidsm.indexOf( dpGUID ) >= 0 )
          continue;
 
       if ( dpGUID == dmyGUID )
@@ -1095,10 +1149,12 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
 
       sortm << dsorts;
       orphm << dsorts;
+      guidsm << dpGUID;
       tdess.append( cdesc );
 //DbgLv(2) << "N orphan:" << orphn.at( ii );
 //DbgLv(2) << "  M dummy:" << dsorts;
    }
+DbgLv(2) << "SrtD:  Orph(N)" << QDateTime::currentDateTime();
 
    ndmy   = 0;
 
@@ -1136,8 +1192,8 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
-      // if this record is no longer an orphan, skip creating new parent
-      if ( index_substring( dpGUID, 2, sorte ) >= 0 )
+      // If this record is no longer an orphan, skip creating new parent
+      if ( guidse.indexOf( dpGUID ) >= 0 )
          continue;
 
       if ( dpGUID == dmyGUID )
@@ -1168,10 +1224,12 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
 
       sorte << dsorts;
       orphe << dsorts;
+      guidse << dpGUID;
       tdess.append( cdesc );
 //DbgLv(2) << "M orphan:" << orphm.at( ii );
 //DbgLv(2) << "  E dummy:" << dsorts;
    }
+DbgLv(2) << "SrtD:  Orph(M)" << QDateTime::currentDateTime();
 
    ndmy   = 0;
 
@@ -1209,8 +1267,8 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
-      // if this record is no longer an orphan, skip creating new parent
-      if ( index_substring( dpGUID, 2, sortr ) >= 0 )
+      // If this record is no longer an orphan, skip creating new parent
+      if ( guidsr.indexOf( dpGUID ) >= 0 )
          continue;
 
       if ( dpGUID == dmyGUID )
@@ -1240,10 +1298,12 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
 
       sortr << dsorts;
+      guidsr << dpGUID;
       tdess.append( cdesc );
 DbgLv(2) << "E orphan:" << orphe.at( ii );
 DbgLv(2) << "  R dummy:" << dsorts;
    }
+DbgLv(2) << "SrtD:  Orph(E)" << QDateTime::currentDateTime();
 
 //for ( int ii = 0; ii < sortr.size(); ii++ )
 // DbgLv(2) << "R entry:" << sortr.at( ii );
@@ -1267,6 +1327,8 @@ DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
    int pstate = REC_LO | PAR_LO;
 
    descs.clear();                // reset input vector to become sorted output
+   lb_status->setText( tr( "Building Sorted Trees..." ) );
+   qApp->processEvents();
 
    // rebuild the description vector with sorted trees
 
@@ -1350,6 +1412,7 @@ DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
          }
       }
    }
+DbgLv(2) << "SrtD:  END" << QDateTime::currentDateTime();
 
    if ( noutR != countR  ||  noutE != countE  ||
         noutM != countM  ||  noutN != countN )
@@ -1375,6 +1438,7 @@ bool US_DataModel::review_descs( QStringList& sorts,
    QString        rtyp;
    QVector< int > multis;
    const char* rtyps[] = { "RawData", "EditedData", "Model", "Noise" };
+   QStringList    tGUIDs;
 
    if ( nrecs < 1 )
       return abort;
@@ -1394,6 +1458,7 @@ DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
       cGUID    = sorts[ ii ].section( ":", 2, 2 );     // current rec GUID
       kmult    = 0;                                    // flag no multiples yet
 
+#if 0
       for ( int jj = 0; jj < ii; jj++ )
       {  // review all the records preceeding this one
          pGUID    = sorts[ jj ].section( ":", 2, 2 );  // a previous GUID
@@ -1412,16 +1477,30 @@ DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
                break;
          }
       }
+#endif
+      int jj = tGUIDs.indexOf( cGUID );
+
+      if ( jj >= 0 )
+      {
+         kmult++;
+         if ( ! multis.contains( jj ) )
+         {  // not yet marked, so mark previous as multiple
+            multis << jj;    // save index
+            nmult++;         // bump count
+         }
+      }
 
       if ( kmult > 0 )
       {  // this pass found a duplicate:  save the index and bump count
          multis << ii;
          nmult++;
       }
+
+      tGUIDs << cGUID;
 //DbgLv(2) << "RvwD:   ii kmult nmult" << ii << kmult << nmult;
    }
 
-DbgLv(2) << "RvwD:      GUID nmult" << nmult;
+DbgLv(2) << "RvwD:      GUID nmult" << nmult << QDateTime::currentDateTime();
    if ( nmult > 0 )
    {  // there were multiple instances of the same GUID
       QMessageBox msgBox;
@@ -1560,19 +1639,26 @@ QStringList US_DataModel::filter_substring( QString ss, int ixs,
    return subl;
 }
 
-// list orphans of a record type (in rec list, no tie to parent list)
+// List orphans of a record type (in rec list, no tie to parent list)
 QStringList US_DataModel::list_orphans( QStringList& rlist,
    QStringList& plist )
 {
    QStringList olist;
+   QStringList tlist;
+
+   for ( int ii = 0; ii < plist.size(); ii++ )
+   {  // Build test-parent-GUID list
+      tlist << plist.at( ii ).section( ":", 2, 2 );
+   }
 
    for ( int ii = 0; ii < rlist.size(); ii++ )
    {  // examine parentGUID for each record in the list
-      QString pGUID = rlist.at( ii ).section( ":", 3, 3 );
+      QString pReco = rlist.at( ii );
+      QString pGUID = pReco.section( ":", 3, 3 );
 
       // see if it is the recordGUID of any in the potential parent list
-      if ( index_substring( pGUID, 2, plist ) < 0 )
-         olist << rlist.at( ii ); // no parent found, so add to the orphan list
+      if ( ! tlist.contains( pGUID ) )
+         olist << pReco;          // no parent found, so add to the orphan list
    }
 
    return olist;

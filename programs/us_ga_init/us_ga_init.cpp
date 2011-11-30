@@ -253,13 +253,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_mandrsb, SIGNAL( clicked() ),
             this,       SLOT(   manDrawSb() ) );
 
-   //pb_shrnksb    = us_pushbutton( tr( "Shrink Solute Bins" ) );
-   //pb_shrnksb->setEnabled( false );
-   //spec->addWidget( pb_shrnksb, s_row++, 1 );
-   //pb_shrnksb->setVisible( false );
-   //connect( pb_shrnksb, SIGNAL( clicked() ),
-   //         this,       SLOT(   shrinkSb() ) );
-
    pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps" ) );
    pb_ckovrlp->setEnabled( false );
    spec->addWidget( pb_ckovrlp, s_row++, 1 );
@@ -472,36 +465,26 @@ void US_GA_Initialize::save( void )
       return;
    }
 
-   QString filter = tr( "GA data files (*.gadistro.dat);;"
-                        "Any files (*)" );
-   QString fsufx = ".gadistro.dat";
-   QString mtitl = tr( "Save GA Data File" );
-
-   if ( !plot_s )
-   {  // MW plot:  only statistics file might be output
-      if ( monte_carlo )
-      {  // Monte Carlo:  set up to ask for output statistics file
-         filter = tr( "GA statistics files (*.stats.dat);;"
-                      "Any files (*)" );
-         fsufx  = ".ga.stats";
-         mtitl  = tr( "Save GA Statistics File" );
-      }
-
-      else
-      {  // MW & not Monte Carlo:  there can be no output file
-         QMessageBox::information( this,
-            tr( "No Files Output" ),
-            tr( "No files will be saved, since buckets are not s vs. f/f0\n"
-                "and input models were not Monte Carlo.\n\n"
-                "To output a gadistro file, pick buckets in s vs. f/f0." ) );
-         return;
-      }
+   if ( ! plot_s  &&  ! monte_carlo )
+   {  // MW & not Monte Carlo:  there can be no output file
+      QMessageBox::information( this,
+         tr( "No Files Output" ),
+         tr( "No files will be saved, since buckets are not s vs. f/f0\n"
+             "and input models were not Monte Carlo.\n\n"
+             "To output a gadistro file, pick buckets in s vs. f/f0." ) );
+      return;
    }
-   QString fname = run_name + fsufx;
-   fname         = QFileDialog::getSaveFileName( this, mtitl,
-      US_Settings::resultDir() + "/" + fname,
-      filter,
-      0, 0 );
+
+   QString runid = run_name.section( ".", 0, -2 );
+   QString fdir  = US_Settings::resultDir() + "/" + runid;
+   QString fndat = run_name + ".gadistro.dat";
+   QString fnsta = run_name + ".ga.stats";
+   QString fname = fdir + "/" + fndat;
+
+   QDir dirp( US_Settings::resultDir() );
+
+   if ( ! dirp.exists( fdir ) )
+      dirp.mkpath( fdir );
 
    if ( plot_s )
       soludata->saveGAdata( fname );
@@ -511,11 +494,20 @@ void US_GA_Initialize::save( void )
 
       soludata->buildDataMC( plot_s );             // build it
 
-      int jj        = fname.lastIndexOf( fsufx );
-      fname         = ( ( jj > 0 ) ? fname.left( jj ) : fname ) + ".ga.stats";
+      fname         = fdir + "/" + fnsta;
 
       soludata->reportDataMC( fname, mc_iters );   // report it
    }
+
+   // Report on files saved
+   QString msg = tr( "Saved:\n" );
+   if ( plot_s )
+      msg     += "    " + fndat + "\n";
+   if ( monte_carlo )
+      msg     += "    " + fnsta + "\n";
+   msg        += tr( "in directory:\n    " ) + fdir;
+
+   QMessageBox::information( this, tr( "Distro/Stats File Save" ), msg );
 }
 
 // Manually draw solute bins
@@ -545,8 +537,7 @@ void US_GA_Initialize::manDrawSb( void )
    connect( pick, SIGNAL( mouseUp(    const QwtDoublePoint& ) ),
             this, SLOT( getMouseUp(   const QwtDoublePoint& ) ) );
 
-   //pb_shrnksb->setEnabled( true );
-   pb_ckovrlp->setEnabled( true );
+   pb_ckovrlp->setEnabled( false );
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
@@ -559,12 +550,6 @@ void US_GA_Initialize::manDrawSb( void )
    ct_hfbuck->setValue( hfbuck );
    connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_wsbuck( double ) ) );
-}
-
-// Shrink solute bins
-void US_GA_Initialize::shrinkSb( void )
-{
-   //pb_shrnksb->setEnabled( false );
 }
 
 // Check for bin overlaps
@@ -615,7 +600,8 @@ void US_GA_Initialize::autoAssignSb( void )
 
    data_plot->replot();
    pb_resetsb->setEnabled( true );
-   pb_save->setEnabled(    true );
+   pb_save   ->setEnabled( true );
+   pb_ckovrlp->setEnabled( true );
 }
 
 // Reset solute bins
@@ -629,6 +615,7 @@ void US_GA_Initialize::resetSb( void )
    erase_buckets( true );     // erase bucket rectangles from plot and delete
 
    nibuks   = 0;
+   pb_save   ->setEnabled( false );
    pb_ckovrlp->setEnabled( false );
 
    data_plot->replot();
@@ -949,6 +936,13 @@ void US_GA_Initialize::update_plsmin( double dval )
 void US_GA_Initialize::update_plsmax( double dval )
 {
    plsmax    = dval;
+
+   if ( ! plot_s )
+   {  // For MW, use logarithmic steps
+      double rinc = qMax( pow( 10.0, qRound( log10( dval ) ) - 2.0 ), 10.0 );
+      ct_plsmin->setRange( -10.0, 1.0E+5, rinc );
+      ct_plsmax->setRange(   0.0, 1.0E+8, rinc );
+   }
 }
 
 // update plot limit f/f0 min
@@ -984,8 +978,8 @@ void US_GA_Initialize::select_autolim()
 
    else
    {
-      ct_plsmin->setRange( -10.0, 1.0E+08, 1.0E+05 );
-      ct_plsmax->setRange( 0.0, 1.0E+080, 1.0E+05 );
+      ct_plsmin->setRange( -10.0, 1.0E+8, 1.0E+3 );
+      ct_plsmax->setRange(   0.0, 1.0E+8, 1.0E+3 );
    }
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
@@ -1140,11 +1134,13 @@ void US_GA_Initialize::load_distro()
    QString         mdesc;
    bool            loadDB = dkdb_cntrls->db();
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
    connect( &dialog, SIGNAL(   changed( bool ) ),
             this, SLOT( update_disk_db( bool ) ) );
+   QApplication::restoreOverrideCursor();
 
    QString         mfnam;
    QString         sep;
@@ -1258,8 +1254,8 @@ for ( int jj=0;jj<qMin(s_distro.size(),w_distro.size());jj++ ) {
       }
       else
       {
-         ct_plsmin->setRange( -10.0, 1.0E+08, 1.0E+05 );
-         ct_plsmax->setRange( 0.0, 1.0E+080, 1.0E+05 );
+         ct_plsmin->setRange( -10.0, 1.0E+8, 1.0E+3 );
+         ct_plsmax->setRange(   0.0, 1.0E+8, 1.0E+3 );
       }
    }
    data_plot->setAxisScale( QwtPlot::xBottom, plsmin, plsmax );
@@ -1623,8 +1619,11 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
    // bump solute bins count
    nibuks++;
    ct_nisols->setValue( (double)nibuks );
+
    if ( nibuks > 2 )
-      pb_save->setEnabled(    true );
+      pb_save   ->setEnabled( true );
+   if ( nibuks > 1 )
+      pb_ckovrlp->setEnabled( true );
 }
 
 // draw a bucket rectangle by index and top-left,bottom-right points

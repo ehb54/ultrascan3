@@ -176,7 +176,6 @@ class US_GA_Initialize : public US_Widgets
       void load_distro (   void );
       void load_color(     void );
       void manDrawSb(      void );
-      void shrinkSb(       void );
       void checkOverlaps(  void );
       void autoAssignSb(   void );
       void resetSb(        void );

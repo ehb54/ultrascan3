@@ -775,6 +775,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
    {  // output Monte Carlo statistics to a report file
       QList< qreal > valus;
       QList< qreal > concs;
+      QList< qreal > csums;
       QTextStream ts( &fileo );
       QString str1;
 
@@ -817,7 +818,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += bcomp.at( jj ).c;
             ts << ( vsum / vsiz ) << endl;
-            concs.append( vsum );
+            csums.append( vsum );
             concsum += vsum;
 
             ts << "Average Frictional Ratio: ";
@@ -833,10 +834,15 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             qreal vtotal  = 0.0;
             qreal sclmci  = (qreal)mc_iters;
             valus.clear();
+            concs.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               concs.append( bcomp.at( jj ).c );
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).w );
-            outputStats( ts, valus, false, tr( "Molecular weight:        " ) );
+            outputStats( ts, valus, concs, false,
+                  tr( "Molecular weight:        " ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
@@ -846,9 +852,10 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vtotal    += cval;
             }
 
-            concs.append( vtotal );
+            csums.append( vtotal );
             concsum   += vtotal;
-            outputStats( ts, valus, false, tr( "Concentration:           " ) );
+            outputStats( ts, concs, concs, false,
+                  tr( "Concentration:           " ) );
             valus.clear();
 
             ts << tr( "Total Concentration:     " ) <<
@@ -856,17 +863,20 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).s );
-            outputStats( ts, valus, false, tr( "Sedimentation Coeff.:    " ) );
+            outputStats( ts, valus, concs, false,
+                  tr( "Sedimentation Coeff.:    " ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).d );
-            outputStats( ts, valus, false, tr( "Diffusion Coeff.:        " ) );
+            outputStats( ts, valus, concs, false,
+                  tr( "Diffusion Coeff.:        " ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, false, tr( "Frictional Ratio, f/f0:  " ) );
+            outputStats( ts, valus, concs, false,
+                  tr( "Frictional Ratio, f/f0:  " ) );
             valus.clear();
          }
       }
@@ -874,10 +884,11 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       ts << tr( "\n\nRelative Concentrations:\n\n" );
       ts << tr( "Total concentration: " ) << concsum << " OD\n";
 
-      for ( int jj = 0; jj < concs.size(); jj++ )
+      for ( int jj = 0; jj < csums.size(); jj++ )
       {
+         qreal pcconc = 100.0 * csums.at( jj ) / concsum;
          ts << tr( "Relative percentage of Solute " ) << ( jj + 1 )
-            << ": " << ( 100.0 * concs.at( jj ) / concsum ) << " %\n";
+            << ": " << QString().sprintf( "%7.3f", pcconc ) << " %\n";
       }
 
       ts << tr( "\n\nDetailed Results:\n" );
@@ -920,31 +931,40 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
          else
          {  // calculate and output detailed statistics for the bin
             qreal sclmci  = (qreal)mc_iters;
+            concs.clear();
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
+               concs.append( bcomp.at( jj ).c );
+
+            for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).w );
-            outputStats( ts, valus, true, tr( "Molecular Weight" ) );
+            outputStats( ts, valus, concs, true,
+                  tr( "Molecular Weight" ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).c * sclmci );
-            outputStats( ts, valus, true, tr( "Concentration" ) );
+            outputStats( ts, valus, concs, true,
+                  tr( "Concentration" ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).s );
-            outputStats( ts, valus, true, tr( "Sedimentation Coefficient" ) );
+            outputStats( ts, valus, concs, true,
+                  tr( "Sedimentation Coefficient" ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).d );
-            outputStats( ts, valus, true, tr( "Diffusion Coefficient" ) );
+            outputStats( ts, valus, concs, true,
+                  tr( "Diffusion Coefficient" ) );
             valus.clear();
 
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, true, tr( "Frictional Ratio" ) );
+            outputStats( ts, valus, concs, true,
+                  tr( "Frictional Ratio" ) );
             valus.clear();
 
          }
@@ -959,7 +979,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
 // output statistics for an array of values of a given type
 void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
-      bool details, QString title )
+      QList< qreal >& concs, bool details, QString title )
 {
    QString str1;
    QString str2;
@@ -980,13 +1000,13 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    qreal   vm3        = 0.0;
    qreal   vm4        = 0.0;
    qreal   vmean;
-   qreal   modecen;
-   qreal   modelo;
-   qreal   modehi;
-   qreal   cnf99lo;
-   qreal   cnf99hi;
-   qreal   cnf95lo;
-   qreal   cnf95hi;
+   qreal   mode_cen;
+   qreal   mode_lo;
+   qreal   mode_hi;
+   qreal   conf99lo;
+   qreal   conf99hi;
+   qreal   conf95lo;
+   qreal   conf95hi;
    qreal   skew;
    qreal   kurto;
    qreal   vmedi;
@@ -1000,20 +1020,24 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    qreal   area;
    qreal   bininc;
    qreal   val;
+   qreal   conc;
+   qreal   vctot = 0.0;
 
    // get basic min,max,mean information
 
    for ( int jj = 0; jj < nvals; jj++ )
    {
       val       = vals.at( jj );
-      vsum     += val;
+      conc      = concs.at( jj );
+      vsum     += ( val * conc );
+      vctot    += conc;
       vlo       = ( vlo < val ) ? vlo : val;
       vhi       = ( vhi > val ) ? vhi : val;
       xplot[jj] = (qreal)jj;
       yplot[jj] = val;
    }
 
-   vmean     = vsum / vsiz;
+   vmean     = vsum / vctot;
 
    // get difference information
 
@@ -1057,14 +1081,14 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       for ( int jj = 0; jj < nvals; jj++ )
       {
          val       = vals.at( jj );
+
          if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
          {
-            yplot[ii] += 1.0;
+            yplot[ii] += ( concs.at( jj ) );
          }
       }
-         
+
       area     += yplot[ ii ] * bininc;
-      yplot[ii] = 0.0;
    }
 
    val       = -1.0;
@@ -1079,13 +1103,13 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       }
    }
 
-   modelo    = xplot[ thisb ];
-   modehi    = modelo + bininc;
-   modecen   = ( modelo + modehi ) / 2.0;
-   cnf99lo   = vmean - 2.576 * sdevi;
-   cnf99hi   = vmean + 2.576 * sdevi;
-   cnf95lo   = vmean - 1.960 * sdevi;
-   cnf95hi   = vmean + 1.960 * sdevi;
+   mode_lo   = xplot[ thisb ];
+   mode_hi   = mode_lo + bininc;
+   mode_cen  = ( mode_lo + mode_hi ) / 2.0;
+   conf99lo  = vmean - 2.576 * sdevi;
+   conf99hi  = vmean + 2.576 * sdevi;
+   conf95lo  = vmean - 1.960 * sdevi;
+   conf95hi  = vmean + 1.960 * sdevi;
 
    if ( details )
    {  // Details
@@ -1103,17 +1127,17 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       ts << tr( "Kurtosis Value:            " ) 
          << str1.sprintf( "%6.4e\n", kurto );
       ts << tr( "Lower Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", modelo );
+         << str1.sprintf( "%6.4e\n", mode_lo );
       ts << tr( "Upper Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", modehi );
+         << str1.sprintf( "%6.4e\n", mode_hi );
       ts << tr( "Mode Center:               " ) 
-         << str1.sprintf( "%6.4e\n", modecen );
+         << str1.sprintf( "%6.4e\n", mode_cen );
       ts << tr( "95% Confidence Limits:     " ) 
          << str1.sprintf( "%6.4e, -%6.4e\n",
-         ( cnf95hi - modecen ), ( modecen - cnf95lo ) );
+         ( conf95hi - mode_cen ), ( mode_cen - conf95lo ) );
       ts << tr( "99% Confidence Limits:     " ) 
          << str1.sprintf( "%6.4e, -%6.4e\n",
-         ( cnf99hi - modecen ), ( modecen - cnf99lo ) );
+         ( conf99hi - mode_cen ), ( mode_cen - conf99lo ) );
       ts << tr( "Standard Deviation:        " ) 
          << str1.sprintf( "%6.4e\n", sdevi );
       ts << tr( "Standard Error:            " ) 
@@ -1123,23 +1147,23 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       ts << tr( "Correlation Coefficent:    " ) 
          << str1.sprintf( "%6.4e\n", corr );
       ts << tr( "Number of Bins:            " ) 
-         << str1.sprintf( "%6.4e\n", binsz );
+         << qRound( binsz ) << "\n";
       ts << tr( "Distribution Area:         " ) 
          << str1.sprintf( "%6.4e\n", area );
 
-      str1.sprintf( "%e", cnf95lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", cnf95hi ).append( tr( " (high)\n" ) );
+      str1.sprintf( "%e", conf95lo ).append( tr( " (low), " ) );
+      str2.sprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
       ts << tr( "95% Confidence Interval:   " ) << str1 << str2;
 
-      str1.sprintf( "%e", cnf99lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", cnf99hi ).append( tr( " (high)\n" ) );
+      str1.sprintf( "%e", conf99lo ).append( tr( " (low), " ) );
+      str2.sprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
       ts << tr( "99% Confidence Interval:   " ) << str1 << str2;
    }
 
    else
    {  // Summary
       ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
-            modecen, cnf95lo, cnf95hi );
+            mode_cen, conf95lo, conf95hi );
    }
 }
 
