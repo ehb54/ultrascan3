@@ -348,9 +348,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
       buk.ff0_max = fval + hbuckh;
       buk.conc    = cval;
       buk.status  = 2;
-
       limitBucket( buk );
-
       buks1->append( buk );
       cvals.append( cval );
    }
@@ -813,6 +811,13 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vsum    += bcomp.at( jj ).w;
             ts << ( vsum / vsiz ) << endl;
 
+            ts << "Average Frictional Ratio: ";
+            vsum     = 0.0;
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += bcomp.at( jj ).f;
+            ts << ( vsum / vsiz ) << endl;
+
             ts << "Average Concentration:    ";
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
@@ -820,69 +825,53 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << ( vsum / vsiz ) << endl;
             csums.append( vsum );
             concsum += vsum;
-
-            ts << "Average Frictional Ratio: ";
-            vsum     = 0.0;
-
-            for ( int jj = 0; jj < ksol; jj++ )
-               vsum    += bcomp.at( jj ).f;
-            ts << ( vsum / vsiz ) << endl;
          }
 
          else
          {  // Summary prints for the typical bin with many points
             qreal vtotal  = 0.0;
-            qreal sclmci  = (qreal)mc_iters;
-            valus.clear();
-            concs.clear();
 
+            concs.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                concs.append( bcomp.at( jj ).c );
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).w );
             outputStats( ts, valus, concs, false,
                   tr( "Molecular weight:        " ) );
+
             valus.clear();
-
-            for ( int jj = 0; jj < ksol; jj++ )
-            {
-               qreal cval = bcomp.at( jj ).c;
-               valus.append( cval * sclmci );
-               vtotal    += cval;
-            }
-
-            csums.append( vtotal );
-            concsum   += vtotal;
-            outputStats( ts, concs, concs, false,
-                  tr( "Concentration:           " ) );
-            valus.clear();
-
-            ts << tr( "Total Concentration:     " ) <<
-               str1.sprintf( " %6.4e\n", vtotal );
-
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).s );
             outputStats( ts, valus, concs, false,
                   tr( "Sedimentation Coeff.:    " ) );
-            valus.clear();
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).d );
             outputStats( ts, valus, concs, false,
                   tr( "Diffusion Coeff.:        " ) );
-            valus.clear();
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
             outputStats( ts, valus, concs, false,
                   tr( "Frictional Ratio, f/f0:  " ) );
-            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               vtotal    += bcomp.at( jj ).c;
+            csums.append( vtotal );
+            concsum   += vtotal;
+            ts << tr( "Total Concentration:     " ) <<
+               str1.sprintf( " %6.4e\n", vtotal );
+
          }
       }
 
+      ts << tr( "\nMonte Carlo iterations:   " ) << mc_iters;
       ts << tr( "\n\nRelative Concentrations:\n\n" );
-      ts << tr( "Total concentration: " ) << concsum << " OD\n";
+      ts << tr( "Total concentration:      " ) << concsum << " OD\n";
 
       for ( int jj = 0; jj < csums.size(); jj++ )
       {
@@ -910,10 +899,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << tr( "\nMolecular Weight:\n" );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).w << endl;
- 
-            ts << tr( "\nConcentration:\n" );
-            for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).c << endl;
 
             ts << tr( "\nSedimentation Coefficient:\n" );
             for ( int jj = 0; jj < ksol; jj++ )
@@ -926,47 +911,41 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << tr( "\nFrictional Ratio:\n" );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << endl;
+ 
+            ts << tr( "\nConcentration:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).c << endl;
          }
 
          else
          {  // calculate and output detailed statistics for the bin
-            qreal sclmci  = (qreal)mc_iters;
             concs.clear();
-            valus.clear();
-
             for ( int jj = 0; jj < ksol; jj++ )
                concs.append( bcomp.at( jj ).c );
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).w );
             outputStats( ts, valus, concs, true,
                   tr( "Molecular Weight" ) );
-            valus.clear();
 
-            for ( int jj = 0; jj < ksol; jj++ )
-               valus.append( bcomp.at( jj ).c * sclmci );
-            outputStats( ts, valus, concs, true,
-                  tr( "Concentration" ) );
             valus.clear();
-
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).s );
             outputStats( ts, valus, concs, true,
                   tr( "Sedimentation Coefficient" ) );
-            valus.clear();
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).d );
             outputStats( ts, valus, concs, true,
                   tr( "Diffusion Coefficient" ) );
-            valus.clear();
 
+            valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
             outputStats( ts, valus, concs, true,
                   tr( "Frictional Ratio" ) );
-            valus.clear();
-
          }
       }
 
@@ -1170,13 +1149,32 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 // Insure vertexes of a bucket do not exceed physically possible limits
 void US_SoluteData::limitBucket( bucket& buk )
 {
-   buk.s_min   = buk.s_min >= 0.0 ?
-                 max(  0.1, buk.s_min ) :
-                 min( -0.1, buk.s_min );
-   buk.s_max   = buk.s_max >= 0.0 ?
-                 max(  0.1, buk.s_max ) :
-                 min( -0.1, buk.s_max );
-   buk.ff0_min = max(  1.0, buk.ff0_min );
+   if ( buk.s_min > 0.0 )
+   {  // All-positive s's start at 0.1 at least
+      buk.s_min   = qMax( 0.1, buk.s_min );
+      buk.s_max   = qMax( ( buk.s_min + 0.1 ), buk.s_max );
+   }
+
+   else if ( buk.s_max <= 0.0 )
+   {  // All-negative s's end at -0.1 at most
+      buk.s_max   = qMin( -0.1, buk.s_max );
+      buk.s_min   = qMin( ( buk.s_max - 0.1 ), buk.s_min );
+   }
+
+   else if ( ( buk.s_min + buk.s_max ) >= 0.0 )
+   {  // Mostly positive clipped to all positive starting at 0.1
+      buk.s_min   = 0.1;
+      buk.s_max   = qMax( 0.2, buk.s_max );
+   }
+
+   else
+   {  // Mostly negative clipped to all negative ending at -0.1
+      buk.s_min   = qMin( -0.2, buk.s_min );
+      buk.s_max   = -0.1;
+   }
+
+   buk.ff0_min = qMax(  1.0, buk.ff0_min );
+   buk.ff0_max = qMax( ( buk.ff0_min + 0.1 ), buk.ff0_max );
 }
 
 // Count the number of overlaps in the current list of buckets
