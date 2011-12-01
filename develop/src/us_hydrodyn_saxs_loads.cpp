@@ -1624,17 +1624,8 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          plotted = false;
       }
 
-      //      long Iq = plot_saxs->insertCurve("I(q) vs q");
-      //      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-      //      plotted_q.push_back(q);
-      //      plotted_I.push_back(I);
-      //      unsigned int q_points = q.size();
-      //      unsigned int p = plotted_q.size() - 1;
-      //      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
-      //      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-      //      plot_saxs->replot();
-      cb_guinier->setChecked(false);
-      cb_user_range->setChecked(false);
+      cb_guinier   ->setChecked( false );
+      cb_user_range->setChecked( false );
       set_guinier();
    }
 }

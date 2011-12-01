@@ -795,7 +795,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
 #ifndef QT4
-   plot_saxs->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+   plot_saxs->setAxisOptions(QwtPlot::yLeft, 
+                             cb_kratky->isChecked() ? 
+                             QwtAutoScale::None :
+                             QwtAutoScale::Logarithmic
+                             );
 #else
    plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
 #endif
@@ -4581,15 +4585,15 @@ void US_Hydrodyn_Saxs::rescale_plot()
    double highq;
    double lowI;
    double highI;
-   plot_domain(lowq, highq);
-   plot_range(lowq, highq, lowI, highI);
+   plot_domain( lowq, highq );
+   plot_range ( lowq, highq, lowI, highI );
 
-   //   cout << "rescale plot "
-   //        << lowq << ":" << highq << "  "
-   //        << lowI << ":" << highI << endl;
+   cout << "rescale plot "
+           << lowq << ":" << highq << "  "
+           << lowI << ":" << highI << endl;
 
-   plot_saxs->setAxisScale(QwtPlot::xBottom, lowq, highq);
-   plot_saxs->setAxisScale(QwtPlot::yLeft, lowI, highI);
+   plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
+   plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );
 
    if ( plot_saxs_zoomer )
    {
@@ -4615,11 +4619,9 @@ void US_Hydrodyn_Saxs::set_kratky()
         cb_guinier->isChecked() )
    {
       cb_guinier->setChecked( false );
-      set_guinier();
-   } else {
-      plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
-      rescale_plot();
    }
+
+   set_guinier();
 }
 
 void US_Hydrodyn_Saxs::set_user_range()
@@ -4653,19 +4655,20 @@ void US_Hydrodyn_Saxs::set_user_range()
    }
 #endif
 
-   if ( cb_kratky->isChecked() &&
-        cb_user_range->isChecked() )
-   {
-      cb_kratky->setChecked( false );
-   }
-
    if ( cb_user_range->isChecked() &&
-        cb_guinier->isChecked() )
+        ( cb_guinier->isChecked() ||
+          cb_kratky->isChecked() ) )
    {
       cb_guinier->setChecked(false);
+      cb_kratky ->setChecked(false);
       set_guinier();
    } else {
-      plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+      plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
+                                 cb_kratky ->isChecked() ?
+                                 tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+      plot_saxs->setAxisOptions( QwtPlot::yLeft, 
+                                 cb_kratky->isChecked()  ? 
+                                 QwtAutoScale::None         : QwtAutoScale::Logarithmic );
       rescale_plot();
    }
 }
@@ -4685,7 +4688,69 @@ void US_Hydrodyn_Saxs::set_guinier()
       cb_kratky    ->setChecked(false);
    }
 
+   if ( cb_kratky->isChecked() )
+   {
+      if ( rb_sans->isChecked() ) 
+      {
+         plot_saxs->setTitle( "Kratky " + tr("SANS Curve"));
+      } else {
+         plot_saxs->setTitle( "Kratky " + tr("SAXS Curve"));
+      }
+   }      
+
    rescale_plot();
+
+   // clear the plot and replot the curves in correct mode ( kratky or guniner )
+   plot_saxs->clear();
+   for ( unsigned int p = 0;
+#ifndef QT4
+         p < plotted_Iq.size();
+#else
+         p < plotted_Iq_curves.size();
+#endif
+         p++ )
+   {
+      unsigned int q_points = plotted_q[ p ].size();
+      
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve("I(q) vs q");
+      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+      plotted_Iq[ p ] = Iq;
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      plotted_Iq_curves[ p ] = curve;
+#endif
+      
+      
+#ifndef QT4
+      plot_saxs->setCurveData(plotted_Iq[ p ],
+                              cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
+                              q_points);
+      plot_saxs->setCurvePen( plotted_Iq[ p ], QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+      plotted_Iq_curves[ p ]->setData(
+                                      cb_guinier->isChecked() ?
+                                      (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
+                                      cb_kratky ->isChecked() ?
+                                      (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
+                                      q_points
+                                      );
+      plotted_Iq_curves[ p ]->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+      plotted_Iq_curves[ p ]->attach( plot_saxs );
+#endif
+   }
 
    for ( unsigned int i = 0;
 #ifndef QT4
@@ -4695,7 +4760,6 @@ void US_Hydrodyn_Saxs::set_guinier()
 #endif
          i++ )
    {
-
       if ( cb_guinier->isChecked() )
       {
          // replot the guinier bits
@@ -4765,22 +4829,44 @@ void US_Hydrodyn_Saxs::set_guinier()
 #endif
       }
 
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            q2I.push_back( plotted_q2[ i ][ j ] * plotted_I[ i ][ j ] );
+         }
+      }
+
 #ifndef QT4
-      plot_saxs->setCurveData(plotted_Iq[i], 
+      plot_saxs->setCurveData(
+                              plotted_Iq[i], 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
-                              (double *)&(plotted_I[i][0]), plotted_q[i].size());
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])           : (double *)&(plotted_I[i][0]),
+                              plotted_q[i].size()
+                              );
 #else
       plotted_Iq_curves[i]->setData(
                                     cb_guinier->isChecked() ?
                                     (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
-                                    (double *)&(plotted_I[i][0]), plotted_q[i].size()
+                                    cb_kratky ->isChecked() ?
+                                    (double *)&(q2I[0])           : (double *)&(plotted_I[i][0]),
+                                    plotted_q[i].size()
                                     );
 #endif
    }
 
-   plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
-   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+   plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
+                              cb_guinier->isChecked() ? 
+                              tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
+                              cb_kratky ->isChecked() ? 
+                              tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+   plot_saxs->setAxisOptions( QwtPlot::yLeft, 
+                              cb_kratky->isChecked()  ? 
+                              QwtAutoScale::None         : QwtAutoScale::Logarithmic );
 
    if ( plot_saxs_zoomer )
    {
@@ -5265,17 +5351,36 @@ void US_Hydrodyn_Saxs::plot_range(
             {
                if ( !any_plots )
                {
-                  lowI = plotted_I[i][j];
-                  highI = plotted_I[i][j];
+                  if ( cb_kratky->isChecked() )
+                  {
+                     lowI  = plotted_q2[ i ][ j ] * plotted_I[ i ][ j ];
+                     highI = lowI;
+                  } else {
+                     lowI  = plotted_I[i][j];
+                     highI = plotted_I[i][j];
+                  }
                   any_plots = true;
                } else {
-                  if ( lowI > plotted_I[i][j] )
+                  if ( cb_kratky->isChecked() )
                   {
-                     lowI = plotted_I[i][j];
-                  }
-                  if ( highI < plotted_I[i][j] )
-                  {
-                     highI = plotted_I[i][j];
+                     double this_I = plotted_q2[ i ][ j ] * plotted_I[ i ][ j ];
+                     if ( lowI > this_I )
+                     {
+                        lowI = this_I;
+                     }
+                     if ( highI < this_I )
+                     {
+                        highI = this_I;
+                     }
+                  } else {
+                     if ( lowI > plotted_I[i][j] )
+                     {
+                        lowI = plotted_I[i][j];
+                     }
+                     if ( highI < plotted_I[i][j] )
+                     {
+                        highI = plotted_I[i][j];
+                     }
                   }
                }
             }
@@ -5285,8 +5390,9 @@ void US_Hydrodyn_Saxs::plot_range(
    if ( any_plots )
    {
       lowI *= .6;
-      highI *= 1.7;
+      highI *= cb_kratky->isChecked() ? 1.2 : 1.7;
    }
+
    // cout << "plot range " << lowI << ":" << highI << endl;
 }
 

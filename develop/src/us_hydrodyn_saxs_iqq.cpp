@@ -919,17 +919,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       {
          // plotted_I[p][i] = log10(plotted_I[p][i]);
       }
+
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+
 #ifndef QT4
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              (double *)&(plotted_I[p][0]), q_points);
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
+                              q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 #else
       curve->setData(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                     (double *)&(plotted_I[p][0]),
+                     cb_kratky ->isChecked() ?
+                     (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                      q_points
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
@@ -1752,17 +1765,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       //      {
       //         plotted_I[p][i] = log10(plotted_I[p][i]);
       //      }
+
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+
 #ifndef QT4
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              (double *)&(plotted_I[p][0]), q_points);
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
+                              q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 #else
       curve->setData(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                     (double *)&(plotted_I[p][0]),
+                     cb_kratky ->isChecked() ?
+                     (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                      q_points
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
@@ -2658,17 +2684,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       //      {
       //         plotted_I[p][i] = log10(plotted_I[p][i]);
       //      }
+
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+
 #ifndef QT4
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              (double *)&(plotted_I[p][0]), q_points);
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
+                              q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 #else
       curve->setData(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                     (double *)&(plotted_I[p][0]),
+                     cb_kratky ->isChecked() ?
+                     (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
                      q_points
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );

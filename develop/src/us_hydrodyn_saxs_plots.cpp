@@ -220,12 +220,12 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    plotted_Iq_curves.push_back( curve );
 #endif
    {
-      vector < double > q2(q.size());
+      vector < double > q2 ( q.size() );
       for ( unsigned int i = 0; i < q.size(); i++ )
       {
-         q2[i] = q[i] * q[i];
+         q2 [ i ] = q[i] * q[i];
       }
-      plotted_q2.push_back(q2);
+      plotted_q2 .push_back( q2  );
    }
    plotted_I.push_back(I);
    plotted_I_error.push_back(I_error);
@@ -233,24 +233,35 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    unsigned int q_points = q.size();
    unsigned int p = plotted_q.size() - 1;
 
+   vector < double > q2I;
+   if ( cb_kratky->isChecked() )
+   {
+      for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+      {
+         q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+      }
+   }
+
 #ifndef QT4
    plot_saxs->setCurveData(Iq, 
                            cb_guinier->isChecked() ?
-                           (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                           (double *)&(plotted_I[p][0]), q_points);
+                           (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
+                           cb_kratky ->isChecked() ?
+                           (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
+                           q_points);
    plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 #else
    curve->setData(
                   cb_guinier->isChecked() ?
-                  (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                  (double *)&(plotted_I[p][0]),
+                  (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
+                  cb_kratky ->isChecked() ?
+                  (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
                   q_points
                   );
    curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
    curve->attach( plot_saxs );
 #endif
 
-   // figure out how to plot points for guinier plots
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
