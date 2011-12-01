@@ -1620,7 +1620,7 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
    nibuks++;
    ct_nisols->setValue( (double)nibuks );
 
-   if ( nibuks > 2 )
+   if ( nibuks > 0 )
       pb_save   ->setEnabled( true );
    if ( nibuks > 1 )
       pb_ckovrlp->setEnabled( true );
