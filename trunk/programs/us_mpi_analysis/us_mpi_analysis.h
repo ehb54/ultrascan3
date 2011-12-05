@@ -232,6 +232,7 @@ class US_MPI_Analysis : public QObject
                              double, double, double );
     void     init_solutes  ( void );
     void     fill_queue    ( void );
+    void     limitBucket   ( Bucket& );
 
     // Master
     void     _2dsa_master      ( void );

@@ -47,12 +47,12 @@ void US_MPI_Analysis::_2dsa_master( void )
       {
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset ) +
+            "; Dataset: "    + QString::number( current_dataset + 1 ) +
             "; Meniscus: "   + 
                  QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
                  QString( " (Run %1 of %2)" ).arg( meniscus_run + 1 )
                                              .arg( meniscus_values.size() )  +
-            "; MonteCarlo: " + QString::number( mc_iteration );
+            "; MonteCarlo: " + QString::number( mc_iteration + 1 );
 
          send_udp( progress );
 

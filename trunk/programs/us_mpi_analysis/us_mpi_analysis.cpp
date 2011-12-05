@@ -262,6 +262,8 @@ if ( my_rank == 0 )
       // Put into Qt rectangles (upper left, lower right points)
       for ( int i = 0; i < buckets.size(); i++ )
       {
+         limitBucket( buckets[ i ] );
+
          bucket_rects << QRectF( 
                QPointF( buckets[ i ].s_min, buckets[ i ].ff0_max ),
                QPointF( buckets[ i ].s_max, buckets[ i ].ff0_min ) );
@@ -437,5 +439,36 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
    out << fname << "\n";
    f.close();
    return;
+}
+
+// Insure vertexes of a bucket do not exceed physically possible limits
+void US_MPI_Analysis::limitBucket( Bucket& buk )
+{
+   if ( buk.s_min > 0.0 )
+   {  // All-positive s's start at 0.1 at least
+      buk.s_min   = qMax( 0.1, buk.s_min );
+      buk.s_max   = qMax( ( buk.s_min + 0.1 ), buk.s_max );
+   }
+
+   else if ( buk.s_max <= 0.0 )
+   {  // All-negative s's end at -0.1 at most
+      buk.s_max   = qMin( -0.1, buk.s_max );
+      buk.s_min   = qMin( ( buk.s_max - 0.1 ), buk.s_min );
+   }
+
+   else if ( ( buk.s_min + buk.s_max ) >= 0.0 )
+   {  // Mostly positive clipped to all positive starting at 0.1
+      buk.s_min   = 0.1;
+      buk.s_max   = qMax( 0.2, buk.s_max );
+   }
+
+   else
+   {  // Mostly negative clipped to all negative ending at -0.1
+      buk.s_min   = qMin( -0.2, buk.s_min );
+      buk.s_max   = -0.1;
+   }
+
+   buk.ff0_min = qMax(  1.0, buk.ff0_min );
+   buk.ff0_max = qMax( ( buk.ff0_min + 0.1 ), buk.ff0_max );
 }
 

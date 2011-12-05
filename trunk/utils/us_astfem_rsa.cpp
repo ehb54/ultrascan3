@@ -1749,7 +1749,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
       xA           = x.data();
 
-      qDebug() << "Use exponential grid only!  NN Nf b m" << NN << Nf << b << m;
+      qDebug() << "Use exponential grid only!  NN Nf b m nu0" << NN << Nf << b << m << nu0;
    }
    else
    {
