@@ -621,7 +621,8 @@ DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
       }
    }
 
-   sim_vals.solutes.resize( kk );    // Truncate solutes at non-zero count
+   // Truncate solutes at non-zero count
+   sim_vals.solutes.resize( qMax( kk, 1 ) );
 DbgLv(1) << "CR: out solutes size" << kk;
 DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.solutes[0].c;
 DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.solutes[1].c:0.0);

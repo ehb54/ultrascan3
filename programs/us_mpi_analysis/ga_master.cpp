@@ -176,7 +176,7 @@ QString s;
             
                QString progress =
                   "Avg Generation: "  + QString::number( avg_generation ) +
-                  "; MonteCarlo: " + QString::number( mc_iteration );
+                  "; MonteCarlo: " + QString::number( mc_iteration + 1 );
 
                send_udp( progress );
             }

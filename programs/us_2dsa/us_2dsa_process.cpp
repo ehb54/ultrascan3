@@ -485,7 +485,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
    }  // Constant f/f0
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
- << c_solutes[maxdepth][nsolutes-1].c;
+ << c_solutes[maxdepth][qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
    nscans           = edata->scanData.size();
    npoints          = edata->x.size();
    double vari      = wresult.sim_vals.variances[ 0 ];
@@ -553,8 +553,6 @@ DbgLv(1) << "done: vari bvol" << vari << bvol
    max_rss();
    double memmb  = (double)maxrss / 1024.0;
 
-   //pmsg += tr( "Maximum memory used:  " )
-   //        + QString().sprintf( "%.1f", memmb ) + " MB";
    pmsg += tr( "Maximum memory used:  " )
            + QString::number( qRound( memmb ) ) + " MB";
 
