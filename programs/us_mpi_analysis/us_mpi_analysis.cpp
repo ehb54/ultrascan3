@@ -447,13 +447,13 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
    if ( buk.s_min > 0.0 )
    {  // All-positive s's start at 0.1 at least
       buk.s_min   = qMax( 0.1, buk.s_min );
-      buk.s_max   = qMax( ( buk.s_min + 0.1 ), buk.s_max );
+      buk.s_max   = qMax( ( buk.s_min + 0.0001 ), buk.s_max );
    }
 
    else if ( buk.s_max <= 0.0 )
    {  // All-negative s's end at -0.1 at most
       buk.s_max   = qMin( -0.1, buk.s_max );
-      buk.s_min   = qMin( ( buk.s_max - 0.1 ), buk.s_min );
+      buk.s_min   = qMin( ( buk.s_max - 0.0001 ), buk.s_min );
    }
 
    else if ( ( buk.s_min + buk.s_max ) >= 0.0 )
@@ -469,6 +469,6 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
    }
 
    buk.ff0_min = qMax(  1.0, buk.ff0_min );
-   buk.ff0_max = qMax( ( buk.ff0_min + 0.1 ), buk.ff0_max );
+   buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
 }
 
