@@ -410,7 +410,7 @@ void US_DataLoader::list_data()
    tw_data->setHeaderLabel( tr( "Edited Data Sets" ) );
    
    QTreeWidgetItem* twi_edit;
-   QTreeWidgetItem* twi_runi;
+   QTreeWidgetItem* twi_runi = NULL;
    QTreeWidgetItem* twi_trip;
 
    dlabels                   = datamap.keys();
@@ -759,7 +759,8 @@ void US_DataLoader::scan_local_edit( void )
 // Pare down data description map to only latest edit
 void US_DataLoader::pare_to_latest( void )
 {
-   QStringList keys = datamap.keys();
+   QStringList       keys = datamap.keys();
+   QList< DataDesc > vals = datamap.values();
 
    for ( int ii = 0; ii < keys.size() - 1; ii++ )
    {
@@ -780,8 +781,19 @@ void US_DataLoader::pare_to_latest( void )
       if ( cstype != fstype )
          continue;
 
-      // this record's label differs from next only by edit code: remove it
-      datamap.remove( clabel );
+      // This record's label differs from next only by edit code: remove it
+      QString   cdtxt = vals.at( ii ).date;
+      QString   fdtxt = vals.at( jj ).date;
+      QDateTime cdate = QDateTime::fromString( cdtxt, Qt::ISODate );
+      QDateTime fdate = QDateTime::fromString( fdtxt, Qt::ISODate );
+//qDebug() << "PARE ii" << ii << "C,F date" << cdtxt << fdtxt;
+//qDebug() << "  C,F lab" << clabel << flabel;
+//qDebug() << "   (C<=F)" << (cdate<=fdate) << " C,F dt" << cdate << fdate;
+
+      if ( cdate <= fdate )         // Remove the earlier of the two
+         datamap.remove( clabel );
+      else
+         datamap.remove( flabel );
    }
 }
 
