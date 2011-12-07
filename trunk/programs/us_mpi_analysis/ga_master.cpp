@@ -114,7 +114,7 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
-   int    avg_generation       = -1;
+   int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
    double best_overall_fitness = 1.0e99;
@@ -165,10 +165,9 @@ QString s;
 
             sum = 0;
             for ( int i = 1; i < proc_count; i++ ) 
-               //sum += generations[ worker ];
                sum += generations[ i ];
 
-            avg = qRound( sum / ( proc_count - 1 ) );
+            avg = qRound( sum / ( proc_count - 1 ) ) + 1;
 
             if ( avg > avg_generation )
             {

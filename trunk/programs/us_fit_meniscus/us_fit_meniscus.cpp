@@ -493,8 +493,8 @@ void US_FitMeniscus::file_loaded( QString fn )
    fname_load = fn.section( "/", -1, -1 );
 
    QString edittrip = fname_load.section( ".", -3, -3 );
-   QString editID   = edittrip.section( "-", 0, 0 ).mid( 1 );
-   QString tripnode = edittrip.section( "-", 1, 1 );
+   QString editID   = edittrip.section( "-",  0, -2 ).mid( 1 );
+   QString tripnode = edittrip.section( "-", -1, -1 );
    QString runID    = filedir.section( "/", -1, -1 );
    QString tripl    = tripnode.left( 1 ) + "." +
                       tripnode.mid( 1, 1 ) + "." +

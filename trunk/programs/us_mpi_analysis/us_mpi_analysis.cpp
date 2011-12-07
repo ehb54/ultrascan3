@@ -61,7 +61,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 
    if ( my_rank == 0 )
    {
-      submitTime      = QFileInfo( xmlfile ).lastModified();
+      submitTime      = QFileInfo( tarfile ).lastModified();
 DbgLv(0) << "submitTime " << submitTime;
    }
 
