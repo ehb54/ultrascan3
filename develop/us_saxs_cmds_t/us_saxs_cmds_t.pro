@@ -4,6 +4,7 @@ SOURCES		+= ../src/us_saxs_gp.cpp
 SOURCES		+= ../src/us_saxs_util.cpp
 SOURCES		+= ../src/us_saxs_util_a2sb.cpp
 SOURCES		+= ../src/us_saxs_util_asab1.cpp
+SOURCES		+= ../src/us_saxs_util_cuda.cpp
 SOURCES		+= ../src/us_saxs_util_dmd.cpp
 SOURCES		+= ../src/us_saxs_util_extern.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate.cpp

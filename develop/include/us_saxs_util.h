@@ -1090,6 +1090,13 @@ class US_EXTERN US_Saxs_Util
       bool                  bspline_prepare      ( unsigned int knots, 
                                                    unsigned int degree );
       bool                  bspline_test         ();
+
+      bool                  iqq_cuda             (
+                                                  vector < double >            &q,
+                                                  vector < saxs_atom >         &atoms,
+                                                  vector < vector < double > > &fp,
+                                                  vector < double >            &I
+                                                  );
 };
 
 #endif

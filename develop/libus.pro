@@ -268,6 +268,7 @@ SOURCES += \
   src/us_saxs_gp.cpp \
   src/us_saxs_util.cpp \
   src/us_saxs_util_a2sb.cpp \
+  src/us_saxs_util_cuda.cpp \
   src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
   src/us_saxs_util_hydrate.cpp \

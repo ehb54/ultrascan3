@@ -836,63 +836,71 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
       double rik; // distance from atom i to k 
       double qrik; // q * rik
       double sqrikd; // sin * q * rik / qrik
-      for ( unsigned int i = 0; i < as1; i++ )
+      if ( control_parameters.count( "iqcuda" ) )
       {
-         for ( unsigned int k = i + 1; k < as; k++ )
+         if ( !iqq_cuda( q, atoms, fp, I ) )
          {
-            rik = 
-               sqrt(
-                    (atoms[i].pos[0] - atoms[k].pos[0]) *
-                    (atoms[i].pos[0] - atoms[k].pos[0]) +
-                    (atoms[i].pos[1] - atoms[k].pos[1]) *
-                    (atoms[i].pos[1] - atoms[k].pos[1]) +
-                    (atoms[i].pos[2] - atoms[k].pos[2]) *
-                    (atoms[i].pos[2] - atoms[k].pos[2])
-                    );
-            if ( our_saxs_options.subtract_radius )
+            return false;
+         }
+      } else {
+         for ( unsigned int i = 0; i < as1; i++ )
+         {
+            for ( unsigned int k = i + 1; k < as; k++ )
             {
-               rik = rik - atoms[i].radius - atoms[k].radius;
-               if ( rik < 0e0 )
+               rik = 
+                  sqrt(
+                       (atoms[i].pos[0] - atoms[k].pos[0]) *
+                       (atoms[i].pos[0] - atoms[k].pos[0]) +
+                       (atoms[i].pos[1] - atoms[k].pos[1]) *
+                       (atoms[i].pos[1] - atoms[k].pos[1]) +
+                       (atoms[i].pos[2] - atoms[k].pos[2]) *
+                       (atoms[i].pos[2] - atoms[k].pos[2])
+                       );
+               if ( our_saxs_options.subtract_radius )
                {
-                  rik = 0e0;
+                  rik = rik - atoms[i].radius - atoms[k].radius;
+                  if ( rik < 0e0 )
+                  {
+                     rik = 0e0;
+                  }
+               }
+               
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  qrik = rik * q[j];
+                  sqrikd = ( fabs(qrik) < 1e-30 ) ? 1.0 : sin(qrik) / qrik;
+                  I[j] += 2.0 * fp[j][i] * fp[j][k] * sqrikd;
+                  Ia[j] += 2.0 * f[j][i] * f[j][k] * sqrikd;
+                  Ic[j] += 2.0 * fc[j][i] * fc[j][k] * sqrikd;
+               } // j
+            } // k
+            if ( our_saxs_options.autocorrelate )
+            {
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  I[j] += fp[j][i] * fp[j][i];
+                  Ia[j] += f[j][i] * f[j][i];
+                  Ic[j] += fc[j][i] * fc[j][i];
                }
             }
-
-            for ( unsigned int j = 0; j < q_points; j++ )
-            {
-               qrik = rik * q[j];
-               sqrikd = ( fabs(qrik) < 1e-30 ) ? 1.0 : sin(qrik) / qrik;
-               I[j] += 2.0 * fp[j][i] * fp[j][k] * sqrikd;
-               Ia[j] += 2.0 * f[j][i] * f[j][k] * sqrikd;
-               Ic[j] += 2.0 * fc[j][i] * fc[j][k] * sqrikd;
-            } // j
-         } // k
+         }
          if ( our_saxs_options.autocorrelate )
          {
             for ( unsigned int j = 0; j < q_points; j++ )
             {
-               I[j] += fp[j][i] * fp[j][i];
-               Ia[j] += f[j][i] * f[j][i];
-               Ic[j] += fc[j][i] * fc[j][i];
+               I[j] += fp[j][as1] * fp[j][as1];
+               Ia[j] += f[j][as1] * f[j][as1];
+               Ic[j] += fc[j][as1] * fc[j][as1];
             }
          }
-      }
-      if ( our_saxs_options.autocorrelate )
-      {
-         for ( unsigned int j = 0; j < q_points; j++ )
-         {
-            I[j] += fp[j][as1] * fp[j][as1];
-            Ia[j] += f[j][as1] * f[j][as1];
-            Ic[j] += fc[j][as1] * fc[j][as1];
-         }
-      }
 
-      //for ( unsigned int j = 0; j < q_points; j++ )
-      //      {
-      //         I[j] = I[j] > 0.0 ? log10(I[j]) : 0.0;
-      //         Ia[j] = Ia[j] > 0.0 ? log10(Ia[j]) : 0.0;
-      //         Ic[j] = Ic[j] > 0.0 ? log10(Ic[j]) : 0.0;
-      //      }
+         //for ( unsigned int j = 0; j < q_points; j++ )
+         //      {
+         //         I[j] = I[j] > 0.0 ? log10(I[j]) : 0.0;
+         //         Ia[j] = Ia[j] > 0.0 ? log10(Ia[j]) : 0.0;
+         //         Ic[j] = Ic[j] > 0.0 ? log10(Ic[j]) : 0.0;
+         //      }
+      }
 
       noticemsg += "I(q) computed.\n";
 

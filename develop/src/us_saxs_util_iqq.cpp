@@ -140,6 +140,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrationscd|"
                       "saxs|"
                       "iqmethod|"
+                      "iqcuda|"
                       "fdbinsize|"
                       "fdmodulation|"
                       "hypoints|"

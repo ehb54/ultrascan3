@@ -1,5 +1,6 @@
 #include "../include/us_saxs_cmds_t.h"
 #include "../include/us_revision.h"
+#include "us_cuda.h"
 
 // globals to remove dependencies on libus
 // a better job could be done
@@ -61,6 +62,7 @@ int main (int argc, char **argv)
              "              \tproduce a weighted merge of the two files\n"
              "iq            \tcontrolfile\n"
              "              \tcompute a saxs curve (can be a .tar)\n"
+             "cuda          \tcuda test\n"
              , argv[0]
              );
       exit(-1);
@@ -1701,6 +1703,14 @@ int main (int argc, char **argv)
          exit( errorbase - 1 );
       }
       exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "cuda" ) 
+   {
+     cout << "cuda test\n";
+     cuda_hello_world();
+     exit( 0 );
    }
    errorbase -= 1000;
 
