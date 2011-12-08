@@ -62,7 +62,9 @@ int main (int argc, char **argv)
              "              \tproduce a weighted merge of the two files\n"
              "iq            \tcontrolfile\n"
              "              \tcompute a saxs curve (can be a .tar)\n"
+#if defined( CUDA )
              "cuda          \tcuda test\n"
+#endif
              , argv[0]
              );
       exit(-1);
@@ -1706,6 +1708,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
+#if defined( CUDA )
    if ( cmds[0].lower() == "cuda" ) 
    {
      cout << "cuda test\n";
@@ -1713,6 +1716,7 @@ int main (int argc, char **argv)
      exit( 0 );
    }
    errorbase -= 1000;
+#endif
 
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
    exit(-2);
