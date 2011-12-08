@@ -1,5 +1,11 @@
 #include "../include/us_saxs_util.h"
 
+#define IQQ_TIMER
+
+#if defined(IQQ_TIMER)
+#  include "../include/us_timer.h"
+#endif
+
 #define SAXS_MIN_Q 1e-6
 #define SLASH QDir::separator();
 
@@ -573,8 +579,21 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
    // right now we are going with first residue map entry
    QRegExp count_hydrogens("H(\\d)");
 
+#if defined(IQQ_TIMER)
+   cout << "timer enabled\n";
+#endif
+
    for ( unsigned int i = 0; i < model_vector.size(); i++ )
    {
+#if defined(IQQ_TIMER)
+      US_Timer iqq_timers;
+      iqq_timers.init_timer ( "iqq native debye" );
+      iqq_timers.init_timer ( "iqq native debye setup" );
+      iqq_timers.init_timer ( "iqq native debye compute f" );
+      iqq_timers.init_timer ( "iqq native debye compute I" );
+      iqq_timers.start_timer( "iqq native debye" );
+      iqq_timers.start_timer( "iqq native debye setup" );
+#endif
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -685,6 +704,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
          }
       }
                
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq native debye setup" );
+      iqq_timers.start_timer( "iqq native debye compute f" );
+#endif
       // ok now we have all the atoms
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options.end_q - our_saxs_options.start_q) / our_saxs_options.delta_q) + .5) + 1;
@@ -818,6 +841,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
          }
       }            
 
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq native debye compute f" );
+      iqq_timers.start_timer( "iqq native debye compute I" );
+#endif
       noticemsg += "f' computed, starting computation of I(q)\n";
       vector < double > I;
       vector < double > Ia;
@@ -902,6 +929,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
          //      }
       }
 
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq native debye compute I" );
+      iqq_timers.end_timer  ( "iqq native debye" );
+      cout << iqq_timers.list_times() << flush;
+#endif
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
