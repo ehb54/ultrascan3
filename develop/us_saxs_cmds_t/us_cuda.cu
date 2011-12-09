@@ -63,10 +63,19 @@ void cuda_debye(
 		float *      I    // the computed debye output, q_points
 		)
 {
+#define MAXN 100000
+#define TPB  2
+  if ( n > MAXN )
+  {
+     printf( "n was %u, now set to %u\n", n, MAXN );
+     n = MAXN;
+  }
+
   int devID;
   cudaDeviceProp props;
   
   // get number of SMs on this GPU
+  //  CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
   CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
   CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
 
@@ -127,7 +136,7 @@ void cuda_debye(
   // each thread will create its own I which we will have to sum at the end
   unsigned int threads         = q_points;
       
-  unsigned int threadsPerBlock = 256;
+  unsigned int threadsPerBlock = TPB;
   unsigned int blocksPerGrid   = (q_points + threadsPerBlock - 1) / threadsPerBlock;
 
   printf( "cuda_debye:\n"
