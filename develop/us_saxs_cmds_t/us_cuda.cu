@@ -71,6 +71,58 @@ void cuda_debye(
   CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
 
   printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
+  printf( 
+	  "totalGlobalMem               %d\n"
+          "sharedMemPerBlock            %d\n"
+          "regsPerBlock                 %d\n"
+          "warpSize                     %d\n"
+          "memPitch                     %d\n"
+          "maxThreadsPerBlock           %d\n"
+          "maxThreadsDim                %d %d %d\n"
+          "maxGridSize                  %d %d %d\n"
+          "clockRate                    %d\n"
+          "totalConstMem                %d\n"
+          "multiProcessorCount          %d\n"
+          "kernelExecTimeoutEnabled     %d\n"
+          "canMapHostMemory             %d\n"
+          "computeMode                  %d\n"
+          "concurrentKernels            %d\n"
+          "asyncEngineCount             %d\n"
+          "unifiedAddressing            %d\n"
+          "memoryClockRate              %d\n"
+          "memoryBusWidth               %d\n"
+          "l2CacheSize                  %d\n"
+          "maxThreadsPerMultiProcessor  %d\n"
+
+	  , props.totalGlobalMem
+          , props.sharedMemPerBlock
+          , props.regsPerBlock
+          , props.warpSize
+          , props.memPitch
+          , props.maxThreadsPerBlock
+          , props.maxThreadsDim[0]
+          , props.maxThreadsDim[1]
+          , props.maxThreadsDim[2]
+          , props.maxGridSize  [0]
+          , props.maxGridSize  [1]
+          , props.maxGridSize  [2]
+          , props.clockRate
+          , props.totalConstMem
+          , props.multiProcessorCount
+          , props.kernelExecTimeoutEnabled
+          , props.canMapHostMemory
+          , props.computeMode
+          , props.concurrentKernels
+          , props.asyncEngineCount
+          , props.unifiedAddressing
+          , props.memoryClockRate
+          , props.memoryBusWidth
+          , props.l2CacheSize
+          , props.maxThreadsPerMultiProcessor
+  );
+	
+
+
 
   // each thread will create its own I which we will have to sum at the end
   unsigned int threads         = q_points;
@@ -137,6 +189,64 @@ void cuda_debye(
 int
 cuda_hello_world()
 {
+  int devID;
+  cudaDeviceProp props;
+
+  CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
+  CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
+
+  printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
+  printf( 
+	  "totalGlobalMem               %d\n"
+          "sharedMemPerBlock            %d\n"
+          "regsPerBlock                 %d\n"
+          "warpSize                     %d\n"
+          "memPitch                     %d\n"
+          "maxThreadsPerBlock           %d\n"
+          "maxThreadsDim                %d %d %d\n"
+          "maxGridSize                  %d %d %d\n"
+          "clockRate                    %d\n"
+          "totalConstMem                %d\n"
+          "multiProcessorCount          %d\n"
+          "kernelExecTimeoutEnabled     %d\n"
+          "canMapHostMemory             %d\n"
+          "computeMode                  %d\n"
+          "concurrentKernels            %d\n"
+          "asyncEngineCount             %d\n"
+          "unifiedAddressing            %d\n"
+          "memoryClockRate              %d\n"
+          "memoryBusWidth               %d\n"
+          "l2CacheSize                  %d\n"
+          "maxThreadsPerMultiProcessor  %d\n"
+
+	  , props.totalGlobalMem
+          , props.sharedMemPerBlock
+          , props.regsPerBlock
+          , props.warpSize
+          , props.memPitch
+          , props.maxThreadsPerBlock
+          , props.maxThreadsDim[0]
+          , props.maxThreadsDim[1]
+          , props.maxThreadsDim[2]
+          , props.maxGridSize  [0]
+          , props.maxGridSize  [1]
+          , props.maxGridSize  [2]
+          , props.clockRate
+          , props.totalConstMem
+          , props.multiProcessorCount
+          , props.kernelExecTimeoutEnabled
+          , props.canMapHostMemory
+          , props.computeMode
+          , props.concurrentKernels
+          , props.asyncEngineCount
+          , props.unifiedAddressing
+          , props.memoryClockRate
+          , props.memoryBusWidth
+          , props.l2CacheSize
+          , props.maxThreadsPerMultiProcessor
+  );
+
+
   int i;
 
   // desired output
