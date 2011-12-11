@@ -2,16 +2,15 @@
 
 #if defined( CUDA )
 # include "../us_saxs_cmds_t/us_cuda.h"
-#endif
 
 bool US_Saxs_Util::iqq_cuda( 
                             vector < double >            &q,
                             vector < saxs_atom >         &atoms,
                             vector < vector < double > > &fp,
-                            vector < double >            &I
+                            vector < double >            &I,
+                            unsigned int                 threads_per_block
                             )
 {
-#if defined( CUDA )
 
    if ( !our_saxs_options.autocorrelate )
    {
@@ -57,7 +56,8 @@ bool US_Saxs_Util::iqq_cuda(
               f_q.size(),
               &( f_q[ 0 ] ),
               &( f_fp[ 0 ] ),
-              &( f_I[ 0 ] ) 
+              &( f_I[ 0 ] ),
+              threads_per_block
               );
 
    for ( unsigned int i = 0; i < I.size(); i++ )
@@ -68,6 +68,14 @@ bool US_Saxs_Util::iqq_cuda(
 }
 
 #else 
+bool US_Saxs_Util::iqq_cuda( 
+                            vector < double >            &,
+                            vector < saxs_atom >         &,
+                            vector < vector < double > > &,
+                            vector < double >            &,
+                            unsigned int                 
+                            )
+{
    errormsg = "Cuda not supported in this version";
    return false;
 }

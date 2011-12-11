@@ -65,11 +65,13 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       QLabel        *lbl_no_of_jobs;
       QLineEdit     *le_no_of_jobs;
+      QValidator    *le_no_of_jobs_qv;
 
       QLabel        *lbl_output_name;
       QLineEdit     *le_output_name;
 
       QCheckBox     *cb_for_mpi;
+      QCheckBox     *cb_split_grid;
       QPushButton   *pb_dmd;
       QPushButton   *pb_advanced;
 
@@ -140,6 +142,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       bool          create_enabled;
       QString       options_summary();
 
+      void          update_validator();
+
    private slots:
 
       void setupGUI();
@@ -155,6 +159,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void load_results();
 
       void for_mpi();
+      void split_grid();
       void dmd();
       void advanced();
 

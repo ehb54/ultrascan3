@@ -16,6 +16,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
    saxs_I_for_csv        .clear();
    file_write_count      .clear();
    write_output_count    = 0;
+   timings               = "";
    
    env_ultrascan = getenv( "ULTRASCAN" );
 #if !defined( USE_MPI )
@@ -1613,3 +1614,34 @@ bool US_Saxs_Util::flush_output_one()
    }
    return true;
 }
+
+bool US_Saxs_Util::write_timings( QString file, QString msg )
+{
+   if ( timings.isEmpty() )
+   {
+      return true;
+   }
+
+   unsigned int ext = 0;
+   QString out_file = file;
+   while ( QFile::exists( out_file ) )
+   {
+      out_file = QString( "%1-%2" ).arg( file ).arg( ++ext );
+   }
+
+   QFile f( out_file );
+   if ( f.open( IO_WriteOnly ) )
+   {
+      QTextStream ts( &f );
+      ts << msg << endl;
+      ts << timings;
+      f.close();
+      timings = "";
+      output_files << out_file;
+      return true;
+   }
+   timings  = "";
+   errormsg = QString( "Error: could not open timing output file %1" ).arg( out_file );
+   return false;
+}
+

@@ -1095,8 +1095,11 @@ class US_EXTERN US_Saxs_Util
                                                   vector < double >            &q,
                                                   vector < saxs_atom >         &atoms,
                                                   vector < vector < double > > &fp,
-                                                  vector < double >            &I
+                                                  vector < double >            &I,
+                                                  unsigned int                 threads_per_block
                                                   );
+      QString               timings;
+      bool                  write_timings        ( QString file, QString msg );
 };
 
 #endif

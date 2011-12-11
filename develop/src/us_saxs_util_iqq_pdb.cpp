@@ -11,7 +11,7 @@
 
 static bool save_calc_to_csv = false;
 
-bool US_Saxs_Util::calc_saxs_iq_native_fast( )
+bool US_Saxs_Util::calc_saxs_iq_native_fast()
 {
    errormsg = "";
    noticemsg = "";
@@ -22,6 +22,15 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast( )
    
    for ( unsigned int i = 0; i < model_vector.size(); i++ )
    {
+#if defined(IQQ_TIMER)
+      US_Timer iqq_timers;
+      iqq_timers.init_timer ( "iqq fast debye" );
+      iqq_timers.init_timer ( "iqq fast debye setup" );
+      iqq_timers.init_timer ( "iqq fast debye compute f" );
+      iqq_timers.init_timer ( "iqq fast debye compute I" );
+      iqq_timers.start_timer( "iqq fast debye" );
+      iqq_timers.start_timer( "iqq fast debye setup" );
+#endif
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -140,6 +149,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast( )
          }
       }
       
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq fast debye setup" );
+      iqq_timers.start_timer( "iqq fast debye compute f" );
+#endif
       // ok now we have all the atoms
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options.end_q - our_saxs_options.start_q) / our_saxs_options.delta_q) + .5) + 1;
@@ -209,7 +222,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast( )
          fc[0][i] = vie;
          fp[0][i] = f[0][i] - fc[0][i];
       }
-
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq fast debye compute f" );
+      iqq_timers.start_timer( "iqq fast debye compute I" );
+#endif
       // foxs method: compute real space distribution
 
       unsigned int as = atoms.size();
@@ -558,6 +574,22 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast( )
          // cout << "I[" << i << "] = " << I[i] << endl;
       }
          
+#if defined(IQQ_TIMER)
+      {
+         iqq_timers.end_timer  ( "iqq fast debye compute I" );
+         iqq_timers.end_timer  ( "iqq fast debye" );
+         cout << iqq_timers.list_times() << flush;
+         timings = iqq_timers.list_times();
+         QString file = 
+            QString( "%1_%2_q%3-%4.timing" )
+            .arg( control_parameters[ "outputfile" ] )
+            .arg( current_model + 1 )
+            .arg( q_points )
+            .arg( control_parameters[ "iqmethod" ] )
+            ;
+         write_timings( file, file );
+      }
+#endif
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
@@ -570,7 +602,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast( )
 }
 
 //  ------------------------------------------------------------------------------------------------------
-bool US_Saxs_Util::calc_saxs_iq_native_debye( )
+bool US_Saxs_Util::calc_saxs_iq_native_debye()
 {
    errormsg = "";
    noticemsg = "";
@@ -865,7 +897,9 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
       double sqrikd; // sin * q * rik / qrik
       if ( control_parameters.count( "iqcuda" ) )
       {
-         if ( !iqq_cuda( q, atoms, fp, I ) )
+         if ( !iqq_cuda( q, atoms, fp, I, 
+                         control_parameters[ "iqcuda" ].toUInt() > 0 ?
+                         control_parameters[ "iqcuda" ].toUInt() : 32 ) )
          {
             return false;
          }
@@ -930,9 +964,20 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
       }
 
 #if defined(IQQ_TIMER)
-      iqq_timers.end_timer  ( "iqq native debye compute I" );
-      iqq_timers.end_timer  ( "iqq native debye" );
-      cout << iqq_timers.list_times() << flush;
+      {
+         iqq_timers.end_timer  ( "iqq native debye compute I" );
+         iqq_timers.end_timer  ( "iqq native debye" );
+         cout << iqq_timers.list_times() << flush;
+         timings = iqq_timers.list_times();
+         QString file = 
+            QString( "%1_%2_q%3-%4.timing" )
+            .arg( control_parameters[ "outputfile" ] )
+            .arg( current_model + 1 )
+            .arg( q_points )
+            .arg( control_parameters[ "iqmethod" ] )
+            ;
+         write_timings( file, file );
+      }
 #endif
       noticemsg += "I(q) computed.\n";
 
@@ -946,7 +991,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye( )
 }
 
 //  ------------------------------------------------------------------------------------------------------
-bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
+bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
 {
    errormsg = "";
    noticemsg = "";
@@ -955,8 +1000,21 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
    // right now we are going with first residue map entry
    QRegExp count_hydrogens("H(\\d)");
 
+#if defined(IQQ_TIMER)
+   cout << "timer enabled\n";
+#endif
+
    for ( unsigned int i = 0; i < model_vector.size(); i++ )
    {
+#if defined(IQQ_TIMER)
+      US_Timer iqq_timers;
+      iqq_timers.init_timer ( "iqq hybrid debye" );
+      iqq_timers.init_timer ( "iqq hybrid debye setup" );
+      iqq_timers.init_timer ( "iqq hybrid debye compute f" );
+      iqq_timers.init_timer ( "iqq hybrid debye compute I" );
+      iqq_timers.start_timer( "iqq hybrid debye" );
+      iqq_timers.start_timer( "iqq hybrid debye setup" );
+#endif
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -1059,6 +1117,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
             atoms.push_back(new_atom);
          }
       }
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq hybrid debye setup" );
+      iqq_timers.start_timer( "iqq hybrid debye compute f" );
+#endif
          
       // ok now we have all the atoms
       unsigned int q_points = 
@@ -1143,6 +1205,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
 #endif
          }
       }
+#if defined(IQQ_TIMER)
+      iqq_timers.end_timer  ( "iqq hybrid debye compute f" );
+      iqq_timers.start_timer( "iqq hybrid debye compute I" );
+#endif
       noticemsg += "f' computed, starting computation of I(q)\n";
 
       // foxs method: compute real space distribution
@@ -1360,6 +1426,22 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid( )
          errormsg = save_errormsg;
       }
 
+#if defined(IQQ_TIMER)
+      {
+         iqq_timers.end_timer  ( "iqq hybrid debye compute I" );
+         iqq_timers.end_timer  ( "iqq hybrid debye" );
+         cout << iqq_timers.list_times() << flush;
+         timings = iqq_timers.list_times();
+         QString file = 
+            QString( "%1_%2_q%3-%4.timing" )
+            .arg( control_parameters[ "outputfile" ] )
+            .arg( current_model + 1 )
+            .arg( q_points )
+            .arg( control_parameters[ "iqmethod" ] )
+            ;
+         write_timings( file, file );
+      }
+#endif
       noticemsg += "I(q) computed.\n";
 
       if ( !write_output( current_model, q, I ) )

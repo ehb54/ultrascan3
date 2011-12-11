@@ -13,12 +13,14 @@
 
 #include "us_cuda.h"
 
+static bool failed;
+
 #  define CUDA_SAFE_CALL_NO_SYNC( call) {                                    \
     cudaError err = call;                                                    \
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n",        \
                 __FILE__, __LINE__, cudaGetErrorString( err) );              \
-        exit(EXIT_FAILURE);                                                  \
+        return false;                                                        \
     } }
 
 #  define CUDA_SAFE_CALL( call)     CUDA_SAFE_CALL_NO_SYNC(call);                                            \
@@ -28,7 +30,7 @@
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error: %s in file '%s' in line %i : %s.\n",    \
                 errorMessage, __FILE__, __LINE__, cudaGetErrorString( err) );\
-        exit(EXIT_FAILURE);                                                  \
+        return false;                                                        \
     }                                                                        \
     }
 
@@ -40,48 +42,50 @@ __global__ void cudaDebye(
                           const float * q,
                           const float * pos,
                           const float * fp,
-                          float *       I
+                          float *       I,
+                          unsigned int  threads_per_block
                           );
 
 // cuda debye, everything must be preallocated
-void cuda_debye( 
-		bool         autocorrelate,
-		unsigned int n,   // number of atoms
-		float *      pos, // each atom will have 3 floats for coordinates, 
-		// so this will have 3 * n entries
+bool cuda_debye( 
+                bool         autocorrelate,
+                unsigned int n,   // number of atoms
+                float *      pos, // each atom will have 3 floats for coordinates, 
+                // so this will have 3 * n entries
 
-		unsigned int q_points,
-		float *      q,   // this is the q grid
+                unsigned int q_points,
+                float *      q,   // this is the q grid
 
-		float *      fp,  // this has the scattering factors for each atom
-		// it is 2d and it will have n * q_points entries
+                float *      fp,  // this has the scattering factors for each atom
+                // it is 2d and it will have n * q_points entries
                 // currently it is in atom, q order
                 // it would be good to test q, atom order since we are currently 
                 // computing I(q) with q per thread
-		
-		// output:
-		float *      I    // the computed debye output, q_points
-		)
-{
-#define MAXN 100000
-#define TPB  2
-  if ( n > MAXN )
-  {
-     printf( "n was %u, now set to %u\n", n, MAXN );
-     n = MAXN;
-  }
-
-  int devID;
-  cudaDeviceProp props;
   
-  // get number of SMs on this GPU
-  //  CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
-  CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
-  CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
+                // output:
+                float *      I    // the computed debye output, q_points
+                )
+{
 
-  printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
-  printf( 
-	  "totalGlobalMem               %d\n"
+#define MAXN 10000000
+
+   if ( n > MAXN )
+   {
+      printf( "n was %u, now set to %u\n", n, MAXN );
+      n = MAXN;
+   }
+
+   int devID;
+   cudaDeviceProp props;
+  
+   // get number of SMs on this GPU
+   //  CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
+   CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
+   CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
+
+   printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
+   printf( 
+          "totalGlobalMem               %lu\n"
           "sharedMemPerBlock            %d\n"
           "regsPerBlock                 %d\n"
           "warpSize                     %d\n"
@@ -103,7 +107,7 @@ void cuda_debye(
           "l2CacheSize                  %d\n"
           "maxThreadsPerMultiProcessor  %d\n"
 
-	  , props.totalGlobalMem
+          , props.totalGlobalMem
           , props.sharedMemPerBlock
           , props.regsPerBlock
           , props.warpSize
@@ -128,85 +132,99 @@ void cuda_debye(
           , props.memoryBusWidth
           , props.l2CacheSize
           , props.maxThreadsPerMultiProcessor
-  );
-	
-
-
-
-  // each thread will create its own I which we will have to sum at the end
-  unsigned int threads         = q_points;
+          );
+ 
+   // each thread will create its own I which we will have to sum at the end
+   unsigned int threads         = q_points;
       
-  unsigned int threadsPerBlock = TPB;
-  unsigned int blocksPerGrid   = (q_points + threadsPerBlock - 1) / threadsPerBlock;
+   unsigned int threadsPerBlock = threads_per_block;
+   unsigned int blocksPerGrid   = (q_points + threadsPerBlock - 1) / threadsPerBlock;
 
-  printf( "cuda_debye:\n"
-	  "threads         : %u\n"
-	  "threadsperblock : %u\n"
-	  "blockspergrid   : %u\n"
-	  , threads
-	  , threadsPerBlock
-	  , blocksPerGrid
-	  );
 
-  printf( "starting cudaDebye\n" );
+   unsigned long memory_req     = 
+      (unsigned long) ( q_points *     sizeof( float ) ) +
+      (unsigned long) ( 3 * n *        sizeof( float ) ) +
+      (unsigned long) ( n * q_points * sizeof( float ) ) +
+      (unsigned long) ( q_points     * sizeof( float ) );;
 
-  // Allocate vectors in device memory
-  float * d_pos;
-  float * d_fp;
-  float * d_q; 
-  float * d_I; 
 
-  CUDA_SAFE_CALL( cudaMalloc( (void**)&d_q  , q_points *     sizeof( float ) ) );
-  CUDA_SAFE_CALL( cudaMalloc( (void**)&d_pos, 3 * n *        sizeof( float ) ) );
-  CUDA_SAFE_CALL( cudaMalloc( (void**)&d_fp , n * q_points * sizeof( float ) ) );
-  CUDA_SAFE_CALL( cudaMalloc( (void**)&d_I  , q_points     * sizeof( float ) ) );
+   printf( "cuda_debye:\n"
+           "memory required : %lu\n"
+           "threads         : %u\n"
+           "threadsperblock : %u\n"
+           "blockspergrid   : %u\n"
+           , memory_req
+           , threads
+           , threadsPerBlock
+           , blocksPerGrid
+           );
 
-  // Copy vectors from host memory to device memory
-  CUDA_SAFE_CALL( cudaMemcpy( d_q  , q  , q_points *     sizeof( float ) , cudaMemcpyHostToDevice) );
-  CUDA_SAFE_CALL( cudaMemcpy( d_pos, pos, 3 * n *        sizeof( float ) , cudaMemcpyHostToDevice) );
-  CUDA_SAFE_CALL( cudaMemcpy( d_fp , fp , n * q_points * sizeof( float ) , cudaMemcpyHostToDevice) );
+   if ( props.totalGlobalMem < memory_req )
+   {
+      printf( "insufficient memory to run cuda debye on this device" );
+      return false;
+   }
 
-  // Invoke kernel
-  cudaDebye<<<blocksPerGrid, threadsPerBlock>>>( n, q_points, d_q, d_pos, d_fp, d_I );
-  CUT_CHECK_ERROR( "cudaDebye() execution failed\n" );
+   printf( "starting cudaDebye\n" );
 
-  // Copy result from device memory to host memory
-  // h_C contains the result in host memory
-  CUDA_SAFE_CALL( cudaMemcpy( I, d_I, q_points * sizeof( float ), cudaMemcpyDeviceToHost) );
+   // Allocate vectors in device memory
+   float * d_pos;
+   float * d_fp;
+   float * d_q; 
+   float * d_I; 
 
-  if ( d_q )
-  {
-     cudaFree( d_q );
-  }
-  if ( d_pos )
-  {
-     cudaFree( d_pos );
-  }
-  if ( d_fp )
-  {
-     cudaFree( d_fp );
-  }
-  if ( d_I )
-  {
-     cudaFree( d_I );
-  }
+   CUDA_SAFE_CALL( cudaMalloc( (void**)&d_q  , q_points *     sizeof( float ) ) );
+   CUDA_SAFE_CALL( cudaMalloc( (void**)&d_pos, 3 * n *        sizeof( float ) ) );
+   CUDA_SAFE_CALL( cudaMalloc( (void**)&d_fp , n * q_points * sizeof( float ) ) );
+   CUDA_SAFE_CALL( cudaMalloc( (void**)&d_I  , q_points     * sizeof( float ) ) );
 
-  printf( "end cudaDebye\n" );
+   // Copy vectors from host memory to device memory
+   CUDA_SAFE_CALL( cudaMemcpy( d_q  , q  , q_points *     sizeof( float ) , cudaMemcpyHostToDevice) );
+   CUDA_SAFE_CALL( cudaMemcpy( d_pos, pos, 3 * n *        sizeof( float ) , cudaMemcpyHostToDevice) );
+   CUDA_SAFE_CALL( cudaMemcpy( d_fp , fp , n * q_points * sizeof( float ) , cudaMemcpyHostToDevice) );
+
+   // Invoke kernel
+   cudaDebye<<<blocksPerGrid, threadsPerBlock>>>( n, q_points, d_q, d_pos, d_fp, d_I );
+   CUT_CHECK_ERROR( "cudaDebye() execution failed\n" );
+
+   // Copy result from device memory to host memory
+   // h_C contains the result in host memory
+   CUDA_SAFE_CALL( cudaMemcpy( I, d_I, q_points * sizeof( float ), cudaMemcpyDeviceToHost) );
+
+   if ( d_q )
+   {
+      cudaFree( d_q );
+   }
+   if ( d_pos )
+   {
+      cudaFree( d_pos );
+   }
+   if ( d_fp )
+   {
+      cudaFree( d_fp );
+   }
+   if ( d_I )
+   {
+      cudaFree( d_I );
+   }
+
+   printf( "end cudaDebye\n" );
+   return true;
 }
 
 // Host function
-int
+bool
 cuda_hello_world()
 {
-  int devID;
-  cudaDeviceProp props;
+   int devID;
+   cudaDeviceProp props;
 
-  CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
-  CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
+   CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
+   CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
 
-  printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
-  printf( 
-	  "totalGlobalMem               %d\n"
+   printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
+   printf( 
+          "totalGlobalMem               %d\n"
           "sharedMemPerBlock            %d\n"
           "regsPerBlock                 %d\n"
           "warpSize                     %d\n"
@@ -228,7 +246,7 @@ cuda_hello_world()
           "l2CacheSize                  %d\n"
           "maxThreadsPerMultiProcessor  %d\n"
 
-	  , props.totalGlobalMem
+          , props.totalGlobalMem
           , props.sharedMemPerBlock
           , props.regsPerBlock
           , props.warpSize
@@ -253,55 +271,55 @@ cuda_hello_world()
           , props.memoryBusWidth
           , props.l2CacheSize
           , props.maxThreadsPerMultiProcessor
-  );
+          );
 
 
-  int i;
+   int i;
 
-  // desired output
-  char str[] = "Hello World!";
+   // desired output
+   char str[] = "Hello World!";
 
-  // mangle contents of output
-  // the null character is left intact for simplicity
-  for(i = 0; i < 12; i++)
-    str[i] -= i;
+   // mangle contents of output
+   // the null character is left intact for simplicity
+   for(i = 0; i < 12; i++)
+      str[i] -= i;
 
-  // allocate memory on the device 
-  char *d_str;
-  size_t size = sizeof(str);
-  cudaMalloc((void**)&d_str, size);
+   // allocate memory on the device 
+   char *d_str;
+   size_t size = sizeof(str);
+   cudaMalloc((void**)&d_str, size);
 
-  // copy the string to the device
-  cudaMemcpy(d_str, str, size, cudaMemcpyHostToDevice);
+   // copy the string to the device
+   cudaMemcpy(d_str, str, size, cudaMemcpyHostToDevice);
 
-  // set the grid and block sizes
-  dim3 dimGrid(2);   // one block per word  
-  dim3 dimBlock(6); // one thread per character
+   // set the grid and block sizes
+   dim3 dimGrid(2);   // one block per word  
+   dim3 dimBlock(6); // one thread per character
   
-  // invoke the kernel
-  helloWorld<<< dimGrid, dimBlock >>>(d_str);
+   // invoke the kernel
+   helloWorld<<< dimGrid, dimBlock >>>(d_str);
 
-  // retrieve the results from the device
-  cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost);
+   // retrieve the results from the device
+   cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost);
 
-  // free up the allocated memory on the device
-  cudaFree(d_str);
+   // free up the allocated memory on the device
+   cudaFree(d_str);
   
-  // everyone's favorite part
-  printf("%s\n", str);
+   // everyone's favorite part
+   printf("%s\n", str);
 
-  return 0;
+   return strncmp( str, "Hello World!" , 12 );
 }
 
 // Device kernels
 __global__ void
 helloWorld( char* str )
 {
-  // determine where in the thread grid we are
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+   // determine where in the thread grid we are
+   int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-  // unmangle output
-  str[idx] += idx;
+   // unmangle output
+   str[idx] += idx;
 }
 
 // currently autocorrolate always on

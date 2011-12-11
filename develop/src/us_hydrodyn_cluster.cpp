@@ -213,7 +213,9 @@ void US_Hydrodyn_Cluster::setupGUI()
    lb_target_files = new QListBox(this, "target files listbox" );
    lb_target_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_target_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   lb_target_files->setEnabled(false);
+   lb_target_files->setEnabled(true);
+   lb_target_files->setSelectionMode( QListBox::NoSelection );
+   
    lb_target_files->setMinimumHeight( minHeight1 * 2 );
 
    lbl_no_of_jobs = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
@@ -222,14 +224,14 @@ void US_Hydrodyn_Cluster::setupGUI()
    lbl_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_no_of_jobs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   QValidator *qv = new QIntValidator( 1, selected_files.size(), this );
+   le_no_of_jobs_qv = new QIntValidator( 1, selected_files.size(), this );
    le_no_of_jobs = new QLineEdit(this, "csv_filename Line Edit");
    le_no_of_jobs->setText( "1" );
    le_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_no_of_jobs->setMinimumWidth(150);
    le_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_no_of_jobs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_no_of_jobs->setValidator( qv );
+   le_no_of_jobs->setValidator( le_no_of_jobs_qv );
 
    lbl_output_name = new QLabel(tr("Output base name (job identifier)"), this);
    lbl_output_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -252,6 +254,14 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
+
+   cb_split_grid = new QCheckBox(this);
+   cb_split_grid->setText(tr(" Individual jobs for each grid"));
+   cb_split_grid->setEnabled(true);
+   cb_split_grid->setChecked(false);
+   cb_split_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_split_grid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_split_grid, SIGNAL( clicked() ), SLOT( split_grid() ) );
 
    pb_dmd = new QPushButton(tr("DMD settings"), this);
    pb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -346,6 +356,8 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( cb_for_mpi );
    hbl_mpi_etc->addSpacing( 4 );
+   hbl_mpi_etc->addWidget ( cb_split_grid );
+   hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_dmd );
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_advanced );
@@ -419,6 +431,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    batch_window->cluster_target_datafiles = target_files;
    batch_window->cluster_output_name      = le_output_name->text();
    batch_window->cluster_for_mpi          = cb_for_mpi->isChecked();
+   batch_window->cluster_split_grid       = cb_split_grid->isChecked();
    batch_window->cluster_csv_advanced     = csv_advanced;
    batch_window->cluster_csv_dmd          = csv_dmd;
 
@@ -430,6 +443,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_Cluster::clear_target()
 {
    lb_target_files->clear();
+   update_validator();
 }
 
 void US_Hydrodyn_Cluster::add_target()
@@ -464,6 +478,7 @@ void US_Hydrodyn_Cluster::add_target()
    }
 
    lb_target_files->insertStringList( add_filenames );
+   update_validator();
 }
 
 void US_Hydrodyn_Cluster::create_pkg()
@@ -673,14 +688,17 @@ void US_Hydrodyn_Cluster::create_pkg()
 
    if ( lb_target_files->numRows() )
    {
-      base += 
-         QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( 0 ) ).fileName() );
-      base_source_files << lb_target_files->text( 0 );
-      for ( int i = 1; i < lb_target_files->numRows(); i++ )
+      if ( lb_target_files->numRows() == 1 || !cb_split_grid->isChecked() )
       {
          base += 
-            QString( "AdditionalExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( i ) ).fileName() );
-         base_source_files << lb_target_files->text( i );
+            QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( 0 ) ).fileName() );
+         base_source_files << lb_target_files->text( 0 );
+         for ( int i = 1; i < lb_target_files->numRows(); i++ )
+         {
+            base += 
+               QString( "AdditionalExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( i ) ).fileName() );
+            base_source_files << lb_target_files->text( i );
+         }
       }
    } else {
       base += 
@@ -751,8 +769,20 @@ void US_Hydrodyn_Cluster::create_pkg()
       editor_msg( "blue", tr( "Note: using Advanced Options" ) );
    }
 
-   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   unsigned int multi_grid_multiplier = 
+      cb_split_grid->isChecked() && lb_target_files->numRows() > 1 ?
+      lb_target_files->numRows() : 1;
+
+   for ( unsigned int this_i = 0; this_i < selected_files.size() * multi_grid_multiplier; this_i++ )
    {
+      unsigned int i    = this_i % selected_files.size();
+      if ( multi_grid_multiplier > 1 )
+      {
+         unsigned int grid = this_i / selected_files.size();
+         out += QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( grid ) ).fileName() );
+         source_files << lb_target_files->text( grid );
+      }
+
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       QString use_file_name = QFileInfo( selected_files[ i ] ).fileName();
       QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
@@ -778,7 +808,7 @@ void US_Hydrodyn_Cluster::create_pkg()
             out += "Process\n";
          }
       }
-      if ( !( ( i + 1 ) % max_no_of_jobs ) )
+      if ( !( ( this_i + 1 ) % max_no_of_jobs ) )
       {
          write_count++;
          QString ext = "";
@@ -1204,10 +1234,46 @@ bool US_Hydrodyn_Cluster::dup_in_submitted_or_completed()
 
 void US_Hydrodyn_Cluster::for_mpi()
 {
+   update_validator();
    if ( cb_for_mpi->isChecked() )
    {
-      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ));
-      disconnect( cb_for_mpi, SIGNAL( clicked() ) );
+      le_no_of_jobs->setText( QString( "%1" )
+                              .arg( cb_split_grid->isChecked() &&
+                                    lb_target_files->numRows() ?
+                                    selected_files.size() * lb_target_files->numRows() :
+                                    selected_files.size() ) );
+   } 
+}
+
+void US_Hydrodyn_Cluster::update_validator()
+{
+   le_no_of_jobs->setValidator( 0 );
+   if ( le_no_of_jobs_qv )
+   {
+      delete le_no_of_jobs_qv;
+   }
+   unsigned int max_jobs = 
+      ( cb_split_grid->isChecked() && lb_target_files->numRows() ) ?
+      selected_files.size() * lb_target_files->numRows() : selected_files.size();
+                           
+   le_no_of_jobs_qv = new QIntValidator( 1, 
+                                         max_jobs,
+                                         this
+                                         );
+   le_no_of_jobs ->setValidator( le_no_of_jobs_qv );
+   lbl_no_of_jobs->setText( QString(tr( "Number of jobs (maximum %1):" )).arg( max_jobs ) );
+   if ( le_no_of_jobs->text().toUInt() > max_jobs )
+   {
+      le_no_of_jobs->setText( QString( "%1" ).arg( max_jobs ) );
+   }
+}
+
+void US_Hydrodyn_Cluster::split_grid()
+{
+   update_validator();
+   if ( cb_for_mpi->isChecked() && cb_split_grid->isChecked() && lb_target_files->numRows() )
+   {
+      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() * lb_target_files->numRows() ) );
    }
 }
 
@@ -1416,7 +1482,10 @@ QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
          }
       }
 
-      out += "Tag             " + tag + "\n";
+      if ( !tag.isEmpty() )
+      {
+         out += "Tag             " + tag + "\n";
+      }
       out += advanced_addition_methods();
    }
    return out;

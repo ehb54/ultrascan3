@@ -1,10 +1,10 @@
 #ifndef _US_CUDA
 #define _US_CUDA
 
-extern int cuda_hello_world();
+extern bool cuda_hello_world();
 
 // cuda debye, everything must be preallocated
-extern void cuda_debye( 
+extern bool cuda_debye( 
                        bool         autocorrelate,
                        unsigned int n,   // number of atoms
                        float *      pos, // each atom will have 3 floats for coordinates, 
@@ -20,7 +20,9 @@ extern void cuda_debye(
                        // computing I(q) with q per thread
                        
                        // output:
-                       float *      I    // the computed debye output, q_points
+                       float *      I,   // the computed debye output, q_points
+                       
+                       unsigned int threads_per_block
                        );
 
 #endif

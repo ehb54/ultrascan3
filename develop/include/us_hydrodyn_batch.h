@@ -215,6 +215,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QStringList  cluster_target_datafiles;
       QString      cluster_output_name;
       bool         cluster_for_mpi;
+      bool         cluster_split_grid;
       bool         cluster_dmd;
       csv          cluster_csv_advanced;
       csv          cluster_csv_dmd;

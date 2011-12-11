@@ -1,5 +1,11 @@
 #include "../include/us_saxs_util.h"
 
+#define IQQ_TIMER
+
+#if defined(IQQ_TIMER)
+#  include "../include/us_timer.h"
+#endif
+
 #define SLASH QDir::separator()
 
 bool US_Saxs_Util::run_saxs_iq_foxs()
@@ -48,12 +54,35 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
       QString( "%1 -q %2 -s %3 %4\n" )
       .arg( prog )
       .arg( our_saxs_options.end_q )
-      .arg( (unsigned int)( our_saxs_options.end_q / our_saxs_options.delta_q ) )
+      .arg( (unsigned int)( 1 + our_saxs_options.end_q / our_saxs_options.delta_q ) )
       .arg( pdb );
+
+#if defined(IQQ_TIMER)
+   cout << "timer enabled\n";
+#endif
 
    cout << "Starting FoXS\n";
    cout << cmd << endl;
+#if defined(IQQ_TIMER)
+   US_Timer iqq_timers;
+   iqq_timers.init_timer ( "iqq foxs" );
+   iqq_timers.start_timer( "iqq foxs" );
+#endif
    system( cmd.ascii() );
+#if defined(IQQ_TIMER)
+   {
+      iqq_timers.end_timer  ( "iqq foxs" );
+      cout << iqq_timers.list_times() << flush;
+      timings = iqq_timers.list_times();
+      QString file = 
+         QString( "%1-q%2-%3.timing" )
+         .arg( control_parameters[ "outputfile" ] )
+         .arg( (unsigned int)( 1 + our_saxs_options.end_q / our_saxs_options.delta_q ) )
+         .arg( control_parameters[ "iqmethod" ] )
+         ;
+      write_timings( file, file );
+   }
+#endif
    cout << "FoXS finished.\n";
 
    // foxs creates 2 files:
@@ -223,7 +252,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
 
    cmd += 
       QString( " /ns %1" )
-      .arg( (unsigned int)( our_saxs_options.end_q / our_saxs_options.delta_q ) );
+      .arg( (unsigned int)( 1 + our_saxs_options.end_q / our_saxs_options.delta_q ) );
 
    cmd += 
       QString( " /dns %1" )
@@ -241,9 +270,32 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
       QString( " /fb %1" )
       .arg( our_saxs_options.crysol_fibonacci_grid_order );
 
+#if defined(IQQ_TIMER)
+   cout << "timer enabled\n";
+#endif
+
    cout << "Starting Crysol\n";
    cout << cmd << endl;
+#if defined(IQQ_TIMER)
+   US_Timer iqq_timers;
+   iqq_timers.init_timer ( "iqq crysol" );
+   iqq_timers.start_timer( "iqq crysol" );
+#endif
    system( cmd.ascii() );
+#if defined(IQQ_TIMER)
+   {
+      iqq_timers.end_timer  ( "iqq crysol" );
+      cout << iqq_timers.list_times() << flush;
+      timings = iqq_timers.list_times();
+      QString file = 
+         QString( "%1-q%2-%3.timing" )
+         .arg( control_parameters[ "outputfile" ] )
+         .arg( (unsigned int)( 1 + our_saxs_options.end_q / our_saxs_options.delta_q ) )
+         .arg( control_parameters[ "iqmethod" ] )
+         ;
+      write_timings( file, file );
+   }
+#endif
    cout << "Crysol Finished\n";
    
    // crysol creates 4 files:
