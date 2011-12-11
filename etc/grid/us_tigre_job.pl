@@ -7,7 +7,7 @@
 # IF THIS FAILS FOR THE NUMBER OF PROCESSORS YOU HAVE SELECTED, TIGRE JOBS WILL FAIL!
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
-# @bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
+# @bcfdowncount = `ssh bcf.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
 # @laredodowncount = `ssh laredo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
 # @alamodowncount = `ssh alamo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
 
@@ -437,6 +437,7 @@ $ULTRASCAN = $ENV{'ULTRASCAN'};
             'gatekeeper.bigred.iu.teragrid.org' ,
             'gatekeeper.ranger.tacc.teragrid.org' ,
             'lonestar.tacc.teragrid.org' ,
+            'alamo.biochemistry.uthscsa.edu' ,
             'bcf.biochemistry.uthscsa.edu' ,
 	    'meta' 
 	    );
@@ -462,6 +463,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 		 8443 , # bigred
 		 0, # gatekeeper.ranger
 		 0, # new lonestar 
+		 0, # alamo gram5 
 		 0, # bcf gram5 
 		 0 
 		 );
@@ -482,6 +484,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	      22 , # bigred
 	      22 , # ranger
 	      22 , # new lonestar
+	      22 , # alamo gram5
 	      22 , # bcf gram5
 	      0 ,
 	      );
@@ -502,6 +505,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 '/N/dc/scratch/tg-ebrookes' , # bigred
 	 '/work/01314/ultrasca' , # ranger
 	 '/work/01314/ultrasca' , # new lonestar
+	 '/work/ultrasca' , # alamo gram5
 	 '/work/ultrasca' , # bcf gram5
 	 '' 
 	 );
@@ -522,6 +526,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	       'Loadleveler' , # bigred
 	       '' , # ranger
 	       '' , # new lonestar
+	       '' , # gram5 alamo
 	       '' , # gram5 bcf
                'PBS' ,  # ?
 	       '' 
@@ -543,7 +548,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 'bin' ,  # bigred
 	 'bin64' ,  # ranger
 	 'bin64' ,  # new lonestar
-	 'bin64' ,  # gram5 bcf
+	 'bin64' ,  # gram5 alamo
 	 'bin64'   #meta
        );
 @executable = (
@@ -562,6 +567,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
        'us_fe_nnls_t_mpi' , #bigred
        'us_fe_nnls_t_mpi.sh' , #ranger
        'us_fe_nnls_t_mpi' , #new lonestar
+       'us_fe_nnls_t_mpi' , #gram5 alamo
        'us_fe_nnls_t_mpi' , #gram5 bcf
        'us_fe_nnls_t_mpi' , #meta
        );
@@ -583,6 +589,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   '<queue>NORMAL</queue>' , # bigred
 	   '' , #ranger / determined based upon runtime
 	   '' , # new lonestar / determined based upon runtime
+	   'default' , # gram5 alamo
 	   'default' , # gram5 bcf
 	   '' #meta
 	   );
@@ -640,6 +647,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   '', # bigred
 	   '', # ranger
 	   '', # new lonestar
+	   '', # gram5 alamo
 	   '', # gram5 bcf
 	   '' # meta
 	   );
@@ -678,7 +686,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   64 , # bigred
 	   128 , # ranger
 	   144 , # new lonestar
-	   16 , # gram5 bcf
+	   52 , # gram5 alamo
+	   32 , # gram5 bcf
 	   64 #meta
 	   );
 
@@ -698,7 +707,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   2880 ,  # bigred
 	   2880 ,  # ranger
 	   1440 ,  # new lonestar
-	   60000 , # bcf
+	   60000 , # gram5 alamo
+	   60000 , # gram5 bcf
 	   2880    # meta
 	   );
 @gsi = (
@@ -717,6 +727,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	'gsi' ,  # bigred
 	'' ,  # ranger
 	'' ,  # new lonestar
+	'' ,  # gram5 alamo
 	'' ,  # gram5 bcf
 	'gsi'    # meta
 	);
@@ -737,6 +748,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 0 ,  # bigred
 	 1 ,  # ranger
 	 1 ,  # new lonestar
+	 1 ,  # gram5 alamo
 	 1 ,  # gram5 bcf
 	 0    # meta
 	 );
@@ -949,6 +961,13 @@ if( $default_system =~ /bcf.biochemistry.uthscsa.edu/ )
     $np = 2 * ( int( $np / 2 ) + 1);
     $np = $max_np[$usesys] if $np > $max_np[$usesys];
     $gfac_hc = int($np / 2);
+}
+
+if( $default_system =~ /alamo.biochemistry.uthscsa.edu/ )
+{
+    $np = 4 * ( int( $np / 4 ) + 1);
+    $np = $max_np[$usesys] if $np > $max_np[$usesys];
+    $gfac_hc = int($np / 4);
 }
 
 print "np is $np gfac_hc is $gfac_hc\n";
@@ -1234,6 +1253,12 @@ do {
 	if($status =~ /.* (\w*)/) {
 	    $status = $1;
 	}
+    }
+
+    if($status =~ /^CANCELED$/) {
+	&check_is_resubmit();
+        &cancelmsg("Tigre job was canceled\n");
+        die "tigre job was canceled\n";
     }
 
     if($status =~ /^$/) {

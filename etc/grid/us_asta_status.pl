@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 
-# jdbc:mysql://gw33.quarry.iu.teragrid.org:3306/exp_notification?user=exp_ogce&password=exp_pass
-
 use strict;
 use DBI;
 
@@ -19,10 +17,10 @@ my $user = "exp_ogce";
 my $pass = "exp_pass";
 
 ## user hostname : This should be "localhost" but it can be diffrent too
-my $host="gw33.quarry.iu.teragrid.org";
+my $host="gf5.ucs.indiana.edu"; 
 
 ## user hostname : This should be "localhost" but it can be diffrent too
-my $db_port="3306";
+my $db_port="5123";
 
 my $experimentID = $ARGV[0];
 

@@ -12,7 +12,7 @@ print OUT "$0 $experimentID\n";
 close OUT;
 
 # Webserice parameters
-my $WSDL = 'http://gw33.quarry.iu.teragrid.org:8088/axis2/services/CancelJob?wsdl';
+my $WSDL = 'http://gf5.ucs.indiana.edu:7070/axis2/services/CancelJob?wsdl';
 my $namespace = 'http://jobsubmittion.ogce.org';
 
 # Soap call
@@ -37,3 +37,6 @@ $result = $soap -> cancelJob($experimentID) -> result;
 
 #- Showing the result
 print "$result\n";
+open(OUT, ">>$logfiledir/us_asta_cancel.log");
+print OUT "$0 $experimentID cancel result message: $result\n";
+close OUT;

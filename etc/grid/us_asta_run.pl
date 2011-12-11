@@ -10,7 +10,7 @@ use Data::Uniqid qw ( suniqid uniqid luniqid );
 my $WSDL; 
 my $ENDPOINT;
 
-my $gfactarget = "gw33";  # or bcf, when working
+my $gfactarget = "gf5";  # or bcf, when working
 
 if ( $gfactarget eq "bcf" )
 {
@@ -22,6 +22,12 @@ if ( $gfactarget eq "gw33" )
 {
     $WSDL = 'http://gw33.quarry.iu.teragrid.org:5678/?wsdl';
     $ENDPOINT = 'http://gw33.quarry.iu.teragrid.org:5678/';
+}
+
+if ( $gfactarget eq "gf5" )
+{
+    $WSDL = 'http://gf5.ucs.indiana.edu:5678/?wsdl';
+    $ENDPOINT = 'http://gf5.ucs.indiana.edu:5678/';
 }
 
 # Parameter setting. Paramerters passed to run the job. These are used to create soap request.

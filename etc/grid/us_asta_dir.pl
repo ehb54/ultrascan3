@@ -12,10 +12,10 @@ my $user = "exp_ogce";
 my $pass = "exp_pass";
 
 ## user hostname 
-my $host="gw33.quarry.iu.teragrid.org";
+my $host="gf5.ucs.indiana.edu";
 
 ## user port 
-my $db_port="3306";
+my $db_port="5123";
 
 my $experimentID = $ARGV[0];
 
@@ -81,7 +81,7 @@ my $user = "exp_ogce";
 my $pass = "exp_pass";
 
 ## user hostname : This should be "localhost" but it can be diffrent too
-my $host="gw33.quarry.iu.teragrid.org";
+my $host="gf5.ucs.indiana.edu";
 
 my $experimentID = $ARGV[0] || die "usage $0 experimentID\n";
 
