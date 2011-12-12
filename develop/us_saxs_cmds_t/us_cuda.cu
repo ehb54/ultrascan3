@@ -77,7 +77,7 @@ bool cuda_debye(
    cudaDeviceProp props;
   
    // get number of SMs on this GPU
-   //  CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
+   CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
    CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
    CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
 
@@ -132,6 +132,12 @@ bool cuda_debye(
           , props.maxThreadsPerMultiProcessor
           );
  
+   if ( props.kernelExecTimeoutEnabled )
+   {
+      printf( "Error: cuda kernel timeout enabled, disconnect the display and try again!\n" );
+      exit( -1 );
+   }
+
    // each thread will create its own I which we will have to sum at the end
    unsigned int threads         = q_points;
       
@@ -176,18 +182,48 @@ bool cuda_debye(
    CUDA_SAFE_CALL( cudaMalloc( (void**)&d_fp , n * q_points * sizeof( float ) ) );
    CUDA_SAFE_CALL( cudaMalloc( (void**)&d_I  , q_points     * sizeof( float ) ) );
 
+   printf( "cudasync 0\n" );
+   CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+
    // Copy vectors from host memory to device memory
    CUDA_SAFE_CALL( cudaMemcpy( d_q  , q  , q_points *     sizeof( float ) , cudaMemcpyHostToDevice) );
    CUDA_SAFE_CALL( cudaMemcpy( d_pos, pos, 3 * n *        sizeof( float ) , cudaMemcpyHostToDevice) );
    CUDA_SAFE_CALL( cudaMemcpy( d_fp , fp , n * q_points * sizeof( float ) , cudaMemcpyHostToDevice) );
 
+   printf( "cudasync 1\n" );
+   CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+
    // Invoke kernel
    cudaDebye<<<blocksPerGrid, threadsPerBlock>>>( n, q_points, d_q, d_pos, d_fp, d_I );
+
    CUT_CHECK_ERROR( "cudaDebye() execution failed\n" );
+
+   // wait for kernel to finish
+   printf( "cudasync 2\n" );
+   cudaDeviceSynchronize();
+
 
    // Copy result from device memory to host memory
    // h_C contains the result in host memory
    CUDA_SAFE_CALL( cudaMemcpy( I, d_I, q_points * sizeof( float ), cudaMemcpyDeviceToHost) );
+
+   bool all_zero = true;
+   unsigned no_of_nonzeros = 0;
+   for ( unsigned int i = 0; i < q_points; i++ )
+   {
+      if ( I[ i ] != 0e0 )
+      {
+         all_zero = false;
+         no_of_nonzeros++;
+      }
+   }
+
+   if ( all_zero )
+   {
+      printf( "hmm: cudaDebye returned I of all zeros!\n" );
+   } else {
+      printf( "hmm: cudaDebye had %u of %u nonzero\n", no_of_nonzeros, q_points );
+   }      
 
    if ( d_q )
    {
@@ -206,6 +242,9 @@ bool cuda_debye(
       cudaFree( d_I );
    }
 
+   printf( "cudasync 3\n" );
+   CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+
    printf( "end cudaDebye\n" );
    return true;
 }
@@ -214,63 +253,81 @@ bool cuda_debye(
 bool
 cuda_hello_world()
 {
-   int devID;
+   int deviceCount; 
+   cudaGetDeviceCount(&deviceCount); 
+
    cudaDeviceProp props;
 
-   CUDA_SAFE_CALL( cudaGetDevice          ( &devID        ) );
-   CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, devID ) );
+   int okid = -1;
 
-   printf("Device %d: \"%s\" with Compute %d.%d capability\n", devID, props.name, props.major, props.minor);
-   printf( 
-          "totalGlobalMem               %d\n"
-          "sharedMemPerBlock            %d\n"
-          "regsPerBlock                 %d\n"
-          "warpSize                     %d\n"
-          "memPitch                     %d\n"
-          "maxThreadsPerBlock           %d\n"
-          "maxThreadsDim                %d %d %d\n"
-          "maxGridSize                  %d %d %d\n"
-          "clockRate                    %d\n"
-          "totalConstMem                %d\n"
-          "multiProcessorCount          %d\n"
-          "kernelExecTimeoutEnabled     %d\n"
-          "canMapHostMemory             %d\n"
-          "computeMode                  %d\n"
-          "concurrentKernels            %d\n"
-          "asyncEngineCount             %d\n"
-          "unifiedAddressing            %d\n"
-          "memoryClockRate              %d\n"
-          "memoryBusWidth               %d\n"
-          "l2CacheSize                  %d\n"
-          "maxThreadsPerMultiProcessor  %d\n"
+   for ( int device = 0; device < deviceCount; ++device ) 
+   { 
+      CUDA_SAFE_CALL( cudaGetDeviceProperties( &props, device ) );
 
-          , props.totalGlobalMem
-          , props.sharedMemPerBlock
-          , props.regsPerBlock
-          , props.warpSize
-          , props.memPitch
-          , props.maxThreadsPerBlock
-          , props.maxThreadsDim[0]
-          , props.maxThreadsDim[1]
-          , props.maxThreadsDim[2]
-          , props.maxGridSize  [0]
-          , props.maxGridSize  [1]
-          , props.maxGridSize  [2]
-          , props.clockRate
-          , props.totalConstMem
-          , props.multiProcessorCount
-          , props.kernelExecTimeoutEnabled
-          , props.canMapHostMemory
-          , props.computeMode
-          , props.concurrentKernels
-          , props.asyncEngineCount
-          , props.unifiedAddressing
-          , props.memoryClockRate
-          , props.memoryBusWidth
-          , props.l2CacheSize
-          , props.maxThreadsPerMultiProcessor
-          );
+      printf("Device %d: \"%s\" with Compute %d.%d capability\n", device, props.name, props.major, props.minor);
+      printf( 
+             "totalGlobalMem               %lu\n"
+             "sharedMemPerBlock            %d\n"
+             "regsPerBlock                 %d\n"
+             "warpSize                     %d\n"
+             "memPitch                     %d\n"
+             "maxThreadsPerBlock           %d\n"
+             "maxThreadsDim                %d %d %d\n"
+             "maxGridSize                  %d %d %d\n"
+             "clockRate                    %d\n"
+             "totalConstMem                %d\n"
+             "multiProcessorCount          %d\n"
+             "kernelExecTimeoutEnabled     %d\n"
+             "canMapHostMemory             %d\n"
+             "computeMode                  %d\n"
+             "concurrentKernels            %d\n"
+             "asyncEngineCount             %d\n"
+             "unifiedAddressing            %d\n"
+             "memoryClockRate              %d\n"
+             "memoryBusWidth               %d\n"
+             "l2CacheSize                  %d\n"
+             "maxThreadsPerMultiProcessor  %d\n"
+             
+             , props.totalGlobalMem
+             , props.sharedMemPerBlock
+             , props.regsPerBlock
+             , props.warpSize
+             , props.memPitch
+             , props.maxThreadsPerBlock
+             , props.maxThreadsDim[0]
+             , props.maxThreadsDim[1]
+             , props.maxThreadsDim[2]
+             , props.maxGridSize  [0]
+             , props.maxGridSize  [1]
+             , props.maxGridSize  [2]
+             , props.clockRate
+             , props.totalConstMem
+             , props.multiProcessorCount
+             , props.kernelExecTimeoutEnabled
+             , props.canMapHostMemory
+             , props.computeMode
+             , props.concurrentKernels
+             , props.asyncEngineCount
+             , props.unifiedAddressing
+             , props.memoryClockRate
+             , props.memoryBusWidth
+             , props.l2CacheSize
+             , props.maxThreadsPerMultiProcessor
+             );
+      
+      if ( props.kernelExecTimeoutEnabled )
+      {
+         printf( "Warning: cuda kernel timeout enabled on device %d.  Disconnect the display and try again!\n", device );
+      } else {
+         okid = device;
+      }
+   }
 
+   if ( okid != -1 )
+   {
+      printf( "setting to device %d\n", okid );
+      CUDA_SAFE_CALL( cudaSetDevice( okid ) );
+   }
 
    int i;
 
@@ -296,9 +353,6 @@ cuda_hello_world()
   
    // invoke the kernel
    helloWorld<<< dimGrid, dimBlock >>>(d_str);
-
-   // wait for kernel to finish
-   CUDA_SAFE_CALL( cudaDeviceSynchronize() );
 
    // retrieve the results from the device
    CUDA_SAFE_CALL( cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost) );
