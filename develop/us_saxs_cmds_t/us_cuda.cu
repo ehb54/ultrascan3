@@ -316,6 +316,7 @@ bool
 cuda_reset()
 {
    CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
+   return true;
 }
    
 // Device kernels
