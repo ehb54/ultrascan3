@@ -3,6 +3,8 @@
 
 extern bool cuda_hello_world();
 
+extern bool cuda_reset();
+
 // cuda debye, everything must be preallocated
 extern bool cuda_debye( 
                        bool         autocorrelate,

@@ -297,11 +297,14 @@ cuda_hello_world()
    // invoke the kernel
    helloWorld<<< dimGrid, dimBlock >>>(d_str);
 
+   // wait for kernel to finish
+   CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+
    // retrieve the results from the device
-   cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost);
+   CUDA_SAFE_CALL( cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost) );
 
    // free up the allocated memory on the device
-   cudaFree(d_str);
+   CUDA_SAFE_CALL ( cudaFree(d_str) );
   
    // everyone's favorite part
    printf("%s\n", str);
@@ -309,6 +312,12 @@ cuda_hello_world()
    return strncmp( str, "Hello World!" , 12 );
 }
 
+bool
+cuda_reset()
+{
+   CUDA_SAFE_CALL( cudaDeviceReset        (               ) );
+}
+   
 // Device kernels
 __global__ void
 helloWorld( char* str )

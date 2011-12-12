@@ -4,6 +4,9 @@
 #if defined( USE_MPI )
     extern int myrank;
 #endif
+#if defined( CUDA )
+#   include "us_cuda.h"
+#endif
 
 bool US_Saxs_Util::read_control( QString controlfile )
 {
@@ -142,6 +145,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "saxs|"
                       "iqmethod|"
                       "iqcuda|"
+                      "cudareset|"
                       "fdbinsize|"
                       "fdmodulation|"
                       "hypoints|"
@@ -398,6 +402,27 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
       }         
+
+      if ( option == "cudareset" )
+      {
+#if defined( CUDA )
+         if ( !cuda_reset() )
+         {
+            return false;
+         }
+#else
+         errormsg = "Error: program not compiled with CUDA capability";
+         return false;
+#endif
+      }
+
+#if !defined( CUDA )
+      if ( option == "iqcuda" )
+      {
+         errormsg = "Error: program not compiled with CUDA capability";
+         return false;
+      }
+#endif
 
       if ( option == "residuefile" )
       {
