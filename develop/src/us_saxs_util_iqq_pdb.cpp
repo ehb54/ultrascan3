@@ -970,11 +970,15 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
          cout << iqq_timers.list_times() << flush;
          timings = iqq_timers.list_times();
          QString file = 
-            QString( "%1_%2_q%3-%4.timing" )
+            QString( "%1_%2_q%3-%4%5.timing" )
             .arg( control_parameters[ "outputfile" ] )
             .arg( current_model + 1 )
             .arg( q_points )
             .arg( control_parameters[ "iqmethod" ] )
+            .arg( control_parameters.count( "iqcuda" ) ?
+                  QString( "cuda%1" )
+                  .arg( control_parameters[ "iqcuda" ].toUInt() > 0 ?
+                        control_parameters[ "iqcuda" ].toUInt() : 32  ) : QString( "" ) )
             ;
          write_timings( file, file );
       }
