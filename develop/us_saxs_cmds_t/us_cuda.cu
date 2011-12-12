@@ -13,8 +13,6 @@
 
 #include "us_cuda.h"
 
-static bool failed;
-
 #  define CUDA_SAFE_CALL_NO_SYNC( call) {                                    \
     cudaError err = call;                                                    \
     if( cudaSuccess != err) {                                                \
@@ -42,8 +40,7 @@ __global__ void cudaDebye(
                           const float * q,
                           const float * pos,
                           const float * fp,
-                          float *       I,
-                          unsigned int  threads_per_block
+                          float *       I
                           );
 
 // cuda debye, everything must be preallocated
@@ -63,7 +60,8 @@ bool cuda_debye(
                 // computing I(q) with q per thread
   
                 // output:
-                float *      I    // the computed debye output, q_points
+                float *      I,    // the computed debye output, q_points
+                unsigned int  threads_per_block
                 )
 {
 
