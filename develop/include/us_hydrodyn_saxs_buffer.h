@@ -96,10 +96,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_clear_files;
 
       QPushButton   *pb_select_all;
+      QPushButton   *pb_invert;
       QPushButton   *pb_adjacent;
+      QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
-      QPushButton   *pb_invert;
       QPushButton   *pb_rescale;
 
       QListBox      *lb_files;
@@ -276,10 +277,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void conc();
       void clear_files();
       void select_all();
+      void invert();
+      void join();
       void adjacent();
       void to_saxs();
       void view();
-      void invert();
       void rescale();
       void avg();
       void conc_avg();

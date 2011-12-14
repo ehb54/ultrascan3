@@ -77,8 +77,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       // pbs.push_back( pb_clear_files );
 
       // pbs.push_back( pb_select_all );
-      // pbs.push_back( pb_invert );
+      pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
+      pbs.push_back( pb_join );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
@@ -188,6 +189,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_invert->setMinimumHeight(minHeight1);
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
+
+   pb_join = new QPushButton(tr("J"), this);
+   pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_join->setMinimumHeight( minHeight1 );
+   pb_join->setMaximumWidth ( minHeight1 * 2 );
+   pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
    pb_adjacent = new QPushButton(tr("Similar"), this);
    pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -588,6 +596,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
+   hbl_file_buttons_2->addWidget ( pb_join );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -1418,6 +1427,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
+   pb_join               ->setEnabled( files_selected_count == 2 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count );
@@ -3741,6 +3751,162 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       disable_updates = false;
       update_files();
    }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join()
+{
+   vector < QString > selected;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected.push_back( lb_files->text( i ) );
+      }
+   }
+
+   if ( selected.size() != 2 )
+   {
+      return;
+   }
+
+   // swap if 1 ends last
+   if ( f_qs[ selected[ 0 ] ].back() > f_qs[ selected[ 1 ] ].back() )
+   {
+      QString tmp   = selected[ 0 ];
+      selected[ 0 ] = selected[ 1 ];
+      selected[ 1 ] = tmp;
+   }
+
+   // find q intersection
+
+   double q0_min = f_qs[ selected[ 0 ] ][ 0 ];
+   double q0_max = f_qs[ selected[ 0 ] ].back();
+
+   double q1_min = f_qs[ selected[ 1 ] ][ 0 ];
+   double q1_max = f_qs[ selected[ 1 ] ].back();
+
+   double q_max_min = q0_min < q1_min ? q1_min : q0_min;
+   double q_min_max = q0_max < q1_max ? q0_max : q1_max;
+
+   double q_join;
+
+   // do we have overlap?
+   if ( q_max_min < q_min_max )
+   {
+      // ask for overlap point
+      bool ok;
+      double res = QInputDialog::getDouble(
+                                           tr( "US-SOMO: Saxs Buffer Subtraction: Join" ),
+                                           QString( tr( "The curves %1 and %2\n"
+                                                        "have an overlap q-range of %3 to %4.\n"
+                                                        "Enter the join q-value:" ) )
+                                           .arg( selected[ 0 ] )
+                                           .arg( selected[ 1 ] )
+                                           .arg( q_max_min )
+                                           .arg( q_min_max )
+                                           ,
+                                           q_max_min,
+                                           q_max_min,
+                                           q_min_max,
+                                           4,
+                                           &ok,
+                                           this
+                                           );
+      if ( ok ) {
+         // user entered something and pressed OK
+         q_join = res;
+      } else {
+         // user pressed Cancel
+         return;
+      }
+   } else {
+      q_join = q0_max;
+   }
+
+   // join them
+   vector < QString > q_string;
+   vector < double >  q;
+   vector < double >  I;
+   vector < double >  e;
+
+   bool use_errors = f_errors[ selected[ 0 ] ].size() && f_errors[ selected[ 1 ] ].size();
+   bool error_warn = !use_errors && ( f_errors[ selected[ 0 ] ].size() || f_errors[ selected[ 1 ] ].size() );
+   if ( error_warn )
+   {
+      editor_msg( "dark red",
+                  QString( tr( "Warning: no errors will be stored because %1 does not contain any error information" ) )
+                  .arg( f_errors[ selected[ 0 ] ].size() ? selected[ 1 ] : selected[ 0 ] ) );
+   }
+
+   for ( unsigned int i = 0; i < f_qs[ selected[ 0 ] ].size(); i++ )
+   {
+      if ( f_qs[ selected[ 0 ] ][ i ] <= q_join )
+      {
+         q_string.push_back( f_qs_string[ selected[ 0 ] ][ i ] );
+         q       .push_back( f_qs       [ selected[ 0 ] ][ i ] );
+         I       .push_back( f_Is       [ selected[ 0 ] ][ i ] );
+         if ( use_errors )
+         {
+            e       .push_back( f_errors   [ selected[ 0 ] ][ i ] );
+         }
+      }
+   }
+
+   for ( unsigned int i = 0; i < f_qs[ selected[ 1 ] ].size(); i++ )
+   {
+      if ( f_qs[ selected[ 1 ] ][ i ] > q_join )
+      {
+         q_string.push_back( f_qs_string[ selected[ 1 ] ][ i ] );
+         q       .push_back( f_qs       [ selected[ 1 ] ][ i ] );
+         I       .push_back( f_Is       [ selected[ 1 ] ][ i ] );
+         if ( use_errors )
+         {
+            e       .push_back( f_errors   [ selected[ 1 ] ][ i ] );
+         }
+      }
+   }
+
+   QString basename = 
+      QString( "%1-%2-join%3" )
+      .arg( selected[ 0 ] )
+      .arg( selected[ 1 ] )
+      .arg( QString( "%1" ).arg( q_join ).replace( "." , "_" ) );
+
+   QString use_basename = basename;
+
+   unsigned int ext = 0;
+   
+   while ( f_qs.count( use_basename ) )
+   {
+      use_basename = QString( "%1-%2" ).arg( basename ).arg( ++ext );
+   }
+
+   lb_created_files->insertItem   ( use_basename );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files        ->insertItem   ( use_basename );
+   lb_files        ->setBottomItem( lb_files->numRows() - 1 );
+
+   created_files_not_saved[ use_basename ] = true;
+   
+   f_pos       [ use_basename ] = f_qs.size();
+   f_qs_string [ use_basename ] = q_string;
+   f_qs        [ use_basename ] = q;
+   f_Is        [ use_basename ] = I;
+   if ( use_errors )
+   {
+      f_errors    [ use_basename ] = e;
+   }
+
+   lb_files        ->clearSelection();
+   lb_created_files->setSelected( lb_created_files->numRows() - 1, true );
+   show_created();
+
+   editor_msg( "black", 
+               QString( tr( "Created %1 as join of %2 and %3 at q %4" ) )
+               .arg( use_basename )
+               .arg( selected[ 0 ] )
+               .arg( selected[ 1 ] )
+               .arg( q_join ) );
 }
 
 void US_Hydrodyn_Saxs_Buffer::to_saxs()
