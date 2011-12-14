@@ -5,7 +5,6 @@
 
 void US_MPI_Analysis::ga_master( void )
 {
-   startTime       = QDateTime::currentDateTime();
    current_dataset = 0;
 DbgLv(0) << "master start GA" << startTime;
    // // Tell calc_residuals to use the edited data meniscus value
@@ -89,9 +88,15 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
             scaled_data = simulation_values.sim_data;
          }
 
+         time_mc_iterations();
+
+         if ( mc_iteration < mc_iterations )
+         {
 DbgLv(1) << "GaMast:    set_gaMC call";
-         set_gaMonteCarlo();
+            set_gaMonteCarlo();
 DbgLv(1) << "GaMast:    set_gaMC  return";
+         }
+
       }
       else
          break;
@@ -174,7 +179,7 @@ QString s;
                avg_generation = avg;
             
                QString progress =
-                  "Avg Generation: "  + QString::number( avg_generation ) +
+                  "Avg. Generation: "  + QString::number( avg_generation ) +
                   "; MonteCarlo: " + QString::number( mc_iteration + 1 );
 
                send_udp( progress );

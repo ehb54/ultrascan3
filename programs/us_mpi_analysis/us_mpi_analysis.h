@@ -31,6 +31,12 @@ class US_MPI_Analysis : public QObject
   private:
     int                 proc_count;
     int                 my_rank;
+    int                 my_group;
+    int                 mgroup_count;
+    int                 group_rank;
+    int                 my_workers;
+    int                 gcores_count;
+    int                 max_walltime;
     int                 iterations;           // Master only - Iterative
     int                 max_iterations;       // Master only - Iterative
     int                 mc_iterations;        // Monte Carlo
@@ -38,6 +44,7 @@ class US_MPI_Analysis : public QObject
     int                 max_experiment_size;
     int                 dbg_level;
     bool                dbg_timing;
+    MPI_Comm            my_communicator;
 
     int                 current_dataset;      // For global fit
     int                 datasets_to_process;  // For global fit
@@ -96,6 +103,7 @@ class US_MPI_Analysis : public QObject
     QString             analysisDate;
 
     QMap< QString, QString > parameters;
+    QMap< QString, QString > job_params;
   
     QDateTime           submitTime;
     QDateTime           startTime;
@@ -278,6 +286,13 @@ class US_MPI_Analysis : public QObject
     double get_fitness_v ( const US_Vector& );
     void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
     void   align_gene    ( Gene& );
+
+    void   pmasters_start      ( void );
+    void   job_parse           ( const QString& );
+    void   pmasters_supervisor ( void );
+    void   pmasters_master     ( void );
+    void   pmasters_worker     ( void );
+    void   time_mc_iterations  ( void );
 
     // Debug
     void dump_buckets( void );

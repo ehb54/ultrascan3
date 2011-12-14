@@ -720,10 +720,7 @@ void US_GA_Initialize::plot_1dim( void )
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->enableAxis( QwtPlot::yRight, false );
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Frictional Ratio f/f0" ) );
-   data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
-   data_plot->axisTitle( QwtPlot::yRight ).setFont(
-         data_plot->axisTitle( QwtPlot::yLeft ).font() );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Partial Concentration" ) );
    data_plot->setAxisScale( QwtPlot::xBottom, smin, smax );
    data_plot->setAxisScale( QwtPlot::yLeft,   cmin, cmax );
 

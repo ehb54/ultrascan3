@@ -59,12 +59,24 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 
    QString xmlfile = files[ 0 ];
 
+   // Parse job xml file
+   QStringList jfilt;
+   jfilt << "*jobxmlfile.xml";
+   jfilt << "us3.pbs";
+   QStringList jfiles   = d.entryList( jfilt, QDir::Files );
+   QString     jxmlfile = jfiles.size() > 0 ? jfiles[ 0 ] : "jobxmlfile.xml";
+
+   job_parse( jxmlfile );
+
    if ( my_rank == 0 )
-   {
+   {  // Save submit time
       submitTime      = QFileInfo( tarfile ).lastModified();
-DbgLv(0) << "submitTime " << submitTime;
+mgroup_count=job_params["mgroupscount"].toInt();
+DbgLv(0) << "submitTime " << submitTime << " parallel-masters count" << mgroup_count;
+//DbgLv(0) << "jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
    }
 
+   startTime      = QDateTime::currentDateTime();
    maxrss         = 0;
    set_count      = 0;
    iterations     = 1;
@@ -104,13 +116,17 @@ DbgLv(0) << "submitTime " << submitTime;
       catch ( int error )
       {
          QString msg = "Abort.  Bad data file " + d->auc_file + " " + d->edit_file;
+DbgLv(0) << "BAD DATA. error" << error << "rank" << my_rank;
          abort( msg, error );
       }
       catch ( US_DataIO2::ioError error )
       {
          QString msg = "Abort.  Bad data file " + d->auc_file + " " + d->edit_file;
+DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
+//if(proc_count!=16)
          abort( msg, error );
       }
+//DbgLv(0) << "Good DATA. rank" << my_rank;
 
       for ( int j = 0; j < d->noise_files.size(); j++ )
       {
@@ -295,13 +311,27 @@ if ( my_rank == 0 )
    count_calc_residuals = 0;   // Internal instrumentation
    meniscus_run         = 0;
    mc_iteration         = 0;
-   start();
+
+   // Determine masters-group count and related controls
+   mgroup_count = job_params[ "mgroupscount" ].toInt();
+   max_walltime = job_params[ "walltime"     ].toInt();
+   if ( mc_iterations < 2  ||  mgroup_count > ( mc_iterations + 2 ) )
+      mgroup_count = 1;
+
+   gcores_count = proc_count / mgroup_count;
+
+   if ( mgroup_count < 2 )
+      start();                  // Start standard job
+   
+   else
+      pmasters_start();         // Start parallel-masters job
 }
 
-// Main function
+// Main function  (single master group)
 void US_MPI_Analysis::start( void )
 {
    QDateTime analysisStart = QDateTime::currentDateTime();
+   my_communicator         = MPI_COMM_WORLD;
 
    // Real processing goes here
    if ( analysis_type == "2DSA" )
@@ -323,13 +353,27 @@ void US_MPI_Analysis::start( void )
       else
           ga_worker();
    }
-   
+
+   int exit_status = 0;
+
    // Pack results
    if ( my_rank == 0 )
    {
       // Get job end time (after waiting so it has greatest time stamp)
       US_Sleep::msleep( 900 );
       QDateTime endTime = QDateTime::currentDateTime();
+      bool reduced_iter = false;
+
+      if ( mc_iterations > 0 )
+      {
+         int kc_iterations = parameters[ "mc_iterations" ].toInt();
+
+         if ( mc_iterations < kc_iterations )
+         {
+            reduced_iter = true;
+            exit_status  = 99;
+         }
+      }
 
       // Send message and build file with run-time statistics
       int  walltime = qRound(
@@ -337,10 +381,24 @@ void US_MPI_Analysis::start( void )
       int  cputime  = qRound(
          analysisStart.msecsTo( endTime ) / 1000.0 );
       int  maxrssmb = qRound( (double)maxrss / 1024.0 );
-      send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
-            + " MB,  total run seconds " + QString::number( cputime ) );
-      DbgLv(0) << "Finished:  maxrss " << maxrssmb
-               << "MB,  total run seconds " << cputime;
+
+      if ( reduced_iter )
+      {
+         send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
+               + " MB,  total run seconds " + QString::number( cputime )
+               + "  (Reduced MC Iterations)" );
+         DbgLv(0) << "Finished:  maxrss " << maxrssmb
+                  << "MB,  total run seconds " << cputime
+                  << "  (Reduced MC Iterations)";
+      }
+
+      else
+      {
+         send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
+               + " MB,  total run seconds " + QString::number( cputime ) );
+         DbgLv(0) << "Finished:  maxrss " << maxrssmb
+                  << "MB,  total run seconds " << cputime;
+      }
 
       stats_output( walltime, cputime, maxrssmb,
             submitTime, analysisStart, endTime );
@@ -358,13 +416,14 @@ void US_MPI_Analysis::start( void )
    }
 
    MPI_Finalize();
-   exit( 0 );
+   exit( exit_status );
 }
 
 // Send udp
 void US_MPI_Analysis::send_udp( const QString& message )
 {
    if ( my_rank != 0 ) return;
+if(mgroup_count>1) return;   //*DEBUG*
 
    QString    jobid = db_name + "-" + requestID + ": ";
    QByteArray msg   = QString( jobid + message ).toAscii();
@@ -415,12 +474,14 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
    xml.writeEndElement   ();  // statistics
 
    xml.writeStartElement ( "id" );
-   xml.writeAttribute    ( "requestguid",  requestGUID );
-   xml.writeAttribute    ( "dbname",       db_name     );
-   xml.writeAttribute    ( "requestid",    requestID   );
-   xml.writeAttribute    ( "submittime",   sSubmitTime );
-   xml.writeAttribute    ( "starttime",    sStartTime  );
-   xml.writeAttribute    ( "endtime",      sEndTime    );
+   xml.writeAttribute    ( "requestguid",  requestGUID  );
+   xml.writeAttribute    ( "dbname",       db_name      );
+   xml.writeAttribute    ( "requestid",    requestID    );
+   xml.writeAttribute    ( "submittime",   sSubmitTime  );
+   xml.writeAttribute    ( "starttime",    sStartTime   );
+   xml.writeAttribute    ( "endtime",      sEndTime     );
+   xml.writeAttribute    ( "maxwalltime",  QString::number( max_walltime ) );
+   xml.writeAttribute    ( "groupcount",   QString::number( mgroup_count ) );
    xml.writeEndElement   ();  // id
    xml.writeEndElement   ();  // US_JobStatistics
    xml.writeEndDocument  ();

@@ -89,7 +89,10 @@ void US_MPI_Analysis::_2dsa_master( void )
          // Monte Carlo
          if ( ++mc_iteration < mc_iterations )
          {
-            set_monteCarlo(); 
+            time_mc_iterations();
+
+            if ( mc_iteration < mc_iterations )
+               set_monteCarlo();
          }
 
          if ( ! job_queue.isEmpty() ) continue;

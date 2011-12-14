@@ -1884,7 +1884,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
 #endif
 
-   double xd[ 4 ][ 2 ];     // coord for verices of quad elem
+   double xd[ 4 ][ 2 ];     // coord for vertices of quad elem
    
    for ( int k = 0; k < N - 1; k++ )
    {  // loop for all elem
@@ -1900,35 +1900,37 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
    }
 
-   // Assembly coefficient matrices
+   // Assemble coefficient matrices
    // elem[ 0 ]; i=0
    int k = 0;
+   int m = 0;
    CA[ 1 ][ k ] = Stif[ k ][ 3 ][ 0 ] + Stif[ k ][ 3 ][ 3 ]; // j=3;
    CA[ 2 ][ k ] = Stif[ k ][ 2 ][ 0 ] + Stif[ k ][ 2 ][ 3 ]; // j=2;
    CB[ 1 ][ k ] = Stif[ k ][ 0 ][ 0 ] + Stif[ k ][ 0 ][ 3 ]; // j=0;
    CB[ 2 ][ k ] = Stif[ k ][ 1 ][ 0 ] + Stif[ k ][ 1 ][ 3 ]; // j=1;
 
-   for ( int k = 1; k < N - 1; k++ )
+   for ( k = 1, m = 0; k < N - 1; k++, m++ )
    {  // loop for all elem
       // elem k-1: i=1,2
-      CA[ 0 ][ k ]  = Stif[ k-1 ][ 3 ][ 1 ] + Stif[ k-1 ][ 3 ][ 2 ];  // j=3;
-      CA[ 1 ][ k ]  = Stif[ k-1 ][ 2 ][ 1 ] + Stif[ k-1 ][ 2 ][ 2 ];  // j=2;
-      CB[ 0 ][ k ]  = Stif[ k-1 ][ 0 ][ 1 ] + Stif[ k-1 ][ 0 ][ 2 ];  // j=0;
-      CB[ 1 ][ k ]  = Stif[ k-1 ][ 1 ][ 1 ] + Stif[ k-1 ][ 1 ][ 2 ];  // j=1;
+      CA[ 0 ][ k ]  = Stif[ m ][ 3 ][ 1 ] + Stif[ m ][ 3 ][ 2 ];  // j=3;
+      CA[ 1 ][ k ]  = Stif[ m ][ 2 ][ 1 ] + Stif[ m ][ 2 ][ 2 ];  // j=2;
+      CB[ 0 ][ k ]  = Stif[ m ][ 0 ][ 1 ] + Stif[ m ][ 0 ][ 2 ];  // j=0;
+      CB[ 1 ][ k ]  = Stif[ m ][ 1 ][ 1 ] + Stif[ m ][ 1 ][ 2 ];  // j=1;
 
       // elem k: i=0,3
-      CA[ 1 ][ k ] += Stif[ k   ][ 3 ][ 0 ] + Stif[ k   ][ 3 ][ 3 ];  // j=3;
-      CA[ 2 ][ k ]  = Stif[ k   ][ 2 ][ 0 ] + Stif[ k   ][ 2 ][ 3 ];  // j=2;
-      CB[ 1 ][ k ] += Stif[ k   ][ 0 ][ 0 ] + Stif[ k   ][ 0 ][ 3 ];  // j=0;
-      CB[ 2 ][ k ]  = Stif[ k   ][ 1 ][ 0 ] + Stif[ k   ][ 1 ][ 3 ];  // j=1;
+      CA[ 1 ][ k ] += Stif[ k ][ 3 ][ 0 ] + Stif[ k ][ 3 ][ 3 ];  // j=3;
+      CA[ 2 ][ k ]  = Stif[ k ][ 2 ][ 0 ] + Stif[ k ][ 2 ][ 3 ];  // j=2;
+      CB[ 1 ][ k ] += Stif[ k ][ 0 ][ 0 ] + Stif[ k ][ 0 ][ 3 ];  // j=0;
+      CB[ 2 ][ k ]  = Stif[ k ][ 1 ][ 0 ] + Stif[ k ][ 1 ][ 3 ];  // j=1;
    }
 
    // elem[ N-2 ]; i=1,2
    k = N - 1;
-   CA[ 0 ][ k ]  = Stif[ k-1 ][ 3 ][ 1 ] + Stif[ k-1 ][ 3 ][ 2 ];  // j=3;
-   CA[ 1 ][ k ]  = Stif[ k-1 ][ 2 ][ 1 ] + Stif[ k-1 ][ 2 ][ 2 ];  // j=2;
-   CB[ 0 ][ k ]  = Stif[ k-1 ][ 0 ][ 1 ] + Stif[ k-1 ][ 0 ][ 2 ];  // j=0;
-   CB[ 1 ][ k ]  = Stif[ k-1 ][ 1 ][ 1 ] + Stif[ k-1 ][ 1 ][ 2 ];  // j=1;
+   m = k - 1;
+   CA[ 0 ][ k ]  = Stif[ m ][ 3 ][ 1 ] + Stif[ m ][ 3 ][ 2 ];  // j=3;
+   CA[ 1 ][ k ]  = Stif[ m ][ 2 ][ 1 ] + Stif[ m ][ 2 ][ 2 ];  // j=2;
+   CB[ 0 ][ k ]  = Stif[ m ][ 0 ][ 1 ] + Stif[ m ][ 0 ][ 2 ];  // j=0;
+   CB[ 1 ][ k ]  = Stif[ m ][ 1 ][ 1 ] + Stif[ m ][ 1 ][ 2 ];  // j=1;
 
 #ifndef NO_DB
    US_AstfemMath::clear_3d( N, 4, Stif );
