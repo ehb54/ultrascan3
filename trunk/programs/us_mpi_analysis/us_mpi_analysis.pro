@@ -15,11 +15,12 @@ DESTDIR      = .
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
-SOURCES      += us_mpi_analysis.cpp \
-                2dsa_master.cpp     \
-                2dsa_worker.cpp     \
-                ga_master.cpp       \
-                ga_worker.cpp       \
+SOURCES      += us_mpi_analysis.cpp  \
+                2dsa_master.cpp      \
+                2dsa_worker.cpp      \
+                ga_master.cpp        \
+                ga_worker.cpp        \
+                parallel_masters.cpp \
                 us_mpi_parse.cpp
 
 HEADERS      += us_mpi_analysis.h
@@ -31,5 +32,5 @@ LIBS         += -lus_utils -L../../lib
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX
 INCLUDEPATH  += $${MPIPATH}/include
-LIBS         += -L$${MPIPATH}/lib -lmpi
+LIBS         += -L$${MPIPATH}/lib -lmpi -lopen-pal
 

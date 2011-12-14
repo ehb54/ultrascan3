@@ -21,7 +21,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_INT,
                 MPI_Job::MASTER,
                 MPI_Job::READY,
-                MPI_COMM_WORLD ); // let master know we are ready
+                my_communicator ); // let master know we are ready
 
       // Blocking -- Wait for instructions
       MPI_Recv( &job, // get masters' response
@@ -29,7 +29,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_BYTE,
                 MPI_Job::MASTER,
                 MPI_Job::TAG0,
-                MPI_COMM_WORLD,
+                my_communicator,
                 &status );        // status not used
 
       meniscus_value     = job.meniscus_value;
@@ -61,7 +61,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD,
+                         my_communicator,
                          &status );
 
                max_rss();
@@ -80,7 +80,7 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
                          MPI_INT,
                          MPI_Job::MASTER,
                          MPI_Job::RESULTS,
-                         MPI_COMM_WORLD );
+                         my_communicator );
 
                // Send back to master all of simulation_values
                MPI_Send( simulation_values.solutes.data(),
@@ -88,35 +88,35 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD );
+                         my_communicator );
 
                MPI_Send( &simulation_values.variance,
                          1,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD );
+                         my_communicator );
 
                MPI_Send( simulation_values.variances.data(),
                          data_sets.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD );
+                         my_communicator );
 
                MPI_Send( simulation_values.ti_noise.data(),
                          simulation_values.ti_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD );
+                         my_communicator );
 
                MPI_Send( simulation_values.ri_noise.data(),
                          simulation_values.ri_noise.size(),
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
-                         MPI_COMM_WORLD );
+                         my_communicator );
             }
 
             break;
@@ -125,14 +125,14 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
             { 
                mc_data.resize( job.length );
 
-               MPI_Barrier( MPI_COMM_WORLD );
+               MPI_Barrier( my_communicator );
 
                // This is a receive
                MPI_Bcast( mc_data.data(),
                           job.length,
                           MPI_DOUBLE,
                           MPI_Job::MASTER,
-                          MPI_COMM_WORLD );
+                          my_communicator );
 
                int index = 0;
 

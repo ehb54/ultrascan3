@@ -50,14 +50,14 @@ DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDSEC;
                 MPI_BYTE,
                 MPI_Job::MASTER,
                 FINISHED,
-                MPI_COMM_WORLD );
+                my_communicator );
 
       MPI_Recv( &job,          // Find out what to do next
                 sizeof( job ), // from MPI #0, MPI #7, MPI #9
                 MPI_BYTE,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
-                MPI_COMM_WORLD,
+                my_communicator,
                 &status );
 
       int dataset = job.dataset_offset;
@@ -80,14 +80,14 @@ DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDSEC;
 
             mc_data.resize( length );
 
-            MPI_Barrier( MPI_COMM_WORLD );
+            MPI_Barrier( my_communicator );
 
             // This is a receive
             MPI_Bcast( mc_data.data(),  // from MPI #8, #10
                        length,
                        MPI_DOUBLE,
                        MPI_Job::MASTER,
-                       MPI_COMM_WORLD );
+                       my_communicator );
 
             for ( int e = dataset; e < dataset + count; e++ )
             {
@@ -217,14 +217,14 @@ dump_fitness( fitness );
                 MPI_BYTE,
                 MPI_Job::MASTER,
                 GENERATION,
-                MPI_COMM_WORLD );
+                my_communicator );
 
       MPI_Send( genes[ fitness[ 0 ].index ].data(),  // to MPI #2
                 solute_doubles * buckets.size(),
                 MPI_DOUBLE,
                 MPI_Job::MASTER,
                 GENE,
-                MPI_COMM_WORLD );
+                my_communicator );
 
 DbTimMsg("Worker after send fitness,genes");
       // Receive instructions from master (continue or finish)
@@ -235,7 +235,7 @@ DbTimMsg("Worker after send fitness,genes");
                 MPI_BYTE,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
-                MPI_COMM_WORLD,
+                my_communicator,
                 &status );
 DbTimMsg("Worker after receive instructions");
 
