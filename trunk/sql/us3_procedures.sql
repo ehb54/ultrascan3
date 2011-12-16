@@ -39,6 +39,7 @@ BEGIN
   SET @INSERTNULL     = 401;
   SET @INSERTDUP      = 402;
   SET @DUPFIELD       = 403;
+  SET @CONSTRAINT_FAILED = 404;
 
   SET @NO_BUFFER      = 501;
   SET @NO_COMPONENT   = 502;
@@ -59,6 +60,9 @@ BEGIN
   SET @ANALYTE_IN_USE = 517;
   SET @SOLUTION_IN_USE = 518;
   SET @NO_CALIB       = 519;
+  SET @NO_REPORT      = 520;
+  SET @NO_REPORT_DETAIL = 521;
+  SET @NO_REPORT_DOCUMENT = 522;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -516,5 +520,6 @@ SOURCE us3_solution_procs.sql
 SOURCE us3_spectrum_procs.sql
 SOURCE us3_model_procs.sql
 SOURCE us3_noise_procs.sql
+SOURCE us3_report_procs.sql
 
 DELIMITER ;
