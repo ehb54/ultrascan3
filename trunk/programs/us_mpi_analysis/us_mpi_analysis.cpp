@@ -12,11 +12,16 @@ int main( int argc, char* argv[] )
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
 
-   new US_MPI_Analysis( argv[ 1 ] );
+   if ( argc == 1 )
+      new US_MPI_Analysis( argv[ 1 ] );
+
+   else if ( argc == 2 )
+      new US_MPI_Analysis( argv[ 1 ], argv[ 2 ] );
 }
 
 // Constructor
-US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
+US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
+      const QString& jxmlfili ) : QObject()
 {
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
@@ -57,14 +62,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    QStringList files = d.entryList( QStringList( "hpc*.xml" ) );
    if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
 
-   QString xmlfile = files[ 0 ];
+   QString xmlfile   = files[ 0 ];
+   QString jxmlfile  = jxmlfili;
 
-   // Parse job xml file
-   QStringList jfilt;
-   jfilt << "*jobxmlfile.xml";
-   jfilt << "us3.pbs";
-   QStringList jfiles   = d.entryList( jfilt, QDir::Files );
-   QString     jxmlfile = jfiles.size() > 0 ? jfiles[ 0 ] : "jobxmlfile.xml";
+   // Parse job xml file  (input argument or detected file)
+   if ( jxmlfile.isEmpty() )
+   {
+      QStringList jfilt;
+      jfilt << "input/*jobxmlfile.xml";
+      jfilt << "us3.pbs";
+      QStringList jfiles = d.entryList( jfilt, QDir::Files );
+      jxmlfile           = jfiles.size() > 0 ? jfiles[ 0 ]
+                                             : "input/jobxmlfile.xml";
+DbgLv(1) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
+   }
 
    job_parse( jxmlfile );
 
@@ -72,11 +83,12 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    {  // Save submit time
       submitTime      = QFileInfo( tarfile ).lastModified();
 mgroup_count=job_params["mgroupscount"].toInt();
-DbgLv(0) << "submitTime " << submitTime << " parallel-masters count" << mgroup_count;
-//DbgLv(0) << "jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
+DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
+ << mgroup_count;
    }
 
    startTime      = QDateTime::currentDateTime();
+   analysisDate   = startTime.toString( "yyMMddhhmm" );
    maxrss         = 0;
    set_count      = 0;
    iterations     = 1;
@@ -86,7 +98,6 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count" << mgroup_c
    data_sets .clear();
    parameters.clear();
    buckets   .clear();
-   analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
    parse( xmlfile );
 
@@ -99,6 +110,8 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count" << mgroup_c
    }
    else
       US_Math2::randomize();
+
+   group_rank = my_rank;    // Temporary setting for send_udp
 
    send_udp( "Starting" );  // Can't send udp message until xmlfile is parsed
 
@@ -320,6 +333,8 @@ if ( my_rank == 0 )
 
    gcores_count = proc_count / mgroup_count;
 
+   startTime    = QDateTime::currentDateTime();
+
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -327,11 +342,19 @@ if ( my_rank == 0 )
       pmasters_start();         // Start parallel-masters job
 }
 
+// Alsternate Constructor
+US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
+{
+   US_MPI_Analysis( tarfile, QString( "" ) );
+}
+
 // Main function  (single master group)
 void US_MPI_Analysis::start( void )
 {
-   QDateTime analysisStart = QDateTime::currentDateTime();
    my_communicator         = MPI_COMM_WORLD;
+   my_workers              = proc_count - 1;
+   gcores_count            = proc_count;
+   group_rank              = my_rank;
 
    // Real processing goes here
    if ( analysis_type == "2DSA" )
@@ -377,9 +400,9 @@ void US_MPI_Analysis::start( void )
 
       // Send message and build file with run-time statistics
       int  walltime = qRound(
-         submitTime   .msecsTo( endTime ) / 1000.0 );
+         submitTime.msecsTo( endTime ) / 1000.0 );
       int  cputime  = qRound(
-         analysisStart.msecsTo( endTime ) / 1000.0 );
+         startTime .msecsTo( endTime ) / 1000.0 );
       int  maxrssmb = qRound( (double)maxrss / 1024.0 );
 
       if ( reduced_iter )
@@ -401,7 +424,7 @@ void US_MPI_Analysis::start( void )
       }
 
       stats_output( walltime, cputime, maxrssmb,
-            submitTime, analysisStart, endTime );
+            submitTime, startTime, endTime );
 
       // Build list and archive of output files
       QDir        d( "." );
@@ -422,12 +445,39 @@ void US_MPI_Analysis::start( void )
 // Send udp
 void US_MPI_Analysis::send_udp( const QString& message )
 {
-   if ( my_rank != 0 ) return;
-if(mgroup_count>1) return;   //*DEBUG*
+   QByteArray msg;
 
-   QString    jobid = db_name + "-" + requestID + ": ";
-   QByteArray msg   = QString( jobid + message ).toAscii();
-   socket->writeDatagram( msg.data(), msg.size(), server, port );
+   if ( my_rank == 0 )
+   {  // Send UDP message from supervisor (or single-group master)
+if(mgroup_count>1) return;   //*DEBUG*
+      QString jobid = db_name + "-" + requestID + ": ";
+      msg           = QString( jobid + message ).toAscii();
+      socket->writeDatagram( msg.data(), msg.size(), server, port );
+   }
+
+   else if ( group_rank == 0 )
+   {  // For pm group master, forward message to supervisor
+      int     tag   = 1009;
+      int     tagm  = 1007;
+      int     super = 0;
+      QString gpfix = QString( "(pmg %1) " ).arg( my_group );
+      msg           = QString( gpfix + message ).toAscii();
+      int     size  = msg.size();
+
+      MPI_Send( &size,
+                sizeof( int ),
+                MPI_BYTE,
+                super,
+                tag,
+                MPI_COMM_WORLD );
+
+      MPI_Send( msg.data(),
+                size,
+                MPI_BYTE,
+                super,
+                tagm,
+                MPI_COMM_WORLD );
+   }
 }
 
 long int US_MPI_Analysis::max_rss( void )
