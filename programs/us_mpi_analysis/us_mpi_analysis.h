@@ -23,6 +23,7 @@ class US_MPI_Analysis : public QObject
  Q_OBJECT
 
   public:
+    US_MPI_Analysis( const QString&, const QString& );
     US_MPI_Analysis( const QString& );
 
   public slots:
@@ -256,6 +257,9 @@ class US_MPI_Analysis : public QObject
     void     global_fit        ( void );
     void     write_model       ( const SIMULATION&, US_Model::AnalysisType );
     void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
+    void     pm_2dsa_master    ( void );
+    void     pm_ga_master      ( void );
+    void     pm_write_model    ( void );
 
     // Worker
     void     _2dsa_worker      ( void );

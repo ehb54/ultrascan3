@@ -59,22 +59,18 @@ DbgLv(0) << "Final-my_rank" << my_rank << " secs=" << startTime.secsTo(QDateTime
 void US_MPI_Analysis::job_parse( const QString& xmlfile )
 {
    QFile file ( xmlfile );
+   job_params[ "walltime"     ] = "2880";
+   job_params[ "mgroupscount" ] = "1";
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
-   {  // If no job xml or us3.pbs, just set some defaults
+   {  // If no job xml or us3.pbs, return now
       if ( my_rank == 0 ) DbgLv(0) << "Cannot open file " << xmlfile;
-//      printf( "Cannot open file %s\n", xmlfile.toAscii().data() );
 
-      job_params[ "walltime"     ] = "1800";
-      job_params[ "mgroupscount" ] = "1";
       return;
    }
 
    if ( xmlfile == "us3.pbs" )
    {  // If no jobxmlfile.xml, but us3.pbs (-local), get values from it
-      job_params[ "walltime"     ] = "1800";
-      job_params[ "mgroupscount" ] = "1";
-//if (my_rank==0) DbgLv(0) << "  (2)xmlfile=" << xmlfile;
       QTextStream ts( &file );
 
       while ( ! ts.atEnd() )
@@ -111,7 +107,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
    QXmlStreamReader xml( &file );
 
    while ( ! xml.atEnd() )
-   {
+   {  // Parse the *jobxmlfile.xml file  (mainly for walltime,mgroupscount)
       xml.readNext();
 
       if ( xml.isStartElement() )
@@ -138,9 +134,10 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
 // Parallel-masters supervisor
 void US_MPI_Analysis::pmasters_supervisor()
 {
+#if 0
    MPI_GA_MSG msg;
    MPI_Status status;
-   int master = 1;
+   int master   = 1;
 
 /*
    while ( mgroupcount > 0 )
@@ -188,6 +185,77 @@ DbgLv(0) << "SUPER     Recv from master index" << ii;
       master = status.MPI_SOURCE;
 DbgLv(0) << "SUPER      Recv was from master" << master;
    }
+#endif
+#if 1
+   MPI_Status status;
+   // Initialize masters states to READY
+   QVector< int > mstates( mgroup_count, READY );
+   QVector< int > mditers( mgroup_count, 0 );
+   mc_iteration    = 0;
+   int  master     = 1;
+   int  iter_done  = 0;
+
+   // Start off all masters doing iteration 1
+   int tag    = 1001;
+   for ( int ii = 0; ii < mgroup_count; ii++ )
+   {
+      master = ( ii == 0 ) ? 1 : ( ii * gcores_count );
+DbgLv(0) << "SUPER   Send to ii,master" << ii << master;
+      MPI_Send( &iter_done,
+                0,
+                MPI_BYTE,
+                master,
+                tag,
+                MPI_COMM_WORLD );
+      mstates[ ii ] = WORKING;
+   }
+
+   // Loop waiting on masters results
+   while ( mc_iteration < mc_iterations )
+   {
+      tag        = 1009;
+      MPI_Recv( &iter_done,
+                0,
+                MPI_BYTE,
+                MPI_ANY_SOURCE,
+                tag,
+                MPI_COMM_WORLD,
+                &status );
+
+      master     = status.MPI_SOURCE;      // Master that has completed
+      int kgroup = master / gcores_count;  // Group to which master belongs
+
+      int kk     = mditers.count( 0 );
+
+      if ( kk == mgroup_count  ||  kk == 0 )
+      {  // 1st iteration 1 or any other iteration:  write model, bump iter
+         pm_write_model();
+
+         mc_iteration++;
+         mditers[ kgroup ] = mditers[ kgroup ] + 1;
+      }
+
+      int jgroup = mstates.indexOf( READY );
+      mstates[ kgroup ] = READY;
+      jgroup     = ( jgroup < 0 ) ? kgroup : jgroup;
+
+      if ( mc_iteration >= ( mc_iterations - mstates.count( WORKING ) ) )
+         continue;    // Let master go idle if working on last few iterations
+
+      // Alert a master to do an iteration
+      tag    = 1002;
+      master = ( jgroup == 0 ) ? 1 : ( jgroup * gcores_count );
+      MPI_Send( &iter_done,
+                0,
+                MPI_BYTE,
+                master,
+                tag,
+                MPI_COMM_WORLD );
+      mstates[ jgroup ] = WORKING;
+
+DbgLv(0) << "SUPER      Recv was from master" << master;
+   }
+#endif
 }
 
 // Parallel-masters master within a group
@@ -199,7 +267,7 @@ void US_MPI_Analysis::pmasters_master()
    // Wait for start message from supervisor
 DbgLv(0) << "  MASTER   Recv from super. my_rank" << my_rank << "group" << my_group;
    int super  = 0;
-   int tag    = 1;
+   int tag    = 1001;
    MPI_Recv( &msg,
              0,
              MPI_BYTE,
@@ -240,11 +308,12 @@ DbgLv(0) << "  MASTER        Recv fr worker" << worker << " (g r m)" << my_group
    }
 
    // Send master-done to supervisor
-   tag = 9;
+   tag = 1009;
+
    MPI_Send( &msg,
              0,
              MPI_BYTE,
-             0,
+             super,
              tag,
              MPI_COMM_WORLD );
 }
@@ -252,6 +321,7 @@ DbgLv(0) << "  MASTER        Recv fr worker" << worker << " (g r m)" << my_group
 // Parallel-masters worker within a group
 void US_MPI_Analysis::pmasters_worker()
 {
+#if 0
    MPI_GA_MSG msg;
 
    // Receive start from master
@@ -282,6 +352,22 @@ DbgLv(0) << "    WORKER    Send DONE (g r m)" << my_group << group_rank << my_ra
              0,
              tag,
              my_communicator );
+#endif
+#if 1
+   if ( analysis_type == "2DSA" )
+   {  // Standard 2DSA worker
+      _2dsa_worker();
+   }
+
+   else if ( analysis_type == "GA" )
+   {  // Standard GA worker
+      ga_worker();
+   }
+
+   else
+   {  // What???  Should not get here
+   }
+#endif
 
 }
 
@@ -317,5 +403,20 @@ void US_MPI_Analysis::time_mc_iterations()
    }
 
    return;
+}
+
+// Parallel-masters version of 2DSA master
+void US_MPI_Analysis::pm_2dsa_master()
+{
+}
+
+// Parallel-masters version of GA master
+void US_MPI_Analysis::pm_ga_master()
+{
+}
+
+// Parallel-master write model
+void US_MPI_Analysis::pm_write_model()
+{
 }
 
