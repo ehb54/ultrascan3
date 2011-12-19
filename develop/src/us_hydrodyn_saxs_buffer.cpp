@@ -4256,6 +4256,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       {
          f_errors[ it->first ].resize( org_len - 1 );
       }
+      to_created( it->first );
    }
    crop_undos.push_back( cud );
    editor_msg( "blue", tr( "Crop left: cropped 1 point" ) );
@@ -4443,6 +4444,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       {
          f_errors[ it->first ].pop_back();
       }
+      to_created( it->first );
    }
    crop_undos.push_back( cud );
    editor_msg( "blue", tr( "Crop right: cropped 1 point" ) );
@@ -4783,7 +4785,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
                new_e       .push_back( f_errors   [ it->first ][ i ] );
             }
          }
-
       }
 
       f_qs_string[ it->first ] = new_q_string;
@@ -4794,6 +4795,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       {
          f_errors[ it->first ] = new_e;
       }
+      to_created( it->first );
    }
    crop_undos.push_back( cud );
    editor_msg( "blue", tr( "Crop common: done" ) );
@@ -4873,3 +4875,26 @@ bool US_Hydrodyn_Saxs_Buffer::is_nonzero_vector( vector < double > &v )
    }
    return non_zero;
 }
+
+void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
+{
+   bool in_created = false;
+   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   {
+      if ( file == lb_created_files->text( i ) )
+      {
+         created_files_not_saved[ file ] = true;
+         in_created = true;
+      }
+   }
+
+   if ( !in_created )
+   {
+      lb_created_files->insertItem( file );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   }
+}
+
+      
+      
+   

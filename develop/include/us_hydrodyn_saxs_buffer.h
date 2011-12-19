@@ -265,6 +265,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files );
+      void                         to_created( QString file );
 
    private slots:
 
