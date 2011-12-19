@@ -832,6 +832,7 @@ class US_EXTERN US_Saxs_Util
       vector < unsigned int >             saxs_model_for_csv;
       vector < QString >                  saxs_tag_for_csv;
       vector < QString >                  saxs_grid_tag_for_csv;
+      vector < QString >                  saxs_cuda_tag_for_csv;
       vector < QString >                  saxs_method_for_csv;
       vector < vector < double > >        saxs_q_for_csv;
       vector < vector < double > >        saxs_I_for_csv;

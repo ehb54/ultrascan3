@@ -1324,6 +1324,8 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
                                   control_parameters[ "tag" ] : "" );
       saxs_grid_tag_for_csv.push_back( control_parameters.count( "grid_tag" ) ?
                                        control_parameters[ "grid_tag" ] : "" );
+      saxs_cuda_tag_for_csv.push_back( control_parameters.count( "cuda_tag" ) ?
+                                       control_parameters[ "cuda_tag" ] : "" );
       saxs_method_for_csv.push_back( control_parameters[ "iqmethod" ]  );
       saxs_q_for_csv.push_back( q );
       saxs_I_for_csv.push_back( I );
@@ -1341,6 +1343,7 @@ bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vecto
       QString fsaxs_part_2_name =
          ( control_parameters.count( "grid_tag" ) ? control_parameters[ "grid_tag" ] : "" ) +
          ( control_parameters.count( "tag" ) ? control_parameters[ "tag" ] : "" ) +
+         ( control_parameters.count( "cuda_tag" ) ? control_parameters[ "cuda_tag" ] : "" ) +
          iqq_suffix() + "." + 
          control_parameters[ "output" ];
 
@@ -1406,6 +1409,7 @@ bool US_Saxs_Util::flush_output()
       saxs_model_for_csv    .clear();
       saxs_tag_for_csv      .clear();
       saxs_grid_tag_for_csv .clear();
+      saxs_cuda_tag_for_csv .clear();
       saxs_method_for_csv   .clear();
       saxs_q_for_csv        .clear();
       saxs_I_for_csv        .clear();
@@ -1430,6 +1434,7 @@ bool US_Saxs_Util::flush_output()
    saxs_model_for_csv    .clear();
    saxs_tag_for_csv      .clear();
    saxs_grid_tag_for_csv .clear();
+   saxs_cuda_tag_for_csv .clear();
    saxs_method_for_csv   .clear();
    saxs_q_for_csv        .clear();
    saxs_I_for_csv        .clear();

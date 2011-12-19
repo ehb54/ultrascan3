@@ -986,10 +986,20 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
+      if ( control_parameters.count( "iqcuda" ) )
+      {
+         control_parameters[ "cuda_tag" ] = 
+            QString( "cuda%1" )
+            .arg( control_parameters[ "iqcuda" ].toUInt() > 0 ?
+                  control_parameters[ "iqcuda" ].toUInt() : 32  );
+      } else {
+         control_parameters.erase( "cuda_tag" );
+      }
       if ( !write_output( current_model, q, I ) )
       {
          return false;
       }
+      control_parameters.erase( "cuda_tag" );
    }
    return true;
 }

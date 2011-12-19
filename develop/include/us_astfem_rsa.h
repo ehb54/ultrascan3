@@ -4,7 +4,7 @@
 #include <qapp.h>
 #include "us_astfem_math.h"
 
-// #define USE_US_TIMER
+#define USE_US_TIMER
 
 class US_EXTERN US_Astfem_RSA : public QObject
 {
