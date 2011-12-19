@@ -481,11 +481,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_set_grid, SIGNAL(clicked()), SLOT(set_grid()));
 
    pb_clear_plot_saxs = new QPushButton("", this);
-   Q_CHECK_PTR(pb_clear_plot_saxs);
    pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_plot_saxs->setMinimumHeight(minHeight1);
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
+
+   pb_saxs_legend = new QPushButton( "Legend", this);
+   pb_saxs_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_legend->setMinimumHeight(minHeight1);
+   pb_saxs_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_saxs_legend, SIGNAL(clicked()), SLOT(saxs_legend()));
 
    cb_create_native_saxs = new QCheckBox(this);
    cb_create_native_saxs->setText(tr(" Create standard output files"));
@@ -722,14 +727,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_load_plot_pr, SIGNAL(clicked()), SLOT(load_plot_pr()));
 
    pb_clear_plot_pr = new QPushButton(tr("Clear P(r) Distribution"), this);
-   Q_CHECK_PTR(pb_clear_plot_pr);
    pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_plot_pr->setMinimumHeight(minHeight1);
    pb_clear_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_pr, SIGNAL(clicked()), SLOT(clear_plot_pr()));
 
+   pb_pr_legend = new QPushButton(tr("Legend"), this);
+   pb_pr_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pr_legend->setMinimumHeight(minHeight1);
+   pb_pr_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pr_legend, SIGNAL(clicked()), SLOT(pr_legend()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
-   Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -804,6 +813,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
 #endif
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
+   plot_saxs->setAutoLegend( false );
+   plot_saxs->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   connect( plot_saxs, SIGNAL( legendClicked( long ) ), SLOT( plot_saxs_clicked( long ) ) );
 
    plot_pr = new QwtPlot(this);
 #ifndef QT4
@@ -844,6 +856,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setMargin(USglobal->config_list.margin);
    plot_pr->setTitle(tr("P(r) Distribution Curve"));
    plot_pr->setCanvasBackground(USglobal->global_colors.plot);
+   plot_pr->setAutoLegend( false );
+   plot_pr->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
    progress_saxs->setMinimumHeight(minHeight1);
@@ -946,6 +961,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
    hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
+   hbl_load_saxs->addWidget(pb_saxs_legend);
    background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
    j++;
 
@@ -1018,6 +1034,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_pr->addWidget(pb_load_pr);
    hbl_plot_pr->addWidget(pb_load_plot_pr);
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
+   hbl_plot_pr->addWidget(pb_pr_legend);
    background->addMultiCellLayout(hbl_plot_pr, j, j, 0, 1);
    j++;
    
@@ -2179,11 +2196,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       }
    } // models
 
-#ifndef QT4
-   long ppr = plot_pr->insertCurve("P(r) vs r");
-#else
-   QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
-#endif
    vector < double > r;
    vector < double > pr;
    r.resize(hist.size());
@@ -2203,11 +2215,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
    }
 
-#ifndef QT4
-   plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
-#else
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
    plotted_r.push_back(r);
    plotted_pr.push_back(pr);
    QString use_name = QFileInfo(model_filename).fileName();
@@ -2220,6 +2227,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    qsl_plotted_pr_names << plot_name;
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
+
+#ifndef QT4
+   long ppr = plot_pr->insertCurve( plot_name );
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
+#ifndef QT4
+   plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
+#else
+   curve->setStyle( QwtPlotCurve::Lines );
+#endif
 
 #ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
@@ -4721,11 +4739,11 @@ void US_Hydrodyn_Saxs::set_guinier()
          }
       }
 #ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
+      long Iq = plot_saxs->insertCurve( qsl_plotted_iq_names[ p ] );
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
       plotted_Iq[ p ] = Iq;
 #else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
+      QwtPlotCurve *curve = new QwtPlotCurve( qsl_plotted_iq_names[ p ] );
       curve->setStyle( QwtPlotCurve::Lines );
       plotted_Iq_curves[ p ] = curve;
 #endif
@@ -4773,7 +4791,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
             plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", 2, SolidLine));
 #else
-            plotted_Gp_curves[i] = new QwtPlotCurve( "I(q) vs q" );
+            plotted_Gp_curves[i] = new QwtPlotCurve( qsl_plotted_iq_names[ i ] );
             plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
             plotted_Gp_curves[i]->setData(
                            (double *)&(plotted_guinier_x[i][0]), 

@@ -868,11 +868,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
       int extension = 0;
 
       while ( dup_plotted_iq_name_check.count(plot_name) )
@@ -881,6 +876,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
@@ -1702,11 +1703,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
       editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
       if ( tot_excl_vol_noh != tot_excl_vol ||
@@ -1732,6 +1728,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
@@ -2620,11 +2622,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
 
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
       editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
@@ -2651,6 +2648,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();

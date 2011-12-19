@@ -1571,6 +1571,10 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          } else {
             rescale_iqq_curve( scaling_target, q, I );
          }
+         if ( I_error.size() )
+         {
+            rescale_iqq_curve_using_last_rescaling( I_error );
+         }
       }
 
       if ( q.size() )
@@ -2843,7 +2847,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
 void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
                                           vector < double > &q,
                                           vector < double > &I,
-                                          vector < double > &, /* I2 */
+                                          vector < double > &/* I2 */,
                                           QColor plot_color
                                           )
 {
@@ -2969,6 +2973,11 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          editor_msg( "red", tr("Chi^2 fitting disabled, zeros in target standard deviation\n") );
          do_chi2_fitting = false;
       }
+      editor_msg( "dark blue",
+                  QString( tr( "fitting range: %1 to %2 with %3 points\n" ) )
+                  .arg( use_q[ 0 ] )
+                  .arg( use_q.back() )
+                  .arg( use_q.size() ) );
 
       if ( do_chi2_fitting )
       {
@@ -3081,7 +3090,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    {
       I[i] = k * I[i];
    }
-   
+
    for ( unsigned int i = 0; i < use_source_I.size(); i++ )
    {
       use_source_I[i] = k * use_source_I[i];

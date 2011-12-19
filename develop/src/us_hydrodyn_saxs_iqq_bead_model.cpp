@@ -648,11 +648,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
       int extension = 0;
 
       while ( dup_plotted_iq_name_check.count(plot_name) )
@@ -661,6 +656,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
@@ -1260,12 +1261,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       }
 
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
-
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
       QString name = 
@@ -1283,6 +1278,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
@@ -2071,11 +2072,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
 
       editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
 
@@ -2094,6 +2090,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
 
 #ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();

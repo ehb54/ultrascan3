@@ -147,10 +147,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_load_plot_saxs;
       QPushButton *pb_set_grid;
       QPushButton *pb_clear_plot_saxs;
+      QPushButton *pb_saxs_legend;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
       QPushButton *pb_load_plot_pr;
       QPushButton *pb_clear_plot_pr;
+      QPushButton *pb_pr_legend;
       QPushButton *pb_load_gnom;
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
@@ -588,6 +590,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
+
+      void plot_saxs_clicked( long );
+      void plot_pr_clicked  ( long );
+
+      void saxs_legend();
+      void pr_legend();
 
    protected slots:
 

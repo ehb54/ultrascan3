@@ -492,6 +492,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_crop_common->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_common, SIGNAL(clicked()), SLOT(crop_common()));
 
+   pb_crop_vis = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_vis->setMinimumHeight(minHeight1);
+   pb_crop_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
+
    pb_crop_left = new QPushButton(tr("Crop Left"), this);
    pb_crop_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_left->setMinimumHeight(minHeight1);
@@ -653,6 +659,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_common );
+   hbl_plot_buttons->addWidget( pb_crop_vis );
    hbl_plot_buttons->addWidget( pb_crop_left );
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
@@ -1502,6 +1509,11 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
                                     );
    pb_crop_common      ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_vis         ->setEnabled( 
                                     files_selected_count &&
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
@@ -4560,7 +4572,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
 {
    // first make curves visible,
    // of no movement needed, then start cropping points
-   // potential undo?
    
    // find selected curves & their left most position:
    bool all_lefts_visible = true;
@@ -4895,6 +4906,147 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
    }
 }
 
-      
-      
+void US_Hydrodyn_Saxs_Buffer::crop_vis()
+{
    
+   // find curves within zoomRect & select only them
+   double minx = plot_dist_zoomer->zoomRect().x1();
+   double maxx = plot_dist_zoomer->zoomRect().x2();
+
+   map < QString, bool > selected_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_qs[ this_file ][ i ] >= minx &&
+                    f_qs[ this_file ][ i ] <= maxx &&
+                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
+                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+               {
+                  selected_files[ this_file ] = true;
+                  break;
+               }
+            }
+         } 
+      }
+   }
+
+   if ( !selected_files.size() )
+   {
+      editor_msg( "red", tr( "Crop visible: The current visible plot is empty" ) );
+      return;
+   }
+
+
+   // make sure we don't leave a gap
+   map < QString, bool > crop_left_side;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      if ( f_qs[ it->first ][ 0 ]   < minx &&
+           f_qs[ it->first ].back() > maxx )
+      {
+         editor_msg( "red", tr( "Crop visible: error: you can not crop out the middle of a curve" ) );
+         return;
+      }
+      if ( f_qs[ it->first ][ 0 ]   < minx )
+      {
+         crop_left_side[ it->first ] = false;
+      }
+      if ( f_qs[ it->first ].back() > maxx )
+      {
+         crop_left_side[ it->first ] = true;
+      }
+   }
+
+   
+   {
+      map < QString, bool >::iterator it = crop_left_side.begin();
+      bool last_crop = it->second;
+      it++;
+      for ( ; it!= crop_left_side.end(); it++ )
+      {
+         if ( it->second != last_crop )
+         {
+            editor_msg( "dark red", tr( "Crop visible: warning: you are cropping the left of some curves and the right of others. " ) );
+            break;
+         }
+      }
+   }
+   
+   editor_msg( "black",
+               QString( tr( "Crop visible:\n"
+                            "Cropping out q-range of (%1:%2)\n" ) )
+               .arg( minx )
+               .arg( maxx ) );
+
+   crop_undo_data cud;
+   cud.is_left   = false;
+   cud.is_common = true;
+
+   for ( map < QString, bool >::iterator it = selected_files.begin();
+         it != selected_files.end();
+         it++ )
+   {
+      // save undo data
+      cud.f_qs_string[ it->first ] = f_qs_string[ it->first ];
+      cud.f_qs       [ it->first ] = f_qs       [ it->first ];
+      cud.f_Is       [ it->first ] = f_Is       [ it->first ];
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         cud.f_errors   [ it->first ] = f_errors   [ it->first ];
+      }
+
+      vector < QString > new_q_string;
+      vector < double  > new_q;
+      vector < double  > new_I;
+      vector < double  > new_e;
+
+      for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
+      {
+         if ( f_qs[ it->first ][ i ] < minx ||
+              f_qs[ it->first ][ i ] > maxx )
+         {
+            new_q_string.push_back( f_qs_string[ it->first ][ i ] );
+            new_q       .push_back( f_qs       [ it->first ][ i ] );
+            new_I       .push_back( f_Is       [ it->first ][ i ] );
+
+            if ( f_errors.count( it->first ) &&
+                 f_errors[ it->first ].size() )
+            {
+               new_e       .push_back( f_errors   [ it->first ][ i ] );
+            }
+         }
+      }
+
+      f_qs_string[ it->first ] = new_q_string;
+      f_qs       [ it->first ] = new_q;
+      f_Is       [ it->first ] = new_I;
+      if ( f_errors.count( it->first ) &&
+           f_errors[ it->first ].size() )
+      {
+         f_errors[ it->first ] = new_e;
+      }
+      to_created( it->first );
+   }
+   crop_undos.push_back( cud );
+   editor_msg( "blue", tr( "Crop visible: done" ) );
+
+   update_files();
+
+   if ( plot_dist_zoomer &&
+        plot_dist_zoomer->zoomRectIndex() )
+   {
+      plot_dist_zoomer->zoom( -1 );
+   }
+}

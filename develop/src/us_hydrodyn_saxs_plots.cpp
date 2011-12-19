@@ -12,13 +12,6 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
       r.resize(pr.size());
    }
 
-#ifndef QT4
-   long ppr = plot_pr->insertCurve("p(r) vs r");
-   plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-#else
-   QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
    plotted_r.push_back(r);
 
    plotted_pr_not_normalized.push_back(pr);
@@ -40,6 +33,14 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
                   
+#ifndef QT4
+   long ppr = plot_pr->insertCurve( plot_name );
+   plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+   curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
 #ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
    plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
@@ -204,12 +205,12 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 #ifndef QT4
    plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-   long Iq = plot_saxs->insertCurve("I(q) vs q");
+   long Iq = plot_saxs->insertCurve( name );
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
    plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
 
-   QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
+   QwtPlotCurve *curve = new QwtPlotCurve( name );
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
