@@ -27,16 +27,42 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
                .arg( plotted_q[ pos ].size() ) );
    if ( is_nonzero_vector( plotted_I_error[ pos ] ) )
    {
-      double avg_std_dev_pct = 0e0;
-      for ( unsigned int i = 0; i < plotted_I_error[ pos ].size(); i++ )
       {
-         avg_std_dev_pct += 100.0 * plotted_I_error[ pos ][ i ] / plotted_I[ pos ][ i ];
+         double avg_std_dev_pct = 0e0;
+         for ( unsigned int i = 0; i < plotted_I_error[ pos ].size(); i++ )
+         {
+            avg_std_dev_pct += 100.0 * plotted_I_error[ pos ][ i ] / plotted_I[ pos ][ i ];
+         }
+         avg_std_dev_pct /= (double) plotted_I_error[ pos ].size();
+         editor_msg( "black", 
+                     QString( tr( "Errors present %1 points, s.d. average % %2" ) )
+                     .arg( plotted_I_error[ pos ].size() )
+                     .arg( avg_std_dev_pct ) );
       }
-      avg_std_dev_pct /= (double) plotted_I_error[ pos ].size();
-      editor_msg( "black", 
-                  QString( tr( "Errors present %1 points average % error %2" ) )
-                  .arg( plotted_I_error[ pos ].size() )
-                  .arg( avg_std_dev_pct ) );
+      if ( plot_saxs_zoomer )
+      {
+         double       minx            = plot_saxs_zoomer->zoomRect().x1();
+         double       maxx            = plot_saxs_zoomer->zoomRect().x2();
+         double       avg_std_dev_pct = 0e0;
+         unsigned int count           = 0;
+
+         for ( unsigned int i = 0; i < plotted_I_error[ pos ].size(); i++ )
+         {
+            if ( plotted_q[ pos ][ i ] >= minx &&
+                 plotted_q[ pos ][ i ] <= maxx )
+            {
+               avg_std_dev_pct += 100.0 * plotted_I_error[ pos ][ i ] / plotted_I[ pos ][ i ];
+               count++;
+            }
+         }
+         avg_std_dev_pct /= (double) count;
+         editor_msg( "black", 
+                     QString( tr( "Currently visible %1 points in (%2:%3), s.d. average % %4" ) )
+                     .arg( count )
+                     .arg( minx )
+                     .arg( maxx )
+                     .arg( avg_std_dev_pct ) );
+      }
    } else {
       editor_msg( "black", tr( "No errors present" ) );
    }
