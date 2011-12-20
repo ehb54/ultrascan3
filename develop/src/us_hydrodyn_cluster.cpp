@@ -750,8 +750,6 @@ void US_Hydrodyn_Cluster::create_pkg()
    
    QString      out = base;
    unsigned int write_count = 0;
-   unsigned int max_no_of_jobs = (unsigned int) ceil( selected_files.size() / (double) le_no_of_jobs->text().toUInt() );
-   cout << "max jobs per " << max_no_of_jobs << endl;
    unsigned int extension_count = selected_files.size();
    unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
 
@@ -763,25 +761,52 @@ void US_Hydrodyn_Cluster::create_pkg()
 
    QStringList source_files;
    QStringList dest_files;
+   QStringList qsl_advanced;
 
    if ( any_advanced() )
    {
       editor_msg( "blue", tr( "Note: using Advanced Options" ) );
+      qsl_advanced = advanced_addition();
    }
 
    unsigned int multi_grid_multiplier = 
       cb_split_grid->isChecked() && lb_target_files->numRows() > 1 ?
       lb_target_files->numRows() : 1;
 
-   for ( unsigned int this_i = 0; this_i < selected_files.size() * multi_grid_multiplier; this_i++ )
+   unsigned int advanced_multiplier =
+      qsl_advanced.size() ? qsl_advanced.size() : 1;
+
+   unsigned int max_no_of_jobs = 
+      (unsigned int) ceil( ( selected_files.size() * multi_grid_multiplier * advanced_multiplier )
+                           / (double) le_no_of_jobs->text().toUInt() );
+   cout << "max jobs per " << max_no_of_jobs << endl;
+
+   map < QString, bool > already_added;
+
+   for ( unsigned int this_i = 0; this_i < selected_files.size() * multi_grid_multiplier * advanced_multiplier; this_i++ )
    {
       unsigned int i    = this_i % selected_files.size();
       if ( multi_grid_multiplier > 1 )
       {
-         unsigned int grid = this_i / selected_files.size();
+         unsigned int grid = ( this_i / selected_files.size() ) % multi_grid_multiplier;
          out += QString( "ExperimentGrid  %1\n" ).arg( QFileInfo( lb_target_files->text( grid ) ).fileName() );
-         source_files << lb_target_files->text( grid );
+         if ( !already_added.count( lb_target_files->text( grid ) ) )
+         {
+            already_added[ lb_target_files->text( grid ) ] = true;
+            source_files << lb_target_files->text( grid );
+         }
       }
+
+      unsigned int advanced_pos = 0;
+      if ( advanced_multiplier > 1 )
+      {
+         advanced_pos = this_i / ( selected_files.size() * multi_grid_multiplier );
+      }
+
+      cout << QString( "this_i %1 grid %2 advanced_pos %3\n" )
+         .arg( this_i )
+         .arg( ( this_i / selected_files.size() ) % multi_grid_multiplier )
+         .arg( advanced_pos );
 
       out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
       QString use_file_name = QFileInfo( selected_files[ i ] ).fileName();
@@ -796,10 +821,15 @@ void US_Hydrodyn_Cluster::create_pkg()
       {
          out += QString( "OutputFile      %1\n" ).arg( use_output_name );
       }
-      source_files << selected_files[ i ];
+      if ( !already_added.count( selected_files[ i ] ) )
+      {
+         already_added[ selected_files[ i ] ] = true;
+         source_files << selected_files[ i ];
+      }
       if ( any_advanced() )
       {
-         out += advanced_addition( use_output_name );
+         // out += advanced_addition( use_output_name );
+         out += qsl_advanced[ advanced_pos ];
       } else {
          if ( batch_window->cb_dmd->isChecked() )
          {
@@ -835,6 +865,7 @@ void US_Hydrodyn_Cluster::create_pkg()
                                                                  ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
             f.close();
             editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
+            qApp->processEvents();
          }
 
          // copy ne files to base_dir
@@ -897,9 +928,9 @@ void US_Hydrodyn_Cluster::create_pkg()
          {
             return;
          }
-         
 
-         source_files.clear();
+         source_files .clear();
+         already_added.clear();
 
          out = base;
       }
@@ -1252,10 +1283,13 @@ void US_Hydrodyn_Cluster::update_validator()
    {
       delete le_no_of_jobs_qv;
    }
+
    unsigned int max_jobs = 
       ( cb_split_grid->isChecked() && lb_target_files->numRows() ) ?
       selected_files.size() * lb_target_files->numRows() : selected_files.size();
                            
+   max_jobs *= advanced_addition().size();
+
    le_no_of_jobs_qv = new QIntValidator( 1, 
                                          max_jobs,
                                          this
@@ -1286,6 +1320,7 @@ void US_Hydrodyn_Cluster::advanced()
                                        this );
    hca->exec();
    delete hca;
+   update_validator();
 }
 
 void US_Hydrodyn_Cluster::dmd()
@@ -1400,9 +1435,9 @@ QString US_Hydrodyn_Cluster::advanced_addition_methods()
    return out;
 }
 
-QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
+QStringList US_Hydrodyn_Cluster::advanced_addition()
 {
-   QString out;
+   QStringList qsl_out;
 
    map < unsigned int, double >       starts;
    map < unsigned int, double >       ends;
@@ -1452,6 +1487,7 @@ QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
 
    for ( unsigned int i = 0; i < total_points; i++ )
    {
+      QString out;
       unsigned int pos = i;
       QString msg = "";
       QString tag;
@@ -1500,8 +1536,9 @@ QString US_Hydrodyn_Cluster::advanced_addition( QString /* outputfile */ )
          out += "Tag             " + tag + "\n";
       }
       out += advanced_addition_methods();
+      qsl_out << out;
    }
-   return out;
+   return qsl_out;
 }
 
 QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files )

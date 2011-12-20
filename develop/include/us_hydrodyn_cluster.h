@@ -129,7 +129,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 #endif
       csv           csv_advanced;
       bool          any_advanced();
-      QString       advanced_addition( QString outputfile );
+      QStringList   advanced_addition();
       QString       advanced_addition_methods();
 
       csv           csv_dmd;
