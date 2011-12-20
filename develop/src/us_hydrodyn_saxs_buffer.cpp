@@ -4903,6 +4903,7 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
    {
       lb_created_files->insertItem( file );
       lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      created_files_not_saved[ file ] = true;
    }
 }
 

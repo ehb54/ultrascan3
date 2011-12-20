@@ -1334,6 +1334,8 @@ QString US_Hydrodyn_Cluster::advanced_addition_methods()
       adaptive = "a";
    }
 
+   bool any_methods = false;
+
    for ( unsigned int i = 0; i < csv_advanced.data.size(); i++ )
    {
       if ( csv_advanced.data[ i ].size() > 1 &&
@@ -1344,44 +1346,55 @@ QString US_Hydrodyn_Cluster::advanced_addition_methods()
             out += 
                "IqMethod        db\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid" )
          {
             out += 
                "IqMethod        hy" + adaptive + "\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid2" )
          {
             out += 
                "IqMethod        h2" + adaptive + "\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) Hybrid3" )
          {
             out += 
                "IqMethod        h3" + adaptive + "\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) Fast" )
          {
             out += 
                "IqMethod        fd\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) FoXS" )
          {
             out += 
                "IqMethod        foxs\n"
                "Process\n";
+            any_methods = true;
          }
          if ( csv_advanced.data[ i ][ 0 ] == "I(q) Crysol" )
          {
             out += 
                "IqMethod        crysol\n"
                "Process\n";
+            any_methods = true;
          }
       }
+   }
+   if ( !any_methods )
+   {
+      out += "Process\n";
    }
 
    return out;

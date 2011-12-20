@@ -7905,6 +7905,30 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
    }
    cout << endl;
 
+   // we should redo this so it works in general
+   // maybe build some sort of a vector < vector > for each point and
+   // so on...
+   // for now, lets give some tolerance
+   // spacing computation
+
+   vector < unsigned int > closest_from_point;
+   for ( unsigned int i = 0; i < to_grid.size(); i++ )
+   {
+      double       min_deltaq    = fabs( to_grid[ i ] - from_grid[ 0 ] );
+      unsigned int closest_point = 0;
+
+      for ( unsigned int pos = 1; pos < from_grid.size(); pos++ )
+      {
+         double this_deltaq = fabs( to_grid[ i ] - from_grid[ pos ] );
+         if ( min_deltaq > this_deltaq )
+         {
+            min_deltaq    = this_deltaq;
+            closest_point = pos;
+         }
+      }
+      closest_from_point.push_back( closest_point );
+   }
+
    {
       double sum = 0e0;
       double err = 0e0;
@@ -7927,13 +7951,15 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
       
       if ( !count )
       {
-         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
-            .arg( q_start ).arg( q_end );
-         return false;
+         errormsg = QString( "Warning: Interpolation of experimental data found no points within range %1:%2, using closest point %3\n")
+            .arg( q_start ).arg( q_end ).arg( from_grid[ closest_from_point[ 0 ] ] );
+         cout << errormsg;
+         to_data  [ 0 ] = from_data  [ closest_from_point[ 0 ] ];
+         to_errors[ 0 ] = from_errors[ closest_from_point[ 0 ] ];
+      } else {
+         to_data  [ 0 ] = sum / tot_w;
+         to_errors[ 0 ] = err / count;
       }
-
-      to_data  [ 0 ] = sum / tot_w;
-      to_errors[ 0 ] = err / count;
       // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
       // cout << QString("iibc p 0 sum %1 err %2 tot_w %3 count %4\n").arg( sum ).arg( err ).arg( tot_w ).arg( count );
    }
@@ -7962,16 +7988,18 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
 
       if ( !count )
       {
-         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
-            .arg( q_start ).arg( q_end );
-         return false;
+         errormsg = QString( "Warning: Interpolation of experimental data found no points within range %1:%2, using closest point %3\n")
+            .arg( q_start ).arg( q_end ).arg( from_grid[ closest_from_point[ i ] ] );
+         cout << errormsg;
+         to_data  [ i ] = from_data  [ closest_from_point[ i ] ];
+         to_errors[ i ] = from_errors[ closest_from_point[ i ] ];
+      } else {
+         to_data  [ i ] = sum / tot_w;
+         to_errors[ i ] = err / count;
       }
 
       // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
       // cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( i ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
-
-      to_data  [ i ] = sum / tot_w;
-      to_errors[ i ] = err / count;
    }
 
    // last point
@@ -7999,16 +8027,18 @@ bool US_Saxs_Util::interpolate_iqq_by_case( vector < double > from_grid,
       
       if ( !count )
       {
-         errormsg = QString( "Interpolation of experimental data found no points within range %1:%2, failing\n")
-            .arg( q_start ).arg( q_end );
-         return false;
+         errormsg = QString( "Warning: Interpolation of experimental data found no points within range %1:%2, using closest point %3\n")
+            .arg( q_start ).arg( q_end ).arg( from_grid[ closest_from_point[ to_grid.size() - 1 ] ] );
+         cout << errormsg;
+         to_data  [ to_grid.size() - 1 ] = from_data  [ closest_from_point[ to_grid.size() - 1 ] ];
+         to_errors[ to_grid.size() - 1 ] = from_errors[ closest_from_point[ to_grid.size() - 1 ] ];
+      } else {
+         to_data  [ to_grid.size() - 1 ] = sum / tot_w;
+         to_errors[ to_grid.size() - 1 ] = err / count;
       }
 
       // cout << QString("q_start %1 q_end %2 ").arg( q_start ).arg( q_end );
       // cout << QString("iibc p %1 sum %2 err %3 tot_w %4 count %5\n").arg( to_grid.size() - 1 ).arg( sum ).arg( err ).arg( tot_w ).arg( count );
-
-      to_data  [ to_grid.size() - 1 ] = sum / tot_w;
-      to_errors[ to_grid.size() - 1 ] = err / count;
    }
 
    return true;
