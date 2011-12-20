@@ -35,7 +35,7 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
          }
          avg_std_dev_pct /= (double) plotted_I_error[ pos ].size();
          editor_msg( "black", 
-                     QString( tr( "Errors present %1 points, s.d. average % %2" ) )
+                     QString( tr( "Errors present %1 points, s.d. average %2 %" ) )
                      .arg( plotted_I_error[ pos ].size() )
                      .arg( avg_std_dev_pct ) );
       }
@@ -57,7 +57,7 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
          }
          avg_std_dev_pct /= (double) count;
          editor_msg( "black", 
-                     QString( tr( "Currently visible %1 points in (%2:%3), s.d. average % %4" ) )
+                     QString( tr( "Currently visible %1 points in (%2:%3), s.d. average %4 %" ) )
                      .arg( count )
                      .arg( minx )
                      .arg( maxx )
