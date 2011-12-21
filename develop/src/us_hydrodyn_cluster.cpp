@@ -564,7 +564,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       QFileInfo qfi( le_output_name->text() );
       if ( qfi.exists() && !qfi.isFile() )
       {
-         editor_msg( "red", QString( tr( "Output file %1 already exists and is not a regular file\n" ) ).arg( le_output_name->text() ) );
+         editor_msg( "red", QString( tr( "Output file \"%1\" already exists and is not a regular file\n" ) ).arg( le_output_name->text() ) );
          return;
       }
    }
