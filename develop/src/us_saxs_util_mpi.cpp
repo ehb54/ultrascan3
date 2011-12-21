@@ -15,6 +15,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
    {
       errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
+      cout << errormsg << endl << flush;
       MPI_Abort( MPI_COMM_WORLD, errorno );
       exit( errorno );
    }         
@@ -23,6 +24,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    if ( !QFile::exists( controlfile ) )
    {
       errormsg = QString( "controlfile %1 does not exist" ).arg( controlfile );
+      cout << errormsg << endl << flush;
       MPI_Abort( MPI_COMM_WORLD, errorno );
       exit( errorno );
    }         
