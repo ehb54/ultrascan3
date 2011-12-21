@@ -162,6 +162,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_crop_left;
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
+      QPushButton   *pb_legend;
 
 
       QCheckBox     *cb_guinier;
@@ -321,6 +322,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void crop_vis();
       void crop_undo();
       void crop_right();
+      void legend();
       void guinier();
 
    protected slots:

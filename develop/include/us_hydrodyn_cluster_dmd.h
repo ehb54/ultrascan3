@@ -92,6 +92,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       void          sync_csv_with_selected();
       void          reset_csv();
 
+      QString       dmd_dir;
+      QStringList   csv_parse_line( QString qs );
+
    private slots:
 
       void setupGUI();

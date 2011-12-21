@@ -492,6 +492,32 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       return false;
    }
       
+   QString dmd_heat_xc;
+   if ( run_description.lower() == "relax" )
+   {
+      if ( control_parameters.count( "dmdrelaxheatxc" ) )
+      {
+         dmd_heat_xc = control_parameters[ "dmdrelaxheatxc" ];
+      } else {
+         cout << "dmd_run: relax heat exchange using default value of 10.0\n";
+         dmd_heat_xc = "10.0";
+      }
+   } else {
+      if ( run_description.lower() == "equi" )
+      {
+         if ( control_parameters.count( "dmdequiheatxc" ) )
+         {
+            dmd_heat_xc = control_parameters[ "dmdequiheatxc" ];
+         } else {
+            cout << "dmd_run: equi heat exchange using default value of 0.1\n";
+            dmd_heat_xc = "0.1";
+         }
+      } else {
+         errormsg = "dmd run: option must be 'relax' or 'equi'";
+         return false;
+      }
+   }
+      
    QString pdb = control_parameters[ "inputfile" ];
 
    QString prog = 
@@ -604,10 +630,12 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                  "THERMOSTAT              ANDERSON\n"
                  "T_NEW                   %1\n"
                  "T_LIMIT                 %2\n"
-                 "HEAT_X_C                10.0\n"
+                 "HEAT_X_C                %3\n"
                  )
          .arg( control_parameters[ "dmdtemp" ] )
-         .arg( control_parameters[ "dmdtemp" ] );
+         .arg( control_parameters[ "dmdtemp" ] )
+         .arg( dmd_heat_xc )
+         ;
       
       task +=
          QString( 
@@ -864,3 +892,4 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
    return true;
 }
+      

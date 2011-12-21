@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_dmd.h"
+#include "../include/us_hydrodyn.h"
 
 #define SLASH QDir::separator()
 
@@ -30,6 +31,14 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    sync_csv_with_selected();
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
+
+   dmd_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster" + SLASH + "dmd";
+   QDir dir1( dmd_dir );
+   if ( !dir1.exists() )
+   {
+      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( dmd_dir ) );
+      dir1.mkdir( dmd_dir );
+   }
 
    global_Xpos += 30;
    global_Ypos += 30;
@@ -456,14 +465,14 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
 
       tmp_data.push_back( QFileInfo( ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ] ).fileName() );
       tmp_data.push_back("Y");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
-      tmp_data.push_back("");
+      tmp_data.push_back(".7");
+      tmp_data.push_back("100");
+      tmp_data.push_back("50");
+      tmp_data.push_back("2");
+      tmp_data.push_back(".6");
+      tmp_data.push_back("10000");
+      tmp_data.push_back("200");
+      tmp_data.push_back("50");
       tmp_data.push_back("");
 
       csv1.prepended_names.push_back(tmp_data[0]);
@@ -573,10 +582,187 @@ void US_Hydrodyn_Cluster_Dmd::dup()
 
 void US_Hydrodyn_Cluster_Dmd::load()
 {
+   QString use_dir = dmd_dir;
+
+   QString fname = QFileDialog::getOpenFileName(
+                                                use_dir,
+                                                "DMD parameter files (*.dmd *.dmd);;",
+                                                this
+                                                );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !QFile::exists( fname ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO : Cluster DMD Setup : Load" ),
+                            QString( tr( "File %1 does not exist" ) ).arg( fname ) );
+      return;
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO : Cluster DMD Setup : Load" ),
+                            QString( tr( "Can not open file %1 for reading" ) ).arg( fname ) );
+      return;
+   }
+
+   csv1 = current_csv();
+   
+   map < QString, list < unsigned int > > our_files;
+   QStringList                            qsl_our_files;
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      if ( !our_files.count( csv1.data[ i ][ 0 ] ) )
+      {
+         qsl_our_files << csv1.data[ i ][ 0 ];
+      }
+      our_files[ csv1.data[ i ][ 0 ] ].push_back( i );
+   }
+      
+   QTextStream ts( &f );
+
+   QStringList qsl_lines;
+
+   ts.readLine(); // skip header
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      qsl_lines << qs;
+   }
+   f.close();
+      
+   map < QString, bool > names_not_present;
+
+   for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+   {
+      QString     qs  = qsl_lines[ i ];
+      QStringList qsl = csv_parse_line( qs );
+      if ( qsl.size() > 1 && !our_files.count( qsl[ 0 ] ) )
+      {
+         names_not_present[ qsl[ 0 ] ] = true;
+      }
+   }
+
+   map < QString, QString > rename_map;
+   for ( map < QString, bool >::iterator it = names_not_present.begin();
+         it != names_not_present.end();
+         it++ )
+   {
+      bool ok;
+      QString res = QInputDialog::getItem(
+                                          tr( "US-SOMO : Cluster DMD Setup : Load : Missing name" ),
+                                          QString( tr(
+                                                      "%1 is found in the DMD file but is not a currently selected PDB.\n"
+                                                      "Select a remapping or cancel to ignore:" ) )
+                                          .arg( it->first )
+                                          , 
+                                          qsl_our_files,
+                                          0,
+                                          FALSE, 
+                                          &ok,
+                                          this );
+      if ( ok ) {
+         rename_map[ it->first ] = res;
+      } 
+   }
+
+   // merge with current data
+   csv csv_new = csv1;
+
+   for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+   {
+      QString     qs  = qsl_lines[ i ];
+      QStringList qsl = csv_parse_line( qs );
+
+      // if 
+      if ( qsl.size() > 1 )
+      {
+         if ( rename_map.count( qsl[ 0 ] ) )
+         {
+            qsl[ 0 ] = rename_map[ qsl[ 0 ] ];
+         }
+         if ( our_files.count( qsl[ 0 ] ) && our_files[ qsl[ 0 ] ].size() )
+         {
+            for ( unsigned int j = 1; j < qsl.size(); j++ )
+            {
+               csv_new.data    [ our_files[ qsl[ 0 ] ].front() ][ j ] = qsl[ j ];
+               csv_new.num_data[ our_files[ qsl[ 0 ] ].front() ][ j ] = qsl[ j ].toDouble();
+            }
+            our_files[ qsl[ 0 ] ].pop_front();
+         } else {
+            vector < QString > tmp_data;
+            for ( unsigned int j = 0; j < qsl.size(); j++ )
+            {
+               tmp_data.push_back( qsl[ j ] );
+            }
+            csv_new.prepended_names.push_back( tmp_data[ 0 ] );
+            csv_new.data.push_back( tmp_data );
+            vector < double > tmp_num_data;
+            for ( unsigned int i = 0; i < tmp_data.size(); i++ )
+            {
+               tmp_num_data.push_back( tmp_data[ i ].toDouble() );
+            }
+            csv_new.num_data.push_back( tmp_num_data );
+         }
+      }
+   }
+   csv1 = csv_new;
+
+   reload_csv();
+   sync_csv_with_selected();
+   update_enables();
 }
 
 void US_Hydrodyn_Cluster_Dmd::save_csv()
 {
+   QString use_dir = dmd_dir;
+
+   QString fname = QFileDialog::getSaveFileName(
+                                                use_dir,
+                                                "*.dmd *.dmd",
+                                                this,
+                                                tr( "US-SOMO : Cluster DMD Setup : Save" ),
+                                                tr("Choose a filename to save the dmd run parameters") );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !fname.contains(QRegExp(".dmd$",false)) )
+   {
+      fname += ".dmd";
+   }
+   
+   if ( QFile::exists( fname ) )
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
+      raise();
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO : Cluster DMD Setup : Save" ),
+                            QString( tr( "Can not open file %1 for writing" ) ).arg( fname ) );
+      return;
+   }
+
+   csv tmp_csv = current_csv();
+
+   QTextStream ts( &f );
+   ts << csv_to_qstring( tmp_csv );
+   f.close();
+   QMessageBox::information( this, 
+                             tr( "US-SOMO : Cluster DMD Setup : Save" ),
+                             QString( tr( "File %1 saved" ) ).arg( fname ) );
 }
 
 void US_Hydrodyn_Cluster_Dmd::update_enables()
@@ -694,7 +880,7 @@ QString US_Hydrodyn_Cluster_Dmd::csv_to_qstring( csv &from_csv )
 
    for ( unsigned int i = 0; i < from_csv.header.size(); i++ )
    {
-      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(from_csv.header[i]);
+      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(from_csv.header[i]).replace("\n", " ");
    }
    qs += "\n";
    for ( unsigned int i = 0; i < from_csv.data.size(); i++ )
@@ -760,15 +946,15 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
          
          tmp_data.push_back( it->first );
          tmp_data.push_back( "Y" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
-         tmp_data.push_back( "" );
+         tmp_data.push_back(".7");
+         tmp_data.push_back("100");
+         tmp_data.push_back("50");
+         tmp_data.push_back("2");
+         tmp_data.push_back(".6");
+         tmp_data.push_back("10000");
+         tmp_data.push_back("200");
+         tmp_data.push_back("50");
+         tmp_data.push_back("");
          
          csv_new.prepended_names.push_back( tmp_data[ 0 ] );
          csv_new.data.push_back( tmp_data );
@@ -785,3 +971,59 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    reload_csv();
 }
 
+
+QStringList US_Hydrodyn_Cluster_Dmd::csv_parse_line( QString qs )
+{
+   // cout << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
+   QStringList qsl;
+   if ( qs.isEmpty() )
+   {
+      // cout << QString("csv_parse_line: empty\n");
+      return qsl;
+   }
+   if ( !qs.contains(",") )
+   {
+      // cout << QString("csv_parse_line: one token\n");
+      qsl << qs;
+      return qsl;
+   }
+
+   QStringList qsl_chars = QStringList::split("", qs);
+   QString token = "";
+
+   bool in_quote = false;
+
+   for ( QStringList::iterator it = qsl_chars.begin();
+         it != qsl_chars.end();
+         it++ )
+   {
+      if ( !in_quote && *it == "," )
+      {
+         qsl << token;
+         token = "";
+         continue;
+      }
+      if ( in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = true;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      token += *it;
+   }
+   if ( !token.isEmpty() )
+   {
+      qsl << token;
+   }
+   // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
+   return qsl;
+}

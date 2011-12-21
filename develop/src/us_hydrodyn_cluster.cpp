@@ -552,11 +552,21 @@ void US_Hydrodyn_Cluster::create_pkg()
       return;
    }
 
+
    QString base_dir = QFileInfo( filename ).dirPath();
    if ( !QDir::setCurrent( base_dir ) )
    {
       editor_msg( "red", QString( tr( "Can not find output directory %1\n" ) ).arg( base_dir ) );
       return;
+   }
+
+   {
+      QFileInfo qfi( le_output_name->text() );
+      if ( qfi.exists() && !qfi.isFile() )
+      {
+         editor_msg( "red", QString( tr( "Output file %1 already exists and is not a regular file\n" ) ).arg( le_output_name->text() ) );
+         return;
+      }
    }
 
    editor_msg( "black", QString( tr( "Output directory is %1\n" ) ).arg( base_dir ) );
@@ -713,7 +723,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          .arg( our_saxs_options->end_q )
          .arg( our_saxs_options->delta_q );
       if ( our_saxs_options->delta_q == 0e0 ||
-           our_saxs_options->start_q == our_saxs_options->delta_q )
+           our_saxs_options->start_q == our_saxs_options->end_q )
       {
          unimplemented += QString("Error: saxs q range is empty");
       }

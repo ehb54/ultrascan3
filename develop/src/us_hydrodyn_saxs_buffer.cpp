@@ -427,6 +427,9 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 #endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
+   plot_dist->setAutoLegend( false );
+   plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
    t_csv = new QTable(csv1.data.size(), csv1.header.size(), this);
@@ -515,6 +518,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_crop_right->setMinimumHeight(minHeight1);
    pb_crop_right->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_right, SIGNAL(clicked()), SLOT(crop_right()));
+
+   pb_legend = new QPushButton(tr("Legend"), this);
+   pb_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_legend->setMinimumHeight(minHeight1);
+   pb_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier"));
@@ -663,6 +672,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_left );
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
+   hbl_plot_buttons->addWidget( pb_legend );
 
    QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout(0);
    hbl_plot_buttons_2->addWidget( cb_guinier );
@@ -1529,6 +1539,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
+   pb_legend           ->setEnabled( lb_files->numRows() );
    // cb_guinier          ->setEnabled( files_selected_count );
 
    if ( *saxs_widget )
@@ -1866,7 +1877,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          }
          qApp->processEvents();
       } else {
-         errors += QString( tr( "Duplicate name not loaded %1" ) ).arg( basename );
+         errors += QString( tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
       }
    }
 
@@ -2032,10 +2043,10 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
 
 #ifndef QT4
-   long Iq = plot_dist->insertCurve( "I(q) vs q" );
+   long Iq = plot_dist->insertCurve( file );
    plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
 #else
-   QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
+   QwtPlotCurve *curve = new QwtPlotCurve( file );
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -5051,3 +5062,16 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
       plot_dist_zoomer->zoom( -1 );
    }
 }
+
+void US_Hydrodyn_Saxs_Buffer::legend()
+{
+   if ( plot_dist->autoLegend() )
+   {
+      plot_dist->setAutoLegend( false );
+      plot_dist->enableLegend ( false, -1 );
+   } else {
+      plot_dist->setAutoLegend( true );
+      plot_dist->enableLegend ( true, -1 );
+   }
+}
+
