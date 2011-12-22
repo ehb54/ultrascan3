@@ -1,0 +1,2 @@
+nvcc -O3 -arch=compute_20 -code=sm_20 -c us_cuda.cu -DUSE_MPI
+

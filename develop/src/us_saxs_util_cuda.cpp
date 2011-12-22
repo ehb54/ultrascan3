@@ -1,7 +1,14 @@
 #include "../include/us_saxs_util.h"
 
 #if defined( CUDA )
-# include "../us_saxs_cmds_t/us_cuda.h"
+
+#  if defined( USE_MPI )
+#     include <mpi.h>
+      extern int npes;
+      extern int myrank;
+#  endif
+
+#  include "../us_saxs_cmds_mpi_cuda/us_cuda.h"
 
 bool US_Saxs_Util::iqq_cuda( 
                             vector < double >            &q,
@@ -58,6 +65,9 @@ bool US_Saxs_Util::iqq_cuda(
               &( f_fp[ 0 ] ),
               &( f_I[ 0 ] ),
               threads_per_block
+#if defined( USE_MPI )
+	      , myrank
+#endif
               );
 
    for ( unsigned int i = 0; i < I.size(); i++ )

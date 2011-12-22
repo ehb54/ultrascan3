@@ -563,6 +563,8 @@ class US_EXTERN US_Saxs_Util
 #endif
       QStringList      job_output_files;
 
+      map < QString, QString > control_parameters;
+
    private:
 
       bool run_gnom( 
@@ -763,7 +765,6 @@ class US_EXTERN US_Saxs_Util
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      map < QString, QString > control_parameters;
 
       // residue fields
 
