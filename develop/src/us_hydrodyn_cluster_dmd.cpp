@@ -734,7 +734,7 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".dmd$",false)) )
+   if ( !fname.contains( QRegExp("\\.dmd$",false) ) )
    {
       fname += ".dmd";
    }

@@ -24,7 +24,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("PDB viewer"));
+   setCaption( tr("US-SOMO: PDB editor") );
    csv2_pos = 0;
    csv2.resize(1);
    csv2_undos.resize(1);
@@ -117,7 +117,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_join_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_join_pdbs->setMinimumHeight(minHeight1);
    pb_join_pdbs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_join_pdbs->setEnabled( false );
+   pb_join_pdbs->setEnabled( true );
    connect(pb_join_pdbs, SIGNAL(clicked()), SLOT(join_pdbs()));
 
    pb_merge = new QPushButton(tr("Cut/Splice"), this);
@@ -2875,6 +2875,151 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
 void US_Hydrodyn_Pdb_Tool::join_pdbs()
 {
+   QStringList join_files;
+   QStringList files;
+   map < QString, bool > already_listed;
+   do 
+   {
+      files = QFileDialog::getOpenFileNames(
+                                            "PDB files (*.pdb *.PDB)"
+                                            , ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir
+                                            , this
+                                            , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
+                                            , tr( "Select PDB files to join, Cancel when done" )
+                                            );
+      for ( unsigned int i = 0; i < files.size(); i++ )
+      {
+         if ( !already_listed.count( files[ i ] ) )
+         {
+            join_files << files[ i ];
+            already_listed[ files[ i ] ] = true;
+         }
+      }
+   } while ( files.size() );
+   if ( !join_files.size() )
+   {
+      return;
+   }
+
+   if ( join_files.size() == 1 )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: PDB editor : Join" ),
+                            tr( "Error: Only one file selected to join." ) );
+      return;
+   }
+
+   
+   
+
+   QString save_file = QFileDialog::getSaveFileName( QFileInfo( join_files.back() ).dirPath() 
+                                                     , "PDB (*.pdb *.PDB)"
+                                                     , this
+                                                     , tr("US-SOMO: PDB editor : Select PDBs to join" ) 
+                                                     , tr( "Choose a name to save the joined PDBs" )
+                                                     );
+
+   if ( save_file.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !save_file.contains( QRegExp( "\\.pdb$", false ) ) )
+   {
+      save_file += ".pdb";
+   }
+
+   if ( QFile::exists( save_file ) )
+   {
+      save_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( save_file, 0, this );
+   }
+
+   editor_msg( "dark blue", 
+               QString( "Joining %1 as %2" )
+               .arg( join_files.join( "\n" ) )
+               .arg( save_file ) );
+
+   // go through each file & join them as models
+   // note: 
+
+   QFile f_out( save_file );
+   if ( !f_out.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: PDB editor : Join" ),
+                            QString( tr( "Error: Can not open file %1 for writing" ) ).arg( save_file ) );
+      return;
+   }
+
+   QTextStream ts_out( &f_out );
+
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end("^END");
+   QRegExp rx_atom("^(ATOM|HETATM|TER)");
+
+   unsigned int model    = 0;
+
+   ts_out << 
+      QString( "HEADER    US-SOMO: join of %1 pdbs: %2 %3 etc\n" )
+      .arg( join_files.size() )
+      .arg( QFileInfo( join_files[ 0 ] ).fileName() )
+      .arg( QFileInfo( join_files[ 1 ] ).fileName() );
+
+   for ( unsigned int i = 0; i < join_files.size(); i++ )
+   {
+      editor_msg( "dark gray", QString( tr( "Processing %1" ) ).arg( join_files[ i ] ) );
+      qApp->processEvents();
+
+      bool  in_model = false;
+
+      QFile f_in( join_files[ i ] );
+
+      if ( !f_in.open( IO_ReadOnly ) )
+      {
+         QMessageBox::warning( this, 
+                               tr( "US-SOMO: PDB editor : Join" ) ,
+                               QString( tr( "Error: Can not open file %1 for reading" ) ).arg( join_files[ i ] ) );
+         f_out.close();
+         f_out.remove();
+         return;
+      }
+
+      QTextStream ts_in( &f_in );
+
+      while ( !ts_in.atEnd() )
+      {
+         QString qs = ts_in.readLine();
+
+         if ( rx_atom.search( qs ) != -1 )
+         {
+            if ( !in_model )
+            {
+               ts_out << QString( "MODEL        %1\n" ).arg( ++model );
+               in_model = true;
+            }
+            ts_out << qs << "\n";
+         }
+         if ( rx_model.search( qs ) != -1 )
+         {
+            if ( in_model )
+            {
+               ts_out << "ENDMDL\n";
+            }
+            in_model = false;
+         }
+      }
+      f_in.close();
+
+      if ( in_model )
+      {
+         ts_out << "ENDMDL\n";
+      }
+   }
+   ts_out << "END\n";
+   f_out.close();
+   QMessageBox::information( this, 
+                             tr( "US-SOMO: PDB editor : Join" ) ,
+                             QString( tr( "File %1 created with %2 models" ) ).arg( save_file ).arg( model ) );
 }
 
 void US_Hydrodyn_Pdb_Tool::merge()
