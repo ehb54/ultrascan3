@@ -13,11 +13,20 @@
 
 #include "us_cuda.h"
 
+#if defined( USE_MPI )
+#   include "us_semaphore.h"
+#else 
+#   define us_semaphore_unlock(x) ()
+#endif
+
+static int semid;
+
 #  define CUDA_SAFE_CALL_NO_SYNC( call) {                                    \
     cudaError err = call;                                                    \
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n",        \
                 __FILE__, __LINE__, cudaGetErrorString( err) );              \
+        us_semaphore_unlock( semid )                                         \
         return false;                                                        \
     } }
 
@@ -28,6 +37,7 @@
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error: %s in file '%s' in line %i : %s.\n",    \
                 errorMessage, __FILE__, __LINE__, cudaGetErrorString( err) );\
+        us_semaphore_unlock( semid )                                         \
         return false;                                                        \
     }                                                                        \
     }
@@ -149,6 +159,17 @@ bool cuda_debye(
 #if defined( USE_MPI )
    // swap per rank
    okid = myrank % deviceCount;
+   key_t key = (key_t) ( 0x5400001 + okid );
+   if ( !us_semaphore_init( key, 1, semid ) )
+   {
+      perror( "us_semaphore_init");
+      return false;
+   }
+   if ( !us_semaphore_lock( semid ) ) 
+   {
+      perror( "us_semaphore_lock");
+      return false;
+   }
 #endif
 
    if ( okid != -1 )
@@ -169,7 +190,6 @@ bool cuda_debye(
       (unsigned long) ( 3 * n *        sizeof( float ) ) +
       (unsigned long) ( n * q_points * sizeof( float ) ) +
       (unsigned long) ( q_points     * sizeof( float ) );;
-
 
    printf( "cuda_debye:\n"
            "memory required : %lu\n"
@@ -263,6 +283,14 @@ bool cuda_debye(
 
    printf( "cudasync 3\n" );
    CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+
+#if defined( USE_MPI )
+   if ( !us_semaphore_unlock( semid ) ) 
+   {
+      perror( "us_semaphore_lock");
+      return false;
+   }
+#endif
 
    printf( "end cudaDebye\n" );
    return true;
