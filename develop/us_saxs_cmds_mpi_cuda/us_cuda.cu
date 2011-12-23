@@ -26,7 +26,7 @@ static int semid;
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n",        \
                 __FILE__, __LINE__, cudaGetErrorString( err) );              \
-        us_semaphore_unlock( semid )                                         \
+        us_semaphore_unlock( semid );                                        \
         return false;                                                        \
     } }
 
@@ -37,7 +37,7 @@ static int semid;
     if( cudaSuccess != err) {                                                \
         fprintf(stderr, "Cuda error: %s in file '%s' in line %i : %s.\n",    \
                 errorMessage, __FILE__, __LINE__, cudaGetErrorString( err) );\
-        us_semaphore_unlock( semid )                                         \
+        us_semaphore_unlock( semid );                                        \
         return false;                                                        \
     }                                                                        \
     }
