@@ -13,6 +13,7 @@
 #define MAX_RETRIES 10
 
 bool us_semaphore_init  ( key_t key, int nsems, int &semid );
+bool us_semaphore_exists( key_t key, int nsems, int &semid );
 bool us_semaphore_lock  ( int semid );
 bool us_semaphore_unlock( int semid );
 bool us_semaphore_free  ( int semid );

@@ -1,11 +1,3 @@
-/*
-** Hello World using CUDA
-** 
-** The string "Hello World!" is mangled then restored using a common CUDA idiom
-**
-** Byron Galbraith
-** 2009-02-18
-*/
 #include <cuda.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,6 +7,8 @@
 
 #if defined( USE_MPI )
 #   include "us_semaphore.h"
+    extern int myrank;;
+    int env_mpi_node;
 #else 
 #   define us_semaphore_unlock(x) ()
 #endif
@@ -52,6 +46,35 @@ __global__ void cudaDebye(
                           const float * fp,
                           float *       I
                           );
+
+#if defined( USE_MPI )
+bool cuda_ipcrm()
+{
+  // printf( "%d:cuda_ipcrm called node %d\n", myrank, env_mpi_node ); 
+   int deviceCount; 
+   cudaGetDeviceCount(&deviceCount); 
+   for ( int i = 0; i < deviceCount; i++ )
+   {
+     int okid = myrank % deviceCount;
+     key_t key = (key_t) ( 0x54000001 + env_mpi_node * 0x00001000 + okid );
+     // printf( "%d:cuda_ipcrm called node %d key 0x%x device %d\n", myrank, env_mpi_node, key, okid ); 
+     if ( !us_semaphore_exists( key, 1, semid ) )
+     {
+       // perror( "us_semaphore_exists");
+       // printf( "%d:cuda_ipcrm non existant semaphore\n", myrank ); 
+       return true;
+     }
+     if ( !us_semaphore_free( semid ) ) 
+     {
+       // perror( "us_semaphore_free");
+       // printf( "%d:cuda_ipcrm error freeing semaphore\n", myrank ); 
+       return false;
+     }
+   }
+   // printf( "%d:cuda_ipcrm successfully removed\n", myrank ); 
+   return true;
+}
+#endif      
 
 // cuda debye, everything must be preallocated
 bool cuda_debye( 
@@ -147,7 +170,6 @@ bool cuda_debye(
              , props.l2CacheSize
              , props.maxThreadsPerMultiProcessor
              );
-      
       if ( props.kernelExecTimeoutEnabled )
       {
          printf( "Warning: cuda kernel timeout enabled on device %d.  Disconnect the display and try again!\n", device );
@@ -159,12 +181,13 @@ bool cuda_debye(
 #if defined( USE_MPI )
    // swap per rank
    okid = myrank % deviceCount;
-   key_t key = (key_t) ( 0x5400001 + okid );
+   key_t key = (key_t) ( 0x54000001 + env_mpi_node * 0x00001000 + okid );
    if ( !us_semaphore_init( key, 1, semid ) )
    {
       perror( "us_semaphore_init");
       return false;
    }
+   printf( "%d:cuda_lock called node %d key 0x%x device %d\n", myrank, env_mpi_node, key, okid ); 
    if ( !us_semaphore_lock( semid ) ) 
    {
       perror( "us_semaphore_lock");
@@ -420,8 +443,19 @@ cuda_reset()
    return true;
 }
    
+
 // Device kernels
 __global__ void
+
+/*
+** Hello World using CUDA
+** 
+** The string "Hello World!" is mangled then restored using a common CUDA idiom
+**
+** Byron Galbraith
+** 2009-02-18
+*/
+
 helloWorld( char* str )
 {
    // determine where in the thread grid we are

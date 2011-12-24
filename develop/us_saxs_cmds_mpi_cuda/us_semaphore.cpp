@@ -11,6 +11,16 @@ union semun {
 ** Programming 2nd edition, volume 2, lockvsem.c, page 295.
 */
 
+bool us_semaphore_exists( key_t key, int nsems, int &semid ) 
+{
+   semid = semget(key, nsems, 0);
+   if ( semid < 0 )
+   {
+     return false;
+   } 
+   return true;
+}
+
 bool us_semaphore_init( key_t key, int nsems, int &semid ) 
 {
    int i;
@@ -140,6 +150,7 @@ int main( int argc, char ** argv )
    {
       printf( "usage: %s command number\n"
               "commands:\n"
+              "exists   check to see if the semaphore exists\n"
               "lock     lock the semaphore\n"
               "unlock   unlock the semaphore\n"
               "delete   delete the semaphore\n"
@@ -150,8 +161,18 @@ int main( int argc, char ** argv )
    int semnumber = atoi( argv[ 2 ] );
    printf( "semaphore number is %d\n", semnumber );
 
-   key_t key = (key_t) ( 0x5400001 + semnumber );
    int semid;
+   key_t key = (key_t) ( 0x54000001 + semnumber );
+
+   if ( !strncmp( argv[ 1 ], "exists", 6 ) )
+   {
+      printf( "semaphore 0x%x %d %s\n",
+	      key, semid,
+	      us_semaphore_exists( key, 1, semid ) ?
+	      "exists" : "does not exist" );
+      exit( 0 );
+   }
+
    struct sembuf sb;
    
    sb.sem_num = 0;

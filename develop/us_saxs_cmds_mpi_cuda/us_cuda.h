@@ -30,4 +30,9 @@ extern bool cuda_debye(
 #endif
                        );
 
+
+#if defined( USE_MPI )
+bool cuda_ipcrm();
+#endif
+
 #endif

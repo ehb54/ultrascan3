@@ -4,10 +4,22 @@
 extern int npes;
 extern int myrank;
 
+#if defined( CUDA )
+#  include "us_cuda.h"
+   extern int env_mpi_node;
+#endif
+
 #define SLASH QDir::separator()
 
 bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 {
+
+#if defined( CUDA )
+   env_mpi_node = QString( "%1" ).arg( getenv( "MPISPAWN_ID" ) ).toInt();
+   // cout << QString( "%1:MPISPAWN_ID %2\n" ).arg( myrank ).arg( env_mpi_node ) << flush;
+   cuda_ipcrm();
+#endif
+
    int errorno = -1;
    QString original_controlfile = controlfile;
 
@@ -463,6 +475,10 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
       exit( errorno );
    }         
    errorno--;
+
+#if defined( CUDA )
+   cuda_ipcrm();
+#endif
 
    MPI_Finalize();
    exit( 0 );
