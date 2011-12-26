@@ -6,9 +6,6 @@
 void US_MPI_Analysis::ga_master( void )
 {
    current_dataset = 0;
-DbgLv(0) << "master start GA" << startTime;
-   // // Tell calc_residuals to use the edited data meniscus value
-   //meniscus_value  = -1.0; 
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -20,8 +17,8 @@ DbgLv(0) << "master start GA" << startTime;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
-   best_genes  .reserve( proc_count );
-   best_fitness.reserve( proc_count );
+   best_genes  .reserve( gcores_count );
+   best_fitness.reserve( gcores_count );
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
@@ -29,7 +26,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
-   for ( int i = 0; i < proc_count; i++ )
+   for ( int i = 0; i < gcores_count; i++ )
    {
       best_genes << working_gene;
 
@@ -106,14 +103,14 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
    MPI_Job job;
 
    // Send finish to workers ( in the tag )
-   for ( int worker = 1; worker < proc_count; worker++ )
+   for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &job,              // MPI #0
                 sizeof( job ),
                 MPI_BYTE,
                 worker,
                 FINISHED,
-                MPI_COMM_WORLD );
+                my_communicator );
    }            
 }
 
@@ -124,19 +121,19 @@ void US_MPI_Analysis::ga_master_loop( void )
    int    fitness_same_count   = 0;
    double best_overall_fitness = 1.0e99;
    int    tag;
-   int    workers              = proc_count - 1;
+   int    workers              = my_workers;
 
-DbgLv(1) << "master start master loop:  proccount fitsize" << proc_count
+DbgLv(1) << "ga_master start loop:  gcores_count fitsize" << gcores_count
    << best_fitness.size();
    // Reset best fitness for each worker
-   for ( int i = 0; i < proc_count; i++ )
+   for ( int i = 0; i < gcores_count; i++ )
    {
       best_fitness[ i ].fitness = LARGE;
       best_fitness[ i ].index   = i;
    }
 
    QList  < Gene > emigres;      // Holds genes passed as emmigrants
-   QVector< int  > generations( proc_count, 0 ); 
+   QVector< int  > generations( gcores_count, 0 ); 
    int             sum = 0;
    int             avg = 0;
    long            rsstotal = 0L;
@@ -153,7 +150,7 @@ DbgLv(1) << "master start master loop:  proccount fitsize" << proc_count
                 MPI_BYTE,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
-                MPI_COMM_WORLD,
+                my_communicator,
                 &status );
 
       worker = status.MPI_SOURCE;
@@ -169,18 +166,19 @@ QString s;
             generations[ worker ] = msg.generation;
 
             sum = 0;
-            for ( int i = 1; i < proc_count; i++ ) 
+            for ( int i = 1; i <= my_workers; i++ ) 
                sum += generations[ i ];
 
-            avg = qRound( sum / ( proc_count - 1 ) ) + 1;
+            avg = qRound( sum / my_workers ) + 1;
 
             if ( avg > avg_generation )
             {
                avg_generation = avg;
+               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
             
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation ) +
-                  "; MonteCarlo: " + QString::number( mc_iteration + 1 );
+                  "; MonteCarlo: " + QString::number( mc_iter );
 
                send_udp( progress );
             }
@@ -191,7 +189,7 @@ QString s;
                       MPI_DOUBLE,  
                       worker,
                       GENE,
-                      MPI_COMM_WORLD,
+                      my_communicator,
                       MPI_STATUS_IGNORE );
 
             if ( msg.fitness < best_fitness[ worker ].fitness )
@@ -207,7 +205,7 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             static const double fit_div        = 1.0e-9;
             static const double fit_mul        = 1.0e+9;
-            static const int    max_same_count = ( proc_count - 1 ) * 5;
+            static const int    max_same_count = my_workers * 5;
             static const int    min_generation = 10;
 
             if ( ! early_termination )
@@ -244,7 +242,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
                       MPI_BYTE,  
                       worker,
                       tag,
-                      MPI_COMM_WORLD );
+                      my_communicator );
             break;
 
          case FINISHED:
@@ -265,7 +263,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
                       MPI_DOUBLE,
                       worker,
                       EMMIGRATE,
-                      MPI_COMM_WORLD,
+                      my_communicator,
                       MPI_STATUS_IGNORE );
 
             // Add the genes to the emmigres list
@@ -291,12 +289,12 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
             // Don't send any back if the pool is too small
             if ( emigres.size() < gene_count * 5 ) doubles_count = 0;
 
-            // Get immigrents from emmigres
+            // Get immigrants from emmigres
             QVector< US_Solute > immigrants;
 
             if ( doubles_count > 0 )
             {
-               // Prepare a vector of concatenated genes form the emmigrant list
+               // Prepare a vector of concatenated genes from the emmigrant list
                for ( int i = 0; i < gene_count; i++ )
                   immigrants += emigres.takeAt( u_random( emigres.size() ) );
             }
@@ -306,7 +304,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
                       MPI_DOUBLE,
                       worker,
                       IMMIGRATE,
-                      MPI_COMM_WORLD );
+                      my_communicator );
             break;
          }
       }
@@ -314,7 +312,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
       max_rss();
    }
 
-DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal;
+DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal << "rank" << my_rank;
    maxrss += rsstotal;
 
    if ( early_termination )
@@ -361,24 +359,24 @@ void US_MPI_Analysis::ga_global_fit( void )
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
 
-   for ( int worker = 1; worker < proc_count; worker++ )
+   for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &job,                   // MPI #7
           sizeof( MPI_Job ), 
           MPI_BYTE,
           worker,   
           UPDATE,
-          MPI_COMM_WORLD );
+          my_communicator );
    }
 
    // Get everybody synced up
-   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Barrier( my_communicator );
 
    MPI_Bcast( scaled_data.data(),      // MPI #8
               scaled_data.size(), 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD );
+              my_communicator );
 
    // Go to the next dataset
    current_dataset++;
@@ -453,30 +451,30 @@ DbgLv(1) << "sgMC: mc_data set index" << index;
    job.length         = total_points;
    job.dataset_offset = 0;
    job.dataset_count  = data_sets.size();
-DbgLv(1) << "sgMC: MPI send proc_count" << proc_count;
+DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-   for ( int worker = 1; worker < proc_count; worker++ )
+   for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &job,         // MPI #9
           sizeof( job ), 
           MPI_BYTE,
           worker,   
           UPDATE,
-          MPI_COMM_WORLD );
+          my_communicator );
    }
 
    // Get everybody synced up
 DbgLv(1) << "sgMC: MPI Barrier";
-   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Barrier( my_communicator );
 
 DbgLv(1) << "sgMC: MPI Bcast";
    MPI_Bcast( mc_data.data(),   // MPI #10
               total_points, 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD );
+              my_communicator );
 }
 
 void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
@@ -522,9 +520,10 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    QString dates    = "e" + data->editID + "_a" + analysisDate;
 
    QString iterID;
+   int mc_iter      = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iteration + 1 );
+      iterID.sprintf( "mc%04d", mc_iter );
    else if (  meniscus_points > 1 )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
@@ -576,17 +575,18 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    QString meniscus = QString::number( meniscus_value, 'e', 4 );
    QString variance = QString::number( sim.variance,   'e', 4 );
 
-   int run = 1;
+   int run     = 1;
+   mc_iter     = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( meniscus_run > 0 ) 
        run = meniscus_run + 1;
    else if ( mc_iterations > 0 )
-       run = mc_iteration + 1;
+       run = mc_iter;
 
    QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
    out << fn << ";meniscus_value=" << meniscus_value
-             << ";MC_iteration="   << mc_iteration
+             << ";MC_iteration="   << mc_iter
              << ";variance="       << sim.variance
              << ";run="            << runstring
              << "\n";
