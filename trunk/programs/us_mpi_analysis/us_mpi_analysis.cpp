@@ -333,8 +333,6 @@ if ( my_rank == 0 )
 
    gcores_count = proc_count / mgroup_count;
 
-   startTime    = QDateTime::currentDateTime();
-
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -342,7 +340,7 @@ if ( my_rank == 0 )
       pmasters_start();         // Start parallel-masters job
 }
 
-// Alsternate Constructor
+// Alternate Constructor (empty jobxmlfile name)
 US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 {
    US_MPI_Analysis( tarfile, QString( "" ) );
@@ -449,7 +447,9 @@ void US_MPI_Analysis::send_udp( const QString& message )
 
    if ( my_rank == 0 )
    {  // Send UDP message from supervisor (or single-group master)
-if(mgroup_count>1) return;   //*DEBUG*
+///////////////////////////////*DEBUG*
+//if(mgroup_count>1) return;   //*DEBUG*
+///////////////////////////////*DEBUG*
       QString jobid = db_name + "-" + requestID + ": ";
       msg           = QString( jobid + message ).toAscii();
       socket->writeDatagram( msg.data(), msg.size(), server, port );
@@ -457,8 +457,6 @@ if(mgroup_count>1) return;   //*DEBUG*
 
    else if ( group_rank == 0 )
    {  // For pm group master, forward message to supervisor
-      int     tag   = 1009;
-      int     tagm  = 1007;
       int     super = 0;
       QString gpfix = QString( "(pmg %1) " ).arg( my_group );
       msg           = QString( gpfix + message ).toAscii();
@@ -468,14 +466,14 @@ if(mgroup_count>1) return;   //*DEBUG*
                 sizeof( int ),
                 MPI_BYTE,
                 super,
-                tag,
+                UDPSIZE,
                 MPI_COMM_WORLD );
 
       MPI_Send( msg.data(),
                 size,
                 MPI_BYTE,
                 super,
-                tagm,
+                UDPMSG,
                 MPI_COMM_WORLD );
    }
 }

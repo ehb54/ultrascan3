@@ -169,9 +169,6 @@ void US_MPI_Analysis::ga_worker_loop( void )
    QDateTime  start = QDateTime::currentDateTime();
    MPI_GA_MSG msg;
 
-////////////DEBUG
-//generations = 10;
-
    for ( generation = 0; generation < generations; generation++ )
    {
       max_rss();
@@ -537,7 +534,7 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_BYTE,
              MPI_Job::MASTER,
              EMMIGRATE,
-             MPI_COMM_WORLD );
+             my_communicator );
 
    // MPI send emmigrants
    MPI_Send( emmigres.data(),  // to MPI #4
@@ -545,7 +542,7 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_DOUBLE,
              MPI_Job::MASTER,
              EMMIGRATE,
-             MPI_COMM_WORLD );
+             my_communicator );
 
    // Get genes from master as concatenated genes
    QVector< US_Solute > immigres( migrate_sols );
@@ -556,7 +553,7 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_DOUBLE,
              MPI_Job::MASTER,
              IMMIGRATE,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
 
    int solutes_sent;
@@ -603,6 +600,9 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 // inverse hessian minimization 
 double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
 {
+static long totms=0L;
+long insms;
+QDateTime stime=QDateTime::currentDateTime();
    int       vsize = gene.size() * 2;
    US_Vector v( vsize );  // Input values
    US_Vector u( vsize );  // Vector of derivitives
@@ -703,6 +703,9 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
                gene[ i ].k = v[ index++ ];
             }
 
+insms=(long)stime.msecsTo(QDateTime::currentDateTime());
+totms+=insms;
+DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
             return fitness;
          }
 
@@ -901,6 +904,9 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
       gene[ i ].k = v[ index++ ];
    }
 
+insms=(long)stime.msecsTo(QDateTime::currentDateTime());
+totms+=insms;
+DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
    return fitness;
 }
 

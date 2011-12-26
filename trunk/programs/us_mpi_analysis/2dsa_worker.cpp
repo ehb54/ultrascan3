@@ -182,7 +182,7 @@ simu_values.dbg_level=(dbglvsv>1?dbglvsv:0);
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
 simu_values.dbg_level=dbglvsv;
-if ( dbg_level > 0 && ( my_rank == 1 || my_rank == 11 ) ) {
+if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) ) {
  US_DataIO2::EditedData* data = &data_sets[0]->run_data;
  int nsc=data->scanData.size();
  int nrp=data->x.size();

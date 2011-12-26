@@ -10,7 +10,7 @@ void US_MPI_Analysis::_2dsa_master( void )
    init_solutes();
    fill_queue();
 
-   work_rss.resize( proc_count );
+   work_rss.resize( gcores_count );
 
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
@@ -34,7 +34,7 @@ void US_MPI_Analysis::_2dsa_master( void )
          }
 
          worknext  = worker + 1;
-         worknext  = ( worknext >= proc_count ) ? 1 : worknext;
+         worknext  = ( worknext > my_workers ) ? 1 : worknext;
 
          _2dsa_Job job          = job_queue.takeFirst();
          submit( job, worker );
@@ -110,7 +110,7 @@ void US_MPI_Analysis::_2dsa_master( void )
                 MPI_INT,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
-                MPI_COMM_WORLD,
+                my_communicator,
                 &status);
 
 //if ( max_depth > 0 )
@@ -184,8 +184,8 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 //////////////////
 void US_MPI_Analysis::fill_queue( void )
 {
-   worker_status.resize( proc_count );
-   worker_depth .resize( proc_count );
+   worker_status.resize( gcores_count );
+   worker_depth .resize( gcores_count );
 
    worker_status.fill( INIT );
    worker_depth .fill( 0 );
@@ -252,24 +252,24 @@ void US_MPI_Analysis::global_fit( void )
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-   for ( int worker = 1; worker < proc_count; worker++ )
+   for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &job, 
           sizeof( MPI_Job ), 
           MPI_BYTE,
           worker,   
           MPI_Job::MASTER,
-          MPI_COMM_WORLD );
+          my_communicator );
    }
 
    // Get everybody synced up
-   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Barrier( my_communicator );
 
    MPI_Bcast( scaled_data.data(), 
               scaled_data.size(), 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD );
+              my_communicator );
 
    // Go to the next dataset
    current_dataset++;
@@ -410,27 +410,27 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-DbgLv(1) << "sMC: MPI send   proc_count" << proc_count;
-   for ( int worker = 1; worker < proc_count; worker++ )
+DbgLv(1) << "sMC: MPI send   my_workers" << my_workers;
+   for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &newdata, 
           sizeof( MPI_Job ), 
           MPI_BYTE,
           worker,   
           MPI_Job::MASTER,
-          MPI_COMM_WORLD );
+          my_communicator );
    }
 
    // Get everybody synced up
 DbgLv(1) << "sMC: MPI Barrier";
-   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Barrier( my_communicator );
 
 DbgLv(1) << "sMC: MPI Bcast";
    MPI_Bcast( mc_data.data(), 
               total_points, 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
-              MPI_COMM_WORLD );
+              my_communicator );
 
    fill_queue();
 
@@ -585,14 +585,14 @@ void US_MPI_Analysis::shutdown_all( void )
    job.command = MPI_Job::SHUTDOWN;
 DbgLv(1) << "2dsa master shutdown : master maxrss" << maxrss;
  
-   for ( int i = 1; i < proc_count; i++ )
+   for ( int i = 1; i <= my_workers; i++ )
    {
       MPI_Send( &job, 
          sizeof( job ), 
          MPI_BYTE,
          i,               // Send to each worker
          MPI_Job::MASTER,
-         MPI_COMM_WORLD );
+         my_communicator );
 
       maxrss += work_rss[ i ];
 DbgLv(1) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
@@ -621,7 +621,7 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        MPI_BYTE,
        worker,      // Send to system that needs work
        MPI_Job::MASTER,
-       MPI_COMM_WORLD );
+       my_communicator );
 
    // Send solutes
    MPI_Send( job.solutes.data(), 
@@ -629,7 +629,7 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        MPI_DOUBLE,   // Pass solute vector as hw independent values
        worker,       // to worker
        MPI_Job::MASTER,
-       MPI_COMM_WORLD );
+       my_communicator );
 }
 
 /////////////////////
@@ -651,7 +651,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
 
    MPI_Recv( &simulation_values.variance,
@@ -659,7 +659,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
    
    MPI_Recv( simulation_values.variances.data(),
@@ -667,7 +667,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
 
    MPI_Recv( simulation_values.ti_noise.data(),
@@ -675,7 +675,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
 
    MPI_Recv( simulation_values.ri_noise.data(),
@@ -683,7 +683,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
-             MPI_COMM_WORLD,
+             my_communicator,
              &status );
 
    worker_status[ worker ] = INIT;
@@ -743,7 +743,7 @@ DbgLv(1) << "Mast:   queue new DEPTH sols" << job.solutes.size() << " d=" << job
       }
 
       bool working = false;
-      for ( int w = 1; w < proc_count; w++ )
+      for ( int w = 1; w <= my_workers; w++ )
       {
          if ( worker_depth[ w ] == d  &&  worker_status[ w ] == WORKING )
          {
@@ -771,7 +771,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
    // Is anyone working?
    bool working = false;
-   for ( int w = 1; w < proc_count; w++ )
+   for ( int w = 1; w <= my_workers; w++ )
    {
       if ( worker_status[ w ] == WORKING )
       {
@@ -806,7 +806,7 @@ if(max_depth>10) calculated_solutes[depth+10].clear();  // Force abort if run-aw
             worker    = worker_status.indexOf( READY, worknext );
          }
          worknext  = worker + 1;
-         worknext  = ( worknext >= proc_count ) ? 1 : worknext;
+         worknext  = ( worknext > my_workers ) ? 1 : worknext;
 
          if ( worker > 0 )
          {
