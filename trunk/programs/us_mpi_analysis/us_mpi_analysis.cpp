@@ -82,7 +82,7 @@ DbgLv(1) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
    if ( my_rank == 0 )
    {  // Save submit time
       submitTime      = QFileInfo( tarfile ).lastModified();
-mgroup_count=job_params["mgroupscount"].toInt();
+mgroup_count=job_params["mgroupcount"].toInt();
 DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
  << mgroup_count;
    }
@@ -326,11 +326,12 @@ if ( my_rank == 0 )
    mc_iteration         = 0;
 
    // Determine masters-group count and related controls
-   mgroup_count = job_params[ "mgroupscount" ].toInt();
-   max_walltime = job_params[ "walltime"     ].toInt();
+   mgroup_count = job_params[ "mgroupcount" ].toInt();
+   max_walltime = job_params[ "walltime"    ].toInt();
    if ( mc_iterations < 2  ||  mgroup_count > ( mc_iterations + 2 ) )
       mgroup_count = 1;
 
+   mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
 
    if ( mgroup_count < 2 )
