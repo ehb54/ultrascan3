@@ -60,8 +60,8 @@ DbgLv(1) << "Final-my_rank" << my_rank << " msecs=" << startTime.msecsTo(QDateTi
 void US_MPI_Analysis::job_parse( const QString& xmlfile )
 {
    QFile file ( xmlfile );
-   job_params[ "walltime"     ] = "2880";
-   job_params[ "mgroupscount" ] = "1";
+   job_params[ "walltime"    ] = "2880";
+   job_params[ "mgroupcount" ] = "1";
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {  // If no job xml or us3.pbs, return now
@@ -86,7 +86,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
             int     valu1 = svalu.section( ":", 0, 0 ).toInt();
             int     valu2 = svalu.section( ":", 1, 1 ).toInt();
             svalu         = QString::number( valu1 * 60 + valu2 );
-            job_params[ "walltime"     ] = svalu;
+            job_params[ "walltime"    ] = svalu;
 //if (my_rank==0) DbgLv(0) << "h m" << valu1 << valu2 << "svalu" << svalu;
          }
 
@@ -96,7 +96,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
             int     valu1 = svalu.toInt();
                     valu1 = valu1 < 0 ? 1 : valu1;
             svalu         = QString::number( valu1 );
-            job_params[ "mgroupscount" ] = svalu;
+            job_params[ "mgroupcount" ] = svalu;
 //if (my_rank==0) DbgLv(0) << "group" << svalu << "valu1" << valu1;
          }
       }
@@ -108,7 +108,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
    QXmlStreamReader xml( &file );
 
    while ( ! xml.atEnd() )
-   {  // Parse the *jobxmlfile.xml file  (mainly for walltime,mgroupscount)
+   {  // Parse the *jobxmlfile.xml file  (mainly for walltime,mgroupcount)
       xml.readNext();
 
       if ( xml.isStartElement() )
@@ -128,8 +128,8 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
    }
 
    file.close();
-//if ( my_rank == 0 ) DbgLv(0) << "walltime=" << job_params["walltime"]
-//   << "mgroupscount=" << job_params["mgroupscount"];
+if ( my_rank == 0 ) DbgLv(1) << "walltime=" << job_params["walltime"]
+ << "mgroupcount=" << job_params["mgroupcount"];
 }
 
 // Parallel-masters supervisor
