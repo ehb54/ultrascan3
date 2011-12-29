@@ -760,8 +760,6 @@ void US_Hydrodyn_Cluster::create_pkg()
    
    QString      out = base;
    unsigned int write_count = 0;
-   unsigned int extension_count = selected_files.size();
-   unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
 
    if ( !copy_files_to_pkg_dir( base_source_files ) )
    {
@@ -791,6 +789,8 @@ void US_Hydrodyn_Cluster::create_pkg()
                            / (double) le_no_of_jobs->text().toUInt() );
    cout << "max jobs per " << max_no_of_jobs << endl;
 
+   unsigned int extension_count = max_no_of_jobs;
+   unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
    map < QString, bool > already_added;
 
    for ( unsigned int this_i = 0; this_i < selected_files.size() * multi_grid_multiplier * advanced_multiplier; this_i++ )
@@ -1977,6 +1977,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       "runtime|"
                       "maxruntime|"
                       "queue|"
+                      "executable|"
                       "stage"
                       ")$"
                       );
@@ -1995,6 +1996,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       "runtime|"
                       "maxruntime|"
                       "queue|"
+                      "executable|"
                       "stage"
                       ")$"
                       );

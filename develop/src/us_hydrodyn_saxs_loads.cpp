@@ -145,11 +145,51 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          } else {
             original_q = q;
             q = plotted_q[ plotted_iq_names_to_pos[ grid_target ] ];
+            // check q against original_q for cropping
+            if ( q[ 0 ] < original_q[ 0 ] || q.back() > original_q.back() )
+            {
+               editor_msg( 
+                          "dark red", 
+                          QString( "Notice: the target curve is cropped to q(%1:%2) to prevent extrapolation" )
+                          .arg( original_q[ 0 ] )
+                          .arg( original_q.back() ) 
+                          );
+                          
+               unsigned int pos = plotted_iq_names_to_pos[ grid_target ];
+
+               vector < double > new_q;
+               vector < double > new_q2;
+               vector < double > new_I;
+               vector < double > new_I_error;
+
+               for ( unsigned int i = 0; i < q.size(); i++ )
+               {
+                  if ( q[ i ] >= original_q[ 0 ] && q[ i ] <= original_q.back() )
+                  {
+                     new_q       .push_back( q[ i ] );
+                     if ( plotted_q2[ pos ].size() > i )
+                     {
+                        new_q2      .push_back( plotted_q2[ pos ][ i ] );
+                     }
+                     new_I       .push_back( plotted_I[ pos ][ i ] );
+                     if ( plotted_I_error[ pos ].size() > i )
+                     {
+                        new_I_error .push_back( plotted_I_error[ pos ][ i ] );
+                     }
+                  }
+               }
+               plotted_q       [ pos ] = new_q;
+               plotted_q2      [ pos ] = new_q2;
+               plotted_I       [ pos ] = new_I;
+               plotted_I_error [ pos ] = new_I_error;
+               q = new_q;
+            }
+
             // reset header
-            QStringList qsl_q = QStringList::split(",",qsl_headers[0],true);
+            QStringList qsl_q = QStringList::split( ",", qsl_headers[0], true );
             QString msg = qsl_q[ qsl_q.size() - 1 ];
             msg.replace("\"", "");
-            qsl[0] = QString("\"Name\",\"Type; q:\",%1,\"%2 reinterpolated to q(%3:%4) step %5\"")
+            qsl[0] = QString( "\"Name\",\"Type; q:\",%1,\"%2 reinterpolated to q(%3:%4) step %5\"" )
                .arg( vector_double_to_csv( q ) )
                .arg( msg )
                .arg( q.size() ? q[ 0 ] : 0 )
@@ -199,7 +239,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   QMessageBox::warning( this, "US-SOMO",
                                         QString( tr( "There was an error attempting to interpolate\n"
                                                      "%1 q(%2:%3) to the common grid of q(%4:%5)\n"
-                                                     "Error: \"%6\"" ) )
+                                                     "Error : \"%6\"" ) )
                                         .arg( qsl_d[ 0 ] )
                                         .arg( original_q.size() ? original_q[ 0 ] : 0 )
                                         .arg( original_q.size() ? original_q[ original_q.size() - 1 ] : 0 )
@@ -615,7 +655,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                .arg( plotted_q[ i ].size() ? plotted_q[ i ][ 0 ] : 0 )
                                .arg( plotted_q[ i ].size() ? plotted_q[ i ][ plotted_q[ i ].size() - 1 ] : 0 )
                                .arg( q.size() ? q[ 0 ] : 0 )
-                               .arg( q.size() ? q[ q.size() - 1 ] : 0 )
+                               .arg( q.size() ? q.back() : 0 )
                                .arg( usu.errormsg )
                                );
          return;

@@ -110,6 +110,9 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
       for ( unsigned int i = 0; i < files.size(); i++ )
       {
          cout << "files: " << files[ i ] << endl;
+         // qt3 QFileInfo::size() is incorrect uint is too small
+         // so use fstat()
+
          new QListViewItem( lv_files, 
                             files[ i ], 
                             QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),

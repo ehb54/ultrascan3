@@ -363,6 +363,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
          << "runtime"
          << "stage"
          << "type"
+         << "executable"
          << "queue";
       
       for ( unsigned int i = 0; i < params.size(); i++ )
