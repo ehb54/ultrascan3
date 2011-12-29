@@ -283,8 +283,8 @@ if ( my_rank == 0 )
    // Check GA buckets
    if ( analysis_type == "GA" )
    {
-      if ( buckets.size() < 2 )
-         abort( "Insufficient buckets defined" );
+      if ( buckets.size() < 1 )
+         abort( "No buckets defined" );
 
       QList< QRectF > bucket_rects;
 
