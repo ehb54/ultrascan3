@@ -911,6 +911,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisResult (
   wallTime int(11) NOT NULL default '0',
   CPUTime double NOT NULL default '0',
   CPUCount int(11) default '0',
+  mgroupcount int(11) NOT NULL DEFAULT 1,
   max_rss int(11) default '0',            -- from nnls finished message
   calculatedData TEXT,                          -- an xml file
   stderr LONGTEXT DEFAULT NULL,
