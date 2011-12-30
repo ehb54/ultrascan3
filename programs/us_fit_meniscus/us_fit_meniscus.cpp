@@ -878,8 +878,8 @@ void US_FitMeniscus::remove_models()
 {
    QString srchRun  = filedir.section( "/", -1, -1 );
    QString srchEdit = fname_load.section( ".", -3, -3 );
-   QString srchTrip = srchEdit.section( "-", 1, 1 );
-           srchEdit = srchEdit.section( "-", 0, 0 );
+   QString srchTrip = srchEdit.section( "-", -1, -1 );
+           srchEdit = srchEdit.section( "-",  0, -2 );
 //DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
 // << srchRun << srchEdit << srchTrip;
 
@@ -928,7 +928,7 @@ void US_FitMeniscus::remove_models()
       QString runID      = descript.section( '.',  0, -4 );
       QString tripID     = descript.section( '.', -3, -3 );
       QString anRunID    = descript.section( '.', -2, -2 );
-      QString editLabl   = anRunID .section( '_',  0,  0 );
+      QString editLabl   = anRunID .section( '_',  0, -5 );
 DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
  << ii << runID << editLabl << tripID;
 
