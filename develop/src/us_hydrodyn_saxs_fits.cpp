@@ -390,6 +390,20 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    int    lowest_chi2_pos = 0;
 
    //   editor->append(QString("running best fit %1 %2\n").arg(best_fit_models.size()).arg(best_fit_target.size()));
+   // save saxs plot
+   vector < vector < double > > qs;
+   vector < vector < double > > Is;
+   vector < vector < double > > I_errors;
+   vector < QString >           names;
+
+   for ( unsigned int i = 0; i < plotted_I_error.size(); i++ )
+   {
+      qs.      push_back( plotted_q           [ i ] );
+      Is.      push_back( plotted_I           [ i ] );
+      I_errors.push_back( plotted_I_error     [ i ] );
+      names.   push_back( qsl_plotted_iq_names[ i ] );
+   }
+
    editor->append("Running best fit\n");
    clear_plot_saxs( true );
 
@@ -441,6 +455,12 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    editor->setColor(save_color);
 
    // plot 
+   plotted = false;
+   // replot previous plot
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      plot_one_iqq( qs[ i ], Is[ i ], I_errors[ i ], names[ i ] );
+   }
    
    if ( is_nonzero_vector( nnls_errors ) )
    {

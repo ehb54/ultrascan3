@@ -2943,6 +2943,9 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    vector < double > use_I;
    vector < double > use_I_error;
 
+   double       avg_std_dev_frac        = 0e0;
+   unsigned int avg_std_dev_point_count = 0;
+
    for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
    {
       if ( plotted_q[iq_pos][i] >= q_min &&
@@ -2951,9 +2954,19 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          use_q.push_back(plotted_q[iq_pos][i]);
          use_I.push_back(plotted_I[iq_pos][i]);
          use_I_error.push_back(plotted_I_error[iq_pos][i]);
+         if ( plotted_I[ iq_pos ][ i ] )
+         {
+            avg_std_dev_frac += plotted_I_error[ iq_pos ][ i ] / plotted_I[ iq_pos ][ i ];
+            avg_std_dev_point_count++;
+         }
       }
    }
    
+   if ( avg_std_dev_point_count )
+   {
+      avg_std_dev_frac /= ( double ) avg_std_dev_point_count;
+   }
+
    cout << QString("After cropping q to overlap region:\n"
                    "use_q.size == %1\n").arg(use_q.size());
    
@@ -3107,6 +3120,12 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
          .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
          ;
+      if ( avg_std_dev_frac )
+      {
+         fit_msg += QString( " sdf=%1 nchi*sdf=%2 " )
+            .arg( avg_std_dev_frac ) 
+            .arg( avg_std_dev_frac * sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
+      }
    } else {
       fit_msg = QString("RMSD=%1").arg(chi2, 5);
    }

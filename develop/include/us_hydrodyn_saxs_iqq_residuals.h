@@ -52,6 +52,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      bool plot_log,
                                      bool plot_difference,
                                      bool plot_as_percent,
+                                     double avg_std_dev_frac,
+                                     vector < double > std_dev_frac,
                                      QWidget *p = 0, 
                                      const char *name = 0
                                      );
@@ -79,6 +81,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       vector < vector < double > > qs;
 
       vector < vector < double > > differences;
+      vector < vector < double > > differences_mult_avg_sd;
+      vector < vector < double > > differences_mult_sd;
       vector < vector < double > > differences_no_errors;
       vector < vector < double > > log_differences;
 
@@ -91,9 +95,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 
       vector < QColor > plot_colors;
 
+      vector < double >            std_dev_frac;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      double            avg_std_dev_frac;
 
       bool              use_errors;
 
@@ -116,6 +123,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       QCheckBox         *cb_plot_log;
       QCheckBox         *cb_plot_difference;
       QCheckBox         *cb_plot_as_percent;
+      QCheckBox         *cb_plot_mult_avg_sd_frac;
+      QCheckBox         *cb_plot_mult_sd_frac;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -124,7 +133,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       QPushButton        *pb_help;
       QPushButton        *pb_cancel;
 
-      void               update_plot();
+      void update_plot();
 
    private slots:
       
@@ -133,6 +142,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       void set_plot_log();
       void set_plot_difference();
       void set_plot_as_percent();
+      void set_plot_mult_avg_sd_frac();
+      void set_plot_mult_sd_frac();
 
       void cancel();
       void help();

@@ -15,6 +15,8 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              bool plot_log,
                                                              bool plot_difference,
                                                              bool plot_as_percent,
+                                                             double avg_std_dev_frac,
+                                                             vector < double > std_dev_frac,
                                                              QWidget *p, 
                                                              const char *name
                                                              ) : QFrame(p, name)
@@ -22,10 +24,12 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->saxs_iqq_residuals_widget = saxs_iqq_residuals_widget;
    this->title = title;
 
-   this->use_errors = use_errors;
-   this->plot_log = plot_log;
-   this->plot_difference = plot_difference;
-   this->plot_as_percent = plot_as_percent;
+   this->use_errors       = use_errors;
+   this->plot_log         = plot_log;
+   this->plot_difference  = plot_difference;
+   this->plot_as_percent  = plot_as_percent;
+   this->avg_std_dev_frac = avg_std_dev_frac;
+   this->std_dev_frac     = std_dev_frac;
 
    plot_zoomer = (ScrollZoomer *)0;
 
@@ -82,6 +86,28 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
    differences_no_errors_pcts      .push_back(log_difference);
    log_difference_pcts             .push_back(log_difference);
 
+   {
+      if ( std_dev_frac.size() > difference.size() )
+      {
+         cout << QString( "Warning: additional plot smaller than original %1 %2\n" ).arg( std_dev_frac.size() ).arg( difference.size() );
+      }
+      vector < double > difference_mult_avg_sd;
+      vector < double > difference_mult_sd;
+      cout << QString( "multiply difference by %1\n" ).arg( avg_std_dev_frac );
+      for ( unsigned int i = 0; i < difference.size(); i++ )
+      {
+         difference_mult_avg_sd.push_back( difference[ i ] * avg_std_dev_frac );
+         if ( std_dev_frac.size() > i )
+         {
+            difference_mult_sd    .push_back( difference[ i ] * std_dev_frac[ i ] );
+         } else {
+            difference_mult_sd    .push_back( 0e0 );
+         }
+      }
+      differences_mult_avg_sd.push_back( difference_mult_avg_sd );
+      differences_mult_sd    .push_back( difference_mult_sd );
+   }
+
    // make sure things aren't to big
 
    unsigned int min_len = qs[pos].size();
@@ -104,6 +130,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
 
    qs                           [pos].resize(min_len);
    differences                  [pos].resize(min_len);
+   differences_mult_sd          [pos].resize(min_len);
    differences_no_errors        [pos].resize(min_len);
    log_differences              [pos].resize(min_len);
    targets                      [pos].resize(min_len);
@@ -224,6 +251,25 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_as_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
+   if ( avg_std_dev_frac )
+   {
+      cb_plot_mult_avg_sd_frac = new QCheckBox(this);
+      cb_plot_mult_avg_sd_frac->setText( tr( " Mult avg s.d. frac" ) );
+      cb_plot_mult_avg_sd_frac->setEnabled(true);
+      cb_plot_mult_avg_sd_frac->setChecked( true );
+      cb_plot_mult_avg_sd_frac->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_plot_mult_avg_sd_frac->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_plot_mult_avg_sd_frac, SIGNAL(clicked()), SLOT( set_plot_mult_avg_sd_frac() ));
+
+      cb_plot_mult_sd_frac = new QCheckBox(this);
+      cb_plot_mult_sd_frac->setText( tr( " Mult s.d. frac" ) );
+      cb_plot_mult_sd_frac->setEnabled(true);
+      cb_plot_mult_sd_frac->setChecked( false );
+      cb_plot_mult_sd_frac->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_plot_mult_sd_frac->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_plot_mult_sd_frac, SIGNAL(clicked()), SLOT( set_plot_mult_sd_frac() ));
+   }
+
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -255,6 +301,11 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    hbl->addWidget(cb_plot_difference);
    hbl->addWidget(cb_plot_log);
    hbl->addWidget(cb_plot_as_percent);
+   if ( avg_std_dev_frac )
+   {
+      hbl->addWidget( cb_plot_mult_avg_sd_frac );
+      hbl->addWidget( cb_plot_mult_sd_frac );
+   }
 
    background->addMultiCellLayout(hbl, j, j, 0, 1);
    j++;
@@ -296,6 +347,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_log()
    update_plot();
 }
 
+
+
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_difference()
 {
    plot_difference = cb_plot_difference->isChecked();
@@ -307,6 +360,26 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_difference()
 void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_as_percent()
 {
    plot_as_percent = cb_plot_as_percent->isChecked();
+   update_plot();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_mult_avg_sd_frac()
+{
+   if ( cb_plot_mult_avg_sd_frac->isChecked() && 
+        cb_plot_mult_sd_frac->isChecked() )
+   {
+      cb_plot_mult_sd_frac->setChecked( false );
+   }
+   update_plot();
+}
+   
+void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_mult_sd_frac()
+{
+   if ( cb_plot_mult_avg_sd_frac->isChecked() && 
+        cb_plot_mult_sd_frac->isChecked() )
+   {
+      cb_plot_mult_avg_sd_frac->setChecked( false );
+   }
    update_plot();
 }
 
@@ -390,30 +463,97 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       }
       if ( plot_difference ) 
       {
+         bool use_mult_avg_sd_frac = avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
+         bool use_mult_sd_frac     = avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
+
 #ifndef QT4
          long iqq = plot->insertCurve("Log10 I(q) vs q"); 
          plot->setCurveStyle(iqq, QwtCurve::Lines);
          plot->setCurveData(iqq, 
                             (double *)&(qs[pos][0]), 
-                            plot_as_percent ? (double *)&(differences_no_errors_pcts[pos][0]) : (double *)&(differences[pos][0]),
-                            (int)qs[pos].size());
+                            plot_as_percent 
+                            ? 
+                            (double *)&(differences_no_errors_pcts[pos][0]) 
+                            : 
+                            ( 
+                             use_mult_sd_frac 
+                             ? 
+                             (double *)&(differences_mult_sd[pos][0])
+                             :
+                             ( 
+                              use_mult_avg_sd_frac ?
+                              (double *)&(differences_mult_avg_sd[pos][0])
+                              :
+                              (double *)&(differences[pos][0])
+                              )
+                             ),
+                            (int)qs[pos].size() 
+                            );
          plot->setCurvePen(iqq, QPen(plot_colors[pos], 2, SolidLine));
 #else
          QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setData(
                         (double *)&(qs[pos][0]), 
-                        plot_as_percent ? (double *)&(differences_no_errors_pcts[pos][0]) : (double *)&(differences[pos][0]),
+                        plot_as_percent 
+                        ? 
+                        (double *)&(differences_no_errors_pcts[pos][0]) 
+                        : 
+                        ( 
+                         use_mult_sd_frac 
+                         ? 
+                         (double *)&(differences_mult_sd[pos][0])
+                         :
+                         ( 
+                          use_mult_avg_sd_frac ?
+                          (double *)&(differences_mult_avg_sd[pos][0])
+                          :
+                          (double *)&(differences[pos][0])
+                          )
+                         ),
                         (int)qs[pos].size()
                         );
          curve->setPen( QPen(plot_colors[pos], 2, SolidLine) );
          curve->attach( plot );
 #endif
-         double this_miny = plot_as_percent ? differences_no_errors_pcts[ pos ][ 0 ] : differences[ pos ][ 0 ];
+         double this_miny = 
+            plot_as_percent 
+            ? 
+            differences_no_errors_pcts[ pos ][ 0 ] 
+            :
+            (
+             use_mult_sd_frac 
+             ? 
+             differences_mult_sd[ pos ][ 0 ] 
+             :
+             ( 
+              use_mult_avg_sd_frac ?
+              differences_mult_avg_sd[ pos ][ 0 ] 
+              :
+              differences[ pos ][ 0 ] 
+              )
+             );
+
          double this_maxy = this_miny;
          for ( unsigned int i = 1; i < qs[ pos ].size(); i++ )
          {
-            double val = plot_as_percent ? differences_no_errors_pcts[ pos ][ i ] : differences[ pos ][ i ];
+            double val = plot_as_percent 
+               ? 
+               differences_no_errors_pcts[ pos ][ i ] 
+               : 
+               ( 
+                use_mult_sd_frac 
+                ? 
+                differences_mult_sd[ pos ][ i ] 
+                :
+                ( 
+                 use_mult_avg_sd_frac ?
+                 differences_mult_avg_sd[ pos ][ i ] 
+                 :
+                 differences[ pos ][ i ] 
+                 )
+                );
+
             if ( this_miny > val )
             {
                this_miny = val;

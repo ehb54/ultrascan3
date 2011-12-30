@@ -5585,7 +5585,7 @@ void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
 }
 
 
-#define DEBUG_RESID
+// #define DEBUG_RESID
 
 void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               vector < double > q,
@@ -5624,6 +5624,10 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    vector < double > log_I1 ( I1.size() );
    vector < double > log_I2 ( I2.size() );
 
+   double       avg_std_dev_frac        = 0e0;
+   unsigned int avg_std_dev_frac_count  = 0;
+   vector < double > std_dev_frac( q.size() );
+
 #if defined( DEBUG_RESID )
    cout <<
       QString("q\ttarget\tcalc\terror\tdifference\tdifference/error\n");
@@ -5648,6 +5652,14 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       if ( use_errors ) 
       {
          difference[ i ] /= I_errors[ i ];
+         if ( I1[ i ] )
+         {
+            avg_std_dev_frac += I_errors[ i ] / I1[ i ];
+            avg_std_dev_frac_count++;
+            std_dev_frac[ i ] = I_errors[ i ] / I1[ i ];
+         } else {
+            std_dev_frac[ i ] = 0e0;
+         }
       }
       log_I1[ i ] = log10( I1[ i ] );
       log_I2[ i ] = log10( I2[ i ] );
@@ -5660,6 +5672,11 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
          log_I2[ i ] = 1e-34;
       }
       log_difference[ i ] = log_I2[ i ] - log_I1[ i ];
+   }
+
+   if ( use_errors ) 
+   {
+      avg_std_dev_frac /= ( double ) avg_std_dev_frac_count;
    }
 
    // #ifndef WIN32
@@ -5705,7 +5722,9 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                             use_errors,
                                             false,
                                             true,
-                                            !use_errors
+                                            !use_errors,
+                                            avg_std_dev_frac,
+                                            std_dev_frac
                                             );
       saxs_iqq_residuals_windows[title]->show();
    }
