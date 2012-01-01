@@ -802,41 +802,39 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
          if ( ksol < 3 )
          {  // Summary prints for a bin that has only a point or two
-            ts << tr( "\nThis solute bin does not have sufficient points to"
-                      "\n  calculate meaningful statistics.\n" );
+            ts << tr( "This solute bin does not have sufficient points to"
+                      "\ncalculate meaningful statistics.\n" );
 
-            QString apfix = ( ksol == 1 ) ? "" : tr( "Weight-Average " );
-            QString cpfix = ( ksol == 1 ) ? "" : tr( "Average        " );
             double tconc  = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                tconc   += bcomp.at( jj ).c;
 
-            ts << apfix << tr( "Molecular Weight:          " );
+            ts << tr( "Molecular weight:           " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).w * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-            ts << apfix << tr( "Sedimentation Coefficient: " );
+            ts << tr( "Sedimentation coefficient:  " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).s * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-            ts << apfix << tr( "Diffusion Coefficient:     " );
+            ts << tr( "Diffusion coefficient:      " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-            ts << apfix << tr( "Frictional Ratio:          " );
+            ts << tr( "Frictional ratio:           " );
             vsum     = 0.0;
 
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-            ts << cpfix << tr( "Concentration:             " );
+            ts << tr( "Partial concentration:      " );
             vsum     = tconc;
             ts << ( vsum / vsiz ) << endl;
             csums.append( vsum );
@@ -855,31 +853,31 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).w );
             outputStats( ts, valus, concs, false,
-                  tr( "Molecular weight:        " ) );
+                  tr( "Molecular weight:          " ) );
 
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).s );
             outputStats( ts, valus, concs, false,
-                  tr( "Sedimentation Coeff.:    " ) );
+                  tr( "Sedimentation coefficient: " ) );
 
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).d );
             outputStats( ts, valus, concs, false,
-                  tr( "Diffusion Coeff.:        " ) );
+                  tr( "Diffusion coefficient:     " ) );
 
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
             outputStats( ts, valus, concs, false,
-                  tr( "Frictional Ratio, f/f0:  " ) );
+                  tr( "Frictional ratio:          " ) );
 
             for ( int jj = 0; jj < ksol; jj++ )
                vtotal    += bcomp.at( jj ).c;
             csums.append( vtotal );
             concsum   += vtotal;
-            ts << tr( "Total Concentration:     " ) <<
+            ts << tr( "Partial concentration:     " ) <<
                str1.sprintf( " %6.4e\n", vtotal );
 
          }
@@ -910,24 +908,24 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
          if ( ksol < 3 )
          {  // just print the values for a sparse bin
             ts << tr( "\nThis solute bin does not have sufficient points to"
-                      "\n  calculate a meaningful distribution.\n\n" );
+                      "\ncalculate a meaningful distribution.\n\n" );
 
-            ts << tr( "Molecular Weight:          " );
+            ts << tr( "Molecular weight:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).w << "  ";
             ts << endl;
 
-            ts << tr( "Sedimentation Coefficient: " );
+            ts << tr( "Sedimentation coefficient: " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).s << "  ";
             ts << endl;
 
-            ts << tr( "Diffusion Coefficient:     " );
+            ts << tr( "Diffusion coefficient:     " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).d << "  ";
             ts << endl;
 
-            ts << tr( "Frictional Ratio:          " );
+            ts << tr( "Frictional ratio:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
             ts << endl;
