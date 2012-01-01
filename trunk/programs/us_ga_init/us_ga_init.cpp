@@ -365,7 +365,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_dim   = 3;          // default plot dimension
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
-   mfilter    = "";         // default model list filter
+   mfilter    = "mc";       // default model list filter
 
    reset();
 }
@@ -480,6 +480,10 @@ void US_GA_Initialize::save( void )
    QString fndat = run_name + ".gadistro.dat";
    QString fnsta = run_name + ".ga.stats";
    QString fname = fdir + "/" + fndat;
+   QString trpid = run_name.section( ".", -1, -1 );
+   QString fdir2 = US_Settings::reportDir() + "/" + runid;
+   QString fnst2 = "gain." + trpid + ".ga_stats.rpt";
+   QString fnam2 = fdir2 + "/" + fnst2;
 
    QDir dirp( US_Settings::resultDir() );
 
@@ -497,15 +501,29 @@ void US_GA_Initialize::save( void )
       fname         = fdir + "/" + fnsta;
 
       soludata->reportDataMC( fname, mc_iters );   // report it
+
+      // Copy the statistics file to the report directory
+      QFile( fnam2 ).remove();
+      QFile( fname ).copy( fnam2 );
    }
 
    // Report on files saved
    QString msg = tr( "Saved:\n" );
    if ( plot_s )
       msg     += "    " + fndat + "\n";
+
    if ( monte_carlo )
+   {
       msg     += "    " + fnsta + "\n";
-   msg        += tr( "in directory:\n    " ) + fdir;
+      msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
+      msg     += "    " + fnst2 + "\n";
+      msg     += tr( "in directory:\n    " ) + fdir2;
+   }
+
+   else
+   {
+      msg     += tr( "in directory:\n    " ) + fdir;
+   }
 
    QMessageBox::information( this, tr( "Distro/Stats File Save" ), msg );
 }
@@ -651,6 +669,7 @@ void US_GA_Initialize::plot_1dim( void )
    data_plot->detachItems();
 
    data_plot->setCanvasBackground( Qt::black );
+   pick->setTrackerPen( QColor( Qt::white ) );
 
    sdistro       = plot_s ? &s_distro : &w_distro;
 
@@ -736,6 +755,7 @@ void US_GA_Initialize::plot_2dim( void )
    data_plot->detachItems();
 
    data_plot->setCanvasBackground( Qt::black );
+   pick->setTrackerPen( QColor( Qt::white ) );
 
    sdistro       = plot_s ? &s_distro : &w_distro;
 

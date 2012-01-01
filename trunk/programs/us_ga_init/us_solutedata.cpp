@@ -802,26 +802,42 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
          if ( ksol < 3 )
          {  // Summary prints for a bin that has only a point or two
-            ts << "\nThis solute bin does not have sufficient points to"
-               "\ncalculate meaningful statistics.\n";
+            ts << tr( "\nThis solute bin does not have sufficient points to"
+                      "\n  calculate meaningful statistics.\n" );
 
-            ts << "Average Molecular Weight: ";
+            QString apfix = ( ksol == 1 ) ? "" : tr( "Weight-Average " );
+            QString cpfix = ( ksol == 1 ) ? "" : tr( "Average        " );
+            double tconc  = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               tconc   += bcomp.at( jj ).c;
+
+            ts << apfix << tr( "Molecular Weight:          " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
-               vsum    += bcomp.at( jj ).w;
-            ts << ( vsum / vsiz ) << endl;
+               vsum    += ( bcomp.at( jj ).w * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
 
-            ts << "Average Frictional Ratio: ";
+            ts << apfix << tr( "Sedimentation Coefficient: " );
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += ( bcomp.at( jj ).s * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
+
+            ts << apfix << tr( "Diffusion Coefficient:     " );
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
+
+            ts << apfix << tr( "Frictional Ratio:          " );
             vsum     = 0.0;
 
             for ( int jj = 0; jj < ksol; jj++ )
-               vsum    += bcomp.at( jj ).f;
-            ts << ( vsum / vsiz ) << endl;
+               vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
 
-            ts << "Average Concentration:    ";
-            vsum     = 0.0;
-            for ( int jj = 0; jj < ksol; jj++ )
-               vsum    += bcomp.at( jj ).c;
+            ts << cpfix << tr( "Concentration:             " );
+            vsum     = tconc;
             ts << ( vsum / vsiz ) << endl;
             csums.append( vsum );
             concsum += vsum;
@@ -894,27 +910,32 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
          if ( ksol < 3 )
          {  // just print the values for a sparse bin
             ts << tr( "\nThis solute bin does not have sufficient points to"
-                  "\ncalculate a meaningful distribution\n" );
+                      "\n  calculate a meaningful distribution.\n\n" );
 
-            ts << tr( "\nMolecular Weight:\n" );
+            ts << tr( "Molecular Weight:          " );
             for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).w << endl;
+               ts << bcomp.at( jj ).w << "  ";
+            ts << endl;
 
-            ts << tr( "\nSedimentation Coefficient:\n" );
+            ts << tr( "Sedimentation Coefficient: " );
             for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).s << endl;
+               ts << bcomp.at( jj ).s << "  ";
+            ts << endl;
 
-            ts << tr( "\nDiffusion Coefficient:\n" );
+            ts << tr( "Diffusion Coefficient:     " );
             for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).d << endl;
+               ts << bcomp.at( jj ).d << "  ";
+            ts << endl;
 
-            ts << tr( "\nFrictional Ratio:\n" );
+            ts << tr( "Frictional Ratio:          " );
             for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).f << endl;
+               ts << bcomp.at( jj ).f << "  ";
+            ts << endl;
  
-            ts << tr( "\nConcentration:\n" );
+            ts << tr( "Concentration:             " );
             for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).c << endl;
+               ts << bcomp.at( jj ).c << "  ";
+            ts << endl;
          }
 
          else
