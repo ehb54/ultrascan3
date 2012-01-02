@@ -759,41 +759,54 @@ void US_DataLoader::scan_local_edit( void )
 // Pare down data description map to only latest edit
 void US_DataLoader::pare_to_latest( void )
 {
-   QStringList       keys = datamap.keys();
-   QList< DataDesc > vals = datamap.values();
-
-   for ( int ii = 0; ii < keys.size() - 1; ii++ )
+   for ( int kk = 0; kk < 2; kk++ )  // May need two passes to pare down
    {
-      int jj = ii + 1;
+      QStringList       keys = datamap.keys();
+      QList< DataDesc > vals = datamap.values();
+      int               kchg = 0;
 
-      QString clabel = keys.at( ii );
-      QString flabel = keys.at( jj );
+      for ( int ii = 0; ii < keys.size() - 1; ii++ )
+      {
+         int jj = ii + 1;
 
-      QString crunid = clabel.section( ".", 0, 1 );
-      QString frunid = flabel.section( ".", 0, 1 );
+         QString clabel = keys.at( ii );
+         QString flabel = keys.at( jj );
 
-      if ( crunid != frunid )
-         continue;
+         QString crunid = clabel.section( ".", 0, 1 );
+         QString frunid = flabel.section( ".", 0, 1 );
 
-      QString cstype  = clabel.section( ".", 2, 2 );
-      QString fstype  = flabel.section( ".", 2, 2 );
+         if ( crunid != frunid )
+            continue;
 
-      if ( cstype != fstype )
-         continue;
+         QString cstype  = clabel.section( ".", 2, 2 );
+         QString fstype  = flabel.section( ".", 2, 2 );
 
-      // This record's label differs from next only by edit code: remove it
-      QString   cdtxt = vals.at( ii ).date;
-      QString   fdtxt = vals.at( jj ).date;
-      QDateTime cdate = QDateTime::fromString( cdtxt, Qt::ISODate );
-      QDateTime fdate = QDateTime::fromString( fdtxt, Qt::ISODate );
+         if ( cstype != fstype )
+            continue;
+
+         // This record's label differs from next only by edit code: remove it
+         QString   cdtxt = vals.at( ii ).date;
+         QString   fdtxt = vals.at( jj ).date;
+         QDateTime cdate = QDateTime::fromString( cdtxt, Qt::ISODate );
+         QDateTime fdate = QDateTime::fromString( fdtxt, Qt::ISODate );
 //qDebug() << "PARE ii" << ii << "C,F date" << cdtxt << fdtxt;
 //qDebug() << "  C,F lab" << clabel << flabel;
 //qDebug() << "   (C<=F)" << (cdate<=fdate) << " C,F dt" << cdate << fdate;
 
-      if ( cdate <= fdate )         // Remove the earlier of the two
-         datamap.remove( clabel );
-      else
-         datamap.remove( flabel );
+         if ( cdate <= fdate )         // Remove the earlier of the two
+            datamap.remove( clabel );  //  Earlier is earlier in list
+
+         else
+         {
+            datamap.remove( flabel );  //  Earlier is later in list
+            kchg++;                    //  Mark when early one later in list
+         }
+      }
+
+//qDebug() << "PARE   kchg" << kchg << "kk" << kk;
+      if ( kchg == 0 )   break;        // We're done
+
+      // Need to repeat above when any removed was later in list
    }
 }
 
