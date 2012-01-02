@@ -365,7 +365,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_dim   = 3;          // default plot dimension
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
-   mfilter    = "mc";       // default model list filter
+   mfilter    = "";         // default model list filter
 
    reset();
 }
