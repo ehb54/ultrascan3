@@ -5,6 +5,10 @@ QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDNOW (elapsed.msecsTo(QDateTime::currentDateTime()))
 #define ELAPSEDSEC (elapsed.secsTo(QDateTime::currentDateTime()))
 #define DbTimMsg(a) DbTiming << my_rank << generation << ELAPSEDNOW << a;
+#define DRTiming    DbTiming << my_rank
+#if 0
+#define UPDATE_FIT
+#endif
 
 void US_MPI_Analysis::ga_worker( void )
 {
@@ -374,9 +378,9 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    for ( int s = 0; s < gene.size(); s++ ) 
       sim.solutes[ s ].s *= 1.0e-13;
 
-DbTimMsg("  ++ call gf calc_residuals");
+//DbTimMsg("  ++ call gf calc_residuals");
    calc_residuals( current_dataset, datasets_to_process, sim );
-DbTimMsg("  ++  return calc_residuals");
+//DbTimMsg("  ++  return calc_residuals");
 
    double fitness      = sim.variance;
    int    solute_count = 0;
@@ -600,12 +604,24 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 // inverse hessian minimization 
 double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
 {
+#if 0
+#define TIMING_MZ
+#endif
+#ifdef TIMING_MZ
+static int  ncalls=0;
 static long totms=0L;
+static long totT1=0L;
+static long totT2=0L;
+static long totT3=0L;
+static long totT4=0L;
+static long totT5=0L;
+static long totT6=0L;
 long insms;
-QDateTime stime=QDateTime::currentDateTime();
+QDateTime clcSt0=QDateTime::currentDateTime();
+#endif
    int       vsize = gene.size() * 2;
    US_Vector v( vsize );  // Input values
-   US_Vector u( vsize );  // Vector of derivitives
+   US_Vector u( vsize );  // Vector of derivatives
 
    // Create hessian as identity matrix
    QVector< QVector< double > > hessian( vsize );
@@ -625,7 +641,11 @@ QDateTime stime=QDateTime::currentDateTime();
       v.assign( index++, gene[ i ].k );
    }
 
-   lamm_gsm_df( v, u );   // u is vector of derivitives
+   lamm_gsm_df( v, u );   // u is vector of derivatives
+#ifdef TIMING_MZ
+QDateTime clcSt1=QDateTime::currentDateTime();
+totT1+=clcSt0.msecsTo(clcSt1);
+#endif
 
    static const double epsilon        = 1.0e-7;
    static const int    max_iterations = 20;
@@ -633,6 +653,9 @@ QDateTime stime=QDateTime::currentDateTime();
 
    while ( u.L2norm() >= epsilon  && iteration < max_iterations )
    {
+#ifdef TIMING_MZ
+clcSt1=QDateTime::currentDateTime();
+#endif
       iteration++;
       if ( fitness == 0.0 ) break;
 
@@ -658,6 +681,10 @@ QDateTime stime=QDateTime::currentDateTime();
          v_s2.add  ( v );                // v_s2 = u * -s2 + v
          g_s2 = get_fitness_v( v_s2 );
       }
+#ifdef TIMING_MZ
+QDateTime clcSt2=QDateTime::currentDateTime();
+totT2+=clcSt1.msecsTo(clcSt2);
+#endif
 
       // Test for initial decrease
       if ( s2 <= epsilon  ||  s3 - s2 < epsilon ) break;
@@ -666,6 +693,10 @@ QDateTime stime=QDateTime::currentDateTime();
       v_s3.scale( -s3 );
       v_s3.add  ( v );                   // v_s3 = u * -s3 + v
       double g_s3 = get_fitness_v( v_s3 );
+#ifdef TIMING_MZ
+QDateTime clcSt3=QDateTime::currentDateTime();
+totT3+=clcSt2.msecsTo(clcSt3);
+#endif
 
       int              reps     = 0;
       static const int max_reps = 100;
@@ -703,9 +734,16 @@ QDateTime stime=QDateTime::currentDateTime();
                gene[ i ].k = v[ index++ ];
             }
 
-insms=(long)stime.msecsTo(QDateTime::currentDateTime());
+#ifdef TIMING_MZ
+QDateTime clcSt4=QDateTime::currentDateTime();
+totT4+=clcSt3.msecsTo(clcSt4);
+insms=(long)clcSt0.msecsTo(clcSt4);
 totms+=insms;
-DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
+ncalls++;
+DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
+DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
+ << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
+#endif
             return fitness;
          }
 
@@ -828,8 +866,16 @@ DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
          fitness = g_s3;
       }
       
-      US_Vector v_g( vsize );        // Vector of derivitives
+#ifdef TIMING_MZ
+QDateTime clcSt4=QDateTime::currentDateTime();
+totT4+=clcSt3.msecsTo(clcSt4);
+#endif
+      US_Vector v_g( vsize );        // Vector of derivatives
       lamm_gsm_df( v_p, v_g );       // New gradient in v_g (old in u) 
+#ifdef TIMING_MZ
+QDateTime clcSt5=QDateTime::currentDateTime();
+totT5+=clcSt4.msecsTo(clcSt5);
+#endif
 
       US_Vector v_dx = v_p;
       US_Vector temp = v;
@@ -893,6 +939,10 @@ DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
             u.assign( i, u[ i ] + hessian[ i ][ j ] * v_g[ j ] );
       }
 
+#ifdef TIMING_MZ
+QDateTime clcSt6=QDateTime::currentDateTime();
+totT6+=clcSt5.msecsTo(clcSt6);
+#endif
    }  // end while ( u.L2norm() > epsilon )
 
    index = 0;
@@ -904,33 +954,234 @@ DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
       gene[ i ].k = v[ index++ ];
    }
 
-insms=(long)stime.msecsTo(QDateTime::currentDateTime());
+#ifdef TIMING_MZ
+insms=(long)clcSt0.msecsTo(QDateTime::currentDateTime());
 totms+=insms;
-DbgLv(1) << "MINIMIZE: msecs" << insms << "tot-msecs" << totms;
+ncalls++;
+DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
+DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
+ << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
+#endif
+   return fitness;
+}
+
+
+// Update the fitness value for a set of solutes.
+// Initially (index<0), the A and B matrices are populated.
+// Thereafter, each call updates a single column of the A matrix
+// and recalculates the x vector, with fitness update.
+double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
+{
+   double fitness = 0.0;
+   static QVector< double > nnls_a;
+   static QVector< double > nnls_b;
+          QVector< double > nnls_x;
+          QVector< double > nnls_c;
+   US_SolveSim::DataSet*   dset  = data_sets[ 0 ];
+   US_DataIO2::EditedData* edata = &dset->run_data;
+   US_DataIO2::RawData     simdat;
+   int    nscans  = edata->scanData.size();
+   int    npoints = edata->x       .size();
+   int    ntotal  = nscans * npoints;
+   int    vsize   = v.size();
+   int    nsols   = vsize / 2;
+   int    navals  = nsols * ntotal;
+//qDebug() << "UF: vsize nsols ntotal navals" << vsize << nsols << ntotal << navals;
+   US_Model::SimulationComponent zcomponent;
+   zcomponent.s      = 0.0;
+   zcomponent.D      = 0.0;
+   zcomponent.mw     = 0.0;
+   zcomponent.f      = 0.0;
+   zcomponent.f_f0   = 0.0;
+   zcomponent.vbar20 = dset->vbar20;
+
+   if ( index < 0 )
+   {  // Do the initial population of A and B matrices
+
+      nnls_a.resize( navals );    // Prepare the NNLS A,B matrices
+      nnls_b.resize( ntotal );
+
+      int kk = 0;
+
+      for ( int vv = 0; vv < vsize; vv += 2 )
+      {  // Fit each solute and populate the A matrix with simulations
+         US_Model model;
+         model.components.resize( 1 );
+         model.components[ 0 ]      = zcomponent;
+         model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
+         model.components[ 0 ].f_f0 = v[ vv + 1 ];
+         US_Model::calc_coefficients( model.components[ 0 ] );
+         model.components[ 0 ].s   /= dset->s20w_correction;
+         model.components[ 0 ].D   /= dset->D20w_correction;
+
+         US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+         US_Astfem_RSA astfem_rsa( model, dset->simparams );
+         astfem_rsa.calculate( simdat );
+
+         for ( int ss = 0; ss < nscans; ss++ )
+            for ( int rr = 0; rr < npoints; rr++ )
+               nnls_a[ kk++ ] = simdat.value( ss, rr );
+      }
+
+      kk     = 0;
+
+      // Populate the B matrix with experiment data
+      for ( int ss = 0; ss < nscans; ss++ )
+         for ( int rr = 0; rr < npoints; rr++ )
+            nnls_b[ kk++ ] = edata->value( ss, rr );
+
+   }
+
+   else
+   {  // Calculate one column of the A matrix and re-do NNLS
+      nnls_x.resize( nsols  );
+      nnls_c.resize( ntotal );
+      US_Model model;
+      model.components.resize( 1 );
+
+      int vv = index * 2;
+      model.components[ 0 ]      = zcomponent;
+      model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
+      model.components[ 0 ].f_f0 = v[ vv + 1 ];
+      US_Model::calc_coefficients( model.components[ 0 ] );
+      model.components[ 0 ].s   /= dset->s20w_correction;
+      model.components[ 0 ].D   /= dset->D20w_correction;
+//qDebug() << "UF: index vv" << index << vv << "s,D"
+// << model.components[0].s << model.components[0].D;
+
+      US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+      US_Astfem_RSA astfem_rsa( model, dset->simparams );
+      astfem_rsa.calculate( simdat );
+
+      int kk = index * ntotal;
+      int jj = 0;
+
+      for ( int ss = 0; ss < nscans; ss++ )
+      {
+         for ( int rr = 0; rr < npoints; rr++ )
+         {  // Save the column, then replace it with simulation values
+            nnls_c[ jj++ ] = nnls_a[ kk ];
+            nnls_a[ kk++ ] = simdat.value( ss, rr );
+         }
+      }
+//qDebug() << "UF:  kk jj" << kk << jj;
+
+      // Re-do NNLS to get X concentrations using replaced A
+      US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsols,
+                      nnls_b.data(), nnls_x.data() );
+
+      kk     = index * ntotal;
+      jj     = 0;
+
+      // Restore the A column with its previous values
+      for ( int ss = 0; ss < nscans; ss++ )
+         for ( int rr = 0; rr < npoints; rr++ )
+            nnls_a[ kk++ ] = nnls_c[ jj++ ];
+
+      model.components.clear();
+      kk       = 0;
+      int ksol = 0;
+
+      for ( int cc = 0; cc < nsols; cc++ )
+      {  // Build a model using solutes where the concentration is positive
+         double soluval = nnls_x[ cc ];
+
+         if ( soluval > 0.0 )
+         {
+            model.components << zcomponent;
+
+            int vv = cc * 2;
+            model.components[ kk ].s    = v[ vv     ] * 1.0e-13;
+            model.components[ kk ].f_f0 = v[ vv + 1 ];
+
+            US_Model::calc_coefficients( model.components[ kk ] );
+
+            model.components[ kk ].s   /= dset->s20w_correction;
+            model.components[ kk ].D   /= dset->D20w_correction;
+            model.components[ kk ].signal_concentration = soluval;
+            kk++;
+
+            if ( soluval >= concentration_threshold )  ksol++;
+         }
+      }
+
+      // Calculate the simulation using a model of all live solutes
+      US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+      US_Astfem_RSA astfem_rsa2( model, dset->simparams );
+      astfem_rsa2.calculate( simdat );
+
+      // Calculate the fitness (variance) == average of residuals-squared
+      fitness   = 0.0;
+
+      for ( int ss = 0; ss < nscans; ss++ )
+      {
+         for ( int rr = 0; rr < npoints; rr++ )
+         {
+            double resid = edata->value( ss, rr ) - simdat.value( ss, rr );
+            fitness     += sq( resid );
+//int ms=nscans/2;int mr=npoints/2;
+//if((ss>ms-3)&&(ss<ms+3)&&(rr>mr-3)&&(rr<mr+3))
+// qDebug() << "UF: index" << index << "ss rr edat sdat resd"
+//  << ss << rr << edata->value(ss,rr) << simdat.value(ss,rr) << resid;
+         }
+      }
+
+      fitness  /= (double)( ntotal );
+      fitness  *= ( 1.0 + sq( regularization * ksol ) );
+   }
+
    return fitness;
 }
 
 void US_MPI_Analysis::lamm_gsm_df( const US_Vector& v, US_Vector& vd )
 {
    static const double h        = 0.01;
-   static const double h2_recip = 1.0 / ( h * 2.0 );
+   static const double h2_recip = 0.5 / h;
 
    // Work with a temporary vector
    US_Vector t = v;
 
-   for ( int i = 0; i < t.size(); i++ )
+#ifdef UPDATE_FIT
+   if ( current_dataset == 0  &&  data_sets.size() == 1 )
    {
-      double save = t[ i ];
+      update_fitness( -1, t );
 
-      t.assign( i, save - h );
-      double y0 = get_fitness_v( t );    // Calc fitness value -h
+      for ( int i = 0; i < t.size(); i++ )
+      {
+         double save = t[ i ];
+         int    cc   = i / 2;
 
-      t.assign( i, save + h );
-      double y2 = get_fitness_v( t );    // Calc fitness value +h
+         t.assign( i, save - h );
+         double y0 = update_fitness( cc, t );    // Calc fitness value -h
 
-      vd.assign( i, ( y2 - y0 ) * h2_recip ); // The derivitive
-      t.assign( i, save );
+         t.assign( i, save + h );
+         double y2 = update_fitness( cc, t );    // Calc fitness value +h
+
+         vd.assign( i, ( y2 - y0 ) * h2_recip ); // The derivative
+         t.assign( i, save );
+      }
    }
+
+   else
+#endif
+   {
+      for ( int i = 0; i < t.size(); i++ )
+      {
+         double save = t[ i ];
+
+         t.assign( i, save - h );
+         double y0 = get_fitness_v( t );         // Calc fitness value -h
+
+         t.assign( i, save + h );
+         double y2 = get_fitness_v( t );         // Calc fitness value +h
+
+         vd.assign( i, ( y2 - y0 ) * h2_recip ); // The derivative
+         t.assign( i, save );
+      }
+   }
+//int n=t.size()-1;
+//qDebug() << "GDF: vd0..." << vd[0] << vd[1] << vd[2] << vd[3];
+//qDebug() << "GDF: ...vdn" << vd[n-3] << vd[n-2] << vd[n-1] << vd[n];
 
 }
 

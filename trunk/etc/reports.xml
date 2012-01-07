@@ -27,6 +27,7 @@
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
     <extension name="png" label="PNG Plot" mimetype="image/png" />
     <extension name="dat" label="Text Data Table" mimetype="text/plain" />
+    <extension name="csv" label="Comma Separated Values" mimetype="text/csv" />
     <report name="report" label="Analysis Report" />
     <report name="velocity" label="Velocity Data Scans" />
     <report name="residuals" label="Experiment-Simulation Residuals" />

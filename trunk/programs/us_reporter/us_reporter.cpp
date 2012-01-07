@@ -1192,6 +1192,7 @@ void US_Reporter::item_view()
                           "All files (*.*)" );
    int row = tw_recs->currentItem()->type() - (int)QTreeWidgetItem::UserType;
    cdesc   = adescs.at( row );
+   bool    isHTML = true;
    QString mtext;
 
    if ( cdesc.type.contains( "Plot" ) )
@@ -1202,7 +1203,7 @@ void US_Reporter::item_view()
    }
 
    else
-   {  // For HTML, simple copy the file itself
+   {  // For non-plot, simply copy the file itself
       QFile fi( cdesc.filepath );
       if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
@@ -1214,15 +1215,21 @@ void US_Reporter::item_view()
          mtext += "\n";
          fi.close();
       }
+
+      // Flag as HTML or plain-text
+      isHTML   = cdesc.type.contains( "HTML" );
    }
 
-   // Display the report (HTML or PLOT) in an editor dialog
+   // Display the report (plot or text) in an editor dialog
    US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
    editd->setWindowTitle( tr( "Report Tree Item View" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 500 );
    editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
-   editd->e->setHtml( mtext );
+   if ( isHTML )
+      editd->e->setHtml( mtext );
+   else
+      editd->e->setText( mtext );
    editd->show();
 }
 

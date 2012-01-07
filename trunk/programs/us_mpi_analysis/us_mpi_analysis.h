@@ -289,6 +289,7 @@ class US_MPI_Analysis : public QObject
     double minimize      ( Gene&, double );
     double get_fitness   ( const Gene& );
     double get_fitness_v ( const US_Vector& );
+    double update_fitness( int, US_Vector& );
     void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
     void   align_gene    ( Gene& );
 
