@@ -1558,23 +1558,10 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 
    xc .append( b );
 
-   if ( IndLayer == 0 )   // Use Schuck's grid only
-   {
-      x .append( m );
+   int indp = 0;   // Index for a grid point
 
-      // Add one more point to Schuck's grids
-      for ( int i = 1; i < NN - 1 ; i++ ) 
-      { // Schuck's mesh
-         x .append( m * pow( bmrat, (double) i / NNm1 ) );
-      }
-
-      x .append( b );
-   }
-
-   else  // Need a composite grid
-   {
-      // Steep region
-      int indp = 0;  // Index for a grid point
+   if ( IndLayer > 0 )
+   { // Steep region  (potentially)
       
       for ( int i = 0; i < IndLayer; i++ )  // Consider i-th steep region
       {
@@ -1614,9 +1601,25 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
             }
          }
       }
+   }
 
+   if ( indp < 2 )
+   {  // IndLayer==0  or  indp count less than 2
+      x .append( m );
+
+      // Add one more point to Schuck's grids
+      for ( int k = 1; k < NN - 1 ; k++ ) 
+      { // Schuck's mesh
+         x .append( m * pow( bmrat, (double) k / NNm1 ) );
+      }
+
+      x .append( b );
+   }
+
+   else
+   {  // IndLayer>0  and  indp greater than 1
       int NfTotal = indp;
-      
+
       // Reverse the order of y
       int jj = 0;
       int kk = NfTotal - 1;
@@ -1865,6 +1868,10 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( 
       double D, double sw2, double** CA, double** CB )
 {
+   if ( N != x.size()  ||  N < 1 )
+      qDebug() << "***FixedMesh ERROR*** N x.size" << N << x.size()
+         << " params.s[0] D sw2" << af_params.s[0] << D << sw2;
+
 #ifdef NO_DB
    static int       Nsave = 0;
    static double*** Stif  = NULL;

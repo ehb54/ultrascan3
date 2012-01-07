@@ -116,6 +116,13 @@
        </li>
 
        <li>
+          <b>Vary Vbar with Constant f/f0</b> Check this box if you want to
+          vary vbar while holding f/f0 constant. With this box checked,
+          the control window becomes a
+          <a href="2dsa_analvv.html">2DSA Analysis Vary Vbar Control</a>.
+       </li>
+
+       <li>
           <b>Start Fit</b> Click to begin the fit analysis.
        </li>
 
