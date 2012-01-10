@@ -257,6 +257,7 @@ struct saxs_options
    QString default_rotamer_filename;
 
    double  steric_clash_distance;
+   double  steric_clash_recheck_distance;
 
    bool    disable_iq_scaling;
    bool    autocorrelate;

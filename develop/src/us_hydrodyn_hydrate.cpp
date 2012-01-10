@@ -1824,6 +1824,48 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             }
             pointmap_atoms_dest[ res ].push_back( atoms_dest );
          }
+         if ( res == "AA" )
+         {
+            cout << QString( "expanding AA pointmap\n" );
+            QStringList AAs;
+            AAs 
+               << "ALA"
+               << "ARG"
+               << "ASN"
+               << "ASP"
+               << "CYS"
+               << "GLN"
+               << "GLU"
+               << "GLY"
+               << "HIS"
+               << "ILE"
+               << "LEU"
+               << "LYS"
+               << "MET"
+               << "PHE"
+               << "PRO"
+               << "SER"
+               << "THR"
+               << "TRP"
+               << "TYR"
+               << "VAL";
+            for ( unsigned int j = 0; j < AAs.size(); j++ )
+            {
+               cout << QString( "expanding AA pointmap for AA %1\n" ).arg( AAs[ j ] );
+               if ( pointmap_atoms.count( AAs[ j ] ) )
+               {
+                  error_msg = 
+                     QString( tr( "Error in hydrated rotamer file line %1. "
+                                  "Pointmap defined for AA, but preexisting pointmap defined for Amino Acid residue %2." ) )
+                     .arg( i + 1 )
+                     .arg( AAs[ j ] );
+                  return false;
+               }
+               pointmap_atoms            [ AAs[ j ] ] = pointmap_atoms            [ res ];
+               pointmap_atoms_dest       [ AAs[ j ] ] = pointmap_atoms_dest       [ res ];
+               pointmap_atoms_ref_residue[ AAs[ j ] ] = pointmap_atoms_ref_residue[ res ];
+            }
+         }
          continue;
       }  
 
@@ -2439,6 +2481,8 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
    qApp->processEvents();
    puts("Transforming waters to add to pdb coordinates");
 
+   steric_clash_summary.clear();
+
    unsigned int count_waters           = 0;
    unsigned int count_waters_added     = 0;
    unsigned int count_waters_not_added = 0;
@@ -2662,6 +2706,8 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
                    .arg( count_waters_added ) 
                    .arg( count_waters_not_added ) 
                    );
+   editor->append( list_steric_clash        () );
+   editor->append( list_steric_clash_recheck() );
    qApp->processEvents();
    puts("Done transforming waters to add to pdb coordinates");
    return true;
@@ -2691,16 +2737,36 @@ QString US_Hydrodyn::list_waters_to_add()
    return out;
 }
 
+QString US_Hydrodyn::list_steric_clash()
+{
+   QString qs = QString( tr( "Steric clash at threshold %1 A\n" ) ).arg( saxs_options.steric_clash_distance );
+   for ( map < QString, unsigned int >::iterator it = steric_clash_summary.begin();
+         it != steric_clash_summary.end();
+         it++ )
+   {
+      qs += QString( tr( "Steric clashes with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
+   }
+   return qs;
+}
+
 bool US_Hydrodyn::has_steric_clash( point p )
 {
    unsigned int i = current_model;
+   double dist_threshold = saxs_options.steric_clash_distance;
 
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( dist( this_atom->coordinate, p ) <= saxs_options.steric_clash_distance )
+         if ( dist( this_atom->coordinate, p ) <= dist_threshold )
          {
+            if ( this_atom->chain == 1 )
+            {
+               steric_clash_summary[ "structure side chain" ]++;
+            } else {
+               steric_clash_summary[ "structure main chain" ]++;
+            }
+            steric_clash_summary[ "structure total" ]++;
             return true;
          }
       }
@@ -2713,13 +2779,77 @@ bool US_Hydrodyn::has_steric_clash( point p )
    {
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         if ( dist( it->second[ i ], p ) <= saxs_options.steric_clash_distance )
+         if ( dist( it->second[ i ], p ) <= dist_threshold )
          {
+            steric_clash_summary[ "other water" ]++;
             return true;
          }
       }
    }
    return false;
+}
+
+QString US_Hydrodyn::list_steric_clash_recheck()
+{
+   unsigned int i = current_model;
+   double dist_threshold = saxs_options.steric_clash_recheck_distance;
+   map < QString, unsigned int > steric_clash_recheck_summary;
+
+   for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+         it != waters_to_add.end();
+         it++ )
+   {
+      for ( unsigned int pos = 0; pos < it->second.size(); pos++ )
+      {
+         point p = it->second[ pos ];
+
+         // check structure:
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if ( dist( this_atom->coordinate, p ) <= dist_threshold )
+               {
+                  if ( this_atom->chain == 1 )
+                  {
+                     steric_clash_recheck_summary[ "structure side chain" ]++;
+                  } else {
+                     steric_clash_recheck_summary[ "structure main chain" ]++;
+                  }
+                  steric_clash_recheck_summary[ "structure total" ]++;
+               }
+            }
+         }
+
+         // check other added waters:
+         // map < QString, vector < point > >::iterator it2 = waters_to_add.begin();
+         // while ( *it2 != *it &&
+         // it2 != waters_to_add.end() )
+         // {
+         // it2++;
+         // }
+         for ( map < QString, vector < point > >::iterator it2 = it;
+               it2 != waters_to_add.end();
+               it2++ )
+         {
+            for ( unsigned int j = ( it2 == it ? pos + 1 : 0 ); j < it2->second.size(); j++ )
+            {
+               if ( dist( it2->second[ j ], p ) <= dist_threshold )
+               {
+                  steric_clash_recheck_summary[ "other water" ]++;
+               }
+            }
+         }
+      }
+   }
+
+   QString qs = QString( tr( "Steric recheck clash at threshold %1 A\n" ) ).arg( dist_threshold );
+   for ( map < QString, unsigned int >::iterator it = steric_clash_recheck_summary.begin();
+         it != steric_clash_recheck_summary.end();
+         it++ )
+   {
+      qs += QString( tr( "Steric recheck clash with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
+   }
+   return qs;
 }
 
 bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )

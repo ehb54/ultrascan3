@@ -806,6 +806,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_steric_clash_distance->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_steric_clash_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_distance(double)));
 
+   lbl_steric_clash_recheck_distance = new QLabel(tr(" Steric clash recheck distance : "), this);
+   lbl_steric_clash_recheck_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_steric_clash_recheck_distance->setMinimumHeight(minHeight1);
+   lbl_steric_clash_recheck_distance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_steric_clash_recheck_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_steric_clash_recheck_distance = new QwtCounter(this);
+   cnt_steric_clash_recheck_distance->setRange(0.0, 10, 0.1);
+   cnt_steric_clash_recheck_distance->setValue((*saxs_options).steric_clash_recheck_distance);
+   cnt_steric_clash_recheck_distance->setMinimumHeight(minHeight1);
+   cnt_steric_clash_recheck_distance->setEnabled(true);
+   cnt_steric_clash_recheck_distance->setNumButtons(2);
+   cnt_steric_clash_recheck_distance->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_steric_clash_recheck_distance->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_steric_clash_recheck_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_recheck_distance(double)));
+
    cb_iq_ask = new QCheckBox(this);
    cb_iq_ask->setText(tr("Manually choose I(q) method"));
    cb_iq_ask->setEnabled(true);
@@ -1181,6 +1197,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    k++;
    background->addWidget(lbl_steric_clash_distance, k, 2);
    background->addWidget(cnt_steric_clash_distance, k, 3);
+   k++;
+   background->addWidget(lbl_steric_clash_recheck_distance, k, 2);
+   background->addWidget(cnt_steric_clash_recheck_distance, k, 3);
    k++;
    
    QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
@@ -2050,6 +2069,12 @@ void US_Hydrodyn_SaxsOptions::update_hybrid2_q_points(double val)
 void US_Hydrodyn_SaxsOptions::update_steric_clash_distance(double val)
 {
    (*saxs_options).steric_clash_distance = val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_steric_clash_recheck_distance(double val)
+{
+   (*saxs_options).steric_clash_recheck_distance = val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

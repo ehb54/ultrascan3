@@ -154,6 +154,9 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel      *lbl_steric_clash_distance;
       QwtCounter  *cnt_steric_clash_distance;
 
+      QLabel      *lbl_steric_clash_recheck_distance;
+      QwtCounter  *cnt_steric_clash_recheck_distance;
+
       QCheckBox   *cb_iq_ask;
 
       QCheckBox   *cb_iq_scale_ask;
@@ -261,6 +264,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_normalize_by_mw();
 
       void update_steric_clash_distance(double);
+      void update_steric_clash_recheck_distance(double);
       void set_iq_ask();
 
       void set_iq_scale_ask();

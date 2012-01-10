@@ -516,6 +516,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, rotamer >                       best_fit_rotamer;
       map < QString, vector < rotamer > >            pointmap_rotamers;
       map < QString, vector < point > >              waters_to_add;
+      map < QString, unsigned int >                  steric_clash_summary;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -545,7 +546,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_waters_to_add( QString &error_msg );
       QString list_waters_to_add();
 
-      bool has_steric_clash( point p );
+      bool    has_steric_clash( point p );
+      QString list_steric_clash();
+      QString list_steric_clash_recheck();
 
       bool write_pdb_with_waters( QString &error_msg );
       QString last_hydrated_pdb_name;
