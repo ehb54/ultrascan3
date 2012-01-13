@@ -50,7 +50,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    // Lay out the meniscus,rmsd text box
    te_data = new US_Editor( US_Editor::LOAD, false,
-         "results/*-fm*.fit.dat;;*.dat;;*.*" );
+         "results/*-fm*.fit*dat;;*.dat;;*.*" );
    connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
                      SLOT  ( file_loaded(           QString ) ) );
    
@@ -601,7 +601,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0,  0 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
-                              "-" + tripleID + ".fit.dat";
+                              "-" + tripleID + ".fitmen.dat";
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."
                               + ansysID.section( "-", 0, 3 );
@@ -663,7 +663,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0,  0 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
-                              "-" + tripleID + ".fit.dat";
+                              "-" + tripleID + ".fitmen.dat";
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."
                               + ansysID.section( "-", 0, 3 );

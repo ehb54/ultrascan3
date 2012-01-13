@@ -18,6 +18,8 @@
     label="Genetic Algorithm - Monte Carlo Analysis" />
     <application name="ga-mw"
     label="Genetic Algorithm with Molecular Weight constraints" />
+    <application name="ga-mw-mc"
+    label="Genetic Algorithm with MW constraints - Monte Carlo" />
     <application name="gain" label="Genetic Algorithm Initialize" />
     <application name="secmo" label="Second Moment Analysis" />
     <application name="global" label="Global Analysis" />
@@ -54,7 +56,6 @@
     <report name="diagnostics" label="Scan Diagnostics" />
     <report name="scan_check" label="Scan Fit Check" />
     <report name="fitmen" label="Fit Meniscus Results" />
-    <report name="fit" label="Fit Meniscus Results" />
     <report name="eqfit" label="Equilibrium Fit Analysis" />
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
 </US_Reports>
