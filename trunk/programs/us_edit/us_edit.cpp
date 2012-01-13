@@ -2651,31 +2651,40 @@ void US_Edit::write_triple( void )
       return;
    }
 
+   QString sufx = "";
+
    // Ask for editID if not yet defined
    while ( editID.isEmpty() )
    {
-      QString now =  QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+      QString now  =  QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
       bool ok;
-      editID = QInputDialog::getText( this, 
-         tr( "Input a unique Edit ID for this edit session" ),
-         tr( "Use alphanumeric characters, underscores, or hyphens"
-             " (no spaces).\nLimit total characters to 20." ),
+      QString msg = tr( "The base Edit ID for this edit session is <b>" )
+         + now + "</b> .<br/>"
+         + tr( "You may add an optional suffix to further distinquish<br/>"
+               "the Edit ID. Use alphanumeric characters, underscores,<br/>"
+               "or hyphens (no spaces). Enter 0 to 10 suffix characters." );
+      sufx   = QInputDialog::getText( this, 
+         tr( "Create a unique session Edit ID" ),
+         msg,
          QLineEdit::Normal,
-         now, &ok);
+         sufx,
+         &ok );
       
       if ( ! ok ) return;
 
-      editID.remove( QRegExp( "[^\\w\\d_-]" ) );
+      sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
+      editID = now + sufx;
 
       if ( editID.length() > 20 )
       {
          QMessageBox::critical( this,
             tr( "Text length error" ),
-            tr( "You entered %1 characters for the Edit ID.\n"
-                "Re-enter, limiting length to 20 characters." )
-            .arg( editID.length() ) );
+            tr( "You entered %1 characters for the Edit ID suffix.\n"
+                "Re-enter, limiting length to 10 characters." )
+            .arg( sufx.length() ) );
          editID.clear();
+         sufx = sufx.left( 10 );
       }
    }
 
