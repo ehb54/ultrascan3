@@ -2907,6 +2907,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       ts << "\nEnd clash info\n";
       qs += QString( tr( "Steric clash report in: %1\n" ) ).arg( fname );
       f.close();
+      view_file( fname );
    } else {
       editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
    }
