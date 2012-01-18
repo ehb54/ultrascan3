@@ -555,6 +555,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString last_hydrated_pdb_text;
       QString last_hydrated_pdb_header;
 
+      QStringList hydrate_clash_log;
+
       // atom align computes a transformation matrix 
       // on the transform_from to the transform_to
       // applies it to the apply_from and

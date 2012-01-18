@@ -2520,7 +2520,6 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
          // get coordinates of 
          p1.resize( it->second.water_positioning_atoms[ i ].size() );
          p2.resize( it->second.water_positioning_atoms[ i ].size() );
-
             
          for ( unsigned int j = 0; j < it->second.water_positioning_atoms[ i ].size(); j++ )
          {
@@ -2794,11 +2793,14 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    unsigned int i = current_model;
    double dist_threshold = saxs_options.steric_clash_recheck_distance;
    map < QString, unsigned int > steric_clash_recheck_summary;
+   hydrate_clash_log.clear();
+   // cout << "steric clash recheck:\n";
 
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
          it++ )
    {
+      // cout << QString( "checking steric clash water to add %1\n" ).arg( it->first );
       for ( unsigned int pos = 0; pos < it->second.size(); pos++ )
       {
          point p = it->second[ pos ];
@@ -2809,13 +2811,29 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if ( dist( this_atom->coordinate, p ) <= dist_threshold )
                {
+                  hydrate_clash_log << 
+                     QString( "Water %1 number %2 clashes with %3~%4~%5 atom %6\n" )
+                     .arg( it->first )
+                     .arg( pos + 1 )
+                     .arg( this_atom->resName )
+                     .arg( this_atom->resSeq )
+                     .arg( this_atom->chainID )
+                     .arg( this_atom->name )
+                     ;
+                        
+                  cout << QString( "Water %1 clashes with %2~%3~%4\n" )
+                     .arg( it->first )
+                     .arg( this_atom->resName )
+                     .arg( this_atom->resSeq )
+                     .arg( this_atom->chainID );
                   if ( this_atom->chain == 1 )
                   {
-                     steric_clash_recheck_summary[ "structure side chain" ]++;
+                     steric_clash_recheck_summary[ " structure side chain" ]++;
                   } else {
-                     steric_clash_recheck_summary[ "structure main chain" ]++;
+                     steric_clash_recheck_summary[ " structure main chain" ]++;
                   }
-                  steric_clash_recheck_summary[ "structure total" ]++;
+                  steric_clash_recheck_summary[ " structure total" ]++;
+                  steric_clash_recheck_summary[ "structure or other water" ]++;
                }
             }
          }
@@ -2835,7 +2853,18 @@ QString US_Hydrodyn::list_steric_clash_recheck()
             {
                if ( dist( it2->second[ j ], p ) <= dist_threshold )
                {
-                  steric_clash_recheck_summary[ "other water" ]++;
+                  hydrate_clash_log << 
+                     QString( "Water %1 number %2 clashes with water from %3 number %4\n" )
+                     .arg( it->first )
+                     .arg( pos + 1 )
+                     .arg( it2->first )
+                     .arg( j + 1 )
+                     ;
+                  cout << QString( "Water %1 clashes with water from %2\n" )
+                     .arg( it->first )
+                     .arg( it2->first );
+                  steric_clash_recheck_summary[ " other water" ]++;
+                  steric_clash_recheck_summary[ "structure or other water" ]++;
                }
             }
          }
@@ -2849,6 +2878,40 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    {
       qs += QString( tr( "Steric recheck clash with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
+
+   cout << "Steric clash log detail:\n";
+   //   cout << hydrate_clash_log.join( "" ) << endl;
+   QString fname = 
+      somo_dir + SLASH + "tmp" + SLASH + QFileInfo( pdb_file ).baseName() + "_clash.txt";
+   fname.replace( "//", "/" );
+   QFile f(fname);
+   if ( f.open( IO_WriteOnly ) )
+   {
+      QTextStream ts( &f );
+      ts << 
+         QString(
+                 "Hydration of                  %1\n"
+                 "Hydration file                %2\n"
+                 "Steric clash at threshold     %3 A\n"
+                 )
+         .arg( pdb_file )
+         .arg( saxs_options.default_rotamer_filename )
+         .arg( saxs_options.steric_clash_distance )
+         ;              
+      ts << qs;
+      ts << "\nDetailed clash info:\n\n";
+      for ( unsigned int i = 0; i < hydrate_clash_log.size(); i++ )
+      {
+         ts << hydrate_clash_log[ i ];
+      }
+      ts << "\nEnd clash info\n";
+      qs += QString( tr( "Steric clash report in: %1\n" ) ).arg( fname );
+      f.close();
+   } else {
+      editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
+   }
+   
+   hydrate_clash_log.clear();
    return qs;
 }
 
