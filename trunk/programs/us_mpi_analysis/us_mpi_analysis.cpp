@@ -428,6 +428,7 @@ void US_MPI_Analysis::start( void )
       // Build list and archive of output files
       QDir        d( "." );
       QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+      files.removeOne( "analysis-results.tar" );
 
       US_Tar tar;
       tar.create( "analysis-results.tar", files );

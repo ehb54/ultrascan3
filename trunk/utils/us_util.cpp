@@ -151,6 +151,36 @@ QString US_Util::uuid_unparse( unsigned char* uu )
          uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
 }
 
+// Convert a triple string from expanded to compressed form
+QString US_Util::compressed_triple( const QString& ccw )
+{
+   // For example, convert "1 / A / 290" to "1A290"
+   return ( ccw.section( "/", 0, 0 ).simplified() +
+            ccw.section( "/", 1, 1 ).simplified() +
+            ccw.section( "/", 2, 2 ).simplified() );
+}
+
+// Convert a triple string from expanded to compressed form
+QString US_Util::expanded_triple( const QString& ccw, bool spaces )
+{
+   QString cells( "ABCDEFGH" );
+
+   // Get, for example, {"4","A","280"} from "4A280"
+   int     jj   = 1;
+           jj   = cells.contains( ccw.mid( 2, 1 ) ) ? 2 : jj;
+           jj   = cells.contains( ccw.mid( 3, 1 ) ) ? 3 : jj;
+           jj   = cells.contains( ccw.mid( 4, 1 ) ) ? 4 : jj;
+   QString cell = ccw.left( jj     );
+   QString chan = ccw.mid ( jj, 1  );
+   QString wvln = ccw.mid ( jj + 1 );
+
+   // Spaces value determines separator as " / " or "/"
+   QString sep  = spaces ? " / " : "/";
+
+   // Return, for example, "4 / A / 280" or "4/A/280"
+   return ( cell + sep + chan + sep + wvln );
+}
+
 // A helper function to convert a character hex digit to decimal
 unsigned char US_Util::hex2int( unsigned char c )
 {

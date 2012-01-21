@@ -94,6 +94,9 @@ DbgLv(1) << "GaMast:    set_gaMC call";
 DbgLv(1) << "GaMast:    set_gaMC  return";
          }
 
+         else
+            break;
+
       }
       else
          break;
@@ -226,13 +229,15 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
                if ( fitness_same_count > max_same_count  &&
                     avg_generation     > min_generation )
                {
-                  DbgLv(0) << "Fitness has not improved in the last" << fitness_same_count
+                  DbgLv(0) << "Fitness has not improved in the last"
+                     << fitness_same_count
                      << "deme results - Early Termination.";
                   early_termination = true;
                }
             }
-DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_count"
- << fitness_same_count << " early_term?" << early_termination;
+DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
+ << "fitness_same_count" << fitness_same_count
+ << " early_term?" << early_termination;
             
             tag = early_termination ? FINISHED : GENERATION; 
 
@@ -312,12 +317,14 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_co
       max_rss();
    }
 
-DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal << "rank" << my_rank;
+DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal
+ << "rank" << my_rank;
    maxrss += rsstotal;
 
    if ( early_termination )
    {
-      DbgLv(0) << "Early termination at average generation" << avg;
+      DbgLv(0) << "Early termination at average generation" << avg
+         << ", MC" << mc_iteration + 1;
    }
 }
 

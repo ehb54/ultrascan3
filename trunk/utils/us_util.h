@@ -91,6 +91,19 @@ class US_UTIL_EXTERN US_Util
       //! \param uu A pointer to a 16-byte array holding a binary uuid
       static QString uuid_unparse( unsigned char* );
 
+      //! \brief Create a compressed (ccw) form of a triple (c/c/w) string.
+      //!
+      //! \param ccw Expanded triple string ("c/c/w" or "c / c / w")
+      //! \returns   Compressed form of the triple string ("ccw")
+      static QString compressed_triple( const QString& );
+
+      //! \brief Create an expanded (c/c/w) form of a triple (ccw) string.
+      //!
+      //! \param ccw    Compressed triple string ("ccw")
+      //! \param spaces Flag to insert spaces around slashes.
+      //! \returns      Uncompressed triple string ("c/c/w" or "c / c / w")
+      static QString expanded_triple( const QString&, bool = true );
+
    private:
       static unsigned char hex2int( unsigned char c );
 };

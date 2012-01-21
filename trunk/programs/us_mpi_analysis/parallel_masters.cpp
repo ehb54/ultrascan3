@@ -350,6 +350,7 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    // Build list and archive of output files
    QDir        d( "." );
    QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+   files.removeOne( "analysis-results.tar" );
 
    US_Tar tar;
    tar.create( "analysis-results.tar", files );
@@ -440,7 +441,8 @@ void US_MPI_Analysis::time_mc_iterations()
    if ( mc_iters_estim < mc_iterations  &&  mc_iters_left < 4 )
    {  // In danger of exceeding allowed time:   reduce MC iterations
       int old_mciters     = mc_iterations;
-      mc_iterations       = mc_iters_estim;
+      mc_iterations       = qMax( mc_iteration, mc_iters_estim - 2 );
+      int ac_iters_left   = mc_iterations - mc_iteration;
 
       QString msg = tr( "MC Iterations reduced from %1 to %2, "
                         "due to max. time restrictions." )
@@ -452,8 +454,16 @@ void US_MPI_Analysis::time_mc_iterations()
       DbgLv(0) << "  Allowed minutes remaining:          " << mins_left_allow;
       DbgLv(0) << "  MC iterations run so far:           " << mc_iteration;
       DbgLv(0) << "  Estimated allowed iterations left:  " << mc_iters_left;
+      DbgLv(0) << "  Actual adjusted iterations left:    " << ac_iters_left;
       DbgLv(0) << "MC Iterations reduced from" << old_mciters << "to"
          << mc_iterations << ", due to max. time restrictions.";
+
+      // Just to be sure, create tar file right now
+      QDir        d( "." );
+      QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+      files.removeOne( "analysis-results.tar" );
+      US_Tar tar;
+      tar.create( "analysis-results.tar", files );
    }
 
    return;
