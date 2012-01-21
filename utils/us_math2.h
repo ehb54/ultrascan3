@@ -93,7 +93,7 @@ class US_UTIL_EXTERN US_Math2
       //! \brief Return a random floating point number
       static double  ranf      ( void );      
 
-      //! \brief Given a line as a set of x and y coordinates, calulate
+      //! \brief Given a line as a set of x and y coordinates, calculate
       //!        the line's characteristics
       //!       
       //! \param x Pointer to an array of x values
@@ -106,10 +106,10 @@ class US_UTIL_EXTERN US_Math2
       static double linefit   ( double**, double**, double*, double*, double*, 
                                 double* , int );
 
-      //! \brief A routine to calulate the vbar and MW of a peptide sequence
+      //! \brief A routine to calculate the vbar and MW of a peptide sequence
       //! \param pep      The structure to be populated
       //! \param sequence The secuence used for the calculations
-      //! \param temperature The temperature to use for calulations
+      //! \param temperature The temperature to use for calculations
 
       static void calc_vbar( Peptide&, const QString&, double );
 
@@ -135,7 +135,7 @@ class US_UTIL_EXTERN US_Math2
 
       static void data_correction( double, SolutionData& );
 
-      //! \brief A routine to calulate the value of a normally distrubted
+      //! \brief A routine to calculate the value of a normally distributed
       //!        value.
       //! \param sigma Standard deviation of the distribution
       //! \param mean  Mean value of the distribution
