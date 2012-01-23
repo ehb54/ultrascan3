@@ -2738,7 +2738,7 @@ QString US_Hydrodyn::list_waters_to_add()
 
 QString US_Hydrodyn::list_steric_clash()
 {
-   QString qs = QString( tr( "Steric clash at threshold %1 A\n" ) ).arg( saxs_options.steric_clash_distance );
+   QString qs = QString( tr( "Steric clash tolerance %1%\n" ) ).arg( saxs_options.steric_clash_distance );
    for ( map < QString, unsigned int >::iterator it = steric_clash_summary.begin();
          it != steric_clash_summary.end();
          it++ )
@@ -2751,13 +2751,17 @@ QString US_Hydrodyn::list_steric_clash()
 bool US_Hydrodyn::has_steric_clash( point p )
 {
    unsigned int i = current_model;
-   double dist_threshold = saxs_options.steric_clash_distance;
+   double dist_threshold = 1e0 - ( saxs_options.steric_clash_distance / 100e0 );
+   double water_radius   = multi_residue_map.count( "SWH" ) ?
+      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+
 
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( dist( this_atom->coordinate, p ) <= dist_threshold )
+         
+         if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
          {
             if ( this_atom->chain == 1 )
             {
@@ -2778,7 +2782,7 @@ bool US_Hydrodyn::has_steric_clash( point p )
    {
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         if ( dist( it->second[ i ], p ) <= dist_threshold )
+         if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
          {
             steric_clash_summary[ "other water" ]++;
             return true;
@@ -2791,7 +2795,10 @@ bool US_Hydrodyn::has_steric_clash( point p )
 QString US_Hydrodyn::list_steric_clash_recheck()
 {
    unsigned int i = current_model;
-   double dist_threshold = saxs_options.steric_clash_recheck_distance;
+   double dist_threshold = 1e0 - ( saxs_options.steric_clash_recheck_distance / 100e0 );
+   double water_radius   = multi_residue_map.count( "SWH" ) ?
+      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+
    map < QString, unsigned int > steric_clash_recheck_summary;
    hydrate_clash_log.clear();
    // cout << "steric clash recheck:\n";
@@ -2809,23 +2816,21 @@ QString US_Hydrodyn::list_steric_clash_recheck()
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               if ( dist( this_atom->coordinate, p ) <= dist_threshold )
+               if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
                {
                   hydrate_clash_log << 
-                     QString( "Water %1 number %2 clashes with %3~%4~%5 atom %6\n" )
+                     QString( "Water %1 number %2 clashes with %3~%4~%5 atom %6 by %7 A or %8%\n" )
                      .arg( it->first )
                      .arg( pos + 1 )
                      .arg( this_atom->resName )
                      .arg( this_atom->resSeq )
                      .arg( this_atom->chainID )
                      .arg( this_atom->name )
+                     .arg( ( this_atom->radius + water_radius ) - dist( this_atom->coordinate, p ) )
+                     .arg( 100.0 * ( ( this_atom->radius + water_radius ) - dist( this_atom->coordinate, p ) ) 
+                           / ( this_atom->radius + water_radius ) )
                      ;
                         
-                  cout << QString( "Water %1 clashes with %2~%3~%4\n" )
-                     .arg( it->first )
-                     .arg( this_atom->resName )
-                     .arg( this_atom->resSeq )
-                     .arg( this_atom->chainID );
                   if ( this_atom->chain == 1 )
                   {
                      steric_clash_recheck_summary[ " structure side chain" ]++;
@@ -2851,14 +2856,17 @@ QString US_Hydrodyn::list_steric_clash_recheck()
          {
             for ( unsigned int j = ( it2 == it ? pos + 1 : 0 ); j < it2->second.size(); j++ )
             {
-               if ( dist( it2->second[ j ], p ) <= dist_threshold )
+               if ( dist( it2->second[ i ], p ) < 2e0 * water_radius * dist_threshold )
                {
                   hydrate_clash_log << 
-                     QString( "Water %1 number %2 clashes with water from %3 number %4\n" )
+                     QString( "Water %1 number %2 clashes with water from %3 number %4 by %5 A or %6%\n" )
                      .arg( it->first )
                      .arg( pos + 1 )
                      .arg( it2->first )
                      .arg( j + 1 )
+                     .arg( 2e0 * water_radius -  dist( it2->second[ i ], p ) )
+                     .arg( 100.0 * ( 2e0 * water_radius - dist( it2->second[ i ], p ) )
+                           / ( 2e0 * water_radius ) )
                      ;
                   cout << QString( "Water %1 clashes with water from %2\n" )
                      .arg( it->first )
@@ -2871,7 +2879,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       }
    }
 
-   QString qs = QString( tr( "Steric recheck clash at threshold %1 A\n" ) ).arg( dist_threshold );
+   QString qs = QString( tr( "Steric clash recheck tolerance %1%\n" ) ).arg( saxs_options.steric_clash_recheck_distance );
    for ( map < QString, unsigned int >::iterator it = steric_clash_recheck_summary.begin();
          it != steric_clash_recheck_summary.end();
          it++ )
@@ -2892,7 +2900,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
          QString(
                  "Hydration of                  %1\n"
                  "Hydration file                %2\n"
-                 "Steric clash at threshold     %3 A\n"
+                 "Steric clash tolerance        %3%\n"
                  )
          .arg( pdb_file )
          .arg( saxs_options.default_rotamer_filename )

@@ -3335,8 +3335,8 @@ void US_Hydrodyn::set_default()
    saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
    saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
 
-   saxs_options.steric_clash_distance         = 1.4;
-   saxs_options.steric_clash_recheck_distance = 1.4;
+   saxs_options.steric_clash_distance         = 20.0;
+   saxs_options.steric_clash_recheck_distance = 0.0;
 
    saxs_options.disable_iq_scaling = false;
    saxs_options.autocorrelate = true;
