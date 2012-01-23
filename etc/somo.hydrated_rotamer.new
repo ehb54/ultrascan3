@@ -5,7 +5,26 @@ pointmap: NGA  3 C2 C3 O3 TYR CE1 CZ OH  3 C3 C4 O4 TYR CE1 CZ OH  3 C5 C6 O6 SE
 pointmap: BMA  3 C1 C2 O2 TYR CE1 CZ OH  3 C2 C3 O3 TYR CE1 CZ OH  3 C5 C6 O6 SER CA CB OG
 pointmap: GAL  3 C1 C2 O2 TYR CE1 CZ OH  3 C3 C4 O4 TYR CE1 CZ OH  3 C5 C6 O6 SER CA CB OG
 pointmap: SIA  3 C3 C4 O4 TYR CE1 CZ OH  3 C6 C7 O7 SER CA  CB OG  3 C7 C8 O8 SER CA CB OG  3 C8 C9 O9 SER CA CB OG  3 C2 C1 O1B ASP CB CG OD2  3 C11 C10 N5 ASN CB CG ND2
-pointmap: * 3 CA C N ASN CB CG ND2
+pointmap: ALA  3 CA C N MCW CA C NX
+pointmap: ARG  3 CA C N MCW CA C NX
+pointmap: ASN  3 CA C N MCW CA C NX
+pointmap: ASP  3 CA C N MCW CA C NX
+pointmap: CYS  3 CA C N MCW CA C NX
+pointmap: GLN  3 CA C N MCW CA C NX
+pointmap: GLU  3 CA C N MCW CA C NX
+pointmap: GLY  3 CA C N MCW CA C NX
+pointmap: HIS  3 CA C N MCW CA C NX
+pointmap: ILE  3 CA C N MCW CA C NX
+pointmap: LEU  3 CA C N MCW CA C NX
+pointmap: LYS  3 CA C N MCW CA C NX
+pointmap: MET  3 CA C N MCW CA C NX
+pointmap: PHE  3 CA C N MCW CA C NX
+pointmap: PRO  3 CA C N MCW CA C NX
+pointmap: SER  3 CA C N MCW CA C NX
+pointmap: THR  3 CA C N MCW CA C NX
+pointmap: TRP  3 CA C N MCW CA C NX
+pointmap: TYR  3 CA C N MCW CA C NX
+pointmap: VAL  3 CA C N MCW CA C NX
 dihedral: ARG  C CA CB CG  CA CB CG CD  CB CG CD NE  CG CD NE CZ
 dihedral: ASN  C CA CB CG  CA CB CG OD1
 dihedral: ASP  C CA CB CG  CA CB CG OD1
@@ -8990,5 +9009,17 @@ TER
 ATOM     38  O   WAT B  41      18.689  12.376  22.299  1.00  0.00           O  
 ATOM     39  H1  WAT B  41      18.730  11.419  22.312  1.00  0.00           H  
 ATOM     40  H2  WAT B  41      19.183  12.648  23.072  1.00  0.00           H  
+TER
+end-rotamer
+start-rotamer: MCW-0-0-0-1
+ATOM     10  NX  MCW A   2      15.470  16.155  14.935  1.00  0.00           N  
+ATOM     11  CA  MCW A   2      15.698  15.683  16.297  1.00  0.00           C  
+ATOM     12  C   MCW A   2      17.166  15.428  16.543  1.00  0.00           C  
+ATOM     13  O   MCW A   2      18.036  15.186  15.678  1.00  0.00           O  
+ATOM     14  CB  MCW A   2      14.833  14.428  16.508  1.00  0.00           C  
+TER
+ATOM     29  O   WAT B 485      14.990  15.618  20.181  0.00  0.00           O  
+ATOM     30  H1  WAT B 485      14.387  16.284  19.849  0.00  0.00           H  
+ATOM     31  H2  WAT B 485      14.697  15.455  21.077  0.00  0.00           H  
 TER
 end-rotamer
