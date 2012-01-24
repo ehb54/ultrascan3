@@ -2638,10 +2638,10 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
 
          for ( unsigned int j = 0; j < p1.size(); j++ )
          {
-            cout << QString("mapping: %1 %2 dest %3\n")
-               .arg(it->first)
-               .arg(i)
-               .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
+            // cout << QString("mapping: %1 %2 dest %3\n")
+            // .arg(it->first)
+            // .arg(i)
+            // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
             if ( !it->second[ i ].atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
             {
                error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
@@ -2657,10 +2657,10 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
                   .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                return false;
             }
-            cout << QString("mapping: %1 %2 source %3\n")
-               .arg(it->first)
-               .arg(i)
-               .arg(pointmap_atoms[ resName ][ i ][ j ] );
+            // cout << QString("mapping: %1 %2 source %3\n")
+            // .arg(it->first)
+            // .arg(i)
+            // .arg(pointmap_atoms[ resName ][ i ][ j ] );
 
             p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
 
@@ -2675,10 +2675,10 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
          }
 
          // now we have p1 & p2, apply to all of the waters
-         cout << QString("adding %1 waters for %2 %3\n")
-            .arg( it->second[ i ].waters.size() )
-            .arg( it->first )
-            .arg( resName );
+         // cout << QString("adding %1 waters for %2 %3\n")
+         // .arg( it->second[ i ].waters.size() )
+         // .arg( it->first )
+         // .arg( resName );
 
          for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
          {
@@ -2801,7 +2801,14 @@ QString US_Hydrodyn::list_steric_clash_recheck()
 
    map < QString, unsigned int > steric_clash_recheck_summary;
    hydrate_clash_log.clear();
+   QString hydrate_clash_detail;
    // cout << "steric clash recheck:\n";
+
+   hydrate_clash_detail +=
+      "Water,clash,radius water,radius clash,sum radii,distance,overlap,percent overlap,water x,clash x, water y, clash y, water z, clash z\n";
+
+   hydrate_clash_map_water.clear();
+   hydrate_clash_map_structure.clear();
 
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
@@ -2818,6 +2825,20 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
                {
+                  hydrate_clash_map_structure[ 
+                                              QString( "%1%2:%3.%4" )
+                                              .arg( this_atom->resName )
+                                              .arg( this_atom->resSeq )
+                                              .arg( this_atom->chainID )
+                                              .arg( this_atom->name )
+                  ] = true;
+                  
+                  hydrate_clash_map_water[ 
+                                          QString( "%1~%2" )
+                                          .arg( it->first )
+                                          .arg( pos ) 
+                  ] = true;
+
                   hydrate_clash_log << 
                      QString( "Water %1 number %2 clashes with %3~%4~%5 atom %6 by %7 A or %8%\n" )
                      .arg( it->first )
@@ -2830,6 +2851,42 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      .arg( 100.0 * ( ( this_atom->radius + water_radius ) - dist( this_atom->coordinate, p ) ) 
                            / ( this_atom->radius + water_radius ) )
                      ;
+                        
+                  hydrate_clash_detail +=
+                     QString( "Water:%1~%2,%3~%4~%5~%6," )
+                     .arg( it->first )
+                     .arg( pos + 1 )
+                     .arg( this_atom->resName )
+                     .arg( this_atom->resSeq )
+                     .arg( this_atom->chainID )
+                     .arg( this_atom->name )
+                         ;
+                  hydrate_clash_detail +=
+                     QString( "%1,%2,%3,%4," )
+                     .arg( water_radius )
+                     .arg( this_atom->radius )
+                     .arg( this_atom->radius + water_radius )
+                     .arg( dist( this_atom->coordinate, p ) )
+                     ;
+
+                  hydrate_clash_detail +=
+                     QString( "%1,%2," )
+                     .arg( ( this_atom->radius + water_radius ) - dist( this_atom->coordinate, p ) )
+                     .arg( 100.0 * ( ( this_atom->radius + water_radius ) - dist( this_atom->coordinate, p ) ) 
+                           / ( this_atom->radius + water_radius ) )
+                     ;
+                     
+                  hydrate_clash_detail +=
+                     QString( "%1,%2,%3,%4,%5,%6" )
+                     .arg( p.axis[ 0 ] )
+                     .arg( this_atom->coordinate.axis[ 0 ] )
+                     .arg( p.axis[ 1 ] )
+                     .arg( this_atom->coordinate.axis[ 1 ] )
+                     .arg( p.axis[ 2 ] )
+                     .arg( this_atom->coordinate.axis[ 2 ] )
+                     ;
+
+                  hydrate_clash_detail += "\n";
                         
                   if ( this_atom->chain == 1 )
                   {
@@ -2856,18 +2913,66 @@ QString US_Hydrodyn::list_steric_clash_recheck()
          {
             for ( unsigned int j = ( it2 == it ? pos + 1 : 0 ); j < it2->second.size(); j++ )
             {
-               if ( dist( it2->second[ i ], p ) < 2e0 * water_radius * dist_threshold )
+               if ( dist( it2->second[ j ], p ) < 2e0 * water_radius * dist_threshold )
                {
+                  hydrate_clash_map_water[ 
+                                          QString( "%1~%2" )
+                                          .arg( it->first )
+                                          .arg( pos ) 
+                  ] = true;
+
+                  hydrate_clash_map_water[ 
+                                          QString( "%1~%2" )
+                                          .arg( it2->first )
+                                          .arg( j ) 
+                  ] = true;
+
                   hydrate_clash_log << 
                      QString( "Water %1 number %2 clashes with water from %3 number %4 by %5 A or %6%\n" )
                      .arg( it->first )
                      .arg( pos + 1 )
                      .arg( it2->first )
                      .arg( j + 1 )
-                     .arg( 2e0 * water_radius -  dist( it2->second[ i ], p ) )
-                     .arg( 100.0 * ( 2e0 * water_radius - dist( it2->second[ i ], p ) )
+                     .arg( 2e0 * water_radius -  dist( it2->second[ j ], p ) )
+                     .arg( 100.0 * ( 2e0 * water_radius - dist( it2->second[ j ], p ) )
                            / ( 2e0 * water_radius ) )
                      ;
+
+                  hydrate_clash_detail +=
+                     QString( "Water:%1~%2,Water:%3~%4," )
+                     .arg( it->first )
+                     .arg( i + 1 )
+                     .arg( it2->first )
+                     .arg( j + 1 )
+                         ;
+
+                  hydrate_clash_detail +=
+                     QString( "%1,%2,%3,%4," )
+                     .arg( water_radius )
+                     .arg( water_radius )
+                     .arg( 2e0 * water_radius )
+                     .arg( dist( it2->second[ j ], p ) )
+                     ;
+
+                  hydrate_clash_detail +=
+                     QString( "%1,%2," )
+                     .arg( 2e0 * water_radius -  dist( it2->second[ j ], p ) )
+                     .arg( 100.0 * ( 2e0 * water_radius - dist( it2->second[ j ], p ) )
+                           / ( 2e0 * water_radius ) )
+                     ;
+                     
+                  hydrate_clash_detail +=
+                     QString( "%1,%2,%3,%4,%5,%6" )
+                     .arg( p.axis[ 0 ] )
+                     .arg( it2->second[ j ].axis[ 0 ] )
+                     .arg( p.axis[ 1 ] )
+                     .arg( it2->second[ j ].axis[ 1 ] )
+                     .arg( p.axis[ 2 ] )
+                     .arg( it2->second[ j ].axis[ 2 ] )
+                     ;
+
+                  hydrate_clash_detail += "\n";
+
                   cout << QString( "Water %1 clashes with water from %2\n" )
                      .arg( it->first )
                      .arg( it2->first );
@@ -2920,6 +3025,22 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
    }
    
+   {
+      QString fname = 
+         somo_dir + SLASH + "tmp" + SLASH + QFileInfo( pdb_file ).baseName() + "_clash.csv";
+      fname.replace( "//", "/" );
+      QFile f(fname);
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << hydrate_clash_detail;
+         f.close();
+         qs += QString( tr( "Steric clash report csv in: %1\n" ) ).arg( fname );
+      } else {
+         editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
+      }
+   }
+
    hydrate_clash_log.clear();
    return qs;
 }
@@ -3024,7 +3145,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       }
    }
       
-   // check already added waters:
+   // add waters:
+   QStringList hydrate_clash_waters_list;
+
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
          it++ )
@@ -3042,7 +3165,10 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      it->second[ i ].axis[ 1 ],
                      it->second[ i ].axis[ 2 ]
                      );
-
+         if ( hydrate_clash_map_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
+         {
+            hydrate_clash_waters_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
+         }
       }
    }
 
@@ -3057,6 +3183,58 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
 
    last_hydrated_pdb_name = fname;
    editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
+
+   // now rasmol it!
+   {
+      QString out;
+      out = QString( "load %1\ncpk\nselect all\ncolor white\nselect swh\ncolor red\n" ).arg( fname );
+      for ( map < QString, bool >::iterator it = hydrate_clash_map_structure.begin();
+            it != hydrate_clash_map_structure.end();
+            it++ )
+      {
+         out += QString( "select %1\ncolor cyan\n" ).arg( it->first );
+      }
+      for ( unsigned int i = 0; i < hydrate_clash_waters_list.size(); i++ )
+      {
+         out += QString( "select %1\ncolor yellow\n" ).arg( hydrate_clash_waters_list[ i ] );
+      }
+
+      QString fname = 
+         somo_dir + SLASH + "tmp" + SLASH + QFileInfo(last_hydrated_pdb_name).baseName() + ".spt";
+      QFile f(fname);
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         editor->append("Error creating file " + fname + "\n");
+      } else {
+         QTextStream t( &f );
+         t << out;
+         f.close();
+         
+         QStringList argument;
+#if !defined(WIN32)
+         argument.append("xterm");
+         argument.append("-e");
+#endif
+#if defined(BIN64)
+         argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+#else
+         argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+#endif
+         argument.append("-script");
+         argument.append(fname);
+         rasmol = new QProcess(this);
+         rasmol->setWorkingDirectory(somo_dir + SLASH + "tmp");
+         rasmol->setArguments(argument);
+         if (!rasmol->start())
+         {
+            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                        "Please check to make sure RASMOL is properly installed..."));
+         }
+      }
+      hydrate_clash_map_structure.clear();
+      hydrate_clash_map_water.clear();
+   }
+
    return true;
 }
 
