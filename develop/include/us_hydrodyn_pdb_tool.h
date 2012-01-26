@@ -83,6 +83,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_reseq;
       QPushButton   *pb_csv_check;
       QPushButton   *pb_csv_find_alt;
+      QPushButton   *pb_csv_clash_report;
       QPushButton   *pb_csv_sel_clear;
       QPushButton   *pb_csv_sel_clean;
       QPushButton   *pb_csv_sel_invert;
@@ -110,6 +111,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_reseq;
       QPushButton   *pb_csv2_check;
       QPushButton   *pb_csv2_find_alt;
+      QPushButton   *pb_csv2_clash_report;
       QPushButton   *pb_csv2_sel_clear;
       QPushButton   *pb_csv2_sel_clean;
       QPushButton   *pb_csv2_sel_invert;
@@ -202,6 +204,11 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          select_these           ( QListView *lv, vector < QString > &error_keys );
 
       void          replace_selected_residues ( QListView *lv, csv &csv_use, QString from, QString to );
+      void          distances              ( QListView *lv );
+      QString       get_atom_name          ( QListViewItem *lvi );
+      QStringList   atom_set               ( QListView *lv ); // returns a list of selected atoms
+      QStringList   model_set              ( QListView *lv ); // returns a list of selected models
+      void          select_model           ( QListView *lv, QString model ); // selects just that model
 
    private slots:
       
@@ -229,6 +236,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_reseq();
       void csv_check();
       void csv_find_alt();
+      void csv_clash_report();
       void csv_visualize();
       void csv_sel_clear();
       void csv_sel_clean();
@@ -251,6 +259,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_reseq();
       void csv2_check();
       void csv2_find_alt();
+      void csv2_clash_report();
       void csv2_visualize();
       void csv2_sel_clear();
       void csv2_sel_clean();

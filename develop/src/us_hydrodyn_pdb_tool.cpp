@@ -13,6 +13,36 @@ public:
    }
 };
 
+class lvipair
+{
+public:
+   QListViewItem *lvi1;
+   QListViewItem *lvi2;
+   bool operator < (const lvipair& objIn) const
+   {
+      return ( lvi1 == objIn.lvi1 ? lvi2 < objIn.lvi2 : lvi1 < objIn.lvi1 );
+   }
+};
+
+class sortable_qlipair_double {
+public:
+   double  d;
+   lvipair lvip;
+   bool operator < (const sortable_qlipair_double& objIn) const
+   {
+      return ( d < objIn.d );
+   }
+};
+
+double US_Hydrodyn_Pdb_Tool::pair_dist( QListViewItem *item1, QListViewItem *item2 )
+{
+   double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+   double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+   double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+
+   return sqrt( dx * dx + dy * dy + dz * dz );
+}
+
 US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                                                csv csv1,
                                                void *us_hydrodyn, 
@@ -257,6 +287,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_find_alt, SIGNAL(clicked()), SLOT(csv_find_alt()));
 
+   pb_csv_clash_report = new QPushButton(tr("Pairwise distance"), this);
+   pb_csv_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_clash_report->setMinimumHeight(minHeight1);
+   pb_csv_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_clash_report, SIGNAL(clicked()), SLOT(csv_clash_report()));
+
    pb_csv_sel_clear = new QPushButton(tr("Clear selection"), this);
    pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv_sel_clear->setMinimumHeight(minHeight1);
@@ -414,6 +450,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_find_alt, SIGNAL(clicked()), SLOT(csv2_find_alt()));
 
+   pb_csv2_clash_report = new QPushButton(tr("Pairwise Distance"), this);
+   pb_csv2_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_clash_report->setMinimumHeight(minHeight1);
+   pb_csv2_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_clash_report, SIGNAL(clicked()), SLOT(csv2_clash_report()));
+
    pb_csv2_sel_clear = new QPushButton(tr("Clear selection"), this);
    pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_sel_clear->setMinimumHeight(minHeight1);
@@ -535,6 +577,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_3->addWidget( pb_csv_check );
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_find_alt );
+   hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_clash_report );
 
    QBoxLayout *hbl_center_buttons_row_4 = new QHBoxLayout;
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_clear );
@@ -604,6 +648,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_3->addWidget( pb_csv2_check );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_find_alt );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_clash_report );
 
    QBoxLayout *hbl_right_buttons_row_4 = new QHBoxLayout;
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_clear );
@@ -716,6 +762,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_reseq                ->setEnabled( csv1.data.size() );
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_find_alt             ->setEnabled( counts.residues == 1 );
+   pb_csv_clash_report         ->setEnabled( any_csv_selected );
    pb_csv_sel_clear            ->setEnabled( any_csv_selected );
    pb_csv_sel_clean            ->setEnabled( selection_since_clean_csv1 && any_csv_selected );
    pb_csv_sel_invert           ->setEnabled( csv1.data.size() );
@@ -752,6 +799,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_find_alt             ->setEnabled( counts.residues == 1 );
+   pb_csv2_clash_report         ->setEnabled( any_csv2_selected );
    pb_csv2_sel_clear            ->setEnabled( any_csv2_selected );
    pb_csv2_sel_clean            ->setEnabled( selection_since_clean_csv2 && any_csv2_selected );
    pb_csv2_sel_invert           ->setEnabled( csv2[ csv2_pos ].data.size()  );
@@ -2248,16 +2296,403 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_atoms( QListView *lv )
    editor_msg( "blue", "sel nearest atoms done");
 }
 
-double US_Hydrodyn_Pdb_Tool::pair_dist( QListViewItem *item1, QListViewItem *item2 )
+void US_Hydrodyn_Pdb_Tool::select_model( QListView *lv, QString model )
 {
-   double dx = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
-   double dy = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
-   double dz = item1->text( 6 ).toDouble() - item2->text( 6 ).toDouble();
-   return sqrt( dx * dx + dy * dy + dz * dz );
+   lv->selectAll( false );
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->depth() && item1->text( 0 ) == model )
+      {
+         item1->setSelected( true );
+      }
+      ++it1;
+   }
+   clean_selection( lv );
+}
+
+void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
+{
+   static QString previous_selection;
+
+   editor_msg( "blue", "compute pairwise distances");
+   pdb_sel_count counts = count_selected( lv );
+   bool ok;
+   unsigned int atoms = ( unsigned int )QInputDialog::getInteger(
+                                                                 tr( "US-SOMO: PDB editor : Pairwise Distances" ) ,
+                                                                 QString( tr( "Enter the of number of minimum pairwise distances to find:" ) )
+                                                                 ,
+                                                                 1,
+                                                                 1, 
+                                                                 counts.atoms * counts.atoms,
+                                                                 1,
+                                                                 &ok, 
+                                                                 this );
+   if ( !ok ) 
+   {
+      return;
+   }
+
+   QString restrict_atom;
+
+   {
+      QStringList qsl = atom_set( lv );
+      bool ok;
+      int use_pos = 1;
+      if ( !previous_selection.isEmpty() )
+      {
+         for ( unsigned int pos = 0; pos < qsl.size(); pos++ )
+         {
+            if ( qsl[ pos ] == previous_selection )
+            {
+               use_pos = ( int ) pos;
+               break;
+            }
+         }
+      }
+
+      restrict_atom = QInputDialog::getItem(
+                                            tr( "US-SOMO: PDB editor : Pairwise Distances" ) ,
+                                            tr( "Restrict search to pairs with selected atom or CANCEL to compare all" ),
+                                            qsl, 
+                                            use_pos, 
+                                            FALSE, 
+                                            &ok,
+                                            this );
+      if ( !ok )
+      {
+         // user pressed Cancel
+         restrict_atom = "";
+      } else {
+         previous_selection = restrict_atom;
+      }
+   }
+
+   if ( counts.models > 1 )
+   {
+      // go through each model and select individually
+      // summary select all at the end
+      // n will be from each model
+      QStringList models = model_set( lv );
+      QMessageBox::information( this, 
+                                tr( "US-SOMO: PDB editor : Pairwise Distances" ) ,
+                                QString( tr( "%1 models are selected, the operation will be performed on each model independently." ) ).arg( models.size() ) );
+
+      map < QListViewItem *, bool > selected_items;
+      list < sortable_qlipair_double > global_lsqd;
+         
+      for ( unsigned int i = 0; i < models.size(); i++ )
+      {
+         editor_msg( "black", QString( tr( "Selecting model %1\n" ) ).arg( models[ i ] ) );
+         qApp->processEvents();
+
+         select_model( lv, models[ i ] );
+         editor_msg( "black", QString( tr( "Processing model %1\n" ) ).arg( models[ i ] ) );
+         qApp->processEvents();
+         
+         map < lvipair, double > distmap;
+
+         QListViewItemIterator it1( lv );
+         while ( it1.current() ) 
+         {
+            QListViewItem *item1 = it1.current();
+            if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+            {
+               if ( !item1->childCount() && is_selected( item1 ) )
+               {
+                  
+                  QListViewItemIterator it2( lv );
+                  while ( it2.current() ) 
+                  {
+                     QListViewItem *item2 = it2.current();
+                     lvipair lvp;
+                     lvp.lvi1 = item2;
+                     lvp.lvi2 = item1;
+                     if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+                     {
+                        double d = pair_dist( item1, item2 );
+                        lvp.lvi1 = item1;
+                        lvp.lvi2 = item2;
+                        if ( !distmap.count( lvp ) )
+                        {
+                           distmap[ lvp ] = d;
+                        } else {
+                           if ( distmap[ lvp ] > d )
+                           {
+                              distmap[ lvp ] = d;
+                           }
+                        }
+                        
+                     }
+                     ++it2;
+                  }
+               }
+            }
+            ++it1;
+         }
+         
+         list < sortable_qlipair_double > lsqd;
+         
+         for ( map < lvipair, double >::iterator it = distmap.begin(); 
+               it != distmap.end(); 
+               it++ ) 
+         {
+            sortable_qlipair_double sqd;
+            sqd.lvip = it->first;
+            sqd.d    = it->second;
+            lsqd.push_back( sqd );
+         }
+         
+         // editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
+         lsqd.sort();
+         
+         distmap.clear();
+         
+         unsigned int pos = 0;
+         for ( list < sortable_qlipair_double >::iterator it = lsqd.begin();
+               it != lsqd.end();
+               it++ )
+         {
+            distmap[ it->lvip ] = it->d;
+            selected_items[ it->lvip.lvi1 ] = true;
+            selected_items[ it->lvip.lvi2 ] = true;
+            editor_msg( "blue", 
+                        QString( tr( "pw distance %1 %2 %3\n" ) )
+                        .arg( key( it->lvip.lvi1 ) )
+                        .arg( key( it->lvip.lvi2 ) )
+                        .arg( it->d ) );
+            pos++;
+            global_lsqd.push_back( *it );
+            if ( pos >= atoms )
+            {
+               break;
+            }
+         }
+      }
+      
+      editor_msg( "black", QString( tr( "Global model pairwise distance summary\n" ) ) );
+
+      global_lsqd.sort();
+      map < lvipair, double > distmap;
+         
+      unsigned int pos = 0;
+      for ( list < sortable_qlipair_double >::iterator it = global_lsqd.begin();
+            it != global_lsqd.end();
+            it++ )
+      {
+         distmap[ it->lvip ] = it->d;
+         selected_items[ it->lvip.lvi1 ] = true;
+         selected_items[ it->lvip.lvi2 ] = true;
+         editor_msg( "blue", 
+                     QString( tr( "pw distance %1 %2 %3\n" ) )
+                     .arg( key( it->lvip.lvi1 ) )
+                     .arg( key( it->lvip.lvi2 ) )
+                     .arg( it->d ) );
+         pos++;
+      }
+      
+      lv->selectAll( false );
+      
+      QListViewItemIterator it( lv );
+      while ( it.current() ) 
+      {
+         QListViewItem *item = it.current();
+         if ( selected_items.count( item ) )
+         {
+            item->setSelected( true );
+            }
+         ++it;
+      }
+      
+      clean_selection( lv );
+      
+      if ( lv == lv_csv )
+      {
+         emit csv_selection_changed();
+      } else {
+         emit csv2_selection_changed();
+      }
+      editor_msg( "blue", QString( tr( "Pairwise distance report for %1 atoms done") ).arg( atoms ) );
+      return;
+   }
+
+   map < lvipair, double > distmap;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+      {
+         if ( !item1->childCount() && is_selected( item1 ) )
+         {
+            
+            QListViewItemIterator it2( lv );
+            while ( it2.current() ) 
+            {
+               QListViewItem *item2 = it2.current();
+               lvipair lvp;
+               lvp.lvi1 = item2;
+               lvp.lvi2 = item1;
+               if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+               {
+                  double d = pair_dist( item1, item2 );
+                  lvp.lvi1 = item1;
+                  lvp.lvi2 = item2;
+                  if ( !distmap.count( lvp ) )
+                  {
+                     distmap[ lvp ] = d;
+                  } else {
+                     if ( distmap[ lvp ] > d )
+                     {
+                        distmap[ lvp ] = d;
+                     }
+                  }
+                  
+               }
+               ++it2;
+            }
+         }
+      }
+      ++it1;
+   }
+
+   list < sortable_qlipair_double > lsqd;
+
+   for ( map < lvipair, double >::iterator it = distmap.begin(); 
+         it != distmap.end(); 
+         it++ ) 
+   {
+      sortable_qlipair_double sqd;
+      sqd.lvip = it->first;
+      sqd.d    = it->second;
+      lsqd.push_back( sqd );
+   }
+
+   editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
+   lsqd.sort();
+
+   distmap.clear();
+
+   map < QListViewItem *, bool > selected_items;
+
+   unsigned int pos = 0;
+   for ( list < sortable_qlipair_double >::iterator it = lsqd.begin();
+         it != lsqd.end();
+         it++ )
+   {
+      distmap[ it->lvip ] = it->d;
+      selected_items[ it->lvip.lvi1 ] = true;
+      selected_items[ it->lvip.lvi2 ] = true;
+      editor_msg( "blue", 
+                  QString( tr( "pw distance %1 %2 %3\n" ) )
+                  .arg( key( it->lvip.lvi1 ) )
+                  .arg( key( it->lvip.lvi2 ) )
+                  .arg( it->d ) );
+      pos++;
+      if ( pos >= atoms )
+      {
+         break;
+      }
+   }
+
+   lv->selectAll( false );
+   
+   QListViewItemIterator it( lv );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( selected_items.count( item ) )
+      {
+         item->setSelected( true );
+      }
+      ++it;
+   }
+
+   clean_selection( lv );
+
+   if ( lv == lv_csv )
+   {
+      emit csv_selection_changed();
+   } else {
+      emit csv2_selection_changed();
+   }
+   editor_msg( "blue", QString( tr( "Pairwise distance report for %1 atoms done") ).arg( atoms ) );
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_atom_name( QListViewItem *lvi )
+{
+   QString atom = 
+      QString( "%1" ).arg( lvi->text( 0 ) )
+      .replace( QRegExp( "^\\S+" ), "" )
+      .replace( QRegExp( "\\S+$" ), "" )
+      .stripWhiteSpace();
+   // for some reason teh qregexp's aren't working correctly, thus the stripwhitespace at the end
+   // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
+   return atom;
+}
+
+QStringList US_Hydrodyn_Pdb_Tool::atom_set( QListView *lv )
+{
+   map < QString, bool > atoms;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->childCount() && is_selected( item1 ) )
+      {
+         atoms[ get_atom_name( item1 ) ] = true;
+      }
+      ++it1;
+   }
+   
+   QStringList qsl;
+   for ( map < QString, bool >::iterator it = atoms.begin();
+         it != atoms.end();
+         it++ )
+   {
+      qsl << it->first;
+   }
+   qsl.sort();
+   return qsl;
+}
+
+QStringList US_Hydrodyn_Pdb_Tool::model_set( QListView *lv )
+{
+   map < QString, bool > models;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->depth() && is_selected( item1 ) )
+      {
+         models[ item1->text(0) ] = true;
+      }
+      ++it1;
+   }
+   
+   QStringList qsl;
+   for ( map < QString, bool >::iterator it = models.begin();
+         it != models.end();
+         it++ )
+   {
+      qsl << it->first;
+   }
+   qsl.sort();
+   return qsl;
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_residues()
 {
+   editor_msg( "red", "not yet implemented" );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_clash_report()
+{
+   distances( lv_csv );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
@@ -2291,6 +2726,12 @@ void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_atoms()
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_residues()
 {
+   editor_msg( "red", "not yet implemented" );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_clash_report()
+{
+   distances( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_msg()
