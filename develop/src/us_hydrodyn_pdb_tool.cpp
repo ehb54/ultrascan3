@@ -44,11 +44,11 @@ double US_Hydrodyn_Pdb_Tool::pair_dist( QListViewItem *item1, QListViewItem *ite
 }
 
 US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
-                                               csv csv1,
-                                               void *us_hydrodyn, 
-                                               QWidget *p, 
-                                               const char *name
-                                               ) : QFrame(p, name)
+                                           csv csv1,
+                                           void *us_hydrodyn, 
+                                           QWidget *p, 
+                                           const char *name
+                                           ) : QFrame(p, name)
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
@@ -311,6 +311,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
 
+   pb_csv_sel_chain = new QPushButton(tr("Chain"), this);
+   pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_chain->setMinimumHeight(minHeight1);
+   pb_csv_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel_chain, SIGNAL(clicked()), SLOT(csv_sel_chain()));
+
    pb_csv_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
    pb_csv_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv_sel_nearest_atoms->setMinimumHeight(minHeight1);
@@ -474,6 +480,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
 
+   pb_csv2_sel_chain = new QPushButton(tr("Chain"), this);
+   pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_chain->setMinimumHeight(minHeight1);
+   pb_csv2_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel_chain, SIGNAL(clicked()), SLOT(csv2_sel_chain()));
+
    pb_csv2_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
    pb_csv2_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_sel_nearest_atoms->setMinimumHeight(minHeight1);
@@ -587,6 +599,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_invert );
    hbl_center_buttons_row_4->addSpacing( 2 );
+   hbl_center_buttons_row_4->addWidget( pb_csv_sel_chain );
+   hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_nearest_atoms );
    hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_nearest_residues );
@@ -657,6 +671,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_clean );
    hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_invert );
+   hbl_right_buttons_row_4->addSpacing( 2 );
+   hbl_right_buttons_row_4->addWidget( pb_csv2_sel_chain );
    hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_nearest_atoms );
    hbl_right_buttons_row_4->addSpacing( 2 );
@@ -766,6 +782,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_sel_clear            ->setEnabled( any_csv_selected );
    pb_csv_sel_clean            ->setEnabled( selection_since_clean_csv1 && any_csv_selected );
    pb_csv_sel_invert           ->setEnabled( csv1.data.size() );
+   pb_csv_sel_chain            ->setEnabled( counts.chains > 1 );
    pb_csv_sel_nearest_atoms    ->setEnabled( any_csv_selected && counts.not_selected_atoms > 1 );
    pb_csv_sel_nearest_residues ->setEnabled( any_csv_selected && counts.not_selected_atoms > 1 );
 
@@ -803,6 +820,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_sel_clear            ->setEnabled( any_csv2_selected );
    pb_csv2_sel_clean            ->setEnabled( selection_since_clean_csv2 && any_csv2_selected );
    pb_csv2_sel_invert           ->setEnabled( csv2[ csv2_pos ].data.size()  );
+   pb_csv2_sel_chain            ->setEnabled( counts.chains > 1 );
    pb_csv2_sel_nearest_atoms    ->setEnabled( any_csv2_selected && counts.not_selected_atoms > 1 );
    pb_csv2_sel_nearest_residues ->setEnabled( any_csv2_selected && counts.not_selected_atoms > 1 );
 
@@ -2184,6 +2202,12 @@ void US_Hydrodyn_Pdb_Tool::csv_sel_invert()
    update_enables_csv();
 }
 
+void US_Hydrodyn_Pdb_Tool::csv_sel_chain()
+{
+   select_chain( lv_csv );
+   update_enables_csv();
+}
+
 void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_atoms()
 {
    sel_nearest_atoms( lv_csv );
@@ -2312,6 +2336,91 @@ void US_Hydrodyn_Pdb_Tool::select_model( QListView *lv, QString model )
    clean_selection( lv );
 }
 
+void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv )
+{
+   pdb_sel_count counts = count_selected( lv );
+   if ( counts.chains <= 1 )
+   {
+      return;
+   }
+   QStringList chains = chain_set( lv );
+   map < QString, bool > chains_to_select;
+
+   bool ok;
+
+   do {
+      QString chain = QInputDialog::getItem(
+                                            tr( "US-SOMO: PDB editor : Select chain" ) ,
+                                            tr( "Select a chain or CANCEL when done" ),
+                                            chains, 
+                                            0, 
+                                            FALSE, 
+                                            &ok,
+                                            this );
+      if ( ok )
+      {
+         chains_to_select[ chain ] = true;
+      }
+      QStringList new_list;
+      for ( unsigned int i = 0; i < chains.size(); i++ )
+      {
+         if ( !chains_to_select.count( chains[ i ] ) )
+         {
+            new_list << chains[ i ];
+         }
+      }
+      chains = new_list;
+   } while ( ok && chains.size() );
+
+   if ( !chains.size() )
+   {
+      return;
+   }
+
+   // now select just these chains
+   // first build map of original selections
+
+   map < QListViewItem *, bool > selected;
+
+   {
+      QListViewItemIterator it1( lv );
+
+      while ( it1.current() ) 
+      {
+         QListViewItem *item1 = it1.current();
+         if ( is_selected( item1 ) )
+         {
+            selected[ item1 ] = true;
+         }
+         ++it1;
+      }
+   }
+
+   lv->selectAll( false );
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( item1->depth() == 1 &&
+           selected.count( item1 ) &&
+           chains_to_select.count( item1->text( 0 ) ) )
+      {
+         item1->setSelected( true );
+      }
+      ++it1;
+   }
+   clean_selection( lv );
+   if ( lv == lv_csv )
+   {
+      selection_since_count_csv1 = true;
+      csv_sel_msg();
+   } else {
+      selection_since_count_csv2 = true;
+      csv2_sel_msg();
+   }
+}
+
 void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
 {
    static QString previous_selection;
@@ -2339,7 +2448,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
    {
       QStringList qsl = atom_set( lv );
       bool ok;
-      int use_pos = 1;
+      int use_pos = 0;
       if ( !previous_selection.isEmpty() )
       {
          for ( unsigned int pos = 0; pos < qsl.size(); pos++ )
@@ -2685,6 +2794,32 @@ QStringList US_Hydrodyn_Pdb_Tool::model_set( QListView *lv )
    return qsl;
 }
 
+QStringList US_Hydrodyn_Pdb_Tool::chain_set( QListView *lv )
+{
+   map < QString, bool > chains;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( item1->depth() == 1 && is_selected( item1 ) )
+      {
+         chains[ item1->text(0) ] = true;
+      }
+      ++it1;
+   }
+   
+   QStringList qsl;
+   for ( map < QString, bool >::iterator it = chains.begin();
+         it != chains.end();
+         it++ )
+   {
+      qsl << it->first;
+   }
+   qsl.sort();
+   return qsl;
+}
+
 void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_residues()
 {
    editor_msg( "red", "not yet implemented" );
@@ -2716,6 +2851,12 @@ void US_Hydrodyn_Pdb_Tool::csv2_sel_clean()
 void US_Hydrodyn_Pdb_Tool::csv2_sel_invert()
 {
    invert_selection( lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel_chain()
+{
+   select_chain( lv_csv2 );
    update_enables_csv2();
 }
 

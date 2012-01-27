@@ -87,6 +87,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_sel_clear;
       QPushButton   *pb_csv_sel_clean;
       QPushButton   *pb_csv_sel_invert;
+      QPushButton   *pb_csv_sel_chain;
       QPushButton   *pb_csv_sel_nearest_atoms;
       QPushButton   *pb_csv_sel_nearest_residues;
       QLabel        *lbl_csv_sel_msg;
@@ -115,6 +116,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_sel_clear;
       QPushButton   *pb_csv2_sel_clean;
       QPushButton   *pb_csv2_sel_invert;
+      QPushButton   *pb_csv2_sel_chain;
       QPushButton   *pb_csv2_sel_nearest_atoms;
       QPushButton   *pb_csv2_sel_nearest_residues;
       QLabel        *lbl_csv2_sel_msg;
@@ -207,8 +209,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          distances              ( QListView *lv );
       QString       get_atom_name          ( QListViewItem *lvi );
       QStringList   atom_set               ( QListView *lv ); // returns a list of selected atoms
+      QStringList   chain_set              ( QListView *lv ); // returns a list of selected chains
       QStringList   model_set              ( QListView *lv ); // returns a list of selected models
       void          select_model           ( QListView *lv, QString model ); // selects just that model
+      void          select_chain           ( QListView *lv ); // selected a set of chains
 
    private slots:
       
@@ -241,6 +245,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_sel_clear();
       void csv_sel_clean();
       void csv_sel_invert();
+      void csv_sel_chain();
       void csv_sel_nearest_atoms();
       void csv_sel_nearest_residues();
 
@@ -264,6 +269,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_sel_clear();
       void csv2_sel_clean();
       void csv2_sel_invert();
+      void csv2_sel_chain();
       void csv2_sel_nearest_atoms();
       void csv2_sel_nearest_residues();
 
