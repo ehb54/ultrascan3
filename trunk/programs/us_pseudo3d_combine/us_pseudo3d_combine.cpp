@@ -277,6 +277,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
    data_plot->setAxisScale( QwtPlot::yRight,  0.0,  0.2 );
    data_plot->setCanvasBackground( Qt::white );
+   QwtText zTitle( "Partial Concentration" );
+   zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+      US_GuiSettings::fontSize(), QFont::Bold ) );
+   data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::RectRubberBand );
@@ -301,7 +305,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
 void US_Pseudo3D_Combine::reset( void )
 {
-   data_plot->detachItems();
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    data_plot->replot();
  
    cnst_vbar  = true;
@@ -391,7 +395,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
    data_plot->setTitle( tstr );
-   data_plot->detachItems();
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    QColor bg   = colormap->color1();
    data_plot->setCanvasBackground( bg );
    int    csum = bg.red() + bg.green() + bg.blue();
@@ -422,11 +426,6 @@ void US_Pseudo3D_Combine::plot_data( void )
    // set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
-   QwtText zTitle( "Partial Concentration" );
-   zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-      US_GuiSettings::fontSize(), QFont::Bold ) );
-   data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
-   data_plot->enableAxis( QwtPlot::yRight );
    ya_title   = cnst_vbar ? ya_title_ff : ya_title_vb;
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
 
@@ -457,10 +456,12 @@ void US_Pseudo3D_Combine::plot_data( void )
    }
    else
    {   // manual limits or looping
+      double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
+      double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
       rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
          d_spectrogram->colorMap() );
-      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
+      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
+      data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax, lStep );
       data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
    }
 
