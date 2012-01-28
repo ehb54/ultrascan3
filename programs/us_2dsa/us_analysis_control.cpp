@@ -118,7 +118,7 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
 
 
-   ct_iters     = us_counter( 2,    1,    8,    1 );
+   ct_iters     = us_counter( 2,    1,   16,    1 );
    ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   21,   10 );

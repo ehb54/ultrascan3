@@ -237,6 +237,7 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
             islast   = true;
 
          case DONEITER:  // Iteration done
+            islast   = ( mc_iteration >= mc_iterations ) ? true : islast;
             break;
 
          default:
@@ -271,18 +272,17 @@ DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
          mstates[ kgroup ] = INIT;           // Mark as finished
          maxrssma += (long)( iwork );        // Sum in master maxrss
 DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
+
+         if ( nileft == 0 )
+         {
+            mc_iterations = mc_iteration;    // All are complete
+            break;
+         }
+
+         if ( mgroup < 0 )
+            continue;                        // Some iters are still working
       }
 
-      if ( mc_iteration >= mc_iterations )
-      {  // All iterations have been started
-         if ( nileft == 0 ) break;           // All are complete
-         continue;                           // Some iters are still working
-      }
-
-      else if ( islast  &&  mgroup < 0 )
-      {  // Last iteration of group and no group ready, so loop
-         continue;                          // Some iters still needed
-      }
 
       // Alert the next available master to do an iteration. Use a
       //   different tag when it is to be the last iteration for a group.
@@ -436,6 +436,7 @@ void US_MPI_Analysis::time_mc_iterations()
    int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
    int mins_left_allow = max_walltime - mins_so_far;
    int mc_iters_left   = ( mins_left_allow * mc_iteration ) / mins_so_far;
+   mc_iters_left       = ( mc_iters_left / mgroup_count ) * mgroup_count;
    int mc_iters_estim  = mc_iteration + mc_iters_left;
 
    if ( mc_iters_estim < mc_iterations  &&  mc_iters_left < 4 )
@@ -443,6 +444,8 @@ void US_MPI_Analysis::time_mc_iterations()
       int old_mciters     = mc_iterations;
       mc_iterations       = qMax( mc_iteration, mc_iters_estim - 2 );
       int ac_iters_left   = mc_iterations - mc_iteration;
+      ac_iters_left       = ( ac_iters_left / mgroup_count ) * mgroup_count;
+      mc_iterations       = mc_iteration + ac_iters_left;
 
       QString msg = tr( "MC Iterations reduced from %1 to %2, "
                         "due to max. time restrictions." )
@@ -773,10 +776,22 @@ DbgLv(1) << "GaMast:      (2)do_write" << do_write << (do_write?"":files[0]);
       if ( do_write )
          write_model( simulation_values, US_Model::GA );
 
-      // Tell supervisor that an iteration is done
+      if ( mc_iteration < mc_iterations )
+      {  // Before last iteration:  check if max is reset based on time limit
+         time_mc_iterations();    // Test if near time limit
+
+         tag     = ( mc_iteration < mc_iterations ) ?
+                   DONEITER : DONELAST;
+      }
+
+      else
+      {  // Mark that max iterations reached
+         tag     = DONELAST;
+      }
+
+      // Tell the supervisor that an iteration is done
       iter    = (int)maxrss;
-      tag     = ( mc_iteration < mc_iterations ) ?
-                DONEITER : DONELAST;
+DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
 
       MPI_Send( &iter,
                 1,
@@ -787,24 +802,19 @@ DbgLv(1) << "GaMast:      (2)do_write" << do_write << (do_write?"":files[0]);
 
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( mc_iteration < mc_iterations )
-      {
-         // Set scaled_data the first time
+      {     // Set up for next iteration
          if ( mc_iteration == 1 ) 
-         {
+         {    // Set scaled_data the first time
             scaled_data = simulation_values.sim_data;
          }
 
-         time_mc_iterations();
-
-         if ( mc_iteration < mc_iterations )
-         {
-            set_gaMonteCarlo();
-         }
-
+         set_gaMonteCarlo();
       }
-      else
+
+      else  // Break out of the loop if all iterations have been done
          break;
-   }
+
+   }  // END:  MC iterations loop
 
 
    MPI_Job job;
