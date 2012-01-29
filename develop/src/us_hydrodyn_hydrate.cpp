@@ -2490,6 +2490,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
    vector < point > p1;
    vector < point > p2;
    waters_to_add.clear();
+   waters_source.clear();
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -2564,11 +2565,14 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
          {
             count_waters_added++;
             waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
+            waters_source[ it->first ].push_back( QString( "Rtmr:%1" ).arg( it->second.name ) );
          } else {
             count_waters_not_added++;
          }
       }
    }
+
+
 
    for ( map < QString, vector < rotamer > >::iterator it = pointmap_rotamers.begin();
          it != pointmap_rotamers.end();
@@ -2694,6 +2698,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
             {
                count_waters_added++;
                waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
+               waters_source [ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
             } else {
                count_waters_not_added++;
             }
@@ -2805,10 +2810,13 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    // cout << "steric clash recheck:\n";
 
    hydrate_clash_detail +=
-      "Water,clash,radius water,radius clash,sum radii,distance,overlap,percent overlap,water x,clash x, water y, clash y, water z, clash z\n";
+      "Water,clash,radius water,radius clash,sum radii,distance,overlap,percent overlap,water x,clash x, water y, clash y, water z, clash z, source, source2\n";
 
-   hydrate_clash_map_water.clear();
-   hydrate_clash_map_structure.clear();
+   hydrate_clash_map_structure .clear();
+   hydrate_clash_map_rtmr_water.clear();
+   hydrate_clash_map_pm_water  .clear();
+
+   map < QString, bool > counted;
 
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
@@ -2833,11 +2841,20 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                                               .arg( this_atom->name )
                   ] = true;
                   
-                  hydrate_clash_map_water[ 
-                                          QString( "%1~%2" )
-                                          .arg( it->first )
-                                          .arg( pos ) 
-                  ] = true;
+                  if ( waters_source[ it->first ][ pos ].startsWith( "PM" ) )
+                  {
+                     hydrate_clash_map_pm_water[ 
+                                                  QString( "%1~%2" )
+                                                  .arg( it->first )
+                                                  .arg( pos ) 
+                     ] = true;
+                  } else {
+                     hydrate_clash_map_rtmr_water[ 
+                                                  QString( "%1~%2" )
+                                                  .arg( it->first )
+                                                  .arg( pos ) 
+                     ] = true;
+                  }                     
 
                   hydrate_clash_log << 
                      QString( "Water %1 number %2 clashes with %3~%4~%5 atom %6 by %7 A or %8%\n" )
@@ -2877,7 +2894,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      ;
                      
                   hydrate_clash_detail +=
-                     QString( "%1,%2,%3,%4,%5,%6" )
+                     QString( "%1,%2,%3,%4,%5,%6," )
                      .arg( p.axis[ 0 ] )
                      .arg( this_atom->coordinate.axis[ 0 ] )
                      .arg( p.axis[ 1 ] )
@@ -2886,11 +2903,26 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      .arg( this_atom->coordinate.axis[ 2 ] )
                      ;
 
+                  hydrate_clash_detail += 
+                     QString( "%1" )
+                     .arg( waters_source[ it->first ][ pos ] );
+
                   hydrate_clash_detail += "\n";
                         
                   if ( this_atom->chain == 1 )
                   {
                      steric_clash_recheck_summary[ " structure side chain" ]++;
+                     if ( !counted.count( QString( "%1~%2" ).arg( it->first ).arg( pos ) ) )
+                     {
+                        steric_clash_recheck_summary[ "waters with clashes total" ]++;
+                        if ( waters_source[ it->first ][ pos ].startsWith( "PM" ) )
+                        {
+                           steric_clash_recheck_summary[ "waters with clashes (Pointmap)" ]++;
+                        } else {
+                           steric_clash_recheck_summary[ "waters with clashes (Rotamer)" ]++;
+                        }
+                        counted[ QString( "%1~%2" ).arg( it->first ).arg( pos ) ] = true;
+                     }
                   } else {
                      steric_clash_recheck_summary[ " structure main chain" ]++;
                   }
@@ -2915,17 +2947,36 @@ QString US_Hydrodyn::list_steric_clash_recheck()
             {
                if ( dist( it2->second[ j ], p ) < 2e0 * water_radius * dist_threshold )
                {
-                  hydrate_clash_map_water[ 
-                                          QString( "%1~%2" )
-                                          .arg( it->first )
-                                          .arg( pos ) 
-                  ] = true;
+                  if ( waters_source[ it->first ][ pos ].startsWith( "PM" ) )
+                  {
+                     hydrate_clash_map_pm_water[ 
+                                                  QString( "%1~%2" )
+                                                  .arg( it->first )
+                                                  .arg( pos ) 
+                     ] = true;
+                  } else {
+                     hydrate_clash_map_rtmr_water[ 
+                                                  QString( "%1~%2" )
+                                                  .arg( it->first )
+                                                  .arg( pos ) 
+                     ] = true;
+                  }                     
 
-                  hydrate_clash_map_water[ 
-                                          QString( "%1~%2" )
-                                          .arg( it2->first )
-                                          .arg( j ) 
-                  ] = true;
+
+                  if ( waters_source[ it2->first ][ j ].startsWith( "PM" ) )
+                  {
+                     hydrate_clash_map_pm_water[ 
+                                                QString( "%1~%2" )
+                                                .arg( it2->first )
+                                                .arg( j ) 
+                     ] = true;
+                  } else {
+                     hydrate_clash_map_rtmr_water[ 
+                                                  QString( "%1~%2" )
+                                                  .arg( it2->first )
+                                                  .arg( j ) 
+                     ] = true;
+                  }                     
 
                   hydrate_clash_log << 
                      QString( "Water %1 number %2 clashes with water from %3 number %4 by %5 A or %6%\n" )
@@ -2962,7 +3013,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      ;
                      
                   hydrate_clash_detail +=
-                     QString( "%1,%2,%3,%4,%5,%6" )
+                     QString( "%1,%2,%3,%4,%5,%6," )
                      .arg( p.axis[ 0 ] )
                      .arg( it2->second[ j ].axis[ 0 ] )
                      .arg( p.axis[ 1 ] )
@@ -2971,6 +3022,11 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      .arg( it2->second[ j ].axis[ 2 ] )
                      ;
 
+                  hydrate_clash_detail += 
+                     QString( "%1,%2" )
+                     .arg( waters_source[ it ->first ][ pos ] )
+                     .arg( waters_source[ it2->first ][ j   ] );
+
                   hydrate_clash_detail += "\n";
 
                   cout << QString( "Water %1 clashes with water from %2\n" )
@@ -2978,6 +3034,28 @@ QString US_Hydrodyn::list_steric_clash_recheck()
                      .arg( it2->first );
                   steric_clash_recheck_summary[ " other water" ]++;
                   steric_clash_recheck_summary[ "structure or other water" ]++;
+                  if ( !counted.count( QString( "%1~%2" ).arg( it->first ).arg( pos ) ) )
+                  {
+                     steric_clash_recheck_summary[ "waters with clashes total" ]++;
+                     if ( waters_source[ it->first ][ pos ].startsWith( "PM" ) )
+                     {
+                        steric_clash_recheck_summary[ "waters with clashes (Pointmap)" ]++;
+                     } else {
+                        steric_clash_recheck_summary[ "waters with clashes (Rotamer)" ]++;
+                     }
+                     counted[ QString( "%1~%2" ).arg( it->first ).arg( pos ) ] = true;
+                  }
+                  if ( !counted.count( QString( "%1~%2" ).arg( it2->first ).arg( j ) ) )
+                  {
+                     steric_clash_recheck_summary[ "waters with clashes total" ]++;
+                     if ( waters_source[ it2->first ][ j ].startsWith( "PM" ) )
+                     {
+                        steric_clash_recheck_summary[ "waters with clashes (Pointmap)" ]++;
+                     } else {
+                        steric_clash_recheck_summary[ "waters with clashes (Rotamer)" ]++;
+                     }
+                     counted[ QString( "%1~%2" ).arg( it2->first ).arg( j ) ] = true;
+                  }
                }
             }
          }
@@ -2989,7 +3067,7 @@ QString US_Hydrodyn::list_steric_clash_recheck()
          it != steric_clash_recheck_summary.end();
          it++ )
    {
-      qs += QString( tr( "Steric recheck clash with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
+      qs += QString( tr( "Steric recheck clash %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
 
    cout << "Steric clash log detail:\n";
@@ -3146,7 +3224,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    }
       
    // add waters:
-   QStringList hydrate_clash_waters_list;
+   QStringList hydrate_clash_waters_rtmr_list;
+   QStringList hydrate_clash_waters_pm_list;
 
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
@@ -3165,9 +3244,13 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      it->second[ i ].axis[ 1 ],
                      it->second[ i ].axis[ 2 ]
                      );
-         if ( hydrate_clash_map_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
+         if ( hydrate_clash_map_rtmr_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
          {
-            hydrate_clash_waters_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
+            hydrate_clash_waters_rtmr_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
+         }
+         if ( hydrate_clash_map_pm_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
+         {
+            hydrate_clash_waters_pm_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
          }
       }
    }
@@ -3194,9 +3277,13 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
       {
          out += QString( "select %1\ncolor cyan\n" ).arg( it->first );
       }
-      for ( unsigned int i = 0; i < hydrate_clash_waters_list.size(); i++ )
+      for ( unsigned int i = 0; i < hydrate_clash_waters_rtmr_list.size(); i++ )
       {
-         out += QString( "select %1\ncolor yellow\n" ).arg( hydrate_clash_waters_list[ i ] );
+         out += QString( "select %1\ncolor yellow\n" ).arg( hydrate_clash_waters_rtmr_list[ i ] );
+      }
+      for ( unsigned int i = 0; i < hydrate_clash_waters_pm_list.size(); i++ )
+      {
+         out += QString( "select %1\ncolor green\n" ).arg( hydrate_clash_waters_pm_list[ i ] );
       }
 
       QString fname = 
@@ -3231,8 +3318,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                                                         "Please check to make sure RASMOL is properly installed..."));
          }
       }
-      hydrate_clash_map_structure.clear();
-      hydrate_clash_map_water.clear();
+      hydrate_clash_map_structure .clear();
+      hydrate_clash_map_rtmr_water.clear();
+      hydrate_clash_map_pm_water  .clear();
    }
 
    return true;

@@ -519,7 +519,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, unsigned int >                  steric_clash_summary;
 
       map < QString, bool >                          hydrate_clash_map_structure;
-      map < QString, bool >                          hydrate_clash_map_water;
+      map < QString, bool >                          hydrate_clash_map_rtmr_water;
+      map < QString, bool >                          hydrate_clash_map_pm_water;
+      map < QString, vector < QString > >            waters_source;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
