@@ -454,7 +454,7 @@ void US_2dsa::save( void )
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbp      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   US_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    QStringList mfilt( "M*.xml" );
@@ -538,8 +538,8 @@ void US_2dsa::save( void )
       // output the model
       model.write( mname );
 
-      if ( dbp != NULL )
-         model.write( dbp );
+      if ( dbP != NULL )
+         model.write( dbP );
 
       int kk  = jj * knois;
 
@@ -558,8 +558,8 @@ void US_2dsa::save( void )
 
          ti_noise.write( nname );
 
-         if ( dbp != NULL )
-            ti_noise.write( dbp );
+         if ( dbP != NULL )
+            ti_noise.write( dbP );
 
          if ( nicount > 0 )   // Remove input noise in case re-plotted
          {
@@ -587,8 +587,8 @@ void US_2dsa::save( void )
 
          ri_noise.write( nname );
 
-         if ( dbp != NULL )
-            ri_noise.write( dbp );
+         if ( dbP != NULL )
+            ri_noise.write( dbP );
 
          if ( nicount > 0 )   // Remove input noise in case re-plotted
          {
@@ -604,6 +604,12 @@ void US_2dsa::save( void )
 //tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
 //rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
 //DbgLv(1) << "  Post-sum tno rno" << tino << rino;
+
+   if ( dbP != NULL )
+   {
+      delete dbP;
+      dbP = NULL;
+   }
 
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
@@ -795,6 +801,8 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
    if ( dbP != NULL )
    {
       dataList[ drow ].description += "  (DB)";
+      delete dbP;
+      dbP    = NULL;
    }
 
    if ( analcd != 0 )
