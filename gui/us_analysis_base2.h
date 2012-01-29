@@ -41,7 +41,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       //! Scans excluded by the user beyond those excluded by US_Edit
       QList< int >                      excludedScans;
 
-      //! Current data values for athe analysis
+      //! Current data values for the analysis
       QList< QVector< double > >        savedValues;
 
       //! The solution data corresponding to the current triple
@@ -51,8 +51,8 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       bool         def_local;       //!< Flag if default source is local
       bool         buffLoaded;      //!< Flag to indicate buffer is loaded
 
-      QString      directory;       //!< Data directory of analysis files.
-      QString      editID;          //!< Current edit ID.  Ususally a date-time.
+      QString      directory;       //!< Data directory of analysis files
+      QString      editID;          //!< Current edit ID. Usually a date-time
       QString      runID;           //!< User specified run ID string
       QString      dfilter;         //!< Data files filter
       QString      investig;        //!< Investigator string
@@ -62,7 +62,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       US_Solution  solution_rec;    //!< Current data's solution
 
-      US_Noise     ri_noise;        //!< Loaded,applied radially-invariant noise
+      US_Noise     ri_noise;        //!< Loaded,appl'd radially-invariant noise
       US_Noise     ti_noise;        //!< Loaded,applied time-invariant noise
 
       QVector< int > noiflags;      //!< Noise-applied flags, for all triples
@@ -100,7 +100,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       QPushButton* pb_details;      //!< Pushbuttion to view run details
       QPushButton* pb_solution;     //!< Pushbuttion to get solution parameters
       QPushButton* pb_view;         //!< Pushbuttion to view run a data report
-      QPushButton* pb_save;         //!< Pushbutton to save the analysis results
+      QPushButton* pb_save;         //!< Pushbutton to save analysis results
       QPushButton* pb_reset;        //!< Pushbutton to reset the screen
       QPushButton* pb_help;         //!< Pushbutton to show help
       QPushButton* pb_close;        //!< Pushbutton to close the application
@@ -119,18 +119,18 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       QLineEdit*   le_skipped;      //!< Display the number of scans skipped
 
       QwtCounter*  ct_smoothing;
-        //!< Counter for the number of coefficients in a polynomial smoothing function
+       //!< Counter for number of coefficients in polynomial smoothing function
       QwtCounter*  ct_boundaryPercent;
-        //!< Counter for boundary percentage specification
+       //!< Counter for boundary percentage specification
       QwtCounter*  ct_boundaryPos;  //!< Counter for boundary starting point
-      QwtCounter*  ct_from;         //!< Counter for specifying start of exclude range
-      QwtCounter*  ct_to;           //!< Counter for specifying end of exclude range
+      QwtCounter*  ct_from;         //!< Counter for start of exclude range
+      QwtCounter*  ct_to;           //!< Counter for end of exclude range
 
       QCheckBox*   ck_edlast;           //!< Checkbox for edit-lastest flag
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
-      virtual void update   ( int );    //!< Update the screen for a new dataset
+      virtual void update   ( int );    //!< Update screen for a new dataset
       virtual void data_plot( void );   //!< Update the data plot
 
       //! Write the specified plot to a file

@@ -407,6 +407,11 @@ void US_AnalysisBase2::update( int selection )
       le_solution ->setText( tr( "( ***Undefined*** )" ) );
    }
 
+   if ( dbP != NULL )
+   {
+      delete dbP;
+   }
+
    data_plot();
 }
 
@@ -1382,6 +1387,11 @@ void US_AnalysisBase2::load_noise( int index )
 
       rinoises[ index ] = nrinois > 0 ? ri_noise : US_Noise();
       tinoises[ index ] = ntinois > 0 ? ti_noise : US_Noise();
+
+      if ( dbP != NULL )
+      {
+         delete dbP;
+      }
    }  // End:  query for desired noise
 
    else                            // Flag that there was no noise to apply
@@ -1402,14 +1412,14 @@ void US_AnalysisBase2::get_solution()
    if ( disk_controls->db() )
    {
       US_Passwd pw;
-      US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
+      US_DB2 db( pw.getPasswd() );
       QStringList query( "get_experiment_info_by_runID" );
       query << runID << QString::number( US_Settings::us_inv_ID() );
-      dbP->query( query );
-      if ( dbP->lastErrno() != US_DB2::NOROWS )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::NOROWS )
       {
-         dbP->next();
-         expID = dbP->value( 1 ).toString().toInt();
+         db.next();
+         expID = db.value( 1 ).toString().toInt();
       }
    }
 
@@ -1440,9 +1450,9 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
    if ( disk_controls->db() )
    {
       US_Passwd pw;
-      US_DB2*   dbP  = ( disk_controls->db() ) ?
-                       new US_DB2( pw.getPasswd() ) : 0;
-      US_SolutionVals::bufvals_db( dbP, sbufID, bufGUID, bufDesc,
+      US_DB2 db( pw.getPasswd() );
+
+      US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
             bdens, bvisc, bcmpr, errmsg );
    }
 

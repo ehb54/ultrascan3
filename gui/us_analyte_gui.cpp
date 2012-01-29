@@ -1566,6 +1566,10 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
 {
    if ( ! discard_changes() ) return;
 
+   analyte.extinction  .clear();
+   analyte.refraction  .clear();
+   analyte.fluorescence.clear();
+
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
    pb_more  ->setEnabled( false );

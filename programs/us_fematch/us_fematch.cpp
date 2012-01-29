@@ -551,6 +551,12 @@ void US_FeMatch::update( int drow )
    ri_noise.count = 0;
 
    data_plot();
+
+   if ( dbP != NULL )
+   {
+      delete dbP;
+      dbP = NULL;
+   }
 }
 
 
@@ -1744,10 +1750,16 @@ for (int jj=0;jj<nenois;jj++)
 
          QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
       }
+
+      if ( dbP != NULL )
+      {
+         delete dbP;
+         dbP = NULL;
+      }
    }
 }
 
-// do model simulation
+// Do model simulation
 void US_FeMatch::simulate_model( )
 {
    int    drow    = lw_triples->currentRow();
@@ -1767,12 +1779,18 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
    adjust_model();
 
-   //sdata          = new US_DataIO2::RawData();
+   // Initialize simulation parameters using edited data information
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      simparams.initFromData( &db, *edata );
+   }
 
-   // initialize simulation parameters using edited data information
-   US_Passwd pw;
-   US_DB2* dbP = dkdb_cntrls->db() ?  new US_DB2( pw.getPasswd() ) : 0;
-   simparams.initFromData( dbP, *edata );
+   else
+   {
+      simparams.initFromData( NULL, *edata );
+   }
 DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 
@@ -1809,7 +1827,7 @@ DbgLv(1) << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
 DbgLv(1) << "  delay_hours  " << simparams.speed_step[0].delay_hours;
 DbgLv(1) << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
-   // make a simulation copy of the experimental data without actual readings
+   // Make a simulation copy of the experimental data without actual readings
 
    //US_AstfemMath::initSimData( *sdata, *edata,
    //      model.components[ 0 ].signal_concentration );
@@ -2670,14 +2688,14 @@ void US_FeMatch::get_solution()
    if ( dkdb_cntrls->db() )
    {
       US_Passwd pw;
-      US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
+      US_DB2 db( pw.getPasswd() );
       QStringList query( "get_experiment_info_by_runID" );
       query << runID << QString::number( US_Settings::us_inv_ID() );
-      dbP->query( query );
-      if ( dbP->lastErrno() != US_DB2::NOROWS )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::NOROWS )
       {
-         dbP->next();
-         expID = dbP->value( 1 ).toString().toInt();
+         db.next();
+         expID = db.value( 1 ).toString().toInt();
       }
    }
 
@@ -2708,9 +2726,8 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
    if ( dkdb_cntrls->db() )
    {
       US_Passwd pw;
-      US_DB2*   dbP  = ( dkdb_cntrls->db() ) ?
-                       new US_DB2( pw.getPasswd() ) : 0;
-      US_SolutionVals::bufvals_db( dbP, sbufID, bufGUID, bufDesc,
+      US_DB2 db( pw.getPasswd() );
+      US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
             bdens, bvisc, bcmpr, errmsg );
    }
 

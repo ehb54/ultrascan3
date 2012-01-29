@@ -1318,7 +1318,7 @@ DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi nlnois ndnois"
          QString recDesc;
 DbgLv(1) << " Remove Models and Noises";
          for ( int ii = 0; ii < rmodIDs.size(); ii++ )
-         {
+         {  // Remove models and db noises
             recID    = rmodIDs  [ ii ];
             recDesc  = rmodDescs[ ii ];
             recFname = rmodFnams[ ii ];
@@ -1347,8 +1347,14 @@ else DbgLv(1) << "     DB record deleted";
             }
          }
 
-         for ( int ii = 0; ii < rnoiIDs.size(); ii++ )
+         if ( dbP != NULL )
          {
+            delete dbP;
+            dbP   = NULL;
+         }
+
+         for ( int ii = 0; ii < rnoiIDs.size(); ii++ )
+         {  // Remove local noises
             recID    = rnoiIDs  [ ii ];
             recDesc  = rnoiDescs[ ii ];
             recFname = rnoiFnams[ ii ];
