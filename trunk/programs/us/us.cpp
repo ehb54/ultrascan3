@@ -174,6 +174,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_ROTORCAL , tr( "R&otor Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
   addMenu(  P_VHWCOMB ,  tr( "Combine &Distribution Plots (vHW)" ), utilities );
+  addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
@@ -534,7 +535,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
             "%2\n"
-            "Copyright 1989 - 2011\n"
+            "Copyright 1989 - 2012\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"

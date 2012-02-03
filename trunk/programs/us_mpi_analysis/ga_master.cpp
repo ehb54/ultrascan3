@@ -323,8 +323,9 @@ DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal
 
    if ( early_termination )
    {
+      int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
-         << ", MC" << mc_iteration;
+         << ", MC" << mc_iter;
    }
 }
 
