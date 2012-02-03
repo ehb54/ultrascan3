@@ -11,6 +11,7 @@
 #include "us_passwd.h"
 #include "us_editor.h"
 #include "us_model_loader.h"
+#include "us_db2.h"
 #include "us_util.h"
 #include "us_sleep.h"
 
@@ -203,12 +204,9 @@ qDebug() << "SAVE:    nrunIDs" << runIDs.size();
    // Default output name derives from the name of the first input
    cmodel_name = "global-" + mdescs[ 0 ];
 qDebug() << "SAVE:     cmodel_name" << cmodel_name;
-   QString mdlpath;
-   US_Model::model_path( mdlpath );
    QString mdlguid    = US_Util::new_guid();
    cmodel.modelGUID   = mdlguid;
    cmodel.global      = US_Model::GLOBAL;
-   QString fnamo      = US_Model::get_filename( mdlpath, mdlguid );
 
    // Open a dialog that reports and allows modification of description
    runID           = cmodel_name.section( ".",  0, -4 );
@@ -273,8 +271,22 @@ qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
    cmodel.description = cmodel_name;
 
    // Output the combined model
-   cmodel.write( fnamo );
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      cmodel.write( &db );
+qDebug() << "SAVE:      DB";
+   }
+
+   else
+   {
+      QString mdlpath;
+      US_Model::model_path( mdlpath );
+      QString fnamo = US_Model::get_filename( mdlpath, mdlguid );
+      cmodel.write( fnamo );
 qDebug() << "SAVE:      fnamo" << fnamo;
+   }
 
 }
 
