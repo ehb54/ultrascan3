@@ -574,7 +574,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
                        QString          &error_msg );
 
 
-      bool selected_models_contain_SWH();
+      bool selected_models_contain( QString residue );
 
       float mw_to_volume( float mw, float vbar );
 

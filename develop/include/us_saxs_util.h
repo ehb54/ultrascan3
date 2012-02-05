@@ -901,7 +901,7 @@ class US_EXTERN US_Saxs_Util
       bool         compute_water_positioning_atoms();
       QString      list_water_positioning_atoms();
       bool         validate_pointmap();
-      bool         selected_models_contain_SWH();
+      bool         selected_models_contain( QString residue );
       bool         buffer_pdb_with_waters();
       bool         flush_pdb();
       QString      last_hydrated_pdb_header;

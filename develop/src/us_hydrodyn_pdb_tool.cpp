@@ -156,11 +156,17 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_merge, SIGNAL(clicked()), SLOT(merge()));
 
-   pb_hybrid_split = new QPushButton(tr("Hybrid split"), this);
+   pb_hybrid_split = new QPushButton(tr("Hybrid extract"), this);
    pb_hybrid_split->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_hybrid_split->setMinimumHeight(minHeight1);
    pb_hybrid_split->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_hybrid_split, SIGNAL(clicked()), SLOT(hybrid_split()));
+
+   pb_h_to_chainX = new QPushButton(tr("H to chain X"), this);
+   pb_h_to_chainX->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_h_to_chainX->setMinimumHeight(minHeight1);
+   pb_h_to_chainX->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_h_to_chainX, SIGNAL(clicked()), SLOT(h_to_chainX()));
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -173,7 +179,6 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
-
 
    // center pane
 
@@ -555,6 +560,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
    hbl_left_buttons_row_3->addWidget( pb_hybrid_split );
+   hbl_left_buttons_row_3->addWidget( pb_h_to_chainX );
 
    QBoxLayout *hbl_left_buttons_row_4 = new QHBoxLayout;
    hbl_left_buttons_row_4->addWidget( pb_help );
@@ -3584,7 +3590,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
    if ( !QFile::exists( filename ) )
    {
       QMessageBox::warning( this,
-                            tr("US-SOMO: PDB Editor - Hybrid Split"),
+                            tr("US-SOMO: PDB Editor - Hybrid Extract"),
                             QString( tr( "An error occured when trying to open file\n"
                                          "%1\n"
                                          "The file does not exist" ) )
@@ -3598,7 +3604,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
    if ( !f.open( IO_ReadOnly ) )
    {
       QMessageBox::warning( this,
-                            tr("US-SOMO: PDB Editor - Hybrid Split"),
+                            tr("US-SOMO: PDB Editor - Hybrid Extract"),
                             QString("An error occured when trying to open file\n"
                                     "%1\n"
                                     "Please check the permissions and try again\n")
@@ -3607,8 +3613,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
       return;
    }
 
-   editor_msg( "dark blue", QString( tr( "Checking file %1" ).arg( f.name() ) ) );
-
+   editor_msg( "dark blue", QString( tr( "Hybrid extract: processing file %1" ).arg( f.name() ) ) );
    
    QRegExp rx_atom("^ATOM");
 
@@ -3759,20 +3764,361 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
    
    f.close();
 
+   // write them out
+
+   QString fbase = QFileInfo( filename ).dirPath() + SLASH + QFileInfo( filename ).baseName();
+
    for ( map < QString, vector < QString > >::iterator it = atoms_with_hydrogens.begin();
          it != atoms_with_hydrogens.end();
          it++ )
    {
-      cout << endl << it->first << ":" << endl;
+
+      QFile f_out( QString( "%1-%2.pdb" ).arg( fbase ).arg( it->first ) );
+      if ( !f_out.open( IO_WriteOnly ) )
+      {
+         QMessageBox::warning( this, 
+                               tr( "US-SOMO: PDB editor : Hybrid Extract" ),
+                               QString( tr( "Error: Can not open file %1 for writing" ) ).arg( f_out.name() ) );
+         return;
+      }
+
+      editor_msg( "blue", QString( tr( "Creating %1 with %2 models" ) ).arg( f_out.name() ).arg( it->second.size() ) );
+
+      // compute for remarks
+      // average, sd dev pairwise distances
+
+      vector < QString > atom_names;
+
+      vector < double >  distance_sum;
+      vector < double >  distance_sum2;
+      unsigned int       count           = 0;
+
+      double             gdistance_sum  = 0e0;
+      double             gdistance_sum2 = 0e0;
+      unsigned int       gcount         = 0;
+
+      vector < double >  angle_sum;
+      vector < double >  angle_sum2;
+      unsigned int       angle_count    = 0;
+
+      double             gangle_sum     = 0e0;
+      double             gangle_sum2    = 0e0;
+      unsigned int       gangle_count   = 0;
+
+      QString            remark;
+
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         cout << QString( "\n%1:--------\n%2\n------" ).arg( i ).arg( it->second[ i ] );
+         QStringList lines = QStringList::split( "\n", it->second[ i ] );
+         vector < QString > names;
+         vector < point   > p;
+         for ( unsigned int j = 0; j < lines.size(); j++ )
+         {
+            names.push_back( lines[ j ].mid( 12, 4 ).stripWhiteSpace().left( 1 ) );
+            point this_p;
+            this_p.axis[ 0 ] = lines[ j ].mid( 30 , 8 ).stripWhiteSpace().toFloat();
+            this_p.axis[ 1 ] = lines[ j ].mid( 38 , 8 ).stripWhiteSpace().toFloat();
+            this_p.axis[ 2 ] = lines[ j ].mid( 46 , 8 ).stripWhiteSpace().toFloat();
+            p.push_back( this_p );
+         }
+
+         if ( !i )
+         {
+            atom_names = names;
+            distance_sum .resize( names.size() );
+            distance_sum2.resize( names.size() );
+            if ( names.size() > 2 )
+            {
+               angle_sum .resize( names.size() - 2 );
+               angle_sum2.resize( names.size() - 2 );
+            }
+         } else {
+            if ( atom_names != names )
+            {
+               editor_msg( "dark red", QString( tr( "WARNING: atom names inconsistance for %1" ) ).arg( it->first ) );
+            }
+         }
+
+         // compute distances
+         count++;
+
+         for ( unsigned int j = 1; j < names.size(); j++ )
+         {
+            double distance = 
+               sqrt( ( p[ 0 ].axis[ 0 ] - p[ j ].axis[ 0 ] ) * ( p[ 0 ].axis[ 0 ] - p[ j ].axis[ 0 ] ) +
+                     ( p[ 0 ].axis[ 1 ] - p[ j ].axis[ 1 ] ) * ( p[ 0 ].axis[ 1 ] - p[ j ].axis[ 1 ] ) +
+                     ( p[ 0 ].axis[ 2 ] - p[ j ].axis[ 2 ] ) * ( p[ 0 ].axis[ 2 ] - p[ j ].axis[ 2 ] ) );
+            if ( !i )
+            {
+               distance_sum [ j ] = distance;
+               distance_sum2[ j ] = distance * distance;
+            } else {
+               distance_sum [ j ] += distance;
+               distance_sum2[ j ] += distance * distance;
+            }
+            gcount++;
+            gdistance_sum      += distance;
+            gdistance_sum2     += distance * distance;
+         }               
+
+         // compute angles, if possible
+         if ( names.size() > 2 )
+         {
+            // angle H1-X-H2
+            angle_count++;
+            for ( unsigned int j = 0; j < names.size() - 2; j++ )
+            {
+               double angle =
+                  acos( ((US_Hydrodyn *)us_hydrodyn)->dot( ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 1 ], p[ 0 ] ) ),
+                                                           ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ j + 2 ], p[ 0 ] ) ) ) );
+               if ( !i )
+               {
+                  angle_sum [ j ] = angle;
+                  angle_sum2[ j ] = angle * angle;
+               } else {
+                  angle_sum [ j ] += angle;
+                  angle_sum2[ j ] += angle * angle;
+               }
+               gangle_count++;
+               gangle_sum      += angle;
+               gangle_sum2     += angle * angle;
+            }
+         }  
+      }
+      
+      for ( unsigned int i = 1; i < atom_names.size(); i++ )
+      {
+         remark += 
+            QString( "REMARK     distance %1-%2%3 average of %4 pairs %5 A" )
+            .arg( atom_names[ 0 ] )
+            .arg( atom_names[ i ] )
+            .arg( i )
+            .arg( count )
+            .arg( distance_sum[ i ] / (double) count );
+         
+         if ( count > 1 )
+         {
+            remark += 
+               QString( ", standard deviation %1" )
+               .arg( 
+                    sqrt( 
+                         ( count * distance_sum2[ i ] - distance_sum[ i ] * distance_sum[ i ] ) /
+                         ( count * ( count - 1 ) ) 
+                         ) );
+         }
+         remark += "\n";
+      }
+
+      if ( atom_names.size() > 2 )
+      {
+         remark += 
+            QString( "REMARK     distance %1-H* average of %2 pairs %3 A" )
+            .arg( atom_names[ 0 ] )
+            .arg( gcount )
+            .arg( gdistance_sum / (double) gcount );
+         
+         if ( gcount > 1 )
+         {
+            remark += 
+               QString( ", standard deviation %1" )
+               .arg( 
+                    sqrt( 
+                         ( gcount * gdistance_sum2 - gdistance_sum * gdistance_sum ) /
+                         ( gcount * ( gcount - 1 ) ) 
+                         ) );
+         }
+         remark += "\n";
+      }
+
+      for ( unsigned int i = 0; i < atom_names.size() - 2; i++ )
+      {
+         remark += 
+            QString( "REMARK     angle H1-%1-H%2 average of %3 pairs %4 degrees" )
+            .arg( atom_names[ 0 ] )
+            .arg( i + 2 )
+            .arg( angle_count )
+            .arg( ( angle_sum[ i ] / (double) angle_count ) * 180.0 / M_PI );
+
+         if ( angle_count > 1 )
+         {
+            remark += 
+               QString( ", standard deviation %1" )
+               .arg( 
+                    sqrt( 
+                      ( angle_count * angle_sum2[ i ] - angle_sum[ i ] * angle_sum[ i ] ) /
+                      ( angle_count * ( angle_count - 1 ) ) 
+                      ) * ( 180.0 / M_PI ) );
+         }
+         remark += "\n";
+      }
+      
+      if ( atom_names.size() > 3 )
+      {
+         remark += 
+            QString( "REMARK     angle H1-%1-H* average of %2 pairs %3 degrees" )
+            .arg( atom_names[ 0 ] )
+            .arg( gangle_count )
+            .arg( ( gangle_sum / (double) gangle_count ) * 180.0 / M_PI );
+
+         if ( gangle_count > 1 )
+         {
+            remark += 
+               QString( ", standard deviation %1" )
+               .arg( 
+                    sqrt( 
+                         ( gangle_count * gangle_sum2 - gangle_sum * gangle_sum ) /
+                         ( gangle_count * ( gangle_count - 1 ) ) 
+                         ) * ( 180.0 / M_PI ) );
+         }
+         remark += "\n";
+      }
+         
+      QTextStream ts_out( &f_out );
+      ts_out << QString( "HEADER    US-SOMO PDB Editor hybrid extract from %1\n" ).arg( filename );
+      ts_out << remark;
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         ts_out <<
+            QString( "MODEL     %1\n%2\nENDMDL\n" )
+            .arg( QString( "" ).sprintf( "%4u", i + 1 ) )
+            .arg( it->second[ i ] );
+      }
+      ts_out << "END\n";
+      f_out.close();
+   }
+
+   editor_msg( "dark blue", "Hybrid extract done");
+   return;
+}
+
+void US_Hydrodyn_Pdb_Tool::h_to_chainX()
+{
+   // read through a pdb
+   // match hydrogens to atom
+   // collect up into output pdb(s)
+
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: PDB Editor - H to chain X"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   QFile f( filename );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: PDB Editor - H to chain X"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   editor_msg( "dark blue", QString( tr( "H to Chain X: processing file %1" ).arg( f.name() ) ) );
+   
+   QRegExp rx_atom ("^(ATOM|HETATM)");
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end  ("^END");
+
+   QTextStream ts( &f );
+   unsigned int line_count = 0;
+
+   QString     out;
+   QStringList hydrogens;
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      line_count++;
+      if ( line_count && !(line_count % 100000 ) )
+      {
+         editor_msg( "dark blue", QString( tr( "Lines read %1" ).arg( line_count ) ) );
+         qApp->processEvents();
+      }
+      if ( qs.contains( rx_atom ) )
+      {
+         QString atom        = qs.mid( 12, 4 ).stripWhiteSpace();
+         QString atom_left   = atom.right( atom.length() - 1 );
+         if ( atom.left( 1 ) == "H" )
+         {
+            hydrogens << qs;
+         } else {
+            out += qs + "\n";
+         }
+      } else {
+         if ( qs.contains( rx_end ) && hydrogens.size() )
+         {
+            // flush out hydrogens into this chain
+            out += "TER\n";
+            for ( unsigned int i = 0; i < hydrogens.size(); i++ )
+            {
+               hydrogens[ i ]
+                  .replace( 12, 4, " XH " )
+                  .replace( 17, 3, "XHY" )
+                  .replace( 21, 1, "X" )
+                  .replace( 22, 4, QString( "" ).sprintf( "%4u",  i + 1 ) );
+               out += hydrogens[ i ] + "\n";
+            }
+            out += "TER\n";
+            hydrogens.clear();
+         }
+         out += qs + "\n";
       }
    }
-   cout << "\n";
 
-   editor_msg( "dark blue", "Hybrid split done");
-   pb_hybrid_split->setEnabled( true );
+   f.close();
+
+   if ( hydrogens.size() )
+   {
+      // flush out hydrogens into this chain
+      out += "TER\n";
+      for ( unsigned int i = 0; i < hydrogens.size(); i++ )
+      {
+         hydrogens[ i ]
+            .replace( 12, 4, " XH " )
+            .replace( 17, 3, "XHY" )
+            .replace( 21, 1, "X" );
+         out += hydrogens[ i ] + "\n";
+            }
+      out += "TER\n";
+      hydrogens.clear();
+   }
+
+   QString fbase = QFileInfo( filename ).dirPath() + SLASH + QFileInfo( filename ).baseName();
+   QFile f_out( QString( "%1-HX.pdb" ).arg( fbase ) );
+
+   if ( !f_out.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, 
+                            tr( "US-SOMO: PDB editor : H to chain X" ),
+                            QString( tr( "Error: Can not open file %1 for writing" ) ).arg( f_out.name() ) );
+      return;
+   }
+   
+   editor_msg( "blue", QString( tr( "Creating %1" ) ).arg( f_out.name() ) );
+
+   QTextStream ts_out( &f_out );
+   ts_out << out;
+   f_out.close();
+   
+   editor_msg( "dark blue", "H to chain X done");
    return;
 }
 

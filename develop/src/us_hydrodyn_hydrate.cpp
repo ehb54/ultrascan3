@@ -3326,14 +3326,14 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    return true;
 }
 
-bool US_Hydrodyn::selected_models_contain_SWH()
+bool US_Hydrodyn::selected_models_contain( QString residue )
 {
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++) {
       if ( lb_model->isSelected( i ) ) {
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               if ( this_atom->resName == "SWH" )
+               if ( this_atom->resName == residue )
                {
                   return true;
                }

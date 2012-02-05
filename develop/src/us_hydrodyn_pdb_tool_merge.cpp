@@ -1181,6 +1181,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
    sel_to_range( lv_csv_from, from_ranges, false );
    sel_to_range( lv_csv_to  , to_ranges  , false );
 
+   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   {
+      cout << QString( "From ranges %1: " ).arg( i ) << from_ranges[ i ] << endl;
+   }
+   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   {
+      cout << QString( "To ranges %1: " ).arg( i ) << to_ranges[ i ] << endl;
+   }
+
    map < QString, unsigned int > from_range_pos;
 
    for ( unsigned int i = 0; i < from_ranges.size(); i++ )

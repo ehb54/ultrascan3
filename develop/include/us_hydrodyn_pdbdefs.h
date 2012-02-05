@@ -287,6 +287,8 @@ struct saxs_options
 
    bool    iqq_log_fitting;
    bool    iqq_scaled_fitting;
+
+   bool    iqq_use_atomic_ff;
 };
 
 struct saxs_atom

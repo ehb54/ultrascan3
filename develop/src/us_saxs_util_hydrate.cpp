@@ -2226,7 +2226,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
    return true;
 }
 
-bool US_Saxs_Util::selected_models_contain_SWH()
+bool US_Saxs_Util::selected_models_contain( QString residue )
 {
    for ( unsigned int i = 0; i < model_vector.size(); i++) 
    {
@@ -2235,7 +2235,7 @@ bool US_Saxs_Util::selected_models_contain_SWH()
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
          {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            if ( this_atom->resName == "SWH" )
+            if ( this_atom->resName == residue )
             {
                return true;
             }

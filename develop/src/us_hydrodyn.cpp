@@ -2139,12 +2139,24 @@ void US_Hydrodyn::update_bead_model_prefix(const QString &str)
 
 int US_Hydrodyn::calc_somo()
 {
-   if ( selected_models_contain_SWH() )
+   if ( selected_models_contain( "SWH" ) )
    {
       QMessageBox::warning( this,
                             tr( "Selected model contains SWH residue" ),
                             tr( 
                                "Can not process models that contain the SWH residue.\n"
+                               "These are currently generated only for SAXS/SANS computations\n"
+                               )
+                            );
+      return -1;
+   }
+
+   if ( selected_models_contain( "XHY" ) )
+   {
+      QMessageBox::warning( this,
+                            tr( "Selected model contains XHY residue" ),
+                            tr( 
+                               "Can not process models that contain the XHY residue.\n"
                                "These are currently generated only for SAXS/SANS computations\n"
                                )
                             );
@@ -2288,13 +2300,25 @@ int US_Hydrodyn::calc_somo()
 
 int US_Hydrodyn::calc_grid_pdb()
 {
-   if ( selected_models_contain_SWH() )
+   if ( selected_models_contain( "SWH" ) )
    {
       QMessageBox::warning( this,
                             tr( "Selected model contains SWH residue" ),
                             tr( 
                                "Can not process models that contain the SWH residue.\n"
                                "These are currently generated only for SAXS/SANS computations"
+                               )
+                            );
+      return -1;
+   }
+
+   if ( selected_models_contain( "XHY" ) )
+   {
+      QMessageBox::warning( this,
+                            tr( "Selected model contains XHY residue" ),
+                            tr( 
+                               "Can not process models that contain the XHY residue.\n"
+                               "These are currently generated only for SAXS/SANS computations\n"
                                )
                             );
       return -1;

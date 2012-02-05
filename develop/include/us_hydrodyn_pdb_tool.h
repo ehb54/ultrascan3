@@ -66,6 +66,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_join_pdbs;
       QPushButton   *pb_merge;
       QPushButton   *pb_hybrid_split;
+      QPushButton   *pb_h_to_chainX;
 
       QLabel        *lbl_csv;
       QListView     *lv_csv;
@@ -230,6 +231,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void join_pdbs();
       void merge();
       void hybrid_split();
+      void h_to_chainX();
 
       void csv_selection_changed();
       void csv_load_1();
