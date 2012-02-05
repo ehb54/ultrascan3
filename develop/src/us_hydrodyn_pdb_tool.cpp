@@ -156,6 +156,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_merge, SIGNAL(clicked()), SLOT(merge()));
 
+   pb_hybrid_split = new QPushButton(tr("Hybrid split"), this);
+   pb_hybrid_split->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_hybrid_split->setMinimumHeight(minHeight1);
+   pb_hybrid_split->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_hybrid_split, SIGNAL(clicked()), SLOT(hybrid_split()));
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -268,6 +274,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_merge->setMinimumHeight(minHeight1);
    pb_csv_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_merge, SIGNAL(clicked()), SLOT(csv_merge()));
+
+   pb_csv_angle = new QPushButton(tr("Angle"), this);
+   pb_csv_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_angle->setMinimumHeight(minHeight1);
+   pb_csv_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_angle, SIGNAL(clicked()), SLOT(csv_angle()));
 
    pb_csv_reseq = new QPushButton(tr("Reseq"), this);
    pb_csv_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -438,6 +450,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_merge, SIGNAL(clicked()), SLOT(csv2_merge()));
 
+   pb_csv2_angle = new QPushButton(tr("Angle"), this);
+   pb_csv2_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_angle->setMinimumHeight(minHeight1);
+   pb_csv2_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_angle, SIGNAL(clicked()), SLOT(csv2_angle()));
+
    pb_csv2_reseq = new QPushButton(tr("Reseq"), this);
    pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_csv2_reseq->setMinimumHeight(minHeight1);
@@ -535,7 +553,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    QBoxLayout *hbl_left_buttons_row_2 = new QHBoxLayout;
    hbl_left_buttons_row_2->addWidget( pb_merge );
 
-   // QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
+   QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
+   hbl_left_buttons_row_3->addWidget( pb_hybrid_split );
 
    QBoxLayout *hbl_left_buttons_row_4 = new QHBoxLayout;
    hbl_left_buttons_row_4->addWidget( pb_help );
@@ -545,7 +564,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    QBoxLayout *vbl_left_buttons = new QVBoxLayout;
    vbl_left_buttons->addLayout( hbl_left_buttons_row_1 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_2 );
-   // vbl_left_buttons->addLayout( hbl_left_buttons_row_3 );
+   vbl_left_buttons->addLayout( hbl_left_buttons_row_3 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_4 );
 
    gl_panes->addLayout( vbl_left_buttons, 1, 0 );
@@ -582,6 +601,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_2->addWidget( pb_csv_paste_new );
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_merge );
+   hbl_center_buttons_row_2->addSpacing( 2 );
+   hbl_center_buttons_row_2->addWidget( pb_csv_angle );
 
    QBoxLayout *hbl_center_buttons_row_3 = new QHBoxLayout;
    hbl_center_buttons_row_3->addWidget( pb_csv_reseq );
@@ -655,6 +676,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_2->addWidget( pb_csv2_paste_new );
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_merge );
+   hbl_right_buttons_row_2->addSpacing( 2 );
+   hbl_right_buttons_row_2->addWidget( pb_csv2_angle );
 
    QBoxLayout *hbl_right_buttons_row_3 = new QHBoxLayout;
    hbl_right_buttons_row_3->addWidget( pb_csv2_reseq );
@@ -775,6 +798,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_paste_new            ->setEnabled( csv_clipboard.data.size() );
    pb_csv_merge                ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge               ->setEnabled( any_csv2_selected && merge_ok() );
+   pb_csv_angle                ->setEnabled( counts.atoms == 3 );
    pb_csv_reseq                ->setEnabled( csv1.data.size() );
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_find_alt             ->setEnabled( counts.residues == 1 );
@@ -813,6 +837,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_paste_new            ->setEnabled( csv_clipboard.data.size() );
    pb_csv_merge                 ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge                ->setEnabled( any_csv2_selected && merge_ok() );
+   pb_csv2_angle                ->setEnabled( counts.atoms == 3 );
    pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_find_alt             ->setEnabled( counts.residues == 1 );
@@ -2730,6 +2755,83 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
    editor_msg( "blue", QString( tr( "Pairwise distance report for %1 atoms done") ).arg( atoms ) );
 }
 
+void US_Hydrodyn_Pdb_Tool::compute_angle( QListView *lv )
+{
+   editor_msg( "blue", tr( "compute angle" ) );
+   vector < QString > atom_names;
+   vector < point > p;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->childCount() && is_selected( item1 ) )
+      {
+         atom_names.push_back( get_atom_name( item1 ) );
+         point this_p;
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            this_p.axis[ j ] = item1->text( 3 + j ).toFloat();
+         }
+         p.push_back( this_p );
+      }
+      ++it1;
+   }
+   
+   if ( atom_names.size() != 3 )
+   {
+      editor_msg( "red", 
+                  QString( tr( "Error: compute angle: exactly 3 atoms must be selected, %1 are selected" ) )
+                  .arg( atom_names.size() ) );
+      return;
+   }
+
+   QString res;
+   // base atom[ 0 ]
+   {
+      float a = acosf( ((US_Hydrodyn *)us_hydrodyn)->dot( ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 1 ], p[ 0 ] ) ),
+                                                          ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 2 ], p[ 0 ] ) ) ) );
+      
+      res += 
+         QString( tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+         .arg( atom_names[ 1 ] )
+         .arg( atom_names[ 0 ] )
+         .arg( atom_names[ 2 ] )
+         .arg( a )
+         .arg( a * 180.0 / M_PI )
+         ;
+   }
+   // base atom[ 1 ]
+   {
+      float a = acosf( ((US_Hydrodyn *)us_hydrodyn)->dot( ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 0 ], p[ 1 ] ) ),
+                                                          ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 2 ], p[ 1 ] ) ) ) );
+      res += 
+         QString( tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+         .arg( atom_names[ 0 ] )
+         .arg( atom_names[ 1 ] )
+         .arg( atom_names[ 2 ] )
+         .arg( a )
+         .arg( a * 180.0 / M_PI )
+         ;
+   }
+   // base atom[ 2 ]
+   {
+      float a = acosf( ((US_Hydrodyn *)us_hydrodyn)->dot( ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 0 ], p[ 2 ] ) ),
+                                                          ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 1 ], p[ 2 ] ) ) ) );
+      res += 
+         QString( tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+         .arg( atom_names[ 0 ] )
+         .arg( atom_names[ 2 ] )
+         .arg( atom_names[ 1 ] )
+         .arg( a )
+         .arg( a * 180.0 / M_PI )
+         ;
+   }
+   editor_msg( "black", res );
+   editor_msg( "blue", tr( "compute angle done" ) );
+
+}
+
 QString US_Hydrodyn_Pdb_Tool::get_atom_name( QListViewItem *lvi )
 {
    QString atom = 
@@ -2830,6 +2932,11 @@ void US_Hydrodyn_Pdb_Tool::csv_clash_report()
    distances( lv_csv );
 }
 
+void US_Hydrodyn_Pdb_Tool::csv_angle()
+{
+   compute_angle( lv_csv );
+}
+
 void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
 {
    pdb_sel_count counts = count_selected( lv_csv );
@@ -2873,6 +2980,11 @@ void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_residues()
 void US_Hydrodyn_Pdb_Tool::csv2_clash_report()
 {
    distances( lv_csv2 );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_angle()
+{
+   compute_angle( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_msg()
@@ -3452,6 +3564,215 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    editor_msg( "dark blue", "Split done");
    pb_split_pdb->setEnabled( true );
+   return;
+}
+
+void US_Hydrodyn_Pdb_Tool::hybrid_split()
+{
+   // read through a pdb
+   // match hydrogens to atom
+   // collect up into output pdb(s)
+
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: PDB Editor - Hybrid Split"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   QFile f( filename );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: PDB Editor - Hybrid Split"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      return;
+   }
+
+   editor_msg( "dark blue", QString( tr( "Checking file %1" ).arg( f.name() ) ) );
+
+   
+   QRegExp rx_atom("^ATOM");
+
+   QTextStream ts( &f );
+   unsigned int line_count = 0;
+
+   map < QString, vector < QString > > atoms_with_hydrogens;
+   map < QString, QString > this_residue;
+   map < QString, QString > this_residue_hydrogens;
+
+   QString last_residue     = "";
+   QString last_residue_seq = "";
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      line_count++;
+      if ( line_count && !(line_count % 100000 ) )
+      {
+         editor_msg( "dark blue", QString( tr( "Lines read %1" ).arg( line_count ) ) );
+         qApp->processEvents();
+      }
+      if ( qs.contains( rx_atom ) )
+      {
+         // cout << QString( "got atom <%1>\n" ).arg( qs );
+         QString atom        = qs.mid( 12, 4 ).stripWhiteSpace();
+         QString atom_left   = atom.right( atom.length() - 1 );
+         QString atom_hmap   = qs.mid( 12, 3 ).stripWhiteSpace();
+         atom_hmap           = atom_hmap.right( atom_hmap.length() - 1 );
+         QString atom_hseq   = qs.mid( 15, 1 );
+         if ( atom_hseq == " " && atom_hmap.contains( QRegExp( "^\\d$" ) ) )
+         {
+            atom_hseq = atom_hmap;
+            atom_hmap = "";
+         }
+
+         if ( !this_residue.count( atom_hmap ) )
+         {
+            // cout << QString( "hmap does not contain <%1>, trying alternate\n" ).arg( atom_hmap );
+            atom_hmap        = qs.mid( 12, 4 ).stripWhiteSpace();
+            atom_hmap        = atom_hmap.right( atom_hmap.length() - 1 );
+            atom_hseq        = " ";
+         }
+         QString atom_hkey   = atom_hmap + ":" + atom_hseq;
+         QString residue     = qs.mid( 17, 3 ).stripWhiteSpace();
+         QString residue_seq = qs.mid( 22, 4 ).stripWhiteSpace();
+         
+         bool is_hydrogen = atom.left( 1 ) == "H";
+
+         if ( !last_residue_seq.isEmpty() &&
+              ( residue_seq != last_residue_seq ||
+                residue     != last_residue ) )
+         {
+            // cout << QString( "store previous\n" );
+            // match up hydrogens and push back to atoms with hydrogens
+            map < QString, unsigned int > used_residues;
+            for ( map < QString, QString >::iterator it = this_residue_hydrogens.begin();
+                  it != this_residue_hydrogens.end();
+                  it ++ )
+            {
+               QString href = it->first;
+               href.replace( QRegExp( ":.$" ), "" );
+               href.replace( QRegExp( "^\\d$" ), "" );
+               // cout << QString( "href <%1>\n" ).arg( href );
+               if ( !this_residue.count( href ) )
+               {
+                  editor_msg( "red", QString( tr( "Error: hydrogen ref <%1> but no atom with ref" ) ).arg( href ) );
+                  return;
+               }
+               this_residue [ href ] += "\n" + it->second;
+               if ( used_residues.count( href ) )
+               {
+                  used_residues[ href ]++;
+               } else {
+                  used_residues[ href ] = 1;
+               }
+            }
+            for ( map < QString, unsigned int >::iterator it = used_residues.begin();
+                  it != used_residues.end();
+                  it ++ )
+            {
+               QString atom_hybrid = 
+                  QString( "%1H%2" )
+                  .arg( this_residue[ it->first ].mid( 77, 1 ) )
+                  .arg( it->second );
+               atoms_with_hydrogens[ atom_hybrid ].push_back( this_residue[ it->first ] );
+            }
+            this_residue          .clear();
+            this_residue_hydrogens.clear();
+         }
+         last_residue          = residue;
+         last_residue_seq      = residue_seq;
+         
+         if ( is_hydrogen )
+         {
+            // cout << QString( "is hydrogen key <%1>\n" ).arg( atom_hkey );
+            this_residue_hydrogens[ atom_hkey ] = qs;
+         } else {
+            if ( atom != "C" && atom != "O" )
+            {
+               // cout << QString( "is not hydrogen key <%1>\n" ).arg( atom_left );
+               this_residue          [ atom_left ] = qs;
+            }
+         }
+      }
+   }
+   
+   // flush last one
+   if ( !last_residue_seq.isEmpty() )
+   {
+      // cout << QString( "store previous\n" );
+      // match up hydrogens and push back to atoms with hydrogens
+      map < QString, unsigned int > used_residues;
+      for ( map < QString, QString >::iterator it = this_residue_hydrogens.begin();
+            it != this_residue_hydrogens.end();
+            it ++ )
+      {
+         QString href = it->first;
+         href.replace( QRegExp( ":.$" ), "" );
+         href.replace( QRegExp( "^\\d$" ), "" );
+         // cout << QString( "href <%1>\n" ).arg( href );
+         if ( !this_residue.count( href ) )
+         {
+            editor_msg( "red", QString( tr( "Error: hydrogen ref <%1> but no atom with ref" ) ).arg( href ) );
+            return;
+         }
+         this_residue [ href ] += "\n" + it->second;
+         if ( used_residues.count( href ) )
+         {
+            used_residues[ href ]++;
+         } else {
+            used_residues[ href ] = 1;
+         }
+      }
+      for ( map < QString, unsigned int >::iterator it = used_residues.begin();
+            it != used_residues.end();
+            it ++ )
+      {
+         QString atom_hybrid = 
+            QString( "%1H%2" )
+            .arg( this_residue[ it->first ].mid( 77, 1 ) )
+            .arg( it->second );
+         atoms_with_hydrogens[ atom_hybrid ].push_back( this_residue[ it->first ] );
+      }
+      this_residue          .clear();
+      this_residue_hydrogens.clear();
+   }
+   
+   f.close();
+
+   for ( map < QString, vector < QString > >::iterator it = atoms_with_hydrogens.begin();
+         it != atoms_with_hydrogens.end();
+         it++ )
+   {
+      cout << endl << it->first << ":" << endl;
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         cout << QString( "\n%1:--------\n%2\n------" ).arg( i ).arg( it->second[ i ] );
+      }
+   }
+   cout << "\n";
+
+   editor_msg( "dark blue", "Hybrid split done");
+   pb_hybrid_split->setEnabled( true );
    return;
 }
 

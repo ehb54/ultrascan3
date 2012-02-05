@@ -65,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_split_pdb;
       QPushButton   *pb_join_pdbs;
       QPushButton   *pb_merge;
+      QPushButton   *pb_hybrid_split;
 
       QLabel        *lbl_csv;
       QListView     *lv_csv;
@@ -80,6 +81,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_paste;
       QPushButton   *pb_csv_paste_new;
       QPushButton   *pb_csv_merge;
+      QPushButton   *pb_csv_angle;
       QPushButton   *pb_csv_reseq;
       QPushButton   *pb_csv_check;
       QPushButton   *pb_csv_find_alt;
@@ -109,6 +111,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_paste;
       QPushButton   *pb_csv2_paste_new;
       QPushButton   *pb_csv2_merge;
+      QPushButton   *pb_csv2_angle;
       QPushButton   *pb_csv2_reseq;
       QPushButton   *pb_csv2_check;
       QPushButton   *pb_csv2_find_alt;
@@ -213,6 +216,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QStringList   model_set              ( QListView *lv ); // returns a list of selected models
       void          select_model           ( QListView *lv, QString model ); // selects just that model
       void          select_chain           ( QListView *lv ); // selected a set of chains
+      void          compute_angle          ( QListView *lv );
 
    private slots:
       
@@ -225,6 +229,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void split_pdb();
       void join_pdbs();
       void merge();
+      void hybrid_split();
 
       void csv_selection_changed();
       void csv_load_1();
@@ -237,6 +242,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_paste();
       void csv_paste_new();
       void csv_merge();
+      void csv_angle();
       void csv_reseq();
       void csv_check();
       void csv_find_alt();
@@ -261,6 +267,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_paste();
       void csv2_paste_new();
       void csv2_merge();
+      void csv2_angle();
       void csv2_reseq();
       void csv2_check();
       void csv2_find_alt();
