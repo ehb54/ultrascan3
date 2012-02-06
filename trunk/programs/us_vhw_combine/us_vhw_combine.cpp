@@ -396,9 +396,23 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
    data_plot1->replot();
 }
 
-// save the plot data
+// Save the plot data
 void US_vHW_Combine::save( void )
-{ 
+{
+   QSvgGenerator generator;
+   QString fdir     = US_Settings::reportDir() + "/" + pdistrs[ 0 ].runID;
+   QString fname    = "vHW." + pdistrs[ 0 ].triple + ".combo-distrib.svg";
+   QString plotFile = fdir + "/" + fname;
+
+   // Save plot file
+   generator.setSize    ( data_plot1->size() );
+   generator.setFileName( plotFile );
+   data_plot1->print    ( generator );
+
+   // Report saved file
+   QMessageBox::information( this, tr( "Combo Distro Plot File Save" ),
+       tr( "Saved:" )        + "\n    " + fname + "\n" +
+       tr( "in directory:" ) + "\n    " + fdir );
 }
 
 // RunID selected
@@ -570,8 +584,8 @@ int US_vHW_Combine::envel_data( DistrDesc& ddesc )
 
    for ( int jj = 0; jj < ndpts; jj++ )
    {  // get min,max intercept sedimentation coefficients
-      max_cept   = max( max_cept, ddesc.dsedcs.at( jj ) );
-      min_cept   = min( min_cept, ddesc.dsedcs.at( jj ) );
+      min_cept   = qMin( min_cept, ddesc.dsedcs.at( jj ) );
+      max_cept   = qMax( max_cept, ddesc.dsedcs.at( jj ) );
    }
 
    // calculate values based on range and sensitivity

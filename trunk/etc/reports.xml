@@ -58,4 +58,5 @@
     <report name="fitmen" label="Fit Meniscus Results" />
     <report name="eqfit" label="Equilibrium Fit Analysis" />
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
+    <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
 </US_Reports>
