@@ -589,7 +589,7 @@ void US_FitMeniscus::scan_dbase()
       QDateTime lmtime   = db.value( 7 ).toDateTime();
       lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_',  4,  4 );
+      QString iterID     = ansysID .section( '_', -1, -1 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
       if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
@@ -599,7 +599,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
-         QString editLabel  = ansysID .section( '_',  0,  0 );
+         QString editLabel  = ansysID .section( '_',  0, -5 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
                               "-" + tripleID + ".fitmen.dat";
          mdescr.description = descript;
@@ -650,7 +650,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       QDateTime lmtime   = db.value( 6 ).toDateTime();
       lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_',  4,  4 );
+      QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
 
       if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
@@ -661,7 +661,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
-         QString editLabel  = ansysID .section( '_',  0,  0 );
+         QString editLabel  = ansysID .section( '_',  0, -5 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
                               "-" + tripleID + ".fitmen.dat";
          mdescr.description = descript;
@@ -935,14 +935,14 @@ DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
-      QString iterID     = anRunID .section( '_',  4,  4 );
+      QString iterID     = anRunID .section( '_', -1, -1 );
 //DbgLv(1) << "RmvMod:    iterID" << iterID;
 
       if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
          continue;    // Can't use if not a fit-meniscus type
 
       // Probably a file from the right set, but let's check for other sets
-      int     arTime     = anRunID .section( '_',  1,  1 ).mid( 1 ).toInt();
+      int     arTime     = anRunID .section( '_', -4, -4 ).mid( 1 ).toInt();
 DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
 
       if ( arTime > lArTime )
@@ -1053,14 +1053,14 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
           ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
-         QString iterID     = anRunID .section( '_',  4,  4 );
+         QString iterID     = anRunID .section( '_', -1, -1 );
 //DbgLv(1) << "RmvMod:    iterID" << iterID;
 
          if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
             continue;    // Can't use if not a fit-meniscus type
 
          // Probably a file from the right set, but let's check for other sets
-         int     arTime     = anRunID .section( '_',  1,  1 ).mid( 1 ).toInt();
+         int     arTime     = anRunID .section( '_', -4, -4 ).mid( 1 ).toInt();
 
          if ( arTime > dArTime )
          {  // If first set or new one younger than previous, start lists
