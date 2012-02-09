@@ -168,6 +168,15 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
       ymax    = drecti.bottom();
    }
 
+   if ( nsol == 1 )
+   {
+      zmin   *= zfloor;
+      xmin   *= 0.90;
+      xmax   *= 1.10;
+      ymin   *= 0.90;
+      ymax   *= 1.10;
+   }
+
    xrng    = xmax - xmin;
    yrng    = ymax - ymin;
    xinc    = ( xreso - 1.0 ) / xrng;

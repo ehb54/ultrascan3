@@ -714,6 +714,14 @@ void US_GA_Initialize::plot_1dim( void )
       cmax        = ( cmax > cval ) ? cmax : cval;
    }
 
+   if ( dsize == 1 )
+   {
+      smin       *= 0.95;
+      smax       *= 1.05;
+      cmin       *= 0.95;
+      cmax       *= 1.05;
+   }
+
    double rdif = ( smax - smin ) / 20.0;
    smin       -= rdif;
    smax       += rdif;
@@ -777,6 +785,14 @@ void US_GA_Initialize::plot_2dim( void )
       smax        = ( smax > sval ) ? smax : sval;
       fmin        = ( fmin < fval ) ? fmin : fval;
       fmax        = ( fmax > fval ) ? fmax : fval;
+   }
+
+   if ( dsize == 1 )
+   {
+      smin       *= 0.95;
+      smax       *= 1.05;
+      fmin       *= 0.95;
+      fmax       *= 1.05;
    }
 
    double rdif = ( smax - smin ) / 20.0;
@@ -1387,6 +1403,16 @@ void US_GA_Initialize::set_limits()
    smax     += rdif;
    smin      = ( smin < 0.0 ) ? 0.0 : smin;
    rdif      = ( fmax - fmin ) / 10.0;
+
+   if ( sdistro->size() == 1 )
+   {
+      rdif      = smin * 0.05;
+      smin     -= rdif;
+      smax     += rdif;
+      rdif      = fmin * 0.05;
+      fmin     -= rdif;
+      fmax     += rdif;
+   }
 
    if ( rdif == 0.0 )
    {

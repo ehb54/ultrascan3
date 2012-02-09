@@ -437,7 +437,13 @@ void US_ManageData::scan_data()
 {
    da_model->scan_data();          // scan the data
 
+   lb_status->setText( tr( "Building Data Tree..." ) );
+   qApp->processEvents();
+
    da_tree ->build_dtree();        // rebuild the data tree with present data
+
+   lb_status->setText( tr( "Data Tree Build Complete" ) );
+   qApp->processEvents();
 
    // resize so all of columns are shown
    tw_recs->expandAll();                      // expand the entire tree
