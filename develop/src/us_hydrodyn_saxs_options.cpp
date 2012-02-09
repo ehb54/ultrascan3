@@ -951,12 +951,20 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    connect(cb_subtract_radius, SIGNAL(clicked()), this, SLOT(set_subtract_radius()));
 
    cb_iqq_use_atomic_ff = new QCheckBox(this);
-   cb_iqq_use_atomic_ff->setText(tr(" Use atomic FF's"));
+   cb_iqq_use_atomic_ff->setText(tr(" Explicit hydrogens"));
    cb_iqq_use_atomic_ff->setEnabled(true);
    cb_iqq_use_atomic_ff->setChecked((*saxs_options).iqq_use_atomic_ff);
    cb_iqq_use_atomic_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq_use_atomic_ff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_use_atomic_ff, SIGNAL(clicked()), this, SLOT(set_iqq_use_atomic_ff()));
+
+   cb_iqq_use_saxs_excl_vol = new QCheckBox(this);
+   cb_iqq_use_saxs_excl_vol->setText(tr(" Use saxs exclulded volume"));
+   cb_iqq_use_saxs_excl_vol->setEnabled(true);
+   cb_iqq_use_saxs_excl_vol->setChecked((*saxs_options).iqq_use_saxs_excl_vol);
+   cb_iqq_use_saxs_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_use_saxs_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_use_saxs_excl_vol, SIGNAL(clicked()), this, SLOT(set_iqq_use_saxs_excl_vol()));
 
    lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve q range for scaling, NNLS and best fit (Angstrom) "), this);
    lbl_iqq_scale_min_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -1247,8 +1255,11 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellLayout(hbl_various_2b, k, k, 2, 3);
    k++;
 
-   background->addWidget(cb_iqq_use_atomic_ff, k, 2);
-   background->addWidget(pb_clear_mw_cache, k, 3);
+   QHBoxLayout *hbl_various_2c = new QHBoxLayout;
+   hbl_various_2c->addWidget( cb_iqq_use_atomic_ff );
+   hbl_various_2c->addWidget( cb_iqq_use_saxs_excl_vol );
+   hbl_various_2c->addWidget( pb_clear_mw_cache );
+   background->addMultiCellLayout(hbl_various_2c, k, k, 2, 3);
    k++;
 
    QHBoxLayout *hbl_iqq_scaling = new QHBoxLayout;
@@ -1970,6 +1981,12 @@ void US_Hydrodyn_SaxsOptions::set_subtract_radius()
 void US_Hydrodyn_SaxsOptions::set_iqq_use_atomic_ff()
 {
    (*saxs_options).iqq_use_atomic_ff = cb_iqq_use_atomic_ff->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iqq_use_saxs_excl_vol()
+{
+   (*saxs_options).iqq_use_saxs_excl_vol = cb_iqq_use_saxs_excl_vol->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

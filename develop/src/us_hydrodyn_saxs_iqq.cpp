@@ -1101,6 +1101,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
    progress_saxs->reset();
    QRegExp count_hydrogens("H(\\d)");
 
+   if ( our_saxs_options->iqq_use_atomic_ff )
+   {
+      editor_msg( "dark red", "using explicit hydrogens" );
+   }
+   if ( our_saxs_options->iqq_use_saxs_excl_vol  )
+   {
+      editor_msg( "dark red", "using excluded volume from saxs atoms" );
+   }
+
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
       double tot_excl_vol      = 0e0;
@@ -1135,6 +1144,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             new_atom.pos[0] = this_atom->coordinate.axis[0];
             new_atom.pos[1] = this_atom->coordinate.axis[1];
             new_atom.pos[2] = this_atom->coordinate.axis[2];
+
+            if ( this_atom->name == "XH" && !our_saxs_options->iqq_use_atomic_ff )
+            {
+               continue;
+            }
 
             QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
             if ( this_atom->name == "OXT" )
@@ -1232,30 +1246,44 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
                ;
 
-
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options->swh_excl_vol;
             }
+            if ( this_atom->name == "XH" )
+            {
+               // skip excl vol for now
+               new_atom.excl_vol = 0e0;
+            }
+
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
+
+               
+            if ( our_saxs_options->iqq_use_saxs_excl_vol )
+            {
+               new_atom.excl_vol = saxs_map[hybrid_map[hybrid_name].saxs_name].volume;
+            }
+
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
                tot_excl_vol_noh  += new_atom.excl_vol;
                total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
+
             new_atom.radius = hybrid_map[hybrid_name].radius;
             tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( !our_saxs_options->iqq_use_atomic_ff &&
+                 count_hydrogens.search(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1291,6 +1319,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                continue;
             }
 
+#define SAXS_DEBUG2
 #if defined(SAXS_DEBUG2)
             cout << "Atom: "
                  << this_atom->name
