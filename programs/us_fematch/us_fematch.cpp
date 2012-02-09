@@ -271,7 +271,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    
    // Plots
    plotLayout1 = new US_Plot( data_plot1,
-            tr( "Experimental Data" ),
+            tr( "Residuals" ),
             tr( "Radius (cm)" ),
             tr( "OD Difference" ) );
 
@@ -473,6 +473,7 @@ void US_FeMatch::update( int drow )
    edata          = &dataList[ drow ];
    scanCount      = edata->scanData.size();
    runID          = edata->runID;
+   haveSim        = false;
    le_id->  setText( runID + " / " + edata->editID );
 
    double avgTemp = edata->average_temperature();
@@ -556,6 +557,36 @@ void US_FeMatch::update( int drow )
    {
       delete dbP;
       dbP = NULL;
+   }
+
+   pb_view     ->setEnabled( false );
+   pb_save     ->setEnabled( false );
+   pb_simumodel->setEnabled( false );
+   pb_distrib  ->setEnabled( false );
+   pb_advanced ->setEnabled( false );
+   pb_plot3d   ->setEnabled( false );
+   pb_plotres  ->setEnabled( false );
+   pb_distrib  ->setText   ( tr( "s20,W Distribution" ) );
+
+   if ( eplotcd != 0 )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+      eplotcd  = 0;
+   }
+
+   if ( resplotd != 0 )
+   {
+      rpd_pos  = resplotd->pos();
+      resplotd->close();
+      resplotd = 0;
+   }
+
+   if ( rbmapd != 0 )
+   {
+      bmd_pos  = rbmapd->pos();
+      rbmapd->close();
+      rbmapd   = 0;
    }
 }
 
@@ -781,6 +812,7 @@ DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
    {  // No simulation exists yet
       data_plot1->detachItems();
       data_plot1->clear();
+      data_plot1->setTitle( tr( "Residuals" ) );
       data_plot1->replot();
    }
 
@@ -1777,6 +1809,7 @@ DbgLv(1) << " kscan nscan nconc" << kscan << nscan << nconc;
 DbgLv(1) << " radlo radhi" << radlo << radhi;
 DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    adjust_model();
 
    // Initialize simulation parameters using edited data information
@@ -1923,6 +1956,7 @@ DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
    plot3d();
 
    plotres();
+   QApplication::restoreOverrideCursor();
 }
 
 // pare down files list by including only the last-edit versions
