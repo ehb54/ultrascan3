@@ -363,7 +363,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
    {
       buk         = buks1->at( jj );
       cval        = buk.conc;
-      if ( cval > cutlo )
+      if ( cval >= cutlo )
       {
          buks2->append( buk );
       }

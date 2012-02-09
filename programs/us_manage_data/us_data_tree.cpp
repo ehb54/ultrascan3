@@ -67,6 +67,9 @@ void US_DataTree::build_dtree( )
    QBrush  fbru( colorBrown );
    QBrush  bbru( colorWhite );
    QTreeWidgetItem* pitems[4];
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+   US_DB2*   dbP = &db;
 
    da_process = (US_DataProcess*)da_model->procobj();
 
@@ -78,6 +81,9 @@ void US_DataTree::build_dtree( )
    ndraws     = ndedts = ndmods = ndnois = 0;
    nlraws     = nledts = nlmods = nlnois = 0;
    tw_recs->clear();
+   QProgressBar* progress = da_model->progrBar();
+   progress->setMaximum( ncrecs );
+   progress->setValue  ( 0 );
 
    for ( int ii = 0; ii < ncrecs; ii++ )
    {
@@ -160,7 +166,7 @@ void US_DataTree::build_dtree( )
          {
             QString cont1 = cdesc.contents.section( " ", 0, 1 ).simplified();
             QString cont2 = cdesc.contents.section( " ", 2, 4 ).simplified();
-            if ( cont1 != cont2  &&  significant_diffs( cdesc ) )
+            if ( cont1 != cont2  &&  significant_diffs( cdesc, dbP ) )
             {
                fbru    = QBrush( colorRed );
                rsrc    = "Conflict";
@@ -255,6 +261,9 @@ DbgLv(1) << "CONFLICT cont1 cont2" << cont1 << cont2;
          item->setForeground( jj, fbru );
          item->setBackground( jj, bbru );
       }
+
+      progress->setValue( ii + 1 );
+      qApp->processEvents();
    }
 
    // resize so all of columns are shown
@@ -1033,7 +1042,8 @@ DbgLv(1) << "acrow:  narows nrrows" << actrows.size() << rawrows.size();
 }
 
 // Check model or noise for significant differences
-bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc )
+bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc,
+      US_DB2* dbP )
 {
    bool differs = true;   // Assume significant differences unless model,noise
    const double dtoler = 5.0e-5;
@@ -1044,12 +1054,17 @@ bool US_DataTree::significant_diffs( US_DataModel::DataDesc ddesc )
       US_Model dmodel;
       US_Model fmodel;
       double   difmax = 0.0;
-      US_Passwd pw;
-      US_DB2* dbP = new US_DB2( pw.getPasswd() );
 
-      dmodel.load( QString::number( ddesc.recordID ), dbP );
-      fmodel.load( ddesc.filename );
+      int dst = dmodel.load( QString::number( ddesc.recordID ), dbP );
+      int fst = fmodel.load( ddesc.filename );
 
+      if ( dst != US_DB2::OK )
+         dmodel.description = "DBAD:" + dmodel.description;
+
+      if ( fst != US_DB2::OK )
+         fmodel.description = "FBAD:" + fmodel.description;
+
+DbgLv(1) << " CONFLICT? dst fst differs" << dst << fst << differs;
       if ( dmodel == fmodel )
          differs = false;          // Differences only in formatting
 
@@ -1136,11 +1151,15 @@ DbgLv(1) << " CONFLICT? model difmax differs" << difmax << differs;
       US_Noise dnoise;
       US_Noise fnoise;
       double   difmax = 0.0;
-      US_Passwd pw;
-      US_DB2* dbP = new US_DB2( pw.getPasswd() );
 
-      dnoise.load( QString::number( ddesc.recordID ), dbP );
-      fnoise.load( ddesc.filename );
+      int dst = dnoise.load( QString::number( ddesc.recordID ), dbP );
+      int fst = fnoise.load( ddesc.filename );
+
+      if ( dst != US_DB2::OK )
+         dnoise.description = "DBAD:" + dnoise.description;
+
+      if ( fst != US_DB2::OK )
+         fnoise.description = "FBAD:" + fnoise.description;
 
       if ( dnoise == fnoise )
          differs = false;          // Differences only in formatting

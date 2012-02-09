@@ -1805,6 +1805,7 @@ void US_DataModel::dummy_data()
    cdesc.label          = "item_1_2";
    cdesc.description    = "demo1_veloc";
    cdesc.dataGUID       = "demo1_veloc";
+   cdesc.parentID       = 1;
    cdesc.recordID       = 1;
    cdesc.filename       = "";
    adescs<<cdesc;
@@ -1816,6 +1817,7 @@ void US_DataModel::dummy_data()
    cdesc.label          = "item_2_2";
    cdesc.description    = "demo1_veloc";
    cdesc.contents       = "AA 12 AA 12";
+   cdesc.parentID       = 1;
    cdesc.recordID       = 2;
    cdesc.filename       = "demo1_veloc_edit.xml";
    adescs<<cdesc;
@@ -1827,6 +1829,7 @@ void US_DataModel::dummy_data()
    cdesc.subType        = "2DSA";
    cdesc.label          = "item_3_2";
    cdesc.description    = "demo1_veloc.sa2d.model.11";
+   cdesc.parentID       = 2;
    cdesc.recordID       = -1;
    cdesc.filename       = "demo1_veloc_model.xml";
    adescs<<cdesc;
@@ -1838,8 +1841,9 @@ void US_DataModel::dummy_data()
    cdesc.label          = "item_4_2";
    cdesc.description    = "demo1_veloc.ti_noise";
    cdesc.contents       = "BB 12 AA 13";
+   cdesc.parentID       = 2;
    cdesc.recordID       = 3;
-   cdesc.filename       = "demo1_veloc_model.xml";
+   cdesc.filename       = "demo1_veloc_noise.xml";
    adescs<<cdesc;
    ddescs<<cdesc;
    ldescs<<cdesc;
@@ -1849,6 +1853,7 @@ void US_DataModel::dummy_data()
    cdesc.subType        = "RA";
    cdesc.label          = "item_5_2";
    cdesc.description    = "demo1_veloc";
+   cdesc.contents       = "CC 15";
    cdesc.recordID       = -1;
    cdesc.filename       = "";
    adescs<<cdesc;

@@ -350,6 +350,16 @@ DbgLv(2) << "P3D:sT: type xyz" << typex << typey << typez;
       zmax  = zmax > zval ? zmax : zval;
    }
 
+   if ( ncomp == 1 )
+   {
+      zmin *= 0.90;
+      zmax *= 1.10;
+      ymin *= 0.90;
+      ymax *= 1.10;
+      xmin *= 0.90;
+      xmax *= 1.10;
+   }
+
    // extend x,y,z ranges a bit
    xval    = ( xmax - xmin ) * 0.05;
    xmin   -= xval;
