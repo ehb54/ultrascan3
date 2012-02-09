@@ -593,6 +593,8 @@ void US_Hydrodyn_Cluster::create_pkg()
    {
       base += 
          QString( "HydrationFile   %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
+      base += 
+         QString( "HydrationSCD    %1\n" ).arg( our_saxs_options->steric_clash_distance );
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
 

@@ -46,7 +46,7 @@ bool US_Saxs_Util::pdb_hydrate()
    asa.asab1_step            = control_parameters[ "asastep"               ].toFloat();
    asa.threshold_percent     = control_parameters[ "asathreshpct"          ].toFloat();
 
-   our_saxs_options.steric_clash_distance = 1.4f;
+   our_saxs_options.steric_clash_distance = 20.0f;
 
    if ( control_parameters.count( "hydrationscd" ) )
    {
@@ -2054,11 +2054,15 @@ bool US_Saxs_Util::has_steric_clash( point p )
 {
    unsigned int i = current_model;
 
+   double dist_threshold = 1e0 - ( our_saxs_options.steric_clash_distance / 100e0 );
+   double water_radius   = multi_residue_map.count( "SWH" ) ?
+      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-         if ( dist( this_atom->coordinate, p ) <= our_saxs_options.steric_clash_distance )
+         if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
          {
             return true;
          }
@@ -2072,7 +2076,7 @@ bool US_Saxs_Util::has_steric_clash( point p )
    {
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         if ( dist( it->second[ i ], p ) <= our_saxs_options.steric_clash_distance )
+         if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
          {
             return true;
          }
