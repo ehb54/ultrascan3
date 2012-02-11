@@ -28,6 +28,7 @@ class US_vHW_Combine : public US_Widgets
          public:
             QString            runID;    // Run ID
             QString            triple;   // Triple
+            QString            tdescr;   // Triple description string
             QVector< double >  dsedcs;   // Distribution sedimentation coeffs.
             QVector< double >  bfracs;   // Boundary fractions
             QVector< double >  esedcs;   // Envelope sedimentation coeffs.

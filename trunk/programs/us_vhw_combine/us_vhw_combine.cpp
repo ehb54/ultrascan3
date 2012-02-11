@@ -198,6 +198,14 @@ void US_vHW_Combine::load( void )
          QTextStream ts( &fi );
          QString fline = ts.readLine().simplified();
 
+         if ( fline.contains( "%Boundary" ) )
+            ddesc.tdescr  = tr( "(Unknown description)" );
+         else
+         {
+            ddesc.tdescr  = fline;
+            fline = ts.readLine();
+         }
+
          while ( !ts.atEnd() )
          {
             fline = ts.readLine().simplified();
@@ -216,12 +224,11 @@ DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
 
          fpath         = fpath.replace( ".distrib.", ".envelope." );
          QFile fe( fpath );
-         fline         = ts.readLine().simplified();
 
          if ( fe.open( QIODevice::ReadOnly | QIODevice::Text ) )
          {  // Read in  envelope data
             QTextStream ts( &fe );
-            QString fline = ts.readLine().simplified();
+            fline = ts.readLine();
             int     fnz   = -1;
             int     lnz   = 0;
 
@@ -259,6 +266,10 @@ DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
                ddesc.esedcs.resize( nepts );
                ddesc.efreqs.resize( nepts );
             }
+DbgLv(1) << " Envel nepts" << nepts << ddesc.esedcs.size();
+int kk = ddesc.esedcs.size()-1;
+DbgLv(1) << "  0 sed frac" << ddesc.esedcs[0] << ddesc.efreqs[0];
+DbgLv(1) << "  kk sed frac" << ddesc.esedcs[kk] << ddesc.efreqs[kk];
          }
 
          else
@@ -431,7 +442,8 @@ DbgLv(1) << "RunIDSel:runID" << runID;
    {
       if ( distros[ ii ].runID == runID )
       {
-         lw_triples->addItem( expandedTriple( distros[ ii ].triple ) );
+         lw_triples->addItem( expandedTriple(
+            distros[ ii ].triple ) + " : " + distros[ ii ].tdescr );
       }
    }
 }
@@ -442,7 +454,7 @@ void US_vHW_Combine::triple_select( int row )
 DbgLv(1) << "TripleSel:row" << row;
    if ( row < 0 )  return;
    QListWidgetItem* item = lw_triples->item( row );
-   triple   = collapsedTriple( item->text() );
+   triple   = collapsedTriple( item->text().section( ":", 0, 0 ).simplified() );
 DbgLv(1) << "TripleSel:triple" << triple;
 
    DistrDesc ddesc;
@@ -455,7 +467,7 @@ DbgLv(1) << "TripleSel:triple" << triple;
          break;
    }
 
-   QString distrID = ddesc.runID + "." + ddesc.triple;
+   QString distrID = ddesc.runID + "." + ddesc.triple + " : " + ddesc.tdescr;
 
    if ( ! pdisIDs.contains( distrID ) )
    {

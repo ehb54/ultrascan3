@@ -2085,43 +2085,43 @@ QString US_FeMatch::text_model( US_Model model, int width )
    switch ( (int)model.analysis )
    {
       case (int)US_Model::TWODSA:
-         title = ( width == 0 ) ? "2dsa" :
+         title = ( width == 0 ) ? "2DSA" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::TWODSA_MW:
-         title = ( width == 0 ) ? "2dsa-mw" :
+         title = ( width == 0 ) ? "2DSA-MW" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::GA:
-         title = ( width == 0 ) ? "ga" :
+         title = ( width == 0 ) ? "GA" :
             tr( "Genetic Algorithm Analysis" );
          break;
 
       case (int)US_Model::GA_MW:
-         title = ( width == 0 ) ? "ga-mw" :
+         title = ( width == 0 ) ? "GA-MW" :
             tr( "Genetic Algorithm Analysis" );
          break;
 
       case (int)US_Model::COFS:
-         title = ( width == 0 ) ? "cofs" :
+         title = ( width == 0 ) ? "COFS" :
             tr( "C(s) Analysis" );
          break;
 
       case (int)US_Model::FE:
-         title = ( width == 0 ) ? "fe" :
+         title = ( width == 0 ) ? "FE" :
             tr( "Finite Element Analysis" );
          break;
 
       case (int)US_Model::ONEDSA:
-         title = ( width == 0 ) ? "1dsa" :
+         title = ( width == 0 ) ? "1DSA" :
             tr( "1-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::MANUAL:
       default:
-         title = ( width == 0 ) ? "2dsa" :
+         title = ( width == 0 ) ? "2DSA" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
    }
@@ -2130,19 +2130,19 @@ QString US_FeMatch::text_model( US_Model model, int width )
    {  // short title (file node):  add any "ra", "gl" ,... "mc"
 
       if ( model.associations.size() > 1 )
-         title = title + "-ra";
+         title = title + "-RA";
 
       if ( model.global == US_Model::MENISCUS )
-         title = title + "-fm";
+         title = title + "-FM";
 
       else if ( model.global == US_Model::GLOBAL )
-         title = title + "-gl";
+         title = title + "-GL";
 
       else if ( model.global == US_Model::SUPERGLOBAL )
-         title = title + "-sg";
+         title = title + "-SG";
 
       if ( model.monteCarlo )
-         title = title + "-mc";
+         title = title + "-MC";
 
    }
 

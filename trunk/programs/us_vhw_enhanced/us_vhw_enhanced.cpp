@@ -260,7 +260,6 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    // Do first experimental plateau calcs based on horizontal zones
 
    int     nrelp = 0;
-   int     nunrp = 0;
    QVector< double > pxvec( scanCount  );
    QVector< double > pyvec( totalCount );
    QVector< double > sxvec( scanCount  );
@@ -280,7 +279,6 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
 
    scplats.fill( 0.0, scanCount );
    nrelp    = 0;
-   nunrp    = 0;
 
 DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
    // Initially reliable plateaus are all average non-excluded
@@ -346,7 +344,6 @@ DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
    }
 
    // Now find the spot where the derivative of the fit crosses zero
-   double prevx = csx[ 1 ];
    double prevy = fsy[ 1 ];
    double maxd  = -1e+30;
    double dfac  = 1.0 / qAbs( fsy[ kf - 1 ] - prevy );  // norm. deriv. factor
@@ -370,7 +367,7 @@ DbgLv(1) << "  k" << jj << " x fslo" << currx << curry << " deriv" << currd;
          jrelp    = jj - 1;
 DbgLv(1) << "    Z-CROSS";
 if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
- prevx = currx; prevy = curry; prevd = currd;
+ prevy = curry; prevd = currd;
  currx = csx[mm]; curry = fsy[mm];
  currd = ( curry - prevy ) * dfac;
  DbgLv(1) << "  k cx cy cd pd" << mm << currx << curry << currd << prevd;
@@ -384,7 +381,6 @@ if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
          jrelp    = jj;
 DbgLv(1) << "    MAXD" << maxd;
       }
-      prevx      = currx;
       prevy      = curry;
       prevd      = currd;
    }
@@ -981,6 +977,7 @@ void US_vHW_Enhanced::save_data( void )
    if ( saved[ row ] == false )
    {  // If no plot dialog was opened for this triple, get files now
       US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+DbgLv(1) << "(P)PLOT ENV save: plot3File" << plot3File;
       dialog->save_plots( plot3File, plot4File );
 
       delete dialog;
@@ -988,6 +985,7 @@ void US_vHW_Enhanced::save_data( void )
 
    else
    {  // Otherwise, copy the temporary files created earlier
+DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
       copy_data_files( plot3File, plot4File, data2File );
    }
 
@@ -1205,7 +1203,6 @@ void US_vHW_Enhanced::div_seds( )
 //DbgLv(3) << "  DS:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    for ( int ii = 0; ii < scanCount; ii++ )
    {
-      double  oterm;     // Omega term:  omega^2 * time
       double  timecor;   // Time (corrected)
       double  timesqr;   // Square root of corrected time
       double  bdleft;    // Back-diffusion left value
@@ -1234,7 +1231,6 @@ void US_vHW_Enhanced::div_seds( )
 //  *pow(run_inf.time[selected_cell][selected_lambda][i],0.5);
 //radD=bottom-(2*find_root(left)
 //  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
-         oterm       = timecor * omegasq;
 
          // left = tolerance * sqrt( diff )
          //        / ( 2 * intercept[0] * omega^2
@@ -1627,6 +1623,7 @@ DbgLv(1) << "WD: filename " << filename;
 
    // write the line-fit variables for each division
    QTextStream ts( &res_f );
+   ts << d->description << "\n";
    ts << tr( "%Boundary: Points:       Slope:   Intercept:"
          "       Sigma: Correlation:\n" );
 
@@ -1892,12 +1889,27 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
    QFile tfd2( tdata2File );
 
    if ( tfp1.exists() )
-      tfp1.copy( plot1File );
+   {
+      if ( QFile( plot1File ).remove() )
+         DbgLv(1) << "CDF: removed:" << plot1File;
+      if ( tfp1.copy( plot1File ) )
+         DbgLv(1) << "CDF: copied:" << tplot1File;
+   }
 
    if ( tfp2.exists() )
-      tfp2.copy( plot2File );
+   {
+      if ( QFile( plot2File ).remove() )
+         DbgLv(1) << "CDF: removed:" << plot2File;
+      if ( tfp2.copy( plot2File ) )
+         DbgLv(1) << "CDF: copied:" << tplot2File;
+   }
 
    if ( tfd2.exists() )
-      tfd2.copy( data2File );
+   {
+      if ( QFile( data2File ).remove() )
+         DbgLv(1) << "CDF: removed:" << data2File;
+      if ( tfd2.copy( data2File ) )
+         DbgLv(1) << "CDF: copied:" << tdata2File;
+   }
 }
 
