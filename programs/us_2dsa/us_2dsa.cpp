@@ -614,14 +614,14 @@ void US_2dsa::save( void )
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
    QString filebase  = reppath
-                    + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )
+                    + ( fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" ) )
                     + dext + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString fitFile   = filebase + "fitmen.dat";
-   QString fresFile  = respath + "2dsa-fm" + dext2 + ".fitmen.dat";
+   QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
 
    // Write HTML report file
    QFile rep_f( htmlFile );

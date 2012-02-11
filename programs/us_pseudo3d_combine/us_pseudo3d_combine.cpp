@@ -401,7 +401,8 @@ void US_Pseudo3D_Combine::plot_data( void )
    int    csum = bg.red() + bg.green() + bg.blue();
    pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
                                            QColor( Qt::white ) ) );
-   bool autlim = ( auto_lim && ! looping );
+   //bool autlim = ( auto_lim && ! looping );
+   bool autlim = auto_lim;
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
@@ -444,7 +445,8 @@ void US_Pseudo3D_Combine::plot_data( void )
       cb_plot_mw ->setText( tr( "Plot vbar vs MW" ) );
    }
 
-   if ( auto_lim  &&  ! looping )
+   //if ( auto_lim  &&  ! looping )
+   if ( auto_lim )
    {   // auto limits and not looping
       rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
       data_plot->setAxisScale( QwtPlot::yLeft,
@@ -467,23 +469,31 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    data_plot->replot();
 
-   if ( need_save )
-   {  // automatically save plot image in a PNG file
+   bool do_plot = ( looping && cb_conloop->isChecked() ) ? false : true;
+DbgLv(1) << "(1) do_plot" << do_plot << "looping" << looping;
+
+   if ( tsys->method.contains( "-MC" ) )
+   {  // Test if some MC should be skipped
+      do_plot   = do_plot && tsys->monte_carlo;   // Only plot if MC composite
+DbgLv(1) << "(2)   do_plot" << do_plot;
+   }
+
+DbgLv(1) << "(3)   need_save do_plot" << need_save << do_plot;
+   if ( need_save  &&  do_plot )
+   {  // Automatically save plot image in a PNG file
       QPixmap plotmap( data_plot->size() );
       plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
 
-      QString ofdir  = US_Settings::reportDir() + "/"
-         + tsys->run_name.section( ".", 0, -2 );
+      QString runid  = tsys->run_name.section( ".",  0, -2 );
+      QString triple = tsys->run_name.section( ".", -1, -1 );
+      QString report = QString( "pseudo3d_ff0_" ) + ( plot_s ? "s" : "MW" );
+
+      QString ofdir  = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
       if ( !dirof.exists( ) )
-         QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
-      QString celli  = "." + tsys->run_name.section( ".", -1, -1 ) + ".plot";
-      QString distr  = QString().sprintf( "%2.2d", ( curr_distr + 1 ) );
-      QString methi  = tsys->method;
-      methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
-      if ( tsys->distro_type == (int)US_Model::MANUAL )
-         methi          = methi + ".00";
-      QString ofname = ofdir + "/" + methi + celli + distr + ".png";
+         QDir( US_Settings::reportDir() ).mkdir( runid );
+      QString ofname = ofdir + "/" + tsys->method + "." + triple
+         + "." + report + ".png";
 
       data_plot->print( plotmap );
       plotmap.save( ofname );
@@ -576,11 +586,20 @@ void US_Pseudo3D_Combine::select_autolim()
 void US_Pseudo3D_Combine::select_conloop()
 {
    cont_loop  = cb_conloop->isChecked();
+   DisSys* tsys   = (DisSys*)&system.at( curr_distr );
+   QString dtext  = tr( "Run:  " ) + tsys->run_name
+         + " (" + tsys->method + ")\n    " + tsys->analys_name;
 
    if ( cont_loop )
+   {
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
+      dtext          = dtext
+         + tr( "\nWith continuous loop, no plot files will be saved." );
+   }
    else
       pb_pltall->setText( tr( "Plot All Distros" ) );
+
+   te_distr_info->setText( dtext );
 }
 
 void US_Pseudo3D_Combine::select_plot_s()
@@ -628,6 +647,7 @@ void US_Pseudo3D_Combine::load_distro()
       load_distro( models[ jj ], mdescs[ jj ] );
    }
 
+   need_save  = true;
    plot_data();
 }
 
@@ -647,12 +667,24 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 
    tsys.run_name     = mdesc.section( ".",  0, -3 );
    QString asys      = mdesc.section( ".", -2, -2 );
-   tsys.analys_name  = asys.section( "_", 0, 1 ) + "_"
-                     + asys.section( "_", 3, 4 );
+   tsys.analys_name  = asys.section( "_",  0, -4 ) + "_"
+                     + asys.section( "_", -2, -1 );
    tsys.method       = model.typeText();
 
    tsys.distro_type  = (int)model.analysis;
    tsys.monte_carlo  = model.monteCarlo;
+
+   if ( model.monteCarlo )
+   {  // Revisit setting if Monte Carlo
+      QString miter = mdescr.section( mdescr.left( 1 ), 6 );
+      int     kiter = miter.isEmpty() ? 0 : miter.toInt();
+
+      if ( kiter < 2 )
+      {  // Turn off flag if not composite MC model (is individual MC)
+         tsys.monte_carlo = false;
+      }
+   }
+      
 
    te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
       + " (" + tsys.method + ")\n    " + tsys.analys_name );
@@ -1103,8 +1135,8 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
 
          if ( ! cont_loop )
          {
-            jdistr  = curr_distr;
-            looping = false;
+            jdistr     = curr_distr;
+            looping    = false;
          }
       }
       curr_distr = jdistr;
@@ -1116,6 +1148,7 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
       killTimer( tm_id );
       pb_stopplt->setEnabled( false );
       curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
+      need_save  = true;
    }
    ct_curr_distr->setValue( curr_distr + 1 );
 }

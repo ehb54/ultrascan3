@@ -139,9 +139,12 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    generator2.setFileName( plot2File );
    data_plot->print( generator2 );
 
+   QString runID = plot1File.section( "/", -2, -2 );
+
+   if ( runID == "tmp" )  return;
+
    // Also save the envelope data with present parameters
-   QString dat2File = US_Settings::resultDir() + "/"
-      + plot1File.section( "/", -2, -2 ) + "/"
+   QString dat2File = US_Settings::resultDir() + "/" + runID + "/"
       + plot1File.section( "/", -1, -1 ).section( ".", 0, 1 )
       + ".envelope.dat";
 
@@ -503,7 +506,6 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
                                 QVector< double >& yvec )
 {
    int     steps;
-   int     stoff    = 0;
    int     array    = 300;
    double  max_cept = 1.0e-6;
    double  min_cept = 1.0e+6;
@@ -527,11 +529,7 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
    sed_bin      = ( max_cept - min_cept ) / div_scl;
    max_step     = max_cept * 4.0 / 3.0;
    steps        = (int)( max_step / sed_bin );
-   stoff        = (int)( min_cept / sed_bin ) - 1;
-   stoff        = qMax( stoff, 0 );
-DbgLv(2) << "ED: steps stoff" << steps << stoff;
-   steps       -= stoff;
-DbgLv(2) << "ED:  steps" << steps;
+DbgLv(2) << "ED:  steps" << steps << "sed_bin" << sed_bin;
 
    if ( array <= steps )
    {  // insure envelope array size bigger than histogram array size
@@ -546,19 +544,21 @@ DbgLv(2) << "ED:  steps" << steps;
    double* xval   = xvec.data();
    double* yval   = yvec.data();
    double  scale  = max_step / (double)array;
+DbgLv(2) << "ED:  max_step array scale" << max_step << array << scale;
 
    for ( int jj = 0; jj < array; jj++ )
    {  // initialize envelope values
-      xval[ jj ]   = scale * (double)( jj + stoff );
+      xval[ jj ]   = scale * (double)( jj );
       yval[ jj ]   = 0.0;
    }
 
    sigma        = sed_bin * 0.02 * (double)nSmooth;
+DbgLv(2) << "ED:  sed_bin sigma" << sed_bin << sigma;
 
    for ( int jj = 0; jj < steps; jj++ )
    {  // calculate histogram values and envelope values based on them
       int kbin     = 0;
-      sed_lo       = sed_bin * (double)( jj + stoff );
+      sed_lo       = sed_bin * (double)( jj );
       sed_hi       = sed_lo + sed_bin;
       sval         = ( sed_lo + sed_hi ) * 0.5;
 
@@ -580,8 +580,10 @@ DbgLv(2) << "ED:  steps" << steps;
             double xdif  = ( xval[ kk ] - sval ) / sigma;
             yval[ kk ]  += ( ( bink / ( sigma * pisqr ) )
                * exp( -( xdif * xdif ) / 2.0 ) );
+DbgLv(2) << "ED:  kk" << kk << "xdif bink yval" << xdif << bink << yval[kk];
          }
       }
+DbgLv(2) << "ED:    jj" << jj << "sval his_sum" << sval << his_sum;
    }
 
    for ( int kk = 0; kk < array; kk++ )

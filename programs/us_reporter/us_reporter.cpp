@@ -387,11 +387,16 @@ DbgLv(1) << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
          QString appname = appnames.at( jj );
          QString aplabel = appmap[ appname ];
                  appname = appname.section( ":", 1, 1 );
+         QString appnmLo = appname.toLower();
+         QString appnmUp = appname.toUpper();
 
          QStringList rafilt( appname + "." + trnam + ".*.*" );
+         rafilt  << appnmLo + "." + trnam + ".*.*"
+                 << appnmUp + "." + trnam + ".*.*";
          QStringList rafiles = QDir( path )
             .entryList( rafilt, QDir::Files, QDir::Name );
-DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
+DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0]
+   << rafilt[1] << rafilt[2];
 
          if ( rafiles.size() < 1 )  continue;
 
@@ -422,11 +427,21 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
                        rptname = rptname.section( ":", 1, 1 );
 
                // Get a specific report file name
-               QString rpfname = appname + "." + trnam + "."
-                  + rptname + "."  + extname;
+               QString basname = "." + trnam + "." + rptname + "."  + extname;
+               QString rpfname = appname + basname;
+               QString rpfnmLo = appnmLo + basname;
+               QString rpfnmUp = appnmUp + basname;
 //DbgLv(1) << " BD:     nrptf" << rafiles.size() << "rpfname" << rpfname;
 
-               if ( rafiles.indexOf( rpfname ) < 0 )  continue;
+               if ( rafiles.indexOf( rpfname ) < 0 )
+               {  // Skip if name (even lower/upper case version) not in list
+                  int jj1 = rafiles.indexOf( appnmLo + basname );
+                  int jj2 = rafiles.indexOf( appnmUp + basname );
+                  if ( jj1 < 0  &&  jj2 < 0 )
+                     continue;
+                  rpfname = ( jj1 < 0 ) ? rpfname : rpfnmLo;
+                  rpfname = ( jj2 < 0 ) ? rpfname : rpfnmUp;
+               }
 
                // There are reports of this type, so add a level-3 item
                cdesc.linen       = linex + 1;
