@@ -24,8 +24,9 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
       //! \param nieGUIDs List of noise-in-edit GUID:type:index strings.
       //! \param ti_noise Reference to a time-independent noise object loaded.
       //! \param ri_noise Reference to a radius-independent noise object loaded.
+      //! \param edata    Pointer to edited experiment data for range compare.
       US_NoiseLoader( US_DB2*, QStringList&, QStringList&,
-                      US_Noise&, US_Noise& );
+                      US_Noise&, US_Noise&, US_DataIO2::EditedData* = 0 );
 
    private:
       US_DB2*       db;
@@ -38,6 +39,8 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
       QListWidget*  lw_selects;
       QVBoxLayout*  mainLayout;
       QHBoxLayout*  btnsLayout;
+
+      double        darange;
 
    private slots:
       void itemsSelected( void );

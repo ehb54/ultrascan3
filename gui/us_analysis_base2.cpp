@@ -1301,7 +1301,7 @@ void US_AnalysisBase2::load_noise( int index )
       if ( nenois > 1 )
       {  // more than 1:  get choice from noise loader dialog
          US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
-            mieGUIDs, nieGUIDs, ti_noise, ri_noise );
+            mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
          nldiag->move( this->pos() + QPoint( 200, 200 ) );
          nldiag->exec();
          qApp->processEvents();

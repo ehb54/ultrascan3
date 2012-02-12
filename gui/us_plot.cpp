@@ -505,7 +505,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    // Row 11
    lw_curves = us_listwidget( 1 );
    lw_curves->setMinimumHeight( 26 * 5 );
-   lw_curves->setSelectionMode( QAbstractItemView::MultiSelection );
+   lw_curves->setSelectionMode( QAbstractItemView::ExtendedSelection );
    
    // Populate list widget
    QwtPlotItemList list = plot->itemList();
@@ -610,7 +610,7 @@ void US_PlotConfig::selectMargin( int index )
 */
 void US_PlotConfig::selectLegendPos( int index )
 {
-   QwtLegend* legend;
+   QwtLegend* legend = NULL;
 
    if ( index > 0 )
    {
@@ -726,6 +726,7 @@ void US_PlotConfig::updateCurve( void )
    curveWidget->exec();
    qApp->processEvents();
    delete curveWidget;
+   curveWidget = NULL;
 }
 
 void US_PlotConfig::updateGrid( void )

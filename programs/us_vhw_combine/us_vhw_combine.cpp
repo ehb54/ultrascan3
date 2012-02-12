@@ -348,9 +348,9 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    double* xs  = ddesc.esedcs.data();
    double* yf  = ddesc.efreqs.data();
 
-   QString dcID = "DPoint - " + distrID;
-   QString lcID = "DLine - "  + distrID;
-   QString ecID = "ELine - "  + distrID;
+   QString dcID = distrID + tr( " (diff.)" ); 
+   QString lcID = distrID + tr( " (diff.line)" );
+   QString ecID = distrID + tr( " (integ.)" );
    QwtPlotCurve* dcurve;
    QwtPlotCurve* lcurve;
    QwtPlotCurve* ecurve;

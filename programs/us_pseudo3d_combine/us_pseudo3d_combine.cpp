@@ -401,8 +401,6 @@ void US_Pseudo3D_Combine::plot_data( void )
    int    csum = bg.red() + bg.green() + bg.blue();
    pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
                                            QColor( Qt::white ) ) );
-   //bool autlim = ( auto_lim && ! looping );
-   bool autlim = auto_lim;
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
@@ -410,7 +408,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    d_spectrogram->setColorMap( *colormap );
    QwtDoubleRect drect;
 
-   if ( autlim )
+   if ( auto_lim )
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
    else
       drect = QwtDoubleRect( plt_smin, plt_fmin,
@@ -445,9 +443,8 @@ void US_Pseudo3D_Combine::plot_data( void )
       cb_plot_mw ->setText( tr( "Plot vbar vs MW" ) );
    }
 
-   //if ( auto_lim  &&  ! looping )
    if ( auto_lim )
-   {   // auto limits and not looping
+   {   // Auto limits
       rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
       data_plot->setAxisScale( QwtPlot::yLeft,
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
@@ -457,7 +454,7 @@ void US_Pseudo3D_Combine::plot_data( void )
          spec_dat.range() .minValue(), spec_dat.range() .maxValue() );
    }
    else
-   {   // manual limits or looping
+   {   // Manual limits
       double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
       double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
       rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
