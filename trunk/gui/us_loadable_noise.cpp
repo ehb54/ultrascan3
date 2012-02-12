@@ -9,6 +9,7 @@
 #include "us_gui_settings.h"
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_noise.h"
 #include "us_util.h"
 #include "us_investigator.h"
 
@@ -131,18 +132,62 @@ for (int jj=0;jj<nenois;jj++)
       QString     msg;
 
       if ( model == 0 )
-         amsg = tr( ", associated with the loaded edit\n" );
+         amsg = tr( ", associated with the loaded edit.\n" );
 
       else
-         amsg = tr( ", associated with the loaded edit/model\n" );
+         amsg = tr( ", associated with the loaded edit/model.\n" );
 
       if ( nenois > 1 )
+      {
          msg  = tr( "There are noise files" ) + amsg
               + tr( "Do you want to load some of them?" );
+      }
 
       else
+      {  // Single noise file: check its value range versus experiment
+         QString noiID  = nieGUIDs.at( 0 ).section( ":", 0, 0 );
+         US_Noise i_noise;
+
+         if ( ondisk )
+            i_noise.load( false, noiID, NULL );
+         else
+         {
+            US_Passwd pw;
+            US_DB2 db( pw.getPasswd() );
+            i_noise.load( true, noiID, &db );
+         }
+
+         double datmin  = edata->value( 0, 0 );
+         double datmax  = datmin;
+         double noimin  = 1.0e10;
+         double noimax  = -noimin;
+
+         for ( int ii = 0; ii < edata->scanData.size(); ii++ )
+         {
+            for ( int jj = 0; jj < edata->x.size(); jj++ )
+            {
+               double datval = edata->value( ii, jj );
+               datmin        = qMin( datmin, datval );
+               datmax        = qMax( datmax, datval );
+            }
+         }
+
+         for ( int ii = 0; ii < i_noise.values.size(); ii++ )
+         {
+            double noival = i_noise.values[ ii ];
+            noimin        = qMin( noimin, noival );
+            noimax        = qMax( noimax, noival );
+         }
+
+         if ( ( noimax - noimin ) > ( datmax - datmin ) )
+         {  // Insert a warning if noise appears corrupt or unusual
+            amsg = amsg
+               + tr( "\nBUT THE NOISE HAS AN UNUSUALLY LARGE DATA RANGE.\n\n" );
+         }
+
          msg  = tr( "There is a noise file" ) + amsg
               + tr( "Do you want to load it?" );
+      }
 
       msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
       msgBox.setText( msg );

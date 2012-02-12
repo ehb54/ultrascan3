@@ -9,7 +9,8 @@
 
 // constructor:  load loader dialog
 US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
-   QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise )
+   QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise,
+   US_DataIO2::EditedData* edata )
    : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
    nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
@@ -115,6 +116,30 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
             this,       SLOT(   cancelled()    ) );
    connect( pb_load,    SIGNAL( clicked()      ),
             this,       SLOT(   selected()     ) );
+
+   // Compute the OD range of the edited data
+   if ( edata != NULL )
+   {
+      int nscans    = edata->scanData.size();
+      int npoints   = edata->x.size();
+      double datmin = edata->value( 0, 0 );
+      double datmax = datmin;
+
+      for ( int ii = 0; ii < nscans; ii++ )
+      {
+         for ( int jj = 0; jj < npoints; jj++ )
+         {
+            double datval = edata->value( ii, jj );
+            datmin        = qMin( datmin, datval );
+            datmax        = qMax( datmax, datval );
+         }
+      }
+
+      darange = datmax - datmin;
+   }
+
+   else
+      darange = 0.0;
 }
 
 void US_NoiseLoader::itemsSelected( void )
@@ -219,6 +244,65 @@ void US_NoiseLoader::selected()
          }
 
          nri++;
+      }
+   }
+
+   // Verify that noise(s) values not beyond reasonable data range
+   if ( darange > 0.0 )
+   {
+      int nurnois    = 0;
+
+      if ( nti > 0 )
+      {
+         double noimin  = ti_noise.values[ 0 ];
+         double noimax  = noimin;
+
+         for ( int ii = 0; ii < ti_noise.values.size(); ii++ )
+         {
+            double noival  = ti_noise.values[ ii ];
+            noimin         = qMin( noimin, noival );
+            noimax         = qMax( noimax, noival );
+         }
+
+         if ( ( noimax - noimin ) > darange )  nurnois++;
+      }
+
+      if ( nri > 0 )
+      {
+         double noimin  = ri_noise.values[ 0 ];
+         double noimax  = noimin;
+
+         for ( int ii = 0; ii < ri_noise.values.size(); ii++ )
+         {
+            double noival  = ri_noise.values[ ii ];
+            noimin         = qMin( noimin, noival );
+            noimax         = qMax( noimax, noival );
+         }
+
+         if ( ( noimax - noimin ) > darange )  nurnois++;
+      }
+
+      if ( nurnois > 0 )
+      {
+         QString msg = tr(
+            "Noise values exceed the range of experimental data.<br/>"
+            "Do you still want to honor the current noise selection(s)?<br/>"
+            "<ul><li><b>Yes</b> to proceed, anyway, with selected noise;</li>"
+            "<li><b>No </b> to retry with a new noise selection></li></ul>" );
+         QMessageBox msgBox     ( this );
+         msgBox.setWindowTitle  ( tr( "Noise Value Problems" ) );
+         msgBox.setTextFormat   ( Qt::RichText );
+         msgBox.setText         ( msg );
+         msgBox.addButton       ( QMessageBox::No  );
+         msgBox.addButton       ( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
+
+         if ( msgBox.exec() == QMessageBox::No )
+         {
+            ti_noise.values.clear();
+            ri_noise.values.clear();
+            return;
+         }
       }
    }
 
