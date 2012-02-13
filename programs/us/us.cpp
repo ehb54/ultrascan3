@@ -243,9 +243,15 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 {
   US_Action* action = new US_Action( index, label, menu );
 
+#ifndef Q_WS_MAC
   QFont      font   = QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() - 1,
                              QFont::Normal );
+#else
+  QFont      font   = QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() + 3,
+                             QFont::Normal );
+#endif
   action->setFont( font );
 
   connect( action, SIGNAL( indexTriggered  ( int ) ), 
