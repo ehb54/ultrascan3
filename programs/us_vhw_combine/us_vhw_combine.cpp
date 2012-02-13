@@ -116,7 +116,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QBoxLayout* plot = new US_Plot( data_plot1,
          tr( "G(s) Distributions" ),
-         tr( "Sedimentation Coefficient (20W x 1e+13)" ),
+         tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Boundary Fraction (%)" ) );
 
    QwtText qtitle( tr( "Relative Frequency" ) );
