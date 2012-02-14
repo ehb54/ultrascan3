@@ -149,6 +149,89 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       cout << QString("%1: finished extracting job files\n" ).arg( myrank ) << flush;
 
+      // check for ^common_
+
+      QStringList common = qslt.grep( QRegExp( "^common_" ) );
+      if ( common.size() )
+      {
+         for ( unsigned int i = 0; i < common.size(); i++ )
+         {
+            cout << QString("%1: found common file %2\n" ).arg( myrank ).arg( common[ i ] ) << flush;
+         
+            QString controlfile = common[ i ];
+
+            if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+            {
+               // gunzip controlfile, must be renamed for us_gzip
+
+               dest = controlfile;
+
+               // rename
+               dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+               cout << QString("Renaming %1 to %2\n").arg( controlfile ).arg( dest );
+               QDir qd;
+               qd.remove( dest );
+               if ( !qd.rename( controlfile, dest ) )
+               {
+                  cout << QString("Error renaming %1 to %2\n").arg( controlfile ).arg( dest );
+                  MPI_Abort( MPI_COMM_WORLD, errorno );
+                  exit( errorno );
+               }
+               errorno--;
+            
+               controlfile = dest;
+               
+               US_Gzip usg;
+               result = usg.gunzip( controlfile );
+               if ( GZIP_OK != result )
+               {
+                  cout << QString("Error: %1 problem gunzipping (%2)\n").arg( controlfile ).arg( usg.explain( result ) );
+                  MPI_Abort( MPI_COMM_WORLD, errorno );
+                  exit( errorno );
+               }
+               errorno--;
+               
+               controlfile.replace( QRegExp( "\\.gz$" ), "" );
+            }
+
+            // mkdir, extract
+            QString qs_base_dir = QDir::currentDirPath();
+            QString qs_run_dir = QString( "%1/common" ).arg( qs_base_dir );
+            QDir qd( qs_run_dir );
+            if ( !qd.exists() )
+            {
+               qd.mkdir( qs_run_dir );
+            }
+            QDir::setCurrent( qs_run_dir );
+            // tar open controlfile
+            QStringList qslt;
+            US_Tar ust;
+            result = ust.extract( qs_base_dir + QDir::separator() + controlfile, &qslt );
+            if ( TAR_OK != result )
+            {
+               cout << QString("Error: %1 problem extracting tar archive (%2)\n").arg( controlfile ).arg( ust.explain( result ) );
+               MPI_Abort( MPI_COMM_WORLD, errorno );
+               exit( errorno );
+            }
+            errorno--;
+            QDir::setCurrent( qs_base_dir );
+         }
+
+         // remove ^common_ from qslt
+         QStringList newqslt;
+         for ( unsigned int i = 0; i < qslt.size(); i++ )
+         {
+            if ( !qslt[ i ].contains( QRegExp( "^common_" ) ) )
+            {
+               newqslt << qslt[ i ];
+            }
+         }
+
+         qslt = newqslt;
+
+         cout << QString("%1: done with common files\n" ).arg( myrank ) << flush;
+      }
+
       QString qs_files = qslt.join( "\n" ).ascii();
       sizeoflist = qs_files.length();
       char char_files[ sizeoflist + 1 ];

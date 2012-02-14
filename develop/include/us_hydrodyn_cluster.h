@@ -133,7 +133,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QString       advanced_addition_methods();
 
       csv           csv_dmd;
-      QString       dmd_base_addition( QStringList &base_source_files );
+      QString       dmd_base_addition( QStringList &base_source_files, QString common_prefix );
       QString       dmd_file_addition( QString inputfile, QString outputfile );
 
       bool          validate_csv_dmd( unsigned int &number_active );
