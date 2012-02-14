@@ -36,13 +36,14 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 /*********************       US_Plot Class      *************************/
 
 // A new plot returns a QBoxLayout
-US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
-                  const QString& y_axis ) : QHBoxLayout()
+US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
+      const QString& x_axis, const QString& y_axis ) : QHBoxLayout()
 {
    zoomer = NULL;
    setSpacing( 0 );
 
-   QFont buttonFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
+   QFont buttonFont( US_GuiSettings::fontFamily(),
+                     US_GuiSettings::fontSize() - 2 );
 
    // Add the tool bar 
    QToolBar* toolBar = new QToolBar;
@@ -67,10 +68,17 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
 
    QToolButton* btnSVG = new QToolButton( toolBar );
    btnSVG->setText( "SVG" );
-   btnSVG->setIcon( QIcon( print_xpm ) );
+   btnSVG->setIcon( QIcon( vec_xpm ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
+
+   QToolButton* btnPNG = new QToolButton( toolBar );
+   btnPNG->setText( "PNG" );
+   btnPNG->setIcon( QIcon( ras_xpm ) );
+   btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnPNG->setFont( buttonFont );
+   connect( btnPNG, SIGNAL( clicked() ), SLOT( png() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
    btnConfig->setText( "Config" );
@@ -82,6 +90,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    toolBar->addWidget( btnZoom   );
    toolBar->addWidget( btnPrint  );
    toolBar->addWidget( btnSVG    );
+   toolBar->addWidget( btnPNG    );
    toolBar->addWidget( btnConfig );
 
    addWidget( toolBar );
@@ -210,6 +219,27 @@ void US_Plot::svg( void )
 
       generator.setSize( plot->size() );
       plot->print( generator );
+   }
+}
+
+void US_Plot::png( void )
+{
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+   QString fileName = QFileDialog::getSaveFileName( plot, 
+      tr( "Export File Name" ), reportDir, 
+      tr( "PNG Documents (*.png)" ) );
+
+   if ( ! fileName.isEmpty() )
+   {
+      if ( fileName.right( 4 ) != ".png" ) fileName += ".png";
+
+      int pw = plot->width();
+      int ph = plot->height(); 
+      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
+      pixmap.save( fileName );
    }
 }
 

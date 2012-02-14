@@ -910,45 +910,89 @@ void US_FeMatch::save_data( void )
    }
 DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
 
-   // save image files from main window
+   // Save image files from main window
    write_plot( img01File, data_plot2 );
    files << img01File;
 
-   distrib_plot_resids();
-   write_plot( img02File, data_plot1 );
+   int     p1type = type_distrib() - 1;
+           p1type = ( p1type < 0 ) ? 9 : p1type;
+   QString                   p1file = img02File;
+   if ( p1type == 0 )        p1file = img03File;
+   else if ( p1type == 1 )   p1file = img04File;
+   else if ( p1type == 2 )   p1file = img05File;
+   else if ( p1type == 3 )   p1file = img06File;
+   else if ( p1type == 4 )   p1file = img07File;
+   else if ( p1type == 5 )   p1file = img06File;
+   else if ( p1type == 6 )   p1file = img07File;
+   else if ( p1type == 7 )   p1file = img08File;
+   else if ( p1type == 8 )   p1file = img09File;
+DbgLv(1) << "p1type" << p1type << "p1file" << p1file;
+
+   write_plot( p1file, data_plot1 );
+
+   if ( p1type != 9 )
+   {
+      distrib_plot_resids();
+      write_plot( img02File, data_plot1 );
+   }
    files << img02File;
 
-   distrib_plot_stick( 0 );
-   write_plot( img03File, data_plot1 );
+   if ( p1type != 0 )
+   {
+      distrib_plot_stick( 0 );
+      write_plot( img03File, data_plot1 );
+   }
    files << img03File;
 
-   distrib_plot_stick( 1 );
-   write_plot( img04File, data_plot1 );
+   if ( p1type != 1 )
+   {
+      distrib_plot_stick( 1 );
+      write_plot( img04File, data_plot1 );
+   }
    files << img04File;
 
-   distrib_plot_stick( 2 );
-   write_plot( img05File, data_plot1 );
+   if ( p1type != 2 )
+   {
+      distrib_plot_stick( 2 );
+      write_plot( img05File, data_plot1 );
+   }
    files << img05File;
 
-   distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
-   write_plot( img06File, data_plot1 );
+   if ( p1type != 3  &&  p1type != 5 )
+   {
+      distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
+      write_plot( img06File, data_plot1 );
+   }
    files << img06File;
 
-   distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
-   write_plot( img07File, data_plot1 );
+   if ( p1type != 4  &&  p1type != 6 )
+   {
+      distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
+      write_plot( img07File, data_plot1 );
+   }
    files << img07File;
 
-   distrib_plot_2d(    7 );
-   write_plot( img08File, data_plot1 );
+   if ( p1type != 7 )
+   {
+      distrib_plot_2d(    7 );
+      write_plot( img08File, data_plot1 );
+   }
    files << img08File;
 
-   distrib_plot_2d(    8 );
-   write_plot( img09File, data_plot1 );
+   if ( p1type != 8 )
+   {
+      distrib_plot_2d(    8 );
+      write_plot( img09File, data_plot1 );
+   }
    files << img09File;
 
-   distrib_plot_resids();
+DbgLv(1) << "(9)p1type" << p1type;
+   // Restore upper plot displayed before saves
+   if ( p1type == 9 )       distrib_plot_resids();
+   else if ( p1type < 3 )   distrib_plot_stick( p1type );
+   else                     distrib_plot_2d( p1type );
 
-   // save 3-d plot
+   // Save 3-d plot
    if ( eplotcd != 0 )
    {
       write_plot( img10File, NULL );
@@ -1106,17 +1150,7 @@ void US_FeMatch::distrib_type( )
    };
    const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
 
-   QString curtxt = pb_distrib->text();
-   int     itype  = 0;
-
-   for ( int ii = 0; ii < ndptyp; ii++ )
-   { // identify text of current push button
-      if ( curtxt == QString( dptyp[ ii ] ) )
-      { // found:  save index and break
-         itype   = ii;
-         break;
-      }
-   }
+   int itype = type_distrib();
 
    // get pointer to data for use by plot routines
    edata   = &dataList[ lw_triples->currentRow() ];
@@ -2616,6 +2650,16 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
       generator.setSize( plot->size() );
       generator.setFileName( filename );
       plot->print( generator );
+
+      // Make a PNG copy
+      QString fnmpng = QString( filename ).replace( ".svg", ".png" );
+      int     iwid   = plot->width();
+      int     ihgt   = plot->height();
+      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, iwid, ihgt );
+
+      if ( ! pixmap.save( fnmpng ) )
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + fnmpng );
    }
 
    else if ( filename.endsWith( "rbitmap.png" ) )
@@ -2869,5 +2913,38 @@ void US_FeMatch::reset( void )
    le_id       ->setText( "" );
    le_temp     ->setText( "" );
    te_desc     ->setText( "" );
+}
+
+// Return index to type of distribution plot currently displayed
+int US_FeMatch::type_distrib( )
+{
+   const char* dptyp[] = 
+   {
+      "s20,w distribution",
+      "MW distribution",
+      "D20,w distribution",
+      "f_f0 vs s20,w",
+      "f_f0 vs MW",
+      "vbar vs s20,w",
+      "vbar vs MW",
+      "D20,w vs s20,w",
+      "D20,w vs MW",
+      "Residuals"
+   };
+   const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
+
+   QString curtxt = pb_distrib->text();
+   int     itype  = 0;
+
+   for ( int ii = 0; ii < ndptyp; ii++ )
+   { // identify text of current push button
+      if ( curtxt == QString( dptyp[ ii ] ) )
+      { // found:  save index and break
+         itype   = ii;
+         break;
+      }
+   }
+
+   return itype;
 }
 

@@ -155,6 +155,7 @@ class US_FeMatch : public US_Widgets
       void comp_number (     double );
       void component_values( int    );
       QStringList last_edit_files( QStringList );
+      int  type_distrib(     void );
 
       void distrib_plot_stick(  int );
       void distrib_plot_2d(     int );

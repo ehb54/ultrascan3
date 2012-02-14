@@ -123,6 +123,10 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    generator.setSize( data_plot->size() );
    generator.setFileName( plot1File );
    data_plot->print( generator );
+   QString plot1FPng = QString( plot1File ).replace( ".svg", ".png" );
+   QPixmap pixmap    = QPixmap::grabWidget( (QWidget*)data_plot,
+         0, 0, data_plot->width(), data_plot->height() );
+   pixmap.save( plot1FPng );
 
    // Set up, generate combined histogram plot and save it to a file
    data_plot->detachItems();
@@ -138,6 +142,10 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    generator2.setSize( data_plot->size() );
    generator2.setFileName( plot2File );
    data_plot->print( generator2 );
+   QString plot2FPng = QString( plot2File ).replace( ".svg", ".png" );
+   QPixmap pixmap2   = QPixmap::grabWidget( (QWidget*)data_plot,
+         0, 0, data_plot->width(), data_plot->height() );
+   pixmap2.save( plot2FPng );
 
    QString runID = plot1File.section( "/", -2, -2 );
 

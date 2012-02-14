@@ -443,6 +443,14 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0]
                   rpfname = ( jj2 < 0 ) ? rpfname : rpfnmUp;
                }
 
+               if ( rpfname.endsWith( ".svg" ) )
+               {  // Skip if SVG file has PNG equivalent
+                  QString rpfnpng = QString( rpfname )
+                     .replace( ".svg", ".png" );
+                  if ( rafiles.indexOf( rpfnpng ) >= 0 )
+                     continue;
+               }
+
                // There are reports of this type, so add a level-3 item
                cdesc.linen       = linex + 1;
                cdesc.level       = 3;

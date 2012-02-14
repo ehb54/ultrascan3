@@ -634,9 +634,9 @@ void US_2dsa::save( void )
    rep_f.close();
 
    // Write plots
-   write_svg( plot1File, data_plot2 );
-   write_png( plot2File, data_plot1 );
-   write_png( plot3File, NULL       );
+   write_plot( plot1File, data_plot2 );
+   write_plot( plot2File, data_plot1 );
+   write_bmap( plot3File );
    
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
@@ -1037,60 +1037,41 @@ void US_2dsa::write_report( QTextStream& ts )
    ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
-// Write PNG plot file
-void US_2dsa::write_png( const QString plotFile, const QWidget* pwidget )
+// Write resids bitmap plot file
+void US_2dsa::write_bmap( const QString plotFile )
 {
-   QWidget*         plwidg  = (QWidget*)pwidget;
-   QPixmap          pixmap;
-   US_ResidsBitmap* resbmap = NULL;
+   // Generate the residuals array
+   bool have_ri = ri_noise.count > 0;
+   bool have_ti = ti_noise.count > 0;
+   int  nscans  = edata->scanData.size();
+   int  npoints = edata->x.size();
+   QVector< double >            resscn( npoints );
+   QVector< QVector< double > > resids( nscans  );
 
-   if ( pwidget == NULL )
-   {  // non-existing plot widget:   create a pixmap of the resids bitmap
-      bool have_ri = ri_noise.count > 0;
-      bool have_ti = ti_noise.count > 0;
-      int  nscans  = edata->scanData.size();
-      int  npoints = edata->x.size();
-      QVector< double >            resscn( npoints );
-      QVector< QVector< double > > resids( nscans  );
+   for ( int ii = 0; ii < nscans; ii++ )
+   {
+      double rnoi  = have_ri ? ri_noise.values[ ii ] : 0.0;
 
-      for ( int ii = 0; ii < nscans; ii++ )
+      for ( int jj = 0; jj < npoints; jj++ )
       {
-         double rnoi  = have_ri ? ri_noise.values[ ii ] : 0.0;
-
-         for ( int jj = 0; jj < npoints; jj++ )
-         {
-            double tnoi  = have_ti ? ti_noise.values[ jj ] : 0.0;
-            resscn[ jj ] = edata->value( ii, jj )
-                         - sdata.value(  ii, jj ) - rnoi - tnoi;
-         }
-
-         resids[ ii ] = resscn;
+         double tnoi  = have_ti ? ti_noise.values[ jj ] : 0.0;
+         resscn[ jj ] = edata->value( ii, jj )
+                      - sdata.value(  ii, jj ) - rnoi - tnoi;
       }
 
-      resbmap = new US_ResidsBitmap( resids );
-      pixmap  = QPixmap::grabWidget( resbmap, 0, 0,
-                                     resbmap->width(), resbmap->height() );
-      plwidg  = resbmap;
+      resids[ ii ] = resscn;
    }
 
-   pixmap  = QPixmap::grabWidget( plwidg, 0, 0,
-                                  plwidg->width(), plwidg->height() );
+   // Generate the residuals bitmap plot
+   US_ResidsBitmap* resbmap = new US_ResidsBitmap( resids );
+   QPixmap          pixmap  = QPixmap::grabWidget( resbmap, 0, 0,
+                                 resbmap->width(), resbmap->height() );
 
    // Save the pixmap to the specified file
    if ( ! pixmap.save( plotFile ) )
       qDebug() << "*ERROR* Unable to write file" << plotFile;
 
-   if ( pwidget == NULL )
-      resbmap->close();
-}
-
-// Write SVG plot file
-void US_2dsa::write_svg( const QString plotFile, const QwtPlot* plot )
-{
-   QSvgGenerator generator;
-   generator.setSize( plot->size() );
-   generator.setFileName( plotFile );
-   plot->print( generator );
+   resbmap->close();
 }
 
 // New triple selected

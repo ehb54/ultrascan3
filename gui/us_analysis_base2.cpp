@@ -1227,19 +1227,34 @@ QString US_AnalysisBase2::scan_info( void ) const
 
 void US_AnalysisBase2::write_plot( const QString& fname, const QwtPlot* plot )
 {
-    QSvgGenerator generator;
     // Set resolution to screen resolution
     double px  = (double)qApp->desktop()->width();
     double in  = (double)qApp->desktop()->widthMM() / 25.4;
     int    res = qRound( px / in );
-    int    pw  = plot->width()  + res;
-    int    ph  = plot->height() + res;
+    int    pw  = plot->width();
+    int    ph  = plot->height();
 
-    generator.setResolution( res );
-    generator.setFileName( fname );
-    generator.setSize( plot->size() );
-    generator.setViewBox( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
-    plot->print( generator );
+    if ( fname.endsWith( ".svg" ) )
+    {  // Save the file as SVG, then save a PNG version
+       int lx  = pw + res;
+       int ly  = ph + res;
+       QSvgGenerator generator;
+       generator.setResolution( res );
+       generator.setFileName( fname );
+       generator.setSize( plot->size() );
+       generator.setViewBox( QRect( QPoint( 0, 0 ), QPoint( lx, ly ) ) );
+       plot->print( generator );
+
+       QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
+       QString fnpng  = QString( fname ).replace( ".svg", ".png" );
+       pixmap.save( fnpng );
+    }
+
+    else
+    {
+       QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
+       pixmap.save( fname );
+    }
 }
 
 bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )

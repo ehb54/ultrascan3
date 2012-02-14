@@ -210,6 +210,11 @@ void US_ResidPlot::set_plot( int plotf )
    {  // ri_noise plot
       ck_pltrin->setChecked( true );
    }
+
+   else if ( plotf == 0 )
+   {  // residuals plot
+      ck_pltres->setChecked( true );
+   }
 }
 
 // return a pointer to the QwtPlot for the lower plot
