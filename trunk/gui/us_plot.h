@@ -70,6 +70,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void zoom  ( bool );
       void print ( void );
       void svg   ( void );
+      void png   ( void );
       void config( void );
 };
 

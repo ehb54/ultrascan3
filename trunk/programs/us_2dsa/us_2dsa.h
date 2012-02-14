@@ -91,8 +91,7 @@ class US_2dsa : public US_AnalysisBase2
       QString fit_meniscus_data( void );
       void data_plot( void );
       void write_report( QTextStream& );
-      void write_svg(    const QString, const QwtPlot* );
-      void write_png(    const QString, const QWidget* );
+      void write_bmap( const QString );
       void load     ( void );
       void view     ( void );
       void save     ( void );

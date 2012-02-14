@@ -906,15 +906,6 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    ts << "  </body>\n</html>\n";
 }
 
-// Write SVG plot file
-void US_vHW_Enhanced::write_plot( const QString fname, const QwtPlot* plot )
-{
-   QSvgGenerator generator;
-   generator.setSize( plot->size() );
-   generator.setFileName( fname );
-   plot->print( generator );
-}
-
 // save the enhanced data
 void US_vHW_Enhanced::save_data( void )
 { 
@@ -1883,10 +1874,16 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
    QString tplot1File = tempbase + "s-c-distrib.svg";
    QString tplot2File = tempbase + "s-c-histo.svg";
    QString tdata2File = tempbase + "envelope.dat";
+   QString tplot3File = tempbase + "s-c-distrib.png";
+   QString tplot4File = tempbase + "s-c-histo.png";
+   QString plot3File  = QString( plot1File ).replace( ".svg", ".png" );
+   QString plot4File  = QString( plot2File ).replace( ".svg", ".png" );
 
    QFile tfp1( tplot1File );
    QFile tfp2( tplot2File );
    QFile tfd2( tdata2File );
+   QFile tfp3( tplot3File );
+   QFile tfp4( tplot4File );
 
    if ( tfp1.exists() )
    {
@@ -1910,6 +1907,22 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
          DbgLv(1) << "CDF: removed:" << data2File;
       if ( tfd2.copy( data2File ) )
          DbgLv(1) << "CDF: copied:" << tdata2File;
+   }
+
+   if ( tfp3.exists() )
+   {
+      if ( QFile( plot3File ).remove() )
+         DbgLv(1) << "CDF: removed:" << plot3File;
+      if ( tfp3.copy( plot3File ) )
+         DbgLv(1) << "CDF: copied:" << tplot3File;
+   }
+
+   if ( tfp4.exists() )
+   {
+      if ( QFile( plot4File ).remove() )
+         DbgLv(1) << "CDF: removed:" << plot4File;
+      if ( tfp4.copy( plot4File ) )
+         DbgLv(1) << "CDF: copied:" << tplot4File;
    }
 }
 

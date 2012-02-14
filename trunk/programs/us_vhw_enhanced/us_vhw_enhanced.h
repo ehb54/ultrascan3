@@ -142,7 +142,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void write_dis(      void );
       void write_model(    void );
       void write_report(   QTextStream& );
-      void write_plot(     const QString, const QwtPlot* );
       QString text_time( double, int );
       QString text_time( double );
       QStringList last_edit_files( QStringList );
