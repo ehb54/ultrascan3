@@ -203,7 +203,7 @@ bool US_Saxs_Util::dmd_prepare()
    QFile::remove( const_file );
 
    QString cmd = 
-      QString( "%1 . %2 /dev/null %3 %4 %5 %6 %7\n" )
+      QString( "%1 ../common %2 /dev/null %3 %4 %5 %6 %7\n" )
       .arg( prog )
       .arg( pdb )
       .arg( qs_range )
@@ -779,7 +779,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       QString pdb_out_to_fix_file = base_pdb + "_" + run_description + ".pdb-to-fix";
       
       cmd = 
-         QString( "%1 . %2 /dev/null %3 %4" )
+         QString( "%1 ../common %2 /dev/null %3 %4" )
          .arg( prog )
          .arg( pdb )
          .arg( movie_file )

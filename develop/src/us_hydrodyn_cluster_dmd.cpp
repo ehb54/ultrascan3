@@ -469,7 +469,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       tmp_data.push_back("100");
       tmp_data.push_back("50");
       tmp_data.push_back("2");
-      tmp_data.push_back(".6");
+      tmp_data.push_back(".5");
       tmp_data.push_back("10000");
       tmp_data.push_back("200");
       tmp_data.push_back("50");
@@ -950,7 +950,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
          tmp_data.push_back("100");
          tmp_data.push_back("50");
          tmp_data.push_back("2");
-         tmp_data.push_back(".6");
+         tmp_data.push_back(".5");
          tmp_data.push_back("10000");
          tmp_data.push_back("200");
          tmp_data.push_back("50");
