@@ -192,7 +192,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    QLabel* lb_protein_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
    protein_info->addWidget( lb_protein_mw, prow, 0 );
 
-   le_protein_mw = us_lineedit( "", 0, true );
+   le_protein_mw = us_lineedit( "", 0, false );
    protein_info->addWidget( le_protein_mw, prow, 1 );
 
    QLabel* lb_protein_vbar20 = us_label( 
@@ -1257,6 +1257,7 @@ void US_AnalyteGui::search( const QString& text )
 {
    lw_analytes->clear();
    info.clear();
+   int crow = -1;
 
    for ( int i = 0; i < descriptions.size(); i++ )
    {
@@ -1272,8 +1273,14 @@ void US_AnalyteGui::search( const QString& text )
 
          lw_analytes->addItem( 
                new QListWidgetItem( descriptions[ i ], lw_analytes ) );
+
+         if ( ai.description == analyte.description )
+            crow = i;
       }
    }
+
+   if ( crow >= 0 )
+      lw_analytes->setCurrentRow( crow );
 }
 
 void US_AnalyteGui::sel_investigator( void )
@@ -1505,11 +1512,28 @@ bool US_AnalyteGui::data_ok( void )
 
    double vbar = le_protein_vbar->text().toDouble();
 
-   if ( analyte.type == US_Analyte::PROTEIN  &&  ( vbar < 0.0  || vbar > 2.0 ) )
+   if ( analyte.type == US_Analyte::PROTEIN && ( vbar <= 0.0  || vbar > 2.0 ) )
    {
       QMessageBox::information( this,
          tr( "Attention" ), 
-         tr( "The vbar entry is not a resonable value." ) );
+         tr( "The vbar entry (%1) is not a reasonable value." )
+         .arg( vbar ) );
+      return false;
+   }
+
+   double mwvl   = le_protein_mw->text().toDouble();
+   if ( analyte.type == US_Analyte::DNA ||
+        analyte.type == US_Analyte::RNA  )
+      mwvl   = le_nucle_mw->text().section( " ", 1, 1 ).toDouble();
+   else if ( analyte.type == US_Analyte::CARBOHYDRATE )
+      mwvl   = le_carbs_mw->text().toDouble();
+
+   if ( mwvl <= 0.0 )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "The Molecular Weight entry (%1) is not a reasonable value." )
+         .arg( mwvl ) );
       return false;
    }
 
@@ -1821,6 +1845,34 @@ void US_AnalyteGui::verify_vbar()
       US_Math2::Peptide p;
       double temperature = le_protein_temp->text().toDouble();
       US_Math2::calc_vbar( p, analyte.sequence, temperature );
+
+      double mwval    = le_protein_mw->text().toDouble();
+
+      if ( p.mw == 0.0 )
+         p.mw            = mwval;
+
+      else if ( mwval != 0.0  &&  qAbs( mwval - p.mw ) > 1.0 )
+      {
+         QString msg  = tr(
+               "There is a difference between<br/>"
+               "the Molecular Weight value that you specified and<br/>"
+               "the one calculated from the protein sequence.<br/> <br/>"
+               "Do you wish to accept the specified value?<ul>"
+               "<li><b>Yes</b> to use %1 (the specified);</li>"
+               "<li><b>No </b> to use %2 (the calculated).</li></ul>" )
+                            .arg( mwval ).arg( p.mw );
+
+         QMessageBox msgBox     ( this );
+         msgBox.setWindowTitle  ( tr( "Analyte MW Difference" ) );
+         msgBox.setTextFormat   ( Qt::RichText );
+         msgBox.setText         ( msg );
+         msgBox.addButton       ( QMessageBox::No  );
+         msgBox.addButton       ( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
+
+         if ( msgBox.exec() == QMessageBox::Yes )
+            p.mw         = mwval;
+      }
 
       le_protein_mw->setText( QString::number( (int) p.mw ) );
       double pvbar    = p.vbar20;
