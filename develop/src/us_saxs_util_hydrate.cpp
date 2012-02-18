@@ -2090,6 +2090,8 @@ bool US_Saxs_Util::flush_pdb()
 
    QString fname = control_parameters[ "inputfile" ];
 
+   fname = fname.replace( QRegExp( "^../common/" ), "" );
+
    fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) +
       QString( "-c%2-h.pdb" )
       .arg( QString( "%1" ).arg( our_saxs_options.steric_clash_distance ).replace( ".", "_" ) );
