@@ -1660,7 +1660,7 @@ void US_ConvertGui::exclude_scans( void )
 
 void US_ConvertGui::include( void )
 {
-   init_excludes();
+   allExcludes[ currentTriple ].excludes.clear();
    enableScanControls();
 
    pb_include->setEnabled( false );
