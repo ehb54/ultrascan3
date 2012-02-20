@@ -65,6 +65,7 @@ class US_UTIL_EXTERN US_DB2
       INSERTDUP      = 402,     //!< Attempt to insert a duplicate value in a primary
                                 //!<    or unique key field
       DUPFIELD       = 403,     //!< Attempt to insert duplicate value where one should not exist
+      CONSTRAINT_FAILED = 404,  //!< A database constraint failed
 
       NO_BUFFER      = 501,     //!< No buffer with that ID was found
       NO_COMPONENT   = 502,     //!< No buffer component with that ID was found
@@ -86,6 +87,9 @@ class US_UTIL_EXTERN US_DB2
       ANALY_IN_USE   = 517,     //!< The analyte to be deleted is in use
       SOLUT_IN_USE   = 518,     //!< The solution to be deleted is in use
       NO_CALIB       = 519,     //!< The specified calibration profile cannot be found
+      NO_REPORT      = 520,     //!< No global report structure with that ID exists
+      NO_REPORT_DETAIL = 521,   //!< No report detail with the specified ID exists
+      NO_REPORT_DOCUMENT = 522, //!< No report document with the specified ID exists
       UNKNOWN_ERR    = 999      //!< No project with the specified ID exists
     };
 
@@ -280,8 +284,8 @@ class US_UTIL_EXTERN US_DB2
         \param procedure The name of the MySQL stored procedure that will
                read the data from the database. The procedure
                must implement a parameter list as follows:<br><br>
-               CALL procedure( yourGUID, yourPassword, tableID, blobData, checksum );
-               where checksum is an MD5 checksum.<br><br>
+               CALL procedure( yourGUID, yourPassword, tableID); and should
+               return two fields: the blob data and an MD5 checksum 
 
         \param tableID The integer primary-key index of the record that 
                contains the raw binary data.
