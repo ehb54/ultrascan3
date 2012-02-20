@@ -1452,12 +1452,20 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS report ;
 
 CREATE  TABLE IF NOT EXISTS report (
-  reportID int(11) NOT NULL AUTO_INCREMENT ,
-  reportGUID CHAR(36) NOT NULL UNIQUE,
-  title VARCHAR(255) NOT NULL DEFAULT '',
-  html LONGTEXT,
-  PRIMARY KEY( reportID ) )
-ENGINE = InnoDB;
+  reportID int(11) NOT NULL AUTO_INCREMENT,
+  reportGUID char(36) NOT NULL UNIQUE,
+  experimentID int(11) NOT NULL,
+  runID varchar(80) NOT NULL,
+  title varchar(255) NOT NULL DEFAULT '',
+  html longtext,
+  PRIMARY KEY (reportID),
+  INDEX ndx_report_experimentID (experimentID),
+  CONSTRAINT fk_report_experimentID 
+    FOREIGN KEY (experimentID) 
+    REFERENCES experiment (experimentID) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -1466,57 +1474,43 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS reportPerson ;
 
 CREATE  TABLE IF NOT EXISTS reportPerson (
-  reportID int(11) NOT NULL ,
-  personID int(11) NOT NULL ,
-  PRIMARY KEY (reportID) ,
-  INDEX ndx_reportPerson_personID  (personID ASC) ,
-  INDEX ndx_reportPerson_reportID (reportID ASC) ,
-  CONSTRAINT fk_reportPerson_personID
-    FOREIGN KEY (personID )
-    REFERENCES people (personID )
-    ON DELETE CASCADE
+  reportID int(11) NOT NULL,
+  personID int(11) NOT NULL,
+  PRIMARY KEY (reportID),
+  INDEX ndx_reportPerson_personID (personID),
+  INDEX ndx_reportPerson_reportID (reportID),
+  CONSTRAINT fk_reportPerson_personID 
+    FOREIGN KEY (personID) 
+    REFERENCES people (personID) 
+    ON DELETE CASCADE 
     ON UPDATE CASCADE,
-  CONSTRAINT fk_reportPerson_reportID
-    FOREIGN KEY (reportID )
-    REFERENCES report (reportID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE )
-ENGINE = InnoDB;
+  CONSTRAINT fk_reportPerson_reportID 
+    FOREIGN KEY (reportID) 
+    REFERENCES report (reportID) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
--- Table reportDetail
+-- Table reportTriple
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS reportDetail ;
+DROP TABLE IF EXISTS reportTriple ;
 
-CREATE  TABLE IF NOT EXISTS reportDetail (
-  reportDetailID int(11) NOT NULL AUTO_INCREMENT ,
-  reportDetailGUID CHAR(36) NOT NULL UNIQUE,
+CREATE  TABLE IF NOT EXISTS reportTriple (
+  reportTripleID int(11) NOT NULL AUTO_INCREMENT,
+  reportTripleGUID char(36) NOT NULL UNIQUE,
   reportID int(11) NOT NULL,
   resultID int(11) DEFAULT NULL,
-  experimentID int(11) NOT NULL,
-  runID VARCHAR(80) NOT NULL,
-  triple VARCHAR(20) NOT NULL DEFAULT '',       -- cell/channel/wavelength
-  PRIMARY KEY( reportDetailID ),
-  INDEX ndx_reportDetail_reportID (reportID ASC) ,
-  INDEX ndx_reportDetail_resultID (resultID ASC) ,
-  INDEX ndx_reportDetail_experimentID (experimentID ASC) ,
-  CONSTRAINT fk_reportDetail_reportID
-    FOREIGN KEY (reportID )
-    REFERENCES report (reportID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_reportDetail_resultID
-    FOREIGN KEY (resultID )
-    REFERENCES HPCAnalysisResult (HPCAnalysisResultID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_reportDetail_experimentID
-    FOREIGN KEY (experimentID )
-    REFERENCES experiment (experimentID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE )
-ENGINE = InnoDB;
+  triple varchar(20) NOT NULL DEFAULT '',     -- cell/channel/wavelength format
+  PRIMARY KEY (reportTripleID),
+  INDEX ndx_reportTriple_reportID (reportID),
+  CONSTRAINT fk_reportTriple_reportID 
+    FOREIGN KEY (reportID) 
+    REFERENCES report (reportID) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -1525,23 +1519,23 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS documentLink ;
 
 CREATE  TABLE IF NOT EXISTS documentLink (
-  documentLinkID int(11) NOT NULL AUTO_INCREMENT ,
-  reportDetailID int(11) NOT NULL,
-  reportDocumentID int(11) NOT NULL ,
-  PRIMARY KEY( documentLinkID ),
-  INDEX ndx_documentLink_reportDocumentID (reportDocumentID ASC) ,
-  INDEX ndx_documentLink_reportDetailID (reportDetailID ASC) ,
-  CONSTRAINT fk_documentLink_reportDocumentID
-    FOREIGN KEY (reportDocumentID )
-    REFERENCES reportDocument (reportDocumentID )
-    ON DELETE CASCADE
+  documentLinkID int(11) NOT NULL AUTO_INCREMENT,
+  reportTripleID int(11) NOT NULL,
+  reportDocumentID int(11) NOT NULL,
+  PRIMARY KEY (documentLinkID),
+  INDEX ndx_documentLink_reportTripleID (reportTripleID),
+  INDEX ndx_documentLink_reportDocumentID (reportDocumentID),
+  CONSTRAINT fk_documentLink_reportDocumentID 
+    FOREIGN KEY (reportDocumentID) 
+    REFERENCES reportDocument (reportDocumentID) 
+    ON DELETE CASCADE 
     ON UPDATE CASCADE,
-  CONSTRAINT fk_documentLink_reportDetailID
-    FOREIGN KEY (reportDetailID )
-    REFERENCES reportDetail (reportDetailID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE )
-ENGINE = InnoDB;
+  CONSTRAINT fk_documentLink_reportTripleID 
+    FOREIGN KEY (reportTripleID) 
+    REFERENCES reportTriple (reportTripleID) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -1550,26 +1544,22 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS reportDocument ;
 
 CREATE  TABLE IF NOT EXISTS reportDocument (
-  reportDocumentID int(11) NOT NULL AUTO_INCREMENT ,
-  reportDocumentGUID CHAR(36) NOT NULL UNIQUE,
-  label VARCHAR(80) NOT NULL DEFAULT '',
-  filename VARCHAR(255) NOT NULL DEFAULT '',
-  analysis     enum('vHW', 'dcdt', 'secmo',
-                    '2DSA', '2DSA-MC', '2DSA-MW', '2DSA-MW-MC',
-                    'GA', 'GA-MC', 'GA-MW-MC')
-               DEFAULT '2DSA',
-  subAnalysis  enum('report', 'velocity', 'residuals', 'rbitmap', 
-                    'rinoise', 'tinoise',
-                    'sdistrib', 'mw-distrib', 'D-distrib', '3dplot',
-                    'D_vs_s', 'D_vs_mw', 'ff0_vs_s', 'ff0_vs_mw',
-                    'x-to-radius', 'x-to-S', 'average-S', 'combined')
-               DEFAULT 'report',
-  documentType enum('csv', 'png', 'svg', 'html', 'text')
-               DEFAULT 'png',
+  reportDocumentID int(11) NOT NULL AUTO_INCREMENT,
+  reportDocumentGUID char(36) NOT NULL UNIQUE,
+  editedDataID int(11) NOT NULL DEFAULT '1',
+  label varchar(80) NOT NULL DEFAULT '',
+  filename varchar(255) NOT NULL DEFAULT '',
+  analysis varchar(20) DEFAULT '2DSA',
+  subAnalysis varchar(20) DEFAULT 'report',
+  documentType varchar(20) DEFAULT 'png',
   contents longblob,
-  PRIMARY KEY( reportDocumentID ) )
-ENGINE = InnoDB;
-
+  PRIMARY KEY (reportDocumentID),
+  INDEX ndx_reportDocument_editedDataID (editedDataID),
+  CONSTRAINT fk_reportDocument_editedDataID 
+    FOREIGN KEY (editedDataID) 
+    REFERENCES editedData (editedDataID) 
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
 
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql

@@ -575,7 +575,11 @@ BEGIN
   WHERE  editedDataID = p_editedDataID
   AND    editedData.rawDataID = rawData.rawDataID;
  
-  IF ( count_experiments = 1 ) THEN           -- this is what it should be
+  IF ( p_editedDataID = 1 ) THEN
+    -- Everybody can use this
+    SET status = @OK;
+    
+  ELSEIF ( count_experiments = 1 ) THEN           -- this is what it should be
     -- Find experimentID so we can check permissions on that
     SELECT experimentID
     INTO   l_experimentID

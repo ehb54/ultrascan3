@@ -37,6 +37,10 @@ BEGIN
   WHERE  experimentID = p_experimentID
   AND    personID = @US3_ID;
 
+  IF ( p_experimentID = 1 ) THEN    -- The magic ID that anyone can use temporarily
+    SET count_permissions = 1;
+  END IF;
+
   IF ( count_experiments = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
     SET @US3_LAST_ERROR = 'MySQL: the specified experiment does not exist';
