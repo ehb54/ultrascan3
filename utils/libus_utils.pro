@@ -53,7 +53,8 @@ HEADERS      = us_analyte.h       \
                us_tar.h           \
                us_util.h          \
                us_vector.h        \
-               us_rotor.h
+               us_rotor.h         \
+               us_report.h
 
 SOURCES      = us_analyte.cpp       \
                us_astfem_math.cpp   \
@@ -87,7 +88,8 @@ SOURCES      = us_analyte.cpp       \
                us_tar.cpp           \
                us_util.cpp          \
                us_vector.cpp        \
-               us_rotor.cpp
+               us_rotor.cpp         \
+               us_report.cpp
 
 # Only include us_crypto when not on a supercomputer
 

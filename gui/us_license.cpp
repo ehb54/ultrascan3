@@ -459,14 +459,14 @@ void US_License::update( void )
           QMessageBox::Yes, QMessageBox::No );
 
       if ( result == QMessageBox::No ) 
-		{
-			return;
-		}
-		else
-		{
-			request();
-			return;
-		}
+      {
+         return;
+      }
+      else
+      {
+         request();
+         return;
+      }
     }
   }
   else
@@ -586,7 +586,7 @@ void US_License::request_response( const QString& response )
     // Process possible errors
     QMessageBox::information ( this, 
       tr( "Request Error" ),
-      tr( "The response was " ) +  response );
+      response );
      
     return;
   } 
@@ -625,13 +625,14 @@ bool US_License::save( void )
       break;
 
     case US_License_t::BadOS:
-      message = tr( "failure,\n"
+      message = tr( "Failure.\n"
           "The wrong operating system has been selected." );
       break;
 
     case US_License_t::OK:
       US_Settings::set_license( license );
-      message        = tr( "Success" );
+      message        = tr( "Success.\n"
+          "The registration has been saved successfully." );
       isOK           = true;
       updating_email = false;
       break;
