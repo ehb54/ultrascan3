@@ -129,6 +129,7 @@ DROP PROCEDURE IF EXISTS new_report$$
 CREATE PROCEDURE new_report ( p_personGUID  CHAR(36),
                               p_password    VARCHAR(80),
                               p_reportGUID  CHAR(36),
+                              p_runID       VARCHAR(80),
                               p_title       VARCHAR(255),
                               p_html        LONGTEXT,
                               p_ownerID     INT )
@@ -137,6 +138,9 @@ CREATE PROCEDURE new_report ( p_personGUID  CHAR(36),
 BEGIN
   DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
+  DECLARE count_experiment  INT DEFAULT 0;
+  DECLARE count_reports     INT DEFAULT 0;
+  DECLARE l_experimentID    INT DEFAULT -1;
 
   DECLARE CONTINUE HANDLER FOR 1062
     SET duplicate_key = 1;
@@ -150,12 +154,45 @@ BEGIN
 
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
-       ( check_GUID ( p_personGUID, p_password, p_reportGUID ) = @OK ) ) THEN
+  -- runID is unique for the investigator in the experiment table, too 
+  SELECT COUNT(*)
+  INTO   count_experiment
+  FROM   experimentPerson p, experiment e
+  WHERE  p.personID = p_ownerID
+  AND    p.experimentID = e.experimentID
+  AND    e.runID = p_runID;
+
+  -- And now check for uniqueness of the runID for this investigator
+  SELECT COUNT(*)
+  INTO   count_reports
+  FROM   reportPerson p, report r
+  WHERE  personID = p_ownerID
+  AND    p.reportID = r.reportID
+  AND    runID = p_runID;
+
+  SELECT e.experimentID
+  INTO   l_experimentID
+  FROM   experimentPerson p, experiment e
+  WHERE  p.personID = p_ownerID
+  AND    p.experimentID = e.experimentID
+  AND    e.runID = p_runID;
+
+  IF ( count_experiment = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
+    SET @US3_LAST_ERROR = "MySQL: No experiment with that runID exists";
+
+  ELSEIF ( count_reports > 0 ) THEN
+    SET @US3_LAST_ERRNO = @INSERTDUP;
+    SET @US3_LAST_ERROR = "MySQL: Duplicate entry for runID field";
+
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( check_GUID ( p_personGUID, p_password, p_reportGUID ) = @OK ) ) THEN
     INSERT INTO report SET
-      reportGUID  = p_reportGUID,
-      title       = p_title,
-      html        = p_html;
+      reportGUID   = p_reportGUID,
+      experimentID = l_experimentID,
+      runID        = p_runID,
+      title        = p_title,
+      html         = p_html;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -185,7 +222,6 @@ DROP PROCEDURE IF EXISTS update_report$$
 CREATE PROCEDURE update_report ( p_personGUID   CHAR(36),
                                  p_password     VARCHAR(80),
                                  p_reportID     INT,
-                                 p_reportGUID   CHAR(36),
                                  p_title        VARCHAR(255),
                                  p_html         LONGTEXT )
   MODIFIES SQL DATA
@@ -202,7 +238,6 @@ BEGIN
 
   IF ( verify_report_permission( p_personGUID, p_password, p_reportID ) = @OK ) THEN
     UPDATE report SET
-      reportGUID  = p_reportGUID,
       title       = p_title,
       html        = p_html
     WHERE reportID  = p_reportID;
@@ -269,6 +304,58 @@ BEGIN
 
 END$$
 
+-- Returns the reportID associated with the given runID
+DROP PROCEDURE IF EXISTS get_reportID_by_runID$$
+CREATE PROCEDURE get_reportID_by_runID ( p_personGUID  CHAR(36),
+                                         p_password    VARCHAR(80),
+                                         p_ID          INT,
+                                         p_runID       VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_reports INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET count_reports    = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+
+    SELECT COUNT(*)
+    INTO   count_reports
+    FROM   reportPerson p, report r
+    WHERE  personID = p_ID
+    AND    p.reportID = r.reportID
+    AND    runID = p_runID;
+
+    IF ( TRIM( p_runID ) = '' ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The runID parameter to the ',
+                                    'get_reportID_by_runID function cannot be empty' );
+
+    ELSEIF ( count_reports < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT p.reportID
+      FROM   reportPerson p, report r
+      WHERE  personID = p_ID
+      AND    p.reportID = r.reportID
+      AND    runID = p_runID;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 -- Returns the reportID and title of all reports associated with p_ID
 --  If p_ID = 0, retrieves information about all reports in db
 --  Regular user can only get info about his own reports
@@ -296,14 +383,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT    report.reportID, reportGUID, title, html
+        SELECT    report.reportID, reportGUID, title, experimentID, runID
         FROM      reportPerson, report
         WHERE     reportPerson.personID = p_ID
         AND       reportPerson.reportID = report.reportID
         ORDER BY  reportID DESC;
    
       ELSE
-        SELECT    report.reportID, reportGUID, title, html
+        SELECT    report.reportID, reportGUID, title, experimentID, runID
         FROM      reportPerson, report
         WHERE     reportPerson.reportID = report.reportID
         ORDER BY  reportID DESC;
@@ -330,10 +417,88 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT    report.reportID, reportGUID, title, html
+      SELECT    report.reportID, reportGUID, title, experimentID, runID
       FROM      reportPerson, report
       WHERE     reportPerson.personID = @US3_ID
       AND       reportPerson.reportID = report.reportID
+      ORDER BY  reportID DESC;
+
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Returns the reportID and title of all reports that have a given runID
+-- that belong to the person identified by p_ID
+-- An admin can view anybody's reports; a regular user only his own
+-- If p_ID = 0, retrieves information about all reports in db
+DROP PROCEDURE IF EXISTS get_report_desc_by_runID$$
+CREATE PROCEDURE get_report_desc_by_runID ( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_ID         INT,
+                                            p_runID      VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_reports_by_runID( p_personGUID, p_password, p_ID, p_runID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      IF ( p_ID > 0 ) THEN
+        SELECT    r.reportID, reportGUID, title, experimentID
+        FROM      reportPerson p, report r
+        WHERE     p.personID = p_ID
+        AND       p.reportID = r.reportID
+        AND       runID    = p_runID
+        ORDER BY  reportID DESC;
+   
+      ELSE
+        SELECT    reportID, reportGUID, title, experimentID
+        FROM      report
+        WHERE     runID = p_runID
+        ORDER BY  reportID DESC;
+
+      END IF;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this report';
+     
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_reports( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT    r.reportID, reportGUID, title, experimentID
+      FROM      reportPerson p, report r
+      WHERE     p.personID = @US3_ID
+      AND       p.reportID = r.reportID
+      AND       runID    = p_runID
       ORDER BY  reportID DESC;
 
     END IF;
@@ -371,12 +536,63 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT    report.reportID, reportGUID, title, html
+      SELECT    report.reportID, reportGUID, experimentID, runID, title, html
       FROM      reportPerson, report
       WHERE     report.reportID = p_reportID
       AND       report.reportID = reportPerson.reportID;
 
     END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- Returns all global report information about one report
+DROP PROCEDURE IF EXISTS get_report_info_by_runID$$
+CREATE PROCEDURE get_report_info_by_runID ( p_personGUID  CHAR(36),
+                                            p_password    VARCHAR(80),
+                                            p_ID          INT,
+                                            p_runID       VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_reports INT;
+  DECLARE l_reportID    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT COUNT(*)
+  INTO   count_reports
+  FROM   reportPerson p, report r
+  WHERE  personID = p_ID
+  AND    p.reportID = r.reportID
+  AND    runID = p_runID;
+
+  SELECT p.reportID
+  INTO   l_reportID
+  FROM   reportPerson p, report r
+  WHERE  personID = p_ID
+  AND    p.reportID = r.reportID
+  AND    runID = p_runID;
+
+  IF ( count_reports = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( verify_report_permission( p_personGUID, p_password, l_reportID ) = @OK ) THEN
+    SELECT @OK AS status;
+
+    SELECT    report.reportID, reportGUID, experimentID, runID, title, html
+    FROM      reportPerson, report
+    WHERE     report.reportID = l_reportID
+    AND       report.reportID = reportPerson.reportID;
 
   ELSE
     SELECT @US3_LAST_ERRNO AS status;
@@ -403,14 +619,14 @@ BEGIN
     -- Have to do it in a couple of stages because of the constraints
     DELETE      documentLink, reportDocument
     FROM        report
-    LEFT JOIN   reportDetail   ON ( report.reportID = reportDetail.reportID )
-    LEFT JOIN   documentLink   ON ( reportDetail.reportDetailID = documentLink.reportDetailID )
+    LEFT JOIN   reportTriple   ON ( report.reportID = reportTriple.reportID )
+    LEFT JOIN   documentLink   ON ( reportTriple.reportTripleID = documentLink.reportTripleID )
     LEFT JOIN   reportDocument ON ( documentLink.reportDocumentID = reportDocument.reportDocumentID )
     WHERE       report.reportID = p_reportID;
 
-    DELETE      reportDetail
+    DELETE      reportTriple
     FROM        report
-    LEFT JOIN   reportDetail ON ( report.reportID = reportDetail.reportID )
+    LEFT JOIN   reportTriple ON ( report.reportID = reportTriple.reportID )
     WHERE       report.reportID = p_reportID;
 
     DELETE FROM report
@@ -428,8 +644,8 @@ END$$
 -- This set of routines deals with all documents relating to a single 
 -- runID/triple combination
 
-DROP FUNCTION IF EXISTS count_reportDetail$$
-CREATE FUNCTION count_reportDetail( p_personGUID CHAR(36),
+DROP FUNCTION IF EXISTS count_reportTriple$$
+CREATE FUNCTION count_reportTriple( p_personGUID CHAR(36),
                                     p_password   VARCHAR(80),
                                     p_reportID   INT )
   RETURNS INT
@@ -446,7 +662,7 @@ BEGIN
     -- This is either an admin, or a user getting info about his own reports
     SELECT COUNT(*)
     INTO   count_reports
-    FROM   reportDetail
+    FROM   reportTriple
     WHERE  reportID = p_reportID;
 
   END IF;
@@ -455,15 +671,13 @@ BEGIN
 
 END$$
 
--- INSERTs a new report detail record with the specified information
-DROP PROCEDURE IF EXISTS new_reportDetail$$
-CREATE PROCEDURE new_reportDetail ( p_personGUID        CHAR(36),
+-- INSERTs a new report triple record with the specified information
+DROP PROCEDURE IF EXISTS new_reportTriple$$
+CREATE PROCEDURE new_reportTriple ( p_personGUID        CHAR(36),
                                     p_password          VARCHAR(80),
-                                    p_reportDetailGUID  CHAR(36),
+                                    p_reportTripleGUID  CHAR(36),
                                     p_reportID          INT,
                                     p_resultID          INT,
-                                    p_experimentID      INT,
-                                    p_runID             VARCHAR(80),
                                     p_triple            VARCHAR(20) )
   MODIFIES SQL DATA
 
@@ -494,39 +708,30 @@ BEGIN
     
     SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) != @OK ) THEN
-    -- Doesn't have permission to use this experiment
-    SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view that experiment';
-    
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportDetailGUID ) != @OK ) THEN
+  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportTripleGUID ) != @OK ) THEN
     SET @US3_LAST_ERRNO = @BADGUID;
-    SET @US3_LAST_ERROR = 'MySQL: the reportDetailGUID is not in the correct format';
+    SET @US3_LAST_ERROR = 'MySQL: the reportTripleGUID is not in the correct format';
 
     SELECT @US3_LAST_ERRNO AS status;
 
   ELSE
-    INSERT INTO reportDetail SET
-      reportDetailGUID  = p_reportDetailGUID,
+    INSERT INTO reportTriple SET
+      reportTripleGUID  = p_reportTripleGUID,
       reportID          = p_reportID,
       resultID          = p_resultID,
-      experimentID      = p_experimentID,
-      runID             = p_runID,
       triple            = p_triple;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for reportDetailGUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for reportTripleGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for reportDetailGUID field";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for reportTripleGUID field";
 
     ELSEIF ( constraint_failed = 1 ) THEN
       SET @US3_LAST_ERRNO = @CONSTRAINT_FAILED;
-      SET @US3_LAST_ERROR = "MySQL: FK Constraint failed inserting into reportDetail";
+      SET @US3_LAST_ERROR = "MySQL: FK Constraint failed inserting into reportTriple";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -539,33 +744,22 @@ BEGIN
 
 END$$
 
--- UPDATEs an existing report detail record with the specified information
-DROP PROCEDURE IF EXISTS update_reportDetail$$
-CREATE PROCEDURE update_reportDetail ( p_personGUID        CHAR(36),
+-- UPDATEs an existing report triple record with the specified information
+DROP PROCEDURE IF EXISTS update_reportTriple$$
+CREATE PROCEDURE update_reportTriple ( p_personGUID        CHAR(36),
                                        p_password          VARCHAR(80),
-                                       p_reportDetailID    INT,
-                                       p_reportDetailGUID  CHAR(36),
+                                       p_reportTripleID    INT,
                                        p_resultID          INT,
-                                       p_experimentID      INT,
-                                       p_runID             VARCHAR(80),
                                        p_triple            VARCHAR(20) )
   MODIFIES SQL DATA
 
 BEGIN
   DECLARE l_reportID    INT;
   DECLARE not_found     TINYINT DEFAULT 0;
-  DECLARE duplicate_key TINYINT DEFAULT 0;
-  DECLARE null_field    TINYINT DEFAULT 0;
   DECLARE constraint_failed TINYINT DEFAULT 0;
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND
     SET not_found = 1;
-
-  DECLARE CONTINUE HANDLER FOR 1062
-    SET duplicate_key = 1;
-
-  DECLARE CONTINUE HANDLER FOR 1048
-    SET null_field = 1;
 
   DECLARE CONTINUE HANDLER FOR 1452
     SET constraint_failed = 1;
@@ -579,8 +773,8 @@ BEGIN
   -- Figure out the reportID
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
     -- Can't do that
@@ -589,43 +783,19 @@ BEGIN
     
     SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) != @OK ) THEN
-    -- Doesn't have permission to use this experiment
-    SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view that experiment';
-    
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportDetailGUID ) != @OK ) THEN
-    SET @US3_LAST_ERRNO = @BADGUID;
-    SET @US3_LAST_ERROR = 'MySQL: the reportDetailGUID is not in the correct format';
-
-    SELECT @US3_LAST_ERRNO AS status;
-
   ELSE
-    UPDATE reportDetail SET
-      reportDetailGUID  = p_reportDetailGUID,
+    UPDATE reportTriple SET
       resultID          = p_resultID,
-      experimentID      = p_experimentID,
-      runID             = p_runID,
       triple            = p_triple
-    WHERE reportDetailID = p_reportDetailID;
+    WHERE reportTripleID = p_reportTripleID;
 
     IF ( not_found = 1 ) THEN
-      SET @US3_LAST_ERRNO = @NO_REPORT_DETAIL;
-      SET @US3_LAST_ERROR = "MySQL: No report detail record with that ID exists";
-
-    ELSEIF ( duplicate_key = 1 ) THEN
-      SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for reportDetailGUID field";
-
-    ELSEIF ( null_field = 1 ) THEN
-      SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for reportDetailGUID field";
+      SET @US3_LAST_ERRNO = @NO_REPORT_TRIPLE;
+      SET @US3_LAST_ERROR = "MySQL: No report triple record with that ID exists";
 
     ELSEIF ( constraint_failed = 1 ) THEN
       SET @US3_LAST_ERRNO = @CONSTRAINT_FAILED;
-      SET @US3_LAST_ERROR = "MySQL: FK Constraint failed while updating reportDetail";
+      SET @US3_LAST_ERROR = "MySQL: FK Constraint failed while updating reportTriple";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -638,11 +808,11 @@ BEGIN
 
 END$$
 
--- Returns the reportDetailID associated with the given reportDetailGUID
-DROP PROCEDURE IF EXISTS get_reportDetailID$$
-CREATE PROCEDURE get_reportDetailID ( p_personGUID        CHAR(36),
+-- Returns the reportTripleID associated with the given reportTripleGUID
+DROP PROCEDURE IF EXISTS get_reportTripleID$$
+CREATE PROCEDURE get_reportTripleID ( p_personGUID        CHAR(36),
                                       p_password          VARCHAR(80),
-                                      p_reportDetailGUID  CHAR(36) )
+                                      p_reportTripleGUID  CHAR(36) )
   READS SQL DATA
 
 BEGIN
@@ -658,13 +828,13 @@ BEGIN
 
     SELECT    COUNT(*)
     INTO      count_reports
-    FROM      reportDetail
-    WHERE     reportDetailGUID = p_reportDetailGUID;
+    FROM      reportTriple
+    WHERE     reportTripleGUID = p_reportTripleGUID;
 
-    IF ( TRIM( p_reportDetailGUID ) = '' ) THEN
+    IF ( TRIM( p_reportTripleGUID ) = '' ) THEN
       SET @US3_LAST_ERRNO = @EMPTY;
-      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The reportDetailGUID parameter to the ',
-                                    'get_reportDetailID function cannot be empty' );
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The reportTripleGUID parameter to the ',
+                                    'get_reportTripleID function cannot be empty' );
 
     ELSEIF ( count_reports < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -675,9 +845,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   reportDetailID
-      FROM     reportDetail
-      WHERE    reportDetailGUID = p_reportDetailGUID;
+      SELECT   reportTripleID
+      FROM     reportTriple
+      WHERE    reportTripleGUID = p_reportTripleGUID;
 
     END IF;
 
@@ -686,8 +856,8 @@ BEGIN
 END$$
 
 -- Returns all report details associated with p_reportID
-DROP PROCEDURE IF EXISTS get_reportDetail_desc$$
-CREATE PROCEDURE get_reportDetail_desc ( p_personGUID CHAR(36),
+DROP PROCEDURE IF EXISTS get_reportTriple_desc$$
+CREATE PROCEDURE get_reportTriple_desc ( p_personGUID CHAR(36),
                                          p_password   VARCHAR(80),
                                          p_reportID   INT )
   READS SQL DATA
@@ -704,7 +874,7 @@ BEGIN
      
      SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( count_reportDetail( p_personGUID, p_password, p_reportID ) < 1 ) THEN
+  ELSEIF ( count_reportTriple( p_personGUID, p_password, p_reportID ) < 1 ) THEN
      SET @US3_LAST_ERRNO = @NOROWS;
      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -713,20 +883,20 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportDetailID, reportDetailGUID, resultID, experimentID, runID, triple
-     FROM      reportDetail
+     SELECT    reportTripleID, reportTripleGUID, resultID, triple
+     FROM      reportTriple
      WHERE     reportID = p_reportID
-     ORDER BY  runID, triple;
+     ORDER BY  triple;
    
   END IF;
 
 END$$
 
--- Returns all report details associated with a single p_reportDetailID
-DROP PROCEDURE IF EXISTS get_reportDetail_info$$
-CREATE PROCEDURE get_reportDetail_info ( p_personGUID       CHAR(36),
+-- Returns all report details associated with a single p_reportTripleID
+DROP PROCEDURE IF EXISTS get_reportTriple_info$$
+CREATE PROCEDURE get_reportTriple_info ( p_personGUID       CHAR(36),
                                          p_password         VARCHAR(80),
-                                         p_reportDetailID   INT )
+                                         p_reportTripleID   INT )
   READS SQL DATA
 
 BEGIN
@@ -739,13 +909,13 @@ BEGIN
 
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   SELECT COUNT(*)
   INTO   count_reports
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
      SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -762,19 +932,19 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportDetailGUID, resultID, experimentID, runID, triple
-     FROM      reportDetail
-     WHERE     reportDetailID = p_reportDetailID;
+     SELECT    reportTripleGUID, resultID, triple
+     FROM      reportTriple
+     WHERE     reportTripleID = p_reportTripleID;
    
   END IF;
 
 END$$
 
 -- DELETEs a report detail record, plus information in related tables
-DROP PROCEDURE IF EXISTS delete_reportDetail$$
-CREATE PROCEDURE delete_reportDetail ( p_personGUID        CHAR(36),
+DROP PROCEDURE IF EXISTS delete_reportTriple$$
+CREATE PROCEDURE delete_reportTriple ( p_personGUID        CHAR(36),
                                        p_password          VARCHAR(80),
-                                       p_reportDetailID    INT )
+                                       p_reportTripleID    INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -786,21 +956,21 @@ BEGIN
 
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) = @OK ) THEN
 
     -- Make sure records match if they have related tables or not
     -- Have to do it in a couple of stages because of the constraints
     DELETE      documentLink, reportDocument
-    FROM        reportDetail
-    LEFT JOIN   documentLink   ON ( reportDetail.reportDetailID = documentLink.reportDetailID )
+    FROM        reportTriple
+    LEFT JOIN   documentLink   ON ( reportTriple.reportTripleID = documentLink.reportTripleID )
     LEFT JOIN   reportDocument ON ( documentLink.reportDocumentID = reportDocument.reportDocumentID )
-    WHERE       reportDetail.reportDetailID = p_reportDetailID;
+    WHERE       reportTriple.reportTripleID = p_reportTripleID;
 
-    DELETE FROM reportDetail
-    WHERE       reportDetailID = p_reportDetailID;
+    DELETE FROM reportTriple
+    WHERE       reportTripleID = p_reportTripleID;
 
   END IF;
 
@@ -813,7 +983,7 @@ END$$
 DROP FUNCTION IF EXISTS count_reportDocument$$
 CREATE FUNCTION count_reportDocument( p_personGUID       CHAR(36),
                                       p_password         VARCHAR(80),
-                                      p_reportDetailID   INT )
+                                      p_reportTripleID   INT )
   RETURNS INT
   READS SQL DATA
 
@@ -826,15 +996,15 @@ BEGIN
 
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) = @OK ) THEN
     -- This is either an admin, or a user getting info about his own reports
     SELECT COUNT(*)
     INTO   count_reports
     FROM   documentLink
-    WHERE  reportDetailID = p_reportDetailID;
+    WHERE  reportTripleID = p_reportTripleID;
 
   END IF;
 
@@ -846,20 +1016,14 @@ END$$
 DROP PROCEDURE IF EXISTS new_reportDocument$$
 CREATE PROCEDURE new_reportDocument ( p_personGUID          CHAR(36),
                                       p_password            VARCHAR(80),
-                                      p_reportDetailID      INT,
+                                      p_reportTripleID      INT,
                                       p_reportDocumentGUID  CHAR(36),
+                                      p_editedDataID        INT,
                                       p_label               VARCHAR(80),
                                       p_filename            VARCHAR(255),
-                                      p_analysis            enum('vHW', 'dcdt', 'secmo',
-                                                              '2DSA', '2DSA-MC', '2DSA-MW', '2DSA-MW-MC',
-                                                              'GA', 'GA-MC', 'GA-MW-MC'),
-                                      p_subAnalysis         enum('report', 'velocity', 'residuals', 'rbitmap',
-                                                              'rinoise', 'tinoise',
-                                                              'sdistrib', 'mw-distrib', 'D-distrib', '3dplot',
-                                                              'D_vs_s', 'D_vs_mw', 'ff0_vs_s', 'ff0_vs_mw',
-                                                              'x-to-radius', 'x-to-S', 'average-S', 'combined'),
-                                      p_documentType        enum('csv', 'png', 'svg', 'html', 'text'),
-                                      p_contents longblob )
+                                      p_analysis            VARCHAR(20),
+                                      p_subAnalysis         VARCHAR(20),
+                                      p_documentType        VARCHAR(20) )
 
   MODIFIES SQL DATA
 
@@ -888,8 +1052,8 @@ BEGIN
  
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
     -- Can't do that
@@ -904,15 +1068,22 @@ BEGIN
 
     SELECT @US3_LAST_ERRNO AS status;
 
+  ELSEIF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) != @OK ) THEN
+    -- Don't have permission to reference this edit profile
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to use that edit profile';
+    
+    SELECT @US3_LAST_ERRNO AS status;
+
   ELSE
     INSERT INTO reportDocument SET
       reportDocumentGUID  = p_reportDocumentGUID,
+      editedDataID        = p_editedDataID,
       label               = p_label,
       filename            = p_filename,
       analysis            = p_analysis,
       subAnalysis         = p_subAnalysis,
-      documentType        = p_documentType,
-      contents            = p_contents;
+      documentType        = p_documentType;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -933,7 +1104,7 @@ BEGIN
       SET l_documentID = LAST_INSERT_ID();
 
       INSERT INTO documentLink SET
-        reportDetailID = p_reportDetailID,
+        reportTripleID   = p_reportTripleID,
         reportDocumentID = l_documentID;
 
       SET @LAST_INSERT_ID = l_documentID;
@@ -951,34 +1122,19 @@ DROP PROCEDURE IF EXISTS update_reportDocument$$
 CREATE PROCEDURE update_reportDocument ( p_personGUID          CHAR(36),
                                          p_password            VARCHAR(80),
                                          p_reportDocumentID    INT,
-                                         p_reportDocumentGUID  CHAR(36),
+                                         p_editedDataID        INT,
                                          p_label               VARCHAR(80),
                                          p_filename            VARCHAR(255),
-                                         p_analysis            enum('vHW', 'dcdt', 'secmo',
-                                                                 '2DSA', '2DSA-MC', '2DSA-MW', '2DSA-MW-MC',
-                                                                 'GA', 'GA-MC', 'GA-MW-MC'),
-                                         p_subAnalysis         enum('report', 'velocity', 'residuals', 'rbitmap',
-                                                                 'rinoise', 'tinoise',
-                                                                 'sdistrib', 'mw-distrib', 'D-distrib', '3dplot',
-                                                                 'D_vs_s', 'D_vs_mw', 'ff0_vs_s', 'ff0_vs_mw',
-                                                                 'x-to-radius', 'x-to-S', 'average-S', 'combined'),
-                                         p_documentType        enum('csv', 'png', 'svg', 'html', 'text'),
-                                         p_contents longblob )
+                                         p_analysis            VARCHAR(20),
+                                         p_subAnalysis         VARCHAR(20),
+                                         p_documentType        VARCHAR(20) )
 
   MODIFIES SQL DATA
 
 BEGIN
   DECLARE l_reportID    INT;
 
-  DECLARE duplicate_key TINYINT DEFAULT 0;
-  DECLARE null_field    TINYINT DEFAULT 0;
   DECLARE constraint_failed TINYINT DEFAULT 0;
-
-  DECLARE CONTINUE HANDLER FOR 1062
-    SET duplicate_key = 1;
-
-  DECLARE CONTINUE HANDLER FOR 1048
-    SET null_field = 1;
 
   DECLARE CONTINUE HANDLER FOR 1452
     SET constraint_failed = 1;
@@ -991,9 +1147,9 @@ BEGIN
  
   SELECT reportID
   INTO   l_reportID
-  FROM   documentLink, reportDetail
+  FROM   documentLink, reportTriple
   WHERE  documentLink.reportDocumentID = p_reportDocumentID
-  AND    documentLink.reportDetailID = reportDetail.reportDetailID;
+  AND    documentLink.reportTripleID = reportTriple.reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
     -- Can't do that
@@ -1002,32 +1158,24 @@ BEGIN
     
     SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportDocumentGUID ) != @OK ) THEN
-    SET @US3_LAST_ERRNO = @BADGUID;
-    SET @US3_LAST_ERROR = 'MySQL: the reportDocumentGUID is not in the correct format';
-
+  ELSEIF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) != @OK ) THEN
+    -- Don't have permission to reference this edit profile
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to use that edit profile';
+    
     SELECT @US3_LAST_ERRNO AS status;
 
   ELSE
     UPDATE reportDocument SET
-      reportDocumentGUID   = p_reportDocumentGUID,
+      editedDataID         = p_editedDataID,
       label                = p_label,
       filename             = p_filename,
       analysis             = p_analysis,
       subAnalysis          = p_subAnalysis,
-      documentType         = p_documentType,
-      contents             = p_contents
+      documentType         = p_documentType
     WHERE reportDocumentID = p_reportDocumentID;
 
-    IF ( duplicate_key = 1 ) THEN
-      SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for reportDocumentGUID field";
-
-    ELSEIF ( null_field = 1 ) THEN
-      SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for reportDocumentGUID field";
-
-    ELSEIF ( constraint_failed = 1 ) THEN
+    IF ( constraint_failed = 1 ) THEN
       SET @US3_LAST_ERRNO = @CONSTRAINT_FAILED;
       SET @US3_LAST_ERROR = "MySQL: FK Constraint failed while updating reportDocument";
 
@@ -1092,11 +1240,11 @@ BEGIN
 
 END$$
 
--- Returns most info about all reports associated with p_reportDetailID
+-- Returns most info about all reports associated with p_reportTripleID
 DROP PROCEDURE IF EXISTS get_reportDocument_desc$$
 CREATE PROCEDURE get_reportDocument_desc ( p_personGUID      CHAR(36),
                                            p_password        VARCHAR(80),
-                                           p_reportDetailID  INT )
+                                           p_reportTripleID  INT )
   READS SQL DATA
 
 BEGIN
@@ -1108,8 +1256,8 @@ BEGIN
 
   SELECT reportID
   INTO   l_reportID
-  FROM   reportDetail
-  WHERE  reportDetailID = p_reportDetailID;
+  FROM   reportTriple
+  WHERE  reportTripleID = p_reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
      SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -1117,7 +1265,7 @@ BEGIN
      
      SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( count_reportDocument( p_personGUID, p_password, p_reportDetailID ) < 1 ) THEN
+  ELSEIF ( count_reportDocument( p_personGUID, p_password, p_reportTripleID ) < 1 ) THEN
      SET @US3_LAST_ERRNO = @NOROWS;
      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -1126,10 +1274,10 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportDocument.reportDocumentID, reportDocumentGUID, label, filename, 
-               analysis, subAnalysis, documentType
+     SELECT    reportDocument.reportDocumentID, reportDocumentGUID, editedDataID, 
+               label, filename, analysis, subAnalysis, documentType
      FROM      documentLink, reportDocument
-     WHERE     reportDetailID = p_reportDetailID
+     WHERE     reportTripleID = p_reportTripleID
      AND       documentLink.reportDocumentID = reportDocument.reportDocumentID
      ORDER BY  label;
    
@@ -1146,17 +1294,17 @@ CREATE PROCEDURE get_reportDocument_info ( p_personGUID      CHAR(36),
 
 BEGIN
   DECLARE l_reportID       INT;
-  DECLARE l_reportDetailID INT;
+  DECLARE l_reportTripleID INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  SELECT reportID, documentLink.reportDetailID
-  INTO   l_reportID, l_reportDetailID
-  FROM   documentLink, reportDetail
+  SELECT reportID, documentLink.reportTripleID
+  INTO   l_reportID, l_reportTripleID
+  FROM   documentLink, reportTriple
   WHERE  documentLink.reportDocumentID = p_reportDocumentID
-  AND    documentLink.reportDetailID = reportDetail.reportDetailID;
+  AND    documentLink.reportTripleID = reportTriple.reportTripleID;
 
   IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
      SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -1164,7 +1312,7 @@ BEGIN
      
      SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( count_reportDocument( p_personGUID, p_password, l_reportDetailID ) < 1 ) THEN
+  ELSEIF ( count_reportDocument( p_personGUID, p_password, l_reportTripleID ) < 1 ) THEN
      SET @US3_LAST_ERRNO = @NOROWS;
      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -1173,12 +1321,125 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportDocumentGUID, label, filename, 
-               analysis, subAnalysis, documentType, contents
+     SELECT    reportDocumentGUID, editedDataID, label, filename, 
+               analysis, subAnalysis, documentType
      FROM      reportDocument
      WHERE     reportDocumentID = p_reportDocumentID
      ORDER BY  label;
    
+  END IF;
+
+END$$
+
+-- UPDATEs a reportDocument record with the document content data
+DROP PROCEDURE IF EXISTS upload_reportContents$$
+CREATE PROCEDURE upload_reportContents ( p_personGUID       CHAR(36),
+                                         p_password         VARCHAR(80),
+                                         p_reportDocumentID INT,
+                                         p_contents         LONGBLOB,
+                                         p_checksum         CHAR(33) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_checksum     CHAR(33);
+  DECLARE l_reportID     INT;
+  DECLARE not_found      TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+    SET not_found = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Compare checksum with calculated checksum
+  SET l_checksum = MD5( p_contents );
+  SET @DEBUG = CONCAT( l_checksum , ' ', p_checksum );
+
+  -- Get information we need to verify ownership
+  SELECT reportID
+  INTO   l_reportID
+  FROM   reportTriple, documentLink
+  WHERE  reportDocumentID = p_reportDocumentID
+  AND    reportTriple.reportTripleID = documentLink.reportTripleID;
+
+  IF ( l_checksum != p_checksum ) THEN
+
+    -- Checksums don't match; abort
+    SET @US3_LAST_ERRNO = @BAD_CHECKSUM;
+    SET @US3_LAST_ERROR = "MySQL: Transmission error, bad checksum";
+
+  ELSEIF ( verify_report_permission( p_personGUID, p_password, l_reportID ) = @OK ) THEN
+ 
+    -- This is either an admin, or a person inquiring about his own experiment
+    UPDATE reportDocument SET
+           contents  = p_contents
+    WHERE  reportDocumentID = p_reportDocumentID;
+
+    IF ( not_found = 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_REPORT_DOCUMENT;
+      SET @US3_LAST_ERROR = "MySQL: No report document with that ID exists";
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs a reportDocument record of binary data previously saved with upload_reportContents
+DROP PROCEDURE IF EXISTS download_reportContents$$
+CREATE PROCEDURE download_reportContents ( p_personGUID       CHAR(36),
+                                           p_password         VARCHAR(80),
+                                           p_reportDocumentID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_count_reportContents INT;
+  DECLARE l_reportID             INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Get information to verify that there are records
+  SELECT COUNT(*)
+  INTO   l_count_reportContents
+  FROM   reportDocument
+  WHERE  reportDocumentID = p_reportDocumentID;
+
+SET @DEBUG = CONCAT('Report document ID = ', p_rawDataID,
+                    'Count = ', l_count_reportContents );
+
+  -- Get information we need to verify ownership
+  SELECT reportID
+  INTO   l_reportID
+  FROM   reportTriple, documentLink
+  WHERE  reportDocumentID = p_reportDocumentID
+  AND    reportTriple.reportTripleID = documentLink.reportTripleID;
+
+  IF ( l_count_reportContents != 1 ) THEN
+    -- Probably no rows
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows exist with that ID (or too many rows)';
+
+    SELECT @NOROWS AS status;
+    
+  ELSEIF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
+ 
+    -- verify_experiment_permission must have thrown an error, so pass it on
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+
+    -- This is either an admin, or a person inquiring about his own experiment
+    SELECT @OK AS status;
+
+    SELECT contents, MD5( contents )
+    FROM   reportDocument
+    WHERE  reportDocumentID = p_reportDocumentID;
+
   END IF;
 
 END$$
@@ -1205,9 +1466,9 @@ BEGIN
 
   SELECT reportID
   INTO   l_reportID
-  FROM   documentLink, reportDetail
+  FROM   documentLink, reportTriple
   WHERE  reportDocumentID = p_reportDocumentID
-  AND    documentLink.reportDetailID = reportDetail.reportDetailID;
+  AND    documentLink.reportTripleID = reportTriple.reportTripleID;
 
   IF ( l_reportCount != 1 ) THEN
     -- Can't find the report document
