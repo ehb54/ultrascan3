@@ -35,7 +35,9 @@
             <keyword id="c2" name="configuration" ref="config.html"/>
             <keyword id="c3" name="convert-data"  ref="convert.html"/>
             <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
-            <keyword id="e1" name="experiment"    ref="convert-experiment.html"/>
+            <keyword id="e1" name="edit"          ref="us_edit.html"/>
+            <keyword id="e2" name="equiltime"     ref="us_equiltime.html"/>
+            <keyword id="e3" name="experiment"    ref="convert-experiment.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"  ref="combine_models.html"/>
@@ -55,8 +57,6 @@
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="r2" name="reporter"      ref="reporter.html"/>
             <keyword id="r3" name="rotor"         ref="rotor.html"/>
-            <keyword id="e1" name="us_edit"       ref="us_edit.html"/>
-            <keyword id="e2" name="us_equiltime"  ref="us_equiltime.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
             <keyword id="s2" name="solution"      ref="us_solution.html"/>
             <keyword id="v1" name="vhw-combine"   ref="vhw_combine.html"/>
@@ -134,6 +134,7 @@
 
             <file>vhw_enhanced.html</file>
             <file>images/vhw_enhanced.png</file>
+            <file>images/vhw_enh_groups.png</file>
 
             <file>vhw_distrib_plot.html</file>
             <file>images/vhw_distribution.png</file>

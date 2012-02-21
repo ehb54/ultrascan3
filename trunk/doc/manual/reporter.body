@@ -98,9 +98,9 @@
           the composite report.
        </li>
        <li>
-          <b>Include Table Data</b> Release on this menu to initiate a dialog
-          for choosing supporting spreadsheet and other text data to include
-          in the report folder.
+          <b>Save As</b> Save a copy of the currently selected item. The
+          location and name of the file copy may be chosen in the resulting
+          standard file dialog.
        </li>
     </ul>
 

@@ -71,39 +71,29 @@
         </li>
 
         <li>
-            <b>Density</b> Density is displayed.
-            The initial value after data load is the experiment solution
-            buffer value. Although rarely required or desirable, the value
-            can be changed by editing the text and hitting the Return/Enter
-            key or by clicking the Density button to open a buffer dialog.
+            <b>Solution</b> Click this button to open a
+            <a href="us_solution.html">Solution Management dialog</a>
+            that allows changes to buffer and analyte characteristics of
+            the data set.
         </li>
 
         <li>
-            <b>Viscosity</b> Viscosity is displayed.
-            The initial value after data load is the experiment solution
-            buffer value. Although rarely required or desirable, the value
-            can be changed by editing the text and hitting the Return/Enter
-            key or by clicking the Viscosity button to open a buffer dialog.
+            <b>Density (20&deg; C)</b> Shows the density value for the loaded
+            experiment. Click the Solution button to open a dialog in which
+            density and other values may be changed.
         </li>
 
         <li>
-            <b>Vbar</b> Vbar is displayed.
-            The initial value after data load is the experiment solution
-            value. Although rarely required or desirable, the value
-            can be changed by editing the text and hitting the Return/Enter
-            key or by clicking the Vbar button to open an analyte dialog.
-        </li>
-
-        <li>
-            <b>Skipped</b> A count of early scans not fully clearing the
-            meniscus is given. Portions of these scans will be excluded
-            from analysis.
+            <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+            loaded experiment. Click the Solution button to open a dialog
+            in which viscosity and other values may be changed.
         </li>
 
         <li>
             <b>Distribution Plot</b> Click for a plot dialog that shows a
-            distribution plot or a histogram plot illustrating sedimentation
-            coefficient power related to separate species.
+            <a href="vhw_distrib_plot.html">vHW Distribution plot</a>
+            illustrating sedimentation coefficient power related to separate
+            species.
         </li>
 
         <li>
@@ -114,7 +104,8 @@
             with division line overlap between groups. Note that the button
             label becomes <b>Clear Groups</b> after selection, allowing the
             set of selected groups to be discarded in favor of a new set
-            of selections.
+            of selections. (See the
+            <a href="images/vhw_enh_groups.png">vHW Groups image</a>).
         </li>
 
         <li>

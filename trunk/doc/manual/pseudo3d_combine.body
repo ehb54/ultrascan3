@@ -39,21 +39,32 @@
             </li>
             
             <li>
-              <b>Plot Limit f/f0 min:</b> Choose the lower plot limit for f/f0.
+              <b>Plot Limit f/f0 Minimum:</b> Choose the lower plot limit for f/f0.
             </li>
 
             <li>
-              <b>Plot Limit f/f0 max:</b> Choose upper lower plot limit for f/f0.
+              <b>Plot Limit f/f0 Maximum:</b> Choose upper lower plot limit for f/f0.
             </li>
 
             <li>
-              <b>Plot Limit s min:</b> Choose the lower plot limit for
+              <b>Plot Limit s Minimum:</b> Choose the lower plot limit for
               sedimentation (or MW).
             </li>
 
             <li>
-              <b>Plot Limit s max:</b> Choose the upper plot limit for
+              <b>Plot Limit s Maximum:</b> Choose the upper plot limit for
               sedimentation (or MW).
+            </li>
+
+            <li>
+              <b>Plot Loop Delay Seconds:</b> Choose the number of seconds to
+              delay between plots when all distros are plotted.
+            </li>
+
+            <li>
+              <b>Continuous Loop</b> Check this box if you wish to continually
+              loop through plots of distributions. While in a continuous loop,
+              the plots are not automatically saved for reports.
             </li>
 
             <li>
@@ -99,7 +110,7 @@
             </li>
 
             <li>
-              <b>Load Distribution</b> Load model distribution data as
+              <b>Load Distribution(s)</b> Load model distribution data as
               specified through a
               <a href="load_model_distrib.html">Model Loader dialog</a>.
               Multiple distribution files may be selected.
@@ -110,9 +121,13 @@
               as specified through a file dialog (
               <a href="load_colormap.html">Color Map Load dialog</a> ).
             </li>
-            
+
             <li>
               <b>Help:</b> Display detailed pseudo-3d combine help.
+            </li>
+
+            <li>
+              <b>Close:</b> Close the pseudo3d dialog and exit.
             </li>
           </ul>
 

@@ -26,26 +26,28 @@
 
     <ul>
         <li>
-            <b>upload to DB</b> Create or replace a database copy of an
-            existing local record.
+            <b>upload **** to DB</b> Create or replace database copies
+            of existing local records.
         </li>
         <li>
-            <b>download to local</b> Create or replace a local copy of an
-            existing database record.
+            <b>download **** to local</b> Create or replace local copies
+            of existing database records.
         </li>
         <li>
-            <b>remove from DB</b> Remove a data record from the database.
+            <b>remove **** from DB</b> Remove data records from the
+            database.
         </li>
         <li>
-            <b>remove from local</b> Remove a data record from local disk.
+            <b>remove **** from local</b> Remove data records from
+            local disk.
         </li>
         <li>
-            <b>remove both</b> Remove a data record from both the database
-            and local disk.
+            <b>remove **** from both</b> Remove data records from both
+            the database and local disk.
         </li>
         <li>
-            <b>show details</b> Pop up a text window that gives details about
-            a data record. This may help in deciding how best to bring
+            <b>show record details</b> Pop up a text window that gives details
+            about a data record. This may help in deciding how best to bring
             database and local copies in sync. More on the detail window is
             given below.
         </li>
