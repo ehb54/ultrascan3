@@ -82,7 +82,7 @@
             <b>Distribution Name:</b> The name shown to the right of this
             label is to be used for any saved combination distribution
             data files. By default, the name shown is the first run selected,
-            but this can by changed by the user to any desired name.
+            but this can be changed by the user to any desired name.
         </li>
             
         <li>

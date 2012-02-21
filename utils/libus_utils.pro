@@ -43,6 +43,8 @@ HEADERS      = us_analyte.h       \
                us_model.h         \
                us_noise.h         \
                us_project.h       \
+               us_report.h        \
+               us_rotor.h         \
                us_settings.h      \
                us_simparms.h      \
                us_solute.h        \
@@ -52,9 +54,7 @@ HEADERS      = us_analyte.h       \
                us_stiffbase.h     \
                us_tar.h           \
                us_util.h          \
-               us_vector.h        \
-               us_rotor.h         \
-               us_report.h
+               us_vector.h
 
 SOURCES      = us_analyte.cpp       \
                us_astfem_math.cpp   \
@@ -78,6 +78,8 @@ SOURCES      = us_analyte.cpp       \
                us_model.cpp         \
                us_noise.cpp         \
                us_project.cpp       \
+               us_report.cpp        \
+               us_rotor.cpp         \
                us_settings.cpp      \
                us_simparms.cpp      \
                us_solute.cpp        \
@@ -87,9 +89,7 @@ SOURCES      = us_analyte.cpp       \
                us_stiffbase.cpp     \
                us_tar.cpp           \
                us_util.cpp          \
-               us_vector.cpp        \
-               us_rotor.cpp         \
-               us_report.cpp
+               us_vector.cpp
 
 # Only include us_crypto when not on a supercomputer
 
