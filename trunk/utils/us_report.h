@@ -26,6 +26,27 @@ class US_UTIL_EXTERN US_Report
          SAVED_DB           //!< The report has been saved to the DB
       };
 
+      //! \brief Map report types: name-to-label and name-to-mimetype.
+      //!
+      //! Object that creates and holds mappings of name-to-label for analysis
+      //! (application), subAnalysis (report), and reportType (extension);
+      //! as well as a mapping of extension names to mime-types.
+      class US_UTIL_EXTERN ReportTypes
+      {
+         public:
+            //! \brief US_ReportTypes constructor to create mappings.
+            ReportTypes();
+
+            QMap< QString, QString > appLabels;  //!< Application Name-to-Label
+            QMap< QString, QString > rptLabels;  //!< Report Name-to-Label
+            QMap< QString, QString > extLabels;  //!< Extension Name-to-Label
+            QMap< QString, QString > extMTypes;  //!< Exten. Name-to-MimeType
+
+            //! \brief Displays the contents of the class variables in qDebug() statements
+            void    show  ( void );
+   
+      };
+
       /*! \brief      The ReportDocument class describes an individual report document. This
                       document would be a png or an html snippet that could be included as
                       one of many documents available to be a part of a report
@@ -106,7 +127,7 @@ class US_UTIL_EXTERN US_Report
          */
          Status        readDocsDB( US_DB2* = 0 );
 
-         /*! \brief    Function to add a report document record, both in the object 
+         /*! \brief    Function to add an empty report document record, both in the object 
                        and the DB
 
              \param    editedDataID       The edit profile in effect when the document
@@ -129,6 +150,15 @@ class US_UTIL_EXTERN US_Report
                                     QString,
                                     US_DB2* = 0 );
 
+         /*! \brief    Function to add/replace an entire document record
+
+             \param    d    A US_Report::ReportDocument object
+             \param    dir  The directory where the document can be found
+             \param    db   For database access, an open database connection
+             \return   One of the US_Report error codes
+         */
+         Status        addDocument( US_Report::ReportDocument , QString , US_DB2* = 0 );
+
          /*! \brief    Function to delete a report document from the DB
 
              \param    ndx The index into the docs QVector of the report document to delete
@@ -136,11 +166,22 @@ class US_UTIL_EXTERN US_Report
          */
          Status        removeDocument( int, US_DB2* = 0 );
 
-         //! \brief Resets the class variables to their default values
-         void       reset ( void );
-   
-         //! \brief Displays the contents of the class variables in qDebug() statements
-         void       show  ( void );
+         /*! \brief    Function to find an existing report document record, based on the
+                       analysis, subAnalysis, and documentType fields
+
+             \param    searchAnal         The type of analysis (vHW, dcdt, 2DSA, etc.)
+             \param    searchSubanal      The sub-analysis type (residuals, rinoise, sdistrib, etc.)
+             \param    searchType         The type of document (png, csv, svg, html, etc.)
+             \return   The index into the QVector docs that matches all three analysis fields,
+                       or -1 if no match
+         */
+         int           findDocument( QString, QString, QString );
+
+         //! \brief    Resets the class variables to their default values
+         void          reset ( void );
+                       
+         //! \brief    Displays the contents of the class variables in qDebug() statements
+         void          show  ( void );
    
       };
 
@@ -152,6 +193,7 @@ class US_UTIL_EXTERN US_Report
       QString html;          //!< Some introductory html that would appear 
                              //!< at the top of the report
       QVector< ReportTriple > triples; //!< The report triple
+      ReportTypes rTypes;    //!< Persistent structure of report type mappings
           
       /*!  \brief Generic constructor for the US_Report class.
       */  
@@ -163,7 +205,7 @@ class US_UTIL_EXTERN US_Report
       /*! \brief    Function to read an entire report structure from the DB,
                     except for the document content itself
 
-          \param    runID The runID of the associated experiment
+          \param    new_runID The runID of the associated experiment
           \param    db For database access, an open database connection
           \return   One of the US_Report error codes
       */
@@ -176,13 +218,21 @@ class US_UTIL_EXTERN US_Report
       */
       Status        saveDB( US_DB2* = 0 );
 
-      /*! \brief    Function to add a triple record to the report
+      /*! \brief    Function to add a new empty triple record to the report
 
           \param    triple       The triple identifying which channel
           \param    db For database access, an open database connection
           \return   One of the US_Report error codes
       */
       Status        addTriple( QString, US_DB2* = 0 );
+
+      /*! \brief    Function to add or replace an entire triple
+
+          \param    t  A US_Report::ReportTriple object
+          \param    db For database access, an open database connection
+          \return   One of the US_Report error codes
+      */
+      Status        addTriple( US_Report::ReportTriple , US_DB2* = 0 );
 
       /*! \brief    Function to save the entire report structure to db
 
@@ -199,12 +249,33 @@ class US_UTIL_EXTERN US_Report
       */
       Status        removeTriple( int, US_DB2* = 0 );
 
-      /*!  \brief    Function to delete the specified report from the DB
+      /*! \brief    Function to locate a triple record using the triple string
+
+          \param    searchTriple The triple identifying which channel
+          \return   The index into the QVector triples that matches the triple string,
+                    or -1 if no match
+      */
+      int           findTriple( QString );
+
+      /*! \brief    Store a single reportDocument record based on info in filename
+          \param    dir      The directory where the report file is located. This is
+                             required to end with the runID, for example, 
+                             dir = "/home/user/ultrascan/reports/demo1_veloc"
+          \param    filename Base file name of the local report document file. This
+                             file should be named as follows:
+                             analysis.triple.subAnalysis.docType --- for example,
+                             2dsa.2A260.tinoise.svg
+          \param    db       For database access, an open database connection
+          \return   One of the US_Report error codes
+      */
+      Status        saveDocumentFromFile( const QString&, const QString&, US_DB2* = 0 );
+
+      /*! \brief    Function to delete the specified report from the DB
           
-           \param    reportID The database reportID of the report to delete
-           \param    db For database access, an open database connection
+          \param    reportID The database reportID of the report to delete
+          \param    db For database access, an open database connection
       */  
-      Status         removeReport( int, US_DB2* = 0 );
+      Status        removeReport( int, US_DB2* = 0 );
           
       //! \brief    Resets the class variables to default values
       void          reset();
