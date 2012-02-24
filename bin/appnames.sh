@@ -12,8 +12,6 @@ cd ${BDIR}/bin
  
 #		fix the application in each bundle
 for BUND in `ls -d *.app`;do
-##for BUND in us.app; do
-##for BUND in us_license.app; do
 
   FILE=`echo ${BUND} | sed -e 's/.app//'`
 
@@ -21,20 +19,15 @@ for BUND in `ls -d *.app`;do
 
 #		get list of library names to change
   LIBL=`otool -L ${APPP} \
-    | egrep 'libus|qt-mt|qwt|qca' \
+    | egrep 'libus|qwt|qt-mt' \
     | grep -v executable \
     | awk '{print $1}'`
 
 #		change each of the library names
   for NAMI in ${LIBL}; do
     
-    if [ `echo ${NAMI} | grep -ci qca` -eq 0 ]; then
-      #		use relative path to library
-      NAMO=@executable_path/../../../../lib/${NAMI}
-    else
-      #		use relative path to qca library
-      NAMO=@executable_path/../../../../lib/qca
-    fi
+    #		use relative path to library
+    NAMO=@executable_path/../../../../lib/${NAMI}
 
 #		report and do the install name change
     echo "install_name_tool -change ${NAMI} ${NAMO} ${APPP}"

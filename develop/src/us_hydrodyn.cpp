@@ -1630,6 +1630,10 @@ void US_Hydrodyn::load_pdb()
          // maybe we should make this a user defined terminal window?
          argument.append("xterm");
          argument.append("-e");
+#ifdef MAC
+         argument.append( "open" );
+         argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
          argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -1667,6 +1671,10 @@ void US_Hydrodyn::load_pdb()
       // maybe we should make this a user defined terminal window?
       argument.append("xterm");
       argument.append("-e");
+#ifdef MAC
+      argument.append( "open" );
+      argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
       argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -1796,6 +1804,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
       // maybe we should make this a user defined terminal window?
       argument.append("xterm");
       argument.append("-e");
+#ifdef MAC
+      argument.append( "open" );
+      argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
       argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -2081,6 +2093,10 @@ void US_Hydrodyn::load_bead_model()
          // maybe we should make this a user defined terminal window?
          argument.append("xterm");
          argument.append("-e");
+#ifdef MAC
+         argument.append( "open" );
+         argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
          argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -3136,6 +3152,10 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool bla
                argument.append("xterm");
                argument.append("-e");
             }
+#ifdef MAC
+            argument.append( "open" );
+            argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
             argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");

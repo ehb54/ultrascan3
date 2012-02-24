@@ -33,9 +33,19 @@ void US_Register::us_license()
   proc->addArgument("us_license");
 #else
   US_Config* USglobal = new US_Config();
+  QString basedir = USglobal->config_list.system_dir;
+  if ( basedir == ""  ||  ! QFile( basedir ).exists() )
+    basedir = "/Applications/UltraScanII";
+  QString applic  = basedir + "/bin/us_license.app";
+  if ( ! QFile( applic ).exists() )
+    applic  = "/Applications/UltraScanII/bin/us_license.app";
+  if ( ! QFile( applic ).exists() )
+    applic  = QDir::homeDirPath() + "/ultrascan2/bin/us_license.app";
+  if ( ! QFile( applic ).exists() )
+    applic  = QDir::homeDirPath() + "/ultrascan/bin/us_license.app";
   proc->addArgument("open");
   proc->addArgument("-a");
-  proc->addArgument( USglobal->config_list.system_dir + "/bin/us_license.app" );
+  proc->addArgument( applic);
 #endif
   
   if ( ! proc->start() ) // Error

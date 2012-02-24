@@ -2,6 +2,7 @@
 #define US_SAXS_GP_H
 
 #include "us_hydrodyn_pdbdefs.h"
+#include <list>
 
 // structs/classes for saxs bead GP
 

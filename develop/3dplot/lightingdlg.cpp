@@ -111,6 +111,7 @@ void Pointer::configure(double rad)
 
 void Pointer::drawBegin()
 {
+#ifndef MAC
    GLint mode;
    glGetIntegerv(GL_MATRIX_MODE, &mode);
    glMatrixMode( GL_MODELVIEW );
@@ -124,6 +125,7 @@ void Pointer::drawBegin()
 
    glPopMatrix();
    glMatrixMode(mode);
+#endif
 }
 
 

@@ -10,31 +10,26 @@ BDIR=`echo ${BDIR} | sed -e 's@/bin$@@'`
 #		work from the ~/ultrascan3/lib directory
 cd ${BDIR}/lib
 
-##LIBS="utils gui db"
-LIBS="qt-mt.3.3.8 qui.1.0.0 qwt.4.2.0 qwtplot3d.0.2.6 us.9.9.0"
+	echo "PWD=`pwd`"
+LIBS="libus.9.9.0.dylib"
  
 #		fix each of the us3 libraries
-for ULIB in ${LIBS}; do
-
-  FILE="lib${ULIB}.dylib"
+for FILE in ${LIBS}; do
+	echo "	FILE=${FILE}"
 
 #		get list of names that need fixing
   LIBL=`otool -L ${FILE} \
-    | egrep 'libus|qt-mt|qui|qwt|qca' \
+    | egrep 'qwt|qt-mt' \
     | grep -v executable \
     | grep -v ${FILE} \
     | awk '{print $1}'`
 
 #		fix each of the shared library names
   for NAMI in ${LIBL}; do
+	echo "		NAMI=${NAMI}"
     
-    if [ `echo ${NAMI} | grep -ci qca` -eq 0 ]; then
-      #		give relative path to library
-      NAMO=@executable_path/../../../../lib/${NAMI}
-    else
-      #		give relative path to qca library
-      NAMO=@executable_path/../../../../lib/qca
-    fi
+    #		give relative path to library
+    NAMO=@executable_path/../../../../lib/${NAMI}
 
 #		report and do the fix
     echo "install_name_tool -change ${NAMI} ${NAMO} ${FILE}"

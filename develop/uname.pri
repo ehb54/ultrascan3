@@ -104,6 +104,10 @@ macx:contains (UNAME, i386) {
   DEFINES += MAC
   message ("Configuring for the Macintosh Intel 386 Platform...")
 }
+macx:contains (UNAME, powerpc) {
+  DEFINES += MAC
+  message ("Configuring for the Macintosh PowerPC Platform...")
+}
 
 macx {
    QMAKE_CFLAGS   += -arch ppc -arch i386

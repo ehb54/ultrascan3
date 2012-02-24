@@ -117,6 +117,20 @@ bool US_Write_Config::write_config( struct Config config_list )
    }
 
    QString rcfile = US_Config::get_home_dir() + USRC;
+   QString rcdir  = US_Config::get_home_dir() + ETC_DIR;
+   temp_dir       = QDir( rcdir );
+   if ( ! temp_dir.exists() )
+   {
+      if ( ! temp_dir.mkdir( rcdir, true ) )
+      {
+         message = tr("Could not create the Configuration Directory!\n\n"
+                      + rcdir + "\nPlease check your write permissions!");
+         errorMessage(warning, message);
+         cerr << warning << ":\n" << message << endl;
+         return false;
+      }
+   }
+
    QFile f( rcfile );
    QTextStream ts ( &f );
    

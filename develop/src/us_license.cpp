@@ -635,6 +635,16 @@ void US_License::request()
       QString url;
    } browser[] = 
       { 
+#ifdef MAC
+#undef UNIX
+#define BROWSERS "Safari or Firefox"
+         { "safari" , "", 
+           "http://www.ultrascan2.uthscsa.edu/registration.php" },
+         { "firefox", "", 
+           "http://www.ultrascan2.uthscsa.edu/registration.php" },
+         { "", "", "" }
+#endif
+
 #ifdef UNIX
 #define BROWSERS "Netscape, Mozilla or Firefox"
          { "firefox", "",
@@ -690,6 +700,10 @@ bool US_License::start_browser( const QString& browser,
                                 const QString& remote, const QString& url )
 {
    proc->clearArguments();
+#ifdef Q_WS_MAC
+   proc->addArgument( "open" );
+   proc->addArgument( "-a" );
+#endif
    proc->addArgument( browser );
    if ( remote != "" ) proc->addArgument( remote );
    proc->addArgument( url );

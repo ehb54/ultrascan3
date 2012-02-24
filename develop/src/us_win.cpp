@@ -422,10 +422,10 @@ namespace us_win_data
    } h[] =
       {
          { HELP,         PAGE, "Help...",                     "manual/index.html" },
-         { HELP_REG,     URL,  "Registration Information...", "register.html"     },
+         { HELP_REG,     URL,  "Registration Information...", "registration.php"  },
          { HELP_HOME,    URL,  "UltraScan Home Page...",      ""                  },
-         { HELP_UPGRADE, URL,  "Upgrade Information...",      "download.html"     },
-         { HELP_LICENSE, URL,  "License Information...",      "license.html"      },
+         { HELP_UPGRADE, URL,  "Upgrade Information...",      "download.php"      },
+         { HELP_LICENSE, URL,  "License Information...",      "registration.php"  },
          { HELP_END,     URL,  "",                            ""                  }
       };
 }
@@ -940,7 +940,7 @@ void  UsWin::display_help( int index )
    if ( h[ index ].type == PAGE )
       online_help->show_help( h[ index ].url );
    else
-      online_help->show_URL( "http://www.ultrascan.uthscsa.edu/" + h[ index ].url );
+      online_help->show_URL( "http://www.ultrascan2.uthscsa.edu/" + h[ index ].url );
 
    emit explain( " " );
 }

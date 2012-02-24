@@ -1471,6 +1471,10 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
 #if !defined(WIN32)
    argument.append("xterm");
    argument.append("-e");
+#ifdef MAC
+   argument.append( "open" );
+   argument.append( "-a" );
+#endif
 #endif
 #if defined(BIN64)
    argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");

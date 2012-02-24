@@ -446,9 +446,10 @@ void US_Config::setDefault()
    config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
 #endif
 
-#ifdef OSX
-   config_list.browser = "open";
-#endif
+#ifdef MAC
+   config_list.browser = "/Applications/Safari.app";
+   config_list.system_dir = "/Applications/UltraScanII";
+#else
 
    QString ultrascan = getenv( "ULTRASCAN" );
 
@@ -464,6 +465,7 @@ void US_Config::setDefault()
    }
 
    config_list.system_dir = QDir::convertSeparators( ultrascan );
+#endif
 
    // Doc Directory
    config_list.help_dir =

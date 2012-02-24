@@ -132,12 +132,17 @@ bool USconfig_check::check_config()
    }
 
    // Check the default location
+   QString dir;
 #ifdef UNIX
-   QString dir = "/usr/local/ultrascan";
+   dir = "/usr/local/ultrascan";
 #endif
 
 #ifdef WIN32
-   QString dir = "C:/Program Files/UltraScan";
+   dir = "C:/Program Files/UltraScan";
+#endif
+
+#ifdef MAC
+   dir = "/Applications/UltraScanII";
 #endif
 
    if ( exists ( dir + "/etc/ultra.xpm" ) )
@@ -187,7 +192,7 @@ void USconfig_check::set_default( const QString& system_dir )
 #if defined(WIN32)
    config.browser         = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
 #elif defined(MAC)
-   config.browser         = "open";
+   config.browser         = "/Applications/Safari.app";
 #else
    config.browser         = "/usr/bin/firefox";
 #endif
