@@ -701,20 +701,8 @@ BEGIN
 
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_report_permission( p_personGUID, p_password, p_reportID ) != @OK ) THEN
-    -- Can't do that
-    SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to edit this report';
-    
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportTripleGUID ) != @OK ) THEN
-    SET @US3_LAST_ERRNO = @BADGUID;
-    SET @US3_LAST_ERROR = 'MySQL: the reportTripleGUID is not in the correct format';
-
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSE
+  IF ( ( verify_report_permission( p_personGUID, p_password, p_reportID ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_reportTripleGUID ) = @OK )      ) THEN
     INSERT INTO reportTriple SET
       reportTripleGUID  = p_reportTripleGUID,
       reportID          = p_reportID,
@@ -1055,27 +1043,9 @@ BEGIN
   FROM   reportTriple
   WHERE  reportTripleID = p_reportTripleID;
 
-  IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
-    -- Can't do that
-    SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to edit this report';
-    
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSEIF ( check_GUID ( p_personGUID, p_password, p_reportDocumentGUID ) != @OK ) THEN
-    SET @US3_LAST_ERRNO = @BADGUID;
-    SET @US3_LAST_ERROR = 'MySQL: the reportDocumentGUID is not in the correct format';
-
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSEIF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) != @OK ) THEN
-    -- Don't have permission to reference this edit profile
-    SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to use that edit profile';
-    
-    SELECT @US3_LAST_ERRNO AS status;
-
-  ELSE
+  IF ( ( verify_report_permission( p_personGUID, p_password, l_reportID ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_reportDocumentGUID ) = @OK )    &&
+       ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) = @OK ) ) THEN
     INSERT INTO reportDocument SET
       reportDocumentGUID  = p_reportDocumentGUID,
       editedDataID        = p_editedDataID,

@@ -5,6 +5,75 @@
 #include "us_util.h"
 #include "us_db2.h"
 
+// Report types
+US_Report::ReportTypes::ReportTypes()
+{
+   // Open the etc/reports.xml file, then read to create mappings
+   QString path = US_Settings::appBaseDir() + "/etc/reports.xml";
+   QFile file( path );
+
+   if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            QXmlStreamAttributes atts = xml.attributes();
+            QString name  = atts.value( "name"  ).toString();
+            QString label = atts.value( "label" ).toString();
+
+            if ( xml.name() == "application" )
+            {  // Map application (analysis) name to label
+               appLabels[ name ] = label;
+            }
+
+            else if ( xml.name() == "report" )
+            {  // Map report (subAnalysis) name to label
+               rptLabels[ name ] = label;
+            }
+
+            else if ( xml.name() == "extension" )
+            {  // Map extension (documentType) name to label and to mime-type
+               extLabels[ name ] = label;
+               extMTypes[ name ] = atts.value( "mimetype" ).toString();
+            }
+         }
+      }
+   }
+}
+
+// Function to show the current values of the class variables
+void US_Report::ReportTypes::show( void )
+{
+   qDebug() << "Application (analysis) mappings:";
+   foreach ( QString label, appLabels.keys() )
+      qDebug() << label << ": " << appLabels.value( label );
+
+   qDebug() << "";
+
+   qDebug() << "Report (subAnalysis) mappings:";
+   foreach ( QString label, rptLabels.keys() )
+      qDebug() << label << ": " << rptLabels.value( label );
+
+   qDebug() << "";
+
+   qDebug() << "Extension (documentType) mappings:";
+   foreach ( QString label, extLabels.keys() )
+      qDebug() << label << ": " << extLabels.value( label );
+
+   qDebug() << "";
+
+   qDebug() << "Extension (mime-type) mappings:";
+   foreach ( QString label, extMTypes.keys() )
+      qDebug() << label << ": " << extMTypes.value( label );
+
+   qDebug() << "";
+}
+
 // Methods relating to the report document
 US_Report::ReportDocument::ReportDocument()
 {
@@ -71,7 +140,7 @@ US_Report::Status US_Report::ReportDocument::saveDB(
       if ( newStatus != US_DB2::OK )
       {
          qDebug() << "new_reportDocument error"
-                  << newStatus;
+                  << newStatus << db->lastError();
          return DB_ERROR;
       }
 
@@ -288,12 +357,27 @@ US_Report::Status US_Report::ReportTriple::addDocument(
    d.subAnalysis  = subAnalysis;
    d.documentType = documentType;
 
+   return this->addDocument( d, dir, db );
+}
+
+// Function to add/replace an entire document record 
+US_Report::Status US_Report::ReportTriple::addDocument(
+   US_Report::ReportDocument d,
+   QString dir,
+   US_DB2* db )
+{
+   int ndx = this->findDocument( d.analysis, d.subAnalysis, d.documentType );
+
+   // Easier to delete/add the document if it exists
+   if ( ndx != -1 )
+      this->removeDocument( ndx, db );
+
    this->docs << d;
 
-   int last = docs.size() - 1;
+   // Refresh ndx
+   ndx = this->findDocument( d.analysis, d.subAnalysis, d.documentType );
 
-   US_Report::Status status = this->docs[last].saveDB( this->tripleID, dir, db );
-   return status;
+   return this->docs[ndx].saveDB( this->tripleID, dir, db );
 }
 
 US_Report::Status US_Report::ReportTriple::removeDocument(
@@ -311,6 +395,24 @@ US_Report::Status US_Report::ReportTriple::removeDocument(
 
    this->docs.remove( ndx );
    return REPORT_OK;
+}
+
+// Function to find an existing report document record, based on the
+//   analysis, subAnalysis, and documentType fields
+int US_Report::ReportTriple::findDocument( 
+    QString searchAnal, QString searchSubanal, QString searchType )
+{
+   for ( int i = 0; i < this->docs.size(); i++ )
+   {
+      if ( ( this->docs[i].analysis     == searchAnal    ) &&
+           ( this->docs[i].subAnalysis  == searchSubanal ) &&
+           ( this->docs[i].documentType == searchType    ) )
+         return i;
+   }
+
+   // If we're here then the triple string we were searching for
+   //  was not found
+   return -1;
 }
 
 // Function to clear out the entire report triple structure
@@ -492,7 +594,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
    return REPORT_OK;
 }
 
-// Function to add a triple record, both in the object and the DB
+// Function to add a new, empty triple record, both in the object and the DB
 US_Report::Status US_Report::addTriple(
    QString triple, 
    US_DB2* db )
@@ -501,11 +603,26 @@ US_Report::Status US_Report::addTriple(
 
    d.triple = triple;
 
-   triples << d;
+   return this->addTriple( d, db );
+}
 
-   int last = triples.size() - 1;
+// Function to add or replace an entire triple
+US_Report::Status US_Report::addTriple(
+   US_Report::ReportTriple t,
+   US_DB2* db )
+{
+   int ndx = this->findTriple( t.triple );
 
-   return this->triples[last].saveDB( this->ID, db );
+   // Easier to delete/add the triple if it exists
+   if ( ndx != -1 )
+      this->removeTriple( ndx, db );
+
+   this->triples << t;
+
+   // Refresh ndx
+   ndx = this->findTriple( t.triple );
+
+   return this->triples[ndx].saveDB( this->ID, db );
 }
 
 // Function to remove a triple record, and all the documents
@@ -524,6 +641,120 @@ US_Report::Status US_Report::removeTriple(
 
    this->triples.remove( ndx );
    return REPORT_OK;
+}
+
+// Function to find the index of the triple that matches the
+//  supplied triple string
+int US_Report::findTriple( QString searchTriple )
+{
+   for ( int i = 0; i < this->triples.size(); i++ )
+   {
+      if ( this->triples[i].triple == searchTriple )
+         return i;
+   }
+
+   // If we're here then the triple string we were searching for
+   //  was not found
+   return -1;
+}
+
+// Store a single reportDocument record.
+// For example, dir = /home/user/ultrascan/reports/demo1_veloc
+//     and filename = 2dsa.2A260.tinoise.svg
+US_Report::Status US_Report::saveDocumentFromFile( 
+           const QString& dir, const QString& filename, US_DB2* db )
+{
+   // Parse the directory for the runID
+   QStringList parts  = dir.split( "/" );
+   if ( parts.size() < 2 )
+      return US_Report::MISC_ERROR;
+
+   QString new_runID  = parts.last();
+
+   // Now parse the filename for the other information
+   parts.clear();
+   parts              = filename.split( '.' );
+   if ( parts.size() != 4 )
+      return US_Report::MISC_ERROR;
+
+   QString newAnal    = parts[0];
+   QString newTriple  = US_Util::expanded_triple( parts[1], false );
+   QString newSubanal = parts[2];
+   QString newDoctype = parts[3];
+   
+   // Create a label
+   QString newLabel = this->rTypes.appLabels[newAnal]    + ":" +
+                      this->rTypes.rptLabels[newSubanal] + ":" +
+                      this->rTypes.extLabels[newDoctype] ;
+
+   // Start by reading any DB info we have, or create new report
+   QString now = QDateTime::currentDateTime().toString();
+   US_Report::Status status = this->readDB( new_runID, db );
+   if ( status == US_Report::NOT_FOUND )
+   {
+      US_Report::Status saveStatus = this->saveDB( db );
+      if ( saveStatus != US_Report::REPORT_OK )
+      {
+         qDebug() << "report.saveDB error"
+                  << saveStatus;
+         qDebug() << db->lastError() << db->lastErrno();
+         this->show();
+      }
+   }
+
+   // Read an existing triple, or create a new one
+   int tripNdx = this->findTriple( newTriple );
+   if ( tripNdx == -1 )
+   {
+      // Not found
+      status = this->addTriple( newTriple, db );
+      if ( status != US_Report::REPORT_OK )
+      {
+         qDebug() << "saveDocumentFromFile.addTriple error"
+                  << status;
+         qDebug() << db->lastError() << db->lastErrno();
+         return US_Report::DB_ERROR;
+      }
+
+   }
+   
+   // Refresh tripNdx
+   tripNdx = this->findTriple( newTriple );
+   US_Report::ReportTriple t = this->triples[tripNdx];
+
+   // Now find this document if it already exists
+   int docNdx = t.findDocument( newAnal, newSubanal, newDoctype );
+
+   if ( docNdx == -1 )
+   {
+      // Not found
+      status = t.addDocument( 1,  // editedDataID
+                              newLabel,
+                              dir,
+                              filename,
+                              newAnal,
+                              newSubanal,
+                              newDoctype,
+                              db );
+   }
+
+   else
+   {
+      t.docs[docNdx].label = newLabel;
+   }
+
+   // Refresh docNdx
+   docNdx = t.findDocument( newAnal, newSubanal, newDoctype );
+   
+   // Finally, update the triple
+   status = t.saveDB( this->ID, db );
+   this->triples[tripNdx] = t;
+
+   //status = this->saveAllToDB( dir, db );
+   if ( status != US_Report::REPORT_OK )
+      return status;
+
+   return US_Report::REPORT_OK;
 }
 
 // Function to remove an entire report structure, all the triples, and all the documents
