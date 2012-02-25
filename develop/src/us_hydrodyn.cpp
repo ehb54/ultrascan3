@@ -1626,14 +1626,10 @@ void US_Hydrodyn::load_pdb()
          screen_bead_model(filename);
 #if defined(START_RASMOL)
          QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
          // maybe we should make this a user defined terminal window?
          argument.append("xterm");
          argument.append("-e");
-#ifdef MAC
-         argument.append( "open" );
-         argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
          argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -1667,14 +1663,10 @@ void US_Hydrodyn::load_pdb()
 
 #if defined(START_RASMOL)
       QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
       // maybe we should make this a user defined terminal window?
       argument.append("xterm");
       argument.append("-e");
-#ifdef MAC
-      argument.append( "open" );
-      argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
       argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -1694,7 +1686,7 @@ void US_Hydrodyn::load_pdb()
           !rasmol->start())
       {
          QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                     "Please check to make sure RASMOL is properly installed..."));
+                                                    "Please check to make sure RASMOL is properly installed..."));
       }
 #endif
       QFileInfo fi(filename);
@@ -1800,14 +1792,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    if ( display_pdb )
    {
       QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
       // maybe we should make this a user defined terminal window?
       argument.append("xterm");
       argument.append("-e");
-#ifdef MAC
-      argument.append( "open" );
-      argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
       argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -2089,14 +2077,10 @@ void US_Hydrodyn::load_bead_model()
       {
 #if defined(START_RASMOL)
          QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
          // maybe we should make this a user defined terminal window?
          argument.append("xterm");
          argument.append("-e");
-#ifdef MAC
-         argument.append( "open" );
-         argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
          argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
@@ -3145,17 +3129,13 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool bla
                            DOTSOMO, &bead_model, movie_frame, scale, black_background);
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
             // maybe we should make this a user defined terminal window?
             if ( !movie_frame )
             {
                argument.append("xterm");
                argument.append("-e");
             }
-#ifdef MAC
-            argument.append( "open" );
-            argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
             argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");

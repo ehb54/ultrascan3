@@ -1675,13 +1675,9 @@ void US_Hydrodyn::view_exposed()
    t << out;
    f.close();
    QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
    argument.append("xterm");
    argument.append("-e");
-#ifdef MAC
-   argument.append( "open" );
-   argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
    argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
@@ -3302,13 +3298,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          f.close();
          
          QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
          argument.append("xterm");
          argument.append("-e");
-#ifdef MAC
-         argument.append( "open" );
-         argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
          argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");

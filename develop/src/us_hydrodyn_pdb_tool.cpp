@@ -1866,13 +1866,9 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
    QProcess *rasmol = new QProcess( this );
 
    QStringList argument;
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MAC)
    argument.append("xterm");
    argument.append("-e");
-#ifdef MAC
-   argument.append( "open" );
-   argument.append( "-a" );
-#endif
 #endif
 #if defined(BIN64)
    argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
