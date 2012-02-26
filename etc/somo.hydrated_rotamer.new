@@ -9023,3 +9023,4 @@ ATOM     34  H1  WAT B 792      17.879  15.125  13.388  0.00  0.00           H
 ATOM     35  H2  WAT B 792      18.010  15.692  11.991  0.00  0.00           H  
 TER
 end-rotamer
+multiple-rotate: MCW-0-0-0-1 20 CA NX O
