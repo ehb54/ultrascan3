@@ -11,6 +11,8 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_constants.h"
+#include "us_passwd.h"
+#include "us_report.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -518,6 +520,25 @@ void US_GA_Initialize::save( void )
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
       msg     += "    " + fnst2 + "\n";
       msg     += tr( "in directory:\n    " ) + fdir2;
+
+      if ( dkdb_cntrls->db() )
+      {  // Write statistics report to database
+         US_Passwd   pw;
+         US_DB2      db( pw.getPasswd() );
+         US_DB2*     dbP = &db;
+         QStringList query;
+
+         query << "get_editID" << editGUID;
+         db.query( query );
+         db.next();
+         int         idEdit = db.value( 0 ).toString().toInt();
+         US_Report   freport;
+         freport.runID      = runid;
+
+         freport.saveDocumentFromFile( fdir2, fnst2, dbP, idEdit );
+
+         msg     += tr( "\n\nThe report file was also saved to the database" );
+      }
    }
 
    else
@@ -1220,6 +1241,7 @@ DbgLv(0) << "  NO Model components";
 
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
+   editGUID     = model.editGUID;
 DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
    s_distro.clear();

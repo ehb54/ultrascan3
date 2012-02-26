@@ -149,6 +149,7 @@ class US_GA_Initialize : public US_Widgets
       QString       stdfline;
       QString       stnpline;
       QString       mfilter;
+      QString       editGUID;
 
    private slots:
 

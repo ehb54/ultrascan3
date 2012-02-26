@@ -15,6 +15,7 @@
 #include "us_passwd.h"
 #include "us_solution_vals.h"
 #include "us_solution_gui.h"
+#include "us_report.h"
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
@@ -1520,5 +1521,39 @@ void US_AnalysisBase2::back_out_noise( int index )
    ti_noise     = ( ( noif & 2 ) != 0 ) ? tinoises[ index ] : US_Noise();
    ri_noise.apply_to_data( dataList[ index ], false );
    ti_noise.apply_to_data( dataList[ index ], false );
+}
+
+// Copy report files to the database
+void US_AnalysisBase2::reportFilesToDB( QStringList& files )
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+   US_DB2*     dbP = &db;
+   QStringList query;
+
+   // Get the ID of the EditedData DB record associated with the report
+   query << "get_editID" << dataList[ lw_triples->currentRow() ].editGUID;
+   db.query( query );
+   db.next();
+   int     idEdit = db.value( 0 ).toString().toInt();
+
+   // Parse the plot files directory and set the runID for the report
+   QString pfdir  = files[ 0 ].left( files[ 0 ].lastIndexOf( "/" ) );
+   US_Report freport;
+   freport.runID  = runID;
+
+   // Loop to parse each file name and write the record to the database
+   for ( int ii = 0; ii < files.size(); ii++ )
+   {
+      QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
+      int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
+      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP );
+
+      if ( st != US_DB2::OK )
+      {
+         qDebug() << "**saveDocument ERROR**:  ii status" << ii << st
+            << "filename" << fname;
+      }
+   }
 }
 

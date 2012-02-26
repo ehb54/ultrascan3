@@ -346,6 +346,8 @@ void US_SecondMoment::save( void )
    }
 
    sm_data.close();
+   QStringList repfiles;
+   repfiles << htmlFile << plot1File << plot2File << textFile;
 
    // Tell user
    htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
@@ -353,12 +355,16 @@ void US_SecondMoment::save( void )
    plot2File = plot2File.mid( plot2File.lastIndexOf( "/" ) + 1 );
    textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
 
-   QMessageBox::warning( this,
-         tr( "Success" ),
-         tr( "Wrote:\n  " )
-         + htmlFile  + "\n  "
-         + plot1File + "\n  " 
-         + plot2File + "\n  "
-         + textFile );
+   QString wmsg = tr( "Wrote:\n  " ) + htmlFile  + "\n  "
+      + plot1File + "\n  " + plot2File + "\n  " + textFile;
+
+   if ( disk_controls->db() )
+   {  // Write report files to the database
+      reportFilesToDB( repfiles );
+
+      wmsg += tr( "\n\nReport files were also saved to the database." );
+   }
+
+   QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 

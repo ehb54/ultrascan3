@@ -908,13 +908,16 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
 
 // save the enhanced data
 void US_vHW_Enhanced::save_data( void )
-{ 
+{
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+QDateTime time0=QDateTime::currentDateTime();
    row           = lw_triples->currentRow();
    d             = &dataList[ row ];
    QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
    QString basernam  = US_Settings::resultDir() + "/" + d->runID
       + "/vHW." + tripl + ".";
    QStringList files;
+   QStringList repfiles;
 
    // Write results files
    write_vhw();
@@ -986,12 +989,34 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    files << plot2File;
    files << plot3File;
    files << plot4File;
+   repfiles << htmlFile;
+   repfiles << plot1File;
+   repfiles << plot2File;
+   repfiles << plot3File;
+   repfiles << plot4File;
 
    // Report files created to the user
    QString wmsg = tr( "Wrote:\n\n" );
 
    for ( int ii = 0; ii < files.size(); ii++ )
       wmsg += "  " + files.at( ii ) + "\n";
+
+QDateTime time1=QDateTime::currentDateTime();
+   if ( disk_controls->db() )
+   {  // Also save report files to the database
+      reportFilesToDB( repfiles );
+
+      wmsg += tr( "\nFiles were also saved to the database." );
+   }
+QDateTime time2=QDateTime::currentDateTime();
+int etim1=time0.msecsTo(time1);
+int etim2=time1.msecsTo(time2);
+int etimt=etim1+etim2;
+int et1pc=(etim1*100)/etimt;
+int et2pc=(etim2*100)/etimt;
+DbgLv(1) << "SAVE-FILES: local ms" << etim1 << "=" << et1pc << "%";
+DbgLv(1) << "SAVE-FILES: DB    ms" << etim2 << "=" << et2pc << "%";
+   QApplication::restoreOverrideCursor();
 
    QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
 }

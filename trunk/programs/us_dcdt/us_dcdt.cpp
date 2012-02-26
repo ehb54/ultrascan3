@@ -493,6 +493,10 @@ void US_Dcdt::save( void )
 
    dcdt_data.close();
 
+   QStringList repfiles;
+   repfiles << htmlFile << plot1File << plot2File << plot3File 
+            << plot4File << textFile;
+
    // Tell user
    htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
    plot1File = plot1File.mid( plot1File.lastIndexOf( "/" ) + 1 );
@@ -501,10 +505,17 @@ void US_Dcdt::save( void )
    plot4File = plot4File.mid( plot4File.lastIndexOf( "/" ) + 1 );
    textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
 
-   QMessageBox::warning( this,
-         tr( "Success" ),
-         tr( "Wrote:\n  " )   + htmlFile  + "\n  " + plot1File + "\n  " 
-         + plot2File + "\n  " + plot3File + "\n  " + plot4File + "\n  "
-         + textFile );
+   QString     wmsg = tr( "Wrote:\n  " )
+      + htmlFile  + "\n  " + plot1File + "\n  " + plot2File + "\n  "
+      + plot3File + "\n  " + plot4File + "\n  " + textFile;
+
+   if ( disk_controls->db() )
+   {  // Write report files also to the database
+      reportFilesToDB( repfiles );
+
+      wmsg += tr( "\n\nReport files were also saved to the database." );
+   }
+
+   QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 

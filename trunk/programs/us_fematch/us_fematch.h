@@ -192,6 +192,7 @@ class US_FeMatch : public US_Widgets
       void    get_solution  ( void );
       void    updateSolution( US_Solution );
       void    update_progress( int );
+      void    reportFilesToDB( QStringList& );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

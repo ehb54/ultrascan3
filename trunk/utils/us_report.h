@@ -266,9 +266,11 @@ class US_UTIL_EXTERN US_Report
                              analysis.triple.subAnalysis.docType --- for example,
                              2dsa.2A260.tinoise.svg
           \param    db       For database access, an open database connection
+          \param    idEdit   ID of EditedData with which document is associated.
           \return   One of the US_Report error codes
       */
-      Status        saveDocumentFromFile( const QString&, const QString&, US_DB2* = 0 );
+      Status        saveDocumentFromFile( const QString&, const QString&,
+                                          US_DB2*, int = 1 );
 
       /*! \brief    Function to delete the specified report from the DB
           
