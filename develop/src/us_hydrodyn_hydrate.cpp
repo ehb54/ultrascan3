@@ -23,6 +23,7 @@
 
 // #define DEBUG_DIHEDRAL
 // #define DEBUG_TO_HYDRATE_DIHEDRAL
+#define DEBUG_POINTMAP
 #define MAX_WATER_POSITIONING_ATOMS 4
 
 int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
@@ -35,8 +36,10 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                             error_msg );
       return -1;
    } 
-   // cout << list_rotamers( false );
-   // cout << list_pointmaps();
+#if defined(DEBUG_POINTMAP)
+   cout << list_rotamers( false );
+   cout << list_pointmaps();
+#endif
 
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -101,17 +104,21 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
             // cout << list_exposed();
             // view_exposed();
             build_to_hydrate();
-            // cout << list_to_hydrate();
+#if defined(DEBUG_TO_HYDRATE_DIHEDRAL)
+            cout << list_to_hydrate();
+#endif
             progress->setProgress(9);
             qApp->processEvents();
             if ( !compute_to_hydrate_dihedrals( error_msg ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error computing dihedrals of exposed side chain" ),
+                                     tr( "Error computing to-hydrate dihedrals" ),
                                      error_msg );
                any_errors = true;
             }
-            // cout << list_to_hydrate_dihedrals();
+#if defined(DEBUG_TO_HYDRATE_DIHEDRAL)
+            cout << list_to_hydrate_dihedrals();
+#endif
             progress->setProgress(10);
             qApp->processEvents();
             if ( !compute_best_fit_rotamer( error_msg ) )
@@ -136,12 +143,24 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
 
             progress->setProgress(12);
             qApp->processEvents();
-            if ( !compute_waters_to_add( error_msg ) )
+            if ( saxs_options.alt_hydration )
             {
-               QMessageBox::warning( this,
-                                     tr( "Error trying to add waters" ),
-                                     error_msg );
-               any_errors = true;
+               editor_msg( "blue", tr( "NOTICE: using alternate hydration (experimental) method" ) );
+               if ( !compute_waters_to_add_alt( error_msg ) )
+               {
+                  QMessageBox::warning( this,
+                                        tr( "Error trying to add waters" ),
+                                        error_msg );
+                  any_errors = true;
+               }
+            } else {
+               if ( !compute_waters_to_add( error_msg ) )
+               {
+                  QMessageBox::warning( this,
+                                        tr( "Error trying to add waters" ),
+                                        error_msg );
+                  any_errors = true;
+               }
             }
             // cout << list_waters_to_add();
             progress->setProgress(1, 1);
@@ -1708,6 +1727,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    editor->append( tr("Reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamers.clear();
+   rotated_rotamers.clear();
    dihedral_atoms.clear();
 
    pointmap_atoms.clear();
@@ -1759,6 +1779,334 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          qsl[ i ].at( 22 ) = ' ';
       }
       QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      if ( qsl_line[ 0 ] == "multiple-rotate:" )
+      {
+         if ( in_rotamer )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate token can not occur within a rotamer definition" ) )
+               .arg( i + 1 );
+            return false;
+         }            
+
+         qsl_line.pop_front();
+
+         if ( qsl_line.size() != 5 )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: requires exactly 5 arguments" ) )
+               .arg( i + 1 );
+            return false;
+         }
+
+         QString name        = qsl_line[ 0 ];
+         QString residue     = name.left( 3 );
+         unsigned int rotate = qsl_line[ 1 ].toUInt();
+         vector < QString >  atoms( 3 );
+         atoms[ 0 ]          = qsl_line[ 2 ];
+         atoms[ 1 ]          = qsl_line[ 3 ];
+         atoms[ 2 ]          = qsl_line[ 4 ];
+
+         if ( rotated_rotamers.count( name ) )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: %2 previously multiple-rotate'd" ) )
+               .arg( i + 1 )
+               .arg( name );
+            return false;
+         }
+
+         if ( !rotamers.count( residue ) )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 must be previously defined" ) )
+               .arg( i + 1 )
+               .arg( residue );
+            return false;
+         }
+
+         if ( rotate <= 1 )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: rotate count %1, must be 2 or greater" ) )
+               .arg( i + 1 )
+               .arg( rotate );
+            return false;
+         }
+
+         bool         found_match = false;
+         unsigned int pos;
+         for ( unsigned int j = 0; j < rotamers[ residue ].size(); j++ )
+         {
+            // cout << QString( "rotamers '%1' %2 name '%3'\n" )
+            // .arg( residue )
+            // .arg( j )
+            // .arg( rotamers[ residue ][ j ].name );
+            if ( rotamers[ residue ][ j ].name == name )
+            {
+               found_match = true;
+               pos = j;
+               break;
+            }
+         }
+         if ( !found_match )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, but full name %3 missing" ) )
+               .arg( i + 1 )
+               .arg( residue )
+               .arg( name );
+            return false;
+         }
+            
+         cout << QString( "multiple-rotate %1 x%2 found rotamer match %3 pos %4\n" )
+            .arg( name )
+            .arg( rotate )
+            .arg( residue )
+            .arg( pos );
+         
+         rotamer ref_rotamer = rotamers[ residue ][ pos ];
+
+         // check existance & set atom pos for first two
+         vector < unsigned int > atom_pos( 3 );
+
+         for ( unsigned int j = 0; j < 2; j++ )
+         {
+            bool found_sc_atom = false;
+            for ( unsigned int k = 0; k < ref_rotamer.side_chain.size(); k++ )
+            {
+               if ( ref_rotamer.side_chain[ k ].name == atoms[ j ] )
+               {
+                  found_sc_atom = true;
+                  atom_pos[ j ] = k;
+                  break;
+               }
+            }
+            if ( !found_sc_atom )
+            {
+               error_msg = 
+                  QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing" ) )
+                  .arg( i + 1 )
+                  .arg( residue )
+                  .arg( atoms[ j ] );
+               return false;
+            }
+         }               
+               
+         if ( ref_rotamer.waters.size() != 1 )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, currently only one water supported for multiple-rotate, this target has %3 waters" ) )
+               .arg( i + 1 )
+               .arg( residue )
+               .arg( ref_rotamer.waters.size() );
+            return false;
+         }
+            
+         // check existance of atoms[ 2 ]
+         
+         if ( ref_rotamer.waters[ 0 ].name != atoms[ 2 ] )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing from waters" ) )
+               .arg( i + 1 )
+               .arg( residue )
+               .arg( atoms[ 2 ] );
+            return false;
+         }
+            
+         // now build up rotation into
+
+         // compute distance & angle
+
+         vector < point > p( 3 );
+         p[ 0 ] = ref_rotamer.side_chain[ atom_pos[ 0 ] ].coordinate;
+         p[ 1 ] = ref_rotamer.side_chain[ atom_pos[ 1 ] ].coordinate;
+         p[ 2 ] = ref_rotamer.waters    [ 0             ].coordinate;
+
+         float d01 = dist( p[ 0 ], p[ 1 ] );
+         float d12 = dist( p[ 1 ], p[ 2 ] );
+         float d02 = dist( p[ 0 ], p[ 2 ] );
+
+         cout << QString( "distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 1 ] )
+            .arg( d01 );
+
+         cout << QString( "distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 1 ] )
+            .arg( atoms[ 2 ] )
+            .arg( d12 );
+
+         cout << QString( "distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 2 ] )
+            .arg( d02 );
+
+         float a = acosf( dot( normal( minus( p[ 0 ], p[ 1 ] ) ),
+                               normal( minus( p[ 2 ], p[ 1 ] ) ) ) );
+      
+         cout << QString( tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 1 ] )
+            .arg( atoms[ 2 ] )
+            .arg( a )
+            .arg( a * 180.0 / M_PI )
+            ;
+
+         // transform reference rotamer from p(3) to 
+         // (0,0,-d01), (0,0,0), ( d12 * cos( a ), 0, d12 * sin( a ) )
+         float xdist = d12 * cos( a - M_PI / 2.0 );
+
+         vector < point > np( 3 );
+         np[ 1 ].axis[ 0 ] = 0.0;
+         np[ 1 ].axis[ 1 ] = 0.0;
+         np[ 1 ].axis[ 2 ] = 0.0;
+
+         np[ 0 ]           = np[ 1 ];
+         np[ 0 ].axis[ 2 ] = - d01;
+
+         np[ 2 ].axis[ 0 ] = xdist;
+         np[ 2 ].axis[ 1 ] = 0.0;
+         np[ 2 ].axis[ 2 ] = d12 * sin( a - M_PI / 2.0 );
+         
+         cout << QString( "transform from: " ) <<  p[ 0 ] << " " <<  p[ 1 ] << " " <<  p[ 2 ] << endl;
+         cout << QString( "transform to: " )   << np[ 0 ] << " " << np[ 1 ] << " " << np[ 2 ] << endl;
+
+         float nd01 = dist( np[ 0 ], np[ 1 ] );
+         float nd12 = dist( np[ 1 ], np[ 2 ] );
+         float nd02 = dist( np[ 0 ], np[ 2 ] );
+
+         cout << QString( "new distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 1 ] )
+            .arg( nd01 );
+
+         cout << QString( "new distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 1 ] )
+            .arg( atoms[ 2 ] )
+            .arg( nd12 );
+
+         cout << QString( "new distance %1 to %2 = %3 A\n" )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 2 ] )
+            .arg( nd02 );
+
+         float na = acosf( dot( normal( minus( np[ 0 ], np[ 1 ] ) ),
+                                normal( minus( np[ 2 ], np[ 1 ] ) ) ) );
+      
+         cout << QString( tr( "new: Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+            .arg( atoms[ 0 ] )
+            .arg( atoms[ 1 ] )
+            .arg( atoms[ 2 ] )
+            .arg( na )
+            .arg( na * 180.0 / M_PI )
+            ;
+
+         // now setup and do transformation
+         vector < point > ref_rotamer_p;
+         for ( unsigned int j = 0; j < ref_rotamer.side_chain.size(); j++ )
+         {
+            ref_rotamer_p.push_back( ref_rotamer.side_chain[ j ].coordinate );
+         }
+         for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+         {
+            ref_rotamer_p.push_back( ref_rotamer.waters[ j ].coordinate );
+         }
+
+         vector < point > ref_rotamer_np( ref_rotamer_p.size() );
+         if ( !atom_align( p, np, ref_rotamer_p, ref_rotamer_np, error_msg ) )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: " ) ).
+               arg( i + 1 ) + error_msg;
+            return false;
+         }
+         rotamer new_ref_rotamer = ref_rotamer;
+         for ( unsigned int j = 0; j < ref_rotamer.side_chain.size(); j++ )
+         {
+            new_ref_rotamer.side_chain[ j ].coordinate = ref_rotamer_np[ j ];
+            new_ref_rotamer.atom_map[ new_ref_rotamer.side_chain[ j ].name ].coordinate =
+               new_ref_rotamer.side_chain[ j ].coordinate;
+         }
+         for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+         {
+            new_ref_rotamer.waters[ j ].coordinate = ref_rotamer_np[ ref_rotamer.side_chain.size() + j ];
+         }
+
+         float delta_rho = ( 2.0 * M_PI ) / (float) rotate;
+
+         for ( unsigned int j = 0; j < rotate; j++ )
+         {
+            float rho =  (float) j * delta_rho;
+            
+            new_ref_rotamer.waters[ 0 ].coordinate.axis[ 0 ] = xdist * cos( rho );
+            new_ref_rotamer.waters[ 0 ].coordinate.axis[ 1 ] = xdist * sin( rho );
+
+            // check rotamer for internal steric clash!
+
+            rotated_rotamers[ name ].push_back( new_ref_rotamer );
+         }
+
+         cout << QString( "multiple-rotate: created %1 rotamers for %2\n" )
+            .arg( rotated_rotamers[ name ].size() )
+            .arg( name );
+
+         // create nmr style pdb for rotamer
+
+         QString out;
+         for ( unsigned int j = 0; j < rotated_rotamers[ name ].size(); j++ )
+         {
+            out += QString( "MODEL     %1\n" ).arg( j );
+            unsigned int apos = 0;
+            for ( unsigned int k = 0; k < rotated_rotamers[ name ][ j ].side_chain.size(); k++ )
+            {
+               out += QString( "" )
+                  .sprintf(     
+                           "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                           ++apos,
+                           rotated_rotamers[ name ][ j ].side_chain[ k ].name.ascii(),
+                           "MCW",
+                           "A",
+                           1,
+                           rotated_rotamers[ name ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
+                           rotated_rotamers[ name ][ j ].side_chain[ k ].coordinate.axis[ 1 ],
+                           rotated_rotamers[ name ][ j ].side_chain[ k ].coordinate.axis[ 2 ],
+                           1.00,
+                           0.00,
+                           " "
+                           );
+            }
+            out += "TER\n";
+            for ( unsigned int k = 0; k < rotated_rotamers[ name ][ j ].waters.size(); k++ )
+            {
+               out += QString( "" )
+                  .sprintf(     
+                           "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                           ++apos,
+                           rotated_rotamers[ name ][ j ].waters[ k ].name.ascii(),
+                           "WAT",
+                           "B",
+                           2,
+                           rotated_rotamers[ name ][ j ].waters[ k ].coordinate.axis[ 0 ],
+                           rotated_rotamers[ name ][ j ].waters[ k ].coordinate.axis[ 1 ],
+                           rotated_rotamers[ name ][ j ].waters[ k ].coordinate.axis[ 2 ],
+                           1.00,
+                           0.00,
+                           " "
+                           );
+            }
+            out += "TER\nENDMDL\n";
+         }
+         out += "END\n";
+
+         cout << "--- start nmr style PDB-----------\n" 
+              << out 
+              << "--- end nmr style PDB-----------\n";
+
+         continue;
+      }
+
       if ( qsl_line[ 0 ] == "pointmap:" )
       {
          qsl_line.pop_front();
@@ -2571,8 +2919,6 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
          }
       }
    }
-
-
 
    for ( map < QString, vector < rotamer > >::iterator it = pointmap_rotamers.begin();
          it != pointmap_rotamers.end();
@@ -3426,4 +3772,175 @@ QString US_Hydrodyn::validate_pointmap()
       editor_msg("red", out);
    }
    return out;
+}
+
+bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
+{
+   editor->append( tr("Transforming waters to add to pdb coordinates\n") );
+   qApp->processEvents();
+   puts("Transforming waters to add to pdb coordinates");
+
+   editor_msg( "blue", tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
+
+   steric_clash_summary.clear();
+
+   unsigned int count_waters           = 0;
+   unsigned int count_waters_added     = 0;
+   unsigned int count_waters_not_added = 0;
+
+   vector < point > p1;
+   vector < point > p2;
+   waters_to_add.clear();
+   waters_source.clear();
+
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+
+   // no std rotamers for now, only pointmaps & only C-CA-O
+
+   for ( map < QString, vector < rotamer > >::iterator it = pointmap_rotamers.begin();
+         it != pointmap_rotamers.end();
+         it++ )
+   {
+      if ( !to_hydrate_pointmaps.count( it->first ) )
+      {
+         error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+            .arg( it->first );
+         return false;
+      }
+
+      // add waters for each pointmap for this residue
+      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      {
+         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         return false;
+      }
+      QString resName = rx_expand_mapkey.cap( 1 );
+      if ( !pointmap_atoms.count( resName ) ||
+           !pointmap_atoms_dest.count( resName ) ||
+           !pointmap_atoms_ref_residue.count( resName ) )
+      {
+         error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         return false;
+      }
+         
+      if ( it->second.size() != pointmap_atoms[ resName ].size() ||
+           it->second.size() != pointmap_atoms_dest[ resName ].size() ||
+           it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
+      {
+         error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         return false;
+      }
+         
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         // for each water to add:
+         // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
+         // to the pointmap_atoms in the residue and apply to each water in the rotamer
+         // the rotamer's atom_map(equivalently side chain) & waters have the "dest" info
+
+         if ( it->second[ i ].residue != pointmap_atoms_ref_residue[ resName ][ i ] )
+         {
+            error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               .arg( it->first )
+               .arg( i )
+               .arg( it->second[ i ].residue )
+               .arg( pointmap_atoms_ref_residue[ resName ][ i ] );
+            return false;
+         }
+
+         // build up the transformation
+
+         p1.resize( pointmap_atoms     [ resName ][ i ].size() );
+         p2.resize( pointmap_atoms_dest[ resName ][ i ].size() );
+         
+         if ( p1.size() != p2.size() )
+         {
+            error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               .arg( it->first )
+               .arg( i )
+               .arg( pointmap_atoms[ resName ][ i ].size() )
+               .arg( pointmap_atoms_dest[ resName ][ i ].size() );
+            return false;
+         }
+
+         for ( unsigned int j = 0; j < p1.size(); j++ )
+         {
+            // cout << QString("mapping: %1 %2 dest %3\n")
+            // .arg(it->first)
+            // .arg(i)
+            // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
+            if ( !it->second[ i ].atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
+               return false;
+            }
+               
+            p1[ j ] = it->second[ i ].atom_map[ pointmap_atoms_dest[ resName ][ i ][ j ] ].coordinate;
+
+            if ( !to_hydrate_pointmaps[ it->first ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  .arg(  pointmap_atoms[ resName ][ i ][ j ] );
+               return false;
+            }
+#if defined(DEBUG_POINTMAP)
+            cout << QString("mapping: %1 %2 source %3\n")
+               .arg(it->first)
+               .arg(i)
+               .arg(pointmap_atoms[ resName ][ i ][ j ] );
+#endif
+            p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
+
+#if defined(DEBUG_POINTMAP)
+            cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+               .arg( it->first )
+               .arg( p1[ j ].axis[ 0 ] )
+               .arg( p1[ j ].axis[ 1 ] )
+               .arg( p1[ j ].axis[ 2 ] )
+               .arg( p2[ j ].axis[ 0 ] )
+               .arg( p2[ j ].axis[ 1 ] )
+               .arg( p2[ j ].axis[ 2 ] );
+#endif
+         }
+
+         // now we have p1 & p2, apply to all of the waters
+#if defined(DEBUG_POINTMAP)
+         cout << QString("adding %1 waters for %2 %3\n")
+            .arg( it->second[ i ].waters.size() )
+            .arg( it->first )
+            .arg( resName );
+#endif
+
+         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         {
+            vector < point > rotamer_waters;
+            rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
+            vector < point > new_waters;
+            if ( !atom_align( p1, p2, rotamer_waters, new_waters, error_msg ) )
+            {
+               return false;
+            }
+            count_waters++;
+            if ( !has_steric_clash( new_waters[ 0 ] ) )
+            {
+               count_waters_added++;
+               waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
+               waters_source [ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
+            } else {
+               count_waters_not_added++;
+            }
+         }
+      }
+   }
+   editor->append( tr("Done transforming waters to add to pdb coordinates\n") );
+   editor->append( QString( tr("%1 waters added. %2 not added due to steric clashes \n") )
+                   .arg( count_waters_added ) 
+                   .arg( count_waters_not_added ) 
+                   );
+   editor->append( list_steric_clash        () );
+   editor->append( list_steric_clash_recheck() );
+   qApp->processEvents();
+   puts("Done transforming waters to add to pdb coordinates");
+   return true;
 }

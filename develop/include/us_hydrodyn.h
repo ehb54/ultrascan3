@@ -510,6 +510,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, vector < QString > >            pointmap_atoms_ref_residue;
 
       map < QString, vector < rotamer > >            rotamers;
+      map < QString, vector < rotamer > >            rotated_rotamers;
       map < QString, map < QString, point > >        to_hydrate;
       map < QString, map < QString, point > >        to_hydrate_pointmaps;
       map < QString, vector < float > >              to_hydrate_dihedrals;
@@ -549,6 +550,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString list_pointmap_rotamers();
 
       bool compute_waters_to_add( QString &error_msg );
+      bool compute_waters_to_add_alt( QString &error_msg );
       QString list_waters_to_add();
 
       bool    has_steric_clash( point p );

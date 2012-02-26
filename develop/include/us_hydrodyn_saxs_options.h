@@ -178,6 +178,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter  *cnt_scale_excl_vol;
 
       QCheckBox   *cb_subtract_radius;
+      QCheckBox   *cb_alt_hydration;
       QCheckBox   *cb_iqq_use_atomic_ff;
       QCheckBox   *cb_iqq_use_saxs_excl_vol;
 
@@ -283,6 +284,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_swh_excl_vol(const QString &);
       void update_scale_excl_vol(double);
       void set_subtract_radius();
+      void set_alt_hydration();
       void set_iqq_use_atomic_ff();
       void set_iqq_use_saxs_excl_vol();
       void update_iqq_scale_minq(const QString &);

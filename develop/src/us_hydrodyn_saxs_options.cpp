@@ -950,6 +950,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_subtract_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_subtract_radius, SIGNAL(clicked()), this, SLOT(set_subtract_radius()));
 
+   cb_alt_hydration = new QCheckBox(this);
+   cb_alt_hydration->setText(tr(" Alt hydration"));
+   cb_alt_hydration->setEnabled(true);
+   cb_alt_hydration->setChecked((*saxs_options).alt_hydration);
+   cb_alt_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_alt_hydration->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_alt_hydration, SIGNAL(clicked()), this, SLOT(set_alt_hydration()));
+
    cb_iqq_use_atomic_ff = new QCheckBox(this);
    cb_iqq_use_atomic_ff->setText(tr(" Explicit hydrogens"));
    cb_iqq_use_atomic_ff->setEnabled(true);
@@ -1256,6 +1264,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    k++;
 
    QHBoxLayout *hbl_various_2c = new QHBoxLayout;
+   hbl_various_2c->addWidget( cb_alt_hydration );
    hbl_various_2c->addWidget( cb_iqq_use_atomic_ff );
    hbl_various_2c->addWidget( cb_iqq_use_saxs_excl_vol );
    hbl_various_2c->addWidget( pb_clear_mw_cache );
@@ -1975,6 +1984,12 @@ void US_Hydrodyn_SaxsOptions::update_scale_excl_vol(double val)
 void US_Hydrodyn_SaxsOptions::set_subtract_radius()
 {
    (*saxs_options).subtract_radius = cb_subtract_radius->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_alt_hydration()
+{
+   (*saxs_options).alt_hydration = cb_alt_hydration->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

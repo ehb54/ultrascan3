@@ -3364,6 +3364,7 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_scaled_fitting    = false;
    saxs_options.iqq_use_atomic_ff     = false;
    saxs_options.iqq_use_saxs_excl_vol = false;
+   saxs_options.alt_hydration         = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

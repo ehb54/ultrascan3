@@ -290,6 +290,8 @@ struct saxs_options
 
    bool    iqq_use_atomic_ff;
    bool    iqq_use_saxs_excl_vol;
+
+   bool    alt_hydration;
 };
 
 struct saxs_atom
