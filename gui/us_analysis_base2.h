@@ -191,6 +191,9 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       //! available above the boundary.
       double       calc_baseline( void )                           const;
 
+      //! Copy report files to the database
+      void         reportFilesToDB( QStringList& );
+
       //! Exclude scans in the specified range
       virtual void exclude( void );
 

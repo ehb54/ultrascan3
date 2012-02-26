@@ -103,7 +103,7 @@ US_Report::Status US_Report::ReportDocument::saveDB(
       // Update the existing report document record in the DB
       QStringList q( "update_reportDocument" );
       q << QString::number( this->documentID )
-        << QString::number( editedDataID )
+        << QString::number( this->editedDataID )
         << this->label
         << this->filename
         << this->analysis
@@ -661,8 +661,8 @@ int US_Report::findTriple( QString searchTriple )
 // Store a single reportDocument record.
 // For example, dir = /home/user/ultrascan/reports/demo1_veloc
 //     and filename = 2dsa.2A260.tinoise.svg
-US_Report::Status US_Report::saveDocumentFromFile( 
-           const QString& dir, const QString& filename, US_DB2* db )
+US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
+      const QString& filename, US_DB2* db, int idEdit )
 {
    // Parse the directory for the runID
    QStringList parts  = dir.split( "/" );
@@ -728,7 +728,7 @@ US_Report::Status US_Report::saveDocumentFromFile(
    if ( docNdx == -1 )
    {
       // Not found
-      status = t.addDocument( 1,  // editedDataID
+      status = t.addDocument( idEdit,
                               newLabel,
                               dir,
                               filename,
@@ -740,7 +740,9 @@ US_Report::Status US_Report::saveDocumentFromFile(
 
    else
    {
-      t.docs[docNdx].label = newLabel;
+      t.docs[ docNdx ].label        = newLabel;
+      t.docs[ docNdx ].editedDataID = idEdit;
+      t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
    }
 
    // Refresh docNdx

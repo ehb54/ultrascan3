@@ -19,6 +19,7 @@
 #include "us_investigator.h"
 #include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
+#include "us_report.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -867,6 +868,8 @@ void US_FeMatch::save_data( void )
          eplotcd = NULL;
       }
    }
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+QDateTime time0=QDateTime::currentDateTime();
 
    QStringList files;
    int drow = lw_triples->currentRow();
@@ -1046,6 +1049,23 @@ DbgLv(1) << "(9)p1type" << p1type;
                            + fname.mid( fname.lastIndexOf( "/" ) + 1 ) + "\n";
    }
 
+QDateTime time1=QDateTime::currentDateTime();
+   if ( dkdb_cntrls->db() )
+   {  // Copy report files to the database
+      reportFilesToDB( files );
+
+      umsg = umsg + tr( "\nFiles were also saved to the database.\n" );
+   }
+QDateTime time2=QDateTime::currentDateTime();
+int etim1=time0.msecsTo(time1);
+int etim2=time1.msecsTo(time2);
+int etimt=etim1+etim2;
+int et1pc=(etim1*100)/etimt;
+int et2pc=(etim2*100)/etimt;
+DbgLv(1) << "SAVE-FILES: local ms" << etim1 << "=" << et1pc << "%";
+DbgLv(1) << "SAVE-FILES: DB    ms" << etim2 << "=" << et2pc << "%";
+
+   QApplication::restoreOverrideCursor();
    QMessageBox::information( this, tr( "Successfully Written" ), umsg );
 }
 
@@ -2946,5 +2966,39 @@ int US_FeMatch::type_distrib( )
    }
 
    return itype;
+}
+
+// Copy report files to the database
+void US_FeMatch::reportFilesToDB( QStringList& files )
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+   US_DB2*     dbP = &db;
+   QStringList query;
+
+   // Get the ID of the EditedData DB record associated with the report
+   query << "get_editID" << dataList[ lw_triples->currentRow() ].editGUID;
+   db.query( query );
+   db.next();
+   int     idEdit = db.value( 0 ).toString().toInt();
+
+   // Parse the plot files directory and set the runID for the report
+   QString pfdir  = files[ 0 ].left( files[ 0 ].lastIndexOf( "/" ) );
+   US_Report freport;
+   freport.runID  = runID;
+
+   // Loop to parse each file name and write the record to the database
+   for ( int ii = 0; ii < files.size(); ii++ )
+   {
+      QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
+      int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
+      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP );
+      //
+      if ( st != US_DB2::OK )
+      {
+         qDebug() << "**saveDocument ERROR**: ii status" << ii << st
+            << "filename" << fname;
+      }
+   }
 }
 

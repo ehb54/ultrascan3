@@ -684,6 +684,8 @@ void US_2dsa::save( void )
                + plot1File + "\n"
                + plot2File + "\n"
                + plot3File + "\n";
+   QStringList repfiles;
+   repfiles << htmlFile << plot1File << plot2File << plot3File;
 
    // Add fit files if fit-meniscus
    if ( fitMeni )
@@ -699,6 +701,7 @@ void US_2dsa::save( void )
          ts << fitstr;
          rep_f.close();
          wmsg = wmsg + fitFile  + "\n";
+         repfiles << fitFile;
       }
 
       if ( res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -708,6 +711,13 @@ void US_2dsa::save( void )
          res_f.close();
          wmsg = wmsg + fresFile + "\n";
       }
+   }
+
+   if ( disk_controls->db() )
+   {  // Write report files to the database
+      reportFilesToDB( repfiles );
+
+      wmsg += tr( "\nReport files were also saved to the database." );
    }
 
    QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
