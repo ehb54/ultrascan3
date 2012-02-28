@@ -782,6 +782,31 @@ void US_Hydrodyn_Cluster::create_pkg()
       qsl_advanced = advanced_addition();
    }
 
+   // create use_selected_files for dmd expansion
+   
+   QStringList use_selected_files;
+
+   QRegExp rx_dmd( "^(.*) _dmd(\\d+)$" );
+
+   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   {
+      if ( batch_window->cb_dmd->isChecked() &&
+           dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() ) > 1 )
+      {
+         for ( unsigned int j = 0; j < dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() ); j++ )
+         {
+            use_selected_files << QString( "%1 _dmd%2" ).arg( selected_files[ i ] ).arg( j );
+         }
+      } else {
+         use_selected_files << selected_files[ i ];
+      }
+   }
+
+   for ( unsigned int i = 0; i < use_selected_files.size(); i++ )
+   {
+      cout << QString( "pos %1: %2\n" ).arg( i ).arg( use_selected_files[ i ] );
+   }
+
    unsigned int multi_grid_multiplier = 
       cb_split_grid->isChecked() && lb_target_files->numRows() > 1 ?
       lb_target_files->numRows() : 1;
@@ -790,7 +815,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       qsl_advanced.size() ? qsl_advanced.size() : 1;
 
    unsigned int max_no_of_jobs = 
-      (unsigned int) ceil( ( selected_files.size() * multi_grid_multiplier * advanced_multiplier )
+      (unsigned int) ceil( ( use_selected_files.size() * multi_grid_multiplier * advanced_multiplier )
                            / (double) le_no_of_jobs->text().toUInt() );
    cout << "max jobs per " << max_no_of_jobs << endl;
 
@@ -800,13 +825,25 @@ void US_Hydrodyn_Cluster::create_pkg()
 
    bool last_unwritten;
 
-   for ( unsigned int this_i = 0; this_i < selected_files.size() * multi_grid_multiplier * advanced_multiplier; this_i++ )
+   for ( unsigned int this_i = 0; this_i < use_selected_files.size() * multi_grid_multiplier * advanced_multiplier; this_i++ )
    {
+      unsigned int i    = this_i % use_selected_files.size();
+
+      QString name    = use_selected_files[ i ];
+      int     dmd_pos = -1;
+      if ( rx_dmd.search( name ) != -1 )
+      {
+         name    = rx_dmd.cap( 1 );
+         dmd_pos = rx_dmd.cap( 2 ).toInt();
+      }
+
+      QString use_file_name   = QFileInfo( name ).fileName();
+      QString use_output_name = QFileInfo( name ).baseName();
+
       last_unwritten = true;
-      unsigned int i    = this_i % selected_files.size();
       if ( multi_grid_multiplier > 1 )
       {
-         unsigned int grid = ( this_i / selected_files.size() ) % multi_grid_multiplier;
+         unsigned int grid = ( this_i / use_selected_files.size() ) % multi_grid_multiplier;
          out += QString( "ExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->text( grid ) ).fileName() );
          if ( !already_added.count( lb_target_files->text( grid ) ) )
          {
@@ -819,21 +856,20 @@ void US_Hydrodyn_Cluster::create_pkg()
             }
          }
       }
-
+      
       unsigned int advanced_pos = 0;
       if ( advanced_multiplier > 1 )
       {
-         advanced_pos = this_i / ( selected_files.size() * multi_grid_multiplier );
+         advanced_pos = this_i / ( use_selected_files.size() * multi_grid_multiplier );
       }
-
+      
       cout << QString( "this_i %1 grid %2 advanced_pos %3\n" )
          .arg( this_i )
-         .arg( ( this_i / selected_files.size() ) % multi_grid_multiplier )
+         .arg( ( this_i / use_selected_files.size() ) % multi_grid_multiplier )
          .arg( advanced_pos );
-
-      out += QString( "InputFile       %1\n" ).arg( common_prefix + QFileInfo( selected_files[ i ] ).fileName() );
-      QString use_file_name = QFileInfo( selected_files[ i ] ).fileName();
-      QString use_output_name = QFileInfo( selected_files[ i ] ).baseName();
+      
+      out += QString( "InputFile       %1\n" ).arg( common_prefix + QFileInfo( name ).fileName() );
+      
       if ( !batch_window->cb_dmd->isChecked()
            && batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
@@ -844,14 +880,14 @@ void US_Hydrodyn_Cluster::create_pkg()
       {
          out += QString( "OutputFile      %1\n" ).arg( use_output_name );
       }
-      if ( !already_added.count( selected_files[ i ] ) )
+      if ( !already_added.count( name ) )
       {
-         already_added[ selected_files[ i ] ] = true;
+         already_added[ name ] = true;
          if ( !cb_for_mpi->isChecked() )
          {
-            source_files << selected_files[ i ];
+            source_files << name;
          } else {
-            base_source_files << selected_files[ i ];
+            base_source_files << name;
          }
       }
       if ( any_advanced() )
@@ -861,7 +897,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       } else {
          if ( batch_window->cb_dmd->isChecked() )
          {
-            out += dmd_file_addition( use_file_name, use_output_name );
+            out += dmd_file_addition( use_file_name, use_output_name, dmd_pos );
          } else {
             out += "Process\n";
          }
@@ -896,14 +932,14 @@ void US_Hydrodyn_Cluster::create_pkg()
             editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
             qApp->processEvents();
          }
-
+         
          // copy ne files to base_dir
          if ( !copy_files_to_pkg_dir( source_files ) )
          {
             editor_msg( "red", errormsg );
             return;
          }
-
+         
          // build tar archive
          QStringList list;
          QStringList to_tar_list;
@@ -927,7 +963,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
          cout << "tar_name:" << tar_name << endl;
          cout << "to tar:\n" << to_tar_list.join("\n") << endl;
-
+         
          if ( result != TAR_OK )
          {
             editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
@@ -951,22 +987,22 @@ void US_Hydrodyn_Cluster::create_pkg()
                         .arg( QFileInfo( tar_name + ".gz" ).fileName() )
                         .arg( QFileInfo( use_targz_filename ).fileName() ) );
          }
-
+         
          dest_files << use_targz_filename;
-
+         
          editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
          // clean up droppings
          if ( !remove_files( remove_file_list ) )
          {
             return;
          }
-
+         
          if ( !cb_for_mpi->isChecked() )
          {
             source_files .clear();
             already_added.clear();
          }
-
+         
          out = base;
       }
    }
@@ -1380,9 +1416,22 @@ void US_Hydrodyn_Cluster::update_validator()
       delete le_no_of_jobs_qv;
    }
 
+   unsigned int tot_dmd_file_count = 0;
+   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   {
+      if ( batch_window->cb_dmd->isChecked() &&
+           dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() ) > 1 )
+      {
+         tot_dmd_file_count += dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() );
+      } else {
+         tot_dmd_file_count++;
+      }
+   }
+   // cout << QString( "tot dmd file count %1\n" ).arg( tot_dmd_file_count );
+
    unsigned int max_jobs = 
       ( cb_split_grid->isChecked() && lb_target_files->numRows() ) ?
-      selected_files.size() * lb_target_files->numRows() : selected_files.size();
+      tot_dmd_file_count * lb_target_files->numRows() : tot_dmd_file_count;
                            
    max_jobs *= advanced_addition().size();
 
@@ -1429,6 +1478,7 @@ void US_Hydrodyn_Cluster::dmd()
    hcd->exec();
    delete hcd;
    update_enables();
+   update_validator();
 }
 
 bool US_Hydrodyn_Cluster::any_advanced()
@@ -1664,7 +1714,29 @@ QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files, 
    return out;
 }
 
-QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* outputfile */ )
+unsigned int US_Hydrodyn_Cluster::dmd_entry_count( QString inputfile )
+{
+   // find matching files in csv_dmd and compare with selected files
+   // for current file, create DMDTime/Temp/Relax/Run commands
+   
+   vector < unsigned int > active_csv_rows;
+   bool ok = false;
+   for ( unsigned int i = 0; i < csv_dmd.prepended_names.size(); i++ )
+   {
+      if ( inputfile == csv_dmd.prepended_names[ i ] &&
+           csv_dmd.data[ i ].size() > 5 &&
+           csv_dmd.data[ i ][ 1 ] == "Y" )
+      {
+         active_csv_rows.push_back( i );
+         ok = true;
+      }
+   }
+   return active_csv_rows.size();
+}
+
+QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, 
+                                                QString /* outputfile */,
+                                                int use_entry )
 {
    QString out;
 
@@ -1683,9 +1755,25 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile, QString /* ou
          ok = true;
       }
    }
+
    if ( !ok )
    {
       return "";
+   }
+
+   if ( use_entry != -1 )
+   {
+      if ( use_entry >= (int) active_csv_rows.size() )
+      {
+         editor_msg( "red", QString( tr( "Error: internal issue creating dmd entry for %1 position %2. Insufficient dmd entries (%3)\n" ) )
+                     .arg( inputfile )
+                     .arg( use_entry )
+                     .arg( active_csv_rows.size() )
+                     );
+         return "";
+      }
+      active_csv_rows[ 0 ] = active_csv_rows[ use_entry ];
+      active_csv_rows.resize( 1 );
    }
 
    // we should probably parameterize this, maybe system dependent
