@@ -431,6 +431,7 @@ void US_2dsa::save( void )
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  dwavelen = edata->wavelength.toDouble();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Test existence or create needed subdirectories
    if ( ! mkdir( reppath, runID ) )
@@ -720,6 +721,7 @@ void US_2dsa::save( void )
       wmsg += tr( "\nReport files were also saved to the database." );
    }
 
+   QApplication::restoreOverrideCursor();
    QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
 }
 

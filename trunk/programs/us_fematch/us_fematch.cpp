@@ -2992,12 +2992,17 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
    {
       QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
       int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
-      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP );
-      //
+
       if ( st != US_DB2::OK )
       {
          qDebug() << "**saveDocument ERROR**: ii status" << ii << st
             << "filename" << fname;
+      }
+
+      if ( fname.endsWith( "svg" ) )
+      {
+         QString fnpng = QString( fname ).replace( ".svg", ".png" );
+         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit );
       }
    }
 }

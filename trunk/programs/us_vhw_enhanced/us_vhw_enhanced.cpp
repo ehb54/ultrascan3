@@ -996,10 +996,16 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    repfiles << plot4File;
 
    // Report files created to the user
-   QString wmsg = tr( "Wrote:\n\n" );
+   QString wmsg = tr( "In directories\n%1,\n%2;\nwrote:\n\n" )
+      .arg( files[ 0 ].left( files[ 0 ].lastIndexOf( "/" ) ) )
+      .arg( plot4File.left( plot4File.lastIndexOf( "/" ) ) );
 
    for ( int ii = 0; ii < files.size(); ii++ )
-      wmsg += "  " + files.at( ii ) + "\n";
+   {
+      QString fname = files[ ii ];
+      fname         = fname.mid( fname.lastIndexOf( "/" ) + 1 );
+      wmsg += "    " + fname + "\n";
+   }
 
 QDateTime time1=QDateTime::currentDateTime();
    if ( disk_controls->db() )

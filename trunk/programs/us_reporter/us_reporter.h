@@ -119,6 +119,7 @@ class US_Reporter : public US_Widgets
       void item_save     ( void );
       void load_profile  ( void );
       void save_profile  ( void );
+      void sync_db       ( void );
       void copy_logos    ( QString );
       void write_pdf     ( void );
       void page_loaded   ( bool );

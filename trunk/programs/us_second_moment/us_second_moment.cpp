@@ -285,6 +285,7 @@ void US_SecondMoment::save( void )
 
    if ( ! mkdir( dir, d->runID ) ) return;
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    // Note: d->runID is both directory and first segment of file name
    QString filebase = dir + "/" + d->runID + "/secmo."
       + QString( triples.at( index ) ).replace( " / ", "" ) + ".";
@@ -303,6 +304,7 @@ void US_SecondMoment::save( void )
             tr( "IO Error" ),
             tr( "Could not open\n" ) + htmlFile + "\n" +
                 tr( "\nfor writing" ) );
+      QApplication::restoreOverrideCursor();
       return;
    }
 
@@ -322,6 +324,7 @@ void US_SecondMoment::save( void )
             tr( "IO Error" ),
             tr( "Could not open\n" ) + textFile + "\n" +
                 tr( "\nfor writing" ) );
+      QApplication::restoreOverrideCursor();
       return;
    }
 
@@ -365,6 +368,7 @@ void US_SecondMoment::save( void )
       wmsg += tr( "\n\nReport files were also saved to the database." );
    }
 
+   QApplication::restoreOverrideCursor();
    QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 

@@ -660,6 +660,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
       db_errno = ERROR;
+qDebug() << error;
       return ERROR;
    }
 
@@ -710,6 +711,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
          fout.write( aucData );
          fout.close();
       }
+if(!error.isEmpty()) qDebug() << error;
    }
 
    return db_errno;

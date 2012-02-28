@@ -155,11 +155,16 @@ US_Report::Status US_Report::ReportDocument::saveDB(
    }
 
    // We can also upload the report contents
-   int writeStatus = db->writeBlobToDB( dir + this->filename,
+   QString fpath   = ( dir.endsWith( "/" ) ? dir : dir + "/" ) + this->filename;
+   int writeStatus = db->writeBlobToDB( fpath,
                      QString( "upload_reportContents" ), this->documentID );
 
    if ( writeStatus != US_DB2::OK )
+   {
+      qDebug() << "upload_reportContents error"
+               << writeStatus << db->lastError();
       return DB_ERROR;
+   }
 
    return REPORT_OK;
 }
@@ -175,14 +180,22 @@ US_Report::Status US_Report::ReportDocument::readDB( QString dir, US_DB2* db )
    int status = db->lastErrno();
 
    if ( status == US_DB2::NOROWS )
+   {
+      qDebug() << "get_reportDocument_info NOT_FOUND error" << status;
       return NOT_FOUND;
+   }
 
    else if ( status != US_DB2::OK )
+   {
+      qDebug() << "get_reportDocument_info error" << status;
       return DB_ERROR;
+   }
 
+   int docID = this->documentID;
    this->reset();
    db->next();
 
+   this->documentID   = docID;
    this->documentGUID = db->value(0).toString();
    this->editedDataID = db->value(1).toInt();
    this->label        = db->value(2).toString();
@@ -192,11 +205,16 @@ US_Report::Status US_Report::ReportDocument::readDB( QString dir, US_DB2* db )
    this->documentType = db->value(6).toString();
 
    // We can also download the document contents
-   int readStatus = db->readBlobFromDB( dir + this->filename,
+   QString fpath  = ( dir.endsWith( "/" ) ? dir : dir + "/" ) + this->filename;
+   int readStatus = db->readBlobFromDB( fpath,
                     QString( "download_reportContents" ), this->documentID );
 
    if ( readStatus != US_DB2::OK )
-     return DB_ERROR;
+   {
+      qDebug() << "download_reportContents error"
+               << readStatus;
+      return DB_ERROR;
+   }
 
    return REPORT_OK;
 }
@@ -670,6 +688,8 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
       return US_Report::MISC_ERROR;
 
    QString new_runID  = parts.last();
+   if ( new_runID.isEmpty() )
+      new_runID = parts[ parts.size() - 1 ];
 
    // Now parse the filename for the other information
    parts.clear();
@@ -690,6 +710,7 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    // Start by reading any DB info we have, or create new report
    QString now = QDateTime::currentDateTime().toString();
    US_Report::Status status = this->readDB( new_runID, db );
+
    if ( status == US_Report::NOT_FOUND )
    {
       US_Report::Status saveStatus = this->saveDB( db );
@@ -740,8 +761,8 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
 
    else
    {
-      t.docs[ docNdx ].label        = newLabel;
       t.docs[ docNdx ].editedDataID = idEdit;
+
       t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
    }
 

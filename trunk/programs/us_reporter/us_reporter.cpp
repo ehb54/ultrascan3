@@ -6,6 +6,7 @@
 #include <QWebSettings>
 
 #include "us_reporter.h"
+#include "us_sync_db.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
@@ -78,6 +79,7 @@ US_Reporter::US_Reporter() : US_Widgets()
                 pb_save    = us_pushbutton( tr( "Save" ) );
    QPushButton* pb_loadpr  = us_pushbutton( tr( "Load Profile" ) );
    QPushButton* pb_savepr  = us_pushbutton( tr( "Save Profile" ) );
+   QPushButton* pb_syncdb  = us_pushbutton( tr( "Sync with Database" ) );
                 pb_help    = us_pushbutton( tr( "Help" ) );
                 pb_close   = us_pushbutton( tr( "Close" ) );
 
@@ -90,6 +92,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    dctlLayout->addWidget( pb_save,    row++, 0, 1, 4 );
    dctlLayout->addWidget( pb_loadpr,  row++, 0, 1, 4 );
    dctlLayout->addWidget( pb_savepr,  row++, 0, 1, 4 );
+   dctlLayout->addWidget( pb_syncdb,  row++, 0, 1, 4 );
    dctlLayout->addWidget( pb_help,    row,   0, 1, 2 );
    dctlLayout->addWidget( pb_close,   row++, 2, 1, 2 );
 
@@ -103,6 +106,8 @@ US_Reporter::US_Reporter() : US_Widgets()
             this,       SLOT(   load_profile() ) );
    connect( pb_savepr,  SIGNAL( clicked()      ),
             this,       SLOT(   save_profile() ) );
+   connect( pb_syncdb,  SIGNAL( clicked()      ),
+            this,       SLOT(   sync_db()      ) );
    connect( pb_help,    SIGNAL( clicked()      ),
             this,       SLOT(   help()         ) );
    connect( pb_close,   SIGNAL( clicked()      ),
@@ -1473,6 +1478,14 @@ void US_Reporter::save_profile()
             tr( "Please note:\n\n"
                 "The Report-Select Profile could not be saved to:\n\n" ) +
             fn );
+}
+
+// Synchronize with the database
+void US_Reporter::sync_db()
+{
+   US_SyncWithDB* syncdb = new US_SyncWithDB();
+
+   syncdb->exec();
 }
 
 // Create ./etc if need be and put copies of any logos there

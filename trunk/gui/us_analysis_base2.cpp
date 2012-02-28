@@ -1547,7 +1547,12 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    {
       QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
       int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
-      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP );
+
+      if ( fname.endsWith( ".svg" ) )
+      {
+         QString fnpng  = QString( fname ).replace( ".svg", ".png" );
+         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit );
+      }
 
       if ( st != US_DB2::OK )
       {
