@@ -1379,7 +1379,7 @@ BEGIN
   FROM   reportDocument
   WHERE  reportDocumentID = p_reportDocumentID;
 
-SET @DEBUG = CONCAT('Report document ID = ', p_rawDataID,
+SET @DEBUG = CONCAT('Report document ID = ', p_reportDocumentID,
                     'Count = ', l_count_reportContents );
 
   -- Get information we need to verify ownership
