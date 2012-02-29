@@ -689,7 +689,7 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
 
    QString new_runID  = parts.last();
    if ( new_runID.isEmpty() )
-      new_runID = parts[ parts.size() - 1 ];
+      new_runID = parts[ parts.size() - 2 ];
 
    // Now parse the filename for the other information
    parts.clear();
