@@ -87,23 +87,10 @@ void US_SyncWithDB::get_person()
    int              invID  = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
 
-   //connect(
-   //   dialog,
-   //   SIGNAL( investigator_accepted( int ) ),
-   //   SLOT(   update_person(         int ) ));
-
    dialog->exec();
 }
 
-// Slot to handle accept in investigator dialog
-//void US_SyncWithDB::update_person( int ID )
-//{
-//   QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
-//   le_invest->setText( number + US_Settings::us_inv_name() );
-//   list_data();
-//}
-
-// Cancel button:  no models returned
+// Cancel button
 void US_SyncWithDB::cancelled()
 {
 qDebug() << "CANCELED";
@@ -136,6 +123,16 @@ void US_SyncWithDB::scan_db_reports()
          + db.lastError() );
       return;
    }
+
+   QString desc = tr(
+      "<b>Note:</b> Proceeding may result in local reports<br/>"
+      "being replaced from the database.<ul>"
+      "<li><b>Cancel</b>   to abort synchronizing from the DB.</li>"
+      "<li><b>Download</b> to proceed with DB synchronization.</li></ul>"
+      "<b>Downloading report records from the database...</b>" );
+   te_desc->setHtml( desc );
+   qApp->processEvents();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
@@ -222,6 +219,7 @@ qDebug() << "      Doc" << kk << "filename" << fname << "ID" << doc->documentID;
          }
       }
    }
+   QApplication::restoreOverrideCursor();
         
    QMessageBox::information( this,
          tr( "DB Reports Downloaded" ),

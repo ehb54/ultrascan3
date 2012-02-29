@@ -420,9 +420,15 @@ void US_vHW_Combine::save( void )
    generator.setFileName( plotFile );
    data_plot1->print    ( generator );
 
-   // Report saved file
+   // Also save in PNG format
+   QString fnpng    = QString( plotFile ).replace( ".svg", ".png" );
+   QPixmap pixmap   = QPixmap::grabWidget( (QWidget*)data_plot1, 0, 0,
+         data_plot1->width(), data_plot1->height() );
+   pixmap.save( fnpng );
+
+   // Report saved files
    QMessageBox::information( this, tr( "Combo Distro Plot File Save" ),
-       tr( "Saved:" )        + "\n    " + fname + "\n" +
+       tr( "Saved:" )        + "\n    " + fname + " (/.png)\n" +
        tr( "in directory:" ) + "\n    " + fdir );
 }
 
