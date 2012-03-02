@@ -5,6 +5,8 @@
 #include "us_math2.h"
 #include "us_datafiles.h"
 
+#define DEBUG_QUERY qDebug() << "Q" << q << "Err" << db->lastErrno() << db->lastError(); //!< Debug print showing DB query string and error returns
+
 US_Analyte::US_Analyte()
 {
    vbar20         = TYPICAL_VBAR;
@@ -79,6 +81,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    q << load_guid;
 
    db->query( q );
+DEBUG_QUERY;
    error = db->lastErrno();
   
    if ( error != US_DB2::OK ) 
@@ -95,6 +98,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    q << "get_analyte_info" << analyteID;
 
    db->query( q );
+DEBUG_QUERY;
    error = db->lastErrno();
 
    if ( error != US_DB2::OK )
@@ -122,6 +126,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    q.clear();
    q << "get_nucleotide_info" << analyteID;
    db->query( q );
+DEBUG_QUERY;
    db->next();
    
    doubleStranded = db->value( 0 ).toString().toInt();
@@ -138,9 +143,10 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
       nucleotide();
 
    q.clear();
-   q << "get_spectrum" << analyteID << "Analyte" << "'Extinction";
+   q << "get_spectrum" << analyteID << "Analyte" << "Extinction";
 
    db->query( q );
+DEBUG_QUERY;
 
    while ( db->next() )
    {
@@ -619,17 +625,22 @@ void US_Analyte::set_spectrum( US_DB2* db )
 
    q << "delete_spectrum" << analyteID << "Analyte" << "Extinction";
    db->statusQuery( q );
+DEBUG_QUERY;
    q[ 3 ] = "Refraction";
    db->statusQuery( q );
+DEBUG_QUERY;
    q[ 3 ] = "Fluorescence";
    db->statusQuery( q );
+DEBUG_QUERY;
 
    QList< double > keys = extinction.keys();
+   int kntext = keys.size();
+   kntext = ( kntext > 0 && extinction.values()[ 0 ] == 0.0 ) ?  0 : kntext;
 
    q.clear();
    q << "new_spectrum" << analyteID << "Analyte" << "Extinction" << "" << "";
 
-   for ( int i = 0; i < keys.size(); i++ )
+   for ( int i = 0; i < kntext; i++ )
    {
       double key =  keys[ i ];
       QString lambda = QString::number( key, 'f', 1 );
@@ -639,13 +650,16 @@ void US_Analyte::set_spectrum( US_DB2* db )
       q[ 5 ] = coeff;
 
       db->statusQuery( q );
+DEBUG_QUERY;
    }
 
    keys = refraction.keys();
+   int kntref = keys.size();
+   kntref = ( kntref > 0 && refraction.values()[ 0 ] == 0.0 ) ?  0 : kntref;
 
    q[ 3 ] = "Refraction";
 
-   for ( int i = 0; i < keys.size(); i++ )
+   for ( int i = 0; i < kntref; i++ )
    {
       double key =  keys[ i ];
       QString lambda = QString::number( key, 'f', 1 );
@@ -655,13 +669,16 @@ void US_Analyte::set_spectrum( US_DB2* db )
       q[ 5 ] = coeff;
 
       db->statusQuery( q );
+DEBUG_QUERY;
    }
 
    keys = fluorescence.keys();
+   int kntflu = keys.size();
+   kntflu = ( kntflu > 0 && fluorescence.values()[ 0 ] == 0.0 ) ?  0 : kntflu;
 
    q[ 3 ] = "Fluorescence";
 
-   for ( int i = 0; i < keys.size(); i++ )
+   for ( int i = 0; i < kntflu; i++ )
    {
       double key =  keys[ i ];
       QString lambda = QString::number( key, 'f', 1 );
@@ -671,6 +688,27 @@ void US_Analyte::set_spectrum( US_DB2* db )
       q[ 5 ] = coeff;
 
       db->statusQuery( q );
+DEBUG_QUERY;
+   }
+
+   q.clear();
+   q << "count_spectrum" << analyteID << "Analyte" << "Extinction";
+   int cntext = db->functionQuery( q );
+DEBUG_QUERY;
+   q[ 3 ]     = "Refraction";
+   int cntref = db->functionQuery( q );
+DEBUG_QUERY;
+   q[ 3 ]     = "Fluourescence";
+   int cntflu = db->functionQuery( q );
+DEBUG_QUERY;
+
+   if ( ( kntext != cntext )  ||
+        ( kntref != cntref )  ||
+        ( kntflu != cntflu ) )
+   {
+      qDebug() << "set_spectrum *ERROR* ext k c" << kntext << cntext
+               << "ref k c" << kntref << cntref
+               << "flu k c" << kntflu << cntflu;
    }
 }
 
@@ -695,6 +733,7 @@ int US_Analyte::write_db( US_DB2* db )
    q2 << "get_analyteID" << analyteGUID;
 
    db->query( q2 );
+DEBUG_QUERY;
 
    if ( db->lastErrno() == US_DB2::OK )
    {
@@ -713,6 +752,32 @@ int US_Analyte::write_db( US_DB2* db )
    else                                    q << "Other";
 
    QString spectrum = "";  // Unused element
+   double  lambda1  = 0.0;
+   double  coeff1   = 0.0;
+
+   if ( extinction.keys().count() > 0 )
+   {
+      lambda1 = extinction.keys()[ 0 ];
+      coeff1  = extinction[ lambda1 ];
+   }
+
+   else if ( refraction.keys().count() > 0 )
+   {
+      lambda1 = refraction.keys()[ 0 ];
+      coeff1  = refraction[ lambda1 ];
+   }
+
+   else if ( fluorescence.keys().count() > 0 )
+   {
+      lambda1 = fluorescence.keys()[ 0 ];
+      coeff1  = fluorescence[ lambda1 ];
+   }
+
+   if ( coeff1 != 0.0 )
+   {  // Compose spectrum string from first lambda/coeff pair
+      spectrum = QString::number( lambda1 ) + "/" + QString::number( coeff1 );
+   }
+
    q << sequence;
    q << QString::number( vbar20 );
    q << description;
@@ -723,6 +788,7 @@ int US_Analyte::write_db( US_DB2* db )
       q << QString::number( US_Settings::us_inv_ID() );
 
    db->statusQuery( q );
+DEBUG_QUERY;
 
    int error = db->lastErrno();
    if ( error != US_DB2::OK ) 
