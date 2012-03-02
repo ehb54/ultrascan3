@@ -731,17 +731,7 @@ CREATE TABLE IF NOT EXISTS spectrum (
   lambda FLOAT NOT NULL ,
   molarCoefficient FLOAT NOT NULL ,
   PRIMARY KEY (spectrumID) ,
-  INDEX ndx_component_ID (componentID ASC),
-  CONSTRAINT fk_spectrum_bufferID
-    FOREIGN KEY (componentID)
-    REFERENCES buffer (bufferID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_spectrum_analyteID
-    FOREIGN KEY (componentID)
-    REFERENCES analyte (analyteID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
+  INDEX ndx_component_ID (componentID ASC) )
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
