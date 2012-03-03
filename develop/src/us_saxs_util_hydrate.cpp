@@ -1128,6 +1128,10 @@ bool US_Saxs_Util::load_rotamer( QString filename )
          qsl[ i ].at( 22 ) = ' ';
       }
       QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      if ( qsl_line[ 0 ] == "multiple-rotate:" )
+      {
+         continue;
+      }
       if ( qsl_line[ 0 ] == "pointmap:" )
       {
          qsl_line.pop_front();
