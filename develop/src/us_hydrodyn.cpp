@@ -58,8 +58,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    numThreads = USglobal->config_list.numThreads;
 
    last_pdb_filename = "";
-   last_pdb_title = "";
-   last_pdb_header = "";
+   last_pdb_title.clear();
+   last_pdb_header.clear();
 
    // no_rr = false;
 
