@@ -2,6 +2,7 @@
 #define US_GZIP_H
 
 #include <qstring.h>
+#include <qdatetime.h>
 
 #include <sys/types.h>
 
