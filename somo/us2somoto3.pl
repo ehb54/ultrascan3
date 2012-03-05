@@ -14,7 +14,7 @@ sub cmd {
 }
 
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
-$us2sdev = $ENV{'us2sdev'} || die "can't find env variable us2dev\n";
+$us2sdev = $ENV{'us2sdev'} || die "can't find env variable us2sdev\n";
 
 print "us3 is $us3\n";
 print "us2sdev is $us2sdev\n";
