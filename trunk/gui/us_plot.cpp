@@ -4,6 +4,7 @@
 
 #include "us_plot.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_pixmaps.h"
 #include "us_settings.h"
 
@@ -203,22 +204,8 @@ void US_Plot::svg( void )
    if ( ! fileName.isEmpty() )
    {
       if ( fileName.right( 4 ) != ".svg" ) fileName += ".svg";
-      QSvgGenerator generator;
 
-      // Set resolution to screen resolution
-      double in  = (double)qApp->desktop()->widthMM() / 25.4;
-      double px  = (double)qApp->desktop()->width();
-      int    res = qRound( px / in );
-
-      generator.setResolution( res );
-      generator.setFileName( fileName );
-      
-      int pw = plot->width()  + res;
-      int ph = plot->height() + res; 
-      generator.setViewBox( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
-
-      generator.setSize( plot->size() );
-      plot->print( generator );
+      US_GuiUtil::save_svg( fileName, plot );
    }
 }
 
@@ -236,10 +223,7 @@ void US_Plot::png( void )
    {
       if ( fileName.right( 4 ) != ".png" ) fileName += ".png";
 
-      int pw = plot->width();
-      int ph = plot->height(); 
-      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
-      pixmap.save( fileName );
+      US_GuiUtil::save_png( fileName, plot );
    }
 }
 

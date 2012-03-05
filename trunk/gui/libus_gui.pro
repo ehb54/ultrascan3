@@ -32,6 +32,7 @@ HEADERS      = \
                us_editor.h              \
                us_editor_gui.h          \
                us_gui_settings.h        \
+               us_gui_util.h            \
                us_help.h                \
                us_images.h              \
                us_investigator.h        \
@@ -67,6 +68,7 @@ SOURCES      = \
                us_editor.cpp              \
                us_editor_gui.cpp          \
                us_gui_settings.cpp        \ 
+               us_gui_util.cpp            \ 
                us_help.cpp                \
                us_images.cpp              \
                us_investigator.cpp        \

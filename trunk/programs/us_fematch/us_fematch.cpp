@@ -9,6 +9,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_solution_vals.h"
@@ -2665,25 +2666,14 @@ QString US_FeMatch::distrib_info() const
 void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 {
    if ( filename.endsWith( ".svg" ) )
-   {  // standard SVG file
-      QSvgGenerator generator;
-      generator.setSize( plot->size() );
-      generator.setFileName( filename );
-      plot->print( generator );
-
-      // Make a PNG copy
-      QString fnmpng = QString( filename ).replace( ".svg", ".png" );
-      int     iwid   = plot->width();
-      int     ihgt   = plot->height();
-      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, iwid, ihgt );
-
-      if ( ! pixmap.save( fnmpng ) )
+   {  // Save an SVG file and a PNG copy
+      if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
-            tr( "Unable to write file" ) + fnmpng );
+            tr( "Unable to write file" ) + filename );
    }
 
    else if ( filename.endsWith( "rbitmap.png" ) )
-   {  // special case of rbitmap PNG
+   {  // Special case of rbitmap PNG
       if ( rbmapd == 0 )
       {  // if it is not currently displayed, display it
          rbmapd = new US_ResidsBitmap( resids );
@@ -2701,13 +2691,14 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 
       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
                                             rbmapd->width(), rbmapd->height() );
+
       if ( ! pixmap.save( filename ) )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
    }
 
    else if ( filename.endsWith( "3dplot.png" ) )
-   {  // special case of 3dplot PNG
+   {  // Special case of 3dplot PNG
       if ( eplotcd == 0 )
       {  // if no 3d plot control up,  create it now
          eplotcd = new US_PlotControl( this, &model );
@@ -2727,12 +2718,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
    }
 
    else if ( filename.endsWith( ".png" ) )
-   {  // general case of PNG
-      int     iwid   = plot->width();
-      int     ihgt   = plot->height();
-      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, iwid, ihgt );
-
-      if ( ! pixmap.save( filename ) )
+   {  // General case of PNG
+      if ( US_GuiUtil::save_png( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
    }

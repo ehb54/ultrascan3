@@ -1,6 +1,9 @@
 //! \file us_widgets.cpp
+#include <QtSvg> 
+
 #include "us_widgets.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_settings.h"
 #include "us_images.h"
 
@@ -460,6 +463,11 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
   return newtw;
 }
 
+void US_Widgets::write_plot( const QString& fname, const QwtPlot* plot )
+{
+   US_GuiUtil::save_plot( fname, plot );
+}
+
 //////////////////  New class
 
 US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
@@ -540,3 +548,4 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
 
   return layout;
 }
+
