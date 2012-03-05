@@ -1,13 +1,13 @@
 //! \file us_vhw_combine.cpp
 
 #include <QApplication>
-#include <QtSvg>
 
 #include "us_vhw_combine.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "qwt_legend.h"
@@ -410,21 +410,12 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
 // Save the plot data
 void US_vHW_Combine::save( void )
 {
-   QSvgGenerator generator;
    QString fdir     = US_Settings::reportDir() + "/" + pdistrs[ 0 ].runID;
    QString fname    = "vHW." + pdistrs[ 0 ].triple + ".combo-distrib.svg";
    QString plotFile = fdir + "/" + fname;
 
-   // Save plot file
-   generator.setSize    ( data_plot1->size() );
-   generator.setFileName( plotFile );
-   data_plot1->print    ( generator );
-
-   // Also save in PNG format
-   QString fnpng    = QString( plotFile ).replace( ".svg", ".png" );
-   QPixmap pixmap   = QPixmap::grabWidget( (QWidget*)data_plot1, 0, 0,
-         data_plot1->width(), data_plot1->height() );
-   pixmap.save( fnpng );
+   // Save plot file as SVG and as PNG
+   write_plot( plotFile, data_plot1 );
 
    // Report saved files
    QMessageBox::information( this, tr( "Combo Distro Plot File Save" ),

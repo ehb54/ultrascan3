@@ -161,6 +161,11 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     //! * Color is set to US_GuiSettings::normalColor()
     QTabWidget* us_tabwidget( int = 0,
                               int = QFont::Bold );
+
+    //! \brief Write a plot file (PNG or SVG+PNG) from a plot
+    //! \param fname Full path name of the plot file to create
+    //! \param plot  Pointer to plot
+    void write_plot( const QString&, const QwtPlot* );
 };
 
 //! \brief Set a custom list widget that can override the default size

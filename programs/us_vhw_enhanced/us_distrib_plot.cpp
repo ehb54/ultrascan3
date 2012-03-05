@@ -1,10 +1,9 @@
 //! \file us_distrib_plot.cpp
 
-#include <QtSvg>
-
 #include "us_distrib_plot.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 
 #include <qwt_legend.h>
@@ -106,9 +105,6 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
 // Generate distribution,histogram plots and save the SVG files
 void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 {
-   QSvgGenerator generator;
-   QSvgGenerator generator2;
-
    // Set up, generate distribution plot and save it to a file
    data_plot->detachItems();
    QwtPlotGrid* grid = us_grid( data_plot );
@@ -120,13 +116,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 
    plot_distrib();
 
-   generator.setSize( data_plot->size() );
-   generator.setFileName( plot1File );
-   data_plot->print( generator );
-   QString plot1FPng = QString( plot1File ).replace( ".svg", ".png" );
-   QPixmap pixmap    = QPixmap::grabWidget( (QWidget*)data_plot,
-         0, 0, data_plot->width(), data_plot->height() );
-   pixmap.save( plot1FPng );
+   US_GuiUtil::save_plot( plot1File, data_plot );
 
    // Set up, generate combined histogram plot and save it to a file
    data_plot->detachItems();
@@ -139,13 +129,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 
    plot_combined();
 
-   generator2.setSize( data_plot->size() );
-   generator2.setFileName( plot2File );
-   data_plot->print( generator2 );
-   QString plot2FPng = QString( plot2File ).replace( ".svg", ".png" );
-   QPixmap pixmap2   = QPixmap::grabWidget( (QWidget*)data_plot,
-         0, 0, data_plot->width(), data_plot->height() );
-   pixmap2.save( plot2FPng );
+   US_GuiUtil::save_plot( plot2File, data_plot );
 
    QString runID = plot1File.section( "/", -2, -2 );
 

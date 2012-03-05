@@ -133,9 +133,6 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       virtual void update   ( int );    //!< Update screen for a new dataset
       virtual void data_plot( void );   //!< Update the data plot
 
-      //! Write the specified plot to a file
-      static  void write_plot( const QString&, const QwtPlot* ); 
-
       //! A utility to create a directory
       bool         mkdir     ( const QString&, const QString& );
 

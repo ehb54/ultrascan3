@@ -11,7 +11,7 @@ VER          = 10
 CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
-  LIBS       += -lus_utils -lus_gui -L../../lib
+  LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += -lcrypto
   LIBS       += -lqwt -L$$QWTPATH/lib
   LIBS       += -lmysqlclient -L$$MYSQLDIR 
@@ -37,7 +37,7 @@ win32 {
   LIBS       += $$OPENSSL/lib/libeay32.a
   LIBS       += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS       += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS       += -L../../lib -lus_utils$${VER} -lus_gui$${VER}
+  LIBS       += -L../../lib -lus_gui$${VER} -lus_utils$${VER}
 
   DEFINES     += INTEL
 
@@ -48,7 +48,7 @@ win32 {
 
 macx {
   CONFIG     += x86 x86_64
-  LIBS       += -L../../lib -lus_utils -lus_gui 
+  LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += $$QWTLIB 
   LIBS       += -L../../lib -lmysqlclient -framework QtOpenGL
   DEFINES    += MAC OSX 
