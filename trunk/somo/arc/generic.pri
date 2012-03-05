@@ -27,7 +27,7 @@ unix {
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
 
  contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(ULTRASCAN)/somo/lib64 -lus_somo
+    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt -L$(ULTRASCAN)/somo/lib64 -lus_somo
     DESTDIR  = ../../bin64
  } else {
     LIBS    += -L$(QWTDIR)/lib -lqwt -L$(ULTRASCAN)/somo/lib -lus_somo

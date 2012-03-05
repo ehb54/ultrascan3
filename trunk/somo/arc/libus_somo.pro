@@ -36,7 +36,7 @@ unix {
   INCLUDEPATH    +=  $(QWTDIR)/src
 
   contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -lqwt 
+    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt 
     DEFINES += BIN64
     DESTDIR  = ../lib64
   } else {
