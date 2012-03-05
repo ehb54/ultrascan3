@@ -3,6 +3,8 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_submit.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
@@ -96,7 +98,7 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
                                                ( tgz_files.size() ? "\n" : "" ) +
                                                tar_files.join("\n") );
 
-   for ( unsigned int i = 0; i < all_files.size(); i++ )
+   for ( unsigned int i = 0; i < ( unsigned int ) all_files.size(); i++ )
    {
       if ( !all_files[ i ].contains( "_out", false ) )
       {
@@ -107,7 +109,7 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
    if ( set_lv_files )
    {
       lv_files->clear();
-      for ( unsigned int i = 0; i < files.size(); i++ )
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
          cout << "files: " << files[ i ] << endl;
          // qt3 QFileInfo::size() is incorrect uint is too small
@@ -1027,7 +1029,8 @@ void US_Hydrodyn_Cluster_Submit::http_readyRead( const QHttpResponseHeader & res
 {
    cout << "http: readyRead\n";
    cout << resp.reasonPhrase() << endl;
-   current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   current_http_response = QString( submit_http.readAll() );
    cout << current_http_response << endl;
 
    /*   if ( comm_mode == "status" )

@@ -1,6 +1,8 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_tnt_jama.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 // #define DEBUG_ALIGN
 
 bool US_Saxs_Util::atom_align( vector < point > transform_from, 

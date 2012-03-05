@@ -1,5 +1,7 @@
 #include "../include/us_saxs_util.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #if defined( USE_MPI )
     extern int myrank;
 #endif

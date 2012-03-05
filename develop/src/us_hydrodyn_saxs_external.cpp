@@ -2,6 +2,8 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 void US_Hydrodyn_Saxs::editor_msg( QString color, QString msg )

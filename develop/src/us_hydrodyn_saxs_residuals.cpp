@@ -25,7 +25,9 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
 
+#ifndef QT4
    plot_zoomer = (ScrollZoomer *)0;
+#endif
 
    // make sure things aren't to big
 
@@ -403,6 +405,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    }
 
    // enable zooming
+#ifndef QT4
    if ( plot_zoomer )
    {
       delete plot_zoomer;
@@ -414,6 +417,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    plot_zoomer = new ScrollZoomer(plot->canvas());
    plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
 
    plot->replot();
 }

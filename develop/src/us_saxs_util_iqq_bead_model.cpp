@@ -1,5 +1,7 @@
 #include "../include/us_saxs_util.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SAXS_MIN_Q 1e-6
 #define SLASH QDir::separator();
 

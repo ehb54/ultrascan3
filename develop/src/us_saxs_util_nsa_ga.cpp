@@ -1,5 +1,7 @@
 #include "../include/us_saxs_util.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
 {
    // exponential ranking selection

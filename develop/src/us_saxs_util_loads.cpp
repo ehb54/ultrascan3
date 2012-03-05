@@ -1,5 +1,7 @@
 #include "../include/us_saxs_util.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 bool US_Saxs_Util::select_residue_file( QString filename )
 {
    errormsg = "";

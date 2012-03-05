@@ -1,6 +1,8 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 bool US_Saxs_Util::sgp_run()
 {
    if ( !sgp_validate() )

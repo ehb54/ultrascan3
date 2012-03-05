@@ -3,6 +3,8 @@
 #include "../include/us_surfracer.h"
 #include "qmessagebox.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #undef DEBUG
 
 #define DOTSOMO      ""
@@ -1777,7 +1779,11 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       }
       if ( qsl[ i ].length() > 30 && qsl[ i ].contains( rx_atom ) )
       {
+#ifdef QT4
+         qsl[ i ].data()[ 22 ] = ' ';
+#else
          qsl[ i ].at( 22 ) = ' ';
+#endif
       }
       QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
       if ( qsl_line[ 0 ] == "multiple-rotate:" )

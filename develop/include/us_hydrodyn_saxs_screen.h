@@ -30,8 +30,10 @@
 #include "us_hydrodyn_saxs.h"
 
 #include "qwt_wheel.h"
-#include "qwt/scrollbar.h"
-#include "qwt/scrollzoomer.h"
+#ifndef QT4
+#  include "qwt/scrollbar.h"
+#  include "qwt/scrollzoomer.h"
+#endif
 
 using namespace std;
 
@@ -94,7 +96,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
+#ifndef QT4
       ScrollZoomer  *plot_dist_zoomer;
+#endif
       QwtWheel      *qwtw_wheel;
       QwtWheel      *qwtw_wheel2;
       QLabel        *lbl_pos_range;

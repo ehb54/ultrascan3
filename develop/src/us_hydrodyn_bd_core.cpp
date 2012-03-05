@@ -10,6 +10,7 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 
+
 #ifndef WIN32
 #   include <unistd.h>
 #   define SLASH "/"
@@ -18,12 +19,6 @@
 #   include <io.h>
 #   define SLASH "\\"
 #endif
-
-ostream& operator<<(ostream& out, const point& c)
-{
-   out << "(" << c.axis[0] << "," << c.axis[1] << "," << c.axis[2] << ")";
-   return out;
-}
 
 void US_Hydrodyn::bd_prepare()
 {

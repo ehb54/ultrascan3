@@ -1,12 +1,12 @@
 #include "../include/us_saxs_util.h"
 
-#if defined( CMDLINE )
+// note: this program uses cout and/or cerr and this should be replaced
+
 ostream& operator<<(ostream& out, const point& c)
 {
    out << "(" << c.axis[0] << "," << c.axis[1] << "," << c.axis[2] << ")";
    return out;
 }
-#endif
 
 bool US_Saxs_Util::a2sb_validate()
 {

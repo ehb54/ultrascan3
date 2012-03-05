@@ -4,6 +4,8 @@
 extern int npes;
 extern int myrank;
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #if defined( CUDA )
 #  include "us_cuda.h"
    extern int env_mpi_node;

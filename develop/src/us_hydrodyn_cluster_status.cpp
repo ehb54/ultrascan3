@@ -3,6 +3,8 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_status.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
@@ -927,7 +929,8 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
 {
    cout << "http: readyRead\n" << endl << flush;
    cout << resp.reasonPhrase() << endl;
-   current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   current_http_response = QString( submit_http.readAll() );
    cout << "http response:";
    cout << current_http_response << endl;
 

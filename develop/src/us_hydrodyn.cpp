@@ -153,8 +153,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    pdb_parsing_widget = false;
    advanced_config_widget = false;
    saxs_search_widget = false;
+#ifndef QT4
    saxs_screen_widget = false;
+#endif
+#ifndef QT4
    saxs_buffer_widget = false;
+#endif
    bd_widget = false;
    bd_options_widget = false;
    dmd_options_widget = false;
@@ -172,8 +176,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    editor = (QTextEdit *)0;
 
    last_saxs_search_csv.name = "__empty__";
+#ifndef QT4
    last_saxs_screen_csv.name = "__empty__";
+#endif
+#ifndef QT4
    last_saxs_buffer_csv.name = "__empty__";
+#endif
 
    read_residue_file();
 

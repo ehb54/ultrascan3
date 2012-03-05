@@ -2,6 +2,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(

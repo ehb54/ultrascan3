@@ -54,6 +54,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    curve->attach( plot_pr );
 #endif
 
+#ifndef QT4
    if ( plot_pr_zoomer )
    {
       delete plot_pr_zoomer;
@@ -69,6 +70,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
 
    plot_pr->replot();
                   
@@ -263,6 +265,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    curve->attach( plot_saxs );
 #endif
 
+#ifndef QT4
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
@@ -270,6 +273,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
    plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
 
    plot_saxs->replot();
 

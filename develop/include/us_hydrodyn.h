@@ -44,9 +44,13 @@
 #include "us_hydrodyn_pdb_parsing.h"
 #include "us_hydrodyn_saxs_options.h"
 #include "us_hydrodyn_saxs.h"
-#include "us_hydrodyn_saxs_screen.h"
+#ifndef QT4
+#   include "us_hydrodyn_saxs_screen.h"
+#endif
 #include "us_hydrodyn_saxs_search.h"
-#include "us_hydrodyn_saxs_buffer.h"
+#ifndef QT4
+#  include "us_hydrodyn_saxs_buffer.h"
+#endif
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
@@ -83,9 +87,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Saxs;
+#ifndef QT4
       friend class US_Hydrodyn_Saxs_Screen;
+#endif
       friend class US_Hydrodyn_Saxs_Search;
+#ifndef QT4
       friend class US_Hydrodyn_Saxs_Buffer;
+#endif
       friend class US_Hydrodyn_Misc;
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Pdb_Tool_Merge;
@@ -635,17 +643,21 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QStringList directory_history;
 
+#ifndef QT4
+      bool                     saxs_screen_widget;
+      US_Hydrodyn_Saxs_Screen  *saxs_screen_window;
+      csv                      last_saxs_screen_csv;
+#endif
+
       bool                     saxs_search_widget;
       US_Hydrodyn_Saxs_Search  *saxs_search_window;
       csv                      last_saxs_search_csv;
 
-      bool                     saxs_screen_widget;
-      US_Hydrodyn_Saxs_Screen  *saxs_screen_window;
-      csv                      last_saxs_screen_csv;
-
+#ifndef QT4
       bool                     saxs_buffer_widget;
       US_Hydrodyn_Saxs_Buffer  *saxs_buffer_window;
       csv                      last_saxs_buffer_csv;
+#endif
 
       double       total_volume_of_bead_model( vector < PDB_atom > &bead_model );
       unsigned int number_of_active_beads    ( vector < PDB_atom > &bead_model );

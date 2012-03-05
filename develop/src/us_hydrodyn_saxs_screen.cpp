@@ -21,7 +21,9 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_screen_widget = true;
+#ifndef QT4
    plot_dist_zoomer = (ScrollZoomer *)0;
+#endif
 
    best_fitness = 1e99;
 
@@ -1150,12 +1152,14 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
 
    // enable zooming
    
+#ifndef QT4
    if ( !plot_dist_zoomer )
    {
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
    }
+#endif
 
    plot_dist->replot();
 
@@ -1534,11 +1538,13 @@ void US_Hydrodyn_Saxs_Screen::clear_plot()
 {
    plot_dist->clear();
    plot_dist->replot();
+#ifndef QT4
    if ( plot_dist_zoomer )
    {
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
+#endif
    lbl_message->setText("");
    lbl_message2->setText("");
    lbl_message3->setText("");

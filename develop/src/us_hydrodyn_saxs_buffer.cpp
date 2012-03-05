@@ -2,6 +2,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
@@ -427,9 +429,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 #endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
+#ifndef QT4
    plot_dist->setAutoLegend( false );
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-
+#endif
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
    t_csv = new QTable(csv1.data.size(), csv1.header.size(), this);
@@ -2002,7 +2005,9 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
       connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    }
    
@@ -3596,7 +3601,9 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
    plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    
    plot_dist->replot();
@@ -5065,6 +5072,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 
 void US_Hydrodyn_Saxs_Buffer::legend()
 {
+#ifndef QT4
    if ( plot_dist->autoLegend() )
    {
       plot_dist->setAutoLegend( false );
@@ -5073,5 +5081,6 @@ void US_Hydrodyn_Saxs_Buffer::legend()
       plot_dist->setAutoLegend( true );
       plot_dist->enableLegend ( true, -1 );
    }
+#endif
 }
 

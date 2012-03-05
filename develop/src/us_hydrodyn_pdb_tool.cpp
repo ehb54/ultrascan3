@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 class sortable_qli_double {

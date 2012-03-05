@@ -5,6 +5,8 @@
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH "/"
 #if defined(WIN32)
 #  include <dos.h>

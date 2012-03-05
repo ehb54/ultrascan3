@@ -1,5 +1,7 @@
 #include "../include/us_hydrodyn_saxs_iqq_residuals.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              bool *saxs_iqq_residuals_widget,
                                                              unsigned int width,
@@ -31,7 +33,9 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->avg_std_dev_frac = avg_std_dev_frac;
    this->std_dev_frac     = std_dev_frac;
 
+#ifndef QT4
    plot_zoomer = (ScrollZoomer *)0;
+#endif
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -599,15 +603,17 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          2);
       plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
 #else
-      QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
-      curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
-                     (double *)&(x[0]), 
-                     (double *)&(y[0]), 
-                     2
-                     );
-      curve->setPen( QPen(Qt::white, 2, SolidLine) );
-      curve->attach( plot );
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+      }
 #endif
       y[0] = -2;
       y[1] = -2;
@@ -620,15 +626,17 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          2);
       plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
 #else
-      QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
-      curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
-                     (double *)&(x[0]), 
-                     (double *)&(y[0]), 
-                     2
-                     );
-      curve->setPen( QPen(Qt::white, 2, SolidLine) );
-      curve->attach( plot );
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+      }
 #endif
       if ( miny > -2.2 )
       {
@@ -649,6 +657,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    }
 
    // enable zooming
+#ifndef QT4
    if ( plot_zoomer )
    {
       delete plot_zoomer;
@@ -659,7 +668,9 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
    plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+
    plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
 
    plot->replot();
 }

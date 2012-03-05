@@ -19,8 +19,10 @@
 #include <qprinter.h>
 #include <qregexp.h>
 
-#include "qwt/scrollbar.h"
-#include "qwt/scrollzoomer.h"
+#ifndef QT4
+#  include "qwt/scrollbar.h"
+#  include "qwt/scrollzoomer.h"
+#endif
 
 #include <qwt_plot.h>
 #ifdef QT4
@@ -60,9 +62,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Saxs_Search;
+#ifndef QT4
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
+#endif
 
    public:
 
@@ -201,9 +205,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QMenuBar *m;
 
       QwtPlot       *plot_pr;
+#ifndef QT4
       ScrollZoomer  *plot_pr_zoomer;
+#endif
       QwtPlot       *plot_saxs;
+#ifndef QT4
       ScrollZoomer  *plot_saxs_zoomer;
+#endif
 #ifdef QT4
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;

@@ -4,6 +4,8 @@
 #include "../include/us_hydrodyn_cluster_config.h"
 #include "../include/us_hydrodyn_cluster_config_server.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(

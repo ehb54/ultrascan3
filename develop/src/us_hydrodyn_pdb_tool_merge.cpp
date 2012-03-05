@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_pdb_tool_merge.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 ostream& operator<<(ostream& out, const range_entry& c)

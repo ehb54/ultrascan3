@@ -4,6 +4,8 @@
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 #ifdef WIN32

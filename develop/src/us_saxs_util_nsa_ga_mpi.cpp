@@ -4,6 +4,8 @@
 extern int npes;
 extern int myrank;
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 bool US_Saxs_Util::nsa_run()
 {
    QString save_outputfile = control_parameters[ "outputfile" ];

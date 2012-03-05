@@ -7,6 +7,8 @@
     extern int myrank;
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 bool US_Saxs_Util::nsa_validate()
 {
    errormsg = "";

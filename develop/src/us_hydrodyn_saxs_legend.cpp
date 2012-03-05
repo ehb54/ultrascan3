@@ -1,7 +1,10 @@
 #include "../include/us_hydrodyn_saxs.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
 {
+#ifndef QT4
    bool found = false;
    unsigned int pos;
    for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
@@ -66,6 +69,9 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
    } else {
       editor_msg( "black", tr( "No errors present" ) );
    }
+#else
+   editor_msg( "red", tr( "Legend controls not yet supported in US3" ) );
+#endif
 }
 
 void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
@@ -75,6 +81,7 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
 
 void US_Hydrodyn_Saxs::saxs_legend()
 {
+#ifndef QT4
    if ( plot_saxs->autoLegend() )
    {
       plot_saxs->setAutoLegend( false );
@@ -83,10 +90,12 @@ void US_Hydrodyn_Saxs::saxs_legend()
       plot_saxs->setAutoLegend( true );
       plot_saxs->enableLegend ( true, -1 );
    }
+#endif
 }
 
 void US_Hydrodyn_Saxs::pr_legend()
 {
+#ifndef QT4
    if ( plot_pr->autoLegend() )
    {
       plot_pr->setAutoLegend( false );
@@ -95,4 +104,5 @@ void US_Hydrodyn_Saxs::pr_legend()
       plot_pr->setAutoLegend( true );
       plot_pr->enableLegend ( true, -1 );
    }
+#endif
 }
