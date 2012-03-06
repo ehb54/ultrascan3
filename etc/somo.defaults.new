@@ -124,7 +124,7 @@ w		# solvent acronym
 40		# maximum size
 1		# bin size
 0		# hydrate PDB model? true = yes
-0		# 0 = raw, 1 = saxs, 2 = sans
+1		# 0 = raw, 1 = saxs, 2 = sans
 0		# 0 = saxs, 1 = sans
 5		# bd_options.threshold_pb_pb
 5		# bd_options.threshold_pb_sc
