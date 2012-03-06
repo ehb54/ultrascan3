@@ -154,6 +154,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
 
+   setMinimumWidth( 400 );
 }
 
 void US_Hydrodyn_SasOptionsGuinier::cancel()
