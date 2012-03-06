@@ -566,3 +566,20 @@ void US_Hydrodyn_SasOptionsSaxs::set_crysol_version_26()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsSaxs::update_fast_modulation(double val)
+{
+   (*saxs_options).fast_modulation = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsSaxs::update_hybrid2_q_points(double val)
+{
+   (*saxs_options).hybrid2_q_points = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsSaxs::update_fast_bin_size(double val)
+{
+   (*saxs_options).fast_bin_size = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
