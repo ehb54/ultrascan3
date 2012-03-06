@@ -211,6 +211,14 @@ SOURCES += \
   src/us_hydrodyn_pdb_tool_merge.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
+  src/us_hydrodyn_sas_options_saxs.cpp \
+  src/us_hydrodyn_sas_options_sans.cpp \
+  src/us_hydrodyn_sas_options_guinier.cpp \
+  src/us_hydrodyn_sas_options_hydration.cpp \
+  src/us_hydrodyn_sas_options_misc.cpp \
+  src/us_hydrodyn_sas_options_bead_model.cpp \
+  src/us_hydrodyn_sas_options_experimental.cpp \
+  src/us_hydrodyn_sas_options_curve.cpp \
   src/us_hydrodyn_save.cpp \
   src/us_hydrodyn_saxs.cpp \
   src/us_hydrodyn_saxs_external.cpp \
@@ -474,6 +482,14 @@ HEADERS += \
   include/us_hydrodyn_pdb_tool_merge.h \
   include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
+  include/us_hydrodyn_sas_options_saxs.h \
+  include/us_hydrodyn_sas_options_sans.h \
+  include/us_hydrodyn_sas_options_guinier.h \
+  include/us_hydrodyn_sas_options_hydration.h \
+  include/us_hydrodyn_sas_options_misc.h \
+  include/us_hydrodyn_sas_options_bead_model.h \
+  include/us_hydrodyn_sas_options_experimental.h \
+  include/us_hydrodyn_sas_options_curve.h \
   include/us_hydrodyn_save.h \
   include/us_hydrodyn_saxs.h \
   include/us_hydrodyn_saxs_load_csv.h \

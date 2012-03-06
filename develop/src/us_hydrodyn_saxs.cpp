@@ -5965,14 +5965,14 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
                (asin(our_saxs_options->wavelength * our_saxs_options->delta_q / 
                      (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
                ) / SAXS_Q_ROUNDING;
-      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_options_widget )
+      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_widget )
       {
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
-         ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
       }
 
       unsigned int grid_points = 
@@ -6020,14 +6020,14 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       }
    } while ( !ok );
 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_options_widget )
+   if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_options_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_end_q      ->setValue(our_saxs_options->end_q);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_delta_q    ->setValue(our_saxs_options->delta_q);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_start_angle->setValue(our_saxs_options->start_angle);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
    }
 
    if ( 

@@ -42,6 +42,14 @@
 #include "us_hydrodyn_results.h"
 #include "us_hydrodyn_pdb_visualization.h"
 #include "us_hydrodyn_pdb_parsing.h"
+#include "us_hydrodyn_sas_options_bead_model.h"
+#include "us_hydrodyn_sas_options_experimental.h"
+#include "us_hydrodyn_sas_options_curve.h"
+#include "us_hydrodyn_sas_options_guinier.h"
+#include "us_hydrodyn_sas_options_hydration.h"
+#include "us_hydrodyn_sas_options_misc.h"
+#include "us_hydrodyn_sas_options_sans.h"
+#include "us_hydrodyn_sas_options_saxs.h"
 #include "us_hydrodyn_saxs_options.h"
 #include "us_hydrodyn_saxs.h"
 #ifndef QT4
@@ -97,6 +105,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Misc;
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Pdb_Tool_Merge;
+      friend class US_Hydrodyn_SaxsOptions;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -213,7 +222,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_widget;
+
       bool saxs_options_widget;
+      bool sas_options_bead_model_widget;
+      bool sas_options_experimental_widget;
+      bool sas_options_curve_widget;
+      bool sas_options_guinier_widget;
+      bool sas_options_hydration_widget;
+      bool sas_options_misc_widget;
+      bool sas_options_sans_widget;
+      bool sas_options_saxs_widget;
+
       bool bd_widget;
       bool bd_options_widget;
       bool anaflex_options_widget;
@@ -358,6 +377,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
+
+      US_Hydrodyn_SasOptionsBeadModel    * sas_options_bead_model_window;
+      US_Hydrodyn_SasOptionsCurve        * sas_options_curve_window;
+      US_Hydrodyn_SasOptionsExperimental * sas_options_experimental_window;
+      US_Hydrodyn_SasOptionsGuinier      * sas_options_guinier_window;
+      US_Hydrodyn_SasOptionsHydration    * sas_options_hydration_window;
+      US_Hydrodyn_SasOptionsMisc         * sas_options_misc_window;
+      US_Hydrodyn_SasOptionsSans         * sas_options_sans_window;
+      US_Hydrodyn_SasOptionsSaxs         * sas_options_saxs_window;
+
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;

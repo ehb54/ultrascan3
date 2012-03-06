@@ -135,12 +135,20 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
-   atom_widget = false;
-   residue_widget = false;
-   hybrid_widget = false;
-   saxs_widget = false;
-   saxs_options_widget = false;
-   saxs_plot_widget = false;
+   atom_widget                     = false;
+   residue_widget                  = false;
+   hybrid_widget                   = false;
+   saxs_widget                     = false;
+   saxs_options_widget             = false;
+   sas_options_bead_model_widget   = false;
+   sas_options_curve_widget        = false;
+   sas_options_experimental_widget = false;
+   sas_options_guinier_widget      = false;
+   sas_options_hydration_widget    = false;
+   sas_options_misc_widget         = false;
+   sas_options_sans_widget         = false;
+   sas_options_saxs_widget         = false;
+   saxs_plot_widget                = false;
    asa_widget = false;
    misc_widget = false;
    grid_widget = false;
@@ -1186,7 +1194,17 @@ void US_Hydrodyn::show_saxs_options()
    }
    else
    {
-      saxs_options_window = new US_Hydrodyn_SaxsOptions(&saxs_options, &saxs_options_widget, this);
+      saxs_options_window = new US_Hydrodyn_SaxsOptions( &saxs_options, 
+                                                         &saxs_options_widget, 
+                                                         &sas_options_bead_model_widget,
+                                                         &sas_options_curve_widget,
+                                                         &sas_options_experimental_widget,
+                                                         &sas_options_guinier_widget,
+                                                         &sas_options_hydration_widget,
+                                                         &sas_options_misc_widget,
+                                                         &sas_options_sans_widget,
+                                                         &sas_options_saxs_widget,
+                                                         this );
       saxs_options_window->show();
    }
 }

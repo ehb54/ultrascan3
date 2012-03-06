@@ -58,7 +58,17 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    Q_OBJECT
 
       friend class US_Hydrodyn_Batch;
-      friend class US_Hydrodyn_Saxs_Options;
+      // friend class US_Hydrodyn_Saxs_Options;
+
+      friend class US_Hydrodyn_SasOptionsBeadModel;
+      friend class US_Hydrodyn_SasOptionsCurve;
+      friend class US_Hydrodyn_SasOptionsExperimental;
+      friend class US_Hydrodyn_SasOptionsGuinier;
+      friend class US_Hydrodyn_SasOptionsHydration;
+      friend class US_Hydrodyn_SasOptionsMisc;
+      friend class US_Hydrodyn_SasOptionsSans;
+      friend class US_Hydrodyn_SasOptionsSaxs;
+
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Saxs_Search;
