@@ -267,9 +267,11 @@ void US_Hydrodyn_Saxs::refresh(
 
 void US_Hydrodyn_Saxs::setupGUI()
 {
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+
    int minHeight0 = 22;
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("SAXS/SANS Plotting Functions:"), this);
+   lbl_info = new QLabel(tr("SAXS/SANS I(q) Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -337,15 +339,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   rb_saxs_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
-   rb_saxs_iq_native_hybrid->setEnabled(true);
-   rb_saxs_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_saxs_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   if ( started_in_expert_mode )
+   {
+      rb_saxs_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
+      rb_saxs_iq_native_hybrid->setEnabled(true);
+      rb_saxs_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      rb_saxs_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   rb_saxs_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
-   rb_saxs_iq_native_hybrid2->setEnabled(true);
-   rb_saxs_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_saxs_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      rb_saxs_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
+      rb_saxs_iq_native_hybrid2->setEnabled(true);
+      rb_saxs_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      rb_saxs_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
 
    rb_saxs_iq_native_hybrid3 = new QRadioButton(tr("H3"), this);
    rb_saxs_iq_native_hybrid3->setEnabled(true);
@@ -370,8 +375,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_saxs_iq = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_saxs_iq->setRadioButtonExclusive(true);
    bg_saxs_iq->insert(rb_saxs_iq_native_debye);
-   bg_saxs_iq->insert(rb_saxs_iq_native_hybrid);
-   bg_saxs_iq->insert(rb_saxs_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      bg_saxs_iq->insert(rb_saxs_iq_native_hybrid);
+      bg_saxs_iq->insert(rb_saxs_iq_native_hybrid2);
+   }
    bg_saxs_iq->insert(rb_saxs_iq_native_hybrid3);
    bg_saxs_iq->insert(rb_saxs_iq_native_fast);
    bg_saxs_iq->insert(rb_saxs_iq_foxs);
@@ -383,15 +391,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   rb_sans_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
-   rb_sans_iq_native_hybrid->setEnabled(true);
-   rb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_sans_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   if ( started_in_expert_mode )
+   {
+      rb_sans_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
+      rb_sans_iq_native_hybrid->setEnabled(true);
+      rb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      rb_sans_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   rb_sans_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
-   rb_sans_iq_native_hybrid2->setEnabled(true);
-   rb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_sans_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      rb_sans_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
+      rb_sans_iq_native_hybrid2->setEnabled(true);
+      rb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      rb_sans_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
 
    rb_sans_iq_native_hybrid3 = new QRadioButton(tr("H3"), this);
    rb_sans_iq_native_hybrid3->setEnabled(true);
@@ -411,8 +422,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_sans_iq = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_sans_iq->setRadioButtonExclusive(true);
    bg_sans_iq->insert(rb_sans_iq_native_debye);
-   bg_sans_iq->insert(rb_sans_iq_native_hybrid);
-   bg_sans_iq->insert(rb_sans_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      bg_sans_iq->insert(rb_sans_iq_native_hybrid);
+      bg_sans_iq->insert(rb_sans_iq_native_hybrid2);
+   }
    bg_sans_iq->insert(rb_sans_iq_native_hybrid3);
    bg_sans_iq->insert(rb_sans_iq_native_fast);
    bg_sans_iq->insert(rb_sans_iq_cryson);
@@ -919,10 +933,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    int rows=13, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   //   background->addMultiCellWidget(plot_saxs, j, j+9, 2, 2);
-   // background->addMultiCellWidget(plot_saxs, j, j, 2, 2);
-   j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(te_filename2, j, 1);
    j++;
@@ -936,11 +946,17 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_saxs_table, j, 1);
    j++;
 
+   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   j++;
+
    QBoxLayout *hbl_saxs_iq = new QHBoxLayout(0);
    hbl_saxs_iq->addWidget(rb_saxs);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_debye);
-   hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid);
-   hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid);
+      hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid2);
+   }
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid3);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_fast);
    hbl_saxs_iq->addWidget(rb_saxs_iq_foxs);
@@ -951,8 +967,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_sans_iq = new QHBoxLayout(0);
    hbl_sans_iq->addWidget(rb_sans);
    hbl_sans_iq->addWidget(rb_sans_iq_native_debye);
-   hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid);
-   hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid);
+      hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid2);
+   }
    hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid3);
    hbl_sans_iq->addWidget(rb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(rb_sans_iq_cryson);
@@ -970,7 +989,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(progress_saxs, j, 1);
    j++;
 
-   
    QBoxLayout *hbl_load_saxs = new QHBoxLayout(0);
    hbl_load_saxs->addWidget(pb_load_saxs_sans);
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
@@ -1101,7 +1119,6 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_curve_saxs->setEnabled(true);
       rb_curve_sans->setEnabled(true);
    }
-      
 }
 
 void US_Hydrodyn_Saxs::cancel()
@@ -5553,15 +5570,21 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
 void US_Hydrodyn_Saxs::set_current_method_buttons() 
 {
    rb_saxs_iq_native_debye  ->setChecked(our_saxs_options->saxs_iq_native_debye);
-   rb_saxs_iq_native_hybrid ->setChecked(our_saxs_options->saxs_iq_native_hybrid);
-   rb_saxs_iq_native_hybrid2->setChecked(our_saxs_options->saxs_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      rb_saxs_iq_native_hybrid ->setChecked(our_saxs_options->saxs_iq_native_hybrid);
+      rb_saxs_iq_native_hybrid2->setChecked(our_saxs_options->saxs_iq_native_hybrid2);
+   }
    rb_saxs_iq_native_hybrid3->setChecked(our_saxs_options->saxs_iq_native_hybrid3);
    rb_saxs_iq_native_fast   ->setChecked(our_saxs_options->saxs_iq_native_fast);
    rb_saxs_iq_foxs          ->setChecked(our_saxs_options->saxs_iq_foxs);
    rb_saxs_iq_crysol        ->setChecked(our_saxs_options->saxs_iq_crysol);
    rb_sans_iq_native_debye  ->setChecked(our_saxs_options->sans_iq_native_debye);
-   rb_sans_iq_native_hybrid ->setChecked(our_saxs_options->sans_iq_native_hybrid);
-   rb_sans_iq_native_hybrid2->setChecked(our_saxs_options->sans_iq_native_hybrid2);
+   if ( started_in_expert_mode )
+   {
+      rb_sans_iq_native_hybrid ->setChecked(our_saxs_options->sans_iq_native_hybrid);
+      rb_sans_iq_native_hybrid2->setChecked(our_saxs_options->sans_iq_native_hybrid2);
+   }
    rb_sans_iq_native_hybrid3->setChecked(our_saxs_options->sans_iq_native_hybrid3);
    rb_sans_iq_native_fast   ->setChecked(our_saxs_options->sans_iq_native_fast);
    rb_sans_iq_cryson        ->setChecked(our_saxs_options->sans_iq_cryson);
@@ -5572,17 +5595,24 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
 
 void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 {
-   rb_saxs_iq_native_debye  ->setChecked( val == 0 );
-   rb_saxs_iq_native_hybrid ->setChecked( val == 1 );
-   rb_saxs_iq_native_hybrid2->setChecked( val == 2 );
-   rb_saxs_iq_native_hybrid3->setChecked( val == 3 );
-   rb_saxs_iq_native_fast   ->setChecked( val == 4 );
-   rb_saxs_iq_foxs          ->setChecked( val == 5 );
-   rb_saxs_iq_crysol        ->setChecked( val == 6 );
+   int ref = 0;
+   rb_saxs_iq_native_debye  ->setChecked( val == ref ); ref++;
+   if ( started_in_expert_mode )
+   {
+      rb_saxs_iq_native_hybrid ->setChecked( val == ref ); ref++;
+      rb_saxs_iq_native_hybrid2->setChecked( val == ref ); ref++;
+   }
+   rb_saxs_iq_native_hybrid3->setChecked( val == ref ); ref++;
+   rb_saxs_iq_native_fast   ->setChecked( val == ref ); ref++;
+   rb_saxs_iq_foxs          ->setChecked( val == ref ); ref++;
+   rb_saxs_iq_crysol        ->setChecked( val == ref ); ref++;
 
    our_saxs_options->saxs_iq_native_debye   = rb_saxs_iq_native_debye  ->isChecked();
-   our_saxs_options->saxs_iq_native_hybrid  = rb_saxs_iq_native_hybrid ->isChecked();
-   our_saxs_options->saxs_iq_native_hybrid2 = rb_saxs_iq_native_hybrid2->isChecked();
+   if ( started_in_expert_mode )
+   {
+      our_saxs_options->saxs_iq_native_hybrid  = rb_saxs_iq_native_hybrid ->isChecked();
+      our_saxs_options->saxs_iq_native_hybrid2 = rb_saxs_iq_native_hybrid2->isChecked();
+   }
    our_saxs_options->saxs_iq_native_hybrid3 = rb_saxs_iq_native_hybrid3->isChecked();
    our_saxs_options->saxs_iq_native_fast    = rb_saxs_iq_native_fast   ->isChecked();
    our_saxs_options->saxs_iq_foxs           = rb_saxs_iq_foxs          ->isChecked();
@@ -5593,16 +5623,23 @@ void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 
 void US_Hydrodyn_Saxs::set_sans_iq(int val)
 {
-   rb_sans_iq_native_debye  ->setChecked( val == 0 );
-   rb_sans_iq_native_hybrid ->setChecked( val == 1 );
-   rb_sans_iq_native_hybrid2->setChecked( val == 2 );
-   rb_sans_iq_native_hybrid3->setChecked( val == 3 );
-   rb_sans_iq_native_fast   ->setChecked( val == 4 );
-   rb_sans_iq_cryson        ->setChecked( val == 5 );
+   int ref = 0;
+   rb_sans_iq_native_debye  ->setChecked( val == ref ); ref++;
+   if ( started_in_expert_mode )
+   {
+      rb_sans_iq_native_hybrid ->setChecked( val == ref ); ref++;
+      rb_sans_iq_native_hybrid2->setChecked( val == ref ); ref++;
+   }
+   rb_sans_iq_native_hybrid3->setChecked( val == ref ); ref++;
+   rb_sans_iq_native_fast   ->setChecked( val == ref ); ref++;
+   rb_sans_iq_cryson        ->setChecked( val == ref ); ref++;
 
    our_saxs_options->sans_iq_native_debye   = rb_sans_iq_native_debye  ->isChecked();
-   our_saxs_options->sans_iq_native_hybrid  = rb_sans_iq_native_hybrid ->isChecked();
-   our_saxs_options->sans_iq_native_hybrid2 = rb_sans_iq_native_hybrid2->isChecked();
+   if ( started_in_expert_mode )
+   {
+      our_saxs_options->sans_iq_native_hybrid  = rb_sans_iq_native_hybrid ->isChecked();
+      our_saxs_options->sans_iq_native_hybrid2 = rb_sans_iq_native_hybrid2->isChecked();
+   }
    our_saxs_options->sans_iq_native_hybrid3 = rb_sans_iq_native_hybrid3->isChecked();
    our_saxs_options->sans_iq_native_fast    = rb_sans_iq_native_fast   ->isChecked();
    our_saxs_options->sans_iq_cryson         = rb_sans_iq_cryson        ->isChecked();

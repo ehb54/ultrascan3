@@ -528,6 +528,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void check_pr_grid( vector < double > &r, vector < double > &pr );
       vector < double > range_crop( vector < double > &q, vector < double > &I );
 
+      bool started_in_expert_mode;
+
    private slots:
 
       void foxs_readFromStdout();
