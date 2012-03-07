@@ -1,9 +1,15 @@
 //! \file us_intensity.cpp
 
 #include "us_intensity.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_util.h"
+#include "us_gui_util.h"
 
-US_Intensity::US_Intensity( const QVector< double >& data ) 
+US_Intensity::US_Intensity( 
+      const QString runID, 
+      const QString triple, 
+      const QVector< double >& data ) 
     : US_WidgetsDialog( 0, 0 ), dataIn( data )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
@@ -41,6 +47,18 @@ US_Intensity::US_Intensity( const QVector< double >& data )
    main->addLayout( buttons, row++, 2, 1, 4 );
 
    draw_plot( dataIn );
+
+   // Just automatically save the plot in a file
+   QString dir    = US_Settings::reportDir() + "/" + runID;
+   if ( ! QDir( dir ).exists() )      // make sure the directory exists
+      QDir().mkdir( dir );
+   QString ctriple = US_Util::compressed_triple( triple );
+   QString filename = dir + "/cnvt." + ctriple + ".intensity.svg";
+
+   int status = US_GuiUtil::save_plot( filename, data_plot );
+   if ( status != 0 )
+      qDebug() << filename << "plot not saved";
+
 }
 
 void US_Intensity::draw_plot( const QVector< double >& scanData )

@@ -185,6 +185,7 @@ class US_ConvertGui : public US_Widgets
       void saveUS3         ( void );
       int  saveUS3Disk     ( void );
       void saveUS3DB       ( void );
+      void saveReportsToDB ( void );
       void resetAll        ( void );
       void source_changed  ( bool );
       void update_disk_db  ( bool );

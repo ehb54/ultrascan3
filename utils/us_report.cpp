@@ -763,7 +763,15 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    {
       t.docs[ docNdx ].editedDataID = idEdit;
 
-      t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
+      status = t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
+      if ( status != US_Report::REPORT_OK )
+      {
+         qDebug() << "saveDocumentFromFile.docs.saveDB error"
+                  << status;
+         qDebug() << db->lastError() << db->lastErrno();
+         return US_Report::DB_ERROR;
+      }
+
    }
 
    // Refresh docNdx

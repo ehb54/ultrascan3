@@ -24,6 +24,7 @@
     <application name="secmo" label="Second Moment Analysis" />
     <application name="global" label="Global Analysis" />
     <application name="globeq" label="Global Equilibrium Fit" />
+    <application name="cnvt" label="Convert Legacy Data" />
     <extension name="html" label="HTML General Report" mimetype="text/html" />
     <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
@@ -61,4 +62,6 @@
     <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
     <report name="pseudo3d_ff0_s" label="Pseudo3d ff0_vs_s Distribution" />
     <report name="pseudo3d_ff0_MW" label="Pseudo3d ff0_vs_MW Distribution" />
+    <report name="raw" label="Raw Scan Data" />
+    <report name="intensity" label="Intensity Profile Data" />
 </US_Reports>
