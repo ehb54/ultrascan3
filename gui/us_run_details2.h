@@ -27,6 +27,9 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
                       const QString&, 
                       const QStringList& );
 
+      //! \brief The destructor saves a report for each triple upon leaving
+      ~US_RunDetails2();
+
    private:
       const QVector< US_DataIO2::RawData >& dataList;
       const QStringList&                    triples;
@@ -66,6 +69,7 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
       QLineEdit*   le_runLen;
       QLineEdit*   le_timeCorr;
       QLineEdit*   le_rotorSpeed;
+      QLineEdit*   le_runID;
 
       QwtPlot*     data_plot;
 
