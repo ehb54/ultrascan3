@@ -18,6 +18,8 @@
 #include "us_get_dbrun.h"
 #include "us_investigator.h"
 #include "us_constants.h"
+#include "us_report.h"
+#include "us_gui_util.h"
 
 #ifdef WIN32
   #include <float.h>
@@ -1921,7 +1923,8 @@ void US_ConvertGui::PseudoCalcAvg( void )
 void US_ConvertGui::show_intensity( void )
 {
    US_Intensity* dialog
-      = new US_Intensity( ( const QVector< double > ) ExpData.RIProfile );
+      = new US_Intensity( runID, triples[0].tripleDesc, 
+                        ( const QVector< double > ) ExpData.RIProfile );
    dialog->exec();
    qApp->processEvents();
 }
@@ -2155,6 +2158,30 @@ int US_ConvertGui::saveUS3Disk( void )
 
    enableRunIDControl( false );
 
+   // Save the main plots
+   QString dir    = US_Settings::reportDir() + "/" + runID;
+   if ( ! QDir( dir ).exists() )      // make sure the directory exists
+      QDir().mkdir( dir );
+   int save_currentTriple = currentTriple;
+   data_plot->setVisible( false );
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      currentTriple = i;
+      QString triple = US_Util::compressed_triple( triples[ i ].tripleDesc );
+      QString filename = dir + "/cnvt." + triple + ".raw.svg";
+
+      // Redo current plot and write it to a file
+      plot_current();
+      int status = US_GuiUtil::save_plot( filename, data_plot );
+      if ( status != 0 )
+         qDebug() << filename << "plot not saved";
+   }
+
+   // Restore original plot
+   currentTriple = save_currentTriple;
+   plot_current();
+   data_plot->setVisible( true );
+
    return( US_Convert::OK );
 }
 
@@ -2345,6 +2372,64 @@ void US_ConvertGui::saveUS3DB( void )
 
    saveStatus = BOTH;
    enableRunIDControl( false );
+
+   saveReportsToDB();
+}
+
+void US_ConvertGui::saveReportsToDB( void )
+{
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "Database connectivity error" ) );
+
+      return;
+   }
+
+   // Get a list of report files produced by us_convert
+   QString dir = US_Settings::reportDir() + "/" + runID;
+   QDir d( dir, "cnvt*", QDir::Name, QDir::Files | QDir::Readable );
+   d.makeAbsolute();
+   QStringList files = d.entryList( QDir::Files );
+
+   // Create US_Report object
+   QString now = QDateTime::currentDateTime().toString();
+   US_Report myReport;
+   myReport.reset();
+   myReport.runID = runID;
+   myReport.title = runID + " Report";
+   myReport.html  = "<p>Report created " + now + "</p>";
+
+   // Save all us_convert report files to the DB
+   QString errorMsg = "";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   foreach( QString file, files )
+   {
+      // Edit data ID is not known yet, so use 1. It goes in the report document
+      //   table itself, so we're not overwriting anything.
+      US_Report::Status status = myReport.saveDocumentFromFile( dir, file, &db, 1 );
+      if ( status != US_Report::REPORT_OK )
+      {
+         errorMsg += file + " was not saved to report database; error code: "
+                          + QString::number( status ) + "\n";
+         qDebug() << "US_ConvertGui.saveDocumentFromFile error: " 
+                  << db.lastError() << db.lastErrno();
+      }
+   }
+   QApplication::restoreOverrideCursor();
+
+   if ( ! errorMsg.isEmpty() )
+   {
+      QMessageBox::warning( this,
+            tr( "Problem saving reports to DB" ),
+            errorMsg );
+   }
 
 }
 
