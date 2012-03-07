@@ -25,6 +25,7 @@
     <application name="global" label="Global Analysis" />
     <application name="globeq" label="Global Equilibrium Fit" />
     <application name="cnvt" label="Convert Legacy Data" />
+    <application name="rundetail" label="Run Detail Summary" />
     <extension name="html" label="HTML General Report" mimetype="text/html" />
     <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
@@ -64,4 +65,5 @@
     <report name="pseudo3d_ff0_MW" label="Pseudo3d ff0_vs_MW Distribution" />
     <report name="raw" label="Raw Scan Data" />
     <report name="intensity" label="Intensity Profile Data" />
+    <report name="rundetail" label="Run Detail Information" />
 </US_Reports>

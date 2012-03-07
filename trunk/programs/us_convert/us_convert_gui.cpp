@@ -2398,6 +2398,11 @@ void US_ConvertGui::saveReportsToDB( void )
    d.makeAbsolute();
    QStringList files = d.entryList( QDir::Files );
 
+   // Add any run details files to it
+   QDir d2( dir, "rundetail*", QDir::Name, QDir::Files | QDir::Readable );
+   d2.makeAbsolute();
+   files << d2.entryList( QDir::Files );
+
    // Create US_Report object
    QString now = QDateTime::currentDateTime().toString();
    US_Report myReport;

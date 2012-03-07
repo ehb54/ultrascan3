@@ -5,6 +5,8 @@
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_constants.h"
+#include "us_util.h"
+#include "us_gui_util.h"
 
 #include <qwt_legend.h>
 
@@ -80,7 +82,7 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
    lw_triples->setMinimumSize( 100, 50 );
    main->addWidget( lw_triples, row, 4, 5, 2 );
 
-   QLineEdit* le_runID = us_lineedit();
+   le_runID = us_lineedit();
    le_runID->setReadOnly( true );
    le_runID->setText( runID );
    main->addWidget( le_runID, row++, 1 );
@@ -179,6 +181,31 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
 
    connect( lw_rpm    , SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( show_rpm_details ( int ) ) );
+}
+
+US_RunDetails2::~US_RunDetails2()
+{
+   // Before leaving, save a combined plot for each triple automatically
+   plotType = COMBINED;
+   QString dir    = US_Settings::reportDir() + "/" + le_runID->text();
+   if ( ! QDir( dir ).exists() )      // make sure the directory exists
+      QDir().mkdir( dir );
+   // int save_currentRow = lw_triples->currentRow();
+   data_plot->setVisible( false );
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      QString triple = US_Util::compressed_triple( triples[ i ] );
+      QString filename = dir + "/rundetail." + triple + ".rundetail.svg";
+
+      // Calculate the current plot and write it to a file
+      lw_triples->setCurrentRow( i );
+      update( i );
+      int status = US_GuiUtil::save_plot( filename, data_plot );
+      if ( status != 0 )
+         qDebug() << filename << "plot not saved";
+   }
+
+   // Don't need to restore original view because we're leaving
 }
 
 void US_RunDetails2::setup( void )
