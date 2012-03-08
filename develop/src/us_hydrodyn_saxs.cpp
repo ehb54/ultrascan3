@@ -532,11 +532,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_saxs_search->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_saxs_search, SIGNAL(clicked()), SLOT(saxs_search()));
 
-   pb_saxs_screen = new QPushButton("Screen", this);
-   pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_saxs_screen->setMinimumHeight(minHeight1);
-   pb_saxs_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
+   if ( started_in_expert_mode )
+   {
+      pb_saxs_screen = new QPushButton("Screen", this);
+      pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_saxs_screen->setMinimumHeight(minHeight1);
+      pb_saxs_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
+   }
    
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
@@ -597,11 +600,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
    
-   pb_saxs_buffer = new QPushButton("Buffer", this);
-   pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_saxs_buffer->setMinimumHeight(minHeight1);
-   pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
+   if ( started_in_expert_mode )
+   {
+      pb_saxs_buffer = new QPushButton("Buffer", this);
+      pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_saxs_buffer->setMinimumHeight(minHeight1);
+      pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
+   } 
 
    pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -1001,8 +1007,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
    hbl_various_0->addWidget(pb_load_gnom);
    hbl_various_0->addWidget(pb_saxs_search);
-   hbl_various_0->addWidget(pb_saxs_screen);
-   hbl_various_0->addWidget(pb_saxs_buffer);
+   if ( started_in_expert_mode )
+   {
+      hbl_various_0->addWidget(pb_saxs_screen);
+      hbl_various_0->addWidget(pb_saxs_buffer);
+   }
+
    hbl_various_0->addWidget(pb_guinier_analysis);
    background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;

@@ -260,7 +260,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
       cb_plot_mult_avg_sd_frac = new QCheckBox(this);
       cb_plot_mult_avg_sd_frac->setText( tr( " Mult avg s.d. frac" ) );
       cb_plot_mult_avg_sd_frac->setEnabled(true);
-      cb_plot_mult_avg_sd_frac->setChecked( true );
+      cb_plot_mult_avg_sd_frac->setChecked( false );
       cb_plot_mult_avg_sd_frac->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       cb_plot_mult_avg_sd_frac->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       connect(cb_plot_mult_avg_sd_frac, SIGNAL(clicked()), SLOT( set_plot_mult_avg_sd_frac() ));
@@ -390,7 +390,60 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_mult_sd_frac()
 void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 {
    plot->clear();
-   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("I(q)"));
+
+   QString left_axis_title = "";
+
+   if ( plot_difference )
+   {
+      bool use_mult_avg_sd_frac = avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
+      bool use_mult_sd_frac     = avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
+
+      if ( use_errors )
+      {
+         left_axis_title =
+            (
+             plot_as_percent ? 
+             "% delta I(q)" // (double *)&(differences_no_errors_pcts[pos][0]) 
+             : 
+             ( 
+              use_mult_sd_frac 
+              ? 
+              "delta I(q) * s.d._frac / s.d. " // (double *)&(differences_mult_sd[pos][0])
+              :
+              ( 
+               use_mult_avg_sd_frac ?
+               "delta I(q) * avg_s.d._frac / s.d." // (double *)&(differences_mult_avg_sd[pos][0])
+               :
+               "delta I(q) / s.d." // (double *)&(differences[pos][0])
+               )
+              )
+             );
+      } else {
+         left_axis_title =
+            (
+             plot_as_percent ? 
+             "% delta I(q)" // (double *)&(differences_no_errors_pcts[pos][0]) 
+             : 
+             "delta I(q)" // (double *)&(differences_mult_sd[pos][0])
+             );
+      }
+   }
+
+   if ( plot_log )
+   {
+      left_axis_title = 
+         (
+          plot_as_percent ? 
+          "% delta log10 I(q)" // (double *)&(log_difference_pcts[pos][0]) 
+          : 
+          "delta log10 I(q)"   // (double *)&(log_differences[pos][0])
+          );
+   }
+
+   plot->setAxisTitle(
+                      QwtPlot::yLeft, 
+                      left_axis_title
+                      );
    double minx;
    double maxx;
    double miny;
@@ -586,14 +639,27 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    }
 
    // display 2sd bars
-   if ( qs.size() && plot_difference && use_errors && !plot_as_percent )
+   if ( qs.size() && 
+        plot_difference && 
+        use_errors && 
+        !plot_as_percent &&
+        avg_std_dev_frac && 
+        !cb_plot_mult_avg_sd_frac->isChecked() )
    {
+      double linepos = 2e0;
+      if ( avg_std_dev_frac &&
+           ( cb_plot_mult_avg_sd_frac->isChecked() ||
+             cb_plot_mult_sd_frac->isChecked() ) )
+      {
+         linepos = 2e0 * avg_std_dev_frac;
+      }
+
       double x[2];
       double y[2];
       x[0] = qs[0][0];
       x[1] = qs[0][qs[0].size() - 1];
-      y[0] = 2;
-      y[1] = 2;
+      y[0] = linepos;
+      y[1] = linepos;
 #ifndef QT4
       long iqq = plot->insertCurve("+2 sd"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
@@ -615,8 +681,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          curve->attach( plot );
       }
 #endif
-      y[0] = -2;
-      y[1] = -2;
+      y[0] = - linepos;
+      y[1] = - linepos;
 #ifndef QT4
       iqq = plot->insertCurve("-2 sd"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
@@ -638,13 +704,13 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          curve->attach( plot );
       }
 #endif
-      if ( miny > -2.2 )
+      if ( miny > -1.1 * linepos )
       {
-         miny = -2.2;
+         miny = -1.1 * linepos;
       }
-      if ( maxy < 2.2 )
+      if ( maxy < 1.1 * linepos )
       {
-         maxy = 2.2;
+         maxy = 1.1 * linepos;
       }
       if ( miny > - maxy )
       {
