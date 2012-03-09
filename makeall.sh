@@ -55,7 +55,14 @@ fi
 popd
 
 if [ $ISMAC -eq 0 ]; then
-  doxygen >> $DIR/build.log
+  if [ -d somo ]; then
+    # insure doxygen skips somo source
+    mv somo ../
+    doxygen >> $DIR/build.log
+    mv ../somo .
+  else
+    doxygen >> $DIR/build.log
+  fi
 else
   $DIR/libnames.sh >> $DIR/build.log
   $DIR/appnames.sh >> $DIR/build.log
