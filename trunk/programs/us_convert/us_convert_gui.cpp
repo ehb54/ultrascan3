@@ -2482,8 +2482,21 @@ bool US_ConvertGui::read( QString dir )
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
+   bool runID_changed = false;
    while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at position pos
+      runID_changed = true;
+   }
+
+   // Let the user know if the runID name has changed
+   if ( runID_changed )
+   {
+      QMessageBox::warning( this,
+            tr( "RunID Name Changed" ),
+            tr( "The runID name has been changed. It may consist only of alphanumeric \n" 
+                "characters, the underscore, and the hyphen. New runID: " ) + new_runID );
+   }
 
    // Set the runID and directory
    runID = new_runID;
