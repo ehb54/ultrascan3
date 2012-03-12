@@ -975,9 +975,22 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 {
    resetAll();
 
-   // Set the runID and directory
+   // Check the runID
    QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
-   runID    = components.last();
+   QString new_runID = components.last();
+      
+   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
+   if ( rx.indexIn( new_runID ) < 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "Bad runID Name" ),
+            tr( "The runID name may consist only of alphanumeric\n"  
+                "characters, the underscore, and the hyphen." ) );
+      return;
+   }
+
+   // Set the runID and directory
+   runID = new_runID;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
@@ -2463,9 +2476,17 @@ bool US_ConvertGui::read( QString dir )
    d.makeAbsolute();
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-   // Set the runID and directory
+   // See if we need to fix the runID
    QStringList components = dir.split( "/", QString::SkipEmptyParts );
-   runID    = components.last();
+   QString new_runID = components.last();
+   QRegExp rx( "[^A-Za-z0-9_-]" );
+
+   int pos = 0;
+   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+      new_runID.replace( pos, 1, "_" );         // Replace 1 char at position pos
+
+   // Set the runID and directory
+   runID = new_runID;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
