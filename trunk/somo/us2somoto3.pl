@@ -31,6 +31,8 @@ if ( $part1 ) {
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.pro"`');
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.h"`');
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.cpp"`');
+    cmd("tar zxf somo-qwt5.tgz");
+    cmd("rm -f somo-qwt5.tgz");
 }
 
 cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus-somo.pro > libus-somo.pro.new; mv libus-somo.pro.new libus-somo.pro');
