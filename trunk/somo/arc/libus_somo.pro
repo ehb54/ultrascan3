@@ -192,8 +192,8 @@ SOURCES += \
   us_util.cpp \
 #  us_vbar.cpp \
   us_write_config.cpp \
-#  src/qwt/scrollbar.cpp \
-#  src/qwt/scrollzoomer.cpp
+  src/qwt/scrollbar.cpp \
+  src/qwt/scrollzoomer.cpp
 
 HEADERS += \
   us_admin.h \
@@ -292,8 +292,8 @@ HEADERS += \
   us_version.h \
 #  us_vbar.h \
   us_write_config.h \
-#  qwt/scrollbar.h \
-#  qwt/scrollzoomer.h
+  qwt/scrollbar.h \
+  qwt/scrollzoomer.h
 
 IMAGES = \
   include/editcopy.xpm \
