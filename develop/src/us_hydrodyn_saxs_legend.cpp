@@ -1,6 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
-
-// note: this program uses cout and/or cerr and this should be replaced
+#include <qwt_legend.h>
 
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
 {
@@ -76,7 +75,9 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
 
 void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
 {
+#ifndef QT4
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
+#endif
 }
 
 void US_Hydrodyn_Saxs::saxs_legend()
@@ -90,6 +91,19 @@ void US_Hydrodyn_Saxs::saxs_legend()
       plot_saxs->setAutoLegend( true );
       plot_saxs->enableLegend ( true, -1 );
    }
+#else
+   bool legvi = true;
+   QwtPlotItemList ilist = plot_saxs->itemList();
+   for ( int ii = 0; ii < ilist.size(); ii++ )
+   {
+      QwtPlotItem* plitem = ilist[ ii ];
+      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
+         continue;
+      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
+      plitem->setItemAttribute( QwtPlotItem::Legend, !legon );
+      legvi = !legon;
+   }
+   plot_saxs->legend()->setVisible( legvi );
 #endif
 }
 
@@ -104,5 +118,18 @@ void US_Hydrodyn_Saxs::pr_legend()
       plot_pr->setAutoLegend( true );
       plot_pr->enableLegend ( true, -1 );
    }
+#else
+   bool legvi = true;
+   QwtPlotItemList ilist = plot_pr->itemList();
+   for ( int ii = 0; ii < ilist.size(); ii++ )
+   {
+      QwtPlotItem* plitem = ilist[ ii ];
+      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
+         continue;
+      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
+      plitem->setItemAttribute( QwtPlotItem::Legend, !legon );
+      legvi = !legon;
+   }
+   plot_pr->legend()->setVisible( legvi );
 #endif
 }

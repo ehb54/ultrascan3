@@ -22,6 +22,9 @@
 #ifndef QT4
 #  include "qwt/scrollbar.h"
 #  include "qwt/scrollzoomer.h"
+#else
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 #endif
 
 #include <qwt_plot.h>
@@ -215,13 +218,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QMenuBar *m;
 
       QwtPlot       *plot_pr;
-#ifndef QT4
       ScrollZoomer  *plot_pr_zoomer;
-#endif
       QwtPlot       *plot_saxs;
-#ifndef QT4
       ScrollZoomer  *plot_saxs_zoomer;
-#endif
 #ifdef QT4
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;

@@ -17,7 +17,7 @@ DESTDIR         = ../../bin
 unix {
  UNAME                  = $$system(uname -a)
  CONFIG                += qt warn thread release
- DEFINES               += UNIX
+ DEFINES               += UNIX QT_NO_STL
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
 
  contains(UNAME,x86_64) {

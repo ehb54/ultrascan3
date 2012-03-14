@@ -6,6 +6,7 @@ SUBDIRS   = us_equilmc_t \
             us_cmdline_t \
             us_saxs_cmds_t
 TEMPLATE  = subdirs
+DEFINES  += QT_NO_STL
 }
 
 win32:TEMPLATE=subdirs

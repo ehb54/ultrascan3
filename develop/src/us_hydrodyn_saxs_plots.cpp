@@ -54,7 +54,6 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    curve->attach( plot_pr );
 #endif
 
-#ifndef QT4
    if ( plot_pr_zoomer )
    {
       delete plot_pr_zoomer;
@@ -68,8 +67,12 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
 
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
+#ifndef QT4
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_pr_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot_pr->replot();
@@ -265,14 +268,17 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    curve->attach( plot_saxs );
 #endif
 
-#ifndef QT4
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
    }
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+#ifndef QT4
    plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot_saxs->replot();

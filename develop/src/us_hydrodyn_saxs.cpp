@@ -67,10 +67,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    guinier_cutoff = 0.2;
    last_used_mw = 0.0;
 
-#ifndef QT4
    plot_pr_zoomer   = (ScrollZoomer *)0;
    plot_saxs_zoomer = (ScrollZoomer *)0;
-#endif
 
    saxs_residuals_widget = false;
 
@@ -847,6 +845,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAutoLegend( false );
    plot_saxs->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_saxs, SIGNAL( legendClicked( long ) ), SLOT( plot_saxs_clicked( long ) ) );
+#else
+   QwtLegend* salegend = new QwtLegend;
+   salegend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   plot_saxs->insertLegend( salegend, QwtPlot::BottomLegend );
 #endif
 
    plot_pr = new QwtPlot(this);
@@ -893,6 +895,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setAutoLegend( false );
    plot_pr->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
+#else
+   QwtLegend* prlegend = new QwtLegend;
+   prlegend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   plot_pr->insertLegend( prlegend, QwtPlot::BottomLegend );
 #endif
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
@@ -2294,7 +2300,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    curve->attach( plot_pr );
 #endif
 
-#ifndef QT4
    if ( plot_pr_zoomer )
    {
       delete plot_pr_zoomer;
@@ -2308,8 +2313,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
 
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
+#ifndef QT4
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_pr_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
+   plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot_pr->replot();
@@ -4667,14 +4676,17 @@ void US_Hydrodyn_Saxs::rescale_plot()
    plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
    plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );
 
-#ifndef QT4
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
    }
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+#ifndef QT4
    plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot_saxs->replot();
@@ -4957,14 +4969,17 @@ void US_Hydrodyn_Saxs::set_guinier()
                                     new QwtLog10ScaleEngine);
 #endif
 
-#ifndef QT4
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
    }
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+#ifndef QT4
    plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot_saxs->replot();

@@ -17,11 +17,11 @@
 #include "us_util.h"
 
 #ifdef QT4
-# include "qwt_plot_grid.h"
-# include "qwt_plot_curve.h"
-#endif
-
-#ifndef QT4
+#include "qwt_plot_grid.h"
+#include "qwt_plot_curve.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
+#else
 #  include "qwt/scrollbar.h"
 #  include "qwt/scrollzoomer.h"
 #endif
@@ -82,9 +82,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       QLabel            *lbl_title;
 
       QwtPlot           *plot;
-#ifndef QT4
       ScrollZoomer      *plot_zoomer;
-#endif
 #ifdef QT4
       QwtPlotGrid       *grid;
 #endif

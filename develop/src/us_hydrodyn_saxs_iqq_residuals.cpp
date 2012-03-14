@@ -33,9 +33,7 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->avg_std_dev_frac = avg_std_dev_frac;
    this->std_dev_frac     = std_dev_frac;
 
-#ifndef QT4
    plot_zoomer = (ScrollZoomer *)0;
-#endif
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -191,21 +189,18 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
 
    plot = new QwtPlot(this);
 #ifndef QT4
-   // plot->enableOutline(true);
-   // plot->setOutlinePen(Qt::white);
-   // plot->setOutlineStyle(Qwt::VLine);
    plot->enableGridXMin();
    plot->enableGridYMin();
+   plot->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
-#endif
-   plot->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
-#ifndef QT4
-   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
+   plot->setPalette( QPalette( USglobal->global_colors.cg_normal,
+            USglobal->global_colors.cg_normal,
+            USglobal->global_colors.cg_normal ) );
    grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
@@ -723,7 +718,6 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    }
 
    // enable zooming
-#ifndef QT4
    if ( plot_zoomer )
    {
       delete plot_zoomer;
@@ -733,9 +727,12 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
+#ifndef QT4
    plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-
    plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
+   plot_zoomer->setTrackerPen( QPen( Qt::red ) );
 #endif
 
    plot->replot();

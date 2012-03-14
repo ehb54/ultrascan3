@@ -8,6 +8,7 @@
 unix {
 UNAME = $$system(uname -a)
 DEFINES += UNIX
+DEFINES += QT_NO_STL
 }
 macx {
 UNAME = $$system(uname -a)
@@ -71,7 +72,7 @@ unix:contains (UNAME, i486) {
 }
 unix:contains (UNAME, i386) {
   UNAME = $$system(uname -p)
-  DEFINES += INTEL
+  DEFINES += INTEL QT_NO_STL
   message ("Configuring for the Intel i386 Platform...")
 }
 unix:contains (UNAME, x86_64) {
