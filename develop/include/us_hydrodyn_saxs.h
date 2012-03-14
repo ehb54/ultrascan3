@@ -19,16 +19,12 @@
 #include <qprinter.h>
 #include <qregexp.h>
 
-#ifndef QT4
-#  include "qwt/scrollbar.h"
-#  include "qwt/scrollzoomer.h"
-#else
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
-#endif
 
 #include <qwt_plot.h>
 #ifdef QT4
+# include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
 #endif
