@@ -266,7 +266,8 @@ void US_Hydrodyn_SasOptionsSans::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_sas_options_sans.html");
+   // online_help->show_help("manual/somo_sas_options_sans.html");
+   online_help->show_help("manual/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsSans::closeEvent(QCloseEvent *e)

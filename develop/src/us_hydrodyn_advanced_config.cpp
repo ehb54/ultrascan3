@@ -85,7 +85,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    connect(cb_use_sounds, SIGNAL(clicked()), this, SLOT(set_use_sounds()));
 
    cb_expert_mode = new QCheckBox(this);
-   cb_expert_mode->setText(tr(" Expert mode (skip some warning messages)"));
+   cb_expert_mode->setText(tr(" Expert mode (skip some warning messages, add some developmental features)"));
    cb_expert_mode->setEnabled(true);
    cb_expert_mode->setChecked((*advanced_config).expert_mode);
    cb_expert_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

@@ -537,17 +537,18 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "%4"
                   "<walltime>%5</walltime>"
                   "<userdn>%6</userdn>"
+                  "%7"
                   "</Header>"
                   "<Body>"
                   "<Method>run</Method>"
                   "<input>"
                   "<parameters>"
                   "<name>param</name>"
-                  "<value>%7</value>"
+                  "<value>%8</value>"
                   "</parameters>"
                   "<parameters>"
                   "<name>inputfile</name>"
-                  "<value>%8</value>"
+                  "<value>%9</value>"
                   "</parameters>"
                   "</input>"
                   "</Body>"
@@ -559,6 +560,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "<queuename>%1</queuename>" ).arg( selected_system[ "queue" ] ) )
       .arg( selected_system[ "runtime" ].toUInt() )
       .arg( cluster_id )
+      .arg( selected_system[ "executable" ].isEmpty() ? "" : QString( "<executable>%1</executable>" ).arg( selected_system[ "executable" ] ) )
       .arg( file.contains( QRegExp( "^nsa_" ) ) ? "nsa" : "iq" )
       .arg( QString( "%1/%2/%3/%4" ).arg( stage_path ).arg( cluster_id ).arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ).arg( file ) )
       ;

@@ -176,7 +176,8 @@ void US_Hydrodyn_SasOptionsExperimental::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_sas_options_experimental.html");
+   // online_help->show_help("manual/somo_sas_options_experimental.html");
+   online_help->show_help("manual/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsExperimental::closeEvent(QCloseEvent *e)

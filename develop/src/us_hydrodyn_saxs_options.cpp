@@ -7,6 +7,8 @@
 #  define SLASH "\\"
 #endif
 
+// #define USE_H
+
 US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
                                                  struct saxs_options *saxs_options, 
                                                  bool *saxs_options_widget,
@@ -92,7 +94,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_sas_options_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_hydration->setMinimumHeight(minHeight1);
    pb_sas_options_hydration->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+#if defined( USE_H )
    connect(pb_sas_options_hydration, SIGNAL(clicked()), SLOT(sas_options_hydration()));
+#endif
 
    pb_sas_options_guinier = new QPushButton( tr( "Guinier options"), this);
    pb_sas_options_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -110,7 +114,10 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_sas_options_experimental->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_experimental->setMinimumHeight(minHeight1);
    pb_sas_options_experimental->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_sas_options_experimental, SIGNAL(clicked()), SLOT(sas_options_experimental()));
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) 
+   {
+      connect(pb_sas_options_experimental, SIGNAL(clicked()), SLOT(sas_options_experimental()));
+   }
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));

@@ -82,13 +82,13 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    le_default_saxs_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_default_saxs_filename->setReadOnly(true);
 
-   cb_iq_ask = new QCheckBox(this);
-   cb_iq_ask->setText(tr("Manually choose I(q) method"));
-   cb_iq_ask->setEnabled(true);
-   cb_iq_ask->setChecked((*saxs_options).iq_ask);
-   cb_iq_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iq_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
+   // cb_iq_ask = new QCheckBox(this);
+   // cb_iq_ask->setText(tr("Manually choose I(q) method"));
+   // cb_iq_ask->setEnabled(true);
+   // cb_iq_ask->setChecked((*saxs_options).iq_ask);
+   // cb_iq_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // cb_iq_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
 
    cb_iq_scale_ask = new QCheckBox(this);
    cb_iq_scale_ask->setText(tr("Always ask angstrom or nm"));
@@ -239,7 +239,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    j++;
 
    QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
-   hbl_iq_ask->addWidget(cb_iq_ask);
+   // hbl_iq_ask->addWidget(cb_iq_ask);
    hbl_iq_ask->addWidget(cb_iq_scale_ask);
    hbl_iq_ask->addWidget(cb_iqq_ask_target_grid);
    
@@ -308,7 +308,8 @@ void US_Hydrodyn_SasOptionsMisc::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_sas_options_misc.html");
+   // online_help->show_help("manual/somo_sas_options_misc.html");
+   online_help->show_help("manual/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsMisc::closeEvent(QCloseEvent *e)

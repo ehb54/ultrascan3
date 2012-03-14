@@ -221,7 +221,8 @@ void US_Hydrodyn_SasOptionsCurve::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_sas_options_curve.html");
+   // online_help->show_help("manual/somo_sas_options_curve.html");
+   online_help->show_help("manual/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsCurve::closeEvent(QCloseEvent *e)

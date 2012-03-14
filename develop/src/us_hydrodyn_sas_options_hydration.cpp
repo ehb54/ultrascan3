@@ -155,7 +155,8 @@ void US_Hydrodyn_SasOptionsHydration::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_sas_options_hydration.html");
+   // online_help->show_help("manual/somo_sas_options_hydration.html");
+   online_help->show_help("manual/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsHydration::closeEvent(QCloseEvent *e)
