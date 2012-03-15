@@ -1045,7 +1045,7 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
          QString runID      = descript.section( '.',  0, -4 );
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
-         QString editLabl   = anRunID .section( '_',  0,  0 );
+         QString editLabl   = anRunID .section( '_',  0, -5 );
 //DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
 // << ii << runID << editLabl << tripID;
 
