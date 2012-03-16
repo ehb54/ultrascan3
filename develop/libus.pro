@@ -569,6 +569,7 @@ HEADERS += \
   include/us_widgets.h \
   include/us_win.h \
   include/us_write_config.h \
+  include/us3_defines.h \
   include/qwt/scrollbar.h \
   include/qwt/scrollzoomer.h
 

@@ -14,6 +14,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_revision.h"
+#include "../include/us3_defines.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
@@ -112,7 +113,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       dir6.mkdir(somo_bd_dir);
    }
 
-   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setPalette( PALET_FRAME );
    setCaption(tr("SOMO Solution Bead Modeler"));
    advanced_config.auto_view_pdb = true;
    advanced_config.scroll_editor = false;
@@ -451,7 +452,8 @@ void US_Hydrodyn::setupGUI()
    frame->setMinimumHeight(minHeight1);
 
    menu = new QMenuBar(frame);
-   menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   menu->setPalette( PALET_NORMAL );
+   AUTFBACK( menu );
    menu->insertItem(tr("&Lookup Tables"), lookup_tables);
    menu->insertItem(tr("&SOMO"), somo_options);
    menu->insertItem(tr("&MD"), md_options);
@@ -463,7 +465,8 @@ void US_Hydrodyn::setupGUI()
    lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info1->setMinimumHeight(minHeight1);
-   lbl_info1->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info1->setPalette( PALET_FRAME );
+   AUTFBACK( lbl_info1 );
    lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_info2 = new QLabel(tr("Bead Model Functions:"), this);
@@ -471,7 +474,8 @@ void US_Hydrodyn::setupGUI()
    lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info2->setMinimumHeight(minHeight1);
-   lbl_info2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info2->setPalette( PALET_FRAME );
+   AUTFBACK( lbl_info2 );
    lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_info3 = new QLabel(tr("Hydrodynamic Calculations:"), this);
@@ -479,35 +483,38 @@ void US_Hydrodyn::setupGUI()
    lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info3->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info3->setMinimumHeight(minHeight1);
-   lbl_info3->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info3->setPalette( PALET_FRAME );
+   AUTFBACK( lbl_info3 );
    lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
    Q_CHECK_PTR(pb_select_residue_file);
    pb_select_residue_file->setMinimumHeight(minHeight1);
    pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_select_residue_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_select_residue_file->setPalette( PALET_PUSHB );
    connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
    lbl_table = new QLabel( QDir::convertSeparators( residue_filename ), this );
    lbl_table->setMinimumHeight(minHeight1);
    lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
    lbl_table->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_table->setPalette( PALET_EDIT );
+   AUTFBACK( lbl_table );
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    pb_batch = new QPushButton(tr("Batch Mode Operation"), this);
    Q_CHECK_PTR(pb_batch);
    pb_batch->setMinimumHeight(minHeight1);
    pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_batch->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_batch->setPalette( PALET_PUSHB );
+   pb_batch->setAutoDefault( false );
    connect(pb_batch, SIGNAL(clicked()), SLOT(show_batch()));
 
    pb_view_bead_model = new QPushButton(tr("View Bead Model File"), this);
    Q_CHECK_PTR(pb_view_bead_model);
    pb_view_bead_model->setMinimumHeight(minHeight1);
    pb_view_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_view_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
    pb_load_pdb = new QPushButton(tr("Load Single PDB File"), this);
@@ -515,40 +522,44 @@ void US_Hydrodyn::setupGUI()
    pb_load_pdb->setMinimumHeight(minHeight1);
    pb_load_pdb->setEnabled(true);
    pb_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_load_pdb->setPalette( PALET_PUSHB );
    connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
    lbl_pdb_file = new QLabel(tr(" not selected"),this);
    lbl_pdb_file->setFrameStyle(QFrame::WinPanel|Sunken);
    lbl_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_pdb_file->setMinimumHeight(minHeight1);
-   lbl_pdb_file->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_pdb_file->setPalette( PALET_EDIT );
+   AUTFBACK( lbl_pdb_file );
    lbl_pdb_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_model = new QLabel(tr(" Please select a PDB Structure:"), this);
    Q_CHECK_PTR(lbl_model);
    lbl_model->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_model->setMinimumHeight(minHeight1);
-   lbl_model->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_model->setMargin( 2 );
+   lbl_model->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_model );
    lbl_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    pb_view_pdb = new QPushButton(tr("View/Edit PDB File"), this);
    Q_CHECK_PTR(pb_view_pdb);
    pb_view_pdb->setMinimumHeight(minHeight1);
    pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_view_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_view_pdb->setPalette( PALET_PUSHB );
    connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
 
    pb_pdb_tool = new QPushButton(tr("PDB Editor"), this);
    pb_pdb_tool->setMinimumHeight(minHeight1);
    pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_pdb_tool->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_pdb_tool->setPalette( PALET_PUSHB );
    connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
 
    lb_model = new QListBox(this, "model selection listbox" );
-   lb_model->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lb_model->setPalette( PALET_LISTB );
    lb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   lb_model->setEnabled(false);
+   //lb_model->setEnabled(false);
+   lb_model->setEnabled( true );
    lb_model->setSelectionMode(QListBox::Extended);
    lb_model->setHScrollBarMode(QScrollView::Auto);
    lb_model->setVScrollBarMode(QScrollView::Auto);
@@ -558,14 +569,15 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_load_bead_model);
    pb_load_bead_model->setMinimumHeight(minHeight1);
    pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_load_bead_model->setPalette( PALET_PUSHB );
    connect(pb_load_bead_model, SIGNAL(clicked()), SLOT(load_bead_model()));
 
    le_bead_model_file = new QLineEdit(this, "bead_model_file Line Edit");
    le_bead_model_file->setText(tr(" not selected "));
    le_bead_model_file->setMinimumHeight(minHeight1);
    le_bead_model_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_bead_model_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_bead_model_file->setPalette( PALET_EDIT );
+   AUTFBACK( le_bead_model_file );
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
@@ -573,28 +585,32 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight(minHeight1);
-   lbl_bead_model_prefix->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bead_model_prefix->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_bead_model_prefix );
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_setSuffix = new QCheckBox(this);
    cb_setSuffix->setText(tr(" Add auto-generated suffix "));
    cb_setSuffix->setChecked(setSuffix);
    cb_setSuffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_setSuffix->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_setSuffix->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_setSuffix );
    connect(cb_setSuffix, SIGNAL(clicked()), this, SLOT(set_setSuffix()));
 
    cb_overwrite = new QCheckBox(this);
    cb_overwrite->setText(tr(" Overwrite existing filenames "));
    cb_overwrite->setChecked(overwrite);
    cb_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_overwrite->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_overwrite->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_overwrite );
    connect(cb_overwrite, SIGNAL(clicked()), this, SLOT(set_overwrite()));
 
    le_bead_model_prefix = new QLineEdit(this, "bead_model_prefix Line Edit");
    le_bead_model_prefix->setText(tr(""));
    le_bead_model_prefix->setMinimumHeight(minHeight1);
    le_bead_model_prefix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_bead_model_prefix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_bead_model_prefix->setPalette( PALET_EDIT );
+   AUTFBACK( le_bead_model_prefix );
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
@@ -602,7 +618,8 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_suffix->setText(tr(""));
    le_bead_model_suffix->setMinimumHeight(minHeight1);
    le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_bead_model_suffix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_bead_model_suffix->setPalette( PALET_EDIT );
+   AUTFBACK( le_bead_model_suffix );
    le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_model_suffix->setReadOnly(true);
 
@@ -611,7 +628,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setMinimumHeight(minHeight1);
    pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_somo->setEnabled(false);
-   pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_somo->setPalette( PALET_PUSHB );
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
 #if defined(USE_H)
@@ -619,7 +636,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
    pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_pdb_hydrate_for_saxs->setEnabled(true);
-   pb_pdb_hydrate_for_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_pdb_hydrate_for_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
 #endif
 
@@ -628,7 +645,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_pdb_saxs->setEnabled(true);
-   pb_pdb_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_pdb_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
    pb_bead_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
@@ -636,14 +653,14 @@ void US_Hydrodyn::setupGUI()
    pb_bead_saxs->setMinimumHeight(minHeight1);
    pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bead_saxs->setEnabled(false);
-   pb_bead_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_bead_saxs->setPalette( PALET_PUSHB );
    connect(pb_bead_saxs, SIGNAL(clicked()), SLOT(bead_saxs()));
 
    pb_rescale_bead_model = new QPushButton(tr("Rescale/Equalize Bead Model"), this);
    pb_rescale_bead_model->setMinimumHeight(minHeight1);
    pb_rescale_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_rescale_bead_model->setEnabled(false);
-   pb_rescale_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_rescale_bead_model->setPalette( PALET_PUSHB );
    connect(pb_rescale_bead_model, SIGNAL(clicked()), SLOT(rescale_bead_model()));
 
    pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
@@ -651,7 +668,7 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb->setMinimumHeight(minHeight1);
    pb_grid_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_grid_pdb->setPalette( PALET_PUSHB );
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
 
    pb_grid = new QPushButton(tr("Grid Existing Bead Model"), this);
@@ -659,21 +676,22 @@ void US_Hydrodyn::setupGUI()
    pb_grid->setMinimumHeight(minHeight1);
    pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_grid->setEnabled(false);
-   pb_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_grid->setPalette( PALET_PUSHB );
    connect(pb_grid, SIGNAL(clicked()), SLOT(calc_grid()));
 
    cb_calcAutoHydro = new QCheckBox(this);
    cb_calcAutoHydro->setText(tr(" Automatically Calculate Hydrodynamics "));
    cb_calcAutoHydro->setChecked(calcAutoHydro);
    cb_calcAutoHydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_calcAutoHydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_calcAutoHydro->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_calcAutoHydro );
    connect(cb_calcAutoHydro, SIGNAL(clicked()), this, SLOT(set_calcAutoHydro()));
 
    pb_view_asa = new QPushButton(tr("View ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
    pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_view_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_view_asa->setPalette( PALET_PUSHB );
    connect(pb_view_asa, SIGNAL(clicked()), SLOT(view_asa()));
 
    pb_visualize = new QPushButton(tr("Visualize Bead Model"), this);
@@ -681,14 +699,14 @@ void US_Hydrodyn::setupGUI()
    pb_visualize->setMinimumHeight(minHeight1);
    pb_visualize->setEnabled(false);
    pb_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_visualize->setPalette( PALET_PUSHB );
    connect(pb_visualize, SIGNAL(clicked()), SLOT(visualize()));
 
    pb_batch2 = new QPushButton(tr("Batch Mode Operation"), this);
    Q_CHECK_PTR(pb_batch2);
    pb_batch2->setMinimumHeight(minHeight1);
    pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_batch2->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_batch2->setPalette( PALET_PUSHB );
    connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
 
    pb_calc_hydro = new QPushButton(tr("Calculate RB Hydrodynamics"), this);
@@ -696,7 +714,7 @@ void US_Hydrodyn::setupGUI()
    pb_calc_hydro->setEnabled(false);
    pb_calc_hydro->setMinimumHeight(minHeight1);
    pb_calc_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_calc_hydro->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_calc_hydro->setPalette( PALET_PUSHB );
    connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
 
    pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
@@ -704,13 +722,13 @@ void US_Hydrodyn::setupGUI()
    pb_show_hydro_results->setMinimumHeight(minHeight1);
    pb_show_hydro_results->setEnabled(false);
    pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_show_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_show_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
    pb_comparative = new QPushButton(tr("Model classifier"), this);
    pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_comparative->setEnabled(true);
-   pb_comparative->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
 
    pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
@@ -718,7 +736,7 @@ void US_Hydrodyn::setupGUI()
    pb_open_hydro_results->setMinimumHeight(minHeight1);
    pb_open_hydro_results->setEnabled(true);
    pb_open_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_open_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_open_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_open_hydro_results, SIGNAL(clicked()), SLOT(open_hydro_results()));
 
    pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
@@ -726,14 +744,15 @@ void US_Hydrodyn::setupGUI()
    pb_select_save_params->setMinimumHeight(minHeight1);
    pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_save_params->setEnabled(true);
-   pb_select_save_params->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_select_save_params->setPalette( PALET_PUSHB );
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
 
    cb_saveParams = new QCheckBox(this);
    cb_saveParams->setText(tr(" Save parameters to file "));
    cb_saveParams->setChecked(saveParams);
    cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_saveParams->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_saveParams->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_saveParams );
    connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
 
    // ***** dmd *******
@@ -741,7 +760,7 @@ void US_Hydrodyn::setupGUI()
    pb_dmd_run->setMinimumHeight(minHeight1);
    pb_dmd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_dmd_run->setEnabled( true );
-   pb_dmd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_dmd_run->setPalette( PALET_PUSHB );
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
 
    pb_bd = new QPushButton(tr("BD"), this);
@@ -749,7 +768,7 @@ void US_Hydrodyn::setupGUI()
    pb_bd->setMinimumHeight(minHeight1);
    pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd->setEnabled(true);
-   pb_bd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_bd->setPalette( PALET_PUSHB );
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
 
    // ***** bd *******
@@ -828,14 +847,14 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
-   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_stop_calc = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop_calc);
    pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop_calc->setMinimumHeight(minHeight1);
-   pb_stop_calc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_stop_calc->setPalette( PALET_PUSHB );
    connect(pb_stop_calc, SIGNAL(clicked()), SLOT(stop_calc()));
    pb_stop_calc->setEnabled(false);
 
@@ -843,36 +862,39 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    progress = new QProgressBar(this, "Loading Progress");
-   progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress->setPalette( PALET_NORMAL );
+   AUTFBACK( progress );
    progress->reset();
 
    editor = new QTextEdit(this);
-   editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   editor->setPalette( PALET_NORMAL );
    editor->setReadOnly(true);
    editor->setMinimumWidth(550);
    m = new QMenuBar(editor, "menu" );
    m->setMinimumHeight(minHeight1);
-   m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
    QPopupMenu * file = new QPopupMenu(editor);
    m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 
 #ifndef NO_EDITOR_PRINT
-   file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
+   file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #endif
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
    editor->setWordWrap (advanced_config.scroll_editor ? QTextEdit::NoWrap : QTextEdit::WidgetWidth);
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
    lbl_core_progress->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_core_progress->setMinimumHeight(minHeight1);
-   lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_core_progress->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_core_progress );
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    clear_display();
@@ -1572,7 +1594,7 @@ void US_Hydrodyn::load_pdb()
                      QMessageBox::Information,
                      QMessageBox::Yes | QMessageBox::Default,
                      QMessageBox::Cancel | QMessageBox::Escape,
-                     QMessageBox::NoButton);
+                     Qt::NoButton);
       mb.setButtonText(QMessageBox::Yes, tr("Yes"));
       mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
       switch(mb.exec())
@@ -1608,7 +1630,7 @@ void US_Hydrodyn::load_pdb()
                      QMessageBox::Information,
                      QMessageBox::Yes | QMessageBox::Default,
                      QMessageBox::Cancel | QMessageBox::Escape,
-                     QMessageBox::NoButton);
+                     Qt::NoButton);
       mb.setButtonText(QMessageBox::Yes, tr("Yes"));
       mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
       switch(mb.exec())
@@ -3591,7 +3613,7 @@ void US_Hydrodyn::save()
    {
       QString text = editor->text();
       QFile f( fn );
-      if ( !f.open( IO_WriteOnly | IO_Translate) )
+      if ( !f.open( IO_WriteOnly | IO_Translate ) )
       {
          return;
       }
