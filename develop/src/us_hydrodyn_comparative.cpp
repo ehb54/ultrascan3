@@ -440,7 +440,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_weight->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_ec = new QLabel(tr("Equivalance class controls"), this);
+   lbl_ec = new QLabel(tr("Equivalence class controls"), this);
    lbl_ec->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_ec->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ec->setMinimumHeight(minHeight3);
@@ -449,7 +449,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    cb_by_ec = new QCheckBox(this);
    cb_by_ec->setMinimumHeight(minHeight2b);
-   cb_by_ec->setText(tr("By equivalance class rank"));
+   cb_by_ec->setText(tr("By equivalence class rank"));
    cb_by_ec->setEnabled(true);
    cb_by_ec->setChecked(comparative->by_ec);
    cb_by_ec->setFont(qf_modes);
