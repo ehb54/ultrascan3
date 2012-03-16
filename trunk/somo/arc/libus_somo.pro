@@ -192,6 +192,7 @@ SOURCES += \
   us_util.cpp \
 #  us_vbar.cpp \
   us_write_config.cpp \
+  us_gui_settings.cpp \
   src/qwt/scrollbar.cpp \
   src/qwt/scrollzoomer.cpp
 
@@ -292,6 +293,9 @@ HEADERS += \
   us_version.h \
 #  us_vbar.h \
   us_write_config.h \
+  us_gui_settings.h \
+  us3_extern.h \
+  us3_defines.h \
   qwt/scrollbar.h \
   qwt/scrollzoomer.h
 

@@ -13,6 +13,21 @@ sub cmd {
     print $result;
 }
 
+while ( @ARGV ) 
+{
+    $_ = shift;
+    if ( /^(c|co|com|comp|compile)$/ )
+    {
+        $compile++;
+        print "compiling on\n";
+        next;
+    }
+    die "$0: unrecognized command
+usage: $0 {c}
+ c includes compile step
+"   ;
+}
+
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
 $us2sdev = $ENV{'us2sdev'} || die "can't find env variable us2sdev\n";
 
@@ -24,15 +39,16 @@ chdir "$us3/somo/develop" || die "can't change to dir $us3/somo/develop $!\n";
 if ( $part1 ) {
     cmd("rm -fr * > /dev/null");
     
-    cmd("cp -r $us2sdev/* .");
-    cmd("rm -fr src/saveit include.old include/saveit us*/Makefile 2> /dev/null");
+    cmd('cp -r $us2sdev/* .');
+    cmd('rm -fr src/saveit include.old include/saveit us*/Makefile include/qwt src/qwt 2> /dev/null');
     cmd("cp -r ../arc/* .");
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.pri"`');
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.pro"`');
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.h"`');
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.cpp"`');
-    cmd("tar zxf somo-qwt5.tgz");
-    cmd("rm -f somo-qwt5.tgz");
+    cmd('tar zxf somo-qwt5.tgz');
+    cmd('rm -f somo-qwt5.tgz');
+    cmd('perl ../us3add.pl');
 }
 
 cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus-somo.pro > libus-somo.pro.new; mv libus-somo.pro.new libus-somo.pro');

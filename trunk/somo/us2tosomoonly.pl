@@ -4,17 +4,31 @@ use Cwd;
 
 $wd = cwd();
 
-$sd = shift;
-$td = shift || die "usage: $0 source-directory target-directory\n";
+die "usage has changed, no arguments are needed, but \$us2 and \$us2sdev must be defined\n" if @ARGV;
+
+$us2 = $ENV{'us2'} || die "can't find env variable us2\n";
+$us2sdev = $ENV{'us2sdev'} || die "can't find env variable us2sdev\n";
+
+print "us2 is $us2\n";
+print "us2sdev is $us2sdev\n";
+
+$sd = "$us2/develop";
+$td = "$us2sdev";
 
 die "source and target directory must be named 'develop'\n" if $sd !~ /\/develop$/ || $td !~ /\/develop$/;
 
-die "$sd is not a directory\n" if !-d $sd;
-die "$td exists, please remove first\n" if -e $td;
+$dieline = "\nthe following commands should remove the existance issues:\n";
+
+$dieerror .= "$sd is not a directory\n" if !-d $sd;
+$dieerror .= "$td exists, please remove first\n" if -e $td;
+$dieline .= "rm -fr $td\n" if -e $td;
 
 $ftocopy = "tocopy.txt";
 
-die "$ftocopy be removed first\n" if -e $ftocopy;
+$dieerror .= "$ftocopy be removed first\n" if -e $ftocopy;
+$dieline .= "rm -f $ftocopy\n" if -e $ftocopy;
+
+die "$dieerror$dieline" if $dieerror;
 
 $debug++;
 $exec++;
