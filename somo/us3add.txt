@@ -1,0 +1,24 @@
+# conversion script
+# comment line
+
+# blank lines ok also
+
+# block start with from file, to file
+utils/us_extern.h
+somo/develop/include/us3_extern.h
+# eval'd perl expressions on $_
+s/US_EXTERN_H/US3_EXTERN_H/
+# end writes out
+end
+
+gui/us_gui_settings.h
+somo/develop/include/us_gui_settings.h
+s/us_extern\.h/..\/include\/us3_extern.h/
+end
+
+gui/us_gui_settings.cpp
+somo/develop/src/us_gui_settings.cpp
+s/us_gui_settings/..\/include\/us_gui_settings/
+s/us_defines\.h/..\/include\/us3_defines.h/
+end
+
