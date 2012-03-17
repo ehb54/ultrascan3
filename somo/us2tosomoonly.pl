@@ -47,6 +47,8 @@ die "$td could not be created\n" if !-d $td;
             "attic",
             "bins",
             "docs",
+            "saveem",
+            "tmp"
             );
 
 @skip = (
