@@ -4846,13 +4846,12 @@ void US_Hydrodyn_Saxs::set_guinier()
 #endif
    }
 
-   for ( unsigned int i = 0;
 #ifndef QT4
-         i < plotted_Iq.size();
+   int niqsize = (int)plotted_Iq.size();
 #else
-         i < plotted_Iq_curves.size();
+   int niqsize = (int)plotted_Iq_curves.size();
 #endif
-         i++ )
+   for ( int i = 0; i < niqsize; i++ )
    {
       if ( cb_guinier->isChecked() )
       {
@@ -4867,7 +4866,8 @@ void US_Hydrodyn_Saxs::set_guinier()
 
             plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", 2, SolidLine));
 #else
-            plotted_Gp_curves[i] = new QwtPlotCurve( qsl_plotted_iq_names[ i ] );
+            plotted_Gp_curves[i] = new QwtPlotCurve(
+                  QString( "Guinier points %1" ).args(i ) );
             plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
             plotted_Gp_curves[i]->setData(
                            (double *)&(plotted_guinier_x[i][0]), 

@@ -1,22 +1,22 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
 
+#ifndef QT4
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
 {
-#ifndef QT4
-   bool found = false;
-   unsigned int pos;
-   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   int pos = -1;
+
+   for ( int i = 0; i < (int)plotted_Iq.size(); i++ )
    {
       if ( key == plotted_Iq[ i ] )
       {
-         found = true;
          pos   = i;
       }
    }
-   if ( !found )
+   if ( pos < 0 )
    {
-      editor_msg( "red", "Internal error: plot_saxs_clicked: curve not found\n" );
+      editor_msg( "red",
+            tr( "Internal error: plot_saxs_clicked: curve not found\n" ) );
       return;
    }
    editor_msg( "black", 
@@ -41,14 +41,14 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
                      .arg( plotted_I_error[ pos ].size() )
                      .arg( avg_std_dev_pct ) );
       }
-      if ( plot_saxs_zoomer )
+      if ( plot_saxs_zoomer != 0 )
       {
          double       minx            = plot_saxs_zoomer->zoomRect().x1();
          double       maxx            = plot_saxs_zoomer->zoomRect().x2();
          double       avg_std_dev_pct = 0e0;
-         unsigned int count           = 0;
+         int          count           = 0;
 
-         for ( unsigned int i = 0; i < plotted_I_error[ pos ].size(); i++ )
+         for ( int i = 0; i < (int)plotted_I_error[ pos ].size(); i++ )
          {
             if ( plotted_q[ pos ][ i ] >= minx &&
                  plotted_q[ pos ][ i ] <= maxx )
@@ -68,17 +68,57 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
    } else {
       editor_msg( "black", tr( "No errors present" ) );
    }
-#else
-   editor_msg( "red", tr( "Legend controls not yet supported in US3" ) );
-#endif
 }
+#else
+void US_Hydrodyn_Saxs::plot_saxs_clicked( QwtPlotItem* pitem )
+{
+   QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
+   int csize = pcurve->dataSize();
 
+   if ( csize < 1 )
+   {
+      editor_msg( "red", "Internal error: plot_saxs: curve not found\n" );
+      return;
+   }
+
+   editor_msg( "black", 
+               QString( tr( "Curve information: " 
+                            "Name: %1\n"
+                            "q: [%2:%3] [%4:%5] %6 points" ) )
+               .arg( pcurve->title().text() )
+               .arg( pcurve->minXValue() ).arg( pcurve->maxXValue() )
+               .arg( pcurve->minYValue() ).arg( pcurve->maxYValue() )
+               .arg( csize ) );
+}
+#endif
+
+#ifndef QT4
 void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
 {
-#ifndef QT4
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
-#endif
 }
+#else
+void US_Hydrodyn_Saxs::plot_pr_clicked( QwtPlotItem* pitem )
+{
+   QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
+   int csize = pcurve->dataSize();
+
+   if ( csize < 1 )
+   {
+      editor_msg( "red", "Internal error: plot_pr: curve not found\n" );
+      return;
+   }
+
+   editor_msg( "black", 
+               QString( tr( "Curve information: " 
+                            "Name: %1\n"
+                            "q: [%2:%3] [%4:%5] %6 points" ) )
+               .arg( pcurve->title().text() )
+               .arg( pcurve->minXValue() ).arg( pcurve->maxXValue() )
+               .arg( pcurve->minYValue() ).arg( pcurve->maxYValue() )
+               .arg( csize ) );
+}
+#endif
 
 void US_Hydrodyn_Saxs::saxs_legend()
 {
