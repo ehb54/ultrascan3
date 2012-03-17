@@ -1,16 +1,19 @@
 # Object type   name prefix    "cg_" type    PALET_ type     Follow by AUTFBACK
 table
-Frame          n/a           Frame         FRAME           no
-MenuBar        n/a           n/a           NORMAL          YES
-Label          lbl_          frame         FRAME           YES
-Label          lbl_          edit          EDIT            YES
-Label          lbl_          label         LABEL           YES
+QFrame         n/a           Frame         FRAME           no
+QMenuBar       n/a           n/a           NORMAL          YES
+QLabel         lbl_          frame         FRAME           YES
+QLabel         lbl_          edit          EDIT            YES
+QLabel         lbl_          label         LABEL           YES
 PushButton     pb_           pushb         PUSHB           no
-ListBox        lb_           n/a           LISTB           no
-LineEdit       le_           n/a           EDIT            YES
-CheckBox       cb_           n/a           NORMAL          YES
-ProgressBar    n/a           n/a           NORMAL          YES
+QListBox       lb_           n/a           LISTB           no
+Q3ListBox      lb_           n/a           LISTB           no
+QLineEdit      le_           n/a           EDIT            YES
+QCheckBox      cb_           n/a           NORMAL          YES
+QProgressBar   n/a           n/a           NORMAL          YES
+Q3ProgressBar  n/a           n/a           NORMAL          YES
 TextEdit       te_           n/a           NORMAL          no
+QTextEdit      te_           n/a           NORMAL          no
 end
 
 files
