@@ -1,0 +1,78 @@
+# Object type   name prefix    "cg_" type    PALET_ type     Follow by AUTFBACK
+table
+Frame          n/a           Frame         FRAME           no
+MenuBar        n/a           n/a           NORMAL          YES
+Label          lbl_          frame         FRAME           YES
+Label          lbl_          edit          EDIT            YES
+Label          lbl_          label         LABEL           YES
+PushButton     pb_           pushb         PUSHB           no
+ListBox        lb_           n/a           LISTB           no
+LineEdit       le_           n/a           EDIT            YES
+CheckBox       cb_           n/a           NORMAL          YES
+ProgressBar    n/a           n/a           NORMAL          YES
+TextEdit       te_           n/a           NORMAL          no
+end
+
+files
+./src/us_color.cpp
+./src/us_hydrodyn_advanced_config.cpp
+./src/us_hydrodyn_asa.cpp
+./src/us_config_gui.cpp
+./src/us_hydrodyn_bd.cpp
+./src/us_hydrodyn_sas_options_sans.cpp
+./src/us_hydrodyn_bead_output.cpp
+./src/us_hydrodyn_comparative.cpp
+./src/us_hydrodyn_sas_options_saxs.cpp
+./src/us_hydrodyn_dammin_opts.cpp
+./src/us_hydrodyn_saxs_iqq_residuals.cpp
+./src/us_hydrodyn_saxs_options.cpp
+./src/us_hydrodyn_csv_viewer.cpp
+./src/us_hydrodyn_cluster_config.cpp
+./src/us_hydrodyn_pdb_visualization.cpp
+./src/us_astfem_sim.cpp_save_ti_noise.cpp
+# ./src/us_hydrodyn.cpp
+./src/us_hydrodyn_batch_movie_opts.cpp
+./src/us_hydrodyn_cluster_status.cpp
+./src/us_hydrodyn_addsaxs.cpp
+./src/us_hydrodyn_sas_options_bead_model.cpp
+./src/us_hydrodyn_pdb_parsing.cpp
+./src/us_admin.cpp
+./src/us_util.cpp
+./src/us_hydrodyn_hydro.cpp
+./src/us_hydrodyn_cluster_config_server.cpp
+./src/us_hydrodyn_overlap.cpp
+./src/us_font.cpp
+./src/us_hydrodyn_sas_options_guinier.cpp
+./src/us_hydrodyn_batch.cpp
+./src/us_hydrodyn_misc.cpp
+./src/us_hydrodyn_cluster_results.cpp
+./src/us_hydrodyn_addhybrid.cpp
+./src/us_hydrodyn_cluster_submit.cpp
+./src/us_hydrodyn_saxs_search.cpp
+./src/us_hydrodyn_anaflex_options.cpp
+./src/us_hydrodyn_saxs_iqq_load_csv.cpp
+./src/us_hydrodyn_addatom.cpp
+./src/us_hydrodyn_pdb_tool_merge.cpp
+./src/us_hydrodyn_dmd_options.cpp
+./src/us_hydrodyn_saxs_load_csv.cpp
+./src/us_hydrodyn_cluster_dmd.cpp
+./src/us_hydrodyn_grid.cpp
+./src/us_hydrodyn_file.cpp
+./src/us_hydrodyn_save.cpp
+./src/us_hydrodyn_pdb_tool.cpp
+./src/us_hydrodyn_overlap_reduction.cpp
+./src/us_hydrodyn_cluster.cpp
+./src/us_hydrodyn_results.cpp
+./src/us_hydrodyn_bd_load_results_opts.cpp
+./src/us_hydrodyn_bd_options.cpp
+./src/us_hydrodyn_addresidue.cpp
+./src/us_hydrodyn_saxs_mw.cpp
+./src/us_hydrodyn_sas_options_misc.cpp
+./src/us_hydrodyn_sas_options_curve.cpp
+./src/us_hydrodyn_cluster_advanced.cpp
+./src/us_hydrodyn_saxs.cpp
+./src/us_hydrodyn_sas_options_experimental.cpp
+./src/us_hydrodyn_sas_options_hydration.cpp
+./src/us_hydrodyn_saxs_residuals.cpp
+./src/us_hydrodyn_other.cpp
+end
