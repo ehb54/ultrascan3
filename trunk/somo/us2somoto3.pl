@@ -3,7 +3,6 @@
 $debug++;
 $exec++;
 $part1++;
-# $part2++;
 
 $| = 1;
 
@@ -51,10 +50,10 @@ if ( $part1 ) {
     cmd('perl ../us3add.pl');
 }
 
-cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus-somo.pro > libus-somo.pro.new; mv libus-somo.pro.new libus-somo.pro');
+cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus_somo.pro > libus_somo.pro.new; mv libus_somo.pro.new libus_somo.pro');
 cmd('perl ../postproccpp.pl');
 
-if ( $part2 ) {
+if ( $compile ) {
     cmd('qmake libus_somo.pro');
     cmd('rm qmake_image_collection.cpp');
     cmd('make -j1 src/obj/qmake_image_collection.o');
