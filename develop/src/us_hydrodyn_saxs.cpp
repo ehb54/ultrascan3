@@ -4867,7 +4867,7 @@ void US_Hydrodyn_Saxs::set_guinier()
             plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", 2, SolidLine));
 #else
             plotted_Gp_curves[i] = new QwtPlotCurve(
-                  QString( "Guinier points %1" ).args(i ) );
+                  QString( "Guinier points %1" ).arg( i ) );
             plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
             plotted_Gp_curves[i]->setData(
                            (double *)&(plotted_guinier_x[i][0]), 
