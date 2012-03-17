@@ -1,9 +1,9 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
 
-#ifndef QT4
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
 {
+#ifndef QT4
    int pos = -1;
 
    for ( int i = 0; i < (int)plotted_Iq.size(); i++ )
@@ -68,10 +68,11 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
    } else {
       editor_msg( "black", tr( "No errors present" ) );
    }
+#endif
 }
-#else
-void US_Hydrodyn_Saxs::plot_saxs_clicked( QwtPlotItem* pitem )
+void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem* pitem )
 {
+#ifdef QT4
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
    int csize = pcurve->dataSize();
 
@@ -89,17 +90,18 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( QwtPlotItem* pitem )
                .arg( pcurve->minXValue() ).arg( pcurve->maxXValue() )
                .arg( pcurve->minYValue() ).arg( pcurve->maxYValue() )
                .arg( csize ) );
-}
 #endif
+}
 
-#ifndef QT4
 void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
 {
+#ifndef QT4
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
+#endif
 }
-#else
-void US_Hydrodyn_Saxs::plot_pr_clicked( QwtPlotItem* pitem )
+void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem* pitem )
 {
+#ifdef QT4
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
    int csize = pcurve->dataSize();
 
@@ -117,8 +119,8 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( QwtPlotItem* pitem )
                .arg( pcurve->minXValue() ).arg( pcurve->maxXValue() )
                .arg( pcurve->minYValue() ).arg( pcurve->maxYValue() )
                .arg( csize ) );
-}
 #endif
+}
 
 void US_Hydrodyn_Saxs::saxs_legend()
 {

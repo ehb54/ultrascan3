@@ -608,6 +608,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void plot_saxs_clicked( long );
       void plot_pr_clicked  ( long );
+      void plot_saxs_item_clicked( QwtPlotItem* );
+      void plot_pr_item_clicked  ( QwtPlotItem* );
 
       void saxs_legend();
       void pr_legend();

@@ -846,9 +846,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_saxs, SIGNAL( legendClicked( long ) ), SLOT( plot_saxs_clicked( long ) ) );
 #else
-   QwtLegend* salegend = new QwtLegend;
-   salegend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   plot_saxs->insertLegend( salegend, QwtPlot::BottomLegend );
+   QwtLegend* legend_sa = new QwtLegend;
+   legend_sa->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   plot_saxs->insertLegend( legend_sa, QwtPlot::BottomLegend );
+   legend_sa->setItemMode( QwtLegend::ClickableItem );
+   connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
+                SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
 #endif
 
    plot_pr = new QwtPlot(this);
@@ -896,9 +899,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
 #else
-   QwtLegend* prlegend = new QwtLegend;
-   prlegend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   plot_pr->insertLegend( prlegend, QwtPlot::BottomLegend );
+   QwtLegend* legend_pr = new QwtLegend;
+   legend_pr->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
+   legend_pr->setItemMode( QwtLegend::ClickableItem );
+   connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
+                SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );
 #endif
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
