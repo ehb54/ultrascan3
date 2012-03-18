@@ -4,7 +4,35 @@
 
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
 
-$fconfig = "$us3/somo/us3conv.txt";
+while ( $ARGV[ 0 ] =~ /^-/ )
+{
+    $arg = shift;
+    
+    if ( $arg =~ /-d/ )
+    {
+        $debug++;
+        next;
+    }
+
+    if ( $arg =~ /-c/ )
+    {
+        $commit++;
+        next;
+    }
+
+    die "usage: $0 { args } { file }
+ valid options:
+  -d debug
+  -c change code ( otherwise, just leaves new code in file-us3conv )
+  
+ if a file is specified, it is used instead of the default us3conv.txt controls
+ This is useful when testing.
+  (e.g. you could have a us3conv-short.txt that only contains one entry in the 'files' section )
+";
+}
+
+$fconfig = shift;
+$fconfig = "$us3/somo/us3conv.txt" if !$fconfig;
 
 $f = $fconfig;
 open IN, $f || die "$0: $f $!\n";
@@ -42,7 +70,7 @@ while ( $_ = <IN> )
             
             $te++;
 
-            if ( length( $_[ 2 ] ) )
+            if ( length( $_[ 2 ] ) && $_[ 2 ] ne 'n/a' )
             {
                 if ( $pcg{ $_[ 2 ] } && $pcg{ $_[ 2 ] } != $_[ 3 ] )
                 {
@@ -111,24 +139,32 @@ die $error if $error;
 print sprintf( "%d table entries found\n", $te );
 print sprintf( "%d files found\n"        , scalar @files );
 
-print "pcg:\n";
-foreach $k ( keys %pcg )
+if ( $debug > 1 )
 {
-    print "$k $pcg{ $k }\n";
-}
+    print "pcg:\n";
+    foreach $k ( keys %pcg )
+    {
+        print "$k $pcg{ $k }\n";
+    }
 
-print "pt:\n";
-foreach $k ( keys %pt )
-{
-    print "$k $pt{ $k }\n";
+    print "pt:\n";
+    foreach $k ( keys %pt )
+    {
+        print "$k $pt{ $k }\n";
+    }
 }
 
 # go through the files
+
+$ok_count    = 0;
+$notok_count = 0;
 
 for ( $i = 0; $i < @files; $i++ )
 {
     $fin = $files[ $i ];
     $f = $fin;
+    $fin_name = $fin;
+    $fin_name =~ s/^.*\///g;
     open IN, $f || die "$0: $f $!\n";
     print "processing $f\n";
 
@@ -137,6 +173,25 @@ for ( $i = 0; $i < @files; $i++ )
     open OUT, ">$f" || die "$0: $f $!\n";
 
     print "processing $f\n";
+
+# precheck for us3_defines.h & setPalette
+    undef $has_us3_defines;
+    undef $has_setPalette;
+
+    while ( <IN> )
+    {
+        $has_us3_defines++ if /#\s*include\s*".*us3_defines\.h"/;
+        $has_setPalette++  if /setPalette/;
+        last if $has_us3_defines && $has_setPalette;
+    }
+    close IN;
+    $f = $fin;
+    open IN, $f || die "$0: $f $!\n";
+
+    if ( $has_setPalette && !$has_us3_defines )
+    {
+        print OUT '#include "../include/us3_defines.h"' . "\n";
+    }
 
     undef $l;
     while ( <IN> )
@@ -160,17 +215,41 @@ for ( $i = 0; $i < @files; $i++ )
             {
                 $ptype = $pcg{ $cgtype };
                 $auftb = ( $acg{ $cgtype } =~ /^YES$/ ) ? 1 : 0;
+                $ok_count++;
             } else {
                 if ( $pt{ $lasttype } )
                 {
                     $ptype = $pt{ $lasttype };
                     $auftb = ( $at{ $lasttype } =~ /^YES$/ ) ? 1 : 0;
+                    $ok_count++;
                 } else {
-                    $warns{ "type: $lasttype cg_: $cgtype" }++;
+                    $warns{ "type: $lasttype cg_: $cgtype" } .= " $fin_name";
                     warn "warning: $fin line $l: no table entry for type: $lasttype cg_: $cgtype\n";
+                    $notok_count++;
                 }
             }
                     
+            undef $setpal;
+            undef $setauf;
+
+            if ( $ptype )
+            {
+                $setpal = $_;
+                $setpal =~ s/(setPalette\s*\().*$/$1/;
+                $setpal .= " PALET_$ptype );";
+                print OUT "$setpal\n";
+
+                if ( $auftb )
+                {
+                    $setauf = $_;
+                    $setauf =~ s/\S.*$//g;
+                    $setauf .= "AUTFBACK( $lastnew );";
+                    print OUT "$setauf\n";
+                }
+            } else {
+                print OUT $_;
+            }
+
             if ( $debug )
             {
                 print "line: $l\n";
@@ -179,8 +258,11 @@ for ( $i = 0; $i < @files; $i++ )
                 print "   lastnew: $lastnew\n";
                 print "  lasttype: $lasttype\n";
                 print "     ptype: $ptype\n";
-                print "     autfb: $autfb\n";
+                print "     autfb: " . ( $autfb ? "true" : "false"  ) . "\n";
+                print "    setpal: $setpal\n";
+                print "   setautf: $setauf\n";
             }
+
             $used_types{ $lasttype }++;
         } else {
             print OUT $_;
@@ -189,7 +271,13 @@ for ( $i = 0; $i < @files; $i++ )
 
     close IN;
     close OUT;
-    print "created $fout";
+    if ( $commit )
+    {
+        `mv $fout $fin`;
+        print "updated $fin\n";
+    } else {
+        print "created $fout\n";
+    }
 }
 
 print "used object types:\n";
@@ -201,8 +289,14 @@ foreach $k ( keys %used_types )
 print "missing object types:\n";
 foreach $k ( keys %warns )
 {
-    print "$k\n";
+    print "$k  ";
+    print " referenced in: $warns{ $k }\n";
 }
+
+print "summary info:
+PALET_ updates found $ok_count
+PALET_ updates not found $notok_count
+";
 
 # TODO:
 # process attribs, write out
