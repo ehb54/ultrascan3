@@ -64,7 +64,7 @@ while ( $_ = <IN> )
 
             last if /^\s*end\s*$/;
 
-            split /\s+/;
+            @_ = split /\s+/, $_;
             die errmsg( sprintf( "too many tokens for table entry %d", @_ ) ) if @_ != 5;
             die errmsg( "AUTFBACK must be YES or no" ) if $_[ 4 ] !~ /^(YES|no)$/;
             
