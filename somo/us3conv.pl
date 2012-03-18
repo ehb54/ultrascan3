@@ -247,7 +247,7 @@ for ( $i = 0; $i < @files; $i++ )
                     print OUT "$setauf\n";
                 }
             } else {
-                print OUT $_;
+                print OUT "$_\n";
             }
 
             if ( $debug )
