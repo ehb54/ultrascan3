@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAXS/SANS Load CSV Module</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - SAXS/SANS Load CSV Module</h2></center>
+
+<h3><center>Last updated: March 2012 </center></h3><p>
+
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_SAXS_Load_CSV.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader">
+</center>
+<p>
+</center>Previously computed csv-style <i>I(q)</i> vs. <i>q</i> files, such as those generated using the <a href="somo_batch.html">US-SOMO Batch Mode</a>, can also be uploaded in the SOMO SAXS/SANS graphics window. In this case, a new window will open listing all the individual curves present in the csv file, plus all other files already uploaded into the graphics window.<br>
+Individual data can be selected/deselected by clicking on them, or they can all be selected/deselected by pressing the <b><i>Select All</i></b> button. Several operations can then be performed before returning to the graphics window. In the example shown below, the first ten datasets were selected and the <i>Create average curve</i>, <i>Create std deviation curves</i>, <i>Only plot stats</i>, and <i>Save to csv</i> checkboxes were ticked. This will create an average curve from the selected dataset, plus +1 SD and -1 SD curves. Only the average and SD curves will be plotted (because the <i>Only plot stats</i> checkbox was selected). Furthermore, the resulting average and SD curves will be saved in another csv file, whose filename can be entered in the field next to the <i>Save to csv</i> checkbox. The original source data can be also saved in the new csv file by ticking the <i>Include source data</i> checkbox.
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Load_CSV1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader average selected">
+</center>
+<p>
+Pressing the <b><i>Plot</i></b> button will bring up a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Scaling_curve.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file loader scaling options">
+</center>
+<p>
+After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Plotted2.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file average SD plotted">
+</center>
+
+
+From the  <a href="somo-SAXS_SANS_Iq_panel1.png"><b><i>SAXS/SANS I(q) Plotting Functions:</i></b></a> panel, pressing the  <b><i>Load Plotted</i></b> button will re-open the <i>Load CSV style SAXS results</i> window, listing all data currently shown on the graphics window, on which further operations can be performed: 
+
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_Load_Plotted.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
+</center>
+<p>
+For instance, the selected data, which are stored in rows, can be transposed into columns by pressing the <b><i>Transpose</i></b> button (the number in parentheses in the button label will show how many datasets are going to be transposed). This will bring up a save window where a path and a filename can be chosen. The transposed file will be saved in csv format.<p>
+Alternatively, a <b>Crysol</b>-compatible file can be saved by pressing the <b><i>Save .DAT</i></b> button, bringing up again a save window where a path and a filename can be chosen. Currently (March 2012) only one dataset at the time can be saved in .DAT format (2 columns), but we plan to add the capability of also saving a third column containing the SD data for averaged datasets.<br>
+Pressing the <b><i>Save</i></b> button will instead save the selected dataset(s) into another csv file maintaining the rows storage format.<br>
+Pressing <b><i>Cancel</i></b> will close this window.<p>
+More operations can be performed on multiple <i>I(q)</i> vs. <i>q</i> files within this module.<br>
+A non-negative least squares (NNLS) procedure can be utilized to find the best combination of model curves matching an experimental dataset. This operation is performed by first selecting the experimental dataset by clicking on it, and then pressing the <b><i>Select Target</i></b> button (available only when a single dataset is selected). The chosen dataset name will then appear in the field next to the <b><i>Select Target</i></b> button. If a single (experimental) data file was already loaded into the graphics window, it will be automatically chosen as the target dataset (but it could be changed as described above). Next, the datasets on which the NNLS is to be performed are selected (efficiently by first pressing the <b><i>Select All</i></b> button and then de-selecting the unwanted datasets by single-clicking on their names):
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLS1.png" ALT="SOMO SAXS I(q) Simulation Load Plotted">
+</center>
+<p>
+Pressing the <b><i>Plot</i></b> button will then launch the NNLS operation, at the end of which the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel. This will bring up a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLS_scale.png" ALT="SOMO SAXS I(q) NNLS scaling options">
+</center>
+<p>
+After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLS_graph.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS plotted">
+</center>
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLS_progwind.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS progress window">
+<img SRC="somo-SAXS_SANS_NNLS_progwind1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS progress window">
+</center>
+<p>
+In the example above, two models, #30 & #39, contributed respectively by 79% and 21% to the final curve. The goodness of the fit is also evaluated by checking the residuals window:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLSresiduals1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
+</center>
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_NNLSresiduals3.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file NNLS residuals">
+</center>
+<p>
+<hr><p>
+Likewise, the best mathing curve from an ensemble can be found by selecting the <i>Best fit</i> checkbox, and proceed as described above for the <i>NNLS fit</i>. At the end of the process, the program will return to the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel, bringing up again a pop-up window asking to confirm/change/deselect a target curve upon which the new data to be plotted can be rescaled. After the appropriate selection, pressing "OK" will update the graphics window, and at the same time also the progress window in the bottom-left corner of the panel:<p>
+
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_best_fit.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit graph">
+</center>
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_best_fit_progwind.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit progress window">
+</center>
+<p>
+
+In the example shown above, model #48 was found to have the best fit with the target experimental data. The curve is shown in cyan on the graphics window, and the same color is used in the progress window to indicate it. <br>
+As for the <i>NNLS fit</i>, the goodness of the fit is also evaluated by checking the residuals window:
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_best_fit_res1.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals">
+</center>
+<p>
+<center>
+<p>
+<img SRC="somo-SAXS_SANS_best_fit_res2.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file best fit residuals 2">
+</center>
+<p>
+ 
+<p>
+<hr>
+
+
+<p>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on March 16, 2012
+</font>
+</body>
+</html>

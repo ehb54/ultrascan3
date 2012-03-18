@@ -21,29 +21,29 @@
 <hr>
 <center>
 <h2>
-SOMO - Solution Modeler (Bead Modeler for NMR and X-ray structures):</h2>
+SOMO - Solution Modeler (Bead and SAXS/SANS Modeler for NMR and X-ray structures):</h2>
 </center>
 <p>
-<center>Last updated: March 2010 </center><p>
-The SOMO (SOlution MOdeller) module of UltraScan is a bead modelling
-utility that was originally developed by the Rocco and Byron labs,
-respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
+<h3><center>Last updated: March 2012 </center></h3><p>
+The SOMO (SOlution MOdeller) module of UltraScan initially contained only
+a bead modelling utility that was originally developed by the Rocco and
+Byron labs, respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
 Genova, Italy) and at the University of Glasgow (Glasgow, Scotland,
 UK). The original code was mainly written by B. Spotorno, G. Tassara,
-N. Rai and M. Nollmann. SOMO is based on a reduced representation of
-a biomacromolecule, starting from its atomic coordinates (PDB format), as a set of
-non-overlapping beads of different radii, from which the hydrodynamic
-properties can be calculated using the Garcia de la Torre-Bloomfield rigid-body
-approach (García de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139,
-1981). The reduced representation is afforded by grouping together atoms
-and substituting them with a bead of the same volume, appropriately
-positioned. Importantly, the volume of the water of hydration
+N. Rai and M. Nollmann. The bead modeling utility in SOMO is based on
+a reduced representation of a biomacromolecule, starting from its atomic
+coordinates (PDB format), as a set of non-overlapping beads of different radii,
+from which the hydrodynamic properties can be calculated using the Garcia
+de la Torre-Bloomfield rigid-body approach (García de la Torre and Bloomfield,
+Q. Rev. Biophys. 14:81-139, 1981). The reduced representation is afforded by
+grouping together atoms and substituting them with a bead of the same volume,
+appropriately positioned. Importantly, the volume of the water of hydration
 theoretically bound to each group of atoms can be then added to each
 bead. The overlaps between the beads are then removed in sequential
 steps, but preserving as much as possible the original surface envelope
 of the bead model. The method has been fully validated and reported in the
 literature (Rai et al., Structure 13:723-734, 2005; Brookes et al., Eur. Biophys. J., 39:423-435, 2010;
-Brookes et al., Macromol. Biosci., in press, 2010). Among the main advantages of this method over shell-modelling
+Brookes et al., Macromol. Biosci. 10:746-753, 2010). Among the main advantages of this method over shell-modelling
 and grid-based procedures are a better treatment of the hydration water and the preservation of a
 direct correspondence between beads and original residues. For instance,
 the latter feature could be used to include flexibility effects into
@@ -55,10 +55,12 @@ currently, structures from 5K to 250K have been successfully studied. Recently,
 we have also improved the original AtoB grid method (Byron, Biophys. J. 72:408-415, 1997),
 which was already included within US-SOMO, by adding the theoretical hydration,
 accessible surface area screening, and a better preservation of the original surface.
-The improved AtoB could be very useful to study large structures and complexes.
-Finally, within this new release you will find the nucleus of what wll be a fully functional
+The improved AtoB could be very useful to study large structures and complexes.<br>
+Within this new US-SOMO release you will find several additions to what wll be a fully functional
 Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator, which will work on either the original atomic
-structure, or on a bead model. Presently, only the pairwise-distance distribution function <i>P(r)</i> vs. <i>r</i> computation is operational. 
+structure, or on a bead model, and will also process experimental data. Presently, the pairwise-distance
+distribution function <i>P(r)</i> vs. <i>r</i> computation is fully operational, and several methods are offered for the computation of SAXS <i>I(q)</i> vs. <i>q</i> curves. Some of these methods require explicit hydration of the PDB structures. We are currently (March 2012) refining our own hydration method, which is, however, not yet ready for full release. In other areas, the batch operations
+module has been expanded to include supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85). Other additions include a model classifier in which calculated parameters can be compared and ranked against experimental data, and a PDB editor.
 <p>
 <p>
 <p>
@@ -96,7 +98,7 @@ residues should be properly coded in the SOMO tables (see below).
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-main.png" ALT="SOMO Screen"></td>
+<td><center><img SRC="somo-main0.png" ALT="SOMO Screen"></td>
 </tr> 
 </center>
 <td align=justify>
@@ -130,7 +132,7 @@ lookup tables for different conditions.
 The lookup table needs to contain all atoms and residues present in the (macro)molecule
 to be loaded in the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.<br>
 Two alternative options are available to load an atomic structure, such as those derived from NMR or X-ray
-crystallography data, the new <i><b>Batch Mode Operation</b></i> (see <a href="somo_batch.html">here</a>),
+crystallography data, the <i><b>Batch Mode Operation</b></i> (see <a href="somo_batch.html">here</a>),
 or the standard <i><b>Load Single PDB File</b></i>.
 Selecting a PBD file will also automatically call the molecular visualization program <i>RasMol</i>
 (Sayle RA, Milner-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995)
@@ -139,19 +141,20 @@ which will display the structure(s) in a pop-up window. For <i>Linux</i>-based s
 for 64 bit platforms. You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
 http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
 http://openrasmol.org/#Software</a>.<p> Besides visualizing the structure, the HEADER and TITLE fields of the PDB file
-will be displayed in the progress window, followed by the residues list. If problems are encountered with the selected PDB file, 
-like the presence of non-coded residues or missing atoms within coded residues, they will be
-reported in the progress window either as <i>warnings</i> or <i>errors</i>. In the latter case, 
+will be displayed in the progress window, followed by the residues list in both three- and one-letter codes, and by the 
+partial specific volume (vbar), molecular weight, molecular volume computed both from vbar and from the individual atomic
+volumes, and the average electron density of each chain and of the whole structure.
+If problems are encountered with the selected PDB file, like the presence of non-coded residues or missing atoms within coded residues, they will be reported in the progress window either as <i>warnings</i> or <i>errors</i>. In the latter case, 
 the program execution will be also halted, waiting for corrective action to be taken. The original
 PDB file can be viewed and, if necessary, edited by clicking on the "<i><b>View/Edit PDB File</b></i>
-button. <br>
+button. In addition, we are currently developing an advanced <i><b>PDB editor</b></i> (see 
+ <a href="somo_pdb_editor.html">here</a>).<br>
 The PDB file can contain multiple models and if so, multiple models will be displayed by
 <i>RasMol</i> and in the list box. In this case, you can select just a single model,
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
 all models). If multiple models are selected, all subsequent operations (except the SAXS/SANS options)
-are carried out sequentially on the selected models. The <i><b>SAXS/SANS Functions</b></i> button will also become
-active, allowing the SAXS- or SANS-related simulations to be carried out on the selected PDB structure. Presently (March 2010),
-the SAXS/SANS module is under development. (see <a href="somo_saxs.html">here</a>)<p>
+are carried out sequentially on the selected models. Pressing the <i><b>SAXS/SANS Functions</b></i> button will take you
+to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data. Presently (November 2011), the SAXS/SANS module is in an advanced state but still under development. (see <a href="somo_saxs.html">here</a>). The <i><b>Hydrate</b></i> button will instead launch a new routine, presently under development, that will add explicit hydration water molecules to the selected structure, allowing a more reliable generation of SAXS/SANS simulated curves. This new functionality will be fully described <a href="somo_hydrate.html">here</a>. Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b> utility</a> of the <a href="somo_batch.html"><b><i>Batch Mode Operation</b></i> </a> module. <p>
 </table>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -186,8 +189,8 @@ Note that you can keep processing a loaded PDB file after changing any of the va
 (see below). If the <i>Overwrite existing filenames</i> checkbox is selected, existing filenames will be
 overwritten without a warning. Otherwise, a pop up menu will instead appear offering alternative options
 (see <a href="somo_file.html">here</a>). The <i>Overwrite existing filenames</i>
-checkbox is automatically selected for batch mode operations. A third button, <i><b>Build Grid Bead Model</b></i>,
-will operate the Grid routine on a <i>previously generated</i> bead model. This button is not available
+checkbox is automatically selected for batch mode operations. A third button, <i><b>Grid Existing Bead Model</b></i>,
+will operate the AtoB grid routine on a <i>previously generated</i> bead model. This button is not available
 until a PDB file has been processed with either one of the two bead modeling primary options (see above), 
 or until a previously-generated bead model file has been loaded (see below). If this operation is launched,
 the "-a2bg" suffix is automatically added to the filename of the new bead model.<br>
@@ -210,10 +213,8 @@ or the <i><b>Load Bead Model File</b></i> buttons from the menu. In these cases,
 was (were) generated/saved in the SOMO format, the various settings/parameters used in model generation will be displayed in
 the right-side main window. Note that you can <i>decrease</i> the number of beads used, and thus the
 resolution of the model, by applying a grid procedure on a previously-generated bead model with the
-<i><b>Build Grid Bead Model</b></i> option (see above). This could be useful when large structures are analyzed,
-although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build Grid Bead Model</b></i>)
-seems to produce much better results. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow
-to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>)<p>
+<i><b>Grid Existing Bead Model</b></i> option (see above). This could be useful when large structures are analyzed,
+although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build AtoB (Grid) Bead Model</b></i>) seems to produce much better results. By selecting different file types extensions, other type of bead models can also be loaded, like the old <i>BEAMS</i>-format models, or <i>DAMMIN/DAMMIF</i>-generated models. In this case, a <a href="somo_Dammin_Dammif_bead_model_properties.html">pop-up panel</a> appears requesting entering the partial specific volume and molecular weight of the model. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>). Finally, the <i><b>Rescale/Equalize Bead Model</b></i> function (currently not active) will allow an expansion of anhydrous bead models (like <i>DAMMIN/DAMMIF</i>-generated models) to account for an hydration layer.<p>
 </table>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -458,24 +459,24 @@ used by RasMol. A detailed description of this module can be found <a href=somo_
 
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
-<td><center><img SRC="somo-tab4a.png" ALT="Modify SOMO Options"></td>
+<td><center><img SRC="somo-tab4b.png" ALT="Modify SOMO Options"></td>
 </tr>
 <tr>
 <td align=justify>
 
 <ul>
 <li>
-<b>Load Configuration:</b> This button allows you to retrieve a particular
+<b>Load Configuration</b>: This option allows you to retrieve a particular
 set of options previously saved in a user-specified configuration file (see below).
 
 <li>
-<b>Save Current Configuration:</b> This button allows you to save the currently
+<b>Save Current Configuration</b>: This option allows you to save the currently
 selected options for all modules in a user-specified configuration file different
 from the standard one in which all current parameters are saved when exiting from
 the program.
 
 <li>
-<b>Reset to Default Options:</b> Click on this button to reset all
+<b>Reset to Default Configuration</b>: This option will reset all
 options to default values. The defaults values are stored in a file
 (<i>somo.defaults</i>), but are also hard-coded in the program. If the
 <i>somo.defaults</i> file is either missing or doesn't have the right
@@ -484,8 +485,8 @@ When exiting just after clicking on this button will reset the standard
 configuration file as well to default options.
 
 <li>
-<b>Advanced Configuration:</b> Clicking on this button will open a pop-up panel allowing
-the settings of various additional options.
+<b>Advanced Configuration</b>: This option will open a pop-up panel allowing
+the settings of various additional options (no help provide at this stage for the advanced configuration options).
 </ul>
 </td>
 </tr>
@@ -509,7 +510,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 12, 2010.
+Last modified on March 14, 2012.
 </font>
 </body>
 </html>

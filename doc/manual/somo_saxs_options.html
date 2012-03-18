@@ -21,28 +21,112 @@
 <hr>
 <center>
 <h2>
-SOMO - SAXS/SANS Simulation Options:</h2>
+SOMO - SAXS/SANS Simulation Options:</h2></center>
+
+<h3><center>Last updated: March 2012 </center></h3><p>
+
+
+<p><center>
+<img SRC="somo-SAXS_SANS_Options_summary.png" ALT="SOMO SAXS/SANS Simulation Options Summary">
+</center>
 <p>
-<img SRC="somo-SAXS_SANS_options.png" ALT="SOMO SAXS/SANS Simulation Options Screen">
+In this module you can set/change the parameters used by the  <a href="somo_saxs.html"><b>SAXS/SANS Simulation Module</b></a>. The module has been split up into several sub-modules, as shown in the above image. The sub-menus can be accessed by clicking on their names.<p>
+
+<p><center>
+<img SRC="somo-SAXS_Computation_Options.png" ALT="SOMO SAXS Computation Options">
 </center>
 <p>
 
-In this module you can set/change the parameters used by the  <a href="somo_saxs.html"><b>SAXS/SANS Simulation Module</b></a>.
+
+In the <b>SAXS Computation Options:</b> section, the first entry that can be set/changed is the <i><b>Water electron density (e / A^3):</b></i> (default: <b>0.334 e/A<sup>3</sup></b>).<br>
+Next comes an extended range of computational options in respect to those available in the main <a href="somo_saxs.html">US-SOMO SAXS/SANS</a> panel:
+
+<ul>
+<li>
+<b><i>Full</i></b>. Full Debye method, utilizing the following equations:<p>
+
+<img SRC="Debye_eq1.png" ALT="Debye for SAXS">
 <p>
-In the <b>SAXS Options:</b> section, currently there is only one parameter that can be set/changed, the
-<i><b>Water electron density (e / A^3):</b></i> (default: <b>0.334 e/A<sup>3</sup></b>).
+with<p>
+<img SRC="Debye_eq2.png" ALT="Debye for SAXS">
 <p>
-In the <b>SANS Options:</b> section, several parameters can be controlled. The hydrogen and deuterium neutron
-scattering lengths can be set in the <b><i>H scattering length (*10^-12 cm):</b></i> (default: <b>-0.3742 x 10<sup>-12</sup> cm</b>)
-and <i><b>D scattering length (*10^-12 cm):</b></i> (default: <b>0.6671 x 10<sup>-12</sup> cm</b>) fields, respectively.
-Likewise, the H<sub>2</sub>O and D<sub>2</sub>O neutron scattering lengths densities can be set in the
-<b><i>H<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> (default: <b>-0.562 x 10<sup>-10</sup> cm<sup>2</sup></b>)
-and <i><b>D<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> (default: <b>6.404 x 10<sup>-10</sup> cm<sup>2</sup></b>) fields, respectively.
-<br>
-The actual D<sub>2</sub>O content in the sample is set in the <b><i>Buffer D<sub>2</sub>O fraction (0 - 1):</i></b> field
-(default: <b>0.5</b>), and the fraction of non-exchanged peptide hydrogen can be controlled in the
-<b><i>Fraction of non-exchanged peptide H (0 - 1):</b></i> field (default: <b>0.1</b>).
+where <i>c<sup>(i)</sup></i>, <i>a<sub>k</sub><sup>(i)</sup></i> and <i>b<sub>k</sub><sup>(i)</sup></i> are the X-ray scattering atomic coefficients of non-hydrogen atom <i>i</i>, taken from the <a href="somo-saxs_coeff1.png">SAXS coefficients</a> table, <i>count<sup>(i)</sup><sub>hydrogen</sub></i> is the number of hydrogens attached to atom <i>i</i>, deduced from the  <a href="somo-2.png">atom definition</a> table, <i>c<sup>(hydrogen)</sup></i>, <i>a<sub>k</sub><sup>(hydrogen)</sup></i> and <i>b<sub>k</sub><sup>(hydrogen)</sup></i> are the X-ray scattering atomic coefficients of hydrogen atoms, <i>v<sup>(i)</sup><sub>excluded</sub></i> is the excluded volume of the atomic group <i>i</i> (non-hydrogen atom + attached hydrogen(s)), taken from the  <a href="somo-2.png">atom definition</a> table, &rho; is the solvent electron density, <i>q<sub>j</sub></i> is the scattering vector at which the computation is performed, and <i>r<sub>i,k</sub></i> is the distance between the centers of atoms <i>i</i> and <i>k</i>.
+
+<li>
+<b><i>Hybrid, H2 and H3</i></b>. 
+These are alternate implementations of hybrid Debye methods. They run faster than the full Debye method, at the cost of some accuracy.
+The Hybrid method runs fastest, followed by H2 and H3 is the slowest. Conversely, H3 provides the highest accuracy, followed by H2 and then the Hybrid method.  A manuscript describing these methods is in preparation (Brookes, 2012).<p>
+<h3><b>WARNING: Full and Hybrid Debye methods require explicit hydration!</b></h3> We are still refining our hydration method, which is currently (March 2012) not yet made available to the <b><i>US-SOMO</i></b> users. If you hydrate your structure using one of the methods in the public domain, or your own method, please rename the water residues as "SWH". In this way, the <b><i>US-SOMO</i></b> <i>I(q)</i> vs. <i>q</i> Full and Hybrid Debye methods will be able to account for them in the computations.<p>
+
+<li>
+<b><i>Adaptive</i></b>.
+This option effects the Hybrid, H2 and H3 methods.  Turning Adaptive on (which is default) provides higher accuracy.
+ <p>
+
+<li>
+<b><i>Fast</i></b>. 
+This is an internal implementation of the FoXS method (see below).<p>
+
+<li>
+<b><i>P(r)</i></b>. 
+P(r) can be simultaneously computed with the Fast method at relatively small cost.  Selecting this option will produce an I(q) and a P(r) curve when running the Fast Debye computation.
 <p>
+
+<li>
+<b><i>FoXS</i></b>. This will externally call a pre-compiled version of the method described in Schneidman-Duhovny, Hammel and Sali, "FoXS: a web server for rapid computation and fitting of SAXS profiles", Nucl. Acids Res. 38:W540-W544, 2010. Presently, no options can be set for FoXS, which is then unable to perform parametric fitting to an experimental curve. <b>Important: FoXS is currently available in the US-SOMO Linux version only!</b><p>
+
+<li>
+<b><i>Crysol</i></b>. This will externally call the popular program Crysol (Svergun, Barberato, and Koch. J. Appl. Cryst. 28:768-773, 1995), whose main options can be set in the fields below. Currently (March 2012) the parametric fit to an experimental curve capability of Crysol has not yet been implemented within <b>US-SOMO</b>.<p>
+</ul><p>
+
+Next come a series of entries where various parameters can be set:
+
+<p><center>
+<img SRC="somo-SAXS_Computation_Options1.png" ALT="SOMO SAXS Computation Options 1">
+</center>
+<p>
+
+In the <b>Fast Debye: Bin size</b>.
+Smaller bin sizes increase accuracy at the cost of increased computational time.  See the FoXS paper reference for details.  The default value is that used in the standard FoXS method. <p>
+
+In the <b>Fast Debye: Modulation</b>.
+The modulation effects the exponential decay of a point scatterer extended from the intensity at q = 0 (I(0)). See the FoXS paper reference for details.  The default value is that used in the standard FoXS method. <p>
+<p>
+
+In the <b>Hybrid, H2, H3: q points</b> This parameter effects the accuracy of the hybrid computation.  A larger value will give a more accurate curve at the cost of speed. <p>
+
+The next three entries set some <b><i>Crysol</i></b> options:<p>
+<b>Crysol: Maximun order of harmonics</b> (default: <b>15</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: 40).<p> 
+<b>Crysol: Order of the Fibonacci grid</b> (default: <b>17</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: ??)<p>
+<b>Crysol: Contrast of the hydration shell (e/A^3):</b> (default: <b>0.03 e/A<sup>3</sup></b>). Set this parameter to "0" if you want to run Crysol on a structure with explicit hydration waters.<p>
+Two checkboxes follow, still Crysol-related:<p>
+<i>Crysol: automatically load difference intensity</i> (default: <b>on</b>). After a Crysol computation, the difference intensity data will be loaded in the graphic window.<p>
+<i>Crysol: support version 2.6</i> (default: <b>on</b>).<p>
+<hr> 
+<p>
+
+<p><center>
+<img SRC="somo-SANS_Computation_Options.png" ALT="SOMO SANS Computation Options">
+</center>
+<p>
+
+In the <b>SANS Options:</b> section, several parameters can be controlled:<p>
+
+<ul>
+<li>
+The hydrogen neutron scattering length can be set in the <b><i>H scattering length (*10^-12 cm):</b></i> field (default: <b>-0.3742 x 10<sup>-12</sup> cm</b>). <p>
+<li>
+The deuterium neutron scattering length can be set in the  <i><b>D scattering length (*10^-12 cm):</b></i> field (default: <b>0.6671 x 10<sup>-12</sup> cm</b>. <p>
+<li>
+The H<sub>2</sub>O neutron scattering length density can be set in the <b><i>H<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> field (default: <b>-0.562 x 10<sup>-10</sup> cm<sup>2</sup></b>).<p>
+<li>
+The D<sub>2</sub>O neutron scattering lengths density can be set in the <i><b>D<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> field (default: <b>6.404 x 10<sup>-10</sup> cm<sup>2</sup></b>). <p>
+<li>
+The actual D<sub>2</sub>O content in the sample is set in the <b><i>Buffer D<sub>2</sub>O fraction (0 - 1):</i></b> field (default: <b>0.5</b>). <p>
+<li>
+The fraction of non-exchanged peptide hydrogen can be controlled in the <b><i>Fraction of non-exchanged peptide H (0 - 1):</b></i> field (default: <b>0.1</b>).
+<p></ul>
+
 The actual scattering length <i>b</i> at the set D<sub>2</sub>O fraction <i>Y</i>, <i>b(Y)</i>, for each atom <i>i</i>,
 <i>b(Y)<sub>i</sub></i>, is then computed by the program using this equation:<p>
 <i>b(Y)<sub>i</sub></i> = <i>b(0)<sub>i</sub></i> + <i>n(H<sub>Exch</sub>)<sub>i</sub></i> * <i>Y</i> * [<i>b(D)</i> - <i>b(H)</i>] *
@@ -51,9 +135,17 @@ The actual scattering length <i>b</i> at the set D<sub>2</sub>O fraction <i>Y</i
 where <i>b(0)<sub>i</sub></i> are the neutron scattering lengths of the non-H atoms at <i>Y</i> = 0 and <i>n(H<sub>Exch</sub>)<sub>i</sub></i> are the number of exchangeable H attached to them (both tabulated in the
 <a href="somo-hybrid.png">hybridization table</a>), <i>b(D)</i> and <i>b(H)</i> are the D and H scattering lengths, respectively,
 and <i>f(NH<sub>NExch</sub>)<sub>i</sub></i> is the fraction of non-exchanged peptide bond H (which is 0 for all atoms except
-for the peptide bond N atom), all as defined in the <b>SAXS/SANS Simulation Options:</b> panel (see above).
+for the peptide bond N atom), all as defined in this panel (see above).
 <p>
-The <b>Curve Generation Options:</b> section contains fields whose values are used in the simulation of either a
+As for the SAXS Computation options panel, we have listed a series of alternative methods for the computation of the SANS <i>I(q)</i> vs. <i>q</i> curves. However, none it is active at this time (March 2012).<p>
+<hr>
+
+<p><center>
+<img SRC="somo-SAS_Curve_Generation_Options.png" ALT="SOMO SAS Curve generation options">
+</center>
+<p>
+
+The <b>SAS Curve Generation Options:</b> section contains fields whose values are used in the simulation of either a
 SAXS or a SANS curve.<br>
 Enter either the X-ray or neutron wavelength in the <b><i>Wavelength (Angstrom):</i></b> field (default: <b>1.5 A</b> for
 SAXS; for SANS, an usual value is <b>6 A</b>).<br>
@@ -64,10 +156,67 @@ transformation from angle units to scattering vector <i>q</i> units is automatic
 Default values are <b>0.001</b> to <b>0.6 A<sup>-1</sup></b> <i>q</i> range with a <b>0.015</b> stepsize, corresponding to an
 angular range of <b>0.014</b> to <b>8.214 degrees</b> with a <b>0.2 degrees</b> stepsize for a wavelength of 1.5 A.
 <p>
-The <b>Hydrate the Original Model (PDB files only)</b> checkbox is instead currently (January 2010) inactive. In the
-future, it should allow the addition of the theoretically-bound water of hydration in specific locations at the surface
-of the atomic structure under study, for a better evaluation of the SAXS curves. 
+The <i>Normalize P(r) vs r curve by molecular weight</i> is selected by default. Deselecting it will cause the <i>P(r)</i> vs. <i>r</i> curves to be normalized only by their areas.<p>
 
+<hr>
+
+<p><center>
+<img SRC="somo-SAS_Bead_Model_Options.png" ALT="SOMO SAS bead models options">
+</center>
+<p>
+The options in this panel are currently not yet (March 2012) active.<p>
+<hr>
+The <b><i>US-SOMO SAS Hydration Options</i></b> are not yet (March 2012) available for general release.<p>
+
+<hr>
+<p><center>
+<img SRC="somo-SAS_Guinier_Options.png" ALT="SOMO SAS Guinier options">
+</center>
+<p>
+In the <b><i>SAS Guinier Options</i></b> menu, the options controlling the Guinier analysis of SAS data can be set:<p>
+The results can be saved in a csv file by selecting the <i>Save Guinier results to csv file:</i> checkbox, and entering a filename in the related field.<p>
+Other controls are:
+<ul>
+<li>
+The <b><i>Maximun q * Rg:</i></b> value (default: <b>1.3</b>).<p>
+<li>
+The <b><i>Maximum q value for Guinier search:</i></b> value (default: <b>0.5 1/A</b>).<p>
+<li>
+The <b><i>Minimum number of points:</i></b> to be included in the analysis (default: <b>10</b>).<p>
+The <b><i>Maximum number of points:</i></b> to be included in the analysis (default: <b>100</b>).<p>
+</ul>
+
+<hr>
+<p><center>
+<img SRC="somo-SAS_Miscellaneous_Options.png" ALT="SOMO SAS Miscellaneous options">
+</center>
+<p>
+In the <b><i>SAS Miscellaneous Options</i></b> menu, several controls and limits can be set.<p> 
+In order to properly compute the  <i>I(q)</i> vs. <i>q</i> and <i>P(r)</i> vs. <i>r</i> curves, the SAS module utilizes the  <a href="somo-2.png">atom definition</a> (default: <i>somo.atom</i>), <a href="somo-hybrid.png">hybridization</a> (default: <i>somo.hybrid</i>) and <a href="somo-saxs_coeff1.png">SAXS coefficients</a> (default: <I>somo.saxs_atoms</i>) tables.<br>
+Different tables can be selected by pressing the <b><i>Load Atom Definition File</i></b>, <b><i>Load Hybridization File</i></b>, and <b><i>Load SAXS Coefficients File</i></b> buttons. See the <a href="somo.html">main help</a> for further explanations on the content and use of these tables.<p>
+Next come a series of checkboxes:<p>
+<ul>
+<li>
+
+<i>Always ask angstrom or nm</i>. By default, the <b>SAS</b> module operations assume that the length units are Angstrom. By selecting this box, a pop-up window will appear everytime a curve is uploaded/calculated, asking to define the length units (default: <b>Off</b>).<p>
+<li>
+<i>Calc I(q) ask for grid</i>. Selecting this checkbox will disable the pop-up window asking to use an already uploaded curve to set the grid for <i>I(q)</i> vs. <i>q</i> computations (default: <b>On</b>).<p>
+<li>
+<i>I(q) curves in Angstrom</i> and <i>I(q) curves in nanometers</i>. These mutually exclusive checkboxes define the length units when computing the <i>I(q)</i> vs. <i>q</i> curves (default: <b>A</b>). <p>
+<li>  
+<i>Expt. data in variance</i>. This will set if the errors reported in the experimental data files are SD or variances (default: <b>SD</b>). <p>
+<li>
+<i>Disable I(q) scaling</i>. Selecting this checbox will disable the scaling function at the end of an <i>I(q)</i> vs. <i>q</i> computation (default: <b>Off</b>).<p>
+<li>
+<i>Chi^2 fitting</i>. (default: <b>On</b>).<p>
+</ul>
+
+The <b><i>Excluded volume SWH [A^3]</i></b> field allows entering a volume for the SAS hydration water different from the one utilized for the hydrodynamic computations (see the <a href="somo_misc.html"><b>US-SOMO Miscellaneous Options</b></a> help page). If the field is left blank, the hydrodynamic hydration water volume will be used.<p> 
+The <b><i>Excluded volume scaling</i></b> field allows to modify by a % value the excluded volumes of the non-water atomic groups as tabulated in the <a href="somo-2.png">atom definition</a> table. <p>
+Pressing the <b><i>Clear remembered molecular weights</i></b> button will erase stored MW from the program's memory.<p>
+Finally, a different <i>q</i> range can be entered in the <b><i>I(q) curve q range for scaling, NNLS and best fit (Angstrom)</i></b> two fields. 
+<hr>
+No help is provided at this date (March 2012) for the <b>US-SOMO SAS Experimental Code Options</b> menu.
 
 <hr>
 <font face="helvetica" size="-1">
@@ -84,7 +233,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 26, 2010.
+Last modified on March 14, 2012.
 </font>
 </body>
 </html>

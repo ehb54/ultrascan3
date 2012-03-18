@@ -22,38 +22,80 @@
 <center>
 <h2>
 SOMO - Batch Operations Module:</h2>
+<h3><center>Last updated: March 2012 </center></h3><p>
 <p>
 <img SRC="somo-batch.png" ALT="SOMO Batch Operations Module">
 </center>
 <p>
-This module has been devised to allow the unattended processing of several files, from the bead model generation to the
-computation of the hydrodynamic parameters. The operations begin by loading the files in the module via the <b><i>Add Files</i></b>
+This module has been devised to allow the unattended processing of several files, from the generation of the bead models or of  multiple atomic-level conformations via a Discrete Molecular Dynamics (DMD) module, to the computation of several parameters (hydrodynamic, SAXS/SANS).<p>
+<hr>
+<center>
+<p>
+<img SRC="somo-batch1.png" ALT="SOMO Batch Operations Module first panel">
+</center>
+<p>
+
+The operations begin by loading the files in the module via the <b><i>Add Files</i></b>
 button. Several files can be loaded at the same time from the same directory location. Files can be of <b>both</b> kinds
-supported by <b>US-SOMO</b>, PDB structures or bead models. If unwanted files have been inadvertently loaded, or they are found later to be not suitable for processing (<i>see below</i>), they can be removed from the list by clicking on them and pressing the <b><i>Remove Selected</i></b> button. Once the list is completed, a single file can be selected by clicking on it, and multiple files can be selected by clicking on them while holding the <i>shift</i> key. <b><i>Select All</i></b> will obviously select all files.<p>
+supported by <b>US-SOMO</b>, PDB structures or bead models. If unwanted files have been inadvertently loaded, or they are found later to be not suitable for processing (<i>see below</i>), they can be removed from the list by clicking on them and pressing the <b><i>Remove Selected</i></b> button. Once the list is completed, a single file can be selected by clicking on it, and multiple files can be selected by clicking on them while holding the <i>shift</i> key. <b><i>Select All</i></b> will obviously select all files. The <b><i>Load into SOMO</i></b> and <b><i>Load into SAXS</i></b> buttons are active when exactly one file is selected and will load the file respectively into the SOMO main window or the SAXS/SANS main window. <p>
+
+<hr>
+<center>
+<p>
+<img SRC="somo-batch2.png" ALT="SOMO Batch Operations Module second panel">
+</center>
+<p>
 In order to allow for the unattended operations, the files must be checked for compliance with the <b>US-SOMO</b> requirements.
 In particular, their residues must be defined in the <i>somo.residue</i> lookup table and must contain all atoms. Alternatively,
-the parsing options can be set so to cope with these eventualities, by either skipping the incomple/not coded residues, or by the
+the parsing options can be set so to cope with these eventualities, by either skipping the incompleted/not coded residues, or by the
 use of approximate methods (a detailed description of these options can be found <a href=somo_pdb_parsing.html>here</a>).
 For bead models, they must match the overlap tolerance as set in the  <a href=somo_hydro.html>Hydrodynamic Computations Options</a>
 module.<br>
 The uploaded files are therefore screened for compliance with the settings shown in the <b>Screen selected files:</b> panel, by
 pressing the <b><i>Screen Selected</i></b> button. The progress window on the right side reports the progress of the operations,
 and list the problems that might be found with the files, prompting for corrective action to be taken.<p>
+
+<hr>
+<center>
+<p>
+<img SRC="somo-batch3.png" ALT="SOMO Batch Operations Module third panel">
+</center>
+<p>
+
 The sequence of batch operation is then set in the <b>Process selected files:</b> panel:<p>
-The alternative <i>Process Only First Model in PDBs with Multiple Models</i> and the <i>Process All Models in PDBs with Multiple Models</i> clickboxes control if just the first or all models should be processed in PDB files containing multiple models, like those derived from NMR studies. These options are active only if at least a PDB file is among the selected files.<p>
+The alternative <i>Process Only First Model in PDBs with Multiple Models</i> and the <i>Process All Models in PDBs with Multiple Models</i> clickboxes control if just the first or all models should be processed in PDB files containing multiple models, like those derived from NMR studies. These options are active only if at least a PDB file is among the selected files.<br>
+The <i>Run DMD</i> checkbox will enable <b><i>Discrete Molecular Dynamics (DMD)</b></i> runs to be carried on the selected files according to the DMD settings (see <a href="somo_cluster_dmd.html">here</a>).<br>
 The alternative <i>Build SoMo Bead Model</i> and <i>Build AtoB (Grid) Bead Model</i> dictate which bead modeling
 procedure will be used to generate the models. These options are active only if at least a PDB file is among the selected files.<p>
+
+Next comes a series of checkboxes relating to SAXS (and in the future SANS) computations (<b>be sure to check the SAXS options currently selected using the <i>Saxs Options</i> button at the bottom of this panel before launching the computations</b>):<p>
+<i>Compute SAXS I(q)</i> will allow the computation of the scattering intensity I(<i>q</i>) vs the momentum transfer <i>q</i> curves for each model (see <a href="somo_saxs.html">here</a>). <br>
+<i>I(q) search</i> is an advanced feature that will allow varying the <i>Buffer electron density</i>, the <i>Scaling excluded volume</i>, and <i>SWH</i> (explicit hydration water molecules) <i>excluded volume</i> in a combined, stepwise manner until a best fit with an experimental curve is found. (see <a href="somo_SAXS_search.html">here</a>). <b>IMPORTANT:</b> This selection operates only on local machine computations! For performing an I(<i>q</i>) search on a cluster resource, use the <a href="somo_cluster_advanced_options.html"><b><i>Advanced options</i></b></a> feature under the <a href="somo_cluster.html"><b><i>Cluster</i></b></a> module. <br>
+<i>Compute SAXS P(r)</i> will allow the computation of the distance distribution function P(<i>r</i>) vs <i>r</i> for each model (see <a href="somo_saxs.html">here</a>). <br>
+<i>Hydrate</i> will add explicit water molecules to the PDB file according to our statistical hydration scheme (see <a href="somo_hydrate.html">here</a>). This step is required if the computation of the I(<i>q</i>) vs. <i>q</i> is then performed with our Debye method, but not for other methods like Crysol (unless they are run with no hydration). <br>
+<i>Combined SAXS Results File</i> allows the generation of a single csv-formatted file containing all the computed data. A filename should be entered in the field provided.<br>
+<i>Create Individual Saxs Results File</i> will also produce individual computed SAXS results files. <br>
+<i>Compute I(q) average curves</i> and <i>Compute I(q) std deviation curves</i> become active only if the <i>Combined SAXS Results File</i> checkbox is enabled, and will append to the csv-formatted file extra line(s) containing average and standard deviation values calculated for all the I(<i>q</i>) curves. <br>
+<i>Compute P(r) average curves</i> and <i>Compute P(r) std deviation curves</i> become active only if the <i>Combined SAXS Results File</i> checkbox is enabled, and will append to the csv-formatted file extra line(s) containing average and standard deviation values calculated for all the P(<i>r</i>) curves. <p>
 The <i>Calculate Hydrodynamics</i> checkbox enables the computation of the hydrodynamic parameters after the bead model
-building phase is completed.<p>
-Selecting the <i>Single Hydro Results File:</i> checkbox will produce a single results' file, with at the end the
+building phase is completed.<br>
+Selecting the <i>Combined Hydro Results File:</i> checkbox will produce a single results' file, with at the end the
 averages of all parameters, instead of separate files for each model uploaded or generated. A filename for the single results'
 file must be provided in the dedicated space. Otherwise, each file will be named using the general <b>US-SOMO</b> rules and the
-prefixes present in the main program panel.<p>
+prefixes present in the main program panel.<br>
 A subset of parameters can be saved in another file in a comma-separated format by selecting the <i>Save parameters to file</i>
-clickbox. The parameters to be saved can be selected from the dedicated module (see <a href="somo_save.html">here</a>) accessed
+checkbox. The parameters to be saved can be selected from the dedicated module (see <a href="somo_save.html">here</a>) accessed
 by pressing the <b><i>Select Parameters to be Saved</i></b> button.<p>
-When all the preliminary operations have been completed, the batch operation can be launched by pressing the <b><i>Start</i></b> button, and the progress will be reported in the progress bar and in the right-side progress window. Operations can be aborted at
-any time by pressing the <b><i>Stop</i></b> button.
+
+<hr>
+<center>
+<p>
+<img SRC="somo-batch4.png" ALT="SOMO Batch Operations Module fourth panel">
+</center>
+<p>
+
+When all the preliminary operations have been completed, the batch operation on <b>your computer</b> can be launched by pressing the <b><i>Start</i></b> button, and the progress will be reported in the progress bar and in the right-side progress window. Operations can be aborted at any time by pressing the <b><i>Stop</i></b> button.<p>
+For more demanding computations (and for <b>all</b> the DMD computations), the operations can be transferred to high-end, (super)computing centers using the  <a href="somo_cluster.html"><b><i>Cluster</i></b></a> button. The <b><i>Saxs Options</i></b> button will instead open the <a href="somo_saxs_options.html">Saxs Options</a> panel.
 
 <p>
 
@@ -74,7 +116,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 1, 2010.
+Last modified on March 14, 2012.
 </font>
 </body>
 </html>

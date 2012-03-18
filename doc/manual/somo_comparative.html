@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO Model classifier</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - Model Classifier Module:</h2>
+<p>
+<h3><center>Last updated: March 2012 </center></h3><p>
+<img SRC="somo-Model_Classifier.png" ALT="SOMO Model Classifier Main">
+</center>
+<p>
+
+In this module you will find a tool for selecting a best matching model among a series of models, by comparing their pre-calculated hydrodynamic parameters with user-provided experimental values.
+<p>
+
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<p>
+<p>
+
+<td><center><img SRC="somo-Model_Classifier_param.png" ALT="Model Classifier parameters settings"></td>
+</tr>
+<tr>
+<td align=justify>
+
+In the first panel, the experimental parameters to be used are entered, and the methods used to screen the computed results against them are set.
+<p>
+The currently available parameters are listed in the <b>Select to enable variable comparison</b> column, and include:
+<ul>
+<li>
+<i>Sedimentation coefficient s [S]</i><br>
+<li>
+<i>Traslational diffusion coefficient D [cm^2/sec]</i><br>
+<li>
+<i>Stokes radius [nm]</i><br>
+<li>
+<i>Frictional ratio</i><br>
+<li>
+<i>Radius of gyration [nm] (from bead model)</i><br>
+<li>
+<i>Relaxation Time tau(h) [ns]</i><br>
+<li>
+<i>Intrinsic viscosity [cm^3/g]</i><p>
+
+</ul>
+Select the parameters you wish to use by clicking on their respective checkboxes.<p>
+Enter then the experimental values in the relative fields in the second column, <b>Experimental value</b>. Be careful to use the appropriate units, as indicated after each parameter in the first column.<p>
+The results can be sorted using several alternative criteria, listed under the <b>Sort results</b> group:
+<ul>
+<li>
+<b>Using percentage difference</b> subgroup:
+<ul>
+<li>
+<b>By ranked % absolute difference</b> This is the simplest procedure. Click on its checkbox to activate it, and rank the parameters according to a descending order (i.e. 1=most relevant) in the <b>Rank</b> field(s).<p>
+<li>
+<b>By weighted sum of % absolute differences</b> This is a way to rank
+ over multiple parameters without specifically assigning a numerical
+ rank to each parameter.  This is accomplished by computing a weighted
+ sum of absolute differences of every included parameter.  The weights
+ do not have to add up to 1.  Experimental values with higher
+ confidence should be assigned higher weights.  Click on its checkbox
+ to activate it, select the parameters to be included in the
+ <b>Included</b> column, and assigning a weight to each one in the
+ <b>Weight</b> column. <p> 
+
+</ul> 
+
+<li>
+<b>Equivalence class controls</b> subgroup:
+<ul>
+<li>
+<b>By equivalence class rank</b> Equivalence classes partition a range
+of values.  A value that falls into a specific equivalence class is
+equivalent to all other values within the equivalence class. The range
+runs from the <b>Minimun model value</b> to the <b>Maximum model
+value</b> and is composed of <b>Number of partitions</b> equivalence
+classes.  The equivalence class that contains the experimental value
+is given a distance of zero.  Equivalence classes next to the one
+containing the experimental value are given a distance of 1, and so
+on.  Adding up the distances of each of the selected variables gives
+the equivalence class rank.  Click on its checkbox to activate it, and
+fill up the <b>Number of partitions</b>, <b>Minimum model value</b>
+and <b>Maximum model value</b> fields for each parameter.<p>
+
+</ul> 
+</ul> 
+
+
+The current parameters and the criteria used for the
+sorting can be saved in a file (extension *.smp) by clicking on the
+<b><i>Save Parameters</i></b> button. <b><i>Reset Parameters</i></b>
+will clear all fields. Previously saved parameters can be re-loaded by
+clicking on the <b><i>Load Parameters</i></b> button.<p> The <b>Model
+classifier</b> will write the results in a file. Under the <b>Add
+columns to results</b> header you will find three columns containing
+checkboxes, <b>Experimental value</b>, <b>% Difference</b> and <b>%
+Absolute difference</b>. Selecting one or more checkboxes will add the
+corresponding value(s) to the output file.<p>
+
+
+</td>
+</tr>
+</table>
+
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<p>
+<p>
+<p>
+<p>
+
+<td> <center> <img SRC="somo-Model_Classifier_csv_process.png" ALT="Model Clasifier csv processing"></td>
+</tr>
+<tr>
+<td align=justify>
+<p>
+In the second panel, the calculated parameters are uploaded. They should be in *.csv files, most easily generated using the <i>Save parameters to a file</i> checkbox (and the <a href="somo_save.html"><b><i>Select Parameters to be Saved</i></b></a> module) in the <b>Hydrodynamic calculations</b> section of the main <b>US-SOMO</b> window. Only the parameters present in the *.csv files, identified through their headers, will be then available in the <b>Select to enable variable comparison</b> column.<p>
+
+Pressing the <b><i>Load</i></b> button will open the filesystem dialog and allow importing the required *.csv files into the left-side window. Files can then be selected by clicking on each filename, which will transfer them to the right-side window, or by pressing the <b><i>Select all</i></b> button.<br>
+<b><i>Remove</i></b> will remove files from the list.<br>
+<b><i>View</i></b> will bring up the results of the classifier (see below).<br>
+<b><i>Merge</i></b> will join the selected files from the list into one csv file.<br>
+<b><i>Set min/max</i></b> will set the <b>Minimum model value</b> and <b>Maximum model value</b> from the values found in the selected files<p>
+
+The files listed in the right-side window can be then selected for processing by individually clicking on them, or by pressing the <b><i>Select all</i></b> button.<br>
+<b><i>Remove</i></b> will remove files from the list.<br>
+<b><i>Merge</i></b> will join the selected files from the list into one csv file.<br>
+<b><i>Set min/max</i></b> will set the <b>Minimum model value</b> and <b>Maximum model value</b> from the values found in the selected files<p>
+<p>
+Once files has been selected, the <b>Model Classifier</b> can be launched by pressing the <b><i>Process</i></b> button, and the progress window at the far right will be updated. At the end, pressing <b><i>View</i></b> will open a window with all the selected columns:<p>
+<tr>
+<p>
+<td> <center> <img SRC="somo-Model_Classifier_csv_process1.png" ALT="Model Classifier view results"></td>
+<p>
+</tr>
+<tr>
+<td align=justify>
+<p>
+
+In the example above, the classifier used the weighted sum of % absolute differences to rank the models. By clicking on each column, the results can be sorted according to that column's values.<p>
+
+By pressing the <b><i>Save</i></b> button, a filesystem dialog will open allowing to save the results in a new *.csv file, which can then be opened with a standard spreadsheet. A typical results file after ranking by % absolute difference can be seen below:
+<tr>
+<p>
+<td> <center> <img SRC="somo-Model_Classifier_Results.png" ALT="Model Classifier csv results"></td>
+<p>
+</tr>
+
+
+
+</table>
+
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on March 16, 2012.
+</font>
+</body>
+</html>

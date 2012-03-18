@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO DMD set-up utility</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>US-SOMO - DMD set-up utility</h2>
+
+<h3><center>Last updated: March 2012 </center></h3><p>
+<p>
+<td><img SRC="somo-DMD_setup.png" ALT="SOMO DMD set-up utility"></td>
+</center>
+<p>
+This pop-up windows appears when clicking on the <b><i>RUN DMD</i></b> button in the main US-SOMO panel. 
+<p>
+The actually operative PDB file is shown in the <b>PDB file</b> field.<p>
+
+<b>Active</b>: whether or not the specific parameters/pdb will be run. <p>
+
+<b>Relax temp kcal/mol/kB</b>: This is the Anderson thermostat temperature for the relax phase of the simulation (default: <b>0.7</b> kcal/mol/kB). <p>
+
+<b>Relax time * 50fs</b>: is the duration of the relaxation phase in 50 fs units (default: <b>200</b> 50 fs). <p>
+
+<b>Relax PDB output timestep</b>: is the time interval for the simulation to output a PDB (default: <b>100</b> 50 fs).  <p>
+
+<b>Relax PDB output count</b>: is the number of PDBs produced  (Relax time / PDB timestep = PDB count) (default: 2). <p>
+
+<b>Run temp kcal/mol/kB</b>: This is the Anderson thermostat temperature for the run phase of the simulation (default: <b>0.5</b> kcal/mol/kB).<p>
+
+<b>Run time * 50fs</b>: is the duration of the run phase in 50 fs units (default: <b>1000000</b> 50 fs). <p>
+
+<b>Run PDB output timestep</b>: is the time interval for the run simulation to output a PDB (default: <b>1000</b> 50 fs).  <p>
+
+<b>Run PDB output count</b>: is the number of PDBs produced  (Run time / PDB timestep = PDB count) (default: 100). <p>
+
+The primary difference between the relax and equilibrium phases is the frequency of the heat exchange between the imaginary solvent and the system atoms. The relax phase exchanges heat 100 times more frequently in order to stabilize any energetic stress present in the initial structure. The equilibrium run exchanges heat at a physically realistic rate. <p>
+
+The <b>Static range parameter</b> (to be implemented) will provide a range of structure parts that will remain fixed during the simulation.
+
+<p>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on March 14, 2012.
+</font>
+</body>
+</html>
