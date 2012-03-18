@@ -68,7 +68,7 @@ files
 ./src/us_hydrodyn_sas_options_misc.cpp
 ./src/us_hydrodyn_sas_options_curve.cpp
 ./src/us_hydrodyn_cluster_advanced.cpp
-# ./src/us_hydrodyn_saxs.cpp has errors
+./src/us_hydrodyn_saxs.cpp
 ./src/us_hydrodyn_sas_options_experimental.cpp
 ./src/us_hydrodyn_sas_options_hydration.cpp
 ./src/us_hydrodyn_saxs_residuals.cpp
