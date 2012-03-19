@@ -847,7 +847,7 @@ die "$td could not be created\n" if !-d $td;
          "./include/us_hydrodyn_saxs_buffer_conc.h",
          "./include/us_hydrodyn_saxs_buffer_conc_load.h",
          "./include/us_imgviewer.h",
-         "./include/wt/scrollbar.h",
+         "./include/qwt/scrollbar.h",
          "./include/qwt/scrollzoomer.h",
 
          "__eof"
@@ -1206,8 +1206,8 @@ SOURCES += \
   us_util.cpp \
 #  us_vbar.cpp \
   us_write_config.cpp \
-#  qwt/scrollbar.cpp \
-#  qwt/scrollzoomer.cpp
+  qwt/scrollbar.cpp \
+  qwt/scrollzoomer.cpp
 
 
 HEADERS += \
@@ -1306,9 +1306,9 @@ HEADERS += \
   us_util.h \
   us_version.h \
 #  us_vbar.h \
-  us_write_config.h
-#  qwt/scrollbar.h \
-#  qwt/scrollzoomer.h
+  us_write_config.h \
+  qwt/scrollbar.h \
+  qwt/scrollzoomer.h
 
 IMAGES = \
   include/editcopy.xpm \
