@@ -106,9 +106,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
-   plot->setPalette( QPalette( USglobal->global_colors.cg_normal,
-            USglobal->global_colors.cg_normal,
-            USglobal->global_colors.cg_normal ) );
+   plot->setPalette( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );

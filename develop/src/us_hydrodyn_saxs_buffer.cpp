@@ -155,6 +155,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_add_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
+   pb_similar_files = new QPushButton(tr("Similar"), this);
+   pb_similar_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_similar_files->setMinimumHeight(minHeight3);
+   pb_similar_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_similar_files, SIGNAL(clicked()), SLOT(similar_files()));
+
    pb_conc = new QPushButton(tr("Concentrations"), this);
    pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc->setMinimumHeight(minHeight3);
@@ -607,6 +613,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // build layout
    QBoxLayout *hbl_file_buttons = new QHBoxLayout( 0 );
    hbl_file_buttons->addWidget ( pb_add_files );
+   hbl_file_buttons->addWidget ( pb_similar_files );
    hbl_file_buttons->addWidget ( pb_conc);
    hbl_file_buttons->addWidget ( pb_clear_files );
 
@@ -1428,9 +1435,10 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
       }
    }
 
+   pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->numRows() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
-   pb_avg           ->setEnabled( files_selected_count > 1 );
+   pb_avg                ->setEnabled( files_selected_count > 1 );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
@@ -1790,6 +1798,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          f_Is       .erase( lb_files->text( i ) );
          f_errors   .erase( lb_files->text( i ) );
          f_pos      .erase( lb_files->text( i ) );
+         f_name     .erase( lb_files->text( i ) );
          lb_files->removeItem( i );
       }
    }
@@ -1844,11 +1853,87 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
                                                          // "csv files (*.csv);;"
                                                          // "int files [crysol] (*.int);;"
                                                          // "fit files [crysol] (*.fit);;"
+                                                         "txt files [specify q, I, sigma columns] (*.txt);;"
                                                          , use_dir
                                                          , this
                                                          , "open file dialog"
                                                          , "Set files for grid files"
                                                          );
+   
+   QStringList add_filenames;
+   
+   if ( filenames.size() )
+   {
+      last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
+      QDir::setCurrent( last_load_dir );
+      editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
+   }
+
+   QString errors;
+
+   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   {
+      if ( *saxs_widget )
+      {
+         saxs_window->add_to_directory_history( filenames[ i ] );
+      }
+
+      QString basename = QFileInfo( filenames[ i ] ).baseName( true );
+      if ( !existing_items.count( basename ) )
+      {
+         if ( !load_file( filenames[ i ] ) )
+         {
+            errors += errormsg + "\n";
+         } else {
+            editor_msg( "black", QString( tr( "%1" ) ).arg( basename ) );
+            add_filenames << basename;
+         }
+         qApp->processEvents();
+      } else {
+         errors += QString( tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
+      }
+   }
+
+   if ( errors.isEmpty() )
+   {
+      editor_msg( "blue", tr( "Files loaded ok" ) );
+   } else {
+      editor_msg( "red", errors );
+   }
+
+   lb_files->insertStringList( add_filenames );
+
+   if ( add_filenames.size() &&
+        existing_items.size() )
+   {
+      lb_files->setBottomItem( existing_items.size() );
+   }
+
+   if ( add_filenames.size() && plot_dist_zoomer )
+   {
+      // we should only do this if the ranges are changed
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+      plot_files();
+   }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
+{
+   map < QString, bool > existing_items;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      existing_items[ lb_files->text( i ) ] = true;
+   }
+
+   QString use_dir = QDir::currentDirPath();
    
    QStringList add_filenames;
    
@@ -2188,6 +2273,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
                          "^("
                          "dat|"
                          "int|"
+                         "txt|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -2206,6 +2292,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    QTextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;
+
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
@@ -2219,6 +2306,14 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       errormsg = QString("Error: the file %1 is empty ").arg( filename );
       return false;
    }
+
+   // we should make some configuration for matches & offsets or column mapping
+   // just an ad-hoc fix for APS 5IDD
+   unsigned int offset = 0;
+   if ( ext == "txt" && qv[ 0 ].contains( "# File Encoding (File origin in Excel)" ) )
+   {
+      offset = 1;
+   }      
 
    vector < QString > q_string;
    vector < double >  q;
@@ -2237,32 +2332,36 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       
       QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
 
-      if ( tokens.size() > 1 )
+      if ( tokens.size() > 1 + offset )
       {
-         QString this_q_string = tokens[ 0 ];
-         double this_q         = tokens[ 0 ].toDouble();
-         double this_I         = tokens[ 1 ].toDouble();
+         QString this_q_string = tokens[ 0 + offset ];
+         double this_q         = tokens[ 0 + offset ].toDouble();
+         double this_I         = tokens[ 1 + offset ].toDouble();
          double this_e;
-         if ( tokens.size() > 2 )
+         if ( tokens.size() > 2 + offset)
          {
-            this_e = tokens[ 2 ].toDouble();
+            this_e = tokens[ 2 + offset ].toDouble();
          }
          if ( q.size() && this_q <= q[ q.size() - 1 ] )
          {
             cout << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
             break;
          }
-         q_string.push_back( this_q_string );
-         q       .push_back( this_q );
-         I       .push_back( this_I );
-         if ( tokens.size() > 2 )
+         if ( this_I != 0e0 )
          {
-            e.push_back( this_e );
+            q_string.push_back( this_q_string );
+            q       .push_back( this_q );
+            I       .push_back( this_I );
+            if ( tokens.size() > 2 + offset )
+            {
+               e.push_back( this_e + offset );
+            }
          }
       }
    }
 
    QString basename = QFileInfo( filename ).baseName( true );
+   f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
    f_qs_string [ basename ] = q_string;
    f_qs        [ basename ] = q;
@@ -2920,7 +3019,13 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
       return false;
    } 
 
-   QString use_filename = file + ".dat";
+   QString use_filename;
+   if ( f_name.count( file ) )
+   {
+      use_filename = f_name[ file ];
+   } else {
+      use_filename = file + ".dat";
+   }
 
    if ( QFile::exists( use_filename ) )
    {
@@ -5084,3 +5189,45 @@ void US_Hydrodyn_Saxs_Buffer::legend()
 #endif
 }
 
+void US_Hydrodyn_Saxs_Buffer::similar_files()
+{
+   vector < QString > selected;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected.push_back( lb_files->text( i ) );
+      }
+   }
+
+   if ( selected.size() != 1 )
+   {
+      return;
+   }
+
+   if ( !f_name.count( selected[ 0 ] ) )
+   {
+      editor_msg( 
+                 "red", 
+                 QString( tr( "Error: count not find disk reference for %1" ) )
+                 .arg( selected[ 0 ] ) );
+      return;
+   }
+
+   QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
+   QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).dirPath();
+   QString match   = similar;
+   match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
+
+   cout << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
+      .arg( similar )
+      .arg( dir )
+      .arg( match )
+      .ascii();
+   // go to that directory and get file list
+   // turn basename into regexp \\d{2,} into \\d+
+   // load unloaded files found with match
+   QDir::setCurrent( dir );
+   QDir qd;
+   add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+}

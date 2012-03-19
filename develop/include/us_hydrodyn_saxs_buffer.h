@@ -92,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QLabel        *lbl_files;
       QPushButton   *pb_add_files;
+      QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
       QPushButton   *pb_clear_files;
 
@@ -202,6 +203,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, vector < double > >  f_errors;
       map < QString, unsigned int >       f_pos;
 
+      map < QString, QString >            f_name;
+
       map < QString, bool >               created_files_not_saved;
 
       map < QString, double >             current_concs( bool quiet = false );
@@ -268,6 +271,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         zoom_info();
       void                         clear_files( QStringList files );
       void                         to_created( QString file );
+      void                         add_files( QStringList files );
 
    private slots:
 
@@ -277,6 +281,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void update_files();
       void update_created_files();
       void add_files();
+      void similar_files();
       void conc();
       void clear_files();
       void select_all();
