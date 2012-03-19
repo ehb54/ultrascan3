@@ -194,6 +194,8 @@ for ( $i = 0; $i < @files; $i++ )
     }
 
     undef $l;
+    undef %lasttypes;
+
     while ( <IN> )
     {
         $l++;
@@ -202,30 +204,42 @@ for ( $i = 0; $i < @files; $i++ )
             $lastnew =  $1;
             $lasttype = $2;
             $lasttype =~ s/(;|\().*$//;
+            $lasttypes{ $lastnew } = $lasttype;
         }
 
-        if ( /->\s*setPalette/ && !/PALET_/ )
+        $thissetpalette =  /(this\s*->|^)\s*setPalette.*cg_frame/;
+
+        if ( ( $thissetpalette || /->\s*setPalette/ ) && !/PALET_/ && !/^\s*\/\// )
         {
+            ( $this_var ) = $_ =~ /(\w+)\s*->\s*setPalette/;
+            undef $this_var if $this_var =~ 'this';
+
             ( $cgtype ) = $_ =~ /cg_(\w+)/;
             chomp;
             undef $ptype;
             undef $autfb;
 
-            if ( $pcg{ $cgtype } )
+            if ( $thissetpalette )
             {
-                $ptype = $pcg{ $cgtype };
-                $auftb = ( $acg{ $cgtype } =~ /^YES$/ ) ? 1 : 0;
+                $ptype = 'FRAME';
                 $ok_count++;
             } else {
-                if ( $pt{ $lasttype } )
+                if ( $pcg{ $cgtype } )
                 {
-                    $ptype = $pt{ $lasttype };
-                    $auftb = ( $at{ $lasttype } =~ /^YES$/ ) ? 1 : 0;
+                    $ptype = $pcg{ $cgtype };
+                    $auftb = ( $acg{ $cgtype } =~ /^YES$/ ) ? 1 : 0;
                     $ok_count++;
                 } else {
-                    $warns{ "type: $lasttype cg_: $cgtype" } .= " $fin_name";
-                    warn "warning: $fin line $l: no table entry for type: $lasttype cg_: $cgtype\n";
-                    $notok_count++;
+                    if ( $pt{ $lasttypes{ $this_var } } )
+                    {
+                        $ptype = $pt{ $lasttypes{ $this_var } };
+                        $auftb = ( $at{ $lasttypes{ $this_var } } =~ /^YES$/ ) ? 1 : 0;
+                        $ok_count++;
+                    } else {
+                        $warns{ "type: $lasttypes{ $this_var } cg_: $cgtype" } .= " $fin_name line:$l";
+                        warn "warning: $fin line $l: no table entry for type: $lasttypes{ $this_var} cg_: $cgtype\n";
+                        $notok_count++;
+                    }
                 }
             }
                     
@@ -239,11 +253,14 @@ for ( $i = 0; $i < @files; $i++ )
                 $setpal .= " PALET_$ptype );";
                 print OUT "$setpal\n";
 
-                if ( $auftb )
+                $use_this_var = $this_var;
+# uncomment for alternate behaviour
+#               $use_this_var = 'this' if !$use_this_var;
+                if ( $auftb && $use_this_var )
                 {
                     $setauf = $_;
                     $setauf =~ s/\S.*$//g;
-                    $setauf .= "AUTFBACK( $lastnew );";
+                    $setauf .= "AUTFBACK( $use_this_var );";
                     print OUT "$setauf\n";
                 }
             } else {
@@ -257,13 +274,16 @@ for ( $i = 0; $i < @files; $i++ )
                 print "    cgtype: $cgtype\n";
                 print "   lastnew: $lastnew\n";
                 print "  lasttype: $lasttype\n";
+                print "  this_var: $this_var\n";
+                print "  var_type: $lasttypes{ $this_var }\n";
                 print "     ptype: $ptype\n";
                 print "     autfb: " . ( $autfb ? "true" : "false"  ) . "\n";
                 print "    setpal: $setpal\n";
                 print "   setautf: $setauf\n";
             }
 
-            $used_types{ $lasttype }++;
+            $used_types{ $lasttypes{ $this_var } }++;
+            undef $lastnew;
         } else {
             print OUT $_;
         }
