@@ -25,7 +25,7 @@ files
 ./src/us_hydrodyn_advanced_config.cpp
 ./src/us_hydrodyn_asa.cpp
 ./src/us_config_gui.cpp
-./src/us_hydrodyn_bd.cpp
+# ./src/us_hydrodyn_bd.cpp
 ./src/us_hydrodyn_sas_options_sans.cpp
 ./src/us_hydrodyn_bead_output.cpp
 ./src/us_hydrodyn_comparative.cpp
@@ -36,7 +36,7 @@ files
 ./src/us_hydrodyn_csv_viewer.cpp
 ./src/us_hydrodyn_cluster_config.cpp
 ./src/us_hydrodyn_pdb_visualization.cpp
-./src/us_astfem_sim.cpp_save_ti_noise.cpp
+# ./src/us_astfem_sim.cpp_save_ti_noise.cpp
 # ./src/us_hydrodyn.cpp
 ./src/us_hydrodyn_batch_movie_opts.cpp
 ./src/us_hydrodyn_cluster_status.cpp
@@ -46,7 +46,7 @@ files
 ./src/us_admin.cpp
 ./src/us_util.cpp
 ./src/us_hydrodyn_hydro.cpp
-./src/us_hydrodyn_cluster_config_server.cpp
+# ./src/us_hydrodyn_cluster_config_server.cpp
 ./src/us_hydrodyn_overlap.cpp
 ./src/us_font.cpp
 ./src/us_hydrodyn_sas_options_guinier.cpp
@@ -56,7 +56,7 @@ files
 ./src/us_hydrodyn_addhybrid.cpp
 ./src/us_hydrodyn_cluster_submit.cpp
 ./src/us_hydrodyn_saxs_search.cpp
-./src/us_hydrodyn_anaflex_options.cpp
+# ./src/us_hydrodyn_anaflex_options.cpp
 ./src/us_hydrodyn_saxs_iqq_load_csv.cpp
 ./src/us_hydrodyn_addatom.cpp
 ./src/us_hydrodyn_pdb_tool_merge.cpp
