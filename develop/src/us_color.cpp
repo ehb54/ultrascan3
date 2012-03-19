@@ -19,9 +19,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   uint c1;
 #endif
 
-  setPalette(QPalette(USglobal->global_colors.cg_frame, 
-                      USglobal->global_colors.cg_frame, 
-                      USglobal->global_colors.cg_frame));
+  setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   setCaption(tr("Color Configuration for UltraScan"));
   
   lbl_background = new QLabel(tr("Frame Background"),this);
@@ -32,9 +30,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_background->setFont(QFont( USglobal->config_list.fontFamily, 
                                  USglobal->config_list.fontSize, 
                                  QFont::Bold));
-  lbl_background->setPalette(QPalette(temp_colors.cg_frame, 
-                                      temp_colors.cg_frame, 
-                                      temp_colors.cg_frame));
+  lbl_background->setPalette(QPalette(temp_colors.cg_frame, temp_colors.cg_frame, temp_colors.cg_frame));
 
 
   plot = new QwtPlot(this);
@@ -127,9 +123,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_progress->setFont(QFont( USglobal->config_list.fontFamily, 
                                USglobal->config_list.fontSize - 1, 
                                QFont::Bold));
-  lbl_progress->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                    USglobal->global_colors.cg_label, 
-                                    USglobal->global_colors.cg_label));
+  lbl_progress->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
 
   progress = new QProgressBar(100, this, "Analysis Progress");
@@ -154,9 +148,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_lcd->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize - 1, 
                           QFont::Bold));
-  lbl_lcd->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                               USglobal->global_colors.cg_label, 
-                               USglobal->global_colors.cg_label));
+  lbl_lcd->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   lcd  = new QLCDNumber( 7, this, "lcd" );
   lcd->setPalette( QPalette(temp_colors.cg_lcd, temp_colors.cg_lcd, temp_colors.cg_lcd));
@@ -174,9 +166,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_text->setFont(QFont( USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize - 1, 
                            QFont::Bold));
-  lbl_text->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                USglobal->global_colors.cg_label, 
-                                USglobal->global_colors.cg_label));
+  lbl_text->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   lbl_counter = new QLabel(tr("Counter:"),this);
   Q_CHECK_PTR(lbl_counter);
@@ -184,9 +174,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_counter->setFont(QFont( USglobal->config_list.fontFamily, 
                               USglobal->config_list.fontSize - 1, 
                               QFont::Bold));
-  lbl_counter->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                   USglobal->global_colors.cg_label, 
-                                   USglobal->global_colors.cg_label));
+  lbl_counter->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   cnt = new QwtCounter(this);
   Q_CHECK_PTR(cnt);
@@ -231,9 +219,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_reset->setAutoDefault(false);
   pb_reset->setFont(QFont( USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize));
-  pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                 USglobal->global_colors.cg_pushb_disabled, 
-                                 USglobal->global_colors.cg_pushb)); 
+  pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb)); 
   connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
 
   pb_help = new QPushButton(tr("Help"), this);
@@ -241,9 +227,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_help->setAutoDefault(false);
   pb_help->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
-  pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                USglobal->global_colors.cg_pushb_disabled, 
-                                USglobal->global_colors.cg_pushb));
+  pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
 
@@ -252,9 +236,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_apply->setAutoDefault(false);
   pb_apply->setFont(QFont( USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize));
-  pb_apply->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                 USglobal->global_colors.cg_pushb_disabled, 
-                                 USglobal->global_colors.cg_pushb));
+  pb_apply->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_apply, SIGNAL(clicked()), SLOT(apply()));
 
   pb_quit = new QPushButton(tr("Close"), this);
@@ -262,9 +244,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_quit->setAutoDefault(false);
   pb_quit->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
-  pb_quit->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                USglobal->global_colors.cg_pushb_disabled, 
-                                USglobal->global_colors.cg_pushb));
+  pb_quit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_quit, SIGNAL(clicked()), SLOT(quit()));
 
   pb_delete = new QPushButton(tr("Delete"), this);
@@ -272,9 +252,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_delete->setAutoDefault(false);
   pb_delete->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_delete->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_delete->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_delete, SIGNAL(clicked()), SLOT(delete_scheme()));
 
 
@@ -285,9 +263,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_assign->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize, 
                              QFont::Bold));
-  lbl_assign->setPalette(QPalette(USglobal->global_colors.cg_frame, 
-                                  USglobal->global_colors.cg_frame, 
-                                  USglobal->global_colors.cg_frame));
+  lbl_assign->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   lbl_assign->setMinimumHeight(30);
 
 
@@ -297,9 +273,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_select->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_select->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_select->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   
   lbl_choice = new QLabel("",this);
   Q_CHECK_PTR(lbl_choice);
@@ -307,9 +281,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_choice->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_choice->setPalette(QPalette(USglobal->global_colors.cg_edit, 
-                                  USglobal->global_colors.cg_edit, 
-                                  USglobal->global_colors.cg_edit));
+  lbl_choice->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 
 
   lbl_color1 = new QLabel("",this);
@@ -318,9 +290,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color1->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color1->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color1->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   
   color_field1 = new QLabel("", this);
   Q_CHECK_PTR(color_field1);
@@ -332,9 +302,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color1->setAutoDefault(false);
   pb_color1->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color1->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color1, SIGNAL(clicked()), SLOT(pick_color1()));
 
   lbl_color2 = new QLabel("",this);
@@ -343,9 +311,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color2->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color2->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   color_field2 = new QLabel("", this);
   Q_CHECK_PTR(color_field2);
@@ -357,9 +323,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color2->setAutoDefault(false);
   pb_color2->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color2->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color2->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color2, SIGNAL(clicked()), SLOT(pick_color2()));
 
   lbl_color3 = new QLabel("",this);
@@ -368,9 +332,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color3->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color3->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color3->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   color_field3 = new QLabel("", this);
   Q_CHECK_PTR(color_field3);
@@ -382,9 +344,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color3->setAutoDefault(false);
   pb_color3->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color3->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color3->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color3, SIGNAL(clicked()), SLOT(pick_color3()));
 
   lbl_color4 = new QLabel("",this);
@@ -393,9 +353,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color4->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color4->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color4->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   color_field4 = new QLabel("", this);
   Q_CHECK_PTR(color_field4);
@@ -408,9 +366,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color4->setAutoDefault(false);
   pb_color4->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color4->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color4->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color4, SIGNAL(clicked()), SLOT(pick_color4()));
 
   lbl_color5 = new QLabel("",this);
@@ -419,9 +375,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color5->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color5->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color5->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   
   color_field5 = new QLabel("", this);
   Q_CHECK_PTR(color_field5);
@@ -434,9 +388,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color5->setAutoDefault(false);
   pb_color5->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color5->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color5->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color5, SIGNAL(clicked()), SLOT(pick_color5()));
 
   lbl_color6 = new QLabel("",this);
@@ -445,9 +397,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_color6->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  lbl_color6->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_color6->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   color_field6 = new QLabel("", this);
   Q_CHECK_PTR(color_field6);
@@ -459,9 +409,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_color6->setAutoDefault(false);
   pb_color6->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_color6->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                  USglobal->global_colors.cg_pushb_disabled, 
-                                  USglobal->global_colors.cg_pushb));
+  pb_color6->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_color6, SIGNAL(clicked()), SLOT(pick_color6()));
 
   lbl_choices = new QLabel(tr("Please Make a Selection:"),this);
@@ -471,9 +419,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_choices->setFont(QFont( USglobal->config_list.fontFamily, 
                               USglobal->config_list.fontSize, 
                               QFont::Bold));
-  lbl_choices->setPalette(QPalette(USglobal->global_colors.cg_frame, 
-                                   USglobal->global_colors.cg_frame, 
-                                   USglobal->global_colors.cg_frame));
+  lbl_choices->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   lbl_choices->setMinimumHeight(30);
 
   lbl_select_scheme = new QLabel(tr("Select Color Scheme:"),this);
@@ -482,9 +428,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_select_scheme->setFont(QFont( USglobal->config_list.fontFamily, 
                                     USglobal->config_list.fontSize - 1, 
                                     QFont::Bold));
-  lbl_select_scheme->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                         USglobal->global_colors.cg_label, 
-                                         USglobal->global_colors.cg_label));
+  lbl_select_scheme->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   
   lbl_select_element = new QLabel(tr("Select a Screen Element:"),this);
   Q_CHECK_PTR(lbl_select_element);
@@ -492,9 +436,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_select_element->setFont(QFont( USglobal->config_list.fontFamily, 
                                      USglobal->config_list.fontSize - 1, 
                                      QFont::Bold));
-  lbl_select_element->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                          USglobal->global_colors.cg_label, 
-                                          USglobal->global_colors.cg_label));
+  lbl_select_element->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   
   QDir scheme_dir1, scheme_dir2;
   QString str, filter = "*.col";
@@ -531,9 +473,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
       lb_scheme->insertItem(str);
     }
   }
-  lb_scheme->setPalette(QPalette(USglobal->global_colors.cg_normal, 
-                                 USglobal->global_colors.cg_normal, 
-                                 USglobal->global_colors.cg_normal));
+  lb_scheme->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
   lb_scheme->setCurrentItem(0);
   lb_scheme->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize - 1, 
@@ -557,9 +497,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lb_item->insertItem(tr("Widget Colors"));
   lb_item->insertItem(tr("LCD Panel"));
   
-  lb_item->setPalette(QPalette(USglobal->global_colors.cg_normal, 
-                               USglobal->global_colors.cg_normal, 
-                               USglobal->global_colors.cg_normal));
+  lb_item->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
   lb_item->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize - 1, 
                           QFont::Bold));
@@ -572,9 +510,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   pb_save_as->setAutoDefault(false);
   pb_save_as->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize));
-  pb_save_as->setPalette( QPalette(USglobal->global_colors.cg_pushb, 
-                                   USglobal->global_colors.cg_pushb_disabled, 
-                                   USglobal->global_colors.cg_pushb));
+  pb_save_as->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   connect(pb_save_as, SIGNAL(clicked()), SLOT(save_as()));
 
   le_save_as = new QLineEdit(save_str, this);
@@ -582,9 +518,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   le_save_as->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
-  le_save_as->setPalette(QPalette(USglobal->global_colors.cg_normal, 
-                                  USglobal->global_colors.cg_normal, 
-                                  USglobal->global_colors.cg_normal));
+  le_save_as->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
   connect(le_save_as, SIGNAL(textChanged(const QString &)), SLOT(update_save_str(const QString &)));
   connect(le_save_as, SIGNAL(returnPressed(void)), SLOT(save_as(void)));
   

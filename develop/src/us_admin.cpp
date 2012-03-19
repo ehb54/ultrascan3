@@ -13,16 +13,12 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
   int buttonh = 26;
   
   USglobal = new US_Config();
-  setPalette(QPalette(USglobal->global_colors.cg_frame, 
-                      USglobal->global_colors.cg_frame, 
-                      USglobal->global_colors.cg_frame));
+  setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   
   lbl_blank = new QLabel(tr(" Change Administrator Password:"), this);
   lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
   lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);  
-  lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, 
-                                 USglobal->global_colors.cg_frame, 
-                                 USglobal->global_colors.cg_frame));
+  lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   
   lbl_blank->setMinimumHeight( buttonh * 3 / 2 );
   
@@ -32,18 +28,14 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
     
   lbl_psswd1 = new QLabel(tr(" Enter New Password:"),this);
   lbl_psswd1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-  lbl_psswd1->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_psswd1->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_psswd1->setMinimumHeight(buttonh);
   lbl_psswd1->setFont(QFont(USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize - 1, 
                             QFont::Bold));
     
   le_psswd1 = new QLineEdit("",this);
-  le_psswd1->setPalette(QPalette(USglobal->global_colors.cg_edit, 
-                                 USglobal->global_colors.cg_edit, 
-                                 USglobal->global_colors.cg_edit));
+  le_psswd1->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
   le_psswd1->setFont(QFont(USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize - 1, 
                            QFont::Bold));
@@ -55,18 +47,14 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
   
   lbl_psswd2 = new QLabel(tr(" Verify New Password:"),this);
   lbl_psswd2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-  lbl_psswd2->setPalette(QPalette(USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label, 
-                                  USglobal->global_colors.cg_label));
+  lbl_psswd2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_psswd2->setMinimumHeight(buttonh);
   lbl_psswd2->setFont(QFont(USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize - 1, 
                             QFont::Bold));
   
   le_psswd2 = new QLineEdit("",this);
-  le_psswd2->setPalette(QPalette(USglobal->global_colors.cg_edit, 
-                                 USglobal->global_colors.cg_edit, 
-                                 USglobal->global_colors.cg_edit));
+  le_psswd2->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
   le_psswd2->setFont(QFont(USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize - 1, 
                            QFont::Bold));
@@ -80,9 +68,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
   pb_help->setAutoDefault(false);
   pb_help->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
-  pb_help->setPalette(QPalette(USglobal->global_colors.cg_pushb, 
-                               USglobal->global_colors.cg_pushb_disabled, 
-                               USglobal->global_colors.cg_pushb_active));
+  pb_help->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
   pb_help->setMinimumHeight(buttonh);
   pb_help->setEnabled(true);
   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
@@ -91,9 +77,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
   pb_save->setAutoDefault(false);
   pb_save->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
-  pb_save->setPalette(QPalette(USglobal->global_colors.cg_pushb, 
-                               USglobal->global_colors.cg_pushb_disabled, 
-                               USglobal->global_colors.cg_pushb_active));
+  pb_save->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
   pb_save->setMinimumHeight(buttonh); pb_save->setEnabled(true);
   connect(pb_save, SIGNAL(clicked()), SLOT(save()));
           
@@ -101,9 +85,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
   pb_cancel->setAutoDefault(false);
   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
-  pb_cancel->setPalette(QPalette(USglobal->global_colors.cg_pushb, 
-                                 USglobal->global_colors.cg_pushb_disabled, 
-                                 USglobal->global_colors.cg_pushb_active));
+  pb_cancel->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
   pb_cancel->setMinimumHeight(buttonh);
   pb_cancel->setEnabled(true);
   connect(pb_cancel, SIGNAL(clicked()), SLOT(quit()));

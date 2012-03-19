@@ -39,9 +39,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
    le_browser->setFont( QFont( USglobal->config_list.fontFamily, 
                                USglobal->config_list.fontSize - 1));
 
-   le_browser->setPalette( QPalette( USglobal->global_colors.cg_edit, 
-                                     USglobal->global_colors.cg_edit, 
-                                     USglobal->global_colors.cg_edit));
+   le_browser->setPalette( QPalette( USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 
    US_Config::connect(le_browser, SIGNAL(textChanged(const QString &)), this, SLOT(update_browser(const QString &)));
 
@@ -200,9 +198,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
    cnt_numThreads->setValue(USglobal->config_list.numThreads);
    cnt_numThreads->setEnabled(true);
    cnt_numThreads->setNumButtons(2);
-   cnt_numThreads->setPalette( QPalette( USglobal->global_colors.cg_normal, 
-                                         USglobal->global_colors.cg_normal, 
-                                         USglobal->global_colors.cg_normal));
+   cnt_numThreads->setPalette( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    cnt_numThreads->setFont( QFont( USglobal->config_list.fontFamily, 
                                    USglobal->config_list.fontSize - 1));
