@@ -71,6 +71,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
 
+   //   le_regex     ->setMaximumWidth( csv_width / 4 );
+   //   le_regex_args->setMaximumWidth( csv_width / 3 );
+
    int percharwidth = 7;
    {
       vector < QPushButton * > pbs;
@@ -149,6 +152,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
+   lbl_dir = new QLabel( QDir::currentDirPath(), this );
+   lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+
    pb_add_files = new QPushButton(tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_add_files->setMinimumHeight(minHeight3);
@@ -172,6 +180,24 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_clear_files->setMinimumHeight(minHeight3);
    pb_clear_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_files, SIGNAL(clicked()), SLOT(clear_files()));
+
+   pb_regex_load = new QPushButton(tr("RL"), this);
+   pb_regex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_regex_load->setMinimumHeight(minHeight3);
+   pb_regex_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_regex_load, SIGNAL(clicked()), SLOT(regex_load()));
+
+   le_regex = new QLineEdit(this, "le_regex Line Edit");
+   le_regex->setText( "" );
+   le_regex->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_regex->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_regex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_regex_args = new QLineEdit(this, "le_regex_args Line Edit");
+   le_regex_args->setText( "" );
+   le_regex_args->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_regex_args->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_regex_args->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    lb_files = new QListBox(this, "files files listbox" );
    lb_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -617,6 +643,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons->addWidget ( pb_conc);
    hbl_file_buttons->addWidget ( pb_clear_files );
 
+   QBoxLayout *hbl_file_buttons_1 = new QHBoxLayout( 0 );
+   hbl_file_buttons_1->addWidget ( pb_regex_load );
+   hbl_file_buttons_1->addWidget ( le_regex );
+   hbl_file_buttons_1->addWidget ( le_regex_args );
+
    QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
@@ -658,7 +689,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    QBoxLayout *vbl_files = new QVBoxLayout( 0 );
    vbl_files->addWidget( lbl_files );
+   vbl_files->addWidget( lbl_dir );
    vbl_files->addLayout( hbl_file_buttons );
+   vbl_files->addLayout( hbl_file_buttons_1 );
+   //   vbl_files->addLayout( hbl_file_buttons_1b );
    vbl_files->addWidget( lb_files );
    vbl_files->addWidget( lbl_selected );
    vbl_files->addLayout( hbl_file_buttons_2 );
@@ -672,7 +706,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_created );
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
-
 
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
@@ -1866,6 +1899,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
       QDir::setCurrent( last_load_dir );
+      lbl_dir->setText(  QDir::currentDirPath() );
+
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -1941,6 +1976,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
       QDir::setCurrent( last_load_dir );
+      lbl_dir->setText(  QDir::currentDirPath() );
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -2848,6 +2884,8 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
       editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
       return false;
    }
+   lbl_dir->setText(  QDir::currentDirPath() );
+
 
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
@@ -3012,6 +3050,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
       editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
       return false;
    }
+   lbl_dir->setText(  QDir::currentDirPath() );
 
    if ( !f_qs.count( file ) )
    {
@@ -5228,6 +5267,28 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    // turn basename into regexp \\d{2,} into \\d+
    // load unloaded files found with match
    QDir::setCurrent( dir );
+   lbl_dir->setText( QDir::currentDirPath() );
    QDir qd;
    add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+}
+
+void US_Hydrodyn_Saxs_Buffer::regex_load()
+{
+   // make list of lbl_dir all files
+   // filter with regex for each # in list
+   QString dir     = lbl_dir->text();
+
+   QDir::setCurrent( dir );
+   lbl_dir->setText( QDir::currentDirPath() );
+   QDir qd;
+
+   QStringList args = QStringList::split( QRegExp( "\\s+" ), le_regex_args->text() );
+
+   for ( unsigned int i = 0; i < args.size(); i++ )
+   {
+      QString match   = QString( le_regex->text() ).arg( args[ i ] );
+      editor_msg( "dark blue", 
+                  QString( tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
+      add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+   }
 }

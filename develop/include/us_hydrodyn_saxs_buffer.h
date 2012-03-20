@@ -91,10 +91,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QProgressBar  *progress;
 
       QLabel        *lbl_files;
+      QLabel        *lbl_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
       QPushButton   *pb_clear_files;
+
+      QPushButton   *pb_regex_load;
+      QLineEdit     *le_regex;
+      QLineEdit     *le_regex_args;
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
@@ -284,6 +289,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void similar_files();
       void conc();
       void clear_files();
+      void regex_load();
+
       void select_all();
       void invert();
       void join();
