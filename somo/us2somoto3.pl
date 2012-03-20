@@ -48,6 +48,7 @@ if ( $part1 ) {
     cmd('tar zxf somo-qwt5.tgz');
     cmd('rm -f somo-qwt5.tgz');
     cmd('perl ../us3add.pl');
+    cmd('cd ..; perl us3conv.pl -c');
 }
 
 cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus_somo.pro > libus_somo.pro.new; mv libus_somo.pro.new libus_somo.pro');
