@@ -113,6 +113,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_avg;
+      QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
 
       QPushButton   *pb_set_buffer;
@@ -299,6 +300,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void view();
       void rescale();
       void avg();
+      void normalize();
       void conc_avg();
       void set_buffer();
       void set_empty();
@@ -336,6 +338,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void crop_right();
       void legend();
       void guinier();
+
+      void rename_created( QListBoxItem *, const QPoint & );
 
    protected slots:
 

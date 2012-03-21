@@ -71,9 +71,6 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
 
-   //   le_regex     ->setMaximumWidth( csv_width / 4 );
-   //   le_regex_args->setMaximumWidth( csv_width / 3 );
-
    int percharwidth = 7;
    {
       vector < QPushButton * > pbs;
@@ -82,12 +79,14 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       // pbs.push_back( pb_clear_files );
 
       // pbs.push_back( pb_select_all );
+      pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
       pbs.push_back( pb_join );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
+      pbs.push_back( pb_normalize );
 
       // pbs.push_back( pb_avg );
       // pbs.push_back( pb_conc_avg );
@@ -103,7 +102,10 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
          pbs[ i ]->setMaximumWidth( percharwidth * ( pbs[ i ]->text().length() + 2 ) );
       }
    }
-
+   
+   int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
+   le_regex->setMaximumWidth( left_over / 3 );
+   le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );
 
    // progress        ->setMaximumWidth( csv_width / 3 );
    pb_help         ->setMinimumWidth( csv_width / 3 );
@@ -269,6 +271,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
 
+   pb_normalize = new QPushButton(tr("N"), this);
+   pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_normalize->setMinimumHeight(minHeight1);
+   pb_normalize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_normalize, SIGNAL(clicked()), SLOT(normalize()));
+
    pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
    pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc_avg->setMinimumHeight(minHeight1);
@@ -324,6 +332,9 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lb_created_files->setSelectionMode( QListBox::Multi );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( selectionChanged() ), SLOT( update_created_files() ) );
+   connect( lb_created_files, 
+            SIGNAL( rightButtonClicked( QListBoxItem *, const QPoint & ) ),
+            SLOT  ( rename_created    ( QListBoxItem *, const QPoint & ) ) );
 
    lbl_selected_created = new QLabel("0 files selected", this );
    lbl_selected_created->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -659,6 +670,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
+   hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_avg );
 
    QBoxLayout *hbl_buffer = new QHBoxLayout( 0 );
@@ -706,6 +718,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_created );
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
+
 
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
@@ -1472,6 +1485,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_conc               ->setEnabled( lb_files->numRows() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
    pb_avg                ->setEnabled( files_selected_count > 1 );
+   pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
@@ -5282,13 +5296,187 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    lbl_dir->setText( QDir::currentDirPath() );
    QDir qd;
 
-   QStringList args = QStringList::split( QRegExp( "\\s+" ), le_regex_args->text() );
+
+   QStringList regexs = QStringList::split( QRegExp( "\\s+" ), le_regex->text()      );
+   QStringList args   = QStringList::split( QRegExp( "\\s+" ), le_regex_args->text() );
 
    for ( unsigned int i = 0; i < args.size(); i++ )
    {
-      QString match   = QString( le_regex->text() ).arg( args[ i ] );
-      editor_msg( "dark blue", 
-                  QString( tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
-      add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+      for ( unsigned int j = 0; j < regexs.size(); j++ )
+      {
+         QString match   = QString( regexs[ j ] ).arg( args[ i ] );
+         editor_msg( "dark blue", 
+                     QString( tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
+         add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+      }
    }
 }
+
+void US_Hydrodyn_Saxs_Buffer::rename_created( QListBoxItem *lbi, const QPoint & )
+{
+   map < QString, bool > existing_items;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      existing_items[ lb_files->text( i ) ] = true;
+   }
+
+   QString dupmsg;
+   bool ok;
+   QString text = lbi->text();
+   do {
+      text = QInputDialog::getText(
+                                   tr("US-SOMO: Copy File"),
+                                   dupmsg + "New name:", 
+                                   QLineEdit::Normal,
+                                   text, 
+                                   &ok, 
+                                   this );
+      text.replace( QRegExp( "\\s" ), "_" );
+      if ( ok && !text.isEmpty() )
+      {
+         // user entered something and pressed OK
+         dupmsg = "";
+         if ( existing_items.count( text ) )
+         {
+            dupmsg = tr( "Name already exists, choose a unique name\n" );
+         }
+      } 
+   } while ( ok && !text.isEmpty() && !dupmsg.isEmpty() );
+
+   if ( !ok || text.isEmpty() )
+   {
+      return;
+   }
+   if ( existing_items.count( text ) )
+   {
+      editor_msg( "red", tr( "Internal error: duplicate name" ) );
+      return;
+   }
+
+   // just a copy right now, since lbi is "protected within this context"
+
+   lb_created_files->insertItem( text );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( text );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ text ] = true;
+
+   f_pos      [ text ] = f_qs.size(); // pos      [ lbi->text() ];
+   f_qs_string[ text ] = f_qs_string[ lbi->text() ];
+   f_qs       [ text ] = f_qs       [ lbi->text() ];
+   f_Is       [ text ] = f_Is       [ lbi->text() ];
+   if ( f_errors.count( lbi->text() ))
+   {
+      f_errors   [ text ] = f_errors   [ lbi->text() ];
+   }
+
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+   double lbi_conc = 
+      concs.count( lbi->text() ) ?
+      concs[ lbi->text() ] :
+      0e0;
+
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == text )
+      {
+         csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( lbi_conc );
+      }
+   }
+
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::normalize()
+{
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) && 
+           lb_files->text( i ) != lbl_buffer->text() &&
+           lb_files->text( i ) != lbl_empty->text() )
+      {
+         files << lb_files->text( i );
+      }
+   }
+
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+   map < QString, double > inv_concs;
+
+   for ( map < QString, double >::iterator it = concs.begin();
+         it != concs.end();
+         it++ )
+   {
+      if ( it->second != 0e0 )
+      {
+         inv_concs[ it->first ] = 1e0 / it->second;
+      }
+   }
+
+   map < QString, bool > existing_items;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      existing_items[ lb_files->text( i ) ] = true;
+   }
+
+   for ( unsigned int i = 0; i < files.size(); i++ )
+   {
+      
+      QString norm_name = files[ i ] + "_n";
+      unsigned int ext = 0;
+      while ( existing_items.count( norm_name ) )
+      {
+         norm_name = files[ i ] + QString( "_n%1" ).arg( ++ext );
+      }
+
+      lb_created_files->insertItem( norm_name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( norm_name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ norm_name ] = true;
+
+      f_pos      [ norm_name ] = f_qs.size(); 
+      f_qs_string[ norm_name ] = f_qs_string[ files[ i ] ];
+      f_qs       [ norm_name ] = f_qs       [ files[ i ] ];
+      f_Is       [ norm_name ] = f_Is       [ files[ i ] ];
+      for ( unsigned int j = 0; j < f_Is[ norm_name ].size(); j++ )
+      {
+         f_Is[ norm_name ][ j ] *= inv_concs[ files[ i ] ];
+      }
+      if ( f_errors.count( files[ i ] ))
+      {
+         f_errors   [ norm_name ] = f_errors   [ files[ i ] ];
+         for ( unsigned int j = 0; j < f_errors[ norm_name ].size(); j++ )
+         {
+            f_errors[ norm_name ][ j ] *= inv_concs[ files[ i ] ];
+         }
+      }
+
+      update_csv_conc();
+
+      for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+      {
+         if ( csv_conc.data[ i ].size() > 1 &&
+              csv_conc.data[ i ][ 0 ] == norm_name )
+         {
+            csv_conc.data[ i ][ 1 ] = "1";
+         }
+      }
+
+      if ( conc_widget )
+      {
+         conc_window->refresh( csv_conc );
+      }
+   }
+
+   update_enables();
+}
+
