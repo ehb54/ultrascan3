@@ -623,6 +623,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       lbl_guinier_cutoff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
       cnt_guinier_cutoff= new QwtCounter(this);
+      US_Hydrodyn::sizeArrows( cnt_guinier_cutoff );
       Q_CHECK_PTR(cnt_guinier_cutoff);
       cnt_guinier_cutoff->setRange(0.01, 100, 0.01);
       cnt_guinier_cutoff->setValue(guinier_cutoff);
@@ -650,6 +651,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_bin_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_bin_size= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_bin_size );
    Q_CHECK_PTR(cnt_bin_size);
    cnt_bin_size->setRange(0.01, 100, 0.01);
    cnt_bin_size->setValue(our_saxs_options->bin_size);

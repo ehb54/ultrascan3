@@ -1,4 +1,5 @@
 #include "../include/us_config_gui.h"
+#include "../include/us_hydrodyn.h"
 #include <qfontmetrics.h>
 #include <qmessagebox.h>
 
@@ -194,6 +195,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
    lbl_numThreads->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    cnt_numThreads= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_numThreads );
    cnt_numThreads->setRange(1, MAX_THREADS, 1);
    cnt_numThreads->setValue(USglobal->config_list.numThreads);
    cnt_numThreads->setEnabled(true);

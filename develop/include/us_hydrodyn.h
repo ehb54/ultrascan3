@@ -20,6 +20,7 @@
 #include <qmenubar.h>
 #include <qpopupmenu.h>
 #include <qprinter.h>
+#include "qwt_counter.h"
 
 #include "us.h"
 #include "us_timer.h"
@@ -162,6 +163,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo
       void setHydroFile(); // checks for file existance and resets suffix accordingly
+      static void sizeArrows( QwtCounter* );
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status

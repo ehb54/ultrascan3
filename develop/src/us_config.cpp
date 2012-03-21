@@ -1,6 +1,9 @@
 #include "../include/us_util.h"
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
+#ifdef QT4
+#include <QtCore>
+#endif
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -448,7 +451,23 @@ void US_Config::setDefault()
 
 #ifdef MAC
    config_list.browser = "/Applications/Safari.app";
+#ifndef QT4
    config_list.system_dir = "/Applications/UltraScanII";
+#else
+   QString ultrascan = getenv( "ULTRASCAN" );
+   if ( ultrascan != "" )
+      config_list.system_dir = QDir::convertSeparators( ultrascan );
+   else
+   {
+      QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+      if ( base.contains( ".app/Contents" ) )
+      {
+         int jj = base.lastIndexOf( "/bin/" );
+         base   = ( jj > 0 ) ? base.left( jj ) : base;
+      }
+      config_list.system_dir = base.remove( QRegExp( "/somo$" ) );
+   }
+#endif
 #else
 
    QString ultrascan = getenv( "ULTRASCAN" );
@@ -468,8 +487,13 @@ void US_Config::setDefault()
 #endif
 
    // Doc Directory
+#ifndef QT4
    config_list.help_dir =
       QDir::convertSeparators( config_list.system_dir + "/doc" );
+#else
+   config_list.help_dir =
+      QDir::convertSeparators( config_list.system_dir + "/somo/doc" );
+#endif
 
    // Set the per user directory and subdirectories
    config_list.root_dir = get_home_dir(  );

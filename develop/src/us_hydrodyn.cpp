@@ -4350,3 +4350,19 @@ void US_Hydrodyn::run_us_admin()
 void US_Hydrodyn::update_enables()
 {
 }
+
+void US_Hydrodyn::sizeArrows( QwtCounter* counter )
+{
+#ifdef Q_WS_MAC
+   QList< QObject* > children = counter->children();
+   QStyle* btnstyle = new QPlastiqueStyle();
+   for ( int jj = 0; jj < children.size(); jj++ )
+   {
+      QWidget* cwidg = (QWidget*)children.at( jj );
+      QString clname = cwidg->metaObject()->className();
+      if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+         cwidg->setStyle( btnstyle );
+   }
+#endif
+}
+
