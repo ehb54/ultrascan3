@@ -1,6 +1,9 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
+#ifdef QT4
+#include <qwt_scale_engine.h>
+#endif
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -475,6 +478,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 #ifndef QT4
    plot_dist->setAutoLegend( false );
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+#else
+   QwtLegend* legend_pd = new QwtLegend;
+   legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
 #endif
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
@@ -815,7 +822,7 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
    if ( created_not_saved_list.size() )
    {
       QStringList qsl;
-      for ( unsigned int i = 0; i < created_not_saved_list.size() && i < 15; i++ )
+      for ( int i = 0; i < (int)created_not_saved_list.size() && i < 15; i++ )
       {
          qsl << created_not_saved_list[ i ];
       }
@@ -1759,7 +1766,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    map < QString, bool > created_not_saved_map;
    map < QString, bool > selected_map;
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
       selected_map[ this_file ] = true;
@@ -1773,7 +1780,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    if ( created_not_saved_list.size() )
    {
       QStringList qsl;
-      for ( unsigned int i = 0; i < created_not_saved_list.size() && i < 15; i++ )
+      for ( int i = 0; i < (int)created_not_saved_list.size() && i < 15; i++ )
       {
          qsl << created_not_saved_list[ i ];
       }
@@ -1920,7 +1927,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 
    QString errors;
 
-   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   for ( int i = 0; i < (int)filenames.size(); i++ )
    {
       if ( *saxs_widget )
       {
@@ -1996,7 +2003,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
 
    QString errors;
 
-   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   for ( int i = 0; i < (int)filenames.size(); i++ )
    {
       if ( *saxs_widget )
       {
@@ -2053,7 +2060,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
 void US_Hydrodyn_Saxs_Buffer::plot_files()
 {
    plot_dist->clear();
-   bool any_selected = false;
+   //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
    double miny = 0e0;
@@ -2069,7 +2076,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    {
       if ( lb_files->isSelected( i ) )
       {
-         any_selected = true;
+         //any_selected = true;
          if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
@@ -2359,7 +2366,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    // we should make some configuration for matches & offsets or column mapping
    // just an ad-hoc fix for APS 5IDD
-   unsigned int offset = 0;
+   int offset = 0;
    if ( ext == "txt" && qv[ 0 ].contains( "# File Encoding (File origin in Excel)" ) )
    {
       offset = 1;
@@ -2372,7 +2379,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setMinimal( true );
-   for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
+   for ( int i = 1; i < (int) qv.size(); i++ )
    {
       if ( qv[i].contains(QRegExp("^#")) ||
            rx_ok_line.search( qv[i] ) == -1 )
@@ -2382,13 +2389,13 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       
       QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
 
-      if ( tokens.size() > 1 + offset )
+      if ( (int)tokens.size() > 1 + offset )
       {
          QString this_q_string = tokens[ 0 + offset ];
          double this_q         = tokens[ 0 + offset ].toDouble();
          double this_I         = tokens[ 1 + offset ].toDouble();
          double this_e;
-         if ( tokens.size() > 2 + offset)
+         if ( (int)tokens.size() > 2 + offset)
          {
             this_e = tokens[ 2 + offset ].toDouble();
          }
@@ -2402,7 +2409,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
             q_string.push_back( this_q_string );
             q       .push_back( this_q );
             I       .push_back( this_I );
-            if ( tokens.size() > 2 + offset )
+            if ( (int)tokens.size() > 2 + offset )
             {
                e.push_back( this_e + offset );
             }
@@ -2524,7 +2531,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
    bool all_nonzero_errors = true;
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
 
@@ -2608,7 +2615,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
                   tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
    }
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
 
@@ -2616,7 +2623,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       selected_files << this_file;
       if ( all_nonzero_errors )
       {
-         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             t_Is[ this_file ][ j ] /= t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ];
          }
@@ -2631,7 +2638,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
          avg_Is2       .resize( t_Is[ this_file ].size() );
          sum_weight    .resize( avg_qs.size() );
          sum_weight2   .resize( avg_qs.size() );
-         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
             sum_weight[ j ]  = weight;
@@ -2648,7 +2655,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
-         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > 5e-6 )
             {
@@ -2675,12 +2682,12 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }      
 
    vector < double > avg_sd( avg_qs.size() );
-   for ( unsigned int i = 0; i < avg_qs.size(); i++ )
+   for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
       avg_Is[ i ] /= sum_weight[ i ];
 
       double sum = 0e0;
-      for ( unsigned int j = 0; j < files.size(); j++ )
+      for ( int j = 0; j < (int)files.size(); j++ )
       {
          QString this_file = files[ j ];
          double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
@@ -2699,7 +2706,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    QString head = qstring_common_head( selected_files, true );
    QString tail = qstring_common_tail( selected_files, true );
 
-   unsigned int ext = 0;
+   int ext = 0;
 
    if ( !head.isEmpty() &&
         !head.contains( QRegExp( "_$" ) ) )
@@ -2715,7 +2722,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    QString avg_name = head + "avg" + tail;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {
       current_files[ lb_files->text( i ) ] = true;
    }
@@ -2744,7 +2751,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    // plot_dist_zoomer = (ScrollZoomer *) 0;
    // }
    update_csv_conc();
-   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   for ( int i = 0; i < (int)csv_conc.data.size(); i++ )
    {
       if ( csv_conc.data[ i ].size() > 1 &&
            csv_conc.data[ i ][ 0 ] == avg_name )
@@ -2771,7 +2778,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QStringList qsl, bool stri
       return qsl[ 0 ];
    }
    QString s = qsl[ 0 ];
-   for ( unsigned int i = 1; i < qsl.size(); i++ )
+   for ( int i = 1; i < (int)qsl.size(); i++ )
    {
       s = qstring_common_head( s, qsl[ i ] );
    }
@@ -2794,7 +2801,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QStringList qsl, bool stri
       return qsl[ 0 ];
    }
    QString s = qsl[ 0 ];
-   for ( unsigned int i = 1; i < qsl.size(); i++ )
+   for ( int i = 1; i < (int)qsl.size(); i++ )
    {
       s = qstring_common_tail( s, qsl[ i ] );
    }
@@ -2808,17 +2815,17 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QStringList qsl, bool stri
 QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QString s1, 
                                                       QString s2 )
 {
-   unsigned int min_len = s1.length();
-   if ( min_len > s2.length() )
+   int min_len = (int)s1.length();
+   if ( min_len > (int)s2.length() )
    {
-      min_len = s2.length();
+      min_len = (int)s2.length();
    }
 
    // could do this more efficiently via "divide & conquer"
    // i.e. split the distance in halfs and compare 
    
-   unsigned int match_max = 0;
-   for ( unsigned int i = 1; i <= min_len; i++ )
+   int match_max = 0;
+   for ( int i = 1; i <= min_len; i++ )
    {
       match_max = i;
       if ( s1.left( i ) != s2.left( i ) )
@@ -2833,17 +2840,17 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QString s1,
 QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QString s1, 
                                                       QString s2 )
 {
-   unsigned int min_len = s1.length();
-   if ( min_len > s2.length() )
+   int min_len = (int)s1.length();
+   if ( min_len > (int)s2.length() )
    {
-      min_len = s2.length();
+      min_len = (int)s2.length();
    }
 
    // could do this more efficiently via "divide & conquer"
    // i.e. split the distance in halfs and compare 
    
-   unsigned int match_max = 0;
-   for ( unsigned int i = 1; i <= min_len; i++ )
+   int match_max = 0;
+   for ( int i = 1; i <= min_len; i++ )
    {
       match_max = i;
       if ( s1.right( i ) != s2.right( i ) )
@@ -2901,7 +2908,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    lbl_dir->setText(  QDir::currentDirPath() );
 
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       if ( !f_qs.count( files[ i ] ) )
       {
@@ -2940,7 +2947,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    bool crop  = false;
    unsigned int min_q_len = 0;
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
 
@@ -3012,7 +3019,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
       .arg( tr( "US-SOMO Buffer Subtraction utility output" ) )
       .arg( crop ? tr( " cropped" ) : "" );
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       if ( !t_qs.count( files[ i ] ) )
       {
@@ -3046,7 +3053,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files( QStringList files )
 {
 
    bool errors = false;
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       if ( !save_file( files[ i ] ) )
       {
@@ -3107,10 +3114,10 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
       ts << "q                 \tI(q)\n";
    }
 
-   for ( unsigned int i = 0; i < f_qs[ file ].size(); i++ )
+   for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
    {
       if ( use_errors &&
-           f_errors[ file ].size() > i )
+           (int)f_errors[ file ].size() > i )
       {
          ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
                                     f_qs_string[ file ][ i ].ascii(),
@@ -3357,7 +3364,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
    bool all_nonzero_errors = true;
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
       t_qs_string[ this_file ] = f_qs_string[ this_file ];
@@ -3440,7 +3447,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
                   tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
    }
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       QString this_file = files[ i ];
 
@@ -3449,7 +3456,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
       if ( all_nonzero_errors )
       {
-         for ( unsigned int j = 0; j < t_Is[ this_file ].size(); j++ )
+         for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             t_Is[ this_file ][ j ] /= t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ];
          }
@@ -3470,14 +3477,14 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          nIs           = t_Is       [ this_file ];
          sum_weight    .resize( avg_qs.size() );
          sum_weight2   .resize( avg_qs.size() );
-         for ( unsigned int j = 0; j < nIs.size(); j++ )
+         for ( int j = 0; j < (int)nIs.size(); j++ )
          {
             nIs[ j ] *= inv_concs[ this_file ];
          }
          
          avg_Is        = nIs;
          avg_Is2       .resize( nIs.size() );
-         for ( unsigned int j = 0; j < nIs.size(); j++ )
+         for ( int j = 0; j < (int)nIs.size(); j++ )
          {
             double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ j ] * t_errors[ this_file ][ j ] ) : 1e0;
             sum_weight[ j ]  = weight;
@@ -3497,7 +3504,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          tot_conc  += inv_concs[ this_file ];
          tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
          nIs       = t_Is     [ this_file ];
-         for ( unsigned int j = 0; j < nIs.size(); j++ )
+         for ( int j = 0; j < (int)nIs.size(); j++ )
          {
             if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > 5e-6 )
             {
@@ -3528,12 +3535,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
    avg_conc /= files.size();
 
-   for ( unsigned int i = 0; i < avg_qs.size(); i++ )
+   for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
       avg_Is[ i ] /= sum_weight[ i ];
 
       double sum = 0e0;
-      for ( unsigned int j = 0; j < files.size(); j++ )
+      for ( int j = 0; j < (int)files.size(); j++ )
       {
          QString this_file = files[ j ];
          double weight    = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
@@ -3701,7 +3708,7 @@ QString US_Hydrodyn_Saxs_Buffer::vector_double_to_csv( vector < double > vd )
 
 void US_Hydrodyn_Saxs_Buffer::rescale()
 {
-   bool any_selected = false;
+   //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
    double miny = 0e0;
@@ -3717,7 +3724,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    {
       if ( lb_files->isSelected( i ) )
       {
-         any_selected = true;
+         //any_selected = true;
          if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
@@ -4145,6 +4152,7 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
 {
    if ( plot_dist_zoomer )
    {
+#ifndef QT4
       cout << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().x1() )
          .arg( plot_dist_zoomer->zoomRect().x2() )
@@ -4155,6 +4163,18 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
          .arg( plot_dist_zoomer->zoomBase().x2() )
          .arg( plot_dist_zoomer->zoomBase().y1() )
          .arg( plot_dist_zoomer->zoomBase().y2() );
+#else
+      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
+         .arg( plot_dist_zoomer->zoomRect().left() )
+         .arg( plot_dist_zoomer->zoomRect().right() )
+         .arg( plot_dist_zoomer->zoomRect().top() )
+         .arg( plot_dist_zoomer->zoomRect().bottom() );
+      cout << QString( "zoombase: %1 %2 %3 %4\n" )
+         .arg( plot_dist_zoomer->zoomBase().left() )
+         .arg( plot_dist_zoomer->zoomBase().right() )
+         .arg( plot_dist_zoomer->zoomBase().top() )
+         .arg( plot_dist_zoomer->zoomBase().bottom() );
+#endif
    } else {
       cout << "no current zoomer\n";
    }
@@ -4174,6 +4194,17 @@ void US_Hydrodyn_Saxs_Buffer::plot_mouse( const QMouseEvent & /* me */ )
 
 void US_Hydrodyn_Saxs_Buffer::select_vis()
 {
+#ifndef QT4
+   double zrx1  = plot_dist_zoomer->zoomRect().x1();
+   double zrx2  = plot_dist_zoomer->zoomRect().x2();
+   double zry1  = plot_dist_zoomer->zoomRect().y1();
+   double zry2  = plot_dist_zoomer->zoomRect().y2();
+#else
+   double zrx1  = plot_dist_zoomer->zoomRect().left();
+   double zrx2  = plot_dist_zoomer->zoomRect().right();
+   double zry1  = plot_dist_zoomer->zoomRect().top();
+   double zry2  = plot_dist_zoomer->zoomRect().bottom();
+#endif
    // find curves within zoomRect & select only them
    map < QString, bool > selected_files;
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -4186,10 +4217,10 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
          {
             for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
             {
-               if ( f_qs[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().x1() &&
-                    f_qs[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().x2() &&
-                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
-                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+               if ( f_qs[ this_file ][ i ] >= zrx1 &&
+                    f_qs[ this_file ][ i ] <= zrx2 &&
+                    f_Is[ this_file ][ i ] >= zry1 &&
+                    f_Is[ this_file ][ i ] <= zry2 )
                {
                   selected_files[ this_file ] = true;
                   break;
@@ -4214,6 +4245,17 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
 
 void US_Hydrodyn_Saxs_Buffer::remove_vis()
 {
+#ifndef QT4
+   double zrx1  = plot_dist_zoomer->zoomRect().x1();
+   double zrx2  = plot_dist_zoomer->zoomRect().x2();
+   double zry1  = plot_dist_zoomer->zoomRect().y1();
+   double zry2  = plot_dist_zoomer->zoomRect().y2();
+#else
+   double zrx1  = plot_dist_zoomer->zoomRect().left();
+   double zrx2  = plot_dist_zoomer->zoomRect().right();
+   double zry1  = plot_dist_zoomer->zoomRect().top();
+   double zry2  = plot_dist_zoomer->zoomRect().bottom();
+#endif
    // find curves within zoomRect & select only them
    cout << "select visible\n";
    QStringList selected_files;
@@ -4227,10 +4269,10 @@ void US_Hydrodyn_Saxs_Buffer::remove_vis()
          {
             for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
             {
-               if ( f_qs[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().x1() &&
-                    f_qs[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().x2() &&
-                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
-                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+               if ( f_qs[ this_file ][ i ] >= zrx1  &&
+                    f_qs[ this_file ][ i ] <= zrx2  &&
+                    f_Is[ this_file ][ i ] >= zry1  &&
+                    f_Is[ this_file ][ i ] <= zry2 )
                {
                   selected_files << this_file;
                   break;
@@ -4330,10 +4372,17 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
 
    // is the rectangle contained?
    if ( 
+#ifndef QT4
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
        maxy > plot_dist_zoomer->zoomRect().y2() )
+#else
+       minx < plot_dist_zoomer->zoomRect().left()  ||
+       maxx > plot_dist_zoomer->zoomRect().right() ||
+       miny < plot_dist_zoomer->zoomRect().top()   ||
+       maxy > plot_dist_zoomer->zoomRect().bottom() )
+#endif
    {
       all_lefts_visible = false;
    }
@@ -4346,8 +4395,13 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
+#ifndef QT4
       double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
       double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+#else
+      double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
+      double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
+#endif
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4379,6 +4433,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       {
          newminy = 0e0;
       }
+#ifndef QT4
       dr.setX1( newminx );
       dr.setY1( newminy );
 
@@ -4394,6 +4449,23 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       } else {         
          dr.setY2( newminy + dy * 1.1 );
       }
+#else
+      dr.setLeft( newminx );
+      dr.setTop ( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setRight( newminx + zdx );
+      } else {         
+         dr.setRight( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setBottom( newminy + zdy );
+      } else {         
+         dr.setBottom( newminy + dy * 1.1 );
+      }
+#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -4531,10 +4603,17 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
 
    // is the rectangle contained?
    if ( 
+#ifndef QT4
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
        maxy > plot_dist_zoomer->zoomRect().y2() )
+#else
+       minx < plot_dist_zoomer->zoomRect().left()  ||
+       maxx > plot_dist_zoomer->zoomRect().right() ||
+       miny < plot_dist_zoomer->zoomRect().top()   ||
+       maxy > plot_dist_zoomer->zoomRect().bottom() )
+#endif
    {
       all_rights_visible = false;
    }
@@ -4547,8 +4626,13 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
+#ifndef QT4
       double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
       double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+#else
+      double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
+      double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
+#endif
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4580,6 +4664,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       {
          newminy = 0e0;
       }
+#ifndef QT4
       dr.setX1( newminx );
       dr.setY1( newminy );
 
@@ -4595,6 +4680,23 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       } else {         
          dr.setY2( newminy + dy * 1.1 );
       }
+#else
+      dr.setLeft( newminx );
+      dr.setTop ( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setRight( newminx + zdx );
+      } else {         
+         dr.setRight( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setBottom( newminy + zdy );
+      } else {         
+         dr.setBottom( newminy + dy * 1.1 );
+      }
+#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -4854,11 +4956,18 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    }         
 
    // is the rectangle contained?
-   if ( 
+   if (
+#ifndef QT4
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
        maxy > plot_dist_zoomer->zoomRect().y2() )
+#else
+       minx < plot_dist_zoomer->zoomRect().left()  ||
+       maxx > plot_dist_zoomer->zoomRect().right() ||
+       miny < plot_dist_zoomer->zoomRect().top()   ||
+       maxy > plot_dist_zoomer->zoomRect().bottom() )
+#endif
    {
       all_lefts_visible = false;
    }
@@ -4874,8 +4983,13 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
+#ifndef QT4
       double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
       double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
+#else
+      double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
+      double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
+#endif
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4907,6 +5021,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       {
          newminy = 0e0;
       }
+#ifndef QT4
       dr.setX1( newminx );
       dr.setY1( newminy );
 
@@ -4922,6 +5037,23 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       } else {         
          dr.setY2( newminy + dy * 1.1 );
       }
+#else
+      dr.setLeft( newminx );
+      dr.setTop ( newminy );
+
+      if ( zdx > dx * 1.1 )
+      {
+         dr.setRight( newminx + zdx );
+      } else {         
+         dr.setRight( newminx + dx * 1.1 );
+      }
+      if ( zdy > dy * 1.1 )
+      {
+         dr.setBottom( newminy + zdy );
+      } else {         
+         dr.setBottom( newminy + dy * 1.1 );
+      }
+#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -5032,9 +5164,7 @@ void US_Hydrodyn_Saxs_Buffer::view()
          TextEdit *edit;
          edit = new TextEdit( this, file );
          edit->setFont    ( QFont( "Courier" ) );
-         edit->setPalette ( QPalette( USglobal->global_colors.cg_normal, 
-                                     USglobal->global_colors.cg_normal, 
-                                     USglobal->global_colors.cg_normal ) );
+         edit->setPalette ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
          edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
          // edit->setTitle( file );
          if ( QFile::exists( file + ".dat" ) )
@@ -5052,7 +5182,7 @@ void US_Hydrodyn_Saxs_Buffer::view()
 bool US_Hydrodyn_Saxs_Buffer::is_nonzero_vector( vector < double > &v )
 {
    bool non_zero = v.size() > 0;
-   for ( unsigned int i = 0; i < v.size(); i++ )
+   for ( int i = 0; i < (int)v.size(); i++ )
    {
       if ( v[ i ] == 0e0 )
       {
@@ -5066,7 +5196,7 @@ bool US_Hydrodyn_Saxs_Buffer::is_nonzero_vector( vector < double > &v )
 void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 {
    bool in_created = false;
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_created_files->numRows(); i++ )
    {
       if ( file == lb_created_files->text( i ) )
       {
@@ -5087,8 +5217,17 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 {
    
    // find curves within zoomRect & select only them
+#ifndef QT4
    double minx = plot_dist_zoomer->zoomRect().x1();
    double maxx = plot_dist_zoomer->zoomRect().x2();
+   double miny = plot_dist_zoomer->zoomRect().y1();
+   double maxy = plot_dist_zoomer->zoomRect().y2();
+#else
+   double minx = plot_dist_zoomer->zoomRect().left();
+   double maxx = plot_dist_zoomer->zoomRect().right();
+   double miny = plot_dist_zoomer->zoomRect().top();
+   double maxy = plot_dist_zoomer->zoomRect().bottom();
+#endif
 
    map < QString, bool > selected_files;
 
@@ -5104,8 +5243,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
             {
                if ( f_qs[ this_file ][ i ] >= minx &&
                     f_qs[ this_file ][ i ] <= maxx &&
-                    f_Is[ this_file ][ i ] >= plot_dist_zoomer->zoomRect().y1() &&
-                    f_Is[ this_file ][ i ] <= plot_dist_zoomer->zoomRect().y2() )
+                    f_Is[ this_file ][ i ] >= miny &&
+                    f_Is[ this_file ][ i ] <= maxy )
                {
                   selected_files[ this_file ] = true;
                   break;
@@ -5239,6 +5378,19 @@ void US_Hydrodyn_Saxs_Buffer::legend()
       plot_dist->setAutoLegend( true );
       plot_dist->enableLegend ( true, -1 );
    }
+#else
+   bool legvis = true;
+   QwtPlotItemList ilist = plot_dist->itemList();
+   for ( int ii = 0; ii < ilist.size(); ii++ )
+   {
+      QwtPlotItem* plitem = ilist[ ii ];
+      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
+         continue;
+      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
+      legvis = !legon;
+      plitem->setItemAttribute( QwtPlotItem::Legend, legvis );
+   }
+   plot_dist->legend()->setVisible( legvis );
 #endif
 }
 
@@ -5302,7 +5454,7 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
 
    for ( unsigned int i = 0; i < args.size(); i++ )
    {
-      for ( unsigned int j = 0; j < regexs.size(); j++ )
+      for ( int j = 0; j < (int)regexs.size(); j++ )
       {
          QString match   = QString( regexs[ j ] ).arg( args[ i ] );
          editor_msg( "dark blue", 
@@ -5315,7 +5467,7 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
 void US_Hydrodyn_Saxs_Buffer::rename_created( QListBoxItem *lbi, const QPoint & )
 {
    map < QString, bool > existing_items;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {
       existing_items[ lb_files->text( i ) ] = true;
    }

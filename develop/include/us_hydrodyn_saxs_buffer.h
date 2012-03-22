@@ -161,6 +161,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QwtPlot       *plot_dist;
       ScrollZoomer  *plot_dist_zoomer;
+#ifdef QT4
+      QwtPlotGrid   *grid_saxs;
+#endif
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;

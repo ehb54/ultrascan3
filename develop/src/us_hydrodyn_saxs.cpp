@@ -6,9 +6,7 @@
 #  include "../include/us_hydrodyn_saxs_screen.h"
 #endif
 #include "../include/us_hydrodyn_saxs_search.h"
-#ifndef QT4
-#  include "../include/us_hydrodyn_saxs_buffer.h"
-#endif
+#include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -4175,7 +4173,6 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
 
 void US_Hydrodyn_Saxs::saxs_buffer()
 {
-#ifndef QT4
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_widget )
    {
       if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->isVisible() )
@@ -4196,12 +4193,10 @@ void US_Hydrodyn_Saxs::saxs_buffer()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window = new US_Hydrodyn_Saxs_Buffer( buffer_csv, us_hydrodyn );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs::reset_buffer_csv()
 {
-#ifndef QT4
    if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
    {
       buffer_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv;
@@ -4275,7 +4270,6 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
       }
       buffer_csv.num_data.push_back(tmp_num_data);
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs::load_gnom()

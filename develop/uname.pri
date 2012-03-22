@@ -111,11 +111,12 @@ macx:contains (UNAME, powerpc) {
 }
 
 macx {
-   QMAKE_CFLAGS   += -arch ppc -arch i386
-   QMAKE_LFLAGS   += -arch ppc -arch i386
-   CFLAGS   += -arch ppc -arch i386
-   LDFLAGS   += -arch ppc -arch i386
-   QWTDIR        = /usr/local/qt3/qwt-4.2.0
-   QWT3DDIR      = /usr/local/qt3/qwtplot3d
+   CONFIG += x86 x86_64
+   ##QMAKE_CFLAGS   += -arch ppc -arch i386
+   ##QMAKE_LFLAGS   += -arch ppc -arch i386
+   ##CFLAGS   += -arch ppc -arch i386
+   ##LDFLAGS   += -arch ppc -arch i386
+   ##QWTDIR        = /usr/local/qt3/qwt-4.2.0
+   ##QWT3DDIR      = /usr/local/qt3/qwtplot3d
 }
 
