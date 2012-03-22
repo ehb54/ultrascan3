@@ -13,6 +13,11 @@ if [ "`uname -s`" = "Darwin" ]; then
   FIXMAC=./fix-mac-make.sh
 fi
 
+ISWIN=0
+if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
+  ISWIN=1
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0
@@ -42,26 +47,30 @@ do
   popd
 done
 
-d=doc/manual
-pushd $d
-sdir=`pwd`
-echo "Making in $d"   >> $DIR/build.log
-(cd $sdir;make 2>&1)  >> $DIR/build.log
-stat=$?
-if [ $stat -gt 0 ]; then
-   echo "  ***ERROR*** building $d"
-   NBERR=`expr ${NBERR} + 1`
+if [ $ISWIN -eq 0 ]; then
+  d=doc/manual
+  pushd $d
+  sdir=`pwd`
+  echo "Making in $d"   >> $DIR/build.log
+  (cd $sdir;make 2>&1)  >> $DIR/build.log
+  stat=$?
+  if [ $stat -gt 0 ]; then
+     echo "  ***ERROR*** building $d"
+     NBERR=`expr ${NBERR} + 1`
+  fi
+  popd
 fi
-popd
 
 if [ $ISMAC -eq 0 ]; then
-  if [ -d somo ]; then
-    # insure doxygen skips somo source
-    mv somo ../
-    doxygen >> $DIR/build.log
-    mv ../somo .
-  else
-    doxygen >> $DIR/build.log
+  if [ $ISWIN -eq 0 ]; then
+    if [ -d somo ]; then
+      # insure doxygen skips somo source
+      mv somo ../
+      doxygen >> $DIR/build.log
+      mv ../somo .
+    else
+      doxygen >> $DIR/build.log
+    fi
   fi
 else
   $DIR/libnames.sh >> $DIR/build.log

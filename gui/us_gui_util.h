@@ -12,7 +12,7 @@
 //! This class provides a number of general utility functions.
 //! All methods are static.
 //!
-class US_UTIL_EXTERN US_GuiUtil
+class US_GUI_EXTERN US_GuiUtil
 {
    public:
       //! \brief Save a plot to an SVG and/or PNG file

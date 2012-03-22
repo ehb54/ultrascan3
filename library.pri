@@ -42,6 +42,7 @@ win32 {
   LIBS                   += $${OPENSSL}/lib/libeay32.a
   LIBS                   += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS                   += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
+  LIBS                   += $$MINGWDIR/lib/libkernel32.a $$MINGWDIR/lib/libpsapi.a
 
   #QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.a /MACHINE:X86 /INCREMENTAL:NO 
   #QMAKE_CXXFLAGS_DEBUG   += /wd4996
