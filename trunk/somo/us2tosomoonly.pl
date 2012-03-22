@@ -836,19 +836,19 @@ die "$td could not be created\n" if !-d $td;
          "./include/change1",
 # ------ bring these back -----------
          "./src/us_imgviewer.cpp",
-         "./src/us_hydrodyn_saxs_screen.cpp",
-         "./src/us_hydrodyn_saxs_buffer.cpp",
-         "./src/us_hydrodyn_saxs_buffer_conc.cpp",
-         "./src/us_hydrodyn_saxs_buffer_conc_load.cpp",
-         "./src/qwt/scrollbar.cpp",
-         "./src/qwt/scrollzoomer.cpp",
-         "./include/us_hydrodyn_saxs_screen.h",
-         "./include/us_hydrodyn_saxs_buffer.h",
-         "./include/us_hydrodyn_saxs_buffer_conc.h",
-         "./include/us_hydrodyn_saxs_buffer_conc_load.h",
-         "./include/us_imgviewer.h",
-         "./include/qwt/scrollbar.h",
-         "./include/qwt/scrollzoomer.h",
+#         "./src/us_hydrodyn_saxs_screen.cpp",
+#         "./src/us_hydrodyn_saxs_buffer.cpp",
+#         "./src/us_hydrodyn_saxs_buffer_conc.cpp",
+#         "./src/us_hydrodyn_saxs_buffer_conc_load.cpp",
+#         "./src/qwt/scrollbar.cpp",
+#         "./src/qwt/scrollzoomer.cpp",
+#         "./include/us_hydrodyn_saxs_screen.h",
+#         "./include/us_hydrodyn_saxs_buffer.h",
+#         "./include/us_hydrodyn_saxs_buffer_conc.h",
+#         "./include/us_hydrodyn_saxs_buffer_conc_load.h",
+#         "./include/us_imgviewer.h",
+#         "./include/qwt/scrollbar.h",
+#         "./include/qwt/scrollzoomer.h",
 
          "__eof"
          );
@@ -1169,11 +1169,11 @@ SOURCES += \
   us_hydrodyn_saxs_plots.cpp \
   us_hydrodyn_saxs_pr.cpp \
   us_hydrodyn_saxs_residuals.cpp \
-#  us_hydrodyn_saxs_screen.cpp \
+  us_hydrodyn_saxs_screen.cpp \
   us_hydrodyn_saxs_search.cpp \
-#  us_hydrodyn_saxs_buffer.cpp \
-#  us_hydrodyn_saxs_buffer_conc.cpp \
-#  us_hydrodyn_saxs_buffer_conc_load.cpp \
+  us_hydrodyn_saxs_buffer.cpp \
+  us_hydrodyn_saxs_buffer_conc.cpp \
+  us_hydrodyn_saxs_buffer_conc_load.cpp \
   us_hydrodyn_supc.cpp \
   us_surfracer.cpp \
 #  us_imgviewer.cpp \
@@ -1284,11 +1284,11 @@ HEADERS += \
   us_hydrodyn_saxs_iqq_load_csv.h \
   us_hydrodyn_saxs_iqq_residuals.h \
   us_hydrodyn_saxs_residuals.h \
-#  us_hydrodyn_saxs_screen.h \
+  us_hydrodyn_saxs_screen.h \
   us_hydrodyn_saxs_search.h \
-#  us_hydrodyn_saxs_buffer.h \
-#  us_hydrodyn_saxs_buffer_conc.h \
-#  us_hydrodyn_saxs_buffer_conc_load.h \
+  us_hydrodyn_saxs_buffer.h \
+  us_hydrodyn_saxs_buffer_conc.h \
+  us_hydrodyn_saxs_buffer_conc_load.h \
   us_hydrodyn_supc.h \
   us_saxs_gp.h \
   us_saxs_util.h \

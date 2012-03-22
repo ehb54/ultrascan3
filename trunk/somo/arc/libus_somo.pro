@@ -157,9 +157,9 @@ SOURCES += \
   us_hydrodyn_saxs_residuals.cpp \
 #  us_hydrodyn_saxs_screen.cpp \
   us_hydrodyn_saxs_search.cpp \
-#  us_hydrodyn_saxs_buffer.cpp \
-#  us_hydrodyn_saxs_buffer_conc.cpp \
-#  us_hydrodyn_saxs_buffer_conc_load.cpp \
+  us_hydrodyn_saxs_buffer.cpp \
+  us_hydrodyn_saxs_buffer_conc.cpp \
+  us_hydrodyn_saxs_buffer_conc_load.cpp \
   us_hydrodyn_supc.cpp \
   us_surfracer.cpp \
 #  us_imgviewer.cpp \
@@ -272,9 +272,9 @@ HEADERS += \
   us_hydrodyn_saxs_residuals.h \
 #  us_hydrodyn_saxs_screen.h \
   us_hydrodyn_saxs_search.h \
-#  us_hydrodyn_saxs_buffer.h \
-#  us_hydrodyn_saxs_buffer_conc.h \
-#  us_hydrodyn_saxs_buffer_conc_load.h \
+  us_hydrodyn_saxs_buffer.h \
+  us_hydrodyn_saxs_buffer_conc.h \
+  us_hydrodyn_saxs_buffer_conc_load.h \
   us_hydrodyn_supc.h \
   us_saxs_gp.h \
   us_saxs_util.h \

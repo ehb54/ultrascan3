@@ -81,4 +81,8 @@ files
 ./src/us_hydrodyn_sas_options_hydration.cpp
 ./src/us_hydrodyn_saxs_residuals.cpp
 ./src/us_hydrodyn_other.cpp
+./src/us_hydrodyn_saxs_buffer_conc.cpp
+./src/us_hydrodyn_saxs_buffer_conc_load.cpp
+./src/us_hydrodyn_saxs_buffer.cpp
+./src/us_hydrodyn_saxs_screen.cpp
 end
