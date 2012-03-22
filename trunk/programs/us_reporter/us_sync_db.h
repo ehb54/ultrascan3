@@ -11,7 +11,7 @@
 #include "us_report.h"
 
 //! \brief A dialog class to select and load data (edited or raw)
-class US_GUI_EXTERN US_SyncWithDB : public US_WidgetsDialog
+class US_SyncWithDB : public US_WidgetsDialog
 {
    Q_OBJECT
 
