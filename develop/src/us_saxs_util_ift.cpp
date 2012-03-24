@@ -112,7 +112,7 @@ bool US_Saxs_Util::bspline_basis( unsigned int basis, double q, double &value )
       if ( diff > 0e0 )
       {
          // double this_value = pow( diff, bspline_degree );
-         value += pow( diff, bspline_degree ) * bspline_omega[ basis ][ i - basis ];
+         value += pow( diff, (int) bspline_degree ) * bspline_omega[ basis ][ i - basis ];
          // check omega:
          double omega = 1e0;
          for ( unsigned int j = basis; j <= basis + bspline_degree + 1; j++ )
