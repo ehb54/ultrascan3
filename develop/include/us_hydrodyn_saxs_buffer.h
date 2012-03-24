@@ -163,6 +163,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       ScrollZoomer  *plot_dist_zoomer;
 #ifdef QT4
       QwtPlotGrid   *grid_saxs;
+      bool          legend_vis;
 #endif
 
       QPushButton   *pb_select_vis;
@@ -340,6 +341,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void crop_undo();
       void crop_right();
       void legend();
+      void legend_set();
       void guinier();
 
       void rename_created( QListBoxItem *, const QPoint & );

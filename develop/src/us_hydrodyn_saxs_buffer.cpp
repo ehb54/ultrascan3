@@ -1606,6 +1606,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     );
    pb_legend           ->setEnabled( lb_files->numRows() );
    // cb_guinier          ->setEnabled( files_selected_count );
+   legend_set();
 
    if ( *saxs_widget )
    {
@@ -2153,6 +2154,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    }
    
+   legend_set();
    plot_dist->replot();
 }
 
@@ -3771,6 +3773,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
 #endif
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    
+   legend_set();
    plot_dist->replot();
    update_enables();
 }
@@ -4145,6 +4148,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect & /* rect */ )
    // .arg( rect.x2() )
    // .arg( rect.y1() )
    // .arg( rect.y2() );
+   update_enables();
 }
 
 
@@ -5145,10 +5149,10 @@ void US_Hydrodyn_Saxs_Buffer::view()
             text += "q                  \tI(q)\n";
          }
 
-         for ( unsigned int i = 0; i < f_qs[ file ].size(); i++ )
+         for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
          {
             if ( use_errors &&
-                 f_errors[ file ].size() > i )
+                 (int)f_errors[ file ].size() > i )
             {
                text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
                                           f_qs_string[ file ][ i ].ascii(),
@@ -5379,18 +5383,23 @@ void US_Hydrodyn_Saxs_Buffer::legend()
       plot_dist->enableLegend ( true, -1 );
    }
 #else
-   bool legvis = true;
+   legend_vis = !legend_vis;
+   legend_set();
+#endif
+}
+
+void US_Hydrodyn_Saxs_Buffer::legend_set()
+{
+#ifdef QT4
    QwtPlotItemList ilist = plot_dist->itemList();
    for ( int ii = 0; ii < ilist.size(); ii++ )
    {
       QwtPlotItem* plitem = ilist[ ii ];
       if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
          continue;
-      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
-      legvis = !legon;
-      plitem->setItemAttribute( QwtPlotItem::Legend, legvis );
+      plitem->setItemAttribute( QwtPlotItem::Legend, legend_vis );
    }
-   plot_dist->legend()->setVisible( legvis );
+   plot_dist->legend()->setVisible( legend_vis );
 #endif
 }
 
@@ -5452,7 +5461,7 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QStringList regexs = QStringList::split( QRegExp( "\\s+" ), le_regex->text()      );
    QStringList args   = QStringList::split( QRegExp( "\\s+" ), le_regex_args->text() );
 
-   for ( unsigned int i = 0; i < args.size(); i++ )
+   for ( int i = 0; i < (int)args.size(); i++ )
    {
       for ( int j = 0; j < (int)regexs.size(); j++ )
       {
@@ -5579,7 +5588,7 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
       existing_items[ lb_files->text( i ) ] = true;
    }
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < (int)files.size(); i++ )
    {
       
       QString norm_name = files[ i ] + "_n";
