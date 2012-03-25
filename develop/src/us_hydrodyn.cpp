@@ -846,6 +846,13 @@ void US_Hydrodyn::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+
+   pb_config = new QPushButton(tr("Config"), this);
+   pb_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_config->setMinimumHeight(minHeight1);
+   pb_config->setPalette( PALET_PUSHB );
+   connect(pb_config, SIGNAL(clicked()), SLOT(config()));
+
    pb_stop_calc = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop_calc);
    pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -998,7 +1005,11 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_cancel, j, 1);
 // background->addMultiCellWidget(progress, j, j, 0, 1);
    j++;
-   background->addWidget(pb_help, j, 0);
+   QBoxLayout *bl_help_config = new QHBoxLayout;
+   bl_help_config->addWidget( pb_help );
+   bl_help_config->addWidget( pb_config );
+
+   background->addLayout( bl_help_config, j, 0);
    background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
 }

@@ -321,6 +321,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_bead_saxs;
       QPushButton *pb_rescale_bead_model;
       QPushButton *pb_help;
+      QPushButton *pb_config;
       QPushButton *pb_cancel;
       QPushButton *pb_somo;
       QPushButton *pb_visualize;
@@ -769,6 +770,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool assign_atom(const QString &, struct PDB_chain *, QString *);
       void cancel();
       void help();
+      void config();
       void edit_atom();
       void hybrid();
       void residue();

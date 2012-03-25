@@ -5772,3 +5772,139 @@ void US_Hydrodyn::pdb_tool()
       new US_Hydrodyn_Pdb_Tool( csv1, this );
    pdb_tool_window->show();
 }
+
+
+void US_Hydrodyn::config()
+{
+   QStringList menu_opts;
+
+   menu_opts
+      << tr( "Lookup Tables -> Add/Edit Hybridization" ) // hybrid()
+      << tr( "Lookup Tables -> Add/Edit Atom" ) // edit_atom()
+      << tr( "Lookup Tables -> Add/Edit Residue" ) // residue()
+      << tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) // saxs()
+      << tr( "SOMO Options -> ASA Calculation" ) // show_asa()
+      << tr( "SOMO Options -> SoMo Overlap Reduction" ) // show_overlap()
+      << tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) // show_grid_overlap()
+      << tr( "SOMO Options -> Hydrodynamic Calculations" ) // show_hydro()
+      << tr( "SOMO Options -> Miscellaneous Options" ) // show_misc()
+      << tr( "SOMO Options -> Bead Model Output" ) // show_bead_output()
+      << tr( "SOMO Options -> Grid Functions (AtoB)" ) // show_grid()
+      << tr( "SOMO Options -> SAXS/SANS Options" ) // show_saxs_options()
+      << tr( "MD Options -> DMD Options" ) // show_dmd_options()
+      << tr( "MD Options -> Browflex Options" ) // show_bd_options()
+      << tr( "MD Options -> Anaflex Options" ) // show_anaflex_options()
+      << tr( "PDB Options -> Parsing" ) // pdb_parsing()
+      << tr( "PDB Options -> Visualization" ) // pdb_visualization()
+      << tr( "Configuration -> Load Configuration" ) // load_config()
+      << tr( "Configuration -> Save Current Configuration" ) // write_config()
+      << tr( "Configuration -> Reset to Default Configuration" ) // reset()
+      << tr( "Configuration -> Advanced Configuration" ) // show_advanced_config()
+      << tr( "Configuration -> System Configuration" ) // run_us_config()
+      << tr( "Configuration -> Administrator" ) // run us_admin()
+      ;
+
+   bool ok;
+   QString res = QInputDialog::getItem(
+                                       tr( "US-SOMO Configuration Options" ), 
+                                       tr( "Make a selection or press CANCEL" ),
+                                       menu_opts, 
+                                       -1, 
+                                       TRUE, 
+                                       &ok,
+                                       this );
+   if ( ok ) {
+      if ( res == tr( "Lookup Tables -> Add/Edit Hybridization" ) )
+      {
+         hybrid();
+      }
+      if ( res == tr( "Lookup Tables -> Add/Edit Atom" ) )
+      {
+         edit_atom();
+      }
+      if ( res == tr( "Lookup Tables -> Add/Edit Residue" ) )
+      {
+         residue();
+      }
+      if ( res == tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) )
+      {
+         saxs();
+      }
+      if ( res == tr( "SOMO Options -> ASA Calculation" ) )
+      {
+         show_asa();
+      }
+      if ( res == tr( "SOMO Options -> SoMo Overlap Reduction" ) )
+      {
+         show_overlap();
+      }
+      if ( res == tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) )
+      {
+         show_grid_overlap();
+      }
+      if ( res == tr( "SOMO Options -> Hydrodynamic Calculations" ) )
+      {
+         show_hydro();
+      }
+      if ( res == tr( "SOMO Options -> Miscellaneous Options" ) )
+      {
+         show_misc();
+      }
+      if ( res == tr( "SOMO Options -> Bead Model Output" ) )
+      {
+         show_bead_output();
+      }
+      if ( res == tr( "SOMO Options -> Grid Functions (AtoB)" ) )
+      {
+         show_grid();
+      }
+      if ( res == tr( "SOMO Options -> SAXS/SANS Options" ) )
+      {
+         show_saxs_options();
+      }
+      if ( res == tr( "MD Options -> DMD Options" ) )
+      {
+         show_dmd_options();
+      }
+      if ( res == tr( "MD Options -> Browflex Options" ) )
+      {
+         show_bd_options();
+      }
+      if ( res == tr( "MD Options -> Anaflex Options" ) )
+      {
+         show_anaflex_options();
+      }
+      if ( res == tr( "PDB Options -> Parsing" ) )
+      {
+         pdb_parsing();
+      }
+      if ( res == tr( "PDB Options -> Visualization" ) )
+      {
+         pdb_visualization();
+      }
+      if ( res == tr( "Configuration -> Load Configuration" ) )
+      {
+         load_config();
+      }
+      if ( res == tr( "Configuration -> Save Current Configuration" ) )
+      {
+         write_config();
+      }
+      if ( res == tr( "Configuration -> Reset to Default Configuration" ) )
+      {
+         reset();
+      }
+      if ( res == tr( "Configuration -> Advanced Configuration" ) )
+      {
+         show_advanced_config();
+      }
+      if ( res == tr( "Configuration -> System Configuration" ) )
+      {
+         run_us_config();
+      }
+      if ( res == tr( "Configuration -> Administrator" ) )
+      {
+         run_us_admin();
+      }
+   }
+}
