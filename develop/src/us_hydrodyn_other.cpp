@@ -5777,6 +5777,7 @@ void US_Hydrodyn::pdb_tool()
 void US_Hydrodyn::config()
 {
    QStringList menu_opts;
+   static int last_menu = 0;
 
    menu_opts
       << tr( "Lookup Tables -> Add/Edit Hybridization" ) // hybrid()
@@ -5809,101 +5810,148 @@ void US_Hydrodyn::config()
                                        tr( "US-SOMO Configuration Options" ), 
                                        tr( "Make a selection or press CANCEL" ),
                                        menu_opts, 
-                                       -1, 
+                                       last_menu, 
                                        TRUE, 
                                        &ok,
                                        this );
+
    if ( ok ) {
+      int pos   = 0;
       if ( res == tr( "Lookup Tables -> Add/Edit Hybridization" ) )
       {
+         last_menu = pos;
          hybrid();
       }
+      pos++;
       if ( res == tr( "Lookup Tables -> Add/Edit Atom" ) )
       {
+         last_menu = pos;
          edit_atom();
       }
+      pos++;
       if ( res == tr( "Lookup Tables -> Add/Edit Residue" ) )
       {
+         last_menu = pos;
          residue();
       }
+      pos++;
       if ( res == tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) )
       {
+         last_menu = pos;
          saxs();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> ASA Calculation" ) )
       {
+         last_menu = pos;
          show_asa();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> SoMo Overlap Reduction" ) )
       {
+         last_menu = pos;
          show_overlap();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) )
       {
+         last_menu = pos;
          show_grid_overlap();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> Hydrodynamic Calculations" ) )
       {
+         last_menu = pos;
          show_hydro();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> Miscellaneous Options" ) )
       {
+         last_menu = pos;
          show_misc();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> Bead Model Output" ) )
       {
+         last_menu = pos;
          show_bead_output();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> Grid Functions (AtoB)" ) )
       {
+         last_menu = pos;
          show_grid();
       }
+      pos++;
       if ( res == tr( "SOMO Options -> SAXS/SANS Options" ) )
       {
+         last_menu = pos;
          show_saxs_options();
       }
+      pos++;
       if ( res == tr( "MD Options -> DMD Options" ) )
       {
+         last_menu = pos;
          show_dmd_options();
       }
+      pos++;
       if ( res == tr( "MD Options -> Browflex Options" ) )
       {
+         last_menu = pos;
          show_bd_options();
       }
+      pos++;
       if ( res == tr( "MD Options -> Anaflex Options" ) )
       {
+         last_menu = pos;
          show_anaflex_options();
       }
+      pos++;
       if ( res == tr( "PDB Options -> Parsing" ) )
       {
+         last_menu = pos;
          pdb_parsing();
       }
+      pos++;
       if ( res == tr( "PDB Options -> Visualization" ) )
       {
+         last_menu = pos;
          pdb_visualization();
       }
+      pos++;
       if ( res == tr( "Configuration -> Load Configuration" ) )
       {
+         last_menu = pos;
          load_config();
       }
+      pos++;
       if ( res == tr( "Configuration -> Save Current Configuration" ) )
       {
+         last_menu = pos;
          write_config();
       }
+      pos++;
       if ( res == tr( "Configuration -> Reset to Default Configuration" ) )
       {
+         last_menu = pos;
          reset();
       }
+      pos++;
       if ( res == tr( "Configuration -> Advanced Configuration" ) )
       {
+         last_menu = pos;
          show_advanced_config();
       }
+      pos++;
       if ( res == tr( "Configuration -> System Configuration" ) )
       {
+         last_menu = pos;
          run_us_config();
       }
+      pos++;
       if ( res == tr( "Configuration -> Administrator" ) )
       {
+         last_menu = pos;
          run_us_admin();
       }
    }
