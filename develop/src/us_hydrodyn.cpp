@@ -447,7 +447,11 @@ void US_Hydrodyn::setupGUI()
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
+#if !defined(QT4) || !defined(Q_WS_MAC)
    menu = new QMenuBar(frame);
+#else
+   menu = new QMenuBar( this );
+#endif
    menu->setPalette( PALET_NORMAL );
    AUTFBACK( menu );
    menu->insertItem(tr("&Lookup Tables"), lookup_tables);
