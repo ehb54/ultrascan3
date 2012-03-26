@@ -99,7 +99,7 @@ void US_Hydrodyn_Batch::resizeEvent( QResizeEvent *re )
 
 void US_Hydrodyn_Batch::setupGUI()
 {
-   int minHeight1 = 30;
+   int minHeight1 = 20;
    int minWidth1 = 200;
 
    lbl_selection = new QLabel(tr("Select files:"), this);
@@ -108,7 +108,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_selection->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selection->setMinimumHeight(minHeight1);
    lbl_selection->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_selection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_selection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lb_files = new QListBox(this);
    Q_CHECK_PTR(lb_files);
@@ -116,7 +116,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lb_files->setMinimumHeight(minHeight1 * 3);
    lb_files->setMinimumWidth(minWidth1);
    lb_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    lb_files->setEnabled(true);
    QString load_errors;
    for ( unsigned int i = 0; i < batch->file.size(); i++ ) 
@@ -153,35 +153,35 @@ void US_Hydrodyn_Batch::setupGUI()
 
    pb_add_files = new QPushButton(tr("Add Files"), this);
    Q_CHECK_PTR(pb_add_files);
-   pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_add_files->setMinimumHeight(minHeight1);
    pb_add_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
    pb_select_all = new QPushButton(tr("Select All"), this);
    Q_CHECK_PTR(pb_select_all);
-   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
    pb_remove_files = new QPushButton(tr("Remove Selected"), this);
    Q_CHECK_PTR(pb_remove_files);
-   pb_remove_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_remove_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_remove_files->setMinimumHeight(minHeight1);
    pb_remove_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_remove_files, SIGNAL(clicked()), SLOT(remove_files()));
 
    pb_load_somo = new QPushButton(tr("Load into SOMO"), this);
    Q_CHECK_PTR(pb_load_somo);
-   pb_load_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_somo->setMinimumHeight(minHeight1);
    pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
    pb_load_saxs = new QPushButton(tr("Load into SAXS"), this);
    Q_CHECK_PTR(pb_load_saxs);
-   pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_saxs->setMinimumHeight(minHeight1);
    pb_load_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_saxs, SIGNAL(clicked()), SLOT(load_saxs()));
@@ -193,7 +193,7 @@ void US_Hydrodyn_Batch::setupGUI()
    {
       pb_make_movie = new QPushButton(tr("Make movie"), this);
       Q_CHECK_PTR(pb_make_movie);
-      pb_make_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_make_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_make_movie->setMinimumHeight(minHeight1);
       pb_make_movie->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_make_movie, SIGNAL(clicked()), SLOT(make_movie()));
@@ -207,14 +207,14 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_total_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_total_files->setMinimumHeight(minHeight1);
    lbl_total_files->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_total_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_total_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_selected = new QLabel(tr("Selected: 0 "), this);
    lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selected->setMinimumHeight(minHeight1);
    lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_screen = new QLabel(tr("Screen selected files:"), this);
    Q_CHECK_PTR(lbl_screen);
@@ -222,7 +222,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_screen->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_screen->setMinimumHeight(minHeight1);
    lbl_screen->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    bg_residues = new QButtonGroup(3, Qt::Vertical, "If non-coded residues are found:", this);
    QFont qf = bg_residues->font();
@@ -292,7 +292,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    pb_screen = new QPushButton(tr("Screen Selected"), this);
    Q_CHECK_PTR(pb_screen);
-   pb_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_screen->setMinimumHeight(minHeight1);
    pb_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_screen, SIGNAL(clicked()), SLOT(screen()));
@@ -303,7 +303,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_process->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_process->setMinimumHeight(minHeight1);
    lbl_process->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    cb_mm_first = new QCheckBox(this);
    cb_mm_first->setText(tr(" Process Only First Model in PDB's with Multiple Models "));
@@ -445,7 +445,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    //   pb_select_save_params->setMinimumHeight(minHeight1);
-   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_save_params->setEnabled(true);
    pb_select_save_params->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
@@ -459,7 +459,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    pb_start = new QPushButton(tr("Start"), this);
    Q_CHECK_PTR(pb_start);
-   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
@@ -471,7 +471,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    pb_stop = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop);
-   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_stop->setEnabled(false);
@@ -479,26 +479,26 @@ void US_Hydrodyn_Batch::setupGUI()
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_cluster = new QPushButton(tr("Cluster"), this);
-   pb_cluster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cluster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cluster->setMinimumHeight(minHeight1);
    pb_cluster->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cluster, SIGNAL(clicked()), SLOT(cluster()));
 
    pb_open_saxs_options = new QPushButton(tr("Saxs Options"), this);
-   pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_open_saxs_options->setMinimumHeight(minHeight1);
    pb_open_saxs_options->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_open_saxs_options, SIGNAL(clicked()), SLOT(open_saxs_options()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
