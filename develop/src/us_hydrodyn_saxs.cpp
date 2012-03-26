@@ -265,15 +265,15 @@ void US_Hydrodyn_Saxs::setupGUI()
 {
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
 
-   int minHeight0 = 22;
-   int minHeight1 = 30;
+   int minHeight0 = 18;
+   int minHeight1 = 22;
    lbl_info = new QLabel(tr("SAXS/SANS I(q) Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_filename1 = new QLabel(tr(""), this);
    Q_CHECK_PTR(lbl_filename1);
@@ -294,21 +294,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
    Q_CHECK_PTR(pb_select_atom_file);
    pb_select_atom_file->setMinimumHeight(minHeight1);
-   pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_atom_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
 
    pb_select_hybrid_file = new QPushButton(tr("Load Hybridization File"), this);
    Q_CHECK_PTR(pb_select_hybrid_file);
    pb_select_hybrid_file->setMinimumHeight(minHeight1);
-   pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_hybrid_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
 
    pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficients File"), this);
    Q_CHECK_PTR(pb_select_saxs_file);
    pb_select_saxs_file->setMinimumHeight(minHeight1);
-   pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_saxs_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
 
@@ -472,38 +472,38 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    pb_plot_saxs_sans = new QPushButton("", this);
    Q_CHECK_PTR(pb_plot_saxs_sans);
-   pb_plot_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_plot_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_plot_saxs_sans->setMinimumHeight(minHeight1);
    pb_plot_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_saxs_sans, SIGNAL(clicked()), SLOT(show_plot_saxs_sans()));
 
    pb_load_saxs_sans = new QPushButton("", this);
    Q_CHECK_PTR(pb_load_saxs_sans);
-   pb_load_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_saxs_sans->setMinimumHeight(minHeight1);
    pb_load_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_saxs_sans, SIGNAL(clicked()), SLOT(load_saxs_sans()));
 
    pb_load_plot_saxs = new QPushButton(tr("Load Plotted"), this);
-   pb_load_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_saxs->setMinimumHeight(minHeight1);
    pb_load_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_plot_saxs, SIGNAL(clicked()), SLOT(load_plot_saxs()));
 
    pb_set_grid = new QPushButton(tr("Set Grid"), this);
-   pb_set_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_set_grid->setMinimumHeight(minHeight1);
    pb_set_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_set_grid, SIGNAL(clicked()), SLOT(set_grid()));
 
    pb_clear_plot_saxs = new QPushButton("", this);
-   pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_clear_plot_saxs->setMinimumHeight(minHeight1);
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
 
    pb_saxs_legend = new QPushButton( "Legend", this);
-   pb_saxs_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_legend->setMinimumHeight(minHeight1);
    pb_saxs_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_saxs_legend, SIGNAL(clicked()), SLOT(saxs_legend()));
@@ -517,13 +517,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cb_create_native_saxs, SIGNAL(clicked()), SLOT(set_create_native_saxs()));
 
    pb_load_gnom = new QPushButton("Load GNOM File", this);
-   pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_gnom->setMinimumHeight(minHeight1);
    pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
 
    pb_saxs_search = new QPushButton("Search", this);
-   pb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_search->setMinimumHeight(minHeight1);
    pb_saxs_search->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_saxs_search, SIGNAL(clicked()), SLOT(saxs_search()));
@@ -531,7 +531,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    if ( started_in_expert_mode )
    {
       pb_saxs_screen = new QPushButton("Screen", this);
-      pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_screen->setMinimumHeight(minHeight1);
       pb_saxs_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
@@ -599,14 +599,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    if ( started_in_expert_mode )
    {
       pb_saxs_buffer = new QPushButton("Buffer", this);
-      pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_buffer->setMinimumHeight(minHeight1);
       pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
    } 
 
    pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
-   pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_guinier_analysis->setMinimumHeight(minHeight1);
    pb_guinier_analysis->setEnabled(true);
    pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -639,7 +639,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_info_prr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info_prr->setMinimumHeight(minHeight1);
    lbl_info_prr->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_info_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
    Q_CHECK_PTR(lbl_bin_size);
@@ -723,7 +723,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    pb_pr_contrib = new QPushButton(tr("Display"), this);
    Q_CHECK_PTR(pb_pr_contrib);
-   pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_contrib->setMinimumHeight(minHeight1);
    pb_pr_contrib->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_pr_contrib->setEnabled(false);
@@ -731,60 +731,60 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    pb_plot_pr = new QPushButton(tr("Compute P(r) Distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
-   pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_plot_pr->setMinimumHeight(minHeight1);
    pb_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_pr, SIGNAL(clicked()), SLOT(show_plot_pr()));
 
    pb_load_pr = new QPushButton(tr("Load P(r) Distribution"), this);
    Q_CHECK_PTR(pb_load_pr);
-   pb_load_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_pr->setMinimumHeight(minHeight1);
    pb_load_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
 
    pb_load_plot_pr = new QPushButton(tr("Load Plotted P(r)"), this);
    Q_CHECK_PTR(pb_load_plot_pr);
-   pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_pr->setMinimumHeight(minHeight1);
    pb_load_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_plot_pr, SIGNAL(clicked()), SLOT(load_plot_pr()));
 
    pb_clear_plot_pr = new QPushButton(tr("Clear P(r) Distribution"), this);
-   pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_clear_plot_pr->setMinimumHeight(minHeight1);
    pb_clear_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_pr, SIGNAL(clicked()), SLOT(clear_plot_pr()));
 
    pb_pr_legend = new QPushButton(tr("Legend"), this);
-   pb_pr_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pr_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_legend->setMinimumHeight(minHeight1);
    pb_pr_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pr_legend, SIGNAL(clicked()), SLOT(pr_legend()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_stop = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop);
-   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
    pb_options = new QPushButton(tr("Open Options Panel"), this);
    Q_CHECK_PTR(pb_options);
-   pb_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_options->setMinimumHeight(minHeight1);
    pb_options->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_options, SIGNAL(clicked()), SLOT(options()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
