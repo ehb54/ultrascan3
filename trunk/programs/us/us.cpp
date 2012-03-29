@@ -115,17 +115,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
   procs = QList<procData*>(); // Initialize to an empty list
 
-  QFont bfont = QFont( US_GuiSettings::fontFamily(),
-                       US_GuiSettings::fontSize() - 1,
-                       QFont::Bold );
-
-  QFont mfont = QFont( US_GuiSettings::fontFamily(),
-                       US_GuiSettings::fontSize() - 1,
-                       QFont::Normal );
-
   ////////////
   QMenu* file = new QMenu( tr( "&File" ), this );
-  file       ->setFont( mfont );
 
   //addMenu(  P_CONFIG, tr( "&Configuration" ), file );
   //addMenu(  P_ADMIN , tr( "&Administrator" ), file );
@@ -208,7 +199,12 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu( HELP_ABOUT  , tr("&About"             ), help );
   addMenu( HELP_CREDITS, tr("&Credits"           ), help );
   
+#ifndef Q_WS_MAC
+  QFont bfont = QFont( US_GuiSettings::fontFamily(),
+                       US_GuiSettings::fontSize() - 1,
+                       QFont::Bold );
   menuBar()->setFont( bfont       );
+#endif
   menuBar()->addMenu( file        );
   menuBar()->addMenu( edit        );
   menuBar()->addMenu( velocity    );
@@ -219,6 +215,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
+#ifndef Q_WS_MAC
+  QFont mfont = QFont( US_GuiSettings::fontFamily(),
+                       US_GuiSettings::fontSize() - 1,
+                       QFont::Normal );
   file       ->setFont( mfont );
   edit       ->setFont( mfont );
   velocity   ->setFont( mfont );
@@ -228,6 +228,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   simulation ->setFont( mfont );
   database   ->setFont( mfont );
   help       ->setFont( mfont );
+#endif
 
   splash();
   statusBar()->showMessage( tr( "Ready" ) );
@@ -247,12 +248,8 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
   QFont      font   = QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() - 1,
                              QFont::Normal );
-#else
-  QFont      font   = QFont( US_GuiSettings::fontFamily(),
-                             US_GuiSettings::fontSize() + 3,
-                             QFont::Normal );
-#endif
   action->setFont( font );
+#endif
 
   connect( action, SIGNAL( indexTriggered  ( int ) ), 
            this,   SLOT  ( onIndexTriggered( int ) ) );
@@ -576,6 +573,7 @@ void US_Win::help( int index )
 // apply font and base frame color preferences
 void US_Win::apply_prefs()
 {
+#ifndef Q_WS_MAC
    // reset the menu bar font
    QFont bfont = QFont( US_GuiSettings::fontFamily(),
                         US_GuiSettings::fontSize() - 1,
@@ -599,6 +597,7 @@ void US_Win::apply_prefs()
          acts.at( jj )->setFont( mfont );
       }
    }
+#endif
 
    // reset the frame color
    bigframe->setPalette( US_GuiSettings::frameColor() );
