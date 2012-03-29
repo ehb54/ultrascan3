@@ -1496,7 +1496,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          "yellow",
       };
 
-   QString out = QString("load %1\nselect all\ncolor gray\n").arg(contrib_file);
+   QString out = QString("load %1\nselect all\ncolor gray\n").arg( QFileInfo( contrib_file ).fileName() );
    for ( map < QString, double >::iterator it = contrib_sums.begin();
          it != contrib_sums.end();
          it++ )
