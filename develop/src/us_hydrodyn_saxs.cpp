@@ -1429,7 +1429,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    progress_pr->setTotalSteps(3);
    progress_pr->setProgress(0);
    // sum up all the atoms that contrib:
-   cout << "trying to sum up\n";
+   // cout << "trying to sum up\n";
    map < QString, double > contrib_sums;
    QRegExp rx2("^(\\d+):(\\d+)$");
 
@@ -1510,8 +1510,12 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    //   cout << "\n" << out << endl;
    // put "out" into spt file:
    out += "select all\n";
+
+   QDir::setCurrent( contrib_file );
+   // cout << "contrib file: " << contrib_file << endl;
    QString fname = 
-      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
+      QFileInfo(contrib_file).dirPath() + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
+   // cout << "spt file: " << fname << endl;
    QFile f(fname);
    if ( !f.open( IO_WriteOnly ) )
    {
@@ -1532,9 +1536,11 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
    argument.append("-script");
-   argument.append(fname);
+   argument.append( QFileInfo( fname ).fileName() );
    rasmol = new QProcess(this);
-   rasmol->setWorkingDirectory(((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp");
+   rasmol->setWorkingDirectory( QFileInfo(contrib_file).dirPath() );
+   //   cout << "Working directory: " << QFileInfo(contrib_file).dirPath() << endl;
+   // ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp");
    rasmol->setArguments(argument);
    if (!rasmol->start())
    {
