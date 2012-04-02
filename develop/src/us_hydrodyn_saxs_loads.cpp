@@ -273,6 +273,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          .arg(vector_double_to_csv(q))
          .arg(header_tag);
       qsl << header;
+      qsl_headers << header;
    }
    
    // ok, we have a header line
