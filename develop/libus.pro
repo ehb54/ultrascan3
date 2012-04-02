@@ -241,6 +241,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_buffer_conc.cpp \
   src/us_hydrodyn_saxs_buffer_conc_load.cpp \
   src/us_hydrodyn_supc.cpp \
+  src/us_hydrodyn_zeno.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
   src/us_license.cpp \
@@ -504,6 +505,8 @@ HEADERS += \
   include/us_hydrodyn_saxs_buffer_conc.h \
   include/us_hydrodyn_saxs_buffer_conc_load.h \
   include/us_hydrodyn_supc.h \
+  include/us_hydrodyn_zeno.h \
+  include/us_fable.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
   include/us_license.h \
