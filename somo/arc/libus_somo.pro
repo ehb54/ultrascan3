@@ -161,6 +161,7 @@ SOURCES += \
   us_hydrodyn_saxs_buffer_conc.cpp \
   us_hydrodyn_saxs_buffer_conc_load.cpp \
   us_hydrodyn_supc.cpp \
+  us_hydrodyn_zeno.cpp \
   us_surfracer.cpp \
 #  us_imgviewer.cpp \
   us_license.cpp \
@@ -276,6 +277,8 @@ HEADERS += \
   us_hydrodyn_saxs_buffer_conc.h \
   us_hydrodyn_saxs_buffer_conc_load.h \
   us_hydrodyn_supc.h \
+  us_hydrodyn_zeno.h \
+  us_fable.h \
   us_saxs_gp.h \
   us_saxs_util.h \
   us_saxs_util_nsa.h \
