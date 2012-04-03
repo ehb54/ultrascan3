@@ -1135,6 +1135,7 @@ SOURCES += \
   us_hydrodyn_hydrate.cpp \
   us_hydrodyn_hydrate_align.cpp \
   us_hydrodyn_hydro.cpp \
+  us_hydrodyn_hydro_zeno.cpp \
   us_hydrodyn_misc.cpp \
   us_hydrodyn_other.cpp \
   us_hydrodyn_overlap.cpp \
@@ -1259,6 +1260,7 @@ HEADERS += \
   us_hydrodyn_grid.h \
   us_hydrodyn_grid_atob.h \
   us_hydrodyn_hydro.h \
+  us_hydrodyn_hydro_zeno.h \
   us_hydrodyn_misc.h \
   us_hydrodyn_overlap.h \
   us_hydrodyn_overlap_reduction.h \
