@@ -30,6 +30,10 @@
 #include "us_hydrodyn_saxs.h"
 
 #include "qwt_wheel.h"
+#ifdef QT4
+#include "qwt_plot_marker.h"
+#include "qwt_symbol.h"
+#endif
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 

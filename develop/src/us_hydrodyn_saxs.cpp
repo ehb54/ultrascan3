@@ -2,9 +2,7 @@
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
-#ifndef QT4
-#  include "../include/us_hydrodyn_saxs_screen.h"
-#endif
+#include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_saxs_util.h"
@@ -2290,19 +2288,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
 #ifndef QT4
    long ppr = plot_pr->insertCurve( plot_name );
-#else
-   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
-#ifndef QT4
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
-#else
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
    plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 #else
+   QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+   curve->setStyle( QwtPlotCurve::Lines );
    curve->setData(
                   (double *)&( r[ 0 ] ), 
                   (double *)&( pr[ 0 ] ),
@@ -3641,12 +3632,10 @@ void US_Hydrodyn_Saxs::saxs_search_update_enables()
    {
       ((US_Hydrodyn*)us_hydrodyn)->saxs_search_window->update_enables();
    }
-#ifndef QT4
    if ( ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_widget )
    {
       ((US_Hydrodyn*)us_hydrodyn)->saxs_screen_window->update_enables();
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs::show_plot_sans()
@@ -4083,7 +4072,6 @@ void US_Hydrodyn_Saxs::reset_search_csv()
 
 void US_Hydrodyn_Saxs::saxs_screen()
 {
-#ifndef QT4
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_widget )
    {
       if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->isVisible() )
@@ -4104,12 +4092,10 @@ void US_Hydrodyn_Saxs::saxs_screen()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window = new US_Hydrodyn_Saxs_Screen( screen_csv, us_hydrodyn );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->show();
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs::reset_screen_csv()
 {
-#ifndef QT4
    if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv.name != "__empty__" )
    {
       screen_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv;
@@ -4174,7 +4160,6 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
       }
       screen_csv.num_data.push_back(tmp_num_data);
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs::saxs_buffer()

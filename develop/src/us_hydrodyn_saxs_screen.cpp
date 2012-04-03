@@ -21,9 +21,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_screen_widget = true;
-#ifndef QT4
    plot_dist_zoomer = (ScrollZoomer *)0;
-#endif
 
    best_fitness = 1e99;
 
@@ -279,20 +277,31 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
    // plot_dist->setOutlineStyle(Qwt::VLine);
+#ifndef QT4
    plot_dist->enableGridXMin();
    plot_dist->enableGridYMin();
-   plot_dist->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_dist->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   QwtPlotGrid* grid = new QwtPlotGrid;
+   grid->enableXMin( true );
+   grid->enableYMin( true );
+   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine));
+   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine));
+   grid->attach( plot_dist );
+#endif
+   plot_dist->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    plot_dist->setAxisTitle(QwtPlot::xBottom, tr("Radius (A)"));
    plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Intensity"));
+   plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#endif
    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
@@ -1089,6 +1098,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    lbl_pos_range->setText( QString( "%1 of %2" ).arg( i + 1 ).arg( messages[ current_row ].size() ) );
    
    plot_dist->clear();
+#ifndef QT4
    long curvekey = plot_dist->insertCurve("Radii histogram");
    plot_dist->setCurveStyle( curvekey, QwtCurve::Sticks);
    plot_dist->setCurveData ( curvekey, 
@@ -1096,9 +1106,19 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                              (double *)&( intensitys[ current_row ][ i ][ 0 ] ), 
                              radiis[ current_row ][ i ].size() );
    plot_dist->setCurvePen  ( curvekey, QPen( "yellow", 2, SolidLine ) );
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( "Radii histogram" );
+   curve->setStyle( QwtPlotCurve::Sticks );
+   curve->setData( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
+                   (double *)&( intensitys[ current_row ][ i ][ 0 ] ),
+                   radiis[ current_row ][ i ].size() );
+   curve->setPen( QPen( Qt::yellow, 2, Qt::SolidLine ) );
+   curve->attach( plot_dist );
+#endif
 
    if ( cb_plot_best->isChecked() )
    {
+#ifndef QT4
       long qpmkey = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ current_row ][ i ], 0e0 );
@@ -1114,10 +1134,28 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                             :
                                             "" )
                                       );
+#else
+      QwtSymbol sym1;
+      sym1.setStyle( QwtSymbol::VLine );
+      sym1.setPen  ( QPen( Qt::green, 2, Qt::DashDotDotLine ) );
+      sym1.setBrush( Qt::white );
+      sym1.setSize ( 8 );
+      QwtPlotMarker* marker1 = new QwtPlotMarker;
+      marker1->setSymbol( sym1 );
+      marker1->setLabel( QString( "Best individual\nfit at %1%2" )
+         .arg( best_fit_radiuss[ current_row ][ i ] )
+         .arg( cb_plot_chi2->isChecked() ?
+         QString("\n%1 = %2")
+         .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
+         .arg( chi2_bests[ current_row ][ i ] ) : "" ) );
+      marker1->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
+      marker1->attach( plot_dist );
+#endif
    }
 
    if ( cb_plot_average->isChecked() )
    {
+#ifndef QT4
       long qpmkey2 = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ current_row ][ i ], 0e0 );
@@ -1133,11 +1171,26 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                             :
                                             "" )
                                       );
+#else
+      QwtPlotMarker* marker2 = new QwtPlotMarker;
+      marker2->setLabel( QString( "\n\n\nAverage fit\n at %1%2" )
+         .arg( average_radiuss[ current_row ][ i ] ) 
+         .arg( cb_plot_chi2->isChecked() ?
+         QString( "\nNNLS %2 = %3" )
+         .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
+         .arg( chi2_nnlss[ current_row ][ i ] ) : "" ) );
+      marker2->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
+      marker2->setSymbol( QwtSymbol( QwtSymbol::VLine,
+         QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
+         QSize( 8, 8 ) ) );
+      marker2->attach( plot_dist );
+#endif
    }
 
    if ( cb_plot_rg->isChecked() &&
         target_rgs[ current_row ][ i ] != 0e0 )
    {
+#ifndef QT4
       long qpmkey3 = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey3, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey3, target_rgs[ current_row ][ i ], 0e0 );
@@ -1145,6 +1198,16 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       plot_dist->setMarkerPen       ( qpmkey3, QPen( "blue", 2, DashLine));
       plot_dist->setMarkerFont      ( qpmkey3, QFont("Helvetica", 11, QFont::Bold));
       plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
+#else
+      QwtPlotMarker* marker3 = new QwtPlotMarker;
+      marker3->setLabel( QString( "Guinier Rg\n%1" )
+         .arg( target_rgs[ current_row ][ i ] ) );
+      marker3->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
+      marker3->setSymbol( QwtSymbol( QwtSymbol::VLine,
+         QBrush( Qt::white ), QPen( QColor( "blue" ), 2, Qt::DashLine ),
+         QSize( 8, 8 ) ) );
+      marker3->attach( plot_dist );
+#endif
    }
 
    plot_dist->setAxisScale( QwtPlot::xBottom, 0.0, max_x_range );
@@ -1152,14 +1215,17 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
 
    // enable zooming
    
-#ifndef QT4
    if ( !plot_dist_zoomer )
    {
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+#ifndef QT4
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-   }
+#else
+      plot_dist_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+      plot_dist_zoomer->setTrackerPen   ( QPen( Qt::red ) );
 #endif
+   }
 
    plot_dist->replot();
 

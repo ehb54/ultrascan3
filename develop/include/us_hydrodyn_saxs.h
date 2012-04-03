@@ -71,9 +71,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Iqq_Residuals;
       friend class US_Hydrodyn;
       friend class US_Hydrodyn_Saxs_Search;
-#ifndef QT4
       friend class US_Hydrodyn_Saxs_Screen;
-#endif
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
 
