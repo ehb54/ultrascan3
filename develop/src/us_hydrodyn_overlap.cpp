@@ -137,6 +137,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    lbl_overlap_tolerance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_overlap_tolerance= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_overlap_tolerance );
    Q_CHECK_PTR(cnt_overlap_tolerance);
    cnt_overlap_tolerance->setRange(0, 1, 0.0001);
    cnt_overlap_tolerance->setValue(*overlap_tolerance);

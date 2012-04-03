@@ -44,6 +44,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_h_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_h_scat_len = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_h_scat_len );
    cnt_h_scat_len->setRange(-0.5, 0.5, 0.0001);
    cnt_h_scat_len->setValue((*saxs_options).h_scat_len);
    cnt_h_scat_len->setMinimumHeight(minHeight1);
@@ -60,6 +61,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_d_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_d_scat_len = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_d_scat_len );
    cnt_d_scat_len->setRange(0.1, 1.0, 0.0001);
    cnt_d_scat_len->setValue((*saxs_options).d_scat_len);
    cnt_d_scat_len->setMinimumHeight(minHeight1);
@@ -76,6 +78,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_h2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_h2o_scat_len_dens = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_h2o_scat_len_dens );
    cnt_h2o_scat_len_dens->setRange(-0.9, 0.0, 0.001);
    cnt_h2o_scat_len_dens->setValue((*saxs_options).h2o_scat_len_dens);
    cnt_h2o_scat_len_dens->setMinimumHeight(minHeight1);
@@ -92,6 +95,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_d2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_d2o_scat_len_dens = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_d2o_scat_len_dens );
    cnt_d2o_scat_len_dens->setRange(0.0, 10.0, 0.001);
    cnt_d2o_scat_len_dens->setValue((*saxs_options).d2o_scat_len_dens);
    cnt_d2o_scat_len_dens->setMinimumHeight(minHeight1);
@@ -108,6 +112,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_d2o_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_d2o_conc = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_d2o_conc );
    cnt_d2o_conc->setRange(0.0, 1.0, 0.01);
    cnt_d2o_conc->setValue((*saxs_options).d2o_conc);
    cnt_d2o_conc->setMinimumHeight(minHeight1);
@@ -124,6 +129,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_frac_of_exch_pep->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_frac_of_exch_pep = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_frac_of_exch_pep );
    cnt_frac_of_exch_pep->setRange(0.0, 1.0, 0.01);
    cnt_frac_of_exch_pep->setValue((*saxs_options).frac_of_exch_pep);
    cnt_frac_of_exch_pep->setMinimumHeight(minHeight1);

@@ -169,6 +169,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    lbl_scale_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_scale_excl_vol = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_scale_excl_vol );
    cnt_scale_excl_vol->setRange(.5, 1.5, 0.001);
    cnt_scale_excl_vol->setValue((*saxs_options).scale_excl_vol);
    cnt_scale_excl_vol->setMinimumHeight(minHeight1);

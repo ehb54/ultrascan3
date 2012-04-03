@@ -58,6 +58,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_probe_radius= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_probe_radius );
    Q_CHECK_PTR(cnt_probe_radius);
    cnt_probe_radius->setRange(0, 10, 0.01);
    cnt_probe_radius->setValue((*asa).probe_radius);
@@ -76,6 +77,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_probe_recheck_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_probe_recheck_radius= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_probe_recheck_radius );
    Q_CHECK_PTR(cnt_probe_recheck_radius);
    cnt_probe_recheck_radius->setRange(0, 10, 0.01);
    cnt_probe_recheck_radius->setValue((*asa).probe_recheck_radius);
@@ -94,6 +96,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_asa_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_asa_threshold= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_asa_threshold );
    Q_CHECK_PTR(cnt_asa_threshold);
    cnt_asa_threshold->setRange(0, 100, 0.1);
    cnt_asa_threshold->setValue((*asa).threshold);
@@ -112,6 +115,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_asa_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_asa_threshold_percent= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_asa_threshold_percent );
    Q_CHECK_PTR(cnt_asa_threshold_percent);
    cnt_asa_threshold_percent->setRange(0, 100, 0.1);
    cnt_asa_threshold_percent->setValue((*asa).threshold_percent);
@@ -130,6 +134,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_asa_grid_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_asa_grid_threshold= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_asa_grid_threshold );
    Q_CHECK_PTR(cnt_asa_grid_threshold);
    cnt_asa_grid_threshold->setRange(0, 100, 0.1);
    cnt_asa_grid_threshold->setValue((*asa).grid_threshold);
@@ -148,6 +153,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_asa_grid_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_asa_grid_threshold_percent= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_asa_grid_threshold_percent );
    Q_CHECK_PTR(cnt_asa_grid_threshold_percent);
    cnt_asa_grid_threshold_percent->setRange(0, 100, 0.1);
    cnt_asa_grid_threshold_percent->setValue((*asa).grid_threshold_percent);
@@ -165,6 +171,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_hydrate_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_hydrate_probe_radius = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_hydrate_probe_radius );
    cnt_hydrate_probe_radius->setRange(0, 10, 0.01);
    cnt_hydrate_probe_radius->setValue((*asa).hydrate_probe_radius);
    cnt_hydrate_probe_radius->setMinimumHeight(minHeight1);
@@ -181,6 +188,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_hydrate_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_hydrate_threshold= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_hydrate_threshold );
    cnt_hydrate_threshold->setRange(0, 100, 0.1);
    cnt_hydrate_threshold->setValue((*asa).hydrate_threshold);
    cnt_hydrate_threshold->setMinimumHeight(minHeight1);
@@ -198,6 +206,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_asab1_step->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_asab1_step= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_asab1_step );
    Q_CHECK_PTR(cnt_asab1_step);
    cnt_asab1_step->setRange(0.1, 100, 0.1);
    cnt_asab1_step->setValue((*asa).asab1_step);

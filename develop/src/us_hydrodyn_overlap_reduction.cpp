@@ -60,6 +60,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cb_fuse, SIGNAL(clicked()), SLOT(set_fuse()));
 
    cnt_fuse= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_fuse );
    Q_CHECK_PTR(cnt_fuse);
    cnt_fuse->setRange(0, 100, 0.1);
    cnt_fuse->setValue((*o_r).fuse_beads_percent);
@@ -86,6 +87,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cb_hierarch, SIGNAL(clicked()), SLOT(set_hierarch()));
 
    cnt_hierarch = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_hierarch );
    Q_CHECK_PTR(cnt_hierarch);
    cnt_hierarch->setRange(0, 100, 0.1);
    cnt_hierarch->setValue((*o_r).remove_hierarch_percent);
@@ -106,6 +108,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cb_sync, SIGNAL(clicked()), SLOT(set_sync()));
 
    cnt_sync = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_sync );
    Q_CHECK_PTR(cnt_sync);
    cnt_sync->setRange(0, 100, 0.1);
    cnt_sync->setValue((*o_r).remove_sync_percent);

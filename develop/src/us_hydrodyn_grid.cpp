@@ -56,6 +56,7 @@ void US_Hydrodyn_Grid::setupGUI()
    lbl_cube_side->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_cube_side= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_cube_side );
    Q_CHECK_PTR(cnt_cube_side);
    cnt_cube_side->setRange(0.1, 100, 0.1);
    cnt_cube_side->setValue((*grid).cube_side);

@@ -45,6 +45,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_unit= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_unit );
    Q_CHECK_PTR(cnt_unit);
    cnt_unit->setRange(5, 10, 1);
    cnt_unit->setValue(-(*hydro).unit);

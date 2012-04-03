@@ -45,6 +45,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_wavelength->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_wavelength= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_wavelength );
    cnt_wavelength->setRange(0, 10, 0.01);
    cnt_wavelength->setValue((*saxs_options).wavelength);
    cnt_wavelength->setMinimumHeight(minHeight1);
@@ -61,6 +62,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_start_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_start_angle= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_start_angle );
    cnt_start_angle->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_start_angle->setValue((*saxs_options).start_angle);
    cnt_start_angle->setMinimumHeight(minHeight1);
@@ -77,6 +79,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_end_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_end_angle= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_end_angle );
    cnt_end_angle->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_end_angle->setValue((*saxs_options).end_angle);
    cnt_end_angle->setMinimumHeight(minHeight1);
@@ -93,6 +96,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_delta_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_delta_angle= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_delta_angle );
    cnt_delta_angle->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_angle->setValue((*saxs_options).delta_angle);
    cnt_delta_angle->setMinimumHeight(minHeight1);
@@ -109,6 +113,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_start_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_start_q = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_start_q );
    cnt_start_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_start_q->setValue((*saxs_options).start_q);
    cnt_start_q->setMinimumHeight(minHeight1);
@@ -125,6 +130,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_end_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_end_q = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_end_q );
    cnt_end_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_end_q->setValue((*saxs_options).end_q);
    cnt_end_q->setMinimumHeight(minHeight1);
@@ -141,6 +147,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
    lbl_delta_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_delta_q = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_delta_q );
    cnt_delta_q->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_q->setValue((*saxs_options).delta_q);
    cnt_delta_q->setMinimumHeight(minHeight1);

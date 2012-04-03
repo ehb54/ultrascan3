@@ -60,6 +60,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_qRgmax = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_qRgmax );
    cnt_qRgmax->setRange(0.5, 3, 0.001);
    cnt_qRgmax->setValue((*saxs_options).qRgmax);
    cnt_qRgmax->setMinimumHeight(minHeight1);
@@ -76,6 +77,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_qend = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_qend );
    cnt_qend->setRange(0, 1, 0.001);
    cnt_qend->setValue((*saxs_options).qend);
    cnt_qend->setMinimumHeight(minHeight1);
@@ -92,6 +94,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_pointsmin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_pointsmin = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_pointsmin );
    cnt_pointsmin->setRange(4, 50, 1);
    cnt_pointsmin->setValue((*saxs_options).pointsmin);
    cnt_pointsmin->setMinimumHeight(minHeight1);
@@ -108,6 +111,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_pointsmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_pointsmax = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_pointsmax );
    cnt_pointsmax->setRange(10, 100, 1);
    cnt_pointsmax->setValue((*saxs_options).pointsmax);
    cnt_pointsmax->setMinimumHeight(minHeight1);

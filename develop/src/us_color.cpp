@@ -1,4 +1,5 @@
 #include "../include/us_color.h"
+#include "../include/us_hydrodyn.h"
 
 US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 {
@@ -177,6 +178,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_counter->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
   cnt = new QwtCounter(this);
+  US_Hydrodyn::sizeArrows( cnt );
   Q_CHECK_PTR(cnt);
   cnt->setNumButtons(2);
   cnt->setRange(0, 100, 1);

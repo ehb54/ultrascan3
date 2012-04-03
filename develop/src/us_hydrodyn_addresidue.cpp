@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_addresidue.h"
+#include "../include/us_hydrodyn.h"
 #include "../include/us_math.h"
 
 #include "../include/color_black.xpm"
@@ -147,6 +148,7 @@ void US_AddResidue::setupGUI()
    lbl_numatoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_numatoms= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_numatoms );
    Q_CHECK_PTR(cnt_numatoms);
    cnt_numatoms->setRange(0, 1000, 1);
    cnt_numatoms->setValue(0);
@@ -164,6 +166,7 @@ void US_AddResidue::setupGUI()
    lbl_numbeads->setMinimumHeight(minHeight1);
 
    cnt_numbeads= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_numbeads );
    Q_CHECK_PTR(cnt_numbeads);
    cnt_numbeads->setRange(0, 1000, 1);
    cnt_numbeads->setValue(0);
@@ -321,6 +324,7 @@ void US_AddResidue::setupGUI()
    lbl_atom_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_atom_hydration = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_atom_hydration );
    Q_CHECK_PTR(cnt_atom_hydration);
    cnt_atom_hydration->setRange(0, 100, 1);
    cnt_atom_hydration->setValue(0);
@@ -413,6 +417,7 @@ void US_AddResidue::setupGUI()
    connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
 
    cnt_hydration= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_hydration );
    Q_CHECK_PTR(cnt_hydration);
    cnt_hydration->setRange(0, 100, 1);
    cnt_hydration->setValue(0);

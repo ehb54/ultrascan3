@@ -1,4 +1,5 @@
 #include "../include/us_hydro.h"
+#include "../include/us_hydrodyn.h"
 const int ARRAYSIZE = 999;
 
 US_Hydro1::US_Hydro1(QWidget *p, const char* name) : QDialog(p, name)
@@ -242,6 +243,7 @@ void US_Hydro1::GUI()
    xpos = 5;   
 
    cnt_ratio = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_ratio );
    cnt_ratio->setRange(1.1, (ARRAYSIZE+1)/10, 0.1);
    cnt_ratio->setValue(10);
    cnt_ratio->setNumButtons(3);

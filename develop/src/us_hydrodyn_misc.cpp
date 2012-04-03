@@ -43,6 +43,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_hydrovol= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_hydrovol );
    Q_CHECK_PTR(cnt_hydrovol);
    cnt_hydrovol->setRange(0, 100, 0.001);
    cnt_hydrovol->setValue((*misc).hydrovol);
@@ -126,6 +127,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_avg_radius = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_radius );
    Q_CHECK_PTR(cnt_avg_radius);
    cnt_avg_radius->setRange(0.5, 5.0, 0.001);
    cnt_avg_radius->setValue((*misc).avg_radius);
@@ -146,6 +148,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_avg_mass = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_mass );
    Q_CHECK_PTR(cnt_avg_mass);
    cnt_avg_mass->setRange(0.0, 200.0, 0.01);
    cnt_avg_mass->setValue((*misc).avg_mass);
@@ -166,6 +169,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_avg_hydration = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_hydration );
    Q_CHECK_PTR(cnt_avg_hydration);
    cnt_avg_hydration->setRange(0.0, 10.0, 0.001);
    cnt_avg_hydration->setValue((*misc).avg_hydration);
@@ -186,6 +190,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_avg_volume = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_volume );
    Q_CHECK_PTR(cnt_avg_volume);
    cnt_avg_volume->setRange(1.0, 50.0, 0.01);
    cnt_avg_volume->setValue((*misc).avg_volume);
@@ -206,6 +211,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_avg_vbar = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_avg_vbar );
    Q_CHECK_PTR(cnt_avg_vbar);
    cnt_avg_vbar->setRange(0.01, 2.0, 0.001);
    cnt_avg_vbar->setValue((*misc).avg_vbar);

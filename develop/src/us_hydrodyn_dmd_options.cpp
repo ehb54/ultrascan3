@@ -54,6 +54,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    lbl_threshold_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_threshold_pb_pb= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_threshold_pb_pb );
    cnt_threshold_pb_pb->setRange(0, 100, 0.1);
    cnt_threshold_pb_pb->setValue((*dmd_options).threshold_pb_pb);
    cnt_threshold_pb_pb->setMinimumHeight(minHeight1);
@@ -71,6 +72,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    lbl_threshold_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_threshold_pb_sc = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_threshold_pb_sc );
    cnt_threshold_pb_sc->setRange(0, 100, 0.1);
    cnt_threshold_pb_sc->setValue((*dmd_options).threshold_pb_sc);
    cnt_threshold_pb_sc->setMinimumHeight(minHeight1);
@@ -88,6 +90,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    lbl_threshold_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_threshold_sc_sc= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_threshold_sc_sc );
    cnt_threshold_sc_sc->setRange(0, 100, 0.1);
    cnt_threshold_sc_sc->setValue((*dmd_options).threshold_sc_sc);
    cnt_threshold_sc_sc->setMinimumHeight(minHeight1);
