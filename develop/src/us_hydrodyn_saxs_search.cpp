@@ -573,7 +573,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
    saxs_window->cb_create_native_saxs        ->setChecked( cb_individual_files->isChecked() );
    saxs_window->create_native_saxs           = cb_individual_files->isChecked();
    
-   QString msg =  QString("%1 model %1: ")
+   QString msg =  QString("%1 model %2: ")
       .arg(saxs_window->te_filename2->text())
       .arg(saxs_window->selected_models[0] + 1);
 
@@ -1121,7 +1121,7 @@ bool US_Hydrodyn_Saxs_Search::not_active_warning()
                                           QString(tr("Please note:\n\n"
                                                      "\"Buffer e density\" is inactive, "
                                                      "yet is has a current value of %1, "
-                                                     "whereas the SAXS options value is set to %1\n"
+                                                     "whereas the SAXS options value is set to %2\n"
                                                      "What would you like to do?\n"))
                                           .arg(t_csv->text(i, 6).toFloat())
                                           .arg(saxs_window->our_saxs_options->water_e_density)
@@ -1151,7 +1151,7 @@ bool US_Hydrodyn_Saxs_Search::not_active_warning()
                                           QString(tr("Please note:\n\n"
                                                      "\"Scaling excluded volume\" is inactive, "
                                                      "yet is has a current value of %1, "
-                                                     "whereas the SAXS options value is set to %1\n"
+                                                     "whereas the SAXS options value is set to %2\n"
                                                      "What would you like to do?\n"))
                                           .arg(t_csv->text(i, 6).toFloat())
                                           .arg(saxs_window->our_saxs_options->scale_excl_vol)
@@ -1181,7 +1181,7 @@ bool US_Hydrodyn_Saxs_Search::not_active_warning()
                                           QString(tr("Please note:\n\n"
                                                      "\"SWH excluded volume\" is inactive, "
                                                      "yet is has a current value of %1, "
-                                                     "whereas the SAXS options value is set to %1\n"
+                                                     "whereas the SAXS options value is set to %2\n"
                                                      "What would you like to do?\n"))
                                           .arg(t_csv->text(i, 6).toFloat())
                                           .arg(saxs_window->our_saxs_options->swh_excl_vol)

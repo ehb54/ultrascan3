@@ -732,7 +732,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 #endif
       //      for ( unsigned int i = 0; i < q.size(); i++ )
       //      {
-      //         cout << QString("plotted_q[%1][%1] = %1  plotted_I[%1]I[%1] = %1\n")
+      //         cout << QString("plotted_q[%1][%2] = %3  plotted_I[%4]I[%5] = %6\n")
       //    .arg(p)
       //            .arg(i)
       //            .arg(plotted_q[p][i])

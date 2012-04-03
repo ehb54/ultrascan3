@@ -161,7 +161,7 @@ void US_Hydrodyn_Saxs::foxs_processExited()
    if ( !qd.rename( created_dat, new_created_dat ) )
    {
       editor_msg("red", 
-                 QString(tr("Notice: could not rename %1 to %1"))
+                 QString(tr("Notice: could not rename %1 to %2"))
                  .arg( created_dat )
                  .arg( new_created_dat )
                  );
@@ -397,7 +397,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    if ( !qd.rename( created_dat, new_created_dat ) )
    {
       editor_msg("red", 
-                 QString(tr("Notice: could not rename %1 to %1"))
+                 QString(tr("Notice: could not rename %1 to %2"))
                  .arg( created_dat )
                  .arg( new_created_dat )
                  );

@@ -6652,17 +6652,17 @@ bool US_Saxs_Util::iqq_sphere_fit(
 
    for ( unsigned int i = 0; i < by_radius.size(); i++ )
    {
-      out_radius += QString( "%1 %1\n" ).arg( val_radius[ i ] ).arg( by_radius[ i ] );
+      out_radius += QString( "%1 %2\n" ).arg( val_radius[ i ] ).arg( by_radius[ i ] );
    }
 
    for ( unsigned int i = 0; i < by_delta_rho.size(); i++ )
    {
-      out_delta_rho += QString( "%1 %1\n" ).arg( val_delta_rho[ i ] ).arg( by_delta_rho[ i ] );
+      out_delta_rho += QString( "%1 %2\n" ).arg( val_delta_rho[ i ] ).arg( by_delta_rho[ i ] );
    }
    
    for ( unsigned int i = 0; i < x.size(); i++ )
    {
-      out += QString( "%1 %1 %1\n" )
+      out += QString( "%1 %2 %3\n" )
          .arg( val_radius   [ index_radius   [ A_radius   [ i ] ] ] )
          .arg( val_delta_rho[ index_delta_rho[ A_delta_rho[ i ] ] ] )
          .arg( x[ i ] * oneovertotconc );
@@ -7751,7 +7751,7 @@ bool US_Saxs_Util::create_adaptive_grid(
 
    if ( pointsleft == 0 )
    {
-      noticemsg = QString("Adaptive method used exactly the requested number %2 of points")
+      noticemsg = QString("Adaptive method used exactly the requested number %1 of points")
          .arg(n);
          return true;
    }

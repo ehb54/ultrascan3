@@ -559,7 +559,7 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
          }
       }
             
-      cout << QString( "nsa: gen %1 best individual fitness %1\n" )
+      cout << QString( "nsa: gen %1 best individual fitness %2\n" )
          .arg( g )
          .arg( nsa_pop.front().fitness );
 

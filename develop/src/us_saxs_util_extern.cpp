@@ -126,7 +126,7 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
         !qd.rename( created_dat, new_created_dat ) )
    {
       noticemsg +=
-         QString( "Notice: could not rename %1 to %1" )
+         QString( "Notice: could not rename %1 to %2" )
          .arg( created_dat )
          .arg( new_created_dat );
       new_created_dat = created_dat;
@@ -330,7 +330,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
         !qd.rename( created_dat, new_created_dat ) )
    {
       noticemsg += 
-         QString( "Notice: could not rename %1 to %1" )
+         QString( "Notice: could not rename %1 to %2" )
          .arg( created_dat )
          .arg( new_created_dat );
       new_created_dat = created_dat;

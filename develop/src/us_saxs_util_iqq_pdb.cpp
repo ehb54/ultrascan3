@@ -688,7 +688,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                continue;
             }
 
-            // cout << QString("atom %1 hybrid %1 excl vol %1 by hybrid radius %1\n")
+            // cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
             // .arg(this_atom->name)
             // .arg(this_atom->hybrid_name)
             // .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
@@ -847,10 +847,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             out += 
                QString(
                        "%1,"
-                       "\"%1\","
-                       "\"%1\","
-                       "%1,"
-                       "%1,"
+                       "\"%2\","
+                       "\"%3\","
+                       "%4,"
+                       "%5,"
                        )
                .arg(i + 1)
                .arg(atoms[i].saxs_name)

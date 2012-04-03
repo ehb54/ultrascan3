@@ -252,10 +252,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   return;
                }
 
-               new_qsl << QString( "%1,\"I(q)\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
+               new_qsl << QString( "%1,\"I(q)\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
                if ( sd_map.count( qsl_d[ 0 ] ) )
                {
-                  new_qsl_errors << QString( "%1,\"I(q) sd\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
+                  new_qsl_errors << QString( "%1,\"I(q) sd\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
                }
             }
             for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
@@ -621,10 +621,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                return;
             }
             
-            new_qsl << QString( "%1,\"I(q)\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
+            new_qsl << QString( "%1,\"I(q)\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni ) );
             if ( sd_map.count( qsl_d[ 0 ] ) )
             {
-               new_qsl_errors << QString( "%1,\"I(q) sd\",%1" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
+               new_qsl_errors << QString( "%1,\"I(q) sd\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
             }
          }
          for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
@@ -3118,7 +3118,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
       // 0.5 * chi2,
       // chi2_prob );
       fit_msg = 
-         QString("chi^2=%1 df=%2 nchi=%4")
+         QString("chi^2=%1 df=%2 nchi=%3")
          .arg(chi2, 6)
          .arg(use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
          .arg(sqrt( chi2 / ( use_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )

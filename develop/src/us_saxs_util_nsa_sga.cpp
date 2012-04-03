@@ -149,7 +149,7 @@ vector < sgp_sphere > nsa_sga_individual::sgp_spheres()
          if ( ( v[ i ] >> j ) & 1 )
          {
             unsigned int pos = base + j;
-            // cout << QString( "sgp_spheres: bit on i %1 j %2 pos %3 dim %5\n" ).arg( i ).arg( j ).arg( pos ).arg( dim );
+            // cout << QString( "sgp_spheres: bit on i %1 j %2 pos %3 dim %4\n" ).arg( i ).arg( j ).arg( pos ).arg( dim );
 
             sgp_sphere tmp_sphere;
             tmp_sphere.radius               = 0.5;
@@ -347,7 +347,7 @@ bool US_Saxs_Util::nsa_sga( double & nrmsd )
          }
       }
             
-      cout << QString( "nsa: gen %1 best individual fitness %1\n" )
+      cout << QString( "nsa: gen %1 best individual fitness %2\n" )
          .arg( g )
          .arg( nsa_pop.front().fitness );
 

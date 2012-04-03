@@ -1165,7 +1165,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       plot_dist->setMarkerLabelText ( qpmkey2, QString("\n\n\nAverage fit\n at %1%2")
                                       .arg( average_radiuss[ current_row ][ i ] ) 
                                       .arg( cb_plot_chi2->isChecked() ?
-                                            QString("\nNNLS %2 = %3")
+                                            QString("\nNNLS %1 = %2")
                                             .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
                                             .arg( chi2_nnlss[ current_row ][ i ] )
                                             :
@@ -1176,7 +1176,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       marker2->setLabel( QString( "\n\n\nAverage fit\n at %1%2" )
          .arg( average_radiuss[ current_row ][ i ] ) 
          .arg( cb_plot_chi2->isChecked() ?
-         QString( "\nNNLS %2 = %3" )
+         QString( "\nNNLS %1 = %2" )
          .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
          .arg( chi2_nnlss[ current_row ][ i ] ) : "" ) );
       marker2->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );

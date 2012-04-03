@@ -1835,7 +1835,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( rotate <= 1 )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: rotate count %1, must be 2 or greater" ) )
+               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: rotate count %2, must be 2 or greater" ) )
                .arg( i + 1 )
                .arg( rotate );
             return false;
@@ -3599,11 +3599,11 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      );
          if ( hydrate_clash_map_rtmr_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
          {
-            hydrate_clash_waters_rtmr_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
+            hydrate_clash_waters_rtmr_list << QString( "swh%1:%2" ).arg( residue_number ).arg( chainID );
          }
          if ( hydrate_clash_map_pm_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
          {
-            hydrate_clash_waters_pm_list << QString( "swh%2:%3" ).arg( residue_number ).arg( chainID );
+            hydrate_clash_waters_pm_list << QString( "swh%1:%2" ).arg( residue_number ).arg( chainID );
          }
       }
    }
