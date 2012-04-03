@@ -45,6 +45,19 @@ struct hydro_options
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
    double overlap;            // overlap cut off value if entered manually
+
+   // zeno options
+
+   bool zeno_zeno;
+   bool zeno_interior;
+   bool zeno_surface;
+
+   // these are in thousands:
+   unsigned int zeno_zeno_steps; 
+   unsigned int zeno_interior_steps;
+   unsigned int zeno_surface_steps;
+
+   float zeno_surface_thickness;
 };
 
 class US_EXTERN US_Hydrodyn_Hydro : public QFrame

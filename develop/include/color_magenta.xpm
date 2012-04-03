@@ -1,5 +1,5 @@
 /* XPM */
-static char *color_magenta[] = {
+static const char *color_magenta[] = {
 /* columns rows colors chars-per-pixel */
 "101 25 201 2",
 "   c #800080",

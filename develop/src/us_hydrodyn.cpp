@@ -417,6 +417,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
    somo_options->insertItem(tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
    somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
+   somo_options->insertItem(tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
    somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
@@ -463,7 +464,7 @@ void US_Hydrodyn::setupGUI()
    lbl_info1->setMinimumHeight(minHeight1);
    lbl_info1->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info1 );
-   lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_info2 = new QLabel(tr("Bead Model Functions:"), this);
    Q_CHECK_PTR(lbl_info2);
@@ -472,7 +473,7 @@ void US_Hydrodyn::setupGUI()
    lbl_info2->setMinimumHeight(minHeight1);
    lbl_info2->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info2 );
-   lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_info3 = new QLabel(tr("Hydrodynamic Calculations:"), this);
    Q_CHECK_PTR(lbl_info3);
@@ -481,12 +482,12 @@ void US_Hydrodyn::setupGUI()
    lbl_info3->setMinimumHeight(minHeight1);
    lbl_info3->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info3 );
-   lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
    Q_CHECK_PTR(pb_select_residue_file);
    pb_select_residue_file->setMinimumHeight(minHeight1);
-   pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_residue_file->setPalette( PALET_PUSHB );
    connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
@@ -501,7 +502,7 @@ void US_Hydrodyn::setupGUI()
    pb_batch = new QPushButton(tr("Batch Mode Operation"), this);
    Q_CHECK_PTR(pb_batch);
    pb_batch->setMinimumHeight(minHeight1);
-   pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_batch->setPalette( PALET_PUSHB );
    pb_batch->setAutoDefault( false );
    connect(pb_batch, SIGNAL(clicked()), SLOT(show_batch()));
@@ -509,7 +510,7 @@ void US_Hydrodyn::setupGUI()
    pb_view_bead_model = new QPushButton(tr("View Bead Model File"), this);
    Q_CHECK_PTR(pb_view_bead_model);
    pb_view_bead_model->setMinimumHeight(minHeight1);
-   pb_view_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_view_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
@@ -517,7 +518,7 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_load_pdb);
    pb_load_pdb->setMinimumHeight(minHeight1);
    pb_load_pdb->setEnabled(true);
-   pb_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_pdb->setPalette( PALET_PUSHB );
    connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
@@ -541,13 +542,13 @@ void US_Hydrodyn::setupGUI()
    pb_view_pdb = new QPushButton(tr("View/Edit PDB File"), this);
    Q_CHECK_PTR(pb_view_pdb);
    pb_view_pdb->setMinimumHeight(minHeight1);
-   pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_pdb->setPalette( PALET_PUSHB );
    connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
 
    pb_pdb_tool = new QPushButton(tr("PDB Editor"), this);
    pb_pdb_tool->setMinimumHeight(minHeight1);
-   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pdb_tool->setPalette( PALET_PUSHB );
    connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
 
@@ -564,7 +565,7 @@ void US_Hydrodyn::setupGUI()
    pb_load_bead_model = new QPushButton(tr("Load Single Bead Model File"), this);
    Q_CHECK_PTR(pb_load_bead_model);
    pb_load_bead_model->setMinimumHeight(minHeight1);
-   pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_bead_model->setPalette( PALET_PUSHB );
    connect(pb_load_bead_model, SIGNAL(clicked()), SLOT(load_bead_model()));
 
@@ -622,7 +623,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo = new QPushButton(tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
-   pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_somo->setEnabled(false);
    pb_somo->setPalette( PALET_PUSHB );
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
@@ -630,7 +631,7 @@ void US_Hydrodyn::setupGUI()
 #if defined(USE_H)
    pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
    pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
-   pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pdb_hydrate_for_saxs->setEnabled(true);
    pb_pdb_hydrate_for_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
@@ -639,7 +640,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
-   pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pdb_saxs->setEnabled(true);
    pb_pdb_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
@@ -647,14 +648,14 @@ void US_Hydrodyn::setupGUI()
    pb_bead_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
-   pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_bead_saxs->setEnabled(false);
    pb_bead_saxs->setPalette( PALET_PUSHB );
    connect(pb_bead_saxs, SIGNAL(clicked()), SLOT(bead_saxs()));
 
    pb_rescale_bead_model = new QPushButton(tr("Rescale/Equalize Bead Model"), this);
    pb_rescale_bead_model->setMinimumHeight(minHeight1);
-   pb_rescale_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_rescale_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_rescale_bead_model->setEnabled(false);
    pb_rescale_bead_model->setPalette( PALET_PUSHB );
    connect(pb_rescale_bead_model, SIGNAL(clicked()), SLOT(rescale_bead_model()));
@@ -662,7 +663,7 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
    Q_CHECK_PTR(pb_grid_pdb);
    pb_grid_pdb->setMinimumHeight(minHeight1);
-   pb_grid_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_grid_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_grid_pdb->setEnabled(false);
    pb_grid_pdb->setPalette( PALET_PUSHB );
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
@@ -670,7 +671,7 @@ void US_Hydrodyn::setupGUI()
    pb_grid = new QPushButton(tr("Grid Existing Bead Model"), this);
    Q_CHECK_PTR(pb_grid);
    pb_grid->setMinimumHeight(minHeight1);
-   pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_grid->setEnabled(false);
    pb_grid->setPalette( PALET_PUSHB );
    connect(pb_grid, SIGNAL(clicked()), SLOT(calc_grid()));
@@ -686,7 +687,7 @@ void US_Hydrodyn::setupGUI()
    pb_view_asa = new QPushButton(tr("View ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
-   pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_asa->setPalette( PALET_PUSHB );
    connect(pb_view_asa, SIGNAL(clicked()), SLOT(view_asa()));
 
@@ -694,14 +695,14 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_visualize);
    pb_visualize->setMinimumHeight(minHeight1);
    pb_visualize->setEnabled(false);
-   pb_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_visualize->setPalette( PALET_PUSHB );
    connect(pb_visualize, SIGNAL(clicked()), SLOT(visualize()));
 
    pb_batch2 = new QPushButton(tr("Batch Mode Operation"), this);
    Q_CHECK_PTR(pb_batch2);
    pb_batch2->setMinimumHeight(minHeight1);
-   pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_batch2->setPalette( PALET_PUSHB );
    connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
 
@@ -709,7 +710,7 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_calc_hydro);
    pb_calc_hydro->setEnabled(false);
    pb_calc_hydro->setMinimumHeight(minHeight1);
-   pb_calc_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_calc_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_calc_hydro->setPalette( PALET_PUSHB );
    connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
 
@@ -717,12 +718,26 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_show_hydro_results);
    pb_show_hydro_results->setMinimumHeight(minHeight1);
    pb_show_hydro_results->setEnabled(false);
-   pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_show_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
+   pb_calc_zeno = new QPushButton( "Zeno", this);
+   pb_calc_zeno->setEnabled(false);
+   pb_calc_zeno->setMinimumHeight(minHeight1);
+   pb_calc_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_calc_zeno->setPalette( PALET_PUSHB );
+   connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno()));
+
+   pb_show_zeno_results = new QPushButton( "Zeno" , this);
+   pb_show_zeno_results->setMinimumHeight(minHeight1);
+   pb_show_zeno_results->setEnabled(false);
+   pb_show_zeno_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_show_zeno_results->setPalette( PALET_PUSHB );
+   connect(pb_show_zeno_results, SIGNAL(clicked()), SLOT(show_zeno()));
+
    pb_comparative = new QPushButton(tr("Model classifier"), this);
-   pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_comparative->setEnabled(true);
    pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
@@ -731,14 +746,14 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_open_hydro_results);
    pb_open_hydro_results->setMinimumHeight(minHeight1);
    pb_open_hydro_results->setEnabled(true);
-   pb_open_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_open_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_open_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_open_hydro_results, SIGNAL(clicked()), SLOT(open_hydro_results()));
 
    pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    pb_select_save_params->setMinimumHeight(minHeight1);
-   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_save_params->setEnabled(true);
    pb_select_save_params->setPalette( PALET_PUSHB );
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
@@ -754,7 +769,7 @@ void US_Hydrodyn::setupGUI()
    // ***** dmd *******
    pb_dmd_run = new QPushButton(tr("Run DMD"), this);
    pb_dmd_run->setMinimumHeight(minHeight1);
-   pb_dmd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_dmd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_dmd_run->setEnabled( true );
    pb_dmd_run->setPalette( PALET_PUSHB );
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
@@ -762,7 +777,7 @@ void US_Hydrodyn::setupGUI()
    pb_bd = new QPushButton(tr("BD"), this);
    Q_CHECK_PTR(pb_bd);
    pb_bd->setMinimumHeight(minHeight1);
-   pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_bd->setEnabled(true);
    pb_bd->setPalette( PALET_PUSHB );
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
@@ -770,35 +785,35 @@ void US_Hydrodyn::setupGUI()
    // ***** bd *******
    //   pb_bd_prepare = new QPushButton(tr("Create Browflex files"), this);
    //   pb_bd_prepare->setMinimumHeight(minHeight1);
-   //   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_prepare->setEnabled(false);
    //   pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
    //   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
    //   pb_bd_load->setMinimumHeight(minHeight1);
-   //   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load->setEnabled(false);
    //   pb_bd_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
 
    //   pb_bd_edit = new QPushButton(tr("View/Edit Browflex files"), this);
    //   pb_bd_edit->setMinimumHeight(minHeight1);
-   //   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_edit->setEnabled(false);
    //   pb_bd_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
 
    //   pb_bd_run = new QPushButton(tr("Run Browflex"), this);
    //   pb_bd_run->setMinimumHeight(minHeight1);
-   //   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_run->setEnabled(false);
    //   pb_bd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
 
    //   pb_bd_load_results = new QPushButton(tr("Load/Process Browflex results"), this);
    //   pb_bd_load_results->setMinimumHeight(minHeight1);
-   //   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load_results->setEnabled(false);
    //   pb_bd_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
@@ -806,56 +821,56 @@ void US_Hydrodyn::setupGUI()
    // ***** anaflex *******
    //   pb_anaflex_prepare = new QPushButton(tr("Create Anaflex files"), this);
    //   pb_anaflex_prepare->setMinimumHeight(minHeight1);
-   //   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_prepare->setEnabled(false);
    //   pb_anaflex_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_anaflex_prepare, SIGNAL(clicked()), SLOT(anaflex_prepare()));
 
    //   pb_anaflex_load = new QPushButton(tr("Load Anaflex files"), this);
    //   pb_anaflex_load->setMinimumHeight(minHeight1);
-   //   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load->setEnabled(false);
    //   pb_anaflex_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_anaflex_load, SIGNAL(clicked()), SLOT(anaflex_load()));
 
    //   pb_anaflex_edit = new QPushButton(tr("View/Edit Anaflex files"), this);
    //   pb_anaflex_edit->setMinimumHeight(minHeight1);
-   //   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_edit->setEnabled(false);
    //   pb_anaflex_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_anaflex_edit, SIGNAL(clicked()), SLOT(anaflex_edit()));
 
    //   pb_anaflex_run = new QPushButton(tr("Run Anaflex"), this);
    //   pb_anaflex_run->setMinimumHeight(minHeight1);
-   //   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_run->setEnabled(false);
    //   pb_anaflex_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_anaflex_run, SIGNAL(clicked()), SLOT(anaflex_run()));
 
    //   pb_anaflex_load_results = new QPushButton(tr("Load Anaflex results"), this);
    //   pb_anaflex_load_results->setMinimumHeight(minHeight1);
-   //   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load_results->setEnabled(false);
    //   pb_anaflex_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //   connect(pb_anaflex_load_results, SIGNAL(clicked()), SLOT(anaflex_load_results()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
 
    pb_config = new QPushButton(tr("Config"), this);
-   pb_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_config->setMinimumHeight(minHeight1);
    pb_config->setPalette( PALET_PUSHB );
    connect(pb_config, SIGNAL(clicked()), SLOT(config()));
 
    pb_stop_calc = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop_calc);
-   pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop_calc->setMinimumHeight(minHeight1);
    pb_stop_calc->setPalette( PALET_PUSHB );
    connect(pb_stop_calc, SIGNAL(clicked()), SLOT(stop_calc()));
@@ -863,7 +878,7 @@ void US_Hydrodyn::setupGUI()
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
@@ -983,9 +998,20 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
    j++;
-   background->addWidget(pb_calc_hydro, j, 0);
-   background->addWidget(pb_show_hydro_results, j, 1);
+
+   QBoxLayout *hbl_calc_hydros = new QHBoxLayout( 0 );
+   hbl_calc_hydros->addWidget( pb_calc_hydro );
+   hbl_calc_hydros->addWidget( pb_calc_zeno );
+   background->addLayout(hbl_calc_hydros, j, 0);
+
+   QBoxLayout *hbl_show_hydros = new QHBoxLayout( 0 );
+   hbl_show_hydros->addWidget( pb_show_hydro_results );
+   hbl_show_hydros->addWidget( pb_show_zeno_results );
+   background->addLayout( hbl_show_hydros, j, 1);
    j++;
+   // background->addWidget(pb_calc_zeno, j, 0);
+   // background->addWidget(pb_show_zeno_results, j, 1);
+   // j++;
    //   background->addWidget(pb_anaflex_prepare, j, 0);
    //   QHBoxLayout *qhl_anaflex_1 = new QHBoxLayout;
    //   qhl_anaflex_1->addWidget(pb_anaflex_load);
@@ -1022,6 +1048,8 @@ void US_Hydrodyn::set_disabled()
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(false);
 
@@ -1564,6 +1592,8 @@ void US_Hydrodyn::reload_pdb()
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
@@ -1798,6 +1828,8 @@ void US_Hydrodyn::load_pdb()
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
@@ -1929,6 +1961,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -1954,6 +1988,8 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    pb_visualize->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
@@ -1973,6 +2009,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2031,6 +2068,8 @@ void US_Hydrodyn::select_model(int val)
    pb_somo->setEnabled(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
    bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
@@ -2112,6 +2151,8 @@ void US_Hydrodyn::load_bead_model()
       pb_visualize->setEnabled(false);
       pb_calc_hydro->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
+      pb_calc_zeno->setEnabled(false);
+      pb_show_zeno_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
       pb_grid->setEnabled(false);
       bead_model_prefix = "";
@@ -2165,6 +2206,7 @@ void US_Hydrodyn::load_bead_model()
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_calc_hydro->setEnabled(true);
+         pb_calc_zeno->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2259,6 +2301,8 @@ int US_Hydrodyn::calc_somo()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -2330,6 +2374,7 @@ int US_Hydrodyn::calc_somo()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -2394,6 +2439,8 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
 
    if (results_widget)
    {
@@ -2758,6 +2805,7 @@ int US_Hydrodyn::calc_grid_pdb()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -2799,6 +2847,8 @@ int US_Hydrodyn::calc_grid()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_show_zeno_results->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -3035,6 +3085,7 @@ int US_Hydrodyn::calc_grid()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -3259,6 +3310,7 @@ int US_Hydrodyn::calc_hydro()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
@@ -3306,6 +3358,7 @@ int US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3338,6 +3391,7 @@ int US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3348,6 +3402,7 @@ int US_Hydrodyn::calc_hydro()
    printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
+   pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    if ( retval )
@@ -3476,7 +3531,7 @@ void US_Hydrodyn::open_hydro_results()
                somo_dir :
                path_open_hydro_res;
             
-            filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES", this);
+            filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES *.zno *.ZNO", this);
 
             if ( !filename.isEmpty() )
             {
@@ -4358,7 +4413,11 @@ void US_Hydrodyn::update_enables()
 {
 }
 
-void US_Hydrodyn::sizeArrows( QwtCounter* counter )
+void US_Hydrodyn::sizeArrows( QwtCounter* 
+#ifdef Q_WS_MAC
+                              counter 
+#endif
+)
 {
 #ifdef Q_WS_MAC
    QList< QObject* > children = counter->children();

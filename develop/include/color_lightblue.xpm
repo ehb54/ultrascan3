@@ -1,5 +1,5 @@
 /* XPM */
-static char *color_lightblue[] = {
+static const char *color_lightblue[] = {
 /* columns rows colors chars-per-pixel */
 "101 25 161 2",
 "   c blue",

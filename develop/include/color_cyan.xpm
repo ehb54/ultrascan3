@@ -1,5 +1,5 @@
 /* XPM */
-static char *color_cyan[] = {
+static const char *color_cyan[] = {
 /* columns rows colors chars-per-pixel */
 "101 25 168 2",
 "   c #008080",

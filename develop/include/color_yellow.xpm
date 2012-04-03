@@ -1,5 +1,5 @@
 /* XPM */
-static char *color_yellow[] = {
+static const char *color_yellow[] = {
 /* columns rows colors chars-per-pixel */
 "101 25 164 2",
 "   c black",

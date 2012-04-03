@@ -38,6 +38,7 @@
 #include "us_hydrodyn_bd_options.h"
 #include "us_hydrodyn_dmd_options.h"
 #include "us_hydrodyn_hydro.h"
+#include "us_hydrodyn_hydro_zeno.h"
 #include "us_hydrodyn_misc.h"
 #include "us_hydrodyn_grid.h"
 #include "us_hydrodyn_results.h"
@@ -99,6 +100,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Pdb_Tool_Merge;
       friend class US_Hydrodyn_SaxsOptions;
+      friend class US_Hydrodyn_Zeno;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -212,6 +214,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool bead_output_widget;
       bool grid_widget;
       bool hydro_widget;
+      bool hydro_zeno_widget;
       bool results_widget;
       bool misc_widget;
       bool pdb_parsing_widget;
@@ -325,7 +328,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_pdb_tool;
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
+      QPushButton *pb_calc_zeno;
       QPushButton *pb_show_hydro_results;
+      QPushButton *pb_show_zeno_results;
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
       QPushButton *pb_grid_pdb;
@@ -367,6 +372,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Anaflex_Options *anaflex_options_window;
       US_Hydrodyn_DMD_Options *dmd_options_window;
       US_Hydrodyn_Hydro *hydro_window;
+      US_Hydrodyn_Hydro_Zeno *hydro_zeno_window;
       US_Hydrodyn_Misc *misc_window;
       US_Hydrodyn_Results *results_window;
       US_Hydrodyn_Grid *grid_window;
@@ -703,6 +709,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_grid();     // compute grid model from bead model
       int calc_hydro();
+      bool calc_zeno();
       int calc_iqq(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute iqq curve
       int calc_prr(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute prr curve
       void select_save_params();
@@ -782,6 +789,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_grid_overlap();
       void show_bead_output();
       void show_hydro();
+      void show_zeno();
+      void show_zeno_options();
       void show_grid(); // show grid options
       void show_advanced_config();
       void view_pdb(); // show pdb file in editor

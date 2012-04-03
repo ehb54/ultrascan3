@@ -3366,6 +3366,14 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_use_saxs_excl_vol = false;
    saxs_options.alt_hydration         = false;
 
+   hydro.zeno_zeno              = true;
+   hydro.zeno_interior          = true;
+   hydro.zeno_surface           = true;
+   hydro.zeno_zeno_steps        = 1000;
+   hydro.zeno_interior_steps    = 1000;
+   hydro.zeno_surface_steps     = 1000;
+   hydro.zeno_surface_thickness = 0.0f;
+
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    batch.saxs_search = false;
@@ -5788,6 +5796,7 @@ void US_Hydrodyn::config()
       << tr( "SOMO Options -> SoMo Overlap Reduction" ) // show_overlap()
       << tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) // show_grid_overlap()
       << tr( "SOMO Options -> Hydrodynamic Calculations" ) // show_hydro()
+      << tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) // show_zeno_options()
       << tr( "SOMO Options -> Miscellaneous Options" ) // show_misc()
       << tr( "SOMO Options -> Bead Model Output" ) // show_bead_output()
       << tr( "SOMO Options -> Grid Functions (AtoB)" ) // show_grid()
@@ -5863,6 +5872,12 @@ void US_Hydrodyn::config()
       {
          last_menu = pos;
          show_hydro();
+      }
+      pos++;
+      if ( res == tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) )
+      {
+         last_menu = pos;
+         show_zeno_options();
       }
       pos++;
       if ( res == tr( "SOMO Options -> Miscellaneous Options" ) )
