@@ -3,6 +3,8 @@
 static US_Hydrodyn  * zeno_us_hydrodyn;
 static QProgressBar * zeno_progress;
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 namespace zeno {
 
    using namespace fem::major_types;
@@ -8283,7 +8285,7 @@ bool US_Hydrodyn_Zeno::test()
       cout << 
          QString( "error: %1 %2 does not exist" )
          .arg( QDir::current().path() )
-         .arg( QString( "%1.bod" ).arg( argv1 ) );
+         .arg( QString( "%1.bod" ).arg( argv1 ) ).ascii();
       return false;
    }
    zeno_main( argc, argv );
@@ -8309,7 +8311,7 @@ bool US_Hydrodyn_Zeno::run(
       // return false;
    }
 
-   cout << QString( "current dir is %1\n" ).arg( QDir::current().path() );
+   cout << QString( "current dir is %1\n" ).arg( QDir::current().path() ).ascii();
 
    if ( options->unit != -9 &&
         options->unit != -10 )
@@ -8371,7 +8373,7 @@ bool US_Hydrodyn_Zeno::run(
    }
 
    fout.close();
-   cout << QString( "created: %1\n" ).arg( outname );
+   cout << QString( "created: %1\n" ).arg( outname ).ascii();
 
    int argc = 0;
    const char *argv[ 5 ];
@@ -8386,7 +8388,7 @@ bool US_Hydrodyn_Zeno::run(
    cout << QString ( " zeno <%1> <%2> <%3>\n" )
       .arg( options->zeno_zeno_steps )
       .arg( options->zeno_interior_steps )
-      .arg( options->zeno_surface_steps );
+      .arg( options->zeno_surface_steps ).ascii();
 
 
    QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
