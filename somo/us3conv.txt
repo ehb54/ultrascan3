@@ -45,6 +45,7 @@ files
 ./src/us_admin.cpp
 ./src/us_util.cpp
 ./src/us_hydrodyn_hydro.cpp
+./src/us_hydrodyn_hydro_zeno.cpp
 ./src/us_hydrodyn_cluster_config_server.cpp
 ./src/us_hydrodyn_overlap.cpp
 ./src/us_font.cpp
