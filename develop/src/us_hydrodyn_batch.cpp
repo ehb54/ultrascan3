@@ -427,6 +427,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_hydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_hydro, SIGNAL(clicked()), this, SLOT(set_hydro()));
 
+   cb_zeno = new QCheckBox(this);
+   cb_zeno->setText( " Zeno" );
+   cb_zeno->setChecked(batch->zeno);
+   cb_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_zeno->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
+
    cb_avg_hydro = new QCheckBox(this);
    cb_avg_hydro->setText(tr(" Combined Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
@@ -597,6 +604,10 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_help_cancel->addWidget(pb_open_saxs_options);
    hbl_help_cancel->addWidget(pb_cancel);
 
+   QHBoxLayout *hbl_hydro_zeno = new QHBoxLayout;
+   hbl_hydro_zeno->addWidget( cb_hydro );
+   hbl_hydro_zeno->addWidget( cb_zeno );
+
    QVBoxLayout *leftside = new QVBoxLayout();
    leftside->setMargin(5);
    leftside->addWidget(lbl_selection);
@@ -615,7 +626,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addLayout(hbl_csv_saxs);
    leftside->addLayout(hbl_iq_avg_std_dev);
    leftside->addLayout(hbl_prr_avg_std_dev);
-   leftside->addWidget(cb_hydro);
+   leftside->addLayout( hbl_hydro_zeno );
    leftside->addLayout(hbl_hydro);
    leftside->addLayout(hbl_save);
    leftside->addLayout(hbl_process);
@@ -1017,10 +1028,11 @@ void US_Hydrodyn_Batch::update_enables()
       pb_make_movie->setEnabled(count_selected > 1);
    }
    cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
-   cb_avg_hydro->setEnabled(lb_files->numRows() && batch->hydro);
-   le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
-   pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
-   cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
+   cb_zeno ->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
+   cb_avg_hydro->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
+   le_avg_hydro_name->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) && batch->avg_hydro);
+   pb_select_save_params->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
+   cb_saveParams->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
    pb_cluster->setEnabled( true );
 
    bool anything_to_do =
@@ -1028,7 +1040,8 @@ void US_Hydrodyn_Batch::update_enables()
       ( cb_grid->isEnabled()  && cb_grid->isChecked()  ) ||
       ( cb_prr->isEnabled()   && cb_prr->isChecked()   ) ||
       ( cb_iqq->isEnabled()   && cb_iqq->isChecked()   ) ||
-      ( cb_hydro->isEnabled() && cb_hydro->isChecked() )
+      ( cb_hydro->isEnabled() && cb_hydro->isChecked() ) ||
+      ( cb_zeno->isEnabled()  && cb_zeno->isChecked()  )
       ;
    pb_start->setEnabled(count_selected && !cb_dmd->isChecked() && anything_to_do );
 
@@ -1281,6 +1294,12 @@ void US_Hydrodyn_Batch::set_compute_prr_std_dev()
 void US_Hydrodyn_Batch::set_hydro()
 {
    batch->hydro = cb_hydro->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_zeno()
+{
+   batch->zeno = cb_zeno->isChecked();
    update_enables();
 }
 

@@ -3377,6 +3377,7 @@ void US_Hydrodyn::set_default()
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    batch.saxs_search = false;
+   batch.zeno        = false;
 
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;

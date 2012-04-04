@@ -54,6 +54,7 @@ struct batch_info
    bool create_native_saxs;
    QString csv_saxs_name;
    bool hydro;
+   bool zeno;
    bool avg_hydro;
    QString avg_hydro_name;
    int height;
@@ -140,6 +141,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_compute_prr_avg;
       QCheckBox     *cb_compute_prr_std_dev;
       QCheckBox     *cb_hydro;
+      QCheckBox     *cb_zeno;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
 
@@ -247,6 +249,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_somo();
       void set_grid();
       void set_hydro();
+      void set_zeno();
       void set_iqq();
       void set_saxs_search();
       void set_prr();
