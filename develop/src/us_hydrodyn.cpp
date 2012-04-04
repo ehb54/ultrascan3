@@ -165,6 +165,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_search_widget = false;
    saxs_screen_widget = false;
    saxs_buffer_widget = false;
+   saxs_2d_widget = false;
    bd_widget = false;
    bd_options_widget = false;
    dmd_options_widget = false;

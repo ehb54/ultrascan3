@@ -74,6 +74,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
+      friend class US_Hydrodyn_Saxs_2d;
 
    public:
 
@@ -168,6 +169,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
+      QPushButton *pb_saxs_2d;
       QPushButton *pb_guinier_analysis;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
@@ -603,6 +605,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
+      void saxs_2d();
 
       void plot_saxs_clicked( long );
       void plot_pr_clicked  ( long );

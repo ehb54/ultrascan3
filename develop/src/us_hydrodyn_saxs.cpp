@@ -5,6 +5,7 @@
 #include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
+#include "../include/us_hydrodyn_saxs_2d.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -601,6 +602,12 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_buffer->setMinimumHeight(minHeight1);
       pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
+
+      pb_saxs_2d = new QPushButton("2d", this);
+      pb_saxs_2d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      pb_saxs_2d->setMinimumHeight(minHeight1);
+      pb_saxs_2d->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_saxs_2d, SIGNAL(clicked()), SLOT(saxs_2d()));
    } 
 
    pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
@@ -1021,6 +1028,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    {
       hbl_various_0->addWidget(pb_saxs_screen);
       hbl_various_0->addWidget(pb_saxs_buffer);
+      hbl_various_0->addWidget(pb_saxs_2d);
    }
 
    hbl_various_0->addWidget(pb_guinier_analysis);
