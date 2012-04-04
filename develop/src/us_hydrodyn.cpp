@@ -154,7 +154,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    misc_widget = false;
    grid_widget = false;
    hydro_widget = false;
-   zeno_widget = false;
+   hydro_zeno_widget = false;
    overlap_widget = false;
    grid_overlap_widget = false;
    bead_output_widget = false;
