@@ -1175,6 +1175,7 @@ SOURCES += \
   us_hydrodyn_saxs_buffer.cpp \
   us_hydrodyn_saxs_buffer_conc.cpp \
   us_hydrodyn_saxs_buffer_conc_load.cpp \
+  us_hydrodyn_saxs_2d.cpp \
   us_hydrodyn_supc.cpp \
   us_hydrodyn_zeno.cpp \
   us_surfracer.cpp \
@@ -1292,6 +1293,7 @@ HEADERS += \
   us_hydrodyn_saxs_buffer.h \
   us_hydrodyn_saxs_buffer_conc.h \
   us_hydrodyn_saxs_buffer_conc_load.h \
+  us_hydrodyn_saxs_2d.h \
   us_hydrodyn_supc.h \
   us_hydrodyn_zeno.h \
   us_fable.h \
