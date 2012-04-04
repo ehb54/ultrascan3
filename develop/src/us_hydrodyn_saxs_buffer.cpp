@@ -23,6 +23,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    setCaption(tr("US-SOMO: SAXS Buffer Subtraction Utility"));
    order_ascending = false;
    conc_widget     = false;
+#ifdef QT4
+   legend_vis      = true;
+#endif
 
    QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );
 

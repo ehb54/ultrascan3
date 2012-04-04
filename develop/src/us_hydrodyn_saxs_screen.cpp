@@ -66,7 +66,11 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    }
 
    t_csv->setMaximumHeight( t_csv->height() );
+#ifndef QT4
    editor->setMaximumWidth( editor->width() + editor->width() / 20 );
+#else
+   editor->setMaximumWidth( (int)csv_width );
+#endif
 
    max_y_range = 0e0;
 
@@ -1107,12 +1111,13 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                              radiis[ current_row ][ i ].size() );
    plot_dist->setCurvePen  ( curvekey, QPen( "yellow", 2, SolidLine ) );
 #else
-   QwtPlotCurve *curve = new QwtPlotCurve( "Radii histogram" );
+   QwtPlotCurve *curve = new QwtPlotCurve( tr( "Radii histogram" ) );
    curve->setStyle( QwtPlotCurve::Sticks );
    curve->setData( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
                    (double *)&( intensitys[ current_row ][ i ][ 0 ] ),
                    radiis[ current_row ][ i ].size() );
    curve->setPen( QPen( Qt::yellow, 2, Qt::SolidLine ) );
+   curve->setYAxis( QwtPlot::yLeft );
    curve->attach( plot_dist );
 #endif
 
@@ -1135,20 +1140,18 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                             "" )
                                       );
 #else
-      QwtSymbol sym1;
-      sym1.setStyle( QwtSymbol::VLine );
-      sym1.setPen  ( QPen( Qt::green, 2, Qt::DashDotDotLine ) );
-      sym1.setBrush( Qt::white );
-      sym1.setSize ( 8 );
       QwtPlotMarker* marker1 = new QwtPlotMarker;
-      marker1->setSymbol( sym1 );
+      marker1->setSymbol( QwtSymbol( QwtSymbol::VLine,
+         QBrush( Qt::white ), QPen( Qt::green, 2, Qt::DashLine ),
+         QSize( 8, 8 ) ) );
+      marker1->setValue( best_fit_radiuss[ current_row ][ i ], 0e0 );
+      marker1->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
       marker1->setLabel( QString( "Best individual\nfit at %1%2" )
          .arg( best_fit_radiuss[ current_row ][ i ] )
          .arg( cb_plot_chi2->isChecked() ?
          QString("\n%1 = %2")
          .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
          .arg( chi2_bests[ current_row ][ i ] ) : "" ) );
-      marker1->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
       marker1->attach( plot_dist );
 #endif
    }
@@ -1173,16 +1176,18 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                       );
 #else
       QwtPlotMarker* marker2 = new QwtPlotMarker;
+      marker2->setSymbol( QwtSymbol( QwtSymbol::VLine,
+         QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
+         QSize( 8, 8 ) ) );
+      marker2->setValue( average_radiuss[ current_row ][ i ], 0e0 );
+      marker2->setLabelAlignment( cb_plot_best->isChecked() ?
+         Qt::AlignLeft | Qt::AlignTop : Qt::AlignRight | Qt::AlignTop );
       marker2->setLabel( QString( "\n\n\nAverage fit\n at %1%2" )
          .arg( average_radiuss[ current_row ][ i ] ) 
          .arg( cb_plot_chi2->isChecked() ?
          QString( "\nNNLS %1 = %2" )
          .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
          .arg( chi2_nnlss[ current_row ][ i ] ) : "" ) );
-      marker2->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
-      marker2->setSymbol( QwtSymbol( QwtSymbol::VLine,
-         QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
-         QSize( 8, 8 ) ) );
       marker2->attach( plot_dist );
 #endif
    }
@@ -1200,12 +1205,13 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
 #else
       QwtPlotMarker* marker3 = new QwtPlotMarker;
+      marker3->setSymbol( QwtSymbol( QwtSymbol::VLine,
+         QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
+         QSize( 8, 8 ) ) );
+      marker3->setValue( target_rgs[ current_row ][ i ], 0e0 );
+      marker3->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
       marker3->setLabel( QString( "Guinier Rg\n%1" )
          .arg( target_rgs[ current_row ][ i ] ) );
-      marker3->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
-      marker3->setSymbol( QwtSymbol( QwtSymbol::VLine,
-         QBrush( Qt::white ), QPen( QColor( "blue" ), 2, Qt::DashLine ),
-         QSize( 8, 8 ) ) );
       marker3->attach( plot_dist );
 #endif
    }
