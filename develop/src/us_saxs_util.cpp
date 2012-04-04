@@ -5900,8 +5900,13 @@ bool US_Saxs_Util::run_gnom(
 
       QString cmd = 
          QString(
+#ifndef QT4
+                 "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1 %1 %1\n"
+                 "mv %1%1%1*.png %1%1\n"
+#else
                  "mkgnom.pl %1 %2%3_gnom_ %4 %5 %6 %7 %8 %9\n"
                  "mv %10%11%12*.png %13%14\n"
+#endif
                  )
          .arg(dir)
          .arg(prefix)
