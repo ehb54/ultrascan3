@@ -8380,10 +8380,8 @@ bool US_Hydrodyn_Zeno::run(
 
    argv[ argc++ ] = "us_zeno";
 
-   char buf_name[ QFileInfo( filename ).fileName().length() + 1 ];
-   strncpy( buf_name, QFileInfo( filename ).fileName().ascii(), QFileInfo( filename ).fileName().length() );
-   buf_name[ QFileInfo( filename ).fileName().length() ] = 0;
-   argv[ argc++ ] = buf_name;
+   QString cmdfile = QFileInfo( filename ).fileName();
+   argv[ argc++ ] = cmdfile.ascii();
 
    cout << QString ( " zeno <%1> <%2> <%3>\n" )
       .arg( options->zeno_zeno_steps )
