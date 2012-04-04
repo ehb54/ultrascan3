@@ -8392,36 +8392,25 @@ bool US_Hydrodyn_Zeno::run(
 
 
    QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
-   char buf_zeno[ qs_zeno.length() + 1 ];
-   strncpy( buf_zeno, qs_zeno.ascii(), qs_zeno.length() );
-   buf_zeno[ qs_zeno.length() ] = 0;
-
    QString qs_interior = QString( "" ).sprintf( "i%ut", options->zeno_interior_steps );
-   char buf_interior[ qs_interior.length() + 1 ];
-   strncpy( buf_interior, qs_interior.ascii(), qs_interior.length() );
-   buf_interior[ qs_interior.length() ] = 0;
-
    QString qs_surface  = QString( "" ).sprintf( "s%ut", options->zeno_surface_steps  );
-   char buf_surface[ qs_surface.length() + 1 ];
-   strncpy( buf_surface, qs_surface.ascii(), qs_surface.length() );
-   buf_surface[ qs_surface.length() ] = 0;
 
    int progress_steps = 0;
 
    if ( options->zeno_zeno )
    {
       progress_steps += 108;
-      argv[ argc++ ] = buf_zeno;
+      argv[ argc++ ] = qs_zeno.ascii();
    }
    if ( options->zeno_interior )
    {
       progress_steps += 108;
-      argv[ argc++ ] = buf_interior;
+      argv[ argc++ ] = qs_interior.ascii();
    }
    if ( options->zeno_surface )
    {
       progress_steps += 108;
-      argv[ argc++ ] = buf_surface;
+      argv[ argc++ ] = qs_surface.ascii();
    }
 
    zeno_progress->setProgress( 0, progress_steps );
