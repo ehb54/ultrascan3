@@ -69,7 +69,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
 #ifndef QT4
    editor->setMaximumWidth( editor->width() + editor->width() / 20 );
 #else
-   editor->setMaximumWidth( (int)csv_width );
+   editor->setMaximumWidth( ( (int)csv_width * 35 ) / 100 );
 #endif
 
    max_y_range = 0e0;
@@ -1117,8 +1117,9 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                    (double *)&( intensitys[ current_row ][ i ][ 0 ] ),
                    radiis[ current_row ][ i ].size() );
    curve->setPen( QPen( Qt::yellow, 2, Qt::SolidLine ) );
-   curve->setYAxis( QwtPlot::yLeft );
    curve->attach( plot_dist );
+   int    sizeym = ( plot_dist->height() * 45 ) / 100;
+   double ymark  = ( curve->minYValue() + curve->maxYValue() ) * 0.40;
 #endif
 
    if ( cb_plot_best->isChecked() )
@@ -1143,8 +1144,8 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       QwtPlotMarker* marker1 = new QwtPlotMarker;
       marker1->setSymbol( QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::green, 2, Qt::DashLine ),
-         QSize( 8, 8 ) ) );
-      marker1->setValue( best_fit_radiuss[ current_row ][ i ], 0e0 );
+         QSize( 8, sizeym ) ) );
+      marker1->setValue( best_fit_radiuss[ current_row ][ i ], ymark );
       marker1->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
       marker1->setLabel( QString( "Best individual\nfit at %1%2" )
          .arg( best_fit_radiuss[ current_row ][ i ] )
@@ -1178,8 +1179,8 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       QwtPlotMarker* marker2 = new QwtPlotMarker;
       marker2->setSymbol( QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
-         QSize( 8, 8 ) ) );
-      marker2->setValue( average_radiuss[ current_row ][ i ], 0e0 );
+         QSize( 8, sizeym ) ) );
+      marker2->setValue( average_radiuss[ current_row ][ i ], ymark );
       marker2->setLabelAlignment( cb_plot_best->isChecked() ?
          Qt::AlignLeft | Qt::AlignTop : Qt::AlignRight | Qt::AlignTop );
       marker2->setLabel( QString( "\n\n\nAverage fit\n at %1%2" )
@@ -1207,9 +1208,9 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       QwtPlotMarker* marker3 = new QwtPlotMarker;
       marker3->setSymbol( QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
-         QSize( 8, 8 ) ) );
-      marker3->setValue( target_rgs[ current_row ][ i ], 0e0 );
-      marker3->setLabelAlignment( Qt::AlignRight | Qt::AlignCenter );
+         QSize( 8, sizeym ) ) );
+      marker3->setValue( target_rgs[ current_row ][ i ], ymark );
+      marker3->setLabelAlignment( Qt::AlignRight | Qt::AlignVCenter );
       marker3->setLabel( QString( "Guinier Rg\n%1" )
          .arg( target_rgs[ current_row ][ i ] ) );
       marker3->attach( plot_dist );

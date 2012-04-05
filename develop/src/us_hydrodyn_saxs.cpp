@@ -4130,8 +4130,13 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
    tmp_data.push_back("Radius (A)");
    tmp_data.push_back("Y");
    tmp_data.push_back(".5");
+#ifndef QT4
    tmp_data.push_back("1000");
    tmp_data.push_back("1001");
+#else
+   tmp_data.push_back("100");
+   tmp_data.push_back("101");
+#endif
    tmp_data.push_back("");
 
    screen_csv.prepended_names.push_back(tmp_data[0]);
