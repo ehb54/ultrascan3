@@ -4,6 +4,9 @@
 
 #define SLASH QDir::separator()
 
+// configurable max size of 2d detector image
+#define US_SAXS_2D_PIXMAX 512
+
 US_Hydrodyn_Saxs_2d::US_Hydrodyn_Saxs_2d(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
@@ -165,7 +168,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
    lbl_2d = new QLabel( this );
-   i_2d = (QImage *)0;
+   i_2d = new QImage();
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -348,6 +351,10 @@ void US_Hydrodyn_Saxs_2d::set_target()
 
 void US_Hydrodyn_Saxs_2d::start()
 {
+   // compute complex curves, display modulus on 2d array
+   // compute for each point on detector
+
+
    if ( !validate() )
    {
       return;
@@ -420,22 +427,23 @@ void US_Hydrodyn_Saxs_2d::update_2d()
        le_detector_pixels_height->text().toUInt() > 0 &&
        le_detector_pixels_width->text().toUInt() > 0 &&
        ( 
-        !i_2d ||
         le_detector_pixels_height->text().toInt() != i_2d->height() ||
         le_detector_pixels_width->text().toInt() != i_2d->width() ) )
    {
-      if ( i_2d )
-      {
-         delete i_2d;
-      }
-      i_2d = new QImage( 
-                        le_detector_pixels_height->text().toInt(),
-                        le_detector_pixels_width->text().toInt(),
-                        32
-                        );
+      i_2d->reset();
+      
+      i_2d->create(
+                   le_detector_pixels_height->text().toInt(),
+                   le_detector_pixels_width->text().toInt(),
+                   32
+                   );
       i_2d->fill( qRgb( 0, 0, 0 ) );
       QPixmap pm;
-      pm.convertFromImage( *i_2d );
+      pm.convertFromImage( i_2d->smoothScale( i_2d->height() > US_SAXS_2D_PIXMAX ?
+                                              US_SAXS_2D_PIXMAX : i_2d->height(),
+                                              i_2d->width() > US_SAXS_2D_PIXMAX ?
+                                              US_SAXS_2D_PIXMAX : i_2d->width(),
+                                              QImage::ScaleMin ) );
       lbl_2d->setPixmap( pm );
    }
 }

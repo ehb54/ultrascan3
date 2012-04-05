@@ -724,20 +724,6 @@ void US_Hydrodyn::setupGUI()
    pb_show_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
-   pb_calc_zeno = new QPushButton( "Zeno", this);
-   pb_calc_zeno->setEnabled(false);
-   pb_calc_zeno->setMinimumHeight(minHeight1);
-   pb_calc_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   pb_calc_zeno->setPalette( PALET_PUSHB );
-   connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno()));
-
-   pb_show_zeno_results = new QPushButton( "Zeno" , this);
-   pb_show_zeno_results->setMinimumHeight(minHeight1);
-   pb_show_zeno_results->setEnabled(false);
-   pb_show_zeno_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   pb_show_zeno_results->setPalette( PALET_PUSHB );
-   connect(pb_show_zeno_results, SIGNAL(clicked()), SLOT(show_zeno()));
-
    pb_comparative = new QPushButton(tr("Model classifier"), this);
    pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_comparative->setEnabled(true);
@@ -1003,17 +989,12 @@ void US_Hydrodyn::setupGUI()
 
    QBoxLayout *hbl_calc_hydros = new QHBoxLayout( 0 );
    hbl_calc_hydros->addWidget( pb_calc_hydro );
-   hbl_calc_hydros->addWidget( pb_calc_zeno );
    background->addLayout(hbl_calc_hydros, j, 0);
 
    QBoxLayout *hbl_show_hydros = new QHBoxLayout( 0 );
    hbl_show_hydros->addWidget( pb_show_hydro_results );
-   hbl_show_hydros->addWidget( pb_show_zeno_results );
    background->addLayout( hbl_show_hydros, j, 1);
    j++;
-   // background->addWidget(pb_calc_zeno, j, 0);
-   // background->addWidget(pb_show_zeno_results, j, 1);
-   // j++;
    //   background->addWidget(pb_anaflex_prepare, j, 0);
    //   QHBoxLayout *qhl_anaflex_1 = new QHBoxLayout;
    //   qhl_anaflex_1->addWidget(pb_anaflex_load);
@@ -1050,8 +1031,6 @@ void US_Hydrodyn::set_disabled()
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(false);
 
@@ -1594,8 +1573,6 @@ void US_Hydrodyn::reload_pdb()
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
@@ -1830,8 +1807,6 @@ void US_Hydrodyn::load_pdb()
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
@@ -1963,8 +1938,6 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -1990,8 +1963,6 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    pb_visualize->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
@@ -2011,7 +1982,6 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2070,8 +2040,6 @@ void US_Hydrodyn::select_model(int val)
    pb_somo->setEnabled(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
    bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
@@ -2153,8 +2121,6 @@ void US_Hydrodyn::load_bead_model()
       pb_visualize->setEnabled(false);
       pb_calc_hydro->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
-      pb_calc_zeno->setEnabled(false);
-      pb_show_zeno_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
       pb_grid->setEnabled(false);
       bead_model_prefix = "";
@@ -2208,7 +2174,6 @@ void US_Hydrodyn::load_bead_model()
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_calc_hydro->setEnabled(true);
-         pb_calc_zeno->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2303,8 +2268,6 @@ int US_Hydrodyn::calc_somo()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -2376,7 +2339,6 @@ int US_Hydrodyn::calc_somo()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -2441,8 +2403,6 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
 
    if (results_widget)
    {
@@ -2807,7 +2767,6 @@ int US_Hydrodyn::calc_grid_pdb()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -2849,8 +2808,6 @@ int US_Hydrodyn::calc_grid()
    pb_visualize->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
-   pb_show_zeno_results->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -3087,7 +3044,6 @@ int US_Hydrodyn::calc_grid()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -3304,6 +3260,19 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool bla
 
 int US_Hydrodyn::calc_hydro()
 {
+   if ( misc.hydro_supc )
+   {
+      return do_calc_hydro();
+   }
+   if ( misc.hydro_zeno )
+   {
+      return (int)calc_zeno();
+   }
+   return -1;
+}
+
+int US_Hydrodyn::do_calc_hydro()
+   {
    if ( !overwrite )
    {
       setHydroFile();
@@ -3312,7 +3281,6 @@ int US_Hydrodyn::calc_hydro()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
@@ -3360,7 +3328,6 @@ int US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3393,7 +3360,6 @@ int US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3404,7 +3370,6 @@ int US_Hydrodyn::calc_hydro()
    printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
-   pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    if ( retval )
@@ -3466,22 +3431,29 @@ int US_Hydrodyn::calc_hydro()
 
 void US_Hydrodyn::show_hydro_results()
 {
-   if (results_widget)
+   if ( misc.hydro_supc )
    {
-      if (results_window->isVisible())
+      if (results_widget)
       {
-         results_window->raise();
+         if (results_window->isVisible())
+         {
+            results_window->raise();
+         }
+         else
+         {
+            results_window->show();
+         }
+         return;
       }
       else
       {
+         results_window = new US_Hydrodyn_Results(&results, &results_widget);
          results_window->show();
       }
-      return;
    }
-   else
+   if ( misc.hydro_zeno )
    {
-      results_window = new US_Hydrodyn_Results(&results, &results_widget);
-      results_window->show();
+      show_zeno();
    }
 }
 

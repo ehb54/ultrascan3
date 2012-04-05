@@ -46,6 +46,8 @@ struct misc_options
    double target_volume;
    bool   set_target_on_load_pdb;
    bool   equalize_radii;
+   bool   hydro_supc;
+   bool   hydro_zeno;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -100,6 +102,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QLineEdit *le_target_volume;
       QCheckBox *cb_set_target_on_load_pdb;
       QCheckBox *cb_equalize_radii;
+      QLabel    *lbl_hydro_method;
+      QCheckBox *cb_hydro_supc;
+      QCheckBox *cb_hydro_zeno;
 
    private slots:
 
@@ -121,6 +126,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       void update_target_volume(const QString &);
       void set_set_target_on_load_pdb();
       void set_equalize_radii();
+
+      void set_hydro_supc();
+      void set_hydro_zeno();
 
       void cancel();
       void help();

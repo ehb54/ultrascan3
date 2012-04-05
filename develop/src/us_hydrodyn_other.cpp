@@ -3369,10 +3369,13 @@ void US_Hydrodyn::set_default()
    hydro.zeno_zeno              = true;
    hydro.zeno_interior          = true;
    hydro.zeno_surface           = true;
-   hydro.zeno_zeno_steps        = 1000;
-   hydro.zeno_interior_steps    = 1000;
-   hydro.zeno_surface_steps     = 1000;
+   hydro.zeno_zeno_steps        = 100;
+   hydro.zeno_interior_steps    = 100;
+   hydro.zeno_surface_steps     = 100;
    hydro.zeno_surface_thickness = 0.0f;
+
+   misc.hydro_supc              = true;
+   misc.hydro_zeno              = false;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 

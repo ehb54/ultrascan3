@@ -5,6 +5,9 @@ static QProgressBar * zeno_progress;
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+// was 25
+#define USZ_MAX_ID_SIZE 2048 
+
 namespace zeno {
 
    using namespace fem::major_types;
@@ -2823,11 +2826,11 @@ namespace zeno {
       }
       //C
       int nsp = fem::index(id, " ");
-      fem::str<25> fin = id;
-      fem::str<25> fout = id;
+      fem::str<USZ_MAX_ID_SIZE> fin = id;
+      fem::str<USZ_MAX_ID_SIZE> fout = id;
       fin(nsp, nsp + 3) = ".bod";
       fout(nsp, nsp + 3) = ".zno";
-      fem::str<25> dfl = id;
+      fem::str<USZ_MAX_ID_SIZE> dfl = id;
       dfl(nsp, nsp + 3) = ".dfl";
       //C
       fem::str<32> com = "date > ";
@@ -7276,7 +7279,7 @@ namespace zeno {
       bool kirk_done = fem::bool0;
       bool rg_done = fem::bool0;
       bool bailout = fem::bool0;
-      fem::str<25> id = fem::char0;
+      fem::str<USZ_MAX_ID_SIZE> id = fem::char0;
       fem::integer_star_4 nin = fem::zero<fem::integer_star_4>();
       fem::integer_star_4 nout = fem::zero<fem::integer_star_4>();
       arr_1d<3, fem::integer_star_4> m1(fem::fill0);
@@ -8455,7 +8458,6 @@ bool US_Hydrodyn::calc_zeno()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
-   pb_calc_zeno->setEnabled(false);
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations (Zeno) \n\n");
@@ -8487,11 +8489,9 @@ bool US_Hydrodyn::calc_zeno()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
-      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
-      pb_show_zeno_results->setEnabled(false);
       progress->reset();
       return false;
    }
@@ -8517,10 +8517,9 @@ bool US_Hydrodyn::calc_zeno()
             {
                editor->append("Stopped by user\n\n");
                pb_calc_hydro->setEnabled(true);
-               pb_calc_zeno->setEnabled(true);
                pb_bead_saxs->setEnabled(true);
                pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-               pb_show_zeno_results->setEnabled(false);
+               pb_show_hydro_results->setEnabled(false);
                progress->reset();
                return false;
             }
@@ -8529,10 +8528,9 @@ bool US_Hydrodyn::calc_zeno()
                editor_msg( "red", "ZENO computation failed" );
                editor_msg( "red", tr( uhz.error_msg ) );
                pb_calc_hydro->setEnabled(true);
-               pb_calc_zeno->setEnabled(true);
                pb_bead_saxs->setEnabled(true);
                pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-               pb_show_zeno_results->setEnabled(false);
+               pb_show_hydro_results->setEnabled(false);
                progress->reset();
                return false;
             }
@@ -8542,9 +8540,8 @@ bool US_Hydrodyn::calc_zeno()
 
    chdir(somo_tmp_dir);
 
-   pb_show_zeno_results->setEnabled( true );
+   pb_show_hydro_results->setEnabled( true );
    pb_calc_hydro->setEnabled(true);
-   pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
 

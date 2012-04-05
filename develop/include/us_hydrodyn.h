@@ -330,9 +330,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_pdb_tool;
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
-      QPushButton *pb_calc_zeno;
       QPushButton *pb_show_hydro_results;
-      QPushButton *pb_show_zeno_results;
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
       QPushButton *pb_grid_pdb;
@@ -702,11 +700,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QStringList  last_pdb_title;
       QStringList  last_pdb_header;
 
+      void show_zeno();
+      bool calc_zeno();
+      int do_calc_hydro();
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file
 
    public slots:
+      void show_zeno_options();
       void display_default_differences();
       void clear_display();
       void reload_pdb();
@@ -714,7 +717,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_grid();     // compute grid model from bead model
       int calc_hydro();
-      bool calc_zeno();
+
       int calc_iqq(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute iqq curve
       int calc_prr(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute prr curve
       void select_save_params();
@@ -794,8 +797,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_grid_overlap();
       void show_bead_output();
       void show_hydro();
-      void show_zeno();
-      void show_zeno_options();
       void show_grid(); // show grid options
       void show_advanced_config();
       void view_pdb(); // show pdb file in editor
