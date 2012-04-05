@@ -563,7 +563,15 @@ class US_EXTERN US_Saxs_Util
 #endif
       QStringList      job_output_files;
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
       map < QString, QString > control_parameters;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
    private:
 
@@ -989,12 +997,12 @@ class US_EXTERN US_Saxs_Util
       unsigned int                    bspline_degree;
       unsigned int                    bspline_basis_functions;
 
+      sgp_node              sgp;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
       bool                  sgp_use_e;
 
-      sgp_node              sgp;
       bool                  sgp_run();
       bool                  sgp_validate();
       bool                  sgp_init();

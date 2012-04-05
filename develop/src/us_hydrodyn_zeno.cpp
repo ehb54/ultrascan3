@@ -2833,10 +2833,22 @@ namespace zeno {
       fem::str<32> com = "date > ";
       //C                   1234567
       com(8, 32) = dfl;
-      system(com);
+      // system(com);
       //C
       fem::str<28> start = fem::char0;
-      gettime(cmn, dfl, start);
+      // gettime(cmn, dfl, start);
+
+      QString time = QString( "" ).sprintf( "%d%d%d%d",
+                                            QTime::currentTime().hour(),
+                                            QTime::currentTime().minute(),
+                                            QTime::currentTime().second(),
+                                            QTime::currentTime().msec() );
+
+      start( 9, 10 ) = time.mid( 0, 2 ).ascii();
+      start( 12, 13 ) = time.mid( 2, 2 ).ascii();
+      start( 15, 16 ) = time.mid( 4, 2 ).ascii();
+      start( 18, 19 ) = time.mid( 6, 2 ).ascii();
+
       seeder(cmn, start);
       //C
       nin = 20;
@@ -5374,7 +5386,8 @@ namespace zeno {
       //C
       if (!silent) {
          write(6, "('ZENO CALCULATION')");
-         zeno_us_hydrodyn->editor->append( "ZENO calculation start\n" );
+         zeno_us_hydrodyn->editor->append( "ZENO calculation start\n" );         
+         qApp->processEvents();
       }
       if (!silent) {
          write(6, "(108('='))");
@@ -5875,6 +5888,7 @@ namespace zeno {
       if (!silent) {
          write(6, "('INTERIOR CALCULATION')");
          zeno_us_hydrodyn->editor->append( "ZENO interior calculation start\n" );
+         qApp->processEvents();
       }
       if (!silent) {
          write(6, "(108('='))");
@@ -7103,6 +7117,7 @@ namespace zeno {
       if (!silent) {
          write(6, "('SURFACE CALCULATION')");
          zeno_us_hydrodyn->editor->append( "ZENO surface calculation start\n" );
+         qApp->processEvents();
       }
       if (!silent) {
          write(6, "(108('='))");
@@ -8444,6 +8459,7 @@ bool US_Hydrodyn::calc_zeno()
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations (Zeno) \n\n");
+   qApp->processEvents();
 
    int models_to_proc = 0;
    int first_model_no = 0;

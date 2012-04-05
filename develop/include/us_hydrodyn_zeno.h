@@ -9,6 +9,7 @@ zeno_main(
 #include "us_fable.h"
 
 #include "qstring.h"
+#include "qdatetime.h"
 #include "qfile.h"
 #include "qdir.h"
 

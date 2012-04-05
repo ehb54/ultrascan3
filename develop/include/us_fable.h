@@ -4648,12 +4648,12 @@ namespace fem {
             return 255;
          }
 #if defined(_MSC_VER)
-         if (_setmode(_fileno(stdin), _O_BINARY) == -1) {
-            std::cerr
-               << "FATAL: error switching stdin to binary mode ("
-               << __FILE__ << ", line " << __LINE__ << ")" << std::endl;
-            return 255;
-         }
+         // if (_setmode(_fileno(stdin), _O_BINARY) == -1) {
+         // std::cerr
+         // << "FATAL: error switching stdin to binary mode ("
+         // << __FILE__ << ", line " << __LINE__ << ")" << std::endl;
+         // return 255;
+         // }
 #endif
          try {
             callable(argc, argv);
