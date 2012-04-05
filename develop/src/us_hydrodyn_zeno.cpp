@@ -5404,6 +5404,12 @@ namespace zeno {
       bool hit = fem::bool0;
       int need = fem::int0;
       FEM_DO_SAFE(jax, 1, mtdo) {
+         qApp->processEvents();
+         if ( zeno_us_hydrodyn->stopFlag )
+         {
+            // somehow abort
+            return;
+         }
          loop = fem::mod(jax, 20) + 1;
          sum(loop) += 1.0e0;
          //C
@@ -5907,6 +5913,12 @@ namespace zeno {
       }
       //C
       FEM_DO_SAFE(i, 1, m1) {
+         qApp->processEvents();
+         if ( zeno_us_hydrodyn->stopFlag )
+         {
+            // somehow abort
+            return;
+         }
          loop = fem::mod(i, 20) + 1;
          sm1(loop) += 1.0e0;
       statement_1:
@@ -7136,6 +7148,12 @@ namespace zeno {
       float rr = fem::float0;
       int need = fem::int0;
       FEM_DO_SAFE(i, 1, m1do) {
+         qApp->processEvents();
+         if ( zeno_us_hydrodyn->stopFlag )
+         {
+            // somehow abort
+            return;
+         }
          loop = fem::mod(i, 20) + 1;
          getsurface(cmn, maxelts, eltype, bv, nelts, saar, total, v1,
                     trials, rotations, loop);
@@ -8453,12 +8471,35 @@ bool US_Hydrodyn::calc_zeno()
       return false;
    }
 
+   editor->append( "\n" );
+
+   if ( hydro.zeno_zeno )
+   {
+      editor_msg( "dark blue", 
+                  QString( tr( "Zeno integration selected with %1 thousand MC iterations" ) )
+                  .arg( hydro.zeno_zeno_steps ) );
+   }
+
+
+   if ( hydro.zeno_interior )
+   {
+      editor_msg( "dark blue", 
+                  QString( tr( "Zeno interior integration selected with %1 thousand MC iterations" ) )
+                  .arg( hydro.zeno_interior_steps ) );
+   }
+
+   if ( hydro.zeno_surface )
+   {
+      editor_msg( "dark blue", 
+                  QString( tr( "Zeno surface integration selected with %1 thousand MC iterations" ) )
+                  .arg( hydro.zeno_surface_steps ) );
+   }
+
    US_Hydrodyn_Zeno uhz( &hydro, &results, this );
 
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
-   //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations (Zeno) \n\n");
    qApp->processEvents();
