@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <complex>
 
 #include "us_hydrodyn_saxs.h"
 
@@ -53,6 +54,12 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       QLabel        *lbl_title;
 
+      QLabel        *lbl_atom_file;
+      QLineEdit     *le_atom_file;
+
+      QLabel        *lbl_lambda;
+      QLineEdit     *le_lambda;
+
       QLabel        *lbl_detector_distance;
       QLineEdit     *le_detector_distance;
 
@@ -77,9 +84,6 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       QLabel        *lbl_2d;
 
-      QPushButton   *pb_set_target;
-      QLabel        *lbl_current_target;
-
       QPushButton   *pb_start;
       QPushButton   *pb_stop;
 
@@ -103,14 +107,40 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       QImage        *i_2d;
 
       bool          validate();
-      void          update_2d();
+      void          reset_2d();
+      bool          update_image();
+
+      saxs_options *our_saxs_options;
+
+      int           unit;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < vector < complex < double > > >        data;
+
+      vector < atom >                                 atom_list;
+      vector < hybridization >                        hybrid_list;
+      vector < saxs >                                 saxs_list;
+      vector < residue >                              residue_list;
+      vector < PDB_model >                            model_vector;
+      vector < vector <PDB_atom> >                    bead_models;
+      vector < unsigned int >                         selected_models;
+
+      map < QString, saxs >                           saxs_map;
+      map < QString, hybridization >                  hybrid_map;
+      map < QString, atom >                           atom_map;
+      map < QString, QString >                        residue_atom_hybrid_map;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
    private slots:
 
       void setupGUI();
 
-      void set_target();
-
+      void update_lambda                  ( const QString & );
       void update_detector_distance       ( const QString & );
       void update_detector_height         ( const QString & );
       void update_detector_width          ( const QString & );
