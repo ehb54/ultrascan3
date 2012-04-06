@@ -991,6 +991,10 @@ void US_Hydrodyn_Saxs_2d::editor_msg( QString color, QString msg )
    editor->setColor(save_color);
 }
 
+void US_Hydrodyn_Saxs_2d::update_lambda( const QString & /* str */ )
+{
+}
+
 void US_Hydrodyn_Saxs_2d::update_detector_distance( const QString & /* str */ )
 {
 }
