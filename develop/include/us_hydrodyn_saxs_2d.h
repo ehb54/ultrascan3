@@ -72,8 +72,11 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       QLineEdit     *le_detector_pixels_width;
 
       QLabel        *lbl_beam_center;
-      QLineEdit     *le_beam_center_height;
-      QLineEdit     *le_beam_center_width;
+      QLineEdit     *le_beam_center_pixels_height;
+      QLineEdit     *le_beam_center_pixels_width;
+
+      QLabel        *lbl_atomic_scaling;
+      QLineEdit     *le_atomic_scaling;
 
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
@@ -84,6 +87,7 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       QLabel        *lbl_2d;
 
+      QPushButton   *pb_info;
       QPushButton   *pb_start;
       QPushButton   *pb_stop;
 
@@ -106,7 +110,7 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       QImage        *i_2d;
 
-      bool          validate();
+      bool          validate( bool quiet = false );
       void          reset_2d();
       bool          update_image();
 
@@ -136,24 +140,49 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
   #pragma warning ( default: 4251 )
 #endif
 
+      void           compute_variables();
+      void           report_variables();
+      double         q_of_pixel( int pixels_height, int pixels_width );
+      double         q_of_pixel( double height    , double width );
+
+      double         lambda;
+
+      double         beam_center_pixels_height;
+      double         beam_center_pixels_width;
+      double         beam_center_height;
+      double         beam_center_width;
+
+      int            detector_pixels_height;
+      int            detector_pixels_width;
+      double         detector_height;
+      double         detector_width;
+      double         detector_height_per_pixel;
+      double         detector_width_per_pixel;
+
+      double         atomic_scaling;
+
+      double         detector_distance;
+
    private slots:
 
       void setupGUI();
 
-      void update_lambda                  ( const QString & );
-      void update_detector_distance       ( const QString & );
-      void update_detector_height         ( const QString & );
-      void update_detector_width          ( const QString & );
-      void update_detector_pixels_height  ( const QString & );
-      void update_detector_pixels_width   ( const QString & );
-      void update_beam_center_height      ( const QString & );
-      void update_beam_center_width       ( const QString & );
-      void update_sample_rotations        ( const QString & );
+      void update_lambda                      ( const QString & );
+      void update_detector_distance           ( const QString & );
+      void update_detector_height             ( const QString & );
+      void update_detector_width              ( const QString & );
+      void update_detector_pixels_height      ( const QString & );
+      void update_detector_pixels_width       ( const QString & );
+      void update_beam_center_pixels_height   ( const QString & );
+      void update_beam_center_pixels_width    ( const QString & );
+      void update_sample_rotations            ( const QString & );
 
-      void integrate();
+      void info();
 
       void start();
       void stop();
+
+      void integrate();
 
       void clear_display();
       void update_font();
