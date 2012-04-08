@@ -84,7 +84,7 @@ namespace bulatov {
 
       if ( !Nstep )
       {
-         Nstep = 50 * N;
+         Nstep = 500 * N;
       }
 
       // if(argc < 2){
@@ -356,10 +356,11 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_sample_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_sample_rotations(const QString &)));
 
-   progress = new QProgressBar(this, "Progress");
-   progress->setMinimumHeight(minHeight1);
-   progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   progress->reset();
+   cb_save_pdbs = new QCheckBox( this );
+   cb_save_pdbs->setText(tr(" Save rotated PDBs"));
+   cb_save_pdbs->setEnabled(true);
+   cb_save_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_pdbs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_info = new QPushButton(tr("Compute q range"), this);
    pb_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -387,6 +388,11 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    connect(pb_integrate, SIGNAL(clicked()), SLOT(integrate()));
 
    lbl_2d = new QLabel( this );
+
+   progress = new QProgressBar(this, "Progress");
+   progress->setMinimumHeight(minHeight1);
+   progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress->reset();
 
    lbl_wheel_pos = new QLabel("0 of 0", this);
    lbl_wheel_pos->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
@@ -462,6 +468,8 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
       gl_options->addMultiCellWidget( le_sample_rotations             , j, j, 1, 2 );
+      j++;
+      gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 2 );
       j++;
       gl_options->addMultiCellWidget( pb_info                         , j, j, 0, 2 );
       j++;
@@ -721,12 +729,8 @@ void US_Hydrodyn_Saxs_2d::start()
       rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
    }
 
-   std::cout << "Rotations: " << rotations.size() << std::endl;
-
    running = true;
    update_enables();
-   
-
    
    // setup atoms
    QRegExp count_hydrogens("H(\\d)");
@@ -763,9 +767,9 @@ void US_Hydrodyn_Saxs_2d::start()
       }
          
       saxs_atom new_atom;
-      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+      for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++ )
       {
-         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+         for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++ )
          {
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
@@ -1001,50 +1005,148 @@ void US_Hydrodyn_Saxs_2d::start()
          }
       }
 
-      transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
-      transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
-      transform_to[ 1 ].axis[ 2 ] = 0.0f;
-
-      float norm = 
-         sqrt( 
-              transform_to[ 1 ].axis[ 0 ] * transform_to[ 1 ].axis[ 0 ] +
-              transform_to[ 1 ].axis[ 1 ] * transform_to[ 1 ].axis[ 1 ] );
-
-      transform_to[ 1 ].axis[ 0 ] /= norm;
-      transform_to[ 1 ].axis[ 1 ] /= norm;
-
-      transform_to[ 2 ].axis[ 0 ] = rotations[ r ][ 0 ];
-      transform_to[ 2 ].axis[ 1 ] = 0.0f;
-      transform_to[ 2 ].axis[ 2 ] = rotations[ r ][ 2 ];
-
-      norm = 
-         sqrt( 
-              transform_to[ 2 ].axis[ 0 ] * transform_to[ 2 ].axis[ 0 ] +
-              transform_to[ 2 ].axis[ 1 ] * transform_to[ 2 ].axis[ 1 ] );
-
-      transform_to[ 2 ].axis[ 0 ] /= norm;
-      transform_to[ 2 ].axis[ 1 ] /= norm;
-
-      vector < point > result;
-      QString error_msg;
-      if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
-                                                          transform_from, 
-                                                          transform_to, 
-                                                          atom_positions,
-                                                          result,
-                                                          error_msg ) )
+      if ( rotations.size() > 1 )
       {
-         editor_msg( "red", error_msg );
-         running = false;
-         update_enables();
-         return;
-      }
+         transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
+         transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
+         transform_to[ 1 ].axis[ 2 ] = 0.0f;
+         
+         float norm = 
+            sqrt( 
+                 transform_to[ 1 ].axis[ 0 ] * transform_to[ 1 ].axis[ 0 ] +
+                 transform_to[ 1 ].axis[ 1 ] * transform_to[ 1 ].axis[ 1 ] );
+         
+         transform_to[ 1 ].axis[ 0 ] /= norm;
+         transform_to[ 1 ].axis[ 1 ] /= norm;
+         
+         transform_to[ 2 ].axis[ 0 ] = rotations[ r ][ 0 ];
+         transform_to[ 2 ].axis[ 1 ] = 0.0f;
+         transform_to[ 2 ].axis[ 2 ] = rotations[ r ][ 2 ];
+         
+         norm = 
+            sqrt( 
+                 transform_to[ 2 ].axis[ 0 ] * transform_to[ 2 ].axis[ 0 ] +
+                 transform_to[ 2 ].axis[ 1 ] * transform_to[ 2 ].axis[ 1 ] );
+         
+         transform_to[ 2 ].axis[ 0 ] /= norm;
+         transform_to[ 2 ].axis[ 1 ] /= norm;
+         
+         vector < point > result;
+         QString error_msg;
+         if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
+                                                             transform_from, 
+                                                             transform_to, 
+                                                             atom_positions,
+                                                             result,
+                                                             error_msg ) )
+         {
+            editor_msg( "red", error_msg );
+            running = false;
+            update_enables();
+            return;
+         }
+         
+         for ( unsigned int a = 0; a < atoms.size(); a++ )
+         {
+            atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ];
+            atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ];
+            atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ];
+         }
 
-      for ( unsigned int a = 0; a < atoms.size(); a++ )
-      {
-         atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ];
-         atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ];
-         atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ];
+         if ( cb_save_pdbs->isChecked() )
+         {
+            QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
+            QFile f( fname );
+            bool ok_to_write = true;
+            if ( !r )
+            {
+               if ( !f.open( IO_WriteOnly ) )
+               {
+                  editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                  ok_to_write = false;
+               }                  
+            } else {
+               if ( !f.open( IO_WriteOnly | IO_Append ) )
+               {
+                  editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                  ok_to_write = false;
+               }
+            }
+            
+            if ( ok_to_write )
+            {
+               QTextStream ts( &f );
+               if ( !r )
+               {
+                  ts << QString( "MODEL     0\n" );
+                  ts << QString( "REMARK    Rotations summary\n" );
+                     
+                  ts << QString("")
+                     .sprintf(     
+                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                              1,
+                              "CA",
+                              " LYS",
+                              "",
+                              1,
+                              0.0f,
+                              0.0f,
+                              0.0f,
+                              0.0f,
+                              0.0f,
+                              "C"
+                              );
+
+                  for ( unsigned int r = 0; r < rotations.size(); r++ )
+                  {
+                     ts << QString("")
+                        .sprintf(     
+                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                 r + 2,
+                                 "CA",
+                                 " LYS",
+                                 "",
+                                 r + 1,
+                                 rotations[ r ][ 0 ],
+                                 rotations[ r ][ 1 ],
+                                 rotations[ r ][ 2 ],
+                                 0.0f,
+                                 0.0f,
+                                 "C"
+                                 );
+                  }
+                  ts << "ENDMDL\n";
+               }                     
+
+               ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+               ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                  .arg( rotations[ r ][ 0 ] )
+                  .arg( rotations[ r ][ 1 ] )
+                  .arg( rotations[ r ][ 2 ] );
+               
+               for ( unsigned int a = 0; a < atoms.size(); a++ )
+               {
+                  ts << QString("")
+                     .sprintf(     
+                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                              a + 1,
+                              "CA",
+                              " LYS",
+                              "",
+                              a + 1,
+                              atoms[ a ].pos[ 0 ],
+                              atoms[ a ].pos[ 1 ],
+                              atoms[ a ].pos[ 2 ],
+                              0.0f,
+                              0.0f,
+                              "C"
+                              );
+               }
+               ts << "ENDMDL\n";
+               f.close();
+               editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+            }
+         }
       }
 
       editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );

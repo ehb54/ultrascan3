@@ -113,6 +113,8 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
 
+      QCheckBox     *cb_save_pdbs;
+
       QProgressBar  *progress;
 
       QPushButton   *pb_integrate;
