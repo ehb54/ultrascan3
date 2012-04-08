@@ -148,8 +148,8 @@ namespace bulatov {
             e0 = e;
             step*=2;
          }      
-         fprintf(stderr,"\rn: %5d, e = %18.8f step = %12.10f",k,e,step);
-         fflush(stderr);     
+         // fprintf(stderr,"\rn: %5d, e = %18.8f step = %12.10f",k,e,step);
+         // fflush(stderr);     
       }
       
       // fprintf(stdout,"#VRML V1.0 ascii\n");
@@ -383,10 +383,21 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    pb_integrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_integrate->setMinimumHeight(minHeight1);
    pb_integrate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_integrate->setEnabled( false );
    connect(pb_integrate, SIGNAL(clicked()), SLOT(integrate()));
 
    lbl_2d = new QLabel( this );
-   i_2d = new QImage();
+
+   lbl_wheel_pos = new QLabel("0 of 0", this);
+   lbl_wheel_pos->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_wheel_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_wheel_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   qwtw_wheel = new QwtWheel( this );
+   qwtw_wheel->setMass         ( 1.0 );
+   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
+   qwtw_wheel->setMinimumWidth ( 2 * minHeight1 );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -461,9 +472,17 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    vbl_editor_group->addWidget( frame      );
    vbl_editor_group->addWidget( editor     );
 
+   QBoxLayout *hbl_wheel     = new QHBoxLayout( 0 );
+   hbl_wheel->addWidget( qwtw_wheel );
+   hbl_wheel->addWidget( lbl_wheel_pos );
+
+   QBoxLayout *vbl_image_wheel     = new QVBoxLayout( 0 );
+   vbl_image_wheel->addWidget( lbl_2d );
+   vbl_image_wheel->addLayout( hbl_wheel );
+
    QHBoxLayout *hbl_editor_2d = new QHBoxLayout( 0 );
    hbl_editor_2d->addLayout( vbl_editor_group );
-   hbl_editor_2d->addWidget( lbl_2d           );
+   hbl_editor_2d->addLayout( vbl_image_wheel );
 
    QHBoxLayout *hbl_controls = new QHBoxLayout( 0 );
    hbl_controls->addSpacing(4);
@@ -564,8 +583,8 @@ bool US_Hydrodyn_Saxs_2d::update_image()
       return false;
    }
 
-   if ( i_2d->width() != ( int ) data.size() ||
-        i_2d->height() != ( int ) data[ 0 ].size() )
+   if ( i_2d.width() != ( int ) data.size() ||
+        i_2d.height() != ( int ) data[ 0 ].size() )
    {
       editor_msg( "red", "Internal error: update_image(): detector data mismatch" );
       return false;
@@ -621,7 +640,7 @@ bool US_Hydrodyn_Saxs_2d::update_image()
             cout << QString( "set pixed %1 %2 to qrgb( %3 )\n" ).arg( i ).arg( j ).arg( val );
          }
 #endif
-         i_2d->setPixel( i, j, qRgb( val, val, val ) );
+         i_2d.setPixel( i, j, qRgb( val, val, val ) );
       }
    }
 
@@ -630,9 +649,9 @@ bool US_Hydrodyn_Saxs_2d::update_image()
    int center_w = le_beam_center_pixels_width ->text().toInt();
 
    if ( 
-       center_h < i_2d->height() &&
+       center_h < i_2d.height() &&
        center_h >= 0 &&
-       center_w < i_2d->width() &&
+       center_w < i_2d.width() &&
        center_w >= 0 )
    {
       int min_h = center_h - US_SAXS_2D_CENTER_PIXLEN_2;
@@ -644,38 +663,38 @@ bool US_Hydrodyn_Saxs_2d::update_image()
       {
          min_h = 0;
       }
-      if ( max_h >= i_2d->height() )
+      if ( max_h >= i_2d.height() )
       {
-         max_h = i_2d->height() - 1;
+         max_h = i_2d.height() - 1;
       }
       if ( min_w < 0 )
       {
          min_w = 0;
       }
-      if ( max_w >= i_2d->width() )
+      if ( max_w >= i_2d.width() )
       {
-         max_w = i_2d->width() - 1;
+         max_w = i_2d.width() - 1;
       }
       for ( int i = min_h; i <= max_h; i++ )
       {
-         i_2d->setPixel( i, center_w, qRgb( 255, 0, 0 ) );
+         i_2d.setPixel( i, center_w, qRgb( 255, 0, 0 ) );
       }
       for ( int i = min_w; i <= max_w; i++ )
       {
-         i_2d->setPixel( center_h, i, qRgb( 255, 0, 0 ) );
+         i_2d.setPixel( center_h, i, qRgb( 255, 0, 0 ) );
       }
    }
       
    QPixmap pm;
-   pm.convertFromImage( i_2d->smoothScale( 
-                                          i_2d->width() > US_SAXS_2D_PIXMAX ?
+   pm.convertFromImage( i_2d.smoothScale( 
+                                          i_2d.width() > US_SAXS_2D_PIXMAX ?
                                           US_SAXS_2D_PIXMAX : 
-                                          ( i_2d->width() < US_SAXS_2D_PIXMIN ?
-                                            US_SAXS_2D_PIXMIN : i_2d->width() ) ,
-                                          i_2d->height() > US_SAXS_2D_PIXMAX ?
+                                          ( i_2d.width() < US_SAXS_2D_PIXMIN ?
+                                            US_SAXS_2D_PIXMIN : i_2d.width() ) ,
+                                          i_2d.height() > US_SAXS_2D_PIXMAX ?
                                           US_SAXS_2D_PIXMAX : 
-                                          ( i_2d->height() < US_SAXS_2D_PIXMIN ?
-                                            US_SAXS_2D_PIXMIN : i_2d->height() ) ,
+                                          ( i_2d.height() < US_SAXS_2D_PIXMIN ?
+                                            US_SAXS_2D_PIXMIN : i_2d.height() ) ,
                                           QImage::ScaleMin 
                                           ) );
    lbl_2d->setPixmap( pm );
@@ -702,23 +721,12 @@ void US_Hydrodyn_Saxs_2d::start()
       rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
    }
 
-   std::cout << "Rotations: " << rotations.size() << endl;
+   std::cout << "Rotations: " << rotations.size() << std::endl;
 
    running = true;
    update_enables();
    
-   // initialize data
 
-   editor_msg( "gray", tr( "Initializing data" ) );
-   data.resize( i_2d->width() );
-   for ( int i = 0; i < i_2d->width(); i++ )
-   {
-      data[ i ].resize( i_2d->height() );
-      for ( int j = 0; j < i_2d->height(); j++ )
-      {
-         data[ i ][ j ] = complex < double > ( 0.0, 0.0 );
-      }
-   }
    
    // setup atoms
    QRegExp count_hydrogens("H(\\d)");
@@ -946,102 +954,194 @@ void US_Hydrodyn_Saxs_2d::start()
    atoms[ 0 ].pos[ 1 ] = 0.0f;
    atoms[ 0 ].pos[ 2 ] = 0.0f;
 
-   // for each atom, compute scattering factor for each element on the detector
 
-   saxs saxsH = saxs_map["H"];
-
-   double one_over_4pi   = 1.0 / (4.0 * M_PI);
-   double one_over_4pi_2 = one_over_4pi * one_over_4pi;
+   vector < point > atom_positions;
 
    for ( unsigned int a = 0; a < atoms.size(); a++ )
    {
-      progress->setProgress( a, atoms.size() );
-      editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
-      qApp->processEvents();
-      for ( unsigned int i = 0; i < data.size(); i++ )
+      point this_point;
+      this_point.axis[ 0 ] = atoms[ a ].pos[ 0 ];
+      this_point.axis[ 1 ] = atoms[ a ].pos[ 1 ];
+      this_point.axis[ 2 ] = atoms[ a ].pos[ 2 ];
+      atom_positions.push_back( this_point );
+   }
+
+   vector < point > transform_from;
+   {
+      point this_point;
+      this_point.axis[ 0 ] = 0.0f;
+      this_point.axis[ 1 ] = 0.0f;
+      this_point.axis[ 2 ] = 0.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = 1.0f;
+      this_point.axis[ 1 ] = 0.0f;
+      this_point.axis[ 2 ] = 0.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = 0.0f;
+      this_point.axis[ 1 ] = 0.0f;
+      this_point.axis[ 2 ] = 1.0f;
+      transform_from.push_back( this_point );
+   }
+   vector < point > transform_to = transform_from;
+
+   saxs saxsH = saxs_map["H"];
+   double one_over_4pi   = 1.0 / (4.0 * M_PI);
+   double one_over_4pi_2 = one_over_4pi * one_over_4pi;
+
+   for ( unsigned int r = 0; r < rotations.size(); r++ )
+   {
+      editor_msg( "gray", tr( "Initializing data" ) );
+      data.resize( i_2d.width() );
+      for ( int i = 0; i < i_2d.width(); i++ )
       {
-         for ( unsigned int j = 0; j < data[ 0 ].size(); j++ )
+         data[ i ].resize( i_2d.height() );
+         for ( int j = 0; j < i_2d.height(); j++ )
          {
-            vector < double > pixpos( 2 );
-            pixpos[ 0 ] = ( double ) i * detector_width_per_pixel  - beam_center_width;
-            pixpos[ 1 ] = ( double ) j * detector_height_per_pixel - beam_center_height;
-            
-            vector < double > Q( 3 );
-            Q[ 0 ] = 2.0 * M_PI * ( pixpos[ 0 ]       - ( double ) atoms[ a ].pos[ 0 ] );
-            Q[ 1 ] = 2.0 * M_PI * ( pixpos[ 1 ]       - ( double ) atoms[ a ].pos[ 1 ] );
-            Q[ 2 ] = 2.0 * M_PI * ( detector_distance - ( double ) atoms[ a ].pos[ 1 ] );
+            data[ i ][ j ] = complex < double > ( 0.0, 0.0 );
+         }
+      }
 
-            vector < double > Rv( 3 );
-            Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
-            Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
-            Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+      transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
+      transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
+      transform_to[ 1 ].axis[ 2 ] = 0.0f;
 
-            double QdotR = 
-               Q[ 0 ] * Rv[ 0 ] +
-               Q[ 1 ] * Rv[ 1 ] +
-               Q[ 2 ] * Rv[ 2 ];
+      float norm = 
+         sqrt( 
+              transform_to[ 1 ].axis[ 0 ] * transform_to[ 1 ].axis[ 0 ] +
+              transform_to[ 1 ].axis[ 1 ] * transform_to[ 1 ].axis[ 1 ] );
 
-            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+      transform_to[ 1 ].axis[ 0 ] /= norm;
+      transform_to[ 1 ].axis[ 1 ] /= norm;
 
-            complex < double > expiQdotR = exp( iQdotR );
+      transform_to[ 2 ].axis[ 0 ] = rotations[ r ][ 0 ];
+      transform_to[ 2 ].axis[ 1 ] = 0.0f;
+      transform_to[ 2 ].axis[ 2 ] = rotations[ r ][ 2 ];
 
-            // F_atomic
+      norm = 
+         sqrt( 
+              transform_to[ 2 ].axis[ 0 ] * transform_to[ 2 ].axis[ 0 ] +
+              transform_to[ 2 ].axis[ 1 ] * transform_to[ 2 ].axis[ 1 ] );
 
-            saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+      transform_to[ 2 ].axis[ 0 ] /= norm;
+      transform_to[ 2 ].axis[ 1 ] /= norm;
 
-            double q = q_of_pixel( ( int ) j, ( int ) i );
+      vector < point > result;
+      QString error_msg;
+      if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
+                                                          transform_from, 
+                                                          transform_to, 
+                                                          atom_positions,
+                                                          result,
+                                                          error_msg ) )
+      {
+         editor_msg( "red", error_msg );
+         running = false;
+         update_enables();
+         return;
+      }
 
+      for ( unsigned int a = 0; a < atoms.size(); a++ )
+      {
+         atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ];
+         atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ];
+         atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ];
+      }
+
+      editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+
+      // for each atom, compute scattering factor for each element on the detector
+
+      for ( unsigned int a = 0; a < atoms.size(); a++ )
+      {
+         progress->setProgress( a + r * atoms.size(), atoms.size() * rotations.size() );
+         editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+         qApp->processEvents();
+         for ( unsigned int i = 0; i < data.size(); i++ )
+         {
+            for ( unsigned int j = 0; j < data[ 0 ].size(); j++ )
+            {
+               vector < double > pixpos( 2 );
+               pixpos[ 0 ] = ( double ) i * detector_width_per_pixel  - beam_center_width;
+               pixpos[ 1 ] = ( double ) j * detector_height_per_pixel - beam_center_height;
+               
+               vector < double > Q( 3 );
+               Q[ 0 ] = 2.0 * M_PI * ( pixpos[ 0 ]       - ( double ) atoms[ a ].pos[ 0 ] );
+               Q[ 1 ] = 2.0 * M_PI * ( pixpos[ 1 ]       - ( double ) atoms[ a ].pos[ 1 ] );
+               Q[ 2 ] = 2.0 * M_PI * ( detector_distance - ( double ) atoms[ a ].pos[ 1 ] );
+               
+               vector < double > Rv( 3 );
+               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
+               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
+               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+               
+               double QdotR = 
+                  Q[ 0 ] * Rv[ 0 ] +
+                  Q[ 1 ] * Rv[ 1 ] +
+                  Q[ 2 ] * Rv[ 2 ];
+               
+               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+               
+               complex < double > expiQdotR = exp( iQdotR );
+               
+               // F_atomic
+               
+               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+               
+               double q = q_of_pixel( ( int ) j, ( int ) i );
+               
 #if defined( UHS2_SCAT_DEBUG )
-            cout << QString( 
-                            "atom                %1\n"
-                            "pixel               %2 %3\n"
-                            "relative to beam    %4 %5\n"
-                            "distance            %6\n"
-                            "q of pixel          %7\n"
-                            "expIQdotr           "
-                            )
-               .arg( atoms[ a ].hybrid_name )
-               .arg( i ).arg( j )
-               .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-               .arg( pix_dist_from_beam_center )
-               .arg( q )
-               .ascii();
-
-            cout << expiQdotR << endl;
+               cout << QString( 
+                               "atom                %1\n"
+                               "pixel               %2 %3\n"
+                               "relative to beam    %4 %5\n"
+                               "distance            %6\n"
+                               "q of pixel          %7\n"
+                               "expIQdotr           "
+                               )
+                  .arg( atoms[ a ].hybrid_name )
+                  .arg( i ).arg( j )
+                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+                  .arg( pix_dist_from_beam_center )
+                  .arg( q )
+                  .ascii();
+               
+               cout << expiQdotR << endl;
 #endif
-
-            double q_2_over_4pi = q * q * one_over_4pi_2;
-
-            double F_at =
-               saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-               saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-               saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-               saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-               atoms[ a ].hydrogens * 
-               ( saxsH.c + 
-                 saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                 saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                 saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                 saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
-            
-            data[ i ][ j ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
+               
+               double q_2_over_4pi = q * q * one_over_4pi_2;
+               
+               double F_at =
+                  saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+                  saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+                  saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+                  saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+                  atoms[ a ].hydrogens * 
+                  ( saxsH.c + 
+                    saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+                    saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+                    saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+                    saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+               
+               data[ i ][ j ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
+            }
+            if ( !running ) 
+            {
+               update_image();
+               update_enables();
+               return;
+            }
+         }
+         if ( !update_image() )
+         {
+            running = false;
          }
          if ( !running ) 
          {
-            update_image();
             update_enables();
             return;
          }
       }
-      if ( !update_image() )
-      {
-         running = false;
-      }
-      if ( !running ) 
-      {
-         update_enables();
-         return;
-      }
+      push();
    }
 
 #if defined( UHS2_IMAGE_DEBUG )
@@ -1062,8 +1162,6 @@ void US_Hydrodyn_Saxs_2d::start()
       update_enables();
       return;
    }
-
-   editor_msg( "red", tr( "Note: not fully implemented" ) );
 
    editor_msg( "black", tr( "Completed" ) );
    progress->setProgress(1, 1);
@@ -1093,7 +1191,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
 
    compute_variables();
 
-   if ( i_2d->height() <= 0 || i_2d->height() <= 0 )
+   if ( i_2d.height() <= 0 || i_2d.height() <= 0 )
    {
       if ( !quiet )
       {
@@ -1129,8 +1227,8 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
       is_ok = false;
    }
 
-   if ( beam_center_pixels_height >= ( double ) i_2d->height() ||
-        beam_center_pixels_width  >= ( double ) i_2d->width() )
+   if ( beam_center_pixels_height >= ( double ) i_2d.height() ||
+        beam_center_pixels_width  >= ( double ) i_2d.width() )
    {
       if ( !quiet )
       {
@@ -1196,23 +1294,23 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
        detector_pixels_height  > 0 &&
        detector_pixels_width   > 0 &&
        ( 
-        detector_pixels_height != i_2d->height() ||
-        detector_pixels_width  != i_2d->width() ) )
+        detector_pixels_height != i_2d.height() ||
+        detector_pixels_width  != i_2d.width() ) )
    {
-      i_2d->reset();
+      i_2d.reset();
       
-      i_2d->create(
+      i_2d.create(
                    detector_pixels_width,
                    detector_pixels_height,
                    32
                    );
-      i_2d->fill( qRgb( 0, 0, 0 ) );
+      i_2d.fill( qRgb( 0, 0, 0 ) );
       QPixmap pm;
-      pm.convertFromImage( i_2d->smoothScale( 
-                                             i_2d->width() > US_SAXS_2D_PIXMAX ?
-                                             US_SAXS_2D_PIXMAX : i_2d->width(),
-                                             i_2d->height() > US_SAXS_2D_PIXMAX ?
-                                             US_SAXS_2D_PIXMAX : i_2d->height(),
+      pm.convertFromImage( i_2d.smoothScale( 
+                                             i_2d.width() > US_SAXS_2D_PIXMAX ?
+                                             US_SAXS_2D_PIXMAX : i_2d.width(),
+                                             i_2d.height() > US_SAXS_2D_PIXMAX ?
+                                             US_SAXS_2D_PIXMAX : i_2d.height(),
                                              QImage::ScaleMin 
                                              ) );
       lbl_2d->setPixmap( pm );
@@ -1354,4 +1452,98 @@ void US_Hydrodyn_Saxs_2d::info()
 {
    compute_variables();
    report_variables();
+}
+
+void US_Hydrodyn_Saxs_2d::push()
+{
+   ush2d_data this_data;
+
+   this_data.data                         = data;
+   this_data.i_2d                         = i_2d;
+   this_data.lambda                       = lambda;
+   this_data.beam_center_pixels_height    = beam_center_pixels_height;
+   this_data.beam_center_pixels_width     = beam_center_pixels_width;
+   this_data.beam_center_height           = beam_center_height;
+   this_data.beam_center_width            = beam_center_width;
+   this_data.detector_pixels_height       = detector_pixels_height;
+   this_data.detector_pixels_width        = detector_pixels_width;
+   this_data.detector_height              = detector_height * 1e3;
+   this_data.detector_width               = detector_width  * 1e3;
+   this_data.detector_height_per_pixel    = detector_height_per_pixel;
+   this_data.detector_width_per_pixel     = detector_width_per_pixel;
+   this_data.atomic_scaling               = atomic_scaling;
+   this_data.detector_distance            = detector_distance;
+
+   data_stack.push_back( this_data );
+
+   qwtw_wheel->setRange( 0.5, 
+                         ( double ) data_stack.size() + 0.5, 
+                         data_stack.size() < 10 ? 
+                         data_stack.size() * 0.2 : 1.0 
+                         );
+   qwtw_wheel->setValue( (double) data_stack.size() );
+
+   last_wheel_pos = data_stack.size();
+
+   lbl_wheel_pos->setText( QString( "%1 of %2" )
+                           .arg( data_stack.size() )
+                           .arg( data_stack.size() ) );
+}
+
+void US_Hydrodyn_Saxs_2d::set_pos( unsigned int i )
+{
+   last_wheel_pos = i;
+
+   lbl_wheel_pos->setText( QString( "%1 of %2" )
+                           .arg( i )
+                           .arg( data_stack.size() ) );
+
+   i--;
+
+   if ( i >= data_stack.size() )
+   {
+      return;
+   }
+
+   data                         = data_stack[ i ].data;
+   i_2d                         = data_stack[ i ].i_2d;
+   lambda                       = data_stack[ i ].lambda;
+   beam_center_pixels_height    = data_stack[ i ].beam_center_pixels_height;
+   beam_center_pixels_width     = data_stack[ i ].beam_center_pixels_width;
+   beam_center_height           = data_stack[ i ].beam_center_height;
+   beam_center_width            = data_stack[ i ].beam_center_width;
+   detector_pixels_height       = data_stack[ i ].detector_pixels_height;
+   detector_pixels_width        = data_stack[ i ].detector_pixels_width;
+   detector_height              = data_stack[ i ].detector_height;
+   detector_width               = data_stack[ i ].detector_width;
+   detector_height_per_pixel    = data_stack[ i ].detector_height_per_pixel;
+   detector_width_per_pixel     = data_stack[ i ].detector_width_per_pixel;
+   atomic_scaling               = data_stack[ i ].atomic_scaling;
+   detector_distance            = data_stack[ i ].detector_distance;
+
+   le_lambda                    ->setText( QString( "" ).sprintf( "%g", lambda ) );
+   le_beam_center_pixels_height ->setText( QString( "" ).sprintf( "%g", beam_center_pixels_height ) );
+   le_beam_center_pixels_width  ->setText( QString( "" ).sprintf( "%g", beam_center_pixels_width ) );
+   le_detector_pixels_height    ->setText( QString( "" ).sprintf( "%d", detector_pixels_height ) );
+   le_detector_pixels_width     ->setText( QString( "" ).sprintf( "%d", detector_pixels_width ) );
+   le_detector_height           ->setText( QString( "" ).sprintf( "%g", detector_height ) );
+   le_detector_width            ->setText( QString( "" ).sprintf( "%g", detector_width ) );
+   le_atomic_scaling            ->setText( QString( "" ).sprintf( "%g", atomic_scaling ) );
+   le_detector_distance         ->setText( QString( "" ).sprintf( "%g", detector_distance ) );
+   
+   compute_variables();
+   update_image();
+}
+
+void US_Hydrodyn_Saxs_2d::adjust_wheel( double pos )
+{
+   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).ascii();
+   if ( pos < 1e0 )
+   {
+      pos = 1e0;
+   }
+   if ( last_wheel_pos != (unsigned int) pos )
+   {
+      set_pos( (unsigned int) pos );
+   }
 }

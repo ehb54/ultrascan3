@@ -30,8 +30,40 @@
 #include <complex>
 
 #include "us_hydrodyn_saxs.h"
+#include "qwt_wheel.h"
 
 using namespace std;
+
+struct ush2d_data
+{
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < vector < complex < double > > >   data;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+      QImage         i_2d;
+
+      double         lambda;
+
+      double         beam_center_pixels_height;
+      double         beam_center_pixels_width;
+      double         beam_center_height;
+      double         beam_center_width;
+
+      int            detector_pixels_height;
+      int            detector_pixels_width;
+      double         detector_height;
+      double         detector_width;
+      double         detector_height_per_pixel;
+      double         detector_width_per_pixel;
+
+      double         atomic_scaling;
+
+      double         detector_distance;
+};
 
 class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 {
@@ -86,6 +118,8 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       QPushButton   *pb_integrate;
 
       QLabel        *lbl_2d;
+      QwtWheel      *qwtw_wheel;
+      QLabel        *lbl_wheel_pos;
 
       QPushButton   *pb_info;
       QPushButton   *pb_start;
@@ -107,8 +141,6 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       bool             *saxs_widget;
       bool             activate_saxs_window();
       void             run_one();
-
-      QImage        *i_2d;
 
       bool          validate( bool quiet = false );
       void          reset_2d();
@@ -136,6 +168,8 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       map < QString, atom >                           atom_map;
       map < QString, QString >                        residue_atom_hybrid_map;
 
+      vector < ush2d_data >                           data_stack;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -144,6 +178,8 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       void           report_variables();
       double         q_of_pixel( int pixels_height, int pixels_width );
       double         q_of_pixel( double height    , double width );
+
+      QImage         i_2d;
 
       double         lambda;
 
@@ -163,6 +199,11 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       double         detector_distance;
 
+      void           push();
+      void           set_pos( unsigned int i );
+
+      unsigned int   last_wheel_pos;
+
    private slots:
 
       void setupGUI();
@@ -176,6 +217,8 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       void update_beam_center_pixels_height   ( const QString & );
       void update_beam_center_pixels_width    ( const QString & );
       void update_sample_rotations            ( const QString & );
+
+      void adjust_wheel ( double );
 
       void info();
 
