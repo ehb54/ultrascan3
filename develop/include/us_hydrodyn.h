@@ -612,8 +612,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
                        vector < point > transform_to, 
                        vector < point > apply_from, 
                        vector < point > &result,
-                       QString          &error_msg );
-
+                       QString          &error_msg,
+                       bool             force_zero_center = false );
 
       bool selected_models_contain( QString residue );
 

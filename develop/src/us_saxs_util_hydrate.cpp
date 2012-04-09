@@ -2138,7 +2138,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
    }
 
    last_hydrated_pdb_text +=
-      QString( "MODEL %1\n" ).arg( current_model + 1 );
+      QString( "MODEL    %1\n" ).arg( current_model + 1 );
 
    unsigned int i = current_model;
 

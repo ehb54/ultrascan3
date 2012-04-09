@@ -7,7 +7,8 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
                               vector < point > transform_to, 
                               vector < point > apply_from, 
                               vector < point > &result,
-                              QString          &error_msg )
+                              QString          &error_msg,
+                              bool             force_zero_center )
 {
 #if defined( DEBUG_ALIGN )
    // for testing:
@@ -42,6 +43,11 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
    {
       center_from.axis[ j ] /= transform_from.size();
       center_to.axis  [ j ] /= transform_to.size();
+      if ( force_zero_center )
+      {
+         center_from.axis[ j ] = 0.0f;
+         center_to  .axis[ j ] = 0.0f;
+      }
    }
 
    for ( unsigned int i = 0; i < transform_from.size(); i++ )

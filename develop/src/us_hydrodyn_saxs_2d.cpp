@@ -11,9 +11,9 @@
 
 // #define UHS2_ATOMS_DEBUG
 // #define UHS2_IMAGE_DEBUG
+// #define UHS2_ROTATIONS_DEBUG
 
 // note: this program uses cout and/or cerr and this should be replaced
-
 
 /* **********************************************************
     Thus the scattering amplitude of a dry protein should be : 
@@ -84,7 +84,7 @@ namespace bulatov {
 
       if ( !Nstep )
       {
-         Nstep = 500 * N;
+         Nstep = 50 * N;
       }
 
       // if(argc < 2){
@@ -729,6 +729,51 @@ void US_Hydrodyn_Saxs_2d::start()
       rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
    }
 
+#if defined( UHS2D_ROTATIONS_DEBUG )
+   if ( le_sample_rotations->text().toUInt() == 91 ||
+        le_sample_rotations->text().toUInt() == 92 ||
+        le_sample_rotations->text().toUInt() == 93 ||
+        le_sample_rotations->text().toUInt() == 99 )
+   {
+      rotations.clear();
+      vector < double > this_rotation( 3 );
+
+      if ( le_sample_rotations->text().toUInt() == 93 ||
+           le_sample_rotations->text().toUInt() == 99 )
+      {
+         for ( double theta = 0e0; theta < 2e0 * M_PI; theta += M_PI / 10e0 )
+         {
+            this_rotation[ 0 ] = cos( theta );
+            this_rotation[ 1 ] = 0.0f;
+            this_rotation[ 2 ] = sin( theta );
+            rotations.push_back( this_rotation );
+         }
+      }
+      if ( le_sample_rotations->text().toUInt() == 91 ||
+           le_sample_rotations->text().toUInt() == 99 )
+      {
+         for ( double theta = 0e0; theta < 2e0 * M_PI; theta += M_PI / 10e0 )
+         {
+            this_rotation[ 0 ] = cos( theta );
+            this_rotation[ 1 ] = sin( theta );
+            this_rotation[ 2 ] = 0.0f;
+            rotations.push_back( this_rotation );
+         }
+      }
+      if ( le_sample_rotations->text().toUInt() == 92 ||
+           le_sample_rotations->text().toUInt() == 99 )
+      {
+         for ( double theta = 0e0; theta < 2e0 * M_PI; theta += M_PI / 10e0 )
+         {
+            this_rotation[ 0 ] = 0.0f;
+            this_rotation[ 1 ] = cos( theta );
+            this_rotation[ 2 ] = sin( theta );
+            rotations.push_back( this_rotation );
+         }
+      }
+   }
+#endif
+
    running = true;
    update_enables();
    
@@ -743,6 +788,14 @@ void US_Hydrodyn_Saxs_2d::start()
    vector < saxs_atom > atoms;
 
    progress->setProgress( 0, 1 );
+
+   double atomic_scaler     = pow( 10e0, unit ) * atomic_scaling;
+   double atomic_scaler_inv = 1e0 / atomic_scaler;
+
+   cout << QString( "atomic scaler %1\n"
+                    "atomic scaler inv %2\n" )
+      .arg( atomic_scaler )
+      .arg( atomic_scaler_inv ).ascii();
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -767,6 +820,7 @@ void US_Hydrodyn_Saxs_2d::start()
       }
          
       saxs_atom new_atom;
+
       for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++ )
       {
          for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++ )
@@ -774,9 +828,9 @@ void US_Hydrodyn_Saxs_2d::start()
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
             // keep everything in meters
-            new_atom.pos[0] = this_atom->coordinate.axis[0] * pow( 10e0, unit ) * atomic_scaling;
-            new_atom.pos[1] = this_atom->coordinate.axis[1] * pow( 10e0, unit ) * atomic_scaling;
-            new_atom.pos[2] = this_atom->coordinate.axis[2] * pow( 10e0, unit ) * atomic_scaling;
+            new_atom.pos[ 0 ] = this_atom->coordinate.axis[ 0 ] * atomic_scaler;
+            new_atom.pos[ 1 ] = this_atom->coordinate.axis[ 1 ] * atomic_scaler;
+            new_atom.pos[ 2 ] = this_atom->coordinate.axis[ 2 ] * atomic_scaler;
 
             if ( this_atom->name == "XH" && !our_saxs_options->iqq_use_atomic_ff )
             {
@@ -964,9 +1018,9 @@ void US_Hydrodyn_Saxs_2d::start()
    for ( unsigned int a = 0; a < atoms.size(); a++ )
    {
       point this_point;
-      this_point.axis[ 0 ] = atoms[ a ].pos[ 0 ];
-      this_point.axis[ 1 ] = atoms[ a ].pos[ 1 ];
-      this_point.axis[ 2 ] = atoms[ a ].pos[ 2 ];
+      this_point.axis[ 0 ] = atoms[ a ].pos[ 0 ] * atomic_scaler_inv;
+      this_point.axis[ 1 ] = atoms[ a ].pos[ 1 ] * atomic_scaler_inv;
+      this_point.axis[ 2 ] = atoms[ a ].pos[ 2 ] * atomic_scaler_inv;
       atom_positions.push_back( this_point );
    }
 
@@ -982,8 +1036,24 @@ void US_Hydrodyn_Saxs_2d::start()
       this_point.axis[ 2 ] = 0.0f;
       transform_from.push_back( this_point );
       this_point.axis[ 0 ] = 0.0f;
+      this_point.axis[ 1 ] = 1.0f;
+      this_point.axis[ 2 ] = 0.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = 0.0f;
       this_point.axis[ 1 ] = 0.0f;
       this_point.axis[ 2 ] = 1.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = -1.0f;
+      this_point.axis[ 1 ] = 0.0f;
+      this_point.axis[ 2 ] = 0.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = 0.0f;
+      this_point.axis[ 1 ] = -1.0f;
+      this_point.axis[ 2 ] = 0.0f;
+      transform_from.push_back( this_point );
+      this_point.axis[ 0 ] = 0.0f;
+      this_point.axis[ 1 ] = 0.0f;
+      this_point.axis[ 2 ] = -1.0f;
       transform_from.push_back( this_point );
    }
    vector < point > transform_to = transform_from;
@@ -1009,50 +1079,74 @@ void US_Hydrodyn_Saxs_2d::start()
       {
          transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
          transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
-         transform_to[ 1 ].axis[ 2 ] = 0.0f;
+         transform_to[ 1 ].axis[ 2 ] = rotations[ r ][ 2 ];
          
-         float norm = 
-            sqrt( 
-                 transform_to[ 1 ].axis[ 0 ] * transform_to[ 1 ].axis[ 0 ] +
-                 transform_to[ 1 ].axis[ 1 ] * transform_to[ 1 ].axis[ 1 ] );
-         
-         transform_to[ 1 ].axis[ 0 ] /= norm;
-         transform_to[ 1 ].axis[ 1 ] /= norm;
-         
-         transform_to[ 2 ].axis[ 0 ] = rotations[ r ][ 0 ];
-         transform_to[ 2 ].axis[ 1 ] = 0.0f;
-         transform_to[ 2 ].axis[ 2 ] = rotations[ r ][ 2 ];
-         
-         norm = 
-            sqrt( 
-                 transform_to[ 2 ].axis[ 0 ] * transform_to[ 2 ].axis[ 0 ] +
-                 transform_to[ 2 ].axis[ 1 ] * transform_to[ 2 ].axis[ 1 ] );
-         
-         transform_to[ 2 ].axis[ 0 ] /= norm;
-         transform_to[ 2 ].axis[ 1 ] /= norm;
-         
+         transform_to[ 2 ].axis[ 0 ] = -rotations[ r ][ 1 ];
+         transform_to[ 2 ].axis[ 1 ] = rotations[ r ][ 0 ];
+         transform_to[ 2 ].axis[ 2 ] = 0.0f; // rotations[ r ][ 2 ];
+
+         transform_to[ 3 ] = 
+            ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->cross( transform_to[ 1 ], transform_to[ 2 ] ) );
+
+         transform_to[ 4 ].axis[ 0 ] = -transform_to[ 1 ].axis[ 0 ];
+         transform_to[ 4 ].axis[ 1 ] = -transform_to[ 1 ].axis[ 1 ];
+         transform_to[ 4 ].axis[ 2 ] = -transform_to[ 1 ].axis[ 2 ];
+
+         transform_to[ 5 ].axis[ 0 ] = -transform_to[ 2 ].axis[ 0 ];
+         transform_to[ 5 ].axis[ 1 ] = -transform_to[ 2 ].axis[ 1 ];
+         transform_to[ 5 ].axis[ 2 ] = -transform_to[ 2 ].axis[ 2 ];
+
+         transform_to[ 6 ].axis[ 0 ] = -transform_to[ 3 ].axis[ 0 ];
+         transform_to[ 6 ].axis[ 1 ] = -transform_to[ 3 ].axis[ 1 ];
+         transform_to[ 6 ].axis[ 2 ] = -transform_to[ 3 ].axis[ 2 ];
+
          vector < point > result;
          QString error_msg;
+
+#if defined( UHS2D_ROTATIONS_DEBUG )
+         for ( unsigned int i = 0; i < transform_from.size(); i++ )
+         {
+            cout << "From: " << transform_from[ i ] 
+                 << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_from[ i ], transform_from[ i ] )
+                 << " to: " << transform_to[ i ] 
+                 << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_to[ i ], transform_to[ i ] )
+                 << endl;
+         }
+
+         for ( unsigned int a = 0; a < atom_positions.size(); a++ )
+         {
+            cout << "Atom: " << a << " " << atom_positions[ a ] << endl;
+         }
+#endif
+
          if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
                                                              transform_from, 
                                                              transform_to, 
                                                              atom_positions,
                                                              result,
-                                                             error_msg ) )
+                                                             error_msg,
+                                                             true ) )
          {
             editor_msg( "red", error_msg );
             running = false;
             update_enables();
             return;
          }
-         
+
+#if defined( UHS2D_ROTATIONS_DEBUG )
+         for ( unsigned int a = 0; a < atom_positions.size(); a++ )
+         {
+            cout << "Result Atom: " << a << " " << result[ a ] << endl;
+         }
+#endif
+
          for ( unsigned int a = 0; a < atoms.size(); a++ )
          {
-            atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ];
-            atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ];
-            atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ];
+            atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ] * atomic_scaler;
+            atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ] * atomic_scaler;
+            atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ] * atomic_scaler;
          }
-
+         
          if ( cb_save_pdbs->isChecked() )
          {
             QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
@@ -1106,7 +1200,7 @@ void US_Hydrodyn_Saxs_2d::start()
                                  "CA",
                                  " LYS",
                                  "",
-                                 r + 1,
+                                 r + 2,
                                  rotations[ r ][ 0 ],
                                  rotations[ r ][ 1 ],
                                  rotations[ r ][ 2 ],
@@ -1134,9 +1228,9 @@ void US_Hydrodyn_Saxs_2d::start()
                               " LYS",
                               "",
                               a + 1,
-                              atoms[ a ].pos[ 0 ],
-                              atoms[ a ].pos[ 1 ],
-                              atoms[ a ].pos[ 2 ],
+                              atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                              atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                              atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
                               0.0f,
                               0.0f,
                               "C"

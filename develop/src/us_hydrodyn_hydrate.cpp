@@ -3500,7 +3500,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    last_hydrated_pdb_header +=
       QString( "HEADER  US-SOMO Hydrated pdb file %1\n" ).arg( fname );
    last_hydrated_pdb_text +=
-      QString( "MODEL %1\n" ).arg( current_model + 1 );
+      QString( "MODEL     %1\n" ).arg( current_model + 1 );
 
    unsigned int i = current_model;
 

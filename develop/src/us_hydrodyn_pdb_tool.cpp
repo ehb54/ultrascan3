@@ -1739,7 +1739,7 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
                s += "ENDMDL\n";
             }
             last_model = model;
-            s += "MODEL " + model + "\n";
+            s += "MODEL     " + model + "\n";
          }         
       }
 
