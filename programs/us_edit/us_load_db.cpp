@@ -22,9 +22,6 @@ US_LoadDB::US_LoadDB( QString& wd ) : US_WidgetsDialog( 0, 0 ), workingDir( wd )
    personID = US_Settings::us_inv_ID();
    QHBoxLayout* investigator = new QHBoxLayout;
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    investigator->addWidget( pb_investigator );
@@ -34,9 +31,7 @@ US_LoadDB::US_LoadDB( QString& wd ) : US_WidgetsDialog( 0, 0 ), workingDir( wd )
       ? QString::number( personID ) + ": "
       : "";
 
-   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1 );
-   le_investigator->setReadOnly( true );
-   le_investigator->setPalette ( gray );
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
    investigator->addWidget( le_investigator );
    main->addLayout( investigator );
 

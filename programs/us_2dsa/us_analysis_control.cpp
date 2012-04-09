@@ -70,6 +70,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
    QPushButton* pb_advance = us_pushbutton( tr( "Advanced Analysis Controls" ));
    te_status               = us_textedit();
+   us_setReadOnly( te_status, true );
 
    QLayout* lo_tinois      =
       us_checkbox( tr( "Fit Time-Invariant Noise"     ), ck_tinoise );
@@ -100,11 +101,11 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_thrdcnt ->setStep(    1 );
    ct_constff0->setStep( 0.01 );
 
-   le_estmemory = us_lineedit( "100 MB" );
-   le_iteration = us_lineedit( "0" );
-   le_oldvari   = us_lineedit( "0.000e-05" );
-   le_newvari   = us_lineedit( "0.000e-05" );
-   le_improve   = us_lineedit( "0.000e-08" );
+   le_estmemory = us_lineedit( "100 MB", -1, true );
+   le_iteration = us_lineedit( "0", -1, true );
+   le_oldvari   = us_lineedit( "0.000e-05", -1, true );
+   le_newvari   = us_lineedit( "0.000e-05", -1, true );
+   le_improve   = us_lineedit( "0.000e-08", -1, true );
 
    b_progress   = us_progressBar( 0, 100, 0 );
 
@@ -194,21 +195,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    QLabel* lb_optspace     = us_banner( "" );
    optimizeLayout->addWidget( lb_optspace,   row,   0, 1, 2 );
    optimizeLayout->setRowStretch( row, 2 );
-
-   le_estmemory->setReadOnly( true );
-   le_iteration->setReadOnly( true );
-   le_oldvari  ->setReadOnly( true );
-   le_newvari  ->setReadOnly( true );
-   le_improve  ->setReadOnly( true );
-   te_status   ->setReadOnly( true );
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_estmemory->setPalette( gray );
-   le_iteration->setPalette( gray );
-   le_oldvari  ->setPalette( gray );
-   le_newvari  ->setPalette( gray );
-   le_improve  ->setPalette( gray );
-   te_status   ->setPalette( gray );
 
    lb_constff0 ->setVisible( false );
    ct_constff0 ->setVisible( false );

@@ -52,6 +52,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       QTextEdit*    te_distr_info;
 
       QLineEdit*    le_cmap_name;
+      QLineEdit*    le_prefilt;
 
       US_Help       showHelp;
  
@@ -78,6 +79,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_stopplt;
       QPushButton*  pb_refresh;
       QPushButton*  pb_reset;
+      QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
       QPushButton*  pb_help;
@@ -116,6 +118,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          plot_s;
       bool          looping;
       bool          need_save;
+      bool          runsel;
+      bool          latest;
 
       QString       xa_title_s;
       QString       xa_title_mw;
@@ -125,6 +129,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       QString       ya_title;
       QString       cmapname;
       QString       mfilter;
+
+      QStringList   pfilts;
 
    private slots:
 
@@ -144,6 +150,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_plot_s(  void );
       void select_plot_mw( void );
       void update_disk_db( bool );
+      void select_prefilt( void );
       void load_distro(    void );
       void load_distro(    US_Model, QString );
       void load_color(     void );

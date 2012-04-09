@@ -10,6 +10,7 @@
 #include "us_license.h"
 #include "us_passwd.h"
 #include "us_editor.h"
+#include "us_select_edits.h"
 #include "us_model_loader.h"
 #include "us_db2.h"
 #include "us_util.h"
@@ -45,6 +46,8 @@ US_CombineModels::US_CombineModels() : US_Widgets()
 
    // fill in the GUI components
    QLabel* lb_main    = us_label(      tr( "Combine Models for Global Fit" ) );
+           pb_prefilt = us_pushbutton( tr( "Select PreFilter" ) );
+           le_prefilt = us_lineedit  ( "", -1, true );
            pb_add     = us_pushbutton( tr( "Add Models" ) );
            pb_reset   = us_pushbutton( tr( "Reset List" ) );
            pb_save    = us_pushbutton( tr( "Save Global Model" ) );
@@ -58,12 +61,16 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    mainLayout->addWidget( lb_main,     row++, 0, 1, 4 );
    mainLayout->addWidget( lw_models,   row++, 0, 1, 4 );
    mainLayout->addLayout( dkdb_cntrls, row++, 0, 1, 4 );
+   mainLayout->addWidget( pb_prefilt,  row,   0, 1, 2 );
+   mainLayout->addWidget( le_prefilt,  row++, 2, 1, 2 );
    mainLayout->addWidget( pb_add,      row,   0, 1, 2 );
    mainLayout->addWidget( pb_reset,    row++, 2, 1, 2 );
    mainLayout->addWidget( pb_save,     row,   0, 1, 2 );
    mainLayout->addWidget( pb_help,     row,   2, 1, 1 );
    mainLayout->addWidget( pb_close,    row++, 3, 1, 1 );
 
+   connect( pb_prefilt, SIGNAL( clicked()      ),
+            this,       SLOT(   select_filt()  ) );
    connect( pb_add,     SIGNAL( clicked()      ),
             this,       SLOT(   add_models()   ) );
    connect( pb_reset,   SIGNAL( clicked()      ),
@@ -75,23 +82,31 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    connect( pb_save,    SIGNAL( clicked()      ),
             this,       SLOT(   save()         ) );
 
-   lw_models->setToolTip(
+   lw_models ->setToolTip(
       tr( "List of models to combine for a global model" ) );
-   pb_add   ->setToolTip(
+   pb_prefilt->setToolTip(
+      tr( "Choose RunIDs/Edits to pre-filter the models list" ) );
+   le_prefilt->setToolTip(
+      tr( "Chosen RunIDs/Edits pre-filter to the models list" ) );
+   pb_add    ->setToolTip(
       tr( "Add to the list of component models" ) );
-   pb_reset ->setToolTip(
+   pb_reset  ->setToolTip(
       tr( "Clear the models list to allow re-selection" ) );
-   pb_help  ->setToolTip(
+   pb_help   ->setToolTip(
       tr( "Display detailed US_CombineModels documentation text and images" ) );
-   pb_close ->setToolTip(
+   pb_close  ->setToolTip(
       tr( "Close the US_CombineModels window and exit" ) );
-   pb_save  ->setToolTip(
+   pb_save   ->setToolTip(
       tr( "Create a global model from the listed component models" ) );
    pb_reset->setEnabled( false );
    pb_save ->setEnabled( false );
 
    rbtn_click = false;
+   runsel     = true;
+   latest     = true;
 
+   setMinimumSize( 480, 200 );
+   adjustSize();
    show();
 }
 
@@ -119,7 +134,7 @@ void US_CombineModels::add_models()
    QList< US_Model > tmodels;
    QStringList       tmdescs;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_ModelLoader dialog( loadDB, mfilter, tmodels, tmdescs );
+   US_ModelLoader dialog( loadDB, mfilter, tmodels, tmdescs, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
    connect( &dialog, SIGNAL(   changed( bool ) ),
@@ -299,4 +314,29 @@ void US_CombineModels::update_disk_db( bool isDB )
       dkdb_cntrls->set_disk();
 }
 
+// Select RunID/Edit prefilter of models list
+void US_CombineModels::select_filt( void )
+{
+   pfilts.clear();
+   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
+   sediag.move( this->pos() + QPoint( 200, 200 ) );
+   sediag.exec();
+
+   int nedits    = pfilts.size();
+   QString pfmsg;
+
+   if ( nedits == 0 )
+      pfmsg = tr( "(none chosen)" );
+
+   else if ( runsel )
+      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+
+   else if ( latest )
+      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
+
+   else
+      pfmsg = tr( "%1 total Edit prefilter(s) " ).arg( nedits );
+
+   le_prefilt->setText( pfmsg );
+}
 

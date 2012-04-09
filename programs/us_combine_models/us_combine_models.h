@@ -31,11 +31,14 @@ class US_CombineModels : public US_Widgets
 
       US_DB2*       dbP;
 
+      QPushButton*  pb_prefilt;
       QPushButton*  pb_add;
       QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
       QPushButton*  pb_save;
+
+      QLineEdit*    le_prefilt;
 
       US_Disk_DB_Controls* dkdb_cntrls;
 
@@ -46,11 +49,14 @@ class US_CombineModels : public US_Widgets
 
       bool          rbtn_click;
       bool          changed;
+      bool          runsel;
+      bool          latest;
 
       QString       mfilter;
       QString       run_name;
       QString       cmodel_name;
 
+      QStringList   pfilts;
 
    private slots:
 
@@ -58,6 +64,7 @@ class US_CombineModels : public US_Widgets
       void reset         ( void );
       void save          ( void );
       void update_disk_db( bool );
+      void select_filt   ( void );
 
       void help          ( void )
       { showHelp.show_help( "combine_models.html" ); };

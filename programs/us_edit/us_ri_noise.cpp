@@ -28,7 +28,7 @@ US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw,
    QVBoxLayout* info  = new QVBoxLayout();
    
    te_details = us_textedit();
-   te_details->setReadOnly( true );
+   us_setReadOnly( te_details, true );
    info->addWidget( te_details );
 
    QHBoxLayout* spin = new QHBoxLayout;

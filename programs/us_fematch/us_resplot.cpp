@@ -61,14 +61,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    QLayout* lo_shorbm =
       us_checkbox( tr( "Show Residuals Bitmap" ),             ck_shorbm );
 
-   le_vari   = us_lineedit();
-   le_rmsd   = us_lineedit();
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_vari->setReadOnly( true );
-   le_rmsd->setReadOnly( true );
-   le_vari->setPalette(  gray );
-   le_rmsd->setPalette(  gray );
+   le_vari   = us_lineedit( "0.0", -1, true );
+   le_rmsd   = us_lineedit( "0.0", -1, true );
 
    datctrlsLayout->addWidget( lb_datctrls, 0, 0, 1, 8 );
    datctrlsLayout->addLayout( lo_plteda,   1, 0, 1, 8 );

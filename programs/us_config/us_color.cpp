@@ -71,8 +71,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   lbl_banner = us_banner( tr( "Banner Label" ) );
   labelLine->addWidget( lbl_banner );
   
-  le_edit = us_lineedit( tr( "Line Edit" ), 1 );
-  le_edit->setReadOnly ( true );
+  le_edit = us_lineedit( tr( "Line Edit" ), 1, true );
   le_edit->setAlignment( Qt::AlignCenter );
   le_edit->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
   labelLine->addWidget( le_edit );
@@ -177,8 +176,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   lbl_select = us_label( tr( "Selected Screen Element:" ) );
   rightColumn->addWidget( lbl_select, row, 0 );
 
-  le_choice = us_lineedit( "" );
-  le_choice->setReadOnly ( true );
+  le_choice = us_lineedit( "", -1, true );
   rightColumn->addWidget( le_choice, row++, 1 );
 
   // Change color boxes

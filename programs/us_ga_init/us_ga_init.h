@@ -50,6 +50,7 @@ class US_GA_Initialize : public US_Widgets
       QListWidget*  lw_sbin_data;
       QTextEdit*    te_pctl_help;
       QTextEdit*    te_status;
+      QLineEdit*    le_prefilt;
 
       US_Help       showHelp;
  
@@ -74,6 +75,7 @@ class US_GA_Initialize : public US_Widgets
 
       US_SoluteData*      soludata;
 
+      QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
       QPushButton*  pb_refresh;
@@ -135,6 +137,8 @@ class US_GA_Initialize : public US_Widgets
       bool          monte_carlo;
       bool          plot_s;
       bool          rbtn_click;
+      bool          runsel;
+      bool          latest;
 
       QString       run_name;
       QString       analys_name;
@@ -150,6 +154,8 @@ class US_GA_Initialize : public US_Widgets
       QString       stnpline;
       QString       mfilter;
       QString       editGUID;
+
+      QStringList   pfilts;
 
    private slots:
 
@@ -174,6 +180,7 @@ class US_GA_Initialize : public US_Widgets
       void select_plot3d(  void );
       void select_plot_s(  void );
       void select_plot_mw( void );
+      void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );
       void manDrawSb(      void );

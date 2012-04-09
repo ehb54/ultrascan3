@@ -24,7 +24,7 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   te_dbgtext->setPalette(  US_GuiSettings::editColor() );
   te_dbgtext->setFont(     QFont( US_GuiSettings::fontFamily(),
                                   US_GuiSettings::fontSize() ) );
-  te_dbgtext->setReadOnly( false );
+  us_setReadOnly( te_dbgtext, false );
 
   topbox->addWidget( te_dbgtext );
 

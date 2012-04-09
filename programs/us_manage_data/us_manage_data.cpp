@@ -82,9 +82,8 @@ DbgLv(1) << "GUI setup begun";
 
    personID      = US_Settings::us_inv_ID();
    QString invn  = ( personID > 0 ) ? QString::number( personID ) : "";
-   le_invtor     = us_lineedit( invn + ": " + US_Settings::us_inv_name(), 1 );
-   le_invtor->setReadOnly( true );
-   le_invtor->setPalette( vlgray );
+   le_invtor     = us_lineedit( invn + ": " + US_Settings::us_inv_name(),
+         1, true );
    dctlLayout->addWidget( le_invtor, row++, 3, 1, 5 );
 
    pb_reset      = us_pushbutton( tr( "Reset" ), false );

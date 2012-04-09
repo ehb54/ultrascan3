@@ -83,8 +83,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    // Lay out the controls
    QLabel* lb_status    = us_label( tr( "Status:"    ) );
    
-   le_status    = us_lineedit( tr( "No data loaded" ) );
-   le_status->setReadOnly( true );
+   le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
    le_status->setToolTip(
          tr( "Results of the last action performed" ) );
 
@@ -99,15 +98,13 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
 
-   le_fit = us_lineedit( "" );
-   le_fit->setReadOnly( false );
+   le_fit = us_lineedit( "", -1, false );
    le_fit->setToolTip(
          tr( "Selected-minimum/Editable meniscus radius value" ) );
 
    QLabel* lb_rms_error = us_label( tr( "RMS Error:" ) );
    
-   le_rms_error = us_lineedit( "" );
-   le_rms_error->setReadOnly( true );
+   le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 

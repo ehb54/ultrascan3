@@ -1,6 +1,7 @@
 //! \file us_model_loader.cpp
 
 #include "us_model_loader.h"
+#include "us_select_edits.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
@@ -13,7 +14,8 @@
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, const QString eGUID )
   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
-   omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ) 
+   omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
+   editIDs( weditIDs )
 {
    multi    = false;
    editGUID = eGUID;
@@ -21,11 +23,39 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    build_dialog();
 }
 
+// Alternate constructor for loading a single model (with editIDs)
+US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
+      US_Model& amodel, QString& adescr, QStringList& aeditIDs )
+  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
+   editIDs( aeditIDs )
+{
+   multi    = false;
+   editGUID = "";
+
+   build_dialog();
+}
+
 // Alternate constructor that allows loading multiple models
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
-      QList< US_Model >& amodels, QStringList& adescrs )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
-   omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ) 
+   QList< US_Model >& amodels, QStringList& adescrs,
+   QStringList& aeditIDs )
+   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
+   editIDs( aeditIDs )
+{
+   multi    = true;
+   editGUID = "";
+
+   build_dialog();
+}
+
+// Alternate constructor that allows loading multiple models (no editIDs list)
+US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
+   QList< US_Model >& amodels, QStringList& adescrs )
+   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
+   editIDs( weditIDs )
 {
    multi    = true;
    editGUID = "";
@@ -36,6 +66,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Main shared method to build the model loader dialog
 void US_ModelLoader::build_dialog( void )
 {
+qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    setWindowTitle( multi ? tr( "Load Distribution Model(s)" )
                          : tr( "Load Distribution Model" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -69,15 +100,13 @@ void US_ModelLoader::build_dialog( void )
 
    int inv = US_Settings::us_inv_ID();
    QString number = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
-   le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
-   le_investigator->setPalette(  gray );
-   le_investigator->setReadOnly( true );
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
+         0, true );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
    connect( pb_filtmodels, SIGNAL( clicked() ),
             this,          SLOT( list_models() ) );
-   le_mfilter      = us_lineedit();
-   le_mfilter->setReadOnly( false );
+   le_mfilter      = us_lineedit( "", -1, false );
    dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
    le_mfilter->setText( dsearch );
    connect( le_mfilter,    SIGNAL( returnPressed() ),
@@ -302,6 +331,9 @@ void US_ModelLoader::update_person( int ID )
 // List model choices (disk/db and possibly filtered by search text)
 void US_ModelLoader::list_models()
 {
+QDateTime time0=QDateTime::currentDateTime();
+QDateTime time1=QDateTime::currentDateTime();
+QDateTime time2=QDateTime::currentDateTime();
    QString mfilt = le_mfilter->text();
    bool listall  = mfilt.isEmpty();          // unfiltered?
    bool listdesc = !listall;                 // description filtered?
@@ -392,18 +424,98 @@ void US_ModelLoader::list_models()
 //qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          all_model_descrips.clear();
          query.clear();
+         int nedits        = editIDs.size();
+         QString editID = "";
 
+         if ( nedits == 0  &&  ! editGUID.isEmpty() )
+         {
+            query.clear();
+            query << "get_editID" << editGUID;
+            db.query( query );
+            db.next();
+            editID = db.value( 0 ).toString();
+            if ( !editID.isEmpty()  &&  dsearch == "=edit" )
+            {
+               dsearch = "";
+               le_mfilter->setText( dsearch );
+            }
+         }
+
+#if defined( MODEL_DESC_BY_EDITID )
+         for ( int ii = 0; ii < qMax( nedits, 1 ); ii++ )
+         {
+            query.clear();
+time1=QDateTime::currentDateTime();
+            if ( nedits > 0 )
+               query << "get_model_desc_by_editID"
+                     << invID << editIDs[ ii ];
+
+            else if ( !editID.isEmpty() )
+               query << "get_model_desc_by_editID"
+                     << invID << editID;
+
+            else
+               query << "get_model_desc" << invID;
+
+            db.query( query );
+//qDebug() << " NumRows" << db.numRows();
+time2=QDateTime::currentDateTime();
+qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
+
+            while ( db.next() )
+            {
+               ModelDesc desc;
+               desc.DB_id       = db.value( 0 ).toString();
+               desc.modelGUID   = db.value( 1 ).toString();
+               desc.description = db.value( 2 ).toString();
+               desc.editGUID    = db.value( 5 ).toString();
+
+               desc.filename.clear();
+               desc.reqGUID     = desc.description.section( ".", -2, -2 )
+                                                  .section( "_",  0,  3 );
+               desc.iterations  = ( desc.description.contains( "-MC" )
+                                 && desc.description.contains( "_mc" ) ) ? 1: 0;
+
+               if ( desc.description.simplified().length() < 2 )
+               {
+                  desc.description = " ( ID " + desc.DB_id
+                                     + tr( " : empty description )" );
+               }
+
+               all_model_descrips << desc;   // add to full models list
+            }
+         }
+QDateTime time3=QDateTime::currentDateTime();
+#else
+time1=QDateTime::currentDateTime();
+         query.clear();
          query << "get_model_desc" << invID;
          db.query( query );
 //qDebug() << " NumRows" << db.numRows();
+time2=QDateTime::currentDateTime();
+qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
+int idEDlo=(nedits>0)?editIDs[0].toInt()-10:100;
+int idEDhi=idEDlo+20;
 
          while ( db.next() )
          {
+            QString rEditID  = db.value( 6 ).toString();
+int idED=rEditID.toInt();
+if(idED>idEDlo&&idED<idEDhi) {
+qDebug() << "mdloop: editID" << rEditID
+<< "IDs contains" << editIDs.contains(rEditID) << "nedits" << nedits;
+}
+
+            if ( ( nedits > 0  &&  ! editIDs.contains( rEditID ) )  ||
+                 ( !editID.isEmpty()  &&  rEditID != editID ) )
+               continue;
+
             ModelDesc desc;
             desc.DB_id       = db.value( 0 ).toString();
             desc.modelGUID   = db.value( 1 ).toString();
             desc.description = db.value( 2 ).toString();
             desc.editGUID    = db.value( 5 ).toString();
+
             desc.filename.clear();
             desc.reqGUID     = desc.description.section( ".", -2, -2 )
                                                .section( "_",  0,  3 );
@@ -418,42 +530,8 @@ void US_ModelLoader::list_models()
 
             all_model_descrips << desc;   // add to full models list
          }
-
-#if 0
-         for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
-         {  // loop to get requestID and flag if monte carlo
-            ModelDesc desc = all_model_descrips[ ii ];
-            QString recID  = desc.DB_id;
-            query.clear();
-            query << "get_model_info" << recID;
-            db.query( query );
-            db.next();
-            QString mxml   = db.value( 2 ).toString();
-            int     jj     = mxml.indexOf( "requestGUID=" );
-            int     kk     = mxml.indexOf( "monteCarlo=" );
-
-            if ( jj > 0 )
-            {
-               desc.reqGUID     = mxml.mid( jj ).section( '"', 1, 1 );
-
-               if ( kk > 0 )
-               {
-                  QString mCarl    = mxml.mid( kk ).section( '"', 1, 1 );
-                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
-               }
-
-               else
-                  desc.iterations  = 0;
-            }
-
-            else
-            {
-               desc.reqGUID     = "";
-               desc.iterations  = 0;
-            }
-
-            all_model_descrips[ ii ] = desc;
-         }
+QDateTime time3=QDateTime::currentDateTime();
+qDebug() << "mdloop:   amd size" << all_model_descrips.size();
 #endif
 
          if ( !listsing )
@@ -461,6 +539,9 @@ void US_ModelLoader::list_models()
 
          else
             dup_singles();            // duplicate model list as singles
+QDateTime time4=QDateTime::currentDateTime();
+qDebug() << "Timing: DB-read" << time0.msecsTo(time3) << time2.msecsTo(time3);
+qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
       }
    }
 
@@ -485,6 +566,16 @@ void US_ModelLoader::list_models()
          QXmlStreamAttributes attr;
 
          all_model_descrips.clear();
+         int nedits        = editIDs.size();
+
+         if ( nedits == 0  &&  ! editGUID.isEmpty() )
+         {
+            if ( !editGUID.isEmpty()  &&  dsearch == "=edit" )
+            {
+               dsearch = "";
+               le_mfilter->setText( dsearch );
+            }
+         }
 
          for ( int ii = 0; ii < f_names.size(); ii++ )
          {
@@ -503,13 +594,19 @@ void US_ModelLoader::list_models()
 
                if ( xml.isStartElement() && xml.name() == "model" )
                {  // Pick up model attributes for description
-                  ModelDesc desc;
                   attr             = xml.attributes();
+                  QString edGUID   = attr.value( "editGUID"    ).toString();
+
+                  if ( ( nedits > 0  &&  ! editIDs.contains( edGUID ) )  ||
+                       ( !editGUID.isEmpty()  &&  edGUID != editGUID ) )
+                     continue;
+
+                  ModelDesc desc;
                   desc.description = attr.value( "description" ).toString();
                   desc.modelGUID   = attr.value( "modelGUID"   ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
-                  desc.editGUID    = attr.value( "editGUID"    ).toString();
+                  desc.editGUID    = edGUID;
                   desc.reqGUID     = attr.value( "requestGUID" ).toString();
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
@@ -548,6 +645,8 @@ void US_ModelLoader::list_models()
 
 
    // possibly pare down models list based on search field
+QDateTime time5=QDateTime::currentDateTime();
+qDebug() << "Timing: Time5" << time0.msecsTo(time5) << time2.msecsTo(time5);
 
    if ( listall )
    {
@@ -607,6 +706,8 @@ void US_ModelLoader::list_models()
    {
       lw_models->addItem( "No models found." );
    }
+QDateTime time6=QDateTime::currentDateTime();
+qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
 
    singprev   = listsing;    // save list-singles flag
 

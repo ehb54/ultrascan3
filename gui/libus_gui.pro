@@ -22,6 +22,7 @@ QT          += network svg
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = \
+               us_abstractrotor_gui.h   \
                us_analysis_base2.h      \
                us_analyte_gui.h         \
                us_associations_gui.h    \
@@ -45,19 +46,20 @@ HEADERS      = \
                us_plot.h                \
                us_plot3d.h              \
                us_predict1.h            \
+               us_project_gui.h         \
                us_properties.h          \
                us_resids_bitmap.h       \
+               us_rotor_gui.h           \
                us_run_details2.h        \
                us_sassoc.h              \
+               us_select_edits.h        \
+               us_solution_gui.h        \
                us_table.h               \
                us_widgets.h             \
-               us_widgets_dialog.h      \
-               us_solution_gui.h        \
-               us_project_gui.h         \
-               us_abstractrotor_gui.h   \
-               us_rotor_gui.h
+               us_widgets_dialog.h
 
 SOURCES      = \
+               us_abstractrotor_gui.cpp   \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
                us_associations_gui.cpp    \
@@ -81,16 +83,16 @@ SOURCES      = \
                us_plot.cpp                \
                us_plot3d.cpp              \
                us_predict1.cpp            \
+               us_project_gui.cpp         \
                us_properties.cpp          \
                us_resids_bitmap.cpp       \
+               us_rotor_gui.cpp           \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
+               us_select_edits.cpp        \
+               us_solution_gui.cpp        \
                us_table.cpp               \
                us_widgets.cpp             \
-               us_widgets_dialog.cpp      \
-               us_solution_gui.cpp        \
-               us_project_gui.cpp         \
-               us_abstractrotor_gui.cpp   \
-               us_rotor_gui.cpp
+               us_widgets_dialog.cpp
 
 RESOURCES     = images.qrc

@@ -39,23 +39,17 @@ US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( 0, 0 )
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    QString name = ( invlev > 0 )
                   ? QString::number( US_Settings::us_inv_ID() ) + ": "
                   : "";
 
-   le_invest = us_lineedit( name + US_Settings::us_inv_name() );
-   le_invest->setPalette ( gray );
-   le_invest->setReadOnly( true );
+   le_invest = us_lineedit( name + US_Settings::us_inv_name(),
+         -1, true );
    top->addWidget( le_invest, row++, 1 );
 
    // Instructions text
    te_desc   = us_textedit();
-   te_desc->setReadOnly( true );
-   te_desc->setPalette( vlgray );
+   us_setReadOnly( te_desc, true );
    QString desc = tr(
       "<b>Note:</b> Proceeding may result in local reports<br/>"
       "being replaced from the database.<ul>"

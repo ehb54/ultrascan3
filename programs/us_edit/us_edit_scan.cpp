@@ -70,7 +70,7 @@ US_EditScan::US_EditScan( US_DataIO2::Scan& s,
    instructions->addWidget( lb_instructions );
 
    QTextEdit* te_instructions = us_textedit();
-   te_instructions->setReadOnly( true );
+   us_setReadOnly( te_instructions, true );
    
    QFont        f = te_instructions->font();
    QFontMetrics fm( f );

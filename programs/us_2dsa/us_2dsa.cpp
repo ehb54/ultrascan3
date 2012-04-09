@@ -93,12 +93,6 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    QLabel* lb_rmsd     = us_label ( tr( "RMSD:" ) );
    le_rmsd             = us_lineedit( "0.00000", 0, true );
    int row   = parameterLayout->rowCount();
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_vari->setPalette(  gray );
-   le_rmsd->setPalette(  gray );
-   le_vari->setReadOnly( true );
-   le_rmsd->setReadOnly( true );
    parameterLayout->addWidget( lb_vari,     row,   0, 1, 1 );
    parameterLayout->addWidget( le_vari,     row,   1, 1, 1 );
    parameterLayout->addWidget( lb_rmsd,     row,   2, 1, 1 );
@@ -128,7 +122,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
        "RMSD:  0.000000,\n"
        "Variance: 0.000000e-05 .\n"
        "Iterations:  0" ) );
-   te_status->setPalette(  gray );
+   us_setReadOnly( te_status, true );
 
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );

@@ -121,8 +121,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    te_desc   ->setMaximumHeight( fontHeight * 2 + 12 );  // Add for border
    lw_triples->setMaximumHeight( fontHeight * 6 + 12 );
 
-   te_desc   ->setReadOnly( true );
-   te_desc   ->setPalette( vlgray );
+   us_setReadOnly( te_desc, true );
 
    row = 0;
    runInfoLayout->addWidget( lb_info   , row++, 0, 1, 2 );
@@ -681,7 +680,7 @@ void US_AnalysisBase2::smoothing( double smoothCount )
    int smoothPoints = (int) smoothCount;
 
    // Restore saved data
-   int                    index  = lw_triples->currentRow();
+   int                     index  = lw_triples->currentRow();
    US_DataIO2::EditedData* d      = &dataList[ index ];
 
    for ( int i = 0; i < d->scanData.size(); i++ )
@@ -1244,7 +1243,7 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
 // Slot to give load-data progress feedback
 void US_AnalysisBase2::set_progress( const QString message )
 {
-   te_desc->setText( "<b>" + message + " ...</b>" );
+   te_desc->setHtml( "<b>" + message + " ...</b>" );
    qApp->processEvents();
 }
 
@@ -1269,10 +1268,16 @@ void US_AnalysisBase2::load_noise( int index )
    QStringList mieGUIDs;  // List of GUIDs of models-in-edit
    QStringList nieGUIDs;  // List of GUIDS:type:index of noises-in-edit
 
+   te_desc->setHtml( tr( "<b>Scanning noise for %1 ...</b>" )
+      .arg( triples[ index ] ) );
+   qApp->processEvents();
    US_LoadableNoise lnoise;
    bool loadDB = disk_controls->db();
    bool local  = ! loadDB;
    int  nenois = lnoise.count_noise( local, edata, NULL, mieGUIDs, nieGUIDs );
+   te_desc->setHtml( tr( "<b>%1 noise(s) found for %2</b>" )
+      .arg( nenois ).arg( triples[ index ] ) );
+   qApp->processEvents();
 
 //for (int jj=0;jj<nenois;jj++)
 // qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
