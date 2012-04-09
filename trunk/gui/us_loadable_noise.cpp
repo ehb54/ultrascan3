@@ -29,23 +29,25 @@ int US_LoadableNoise::count_noise( bool ondisk, US_DataIO2::EditedData* edata,
    if ( edata == NULL )
       return nenois;
 
+
    QStringList nimGUIDs;  // list of GUIDs:type:index of noises-in-models
    QStringList tmpGUIDs;  // temporary noises-in-model list
-   QString     editGUID  = edata->editGUID;         // loaded edit GUID
-   QString     modelGUID = ( model == 0 ) ?         // loaded model GUID
+   QString     daEditGUID = edata->editGUID;        // loaded edit GUID
+   QString     modelGUID  = ( model == 0 ) ?        // loaded model GUID
                            "" : model->modelGUID;
    QString     lmodlGUID;                           // list model GUID
    QString     lnoisGUID;                           // list noise GUID
    QString     modelIndx;                           // "0001" style model index
-DbgLv(2) << "LaNoi:editGUID  " << editGUID;
+DbgLv(2) << "LaNoi:editGUID  " << daEditGUID;
 DbgLv(2) << "LaNoi:modelGUID " << modelGUID;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Build lists of IDs for noises and models
    if ( ondisk )
-      id_list_disk();
+      id_list_disk( daEditGUID );
 
    else
-      id_list_db();
+      id_list_db  ( daEditGUID );
 for ( int ii = 0; ii < noiIDs.size(); ii++ ) {
 DbgLv(2) << "LaNoi:allNoi nID eID mID type" << noiIDs.at(ii)
  << noiEdIDs.at(ii) << noiMoIDs.at(ii) << noiTypes.at(ii); }
@@ -53,10 +55,13 @@ for ( int ii = 0; ii < modIDs.size(); ii++ ) {
 DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
 
    // Get a list of models-with-noise tied to the loaded edit
-   int nemods  = models_in_edit(  ondisk, editGUID, mieGUIDs );
+   int nemods  = models_in_edit(  ondisk, daEditGUID, mieGUIDs );
 
    if ( nemods == 0 )
+   {
+      QApplication::restoreOverrideCursor();
       return nemods;          // Go no further if no models-with-noise for edit
+   }
 
    int latemx  = ondisk ? nemods - 1 : 0;   // Index to latest model-in-edit
 
@@ -80,6 +85,7 @@ DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
       if ( ! mieGUIDs.removeOne( modelGUID ) )
       {
          qDebug( "*ERROR* Loaded/Latest model not in model-in-edit list!" );
+         QApplication::restoreOverrideCursor();
          return 0;
       }
 
@@ -124,6 +130,7 @@ DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
 DbgLv(2) << "LaNoi:nemods nmnois nenois" << nemods << nmnois << nenois;
 for (int jj=0;jj<nenois;jj++)
  DbgLv(2) << "LaNoi: jj nieG" << jj << nieGUIDs.at(jj);
+   QApplication::restoreOverrideCursor();
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
@@ -263,7 +270,7 @@ int US_LoadableNoise::noises_in_model( bool ondisk, QString mGUID,
 }
 
 // Build lists of noise and model IDs for database
-int US_LoadableNoise::id_list_db()
+int US_LoadableNoise::id_list_db( QString daEditGUID )
 {
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
@@ -274,6 +281,13 @@ int US_LoadableNoise::id_list_db()
    if ( db.lastErrno() != US_DB2::OK )
       return 0;
 
+   query.clear();
+   query << "get_editID" << daEditGUID;
+   db.query( query );
+   db.next();
+   QString daEditID = db.value( 0 ).toString();
+DbgLv(2) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
+
    noiIDs  .clear();
    noiEdIDs.clear();
    noiMoIDs.clear();
@@ -283,14 +297,24 @@ int US_LoadableNoise::id_list_db()
    modDescs.clear();
 
    QStringList reqIDs;
+   QString     noiEdID;
 
    // Build noise, edit, model ID lists for all noises
    query.clear();
+#if defined( MODEL_DESC_BY_EDITID )
+   query << "get_noise_desc_by_editID" << invID << daEditID;
+#else
    query << "get_noise_desc" << invID;
+#endif
    db.query( query );
 
    while ( db.next() )
    {  // Accumulate lists from noise records
+      noiEdID   = db.value( 2 ).toString();
+#if !defined( MODEL_DESC_BY_EDITID )
+      if ( noiEdID != daEditID )  continue;
+#endif
+
       noiIDs   << db.value( 1 ).toString();
       noiTypes << db.value( 4 ).toString();
       noiMoIDs << db.value( 5 ).toString();
@@ -299,15 +323,20 @@ int US_LoadableNoise::id_list_db()
 DbgLv(2) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
+#if defined( MODEL_DESC_BY_EDITID )
+   query << "get_model_desc_by_editID" << invID << daEditID;
+#else
    query << "get_model_desc" << invID;
+#endif
    db.query( query );
 
    while ( db.next() )
    {  // Accumulate from db desc entries matching noise model IDs
       QString modGUID = db.value( 1 ).toString();
+      QString modEdID = db.value( 6 ).toString();
 
-      if ( noiMoIDs.contains( modGUID ) )
-      {  // Only list models that have associated noise
+      if ( noiMoIDs.contains( modGUID )  &&   modEdID == daEditID )
+      {  // Only list models that have associated noise and match edit
          modIDs   << modGUID;
          modDescs << db.value( 2 ).toString();
          modEdIDs << db.value( 5 ).toString();
@@ -356,7 +385,7 @@ DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
 }
 
 // Build lists of noise and model IDs for local disk
-int US_LoadableNoise::id_list_disk()
+int US_LoadableNoise::id_list_disk( QString daEditGUID )
 {
    noiIDs  .clear();
    noiEdIDs.clear();
@@ -437,8 +466,8 @@ int US_LoadableNoise::id_list_disk()
             QString mcst    = attr.value( "monteCarlo"  ).toString();
             bool    mCarlo  = ( ! mcst.isEmpty()  &&  mcst != "0" );
 
-            if ( noiMoIDs.contains( modelID ) )
-            {  // Only list models that have associated noise
+            if ( noiMoIDs.contains( modelID )  &&  editID == daEditGUID )
+            {  // Only list models that have associated noise that match edit
                if ( mCarlo )
                {  // Treat monte carlo in a special way (1 composite model)
                   if ( reqIDs.contains( reqGUID ) )

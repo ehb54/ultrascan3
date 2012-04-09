@@ -63,16 +63,14 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_remaining = us_label( tr( "Remaining Scans:" ) );
    main->addWidget( lb_remaining, row, 0 );
 
-   le_remaining = us_lineedit( QString::number( scanCount ) + tr( " scans" ) );
-   le_remaining->setReadOnly( true );
+   le_remaining = us_lineedit( QString::number( scanCount ) + tr( " scans" ), -1, true );
    main->addWidget( le_remaining, row++, 1 );
 
    // Row
    QLabel* lb_excluded = us_label( tr( "Excluded Scans:" ) );
    main->addWidget( lb_excluded, row, 0 );
 
-   le_excluded = us_lineedit( tr( "0 scans" ) );
-   le_excluded->setReadOnly( true );
+   le_excluded = us_lineedit( tr( "0 scans" ), -1, true );
    main->addWidget( le_excluded, row++, 1 );
 
    // Button Row

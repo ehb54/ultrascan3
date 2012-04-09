@@ -213,7 +213,7 @@ bool US_DataLoader::load_edit( void )
          QString  triple   = ddesc.tripID.replace( ".", " / " );
          triples << triple;
 
-         QString  filedir  = filename.section( "/", 0, -2 );
+         QString  filedir  = filename.section( "/",  0, -2 );
          filename          = filename.section( "/", -1, -1 );
          QString  message  = tr( "Loading triple " ) + triple;
 
@@ -274,7 +274,7 @@ bool US_DataLoader::load_edit( void )
          QString  recID    = QString::number( idRec );
          QString  invID    = QString::number( US_Settings::us_inv_ID() );
          QString  aucfn    = ddesc.runID + "."
-                             + filename.section( ".", 2, 5 ) + ".auc";
+                             + filename.section( ".", -5, -2 ) + ".auc";
          QString  tempdir  = US_Settings::tmpDir() + "/";
          QString  afn      = tempdir + aucfn;
          QString  efn      = tempdir + filename;
@@ -597,9 +597,9 @@ void US_DataLoader::scan_dbase_edit()
                          .toDateTime().toString( Qt::ISODate ), true );
       QString recGUID  = db.value( 9 ).toString();
       QString filebase = filename.section( "/", -1, -1 );
-      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, 0 )
+      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
-      QString editID   = filebase.section( ".", 1, 1 );
+      QString editID   = filebase.section( ".", -6, -6 );
       QString tripID   = filebase.section( ".", -4, -2 );
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -658,9 +658,9 @@ void US_DataLoader::scan_local_edit( void )
 
       QString aucfbase  = aucfiles.at( 0 );
       QString aucfname  = subdir + "/" + aucfbase;
-      QString runID     = aucfbase.section( ".", 0, 0 );
-      QString subType   = aucfbase.section( ".", 1, 1 );
-      QString tripl     = aucfbase.section( ".", 2, 4 );
+      QString runID     = aucfbase.section( ".",  0, -6 );
+      QString subType   = aucfbase.section( ".", -5, -5 );
+      QString tripl     = aucfbase.section( ".", -4, -2 );
 
       edtfilt.clear();
       //edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
@@ -676,8 +676,8 @@ void US_DataLoader::scan_local_edit( void )
       {
          QString filebase = edtfiles.at( jj );
          QString filename = subdir + "/" + filebase;
-         QString runID    = filebase.section( ".", 0, 0 );
-         QString editID   = filebase.section( ".", 1, 1 );
+         QString runID    = filebase.section( ".",  0, -7 );
+         QString editID   = filebase.section( ".", -6, -6 );
          editID  = ( editID.length() == 12  &&  editID.startsWith( "20" ) ) ?
                    editID.mid( 2 ) : editID;
          QString tripID   = filebase.section( ".", -4, -2 );
@@ -772,16 +772,10 @@ void US_DataLoader::pare_to_latest( void )
          QString clabel = keys.at( ii );
          QString flabel = keys.at( jj );
 
-         QString crunid = clabel.section( ".", 0, 1 );
-         QString frunid = flabel.section( ".", 0, 1 );
+         QString crunid = clabel.section( ".", 0, -2 );
+         QString frunid = flabel.section( ".", 0, -2 );
 
          if ( crunid != frunid )
-            continue;
-
-         QString cstype  = clabel.section( ".", 2, 2 );
-         QString fstype  = flabel.section( ".", 2, 2 );
-
-         if ( cstype != fstype )
             continue;
 
          // This record's label differs from next only by edit code: remove it
@@ -794,7 +788,9 @@ void US_DataLoader::pare_to_latest( void )
 //qDebug() << "   (C<=F)" << (cdate<=fdate) << " C,F dt" << cdate << fdate;
 
          if ( cdate <= fdate )         // Remove the earlier of the two
+         {
             datamap.remove( clabel );  //  Earlier is earlier in list
+         }
 
          else
          {

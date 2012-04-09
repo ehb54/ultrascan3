@@ -3,6 +3,7 @@
 #include <QApplication>
 
 #include "us_ga_init.h"
+#include "us_select_edits.h"
 #include "us_model_loader.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -216,6 +217,15 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
 
+   pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
+   pb_prefilt->setEnabled( true );
+   spec->addWidget( pb_prefilt, s_row, 0 );
+   connect( pb_prefilt, SIGNAL( clicked() ),
+            this,       SLOT(   select_prefilt() ) );
+
+   le_prefilt    = us_lineedit  ( "", -1, true );
+   spec->addWidget( le_prefilt, s_row++, 1 );
+
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
    pb_lddistr->setEnabled( true );
    spec->addWidget( pb_lddistr, s_row, 0 );
@@ -335,7 +345,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
       " probably the most appropriate distribution. You can use a distribution"
       " from the van Holde - Weischet method, the C(s) method, or 2-D Spectrum"
       " Analysis. You may also load a Monte Carlo distribution." ) );
-   te_pctl_help->setReadOnly( true );
+   us_setReadOnly( te_pctl_help, true );
    txed->addWidget( te_pctl_help );
    rght->addLayout( txed );
    rght->setStretchFactor( plot, 4 );
@@ -368,6 +378,9 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
    mfilter    = "";         // default model list filter
+   runsel     = true;       // default prefilter type
+   latest     = true;       // default edit prefilter type
+   pfilts.clear();          // default prefilter edits list
 
    reset();
 }
@@ -1189,7 +1202,7 @@ void US_GA_Initialize::load_distro()
    bool            loadDB = dkdb_cntrls->db();
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_ModelLoader dialog( loadDB, mfilter, model, mdesc );
+   US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
    connect( &dialog, SIGNAL(   changed( bool ) ),
@@ -1977,4 +1990,30 @@ void US_GA_Initialize::update_disk_db( bool isDB )
    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
 
+// Select a prefilter for model distribution list
+void US_GA_Initialize::select_prefilt( void )
+{
+   pfilts.clear();
+
+   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
+   sediag.move( this->pos() + QPoint( 200, 200 ) );
+   sediag.exec();
+
+   int nedits = pfilts.size();
+   QString pfmsg;
+
+   if ( nedits == 0 )
+      pfmsg = tr( "(none chosen)" );
+
+   else if ( runsel )
+      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+
+   else if ( latest )
+      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
+
+   else
+      pfmsg = tr( "%1 total Edit prefilter(s)" ).arg( nedits );
+
+   le_prefilt->setText( pfmsg );
+}
 

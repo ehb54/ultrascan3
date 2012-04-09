@@ -30,8 +30,30 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       US_ModelLoader( bool, QString&, US_Model&, QString&,
                       const QString = "" );
 
+      /*! \brief Alternate constructor for dialog to select a model
+                 and load its distribution data (with pre-filter)
+          \param dbSrc    Flag: default models source to database
+          \param search   List search filter string
+          \param amodel   Output loaded model
+          \param adescr   Output selected model description string
+          \param aeditIDs List of pre-filter editIDs (ID-db/GUID-file)
+      */
+      US_ModelLoader( bool, QString&, US_Model&, QString&,
+                      QStringList& );
+
       /*! \brief Alternate constructor for dialog to select models
                  and load their distribution data
+          \param dbSrc    Flag: default models source to database
+          \param search   List search filter string
+          \param amodels  Output loaded models
+          \param adescrs  Output selected model description strings
+          \param aeditIDs List of pre-filter editIDs (ID-db/GUID-file)
+      */
+      US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList&,
+                      QStringList& );
+
+      /*! \brief Alternate constructor for dialog to select models
+                 and load their distribution data (no editIDs list)
           \param dbSrc    Flag: default models source to database
           \param search   List search filter string
           \param amodels  Output loaded models
@@ -51,6 +73,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QString&             odescr;    // reference to description argument
       QList< US_Model >&   omodels;   // reference to model list argument
       QStringList&         odescrs;   // reference to description list argument
+      QStringList&         editIDs;   // input editIDs list argument
       bool                 multi;     // flag if multiple models can be selected
       QString              editGUID;  // edit GUID to possibly match
 
@@ -98,6 +121,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QString              reqGUID;
 
       QStringList          mdescrs;
+      QStringList          weditIDs;
 
    private slots:
       /*! \brief Load model at a given index

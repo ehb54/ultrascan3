@@ -54,23 +54,11 @@ US_Advanced::US_Advanced( US_Model* amodel, QMap< QString, QString >& adv_vals,
    ct_modelnbr  = us_counter( 2, 1,  50,     1 );
    ct_component = us_counter( 2, 1, 200,     1 );
 
-   le_sedcoeff  = us_lineedit();
-   le_difcoeff  = us_lineedit();
-   le_moweight  = us_lineedit();
-   le_friratio  = us_lineedit();
-   le_partconc  = us_lineedit();
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_sedcoeff->setReadOnly( true );
-   le_difcoeff->setReadOnly( true );
-   le_moweight->setReadOnly( true );
-   le_friratio->setReadOnly( true );
-   le_partconc->setReadOnly( true );
-   le_sedcoeff->setPalette(  gray );
-   le_difcoeff->setPalette(  gray );
-   le_moweight->setPalette(  gray );
-   le_friratio->setPalette(  gray );
-   le_partconc->setPalette(  gray );
+   le_sedcoeff  = us_lineedit( "", -1, true );
+   le_difcoeff  = us_lineedit( "", -1, true );
+   le_moweight  = us_lineedit( "", -1, true );
+   le_friratio  = us_lineedit( "", -1, true );
+   le_partconc  = us_lineedit( "", -1, true );
 
    cb_mesh      = us_comboBox();
    cb_mesh->addItem( "Adaptive Space Time Mesh (ASTFEM)" );

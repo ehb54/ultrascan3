@@ -23,8 +23,7 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
    
    QGridLayout* lineGrid = new QGridLayout();
    
-   le_family = us_lineedit( US_GuiSettings::fontFamily() );
-   le_family->setReadOnly( true );
+   le_family = us_lineedit( US_GuiSettings::fontFamily(), -1, true );
    
    int row = 0;
 
@@ -34,8 +33,8 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
    size = us_label( tr( "Point Size:" ), -1 );
    size->setFixedHeight( BUTTON_H );
   
-   le_pointSize = us_lineedit( QString::number( US_GuiSettings::fontSize() ) );
-   le_pointSize->setReadOnly( true );
+   le_pointSize = us_lineedit( QString::number( US_GuiSettings::fontSize() ),
+         -1, true );
 
    lineGrid->addWidget( size        , row  , 0 );
    lineGrid->addWidget( le_pointSize, row++, 1 );

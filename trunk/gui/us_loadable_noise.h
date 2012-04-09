@@ -49,10 +49,10 @@ class US_GUI_EXTERN US_LoadableNoise : public QObject
     int noises_in_model( bool, QString, QStringList& );
 
     // Build noise,model IDs list for database
-    int id_list_db();
+    int id_list_db( QString );
 
     // Build noise,model IDs list for local disk
-    int id_list_disk();
+    int id_list_disk( QString );
 
     int dbg_level;
 

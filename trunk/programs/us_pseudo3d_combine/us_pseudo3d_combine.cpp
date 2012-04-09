@@ -4,6 +4,7 @@
 
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
+#include "us_select_edits.h"
 #include "us_model.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -182,13 +183,12 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    te_distr_info = us_textedit();
    te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
             + tr( "    analysisID" ) );
-   te_distr_info->setReadOnly( true );
+   us_setReadOnly( te_distr_info, true );
    spec->addWidget( te_distr_info, s_row,   0, 2, 2 );
    s_row += 2;
 
    le_cmap_name  = us_lineedit(
-         tr( "Default Color Map: w-cyan-magenta-red-black" ) );
-   le_cmap_name->setReadOnly( true );
+         tr( "Default Color Map: w-cyan-magenta-red-black" ), -1, true );
    spec->addWidget( le_cmap_name,  s_row++, 0, 1, 2 );
    te_distr_info->setMaximumHeight( le_cmap_name->height() * 2 );
 
@@ -231,6 +231,13 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
+
+   pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
+   spec->addWidget( pb_prefilt, s_row, 0 );
+   le_prefilt    = us_lineedit( tr( "" ), -1, true );
+   spec->addWidget( le_prefilt,    s_row++, 1, 1, 1 );
+   connect( pb_prefilt, SIGNAL( clicked() ),
+            this,       SLOT( select_prefilt() ) );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution(s)" ) );
    pb_lddistr->setEnabled( true );
@@ -297,6 +304,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    mfilter    = "";
    plt_zmin   = 1e+8;
    plt_zmax   = -1e+8;
+   runsel     = true;
+   latest     = true;
 
    // Set up variables and initial state of GUI
 
@@ -629,7 +638,7 @@ void US_Pseudo3D_Combine::load_distro()
    bool              loadDB = dkdb_cntrls->db();
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_ModelLoader dialog( loadDB, mfilter, models, mdescs );
+   US_ModelLoader dialog( loadDB, mfilter, models, mdescs, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
    connect( &dialog, SIGNAL(   changed( bool ) ),
@@ -1154,5 +1163,32 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
 void US_Pseudo3D_Combine::update_disk_db( bool isDB )
 {
    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+}
+
+// Select a prefilter for model distributions list
+void US_Pseudo3D_Combine::select_prefilt( void )
+{
+   pfilts.clear();
+
+   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
+   sediag.move( this->pos() + QPoint( 200, 200 ) );
+   sediag.exec();
+
+   int nedits    = pfilts.size();
+   QString pfmsg;
+
+   if ( nedits == 0 )
+      pfmsg = tr( "(none chosen)" );
+
+   else if ( runsel )
+      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+
+   else if ( latest )
+      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
+
+   else
+      pfmsg = tr( "%1 total Edit prefilter(s) " ).arg( nedits );
+
+   le_prefilt->setText( pfmsg );
 }
 
