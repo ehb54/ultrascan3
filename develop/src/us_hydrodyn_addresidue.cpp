@@ -917,7 +917,6 @@ void US_AddResidue::read_residue_file(const QString & filename)
          calc_bead_mw(&new_residue);
          if ( !new_residue.name.isEmpty()
               && new_residue.molvol > 0.0
-              && new_residue.vbar > 0.0
               && new_residue.asa > 0.0)
          {
             QString str3 ;
