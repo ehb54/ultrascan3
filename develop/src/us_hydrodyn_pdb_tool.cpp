@@ -3322,6 +3322,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    bool dup_model_name_msg_done = false;
 
+   unsigned int end_count = 0;
    
    {
       QTextStream ts( &f );
@@ -3341,6 +3342,11 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
             model_header += qs + "\n";
          }
          
+         if ( qs.contains( rx_end ) )
+         {
+            end_count++;
+         }
+
          if ( qs.contains( rx_model ) )
          {
             model_count++;
@@ -3378,9 +3384,27 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    f.close();
 
+   bool no_model_directives = false;
+
    if ( model_count == 0 )
    {
-      model_count = 1;
+      if ( end_count > 1 )
+      {
+         no_model_directives = true;
+         model_count = end_count;
+         for ( unsigned int i = 0; i < end_count; i++ )
+         {
+            QString model_name = QString("%1").arg( i + 1 );
+            model_names[ model_name ] = true;
+            model_name_vector.push_back ( model_name );
+            if ( model_name.length() > max_model_name_len )
+            {
+               max_model_name_len = model_name.length();
+            }
+         }
+      } else {
+         model_count = 1;
+      }
    }
 
    editor_msg( "dark blue", QString( tr( "File %1 contains %2 models" ) ).arg( f.name() ).arg( model_count ) );
@@ -3493,7 +3517,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
    QTextStream ts( &f );
 
    QString       model_lines;
-   bool          in_model = false;
+   bool          in_model = no_model_directives;
    unsigned int  pos = 0;
 
    if ( !ts.atEnd() )
@@ -3549,7 +3573,8 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                model_lines = "";
                pos++;
             }
-            if ( qs.contains( rx_model ) )
+            if ( qs.contains( rx_model ) ||
+                 ( no_model_directives && qs.contains( rx_end ) ) )
             {
                in_model = true;
                model_lines = "";
