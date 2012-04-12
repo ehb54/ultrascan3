@@ -1358,7 +1358,7 @@ SUBDIRS   = \
 TEMPLATE  = subdirs
 }
 
-win32:TEMPLATE=vcsubdirs
+win32:TEMPLATE=subdirs
 
 SUBDIRS += \
     us_admin \
