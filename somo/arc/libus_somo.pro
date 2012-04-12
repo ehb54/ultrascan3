@@ -19,7 +19,7 @@ DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
 
-INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include
+INCLUDEPATH = $(QWTDIR)/src $(QTDIR)/include
 DEPENDPATH += src include
 DEFINES += NO_DB
 # temporary fix (us2 code was using qt2 qpdevmnt which I think need to be replaced by qprintdevicemetrics)
@@ -47,24 +47,17 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  TEMPLATE             = vclib
-  TARGET               = libus_somo
-  #CONFIG              += qt thread warn exceptions dll release
-  CONFIG              += qt thread warn exceptions dll debug
-  QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
-  QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
-  QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
-  QMAKE_LFLAGS_RELEASE = 
-  DEFINES             += QT_DLL -GX QWT_USE_DLL US_MAKE_DLL
-  LIBS                += $(QWTDIR)/lib/qwt.lib
-  LIBS                += opengl32.lib glu32.lib glaux.lib
+  TEMPLATE             = lib
+  TARGET               = us_somo
+  CONFIG              += qt thread warn exceptions dll release
+  DEFINES             += QT_DLL QWT_USE_DLL US_MAKE_DLL US_MAKE_GUI_DLL
+  LIBS                += $(QWTDIR)/lib/libqwt5.a
   DESTDIR              = ../bin
 }
 
 # Do not remake cpp and h files from ui files
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
 
-unix: { 
 
 SOURCES += \
   us_admin.cpp \
@@ -196,8 +189,8 @@ SOURCES += \
 #  us_vbar.cpp \
   us_write_config.cpp \
   us_gui_settings.cpp \
-  src/qwt/scrollbar.cpp \
-  src/qwt/scrollzoomer.cpp
+  qwt/scrollbar.cpp \
+  qwt/scrollzoomer.cpp
 
 HEADERS += \
   us_admin.h \
@@ -323,7 +316,6 @@ IMAGES = \
   include/textleft.xpm \
   include/textright.xpm \
   include/textunder.xpm
-}
 
 #The following line was inserted by qt3to4
 QT += qt3support 

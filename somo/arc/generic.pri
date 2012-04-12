@@ -2,8 +2,8 @@
 #
 # This is designed to be included in a .pro file
 # It provides boilerplate for all the UltraScan main programs.
-# The only thing the perent needs to supply is TARGET and
-# possibly HEADERS
+
+
 
 # Messages
 !include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
@@ -35,15 +35,25 @@ unix {
 }
 
 win32 {
-  TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
-  CONFIG              += qt warn thread release
-  #CONFIG              += qt warn thread debug
-  QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
-  QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
-  QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
-  QMAKE_LFLAGS_RELEASE =                # Remove //DELAYLOAD: statements
-  LIBS                += ../../bin/libus_somo10.lib 
-  DESTDIR              = ..\..\bin\
+  TEMPLATE     =app
+  MINGWDIR     =c:/mingw
+  MYSQLPATH    =c:/mysql-5.5
+  QTMYSQLPATH  =$(QTDIR)/src/plugins/sqldrivers/mysql/release
+  MYSQLLIB     =$$MYSQLPATH/lib/libmysql.a
+  OPENSSL      =c:/openssl
+  VER          =10
+  CONFIG      += qt thread warn release
+  INCLUDEPATH  += $$QWTPATH/src ..
+  INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
+  INCLUDEPATH  += $$OPENSSL/include
+  INCLUDEPATH  += $$QTPATH/include
+  LIBS         += $$QWTLIB
+  LIBS         += $$MYSQLLIB
+  LIBS         += $$QTMYSQLPATH/libqsqlmysql4.a
+  LIBS         += $$OPENSSL/lib/libeay32.a
+  LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
+  LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
+  LIBS         += ../../bin/libus_somo$${VER}.a
 }
 
 macx { RC_FILE = ultrascan.icns }
