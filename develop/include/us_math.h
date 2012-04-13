@@ -175,7 +175,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
    double stretch_with_rotor_list(int rotor, unsigned int rpm, vector < rotorInfo > *rotor_list);
 
-#ifdef WIN32
+#if !defined(QT4) && defined(WIN32)
   /* The following was derived from glibc source for IA32 architecture. */
 int __fpclassifyf (float x);
 
