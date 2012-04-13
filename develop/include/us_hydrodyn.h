@@ -160,6 +160,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo
       void setHydroFile(); // checks for file existance and resets suffix accordingly
       static void sizeArrows( QwtCounter* );
+      static void fixWinButtons( QWidget* );
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status

@@ -1,4 +1,4 @@
-#include "include/us_hydrodyn_zeno.h"
+#include "../include/us_hydrodyn_zeno.h"
 
 static US_Hydrodyn  * zeno_us_hydrodyn;
 static QProgressBar * zeno_progress;

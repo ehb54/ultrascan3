@@ -349,11 +349,13 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    {
       batch.file = batch_file;
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      fixWinButtons( batch_window );
       batch_window->show();
       batch_window->raise();
    }
    
    save_util = new US_Hydrodyn_Save(&save_params, this);
+   fixWinButtons( save_util );
    saxs_util = new US_Saxs_Util();
    if ( 
        !saxs_util->setup_saxs_maps( 
@@ -1021,6 +1023,8 @@ void US_Hydrodyn::setupGUI()
    background->addLayout( bl_help_config, j, 0);
    background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
+
+   fixWinButtons( this );
 }
 
 
@@ -1110,6 +1114,7 @@ void US_Hydrodyn::show_asa()
    else
    {
       asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget, this);
+      fixWinButtons( asa_window );
       asa_window->show();
    }
 }
@@ -1141,6 +1146,7 @@ void US_Hydrodyn::show_overlap()
                                                &overlap_tolerance,
                                                &overlap_widget,
                                                this);
+      fixWinButtons( overlap_window );
       overlap_window->show();
    }
 }
@@ -1168,6 +1174,7 @@ void US_Hydrodyn::show_grid_overlap()
                                                     &overlap_tolerance,
                                                     &grid_overlap_widget,
                                                     this);
+      fixWinButtons( grid_overlap_window );
       grid_overlap_window->show();
    }
 }
@@ -1189,6 +1196,7 @@ void US_Hydrodyn::show_hydro()
    else
    {
       hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget, this);
+      fixWinButtons( hydro_window );
       hydro_window->show();
    }
 }
@@ -1210,6 +1218,7 @@ void US_Hydrodyn::show_misc()
    else
    {
       misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget, this);
+      fixWinButtons( misc_window );
       connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
       misc_window->show();
    }
@@ -1243,6 +1252,7 @@ void US_Hydrodyn::show_saxs_options()
                                                          &sas_options_sans_widget,
                                                          &sas_options_saxs_widget,
                                                          this );
+      fixWinButtons( saxs_options_window );
       saxs_options_window->show();
    }
 }
@@ -1264,6 +1274,7 @@ void US_Hydrodyn::show_dmd_options()
    else
    {
       dmd_options_window = new US_Hydrodyn_DMD_Options(&dmd_options, &dmd_options_widget, this);
+      fixWinButtons( dmd_options_window );
       dmd_options_window->show();
    }
 }
@@ -1285,6 +1296,7 @@ void US_Hydrodyn::show_bd()
    else
    {
       bd_window = new US_Hydrodyn_BD(&bd_widget, &bd_options, &anaflex_options, this);
+      fixWinButtons( bd_window );
       bd_anaflex_enables(false);
       bd_window->show();
    }
@@ -1307,6 +1319,7 @@ void US_Hydrodyn::show_bd_options()
    else
    {
       bd_options_window = new US_Hydrodyn_BD_Options(&bd_options, &bd_options_widget, this);
+      fixWinButtons( bd_options_window );
       bd_options_window->show();
    }
 }
@@ -1328,6 +1341,7 @@ void US_Hydrodyn::show_anaflex_options()
    else
    {
       anaflex_options_window = new US_Hydrodyn_Anaflex_Options(&anaflex_options, &anaflex_options_widget, this);
+      fixWinButtons( anaflex_options_window );
       anaflex_options_window->show();
    }
 }
@@ -1349,6 +1363,7 @@ void US_Hydrodyn::show_bead_output()
    else
    {
       bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget, this);
+      fixWinButtons( bead_output_window );
       bead_output_window->show();
    }
 }
@@ -1377,6 +1392,7 @@ void US_Hydrodyn::show_grid()
                                          &overlap_tolerance,
                                          &grid_widget,
                                          this);
+      fixWinButtons( grid_window );
       grid_window->show();
    }
 }
@@ -1398,6 +1414,7 @@ void US_Hydrodyn::pdb_parsing()
    else
    {
       pdb_parsing_window = new US_Hydrodyn_PDB_Parsing(&pdb_parse, &pdb_parsing_widget, this);
+      fixWinButtons( pdb_parsing_window );
       pdb_parsing_window->show();
    }
 }
@@ -1419,6 +1436,7 @@ void US_Hydrodyn::pdb_visualization()
    else
    {
       pdb_visualization_window = new US_Hydrodyn_PDB_Visualization(&pdb_vis, &pdb_visualization_widget);
+      fixWinButtons( pdb_visualization_window );
       pdb_visualization_window->show();
    }
 }
@@ -3448,6 +3466,7 @@ void US_Hydrodyn::show_hydro_results()
       else
       {
          results_window = new US_Hydrodyn_Results(&results, &results_widget);
+         fixWinButtons( results_window );
          results_window->show();
       }
    }
@@ -3475,6 +3494,7 @@ void US_Hydrodyn::select_comparative()
    {
       comparative_window = 
          new US_Hydrodyn_Comparative(&comparative, this, &comparative_widget);
+      fixWinButtons( comparative_window );
       comparative_window->show();
    }
 }
@@ -3554,6 +3574,7 @@ void US_Hydrodyn::select_save_params()
    else
    {
       save_window = new US_Hydrodyn_Save(&save_params, this, &save_widget);
+      fixWinButtons( save_window );
       save_window->show();
    }
 }
@@ -3575,6 +3596,7 @@ void US_Hydrodyn::show_advanced_config()
    else
    {
       advanced_config_window = new US_Hydrodyn_AdvancedConfig(&advanced_config, &advanced_config_widget, this);
+      fixWinButtons( advanced_config_window );
       advanced_config_window->show();
    }
 }
@@ -3596,6 +3618,7 @@ void US_Hydrodyn::show_batch()
    else
    {
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      fixWinButtons( batch_window );
       batch_window->show();
    }
 }
@@ -3818,6 +3841,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
                                                  this,
                                                  0
                                                  );
+         fixWinButtons( saxs_plot_window );
          saxs_plot_window->show();
       }
    }
@@ -3942,6 +3966,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
                                                  this,
                                                  0
                                                  );
+         fixWinButtons( saxs_plot_window );
          saxs_plot_window->show();
       }
    }
@@ -4211,6 +4236,7 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
    int result;
 
    US_Hydrodyn_File *hf = new US_Hydrodyn_File( path, base, ext, &result, p );
+   fixWinButtons( hf );
 
    do 
    {
@@ -4256,6 +4282,7 @@ void US_Hydrodyn::dmd_run()
    {
       created_batch = true;
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      fixWinButtons( batch_window );
       batch_window->lb_files->setSelected( 0, true );
    } else {
       batch_window->lb_files->clear();
@@ -4275,6 +4302,7 @@ void US_Hydrodyn::dmd_run()
       new US_Hydrodyn_Cluster(
                               this,
                               batch_window );
+   fixWinButtons( hc );
    hc->exec();
    delete hc;
    batch = save_batch_info;
@@ -4399,6 +4427,23 @@ void US_Hydrodyn::sizeArrows( QwtCounter*
    for ( int jj = 0; jj < children.size(); jj++ )
    {
       QWidget* cwidg = (QWidget*)children.at( jj );
+      QString clname = cwidg->metaObject()->className();
+      if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+         cwidg->setStyle( btnstyle );
+   }
+#endif
+}
+
+void US_Hydrodyn::fixWinButtons( QWidget* widg )
+{
+#if defined(QT4) && defined(Q_WS_WIN)
+   QList< QObject* > children = widg->children();
+   QStyle* btnstyle = new QPlastiqueStyle();
+   for ( int jj = 0; jj < children.size(); jj++ )
+   {
+      QObject* cobj  = children.at( jj );
+      if ( !cobj->isWidgetType() )  continue;
+      QWidget* cwidg = (QWidget*)cobj;
       QString clname = cwidg->metaObject()->className();
       if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
          cwidg->setStyle( btnstyle );

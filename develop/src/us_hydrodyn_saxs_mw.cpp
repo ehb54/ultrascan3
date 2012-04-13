@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs_mw.h"
+#include "../include/us_hydrodyn.h"
 
 US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
                                          QString msg,
@@ -126,6 +127,8 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
+
+   US_Hydrodyn::fixWinButtons( this );
 }
 
 void US_Hydrodyn_Saxs_Mw::set_to_last_used_mw()
