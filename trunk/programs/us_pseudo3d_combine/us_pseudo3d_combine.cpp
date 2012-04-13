@@ -251,6 +251,17 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( pb_ldcolor, SIGNAL( clicked() ),
             this,       SLOT( load_color() ) );
 
+   pb_rmvdist    = us_pushbutton( tr( "Remove Distribution(s)" ) );
+   pb_rmvdist->setEnabled( true );
+   spec->addWidget( pb_rmvdist, s_row, 0 );
+   connect( pb_rmvdist, SIGNAL( clicked() ),
+            this,       SLOT( remove_distro() ) );
+
+   us_checkbox( tr( "Z as Percentage" ), cb_zpcent, false );
+   spec->addWidget( cb_zpcent, s_row++, 1 );
+pb_rmvdist->setEnabled(false);
+cb_zpcent ->setEnabled(false);
+
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
    spec->addWidget( pb_help, s_row, 0 );
@@ -398,6 +409,11 @@ void US_Pseudo3D_Combine::plot_data( void )
    if ( !plot_s )
       sol_d    = &tsys->mw_distro;
 
+   zpcent   = cb_zpcent->isChecked();
+   data_plot->setAxisTitle( QwtPlot::yRight,
+         zpcent ? tr( "Percent of Total Concentration" )
+                : tr( "Partial Concentration" ) );
+
    colormap = tsys->colormap;
    cmapname = tsys->cmapname;
 
@@ -425,9 +441,35 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
-   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-   spec_dat.setZRange( plt_zmin, plt_zmax );
-   spec_dat.setRaster( *sol_d );
+   if ( !zpcent )
+   {
+      spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
+      spec_dat.setZRange( plt_zmin, plt_zmax );
+      spec_dat.setRaster( *sol_d );
+   }
+
+   else
+   {
+      QList< Solute > sol_z = tsys->s_distro;
+      double csum = 0.0;
+      double cmin = 200.0;
+      double cmax = 0.0;
+      for ( int jj = 0; jj < sol_z.size(); jj++ )
+      {
+         csum += sol_z[ jj ].c;
+      }
+
+      for ( int jj = 0; jj < sol_z.size(); jj++ )
+      {
+         sol_z[ jj ].c   = ( 100.0 * sol_z[ jj ].c ) / csum;
+         cmin            = qMin( cmin, sol_z[ jj ].c );
+         cmax            = qMax( cmax, sol_z[ jj ].c );
+      }
+
+      spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
+      spec_dat.setZRange( cmin, cmax );
+      spec_dat.setRaster( sol_z );
+   }
 
    d_spectrogram->attach( data_plot );
 
@@ -1190,5 +1232,12 @@ void US_Pseudo3D_Combine::select_prefilt( void )
       pfmsg = tr( "%1 total Edit prefilter(s) " ).arg( nedits );
 
    le_prefilt->setText( pfmsg );
+}
+
+
+// Remove distribution(s) from the models list
+void US_Pseudo3D_Combine::remove_distro( void )
+{
+qDebug() << "Remove Distros";
 }
 

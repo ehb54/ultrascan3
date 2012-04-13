@@ -84,11 +84,13 @@ class US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_ldcolor;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
+      QPushButton*  pb_rmvdist;
 
       QCheckBox*    cb_autolim;
       QCheckBox*    cb_conloop;
       QCheckBox*    cb_plot_s;
       QCheckBox*    cb_plot_mw;
+      QCheckBox*    cb_zpcent;
 
       QList< DisSys > system;
 
@@ -120,6 +122,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          need_save;
       bool          runsel;
       bool          latest;
+      bool          zpcent;
 
       QString       xa_title_s;
       QString       xa_title_mw;
@@ -159,6 +162,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void reset(       void );
       void set_limits(  void );
       void sort_distro( QList< Solute >&, bool );
+      void remove_distro( void );
 
       void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };

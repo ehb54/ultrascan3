@@ -1362,11 +1362,8 @@ win32:TEMPLATE=subdirs
 
 SUBDIRS += \
     us_admin \
-    us_config \
     us3_config \
-    us_hydrodyn \
-    us3_hydrodyn\
-    us_license
+    us3_hydrodyn
 ';
 print OUT $out;
 close OUT;
