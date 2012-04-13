@@ -159,6 +159,7 @@ SOURCES += \
   us_hydrodyn_zeno.cpp \
   us_surfracer.cpp \
 #  us_imgviewer.cpp \
+  us_json.cpp \
   us_license.cpp \
   us_math.cpp \
   us_matrix.cpp \
@@ -276,6 +277,7 @@ HEADERS += \
   us_hydrodyn_supc.h \
   us_hydrodyn_zeno.h \
   us_fable.h \
+  us_json.h \
   us_saxs_gp.h \
   us_saxs_util.h \
   us_saxs_util_nsa.h \
