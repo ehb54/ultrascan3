@@ -11,6 +11,8 @@ extern int myrank;
    extern int env_mpi_node;
 #endif
 
+QString outputData;
+
 #define SLASH QDir::separator()
 
 bool US_Saxs_Util::run_iq_mpi( QString controlfile )
@@ -21,6 +23,13 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    // cout << QString( "%1:MPISPAWN_ID %2\n" ).arg( myrank ).arg( env_mpi_node ) << flush;
    cuda_ipcrm();
 #endif
+
+   outputData = QString( "%1" ).arg( getenv( "outputData" ) );
+   if ( outputData.isEmpty() )
+   {
+      outputData = "../outputData";
+   }
+   cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
 
    int errorno = -1;
    QString original_controlfile = controlfile;
@@ -388,6 +397,39 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }
       
       cout << QString( "%1: results file %2\n" ).arg( myrank ).arg( results_file );
+
+      // rename to outputDir
+      
+      QDir dod( outputData );
+      if ( !dod.exists() )
+      {
+         QDir current = QDir::current();
+            
+         QString newdir = outputData;
+         while ( newdir.left( 3 ) == "../" )
+         {
+            current.cdUp();
+            newdir.replace( "../", "" );
+         }
+         QDir::setCurrent( current.path() );
+         QDir ndod;
+         if ( !ndod.mkdir( newdir, true ) )
+         {
+            cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
+         }
+         QDir::setCurrent( qs_base_dir );
+      }
+      if ( dod.exists() )
+      {
+         QString dest = outputData + QDir::separator() + results_file;
+         QDir qd;
+         if ( !qd.rename( results_file, dest ) )
+         {
+            cout << QString("Warning: could not rename outputData %1 to %2\n" )
+               .arg( results_file )
+               .arg( dest );
+         }
+      }
    }
 
    MPI_Finalize();

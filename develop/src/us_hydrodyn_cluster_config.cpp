@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_config.h"
 #include "../include/us_hydrodyn_cluster_config_server.h"
+#include "../include/us_json.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -18,6 +19,7 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    setCaption(tr("US-SOMO: Cluster Config"));
    USglobal = new US_Config();
    cluster_window = (void *)p;
+   check_tried = false;
 
    cluster_systems = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems;
    QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
@@ -61,6 +63,51 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_cluster_id->setMinimumWidth(150);
    le_cluster_id->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_cluster_id->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect( le_cluster_id, SIGNAL( textChanged( const QString & ) ), SLOT( update_cluster_id(const QString & ) ) );
+
+   lbl_cluster_pw = new QLabel(tr("Password"), this);
+   lbl_cluster_pw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_cluster_pw->setMinimumHeight(minHeight1);
+   lbl_cluster_pw->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_cluster_pw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   le_cluster_pw = new QLineEdit(this, "csv_filename Line Edit");
+   le_cluster_pw->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userpw" ] );
+   le_cluster_pw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_cluster_pw->setMinimumWidth(150);
+   le_cluster_pw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_cluster_pw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_cluster_pw->setEchoMode( QLineEdit::Password );
+   connect( le_cluster_pw, SIGNAL( textChanged( const QString & ) ), SLOT( update_cluster_pw( const QString & ) ) );
+
+   lbl_cluster_pw2 = new QLabel(tr("Repeat password"), this);
+   lbl_cluster_pw2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_cluster_pw2->setMinimumHeight(minHeight1);
+   lbl_cluster_pw2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_cluster_pw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   le_cluster_pw2 = new QLineEdit(this, "csv_filename Line Edit");
+   le_cluster_pw2->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userpw" ] );
+   le_cluster_pw2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_cluster_pw2->setMinimumWidth(150);
+   le_cluster_pw2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_cluster_pw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_cluster_pw2->setEchoMode( QLineEdit::Password );
+   connect( le_cluster_pw2, SIGNAL( textChanged( const QString & ) ), SLOT( update_cluster_pw2( const QString & ) ) );
+
+   lbl_cluster_email = new QLabel(tr("User email address"), this);
+   lbl_cluster_email->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_cluster_email->setMinimumHeight(minHeight1);
+   lbl_cluster_email->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_cluster_email->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   le_cluster_email = new QLineEdit(this, "csv_filename Line Edit");
+   le_cluster_email->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "useremail" ] );
+   le_cluster_email->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_cluster_email->setMinimumWidth(150);
+   le_cluster_email->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_cluster_email->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect( le_cluster_email, SIGNAL( textChanged( const QString & ) ), SLOT( update_cluster_email( const QString & ) ) );
 
    lbl_submit_url = new QLabel(tr("Job submission URL"), this);
    lbl_submit_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -74,6 +121,33 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_submit_url->setMinimumWidth(150);
    le_submit_url->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_submit_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   lbl_manage_url = new QLabel(tr("Job management URL"), this);
+   lbl_manage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_manage_url->setMinimumHeight(minHeight1);
+   lbl_manage_url->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_manage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   le_manage_url = new QLineEdit(this, "csv_filename Line Edit");
+   le_manage_url->setText( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "manage" ] );
+   le_manage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_manage_url->setMinimumWidth(150);
+   le_manage_url->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_manage_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect( le_manage_url, SIGNAL( textChanged( const QString & ) ), SLOT( update_manage_url( const QString & ) ) );
+
+   pb_check_user = new QPushButton(tr("Check user status"), this);
+   pb_check_user->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_check_user->setMinimumHeight(minHeight1);
+   pb_check_user->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_check_user, SIGNAL(clicked()), SLOT(check_user()));
+
+   pb_add_user = new QPushButton(tr("Add new user"), this);
+   pb_add_user->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_add_user->setMinimumHeight(minHeight1);
+   pb_add_user->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_add_user, SIGNAL(clicked()), SLOT(add_user()));
+   pb_add_user->setEnabled( false );
 
    lbl_systems = new QLabel(tr("Systems"), this);
    lbl_systems->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -120,7 +194,6 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    connect(pb_delete_system, SIGNAL(clicked()), SLOT(delete_system()));
 
    pb_cancel = new QPushButton(tr("Cancel"), this);
-   Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -140,19 +213,31 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
 
    // build layout
 
-   QHBoxLayout *hbl_cluster_id = new QHBoxLayout( 0 );
-   hbl_cluster_id->addSpacing( 4 );
-   hbl_cluster_id->addWidget ( lbl_cluster_id );
-   hbl_cluster_id->addSpacing( 4 );
-   hbl_cluster_id->addWidget ( le_cluster_id );
-   hbl_cluster_id->addSpacing( 4 );
+   QGridLayout *gl_grid = new QGridLayout( 0 );
 
-   QHBoxLayout *hbl_submit_url = new QHBoxLayout( 0 );
-   hbl_submit_url->addSpacing( 4 );
-   hbl_submit_url->addWidget ( lbl_submit_url );
-   hbl_submit_url->addSpacing( 4 );
-   hbl_submit_url->addWidget ( le_submit_url );
-   hbl_submit_url->addSpacing( 4 );
+   int j = 0;
+   gl_grid->addWidget( lbl_cluster_id      , j, 0 );
+   gl_grid->addWidget( le_cluster_id       , j, 1 );
+   j++;
+   gl_grid->addWidget( lbl_cluster_pw      , j, 0 );
+   gl_grid->addWidget( le_cluster_pw       , j, 1 );
+   j++;
+   gl_grid->addWidget( lbl_cluster_pw2     , j, 0 );
+   gl_grid->addWidget( le_cluster_pw2      , j, 1 );
+   j++;
+   gl_grid->addWidget( lbl_cluster_email   , j, 0 );
+   gl_grid->addWidget( le_cluster_email    , j, 1 );
+   j++;
+   gl_grid->addWidget( lbl_submit_url      , j, 0 );
+   gl_grid->addWidget( le_submit_url       , j, 1 );
+   j++;
+   gl_grid->addWidget( lbl_manage_url      , j, 0 );
+   gl_grid->addWidget( le_manage_url       , j, 1 );
+   j++;
+
+   QHBoxLayout *hbl_check_add_user = new QHBoxLayout( 0 );
+   hbl_check_add_user->addWidget( pb_check_user );
+   hbl_check_add_user->addWidget( pb_add_user );
 
    QHBoxLayout *hbl_add_del = new QHBoxLayout( 0 );
    hbl_add_del->addSpacing( 4 );
@@ -176,9 +261,9 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_cluster_id );
+   background->addLayout ( gl_grid );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_submit_url );
+   background->addLayout ( hbl_check_add_user );
    background->addSpacing( 4 );
    background->addWidget ( lbl_systems );
    background->addWidget ( lb_systems );
@@ -191,6 +276,10 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
 
 void US_Hydrodyn_Cluster_Config::cancel()
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
    close();
 }
 
@@ -203,6 +292,10 @@ void US_Hydrodyn_Cluster_Config::help()
 
 void US_Hydrodyn_Cluster_Config::closeEvent(QCloseEvent *e)
 {
+   if ( comm_active )
+   {
+      submit_http.abort();
+   }
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
@@ -243,8 +336,11 @@ void US_Hydrodyn_Cluster_Config::save_config()
       }
    }
 
-   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid" ] = le_cluster_id->text();
-   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server" ] = le_submit_url->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userid"     ] = le_cluster_id->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "userpw"     ] = le_cluster_pw->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "useremail"  ] = le_cluster_email->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "server"     ] = le_submit_url->text();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "manage"     ] = le_manage_url->text();
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems = cluster_systems;
 
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system.clear();
@@ -364,6 +460,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
          << "maxruntime"
          << "runtime"
          << "stage"
+         << "ftp"
          << "type"
          << "executable"
          << "queue";
@@ -436,4 +533,334 @@ void US_Hydrodyn_Cluster_Config::edit()
          }
       }
    }
+}
+
+void US_Hydrodyn_Cluster_Config::http_stateChanged ( int /* state */ )
+{
+   // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
+}
+
+void US_Hydrodyn_Cluster_Config::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
+{
+   cout << resp.reasonPhrase() << endl;
+}
+
+void US_Hydrodyn_Cluster_Config::http_readyRead( const QHttpResponseHeader & resp )
+{
+   cout << "http: readyRead\n" << endl << flush;
+   cout << resp.reasonPhrase() << endl;
+   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
+   current_http_response = QString( submit_http.readAll() );
+   cout << "http response:";
+   cout << current_http_response << endl;
+
+   if ( comm_mode == "check_user" )
+   {
+      map < QString, QString > readJson = US_Json::split( current_http_response );
+      if ( readJson.count( "json parsing error" ) )
+      {
+         cout << QString( "json parsing error:%1\n" ).arg( readJson[ "json parsing error" ] );
+      }
+
+      if ( readJson.count( "username" ) &&
+           readJson[ "username" ] == le_cluster_id->text() )
+      {
+         check_not_ok = false;
+      } else {
+         check_not_ok = true;
+      }
+   }
+   if ( comm_mode == "add_user" )
+   {
+      // check for error
+      check_not_ok = true;
+      check_tried = false;
+      // http response:<?xml version="1.0" encoding="UTF-8" standalone="yes"?><userresponse><status>Success</status></userresponse>
+      
+      current_response_status = current_http_response;
+      current_response_status.replace( QRegExp( "^.*<status>" ), "" );
+      current_response_status.replace( QRegExp( "</status>.*$" ), "" );
+   }
+}
+
+void US_Hydrodyn_Cluster_Config::http_dataSendProgress ( int done, int total )
+{
+   cout << "http: datasendprogress " << done << " " << total << "\n";
+   check_tried = true;
+}
+
+void US_Hydrodyn_Cluster_Config::http_dataReadProgress ( int done, int total )
+{
+   cout << "http: datareadprogress " << done << " " << total << "\n";
+}
+
+void US_Hydrodyn_Cluster_Config::http_requestStarted ( int id )
+{
+   cout << "http: requestStarted " << id << "\n";
+}
+
+void US_Hydrodyn_Cluster_Config::http_requestFinished ( int id, bool error  )
+{
+   cout << "http: requestFinished " << id << " " << error << "\n";
+}
+
+void US_Hydrodyn_Cluster_Config::http_done ( bool /* error */ )
+{
+   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
+   comm_active = false;
+   if ( comm_mode == "add_user" )
+   {
+      if ( current_response_status == "Success" )
+      {
+         QMessageBox::information( this,
+                                   tr("US-SOMO: Cluster Config: Add user"),
+                                   QString( tr( "User \"%1\" successfully added" ) ).arg( le_cluster_id->text() ) );
+      } else {
+         QMessageBox::warning( this,
+                               tr("US-SOMO: Cluster Config: Add user"), 
+                               QString( tr( "There was an error trying to add User \"%1\"\nWarning: %2" ) )
+                               .arg( le_cluster_id->text() )
+                               .arg( current_http_response ),
+                               QMessageBox::Ok,
+                               QMessageBox::NoButton
+                               );
+      }
+   }
+  
+   if ( comm_mode == "check_user" )
+   {
+      if ( check_not_ok )
+      {
+         QMessageBox::information( this,
+                                   tr("US-SOMO: Cluster Config: Check user"),
+                                   QString( tr( "User \"%1\" does not exist.\nPress \"Add user\" to add." ) ).arg( le_cluster_id->text() ) );
+      } else {
+         map < QString, QString > readJson = US_Json::split( current_http_response );
+         QString errors;
+         QString email = le_cluster_email->text();
+         bool password_ok = false;
+         if ( !readJson.count( "password" ) ||
+              readJson[ "password" ] != le_cluster_pw->text() )
+         {
+            errors += QString( tr( "Incorrect password\n" ) );
+         } else {
+            password_ok = true;
+         }
+
+         if ( !readJson.count( "email" ) ||
+              readJson[ "email" ] != le_cluster_email->text() )
+         {
+            if ( password_ok )
+            {
+               email = "";
+               if ( readJson.count( "email" ) )
+               {
+                  email = readJson[ "email" ];
+               }
+               errors += QString( tr( "The email doesn't match, resetting\n" ) );
+            } else {
+               errors += QString( tr( "The email doesn't match\n" ) );
+            }
+         } 
+
+         if ( errors.isEmpty() )
+         {
+            QMessageBox::information( this,
+                                      tr("US-SOMO: Cluster Config: Check user"),
+                                      QString( tr( "User \"%1\" exists." ) ).arg( le_cluster_id->text() ) );
+         } else {
+            QMessageBox::warning( this,
+                                  tr("US-SOMO: Cluster Config: Check user"), 
+                                  QString( tr( "The user \"%1\" exists, but:\n%2" ) )
+                                  .arg( le_cluster_id->text() )
+                                  .arg( errors ),
+                                  QMessageBox::Ok,
+                                  QMessageBox::NoButton
+                                  );
+            le_cluster_email->setText( email );
+         }         
+      }         
+   }         
+
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::update_enables()
+{
+   pb_check_user    ->setEnabled( !comm_active );
+   pb_add_user      ->setEnabled( !comm_active && check_tried && check_not_ok );
+   le_cluster_id    ->setEnabled( !comm_active );
+   le_cluster_pw    ->setEnabled( !comm_active );
+   le_cluster_email ->setEnabled( !comm_active );
+   le_submit_url    ->setEnabled( !comm_active );
+   le_manage_url    ->setEnabled( !comm_active );
+   lb_systems       ->setEnabled( !comm_active );
+   pb_edit          ->setEnabled( !comm_active );
+   pb_add_new       ->setEnabled( !comm_active );
+   pb_delete_system ->setEnabled( !comm_active );
+   pb_save_config   ->setEnabled( !comm_active );
+}
+
+void US_Hydrodyn_Cluster_Config::check_user()
+{
+   if ( le_cluster_pw->text() != le_cluster_pw2->text() )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The passwords do not match" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   comm_active = true;
+   comm_mode   = "check_user";
+   check_not_ok = true;
+   current_response_status = "";
+   update_enables();
+   
+   current_http_response = "";
+
+   QString msg_request = 
+      QString( "%1/%2.json" )
+      .arg( QString( "%1" )
+            .arg( le_manage_url->text() )
+            .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+      .arg( le_cluster_id->text() )
+      .replace ( QRegExp( "^//" ), "/" );
+
+   QString manage_url_host =
+      QString( "%1" )
+      .arg( le_manage_url->text() )
+      .replace( QRegExp( ":.*$" ), "" );
+
+   QString manage_url_port =
+      QString( "%1" )
+      .arg( le_manage_url->text() )
+      .replace( QRegExp( "^.*:" ), "" )
+      .replace( QRegExp( "/.*$" ), "" );
+
+   cout << "msg_request is " << msg_request << endl;
+   cout << "manage_url_host is " << manage_url_host << endl;
+   cout << "manage_url_port is " << manage_url_port << endl;
+
+   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
+   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
+   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
+   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+
+   submit_http.setHost( manage_url_host, manage_url_port.toUInt() );
+   submit_http.get( msg_request );
+
+   return;
+
+   // QHttpRequestHeader header("POST", "/" );
+   // header.setValue( "Host", submit_url_host );
+   // header.setContentType( "application/xml" );
+   // submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+   // without the qba below, QHttp:request will send a null
+   // QByteArray qba = xml.utf8();
+   // qba.resize( qba.size() - 1 );
+   // submit_http.request( header, qba );
+}
+
+void US_Hydrodyn_Cluster_Config::add_user()
+{
+   comm_active = true;
+   comm_mode   = "add_user";
+   current_response_status = "";
+   update_enables();
+
+   map < QString, QString > mqq;
+
+   mqq[ "username" ] = le_cluster_id   ->text();
+   mqq[ "password" ] = le_cluster_pw   ->text();
+   mqq[ "email"    ] = le_cluster_email->text();
+
+   QString post_data = US_Json::compose( mqq );
+
+   current_http_response = "";
+
+   QString msg_request = 
+      QString( "%1/newaccount" )
+      .arg( QString( "%1" )
+            .arg( le_manage_url->text() )
+            .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+      .arg( le_cluster_id->text() );
+
+   QString manage_url_host =
+      QString( "%1" )
+      .arg( le_manage_url->text() )
+      .replace( QRegExp( ":.*$" ), "" );
+
+   QString manage_url_port =
+      QString( "%1" )
+      .arg( le_manage_url->text() )
+      .replace( QRegExp( "^.*:" ), "" )
+      .replace( QRegExp( "/.*$" ), "" );
+
+   cout << "msg_request is " << msg_request << endl;
+   cout << "manage_url_host is " << manage_url_host << endl;
+   cout << "manage_url_port is " << manage_url_port << endl;
+   cout << "post data is "   << post_data << endl; 
+
+   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
+   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
+   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
+   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
+   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+
+   QHttpRequestHeader header("POST", msg_request );
+   header.setValue( "Host", manage_url_host );
+   header.setContentType( "application/json" );
+   submit_http.setHost( manage_url_host, manage_url_port.toUInt() );
+   // without the qba below, QHttp:request will send a null
+   QByteArray qba = post_data.utf8();
+   qba.resize( qba.size() - 1 );
+   submit_http.request( header, qba );
+}
+
+void US_Hydrodyn_Cluster_Config::update_cluster_id( const QString & )
+{
+   check_tried = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::update_cluster_pw( const QString & )
+{
+   check_tried = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::update_cluster_pw2( const QString & )
+{
+   check_tried = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::update_cluster_email( const QString & )
+{
+   check_tried = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::update_manage_url( const QString & )
+{
+   check_tried = false;
+   update_enables();
 }

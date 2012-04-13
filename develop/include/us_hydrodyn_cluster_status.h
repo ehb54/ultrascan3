@@ -18,6 +18,7 @@
 #include "us_hydrodyn_batch.h"
 
 #include <qhttp.h>
+#include <qftp.h>
 
 //standard C and C++ defs:
 

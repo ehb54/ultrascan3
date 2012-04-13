@@ -246,6 +246,7 @@ SOURCES += \
   src/us_hydrodyn_zeno.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
+  src/us_json.cpp \
   src/us_license.cpp \
   src/us_lncr2.cpp \
   src/us_math.cpp \
@@ -513,6 +514,7 @@ HEADERS += \
   include/us_fable.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
+  include/us_json.h \
   include/us_license.h \
   include/us_lncr2.h \
   include/us_math.h \

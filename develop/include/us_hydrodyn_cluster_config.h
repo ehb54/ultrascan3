@@ -10,6 +10,7 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qlistbox.h>
+#include <qhttp.h>
 
 #include "us_hydrodyn_cluster.h"
 
@@ -41,8 +42,23 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QLabel        *lbl_cluster_id;
       QLineEdit     *le_cluster_id;
 
+      QLabel        *lbl_cluster_pw;
+      QLineEdit     *le_cluster_pw;
+
+      QLabel        *lbl_cluster_pw2;
+      QLineEdit     *le_cluster_pw2;
+
+      QLabel        *lbl_cluster_email;
+      QLineEdit     *le_cluster_email;
+
       QLabel        *lbl_submit_url;
       QLineEdit     *le_submit_url;
+
+      QLabel        *lbl_manage_url;
+      QLineEdit     *le_manage_url;
+
+      QPushButton   *pb_check_user;
+      QPushButton   *pb_add_user;
 
       QLabel        *lbl_systems;
       QListBox      *lb_systems;
@@ -64,10 +80,29 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+
+      bool          comm_active;
+      QString       comm_mode;
+      QHttp         submit_http;
+      QString       current_http;
+      QString       current_http_response;
+      QString       current_response_status;
+      bool          check_tried;
+      bool          check_not_ok;
+      void          update_enables();
       
    private slots:
 
       void setupGUI();
+
+      void update_cluster_id   ( const QString & );
+      void update_cluster_pw   ( const QString & );
+      void update_cluster_pw2  ( const QString & );
+      void update_cluster_email( const QString & );
+      void update_manage_url   ( const QString & );
+
+      void check_user();
+      void add_user();
 
       void systems();
 
@@ -78,6 +113,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void save_config();
       void cancel();
       void help();
+
+      void http_stateChanged ( int state );
+      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
+      void http_readyRead ( const QHttpResponseHeader & resp );
+      void http_dataSendProgress ( int done, int total );
+      void http_dataReadProgress ( int done, int total );
+      void http_requestStarted ( int id );
+      void http_requestFinished ( int id, bool error );
+      void http_done ( bool error );
 
    protected slots:
 

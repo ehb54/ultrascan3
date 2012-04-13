@@ -13,12 +13,14 @@
 #include <qprocess.h>
 #include <qcstring.h>
 #include <qiodevice.h>
+#include <qprogressbar.h>
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
 #include <qhttp.h>
+#include <qftp.h>
 
 //standard C and C++ defs:
 
@@ -54,6 +56,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QPushButton   *pb_remove;
       QPushButton   *pb_submit;
 
+      QProgressBar  *progress;
+
       QFont         ft;
       QTextEdit     *editor;
       QMenuBar      *m;
@@ -71,12 +75,18 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QString       tmp_dir;
 
       QString       cluster_id;
+      QString       cluster_pw;
       QString       submit_url;
       QString       submit_url_host;
       QString       submit_url_port;
       QString       stage_url;
       QString       stage_url_path;
       QString       stage_path;
+
+      QFile         *ftp_file;
+      QString       ftp_url;
+      QString       ftp_url_host;
+      QString       ftp_url_port;
 
       QString       errormsg;
       bool          disable_updates;
@@ -96,6 +106,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       bool          submit_active;
       bool          comm_active;
       QHttp         submit_http;
+
+      QFtp          ftp;
 
       QString       current_xml;
       QString       current_xml_response;
@@ -163,6 +175,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void http_requestStarted ( int id );
       void http_requestFinished ( int id, bool error );
       void http_done ( bool error );
+
+      void ftp_stateChanged ( int state );
+      // void ftp_listInfo ( const QUrlInfo & i );
+      // void ftp_readyRead ();
+      // void ftp_dataTransferProgress ( int done, int total );
+      // void ftp_rawCommandReply ( int replyCode, const QString & detail );
+      void ftp_commandStarted ( int id );
+      void ftp_commandFinished ( int id, bool error );
+      void ftp_done ( bool error );
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();

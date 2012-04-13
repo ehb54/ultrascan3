@@ -2145,7 +2145,10 @@ bool US_Hydrodyn_Cluster::read_config()
    QRegExp rx_valid  ( 
                       "^("
                       "userid|"
+                      "userpw|"
+                      "useremail|"
                       "server|"
+                      "manage|"
                       "system|"
                       "type|"
                       "corespernode|"
@@ -2154,13 +2157,17 @@ bool US_Hydrodyn_Cluster::read_config()
                       "maxruntime|"
                       "queue|"
                       "executable|"
-                      "stage"
+                      "stage|"
+                      "ftp"
                       ")$"
                       );
    QRegExp rx_config ( 
                       "^("
                       "userid|"
-                      "server"
+                      "userpw|"
+                      "useremail|"
+                      "server|"
+                      "manage"
                       ")$"
                       );
 
@@ -2173,7 +2180,8 @@ bool US_Hydrodyn_Cluster::read_config()
                       "maxruntime|"
                       "queue|"
                       "executable|"
-                      "stage"
+                      "stage|"
+                      "ftp"
                       ")$"
                       );
 
