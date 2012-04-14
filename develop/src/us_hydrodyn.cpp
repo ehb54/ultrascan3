@@ -4422,12 +4422,12 @@ void US_Hydrodyn::update_enables()
 }
 
 void US_Hydrodyn::sizeArrows( QwtCounter* 
-#if defined(Q_WS_MAC) || defined(Q_WS_WIN)
+#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
                               counter 
 #endif
 )
 {
-#if defined(Q_WS_MAC) || defined(Q_WS_WIN)
+#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
    QList< QObject* > children = counter->children();
    QStyle* btnstyle = new QPlastiqueStyle();
    for ( int jj = 0; jj < children.size(); jj++ )
@@ -4440,7 +4440,11 @@ void US_Hydrodyn::sizeArrows( QwtCounter*
 #endif
 }
 
-void US_Hydrodyn::fixWinButtons( QWidget* widg )
+void US_Hydrodyn::fixWinButtons( QWidget* 
+#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+                                 widg 
+#endif
+                                 )
 {
 #if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
    QList< QObject* > children = widg->children();
