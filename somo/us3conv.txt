@@ -87,4 +87,6 @@ files
 ./src/us_hydrodyn_saxs_buffer.cpp
 ./src/us_hydrodyn_saxs_screen.cpp
 ./src/us_hydrodyn_saxs_2d.cpp
+./src/us_hydrodyn_xsr.cpp
+./src/us_json.cpp
 end
