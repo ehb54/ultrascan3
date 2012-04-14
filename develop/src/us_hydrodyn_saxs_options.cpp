@@ -151,6 +151,8 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addLayout( helpclose );
 
    setMinimumWidth( 300 );
+
+   US_Hydrodyn::fixWinButtons( this );
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()
@@ -192,6 +194,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_saxs()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_saxs_window = new US_Hydrodyn_SasOptionsSaxs( saxs_options, 
                                                                                               sas_options_saxs_widget, 
                                                                                               us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_saxs_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_saxs_window->show();
    }
 }
@@ -215,6 +218,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_sans()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_sans_window = new US_Hydrodyn_SasOptionsSans( saxs_options, 
                                                                                               sas_options_sans_widget, 
                                                                                               us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_sans_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_sans_window->show();
    }
 }
@@ -237,6 +241,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_curve()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window = new US_Hydrodyn_SasOptionsCurve( saxs_options, 
                                                                                                 sas_options_curve_widget, 
                                                                                                 us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->show();
    }
 }
@@ -259,6 +264,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_bead_model()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_bead_model_window = new US_Hydrodyn_SasOptionsBeadModel( saxs_options, 
                                                                                                          sas_options_bead_model_widget, 
                                                                                                          us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_bead_model_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_bead_model_window->show();
    }
 }
@@ -281,6 +287,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_hydration()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_hydration_window = new US_Hydrodyn_SasOptionsHydration( saxs_options, 
                                                                                                         sas_options_hydration_widget, 
                                                                                                         us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_hydration_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_hydration_window->show();
    }
 }
@@ -303,6 +310,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_guinier()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window = new US_Hydrodyn_SasOptionsGuinier( saxs_options, 
                                                                                                     sas_options_guinier_widget, 
                                                                                                     us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
    }
 }
@@ -325,6 +333,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_misc()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_misc_window = new US_Hydrodyn_SasOptionsMisc( saxs_options, 
                                                                                               sas_options_misc_widget, 
                                                                                               us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_misc_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_misc_window->show();
    }
 }
@@ -347,6 +356,7 @@ void US_Hydrodyn_SaxsOptions::sas_options_experimental()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_experimental_window = new US_Hydrodyn_SasOptionsExperimental( saxs_options, 
                                                                                                               sas_options_experimental_widget, 
                                                                                                               us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_experimental_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_experimental_window->show();
    }
 }

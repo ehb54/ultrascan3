@@ -797,6 +797,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
                                         us_hydrodyn
                                         );
+   US_Hydrodyn::fixWinButtons( hslc );
    hslc->exec();
    
    delete hslc;
@@ -2317,6 +2318,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                                           1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
                                           us_hydrodyn
                                           );
+         US_Hydrodyn::fixWinButtons( hslc );
          hslc->exec();
             
          delete hslc;

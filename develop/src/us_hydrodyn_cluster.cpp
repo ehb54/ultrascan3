@@ -1295,6 +1295,7 @@ void US_Hydrodyn_Cluster::submit_pkg()
                                      this );
    if ( hcs->files.size() )
    {
+      US_Hydrodyn::fixWinButtons( hcs );
       hcs->exec();
    }
    delete hcs;
@@ -1310,6 +1311,7 @@ void US_Hydrodyn_Cluster::load_results()
                                       this );
    if ( hcr->files.size() )
    {
+      US_Hydrodyn::fixWinButtons( hcr );
       hcr->exec();
    }
    delete hcr;
@@ -1357,6 +1359,7 @@ void US_Hydrodyn_Cluster::config()
       new US_Hydrodyn_Cluster_Config(
                                      us_hydrodyn,
                                      this );
+   US_Hydrodyn::fixWinButtons( hcc );
    hcc->exec();
 }
 
@@ -1370,6 +1373,7 @@ void US_Hydrodyn_Cluster::check_status()
                                      this );
    if ( hcs->files.size() )
    {
+      US_Hydrodyn::fixWinButtons( hcs );
       hcs->exec();
    }
    delete hcs;
@@ -1465,6 +1469,7 @@ void US_Hydrodyn_Cluster::advanced()
                                        csv_advanced,
                                        us_hydrodyn,
                                        this );
+   US_Hydrodyn::fixWinButtons( hca );
    hca->exec();
    delete hca;
    update_validator();
@@ -1477,6 +1482,7 @@ void US_Hydrodyn_Cluster::dmd()
                                   csv_dmd,
                                   us_hydrodyn,
                                   this );
+   US_Hydrodyn::fixWinButtons( hcd );
    hcd->exec();
    delete hcd;
    update_enables();

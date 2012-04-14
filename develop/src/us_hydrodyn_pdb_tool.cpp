@@ -722,6 +722,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    background->addWidget ( lbl_title );
    background->addSpacing( 2 );
    background->addLayout ( gl_panes );
+
+   US_Hydrodyn::fixWinButtons( this );
 }
 
 void US_Hydrodyn_Pdb_Tool::cancel()

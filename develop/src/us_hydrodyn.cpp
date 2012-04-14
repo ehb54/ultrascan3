@@ -1054,6 +1054,7 @@ void US_Hydrodyn::hybrid()
    else
    {
       addHybrid = new US_AddHybridization(&hybrid_widget, 0);
+      fixWinButtons( addHybrid );
       addHybrid->show();
    }
 }
@@ -1067,6 +1068,7 @@ void US_Hydrodyn::edit_atom()
    else
    {
       addAtom = new US_AddAtom(&atom_widget, 0);
+      fixWinButtons( addAtom );
       addAtom->show();
    }
 }
@@ -1080,6 +1082,7 @@ void US_Hydrodyn::residue()
    else
    {
       addResidue = new US_AddResidue(&residue_widget, misc.hydrovol, 0);
+      fixWinButtons( addResidue );
       addResidue->show();
    }
 }
@@ -1093,6 +1096,7 @@ void US_Hydrodyn::saxs()
    else
    {
       addSaxs = new US_AddSaxs(&saxs_widget, 0);
+      fixWinButtons( addSaxs );
       addSaxs->show();
    }
 }

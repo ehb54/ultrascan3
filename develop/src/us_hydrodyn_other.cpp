@@ -1449,6 +1449,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                                                                        &use_partial,
                                                                        &partial
                                                                        );
+            US_Hydrodyn::fixWinButtons( hdo );
             do {
                hdo->exec();
             } while ( mw <= 0.0 || psv <= 0.0 );
@@ -5782,6 +5783,7 @@ void US_Hydrodyn::pdb_tool()
    US_Hydrodyn_Pdb_Tool 
       *pdb_tool_window =
       new US_Hydrodyn_Pdb_Tool( csv1, this );
+   US_Hydrodyn::fixWinButtons( pdb_tool_window );
    pdb_tool_window->show();
 }
 

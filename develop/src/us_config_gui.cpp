@@ -336,6 +336,7 @@ void US_Config_GUI::setup_GUI()
    pushbutton->addWidget(pb_cancel);
    topbox->activate();
 
+   US_Hydrodyn::fixWinButtons( this );
 }
 
 void US_Config_GUI::closeEvent(QCloseEvent *e)

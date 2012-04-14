@@ -3998,6 +3998,7 @@ void US_Hydrodyn_Saxs::saxs_search()
          search_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_search_csv;
       } 
       ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window = new US_Hydrodyn_Saxs_Search( search_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_search_window->show();
    }
 }
@@ -4098,6 +4099,7 @@ void US_Hydrodyn_Saxs::saxs_screen()
          screen_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_screen_csv;
       } 
       ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window = new US_Hydrodyn_Saxs_Screen( screen_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_screen_window->show();
    }
 }
@@ -4195,6 +4197,7 @@ void US_Hydrodyn_Saxs::saxs_buffer()
          buffer_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv;
       } 
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window = new US_Hydrodyn_Saxs_Buffer( buffer_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
    }
 }
@@ -5840,6 +5843,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                             avg_std_dev_frac,
                                             std_dev_frac
                                             );
+      US_Hydrodyn::fixWinButtons( saxs_iqq_residuals_windows[ title ] );
       saxs_iqq_residuals_windows[title]->show();
    }
    // #endif
