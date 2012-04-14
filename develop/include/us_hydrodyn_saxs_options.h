@@ -31,14 +31,15 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       US_Hydrodyn_SaxsOptions( struct saxs_options *, 
                                bool *saxs_options_widget,
-                               bool *sas_options_bead_model_widget,
-                               bool *sas_options_curve_widget,
-                               bool *sas_options_experimental_widget,
-                               bool *sas_options_guinier_widget,
-                               bool *sas_options_hydration_widget,
-                               bool *sas_options_misc_widget,
-                               bool *sas_options_sans_widget,
                                bool *sas_options_saxs_widget,
+                               bool *sas_options_sans_widget,
+                               bool *sas_options_curve_widget,
+                               bool *sas_options_bead_model_widget,
+                               bool *sas_options_hydration_widget,
+                               bool *sas_options_guinier_widget,
+                               bool *sas_options_xsr_widget,
+                               bool *sas_options_misc_widget,
+                               bool *sas_options_experimental_widget,
                                void *us_hydrodyn, 
                                QWidget *p = 0,
                                const char *name = 0 );
@@ -47,28 +48,30 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
    public:
       struct saxs_options *saxs_options;
       bool *saxs_options_widget;
-      bool *sas_options_bead_model_widget;
-      bool *sas_options_curve_widget;
-      bool *sas_options_experimental_widget;
-      bool *sas_options_guinier_widget;
-      bool *sas_options_hydration_widget;
-      bool *sas_options_misc_widget;
-      bool *sas_options_sans_widget;
       bool *sas_options_saxs_widget;
+      bool *sas_options_sans_widget;
+      bool *sas_options_curve_widget;
+      bool *sas_options_bead_model_widget;
+      bool *sas_options_hydration_widget;
+      bool *sas_options_guinier_widget;
+      bool *sas_options_xsr_widget;
+      bool *sas_options_misc_widget;
+      bool *sas_options_experimental_widget;
 
       void *us_hydrodyn;
       US_Config *USglobal;
 
       QLabel      *lbl_info;
 
-      QPushButton *pb_sas_options_bead_model;
-      QPushButton *pb_sas_options_curve;
-      QPushButton *pb_sas_options_experimental;
-      QPushButton *pb_sas_options_guinier;
-      QPushButton *pb_sas_options_hydration;
-      QPushButton *pb_sas_options_misc;
-      QPushButton *pb_sas_options_sans;
       QPushButton *pb_sas_options_saxs;
+      QPushButton *pb_sas_options_sans;
+      QPushButton *pb_sas_options_curve;
+      QPushButton *pb_sas_options_bead_model;
+      QPushButton *pb_sas_options_hydration;
+      QPushButton *pb_sas_options_guinier;
+      QPushButton *pb_sas_options_xsr;
+      QPushButton *pb_sas_options_misc;
+      QPushButton *pb_sas_options_experimental;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -83,6 +86,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void sas_options_bead_model();
       void sas_options_hydration();
       void sas_options_guinier();
+      void sas_options_xsr();
       void sas_options_misc();
       void sas_options_experimental();
 

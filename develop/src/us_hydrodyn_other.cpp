@@ -3367,6 +3367,15 @@ void US_Hydrodyn::set_default()
    saxs_options.iqq_use_saxs_excl_vol = false;
    saxs_options.alt_hydration         = false;
 
+   saxs_options.xsr_symmop                = 2;
+   saxs_options.xsr_nx                    = 32;
+   saxs_options.xsr_ny                    = 32;
+   saxs_options.xsr_griddistance          = 3e0;
+   saxs_options.xsr_ncomponents           = 1;
+   saxs_options.xsr_compactness_weight    = 10e0;
+   saxs_options.xsr_looseness_weight      = 10e0;
+   saxs_options.xsr_temperature           = 1e-3;
+
    hydro.zeno_zeno              = true;
    hydro.zeno_interior          = true;
    hydro.zeno_surface           = true;

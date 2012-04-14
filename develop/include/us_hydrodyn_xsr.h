@@ -1,6 +1,8 @@
 #ifndef US_HYDRODYN_XSR
 #define US_HYDRODYN_XSR
 
+#if !defined( QT4 ) && defined( WIN32 )
+
 /****************************************************************** 
  ***                       mathFunctions.h                      *** 
  ******************************************************************
@@ -362,4 +364,5 @@ int printPDB(grid_t *grid, char *filename);   /* prints a pbd verison of the gri
 
 int printInformation(calc_t *model, grid_t *grid, int cycle);   /* prints general information to an output file */
 
+# endif
 #endif

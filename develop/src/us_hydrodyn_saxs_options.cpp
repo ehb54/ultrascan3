@@ -15,8 +15,9 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
                                                  bool *sas_options_bead_model_widget,
                                                  bool *sas_options_curve_widget,
                                                  bool *sas_options_experimental_widget,
-                                                 bool *sas_options_guinier_widget,
                                                  bool *sas_options_hydration_widget,
+                                                 bool *sas_options_guinier_widget,
+                                                 bool *sas_options_xsr_widget,
                                                  bool *sas_options_misc_widget,
                                                  bool *sas_options_sans_widget,
                                                  bool *sas_options_saxs_widget,
@@ -32,11 +33,13 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
    this->sas_options_bead_model_widget   = sas_options_bead_model_widget;
    this->sas_options_curve_widget        = sas_options_curve_widget;
    this->sas_options_experimental_widget = sas_options_experimental_widget;
-   this->sas_options_guinier_widget      = sas_options_guinier_widget;
    this->sas_options_hydration_widget    = sas_options_hydration_widget;
+   this->sas_options_guinier_widget      = sas_options_guinier_widget;
+   this->sas_options_xsr_widget          = sas_options_xsr_widget;
    this->sas_options_misc_widget         = sas_options_misc_widget;
    this->sas_options_sans_widget         = sas_options_sans_widget;
    this->sas_options_saxs_widget         = sas_options_saxs_widget;
+
 
    this->us_hydrodyn                     = us_hydrodyn;
 
@@ -104,6 +107,12 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_sas_options_guinier->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sas_options_guinier, SIGNAL(clicked()), SLOT(sas_options_guinier()));
 
+   pb_sas_options_xsr = new QPushButton( tr( "Cross section fitting options"), this);
+   pb_sas_options_xsr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sas_options_xsr->setMinimumHeight(minHeight1);
+   pb_sas_options_xsr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_sas_options_xsr, SIGNAL(clicked()), SLOT(sas_options_xsr()));
+
    pb_sas_options_misc = new QPushButton( tr( "Miscellaneous options"), this);
    pb_sas_options_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_misc->setMinimumHeight(minHeight1);
@@ -140,6 +149,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget( pb_sas_options_bead_model   );
    background->addWidget( pb_sas_options_hydration    );
    background->addWidget( pb_sas_options_guinier      );
+   background->addWidget( pb_sas_options_xsr          );
    background->addWidget( pb_sas_options_misc         );
    background->addWidget( pb_sas_options_experimental );
 
@@ -312,6 +322,29 @@ void US_Hydrodyn_SaxsOptions::sas_options_guinier()
                                                                                                     us_hydrodyn );
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
+   }
+}
+void US_Hydrodyn_SaxsOptions::sas_options_xsr()
+{
+   if ( *sas_options_xsr_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->show();
+      }
+      return;
+   }
+   else
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window = new US_Hydrodyn_SasOptionsXsr( saxs_options, 
+                                                                                                    sas_options_xsr_widget, 
+                                                                                                    us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window );
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->show();
    }
 }
 void US_Hydrodyn_SaxsOptions::sas_options_misc()

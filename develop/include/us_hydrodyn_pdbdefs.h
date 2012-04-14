@@ -293,6 +293,15 @@ struct saxs_options
    bool    iqq_use_saxs_excl_vol;
 
    bool    alt_hydration;
+
+   unsigned int xsr_symmop;
+   unsigned int xsr_nx;
+   unsigned int xsr_ny;
+   double       xsr_griddistance;
+   unsigned int xsr_ncomponents;
+   double       xsr_compactness_weight;
+   double       xsr_looseness_weight;
+   double       xsr_temperature;
 };
 
 struct saxs_atom
