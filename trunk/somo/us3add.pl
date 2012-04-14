@@ -2,6 +2,9 @@
 
 # $debug++;
 
+$dir = shift || die "usage: $0 develop -or- develop_stage\n";
+die "usage: $0 develop -or- $0 develop_stage\n" if $dir !~ /^develop(_stage|)$/;
+
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
 
 $fconfig = "$us3/somo/us3add.txt";
@@ -31,6 +34,7 @@ while ( $_ = <IN> )
     $l++;
 
     $fout = "$us3/$_";
+    $fout =~ s/___dev___/$dir/;
     $f = $fout;
     die errmsg( "$f exists" ) if -e $f;
     open FOUT, ">$f" || die errmsg( "$f writing: $!" );

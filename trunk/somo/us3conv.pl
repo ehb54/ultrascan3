@@ -2,6 +2,9 @@
 
 # $debug++;
 
+$dir = shift || die "usage: $0 develop -or- develop_stage\n";
+die "usage: $0 develop -or- $0 develop_stage\n" if $dir !~ /^develop(_stage|)$/;
+
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
 
 while ( $ARGV[ 0 ] =~ /^-/ )
@@ -116,7 +119,7 @@ while ( $_ = <IN> )
 
             last if /^\s*end\s*$/;
 
-            push @files, "$us3/somo/develop/$_";
+            push @files, "$us3/somo/$dir/$_";
         }
 
         next;
