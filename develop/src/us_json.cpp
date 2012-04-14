@@ -25,7 +25,7 @@ map < QString, QString > US_Json::split( QString qs )
 
    for ( unsigned i = 0; i < qs.length(); i++ )
    {
-      QChar qc = qs[ i ];
+      QChar qc = qs.at( i );
 #if defined( USJ_DEBUG )
       cout << QString( "pos %1 char %2\n" ).arg( i ).arg( qc ).ascii();
 #endif
