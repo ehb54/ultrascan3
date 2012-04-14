@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 
+$dir = shift || die "usage: $0 develop-directory\n";
+
 $addcout = '
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
    return os << qPrintable(str);
 }
 ';
 
-@cpps = `find . -name "*.cpp"`;
+@cpps = `find $dir -name "*.cpp"`;
 grep chomp, @cpps;
 for ( $i = 0; $i < @cpps; $i++ )
 {
@@ -44,10 +46,8 @@ for ( $i = 0; $i < @cpps; $i++ )
     close OUT;
     print "written: $f\n";
 }
-    
-    
 
-@h = `find . -name "*.h"`;
+@h = `find $dir -name "*.h"`;
 grep chomp, @h;
 for ( $i = 0; $i < @h; $i++ )
 {
@@ -71,9 +71,8 @@ for ( $i = 0; $i < @h; $i++ )
     close OUT;
     print "written: $f\n";
 }
-    
    
-@rm = `find . -name "us_imgviewer.*"`;
+@rm = `find $dir -name "us_imgviewer.*"`;
 for ( $i = 0; $i < @rm; $i++ )
 {
     unlink $rm[$i];

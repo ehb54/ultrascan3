@@ -33,9 +33,7 @@ $us2sdev = $ENV{'us2sdev'} || die "can't find env variable us2sdev\n";
 print "us3 is $us3\n";
 print "us2sdev is $us2sdev\n";
 
-$us3stage = "$us3/somo/develop_stage";
-mkdir $us3stage;
-chdir $us3stage || die "can't change to dir $us3stage $!\n";
+chdir "$us3/somo/develop" || die "can't change to dir $us3/somo/develop $!\n";
 
 if ( $part1 ) {
     cmd("rm -fr * > /dev/null");
@@ -49,16 +47,13 @@ if ( $part1 ) {
     cmd('qt3to4 -alwaysoverwrite `find . -name "*.cpp"`');
     cmd('tar zxf somo-qwt5.tgz');
     cmd('rm -f somo-qwt5.tgz');
-    cmd('perl ../us3add.pl develop_stage');
-    cmd('cd ..; perl us3conv.pl develop_stage -c');
-    cmd("cd ..; perl us3button.pl $us3stage -c");
-    cmd("cp ../arc/libus_somo.pro .");
+    cmd('perl ../us3add.pl develop');
+    cmd('cd ..; perl us3conv.pl develop -c');
+    cmd("cd ..; perl us3button.pl $us3/somo/develop -c");
 }
 
 cmd('sed \'s/QMAKE_EXTRA_UNIX_TARGETS/QMAKE_EXTRA_TARGETS/g\' libus_somo.pro > libus_somo.pro.new; mv libus_somo.pro.new libus_somo.pro');
-cmd("perl ../postproccpp.pl $us3stage");
-
-cmd('cd ..; perl us3updates.pl -c -s');
+cmd("perl ../postproccpp.pl $us3/somo/develop");
 
 if ( $compile ) {
     cmd('qmake libus_somo.pro');
@@ -68,3 +63,6 @@ if ( $compile ) {
     cmd('qmake us_somo.pro');
     cmd('make -j4');
 }
+
+
+

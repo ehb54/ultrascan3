@@ -2,6 +2,9 @@
 
 # $debug++;
 
+$dir = shift || die "usage: $0 develop directory\n";
+die "usage: $0 develop directory\n" if $dir =~ /^-/ || !-d $dir;
+
 $us3 = $ENV{'us3'} || die "can't find env variable us3\n";
 
 while ( $ARGV[ 0 ] =~ /^-/ )
@@ -17,6 +20,7 @@ while ( $ARGV[ 0 ] =~ /^-/ )
     if ( $arg =~ /-c/ )
     {
         $commit++;
+        print "commit\n";
         next;
     }
 
@@ -28,44 +32,44 @@ while ( $ARGV[ 0 ] =~ /^-/ )
 }
 
 @exclude = (
-            'develop/include/us_hydrodyn_pdb_parsing.h',
-            'develop/include/us_hydrodyn_sas_options_sans.h',
-            'develop/include/us_hydrodyn_sas_options_hydration.h',
-            'develop/include/us_hydrodyn_pdb_visualization.h',
-            'develop/include/us_hydrodyn_sas_options_bead_model.h',
-            'develop/include/us_hydrodyn_bd_options.h',
-            'develop/include/us_hydrodyn_advanced_config.h',
-            'develop/include/us_hydrodyn_save.h',
-#            'develop/include/us_hydrodyn_saxs.h',
-            'develop/include/us_hydrodyn_dmd_options.h',
-            'develop/include/us_hydrodyn_batch.h',
-            'develop/include/us_hydrodyn_anaflex_options.h',
-            'develop/include/us_hydrodyn.h',
-            'develop/include/us_hydrodyn_sas_options_saxs.h',
-            'develop/include/us_hydrodyn_grid.h',
-            'develop/include/us_hydrodyn_addresidue.h',
-            'develop/include/us_hydrodyn_saxs_buffer.h',
-            'develop/include/us_hydrodyn_hydro.h',
-            'develop/include/us_hydrodyn_misc.h',
-            'develop/include/us_hydrodyn_asa.h',
-            'develop/include/us_hydrodyn_bd.h',
-            'develop/include/us_hydrodyn_sas_options_experimental.h',
-            'develop/include/us_hydrodyn_sas_options_guinier.h',
-            'develop/include/us_hydrodyn_sas_options_misc.h',
-            'develop/include/us_hydrodyn_comparative.h',
-            'develop/include/us_hydrodyn_sas_options_curve.h',
-            'develop/include/us_hydrodyn_bead_output.h',
-            'develop/src/us_hydrodyn_asa.cpp',
-            'develop/src/us_hydrodyn_saxs_buffer.cpp',
-            'develop/src/us_hydrodyn_bead_output.cpp',
-            'develop/src/us_hydrodyn_pdb_visualization.cpp',
-            'develop/src/us_hydrodyn_pdb_parsing.cpp',
-            'develop/src/us_hydrodyn_hydro.cpp',
-            'develop/src/us_hydrodyn_batch.cpp',
-            'develop/src/us_hydrodyn_grid.cpp',
-            'develop/src/us_hydrodyn_bd_options.cpp',
-            'develop/src/us_hydrodyn_addresidue.cpp',
-#            'develop/src/us_hydrodyn_saxs.cpp'
+            "$dir/include/us_hydrodyn_pdb_parsing.h",
+            "$dir/include/us_hydrodyn_sas_options_sans.h",
+            "$dir/include/us_hydrodyn_sas_options_hydration.h",
+            "$dir/include/us_hydrodyn_pdb_visualization.h",
+            "$dir/include/us_hydrodyn_sas_options_bead_model.h",
+            "$dir/include/us_hydrodyn_bd_options.h",
+            "$dir/include/us_hydrodyn_advanced_config.h",
+            "$dir/include/us_hydrodyn_save.h",
+#            "$dir/include/us_hydrodyn_saxs.h",
+            "$dir/include/us_hydrodyn_dmd_options.h",
+            "$dir/include/us_hydrodyn_batch.h",
+            "$dir/include/us_hydrodyn_anaflex_options.h",
+            "$dir/include/us_hydrodyn.h",
+            "$dir/include/us_hydrodyn_sas_options_saxs.h",
+            "$dir/include/us_hydrodyn_grid.h",
+            "$dir/include/us_hydrodyn_addresidue.h",
+            "$dir/include/us_hydrodyn_saxs_buffer.h",
+            "$dir/include/us_hydrodyn_hydro.h",
+            "$dir/include/us_hydrodyn_misc.h",
+            "$dir/include/us_hydrodyn_asa.h",
+            "$dir/include/us_hydrodyn_bd.h",
+            "$dir/include/us_hydrodyn_sas_options_experimental.h",
+            "$dir/include/us_hydrodyn_sas_options_guinier.h",
+            "$dir/include/us_hydrodyn_sas_options_misc.h",
+            "$dir/include/us_hydrodyn_comparative.h",
+            "$dir/include/us_hydrodyn_sas_options_curve.h",
+            "$dir/include/us_hydrodyn_bead_output.h",
+            "$dir/src/us_hydrodyn_asa.cpp",
+            "$dir/src/us_hydrodyn_saxs_buffer.cpp",
+            "$dir/src/us_hydrodyn_bead_output.cpp",
+            "$dir/src/us_hydrodyn_pdb_visualization.cpp",
+            "$dir/src/us_hydrodyn_pdb_parsing.cpp",
+            "$dir/src/us_hydrodyn_hydro.cpp",
+            "$dir/src/us_hydrodyn_batch.cpp",
+            "$dir/src/us_hydrodyn_grid.cpp",
+            "$dir/src/us_hydrodyn_bd_options.cpp",
+            "$dir/src/us_hydrodyn_addresidue.cpp",
+#            "$dir/src/us_hydrodyn_saxs.cpp"
             );
 for ( $i = 0; $i < @exclude; $i++ )
 {
@@ -74,7 +78,7 @@ for ( $i = 0; $i < @exclude; $i++ )
 
 # find all files with q3button
 
-@files = `find develop -name 'us*.cpp' -o -name 'us*.h' | xargs grep -li q3button`;
+@files = `find $dir -name 'us*.cpp' -o -name 'us*.h' | xargs grep -li q3button`;
 grep chomp, @files;
 
 for ( $i = 0; $i < @files; $i++ )
