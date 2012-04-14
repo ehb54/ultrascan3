@@ -421,7 +421,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }
       if ( dod.exists() )
       {
-         QString dest = outputData + QDir::separator() + results_file;
+         QString dest = outputData + QDir::separator() + QFileInfo( results_file ).fileName();
          QDir qd;
          if ( !qd.rename( results_file, dest ) )
          {
