@@ -1,6 +1,7 @@
 namespace xsr {
 
 #include "../include/us_hydrodyn_xsr.h"
+#define MAX_CONTRAST_POINTS 16
 
    /****************************************************************** 
     ***                       mathFunctions.c                      *** 
@@ -311,13 +312,17 @@ namespace xsr {
 
       double f[NPR];
       // double h;
-      double prTotal[model->nContrastPoints][NPR];
+      // fix this: emre
+      // double prTotal[model->nContrastPoints][NPR];
+      double prTotal[MAX_CONTRAST_POINTS][NPR];
+
 
       /* f is for temporary storage of a portion of the integral required to calculate Iq; h is the distance between the f values; prTotal is the pr
        * total pr function at each contrast point */
 
-      double Iq[model->nContrastPoints][NPMOD], qtemp;
-
+      // fix this: emre
+      // double Iq[model->nContrastPoints][NPMOD], qtemp;
+      double Iq[MAX_CONTRAST_POINTS][NPMOD], qtemp;
       /* Iq is the unsmeared model scattering profile */
 
       for(k = 0; k < model->nContrastPoints; k ++)   /* calculate prTotal */
@@ -471,7 +476,7 @@ namespace xsr {
       for(i = 0; i < grid->nGridPoints; i ++)   /* calculate the area of each component */
          grid->area[grid[i].value] ++;
 
-      grid->totalArea = 0.0;
+      grid->totalArea = ( int ) 0.0;
 
       for(i = 1; i <= grid->nComponents; i ++)
          grid->totalArea += grid->area[i];
@@ -521,7 +526,7 @@ namespace xsr {
          for(i = 0; i < grid->nContacts; i ++)
             tempVal += partialLooseness(grid->contact[i], value);
 
-         return(tempVal + 1);
+         return( ( int ) ( tempVal + 1 ) );
 
       }
 
@@ -671,7 +676,9 @@ namespace xsr {
 
       /* All loop counters */
 
-      double prTotal[model->nContrastPoints][NPR];
+      // fix this: emre
+      // double prTotal[model->nContrastPoints][NPR];
+      double prTotal[MAX_CONTRAST_POINTS][NPR];
 
       /* prTotal is the pr at each contrast point */
 
@@ -962,7 +969,7 @@ namespace xsr {
           * casued by the reconfiguration */
 
 
-         srand(time(NULL));   /* randomise the seed */
+         srand(( unsigned int )time(NULL));   /* randomise the seed */
 	
          fgets(buffer, 999, stdin);
          sscanf(buffer, "%d", &symmOp);   /* the symmetry operation is read in from stdin */
