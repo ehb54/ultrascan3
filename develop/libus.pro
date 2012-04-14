@@ -243,6 +243,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_buffer_conc_load.cpp \
   src/us_hydrodyn_saxs_2d.cpp \
   src/us_hydrodyn_supc.cpp \
+  src/us_hydrodyn_xsr.cpp \
   src/us_hydrodyn_zeno.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
@@ -510,6 +511,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_buffer_conc_load.h \
   include/us_hydrodyn_saxs_2d.h \
   include/us_hydrodyn_supc.h \
+  include/us_hydrodyn_xsr.h \
   include/us_hydrodyn_zeno.h \
   include/us_fable.h \
   include/us_imgviewer.h \
