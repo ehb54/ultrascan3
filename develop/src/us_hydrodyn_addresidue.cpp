@@ -60,7 +60,8 @@ US_AddResidue::~US_AddResidue()
 
 void US_AddResidue::setupGUI()
 {
-   unsigned int minHeight1 = 30;
+   int minHeight1 = 24;
+   int minWidth1  = 144;
 
    lbl_info1 = new QLabel(tr(" 1: Define Residue Properties: "), this);
    Q_CHECK_PTR(lbl_info1);
@@ -152,7 +153,7 @@ void US_AddResidue::setupGUI()
    Q_CHECK_PTR(cnt_numatoms);
    cnt_numatoms->setRange(0, 1000, 1);
    cnt_numatoms->setValue(0);
-   cnt_numatoms->setMinimumHeight(minHeight1);
+   cnt_numatoms->setMinimumWidth( minWidth1 );
    cnt_numatoms->setEnabled(false);
    cnt_numatoms->setNumButtons(3);
    cnt_numatoms->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -172,7 +173,7 @@ void US_AddResidue::setupGUI()
    cnt_numbeads->setValue(0);
    cnt_numbeads->setEnabled(false);
    cnt_numbeads->setNumButtons(3);
-   cnt_numbeads->setMinimumHeight(minHeight1);
+   cnt_numbeads->setMinimumWidth( minWidth1 );
    cnt_numbeads->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_numbeads, SIGNAL(valueChanged(double)), SLOT(update_numbeads(double)));
 
@@ -328,7 +329,7 @@ void US_AddResidue::setupGUI()
    Q_CHECK_PTR(cnt_atom_hydration);
    cnt_atom_hydration->setRange(0, 100, 1);
    cnt_atom_hydration->setValue(0);
-   cnt_atom_hydration->setMinimumHeight(minHeight1);
+   cnt_atom_hydration->setMinimumWidth( minWidth1 );
    cnt_atom_hydration->setEnabled(true);
    cnt_atom_hydration->setNumButtons(3);
    cnt_atom_hydration->setEnabled(false);
@@ -421,7 +422,7 @@ void US_AddResidue::setupGUI()
    Q_CHECK_PTR(cnt_hydration);
    cnt_hydration->setRange(0, 100, 1);
    cnt_hydration->setValue(0);
-   cnt_hydration->setMinimumHeight(minHeight1);
+   cnt_hydration->setMinimumWidth( minWidth1 );
    cnt_hydration->setEnabled(true);
    cnt_hydration->setNumButtons(3);
    cnt_hydration->setEnabled(false);

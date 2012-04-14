@@ -1,3 +1,5 @@
+#if !defined(QT4) && defined(Q_WS_WIN)
+
 namespace xsr {
 
 #include "../include/us_hydrodyn_xsr.h"
@@ -1287,3 +1289,5 @@ namespace xsr {
          return(1);
       }
 };
+#endif
+
