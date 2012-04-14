@@ -61,9 +61,10 @@ cmd("perl ../postproccpp.pl $us3stage");
 cmd('cd ..; perl us3updates.pl -c -s');
 
 if ( $compile ) {
+    chdir "../develop" || die "can't change to ../develop\n";
     cmd('qmake libus_somo.pro');
-    cmd('rm qmake_image_collection.cpp');
-    cmd('make -j1 src/obj/qmake_image_collection.o');
+#    cmd('rm qmake_image_collection.cpp');
+#    cmd('make -j1 src/obj/qmake_image_collection.o');
     cmd('make -j4');
     cmd('qmake us_somo.pro');
     cmd('make -j4');
