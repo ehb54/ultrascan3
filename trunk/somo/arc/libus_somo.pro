@@ -33,7 +33,7 @@ unix {
   #CONFIG                 += qt thread warn release 
   CONFIG                 += qt thread warn debug
 
-  INCLUDEPATH    +=  $(QWTDIR)/src
+  INCLUDEPATH    +=  $(QWTDIR)/include
 
   contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt 
