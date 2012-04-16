@@ -51,6 +51,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QPushButton   *pb_retrieve_selected;
       QPushButton   *pb_retrieve;
 
+      QProgressBar  *progress;
+
       QFont         ft;
       QTextEdit     *editor;
       QMenuBar      *m;
@@ -69,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QString       tmp_dir;
 
       QString       cluster_id;
+      QString       cluster_pw;
       QString       submit_url;
       QString       submit_url_host;
       QString       submit_url_port;
@@ -84,6 +87,13 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       bool          comm_active;
       QString       comm_mode;
       QHttp         submit_http;
+
+      QFtp          ftp;
+
+      QFile         *ftp_file;
+      QString       ftp_url;
+      QString       ftp_url_host;
+      QString       ftp_url_port;
 
       unsigned int  update_files( bool set_lv_files = true );
       bool          send_http_get( QString file );
@@ -142,6 +152,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void http_requestStarted ( int id );
       void http_requestFinished ( int id, bool error );
       void http_done ( bool error );
+
+      void ftp_stateChanged ( int state );
+      // void ftp_listInfo ( const QUrlInfo & i );
+      // void ftp_readyRead ();
+      // void ftp_dataTransferProgress ( int done, int total );
+      // void ftp_rawCommandReply ( int replyCode, const QString & detail );
+      void ftp_commandStarted ( int id );
+      void ftp_commandFinished ( int id, bool error );
+      void ftp_done ( bool error );
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();

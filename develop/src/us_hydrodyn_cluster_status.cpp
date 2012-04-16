@@ -24,12 +24,15 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    processing_active = false;
    disable_updates = false;
 
+   ftp_file = ( QFile * ) 0;
+
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    submitted_dir = pkg_dir + SLASH + "submitted";
    completed_dir = pkg_dir  + SLASH + "completed";
    QDir::setCurrent( submitted_dir );
 
    cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userid" ];
+   cluster_pw      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userpw" ];
 
    submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
    submit_url_host = submit_url;
@@ -158,6 +161,17 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    pb_retrieve->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_retrieve, SIGNAL( clicked() ), SLOT( retrieve() ) );
 
+   progress = new QProgressBar(this, "FTP Progress");
+   progress->setMinimumHeight( minHeight1 );
+   progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress->reset();
+
+   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setProgress        ( int, int  ) ) );
+   connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
+   connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
+   connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
+   connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
+
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    editor->setReadOnly(true);
@@ -229,6 +243,8 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    background->addWidget ( lv_files );
    background->addSpacing( 4 );
    background->addLayout ( hbl_buttons1 );
+   background->addSpacing( 4 );
+   background->addWidget ( progress );
    background->addSpacing( 4 );
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 4 );
@@ -726,14 +742,19 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
    {
       map < QString, QString > selected_system = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ selected_system_name ];
-      if ( selected_system.count( "stage" ) )
+      if ( selected_system.count( "ftp" ) )
       {
-         stage_url       = selected_system[ "stage" ];
-         stage_path      = stage_url;
-         stage_url_path  = stage_url;
-         stage_url       .replace( QRegExp( ":.*$" ), "" );
-         stage_path      .replace( QRegExp( "^.*:" ), "" );
-         stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+         // stage_url       = selected_system[ "stage" ];
+         // stage_path      = stage_url;
+         // stage_url_path  = stage_url;
+         // stage_url       .replace( QRegExp( ":.*$" ), "" );
+         // stage_path      .replace( QRegExp( "^.*:" ), "" );
+         // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+         ftp_url         = selected_system[ "ftp" ];
+         ftp_url_host    = ftp_url;
+         ftp_url_port    = ftp_url;
+         ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
+         ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
       } else {
          errormsg = QString( tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
          return false;
@@ -835,16 +856,58 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       }
    }
 
-   QStringList cmd;
-   cmd << "scp";
-   cmd << QString( "%1%2/%3" )
-      .arg( stage_url_path )
-      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) )
-      .arg( QString( "%1_out.t??" )
-            .arg( QString( "%1" ).arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
-   cmd << QString( "." );
+   // using qftp now:
 
-   return( system_cmd( cmd ) );
+   QString get_file = file;
+   get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
+   get_file += "_out.tar";
+
+   ftp_file = new QFile( get_file );
+   if ( !ftp_file->open( IO_WriteOnly ) )
+   {
+      errormsg = QString( tr( "stage: can not open file %1" ) ).arg( file );
+      delete ftp_file;
+      ftp_file = ( QFile * ) 0;
+      return false;
+   }
+
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.tar$" ), "" );
+
+   cout 
+      << QString( "ftp host   : %1\n"
+                  "ftp port   : %2\n"
+                  "target_dir : %3\n"
+                  "file       : %4\n" 
+                  "cluser_id  : %5\n" 
+                  "cluster_pw : %6\n" 
+                  )
+      .arg( ftp_url_host )
+      .arg( ftp_url_port.toUInt() )
+      .arg( target_dir )
+      .arg( get_file )
+      .arg( cluster_id )
+      .arg( cluster_pw );
+   
+   comm_active = true;
+
+   ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
+   ftp.login        ( cluster_id  , cluster_pw   );
+   ftp.cd           ( target_dir );
+   ftp.get          ( get_file    , ftp_file       );
+   ftp.close        ();
+   
+   return true;
+
+   // QStringList cmd;
+   // cmd << "scp";
+   // cmd << QString( "%1%2/%3" )
+   // .arg( stage_url_path )
+   // .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) )
+   // .arg( QString( "%1_out.t??" )
+   // .arg( QString( "%1" ).arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
+   //  cmd << QString( "." );
+
+   // return( system_cmd( cmd ) );
 }
 
 
@@ -1092,4 +1155,65 @@ void US_Hydrodyn_Cluster_Status::stop()
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    update_enables();
+}
+
+void US_Hydrodyn_Cluster_Status::ftp_stateChanged ( int state )
+{
+   cout << "ftp state changed: " << state << endl;
+   if ( state == QFtp::Unconnected )
+   {
+      cout << "- There is no connection to the host. \n";
+   }
+   if ( state == QFtp::HostLookup )
+   {
+      cout << "- A host name lookup is in progress. \n";
+   }
+   if ( state == QFtp::Connecting )
+   {
+      cout << "- An attempt to connect to the host is in progress. \n";
+   }
+   if ( state == QFtp::Connected )
+   {
+      cout << "- Connection to the host has been achieved. \n";
+   }
+   if ( state == QFtp::LoggedIn )
+   {
+      cout << "- Connection and user login have been achieved. \n";
+   }
+   if ( state == QFtp::Closing )
+   {
+      cout << "- The connection is closing down, but it is not yet closed.\n";
+   }
+}
+
+void US_Hydrodyn_Cluster_Status::ftp_commandStarted ( int id )
+{
+   cout << "ftp command started: " << id << endl;
+}
+
+void US_Hydrodyn_Cluster_Status::ftp_commandFinished ( int id, bool error )
+{
+   cout << "ftp command finished" << id 
+        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
+}
+
+void US_Hydrodyn_Cluster_Status::ftp_done ( bool error )
+{
+   cout << "ftp done" 
+        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
+   if ( error &&
+        jobs[ next_to_process ] == "completed" )
+   {
+      jobs[ next_to_process ] = "failed";
+      editor_msg( "red", QString( "Error: %1" ).arg( ftp.errorString() ) );
+   }
+
+   if ( ftp_file )
+   {
+      ftp_file->close();
+      ftp_file = ( QFile * ) 0;
+   }
+
+   comm_active = false;
+   emit next_status();
 }
