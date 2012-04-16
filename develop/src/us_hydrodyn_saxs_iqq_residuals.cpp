@@ -635,7 +635,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    if ( qs.size() && 
         plot_as_percent )
    {
-      double linepos = 10.0;
+      double linepos = 5.0;
       double x[2];
       double y[2];
       x[0] = qs[0][0];
