@@ -248,7 +248,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    cb_plot_as_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
-   if ( avg_std_dev_frac )
+   if ( 0 && avg_std_dev_frac )
    {
       cb_plot_mult_avg_sd_frac = new QCheckBox(this);
       cb_plot_mult_avg_sd_frac->setText( tr( " Mult avg s.d. frac" ) );
@@ -298,7 +298,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    hbl->addWidget(cb_plot_difference);
    hbl->addWidget(cb_plot_log);
    hbl->addWidget(cb_plot_as_percent);
-   if ( avg_std_dev_frac )
+   if ( 0 && avg_std_dev_frac )
    {
       hbl->addWidget( cb_plot_mult_avg_sd_frac );
       hbl->addWidget( cb_plot_mult_sd_frac );
@@ -388,8 +388,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 
    if ( plot_difference )
    {
-      bool use_mult_avg_sd_frac = avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
-      bool use_mult_sd_frac     = avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
+      bool use_mult_avg_sd_frac = false; // avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
+      bool use_mult_sd_frac     = false; // avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
 
       if ( use_errors )
       {
@@ -513,8 +513,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       }
       if ( plot_difference ) 
       {
-         bool use_mult_avg_sd_frac = avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
-         bool use_mult_sd_frac     = avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
+         bool use_mult_avg_sd_frac = false; // avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
+         bool use_mult_sd_frac     = false; // avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
 
 #ifndef QT4
          long iqq = plot->insertCurve("Log10 I(q) vs q"); 
@@ -633,14 +633,86 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 
    // display 2sd bars
    if ( qs.size() && 
+        plot_as_percent )
+   {
+      double linepos = 10.0;
+      double x[2];
+      double y[2];
+      x[0] = qs[0][0];
+      x[1] = qs[0][qs[0].size() - 1];
+      y[0] = linepos;
+      y[1] = linepos;
+#ifndef QT4
+      long iqq = plot->insertCurve("+10 %"); 
+      plot->setCurveStyle(iqq, QwtCurve::Lines);
+      plot->setCurveData(iqq, 
+                         (double *)&(x[0]), 
+                         (double *)&(y[0]), 
+                         2);
+      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( "+10 %" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+      }
+#endif
+      y[0] = - linepos;
+      y[1] = - linepos;
+#ifndef QT4
+      iqq = plot->insertCurve("-10 %"); 
+      plot->setCurveStyle(iqq, QwtCurve::Lines);
+      plot->setCurveData(iqq, 
+                         (double *)&(x[0]), 
+                         (double *)&(y[0]), 
+                         2);
+      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+#else
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( "-10 %" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]), 
+                        (double *)&(y[0]), 
+                        2
+                        );
+         curve->setPen( QPen(Qt::white, 2, SolidLine) );
+         curve->attach( plot );
+      }
+#endif
+      if ( miny > -1.1 * linepos )
+      {
+         miny = -1.1 * linepos;
+      }
+      if ( maxy < 1.1 * linepos )
+      {
+         maxy = 1.1 * linepos;
+      }
+      if ( miny > - maxy )
+      {
+         miny = - maxy;
+      }
+      if ( maxy < - miny )
+      {
+         maxy = - miny;
+      }
+   }
+
+   if ( qs.size() && 
         plot_difference && 
         use_errors && 
-        !plot_as_percent &&
-        avg_std_dev_frac && 
-        !cb_plot_mult_avg_sd_frac->isChecked() )
+        !plot_as_percent )
+      //  &&  avg_std_dev_frac &&
+      // !cb_plot_mult_avg_sd_frac->isChecked() )
    {
       double linepos = 2e0;
-      if ( avg_std_dev_frac &&
+      if ( 0 && avg_std_dev_frac &&
            ( cb_plot_mult_avg_sd_frac->isChecked() ||
              cb_plot_mult_sd_frac->isChecked() ) )
       {
