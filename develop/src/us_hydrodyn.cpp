@@ -429,7 +429,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
 
    md_options = new QPopupMenu;
-   md_options->insertItem(tr("&DMD Options"), this, SLOT(show_dmd_options()));
+   // md_options->insertItem(tr("&DMD Options"), this, SLOT(show_dmd_options()));
    md_options->insertItem(tr("&Browflex Options"), this, SLOT(show_bd_options()));
    md_options->insertItem(tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
 
