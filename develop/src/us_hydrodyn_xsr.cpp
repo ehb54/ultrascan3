@@ -1,8 +1,9 @@
+#include "../include/us_hydrodyn_xsr.h"
+
 #if !defined(QT4) && defined(Q_WS_WIN)
 
 namespace xsr {
 
-#include "../include/us_hydrodyn_xsr.h"
 #define MAX_CONTRAST_POINTS 16
 
    /****************************************************************** 
@@ -1289,5 +1290,251 @@ namespace xsr {
          return(1);
       }
 };
+
 #endif
 
+// ------- the class to run xsr
+
+US_Hydrodyn_Xsr::US_Hydrodyn_Xsr( 
+                                 US_Hydrodyn  * us_hydrodyn,
+                                 QWidget *p, 
+                                 const char *name
+                                 ) : QFrame( p, name )
+{
+   this->us_hydrodyn      = us_hydrodyn;
+   this->our_saxs_options = & ( us_hydrodyn->saxs_options );
+   this->saxs_widget      = & ( us_hydrodyn->saxs_plot_widget );
+   this->saxs_window      = us_hydrodyn->saxs_plot_window;
+
+   USglobal = new US_Config();
+   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setCaption( tr( "US-SOMO: SAXS Cross Sectional Analysis" ) );
+
+   setupGUI();
+   running = false;
+
+   update_enables();
+
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT" );
+
+   global_Xpos += 30;
+   global_Ypos += 30;
+
+   setGeometry(global_Xpos, global_Ypos, 0, 0 );
+}
+
+US_Hydrodyn_Xsr::~US_Hydrodyn_Xsr()
+{
+}
+
+void US_Hydrodyn_Xsr::setupGUI()
+{
+   int minHeight1 = 30;
+   int minHeight3 = 30;
+
+   lbl_title = new QLabel( tr( "US-SOMO: SAXS Cross Sectional Analysis" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_title->setMinimumHeight(minHeight1);
+   lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   pb_start = new QPushButton(tr("Start"), this);
+   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_start->setMinimumHeight(minHeight1);
+   pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_start, SIGNAL(clicked()), SLOT(start()));
+
+   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setMinimumHeight(minHeight1);
+   pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
+
+   progress = new QProgressBar(this, "Progress");
+   progress->setMinimumHeight(minHeight1);
+   progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress->reset();
+
+   editor = new QTextEdit(this);
+   editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   editor->setReadOnly(true);
+
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar(frame, "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   QPopupMenu * file = new QPopupMenu(editor);
+   m->insertItem( tr("&File"), file );
+   file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
+   file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   editor->setWordWrap (QTextEdit::WidgetWidth);
+   // editor->setMinimumHeight(300);
+   
+   pb_help = new QPushButton(tr("Help"), this);
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setMinimumHeight(minHeight1);
+   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+
+   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+
+   // build layout
+   // grid for options
+
+   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
+   vbl_editor_group->addWidget( frame      );
+   vbl_editor_group->addWidget( editor     );
+
+   QHBoxLayout *hbl_controls = new QHBoxLayout( 0 );
+   hbl_controls->addSpacing(4);
+   hbl_controls->addWidget(pb_start);
+   hbl_controls->addSpacing(4);
+   hbl_controls->addWidget(progress);
+   hbl_controls->addWidget(pb_stop);
+   hbl_controls->addSpacing(4);
+
+   QVBoxLayout *vbl_target_controls = new QVBoxLayout( 0 );
+   vbl_target_controls->addLayout( hbl_controls );
+
+   QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
+   hbl_bottom->addSpacing( 4 );
+   hbl_bottom->addWidget ( pb_help );
+   hbl_bottom->addSpacing( 4 );
+   hbl_bottom->addWidget ( pb_cancel );
+   hbl_bottom->addSpacing( 4 );
+
+   QVBoxLayout *background = new QVBoxLayout(this);
+   background->addSpacing( 4 );
+   background->addWidget ( lbl_title );
+   background->addSpacing( 4 );
+   background->addLayout ( vbl_editor_group );
+   background->addSpacing( 4 );
+   background->addLayout ( vbl_target_controls );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_bottom );
+   background->addSpacing( 4 );
+}
+
+void US_Hydrodyn_Xsr::cancel()
+{
+   close();
+}
+
+void US_Hydrodyn_Xsr::help()
+{
+   US_Help *online_help;
+   online_help = new US_Help(this);
+   online_help->show_help("manual/somo_saxs_xsr.html");
+}
+
+void US_Hydrodyn_Xsr::closeEvent( QCloseEvent *e )
+{
+   // ((US_Hydrodyn *)us_hydrodyn)->saxs_2d_widget = false;
+
+   global_Xpos -= 30;
+   global_Ypos -= 30;
+   e->accept();
+}
+
+void US_Hydrodyn_Xsr::clear_display()
+{
+   editor->clear();
+   editor->append("\n\n");
+}
+
+void US_Hydrodyn_Xsr::update_font()
+{
+   bool ok;
+   QFont newFont;
+   newFont = QFontDialog::getFont( &ok, ft, this );
+   if ( ok )
+   {
+      ft = newFont;
+   }
+   editor->setFont(ft);
+}
+
+void US_Hydrodyn_Xsr::save()
+{
+   QString fn;
+   fn = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+   if(!fn.isEmpty() )
+   {
+      QString text = editor->text();
+      QFile f( fn );
+      if ( !f.open( IO_WriteOnly | IO_Translate) )
+      {
+         return;
+      }
+      QTextStream t( &f );
+      t << text;
+      f.close();
+      editor->setModified( false );
+      setCaption( fn );
+   }
+}
+
+void US_Hydrodyn_Xsr::start()
+{
+}
+
+void US_Hydrodyn_Xsr::stop()
+{
+   running = false;
+   editor_msg("red", "Stopped by user request\n");
+   update_enables();
+}
+
+void US_Hydrodyn_Xsr::update_enables()
+{
+   pb_start            ->setEnabled( !running );
+   pb_stop             ->setEnabled( running );
+}
+
+void US_Hydrodyn_Xsr::editor_msg( QString color, QString msg )
+{
+   QColor save_color = editor->color();
+   editor->setColor(color);
+   editor->append(msg);
+   editor->setColor(save_color);
+}
+
+// ------ US_Hydrodyn_Saxs entry 
+
+void US_Hydrodyn_Saxs::saxs_xsr()
+{
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->sas_options_xsr_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->show();
+      }
+      return;
+   }
+   else
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window = new US_Hydrodyn_SasOptionsXsr( 
+                                                                                           our_saxs_options, 
+                                                                                           & ( ( ( US_Hydrodyn * ) us_hydrodyn )->sas_options_xsr_widget ), 
+                                                                                           us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window );
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_xsr_window->show();
+   }
+
+   US_Hydrodyn_Xsr * uhxsr = new US_Hydrodyn_Xsr( ( US_Hydrodyn * ) us_hydrodyn );
+   uhxsr->show();
+}

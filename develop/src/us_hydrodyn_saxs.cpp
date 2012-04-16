@@ -1,3 +1,4 @@
+// #include "../include/us_sas_dammin.h"
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
@@ -6,6 +7,7 @@
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
+#include "../include/us_hydrodyn_xsr.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -266,6 +268,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    int minHeight0 = 18;
    int minHeight1 = 22;
+   int maxWidth   = 14;
    lbl_info = new QLabel(tr("SAXS/SANS I(q) Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -532,6 +535,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_screen = new QPushButton("Screen", this);
       pb_saxs_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_screen->setMinimumHeight(minHeight1);
+      pb_saxs_screen->setMaximumWidth( maxWidth * 6 );
       pb_saxs_screen->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_screen, SIGNAL(clicked()), SLOT(saxs_screen()));
    }
@@ -600,13 +604,22 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_buffer = new QPushButton("Buffer", this);
       pb_saxs_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_buffer->setMinimumHeight(minHeight1);
+      pb_saxs_buffer->setMaximumWidth( maxWidth * 6 );
       pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
+
+      pb_saxs_xsr = new QPushButton("CSA", this);
+      pb_saxs_xsr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      pb_saxs_xsr->setMinimumHeight(minHeight1);
+      pb_saxs_xsr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      pb_saxs_xsr->setMaximumWidth( maxWidth * 3 );
+      connect(pb_saxs_xsr, SIGNAL(clicked()), SLOT(saxs_xsr()));
 
       pb_saxs_2d = new QPushButton("2d", this);
       pb_saxs_2d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_2d->setMinimumHeight(minHeight1);
       pb_saxs_2d->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      pb_saxs_2d->setMaximumWidth( maxWidth * 2 );
       connect(pb_saxs_2d, SIGNAL(clicked()), SLOT(saxs_2d()));
    } 
 
@@ -1028,6 +1041,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    {
       hbl_various_0->addWidget(pb_saxs_screen);
       hbl_various_0->addWidget(pb_saxs_buffer);
+      hbl_various_0->addWidget(pb_saxs_xsr);
       hbl_various_0->addWidget(pb_saxs_2d);
    }
 
@@ -4281,6 +4295,12 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
 
 void US_Hydrodyn_Saxs::load_gnom()
 {
+   // map < QString, QString > params;
+   // params[ "wild" ] = "10.7";
+   // US_SAS_Dammin * usd = new US_SAS_Dammin( (US_Hydrodyn *)us_hydrodyn, 41e0, params );
+   // usd->show();
+   // return;
+
    plotted = false;
    QString use_dir = 
       our_saxs_options->path_load_gnom.isEmpty() ?

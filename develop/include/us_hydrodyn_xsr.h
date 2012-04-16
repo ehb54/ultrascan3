@@ -20,9 +20,9 @@
  * Version 1.1: Slit-smearing correction added to the program
  */
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include <time.h>
 
@@ -365,4 +365,82 @@ int printPDB(grid_t *grid, char *filename);   /* prints a pbd verison of the gri
 int printInformation(calc_t *model, grid_t *grid, int cycle);   /* prints general information to an output file */
 
 # endif
+
+#include "us_saxs_util.h"
+#include "us_hydrodyn.h"
+#include "us_hydrodyn_saxs.h"
+
+class US_EXTERN  US_Hydrodyn_Xsr : public QFrame
+{
+   Q_OBJECT
+
+      friend class US_Hydrodyn_Saxs;
+
+   public:
+      US_Hydrodyn_Xsr( 
+                      US_Hydrodyn *us_hydrodyn,
+                      QWidget     *p = 0,
+                      const char   *name = 0
+                      );
+      ~US_Hydrodyn_Xsr();
+
+   private:    
+
+      US_Config               *USglobal;
+      
+      QLabel                  *lbl_title;
+
+      QPushButton             *pb_start;
+      QProgressBar            *progress;
+      QPushButton             *pb_stop;
+
+      QFont                   ft;
+      QTextEdit               *editor;
+      QMenuBar                *m;
+
+      QPushButton             *pb_help;
+      QPushButton             *pb_cancel;
+
+      void                    editor_msg( QString color, QString msg );
+
+      QString                 filename;
+      vector < US_Saxs_Scan > data;
+      saxs_options *          our_saxs_options;
+      US_Hydrodyn *           us_hydrodyn;
+      US_Hydrodyn_Saxs *      saxs_window;
+      bool *                  saxs_widget;
+      
+      bool                    keep_files;
+
+      bool                    running;
+      
+      bool    run(
+                  QString                 out_filename,
+                  vector < US_Saxs_Scan > data,
+                  bool                    keep_files = false
+                  );
+      QString error_msg;
+      
+   private slots:
+
+      void setupGUI();
+
+      void start();
+      void stop();
+
+      void clear_display();
+      void update_font();
+      void save();
+
+      void cancel();
+      void help();
+
+      void update_enables();
+
+   protected slots:
+
+      void closeEvent(QCloseEvent *);
+
+};
+
 #endif
