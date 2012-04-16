@@ -47,6 +47,16 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    // stage_path    .replace( QRegExp( "^.*:" ), "" );
    // stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
 
+   if ( cluster_id.isEmpty() ||
+        cluster_pw.isEmpty() )
+   {
+      QMessageBox::information( this, 
+                                tr("US-SOMO: Cluster Jobs"),
+                                tr("Cluster credentials must be set in Cluster Config before continuing"),
+                                0 );
+      return;
+   }
+
    if ( !update_files( false ) )
    {
       QMessageBox::information( this, 

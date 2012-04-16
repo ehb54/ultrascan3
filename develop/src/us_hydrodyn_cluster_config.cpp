@@ -26,6 +26,7 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    QDir::setCurrent( pkg_dir );
 
    setupGUI();
+   update_enables();
 
    global_Xpos += 30;
    global_Ypos += 30;
@@ -694,7 +695,7 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool /* error */ )
 
 void US_Hydrodyn_Cluster_Config::update_enables()
 {
-   pb_check_user    ->setEnabled( !comm_active );
+   pb_check_user    ->setEnabled( !comm_active && !le_cluster_id->text().isEmpty() && !le_cluster_pw->text().isEmpty() );
    pb_add_user      ->setEnabled( !comm_active && check_tried && check_not_ok );
    le_cluster_id    ->setEnabled( !comm_active );
    le_cluster_pw    ->setEnabled( !comm_active );
