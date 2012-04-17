@@ -4924,6 +4924,13 @@ QString US_Hydrodyn::default_differences_hydro()
    {
       str += QString(base + "Entered overlap cutoff: %1\n").arg(hydro.overlap);
    }
+
+   if ( hydro.overlap != default_hydro.overlap &&
+        hydro.overlap_cutoff )
+   {
+      str += QString(base + "Entered overlap cutoff: %1\n").arg(hydro.overlap);
+   }
+
    return str;
 }
 
@@ -4976,6 +4983,10 @@ QString US_Hydrodyn::default_differences_misc()
    if ( misc.avg_vbar != default_misc.avg_vbar )
    {
       str += QString(base + sub + "Residue vbar: %1\n").arg(misc.avg_vbar);
+   }
+   if ( misc.hydro_zeno )
+   {
+      str += QString(base + "Hydrodynamic method Zeno\n" );
    }
    return str;
 }

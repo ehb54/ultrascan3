@@ -633,7 +633,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 
    // display 2sd bars
    if ( qs.size() && 
-        plot_as_percent )
+        plot_as_percent &&
+        !plot_log )
    {
       double linepos = 5.0;
       double x[2];

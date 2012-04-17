@@ -20,6 +20,7 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    USglobal = new US_Config();
    cluster_window = (void *)p;
    check_tried = false;
+   comm_active = false;
 
    cluster_systems = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems;
    QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
@@ -650,7 +651,7 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool /* error */ )
          if ( !readJson.count( "password" ) ||
               readJson[ "password" ] != le_cluster_pw->text() )
          {
-            errors += QString( tr( "Incorrect password\n" ) );
+            errors += QString( tr( "Incorrect password.  Possibly another user has registered the same cluster id.\n" ) );
          } else {
             password_ok = true;
          }
@@ -699,6 +700,7 @@ void US_Hydrodyn_Cluster_Config::update_enables()
    pb_add_user      ->setEnabled( !comm_active && check_tried && check_not_ok );
    le_cluster_id    ->setEnabled( !comm_active );
    le_cluster_pw    ->setEnabled( !comm_active );
+   le_cluster_pw2   ->setEnabled( !comm_active );
    le_cluster_email ->setEnabled( !comm_active );
    le_submit_url    ->setEnabled( !comm_active );
    le_manage_url    ->setEnabled( !comm_active );
@@ -716,6 +718,28 @@ void US_Hydrodyn_Cluster_Config::check_user()
       QMessageBox::warning( this,
                             tr("US-SOMO: Cluster Config: Check user"), 
                             tr( "The passwords do not match" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( le_cluster_pw->text().length() < 8 )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "Enter a longer password" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( le_cluster_id->text().length() < 4 )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "Enter a longer cluster id" ),
                             QMessageBox::Ok,
                             QMessageBox::NoButton
                             );
