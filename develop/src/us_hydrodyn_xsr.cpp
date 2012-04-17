@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_xsr.h"
 
 #if !defined(QT4) && defined(Q_WS_WIN)
+#  if !defined( Q_WS_WIN )
 
 namespace xsr {
 
@@ -1291,6 +1292,7 @@ namespace xsr {
       }
 };
 
+#  endif
 #endif
 
 // ------- the class to run xsr

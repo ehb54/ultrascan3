@@ -1,7 +1,8 @@
 #ifndef US_HYDRODYN_XSR
 #define US_HYDRODYN_XSR
 
-#if !defined( QT4 ) && defined( WIN32 )
+# if !defined(QT4) && defined(Q_WS_WIN)
+#  if !defined( Q_WS_WIN )
 
 /****************************************************************** 
  ***                       mathFunctions.h                      *** 
@@ -364,6 +365,7 @@ int printPDB(grid_t *grid, char *filename);   /* prints a pbd verison of the gri
 
 int printInformation(calc_t *model, grid_t *grid, int cycle);   /* prints general information to an output file */
 
+#  endif
 # endif
 
 #include "us_saxs_util.h"
@@ -404,7 +406,6 @@ class US_EXTERN  US_Hydrodyn_Xsr : public QFrame
       void                    editor_msg( QString color, QString msg );
 
       QString                 filename;
-      vector < US_Saxs_Scan > data;
       saxs_options *          our_saxs_options;
       US_Hydrodyn *           us_hydrodyn;
       US_Hydrodyn_Saxs *      saxs_window;
@@ -414,11 +415,22 @@ class US_EXTERN  US_Hydrodyn_Xsr : public QFrame
 
       bool                    running;
       
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      vector < US_Saxs_Scan > data;
+
       bool    run(
                   QString                 out_filename,
                   vector < US_Saxs_Scan > data,
                   bool                    keep_files = false
                   );
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+
       QString error_msg;
       
    private slots:
