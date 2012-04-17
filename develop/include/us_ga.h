@@ -32,7 +32,7 @@ typedef struct {
                                 // the idea is to mutate the nodes' data space
   unsigned int (*hash)(void *);  // hash the data space
   void (*fprint_params)(FILE *, void *);  // display function for data params of element node
-  char *name;
+  const char *name;
 } element;
 
 #define CTL_NONE                0

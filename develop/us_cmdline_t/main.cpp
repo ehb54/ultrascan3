@@ -242,6 +242,8 @@ int main (int argc, char **argv)
              "               \t              \tCreate a solute file\n"
              "create_solutes2 \toutfile s_1 ff0_1 s_2 ff0_2\n"
              "               \t              \tCreate a solute file with two solutes\n"
+             "create_solutes3 \ndistributionfile outfile\n"
+             "               \t              \tCreate a solute file containing the solutes and concentrations of the specified distribution file\n"
              "mwl_info       \tinfile\tlist mwl file info\n"
              "check_limits   \tinfile        \tCheck an experiment analysis file for meniscus issues\n"
              "rmsd2          \tinfile1 infile2\tCompute rmsd between 2 experiment compatible experiment analysis files\n"
@@ -352,7 +354,9 @@ int main (int argc, char **argv)
             ds >> temp_solute.s;
             ds >> temp_solute.k;
             ds >> temp_solute.c;
-            ts << temp_solute.s << "," << temp_solute.k << "\t# s,k element " << j << "\n";
+            ts << temp_solute.s << "," 
+               << temp_solute.k << ","
+               << temp_solute.c << "\t# s,k,c element " << j << "\n";
          }
       }
       unsigned int float_params;
@@ -744,6 +748,7 @@ int main (int argc, char **argv)
       f_in.close();
       exit(0);
    }
+
 
    // #define DEBUG_CHECK_LIMITS
    // #define CHECK_LIMITS_EXTRA_INFO
@@ -1451,6 +1456,73 @@ int main (int argc, char **argv)
       QString cmd = "gnuplot " + f_out_g.name() + "\n";
       cout << "running gnuplot $ " + cmd;
       system(cmd);
+      exit(0);
+   }
+
+   if (cmds[0].lower() == "create_solutes3" ) 
+   {
+      if (cmds.size() != 3) 
+      {
+         printf(
+                "usage: %s %s distributionfile outfile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-1001);
+      }
+      QFile f_in(cmds[1]);
+      if (!f_in.open(IO_ReadOnly))
+      {
+         fprintf(stderr, "%s: File read error : %s\n", argv[0], argv[2]);
+         exit(-1002);
+      }
+
+      QFile f_out(cmds[2]);
+      if (!f_out.open(IO_WriteOnly))
+      {
+         fprintf(stderr, "%s: File create error : %s\n", argv[0], argv[3]);
+         exit(-1003);
+      }
+
+      QDataStream ds(&f_out);
+      QTextStream ts(&f_in);
+
+      vector < vector < Solute > > genes;
+      vector <Solute> solutes;
+      Solute tmp_solute;
+
+      ts.readLine();
+
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         if ( qsl.size() != 7 )
+         {
+            fprintf(stderr, "%s: distribution file contains insufficient columns (expected 7, read %3) : %s\n", argv[0], argv[1], qsl.size() );
+            exit(-1004);
+         }
+            
+         tmp_solute.s = qsl[ 1 ].toDouble();
+         tmp_solute.c = qsl[ 5 ].toDouble();
+         tmp_solute.k = qsl[ 6 ].toDouble();
+         solutes.push_back( tmp_solute );
+      }         
+      genes.push_back( solutes );
+      ds << (unsigned int) genes.size();
+      for (unsigned int i = 0; i < genes.size(); i++)
+      {
+         ds << (unsigned int) genes[i].size();
+         for (unsigned int j = 0; j < genes[i].size(); j++)
+         {
+            ds << genes[i][j].s;
+            ds << genes[i][j].k;
+            ds << genes[i][j].c;
+         }
+      }
+      ds << (unsigned int)0;
+      ds << (unsigned int)0;
+      f_out.close();
       exit(0);
    }
 

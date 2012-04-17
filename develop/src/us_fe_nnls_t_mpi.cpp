@@ -1116,6 +1116,22 @@ US_fe_nnls_t::init_run(const QString & data_file,
       ga_singleff0 = false;
    }
 
+   if ( gridopt == "checksoluterun" )
+   {
+      checksoluterun = true;
+      puts("checksoluterun");
+   } else {
+      checksoluterun = false;
+   }
+
+   if ( gridopt == "loadingvolumerun" )
+   {
+      loadingvolumerun = true;
+      puts("loadingvolumerun");
+   } else {
+      loadingvolumerun = false;
+   }
+
    this->gridopt = "no";
    maxrss = 0l;
 
@@ -2713,6 +2729,82 @@ void US_fe_nnls_t::match_rmsd(
 
 int US_fe_nnls_t::run(int status)
 {
+   if ( checksoluterun ) 
+   {
+      if ( !myrank )
+      {
+         printf( "rank 0 processing solute run\n" );
+         if ( solutions.size() != 1 )
+         {
+            fprintf( stderr, "error: only solutions size of 1 currently supported (value %u)\n", solutions.size() );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         
+         if ( experiment.size() != 1 )
+         {
+            fprintf( stderr, "error: only experiments size of 1 currently supported (value %u)\n", experiment.size() );
+            MPI_Finalize();
+            exit( 0 );
+         }
+
+         Simulation_values sv = calc_residuals( experiment,
+                                                solutions[ 0 ].component,
+                                                0e0,
+                                                0, 
+                                                0 );
+         printf( "rmsd: %g\n", sqrt( sv.variance ) );
+      }
+      MPI_Finalize();
+      exit( 0 );
+   }
+
+   if ( loadingvolumerun ) 
+   {
+      if ( !myrank )
+      {
+         printf( "rank 0 processing loading volume run\n" );
+         if ( solutions.size() != 1 )
+         {
+            fprintf( stderr, "error: only solutions size of 1 currently supported (value %u)\n", solutions.size() );
+            MPI_Finalize();
+            exit( 0 );
+         }
+
+         if ( experiment.size() != 1 )
+         {
+            fprintf( stderr, "error: only experiments size of 1 currently supported (value %u)\n", experiment.size() );
+            MPI_Finalize();
+            exit( 0 );
+         }
+
+         if ( !simulation_parameters_vec[ 0 ].band_forming )
+         {
+            fprintf( stderr, "error: experiment data is not band forming\n" );
+            MPI_Finalize();
+            exit( 0 );
+         }
+            
+
+         for ( double loading_volume = 0.005; 
+               loading_volume < 0.02;
+               loading_volume += 0.0001 )
+         {
+            
+            simulation_parameters_vec[ 0 ].band_volume = loading_volume;
+
+            Simulation_values sv = calc_residuals( experiment,
+                                                   solutions[ 0 ].component,
+                                                   0e0,
+                                                   0, 
+                                                   0 );
+            printf( "loading volume %g rmsd: %g\n", loading_volume, sqrt( sv.variance ) );
+         }
+      }
+      MPI_Finalize();
+      exit( 0 );
+   }
+
    if ( gridrmsd || gridrmsd2 ) 
    {
       // keyed by job_id ???

@@ -69,7 +69,7 @@ class US_MovingFEM : public QObject
       void fprintparams(FILE *);
       void fprintparams(FILE *, int);
       void fprintinitparams(FILE *, int);
-      void fprinterror(FILE *, char *);
+      void fprinterror(FILE *, const char *);
       
       // interpolate maps simulated grid  with a variable delta_r grid onto a 
       // fixed delta_r grid from experimental data, and also interpolates time

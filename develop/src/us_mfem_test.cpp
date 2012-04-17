@@ -1173,7 +1173,7 @@ int US_MovingFEM::filewrite(char *OutFileName)
    FILE *fout;
    int kkk;
    int j;
-   char *fwerror = "File write error";
+   const char *fwerror = "File write error";
 
    if(!sufficient_params)
    {
@@ -1235,7 +1235,7 @@ int US_MovingFEM::filewrite(char *OutFileName)
    return 0;
 }
 
-void US_MovingFEM::fprinterror(FILE *out, char *tag)
+void US_MovingFEM::fprinterror(FILE *out, const char *tag)
 {
    fprintf(out, "%s %s [%d]\n", 
            tag, LastErrorMessage, LastErrorNumber);
@@ -1464,4 +1464,3 @@ int US_MovingFEM::interpolate(struct mfem_data *expdata, struct mfem_data *simda
    delete [] ip_array;
    return 0;
 }
-

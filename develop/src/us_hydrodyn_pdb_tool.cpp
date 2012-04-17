@@ -4834,6 +4834,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
    // {
    // cout << "error key:" << error_keys[ i ] << endl;
    // }
+
    if ( error_keys.size() )
    {
       if ( QMessageBox::question(

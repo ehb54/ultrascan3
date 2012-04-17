@@ -144,7 +144,7 @@ double inverse_hessian_h;
 double conjugate_gradient_h;
 double steepest_descent_h;
 
-char *base_directory;
+const char *base_directory;
 
 double concentration_inactivate_prob;
 double generation_inactivate_prob;
@@ -5202,7 +5202,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 
 void set_command_opt(char *line)
 {
-   char *token[MAX_INPUT_LIN_OPTS];
+   const char *token[MAX_INPUT_LIN_OPTS];
    char *p, *p_new;
    int tokens;
    int valid_token;
