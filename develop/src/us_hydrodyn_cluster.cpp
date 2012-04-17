@@ -43,6 +43,33 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
         batch_window->cb_dmd->isChecked() ) 
       &&
       !batch_window->cb_compute_iq_avg->isChecked();
+   
+   QString unsupported;
+
+   if ( batch_window->cb_somo->isChecked() )
+   {
+      unsupported += tr( "Build SOMO bead model\n" );
+   }
+   if ( batch_window->cb_grid->isChecked() )
+   {
+      unsupported += tr( "Build A to B (Grid) bead model\n" );
+   }
+   if ( batch_window->cb_hydro->isChecked() )
+   {
+      unsupported += tr( "Calculate hydrodynamics\n" );
+   }
+   if ( batch_window->cb_prr->isChecked() )
+   {
+      unsupported += tr( "Compute SAXS P(r)\n" );
+   }
+   if ( batch_window->cb_prr->isChecked() )
+   {
+      unsupported += tr( "Compute SAXS P(r)\n" );
+   }
+   if ( batch_window->cb_compute_iq_avg->isChecked() )
+   {
+      unsupported += tr( "Compute I(q) average curves\n" );
+   }
 
    setupGUI();
 
@@ -156,6 +183,11 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
 
    editor_msg( "dark blue", options_summary() );
+   if ( unsupported.length() )
+   {
+      editor_msg( "red", tr( "Unsupported options selected:\n" + unsupported ) );
+   }
+
    unsigned int number_active;
    if ( batch_window->cb_dmd->isChecked() &&
         validate_csv_dmd( number_active ) )
