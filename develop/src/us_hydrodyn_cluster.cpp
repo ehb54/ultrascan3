@@ -2124,13 +2124,21 @@ bool US_Hydrodyn_Cluster::read_config()
    QFile f( configfile );
    if ( !f.exists() )
    {
-      errormsg = "config file does not exist";
-      return false;
-   }
+      // try and copy over cluster.config
+      US_File_Util ufu;
+      QString ref_config = USglobal->config_list.system_dir + "/etc/cluster.config";
+      if ( !ufu.copy( ref_config, configfile ) )
+      {
+         errormsg = QString( tr( "Error: Can not create blank cluster configuration file:" + ufu.errormsg ) );
+         return false;
+      } else {
+         editor_msg( "blue", tr( "Notice: Created default cluster configuration file." ) );
+      }
+   } 
 
    if ( !f.open( IO_ReadOnly ) )
    {
-      errormsg = "config file is not readable";
+      errormsg = "Error: Cluster configuration file is not readable";
       return false;
    }
 
@@ -2138,7 +2146,7 @@ bool US_Hydrodyn_Cluster::read_config()
    
    if ( ts.atEnd() )
    {
-      errormsg = "config file: premature end of file";
+      errormsg = "Error: Cluster configuration file: premature end of file";
       f.close();
       return false;
    }
