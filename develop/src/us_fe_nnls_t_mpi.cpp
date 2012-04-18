@@ -2994,7 +2994,7 @@ int US_fe_nnls_t::run(int status)
          printf( "%d: overall best rmd is %.7g\n", myrank, sqrt( best_var ) );
          printf( "%d: overall best lv is %.7g\n", myrank, best_lv );
          printf( "%d: overall best meniscus offset %.7g\n", myrank, best_meniscus );
-         WriteResults( experiment, best_sv, QString( "lv%gmo%gti%dri%d" )
+         WriteResults( experiment, best_sv, QString( "lv%1mo%1ti%1ri%1" )
                        .arg( best_lv )
                        .arg( best_meniscus )
                        .arg( fit_tinoise )
