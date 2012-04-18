@@ -60,6 +60,7 @@ ModelSystem model_system;
 ModelSystemConstraints model_system_constraints;
 
 static bool fitdiffs;
+static bool lock_relative_conc;
 
 static ModelSystem model_system_1comp;
 ModelSystem use_model_system;
@@ -1093,6 +1094,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
    job_udp_msg_iterative = "";
    job_udp_msg_meniscus = "";
    
+   lock_relative_conc = false;
+
    this->gridopt = gridopt;
    gridrmsd2 = false;
    if ( gridopt == "gridrmsd" )
@@ -2764,6 +2767,84 @@ int US_fe_nnls_t::run(int status)
       if ( !myrank )
       {
          printf( "rank 0 processing loading volume run\n" );
+         QFile f( "lvconfig" );
+         if ( !f.exists() )
+         {
+            fprintf( stderr, "error: lvconfig not found\n" 
+                     "format of file:\n"
+                     "start lv, end lv, delta lv\n"
+                     "start meniscus, end meniscus, delta meniscus\n"
+                     "lock relative conc # 0 or 1\n"
+                     );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         if ( !f.open( IO_ReadOnly ) )
+         {
+            fprintf( stderr, "error: lvconfig can not open\n" );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         QTextStream ts( &f );
+         QString qs = ts.readLine();
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         if ( qsl.size() < 3 )
+         {
+            fprintf( stderr, "error: lvconfig format error line 1\n" 
+                     "format of file:\n"
+                     "start lv, end lv, delta lv\n"
+                     "start meniscus, end meniscus, delta meniscus\n"
+                     "lock relative conc # 0 or 1\n"
+                     );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         double lv_start = qsl[ 0 ].toDouble();
+         double lv_end   = qsl[ 1 ].toDouble();
+         double lv_delta = qsl[ 2 ].toDouble();
+                                               
+         qs = ts.readLine();
+         qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         if ( qsl.size() < 3 )
+         {
+            fprintf( stderr, "error: lvconfig format error line 2\n" 
+                     "format of file:\n"
+                     "start lv, end lv, delta lv\n"
+                     "start meniscus, end meniscus, delta meniscus\n"
+                     "lock relative conc # 0 or 1\n"
+                     );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         double meniscus_start = qsl[ 0 ].toDouble();
+         double meniscus_end   = qsl[ 1 ].toDouble();
+         double meniscus_delta = qsl[ 2 ].toDouble();
+         
+         qs = ts.readLine();
+         qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         if ( qsl.size() < 1 )
+         {
+            fprintf( stderr, "error: lvconfig format error line 2\n" 
+                     "format of file:\n"
+                     "start lv, end lv, delta lv\n"
+                     "start meniscus, end meniscus, delta meniscus\n"
+                     "lock relative conc # 0 or 1\n"
+                     );
+            MPI_Finalize();
+            exit( 0 );
+         }
+         lock_relative_conc = (bool) qsl[ 0 ].toUInt();
+
+         f.close();
+
+         printf( "optionssummary:\n"
+                 "lv %g:%g by %g\n"
+                 "meniscus %g:%g by %g\n"
+                 "lock relative conc %s\n", 
+                 lv_start, lv_end, lv_delta,
+                 meniscus_start, meniscus_end, meniscus_delta,
+                 lock_relative_conc ? "yes" : "no" );
+            
          if ( solutions.size() != 1 )
          {
             fprintf( stderr, "error: only solutions size of 1 currently supported (value %u)\n", solutions.size() );
@@ -2785,22 +2866,41 @@ int US_fe_nnls_t::run(int status)
             exit( 0 );
          }
             
+         double best_var = 1e99;
+         double best_lv  = 1e99;
+         double best_meniscus  = 1e99;
+         Simulation_values best_sv;
 
-         for ( double loading_volume = 0.005; 
-               loading_volume < 0.02;
-               loading_volume += 0.0001 )
+         for ( double meniscus_offset = meniscus_start; 
+               meniscus_offset <= meniscus_end;
+               meniscus_offset += meniscus_delta )
          {
-            
-            simulation_parameters_vec[ 0 ].band_volume = loading_volume;
-
-            Simulation_values sv = calc_residuals( experiment,
-                                                   solutions[ 0 ].component,
-                                                   0e0,
-                                                   0, 
-                                                   0 );
-            printf( "loading volume %g rmsd: %g\n", loading_volume, sqrt( sv.variance ) );
+            for ( double loading_volume = lv_start; 
+                  loading_volume <= lv_end;
+                  loading_volume += lv_delta )
+            {
+               simulation_parameters_vec[ 0 ].band_volume = loading_volume;
+               
+               Simulation_values sv = calc_residuals( experiment,
+                                                      solutions[ 0 ].component,
+                                                      meniscus_offset,
+                                                      0, 
+                                                      0 );
+               printf( "meniscus %g loading volume %g rmsd: %g\n", meniscus_offset, loading_volume, sqrt( sv.variance ) );
+               if ( sv.variance < best_var )
+               {
+                  best_lv = loading_volume;
+                  best_meniscus = meniscus_offset;
+                  best_var = sv.variance;
+                  best_sv = sv;
+               }
+            }
          }
+         printf( "best sv is %g\n", best_lv );
+         printf( "best meniscus offset %g\n", best_meniscus );
+         WriteResults( experiment, best_sv, "loading volume", 0, 0 );
       }
+
       MPI_Finalize();
       exit( 0 );
    }
