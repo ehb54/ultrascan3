@@ -1023,8 +1023,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-         return(overlap_check(true, true, true,
-                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
+         int overlap_check_results = overlap_check( true, true, true,
+                                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
 
@@ -1168,8 +1169,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models_as_loaded = bead_models;
          editor->append(QString("\nMolecular weight: %1 Daltons\n\n").arg(tmp_mw));
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-         return(overlap_check(true, true, true,
-                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
+         int overlap_check_results = overlap_check( true, true, true,
+                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
 
@@ -1612,8 +1614,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
                              , &bead_model);
          }
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-         return(overlap_check(true, true, true,
-                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
+         int overlap_check_results = overlap_check( true, true, true,
+                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
 
