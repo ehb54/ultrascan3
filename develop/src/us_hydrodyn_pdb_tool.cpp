@@ -99,7 +99,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    // }
 
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
-   editor->setMaximumWidth( editor->width() * 4 );
+   editor->setMaximumWidth( editor->width() * 3 );
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 ); // csv_width, 100 + csv_height );
 }
@@ -195,7 +195,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lv_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_csv->setEnabled(true);
-   lv_csv->setMinimumWidth( 200 );
+   lv_csv->setMinimumWidth( 175 );
 
    lv_csv->addColumn( "Models" );
    for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
@@ -367,7 +367,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lv_csv2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_csv2->setEnabled(true);
-   lv_csv2->setMinimumWidth( 200 );
+   lv_csv2->setMinimumWidth( 175 );
 
    lv_csv2->addColumn( "Models" );
    for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
