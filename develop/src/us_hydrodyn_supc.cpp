@@ -5669,12 +5669,12 @@ overlap()
          // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
          float diff = sqrt(dist) - (dt[i].r + dt[j].r);
          diff = ((int)((diff * decpow) + (diff > 0 ? 0.5 : -0.5))) / (float)decpow;
-         if ( diff < - overlap_tolerance ) 
+         if ( diff < - overlap_tolerance * 1.04 ) 
          {
             printf("\n%s%d%s%d%s%.6f\n", "Notice: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
                    -(sqrt(dist) - (dt[i].r + dt[j].r)));
          }
-         if ( diff < -(overlap_tolerance * 1.04) )
+         if ( diff < -( ( 0.001 + overlap_tolerance ) * 1.04) )
          {
             editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
                                                -(sqrt(dist) - (dt[i].r + dt[j].r))));
