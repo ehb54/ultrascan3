@@ -2,41 +2,47 @@
 #		copypkg-mac.sh  - copy ultrascan3 directories to pkg/ultrascan3
 
 ME=`whoami`
+RSYNC="rsync -av --exclude=.svn"
+SRCDIR=~/us3/ultrascan3
+PKGDIR=~/us3/pkg
+PDIRS=""
+
+for D in ultrascan3 somo Frameworks; do
+  DDIR=${PKGDIR}/${D}
+  if [ ! -d ${DDIR} ]; then
+    mkdir ${DDIR}
+  fi
+  PDIRS="${PDIRS} ${DDIR}"
+done
 echo "Enter Admin password --"
-sudo chown -R $ME:admin ~/us3/pkg/ultrascan3 ~/us3/pkg/somo ~/us3/pkg/Frameworks
+sudo chown -R $ME:admin ${PDIRS}
 
 for D in doc etc bin lib; do
-  SDIR=~/us3/ultrascan3/${D}
-  DDIR=~/us3/pkg/ultrascan3/${D}
-  echo "(cd "${SDIR}";tar cvf - *) 2>/dev/null | (cd "$DDIR";tar xvf -)"
-  (cd "${SDIR}";tar cvf - * .??*) | (cd "$DDIR";tar xvf -)
+  SDIR=${SRCDIR}/${D}
+  DDIR=${PKGDIR}/ultrascan3
+  echo "${RSYNC} ${SDIR} ${DDIR}"
+  ${RSYNC} ${SDIR} ${DDIR}
 done
 
 for D in bin demo doc lib saxs structures; do
-  SDIR=~/us3/ultrascan3/somo/${D}
-  DDIR=~/us3/pkg/somo/${D}
-  echo "(cd "${SDIR}";tar cvf - *) 2>/dev/null | (cd "$DDIR";tar xvf -)"
-  (cd "${SDIR}";tar cvf - * .??*) | (cd "$DDIR";tar xvf -)
+  SDIR=${SRCDIR}/somo/${D}
+  DDIR=${PKGDIR}/somo
+  echo "${RSYNC} ${SDIR} ${DDIR}"
+  ${RSYNC} ${SDIR} ${DDIR}
 done
 
-SDIR=~/us3/ultrascan3/Frameworks
-DDIR=~/us3/pkg/Frameworks
-echo "(cd "${SDIR}";tar cvf - *) 2>/dev/null | (cd "$DDIR";tar xvf -)"
-(cd "${SDIR}";tar cvf - * .??*) | (cd "$DDIR";tar xvf -)
+SDIR=${SRCDIR}/Frameworks
+DDIR=${PKGDIR}
+echo "${RSYNC} ${SDIR} ${DDIR}"
+${RSYNC} ${SDIR} ${DDIR}
 
-cd ~/us3/pkg/ultrascan3
-find ./ -name '.svn' | xargs rm -Rf
-cd ~/us3/pkg/somo
-find ./ -name '.svn' | xargs rm -Rf
-cd ~/us3/pkg/Frameworks
-find ./ -name '.svn' | xargs rm -Rf
-
-cd ~/us3/pkg
+cd ${PKGDIR}
+/bin/rm -rf ultrascan3/somo/develop ultrascan3/somo/*.pl
 pwd
+find ./ -name '.svn' | xargs rm -Rf
 echo "find ./ -name '.svn' -print"
 find ./ -name '.svn' -print
 
-/bin/rm -rf ~/us3/pkg/ultrascan3/somo/develop ~/us3/pkg/ultrascan3/somo/*.pl
-
 echo "(Possibly) Enter Admin password --"
-sudo chown -R root:admin ~/us3/pkg/ultrascan3 ~/us3/pkg/somo ~/us3/pkg/Frameworks
+sudo chown -R root:admin ${PDIRS}
+

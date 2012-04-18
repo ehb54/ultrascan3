@@ -32,9 +32,7 @@ if [ ! -d ${DESTDIR}/somo ]; then
 fi
 
 echo "Copy somo doc,demo,test directories"
-##cp -rp ${SRCDIR}/somo/bin ${DESTDIR}/somo/
 cp -rp ${SRCDIR}/somo/doc ${DESTDIR}/somo/
-
 cp -rp ${US2DIR}/somo/demo ${DESTDIR}/somo/
 cp -rp ${US2DIR}/somo/test ${DESTDIR}/somo/
 
