@@ -132,6 +132,27 @@ static void sv_conc_rescale(Simulation_values *sv, unsigned int e) {
    }
 }
 
+typedef struct dbl_index_struct {
+   double val;
+   int    rank;
+} dbl_index;
+
+void minloc_dbl_index( void *in, void *inout, int *len, MPI_Datatype *type)
+{
+   /* ignore type, just trust that it's our dbl_index type */
+   dbl_index *invals    = (dbl_index *)in;
+   dbl_index *inoutvals = (dbl_index *)inout;
+   
+   for (int i=0; i<*len; i++) {
+      if (invals[i].val < inoutvals[i].val) {
+         inoutvals[i].val  = invals[i].val;
+         inoutvals[i].rank = invals[i].rank;
+      }
+   }
+   
+   return;
+}
+
 // only define one of these _TIMING!
 #define GLOBAL_JOB_TIMING
 // #define SHOW_TIMING
@@ -2219,7 +2240,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
    }
    else
    {
-      if (myrank)
+      if (myrank && !loadingvolumerun)
       {
          f.close();
       }
@@ -2764,117 +2785,166 @@ int US_fe_nnls_t::run(int status)
 
    if ( loadingvolumerun ) 
    {
+      printf( "%d: processing loading volume run\n", myrank );
+      QString usage = 
+         "format of file:\n"
+         "start lv, end lv, delta lv\n"
+         "start meniscus, end meniscus, delta meniscus\n"
+         "lock relative conc # 0 or 1\n"
+         "fit ti noise # 0 or 1\n"
+         "fit ri noise # 0 or 1\n";
+      
+      QFile f( "lvconfig" );
+      if ( !f.exists() )
+      {
+         fprintf( stderr, "%d: error: lvconfig not found\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -3 );
+         exit( 0 );
+      }
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         fprintf( stderr, "%d: error: lvconfig can not open\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -4 );
+         exit( 0 );
+      }
+      printf( "%d: file open\n", myrank ); fflush( stdout );
+      QTextStream ts( &f );
+      QString qs = ts.readLine();
+      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      if ( qsl.size() < 3 )
+      {
+         fprintf( stderr, "%d: error: lvconfig format error line 1\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -5 );
+         exit( 0 );
+      }
+      double lv_start = qsl[ 0 ].toDouble();
+      double lv_end   = qsl[ 1 ].toDouble();
+      double lv_delta = qsl[ 2 ].toDouble();
+      
+      qs = ts.readLine();
+      qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      if ( qsl.size() < 3 )
+      {
+         fprintf( stderr, "%d: error: lvconfig format error line 2\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -6 );
+         exit( 0 );
+      }
+      double meniscus_start = qsl[ 0 ].toDouble();
+      double meniscus_end   = qsl[ 1 ].toDouble();
+      double meniscus_delta = qsl[ 2 ].toDouble();
+      
+      qs = ts.readLine();
+      qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      if ( qsl.size() < 1 )
+      {
+         fprintf( stderr, "%d: error: lvconfig format error line 3\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -7 );
+         exit( 0 );
+      }
+      lock_relative_conc = (bool) qsl[ 0 ].toUInt();
+      
+      qs = ts.readLine();
+      qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      if ( qsl.size() < 1 )
+      {
+         fprintf( stderr, "%d: error: lvconfig format error line 4\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -8 );
+         exit( 0 );
+      }
+      fit_tinoise = qsl[ 0 ].toUInt();
+      
+      qs = ts.readLine();
+      qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      if ( qsl.size() < 1 )
+      {
+         fprintf( stderr, "%d: error: lvconfig format error line 5\n%s", myrank, usage.ascii() );
+         MPI_Abort( MPI_COMM_WORLD, -9 );
+         exit( 0 );
+      }
+      fit_rinoise = qsl[ 0 ].toUInt();
+      
+      f.close();
+      
+      printf( "%d: file read\n", myrank ); fflush( stdout );
+      
       if ( !myrank )
       {
-         printf( "rank 0 processing loading volume run\n" );
-         QFile f( "lvconfig" );
-         if ( !f.exists() )
-         {
-            fprintf( stderr, "error: lvconfig not found\n" 
-                     "format of file:\n"
-                     "start lv, end lv, delta lv\n"
-                     "start meniscus, end meniscus, delta meniscus\n"
-                     "lock relative conc # 0 or 1\n"
-                     );
-            MPI_Finalize();
-            exit( 0 );
-         }
-         if ( !f.open( IO_ReadOnly ) )
-         {
-            fprintf( stderr, "error: lvconfig can not open\n" );
-            MPI_Finalize();
-            exit( 0 );
-         }
-         QTextStream ts( &f );
-         QString qs = ts.readLine();
-         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
-         if ( qsl.size() < 3 )
-         {
-            fprintf( stderr, "error: lvconfig format error line 1\n" 
-                     "format of file:\n"
-                     "start lv, end lv, delta lv\n"
-                     "start meniscus, end meniscus, delta meniscus\n"
-                     "lock relative conc # 0 or 1\n"
-                     );
-            MPI_Finalize();
-            exit( 0 );
-         }
-         double lv_start = qsl[ 0 ].toDouble();
-         double lv_end   = qsl[ 1 ].toDouble();
-         double lv_delta = qsl[ 2 ].toDouble();
-                                               
-         qs = ts.readLine();
-         qsl = QStringList::split( QRegExp( "\\s+" ), qs );
-         if ( qsl.size() < 3 )
-         {
-            fprintf( stderr, "error: lvconfig format error line 2\n" 
-                     "format of file:\n"
-                     "start lv, end lv, delta lv\n"
-                     "start meniscus, end meniscus, delta meniscus\n"
-                     "lock relative conc # 0 or 1\n"
-                     );
-            MPI_Finalize();
-            exit( 0 );
-         }
-         double meniscus_start = qsl[ 0 ].toDouble();
-         double meniscus_end   = qsl[ 1 ].toDouble();
-         double meniscus_delta = qsl[ 2 ].toDouble();
-         
-         qs = ts.readLine();
-         qsl = QStringList::split( QRegExp( "\\s+" ), qs );
-         if ( qsl.size() < 1 )
-         {
-            fprintf( stderr, "error: lvconfig format error line 2\n" 
-                     "format of file:\n"
-                     "start lv, end lv, delta lv\n"
-                     "start meniscus, end meniscus, delta meniscus\n"
-                     "lock relative conc # 0 or 1\n"
-                     );
-            MPI_Finalize();
-            exit( 0 );
-         }
-         lock_relative_conc = (bool) qsl[ 0 ].toUInt();
-
-         f.close();
-
          printf( "optionssummary:\n"
                  "lv %g:%g by %g\n"
                  "meniscus %g:%g by %g\n"
-                 "lock relative conc %s\n", 
+                 "lock relative conc %s\n"
+                 "fit_tinoise %d\n"
+                 "fit_rinoise %d\n", 
                  lv_start, lv_end, lv_delta,
                  meniscus_start, meniscus_end, meniscus_delta,
-                 lock_relative_conc ? "yes" : "no" );
-            
-         if ( solutions.size() != 1 )
-         {
-            fprintf( stderr, "error: only solutions size of 1 currently supported (value %u)\n", solutions.size() );
-            MPI_Finalize();
-            exit( 0 );
-         }
+                 lock_relative_conc ? "yes" : "no" ,
+                 fit_tinoise,
+                 fit_rinoise
+                 );
+      }         
+      
+      if ( solutions.size() != 1 )
+      {
+         fprintf( stderr, "%d: error: only solutions size of 1 currently supported (value %u)\n", myrank, solutions.size() );
+         MPI_Finalize();
+         exit( 0 );
+      }
 
-         if ( experiment.size() != 1 )
-         {
-            fprintf( stderr, "error: only experiments size of 1 currently supported (value %u)\n", experiment.size() );
-            MPI_Finalize();
-            exit( 0 );
-         }
+      if ( experiment.size() != 1 )
+      {
+         fprintf( stderr, "%d: error: only experiments size of 1 currently supported (value %u)\n", myrank, experiment.size() );
+         MPI_Finalize();
+         exit( 0 );
+      }
+      
+      if ( !simulation_parameters_vec[ 0 ].band_forming )
+      {
+         fprintf( stderr, "%d: error: experiment data is not band forming\n" );
+         MPI_Finalize();
+         exit( 0 );
+      }
+      
+      /* create our new data type */
+      dbl_index local;
+      dbl_index global;
+      
+      MPI_Datatype mpi_dbl_index;
+      MPI_Datatype types[2] = { MPI_DOUBLE, MPI_INT };
+      MPI_Aint disps[2] = { offsetof(dbl_index, val),
+                            offsetof(dbl_index, rank), };
+                            
+      int lens[2] = {1,1};
+      MPI_Type_create_struct(2, lens, disps, types, &mpi_dbl_index);
+      MPI_Type_commit(&mpi_dbl_index);
 
-         if ( !simulation_parameters_vec[ 0 ].band_forming )
-         {
-            fprintf( stderr, "error: experiment data is not band forming\n" );
-            MPI_Finalize();
-            exit( 0 );
-         }
-            
-         double best_var = 1e99;
-         double best_lv  = 1e99;
-         double best_meniscus  = 1e99;
-         Simulation_values best_sv;
+      /* create our operator */
+      MPI_Op mpi_minloc_dbl_index;
+      MPI_Op_create(minloc_dbl_index, 1, &mpi_minloc_dbl_index);
 
-         for ( double meniscus_offset = meniscus_start; 
-               meniscus_offset <= meniscus_end;
-               meniscus_offset += meniscus_delta )
+      double best_var = 1e99;
+      double best_lv  = 1e99;
+      double best_meniscus  = 1e99;
+      Simulation_values best_sv;
+      
+      int proc_counter = 0;
+      
+      printf( "%d: entering loop\n", myrank ); fflush( stdout );
+      printf( "%d: mpi barrier enter\n", myrank );
+      
+      if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+      {
+         MPI_Abort( MPI_COMM_WORLD, -10 );
+         exit( -10 );
+      }         
+
+      for ( double meniscus_offset = meniscus_start; 
+            meniscus_offset <= meniscus_end;
+            meniscus_offset += meniscus_delta )
+      {
+         printf( "%d: proc counter %d meniscus %g\n", myrank, proc_counter, meniscus_offset ); fflush(stdout);
+         if ( ( proc_counter++ % npes ) == myrank )
          {
+            printf( "%d: I have meniscus %g\n", myrank, meniscus_offset ); fflush(stdout);
             for ( double loading_volume = lv_start; 
                   loading_volume <= lv_end;
                   loading_volume += lv_delta )
@@ -2886,7 +2956,8 @@ int US_fe_nnls_t::run(int status)
                                                       meniscus_offset,
                                                       0, 
                                                       0 );
-               printf( "meniscus %g loading volume %g rmsd: %g\n", meniscus_offset, loading_volume, sqrt( sv.variance ) );
+               printf( "%d: meniscus %g loading volume %g rmsd: %g\n", myrank, meniscus_offset, loading_volume, sqrt( sv.variance ) ); 
+               fflush( stdout );
                if ( sv.variance < best_var )
                {
                   best_lv = loading_volume;
@@ -2896,9 +2967,38 @@ int US_fe_nnls_t::run(int status)
                }
             }
          }
-         printf( "best sv is %g\n", best_lv );
-         printf( "best meniscus offset %g\n", best_meniscus );
-         WriteResults( experiment, best_sv, "loading volume", 0, 0 );
+      }
+      printf( "%d: mpi barrier enter\n", myrank );
+      
+      if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+      {
+         MPI_Abort( MPI_COMM_WORLD, -10 );
+         exit( -10 );
+      }         
+      printf( "%d: best var is %.7g\n", myrank, best_var );
+      printf( "%d: best lv is %.7g\n", myrank, best_lv );
+      printf( "%d: best meniscus offset %.7g\n", myrank, best_meniscus );
+      
+      double all_best_var[ npes ];
+      all_best_var[ myrank ] = best_var;
+         
+      local.val = best_var;
+      local.rank = myrank;
+      
+      MPI_Allreduce( &local, &global, 1, mpi_dbl_index, mpi_minloc_dbl_index, MPI_COMM_WORLD );
+      
+      if ( global.rank == myrank )
+      {
+         printf( "%d: I have the best result - writing\n", myrank );
+         printf( "%d: overall best var is %.7g\n", myrank, best_var );
+         printf( "%d: overall best rmd is %.7g\n", myrank, sqrt( best_var ) );
+         printf( "%d: overall best lv is %.7g\n", myrank, best_lv );
+         printf( "%d: overall best meniscus offset %.7g\n", myrank, best_meniscus );
+         WriteResults( experiment, best_sv, QString( "lv%gmo%gti%dri%d" )
+                       .arg( best_lv )
+                       .arg( best_meniscus )
+                       .arg( fit_tinoise )
+                       .arg( fit_rinoise ).ascii(), 0, 0 );
       }
 
       MPI_Finalize();
