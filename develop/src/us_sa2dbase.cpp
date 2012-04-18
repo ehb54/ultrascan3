@@ -1061,7 +1061,7 @@ void sa2d_script(Simulation_values (*simulation_routine)(Simulation_values), cha
       exit(-1);
    }
    char line[MAX_INPUT_LIN_LENGTH];
-   char *token[MAX_INPUT_LIN_OPTS];
+   const char *token[MAX_INPUT_LIN_OPTS];
    char *p, *p_new;
    unsigned int tokens;
    unsigned int i;

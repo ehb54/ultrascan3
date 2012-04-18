@@ -110,7 +110,7 @@ US_Hydrodyn_Pdb_Tool::~US_Hydrodyn_Pdb_Tool()
 
 void US_Hydrodyn_Pdb_Tool::setupGUI()
 {
-   int minHeight1 = 30;
+   int minHeight1 = 22;
 
    lbl_title = new QLabel("PDB Editor", this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -140,44 +140,44 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    editor->setMinimumHeight(300);
 
    pb_split_pdb = new QPushButton(tr("Split"), this);
-   pb_split_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_split_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_split_pdb->setMinimumHeight(minHeight1);
    pb_split_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_split_pdb, SIGNAL(clicked()), SLOT(split_pdb()));
 
    pb_join_pdbs = new QPushButton(tr("Join"), this);
-   pb_join_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_join_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_join_pdbs->setMinimumHeight(minHeight1);
    pb_join_pdbs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_join_pdbs->setEnabled( true );
    connect(pb_join_pdbs, SIGNAL(clicked()), SLOT(join_pdbs()));
 
    pb_merge = new QPushButton(tr("Cut/Splice"), this);
-   pb_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_merge->setMinimumHeight(minHeight1);
    pb_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_merge, SIGNAL(clicked()), SLOT(merge()));
 
    pb_hybrid_split = new QPushButton(tr("Hybrid extract"), this);
-   pb_hybrid_split->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_hybrid_split->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_hybrid_split->setMinimumHeight(minHeight1);
    pb_hybrid_split->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_hybrid_split, SIGNAL(clicked()), SLOT(hybrid_split()));
 
    pb_h_to_chainX = new QPushButton(tr("H to chain X"), this);
-   pb_h_to_chainX->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_h_to_chainX->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_h_to_chainX->setMinimumHeight(minHeight1);
    pb_h_to_chainX->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_h_to_chainX, SIGNAL(clicked()), SLOT(h_to_chainX()));
 
    pb_help = new QPushButton(tr("Help"), this);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
@@ -193,9 +193,9 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv = new QListView( this );
    lv_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lv_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lv_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_csv->setEnabled(true);
-   lv_csv->setMinimumWidth( 300 );
+   lv_csv->setMinimumWidth( 200 );
 
    lv_csv->addColumn( "Models" );
    for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
@@ -217,133 +217,133 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    te_csv->setMaximumHeight( minHeight1 * 4 );
    
    pb_csv_load_1 = new QPushButton(tr("Load"), this);
-   pb_csv_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_load_1->setMinimumHeight(minHeight1);
    pb_csv_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_load_1, SIGNAL(clicked()), SLOT(csv_load_1()));
 
    pb_csv_load = new QPushButton(tr("Load All"), this);
-   pb_csv_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_load->setMinimumHeight(minHeight1);
    pb_csv_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_load, SIGNAL(clicked()), SLOT(csv_load()));
 
    pb_csv_visualize = new QPushButton(tr("Visualize"), this);
-   pb_csv_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_visualize->setMinimumHeight(minHeight1);
    pb_csv_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_visualize, SIGNAL(clicked()), SLOT(csv_visualize()));
 
    pb_csv_save = new QPushButton(tr("Save"), this);
-   pb_csv_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_save->setMinimumHeight(minHeight1);
    pb_csv_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_save, SIGNAL(clicked()), SLOT(csv_save()));
 
    pb_csv_undo = new QPushButton(tr("Undo"), this);
-   pb_csv_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_undo->setMinimumHeight(minHeight1);
    pb_csv_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_undo, SIGNAL(clicked()), SLOT(csv_undo()));
 
    pb_csv_clear = new QPushButton(tr("Clear"), this);
-   pb_csv_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_clear->setMinimumHeight(minHeight1);
    pb_csv_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_clear, SIGNAL(clicked()), SLOT(csv_clear()));
 
    pb_csv_cut = new QPushButton(tr("Cut"), this);
-   pb_csv_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_cut->setMinimumHeight(minHeight1);
    pb_csv_cut->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_cut, SIGNAL(clicked()), SLOT(csv_cut()));
 
    pb_csv_copy = new QPushButton(tr("Copy"), this);
-   pb_csv_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_copy->setMinimumHeight(minHeight1);
    pb_csv_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_copy, SIGNAL(clicked()), SLOT(csv_copy()));
 
    pb_csv_paste = new QPushButton(tr("Paste"), this);
-   pb_csv_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_paste->setMinimumHeight(minHeight1);
    pb_csv_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_paste, SIGNAL(clicked()), SLOT(csv_paste()));
 
    pb_csv_paste_new = new QPushButton(tr("Paste as new"), this);
-   pb_csv_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_paste_new->setMinimumHeight(minHeight1);
    pb_csv_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_paste_new, SIGNAL(clicked()), SLOT(csv_paste_new()));
 
    pb_csv_merge = new QPushButton(tr("Merge"), this);
-   pb_csv_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_merge->setMinimumHeight(minHeight1);
    pb_csv_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_merge, SIGNAL(clicked()), SLOT(csv_merge()));
 
    pb_csv_angle = new QPushButton(tr("Angle"), this);
-   pb_csv_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_angle->setMinimumHeight(minHeight1);
    pb_csv_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_angle, SIGNAL(clicked()), SLOT(csv_angle()));
 
    pb_csv_reseq = new QPushButton(tr("Reseq"), this);
-   pb_csv_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_reseq->setMinimumHeight(minHeight1);
    pb_csv_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_reseq, SIGNAL(clicked()), SLOT(csv_reseq()));
 
    pb_csv_check = new QPushButton(tr("Check"), this);
-   pb_csv_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_check->setMinimumHeight(minHeight1);
    pb_csv_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_check, SIGNAL(clicked()), SLOT(csv_check()));
 
    pb_csv_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
-   pb_csv_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_find_alt->setMinimumHeight(minHeight1);
    pb_csv_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_find_alt, SIGNAL(clicked()), SLOT(csv_find_alt()));
 
    pb_csv_clash_report = new QPushButton(tr("Pairwise distance"), this);
-   pb_csv_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_clash_report->setMinimumHeight(minHeight1);
    pb_csv_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_clash_report, SIGNAL(clicked()), SLOT(csv_clash_report()));
 
    pb_csv_sel_clear = new QPushButton(tr("Clear selection"), this);
-   pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_clear->setMinimumHeight(minHeight1);
    pb_csv_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_clear, SIGNAL(clicked()), SLOT(csv_sel_clear()));
 
    pb_csv_sel_clean = new QPushButton(tr("Clean"), this);
-   pb_csv_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_clean->setMinimumHeight(minHeight1);
    pb_csv_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_clean, SIGNAL(clicked()), SLOT(csv_sel_clean()));
 
    pb_csv_sel_invert = new QPushButton(tr("Invert"), this);
-   pb_csv_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_invert->setMinimumHeight(minHeight1);
    pb_csv_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
 
    pb_csv_sel_chain = new QPushButton(tr("Chain"), this);
-   pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_chain->setMinimumHeight(minHeight1);
    pb_csv_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_chain, SIGNAL(clicked()), SLOT(csv_sel_chain()));
 
    pb_csv_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
-   pb_csv_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_nearest_atoms->setMinimumHeight(minHeight1);
    pb_csv_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv_sel_nearest_atoms()));
 
    pb_csv_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
-   pb_csv_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_nearest_residues->setMinimumHeight(minHeight1);
    pb_csv_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv_sel_nearest_residues()));
@@ -365,9 +365,9 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2 = new QListView( this );
    lv_csv2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_csv2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lv_csv2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lv_csv2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_csv2->setEnabled(true);
-   lv_csv2->setMinimumWidth( 300 );
+   lv_csv2->setMinimumWidth( 200 );
 
    lv_csv2->addColumn( "Models" );
    for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
@@ -386,139 +386,139 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    te_csv2->setMaximumHeight( minHeight1 * 4 );
 
    pb_csv2_load_1 = new QPushButton(tr("Load"), this);
-   pb_csv2_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_load_1->setMinimumHeight(minHeight1);
    pb_csv2_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_load_1, SIGNAL(clicked()), SLOT(csv2_load_1()));
 
    pb_csv2_load = new QPushButton(tr("Load All"), this);
-   pb_csv2_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_load->setMinimumHeight(minHeight1);
    pb_csv2_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_load, SIGNAL(clicked()), SLOT(csv2_load()));
 
    pb_csv2_visualize = new QPushButton(tr("Visualize"), this);
-   pb_csv2_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_visualize->setMinimumHeight(minHeight1);
    pb_csv2_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_visualize, SIGNAL(clicked()), SLOT(csv2_visualize()));
 
    pb_csv2_dup = new QPushButton(tr("Dup"), this);
-   pb_csv2_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_dup->setMinimumHeight(minHeight1);
    pb_csv2_dup->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_dup, SIGNAL(clicked()), SLOT(csv2_dup()));
 
    pb_csv2_save = new QPushButton(tr("Save"), this);
-   pb_csv2_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_save->setMinimumHeight(minHeight1);
    pb_csv2_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_save, SIGNAL(clicked()), SLOT(csv2_save()));
 
    pb_csv2_undo = new QPushButton(tr("Undo"), this);
-   pb_csv2_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_undo->setMinimumHeight(minHeight1);
    pb_csv2_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_undo, SIGNAL(clicked()), SLOT(csv2_undo()));
 
    pb_csv2_clear = new QPushButton(tr("Clear"), this);
-   pb_csv2_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_clear->setMinimumHeight(minHeight1);
    pb_csv2_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_clear, SIGNAL(clicked()), SLOT(csv2_clear()));
 
    pb_csv2_cut = new QPushButton(tr("Cut"), this);
-   pb_csv2_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_cut->setMinimumHeight(minHeight1);
    pb_csv2_cut->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_cut, SIGNAL(clicked()), SLOT(csv2_cut()));
 
    pb_csv2_copy = new QPushButton(tr("Copy"), this);
-   pb_csv2_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_copy->setMinimumHeight(minHeight1);
    pb_csv2_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_copy, SIGNAL(clicked()), SLOT(csv2_copy()));
 
    pb_csv2_paste = new QPushButton(tr("Paste"), this);
-   pb_csv2_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_paste->setMinimumHeight(minHeight1);
    pb_csv2_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_paste, SIGNAL(clicked()), SLOT(csv2_paste()));
 
    pb_csv2_paste_new = new QPushButton(tr("Paste as new"), this);
-   pb_csv2_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_paste_new->setMinimumHeight(minHeight1);
    pb_csv2_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_paste_new, SIGNAL(clicked()), SLOT(csv2_paste_new()));
 
    pb_csv2_merge = new QPushButton(tr("Merge"), this);
-   pb_csv2_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_merge->setMinimumHeight(minHeight1);
    pb_csv2_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_merge, SIGNAL(clicked()), SLOT(csv2_merge()));
 
    pb_csv2_angle = new QPushButton(tr("Angle"), this);
-   pb_csv2_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_angle->setMinimumHeight(minHeight1);
    pb_csv2_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_angle, SIGNAL(clicked()), SLOT(csv2_angle()));
 
    pb_csv2_reseq = new QPushButton(tr("Reseq"), this);
-   pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_reseq->setMinimumHeight(minHeight1);
    pb_csv2_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_reseq, SIGNAL(clicked()), SLOT(csv2_reseq()));
 
    pb_csv2_check = new QPushButton(tr("Check"), this);
-   pb_csv2_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_check->setMinimumHeight(minHeight1);
    pb_csv2_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_check, SIGNAL(clicked()), SLOT(csv2_check()));
 
    pb_csv2_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
-   pb_csv2_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_find_alt->setMinimumHeight(minHeight1);
    pb_csv2_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_find_alt, SIGNAL(clicked()), SLOT(csv2_find_alt()));
 
    pb_csv2_clash_report = new QPushButton(tr("Pairwise Distance"), this);
-   pb_csv2_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_clash_report->setMinimumHeight(minHeight1);
    pb_csv2_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_clash_report, SIGNAL(clicked()), SLOT(csv2_clash_report()));
 
    pb_csv2_sel_clear = new QPushButton(tr("Clear selection"), this);
-   pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_clear->setMinimumHeight(minHeight1);
    pb_csv2_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_clear, SIGNAL(clicked()), SLOT(csv2_sel_clear()));
 
    pb_csv2_sel_clean = new QPushButton(tr("Clean"), this);
-   pb_csv2_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_clean->setMinimumHeight(minHeight1);
    pb_csv2_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_clean, SIGNAL(clicked()), SLOT(csv2_sel_clean()));
 
    pb_csv2_sel_invert = new QPushButton(tr("Invert"), this);
-   pb_csv2_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_invert->setMinimumHeight(minHeight1);
    pb_csv2_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
 
    pb_csv2_sel_chain = new QPushButton(tr("Chain"), this);
-   pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_chain->setMinimumHeight(minHeight1);
    pb_csv2_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_chain, SIGNAL(clicked()), SLOT(csv2_sel_chain()));
 
    pb_csv2_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
-   pb_csv2_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_nearest_atoms->setMinimumHeight(minHeight1);
    pb_csv2_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv2_sel_nearest_atoms()));
 
    pb_csv2_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
-   pb_csv2_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv2_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_nearest_residues->setMinimumHeight(minHeight1);
    pb_csv2_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv2_sel_nearest_residues()));
