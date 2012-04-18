@@ -18,6 +18,12 @@ if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
   ISWIN=1
 fi
 
+if [ `uname -s|grep -ci "cygwin"` -ne 0 ]; then
+  (cd programs/us;./revision.sh)
+  echo "*** A Windows build must be done in the MSYS window!!! ***"
+  exit 1
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0
