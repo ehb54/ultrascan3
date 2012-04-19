@@ -1208,6 +1208,7 @@ void US_Hydrodyn_Cluster_Status::stop()
    if ( comm_active )
    {
       submit_http.abort();
+      ftp.abort();
    }
    if ( system_proc_active )
    {

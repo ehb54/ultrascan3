@@ -21,6 +21,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    comm_active = false;
    submit_active = false;
    system_proc_active = false;
+   disable_updates = false;
 
    ftp_file = ( QFile * ) 0;
 

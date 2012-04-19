@@ -16,6 +16,7 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
    this->us_hydrodyn = us_hydrodyn;
    setCaption(tr("US-SOMO: Cluster Results"));
    USglobal = new US_Config();
+   disable_updates = false;
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    completed_dir = pkg_dir + SLASH + "completed";
