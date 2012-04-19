@@ -548,7 +548,8 @@ void US_Hydrodyn_Cluster::create_pkg()
          tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename, 0, this );
          filename = tar_filename;
          filename.replace( QRegExp( "\\.tar$" ), "" );
-         le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+         le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).dirPath() ) == 
+                                  QDir::convertSeparators( pkg_dir ) ?
                                   QFileInfo( filename ).fileName() : 
                                   filename );
       }
@@ -565,7 +566,8 @@ void US_Hydrodyn_Cluster::create_pkg()
                                                                          &path, &name, &ext, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
-            le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+            le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).dirPath() ) == 
+                                     QDir::convertSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
                                      filename );
          }
@@ -576,7 +578,8 @@ void US_Hydrodyn_Cluster::create_pkg()
             targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\.tgz$" ), "" );
-            le_output_name->setText( QFileInfo( filename ).dirPath() == pkg_dir ?
+            le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).dirPath() ) == 
+                                     QDir::convertSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
                                      filename );
          }
@@ -858,6 +861,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    map < QString, bool > already_added;
 
    bool last_unwritten;
+   US_Tar ust;
 
    for ( unsigned int this_i = 0; this_i < use_selected_files.size() * multi_grid_multiplier * advanced_multiplier; this_i++ )
    {
@@ -992,7 +996,7 @@ void US_Hydrodyn_Cluster::create_pkg()
             remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
          }
          remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
-         US_Tar ust;
+
          QString tar_name = use_file + ".tar";
          int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
          cout << "tar_name:" << tar_name << endl;
@@ -1094,7 +1098,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
       }
       remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
-      US_Tar ust;
+
       QString tar_name = use_file + ".tar";
       int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &qsl );
       cout << "tar_name:" << tar_name << endl;
@@ -1153,7 +1157,6 @@ void US_Hydrodyn_Cluster::create_pkg()
          to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
       }
 
-      US_Tar ust;
       QString tar_name = QString( "%1%2common_%3.tar" )
          .arg( QFileInfo( filename ).dirPath() )
          .arg( QDir::separator() )
@@ -1206,15 +1209,12 @@ void US_Hydrodyn_Cluster::create_pkg()
    if ( cb_for_mpi->isChecked() )
    {
       QString tarout = le_output_name->text() + ".tar";
-      US_Tar ust;
-      QStringList qsl;
       QStringList local_dest_files;
       for ( unsigned int i = 0; i < dest_files.size(); i++ )
       {
          local_dest_files << QFileInfo( dest_files[ i ] ).fileName();
       }
-
-      int result = ust.create( QFileInfo( tarout ).filePath(), local_dest_files, &qsl );
+      int result = ust.create( QFileInfo( tarout ).filePath(), local_dest_files );
       if ( result != TAR_OK )
       {
          editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( tarout ).arg( ust.explain( result ) ) );
