@@ -28,14 +28,22 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    // this caused US_Gzip::extract() to fail
    // I didn't try QFile::readBlock, ::writeBlock, so that may make the difference
 
+#if defined ( Q_WS_WIN )
+   FILE *fin = fopen( from, "rb" );
+#else 
    FILE *fin = fopen( from, "r" );
+#endif
    if ( !fin )
    {
       errormsg = QString( "Copy: could not open %1 for reading" ).arg( from );
       return false;
    }
 
+#if defined ( Q_WS_WIN )
+   FILE *fout = fopen( to, "wb" );
+#else
    FILE *fout = fopen( to, "w" );
+#endif
    if ( !fout )
    {
       errormsg = QString( "Copy: could not open %1 for writing" ).arg( from );
