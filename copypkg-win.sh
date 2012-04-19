@@ -26,6 +26,13 @@ cp -rp ${SRCDIR}/bin ${DESTDIR}/
 cp -rp ${SRCDIR}/etc ${DESTDIR}/
 chmod -R a+rw ${DESTDIR}/etc
 
+for F in ${DESTDIR}/etc/somo* ; do
+  if [ `echo ${F} | grep -ic '.new$'` -eq 0 ]; then
+    # Remove any */etc/somo* that does not end in '.new'
+    rm -f ${F}
+  fi
+done
+
 if [ ! -d ${DESTDIR}/somo ]; then
   echo "Creating ${DESTDIR}/somo"
   mkdir ${DESTDIR}/somo
