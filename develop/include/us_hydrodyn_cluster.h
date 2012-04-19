@@ -12,6 +12,7 @@
 #include <qtextedit.h>
 #include <qvalidator.h>
 #include <qtimer.h>
+#include <qsocket.h>
 
 #include "us_util.h"
 #include "us_file_util.h"

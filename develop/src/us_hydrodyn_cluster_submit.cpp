@@ -1200,6 +1200,57 @@ void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
    disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
    comm_active = false;
+   QString current_http_error;
+   if ( error )
+   {
+      switch( submit_http.error() )
+      {
+      case QHttp::NoError :
+         current_http_error = tr( "No error occurred." );
+         break;
+
+      case QHttp::HostNotFound:
+         current_http_error = tr( "The host name lookup failed." );
+         break;
+
+      case QHttp::ConnectionRefused:
+         current_http_error = tr( "The server refused the connection." );
+         break;
+
+      case QHttp::UnexpectedClose:
+         current_http_error = tr( "The server closed the connection unexpectedly." );
+         break;
+
+      case QHttp::InvalidResponseHeader:
+         current_http_error = tr( "The server sent an invalid response header." );
+         break;
+
+      case QHttp::WrongContentLength:
+         current_http_error = tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
+         break;
+
+      case QHttp::Aborted:
+         current_http_error = tr( "The request was aborted with abort()." );
+         break;
+
+      case QHttp::UnknownError:
+      default:
+         current_http_error = tr( "Unknown Error." );
+         break;
+      }
+      cout << current_http_error << endl;
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config"), 
+                            tr( QString( "There was a error with the management server:\n%1" )
+                                .arg( current_http_error ) ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      submit_active = false;
+      editor_msg( "red", tr( "Error: " ) + current_http_error );
+      update_enables();
+      return;
+   }
    emit process_next();
 }
 

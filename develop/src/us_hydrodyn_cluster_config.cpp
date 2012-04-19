@@ -151,6 +151,12 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    connect(pb_add_user, SIGNAL(clicked()), SLOT(add_user()));
    pb_add_user->setEnabled( false );
 
+   pb_reset = new QPushButton(tr("Reset"), this);
+   pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_reset->setMinimumHeight(minHeight1);
+   pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
+
    lbl_systems = new QLabel(tr("Systems"), this);
    lbl_systems->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_systems->setMinimumHeight(minHeight1);
@@ -240,6 +246,7 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    QHBoxLayout *hbl_check_add_user = new QHBoxLayout( 0 );
    hbl_check_add_user->addWidget( pb_check_user );
    hbl_check_add_user->addWidget( pb_add_user );
+   hbl_check_add_user->addWidget( pb_reset );
 
    QHBoxLayout *hbl_add_del = new QHBoxLayout( 0 );
    hbl_add_del->addSpacing( 4 );
@@ -325,7 +332,7 @@ void US_Hydrodyn_Cluster_Config::save_config()
               domain_to_dir[ domain ] != dir )
          {
             QMessageBox::warning( this, 
-                                  tr( lbl_title->text() ),
+                                  lbl_title->text(),
                                   QString( tr( "Staging locations for duplicate physical servers must be identical\n"
                                                "There is an inconsistancy with stage '%1' found with server '%2'\n"
                                                 "Can not save unless this is corrected\n" ) )
@@ -362,7 +369,7 @@ void US_Hydrodyn_Cluster_Config::save_config()
    if ( !((US_Hydrodyn_Cluster *)cluster_window)->write_config() )
    {
       QMessageBox::warning( this, 
-                            tr( lbl_title->text() ),
+                            lbl_title->text(),
                             tr( ((US_Hydrodyn_Cluster *)cluster_window)->errormsg ) );
    } else {
       cout << ((US_Hydrodyn_Cluster *)cluster_window)->list_config();
@@ -606,8 +613,48 @@ void US_Hydrodyn_Cluster_Config::http_requestFinished ( int id, bool error  )
    cout << "http: requestFinished " << id << " " << error << "\n";
 }
 
-void US_Hydrodyn_Cluster_Config::http_done ( bool /* error */ )
+void US_Hydrodyn_Cluster_Config::http_done ( bool error )
 {
+   cout << "http_done error " << error << endl;
+   if ( error )
+   {
+      switch( submit_http.error() )
+      {
+      case QHttp::NoError :
+         current_http_error = tr( "No error occurred." );
+         break;
+
+      case QHttp::HostNotFound:
+         current_http_error = tr( "The host name lookup failed." );
+         break;
+
+      case QHttp::ConnectionRefused:
+         current_http_error = tr( "The server refused the connection." );
+         break;
+
+      case QHttp::UnexpectedClose:
+         current_http_error = tr( "The server closed the connection unexpectedly." );
+         break;
+
+      case QHttp::InvalidResponseHeader:
+         current_http_error = tr( "The server sent an invalid response header." );
+         break;
+
+      case QHttp::WrongContentLength:
+         current_http_error = tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
+         break;
+
+      case QHttp::Aborted:
+         current_http_error = tr( "The request was aborted with abort()." );
+         break;
+
+      case QHttp::UnknownError:
+      default:
+         current_http_error = tr( "Unknown Error." );
+         break;
+      }
+      cout << current_http_error << endl;
+   }
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
@@ -617,6 +664,19 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool /* error */ )
    disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
    comm_active = false;
+   if ( error )
+   {
+         QMessageBox::warning( this,
+                               tr("US-SOMO: Cluster Config"), 
+                               tr( QString( "There was a error with the management server:\n%1" )
+                                   .arg( current_http_error ) ),
+                               QMessageBox::Ok,
+                               QMessageBox::NoButton
+                               );
+         update_enables();
+         return;
+   }                               
+                             
    if ( comm_mode == "add_user" )
    {
       if ( current_response_status == "Success" )
@@ -698,6 +758,7 @@ void US_Hydrodyn_Cluster_Config::update_enables()
 {
    pb_check_user    ->setEnabled( !comm_active && !le_cluster_id->text().isEmpty() && !le_cluster_pw->text().isEmpty() );
    pb_add_user      ->setEnabled( !comm_active && check_tried && check_not_ok );
+   pb_reset         ->setEnabled( !comm_active );
    le_cluster_id    ->setEnabled( !comm_active );
    le_cluster_pw    ->setEnabled( !comm_active );
    le_cluster_pw2   ->setEnabled( !comm_active );
@@ -724,7 +785,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   if ( le_cluster_pw->text().length() < 8 )
+   if ( le_cluster_pw->text().length() < 6 )
    {
       QMessageBox::warning( this,
                             tr("US-SOMO: Cluster Config: Check user"), 
@@ -746,13 +807,74 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   comm_active = true;
-   comm_mode   = "check_user";
-   check_not_ok = true;
-   current_response_status = "";
-   update_enables();
+   if ( le_cluster_email->text().isEmpty() )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The email address is empty" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( !le_cluster_email->text().contains( QRegExp( "^\\w+@\\S+\\.\\w+$" ) ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The email address is improperly formatted" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( le_manage_url->text().isEmpty() )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The Job Management URL is empty" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( le_submit_url->text().isEmpty() )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The Job Submit URL is empty" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( !le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The Job Management URL is improperly formatted" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
+
+   if ( !le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) )
+   {
+      QMessageBox::warning( this,
+                            tr("US-SOMO: Cluster Config: Check user"), 
+                            tr( "The Job Submit URL is improperly formatted" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      return;
+   }
    
    current_http_response = "";
+   current_http_error = "";
 
    QString msg_request = 
       QString( "%1/%2.json" )
@@ -776,6 +898,12 @@ void US_Hydrodyn_Cluster_Config::check_user()
    cout << "msg_request is " << msg_request << endl;
    cout << "manage_url_host is " << manage_url_host << endl;
    cout << "manage_url_port is " << manage_url_port << endl;
+
+   comm_active = true;
+   comm_mode   = "check_user";
+   check_not_ok = true;
+   current_response_status = "";
+   update_enables();
 
    connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
    connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
@@ -888,4 +1016,98 @@ void US_Hydrodyn_Cluster_Config::update_manage_url( const QString & )
 {
    check_tried = false;
    update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::check_socket( QString /* name */, QString /* port */ )
+{
+   comm_active = true;
+   socket_hostfound = false;
+   socket_is_connected = false;
+   update_enables();
+
+   connect( &test_socket, SIGNAL( socket_hostFound() ), this, SLOT( socket_socket_hostFound() ) );
+   connect( &test_socket, SIGNAL( socket_connected() ), this, SLOT( socket_socket_connected() ) );
+   connect( &test_socket, SIGNAL( socket_connectionClosed() ), this, SLOT( socket_socket_connectionClosed() ) );
+   connect( &test_socket, SIGNAL( socket_delayedCloseFinished() ), this, SLOT( socket_socket_delayedCloseFinished() ) );
+   connect( &test_socket, SIGNAL( socket_readyRead() ), this, SLOT( socket_socket_readyRead() ) );
+   connect( &test_socket, SIGNAL( socket_bytesWritten ( int nbytes ) ), this, SLOT( socket_socket_bytesWritten ( int nbytes ) ) );
+   connect( &test_socket, SIGNAL( socket_error ( int ) ), this, SLOT( socket_socket_error ( int ) ) );
+}
+
+void US_Hydrodyn_Cluster_Config::socket_hostFound ()
+{
+   socket_hostfound = true;
+   cout << "socket_hostFound\n";
+}
+
+void US_Hydrodyn_Cluster_Config::socket_connected ()
+{
+   socket_is_connected = true;
+   cout << "socket_connected\n";
+}
+
+void US_Hydrodyn_Cluster_Config::socket_connectionClosed ()
+{
+   cout << "socket_connectionClosed\n";
+   comm_active = false;
+   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_hostFound() ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_connected() ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_connectionClosed() ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_delayedCloseFinished() ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_readyRead() ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_bytesWritten ( int nbytes ) ), 0, 0 );
+   disconnect( &test_socket, SIGNAL( socket_error ( int ) ), 0, 0 );
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::socket_delayedCloseFinished ()
+{
+   cout << "socket_delayedCloseFinished\n";
+}
+
+void US_Hydrodyn_Cluster_Config::socket_readyRead ()
+{
+   cout << "socket_readyRead\n";
+}
+
+void US_Hydrodyn_Cluster_Config::socket_bytesWritten ( int nbytes )
+{
+   cout << "socket_bytesWritten " << nbytes << "\n";
+}
+
+void US_Hydrodyn_Cluster_Config::socket_error ( int error )
+{
+   cout << "socket_error " << error << "\n";
+   test_socket.close();
+   comm_active = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Config::reset()
+{
+   if ( le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) &&
+        le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
+        QMessageBox::Yes != QMessageBox::question(
+                                                  this,
+                                                  lbl_title->text(),
+                                                  tr("Resetting will replace the configuration with the defaults.\n"
+                                                     "Are you sure?" ),
+                                                  QMessageBox::Yes, 
+                                                  QMessageBox::No | QMessageBox::Default
+                                                  ) )
+   {
+      return;
+   }
+   if( !QFile::remove( "config" ) )
+   {
+      QMessageBox::warning( this,
+                            lbl_title->text(),
+                            tr( "Could not remove existing config file" ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton );
+      return;
+   }
+   ((US_Hydrodyn_Cluster *)cluster_window)->read_config();
+   close();
 }

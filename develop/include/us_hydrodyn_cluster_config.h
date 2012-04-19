@@ -67,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QPushButton   *pb_add_new;
       QPushButton   *pb_delete_system;
       
+      QPushButton   *pb_reset;
       QPushButton   *pb_save_config;
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
@@ -86,11 +87,17 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QHttp         submit_http;
       QString       current_http;
       QString       current_http_response;
+      QString       current_http_error;
       QString       current_response_status;
       bool          check_tried;
       bool          check_not_ok;
       void          update_enables();
       
+      QSocket       test_socket;
+      void          check_socket( QString name, QString port );
+      bool          socket_hostfound;
+      bool          socket_is_connected;
+
    private slots:
 
       void setupGUI();
@@ -110,6 +117,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void add_new();
       void delete_system();
 
+      void reset();
       void save_config();
       void cancel();
       void help();
@@ -122,6 +130,14 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void http_requestStarted ( int id );
       void http_requestFinished ( int id, bool error );
       void http_done ( bool error );
+
+      void socket_hostFound ();
+      void socket_connected ();
+      void socket_connectionClosed ();
+      void socket_delayedCloseFinished ();
+      void socket_readyRead ();
+      void socket_bytesWritten ( int nbytes );
+      void socket_error ( int );
 
    protected slots:
 
