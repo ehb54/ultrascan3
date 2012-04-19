@@ -27,11 +27,18 @@ fi
 echo "PKGDIR=${PKGDIR}"
 
 (cd ${PKGDIR};mkdir etc bin lib)
-for D in etc bin lib; do
+for D in etc bin lib us3-update.sh; do
   SDIR=${SRCDIR}/${D}
   DDIR=${PKGDIR}
   echo "${RSYNC} ${SDIR} ${DDIR}"
   ${RSYNC} ${SDIR} ${DDIR}
+done
+
+for F in ${PKGDIR}/etc/somo*; do
+  if [ `echo ${F} | grep -ic '.new$'` -eq 0 ]; then
+    # Remove any etc/somo* that does not end in '.new'
+    /bin/rm -f ${F}
+  fi
 done
 
 SDIR=${SRCDIR}/somo/lib

@@ -24,6 +24,13 @@ for D in doc etc bin lib; do
   ${RSYNC} ${SDIR} ${DDIR}
 done
 
+for F in ${PKGDIR}/ultrascan3/etc/somo*; do
+  if [ `echo ${F}|grep -ic 'new$'` -eq 0 ]; then
+    # If not '*/etc/somo*.new', remove it
+    /bin/rm -f ${F}
+  fi
+done
+
 for D in bin demo doc lib saxs structures; do
   SDIR=${SRCDIR}/somo/${D}
   DDIR=${PKGDIR}/somo
