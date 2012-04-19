@@ -818,7 +818,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   if ( !le_cluster_email->text().contains( QRegExp( "^\\w+@\\S+\\.\\w+$" ) ) )
+   if ( !le_cluster_email->text().contains( QRegExp( "^\\S+@\\S+\\.\\w+$" ) ) )
    {
       QMessageBox::warning( this,
                             tr("US-SOMO: Cluster Config: Check user"), 
