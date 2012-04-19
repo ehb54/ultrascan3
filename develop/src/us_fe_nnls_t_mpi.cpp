@@ -60,7 +60,6 @@ ModelSystem model_system;
 ModelSystemConstraints model_system_constraints;
 
 static bool fitdiffs;
-static bool lock_relative_conc;
 
 static ModelSystem model_system_1comp;
 ModelSystem use_model_system;
@@ -1115,8 +1114,6 @@ US_fe_nnls_t::init_run(const QString & data_file,
    job_udp_msg_iterative = "";
    job_udp_msg_meniscus = "";
    
-   lock_relative_conc = false;
-
    this->gridopt = gridopt;
    gridrmsd2 = false;
    if ( gridopt == "gridrmsd" )
@@ -2841,7 +2838,7 @@ int US_fe_nnls_t::run(int status)
          MPI_Abort( MPI_COMM_WORLD, -7 );
          exit( 0 );
       }
-      lock_relative_conc = (bool) qsl[ 0 ].toUInt();
+      bool lock_relative_conc = (bool) qsl[ 0 ].toUInt();
       
       qs = ts.readLine();
       qsl = QStringList::split( QRegExp( "\\s+" ), qs );
@@ -2951,11 +2948,20 @@ int US_fe_nnls_t::run(int status)
             {
                simulation_parameters_vec[ 0 ].band_volume = loading_volume;
                
-               Simulation_values sv = calc_residuals( experiment,
-                                                      solutions[ 0 ].component,
-                                                      meniscus_offset,
-                                                      0, 
-                                                      0 );
+               Simulation_values sv = 
+                  lock_relative_conc ?
+                  calc_residuals_locked( experiment,
+                                         solutions[ 0 ].component,
+                                         meniscus_offset,
+                                         0, 
+                                         0 ) 
+                  :
+                  calc_residuals( experiment,
+                                  solutions[ 0 ].component,
+                                  meniscus_offset,
+                                  0, 
+                                  0 );
+
                printf( "%d: meniscus %g loading volume %g rmsd: %g\n", myrank, meniscus_offset, loading_volume, sqrt( sv.variance ) ); 
                fflush( stdout );
                if ( sv.variance < best_var )
@@ -7558,4 +7564,1363 @@ bool readCenterpieceInfo(vector <struct centerpieceInfo> *cp_info_vector)
    {
       return(false);
    }
+}
+
+// this is a special routine for a single solute model
+// don't want to add extra logic to std calc residuals
+Simulation_values US_fe_nnls_t::calc_residuals_locked(vector <struct mfem_data> experiment,
+                                                      vector < Solute > solutes,
+                                                      double meniscus_offset,
+                                                      int return_all_solutes, 
+                                                      unsigned int exp_pos)
+{
+   //   printf("%d: calc_residuals\n", myrank); fflush(stdout);
+#if defined(USE_US_TIMER)
+   us_timers.start_timer( "calc residuals" );
+#endif               
+
+#if defined(SAVE_SOLUTES)
+   save_solutes(solutes);
+#endif
+
+#if defined(DEBUG_SCALING)
+   for(unsigned int e = 0; e < experiment.size(); e++) {
+      printf("%d: in calc residuals~~  (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+             myrank,
+             exp_concentrations[e],
+             e,
+             experiment[e].scan[10].conc[10]);
+   }
+#endif
+   Simulation_values sv;
+
+#if defined(JOB_TIMING_CR)
+
+   printf("job_timing_cr size %u\n", (unsigned int)solutes.size());
+   fflush(stdout);
+# if defined(JOB_TIMING_CRMP)
+
+   printf("job_timing_crmp size %u\n", (unsigned int)solutes.size());
+   fflush(stdout);
+   unsigned int use_size, tmp_uint;
+   vector<Solute> crmp_save_solutes = solutes;
+   vector<struct mfem_data> save_experiment = experiment;
+   for (use_size = 1; use_size <= crmp_save_solutes.size(); use_size *= 2)
+   {
+      printf("job_timing_crmp %u of %u\n", use_size, (unsigned int)crmp_save_solutes.size());
+      fflush(stdout);
+      solutes.clear();
+      experiment = save_experiment;
+      for (tmp_uint = 0; tmp_uint < use_size; tmp_uint++)
+      {
+         solutes.push_back(crmp_save_solutes[tmp_uint]);
+      }
+# endif
+      gettimeofday(&start_tv_cr, NULL);
+#endif
+
+      vector<double> ti_noise;
+      vector<double> ri_noise;
+      // #if defined(DO_RESIDUALS)
+      //   float residual = 0;
+      vector<Solute> save_solutes = solutes;
+      vector<struct mfem_data> residuals = experiment;
+      vector<struct mfem_data> save_experiment = experiment;
+      QString str;
+      double *nnls_a,
+         *nnls_b,
+         *nnls_x,
+         nnls_rnorm, *nnls_wp, *nnls_zzp, initial_concentration = 1.0;
+      int *nnls_indexp, result;
+      vector<struct mfem_data> fem_data = experiment;
+      struct mfem_initial initCVector[experiment.size()];
+      unsigned int i, j, k = 0, count;
+      i = 0;
+      unsigned int ti_noise_size = 0;
+      unsigned int ri_noise_size = 0;
+      for (j = 0; j < experiment.size(); j++)
+      {
+         i += experiment[j].radius.size() * experiment[j].scan.size();
+         ti_noise_size += experiment[j].radius.size();
+         ri_noise_size += experiment[j].scan.size();
+      }
+      if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+      {
+         for (j = 0; j < experiment.size(); j++)
+         {
+            i += experiment[j].radius.size() * (experiment[j].scan.size() - 1);
+         }
+      }
+      unsigned int total_points_size = i;
+
+      j = solutes.size();
+      //   printf("i %d j %d\n", i, j);
+      nnls_a = new double[i * j];   // contains the model functions,
+      // end-to-end
+      //   unsigned int a_size = i * j;
+      nnls_b = new double[i];   // contains the experimental data
+      unsigned int b_size = i;
+      nnls_zzp = new double[i];   // pre-allocated working space for nnls
+      nnls_x = new double[j];   // the solution vector, pre-allocated for
+      // nnls
+      nnls_wp = new double[j];   // pre-allocated working space for nnls,
+      // On exit, wp[] will contain the dual
+      // solution vector, wp[i]=0.0 for all i in
+      // set p and wp[i]<=0.0 for all i in set
+      // z. */
+      nnls_indexp = new int[j];
+      //   printf("%d: calc_residuals 1\n", myrank); fflush(stdout);
+      US_MovingFEM *mfem[experiment.size()];
+      for (i = 0; i < experiment.size(); i++)
+      {
+         mfem[i] = new US_MovingFEM(&fem_data[i], false);
+      }
+      //   mfem->fprintparams(stdout);
+
+      //   cerr << "p1\n";
+      // initialize experimental data array sizes and radius positions:
+      //   clear_data(&residuals);
+      //   printf("%d: calc_residuals 2\n", myrank); fflush(stdout);
+      for (i = 0; i < experiment.size(); i++)
+      {
+         initCVector[i].concentration.clear();
+         initCVector[i].radius.clear();
+      }
+      //   cerr << "p2\n";
+      //   printf("%g %g %g\n",
+      //   experiment.scan[0].conc[0],
+      //   experiment.scan[0].conc[5],
+      //   experiment.scan[5].conc[0]);
+
+      count = 0;
+      unsigned int e;
+      //      printf("%d: calc_residuals 3\n", myrank); fflush(stdout);
+      for (e = 0; e < experiment.size(); e++)
+      {
+         experiment[e].meniscus += meniscus_offset;
+         for (i = 0; i < experiment[e].scan.size(); i++)
+         {
+            for (j = 0; j < experiment[e].radius.size(); j++)
+            {
+               // populate the b vector for the NNLS routine with the model
+               // function:
+               nnls_b[count] = experiment[e].scan[i].conc[j];
+               count++;
+            }
+         }
+         if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+         {
+            for (i = 1; i < experiment[e].scan.size(); i++)
+            {
+               for (j = 0; j < experiment[e].radius.size(); j++)
+               {
+                  // populate the b vector for the NNLS routine with the model
+                  // function:
+                  nnls_b[count] = experiment[e].scan[i].conc[j] - experiment[e].scan[i - 1].conc[j];
+                  count++;   
+               }
+            }   
+         }
+      }
+      /*   printf("s20w_correction %.12g D20w_correction %.12g scan.size %d\n",
+           experiment.s20w_correction,
+           experiment.D20w_correction,
+           experiment.scan.size());
+           fflush(stdout);
+      */
+      // check this out later??
+      //   for (i=0; i < solutes.size(); i++) {
+      //   solutes[i].s /= experiment.s20w_correction;
+      //   }
+      //   cerr << "p3\n";
+      //   puts("calc_residuals 4"); fflush(stdout);
+
+#if defined(SHOW_TIMING)
+      gettimeofday(&start_tv, NULL);
+#endif
+      count = 0;
+      for (i = 0; i < solutes.size(); i++)
+      {
+         for (e = 0; e < experiment.size(); e++)
+         {
+            // for each term in the linear combination we need to reset the
+            // simulation vectors, the experimental vector simply keeps
+            // getting overwritten:
+            str.sprintf(tr
+                        ("Calculating Lamm Equation %d of %d\n"),
+                        i + 1, solutes.size());
+            //   cout << str;
+            //   cerr << "p3b\n";
+            clear_data(&fem_data[e]);
+            for (j = 0; j < experiment[e].scan.size(); j++)
+            {
+               for (k = 0; k < experiment[e].radius.size(); k++)
+               {
+                  // reset concentration to zero:
+                  experiment[e].scan[j].conc[k] = 0.0;
+               }
+            }
+            //   cerr << myrank << " p4\n";
+            double D_20w = (R * K20) /
+               (AVOGADRO * 18 * M_PI * pow(solutes[i].k * VISC_20W, 3.0/2.0) *
+                pow((fabs(solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+            double D_tb = D_20w/experiment[e].D20w_correction;
+
+#if defined(DEBUG_HYDRO)
+
+            printf("experiment %d s_correction: %.8g D_correction: %.8g\n",
+                   e, experiment[e].s20w_correction, experiment[e].D20w_correction);
+            printf("s_20w: %.8g s_tb: %.8g k: %.8g\n",
+                   solutes[i].s, solutes[i].s / experiment[e].s20w_correction, solutes[i].k);
+            printf("D_20w: %.8g D_tb: %.8g\n", D_20w, D_tb);
+            printf("AVOGADRO: %.8g VISC_20W: %.8g DENS_20W: %8g vbar20: %.8g R: %.8g\n\n", AVOGADRO, VISC_20W, DENS_20W, experiment[e].vbar20, R);
+            fflush(stdout);
+#endif
+            if (use_ra)
+            {
+               US_Astfem_RSA astfem_rsa(false);
+               use_model_system = model_system_1comp;
+               use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
+               use_model_system.component_vector[0].D = D_tb;
+               use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
+               use_simulation_parameters.meniscus += meniscus_offset;
+               vector<mfem_data> use_experiment;
+               use_experiment.push_back(experiment[e]);
+               astfem_rsa.setTimeCorrection(true);
+               astfem_rsa.setTimeInterpolation(false);
+               if(!fit_tinoise && use_simulation_parameters.band_forming) {
+                  use_simulation_parameters.band_firstScanIsConcentration = true;
+               } else {
+                  use_simulation_parameters.band_firstScanIsConcentration = false;
+               }
+#if defined(DEBUG_RA)
+               printf("call astfem_rsa.calculate s %g D %g\n", solutes[i].s, D_tb); fflush(stdout);
+               printf("use_simulation_paramters.simpoints %u\n", use_simulation_parameters.simpoints);
+#endif
+               astfem_rsa.calculate(&use_model_system, 
+                                    &use_simulation_parameters, 
+                                    &use_experiment, 
+                                    0, 
+                                    0, 
+                                    &rotor_list);
+#if defined(DEBUG_RA)
+               puts("return astfem_rsa.calculate"); fflush(stdout);
+#endif
+#if defined(SAVE_FOR_DISTANCE)
+               save_if_not(&use_experiment, e, solutes[i].s, solutes[i].k);
+#endif
+#if defined(DEBUG_RA_HEAVY1)
+               if(1 || !myrank) {
+                  unsigned int e = 0;
+                  unsigned int j;
+                  unsigned int k;
+                  for(j = 0; j < use_experiment[0].scan.size(); j++) {
+                     for(k = 0; k < use_experiment[0].scan[j].conc.size(); k++) {
+                        printf("%d: asftem experiment scan %lu pos %lu conc %g\n", myrank, j, k, use_experiment[e].scan[j].conc[k]); fflush(stdout);
+                     }
+                  }
+               }
+#endif
+               experiment[e] = use_experiment[0];
+            } else {
+               mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
+                                   (double) experiment[e].rpm,
+                                   experiment[e].scan[experiment[e].scan.size() - 1].time,
+                                   experiment[e].meniscus,
+                                   experiment[e].bottom,
+                                   initial_concentration,
+                                   &initCVector[e]);
+               // generate the next term of the linear combination:
+               //      printf("%d: calc_residuals 4\n", myrank); fflush(stdout);
+               //   puts("p5-1");fflush(stdout);
+               //   mfem[e]->fprintinitparams(stdout, myrank); fflush(stdout);
+               mfem[e]->skipEvents = true;
+                
+               mfem[e]->run();
+
+               //   puts("p5-2");fflush(stdout);
+
+               // printf("%d: calc_residuals back from mfem run\n", myrank); fflush(stdout);
+               // interpolate model function to the experimental data so
+               // dimension 1 in A matches dimension of B:
+               //   printf("meniscus A %g first radius %g\n"
+               //      "meniscus B %g first radius %g\n",
+               //      experiment[e].meniscus, experiment[e].radius[0],
+               //      fem_data.meniscus, fem_data.radius[0]);
+               //   fflush(stdout);
+
+               //   printf("%d: calc_residuals 5 interpolate\n", myrank); fflush(stdout);
+               mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+            } 
+
+            // puts("p5-3");fflush(stdout);
+            //   cerr << "p6\n";
+            //   printf("%d: calc_residuals 6\n", myrank); fflush(stdout);
+            for (j = 0; j < experiment[e].scan.size(); j++)
+            {
+               for (k = 0; k < experiment[e].radius.size(); k++)
+               {
+                  // populate the A matrix for the NNLS routine with the
+                  // model function:
+                  nnls_a[count] = experiment[e].scan[j].conc[k];
+                  count++;
+               }
+            }
+            if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+            {
+               for (j = 1; j < experiment[e].scan.size(); j++)
+               {
+                  for (k = 0; k < experiment[e].radius.size(); k++)
+                  {
+                     // populate the b vector for the NNLS routine with the model
+                     // function:
+                     nnls_a[count] = experiment[e].scan[j].conc[k] - experiment[e].scan[j - 1].conc[k];
+                     count++;   
+                  }
+               }   
+            }
+         } // for e
+      } // for i
+      //   cerr << "p7\n";
+      //   printf("fit_tinoise %d fit_rinoise %d\n", fit_tinoise, fit_rinoise);
+
+#if defined(SHOW_TIMING)
+      gettimeofday(&end_tv, NULL);
+      printf("mfem timing = %ld\n",
+             1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
+             start_tv.tv_usec);
+#endif
+      //   cout << tr("Calculating NNLS solution...");
+      experiment = save_experiment;
+      //   printf("%g %g %g\n",
+      //   experiment.scan[0].conc[0],
+      //   experiment.scan[0].conc[5],
+      //   experiment.scan[5].conc[0]);
+
+      if (fit_tinoise)
+      {
+         //      printf("solutes size %d\n", solutes.size());
+         //      printf("points %d ti_noise_size %d ri_noise_size %d b_size %d a_size %d\n",
+         //      total_points_size,
+         //      ti_noise_size,
+         //         ri_noise_size, b_size, a_size);
+         //   for (e = 0; e < experiment.size(); e++) {
+         //   printf("experiment %d scan size %d radius size %d\n",
+         //      e, experiment[e].scan.size(), experiment[e].radius.size());
+         //   }
+         //   fflush(stdout);
+
+         double *L = new double[b_size];   // this is Sum(concentration * Lamm) for the models after NNLS
+         double *L_bars = new double[ti_noise_size * solutes.size()];   // an average for each distribution
+         double *L_tildes = new double[ri_noise_size * solutes.size()];   // an average for each distribution
+
+         double small_a[solutes.size() * solutes.size()];
+         double small_b[solutes.size()];
+         double small_x[solutes.size()];
+
+         //   double (*nnls_a_pa)[solutes.size()][total_points_size] = (double (*)[solutes.size()][total_points_size])nnls_a;
+         //   double (*L_tildes_pa)[solutes.size()][ri_noise_size] = (double (*)[solutes.size()][ri_noise_size])L_tildes;
+         //   double (*L_bars_pa)[solutes.size()][ti_noise_size] = (double (*)[solutes.size()][ti_noise_size])L_bars;
+
+         //   printf("nnls_a[0][0] %g nnls_a[1][0] %g\n", nnls_a[0], nnls_a[total_points_size]); fflush(stdout);
+         //   printf("nnls_a_pa[0][0] %g nnls_a_pa[1][0] %g\n", (*nnls_a_pa)[0][0], (*nnls_a_pa)[1][0]); fflush(stdout);
+
+         double *L_bar = new double[ti_noise_size];   // a concentration weighted average
+         double *L_tilde = new double[ri_noise_size];
+         unsigned int l;
+         unsigned int countNZ;
+         unsigned int countL;
+         // unsigned int iterations = 0;
+         double *new_ti_noise = new double[ti_noise_size];
+         double *new_ri_noise = new double[ri_noise_size];
+
+         double *a_bar = new double[ti_noise_size];
+         double *a_tilde = new double[ri_noise_size];
+
+         // start with no noise
+         memset(new_ti_noise, 0, ti_noise_size * sizeof(double));
+         memset(new_ri_noise, 0, ri_noise_size * sizeof(double));
+
+         // compute a_bar, the average experiment signal at each radius
+         // compute a_tilde, the average experiment signal at each time
+         unsigned int i_offset, j_offset, exp_offset;
+
+         memset(a_tilde, 0, ri_noise_size * sizeof(double));
+         if (fit_rinoise)
+         {
+            i_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  for (j = 0; j < experiment[e].radius.size(); j++)
+                  {
+                     a_tilde[i + i_offset] += experiment[e].scan[i].conc[j];
+                  }
+                  a_tilde[i + i_offset] /= experiment[e].radius.size();
+               }
+               i_offset += experiment[e].scan.size();
+            }
+         }
+
+         memset(a_bar, 0, ti_noise_size * sizeof(double));
+         i_offset = j_offset = 0;
+         for (e = 0; e < experiment.size(); e++)
+         {
+            for (j = 0; j < experiment[e].radius.size(); j++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  // a_bar[j] += experiment[e].scan[i].conc[j];
+                  a_bar[j + j_offset] += experiment[e].scan[i].conc[j] - a_tilde[i + i_offset];
+               }
+               a_bar[j + j_offset] /= experiment[e].scan.size();
+            }
+            j_offset += experiment[e].radius.size();
+            i_offset += experiment[e].scan.size();
+         }
+         //   for (j = 0; j < 10; j++) {
+         //   printf(" %g", a_bar[j]);
+         //   }
+         //   puts("");
+
+         // compute the new nnls_b vector including noise
+         count = 0;
+
+         // compute L_tildes, the average model signal at each radius
+         memset(L_tildes, 0, ri_noise_size * sizeof(double) * solutes.size());
+
+         if (fit_rinoise)
+         {
+            exp_offset = i_offset = j_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (l = 0; l < solutes.size(); l++)
+               {
+                  for (i = 0; i < experiment[e].scan.size(); i++)
+                  {
+                     for (j = 0; j < experiment[e].radius.size(); j++)
+                     {
+                        L_tildes[l * ri_noise_size + i + i_offset] +=
+                           nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j];
+                     }
+                     L_tildes[l * ri_noise_size + i + i_offset] /= experiment[e].radius.size();
+                  }
+               }
+               i_offset += experiment[e].scan.size();
+               exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+            }
+         }
+
+         //   printf("L_tildes y0 %g\n", L_tildes[0]); fflush(stdout);
+         //   printf("L_tildes y1 %g\n", L_tildes[1 * ri_noise_size]); fflush(stdout);
+         //   printf("L_tildes x0 %g\n", (*L_tildes_pa)[0][0]); fflush(stdout);
+         //   printf("L_tildes x1 %g\n", (*L_tildes_pa)[1][0]); fflush(stdout);
+
+         i_offset = 0;
+         for (e = 0; e < experiment.size(); e++)
+         {
+            for (l = 0; l < 3; l++)
+            {
+               //      printf("L_tildes for eq %d solute %d i_ofs %d :", e, l, i_offset);
+               //      fflush(stdout);
+               for (i = 0; i < 10; i++)
+               {
+                  //      printf(" %g", L_tildes[l * ri_noise_size + i + i_offset]);
+                  //      fflush(stdout);
+               }
+               //      puts("");
+               //      fflush(stdout);
+            }
+            i_offset += experiment[e].scan.size();
+         }
+
+         // compute L_bars, the average for each equation
+         //   puts("ti nnls step 1 create L_bar");
+
+         memset(L_bars, 0, ti_noise_size * solutes.size() * sizeof(double));
+         exp_offset = i_offset = j_offset = 0;
+         for (e = 0; e < experiment.size(); e++)
+         {
+            //   printf("exp %u %u %u %u\n", e, exp_offset, j_offset, i_offset); fflush(stdout);
+            for (l = 0; l < solutes.size(); l++)
+            {
+               //      printf("l %d\n", l); fflush(stdout);
+               for (j = 0; j < experiment[e].radius.size(); j++)
+               {
+                  //      printf("j %d\n", j); fflush(stdout);
+                  for (i = 0; i < experiment[e].scan.size(); i++)
+                  {
+                     //      printf("1 %g\n",(*L_bars_pa)[l][j + j_offset]); fflush(stdout);
+                     //      printf("2 %g\n", (*nnls_a_pa)[l][exp_offset + i * experiment[e].radius.size() + j]); fflush(stdout);
+                     //      printf("3 %g\n", (*L_tildes_pa)[l][i + i_offset]); fflush(stdout);
+                     L_bars[l * ti_noise_size + j + j_offset] +=
+                        nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                        L_tildes[l * ri_noise_size + i + i_offset];
+                     //      if (l == 0 && j == 0) {
+                     //         printf("lji %d %d %d %g\n", l, j, i, L_bars[l * ti_noise_size + j + j_offset]); fflush(stdout);
+                     //}
+                  }
+                  L_bars[l * ti_noise_size + j + j_offset] /= experiment[e].scan.size();
+               }
+            }
+            exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+            j_offset += experiment[e].radius.size();
+            i_offset += experiment[e].scan.size();
+         }
+
+         //   for (j = 0; j < 10; j++) {
+         //   printf(" %g", L_bars[j]); fflush(stdout);
+         //   }
+         //   puts("");
+         //   fflush(stdout);
+
+         //   puts("ti nnls step 2 create the nnls matrix & rhs");
+         // unncessary?
+         {
+            unsigned int k;
+            double residual;
+            // setup small_a, small_b for the alternate nnls
+            memset(small_a, 0,
+                   solutes.size() * solutes.size() * sizeof(double));
+            memset(small_b, 0, solutes.size() * sizeof(double));
+            memset(small_x, 0, solutes.size() * sizeof(double));
+
+
+#if defined(SHOW_TIMING)
+
+            gettimeofday(&start_tv, NULL);
+#endif
+
+            exp_offset = i_offset = j_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (l = 0; l < solutes.size(); l++)
+               {
+                  // printf("l = %d of %d\r", l, solutes.size());
+                  // fflush(stdout);
+                  for (j = 0; j < experiment[e].radius.size(); j++)
+                  {
+                     for (i = 0; i < experiment[e].scan.size(); i++)
+                     {
+                        small_b[l] += (experiment[e].scan[i].conc[j] - a_bar[j + j_offset]) *
+                           (nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                            L_bars[l * ti_noise_size + j + j_offset]);
+                        for (k = 0; k < solutes.size(); k++)
+                        {
+                           small_a[k * solutes.size() + l] +=
+                              (nnls_a[k * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                               L_bars[k * ti_noise_size + j + j_offset]) *
+                              (nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                               L_bars[l * ti_noise_size + j + j_offset]);
+                        }
+                     }
+                  }
+                  //      str.sprintf(tr
+                  //            ("Working on Term %d of %d\r"),
+                  //            l + 1, solutes.size());
+                  //      cout << str;
+                  //      fflush(stdout);
+               }
+               exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+               //??
+               j_offset += experiment[e].radius.size();
+               i_offset += experiment[e].scan.size();
+            }
+
+            //      for (j = 0; j < 10; j++) {
+            //      printf(" %g ", small_a[j]);
+            //      }
+            //      puts("");
+            //      for (j = 0; j < 10; j++) {
+            //      printf(" %g ", small_b[j]);
+            //      }
+            //      puts("");
+
+
+#if defined(SHOW_TIMING)
+            gettimeofday(&end_tv, NULL);
+            //      printf("nnls prep time = %ld\n",
+            //      1000000l * (end_tv.tv_sec - start_tv.tv_sec) +
+            //      end_tv.tv_usec - start_tv.tv_usec);
+#endif
+            // unncessary?
+            {
+               double cks1 = 0e0, cks2 = 0e0;
+               for (i = 0; i < solutes.size(); i++)
+               {
+                  cks1 += small_b[i];
+               }
+               for (i = 0; i < solutes.size() * solutes.size(); i++)
+               {
+                  cks2 += small_a[i];
+               }
+               //      printf("cks %g %g\n", cks1, cks2);
+            }
+            //      puts("ti nnls step 3 run nnls");
+            {
+               long myrss = getrss(0);
+               if (myrss > maxrss)
+               {
+                  maxrss = myrss;
+               }
+            }
+            result =
+               nnls(small_a, solutes.size(), solutes.size(),
+                    solutes.size(), small_b, small_x, &residual, NULL,
+                    NULL, NULL);
+            memcpy(nnls_x, small_x, solutes.size() * sizeof(double));
+         }
+         //   puts("ti nnls step 4 compute ti & ri noise");
+
+         // print out original nnls concentrations & the new concentrations
+
+         // compute L the sum of the equations
+         memset(L, 0, b_size * sizeof(double));
+         // we ignore the fit_baseline stuff
+         count = 0;
+         countNZ = 0;
+         for (l = 0; l < solutes.size(); l++)
+         {
+            if (nnls_x[l] > 0)
+            {
+               countNZ++;
+               countL = 0;
+               // printf("l %d count %d l * b_size %d\n", l, count, l *
+               // b_size);
+               exp_offset = i_offset = j_offset = 0;
+               for (e = 0; e < experiment.size(); e++)
+               {
+                  for (i = 0; i < experiment[e].scan.size(); i++)
+                  {
+                     for (j = 0; j < experiment[e].radius.size(); j++)
+                     {
+                        L[countL] +=
+                           nnls_x[l] * nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() +
+                                              j];
+                        countL++;
+                        count++;
+                     }
+                  }
+                  exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+               }
+            }
+            else
+            {
+               count += b_size;
+            }
+         }
+
+         if (countNZ == 0)
+         {
+            fprintf(stderr, "countNZ is zero!\n");
+            //      exit(-1);
+         }
+         // now L contains the best fit sum of L equations
+
+         // compute L_tilde, the average model signal at each radius
+         memset(L_tilde, 0, ri_noise_size * sizeof(double));
+         if (fit_rinoise)
+         {
+            count = 0;
+            exp_offset = i_offset = j_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  for (j = 0; j < experiment[e].radius.size(); j++)
+                  {
+                     L_tilde[i + i_offset] += L[exp_offset + i * experiment[e].radius.size() + j];
+                     count++;
+                  }
+                  L_tilde[i + i_offset] /= experiment[e].radius.size();
+               }
+               i_offset += experiment[e].scan.size();
+               exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+            }
+         }
+
+         // compute L_bar, the average model signal at each radius
+         memset(L_bar, 0, ti_noise_size * sizeof(double));
+         exp_offset = i_offset = j_offset = 0;
+         for (e = 0; e < experiment.size(); e++)
+         {
+            for (j = 0; j < experiment[e].radius.size(); j++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  L_bar[j + j_offset] += L[exp_offset + i * experiment[e].radius.size() + j] - L_tilde[i + i_offset];
+               }
+               L_bar[j + j_offset] /= experiment[e].scan.size();
+            }
+            i_offset += experiment[e].scan.size();
+            j_offset += experiment[e].radius.size();
+            exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+         }
+
+         // compute ti_noise
+         //   printf("new ti noise");
+         for (i = 0; i < ti_noise_size; i++)
+         {
+            new_ti_noise[i] = a_bar[i] - L_bar[i];
+            //      if (i < 20) {
+            //      printf("a_bar %g - L_bar %g = %g\n", a_bar[i], L_bar[i], new_ti_noise[i]);
+            //      }
+         }
+
+         //   puts("");
+         // unncessary?
+         {
+            double cks = 0e0;
+            for (i = 0; i < ti_noise_size; i++)
+            {
+               cks += new_ti_noise[i];
+            }
+            //      printf("sum of b(i) = %g\n", cks);
+         }
+
+         // compute ri_noise, this is not correct!
+         //   printf("new ri noise");
+         for (i = 0; i < ri_noise_size; i++)
+         {
+            new_ri_noise[i] = a_tilde[i] - L_tilde[i];
+            //      if (i < 10) {
+            //      printf(" %g", new_ri_noise[i]);
+            //      }
+         }
+         //   puts("");
+         // unncessary?
+         {
+            double cks = 0e0;
+            for (i = 0; i < ri_noise_size; i++)
+            {
+               cks += new_ri_noise[i];
+            }
+            //      printf("sum of beta(i) = %g\n", cks);
+         }
+
+         delete[]L_bars;
+         delete[]a_bar;
+         delete[]a_tilde;
+         delete[]L;
+         delete[]L_bar;
+         delete[]L_tilde;
+         delete[]L_tildes;
+         // copy new_ti_noise to ti_noise
+         ti_noise.clear();
+         for (i = 0; i < ti_noise_size; i++)
+         {
+            ti_noise.push_back(new_ti_noise[i]);
+         }
+         //   printf("ti noise");
+         //   for (i = 0; i < 10; i++) {
+         //      printf(" %g", ti_noise[i]);
+         //   }
+         //   puts("");
+         // copy new_ri_noise to ri_noise
+         ri_noise.clear();
+         for (i = 0; i < ri_noise_size; i++)
+         {
+            ri_noise.push_back(new_ri_noise[i]);
+         }
+         //   puts("ti nnls end");
+         // unncessary?
+         for (e = 0; e < experiment.size(); e++)
+         {
+            unsigned int k;
+            for (j = 0; j < experiment[e].scan.size(); j++)
+            {
+               for (k = 0; k < experiment[e].radius.size(); k++)
+               {
+                  residuals[e].scan[j].conc[k] = 0;
+               }
+            }
+         }
+         delete[] new_ti_noise;
+         delete[] new_ri_noise;
+      }
+      else
+      {
+         if (fit_rinoise)
+         {
+            //      printf("solutes size %d\n", solutes.size());
+            //      printf("points %d ti_noise_size %d ri_noise_size %d b_size %d a_size %d\n",
+            //      total_points_size,
+            //      ti_noise_size,
+            //         ri_noise_size, b_size, a_size);
+            //   for (e = 0; e < experiment.size(); e++) {
+            //   printf("experiment %d scan size %d radius size %d\n",
+            //      e, experiment[e].scan.size(), experiment[e].radius.size());
+            //   }
+            //   fflush(stdout);
+
+            double *L = new double[b_size];   // this is Sum(concentration * Lamm) for the models after NNLS
+            double *L_tildes = new double[ri_noise_size * solutes.size()];   // an average for each distribution
+
+            double small_a[solutes.size() * solutes.size()];
+            double small_b[solutes.size()];
+            double small_x[solutes.size()];
+
+            double *L_tilde = new double[ri_noise_size];
+            unsigned int l;
+            unsigned int countNZ;
+            unsigned int countL;
+            // unsigned int iterations = 0;
+            double *new_ri_noise = new double[ri_noise_size];
+
+            double *a_tilde = new double[ri_noise_size];
+
+            // start with no noise
+            memset(new_ri_noise, 0, ri_noise_size * sizeof(double));
+
+            // compute a_tilde, the average experiment signal at each time
+            unsigned int i_offset, j_offset, exp_offset;
+
+            memset(a_tilde, 0, ri_noise_size * sizeof(double));
+            i_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  for (j = 0; j < experiment[e].radius.size(); j++)
+                  {
+                     a_tilde[i + i_offset] += experiment[e].scan[i].conc[j];
+                  }
+                  a_tilde[i + i_offset] /= experiment[e].radius.size();
+               }
+               i_offset += experiment[e].scan.size();
+            }
+
+            // compute the new nnls_b vector including noise
+            count = 0;
+
+            // compute L_tildes, the average model signal at each radius
+            memset(L_tildes, 0, ri_noise_size * sizeof(double) * solutes.size());
+
+            exp_offset = i_offset = j_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (l = 0; l < solutes.size(); l++)
+               {
+                  for (i = 0; i < experiment[e].scan.size(); i++)
+                  {
+                     for (j = 0; j < experiment[e].radius.size(); j++)
+                     {
+                        L_tildes[l * ri_noise_size + i + i_offset] +=
+                           nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j];
+                     }
+                     L_tildes[l * ri_noise_size + i + i_offset] /= experiment[e].radius.size();
+                  }
+               }
+               i_offset += experiment[e].scan.size();
+               exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+            }
+
+            //   printf("L_tildes y0 %g\n", L_tildes[0]); fflush(stdout);
+            //   printf("L_tildes y1 %g\n", L_tildes[1 * ri_noise_size]); fflush(stdout);
+            //   printf("L_tildes x0 %g\n", (*L_tildes_pa)[0][0]); fflush(stdout);
+            //   printf("L_tildes x1 %g\n", (*L_tildes_pa)[1][0]); fflush(stdout);
+
+            i_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (l = 0; l < 3; l++)
+               {
+                  //      printf("L_tildes for eq %d solute %d i_ofs %d :", e, l, i_offset);
+                  //      fflush(stdout);
+                  for (i = 0; i < 10; i++)
+                  {
+                     //      printf(" %g", L_tildes[l * ri_noise_size + i + i_offset]);
+                     //      fflush(stdout);
+                  }
+                  //      puts("");
+                  //      fflush(stdout);
+               }
+               i_offset += experiment[e].scan.size();
+            }
+
+            //   puts("ti nnls step 2 create the nnls matrix & rhs");
+            // unncessary?
+            {
+               unsigned int k;
+               double residual;
+               // setup small_a, small_b for the alternate nnls
+               memset(small_a, 0,
+                      solutes.size() * solutes.size() * sizeof(double));
+               memset(small_b, 0, solutes.size() * sizeof(double));
+               memset(small_x, 0, solutes.size() * sizeof(double));
+
+
+#if defined(SHOW_TIMING)
+
+               gettimeofday(&start_tv, NULL);
+#endif
+
+               exp_offset = i_offset = j_offset = 0;
+               for (e = 0; e < experiment.size(); e++)
+               {
+                  for (l = 0; l < solutes.size(); l++)
+                  {
+                     // printf("l = %d of %d\r", l, solutes.size());
+                     // fflush(stdout);
+                     for (j = 0; j < experiment[e].radius.size(); j++)
+                     {
+                        for (i = 0; i < experiment[e].scan.size(); i++)
+                        {
+                           small_b[l] += (experiment[e].scan[i].conc[j] - a_tilde[i + i_offset]) *
+                              (nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                               L_tildes[l * ri_noise_size + i + i_offset]);
+                           for (k = 0; k < solutes.size(); k++)
+                           {
+                              small_a[k * solutes.size() + l] +=
+                                 (nnls_a[k * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                                  L_tildes[k * ri_noise_size + i + i_offset]) *
+                                 (nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() + j] -
+                                  L_tildes[l * ri_noise_size + i + i_offset]);
+                           }
+                        }
+                     }
+                     //      str.sprintf(tr
+                     //            ("Working on Term %d of %d\r"),
+                     //            l + 1, solutes.size());
+                     //      cout << str;
+                     //      fflush(stdout);
+                  }
+                  exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+                  //??
+                  j_offset += experiment[e].radius.size();
+                  i_offset += experiment[e].scan.size();
+               }
+
+               //      for (j = 0; j < 10; j++) {
+               //      printf(" %g ", small_a[j]);
+               //      }
+               //      puts("");
+               //      for (j = 0; j < 10; j++) {
+               //      printf(" %g ", small_b[j]);
+               //      }
+               //      puts("");
+
+
+#if defined(SHOW_TIMING)
+               gettimeofday(&end_tv, NULL);
+               //      printf("nnls prep time = %ld\n",
+               //      1000000l * (end_tv.tv_sec - start_tv.tv_sec) +
+               //      end_tv.tv_usec - start_tv.tv_usec);
+#endif
+               // unncessary?
+               {
+                  double cks1 = 0e0, cks2 = 0e0;
+                  for (i = 0; i < solutes.size(); i++)
+                  {
+                     cks1 += small_b[i];
+                  }
+                  for (i = 0; i < solutes.size() * solutes.size(); i++)
+                  {
+                     cks2 += small_a[i];
+                  }
+                  //      printf("cks %g %g\n", cks1, cks2);
+               }
+               //      puts("ti nnls step 3 run nnls");
+               {
+                  long myrss = getrss(0);
+                  if (myrss > maxrss)
+                  {
+                     maxrss = myrss;
+                  }
+               }
+               result =
+                  nnls(small_a, solutes.size(), solutes.size(),
+                       solutes.size(), small_b, small_x, &residual, NULL,
+                       NULL, NULL);
+               memcpy(nnls_x, small_x, solutes.size() * sizeof(double));
+            }
+            //   puts("ti nnls step 4 compute ti & ri noise");
+
+            // print out original nnls concentrations & the new concentrations
+
+            // compute L the sum of the equations
+            memset(L, 0, b_size * sizeof(double));
+            // we ignore the fit_baseline stuff
+            count = 0;
+            countNZ = 0;
+            for (l = 0; l < solutes.size(); l++)
+            {
+               if (nnls_x[l] > 0)
+               {
+                  countNZ++;
+                  countL = 0;
+                  // printf("l %d count %d l * b_size %d\n", l, count, l *
+                  // b_size);
+                  exp_offset = i_offset = j_offset = 0;
+                  for (e = 0; e < experiment.size(); e++)
+                  {
+                     for (i = 0; i < experiment[e].scan.size(); i++)
+                     {
+                        for (j = 0; j < experiment[e].radius.size(); j++)
+                        {
+                           L[countL] +=
+                              nnls_x[l] * nnls_a[l * total_points_size + exp_offset + i * experiment[e].radius.size() +
+                                                 j];
+                           countL++;
+                           count++;
+                        }
+                     }
+                     exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+                  }
+               }
+               else
+               {
+                  count += b_size;
+               }
+            }
+
+            if (countNZ == 0)
+            {
+               fprintf(stderr, "countNZ is zero!\n");
+               //      exit(-1);
+            }
+            // now L contains the best fit sum of L equations
+
+            // compute L_tilde, the average model signal at each radius
+            memset(L_tilde, 0, ri_noise_size * sizeof(double));
+            count = 0;
+            exp_offset = i_offset = j_offset = 0;
+            for (e = 0; e < experiment.size(); e++)
+            {
+               for (i = 0; i < experiment[e].scan.size(); i++)
+               {
+                  for (j = 0; j < experiment[e].radius.size(); j++)
+                  {
+                     L_tilde[i + i_offset] += L[exp_offset + i * experiment[e].radius.size() + j];
+                     count++;
+                  }
+                  L_tilde[i + i_offset] /= experiment[e].radius.size();
+               }
+               i_offset += experiment[e].scan.size();
+               exp_offset += experiment[e].scan.size() * experiment[e].radius.size();
+            }
+
+            // compute ri_noise, (this is not correct???)
+            //   printf("new ri noise");
+            for (i = 0; i < ri_noise_size; i++)
+            {
+               new_ri_noise[i] = a_tilde[i] - L_tilde[i];
+               //      if (i < 10) {
+               //      printf(" %g", new_ri_noise[i]);
+               //      }
+            }
+            //   puts("");
+            // unncessary?
+            {
+               double cks = 0e0;
+               for (i = 0; i < ri_noise_size; i++)
+               {
+                  cks += new_ri_noise[i];
+               }
+               //      printf("sum of beta(i) = %g\n", cks);
+            }
+
+            delete[]a_tilde;
+            delete[]L;
+            delete[]L_tilde;
+            delete[]L_tildes;
+            // copy new_ri_noise to ri_noise
+            ri_noise.clear();
+            for (i = 0; i < ri_noise_size; i++)
+            {
+               ri_noise.push_back(new_ri_noise[i]);
+            }
+            //   puts("ti nnls end");
+            // unncessary?
+            for (e = 0; e < experiment.size(); e++)
+            {
+               unsigned int k;
+               for (j = 0; j < experiment[e].scan.size(); j++)
+               {
+                  for (k = 0; k < experiment[e].radius.size(); k++)
+                  {
+                     residuals[e].scan[j].conc[k] = 0;
+                  }
+               }
+            }
+            delete[] new_ri_noise;
+            // zero ti_noise
+            ti_noise.clear();
+            for (i = 0; i < ti_noise_size; i++)
+            {
+               ti_noise.push_back(0);
+            }
+         }
+         else
+         {
+            // no ti or ri noise
+
+            //   cout << "old nnls stuff\n";
+            //   printf("nnls_b %.12g %.12g %.12g %.12g\n", nnls_b[0], nnls_b[1], nnls_b[300], nnls_b[1000]);
+            //   fflush(stdout);
+            {
+               long myrss = getrss(0);
+               if (myrss > maxrss)
+               {
+                  maxrss = myrss;
+               }
+            }
+            result = nnls(nnls_a,
+                          total_points_size,
+                          total_points_size,
+                          solutes.size(),
+                          nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp,
+                          nnls_indexp);
+            // zero ti_noise
+            ti_noise.clear();
+            for (i = 0; i < ti_noise_size; i++)
+            {
+               ti_noise.push_back(0);
+            }
+            // no ri_noise for now
+            ri_noise.clear();
+            for (i = 0; i < ri_noise_size; i++)
+            {
+               ri_noise.push_back(0);
+            }
+            //   printf("nnls norm %g\n", nnls_rnorm);
+         }
+      }
+      //   cout << tr("Calculating Residuals...\n");
+      //   printf("residuals %d %d\n", residuals.radius.size(), residuals.scan.size());
+      for (e = 0; e < experiment.size(); e++)
+      {
+         unsigned int k;
+         for (j = 0; j < experiment[e].scan.size(); j++)
+         {
+            for (k = 0; k < experiment[e].radius.size(); k++)
+            {
+               residuals[e].scan[j].conc[k] = 0;
+            }
+         }
+      }
+
+      for (i = 0; i < solutes.size(); i++)
+      {
+         //   frequency.push_back(nnls_x[i]);
+         if (nnls_x[i] != 0.0)
+         {
+            for (e = 0; e < experiment.size(); e++)
+            {
+               //   printf("exp %d solute %d %g %g %g %g\n", e, i, solutes[i].s / experiment[e].s20w_correction, solutes[i].k,
+               //      (R * (experiment[e].avg_temperature + K0)) /
+               //      (AVOGADRO * solutes[i].k
+               //      * 6.0 * experiment[e].viscosity * 0.01 * M_PI *
+               //      pow((9.0 * (solutes[i].s / experiment[e].s20w_correction) * solutes[i].k *
+               //         experiment[e].vbar * experiment[e].viscosity * 0.01) /
+               //         (2.0 * (1.0 - experiment[e].vbar * experiment[e].density)), 0.5)),
+               //
+               //      nnls_x[i]);
+               //   cerr << "pe1a0\n";
+               //   clear_data(&fem_data[e]);
+               //      clear_data(&fem_data);
+               //   cerr << "pe1a1\n";
+               for (j = 0; j < experiment[e].scan.size(); j++)
+               {
+                  for (k = 0; k < experiment[e].radius.size(); k++)
+                  {
+                     // reset concentration to zero:
+                     experiment[e].scan[j].conc[k] = 0.0;
+                  }
+               }
+               //   cerr << "pe1a2\n";
+               double D_20w = (R * K20) /
+                  (AVOGADRO * 18 * M_PI * pow(solutes[i].k * VISC_20W, 3.0/2.0) *
+                   pow((fabs(solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+               double D_tb = D_20w/experiment[e].D20w_correction;
+
+               if (use_ra) {
+                  US_Astfem_RSA astfem_rsa(false);
+                  use_model_system = model_system_1comp;
+                  use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
+                  use_model_system.component_vector[0].D = D_tb;
+                  use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
+                  use_simulation_parameters.meniscus += meniscus_offset;
+                  vector<mfem_data> use_experiment;
+                  use_experiment.push_back(experiment[e]);
+                  astfem_rsa.setTimeCorrection(true);
+                  astfem_rsa.setTimeInterpolation(false);
+                  if(!fit_tinoise && use_simulation_parameters.band_forming) {
+                     use_simulation_parameters.band_firstScanIsConcentration = true;
+                  } else {
+                     use_simulation_parameters.band_firstScanIsConcentration = false;
+                  }
+                  astfem_rsa.calculate(&use_model_system, 
+                                       &use_simulation_parameters, 
+                                       &use_experiment,
+                                       0, 
+                                       0, 
+                                       &rotor_list);
+#if defined(DEBUG_RA_HEAVY2)
+                  if(1 || !myrank) {
+                     printf("%d: after heavy2 calculate s %g d %g\n", 
+                            myrank,
+                            use_model_system.component_vector[0].s,
+                            use_model_system.component_vector[0].D); fflush(stdout);
+                     unsigned int e = 0;
+                     unsigned int j;
+                     unsigned int k;
+                     for(j = 0; j < use_experiment[0].scan.size(); j++) {
+                        for(k = 0; k < use_experiment[0].scan[j].conc.size(); k++) {
+                           printf("%d: asftem experiment scan %lu pos %lu conc %g\n", myrank, j, k, use_experiment[e].scan[j].conc[k]); fflush(stdout);
+                        }
+                     }
+                  }
+#endif
+                  experiment[e] = use_experiment[0];
+               } else {
+                  mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
+                                      (double) experiment[e].rpm,
+                                      experiment[e].scan[experiment[e].scan.size() - 1].time,
+                                      experiment[e].meniscus,
+                                      experiment[e].bottom, initial_concentration,
+                                      &initCVector[e]);
+                  mfem[e]->skipEvents = true;
+                  mfem[e]->run();
+                  //      mfem[e]->fprintparams(stdout);
+
+                  // interpolate model function to the experimental data so
+                  // dimension 1 in A matches dimension of B:
+                  mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+               }
+               double cks4 = 0e0;
+               for (j = 0; j < experiment[e].scan.size(); j++)
+               {
+                  for (k = 0; k < experiment[e].radius.size(); k++)
+                  {
+                     residuals[e].scan[j].conc[k] +=
+                        nnls_x[i] * experiment[e].scan[j].conc[k];
+#if defined(DEBUG_RA_HEAVY2)
+                     if(!myrank) {
+                        printf("%d: accum residual scan %lu pos %lu conc %g nnls_x[%lu] %g\n", 
+                               myrank, j, k, residuals[e].scan[j].conc[k], i, nnls_x[i]); fflush(stdout);
+                     }
+#endif
+                     //   printf("resid %d %d %g\n", j, k, residuals[e].scan[j].conc[k]); fflush(stdout);
+                     cks4 += residuals[e].scan[j].conc[k];
+                  }
+               }
+               //      printf("e %d nnls used %d cks %g\n", e, i, cks4);
+            } // for e
+            //   cerr << "pe1a\n";
+         } // if (nnls_x[i] != 0)
+      } // for i
+      double rmsd = 0.0;
+      double rmsds[experiment.size()];
+      // unncessary?
+      unsigned int ti_noise_offset = 0, ri_noise_offset = 0;
+      for (e = 0; e < experiment.size(); e++)
+      {
+         //   cerr << "pe1\n";
+         double cks1 = 0e0, cks2 = 0e0, cks3 = 0e0;
+         rmsds[e] = 0;
+         for (j = 0; j < experiment[e].scan.size(); j++)
+         {
+            for (k = 0; k < experiment[e].radius.size(); k++)
+            {
+               /*      printf("save_e %g -ti_noise %g -ri_noise %g -resid %g\n",
+                       save_experiment[e].scan[j].conc[k],
+                       ti_noise[k + ti_noise_offset],
+                       ri_noise[j+ri_noise_offset],
+                       residuals[e].scan[j].conc[k]); fflush(stdout);
+               */
+               residuals[e].scan[j].conc[k] =
+                  save_experiment[e].scan[j].conc[k] -
+                  residuals[e].scan[j].conc[k] - ti_noise[k + ti_noise_offset] - ri_noise[j+ri_noise_offset];
+               cks1 += experiment[e].scan[j].conc[k];
+               cks2 += residuals[e].scan[j].conc[k];
+               cks3 += ti_noise[k + ti_noise_offset];
+               // cout << "C[" << j << "][" << k << "]: " <<
+               //      residuals[e].scan[j].conc[k] << endl; fflush(stdout);
+               rmsd +=
+                  residuals[e].scan[j].conc[k] * residuals[e].scan[j].conc[k];
+               rmsds[e] +=
+                  residuals[e].scan[j].conc[k] * residuals[e].scan[j].conc[k];
+            }
+         }
+         ti_noise_offset += experiment[e].radius.size();
+         ri_noise_offset += experiment[e].scan.size();
+
+         //   cerr << "pe2\n";
+         // printf("cks %g %g %g\n", cks1, cks2, cks3); fflush(stdout);
+      }
+      last_residuals = residuals;
+      //   cerr << "pe3\n";
+      rmsd /= total_points_size;
+      float variance = rmsd;
+      vector<double> variances;
+      rmsd = pow((double) rmsd, 0.5);
+      for (e = 0; e < experiment.size(); e++)
+      {
+         variances.push_back(rmsds[e] / (experiment[e].scan.size() * experiment[e].radius.size()));
+         rmsds[e] = pow((double) rmsds[e], 0.5);
+         //   printf("experiment %d variance %g\n", e, variances[e]);
+      }
+
+
+      //   cerr << "pe4\n";
+      //   cout << str.
+      //   sprintf(tr
+      //      ("Solution converged...\nRMSD: %8.6e,\nVariance: %8.6e\n"),
+      //      rmsd, rmsd * rmsd);
+      //   calc_20W_distros();
+      //   cerr << "pe5\n";
+
+      for (i = 0; i < save_solutes.size(); i++)
+      {
+         if (nnls_x[i] > 0 || return_all_solutes)
+         {
+            save_solutes[i].c = nnls_x[i];
+            sv.solutes.push_back(save_solutes[i]);
+         }
+      }
+      sv.variance = variance;
+      sv.variances = variances;
+      sv.ti_noise = ti_noise;
+      sv.ri_noise = ri_noise;
+
+      delete[]nnls_a;
+      delete[]nnls_b;
+      delete[]nnls_zzp;
+      delete[]nnls_x;
+      delete[]nnls_wp;
+      delete[]nnls_indexp;
+      for (i = 0; i < experiment.size(); i++)
+      {
+         delete mfem[i];
+      }
+
+#if defined(JOB_TIMING_CR)
+      gettimeofday(&end_tv_cr, NULL);
+# if defined(JOB_TIMING_CRMP)
+
+      printf("crmp time %u %lu\n",
+             use_size,
+             1000000l * (end_tv_cr.tv_sec - start_tv_cr.tv_sec) + end_tv_cr.tv_usec -
+             start_tv_cr.tv_usec);
+   }
+# else
+   printf("cr time %lu\n",
+          1000000l * (end_tv_cr.tv_sec - start_tv_cr.tv_sec) + end_tv_cr.tv_usec -
+          start_tv_cr.tv_usec);
+# endif
+
+   fflush(stdout);
+#endif
+
+#if defined(DEBUG_HYDRO)
+   printf("%d: rmsd at end of calc_resid: %f\n", myrank, sqrt(sv.variance)); fflush(stdout);
+#endif
+#if defined(USE_US_TIMER)
+   us_timers.end_timer( "calc residuals" );
+#endif               
+   return sv;
+
+   // return(residual);
 }

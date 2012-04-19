@@ -86,6 +86,7 @@ class US_EXTERN US_fe_nnls_t
    int mc_cutoff;
 
    Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
+   Simulation_values calc_residuals_locked(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
    Simulation_values calc_residuals(struct mfem_data, vector <Solute>);
    Simulation_values regularize(Simulation_values, double);
    int init_run(const QString &, const QString &, const QString &, const QString &, const QString &, int);
