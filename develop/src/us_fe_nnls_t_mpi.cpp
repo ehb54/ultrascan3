@@ -2997,7 +2997,7 @@ int US_fe_nnls_t::run(int status)
       {
          printf( "%d: I have the best result - writing\n", myrank );
          printf( "%d: overall best var is %.7g\n", myrank, best_var );
-         printf( "%d: overall best rmd is %.7g\n", myrank, sqrt( best_var ) );
+         printf( "%d: overall best rmsd is %.7g\n", myrank, sqrt( best_var ) );
          printf( "%d: overall best lv is %.7g\n", myrank, best_lv );
          printf( "%d: overall best meniscus offset %.7g\n", myrank, best_meniscus );
          WriteResults( experiment, best_sv, QString( "lv%1mo%1ti%1ri%1" )
@@ -3005,6 +3005,59 @@ int US_fe_nnls_t::run(int status)
                        .arg( best_meniscus )
                        .arg( fit_tinoise )
                        .arg( fit_rinoise ).ascii(), 0, 0 );
+
+         printf( "%d: rechecking:\n", myrank );
+         {
+
+            simulation_parameters_vec[ 0 ].band_volume = best_lv;
+
+            Simulation_values sv = 
+               lock_relative_conc ?
+               calc_residuals_locked( experiment,
+                                      best_sv.solutes,
+                                      best_meniscus,
+                                      0, 
+                                      0 ) 
+               :
+               calc_residuals( experiment,
+                               best_sv.solutes,
+                               best_meniscus,
+                               0, 
+                               0 );
+            // WriteResults( experiment, sv, QString( "alt_lv%1mo%1ti%1ri%1" )
+            // .arg( best_lv )
+            // .arg( best_meniscus )
+            // .arg( fit_tinoise )
+            // .arg( fit_rinoise ).ascii(), 0, 0 );
+            
+            printf( "%d: recheck rmsd is %.7g\n", myrank, sqrt( sv.variance ) );
+            // printf( "%d: rechecking again:\n", myrank );
+            // {
+            // 
+            // simulation_parameters_vec[ 0 ].band_volume = best_lv;
+            // 
+            // Simulation_values sv2 = 
+            // lock_relative_conc ?
+            // calc_residuals_locked( experiment,
+            // sv.solutes,
+            // best_meniscus,
+            // 0, 
+            // 0 ) 
+            // :
+            // calc_residuals( experiment,
+            // sv.solutes,
+            // best_meniscus,
+            // 0, 
+            // 0 );
+            // WriteResults( experiment, sv, QString( "alt2_lv%1mo%1ti%1ri%1" )
+            // .arg( best_lv )
+            // .arg( best_meniscus )
+            // .arg( fit_tinoise )
+            // .arg( fit_rinoise ).ascii(), 0, 0 );
+            // 
+            // printf( "%d: recheck rmsd is %.7g\n", myrank, sqrt( sv2.variance ) );
+            // }
+         }
       }
 
       MPI_Finalize();
@@ -7782,55 +7835,48 @@ Simulation_values US_fe_nnls_t::calc_residuals_locked(vector <struct mfem_data> 
             if (use_ra)
             {
                // sum up models * conc
+               US_Astfem_RSA astfem_rsa(false);
+               use_model_system = model_system_1comp;
+               use_model_system.component_vector.resize( all_solutes.size() );
+
                for ( unsigned int i = 0; i < all_solutes.size(); i++ )
                {
+                  if ( i )
+                  {
+                     use_model_system.component_vector[ i ] = 
+                        use_model_system.component_vector[ 0 ];
+                  }
+                        
                   double D_20w = (R * K20) /
                      (AVOGADRO * 18 * M_PI * pow(all_solutes[i].k * VISC_20W, 3.0/2.0) *
                       pow((fabs(all_solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
                   double D_tb = D_20w/experiment[e].D20w_correction;
 
-                  US_Astfem_RSA astfem_rsa(false);
-                  use_model_system = model_system_1comp;
-                  use_model_system.component_vector[0].s = all_solutes[i].s / experiment[e].s20w_correction;
-                  use_model_system.component_vector[0].D = D_tb;
-                  use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
-                  use_simulation_parameters.meniscus += meniscus_offset;
-                  vector<mfem_data> use_experiment;
-                  use_experiment.push_back(experiment[e]);
-                  astfem_rsa.setTimeCorrection(true);
-                  astfem_rsa.setTimeInterpolation(false);
-                  if(!fit_tinoise && use_simulation_parameters.band_forming) {
-                     use_simulation_parameters.band_firstScanIsConcentration = true;
-                  } else {
-                     use_simulation_parameters.band_firstScanIsConcentration = false;
-                  }
-                  astfem_rsa.calculate(&use_model_system, 
-                                       &use_simulation_parameters, 
-                                       &use_experiment, 
-                                       0, 
-                                       0, 
-                                       &rotor_list);
+                  use_model_system.component_vector[i].concentration = all_solutes[ i ].c;
+                  use_model_system.component_vector[i].s = all_solutes[i].s / experiment[e].s20w_correction;
+                  use_model_system.component_vector[i].D = D_tb;
 
-                  if ( !i )
-                  {
-                     experiment[e] = use_experiment[0];
-                  }
-                  
-                  for ( unsigned int j = 0; j < experiment[e].scan.size(); j++)
-                  {
-                     for ( unsigned int k = 0; k < experiment[e].radius.size(); k++)
-                     {
-                        if ( i )
-                        {
-                           experiment[ e ].scan[ j ].conc[ k ] +=
-                              use_experiment[ 0 ].scan[ j ].conc[ k ] * all_solutes[ i ].c;
-                        } else {
-                           experiment[ e ].scan[ j ].conc[ k ] =
-                              use_experiment[ 0 ].scan[ j ].conc[ k ] * all_solutes[ i ].c;
-                        }
-                     }
-                  }
                }
+                  
+               use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
+               use_simulation_parameters.meniscus += meniscus_offset;
+               vector<mfem_data> use_experiment;
+               use_experiment.push_back(experiment[e]);
+               astfem_rsa.setTimeCorrection(true);
+               astfem_rsa.setTimeInterpolation(false);
+               if(!fit_tinoise && use_simulation_parameters.band_forming) {
+                  use_simulation_parameters.band_firstScanIsConcentration = true;
+               } else {
+                  use_simulation_parameters.band_firstScanIsConcentration = false;
+               }
+               astfem_rsa.calculate(&use_model_system, 
+                                    &use_simulation_parameters, 
+                                    &use_experiment, 
+                                    0, 
+                                    0, 
+                                    &rotor_list);
+
+               experiment[e] = use_experiment[0];
             } else {
                mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
                                    (double) experiment[e].rpm,
@@ -8747,55 +8793,47 @@ Simulation_values US_fe_nnls_t::calc_residuals_locked(vector <struct mfem_data> 
 
                if (use_ra) {
                   // sum up models * conc
+                  US_Astfem_RSA astfem_rsa(false);
+                  use_model_system = model_system_1comp;
+                  use_model_system.component_vector.resize( all_solutes.size() );
+
                   for ( unsigned int i = 0; i < all_solutes.size(); i++ )
                   {
-
+                     if ( i )
+                     {
+                        use_model_system.component_vector[ i ] = 
+                           use_model_system.component_vector[ 0 ];
+                     }
+                        
                      double D_20w = (R * K20) /
                         (AVOGADRO * 18 * M_PI * pow(all_solutes[i].k * VISC_20W, 3.0/2.0) *
                          pow((fabs(all_solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
                      double D_tb = D_20w/experiment[e].D20w_correction;
 
-                     US_Astfem_RSA astfem_rsa(false);
-                     use_model_system = model_system_1comp;
-                     use_model_system.component_vector[0].s = all_solutes[i].s / experiment[e].s20w_correction;
-                     use_model_system.component_vector[0].D = D_tb;
-                     use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
-                     use_simulation_parameters.meniscus += meniscus_offset;
-                     vector<mfem_data> use_experiment;
-                     use_experiment.push_back(experiment[e]);
-                     astfem_rsa.setTimeCorrection(true);
-                     astfem_rsa.setTimeInterpolation(false);
-                     if(!fit_tinoise && use_simulation_parameters.band_forming) {
-                        use_simulation_parameters.band_firstScanIsConcentration = true;
-                     } else {
-                        use_simulation_parameters.band_firstScanIsConcentration = false;
-                     }
-                     astfem_rsa.calculate(&use_model_system, 
-                                          &use_simulation_parameters, 
-                                          &use_experiment,
-                                          0, 
-                                          0, 
-                                          &rotor_list);
-                     if ( !i )
-                     {
-                        experiment[e] = use_experiment[0];
-                     }
-                  
-                     for ( unsigned int j = 0; j < experiment[e].scan.size(); j++)
-                     {
-                        for ( unsigned int k = 0; k < experiment[e].radius.size(); k++)
-                        {
-                           if ( i )
-                           {
-                              experiment[ e ].scan[ j ].conc[ k ] +=
-                                 use_experiment[ 0 ].scan[ j ].conc[ k ] * all_solutes[ i ].c;
-                           } else {
-                              experiment[ e ].scan[ j ].conc[ k ] =
-                                 use_experiment[ 0 ].scan[ j ].conc[ k ] * all_solutes[ i ].c;
-                           }
-                        }
-                     }
+                     use_model_system.component_vector[i].concentration = all_solutes[ i ].c;
+                     use_model_system.component_vector[i].s = all_solutes[i].s / experiment[e].s20w_correction;
+                     use_model_system.component_vector[i].D = D_tb;
+
                   }
+
+                  use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
+                  use_simulation_parameters.meniscus += meniscus_offset;
+                  vector<mfem_data> use_experiment;
+                  use_experiment.push_back(experiment[e]);
+                  astfem_rsa.setTimeCorrection(true);
+                  astfem_rsa.setTimeInterpolation(false);
+                  if(!fit_tinoise && use_simulation_parameters.band_forming) {
+                     use_simulation_parameters.band_firstScanIsConcentration = true;
+                  } else {
+                     use_simulation_parameters.band_firstScanIsConcentration = false;
+                  }
+                  astfem_rsa.calculate(&use_model_system, 
+                                       &use_simulation_parameters, 
+                                       &use_experiment,
+                                       0, 
+                                       0, 
+                                       &rotor_list);
+                  experiment[e] = use_experiment[0];
                } else {
                   mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
                                       (double) experiment[e].rpm,
@@ -8944,12 +8982,12 @@ Simulation_values US_fe_nnls_t::calc_residuals_locked(vector <struct mfem_data> 
 #endif               
    // ok, now reexpand the solutes
    double final_conc = sv.solutes[ 0 ].c;
+   printf( "%d: final conc %g\n", myrank, final_conc );
    sv.solutes = all_solutes;
    for ( unsigned int i = 0; i < all_solutes.size(); i++ )
    {
       sv.solutes[ i ].c *= final_conc;
    }
-
 
    return sv;
 
