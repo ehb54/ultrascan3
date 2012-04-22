@@ -68,7 +68,7 @@ class US_Advanced : public US_WidgetsDialog
       void next_component( void );
       void set_component(  double );
       void help     ( void )
-      { showHelp.show_help( "fem_advanced.html" ); };
+      { showHelp.show_help( "fe_match_adv.html" ); };
 };
 #endif
 

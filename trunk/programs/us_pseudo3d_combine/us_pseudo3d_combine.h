@@ -25,6 +25,8 @@ typedef struct distro_sys
 {
    QList< Solute > s_distro;
    QList< Solute > mw_distro;
+   QList< Solute > s_distro_zp;
+   QList< Solute > mw_distro_zp;
    QwtLinearColorMap* colormap;
    QString         run_name;
    QString         analys_name;
@@ -101,6 +103,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       double        plt_fmax;
       double        plt_zmin;
       double        plt_zmax;
+      double        plt_zmin_zp;
+      double        plt_zmax_zp;
+      double        plt_zmin_co;
+      double        plt_zmax_co;
       double        k_range;
       double        s_range;
       double        xreso;
