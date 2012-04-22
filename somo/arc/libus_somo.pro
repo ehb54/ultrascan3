@@ -62,6 +62,7 @@ win32 {
 SOURCES += \
   us_admin.cpp \
   us_color.cpp \
+  us_cmdline_app.cpp \
   us_config.cpp \
   us_config_gui.cpp \
 #  us_database.cpp \
@@ -197,6 +198,7 @@ SOURCES += \
 
 HEADERS += \
   us_admin.h \
+  us_cmdline_app.h \
   us_color.h \
   us_config_gui.h \
 #  us_database.h \

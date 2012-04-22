@@ -90,4 +90,5 @@ files
 ./src/us_hydrodyn_xsr.cpp
 ./src/us_hydrodyn_sas_options_xsr.cpp
 ./src/us_json.cpp
+./src/us_cmdline_app.cpp
 end
