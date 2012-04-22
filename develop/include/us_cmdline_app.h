@@ -90,7 +90,10 @@ class US_Cmdline_App : public QObject
                          empty,
                          &error_msg
                          );
-      app.exec();
+      if ( error_msg.isEmpty() )
+      {
+         app.exec();
+      }
       cout << "back from app\n";
       cout << QString( "app's error msg: <%1>\n" ).arg( error_msg );
    }
@@ -180,7 +183,10 @@ class US_Cmdline_App : public QObject
                          response,
                          &error_msg
                          );
-      app.exec();
+      if ( error_msg.isEmpty() )
+      {
+         app.exec();
+      }
       cout << "back from app\n";
       cout << QString( "app's error msg: <%1>\n" ).arg( error_msg );
    }
@@ -236,7 +242,10 @@ class US_Cmdline_App : public QObject
                          &error_msg,
                          2000
                          );
-      app.exec();
+      if ( error_msg.isEmpty() )
+      {
+         app.exec();
+      }
       cout << "back from app\n";
       cout << QString( "app's error msg: <%1>\n" ).arg( error_msg );
    }
