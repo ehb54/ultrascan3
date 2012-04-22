@@ -441,7 +441,7 @@ QDateTime time2=QDateTime::currentDateTime();
             }
          }
 
-#if defined( MODEL_DESC_BY_EDITID )
+#if !defined( NO_MODEL_DESC_BY_EDITID )
          for ( int ii = 0; ii < qMax( nedits, 1 ); ii++ )
          {
             query.clear();

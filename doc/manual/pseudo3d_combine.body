@@ -110,6 +110,16 @@
             </li>
 
             <li>
+              <b>Select PreFilter(s)</b> Open a
+              <a href="select_edits.html">Models Pre-Filter dialog</a>
+              to select Run or Edit IDs on which to pre-filter lists of models
+              for loading. This can significantly reduce model loading time,
+              particularly with large model counts in the database. The text
+              box to the right of this button will display a summary of
+              runs or edits selected as pre-filters.
+            </li>
+
+            <li>
               <b>Load Distribution(s)</b> Load model distribution data as
               specified through a
               <a href="load_model_distrib.html">Model Loader dialog</a>.
@@ -120,6 +130,18 @@
               <b>Load Color File</b> Load a color map for Z dimension display
               as specified through a file dialog (
               <a href="load_colormap.html">Color Map Load dialog</a> ).
+            </li>
+
+            <li>
+              <b>Remove Distribution(s)</b> Open a
+              <a href="pseudo3d_comb_rmv.html">Remove Distributions dialog</a>
+              to remove selected model distributions from the loaded set.
+            </li>
+            
+            <li>
+              <b>Z as Percentage</b> Check this box if you wish to have the Z
+              (color-mapped) values plotted as Percent of Total Concentration
+              instead of the default Partial Concentration values.
             </li>
 
             <li>

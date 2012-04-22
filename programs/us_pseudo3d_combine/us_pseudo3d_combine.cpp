@@ -4,6 +4,7 @@
 
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
+#include "us_remove_distros.h"
 #include "us_select_edits.h"
 #include "us_model.h"
 #include "us_license_t.h"
@@ -259,8 +260,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    us_checkbox( tr( "Z as Percentage" ), cb_zpcent, false );
    spec->addWidget( cb_zpcent, s_row++, 1 );
-pb_rmvdist->setEnabled(false);
-cb_zpcent ->setEnabled(false);
+//pb_rmvdist->setEnabled(false);
+//cb_zpcent ->setEnabled(false);
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
@@ -388,6 +389,7 @@ void US_Pseudo3D_Combine::reset( void )
    system.clear();
    pb_pltall ->setEnabled( false );
    pb_refresh->setEnabled( false );
+   pb_rmvdist->setEnabled( false );
 }
 
 // plot the data
@@ -402,17 +404,25 @@ void US_Pseudo3D_Combine::plot_data( void )
       curr_distr     = qBound( curr_distr, 0, syssiz );
    }
 
+   zpcent   = cb_zpcent->isChecked();
+
    // get current distro
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QList< Solute >* sol_d = &tsys->s_distro;
+   QList< Solute >* sol_d;
 
-   if ( !plot_s )
-      sol_d    = &tsys->mw_distro;
+   if ( zpcent )
+   {
+      data_plot->setAxisTitle( QwtPlot::yRight,
+         tr( "Percent of Total Concentration" ) );
+      sol_d = plot_s ? &tsys->s_distro_zp : &tsys->mw_distro_zp;
+   }
 
-   zpcent   = cb_zpcent->isChecked();
-   data_plot->setAxisTitle( QwtPlot::yRight,
-         zpcent ? tr( "Percent of Total Concentration" )
-                : tr( "Partial Concentration" ) );
+   else
+   {
+      data_plot->setAxisTitle( QwtPlot::yRight,
+         tr( "Partial Concentration" ) );
+      sol_d = plot_s ? &tsys->s_distro : &tsys->mw_distro;
+   }
 
    colormap = tsys->colormap;
    cmapname = tsys->cmapname;
@@ -432,44 +442,40 @@ void US_Pseudo3D_Combine::plot_data( void )
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
    QwtDoubleRect drect;
+   plt_zmin = zpcent ? plt_zmin_zp : plt_zmin_co;
+   plt_zmax = zpcent ? plt_zmax_zp : plt_zmax_co;
 
    if ( auto_lim )
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+
    else
+   {
       drect = QwtDoubleRect( plt_smin, plt_fmin,
             ( plt_smax - plt_smin ), ( plt_fmax - plt_fmin ) );
+      plt_zmin = zpcent ? 100.0 :  1e+8;
+      plt_zmax = zpcent ?   0.0 : -1e+8;
+
+      // find Z min,max for all distributions
+      for ( int ii = 0; ii < system.size(); ii++ )
+      {
+         DisSys* tsys = (DisSys*)&system.at( ii );
+         QList< Solute >* sol_z  = zpcent ? &tsys->s_distro_zp
+                                          : &tsys->s_distro;
+
+         for ( int jj = 0; jj < sol_z->size(); jj++ )
+         {
+            double zval = sol_z->at( jj ).c;
+            plt_zmin    = qMin( plt_zmin, zval );
+            plt_zmax    = qMax( plt_zmax, zval );
+         }
+      }
+   }
 
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
-   if ( !zpcent )
-   {
-      spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-      spec_dat.setZRange( plt_zmin, plt_zmax );
-      spec_dat.setRaster( *sol_d );
-   }
-
-   else
-   {
-      QList< Solute > sol_z = tsys->s_distro;
-      double csum = 0.0;
-      double cmin = 200.0;
-      double cmax = 0.0;
-      for ( int jj = 0; jj < sol_z.size(); jj++ )
-      {
-         csum += sol_z[ jj ].c;
-      }
-
-      for ( int jj = 0; jj < sol_z.size(); jj++ )
-      {
-         sol_z[ jj ].c   = ( 100.0 * sol_z[ jj ].c ) / csum;
-         cmin            = qMin( cmin, sol_z[ jj ].c );
-         cmax            = qMax( cmax, sol_z[ jj ].c );
-      }
-
-      spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-      spec_dat.setZRange( cmin, cmax );
-      spec_dat.setRaster( sol_z );
-   }
+   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
+   spec_dat.setZRange( plt_zmin, plt_zmax );
+   spec_dat.setRaster( *sol_d );
 
    d_spectrogram->attach( data_plot );
 
@@ -518,15 +524,15 @@ void US_Pseudo3D_Combine::plot_data( void )
    data_plot->replot();
 
    bool do_plot = ( looping && cb_conloop->isChecked() ) ? false : true;
-DbgLv(1) << "(1) do_plot" << do_plot << "looping" << looping;
+DbgLv(2) << "(1) do_plot" << do_plot << "looping" << looping;
 
    if ( tsys->method.contains( "-MC" ) )
    {  // Test if some MC should be skipped
       do_plot   = do_plot && tsys->monte_carlo;   // Only plot if MC composite
-DbgLv(1) << "(2)   do_plot" << do_plot;
+DbgLv(2) << "(2)   do_plot" << do_plot;
    }
 
-DbgLv(1) << "(3)   need_save do_plot" << need_save << do_plot;
+DbgLv(2) << "(3)   need_save do_plot" << need_save << do_plot;
    if ( need_save  &&  do_plot )
    {  // Automatically save plot image in a PNG file
       QPixmap plotmap( data_plot->size() );
@@ -697,6 +703,7 @@ void US_Pseudo3D_Combine::load_distro()
 
    need_save  = true;
    plot_data();
+   pb_rmvdist->setEnabled( models.count() > 0 );
 }
 
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
@@ -736,31 +743,56 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 
    te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
       + " (" + tsys.method + ")\n    " + tsys.analys_name );
+   plt_zmin_co = 1e+8;
+   plt_zmax_co = -1e+8;
+   plt_zmin_zp = 100.0;
+   plt_zmax_zp = 0.0;
 
    // read in and set distribution s,c,k values
    if ( tsys.distro_type != (int)US_Model::COFS )
    {
+      double tot_conc = 0.0;
+
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
          double ffval = model.components[ jj ].f_f0;
          double vbval = model.components[ jj ].vbar20;
-         sol_s.s  = model.components[ jj ].s * 1.0e13;
-         sol_s.c  = model.components[ jj ].signal_concentration;
-         sol_s.k  = cnst_vbar ? ffval : vbval;
-         sol_w.s  = model.components[ jj ].mw;
-         sol_w.c  = sol_s.c;
-         sol_w.k  = sol_s.k;
+         sol_s.s   = model.components[ jj ].s * 1.0e13;
+         sol_s.c   = model.components[ jj ].signal_concentration;
+         sol_s.k   = cnst_vbar ? ffval : vbval;
+         sol_w.s   = model.components[ jj ].mw;
+         sol_w.c   = sol_s.c;
+         sol_w.k   = sol_s.k;
+         tot_conc += sol_s.c;
 
          tsys.s_distro.append(  sol_s );
          tsys.mw_distro.append( sol_w );
 
-         plt_zmin = qMin( plt_zmin, sol_s.c );
-         plt_zmax = qMax( plt_zmax, sol_s.c );
+         plt_zmin_co = qMin( plt_zmin_co, sol_s.c );
+         plt_zmax_co = qMax( plt_zmax_co, sol_s.c );
       }
 
       // sort and reduce distributions
       sort_distro( tsys.s_distro, true );
       sort_distro( tsys.mw_distro, true );
+
+      // Create Z-as-percentage version of distributions
+
+      for ( int jj = 0; jj < model.components.size(); jj++ )
+      {
+         sol_s        = tsys.s_distro [ jj ];
+         sol_w        = tsys.mw_distro[ jj ];
+         double coval = sol_s.c;
+         double cozpc = coval * 100.0 / tot_conc;
+         sol_s.c      = cozpc;
+         sol_w.c      = cozpc;
+
+         tsys.mw_distro_zp << sol_w;
+         tsys.s_distro_zp  << sol_s;
+
+         plt_zmin_zp  = qMin( plt_zmin_zp, cozpc );
+         plt_zmax_zp  = qMax( plt_zmax_zp, cozpc );
+      }
    }
 
    // update current distribution record
@@ -1239,5 +1271,24 @@ void US_Pseudo3D_Combine::select_prefilt( void )
 void US_Pseudo3D_Combine::remove_distro( void )
 {
 qDebug() << "Remove Distros";
+   US_RemoveDistros rmvd( system );
+
+   if ( rmvd.exec() == QDialog::Accepted )
+   {
+      int jd     = system.size();
+
+      if ( jd < 1 )
+      {
+         reset();
+         return;
+      }
+
+      curr_distr = 0;
+      ct_curr_distr->setRange( 1, jd, 1 );
+      ct_curr_distr->setValue( 1 );
+      ct_curr_distr->setEnabled( true );
+   }
+
+   plot_data();
 }
 
