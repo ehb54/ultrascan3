@@ -26,6 +26,7 @@ SOURCES		+= ../src/us_timer.cpp
 SOURCES		+= ../src/us_math.cpp
 SOURCES		+= ../src/us_file_util.cpp
 SOURCES		+= ../src/us_hydrodyn_pat.cpp
+SOURCES		+= ../src/us_cmdline_app.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_math.h
@@ -38,6 +39,7 @@ HEADERS		+= ../include/us_saxs_util_asab1.h
 HEADERS         += ../include/us_tnt_jama.h
 HEADERS         += ../include/us_file_util.h
 HEADERS         += ../include/us_timer.h
+HEADERS         += ../include/us_cmdline_app.h
 
 TARGET = us_saxs_cmds_t
 

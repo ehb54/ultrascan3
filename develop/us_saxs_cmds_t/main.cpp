@@ -1,4 +1,5 @@
 #include "../include/us_saxs_cmds_t.h"
+#include "../include/us_cmdline_app.h"
 #include "../include/us_revision.h"
 #include "us_cuda.h"
 

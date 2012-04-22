@@ -83,6 +83,7 @@ SOURCES += \
   src/us_buffer.cpp \
   src/us_calendar.cpp \ 
   src/us_clipdata.cpp \ 
+  src/us_cmdline_app.cpp \
   src/us_cofdistro.cpp \
   src/us_cofs.cpp \ 
   src/us_color.cpp \
@@ -367,6 +368,7 @@ HEADERS += \
   include/us_buffer.h \
   include/us_calendar.h \
   include/us_clipdata.h \
+  include/us_cmdline_app.h \
   include/us_cofdistro.h \
   include/us_cofs.h \
   include/us_color.h \

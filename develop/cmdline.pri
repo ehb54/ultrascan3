@@ -31,7 +31,7 @@ unix {
 }
 
 win32 {
-  CONFIG              += qt warn thread release
+  CONFIG              += qt warn thread release console
   #CONFIG              += qt warn thread debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
