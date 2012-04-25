@@ -122,6 +122,61 @@ BEGIN
 
 END$$
 
+-- Returns the count of models associated with p_ID with a given editedDataID
+--  p_ID cannot be 0
+--  Admin user can get count of models that belong to others
+DROP FUNCTION IF EXISTS count_models_by_editID$$
+CREATE FUNCTION count_models_by_editID( p_personGUID CHAR(36),
+                                        p_password   VARCHAR(80),
+                                        p_ID         INT,
+                                        p_editID     INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  
+  DECLARE count_models INT;
+
+  CALL config();
+  SET count_models = 0;
+
+  IF ( p_ID <= 0 ) THEN
+    -- Gotta have a real ID
+    RETURN ( 0 );
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    SELECT COUNT(*)
+    INTO   count_models
+    FROM   modelPerson, model
+    WHERE  personID = p_ID
+    AND    modelPerson.modelID = model.modelID
+    AND    editedDataID        = p_editID;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view those models';
+     
+    ELSE
+      -- This person is asking about his own models
+      -- Ignore p_ID and return user's own
+      SELECT COUNT(*)
+      INTO   count_models
+      FROM   modelPerson, model
+      WHERE  personID = @US3_ID
+      AND    modelPerson.modelID = model.modelID
+      AND    editedDataID        = p_editID;
+
+    END IF;
+    
+  END IF;
+
+  RETURN( count_models );
+
+END$$
+
 -- INSERTs a new model with the specified information
 DROP PROCEDURE IF EXISTS new_model$$
 CREATE PROCEDURE new_model ( p_personGUID  CHAR(36),
@@ -410,6 +465,88 @@ BEGIN
       ORDER BY m.modelID DESC;
       
 
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Returns the modelID and description of all models associated with p_ID and editID
+--  Unlike get_model_desc, in this function p_ID cannot be 0
+--  Admin can view p_ID/editID combinations that belong to anyone
+DROP PROCEDURE IF EXISTS get_model_desc_by_editID$$
+CREATE PROCEDURE get_model_desc_by_editID ( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_ID         INT,
+                                            p_editID     VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( p_ID <= 0 ) THEN
+    -- Gotta have a real ID
+    SET @US3_LAST_ERRNO = @EMPTY;
+    SET @US3_LAST_ERROR = 'MySQL: The ID cannot be 0';
+
+    SELECT @US3_LAST_ERRNO AS status;
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get info that belongs to others
+    IF ( count_models_by_editID( p_personGUID, p_password, p_ID, p_editID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      SELECT m.modelID, modelGUID, description, m.variance, m.meniscus,
+             editGUID, m.editedDataID,
+             timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+             MD5( xml ) AS checksum, LENGTH( xml ) AS size
+      FROM   modelPerson, model m, editedData
+      WHERE  personID = p_ID
+      AND    modelPerson.modelID = m.modelID
+      AND    m.editedDataID      = p_editID
+      AND    m.editedDataID      = editedData.editedDataID
+      ORDER BY m.modelID DESC;
+   
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this model';
+     
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_models_by_editID( p_personGUID, p_password, @US3_ID, p_editID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT m.modelID, modelGUID, description, m.variance, m.meniscus,
+             editGUID, m.editedDataID,
+             timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+             MD5( xml ) AS checksum, LENGTH( xml ) AS size
+      FROM   modelPerson, model m, editedData
+      WHERE  personID = @US3_ID
+      AND    modelPerson.modelID = m.modelID
+      AND    m.editedDataID      = p_editID
+      AND    m.editedDataID      = editedData.editedDataID
+      ORDER BY m.modelID DESC;
+   
     END IF;
 
   END IF;
