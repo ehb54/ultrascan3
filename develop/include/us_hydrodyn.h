@@ -58,6 +58,7 @@
 #include "us_hydrodyn_saxs_screen.h"
 #include "us_hydrodyn_saxs_search.h"
 #include "us_hydrodyn_saxs_buffer.h"
+#include "us_hydrodyn_saxs_1d.h"
 #include "us_hydrodyn_saxs_2d.h"
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
@@ -98,6 +99,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Buffer;
+      friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
       friend class US_Hydrodyn_Misc;
       friend class US_Hydrodyn_Pdb_Tool;
@@ -105,6 +107,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_SaxsOptions;
       friend class US_Hydrodyn_Zeno;
       friend class US_Hydrodyn_Xsr;
+      friend class US_Hydrodyn_Cluster_Additional;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -530,6 +533,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void dna_rna_resolve();  // often DNA is encoded without the D, check each chain and ask about & adding it
 
+      map < QString, bool >                     cluster_additional_methods_options_active;
+      map < QString, map < QString, QString > > cluster_additional_methods_options_selected;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -690,6 +696,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool                     saxs_search_widget;
       US_Hydrodyn_Saxs_Search  *saxs_search_window;
       csv                      last_saxs_search_csv;
+
+      bool                     saxs_1d_widget;
+      US_Hydrodyn_Saxs_1d      *saxs_1d_window;
 
       bool                     saxs_2d_widget;
       US_Hydrodyn_Saxs_2d      *saxs_2d_window;

@@ -19,6 +19,9 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: Cluster"));
 
+   cluster_additional_methods_options_active   = &( ( US_Hydrodyn * ) us_hydrodyn )->cluster_additional_methods_options_active;
+   cluster_additional_methods_options_selected = &( ( US_Hydrodyn * ) us_hydrodyn )->cluster_additional_methods_options_selected;
+
    cluster_config[ "userid" ] = "";
    cluster_config[ "server" ] = "";
 
@@ -211,6 +214,10 @@ US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
 
 void US_Hydrodyn_Cluster::setupGUI()
 {
+   bool expert_mode = 
+      ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ||
+      active_additional_methods().size();
+
    int minHeight1 = 30;
 
    lbl_title = new QLabel( tr( "Create file for cluster jobs" ), this);
@@ -284,7 +291,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    cb_for_mpi = new QCheckBox(this);
    cb_for_mpi->setText(tr(" Package for parallel job submission"));
    cb_for_mpi->setEnabled(true);
-   cb_for_mpi->setChecked(false);
+   cb_for_mpi->setChecked(true);
    cb_for_mpi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_for_mpi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_for_mpi, SIGNAL( clicked() ), SLOT( for_mpi() ) );
@@ -302,6 +309,15 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_dmd->setMinimumHeight(minHeight1);
    pb_dmd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_dmd, SIGNAL( clicked() ), SLOT( dmd() ) );
+
+   if ( expert_mode )
+   {
+      pb_additional = new QPushButton(tr("Other methods"), this);
+      pb_additional->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_additional->setMinimumHeight(minHeight1);
+      pb_additional->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_additional, SIGNAL(clicked()), SLOT(additional()));
+   }
 
    pb_advanced = new QPushButton(tr("Advanced options"), this);
    pb_advanced->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -394,6 +410,11 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_dmd );
    hbl_mpi_etc->addSpacing( 4 );
+   if ( expert_mode )
+   {
+      hbl_mpi_etc->addWidget ( pb_additional );
+      hbl_mpi_etc->addSpacing( 4 );
+   }
    hbl_mpi_etc->addWidget ( pb_advanced );
    hbl_mpi_etc->addSpacing( 4 );
    
@@ -609,6 +630,11 @@ void US_Hydrodyn_Cluster::create_pkg()
    }
 
    editor_msg( "black", QString( tr( "Output directory is %1\n" ) ).arg( base_dir ) );
+   if ( active_additional_methods().size() )
+   {
+      create_additional_methods_pkg( base_dir, filename, common_prefix, use_extension );
+      return;
+   }      
 
    QString base = 
       "# us_saxs_cmds_t iq controlfile\n"
@@ -1438,12 +1464,15 @@ void US_Hydrodyn_Cluster::for_mpi()
    update_validator();
    if ( cb_for_mpi->isChecked() )
    {
-      le_no_of_jobs->setText( QString( "%1" )
-                              .arg( cb_split_grid->isChecked() &&
-                                    lb_target_files->numRows() ?
-                                    selected_files.size() * lb_target_files->numRows() :
-                                    selected_files.size() ) );
-   } 
+      if ( !active_additional_methods().size() )
+      {
+         le_no_of_jobs->setText( QString( "%1" )
+                                 .arg( cb_split_grid->isChecked() &&
+                                       lb_target_files->numRows() ?
+                                       selected_files.size() * lb_target_files->numRows() :
+                                       selected_files.size() ) );
+      } 
+   }
 }
 
 void US_Hydrodyn_Cluster::update_validator()
@@ -1454,24 +1483,30 @@ void US_Hydrodyn_Cluster::update_validator()
       delete le_no_of_jobs_qv;
    }
 
-   unsigned int tot_dmd_file_count = 0;
-   for ( unsigned int i = 0; i < selected_files.size(); i++ )
+   unsigned int max_jobs;
+   if ( active_additional_methods().size() )
    {
-      if ( batch_window->cb_dmd->isChecked() &&
-           dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() ) > 1 )
+      max_jobs = 16384;
+   } else {
+      unsigned int tot_dmd_file_count = 0;
+      for ( unsigned int i = 0; i < selected_files.size(); i++ )
       {
-         tot_dmd_file_count += dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() );
-      } else {
-         tot_dmd_file_count++;
+         if ( batch_window->cb_dmd->isChecked() &&
+              dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() ) > 1 )
+         {
+            tot_dmd_file_count += dmd_entry_count( QFileInfo( selected_files[ i ] ).fileName() );
+         } else {
+            tot_dmd_file_count++;
+         }
       }
-   }
-   // cout << QString( "tot dmd file count %1\n" ).arg( tot_dmd_file_count );
+      // cout << QString( "tot dmd file count %1\n" ).arg( tot_dmd_file_count );
 
-   unsigned int max_jobs = 
-      ( cb_split_grid->isChecked() && lb_target_files->numRows() ) ?
-      tot_dmd_file_count * lb_target_files->numRows() : tot_dmd_file_count;
+      max_jobs = 
+         ( cb_split_grid->isChecked() && lb_target_files->numRows() ) ?
+         tot_dmd_file_count * lb_target_files->numRows() : tot_dmd_file_count;
                            
-   max_jobs *= advanced_addition().size();
+      max_jobs *= advanced_addition().size();
+   }
 
    le_no_of_jobs_qv = new QIntValidator( 1, 
                                          max_jobs,
@@ -1482,6 +1517,10 @@ void US_Hydrodyn_Cluster::update_validator()
    if ( le_no_of_jobs->text().toUInt() > max_jobs )
    {
       le_no_of_jobs->setText( QString( "%1" ).arg( max_jobs ) );
+   }
+   if ( le_no_of_jobs->text().toUInt() < 1 )
+   {
+      le_no_of_jobs->setText( QString( "%1" ).arg( 1 ) );
    }
 }
 
@@ -2035,6 +2074,36 @@ bool US_Hydrodyn_Cluster::validate_csv_dmd( unsigned int &number_active )
 void US_Hydrodyn_Cluster::update_enables()
 {
    unsigned int number_active;
+   if ( active_additional_methods().size() )
+   {
+      le_no_of_jobs  ->setEnabled( true );
+      pb_create_pkg  ->setEnabled( true );
+      pb_add_target  ->setEnabled( false );
+      pb_clear_target->setEnabled( false );
+      le_output_name ->setEnabled( true );
+      pb_create_pkg  ->setEnabled( true );
+      cb_for_mpi     ->setEnabled( true );
+      pb_dmd         ->setEnabled( false );
+      return;
+   } else {
+      pb_add_target  ->setEnabled( create_enabled && batch_window->cb_iqq->isChecked() );
+      pb_clear_target->setEnabled( create_enabled && batch_window->cb_iqq->isChecked() );
+      le_no_of_jobs  ->setEnabled( create_enabled );
+      if ( batch_window->cluster_no_of_jobs.toUInt() &&
+           batch_window->cluster_no_of_jobs.toUInt() <= selected_files.size() )
+      {
+         le_no_of_jobs->setText( batch_window->cluster_no_of_jobs );
+      }
+      if ( cb_for_mpi->isChecked() )
+      {
+         le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ) );
+      }
+      le_output_name->setEnabled( create_enabled );
+      pb_create_pkg ->setEnabled( create_enabled );
+      cb_for_mpi    ->setEnabled( create_enabled );
+      pb_dmd        ->setEnabled( batch_window->cb_dmd->isChecked() );
+   }
+      
    if ( batch_window->cb_dmd->isChecked() )
    {
       editor_msg( "black", tr( "\nChecking DMD settings:" ) );
@@ -2076,6 +2145,16 @@ QString US_Hydrodyn_Cluster::options_summary()
    bool any_options = false;
 
    QString qs;
+
+   if ( active_additional_methods().size() )
+   {
+      prefix = tr( "Options summary: " );
+      qs += active_additional_methods().join( " " ).upper() + "\n";
+      qs += tr( "Note: current active methods take precedence.\n"
+                "Disable under the \"Other methods\" button.\n" );
+      return prefix + qs;
+   }
+
    if ( batch_window->cb_dmd->isChecked() )
    {
       if ( !qs.isEmpty() )
@@ -2415,3 +2494,463 @@ bool US_Hydrodyn_Cluster::write_config()
 
    return true;
 }
+
+void US_Hydrodyn_Cluster::additional()
+{
+   US_Hydrodyn_Cluster_Additional *hca = 
+      new US_Hydrodyn_Cluster_Additional(
+                                         us_hydrodyn,
+                                         this 
+                                         );
+   US_Hydrodyn::fixWinButtons( hca );
+   hca->exec();
+   delete hca;
+   update_enables();
+   update_validator();
+   editor_msg( "dark blue", options_summary() );
+}
+
+QStringList US_Hydrodyn_Cluster::active_additional_methods()
+{
+   QStringList methods;
+   for ( map < QString, bool >::iterator it = cluster_additional_methods_options_active->begin();
+         it != cluster_additional_methods_options_active->end();
+         it++ )
+   {
+      if ( it->second )
+      {
+         methods << it->first;
+      }
+   }
+   return methods;
+}
+
+QStringList US_Hydrodyn_Cluster::additional_method_files( QString method )
+{
+   QStringList files;
+   if ( cluster_additional_methods_options_active->count( method ) &&
+        (*cluster_additional_methods_options_active)[ method ] &&
+        cluster_additional_methods_options_selected->count( method ) )
+   {
+      for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ method ].begin();
+            it != (*cluster_additional_methods_options_selected)[ method ].end();
+            it++ )
+      {
+         if ( it->first.contains( "file" ) )
+         {
+            files << it->second;
+         }
+      }
+   }
+   return files;
+}
+
+QString US_Hydrodyn_Cluster::additional_method_package_text( QString method )
+{
+   QString text;
+   if ( cluster_additional_methods_options_active->count( method ) &&
+        (*cluster_additional_methods_options_active)[ method ] &&
+        cluster_additional_methods_options_selected->count( method ) )
+   {
+      for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ method ].begin();
+            it != (*cluster_additional_methods_options_selected)[ method ].end();
+            it++ )
+      {
+         if ( it->first.contains( "file" ) )
+         {
+            text += QString( "%1\t%2\n" ).arg( it->first ).arg( QFileInfo( it->second ).fileName() );
+         } else {
+            text += QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );
+         }
+      }
+   }
+   return text;
+}
+
+
+void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString /* base_dir */,
+                                                         QString filename, 
+                                                         QString /* common_prefix */,
+                                                         bool    use_extension )
+{
+   editor_msg( "red"     , "Other methods not yet available" );
+   editor_msg( "dark red", "Files:\n" + additional_method_files        ( active_additional_methods()[ 0 ] ).join( "\n" ) + "\n" );
+   editor_msg( "dark blue", "Text:\n" + additional_method_package_text ( active_additional_methods()[ 0 ] ) + "\n" );
+
+   QString base = 
+      "# us_saxs_cmds_t iq controlfile\n"
+      "# blank lines ok, format token <params>\n"
+      "\n";
+
+   QStringList methods = active_additional_methods();
+
+   QStringList base_source_files;
+
+   // take care of all input files first
+   // this is a problem for dammin etc, as they can't reference a ../common directory
+   // later we could force copy over
+   // -------------------------------------------------
+   // for ( int m = 0; m < ( int )methods.size(); m++ )
+   // {
+   // if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
+   // {
+   // for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();
+   // it != (*cluster_additional_methods_options_selected)[ methods[ m ] ].end();
+   // it++ )
+   // {
+   // if ( it->first.contains( "file" ) )
+   // {
+   // base += 
+   // QString( "%1\t%2\n" )
+   // .arg( it->first )
+   // .arg( common_prefix + QFileInfo( it->second ).fileName() );
+   // base_source_files << it->second;
+   // }
+   // }
+   // }
+   // }
+   // ------------------------------------------------- 
+
+   if ( !cb_for_mpi->isChecked() &&
+        !copy_files_to_pkg_dir( base_source_files ) )
+   {
+      editor_msg( "red", errormsg );
+      return;
+   }
+
+   QString      out = base;
+   QStringList  source_files;
+   QStringList  dest_files;
+   QStringList  use_selected_files;
+
+   unsigned int write_count = 0;
+   bool         last_unwritten;
+
+   int jobs = le_no_of_jobs->text().toInt();
+
+   unsigned int extension_count = jobs;
+   unsigned int extension_count_length = QString("%1").arg( extension_count ).length();
+   map < QString, bool > already_added;
+
+   US_Tar       ust;
+   US_Gzip      usg;
+
+   for ( int i = 0; i < jobs; i++ )
+   {
+      for ( int m = 0; m < ( int )methods.size(); m++ )
+      {
+         if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
+         {
+            for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();
+                  it != (*cluster_additional_methods_options_selected)[ methods[ m ] ].end();
+                  it++ )
+            {
+               if ( !it->first.contains( "file" ) )
+               {
+                  out += QString( "%1\t%2\n" )
+                     .arg( it->first )
+                     .arg( it->second );
+               } else {
+                  out += 
+                     QString( "%1\t%2\n" )
+                     .arg( it->first )
+                     .arg( QFileInfo( it->second ).fileName() );
+                  if ( !already_added.count( it->second ) )
+                  {
+                     source_files << it->second;
+                     already_added[ it->second ]++;
+                  }
+               }
+            }
+            out += methods[ m ] + "run\n";
+            out += "\n";
+         }
+      }
+   
+      // if ( !( ( i + 1 ) % jobs ) )
+      {
+         last_unwritten = false;
+         write_count++;
+         QString ext = "";
+         if ( use_extension )
+         {
+            ext = QString("%1").arg( write_count );
+            while ( ext.length() < extension_count_length )
+            {
+               ext = "0" + ext;
+            }
+         }
+         QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
+         cout << use_file << endl;
+         QFile f( use_file );
+         if ( f.open( IO_WriteOnly ) )
+         {
+            QTextStream ts( &f );
+            ts << out;
+            ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
+                                                                 ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
+            f.close();
+            editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
+            qApp->processEvents();
+         }
+         
+         // copy ne files to base_dir
+         if ( !copy_files_to_pkg_dir( source_files ) )
+         {
+            editor_msg( "red", errormsg );
+            return;
+         }
+         
+         // build tar archive
+         QStringList list;
+         QStringList to_tar_list;
+         QStringList remove_file_list;
+         to_tar_list << QFileInfo( use_file ).fileName();
+         if ( !cb_for_mpi->isChecked() )
+         {
+            for ( unsigned int i = 0; i < base_source_files.size(); i++ )
+            {
+               to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
+            }
+         }
+         for ( unsigned int i = 0; i < source_files.size(); i++ )
+         {
+            to_tar_list << QFileInfo( source_files[ i ] ).fileName();
+            remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+         }
+         remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
+
+         QString tar_name = use_file + ".tar";
+         int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
+         cout << "tar_name:" << tar_name << endl;
+         cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+         
+         if ( result != TAR_OK )
+         {
+            editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
+            return;
+         }
+         editor_msg( "dark gray", QString("Created: %1").arg( tar_name ) );
+
+         result = usg.gzip( tar_name );
+         if ( result != GZIP_OK )
+         {
+            editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+            return;
+         }
+         QDir qd;
+         QString use_targz_filename = tar_name;
+         use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+         qd.remove( use_targz_filename );
+         if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+         {
+            editor_msg( "red", QString("Error renaming %1 to %2")
+                        .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                        .arg( QFileInfo( use_targz_filename ).fileName() ) );
+         }
+         
+         dest_files << use_targz_filename;
+         
+         editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
+         // clean up droppings
+         if ( !remove_files( remove_file_list ) )
+         {
+            return;
+         }
+         
+         if ( !cb_for_mpi->isChecked() )
+         {
+            source_files .clear();
+            already_added.clear();
+         }
+         
+         out = base;
+         // out += QString( "sleep\t%!\n" ).arg( i );
+      }
+   }
+   if ( last_unwritten )
+   {
+      write_count++;
+      QString ext = "";
+      if ( use_extension )
+      {
+         ext = QString("%1").arg( write_count );
+         while ( ext.length() < extension_count_length )
+         {
+            ext = "0" + ext;
+         }
+      }
+      QString use_file = QString( "%1%2" ).arg( filename ).arg( use_extension ? QString("_p%1").arg( ext ) : "" );
+      cout << use_file << endl;
+      QFile f( use_file );
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << out;
+         ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
+                                                              ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
+         f.close();
+         editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
+      }
+      
+      // copy ne files to base_dir
+      if ( !copy_files_to_pkg_dir( source_files ) )
+      {
+         editor_msg( "red", errormsg );
+         return;
+      }
+
+      // build tar archive
+      QStringList qsl;
+      QStringList to_tar_list;
+      QStringList remove_file_list;
+      to_tar_list << QFileInfo( use_file ).fileName();
+      if ( !cb_for_mpi->isChecked() )
+      {
+         for ( unsigned int i = 0; i <  base_source_files.size(); i++ )
+         {
+            to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
+         }
+      }
+      for ( unsigned int i = 0; i < source_files.size(); i++ )
+      {
+         to_tar_list << QFileInfo( source_files[ i ] ).fileName();
+         remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+      }
+      remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
+
+      QString tar_name = use_file + ".tar";
+      int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &qsl );
+      cout << "tar_name:" << tar_name << endl;
+      cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+      
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
+         return;
+      }
+      editor_msg( "dark gray", QString("Created: %1").arg( tar_name ) );
+
+      result = usg.gzip( tar_name );
+      if ( result != GZIP_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+         return;
+      }
+      QDir qd;
+      QString use_targz_filename = tar_name;
+      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      qd.remove( use_targz_filename );
+      if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+      {
+         editor_msg( "red", QString("Error renaming %1 to %2")
+                     .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                     .arg( QFileInfo( use_targz_filename ).fileName() ) );
+      }
+      
+      dest_files << use_targz_filename;
+      
+      editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
+      // clean up droppings
+      if ( !remove_files( remove_file_list ) )
+      {
+         return;
+      }
+      
+      source_files.clear();
+      
+      out = base;
+   }
+
+   if ( cb_for_mpi->isChecked() )
+   {
+      if ( !copy_files_to_pkg_dir( base_source_files ) )
+      {
+         editor_msg( "red", errormsg );
+         return;
+      }
+
+      QStringList list;
+      QStringList to_tar_list;
+      for ( unsigned int i = 0; i < base_source_files.size(); i++ )
+      {
+         to_tar_list << QFileInfo( base_source_files[ i ] ).fileName();
+      }
+
+      QString tar_name = QString( "%1%2common_%3.tar" )
+         .arg( QFileInfo( filename ).dirPath() )
+         .arg( QDir::separator() )
+         .arg( QFileInfo( filename ).fileName() )
+         ;
+
+      int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
+      cout << "tar_name:" << tar_name << endl;
+      cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( tar_name ).arg( ust.explain( result ) ) );
+         return;
+      }
+
+      result = usg.gzip( tar_name );
+      if ( result != GZIP_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+         return;
+      }
+
+      QDir qd;
+      QString use_targz_filename = tar_name;
+      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      qd.remove( use_targz_filename );
+      if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+      {
+         editor_msg( "red", QString("Error renaming %1 to %2")
+                     .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                     .arg( QFileInfo( use_targz_filename ).fileName() ) );
+      }
+      dest_files << use_targz_filename;
+   }
+
+   QStringList base_remove_file_list;
+   for ( unsigned int i = 0; i < base_source_files.size(); i++ )
+   {
+      base_remove_file_list << pkg_dir + SLASH + QFileInfo( base_source_files[ i ] ).fileName();
+   }
+   remove_files( base_remove_file_list );
+   cout << "written:" << write_count << endl;
+   if ( write_count != le_no_of_jobs->text().toUInt() )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: the actually number of jobs created (%1) is less than requested (%2)\n"
+                                           "This is due to the fact that the selected files were evenly distributed among the jobs" ) ).arg( write_count ).arg( le_no_of_jobs->text().toUInt() ) );
+   }
+   if ( cb_for_mpi->isChecked() )
+   {
+      QString tarout = le_output_name->text() + ".tar";
+      QStringList local_dest_files;
+      for ( unsigned int i = 0; i < dest_files.size(); i++ )
+      {
+         local_dest_files << QFileInfo( dest_files[ i ] ).fileName();
+      }
+      int result = ust.create( QFileInfo( tarout ).filePath(), local_dest_files );
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( tarout ).arg( ust.explain( result ) ) );
+         return;
+      }
+      if ( !remove_files( dest_files ) )
+      {
+         return;
+      }
+      editor_msg( "blue", QString( tr( "Package: %1 created" ) ).arg( tarout ) );
+   } else {
+      editor_msg( "blue", 
+                  dest_files
+                  .gres( QRegExp( "^" ), tr( "Package: " ) )
+                  .gres( QRegExp( "$" ), tr( " created" ) )
+                  .join( "\n" ) );
+   }
+   editor_msg( "black", tr( "Package complete" ) );
+}
+

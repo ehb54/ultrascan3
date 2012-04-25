@@ -575,6 +575,8 @@ class US_EXTERN US_Saxs_Util
 
    private:
 
+      bool run_dammin();
+
       bool run_gnom( 
                     QString             project, 
                     QString             prefix, 

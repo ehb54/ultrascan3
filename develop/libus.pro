@@ -184,9 +184,11 @@ SOURCES += \
   src/us_hydrodyn_bd_load_results_opts.cpp \
   src/us_hydrodyn_cluster.cpp \
   src/us_hydrodyn_cluster_advanced.cpp \
+  src/us_hydrodyn_cluster_additional.cpp \
   src/us_hydrodyn_cluster_config.cpp \
   src/us_hydrodyn_cluster_config_server.cpp \
   src/us_hydrodyn_cluster_dmd.cpp \
+  src/us_hydrodyn_cluster_dammin.cpp \
   src/us_hydrodyn_cluster_results.cpp \
   src/us_hydrodyn_cluster_submit.cpp \
   src/us_hydrodyn_cluster_status.cpp \
@@ -243,6 +245,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_buffer.cpp \
   src/us_hydrodyn_saxs_buffer_conc.cpp \
   src/us_hydrodyn_saxs_buffer_conc_load.cpp \
+  src/us_hydrodyn_saxs_1d.cpp \
   src/us_hydrodyn_saxs_2d.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_hydrodyn_xsr.cpp \
@@ -285,6 +288,7 @@ SOURCES += \
   src/us_saxs_util.cpp \
   src/us_saxs_util_a2sb.cpp \
   src/us_saxs_util_cuda.cpp \
+  src/us_saxs_util_dammin.cpp \
   src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
   src/us_saxs_util_hydrate.cpp \
@@ -465,9 +469,11 @@ HEADERS += \
   include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_cluster.h \
+  include/us_hydrodyn_cluster_additional.h \
   include/us_hydrodyn_cluster_advanced.h \
   include/us_hydrodyn_cluster_config.h \
   include/us_hydrodyn_cluster_config_server.h \
+  include/us_hydrodyn_cluster_dammin.h \
   include/us_hydrodyn_cluster_dmd.h \
   include/us_hydrodyn_cluster_results.h \
   include/us_hydrodyn_cluster_submit.h \
@@ -513,6 +519,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_buffer.h \
   include/us_hydrodyn_saxs_buffer_conc.h \
   include/us_hydrodyn_saxs_buffer_conc_load.h \
+  include/us_hydrodyn_saxs_1d.h \
   include/us_hydrodyn_saxs_2d.h \
   include/us_hydrodyn_supc.h \
   include/us_hydrodyn_xsr.h \

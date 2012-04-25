@@ -32,6 +32,8 @@ SOURCES		+= ../src/us_math.cpp
 SOURCES		+= ../src/us_file_util.cpp
 SOURCES		+= ../src/us_hydrodyn_pat.cpp
 SOURCES		+= us_semaphore.cpp
+SOURCES		+= ../src/us_cmdline_app.cpp
+SOURCES		+= ../src/us_saxs_util_dammin.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_math.h
@@ -45,6 +47,7 @@ HEADERS         += ../include/us_tnt_jama.h
 HEADERS         += ../include/us_file_util.h
 HEADERS         += ../include/us_timer.h
 HEADERS		+= us_semaphore.h
+HEADERS         += ../include/us_cmdline_app.h
 
 TARGET = us_saxs_cmds_mpi_cuda
 

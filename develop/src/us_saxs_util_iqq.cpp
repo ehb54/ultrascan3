@@ -223,6 +223,38 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "bsplinetest|"
 
+                      "damminrun|"
+                      "dammingnomfile|"
+                      "damminmode|"
+                      "damminname|"
+                      "dammindescription|"
+                      "damminangularunits|"
+                      "damminfitcurvelimit|"
+                      "damminknotstofit|"
+                      "damminconstantsubtractionprocedure|"
+                      "damminmaxharmonics|"
+                      "dammininitialdamtype|"
+                      "damminsymmetry|"
+                      "damminspherediameter|"
+                      "damminpackingradius|"
+                      "damminradius1stcoordinationsphere|"
+                      "damminloosenesspenaltyweight|"
+                      "dammindisconnectivitypenaltyweight|"
+                      "damminperipheralpenaltyweight|"
+                      "damminfixingthersholdsLosandRf|"
+                      "damminrandomizestructure|"
+                      "damminweight|"
+                      "dammininitialscalefactor|"
+                      "damminfixscalefactor|"
+                      "dammininitialannealingtemperature|"
+                      "damminannealingschedulefactor|"
+                      "damminnumberofindependentatomstomodify|"
+                      "damminmaxnumberiterationseachT|"
+                      "damminmaxnumbersuccesseseachT|"
+                      "damminminnumbersuccessestocontinue|"
+                      "damminmaxnumberannealingsteps|"
+                      "damminexpectedshape|"
+
                       "a2sbrun|"
                       "a2sbcubeside|"
                       "a2sbequalize|"
@@ -233,11 +265,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
    QRegExp rx_file   ( 
                       "^("
+                      "dammingnomfile|"
                       "residuefile|"
                       "atomfile|"
                       "hybridfile|"
                       "hydrationfile|"
                       "saxsfile|"
+                      "dammingnomfile|"
                       "experimentgrid|"
                       "additionalexperimentgrid|"
                       "dmdsupportfile|"
@@ -405,6 +439,18 @@ bool US_Saxs_Util::read_control( QString controlfile )
       {
          if ( !flush_output() )
          {
+            return false;
+         }
+      }         
+
+      if ( option == "damminrun" )
+      {
+         if ( !run_dammin() )
+         {
+            errormsg = QString( "Error %1 line %2 : %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( errormsg );
             return false;
          }
       }         

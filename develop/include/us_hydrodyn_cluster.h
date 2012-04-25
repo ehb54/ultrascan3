@@ -26,6 +26,7 @@
 #include "us_hydrodyn_cluster_config_server.h"
 #include "us_hydrodyn_cluster_advanced.h"
 #include "us_hydrodyn_cluster_dmd.h"
+#include "us_hydrodyn_cluster_additional.h"
 
 //standard C and C++ defs:
 
@@ -43,6 +44,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       friend class US_Hydrodyn_Cluster_Advanced;
       friend class US_Hydrodyn_Cluster_Dmd;
       friend class US_Hydrodyn_Cluster_Config_Server;
+      friend class US_Hydrodyn_Cluster_Additional;
 
    public:
       US_Hydrodyn_Cluster(
@@ -74,6 +76,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QCheckBox     *cb_for_mpi;
       QCheckBox     *cb_split_grid;
       QPushButton   *pb_dmd;
+      QPushButton   *pb_additional;
       QPushButton   *pb_advanced;
 
       QPushButton   *pb_create_pkg;
@@ -125,6 +128,10 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool > submitted_jobs;
       map < QString, bool > completed_jobs;
       map < QString, bool > results_jobs;
+
+      map < QString, bool >                     * cluster_additional_methods_options_active;
+      map < QString, map < QString, QString > > * cluster_additional_methods_options_selected;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -146,6 +153,15 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void          update_validator();
 
+      QStringList   active_additional_methods     ();
+      QStringList   additional_method_files       ( QString method );
+      QString       additional_method_package_text( QString method );
+
+      void          create_additional_methods_pkg ( QString base_dir,
+                                                    QString filename, 
+                                                    QString common_prefix,
+                                                    bool    use_extension );
+
    private slots:
 
       void setupGUI();
@@ -163,6 +179,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       void for_mpi();
       void split_grid();
       void dmd();
+      void additional();
       void advanced();
 
       void clear_display();

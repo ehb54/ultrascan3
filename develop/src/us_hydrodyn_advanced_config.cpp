@@ -257,16 +257,14 @@ void US_Hydrodyn_AdvancedConfig::set_expert_mode()
    (*advanced_config).expert_mode = cb_expert_mode->isChecked();
    if ( cb_expert_mode->isChecked() )
    {
-      cb_auto_view_pdb->setChecked(false);
-      set_auto_view_pdb();
-      cb_auto_calc_somo->setChecked(true);
-      set_auto_calc_somo();
-      cb_auto_calc_somo->setChecked(true);
-      set_auto_calc_somo();
-      cb_auto_show_hydro->setChecked(true);
-      set_auto_show_hydro();
-      cb_scroll_editor->setChecked(true);
-      set_scroll_editor();
+      // cb_auto_view_pdb->setChecked(false);
+      // set_auto_view_pdb();
+      // cb_auto_calc_somo->setChecked(true);
+      // set_auto_calc_somo();
+      // cb_auto_show_hydro->setChecked(true);
+      // set_auto_show_hydro();
+      // cb_scroll_editor->setChecked(true);
+      // set_scroll_editor();
    }
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();

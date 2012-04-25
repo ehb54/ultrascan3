@@ -1,5 +1,5 @@
-#ifndef US_HYDRODYN_SAXS_2D_H
-#define US_HYDRODYN_SAXS_2D_H
+#ifndef US_HYDRODYN_SAXS_1D_H
+#define US_HYDRODYN_SAXS_1D_H
 
 // QT defs:
 
@@ -34,7 +34,7 @@
 
 using namespace std;
 
-struct ush2d_data
+struct ush1d_data
 {
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -65,19 +65,19 @@ struct ush2d_data
       double         detector_distance;
 };
 
-class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
+class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 {
    Q_OBJECT
 
       friend class US_Hydrodyn_Saxs;
 
    public:
-      US_Hydrodyn_Saxs_2d(
+      US_Hydrodyn_Saxs_1d(
                           void *us_hydrodyn, 
                           QWidget *p = 0, 
                           const char *name = 0
                           );
-      ~US_Hydrodyn_Saxs_2d();
+      ~US_Hydrodyn_Saxs_1d();
 
    private:
       void          *us_hydrodyn;
@@ -170,7 +170,7 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       map < QString, atom >                           atom_map;
       map < QString, QString >                        residue_atom_hybrid_map;
 
-      vector < ush2d_data >                           data_stack;
+      vector < ush1d_data >                           data_stack;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -240,10 +240,6 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
 
       void closeEvent(QCloseEvent *);
    
-};
-
-namespace bulatov {
-   vector < vector < double > > bulatov_main( int N, int Nstep );
 };
 
 #endif

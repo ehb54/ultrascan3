@@ -6,6 +6,7 @@
 #include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
+#include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
 #include "../include/us_hydrodyn_xsr.h"
 #include "../include/us_saxs_util.h"
@@ -615,6 +616,13 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_xsr->setMaximumWidth( maxWidth * 3 );
       connect(pb_saxs_xsr, SIGNAL(clicked()), SLOT(saxs_xsr()));
 
+      pb_saxs_1d = new QPushButton("1d", this);
+      pb_saxs_1d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      pb_saxs_1d->setMinimumHeight(minHeight1);
+      pb_saxs_1d->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      pb_saxs_1d->setMaximumWidth( maxWidth * 2 );
+      connect(pb_saxs_1d, SIGNAL(clicked()), SLOT(saxs_1d()));
+
       pb_saxs_2d = new QPushButton("2d", this);
       pb_saxs_2d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_2d->setMinimumHeight(minHeight1);
@@ -1042,6 +1050,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       hbl_various_0->addWidget(pb_saxs_screen);
       hbl_various_0->addWidget(pb_saxs_buffer);
       hbl_various_0->addWidget(pb_saxs_xsr);
+      hbl_various_0->addWidget(pb_saxs_1d);
       hbl_various_0->addWidget(pb_saxs_2d);
    }
 
