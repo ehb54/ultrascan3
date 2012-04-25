@@ -360,6 +360,14 @@ bool US_Saxs_Util::input_dimensions( point &range )
          range.axis[ m ] += 10;
       }
    }
+
+   // add 50%
+
+   for ( unsigned int m = 0; m < 3; m++ )
+   {
+      range.axis[ m ] *= 1.5;
+   }
+   
    return true;
 }
 
