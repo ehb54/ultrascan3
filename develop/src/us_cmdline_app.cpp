@@ -96,7 +96,8 @@ void US_Cmdline_App::readFromStdout()
    } while ( qs != QString::null );
 
    do {
-      qs = QString( "%1" ).arg( (const QString &) process.readStdout() );
+      QString read = process.readStdout();
+      qs = QString( "%1" ).arg( read );
       text += qs;
    } while ( qs.length() );
    
