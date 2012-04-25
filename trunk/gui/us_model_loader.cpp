@@ -441,7 +441,6 @@ QDateTime time2=QDateTime::currentDateTime();
             }
          }
 
-#if !defined( NO_MODEL_DESC_BY_EDITID )
          for ( int ii = 0; ii < qMax( nedits, 1 ); ii++ )
          {
             query.clear();
@@ -486,53 +485,6 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
             }
          }
 QDateTime time3=QDateTime::currentDateTime();
-#else
-time1=QDateTime::currentDateTime();
-         query.clear();
-         query << "get_model_desc" << invID;
-         db.query( query );
-//qDebug() << " NumRows" << db.numRows();
-time2=QDateTime::currentDateTime();
-qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
-int idEDlo=(nedits>0)?editIDs[0].toInt()-10:100;
-int idEDhi=idEDlo+20;
-
-         while ( db.next() )
-         {
-            QString rEditID  = db.value( 6 ).toString();
-int idED=rEditID.toInt();
-if(idED>idEDlo&&idED<idEDhi) {
-qDebug() << "mdloop: editID" << rEditID
-<< "IDs contains" << editIDs.contains(rEditID) << "nedits" << nedits;
-}
-
-            if ( ( nedits > 0  &&  ! editIDs.contains( rEditID ) )  ||
-                 ( !editID.isEmpty()  &&  rEditID != editID ) )
-               continue;
-
-            ModelDesc desc;
-            desc.DB_id       = db.value( 0 ).toString();
-            desc.modelGUID   = db.value( 1 ).toString();
-            desc.description = db.value( 2 ).toString();
-            desc.editGUID    = db.value( 5 ).toString();
-
-            desc.filename.clear();
-            desc.reqGUID     = desc.description.section( ".", -2, -2 )
-                                               .section( "_",  0,  3 );
-            desc.iterations  = ( desc.description.contains( "-MC" )
-                              && desc.description.contains( "_mc" ) ) ? 1: 0;
-
-            if ( desc.description.simplified().length() < 2 )
-            {
-               desc.description = " ( ID " + desc.DB_id
-                                  + tr( " : empty description )" );
-            }
-
-            all_model_descrips << desc;   // add to full models list
-         }
-QDateTime time3=QDateTime::currentDateTime();
-qDebug() << "mdloop:   amd size" << all_model_descrips.size();
-#endif
 
          if ( !listsing )
             compress_list();          // default: compress MC groups

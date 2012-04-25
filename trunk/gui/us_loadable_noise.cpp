@@ -301,19 +301,12 @@ DbgLv(2) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
 
    // Build noise, edit, model ID lists for all noises
    query.clear();
-#if defined( NO_MODEL_DESC_BY_EDITID )
-   query << "get_noise_desc" << invID;
-#else
    query << "get_noise_desc_by_editID" << invID << daEditID;
-#endif
    db.query( query );
 
    while ( db.next() )
    {  // Accumulate lists from noise records
       noiEdID   = db.value( 2 ).toString();
-#if defined( NO_MODEL_DESC_BY_EDITID )
-      if ( noiEdID != daEditID )  continue;
-#endif
 
       noiIDs   << db.value( 1 ).toString();
       noiTypes << db.value( 4 ).toString();
@@ -323,11 +316,7 @@ DbgLv(2) << "LaNoi:idlDB:  daEdit ID GUID" << daEditID << daEditGUID;
 DbgLv(2) << "LaNoi:idlDB: noiTypes size" << noiTypes.size();
    // Build model, edit ID lists for all models
    query.clear();
-#if defined( NO_MODEL_DESC_BY_EDITID )
-   query << "get_model_desc" << invID;
-#else
    query << "get_model_desc_by_editID" << invID << daEditID;
-#endif
    db.query( query );
 
    while ( db.next() )

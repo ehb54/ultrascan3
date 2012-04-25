@@ -1,7 +1,6 @@
 include ( ../library.pri )
 
 QT            += opengl
-DEFINES       += NO_MODEL_DESC_BY_EDITID
 
 unix:   TARGET = us_gui
 
