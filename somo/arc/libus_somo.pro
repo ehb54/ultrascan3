@@ -97,9 +97,11 @@ SOURCES += \
   us_hydrodyn_bead_output.cpp \
   us_hydrodyn_cluster.cpp \
   us_hydrodyn_cluster_advanced.cpp \
+  us_hydrodyn_cluster_additional.cpp \
   us_hydrodyn_cluster_config.cpp \
   us_hydrodyn_cluster_config_server.cpp \
   us_hydrodyn_cluster_dmd.cpp \
+  us_hydrodyn_cluster_dammin.cpp \
   us_hydrodyn_cluster_results.cpp \
   us_hydrodyn_cluster_submit.cpp \
   us_hydrodyn_cluster_status.cpp \
@@ -156,6 +158,7 @@ SOURCES += \
   us_hydrodyn_saxs_buffer.cpp \
   us_hydrodyn_saxs_buffer_conc.cpp \
   us_hydrodyn_saxs_buffer_conc_load.cpp \
+  us_hydrodyn_saxs_1d.cpp \
   us_hydrodyn_saxs_2d.cpp \
   us_hydrodyn_supc.cpp \
   us_hydrodyn_xsr.cpp \
@@ -171,6 +174,7 @@ SOURCES += \
   us_saxs_util.cpp \
   us_saxs_util_a2sb.cpp \
   us_saxs_util_cuda.cpp \
+  us_saxs_util_dammin.cpp \
   us_saxs_util_dmd.cpp \
   us_saxs_util_extern.cpp \
   us_saxs_util_hydrate.cpp \
@@ -231,8 +235,10 @@ HEADERS += \
   us_hydrodyn_bead_output.h \
   us_hydrodyn_cluster.h \
   us_hydrodyn_cluster_advanced.h \
+  us_hydrodyn_cluster_additional.h \
   us_hydrodyn_cluster_config.h \
   us_hydrodyn_cluster_config_server.h \
+  us_hydrodyn_cluster_dammin.h \
   us_hydrodyn_cluster_dmd.h \
   us_hydrodyn_cluster_results.h \
   us_hydrodyn_cluster_submit.h \
@@ -278,6 +284,7 @@ HEADERS += \
   us_hydrodyn_saxs_buffer.h \
   us_hydrodyn_saxs_buffer_conc.h \
   us_hydrodyn_saxs_buffer_conc_load.h \
+  us_hydrodyn_saxs_1d.h \
   us_hydrodyn_saxs_2d.h \
   us_hydrodyn_supc.h \
   us_hydrodyn_xsr.h \

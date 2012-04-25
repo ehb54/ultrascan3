@@ -77,6 +77,7 @@ files
 ./src/us_hydrodyn_sas_options_misc.cpp
 ./src/us_hydrodyn_sas_options_curve.cpp
 ./src/us_hydrodyn_cluster_advanced.cpp
+./src/us_hydrodyn_cluster_additional.cpp
 ./src/us_hydrodyn_saxs.cpp
 ./src/us_hydrodyn_sas_options_experimental.cpp
 ./src/us_hydrodyn_sas_options_hydration.cpp
@@ -86,9 +87,11 @@ files
 ./src/us_hydrodyn_saxs_buffer_conc_load.cpp
 ./src/us_hydrodyn_saxs_buffer.cpp
 ./src/us_hydrodyn_saxs_screen.cpp
+./src/us_hydrodyn_saxs_1d.cpp
 ./src/us_hydrodyn_saxs_2d.cpp
 ./src/us_hydrodyn_xsr.cpp
 ./src/us_hydrodyn_sas_options_xsr.cpp
 ./src/us_json.cpp
 ./src/us_cmdline_app.cpp
+./src/us_hydrodyn_cluster_dammin.cpp
 end
