@@ -125,6 +125,61 @@ BEGIN
 
 END$$
 
+-- Returns the count of noise files associated with p_ID with a given editedDataID
+--  p_ID cannot be 0
+--  Admin user can get count of noise files that belong to others
+DROP FUNCTION IF EXISTS count_noise_by_editID$$
+CREATE FUNCTION count_noise_by_editID( p_personGUID CHAR(36),
+                                       p_password VARCHAR(80),
+                                       p_ID         INT,
+                                       p_editID     INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  
+  DECLARE count_noise INT;
+
+  CALL config();
+  SET count_noise = 0;
+
+  IF ( p_ID <= 0 ) THEN
+    -- Gotta have a real ID
+    RETURN ( 0 );
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    SELECT COUNT(*)
+    INTO   count_noise
+    FROM   modelPerson, noise
+    WHERE  personID = p_ID
+    AND    modelPerson.modelID = noise.modelID
+    AND    editedDataID        = p_editID;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view those noise files';
+     
+    ELSE
+      -- This person is asking about his own noise files
+      -- Ignore p_ID and return user's own
+      SELECT COUNT(*)
+      INTO   count_noise
+      FROM   modelPerson, noise
+      WHERE  personID = @US3_ID
+      AND    modelPerson.modelID = noise.modelID
+      AND    editedDataID        = p_editID;
+
+    END IF;
+    
+  END IF;
+
+  RETURN( count_noise );
+
+END$$
+
 -- INSERTs a new noise file with the specified information
 DROP PROCEDURE IF EXISTS new_noise$$
 CREATE PROCEDURE new_noise ( p_personGUID    CHAR(36),
@@ -479,6 +534,84 @@ BEGIN
       FROM     modelPerson, noise
       WHERE    modelPerson.modelID  = noise.modelID
       AND      modelPerson.personID = @US3_ID
+      ORDER BY timeEntered DESC;
+
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Returns the noiseID and description of all noise files associated with p_ID and editID
+--  Unlike get_noise_desc, in this function p_ID cannot be 0
+--  Admin can view p_ID/editID combinations that belong to anyone
+DROP PROCEDURE IF EXISTS get_noise_desc_by_editID$$
+CREATE PROCEDURE get_noise_desc_by_editID ( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_ID         INT,
+                                            p_editID     VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( p_ID <= 0 ) THEN
+    -- Gotta have a real ID
+    SET @US3_LAST_ERRNO = @EMPTY;
+    SET @US3_LAST_ERROR = 'MySQL: The ID cannot be 0';
+
+    SELECT @US3_LAST_ERRNO AS status;
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_noise_by_editID( p_personGUID, p_password, p_ID, p_editID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
+               timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
+      FROM     modelPerson, noise
+      WHERE    modelPerson.personID = p_ID
+      AND      modelPerson.modelID  = noise.modelID
+      AND      editedDataID         = p_editID
+      ORDER BY timeEntered DESC;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this noise';
+     
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_noise_by_editID( p_personGUID, p_password, @US3_ID, p_editID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
+               timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size, description
+      FROM     modelPerson, noise
+      WHERE    modelPerson.personID = @US3_ID
+      AND      modelPerson.modelID  = noise.modelID
+      AND      editedDataID         = p_editID
       ORDER BY timeEntered DESC;
 
     END IF;
