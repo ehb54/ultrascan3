@@ -47,11 +47,11 @@ public:
 void US_Hydrodyn_Comparative::csv_sort( csv &csv1, vector < unsigned int > cols )
 {
    // build a sortable vector double containing the data of the relevant columns
-   //   cout << "csv_sort\ncols:";
-   //   for ( unsigned int i = 0; i < cols.size(); i++ )
-   //   {
-   //      cout << cols[i] << " ";
-   //   }
+   // cout << "csv_sort\ncols:";
+   // for ( unsigned int i = 0; i < cols.size(); i++ )
+   // {
+   // cout << cols[i] << " ";
+   // }
    cout << endl;
 
    list < sortable_vector_double > lsvd;
@@ -4219,7 +4219,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
    vector < unsigned int > sort_cols;
 
-   if ( do_weight && col_ec )
+   if ( do_weight && col_weight )
    {
       sort_cols.push_back( col_weight );
    } else {

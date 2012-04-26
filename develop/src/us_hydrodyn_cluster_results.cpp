@@ -921,7 +921,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
          dest_file = output_dir + QDir::separator() + base_name + QString( "-%1" ).arg( ++unique_copy ) + extension;
       }
          
-      cout << QString( "move to results %1 %2\n" ).arg( source_file ).arg( dest_file );
+      // cout << QString( "move to results %1 %2\n" ).arg( source_file ).arg( dest_file );
 
       if ( !usu.move( source_file , dest_file, overwrite ) )
       {
