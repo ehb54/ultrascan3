@@ -1,0 +1,3 @@
+#!/bin/bash
+
+$ULTRASCAN/bin64/us_pty $ULTRASCAN/bin64/dammin.bin $*
