@@ -256,11 +256,6 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "damminname" ) )
    {
-      control_parameters[ "dammin0pdb" ] = 
-          control_parameters[ "damminname" ] + "-0.pdb";
-   }
-   if ( control_parameters.count( "damminname" ) )
-   {
       control_parameters[ "dammin1pdb" ] = 
           control_parameters[ "damminname" ] + "-1.pdb";
    }
@@ -286,36 +281,6 @@ bool US_Saxs_Util::run_dammin()
    } else {
       errormsg = "Error: dammin: parameter dammingnomfile must be defined";
       return false;
-   }
-   if ( control_parameters.count( "dammin0pdb" ) &&
-        control_parameters.count( "damminfullname" ) )
-   {
-      QFileInfo fi( control_parameters[ "dammin0pdb" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
-
-      if ( !fi.exists() )
-      {
-          errormsg = QString( "Error: dammin: the expected output file %1 does not exist" )
-              .arg( control_parameters[ "dammin0pdb" ] );
-          return false;
-      }
-
-      int copy = 0;
-      QString destfile = control_parameters[ "damminfullname" ] + "." + ext;
-      while ( QFile::exists( destfile ) )
-      {
-          destfile = control_parameters[ "damminfullname" ] + QString( "_%1" ).arg( ++copy ) + "." + ext;
-      }
-      QDir qd;
-      if ( !qd.rename( control_parameters[ "dammin0pdb" ], destfile ) )
-      {
-          errormsg = QString( "Error renaming %1 to %2" )
-              .arg( control_parameters[ "dammin0pdb" ] )
-              .arg( destfile );
-          return false;
-      }
-      output_files << destfile;
    }
    if ( control_parameters.count( "dammin1pdb" ) &&
         control_parameters.count( "damminfullname" ) )

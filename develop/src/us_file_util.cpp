@@ -16,7 +16,7 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    }
 
    if ( !overwrite && 
-        !QFile( from ).exists() &&
+        QFile( to ).exists() &&
         !QFileInfo( to ).isDir() )
    {
       errormsg = QString( "Copy to file %1 exists" ).arg( to );

@@ -486,7 +486,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    }
       
    US_File_Util ufu;
-   if ( !ufu.copy( file, tmp_dir + SLASH ) )
+   if ( !ufu.copy( file, tmp_dir + SLASH, true ) )
    {
       errormsg = ufu.errormsg;
       return false;
@@ -838,6 +838,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
    QString output_dir = results_dir + SLASH + QString( "%1" )
       .arg( jobname ).replace( QRegExp( "_(out|OUT).*$" ), "" );
    QDir qd( output_dir );
+   bool overwrite = false;
    if ( qd.exists() )
    {
       switch ( QMessageBox::question(
@@ -866,6 +867,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
          break;
 
       case 1 : 
+         overwrite = true;
          break;
       
       case 2 :
@@ -884,6 +886,8 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
 
    US_File_Util usu;
 
+   map < QString, bool > written_dest_files;
+
    for ( unsigned int i = 0; i < final_results.size(); i++ )
    {
       QString from_dir = tmp_dir;
@@ -900,7 +904,26 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
          errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( from_dir );
          return false;
       }
-      if ( !usu.move( QFileInfo( final_results[ i ] ).fileName(), output_dir ) )
+
+      QString source_file = QFileInfo( final_results[ i ] ).fileName();
+      QString base_name   = QFileInfo( source_file ).baseName ( true  );
+      QString extension   = QFileInfo( source_file ).extension( false );
+      if ( !extension.isEmpty() )
+      {
+         extension = "." + extension;
+      }
+
+      QString dest_file = output_dir + QDir::separator() + base_name + extension;
+
+      int unique_copy = 0;
+      while ( QFile::exists( dest_file ) )
+      {
+         dest_file = output_dir + QDir::separator() + base_name + QString( "-%1" ).arg( ++unique_copy ) + extension;
+      }
+         
+      cout << QString( "move to results %1 %2\n" ).arg( source_file ).arg( dest_file );
+
+      if ( !usu.move( source_file , dest_file, overwrite ) )
       {
          errormsg = usu.errormsg;
          return false;
