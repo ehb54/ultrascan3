@@ -132,6 +132,11 @@ bool US_Saxs_Util::run_dammin()
       app_text << "Packing radius of dummy atoms";
       response << control_parameters[ "damminpackingradius" ];
    }
+   if ( control_parameters.count( "damminexpectedshape" ) )
+   {
+      app_text << "Expected particle shape: <P>rolate, <O>blate";
+      response << control_parameters[ "damminexpectedshape" ];
+   }
    if ( control_parameters.count( "damminradius1stcoordinationsphere" ) )
    {
       app_text << "Radius of 1st coordination sphere";
@@ -152,10 +157,10 @@ bool US_Saxs_Util::run_dammin()
       app_text << "Peripheral penalty weight";
       response << control_parameters[ "damminperipheralpenaltyweight" ];
    }
-   if ( control_parameters.count( "damminfixingthersholdsLosandRf" ) )
+   if ( control_parameters.count( "damminfixingthersholdslosandrf" ) )
    {
       app_text << "Fixing thresholds Los and Rf";
-      response << control_parameters[ "damminfixingthersholdsLosandRf" ];
+      response << control_parameters[ "damminfixingthersholdslosandrf" ];
    }
    if ( control_parameters.count( "damminrandomizestructure" ) )
    {
@@ -192,15 +197,15 @@ bool US_Saxs_Util::run_dammin()
       app_text << "# of independent atoms to modify";
       response << control_parameters[ "damminnumberofindependentatomstomodify" ];
    }
-   if ( control_parameters.count( "damminmaxnumberiterationseachT" ) )
+   if ( control_parameters.count( "damminmaxnumberiterationseacht" ) )
    {
       app_text << "Max # of iterations at each T";
-      response << control_parameters[ "damminmaxnumberiterationseachT" ];
+      response << control_parameters[ "damminmaxnumberiterationseacht" ];
    }
-   if ( control_parameters.count( "damminmaxnumbersuccesseseachT" ) )
+   if ( control_parameters.count( "damminmaxnumbersuccesseseacht" ) )
    {
       app_text << "Max # of successes at each T";
-      response << control_parameters[ "damminmaxnumbersuccesseseachT" ];
+      response << control_parameters[ "damminmaxnumbersuccesseseacht" ];
    }
    if ( control_parameters.count( "damminminnumbersuccessestocontinue" ) )
    {
