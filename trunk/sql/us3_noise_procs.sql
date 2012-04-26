@@ -549,7 +549,7 @@ DROP PROCEDURE IF EXISTS get_noise_desc_by_editID$$
 CREATE PROCEDURE get_noise_desc_by_editID ( p_personGUID CHAR(36),
                                             p_password   VARCHAR(80),
                                             p_ID         INT,
-                                            p_editID     VARCHAR(80) )
+                                            p_editID     INT )
   READS SQL DATA
 
 BEGIN
