@@ -24,7 +24,8 @@
 SOMO - Solution Modeler (Bead and SAXS/SANS Modeler for NMR and X-ray structures):</h2>
 </center>
 <p>
-<h3><center>Last updated: March 2012 </center></h3><p>
+<h3><center>Last updated: April 2012 </center></h3><p>
+
 The SOMO (SOlution MOdeller) module of UltraScan initially contained only
 a bead modelling utility that was originally developed by the Rocco and
 Byron labs, respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
@@ -60,7 +61,8 @@ Within this new US-SOMO release you will find several additions to what wll be a
 Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator, which will work on either the original atomic
 structure, or on a bead model, and will also process experimental data. Presently, the pairwise-distance
 distribution function <i>P(r)</i> vs. <i>r</i> computation is fully operational, and several methods are offered for the computation of SAXS <i>I(q)</i> vs. <i>q</i> curves. Some of these methods require explicit hydration of the PDB structures. We are currently (March 2012) refining our own hydration method, which is, however, not yet ready for full release. In other areas, the batch operations
-module has been expanded to include supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85). Other additions include a model classifier in which calculated parameters can be compared and ranked against experimental data, and a PDB editor.
+module has been expanded to include supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85).<br>
+Other additions include a model classifier in which calculated parameters can be compared and ranked against experimental data, a PDB editor, and an alternative, but more computationally intensive method of calculating the hydrodynamics based on approximate analogy that exists between certain hydrodynamic and electrostatic properties, <b>Zeno</b> (see Douglas, Some Applications of Fractional Calculus to Polymer Science, Adv. Chem. Phys. 102:121?191, 1997; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Mansfield et al., Intrinsic Viscosity and the Electric Polarizability of Arbitrarily Shaped Objects, Phys. Rev. E, 64:61401-61416, 2001).  <a href="http://www.stevens.edu/zeno/">http://www.stevens.edu/zeno/</a>).
 <p>
 <p>
 <p>
@@ -98,7 +100,7 @@ residues should be properly coded in the SOMO tables (see below).
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-main0.png" ALT="SOMO Screen"></td>
+<td><center><img SRC="somo-main.png" ALT="SOMO Screen"></td>
 </tr> 
 </center>
 <td align=justify>
@@ -154,7 +156,7 @@ The PDB file can contain multiple models and if so, multiple models will be disp
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
 all models). If multiple models are selected, all subsequent operations (except the SAXS/SANS options)
 are carried out sequentially on the selected models. Pressing the <i><b>SAXS/SANS Functions</b></i> button will take you
-to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data. Presently (November 2011), the SAXS/SANS module is in an advanced state but still under development. (see <a href="somo_saxs.html">here</a>). The <i><b>Hydrate</b></i> button will instead launch a new routine, presently under development, that will add explicit hydration water molecules to the selected structure, allowing a more reliable generation of SAXS/SANS simulated curves. This new functionality will be fully described <a href="somo_hydrate.html">here</a>. Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b> utility</a> of the <a href="somo_batch.html"><b><i>Batch Mode Operation</b></i> </a> module. <p>
+to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data. Presently (November 2011), the SAXS/SANS module is in an advanced state but still under development. (see <a href="somo_saxs.html">here</a>). The <i><b>Hydrate</b></i> button will instead launch a new routine, presently under development, that will add explicit hydration water molecules to the selected structure, allowing a more reliable generation of SAXS/SANS simulated curves. This new functionality will be fully described <a href="somo_hydrate.html">here</a>. Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b> utility</a> of the <a href="somo_batch.html"><b><i>Batch Mode Operation</b></i> </a> module. The <b><i>BD</i></b> button, not yet available in this release (April 2012), will allow running a Brownian dynamics simulation.<p>
 </table>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -226,14 +228,13 @@ although using the improved AtoB routine on the original PDB file while increasi
 <td align=justify>
 <p>
 <b>Hydrodynamic Calculations:</b><br>
-The hydrodynamic parameters can then be determined by clicking on <i><b>Calculate Hydrodynamics</b></i>.
+The hydrodynamic parameters can then be determined by clicking on <i><b>Calculate RB Hydrodynamics</b></i> (a <b>warning</b> message will appear on the right-side main window if the <b><i>Zeno</i></b> method is selected).
 A partial list of parameters can be seen in a pop-up window as soon as the calculations are completed by
-clicking on <a href="somo_show_hydro.html"><i><b>Show Hydrodynamic Calculations</b></i></a>. The pop-up window
-will also list the solvent type, temperature and its associated density and viscosity, as set in the 
+clicking on <a href="somo_show_hydro.html"><i><b>Show Hydrodynamic Calculations</b></i></a> (currently, April 2012, only for the standard Garcia de la Torre-Bloomfield method). The pop-up window will also list the solvent type, temperature and its associated density and viscosity, as set in the 
 <a href=somo_hydro.html><b><i>Hydrodynamic Calculations</i></b></a> options module. A full list of
 all the parameters is also available as a text file, which can be opened from the results' pop-up window.
 Such a list from a previously analyzed model can be opened also from the <i><b>Open Hydrodynamic Calculations File</b></i>
-button. <br> The new <i><b>Select Parameters to be Saved</b></i> button will open a pop-up window 
+button. This button will also open the <b><i>Zeno</i></b> results file when this option is selected.<br> The new <i><b>Select Parameters to be Saved</b></i> button will open a pop-up window 
 (see <a href="somo_save.html">here</a>) where characterizing/computed parameters can be selected
 for saving in a comma-separated file for easy import into spreadsheets. Selecting the <b>Save parameters to file</b>
 checkbox will generate such file, with extension <i>.csv</i>. <p>
@@ -243,7 +244,7 @@ checkbox will generate such file, with extension <i>.csv</i>. <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-bottom_bar.png" ALT="SOMO Screen"></td>
+<td><center><img SRC="somo-bottom_bar.png" ALT="SOMO bottom bar"></td>
 </tr> 
 </center>
 <td align=justify>
@@ -260,16 +261,29 @@ in a pop-up window.
 
 </table>
 <p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-Config.png" ALT="SOMO Config button"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
+Pressing the <b><i>Config</i></b> button will bring up a pop-up window with a listing of all options submenus, which can be opened after selection.
+</td>
+
+</table><p>
 <p>
 <h3><b>Options menus:</b></h3>
 <p>
-Four pull-down menus are presently available to access the various SOMO options:
+Five pull-down menus are presently available to access the various SOMO options:
 <p>
 <i><b>
 Lookup Tables<br>
-SOMO Options<br>
-PDB Options<br>
-Configurations</b></i>
+SOMO<br>
+MD<br>
+PDB<br>
+Configuration</b></i>
 <p>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5>
@@ -341,7 +355,7 @@ Crystallography, but can be edited at will. The use of this module is described 
 </tr>
 </table>
 <p>
-<b><i>SOMO Options:</i></b>
+<b><i>SOMO:</i></b>
 <p>
 
 <table BORDER CELLSPACING=5 CELLPADDING=5>
@@ -383,8 +397,14 @@ A detailed description of this module can be found <a href=somo_grid_overlap.htm
 <li>
 <b>Hydrodynamic Calculations:</b> This module allows you to change
 the options for calculating the hydrodynamic parameters of the bead
-models. A detailed description of this module can be found <a
+models using the standard Garcia de la Torre-Bloomfield supermatrix inversion method. A detailed description of this module can be found <a
 href=somo_hydro.html>here</a>.
+
+<li>
+<b>Hydrodynamic Calculations Zeno:</b> This module allows you to change
+the options for calculating the hydrodynamic parameters of the bead
+models using the <b><i>Zeno</i></b> method. A detailed description of this module can be found <a
+href=somo_hydro_zeno.html>here</a>.
 
 <li>
 <b>Miscellaneous Options:</b> This module allows you to either automatically
@@ -419,6 +439,40 @@ of this module can be found <a href=somo_saxs_options.html>here</a>.
 </td>
 </tr>
 </table>
+<p>
+<b><i>MD:</i></b>
+<p>
+
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td><center><img SRC="somo-tab3.png" ALT="Modify SOMO Options"></td>
+</tr>
+<tr>
+<td align=justify>
+
+From this pull-down menu, it will be possible in the future to access two options panels controlling Brownian dynamics simulations:
+
+<ul>
+
+<li>
+<b>Browflex Options:</b> This module, currently under development (April 2012), will enable setting the parameters for a Brownian dynamics (BD) simulation starting from a SoMo bead model. It was originally devised to provide inputs for J. Garcia de la Torre program Browflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
+
+<center><img SRC="somo-BD_options_notavailable_warning.png" ALT="Options not available warning"></center>
+
+
+<li>
+<b>Anaflex Options:</b> This module, currently under development (April 2012), will enable setting the parameters to analyze a Brownian dynamics (BD) trajectory. It was originally devised to provide inputs for J. Garcia de la Torre program Anaflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
+
+<center><img SRC="somo-BD_options_notavailable_warning.png" ALT="Options not available warning"></center>
+
+</ul>
+</td>
+</tr>
+</table>
+
+
+
+
 
 <p>
 <b><i>PDB Options:</i></b>
@@ -426,7 +480,7 @@ of this module can be found <a href=somo_saxs_options.html>here</a>.
 
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
-<td><center><img SRC="somo-tab3a.png" ALT="Modify SOMO Options"></td>
+<td><center><img SRC="somo-tab3a.png" ALT="Modify PDB Parsing Options"></td>
 </tr>
 <tr>
 <td align=justify>
@@ -486,7 +540,23 @@ configuration file as well to default options.
 
 <li>
 <b>Advanced Configuration</b>: This option will open a pop-up panel allowing
-the settings of various additional options (no help provide at this stage for the advanced configuration options).
+the settings of various additional options (no help is provided at this stage for the advanced configuration options):<p>
+
+<center><img SRC="somo-AdvancedConfiguration.png" ALT="SOMO Advanced Configuration module"></center><p>
+
+<li>
+<b>System Configuration</b>: This option will open the main UltraScan Configuration pop-up panel allowing
+the settings of the UltraScan directories and other general options, like color, fonts, and database preferences. In a future release, the US-SOMO directories will be also configurable from an independent configuration panel (no help is provided at this stage for the System Configuration options):<p>
+
+<center><img SRC="somo-Configuration.png" ALT="SOMO Configuration module"></center><p>
+
+
+<li>
+<b>Administrator</b>: This option will open a pop-up panel allowing
+the setting of an Administrator password:<p>
+
+<center><img SRC="somo-Administrator.png" ALT="SOMO set administrator pwd"></center><p>
+
 </ul>
 </td>
 </tr>
@@ -510,7 +580,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 14, 2012.
+Last modified on April 26, 2012.
 </font>
 </body>
 </html>

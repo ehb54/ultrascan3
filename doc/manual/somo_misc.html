@@ -23,6 +23,8 @@
 <h2>
 SOMO - Miscellaneous Options Module:</h2>
 <p>
+<h3><center>Last updated: April 2012 </center></h3><p>
+<p>
 <img SRC="somo-misc1.png" ALT="SOMO Miscellaneous Options Screen">
 </center>
 <p>
@@ -118,7 +120,7 @@ residues.
 
 </ul>
 <p>
-The <b>Bead model controls</b> are experimental parameters for loading a bead model for SAXS
+The <b>Bead model controls</b> are user-defined parameters still under testing (April 2012) for loading a bead model for SAXS
 computations.
 
 <ul>
@@ -140,6 +142,9 @@ When set, loading a PDB will change the radii of the beads to match the <i>targe
 When set, all beads will be forced to the same radii value.
 
 </ul>
+<p><p>
+<b>Hydrodynamic method:</b><p>
+Recently (April 2012), we have added a new method for the computation of the hydrodynamic parameters of a bead model, <b>Zeno</b>  (Hubbard and Douglas, Hydrodynamic friction of arbitrarily shaped Brownian particles, Phys. Rev. E 47:R2983-R2986, 1994; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Douglas and Garboczi, Intrinsic viscosity and polarizability of particles having wide range of shapes, Adv. Chem. Phys. 91:85-153, 1995;  <a href="http://www.stevens.edu/zeno/">http://www.stevens.edu/zeno/</a>). While the supermatrix inversion method using the Garcia de la Torre-Bloomfield rigid-body approach (García de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139, 1981) remains the default hydrodynamic computations method, the user can select the alternative <b>Zeno</b> method by selecting the <b><i>Zeno method</i></b> checkbox. Options for this method can be found <a href=somo_hydro_zeno.html>here</a>. Reversion to the <b>default</b> method is done by selecting the <b><i>Standard matrix inversion</i></b> checkbox.
 
 <hr>
 <font face="helvetica" size="-1">
@@ -156,7 +161,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 14, 2012.
+Last modified on April 12, 2012.
 </font>
 </body>
 </html>

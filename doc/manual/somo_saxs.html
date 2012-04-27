@@ -177,15 +177,16 @@ Note that all fitting is done on the grid of the target curve.  Any computed cur
 <img SRC="somo-SAXS_SANS_residuals1.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 1">
 </center>
 <p>
-In the graph above, the difference between the calculated and the experimental <i>I(q)</i> points divided by the associated experimental SD are plotted as a funtion of <i>q</i>. The two horizontal white lines indicate the +/- 2 SD which is customarily used as limits for a good fit.<br>
-Alternatively, the data can be viewed as a % delta by clicking on the <i>Plot as percent</i> checkbox:
+In the graph above, the difference between the calculated and the experimental <i>I(q)</i> points divided by the associated experimental SD are plotted as a funtion of <i>q</i>. The two horizontal white lines indicate the +/- 2 SD which is customarily used as limits for a good fit.<p>
+Alternatively, the data can be viewed as a % delta [100 * (<i>I(q)<sub>calc</sub> - I(q)<sub>expt</sub>) / I(q)<sub>expt</sub></i>] by clicking on the <i>Plot as percent</i> checkbox:
 
 <p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_residuals3.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 3">
+<img SRC="somo-SAXS_SANS_residuals3a.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 3">
 </center>
 <p>
+Here we have added two horizontal lines indicating 5% limits of the residuals. We think that this way of plotting the residuals better takes into account the wide variation in both intensity and associated SD values along the <i>q</i> range usually accessed in SAXS experiments.<p>
 
 The same residuals can by also plotted using a log scale by clicking on the <i>Plot log</i> checkbox: 
 <p>
@@ -193,26 +194,7 @@ The same residuals can by also plotted using a log scale by clicking on the <i>P
 <p>
 <img SRC="somo-SAXS_SANS_residuals2.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 2">
 </center>
-<p>
 
-Finally, we have implemented two new ways of plotting the residuals. By clicking on the <i>Mult avg s.d. frac</i> checkbox, each differential between calculated and experimental <i>I(q)</i> points is multiplied by the average fractional SD. This merely changes the <i>Y-axis</i> scale, but better reflects the actual goodness of the fit:
-
-<p>
-<center>
-<p>
-<img SRC="somo-SAXS_SANS_residuals4.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 4">
-</center>
-<p>
-
-The last option is activated by selecting the <i>Mult s.d. frac</i> checkbox. In this case, each <i>delta I(q)</i> is multiplied by its fractional SD value. Given that the SD usually becomes larger at larger <i>q</i> values, this should give a better feeling of the real differences along the <i>q</i> scale. The two 2 SD horizontal bars are likewise multiplied by the average fractional SD:
-
-<p>
-<center>
-<p>
-<img SRC="somo-SAXS_SANS_residuals5.png" ALT="SOMO SAXS I(q) Computed SAXS residuals 5">
-</center>
-<p>
-<p>
 
 <hr>
 
@@ -226,7 +208,7 @@ After the appropriate selection, pressing "OK" will update the graphics window, 
 <p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Plotted_progress window.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file progress window">
+<img SRC="somo-SAXS_SANS_Plotted_progress_window.png" ALT="SOMO SAXS I(q) Expt. SAXS CSV file progress window">
 </center>
 <p>
 
@@ -363,7 +345,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 16, 2012
+Last modified on April 26, 2012
 </font>
 </body>
 </html>

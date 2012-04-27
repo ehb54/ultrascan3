@@ -23,6 +23,8 @@
 <h2>
 SOMO - Residue Definition Module:</h2>
 <p>
+<h3><center>Last updated: April 2012 </center></h3><p>
+
 <img SRC="somo-residue.png" ALT="SOMO Screen">
 </center>
 <p>
@@ -98,10 +100,13 @@ Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsal
 (Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold
 Publ. Comp., 1965, pp. 370-381; see also Durchschlag and Zipper, Biophys. Chem. 93:
 141-157, 2001; Durchschlag and Zipper, J. Appl. Cryst. 30:803-807, 1997; Durchschlag
-and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994). For ions,
-it was computed directly from the anhydrous mol. vol. (cm<sup>3</sup>)
-multiplied by Avogadro's number and divided by the molecular weight. Be aware, however,
-that there's <b>no guarantee</b> that a computed <i>vbar</i> will be correct: the
+and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994).<br>
+For ions, they were mostly computed (<b>April 2012 revision!</b>) from the partial molar volumes (cm<sup>3</sup>/mol) at 25 °C
+listed in Table 3 of Durchschlag and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994, divided by the molecular weight, and corrected to 20 °C.
+For Cd<sup>2+</sup>, which is not present in that table, we used the values derived by Call et al. (J. Chem. Thermodynamics 32:1525-1538, 2000) for 
+MgCl<sub>2</sub> and CdCl<sub>2</sub> at 0.35 MPa, after correction to 0.1 MPa by comparing the MgCl<sub>2</sub> value with that reported by
+Dunn (Trans. Faraday Soc. 62:2348-2354, 1966). Note that most of these vbar values for the cations are <b>negative</b>!<br> 
+Be aware, however, that there's <b>no guarantee</b> that a computed <i>vbar</i> will be correct: the
 use of an <b>experimental</b> <i>vbar</i> is <b>strongly</b> recommended!! (see also the
 <i>vbar</i> fields in the <a href="somo_misc.html"><i><b>Miscellaneous Options</b></i></a> editor.
 <br>Finally, the <i><b>Max. Accessible Surface Area (A^2)</b></i> field is entered. It is
@@ -251,7 +256,7 @@ were determined in this way.
 <p>
 The next field, <i><b>Bead Mol. Weight</b></i> is for visualization only,
 and will display the bead molecular weight, calculated from the values (taken from the <a href=
-"somo-2.png">atom table</a>.
+"somo-2.png">atom table</a>).
 <p>
 Likewise, the subsequent field, <i><b>Bead Hydration from Atoms' Values</b></i>, will show 
 the theoretical number of water of hydration molecules assigned to the bead, based on the
@@ -276,7 +281,10 @@ hydration molecules, see above).
 until all beads have been processed.
 
 <p> The residue can then be added to the file by clicking on the <b>Add Residue to File</b> 
-button. The process can be interrupted at any stage by pressing the <b>Reset</b> button.
+button. If the beads' anhydrous volumes sum doesn't match the residue's anhydrous volume as entered
+in the first section, a pop-up window will appear warning of the problem and prompting to either accept
+the current bead volumes values, or for corrective action to be taken.<br>
+The process can be interrupted at any stage by pressing the <b>Reset</b> button.
 
 <p>To Edit an already defined residue, double-click on its name on the list
 (that can be scrolled) present in the window next to the <i><b>Number of residues in
@@ -313,7 +321,7 @@ latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 1, 2010.
+Last modified on April 12, 2012.
 </font>
 
 </body>

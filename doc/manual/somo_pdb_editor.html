@@ -23,6 +23,8 @@
 <h2>
 SOMO - PDB Editor Module:</h2>
 <p>
+<p>
+<h3><center>Last updated: April 2012 </center></h3><p>
 <img SRC="somo-PDB_Editor.png" ALT="SOMO PDB Editor Screen">
 </center>
 <p>
@@ -51,12 +53,26 @@ number of models displayed in the progress window. A pop up panel (shown above o
 the option of separating all the models into single files, or to skip models.
 
 <li>
-<b><i>Join</i></b>. 
+<b><i>Join</i></b>.  This function allows the joining of individual model PDB files into a single NMR-style file.
+Clicking this button will prompt you with a file dialog to select files to add.  Multiple files can be selected. 
+After selecting, another file dialog will be presented, allowing you to select more files, potentially from a
+different directory.  This process repeats until you press cancel at the file dialog.  Then you are presented
+with a file dialog to save the joined pdbs.  The program then produces the joined PDB, displaying progress
+in the text area at the left and a message box is presented when the process is complete.
 
 <li>
-<b><i>Cut/Splice</i></b>. 
+<b><i>Cut/Splice</i></b>. This function is under development and will be documented in a future release.
 
 
+<li>
+<b><i>Hybrid extract</i></b>. This function takes an NMR style PDB file and extracts information
+about each hybridization, producing a series of NMR style PDB files each containing all copies
+of unique hybridizations contained in the originally loaded PDB.  Statistics about bond distances
+and angles are presented in the REMARK section of the PDB.  
+
+<li>
+<b><i>H to Chain X</i></b>. This function takes a PDB with explicit hydrogens and places the
+hydrogens in a separate chain (X).
 </ul>
 </td>
 </tr>
@@ -70,7 +86,7 @@ the option of separating all the models into single files, or to skip models.
 <p>
 <p>
 
-<td><center><img SRC="somo-PDB_Editor2.png" ALT="PDB Editor"></td>
+<td><center><img SRC="somo-PDB_Editor2a.png" ALT="PDB Editor"></td>
 </tr>
 <tr>
 <td align=justify>
@@ -80,64 +96,97 @@ the option of separating all the models into single files, or to skip models.
 In the main panel, the user will be able visualize in detail PDB files content, and
 perform multiple operations on them. The screen is divided in two identical panels, 
 so that content can be copied/edited/cut/pasted between two different files.
+The right panel supports multiple files and has a wheel which allows scrolling through the loaded files.
 
 <ul>
 <li>
-<b><i>Load</i></b>. 
+<b><i>Load</i></b>. This function loads a PDB file.  Notice: It will only load the first model
+of a multi-model NMR style PDB file. Use <i>Load All</i> to load all models of an NMR style PDB file.
+<li>
+<b><i>Load All</i></b>. This function load a PDB file. All models of a NMR style PDB file will
+be loaded.
 
 <li>
-<b><i>Load All</i></b>. 
+<b><i>Visualize</i></b>.  This function launches a RASMOL window showing the current PDB file.
 
 <li>
-<b><i>Visualize</i></b>. 
+<b><i>Dup</i></b>.  This function is only present in the right panel. It makes a new <i>Copy</i> of
+the current structure in the center panel and <i>Paste as new</i> the copy onto the right panel.
 
 <li>
-<b><i>Save</i></b>
+<b><i>Save</i></b>. This function saves the current PDB file.
 
 <li>
-<b><i>Undo</i></b>
+<b><i>Undo</i></b>. This function undoes the last operation.
 
 <li>
-<b><i>Clear</i></b>
+<b><i>Clear</i></b> This function clears the panel of files.
 
 <li>
-<b><i>Cut</i></b>
+<b><i>Cut</i></b> This function cuts the currently selected models/chains/residues/atoms.
 
 <li>
-<b><i>Copy</i></b>
+<b><i>Copy</i></b> This function copies the currently selected models/chains/residues/atoms into a copy buffer.
 
 <li>
-<b><i>Paste</i></b>
+<b><i>Paste</i></b> This function pastes the copy buffer onto the current structure.
 
 <li>
-<b><i>Paste as new</i></b>
+<b><i>Paste as new</i></b> This function pastes the copy buffer as a new structure.
 
 <li>
-<b><i>Merge</i></b>
+<b><i>Merge</i></b> This function is under development.  It allows merging of two PDB files.
 
 <li>
-<b><i>Reseq</i></b>
+<b><i>Angle</i></b> This function is enabled when exactly three atoms are selected.  The angles 
+are reported in the leftmost panel for each of the three possible angles.
 
 <li>
-<b><i>Check</i></b>
+<b><i>Reseq</i></b> This function is under development.  It will resequence the atom and residue
+nubmers of a PDB.
 
 <li>
-<b><i>Find alternate matching residues</i></b>
+<b><i>Check</i></b> This function checks the current structure for residue matching errors.
+Note: it currently may report problems even when none exist.  Check the textbox in the panel
+for details.  If it says the model is ok, it is ok.  You can optionally select residues for
+errors.  Then, it is convenient to <i>Copy</i> and then in the other panel <i>Paste as new</i>
+to further investigate the issues.  
 
 <li>
-<b><i>Clear selection</i></b>
+<b><i>Find alternate matching residues</i></b> If exactly one residue is selected, this function
+is enabled and will check the residue table for alternative residue names. This is useful
+if you have a miscoded residue.  You can replace the residue name with the correct one and <i>Save</i> it.
 
 <li>
-<b><i>Clean</i></b>
+<b><i>Pairwise Distance</i></b> This function computes minimum pairwise distances between selected atoms.
+A dialog is presented asking the minimum number of pairwise distances to find (default 1).  
+A second dialog is presented asking to restrict the search to specific atoms.  Press CANCEL to disable
+this restriction.  Then a report is presented in the left most text panel listing the N minimum
+pairwise distances.  The format is Model~Chain~Residue~Atom~Model~Chain~Residue~Atom distance.
 
 <li>
-<b><i>Invert</i></b>
+<b><i>Clear selection</i></b> This clears all selections in the panel.
 
 <li>
-<b><i>Nearest Atoms</i></b>
+<b><i>Clean</i></b> Sometimes selections can get a bit odd.  For example you can 
+arbitrary models, chains, residue and atoms selected by manual interaction with the 
+PDB structure tree. <i>Clean</i>ing the selection will make this consistent.  
+A summary of selections is always displayed below the PDB tree view.
+<li>
+<b><i>Invert</i></b> This function inverts the current selection.  I.e. everything selected
+will become unselected and vice-versa.
 
 <li>
-<b><i>Nearest Residues</i></b>
+<b><i>Nearest Atoms</i></b> This function finds the N nearest atoms to the current selection and
+select them.  A dialog box shows up requesting the number of atoms to find.  After selection,
+the selection may not be visible.  A convenient way to see them is to immediately <i>Copy</i>
+and <i>Paste as new</i>.  You may still have to open residues in the tree to see individual
+atoms.
+
+<li>
+<b><i>Nearest Residues</i></b> This function finds the N nearest residues to the current selection.
+
+
 
 </ul>
 </tr>
@@ -162,7 +211,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 29, 2011.
+Last modified on April 18, 2012.
 </font>
 </body>
 </html>

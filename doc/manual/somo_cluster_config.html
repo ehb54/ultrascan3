@@ -25,20 +25,46 @@ US-SOMO - Cluster Configuration module</h2>
 <p>
 <hr>
 </center>
-<b> N.B. </b> : The cluster configuration information is dependent on the target resource and should
-not generally be edited.  Cluster access is currently on a by-request basis.  Complete configuration
-files containing all the information described here will be provided as part of granting cluster
-access.  
+<b> N.B. </b> :
+
+The cluster configuration information is dependent on the target
+resource and only the user specific information should generally be edited.  
+To begin this process, you must create a cluster user by giving yourself
+a cluster id.  Once you have successfully finished <b><i>Add new user</i></b>, 
+we will contact you at the email provided for final approval.
+If you do not hear from us, please contact emre AT biochem.uthscsa.edu.
 <hr>
 <center>
 <td><img SRC="somo-cluster_config.png" ALT="SOMO Cluster Configuration Module"></td>
 </center>
 <p>
 
-The identifier of your system is listed in the <b>Assigned cluster id</b> field, while the job submission is done through a common URL address listed in the <b>job submission URL</b> field. <p>
-The existing Clusters are listed in the <b>Systems</b> window, and can be selected by clicking on them. New systems can be added by pressing the <b><i>Add new system</b></i> button. Selected systems can be either removed from the system by pressing the <b><i>Delete system</b></i> button, or their properties can be modified by pressing the <b><i>Edit system details</b></i> button, which will open a new window (see bottom of this page).<p>
+If the <b>Job submission URL</b> and/or the <b>Job manage URL</b> are empty, you can
+press <b><i>Reset</i></b> to reset to the default values.
+<p>
+
+The identifier of your system is listed in the <b>Assigned cluster id</b> field, while the job submission is done through a common URL address listed in the <b>job submission URL</b> field. For new users, to register enter a <b>Assigned cluster id</b> (e.g., "Smith1"), chose a password (next two fields), and enter your e-mail address in the <b><i>User email address</i></b> field, as shown above. If you are a not-yet-registered user, on clicking <b><i>Check user status</i></b> a prompt will pop-up:
+
+<center>
+<td><img SRC="somo-cluster_config3.png" ALT="SOMO Cluster Configuration Module User Registration warning"></td>
+</center>
+<p>
+
+On pressing "OK", the <b><i>Add new user</i></b> button will become available:
+
+<center>
+<td><img SRC="somo-cluster_config4.png" ALT="SOMO Cluster Configuration Module Add user"></td>
+</center>
+<p>
+
+Pressing it will send a message to the Cluster access administrator, which will then proceed to grant you access to the resources. An e-mail notification will be sent to you once the procedure is completed. <br>
+Already registered users do not need to take any action upon entering the Cluster submission module.<p>
 
 <hr>
+  <p>
+The existing Clusters are listed in the <b>Systems</b> window, and can be selected by clicking on them. New systems can be added by pressing the <b><i>Add new system</b></i> button. Selected systems can be either removed from the system by pressing the <b><i>Delete system</b></i> button, or their properties can be modified by pressing the <b><i>Edit system details</b></i> button, which will open a new window (see bottom of this page).<p>
+
+
 <center>
 <h2>
 
@@ -88,7 +114,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 16, 2012.
+Last modified on April 19, 2012.
 </font>
 </body>
 </html>
