@@ -243,7 +243,7 @@ bool US_Saxs_Util::run_dammin()
                       app_text,
                       response,
                       &cla_error_msg,
-                      5000
+                      30000
                       );
 
    if ( !cla_error_msg.isEmpty() )
