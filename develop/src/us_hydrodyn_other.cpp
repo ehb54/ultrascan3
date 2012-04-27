@@ -3020,7 +3020,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << hydro.solvent_acronym << "\t\t# solvent acronym\n";
       ts << hydro.temperature << "\t\t# solvent temperature in degrees C\n";
       ts << hydro.solvent_viscosity << "\t\t# viscosity of the solvent in cP\n";
-      ts << hydro.solvent_density << "\t\t# desnisty of the solvent (g/ml)\n";
+      ts << hydro.solvent_density << "\t\t# denisty of the solvent (g/ml)\n";
       ts << hydro.reference_system << "\t\t# flag for reference system\n";
       ts << hydro.boundary_cond << "\t\t# flag for boundary condition: false: stick, true: slip\n";
       ts << hydro.volume_correction << "\t\t# flag for volume correction - false: Automatic, true: manual\n";
