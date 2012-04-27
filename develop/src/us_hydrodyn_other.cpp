@@ -1659,6 +1659,13 @@ int US_Hydrodyn::read_config(QFile& f)
 
    QTextStream ts(&f);
 
+   // this is a really silly way to do this, carried over from legacy code
+   // the config file should be free format
+   // either XML, JSON or simply param value lines
+   // this will provide easy updates and allow easy upgrading without removing previous parameters
+   // i.e. via merging
+   // similar things should also be done with the somo.residue, hybrid, atom & saxs_atoms files
+
    if ( ts.readLine() == QString::null ) return -10000; // first line is comment
 
    ts >> str;
@@ -1977,8 +1984,8 @@ int US_Hydrodyn::read_config(QFile& f)
    ts >> str; // visualization option
    if ( ts.readLine() == QString::null ) return -10120;
    pdb_vis.visualization = str.toInt();
-   ts >> str;
-   if ( ts.readLine() == QString::null ) return -10121;
+
+   if ( ( str = ts.readLine() ) == QString::null ) return -10121;
    pdb_vis.filename = str; // custom Rasmol script file
 
    // pdb_parsing options:
@@ -2580,26 +2587,289 @@ int US_Hydrodyn::read_config(QFile& f)
       }
    }
 
-   // saved paths
-   
    if ( ( str = ts.readLine() ) == QString::null ) return -11600;
    path_load_pdb = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11601;
    path_view_pdb = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11602;
    path_load_bead_model = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11603;
    path_view_asa_res = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11604;
    path_view_bead_model = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11605;
    path_open_hydro_res = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11606;
    saxs_options.path_load_saxs_curve = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11607;
    saxs_options.path_load_gnom = str;
-   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11608;
    saxs_options.path_load_prr = str;
+
+   ts >> str;
+   if ( ts.readLine()  == QString::null ) return -11609;
+   asa.hydrate_probe_radius = str.toFloat();
+   ts >> str;
+   if ( ts.readLine()  == QString::null ) return -11610;
+   asa.hydrate_threshold = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11611;
+   misc.target_e_density       = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11612;
+   misc.target_volume          = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11613;
+   misc.set_target_on_load_pdb = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11614;
+   misc.equalize_radii         = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11615;
+   dmd_options.force_chem = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11616;
+   dmd_options.pdb_static_pairs = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11617;
+   dmd_options.threshold_pb_pb = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11618;
+   dmd_options.threshold_pb_sc = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11619;
+   dmd_options.threshold_sc_sc = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11620;
+   saxs_options.normalize_by_mw = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11621;
+   saxs_options.saxs_iq_native_debye = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11622;
+   saxs_options.saxs_iq_native_hybrid = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11623;
+   saxs_options.saxs_iq_native_hybrid2 = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11624;
+   saxs_options.saxs_iq_native_hybrid3 = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11625;
+   saxs_options.saxs_iq_native_fast = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11626;
+   saxs_options.saxs_iq_native_fast_compute_pr = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11627;
+   saxs_options.saxs_iq_foxs = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11628;
+   saxs_options.saxs_iq_crysol = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11629;
+   saxs_options.sans_iq_native_debye = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11630;
+   saxs_options.sans_iq_native_hybrid = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11631;
+   saxs_options.sans_iq_native_hybrid2 = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11632;
+   saxs_options.sans_iq_native_hybrid3 = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11633;
+   saxs_options.sans_iq_native_fast = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11634;
+   saxs_options.sans_iq_native_fast_compute_pr = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11635;
+   saxs_options.sans_iq_cryson = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11636;
+   saxs_options.hybrid2_q_points = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11637;
+   saxs_options.iq_ask = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11638;
+   saxs_options.iq_scale_ask = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11639;
+   saxs_options.iq_scale_angstrom = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11640;
+   saxs_options.iq_scale_nm = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11641;
+   saxs_options.crysol_max_harmonics = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11642;
+   saxs_options.crysol_fibonacci_grid_order = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11643;
+   saxs_options.crysol_hydration_shell_contrast = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11644;
+   saxs_options.crysol_default_load_difference_intensity = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11645;
+   saxs_options.crysol_version_26 = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11646;
+   saxs_options.fast_bin_size = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11647;
+   saxs_options.fast_modulation = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11648;
+   saxs_options.compute_saxs_coeff_for_bead_models = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11649;
+   saxs_options.compute_sans_coeff_for_bead_models = (bool)str.toInt();
+
+   if ( ( str = ts.readLine() ) == QString::null ) return -11650;
+   saxs_options.default_atom_filename = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11651;
+   saxs_options.default_hybrid_filename = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11652;
+   saxs_options.default_saxs_filename = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11653;
+   saxs_options.default_rotamer_filename = str;
+
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11654;
+   saxs_options.steric_clash_distance         = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11655;
+   saxs_options.steric_clash_recheck_distance = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11656;
+   saxs_options.disable_iq_scaling = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11657;
+   saxs_options.autocorrelate = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11658;
+   saxs_options.hybrid_radius_excl_vol = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11659;
+   saxs_options.scale_excl_vol = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11660;
+   saxs_options.subtract_radius = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11661;
+   saxs_options.iqq_scale_minq = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11662;
+   saxs_options.iqq_scale_maxq = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11663;
+   saxs_options.iqq_scale_nnls = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11664;
+   saxs_options.iqq_scale_linear_offset = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11665;
+   saxs_options.iqq_scale_chi2_fitting = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11666;
+   saxs_options.iqq_expt_data_contains_variances = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11667;
+   saxs_options.iqq_ask_target_grid = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11668;
+   saxs_options.iqq_scale_play = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11669;
+   saxs_options.swh_excl_vol = str.toFloat();
+   if ( ( str = ts.readLine() ) == QString::null ) return -11670;
+   saxs_options.iqq_default_scaling_target = str;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11671;
+   saxs_options.saxs_iq_hybrid_adaptive = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11672;
+   saxs_options.sans_iq_hybrid_adaptive = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11673;
+   saxs_options.bead_model_rayleigh   = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11674;
+   saxs_options.iqq_log_fitting       = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11675;
+   saxs_options.iqq_scaled_fitting    = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11676;
+   saxs_options.iqq_use_atomic_ff     = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11677;
+   saxs_options.iqq_use_saxs_excl_vol = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11678;
+   saxs_options.alt_hydration         = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11679;
+   saxs_options.xsr_symmop                = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11680;
+   saxs_options.xsr_nx                    = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11681;
+   saxs_options.xsr_ny                    = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11682;
+   saxs_options.xsr_griddistance          = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11683;
+   saxs_options.xsr_ncomponents           = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11684;
+   saxs_options.xsr_compactness_weight    = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11685;
+   saxs_options.xsr_looseness_weight      = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11686;
+   saxs_options.xsr_temperature           = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11687;
+   hydro.zeno_zeno              = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11688;
+   hydro.zeno_interior          = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11689;
+   hydro.zeno_surface           = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11690;
+   hydro.zeno_zeno_steps        = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11691;
+   hydro.zeno_interior_steps    = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11692;
+   hydro.zeno_surface_steps     = str.toUInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11693;
+   hydro.zeno_surface_thickness = str.toFloat();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11694;
+   misc.hydro_supc              = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11695;
+   misc.hydro_zeno              = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11696;
+   batch.saxs_search = (bool)str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -11697;
+   batch.zeno        = (bool)str.toInt();
 
    if ( !ts.atEnd() ) return -20000;
 
@@ -2764,7 +3034,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << hydro.overlap << "\t\t# overlap value\n";
 
       ts << pdb_vis.visualization << "\t\t# PDB visualization option\n";
-      ts << pdb_vis.filename << "\t\t# RasMol color filename\n";
+      ts << pdb_vis.filename << endl; // "\t\t# RasMol color filename\n";
 
       ts << pdb_parse.skip_hydrogen << "\t\t# skip hydrogen atoms?\n";
       ts << pdb_parse.skip_water << "\t\t# skip water molecules?\n";
@@ -2939,6 +3209,117 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.path_load_gnom << endl;
       ts << saxs_options.path_load_prr << endl;
 
+      ts << asa.hydrate_probe_radius << "\t\t#asa.hydrate_probe_radius\n";
+      ts << asa.hydrate_threshold << "\t\t#asa.hydrate_threshold\n";
+
+      ts << misc.target_e_density       << "\t\t#misc.target_e_density      \n";
+      ts << misc.target_volume          << "\t\t#misc.target_volume         \n";
+      ts << misc.set_target_on_load_pdb << "\t\t#misc.set_target_on_load_pdb\n";
+      ts << misc.equalize_radii         << "\t\t#misc.equalize_radii        \n";
+
+      ts << dmd_options.force_chem << "\t\t#dmd_options.force_chem\n";
+      ts << dmd_options.pdb_static_pairs << "\t\t#dmd_options.pdb_static_pairs\n";
+      ts << dmd_options.threshold_pb_pb << "\t\t#dmd_options.threshold_pb_pb\n";
+      ts << dmd_options.threshold_pb_sc << "\t\t#dmd_options.threshold_pb_sc\n";
+      ts << dmd_options.threshold_sc_sc << "\t\t#dmd_options.threshold_sc_sc\n";
+
+      ts << saxs_options.normalize_by_mw << "\t\t#saxs_options.normalize_by_mw\n";
+
+      ts << saxs_options.saxs_iq_native_debye << "\t\t#saxs_options.saxs_iq_native_debye\n";
+      ts << saxs_options.saxs_iq_native_hybrid << "\t\t#saxs_options.saxs_iq_native_hybrid\n";
+      ts << saxs_options.saxs_iq_native_hybrid2 << "\t\t#saxs_options.saxs_iq_native_hybrid2\n";
+      ts << saxs_options.saxs_iq_native_hybrid3 << "\t\t#saxs_options.saxs_iq_native_hybrid3\n";
+      ts << saxs_options.saxs_iq_native_fast << "\t\t#saxs_options.saxs_iq_native_fast\n";
+      ts << saxs_options.saxs_iq_native_fast_compute_pr << "\t\t#saxs_options.saxs_iq_native_fast_compute_pr\n";
+      ts << saxs_options.saxs_iq_foxs << "\t\t#saxs_options.saxs_iq_foxs\n";
+      ts << saxs_options.saxs_iq_crysol << "\t\t#saxs_options.saxs_iq_crysol\n";
+
+      ts << saxs_options.sans_iq_native_debye << "\t\t#saxs_options.sans_iq_native_debye\n";
+      ts << saxs_options.sans_iq_native_hybrid << "\t\t#saxs_options.sans_iq_native_hybrid\n";
+      ts << saxs_options.sans_iq_native_hybrid2 << "\t\t#saxs_options.sans_iq_native_hybrid2\n";
+      ts << saxs_options.sans_iq_native_hybrid3 << "\t\t#saxs_options.sans_iq_native_hybrid3\n";
+      ts << saxs_options.sans_iq_native_fast << "\t\t#saxs_options.sans_iq_native_fast\n";
+      ts << saxs_options.sans_iq_native_fast_compute_pr << "\t\t#saxs_options.sans_iq_native_fast_compute_pr\n";
+      ts << saxs_options.sans_iq_cryson << "\t\t#saxs_options.sans_iq_cryson\n";
+
+      ts << saxs_options.hybrid2_q_points << "\t\t#saxs_options.hybrid2_q_points\n";
+
+      ts << saxs_options.iq_ask << "\t\t#saxs_options.iq_ask\n";
+
+      ts << saxs_options.iq_scale_ask << "\t\t#saxs_options.iq_scale_ask\n";
+      ts << saxs_options.iq_scale_angstrom << "\t\t#saxs_options.iq_scale_angstrom\n";
+      ts << saxs_options.iq_scale_nm << "\t\t#saxs_options.iq_scale_nm\n";
+
+      ts << saxs_options.crysol_max_harmonics << "\t\t#saxs_options.crysol_max_harmonics\n";
+      ts << saxs_options.crysol_fibonacci_grid_order << "\t\t#saxs_options.crysol_fibonacci_grid_order\n";
+      ts << saxs_options.crysol_hydration_shell_contrast << "\t\t#saxs_options.crysol_hydration_shell_contrast\n";
+      ts << saxs_options.crysol_default_load_difference_intensity << "\t\t#saxs_options.crysol_default_load_difference_intensity\n";
+      ts << saxs_options.crysol_version_26 << "\t\t#saxs_options.crysol_version_26\n";
+
+      ts << saxs_options.fast_bin_size << "\t\t#saxs_options.fast_bin_size\n";
+      ts << saxs_options.fast_modulation << "\t\t#saxs_options.fast_modulation\n";
+
+      ts << saxs_options.compute_saxs_coeff_for_bead_models << "\t\t#saxs_options.compute_saxs_coeff_for_bead_models\n";
+      ts << saxs_options.compute_sans_coeff_for_bead_models << "\t\t#saxs_options.compute_sans_coeff_for_bead_models\n";
+
+      ts << saxs_options.default_atom_filename << endl;
+      ts << saxs_options.default_hybrid_filename << endl;
+      ts << saxs_options.default_saxs_filename << endl;
+      ts << saxs_options.default_rotamer_filename << endl;
+
+      ts << saxs_options.steric_clash_distance         << "\t\t#saxs_options.steric_clash_distance        \n";
+      ts << saxs_options.steric_clash_recheck_distance << "\t\t#saxs_options.steric_clash_recheck_distance\n";
+
+      ts << saxs_options.disable_iq_scaling << "\t\t#saxs_options.disable_iq_scaling\n";
+      ts << saxs_options.autocorrelate << "\t\t#saxs_options.autocorrelate\n";
+      ts << saxs_options.hybrid_radius_excl_vol << "\t\t#saxs_options.hybrid_radius_excl_vol\n";
+      ts << saxs_options.scale_excl_vol << "\t\t#saxs_options.scale_excl_vol\n";
+      ts << saxs_options.subtract_radius << "\t\t#saxs_options.subtract_radius\n";
+      ts << saxs_options.iqq_scale_minq << "\t\t#saxs_options.iqq_scale_minq\n";
+      ts << saxs_options.iqq_scale_maxq << "\t\t#saxs_options.iqq_scale_maxq\n";
+
+      ts << saxs_options.iqq_scale_nnls << "\t\t#saxs_options.iqq_scale_nnls\n";
+      ts << saxs_options.iqq_scale_linear_offset << "\t\t#saxs_options.iqq_scale_linear_offset\n";
+      ts << saxs_options.iqq_scale_chi2_fitting << "\t\t#saxs_options.iqq_scale_chi2_fitting\n";
+      ts << saxs_options.iqq_expt_data_contains_variances << "\t\t#saxs_options.iqq_expt_data_contains_variances\n";
+      ts << saxs_options.iqq_ask_target_grid << "\t\t#saxs_options.iqq_ask_target_grid\n";
+      ts << saxs_options.iqq_scale_play << "\t\t#saxs_options.iqq_scale_play\n";
+      ts << saxs_options.swh_excl_vol << "\t\t#saxs_options.swh_excl_vol\n";
+      ts << saxs_options.iqq_default_scaling_target << endl;
+
+      ts << saxs_options.saxs_iq_hybrid_adaptive << "\t\t#saxs_options.saxs_iq_hybrid_adaptive\n";
+      ts << saxs_options.sans_iq_hybrid_adaptive << "\t\t#saxs_options.sans_iq_hybrid_adaptive\n";
+
+      ts << saxs_options.bead_model_rayleigh   << "\t\t#saxs_options.bead_model_rayleigh  \n";
+      ts << saxs_options.iqq_log_fitting       << "\t\t#saxs_options.iqq_log_fitting      \n";
+      ts << saxs_options.iqq_scaled_fitting    << "\t\t#saxs_options.iqq_scaled_fitting   \n";
+      ts << saxs_options.iqq_use_atomic_ff     << "\t\t#saxs_options.iqq_use_atomic_ff    \n";
+      ts << saxs_options.iqq_use_saxs_excl_vol << "\t\t#saxs_options.iqq_use_saxs_excl_vol\n";
+      ts << saxs_options.alt_hydration         << "\t\t#saxs_options.alt_hydration        \n";
+
+      ts << saxs_options.xsr_symmop                << "\t\t#saxs_options.xsr_symmop               \n";
+      ts << saxs_options.xsr_nx                    << "\t\t#saxs_options.xsr_nx                   \n";
+      ts << saxs_options.xsr_ny                    << "\t\t#saxs_options.xsr_ny                   \n";
+      ts << saxs_options.xsr_griddistance          << "\t\t#saxs_options.xsr_griddistance         \n";
+      ts << saxs_options.xsr_ncomponents           << "\t\t#saxs_options.xsr_ncomponents          \n";
+      ts << saxs_options.xsr_compactness_weight    << "\t\t#saxs_options.xsr_compactness_weight   \n";
+      ts << saxs_options.xsr_looseness_weight      << "\t\t#saxs_options.xsr_looseness_weight     \n";
+      ts << saxs_options.xsr_temperature           << "\t\t#saxs_options.xsr_temperature          \n";
+
+      ts << hydro.zeno_zeno              << "\t\t#hydro.zeno_zeno             \n";
+      ts << hydro.zeno_interior          << "\t\t#hydro.zeno_interior         \n";
+      ts << hydro.zeno_surface           << "\t\t#hydro.zeno_surface          \n";
+      ts << hydro.zeno_zeno_steps        << "\t\t#hydro.zeno_zeno_steps       \n";
+      ts << hydro.zeno_interior_steps    << "\t\t#hydro.zeno_interior_steps   \n";
+      ts << hydro.zeno_surface_steps     << "\t\t#hydro.zeno_surface_steps    \n";
+      ts << hydro.zeno_surface_thickness << "\t\t#hydro.zeno_surface_thickness\n";
+
+      ts << misc.hydro_supc              << "\t\t#misc.hydro_supc             \n";
+      ts << misc.hydro_zeno              << "\t\t#misc.hydro_zeno             \n";
+
+      ts << batch.saxs_search << "\t\t#batch.saxs_search\n";
+      ts << batch.zeno        << "\t\t#batch.zeno       \n";
+
       f.close();
    }
 }
@@ -3103,9 +3484,6 @@ void US_Hydrodyn::set_default()
       hydro.overlap_cutoff = false;      // false: same as in model building, true: enter manually
       hydro.overlap = 0.0;               // overlap
 
-      pdb_vis.visualization = 0;                // default RasMol colors
-      pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
-
       pdb_parse.skip_hydrogen = true;
       pdb_parse.skip_water = true;
       pdb_parse.alternate = true;
@@ -3129,7 +3507,7 @@ void US_Hydrodyn::set_default()
       saxs_options.max_size = 40.0;          // maximum size (A)
       saxs_options.bin_size = 1.0f;          // Bin size (A)
       saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
-      saxs_options.curve = 0;                // 0 = raw, 1 = saxs, 2 = sans
+      saxs_options.curve = 1;                // 0 = raw, 1 = saxs, 2 = sans
       saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
 
       saxs_options.guinier_csv = false;
@@ -3278,122 +3656,148 @@ void US_Hydrodyn::set_default()
       saxs_options.path_load_prr = "";
 
       save_params.field.clear();
+
+      asa.hydrate_probe_radius = 1.4f;
+      asa.hydrate_threshold = 10.0f;
+
+      misc.target_e_density       = 0e0;
+      misc.target_volume          = 0e0;
+      misc.set_target_on_load_pdb = false;
+      misc.equalize_radii         = false;
+
+      dmd_options.force_chem = true;
+      dmd_options.pdb_static_pairs = false;
+      dmd_options.threshold_pb_pb = 5;
+      dmd_options.threshold_pb_sc = 5;
+      dmd_options.threshold_sc_sc = 5;
+
+      saxs_options.normalize_by_mw = true;
+
+      saxs_options.saxs_iq_native_debye = false;
+      saxs_options.saxs_iq_native_hybrid = false;
+      saxs_options.saxs_iq_native_hybrid2 = false;
+      saxs_options.saxs_iq_native_hybrid3 = true;
+      saxs_options.saxs_iq_native_fast = false;
+      saxs_options.saxs_iq_native_fast_compute_pr = false;
+      saxs_options.saxs_iq_foxs = false;
+      saxs_options.saxs_iq_crysol = false;
+
+      saxs_options.sans_iq_native_debye = true;
+      saxs_options.sans_iq_native_hybrid = false;
+      saxs_options.sans_iq_native_hybrid2 = false;
+      saxs_options.sans_iq_native_hybrid3 = false;
+      saxs_options.sans_iq_native_fast = false;
+      saxs_options.sans_iq_native_fast_compute_pr = false;
+      saxs_options.sans_iq_cryson = false;
+
+      saxs_options.hybrid2_q_points = 15;
+
+      saxs_options.iq_ask = false;
+
+      saxs_options.iq_scale_ask = false;
+      saxs_options.iq_scale_angstrom = true;
+      saxs_options.iq_scale_nm = false;
+
+      saxs_options.crysol_max_harmonics = 15;
+      saxs_options.crysol_fibonacci_grid_order = 17;
+      saxs_options.crysol_hydration_shell_contrast = 0.03f;
+      saxs_options.crysol_default_load_difference_intensity = true;
+      saxs_options.crysol_version_26 = true;
+
+      saxs_options.fast_bin_size = 0.5f;
+      saxs_options.fast_modulation = 0.23f;
+
+      saxs_options.compute_saxs_coeff_for_bead_models = true;
+      saxs_options.compute_sans_coeff_for_bead_models = false;
+
+      saxs_options.default_atom_filename = "";
+      saxs_options.default_hybrid_filename = "";
+      saxs_options.default_saxs_filename = "";
+      saxs_options.default_rotamer_filename = "";
+
+      saxs_options.steric_clash_distance         = 20.0;
+      saxs_options.steric_clash_recheck_distance = 0.0;
+
+      saxs_options.disable_iq_scaling = false;
+      saxs_options.autocorrelate = true;
+      saxs_options.hybrid_radius_excl_vol = false;
+      saxs_options.scale_excl_vol = 1.0f;
+      saxs_options.subtract_radius = false;
+      saxs_options.iqq_scale_minq = 0.0f;
+      saxs_options.iqq_scale_maxq = 0.0f;
+
+      saxs_options.iqq_scale_nnls = false;
+      saxs_options.iqq_scale_linear_offset = false;
+      saxs_options.iqq_scale_chi2_fitting = true;
+      saxs_options.iqq_expt_data_contains_variances = false;
+      saxs_options.iqq_ask_target_grid = true;
+      saxs_options.iqq_scale_play = false;
+      saxs_options.swh_excl_vol = 0.0f;
+      saxs_options.iqq_default_scaling_target = "";
+
+      saxs_options.saxs_iq_hybrid_adaptive = true;
+      saxs_options.sans_iq_hybrid_adaptive = true;
+
+      saxs_options.bead_model_rayleigh   = true;
+      saxs_options.iqq_log_fitting       = false;
+      saxs_options.iqq_scaled_fitting    = false;
+      saxs_options.iqq_use_atomic_ff     = false;
+      saxs_options.iqq_use_saxs_excl_vol = false;
+      saxs_options.alt_hydration         = false;
+
+      saxs_options.xsr_symmop                = 2;
+      saxs_options.xsr_nx                    = 32;
+      saxs_options.xsr_ny                    = 32;
+      saxs_options.xsr_griddistance          = 3e0;
+      saxs_options.xsr_ncomponents           = 1;
+      saxs_options.xsr_compactness_weight    = 10e0;
+      saxs_options.xsr_looseness_weight      = 10e0;
+      saxs_options.xsr_temperature           = 1e-3;
+
+      hydro.zeno_zeno              = true;
+      hydro.zeno_interior          = true;
+      hydro.zeno_surface           = true;
+      hydro.zeno_zeno_steps        = 1000;
+      hydro.zeno_interior_steps    = 1000;
+      hydro.zeno_surface_steps     = 1000;
+      hydro.zeno_surface_thickness = 0.0f;
+
+      misc.hydro_supc              = true;
+      misc.hydro_zeno              = false;
+
+      rotamer_changed = true;  // force on-demand loading of rotamer file
+
+      batch.saxs_search = false;
+      batch.zeno        = false;
    }
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
-   asa.hydrate_probe_radius = 1.4f;
-   asa.hydrate_threshold = 10.0f;
+   // defaults that SHOULD NOT BE MOVED INTO somo.config
 
-   misc.target_e_density       = 0e0;
-   misc.target_volume          = 0e0;
-   misc.set_target_on_load_pdb = false;
-   misc.equalize_radii         = false;
+   if ( pdb_vis.filename.isEmpty() )
+   {
+      pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
+   }
 
-   dmd_options.force_chem = true;
-   dmd_options.pdb_static_pairs = false;
-   dmd_options.threshold_pb_pb = 5;
-   dmd_options.threshold_pb_sc = 5;
-   dmd_options.threshold_sc_sc = 5;
-
-   saxs_options.normalize_by_mw = true;
-
-   saxs_options.saxs_iq_native_debye = false;
-   saxs_options.saxs_iq_native_hybrid = false;
-   saxs_options.saxs_iq_native_hybrid2 = false;
-   saxs_options.saxs_iq_native_hybrid3 = true;
-   saxs_options.saxs_iq_native_fast = false;
-   saxs_options.saxs_iq_native_fast_compute_pr = false;
-   saxs_options.saxs_iq_foxs = false;
-   saxs_options.saxs_iq_crysol = false;
-
-   saxs_options.sans_iq_native_debye = true;
-   saxs_options.sans_iq_native_hybrid = false;
-   saxs_options.sans_iq_native_hybrid2 = false;
-   saxs_options.sans_iq_native_hybrid3 = false;
-   saxs_options.sans_iq_native_fast = false;
-   saxs_options.sans_iq_native_fast_compute_pr = false;
-   saxs_options.sans_iq_cryson = false;
-
-   saxs_options.hybrid2_q_points = 15;
-
-   saxs_options.iq_ask = false;
-
-   saxs_options.iq_scale_ask = false;
-   saxs_options.iq_scale_angstrom = true;
-   saxs_options.iq_scale_nm = false;
-
-   saxs_options.crysol_max_harmonics = 15;
-   saxs_options.crysol_fibonacci_grid_order = 17;
-   saxs_options.crysol_hydration_shell_contrast = 0.03f;
-   saxs_options.crysol_default_load_difference_intensity = true;
-   saxs_options.crysol_version_26 = true;
-
-   saxs_options.fast_bin_size = 0.5f;
-   saxs_options.fast_modulation = 0.23f;
-
-   saxs_options.compute_saxs_coeff_for_bead_models = true;
-   saxs_options.compute_sans_coeff_for_bead_models = false;
-   saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
-   saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
-   saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
-   saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
-
-   saxs_options.steric_clash_distance         = 20.0;
-   saxs_options.steric_clash_recheck_distance = 0.0;
-
-   saxs_options.disable_iq_scaling = false;
-   saxs_options.autocorrelate = true;
-   saxs_options.hybrid_radius_excl_vol = false;
-   saxs_options.scale_excl_vol = 1.0f;
-   saxs_options.subtract_radius = false;
-   saxs_options.iqq_scale_minq = 0.0f;
-   saxs_options.iqq_scale_maxq = 0.0f;
-
-   saxs_options.iqq_scale_nnls = false;
-   saxs_options.iqq_scale_linear_offset = false;
-   saxs_options.iqq_scale_chi2_fitting = true;
-   saxs_options.iqq_expt_data_contains_variances = false;
-   saxs_options.iqq_expt_data_contains_variances = false;
-   saxs_options.iqq_ask_target_grid = true;
-   saxs_options.iqq_scale_play = false;
-   saxs_options.swh_excl_vol = 0.0f;
-   saxs_options.iqq_default_scaling_target = "";
-
-   saxs_options.saxs_iq_hybrid_adaptive = true;
-   saxs_options.sans_iq_hybrid_adaptive = true;
-
-   saxs_options.bead_model_rayleigh   = true;
-   saxs_options.iqq_log_fitting       = false;
-   saxs_options.iqq_scaled_fitting    = false;
-   saxs_options.iqq_use_atomic_ff     = false;
-   saxs_options.iqq_use_saxs_excl_vol = false;
-   saxs_options.alt_hydration         = false;
-
-   saxs_options.xsr_symmop                = 2;
-   saxs_options.xsr_nx                    = 32;
-   saxs_options.xsr_ny                    = 32;
-   saxs_options.xsr_griddistance          = 3e0;
-   saxs_options.xsr_ncomponents           = 1;
-   saxs_options.xsr_compactness_weight    = 10e0;
-   saxs_options.xsr_looseness_weight      = 10e0;
-   saxs_options.xsr_temperature           = 1e-3;
-
-   hydro.zeno_zeno              = true;
-   hydro.zeno_interior          = true;
-   hydro.zeno_surface           = true;
-   hydro.zeno_zeno_steps        = 100;
-   hydro.zeno_interior_steps    = 100;
-   hydro.zeno_surface_steps     = 100;
-   hydro.zeno_surface_thickness = 0.0f;
-
-   misc.hydro_supc              = true;
-   misc.hydro_zeno              = false;
+   if ( saxs_options.default_atom_filename.isEmpty() )
+   {
+      saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
+   }
+   if ( saxs_options.default_hybrid_filename.isEmpty() )
+   {
+      saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
+   }
+   if ( saxs_options.default_saxs_filename.isEmpty() )
+   {
+      saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
+   }
+   if ( saxs_options.default_rotamer_filename.isEmpty() )
+   {
+      saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
+   }
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
-
-   batch.saxs_search = false;
-   batch.zeno        = false;
 
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;

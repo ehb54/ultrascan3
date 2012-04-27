@@ -90,7 +90,7 @@ Water		# solvent name
 w		# solvent acronym
 20		# solvent temperature in degrees C
 1.00194		# viscosity of the solvent in cP
-0.998234		# desnisty of the solvent (g/ml)
+0.9982		# desnisty of the solvent (g/ml)
 0		# flag for reference system
 0		# flag for boundary condition: false: stick, true: slip
 0		# flag for volume correction - false: Automatic, true: manual
@@ -103,7 +103,7 @@ w		# solvent acronym
 0		# flag for overlap cutoff: false: same as in model building, true: enter manually
 0		# overlap value
 0		# PDB visualization option
-/root/ultrascan/etc/rasmol.spt		# RasMol color filename
+
 1		# skip hydrogen atoms?
 1		# skip water molecules?
 1		# skip alternate conformations?
@@ -244,62 +244,13 @@ w		# solvent acronym
 0		# batch missing residue handling
 1		# batch run somo
 0		# batch run grid
-0		# batch run hydro
+1		# batch run hydro
 0		# batch avg hydro
 results		# batch avg hydro name
-690		# batch window last height
-964		# batch window last width
+0		# batch window last height
+0		# batch window last width
 0		# batch number of files to follow
-49		# save params number of fields to follow
-results.name
-results.total_beads
-results.used_beads
-results.mass
-results.vbar
-results.s20w
-results.D20w
-results.rs
-results.ff0
-results.rg
-results.tau
-results.viscosity
-tot_surf_area
-tot_volume_of
-num_of_unused
-use_beads_vol
-use_beads_surf
-use_bead_mass
-con_factor
-tra_fric_coef
-rot_fric_coef
-rot_diff_coef
-rot_fric_coef_x
-rot_diff_coef_x
-rot_stokes_rad_x
-cen_of_res_x
-cen_of_mass_x
-cen_of_diff_x
-cen_of_visc_x
-unc_int_visc
-unc_einst_rad
-cor_int_visc
-cor_einst_rad
-rel_times_tau_1
-rel_times_tau_2
-rel_times_tau_3
-rel_times_tau_4
-rel_times_tau_5
-rel_times_tau_m
-rel_times_tau_h
-max_ext_x
-axi_ratios_xz
-hydro.solvent_name
-hydro.solvent_acronym
-hydro.temperature
-hydro.solvent_viscosity
-hydro.solvent_density
-results.asa_rg_pos
-results.asa_rg_neg
+0		# save params number of fields to follow
 
 
 
@@ -309,3 +260,92 @@ results.asa_rg_neg
 
 
 
+1.4		#asa.hydrate_probe_radius
+10		#asa.hydrate_threshold
+0		#misc.target_e_density      
+0		#misc.target_volume         
+0		#misc.set_target_on_load_pdb
+0		#misc.equalize_radii        
+1		#dmd_options.force_chem
+0		#dmd_options.pdb_static_pairs
+5		#dmd_options.threshold_pb_pb
+5		#dmd_options.threshold_pb_sc
+5		#dmd_options.threshold_sc_sc
+1		#saxs_options.normalize_by_mw
+0		#saxs_options.saxs_iq_native_debye
+0		#saxs_options.saxs_iq_native_hybrid
+0		#saxs_options.saxs_iq_native_hybrid2
+1		#saxs_options.saxs_iq_native_hybrid3
+0		#saxs_options.saxs_iq_native_fast
+0		#saxs_options.saxs_iq_native_fast_compute_pr
+0		#saxs_options.saxs_iq_foxs
+0		#saxs_options.saxs_iq_crysol
+1		#saxs_options.sans_iq_native_debye
+0		#saxs_options.sans_iq_native_hybrid
+0		#saxs_options.sans_iq_native_hybrid2
+0		#saxs_options.sans_iq_native_hybrid3
+0		#saxs_options.sans_iq_native_fast
+0		#saxs_options.sans_iq_native_fast_compute_pr
+0		#saxs_options.sans_iq_cryson
+15		#saxs_options.hybrid2_q_points
+0		#saxs_options.iq_ask
+0		#saxs_options.iq_scale_ask
+1		#saxs_options.iq_scale_angstrom
+0		#saxs_options.iq_scale_nm
+15		#saxs_options.crysol_max_harmonics
+17		#saxs_options.crysol_fibonacci_grid_order
+0.03		#saxs_options.crysol_hydration_shell_contrast
+1		#saxs_options.crysol_default_load_difference_intensity
+1		#saxs_options.crysol_version_26
+0.5		#saxs_options.fast_bin_size
+0.23		#saxs_options.fast_modulation
+1		#saxs_options.compute_saxs_coeff_for_bead_models
+0		#saxs_options.compute_sans_coeff_for_bead_models
+
+
+
+
+20		#saxs_options.steric_clash_distance        
+0		#saxs_options.steric_clash_recheck_distance
+0		#saxs_options.disable_iq_scaling
+1		#saxs_options.autocorrelate
+0		#saxs_options.hybrid_radius_excl_vol
+1		#saxs_options.scale_excl_vol
+0		#saxs_options.subtract_radius
+0		#saxs_options.iqq_scale_minq
+0		#saxs_options.iqq_scale_maxq
+0		#saxs_options.iqq_scale_nnls
+0		#saxs_options.iqq_scale_linear_offset
+1		#saxs_options.iqq_scale_chi2_fitting
+0		#saxs_options.iqq_expt_data_contains_variances
+1		#saxs_options.iqq_ask_target_grid
+0		#saxs_options.iqq_scale_play
+0		#saxs_options.swh_excl_vol
+
+1		#saxs_options.saxs_iq_hybrid_adaptive
+1		#saxs_options.sans_iq_hybrid_adaptive
+1		#saxs_options.bead_model_rayleigh  
+0		#saxs_options.iqq_log_fitting      
+0		#saxs_options.iqq_scaled_fitting   
+0		#saxs_options.iqq_use_atomic_ff    
+0		#saxs_options.iqq_use_saxs_excl_vol
+0		#saxs_options.alt_hydration        
+2		#saxs_options.xsr_symmop               
+32		#saxs_options.xsr_nx                   
+32		#saxs_options.xsr_ny                   
+3		#saxs_options.xsr_griddistance         
+1		#saxs_options.xsr_ncomponents          
+10		#saxs_options.xsr_compactness_weight   
+10		#saxs_options.xsr_looseness_weight     
+0.001		#saxs_options.xsr_temperature          
+1		#hydro.zeno_zeno             
+1		#hydro.zeno_interior         
+1		#hydro.zeno_surface          
+1000		#hydro.zeno_zeno_steps       
+1000		#hydro.zeno_interior_steps   
+1000		#hydro.zeno_surface_steps    
+0		#hydro.zeno_surface_thickness
+1		#misc.hydro_supc             
+0		#misc.hydro_zeno             
+0		#batch.saxs_search
+0		#batch.zeno       
