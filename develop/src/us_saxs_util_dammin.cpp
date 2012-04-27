@@ -184,7 +184,7 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "dammininitialannealingtemperature" ) )
    {
-      app_text << "Initial annealing temperature";
+      app_text << "Initial annealing temperature .......... <";
       response << control_parameters[ "dammininitialannealingtemperature" ];
    }
    if ( control_parameters.count( "damminannealingschedulefactor" ) )
