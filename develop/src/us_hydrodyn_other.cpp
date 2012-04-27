@@ -4197,7 +4197,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    fprintf(f,
            "\n\n\n"
            "\tTOTAL ASA OF THE MOLECULE    = %.0f\t[A^2] (Threshold used: %.1f A^2]\n"
-           "\tTOTAL VOLUME OF THE MOLECULE = %-.2f\t[A^3]\n"
+           // "\tTOTAL VOLUME OF THE MOLECULE = %-.2f\t[A^3]\n"
            "\tRADIUS OF GYRATION (+r) =  %-.2f   [A]\n"
            "\tRADIUS OF GYRATION (-r) =  %-.2f   [A]\n"
            "\tMASS OF THE MOLECULE    =  %.0f   [Da]\n"
@@ -4205,7 +4205,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
            ,
            total_asa,
            asa.threshold,
-           total_vol,
+           // total_vol,
            results.asa_rg_pos,
            results.asa_rg_neg,
            total_mass,
@@ -4213,7 +4213,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
            );
 
    fclose(f);
-   editor_msg("dark blue", QString("").sprintf("Volume from ASA calculation %.2f A^3", total_vol));
+   editor_msg("dark blue", QString("").sprintf("Anhydrous volume %.2f A^3", total_vol));
 }
 
 
