@@ -90,7 +90,7 @@ Water		# solvent name
 w		# solvent acronym
 20		# solvent temperature in degrees C
 1.00194		# viscosity of the solvent in cP
-0.998234	# desnisty of the solvent (g/ml)
+0.998234	# denisty of the solvent (g/ml)
 0		# flag for reference system
 0		# flag for boundary condition: false: stick, true: slip
 0		# flag for volume correction - false: Automatic, true: manual
