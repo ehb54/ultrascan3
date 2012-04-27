@@ -94,22 +94,22 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "damminfitcurvelimit" ) )
    {
-      app_text << "Portion of the curve to be fitted";
+      app_text << "Portion of the curve to be fitted ...... <";
       response << control_parameters[ "damminfitcurvelimit" ];
    }
    if ( control_parameters.count( "damminknotstofit" ) )
    {
-      app_text << "Number of knots in the curve to fit";
+      app_text << "Number of knots in the curve to fit .... <";
       response << control_parameters[ "damminknotstofit" ];
    }
    if ( control_parameters.count( "damminconstantsubtractionprocedure" ) )
    {
-      app_text << "Constant subtraction procedure";
+      app_text << "Zero for automatic subtraction ......... <";
       response << control_parameters[ "damminconstantsubtractionprocedure" ];
    }
    if ( control_parameters.count( "damminmaxharmonics" ) )
    {
-      app_text << "Maximum order of harmonics";
+      app_text << "Maximum order of harmonics ............. <";
       response << control_parameters[ "damminmaxharmonics" ];
    }
    if ( control_parameters.count( "dammininitialdamtype" ) )
@@ -119,17 +119,17 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "damminsymmetry" ) )
    {
-      app_text << "Symmetry: P1";
+      app_text << "Symmetry: P1...19";
       response << control_parameters[ "damminsymmetry" ];
    }
    if ( control_parameters.count( "damminspherediameter" ) )
    {
-      app_text << "Sphere  diameter";
+      app_text << "Sphere  diameter [Angstrom] ............ <";
       response << control_parameters[ "damminspherediameter" ];
    }
    if ( control_parameters.count( "damminpackingradius" ) )
    {
-      app_text << "Packing radius of dummy atoms";
+      app_text << "Packing radius of dummy atoms .......... <";
       response << control_parameters[ "damminpackingradius" ];
    }
    if ( control_parameters.count( "damminexpectedshape" ) )
@@ -139,47 +139,47 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "damminradius1stcoordinationsphere" ) )
    {
-      app_text << "Radius of 1st coordination sphere";
+      app_text << "Radius of 1st coordination sphere ...... <";
       response << control_parameters[ "damminradius1stcoordinationsphere" ];
    }
    if ( control_parameters.count( "damminloosenesspenaltyweight" ) )
    {
-      app_text << "Looseness penalty weight";
+      app_text << "Looseness penalty weight ............... <";
       response << control_parameters[ "damminloosenesspenaltyweight" ];
    }
    if ( control_parameters.count( "dammindisconnectivitypenaltyweight" ) )
    {
-      app_text << "Disconnectivity penalty weight";
+      app_text << "Disconnectivity penalty weight ......... <";
       response << control_parameters[ "dammindisconnectivitypenaltyweight" ];
    }
    if ( control_parameters.count( "damminperipheralpenaltyweight" ) )
    {
-      app_text << "Peripheral penalty weight";
+      app_text << "Peripheral penalty weight .............. <";
       response << control_parameters[ "damminperipheralpenaltyweight" ];
    }
    if ( control_parameters.count( "damminfixingthersholdslosandrf" ) )
    {
-      app_text << "Fixing thresholds Los and Rf";
+      app_text << "Fixing thresholds Los and Rf <";
       response << control_parameters[ "damminfixingthersholdslosandrf" ];
    }
    if ( control_parameters.count( "damminrandomizestructure" ) )
    {
-      app_text << "Randomize the structure";
+      app_text << "Randomize the structure [ Y / N ] ...... <";
       response << control_parameters[ "damminrandomizestructure" ];
    }
    if ( control_parameters.count( "damminweight" ) )
    {
-      app_text << "Weight";
+      app_text << "Weight: 0=s^2, 1=Emphas.s->0, 2=Log .... <";
       response << control_parameters[ "damminweight" ];
    }
    if ( control_parameters.count( "dammininitialscalefactor" ) )
    {
-      app_text << "Initial scale factor";
+      app_text << "Initial scale factor ................... <";
       response << control_parameters[ "dammininitialscalefactor" ];
    }
    if ( control_parameters.count( "damminfixscalefactor" ) )
    {
-      app_text << "Fix the scale factor";
+      app_text << "Fix the scale factor [ Y / N ] ......... <";
       response << control_parameters[ "damminfixscalefactor" ];
    }
    if ( control_parameters.count( "dammininitialannealingtemperature" ) )
@@ -189,32 +189,32 @@ bool US_Saxs_Util::run_dammin()
    }
    if ( control_parameters.count( "damminannealingschedulefactor" ) )
    {
-      app_text << "Annealing schedule factor";
+      app_text << "Annealing schedule factor .............. <";
       response << control_parameters[ "damminannealingschedulefactor" ];
    }
    if ( control_parameters.count( "damminnumberofindependentatomstomodify" ) )
    {
-      app_text << "# of independent atoms to modify";
+      app_text << "# of independent atoms to modify ....... <";
       response << control_parameters[ "damminnumberofindependentatomstomodify" ];
    }
    if ( control_parameters.count( "damminmaxnumberiterationseacht" ) )
    {
-      app_text << "Max # of iterations at each T";
+      app_text << "Max # of iterations at each T .......... <";
       response << control_parameters[ "damminmaxnumberiterationseacht" ];
    }
    if ( control_parameters.count( "damminmaxnumbersuccesseseacht" ) )
    {
-      app_text << "Max # of successes at each T";
+      app_text << "Max # of successes at each T ........... <";
       response << control_parameters[ "damminmaxnumbersuccesseseacht" ];
    }
    if ( control_parameters.count( "damminminnumbersuccessestocontinue" ) )
    {
-      app_text << "Min # of successes to continue";
+      app_text << "Min # of successes to continue ......... <";
       response << control_parameters[ "damminminnumbersuccessestocontinue" ];
    }
    if ( control_parameters.count( "damminmaxnumberannealingsteps" ) )
    {
-      app_text << "Max # of annealing steps";
+      app_text << "Max # of annealing steps ............... <";
       response << control_parameters[ "damminmaxnumberannealingsteps" ];
    }
    if ( control_parameters.count( "damminexpectedshape" ) )
