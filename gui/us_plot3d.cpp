@@ -694,6 +694,15 @@ QGLWidget* US_Plot3D::dataWidgetP( void )
    return (QGLWidget*)dataWidget;
 }
 
+// Public method to save the plot to an image file
+bool US_Plot3D::save_plot( const QString filename, const QString imagetype )
+{
+   dataWidget->updateData();
+   dataWidget->updateGL();
+
+   return IO::save( dataWidget, filename, imagetype );
+}
+
 QString US_Plot3D::xyAxisTitle( int type, double sclnorm )
 {
    QString atitle = tr( "s" );

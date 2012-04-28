@@ -8,6 +8,7 @@
 // Define level-conditioned debug print that includes thread/processor
 #ifdef DbgLv
 #undef DbgLv
+//!< special definition of DbgLv(a) for threads
 #define DbgLv(a) if(dbg_level>=a)qDebug()<<"SS-w:"<<thrnrank<<":"
 #endif
 

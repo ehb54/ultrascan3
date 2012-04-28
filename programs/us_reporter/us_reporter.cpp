@@ -708,7 +708,12 @@ void US_Reporter::view()
 {
    if ( write_report() )                 // Write the report file
    {  // Open the PDF file for viewing with system's "open-with" app
-      if ( ! QDesktopServices::openUrl( QString( "file://" ) + ppdfpath ) )
+#ifdef Q_WS_WIN
+      QString file_url = QString( "file:///" ) + ppdfpath;
+#else
+      QString file_url = QString( "file://" ) + ppdfpath;
+#endif
+      if ( ! QDesktopServices::openUrl( file_url ) )
          QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
                tr( "Unable to open the composite report file:\n" )
                + ppdfpath );

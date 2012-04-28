@@ -204,15 +204,24 @@ void US_PlotControl::do_3dplot()
    plot3_btn();
 }
 
-// public slot to return a pointer to the 3D plot data widget
+// Public slot to return a pointer to the 3D plot data widget
 QGLWidget* US_PlotControl::data_3dplot( void )
 {
-   if ( plot3d_w == 0 )
-      return (QGLWidget*)0;
+   QGLWidget* widgP = (QGLWidget*)0;
 
-   //plot3_btn();
+   if ( plot3d_w != 0 )
+   {
+      //plot3_btn();
+      widgP = plot3d_w->dataWidgetP();
+   }
 
-   return plot3d_w->dataWidgetP();
+   return widgP;
+}
+
+// Public slot to return a pointer to the 3D plot main widget
+US_Plot3D* US_PlotControl::widget_3dplot( void )
+{
+   return (US_Plot3D*)plot3d_w;
 }
 
 // mw x box checked

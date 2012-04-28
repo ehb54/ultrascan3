@@ -25,21 +25,37 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
    Q_OBJECT
 
    public:
+      //! \brief Contructor for surface plot class
       //! \param p  A pointer to the parent widget of this one
       //! \param m  A pointer to the model whose data is to be plotted
       US_Plot3D( QWidget*, US_Model* );
 
       //! \brief Public function to set 3 coordinate type flags
+      //! \param tx  The type flag for X (1=MW, 2=s, ...)
+      //! \param ty  The type flag for Y
+      //! \param tz  The type flag for Z
+      //! \param imagetype The image file type ("png" or "jpg")
       void setTypes     ( int, int, int );
       //! \brief Public function to set plot control parameters
+      //! \param a_scale  Z scale factor
+      //! \param a_gridr  Grid resolution
+      //! \param a_alpha  Alpha factor
+      //! \param a_beta   Beta factor
       void setParameters( double, double, double, double );
       //! \brief Public function to (re)calculate Z values at fixed increments
+      //! \param zdat     Z data vector of vectors
       void calculateData( QVector< QVector< double > >& );
       //! \brief Public function to replot the 3D data
       void replot       ( void );
       //! \brief Public function to return the data widget pointer
-      //! returns Pointer to 3D Plot data widget
+      //! \return Pointer to the GL data widget
       QGLWidget* dataWidgetP( void );
+      //! \brief Public function to save the plot to a file
+      //! \param filename  The full path to the file to create
+      //! \param imagetype The image file type ("png" or "jpg")
+      //! \return          Flag if save was successful
+      bool save_plot( const QString, const QString );
+
 
    private:
       QWidget*      centralWidget;
