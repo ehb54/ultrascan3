@@ -223,6 +223,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "bsplinetest|"
 
+                      "sleep|"
+
                       "damminrun|"
                       "dammingnomfile|"
                       "damminmode|"
@@ -322,6 +324,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdrun|"
                       "dmdrelaxheatxc|"
                       "dmdequiheatxc|"
+
+                      "sleep|"
 
                       "sgppopulation|"
                       "sgpgenerations|"
@@ -455,6 +459,21 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }         
 
+      if ( option == "sleep" )
+      {
+#if !defined( Q_WS_WIN )
+         double secs = qsl[ 0 ].toDouble();
+         timespec ns;
+         timespec ns_ret;
+         ns.tv_sec  = 0;
+         ns.tv_nsec = ( long ) ( 1e6 * secs );
+         nanosleep(&ns, &ns_ret);
+#else
+         int secs = qsl[ 0 ].toInt();
+         _sleep( secs );
+#endif
+      }
+         
       if ( option == "cudareset" )
       {
 #if defined( CUDA )

@@ -1032,9 +1032,102 @@ void US_Hydrodyn_Cluster_Dammin::update_damminexpectedshape( const QString & )
 
 void US_Hydrodyn_Cluster_Dammin::save()
 {
+   QString fn = QFileDialog::getSaveFileName( 
+                                              QString::null, 
+                                              "*.cluster_dammin",
+                                              this,
+                                              tr( QString( "%1: Save" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
+                                              tr( "Save the parameters" ) 
+                                              );
+
+   if( !fn.isEmpty() )
+   {
+      if ( !fn.contains( QRegExp( "\\.cluster_dammin$" ) ) )
+      {
+         fn += ".cluster_dammin";
+      }
+      QFile f( fn );
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         QMessageBox::information( this,
+                                   tr( QString( "%1: Save" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
+                                   QString( tr( "Could not open file %1 for writing" ) )
+                                   .arg( fn ) 
+                                   );
+         return;
+      }
+      QTextStream ts( &f );
+      ts << US_Json::compose( *parameters );
+      f.close();
+   }
 }
 
 void US_Hydrodyn_Cluster_Dammin::load()
 {
+   QString fn = QFileDialog::getOpenFileName( 
+                                              QString::null, 
+                                              "*.cluster_dammin",
+                                              this,
+                                              tr( QString( "%1: Open" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
+                                              tr( "Load parameters" ) 
+                                              );
+   if( !fn.isEmpty() )
+   {
+      QFile f( fn );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+          QMessageBox::information( 
+                                    this,
+                                    tr( QString( "%1: Open" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
+                                    QString( tr( "Could not open file %1 for reading" ) )
+                                    .arg( fn ) 
+                                    );
+          return;
+      }
+      QString qs;
+      QTextStream ts( &f );
+      while ( !ts.atEnd() )
+      {
+          qs += ts.readLine();
+      }
+      f.close();
+      *parameters = US_Json::split( qs );
+      update_fields();
+   }
+}
+
+void US_Hydrodyn_Cluster_Dammin::update_fields()
+{
+   disconnect( le_dammingnomfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_dammingnomfile                               ->setText( parameters->count( "dammingnomfile" ) ? ( *parameters )[ "dammingnomfile" ] : "" );
+   connect( le_dammingnomfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_dammingnomfile( const QString & ) ) );
+   le_damminmode                                   ->setText( parameters->count( "damminmode" ) ? ( *parameters )[ "damminmode" ] : "" );
+   le_dammindescription                            ->setText( parameters->count( "dammindescription" ) ? ( *parameters )[ "dammindescription" ] : "" );
+   le_damminangularunits                           ->setText( parameters->count( "damminangularunits" ) ? ( *parameters )[ "damminangularunits" ] : "" );
+   le_damminfitcurvelimit                          ->setText( parameters->count( "damminfitcurvelimit" ) ? ( *parameters )[ "damminfitcurvelimit" ] : "" );
+   le_damminknotstofit                             ->setText( parameters->count( "damminknotstofit" ) ? ( *parameters )[ "damminknotstofit" ] : "" );
+   le_damminconstantsubtractionprocedure           ->setText( parameters->count( "damminconstantsubtractionprocedure" ) ? ( *parameters )[ "damminconstantsubtractionprocedure" ] : "" );
+   le_damminmaxharmonics                           ->setText( parameters->count( "damminmaxharmonics" ) ? ( *parameters )[ "damminmaxharmonics" ] : "" );
+   le_dammininitialdamtype                         ->setText( parameters->count( "dammininitialdamtype" ) ? ( *parameters )[ "dammininitialdamtype" ] : "" );
+   le_damminsymmetry                               ->setText( parameters->count( "damminsymmetry" ) ? ( *parameters )[ "damminsymmetry" ] : "" );
+   le_damminspherediameter                         ->setText( parameters->count( "damminspherediameter" ) ? ( *parameters )[ "damminspherediameter" ] : "" );
+   le_damminpackingradius                          ->setText( parameters->count( "damminpackingradius" ) ? ( *parameters )[ "damminpackingradius" ] : "" );
+   le_damminradius1stcoordinationsphere            ->setText( parameters->count( "damminradius1stcoordinationsphere" ) ? ( *parameters )[ "damminradius1stcoordinationsphere" ] : "" );
+   le_damminloosenesspenaltyweight                 ->setText( parameters->count( "damminloosenesspenaltyweight" ) ? ( *parameters )[ "damminloosenesspenaltyweight" ] : "" );
+   le_dammindisconnectivitypenaltyweight           ->setText( parameters->count( "dammindisconnectivitypenaltyweight" ) ? ( *parameters )[ "dammindisconnectivitypenaltyweight" ] : "" );
+   le_damminperipheralpenaltyweight                ->setText( parameters->count( "damminperipheralpenaltyweight" ) ? ( *parameters )[ "damminperipheralpenaltyweight" ] : "" );
+   le_damminfixingthersholdsLosandRf               ->setText( parameters->count( "damminfixingthersholdsLosandRf" ) ? ( *parameters )[ "damminfixingthersholdsLosandRf" ] : "" );
+   le_damminrandomizestructure                     ->setText( parameters->count( "damminrandomizestructure" ) ? ( *parameters )[ "damminrandomizestructure" ] : "" );
+   le_damminweight                                 ->setText( parameters->count( "damminweight" ) ? ( *parameters )[ "damminweight" ] : "" );
+   le_dammininitialscalefactor                     ->setText( parameters->count( "dammininitialscalefactor" ) ? ( *parameters )[ "dammininitialscalefactor" ] : "" );
+   le_damminfixscalefactor                         ->setText( parameters->count( "damminfixscalefactor" ) ? ( *parameters )[ "damminfixscalefactor" ] : "" );
+   le_dammininitialannealingtemperature            ->setText( parameters->count( "dammininitialannealingtemperature" ) ? ( *parameters )[ "dammininitialannealingtemperature" ] : "" );
+   le_damminannealingschedulefactor                ->setText( parameters->count( "damminannealingschedulefactor" ) ? ( *parameters )[ "damminannealingschedulefactor" ] : "" );
+   le_damminnumberofindependentatomstomodify       ->setText( parameters->count( "damminnumberofindependentatomstomodify" ) ? ( *parameters )[ "damminnumberofindependentatomstomodify" ] : "" );
+   le_damminmaxnumberiterationseachT               ->setText( parameters->count( "damminmaxnumberiterationseachT" ) ? ( *parameters )[ "damminmaxnumberiterationseachT" ] : "" );
+   le_damminmaxnumbersuccesseseachT                ->setText( parameters->count( "damminmaxnumbersuccesseseachT" ) ? ( *parameters )[ "damminmaxnumbersuccesseseachT" ] : "" );
+   le_damminminnumbersuccessestocontinue           ->setText( parameters->count( "damminminnumbersuccessestocontinue" ) ? ( *parameters )[ "damminminnumbersuccessestocontinue" ] : "" );
+   le_damminmaxnumberannealingsteps                ->setText( parameters->count( "damminmaxnumberannealingsteps" ) ? ( *parameters )[ "damminmaxnumberannealingsteps" ] : "" );
+   le_damminexpectedshape                          ->setText( parameters->count( "damminexpectedshape" ) ? ( *parameters )[ "damminexpectedshape" ] : "" );
 }
 

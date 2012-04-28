@@ -165,6 +165,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool          save_calcAutoHydro;
       bool          save_disable_iq_scaling;
 
+      bool          save_misc_supc;
+      bool          save_misc_zeno;
+
       bool          stopFlag;
       bool          disable_updates;
       QFont ft;

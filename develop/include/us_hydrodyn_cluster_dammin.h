@@ -15,6 +15,9 @@
 #include "qfile.h"
 #include "qfiledialog.h"
 #include "qpushbutton.h"
+#include "qmessagebox.h"
+#include "qregexp.h"
+#include "us_json.h"
 
 using namespace std;
 
@@ -103,6 +106,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dammin : public QDialog
       QPushButton *                           pb_close;
       void                     *              us_hydrodyn;
       map < QString, QString > *              parameters;
+      void                                    update_fields();
 
 
       void                                    setupGUI();

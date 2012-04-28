@@ -2639,6 +2639,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString /* base_dir */,
    {
       for ( int m = 0; m < ( int )methods.size(); m++ )
       {
+         if ( cb_for_mpi->isChecked() )
+         {
+            out += QString( "sleep\t%1\n" ).arg( i );
+         }
+
          if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
          {
             for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();

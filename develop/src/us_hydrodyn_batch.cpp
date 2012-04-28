@@ -1074,10 +1074,12 @@ bool US_Hydrodyn_Batch::screen_bead_model(QString file)
 
 void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
 {
-   save_pdb_parse = ((US_Hydrodyn *)us_hydrodyn)->pdb_parse;
-   save_pb_rule_on = ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on;
-   save_calcAutoHydro = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
+   save_pdb_parse          = ((US_Hydrodyn *)us_hydrodyn)->pdb_parse;
+   save_pb_rule_on         = ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on;
+   save_calcAutoHydro      = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
    save_disable_iq_scaling = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling;
+   save_misc_supc          = ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_supc;
+   save_misc_zeno          = ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_zeno;
    
    if ( any_pdb_in_list )
    {
@@ -1093,14 +1095,20 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
    }
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
    ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling = true;
+
+   ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_supc = !cb_zeno->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_zeno =  cb_zeno->isChecked();
 }
 
 void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->pdb_parse = save_pdb_parse;
-   ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = save_pb_rule_on;
-   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = save_calcAutoHydro;
+   ((US_Hydrodyn *)us_hydrodyn)->pdb_parse                       = save_pdb_parse;
+   ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on                 = save_pb_rule_on;
+   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro                   = save_calcAutoHydro;
    ((US_Hydrodyn *)us_hydrodyn)->saxs_options.disable_iq_scaling = save_disable_iq_scaling;
+   ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_supc                 = save_misc_supc;
+   ((US_Hydrodyn *)us_hydrodyn)->misc.hydro_zeno                 = save_misc_zeno;
+
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
