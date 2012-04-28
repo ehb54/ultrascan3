@@ -250,7 +250,8 @@ results		# batch avg hydro name
 0		# batch window last height
 0		# batch window last width
 0		# batch number of files to follow
-0		# save params number of fields to follow
+1		# save params number of fields to follow
+results.name
 
 
 
