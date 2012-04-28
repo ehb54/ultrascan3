@@ -2701,12 +2701,17 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
          eplotcd->do_3dplot();
       }
 
+#ifdef Q_WS_WIN
+      US_Plot3D* widgw = eplotcd->widget_3dplot();
+      bool ok          = widgw->save_plot( filename, QString( "png" ) );
+#else
       QGLWidget* dataw = eplotcd->data_3dplot();
-
-      QPixmap pixmap = dataw->renderPixmap( dataw->width(), dataw->height(),
+      QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
                                             true  );
+      bool ok          = pixmap.save( filename );
+#endif
 
-      if ( ! pixmap.save( filename ) )
+      if ( ! ok )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
    }

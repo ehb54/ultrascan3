@@ -331,10 +331,12 @@ void US_ModelLoader::update_person( int ID )
 // List model choices (disk/db and possibly filtered by search text)
 void US_ModelLoader::list_models()
 {
+qDebug() << "LIST_MODELS";
 QDateTime time0=QDateTime::currentDateTime();
 QDateTime time1=QDateTime::currentDateTime();
 QDateTime time2=QDateTime::currentDateTime();
    QString mfilt = le_mfilter->text();
+   le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
    bool listall  = mfilt.isEmpty();          // unfiltered?
    bool listdesc = !listall;                 // description filtered?
    bool listedit = !listall;                 // edit filtered?
@@ -370,7 +372,7 @@ QDateTime time2=QDateTime::currentDateTime();
             listdesc = !mfilt.isEmpty();
             listall  = !listdesc;
             mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
-//qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
+qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
          }
 
          if ( !singprev )
@@ -380,8 +382,8 @@ QDateTime time2=QDateTime::currentDateTime();
       else if ( singprev )
          db_id1 = -2;     // flag re-list when list-singles flag changes
    }
-//qDebug() << "listall" << listall;
-//qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
+qDebug() << "listall" << listall;
+qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          
    if ( loadDB )
    {  // Model list from DB
@@ -404,7 +406,7 @@ QDateTime time2=QDateTime::currentDateTime();
       int countSD = all_single_descrs .size();
       int kid1    = -3;
       int kid2    = -3;
-//qDebug() << " md count" << countMD;
+qDebug() << " md count" << countMD;
 //      query << "count_models" << invID;
 //      int countDB = db.statusQuery( query );
 //qDebug() << " db count" << countDB;
@@ -414,14 +416,14 @@ QDateTime time2=QDateTime::currentDateTime();
          kid1 = all_model_descrips[ 0           ].DB_id.toInt();
          kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
       }
-//qDebug() << "  kid1 kid2" << kid1 << kid2;
-//qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
+qDebug() << "  kid1 kid2" << kid1 << kid2;
+qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
 
       if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
       { // only re-fetch all-models list if we don't yet have it
          db_id1            = kid1;  // save start,end all_models IDs
          db_id2            = kid2;
-//qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
+qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          all_model_descrips.clear();
          query.clear();
          int nedits        = editIDs.size();
@@ -440,9 +442,11 @@ QDateTime time2=QDateTime::currentDateTime();
                le_mfilter->setText( dsearch );
             }
          }
+qDebug() << "        edit GUID,ID" << editGUID << editID;
 
          for ( int ii = 0; ii < qMax( nedits, 1 ); ii++ )
          {
+qDebug() << "     ii nedits" << ii << nedits;
             query.clear();
 time1=QDateTime::currentDateTime();
             if ( nedits > 0 )
@@ -457,7 +461,7 @@ time1=QDateTime::currentDateTime();
                query << "get_model_desc" << invID;
 
             db.query( query );
-//qDebug() << " NumRows" << db.numRows();
+qDebug() << " NumRows" << db.numRows();
 time2=QDateTime::currentDateTime();
 qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
 
@@ -480,6 +484,7 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
                   desc.description = " ( ID " + desc.DB_id
                                      + tr( " : empty description )" );
                }
+//qDebug() << "   desc" << desc.description << "DB_id" << desc.DB_id;
 
                all_model_descrips << desc;   // add to full models list
             }
@@ -676,6 +681,9 @@ qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
    height       = this->height() + height - olhgt;
 
    resize( width, height );
+
+   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
+            this,          SLOT(   msearch(     const QString& ) ) );
 }
 
 // Cancel button:  no models returned
