@@ -34,7 +34,6 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param tx  The type flag for X (1=MW, 2=s, ...)
       //! \param ty  The type flag for Y
       //! \param tz  The type flag for Z
-      //! \param imagetype The image file type ("png" or "jpg")
       void setTypes     ( int, int, int );
       //! \brief Public function to set plot control parameters
       //! \param a_scale  Z scale factor

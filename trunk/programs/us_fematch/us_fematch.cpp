@@ -2701,7 +2701,7 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
          eplotcd->do_3dplot();
       }
 
-#ifdef Q_WS_WIN
+#if defined(Q_WS_WIN) || defined(Q_WS_MAC)
       US_Plot3D* widgw = eplotcd->widget_3dplot();
       bool ok          = widgw->save_plot( filename, QString( "png" ) );
 #else
