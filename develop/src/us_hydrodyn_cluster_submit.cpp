@@ -553,7 +553,11 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       return false;
    }
 
-   unsigned int host_count      = ( tar_list.size() / selected_system[ "corespernode" ].toUInt() ) + 1;
+   unsigned int common_count = ( unsigned int ) tar_list.grep( QRegExp( "^common_" ) ).size();
+
+   unsigned int host_count      = 
+      ( ( ( unsigned int ) tar_list.size() - common_count - 1 ) 
+        / selected_system[ "corespernode" ].toUInt() ) + 1;
    unsigned int processor_count = host_count * selected_system[ "corespernode" ].toUInt();
    if ( processor_count > selected_system[ "maxcores" ].toUInt() )
    {
