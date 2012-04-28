@@ -91,6 +91,7 @@ if [ $ISWIN -ne 0 ]; then
   echo "  > make"
   echo ""
   echo "Come back to this Cygwin window and do the next qmake:"
+  echo "  > cd $us3/somo/develop"
   echo "  > ${QMAKE} us_somo.pro"
   echo ""
   echo "Then, in the MSYS window, another make"

@@ -211,7 +211,8 @@ void US_vHW_Enhanced::data_plot( void )
    int     nskip       = 0;
    int     totalCount;
 
-   if ( !dataLoaded )
+DbgLv(1) << " data_plot: vbar" << vbar;
+   if ( !dataLoaded  ||  vbar <= 0.0 )
       return;
 
 DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -1834,6 +1835,16 @@ void US_vHW_Enhanced::update( int row )
    d          = &dataList[ row ];
 
    US_AnalysisBase2::update( row );
+DbgLv(1) << " update: vbar" << vbar;
+
+   if ( vbar <= 0.0 )
+   {
+      QMessageBox::warning( this, tr( "Bad Solution Values" ),
+         tr( "The Vbar for this data is not a positive value (vbar=%1).\n"
+             "The current data set needs editing of its Solution before\n"
+             "van Holde - Weischet analysis can proceed." ).arg( vbar ) );
+      return;
+   }
 }
 
 // Calculate the sedimentation coefficient intercept for division 1
