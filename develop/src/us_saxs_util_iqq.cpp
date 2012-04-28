@@ -464,6 +464,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 #if !defined( Q_WS_WIN )
          // 999999999
          double secs = qsl[ 0 ].toDouble();
+         secs *= 2;
          // secs *= 1e-1; // finer resolution if nanosleep available
          cout << QString( "sleep %1\n" ).arg( secs ).ascii();
          timespec ns;
