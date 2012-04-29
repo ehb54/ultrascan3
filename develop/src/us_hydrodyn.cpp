@@ -4452,12 +4452,12 @@ void US_Hydrodyn::sizeArrows( QwtCounter*
 }
 
 void US_Hydrodyn::fixWinButtons( QWidget* 
-#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if defined(QT4)
                                  widg 
 #endif
                                  )
 {
-#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if defined(QT4)
    QList< QObject* > children = widg->children();
    QStyle* btnstyle = new QPlastiqueStyle();
    for ( int jj = 0; jj < children.size(); jj++ )
