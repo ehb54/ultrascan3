@@ -31,6 +31,11 @@ for F in ${PKGDIR}/ultrascan3/etc/somo*; do
   fi
 done
 
+if [ -d ${SRCDIR}/somo/demo ]; then
+  # Clear out somo/demo so only present contents are copied
+  /bin/rm -rf ${SRCDIR}/somo/demo/*
+fi
+
 for D in bin demo doc lib saxs structures; do
   SDIR=${SRCDIR}/somo/${D}
   DDIR=${PKGDIR}/somo

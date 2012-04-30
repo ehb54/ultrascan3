@@ -57,6 +57,9 @@ ${RSYNC} ${SDIR} ${DDIR}
 
 SOMODIR=$HOME/ultrascan/somo
 if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
+  # Clear out somo/demo so only present contents are copied
+  /bin/rm -rf ${PKGDIR}/somo/demo/*
+  # Copy somo demo,test contents
   for D in demo test; do
     SDIR=${SOMODIR}/${D}
     DDIR=${PKGDIR}/somo

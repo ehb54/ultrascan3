@@ -25,6 +25,7 @@ unix {
  CONFIG                += qt warn thread release
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
+ MYSQLPATH              = /usr/lib/mysql
 
  contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt -L$(ULTRASCAN)/somo/lib64 -lus_somo
