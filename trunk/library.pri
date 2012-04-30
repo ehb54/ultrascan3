@@ -20,7 +20,7 @@ unix {
   }
   else {
     DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include
+    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QWT3D/include
     INCLUDEPATH  += $$MYSQLPATH
   }
   DEFINES      += INTEL LINUX

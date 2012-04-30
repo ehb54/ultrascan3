@@ -36,6 +36,11 @@ done
 if [ ! -d ${DESTDIR}/somo ]; then
   echo "Creating ${DESTDIR}/somo"
   mkdir ${DESTDIR}/somo
+else
+  # Clear out somo/demo so only present contents are copied
+  if [ -d ${DESTDIR}/somo/demo ]; then
+    rm -rf ${DESTDIR}/somo/demo/*
+  fi
 fi
 
 echo "Copy somo doc,demo,test directories"
