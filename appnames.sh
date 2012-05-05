@@ -11,17 +11,13 @@ BDIR=`echo ${BDIR} | sed -e 's@/bin$@@'`
 cd ${BDIR}/bin
  
 #		fix the application in each bundle
-for BUND in `ls -d *.app`;do
+for BUND in `ls -d *.app|grep -v 'us3_'`;do
 
   FILE=`echo ${BUND} | sed -e 's/.app//'`
 
   APPP=${BUND}/Contents/MacOS/${FILE}
 
 #		get list of library names to change
-  ##LIBL=`otool -L ${APPP} \
-  ##  | egrep '_utils|_gui|_db|qwt|qca|ramework|mysql' \
-  ##  | grep -v executable \
-  ##  | awk '{print $1}'`
   LIBL=`otool -L ${APPP} \
     | egrep '_utils|us_gui|qwt|qca|mysql' \
     | grep -v executable \
@@ -32,7 +28,7 @@ for BUND in `ls -d *.app`;do
   for NAMI in ${LIBL}; do
     
     if [ `echo ${NAMI} | grep -ci mysql` -ne 0 ]; then
-      NAMO=@executable_path/../../../../lib/libmysqlclient.16.dylib
+      NAMO=@executable_path/../../../../lib/libmysqlclient.18.dylib
     else
       if [ `echo ${NAMI} | grep -ci framework` -eq 0 ]; then
         #		use relative path to library

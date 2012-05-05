@@ -33,6 +33,11 @@ for D in etc bin lib us3-update.sh; do
   echo "${RSYNC} ${SDIR} ${DDIR}"
   ${RSYNC} ${SDIR} ${DDIR}
 done
+US3BINS=`(cd ${SRCDIR}/somo/bin;ls)`
+for F in ${US3BINS}; do
+  echo "/bin/rm -f ${PKGDIR}/bin/${F}"
+  /bin/rm -f ${PKGDIR}/bin/${F}
+done
 
 for F in ${PKGDIR}/etc/somo*; do
   if [ `echo ${F} | grep -ic '.new$'` -eq 0 ]; then
