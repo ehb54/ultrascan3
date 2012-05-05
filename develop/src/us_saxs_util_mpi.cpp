@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_file_util.h"
 
 #include <mpi.h>
 extern int npes;
@@ -440,6 +441,16 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
 {
    // for now, everyone reads the control file & sets things up to the point of nsa run
+
+   QString qs_base_dir = QDir::currentDirPath();
+
+   outputData = QString( "%1" ).arg( getenv( "outputData" ) );
+   if ( outputData.isEmpty() )
+   {
+      outputData = "../outputData";
+   }
+   cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
+
    int errorno = -1;
    nsa_mpi = true;
 
@@ -479,6 +490,8 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    }         
    errorno--;
 
+   QString original_controlfile;
+
    if ( myrank )
    {
       // wait until rank 0 process has extracted the file:
@@ -514,6 +527,20 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
       
       QString dest = controlfile;
       int result;
+
+      // copy here
+      US_File_Util usu;
+      usu.copy( controlfile, QDir::currentDirPath() + SLASH + QFileInfo( controlfile ).fileName() );
+      cout << QString( "copying %1 %2 <%3>\n" )
+         .arg( controlfile )
+         .arg( QDir::currentDirPath() + SLASH + QFileInfo( controlfile ).fileName() )
+         .arg( usu.errormsg );
+      dest = QFileInfo( controlfile ).fileName();
+
+      cout << QString( "dest is now %1\n" )
+         .arg( dest );
+      original_controlfile = dest;
+
       if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
       {
          // gunzip controlfile, must be renamed for us_gzip
@@ -607,7 +634,58 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    cuda_ipcrm();
 #endif
 
+   // cout << QString("%1: signaling end of barrier\n" ).arg( myrank ) << flush;
+   if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+   {
+      MPI_Abort( MPI_COMM_WORLD, errorno );
+      exit( errorno );
+   }         
+   
+   if ( !myrank )
+   {
+      QString results_file = original_controlfile;
+      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file += "_out.tgz";
+
+      QDir dod( outputData );
+      if ( !dod.exists() )
+      {
+         QDir current = QDir::current();
+            
+         QString newdir = outputData;
+         while ( newdir.left( 3 ) == "../" )
+         {
+            current.cdUp();
+            newdir.replace( "../", "" );
+         }
+         QDir::setCurrent( current.path() );
+         QDir ndod;
+         if ( !ndod.mkdir( newdir, true ) )
+         {
+            cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
+         }
+         QDir::setCurrent( qs_base_dir );
+      }
+      if ( dod.exists() )
+      {
+         QString dest = outputData + QDir::separator() + QFileInfo( results_file ).fileName();
+         QDir qd;
+         cout << QString("renaming: %1 to %2\n" )
+               .arg( results_file )
+               .arg( dest );
+         if ( !qd.rename( results_file, dest ) )
+         {
+            cout << QString("Warning: could not rename outputData %1 to %2\n" )
+               .arg( results_file )
+               .arg( dest );
+         }
+      } else {
+         cout << QString( "Error: %1 does not exist\n" ).arg( outputData );
+      }
+   }
+
    MPI_Finalize();
+
    exit( 0 );
    return true;
 }
