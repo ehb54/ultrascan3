@@ -232,11 +232,11 @@ bool US_Saxs_Util::nsa_run()
    double nrmsd;
       
    unsigned int startloop = 1;
-   unsigned int endloop   = control_parameters[ "nsarun" ].toUInt();
+   unsigned int endloop   = control_parameters[ "nsaspheres" ].toUInt();
 
    {
       QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
-      if ( rx.search( control_parameters[ "nsarun" ] ) != -1 )
+      if ( rx.search( control_parameters[ "nsaspheres" ] ) != -1 )
       {
          startloop = rx.cap( 1 ).toUInt();
          endloop   = rx.cap( 2 ).toUInt();

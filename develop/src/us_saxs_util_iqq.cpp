@@ -201,9 +201,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgprun|"
                       "sgptest|"
 
+                      "nsaspheres|"
                       "nsaess|"
                       "nsaexcl|"
-                      "nsarun|"
+                      "bfnb_nsarun|"
                       "nsaga|"
                       "nsasga|"
                       "nsaiterations|"
@@ -342,7 +343,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "sgpbranchmax|"
                       "sgprandomseed|"
 
-                      "nsarun|"
+                      "nsaspheres|"
                       "nsaiterations|"
                       "nsaepsilon|"
                       "nsagsm|"
@@ -785,7 +786,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }
 
-      if ( option == "nsarun" )
+      if ( option == "bfnb_nsarun" )
       {
          if ( !nsa_run() )
          {

@@ -23,10 +23,10 @@ bool US_Saxs_Util::nsa_run()
    // cout << QString( "%1: nsa_mpi is %2\n" ).arg( myrank ).arg( nsa_mpi ? "true" : "false" );
 
    unsigned int startloop = 1;
-   unsigned int endloop   = control_parameters[ "nsarun" ].toUInt();
+   unsigned int endloop   = control_parameters[ "nsaspheres" ].toUInt();
    {
       QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
-      if ( rx.search( control_parameters[ "nsarun" ] ) != -1 )
+      if ( rx.search( control_parameters[ "nsaspheres" ] ) != -1 )
       {
          startloop = rx.cap( 1 ).toUInt();
          endloop   = rx.cap( 2 ).toUInt();
