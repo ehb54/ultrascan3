@@ -14,13 +14,13 @@ unix {
   LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += -lcrypto
   LIBS       += $$QWTLIB
-  LIBS       += -L$$MYSQLDIR -lmysqlclient
   LIBS       += -lqwtplot3d-qt4 
+  LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += INTEL LINUX
 
   DEPENDPATH   += ../../gui ../../utils $$QWTPATH/include ..
-  INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/include ..
   INCLUDEPATH  += $$MYSQLPATH ../$$QWT3D/include
+  INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/include ..
 }
 
 win32 {

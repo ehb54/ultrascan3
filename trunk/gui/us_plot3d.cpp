@@ -14,7 +14,7 @@ using namespace Qwt3D;
 
 // constructor:  3-d plot mainwindow widget
 US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
-   : QMainWindow( p, 0 )
+   : QMainWindow( p, Qt::Dialog )
 {
    model     = m;
    dbg_level = US_Settings::us_debug();
@@ -421,9 +421,8 @@ DbgLv(2) << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
    ymin    = (double)( (int)( ymin * 10.0 )     ) * 0.1;
    ymax    = (double)( (int)( ymax * 10.0 ) + 1 ) * 0.1;
    ymin    = ( ymin < 0.0 ) ? ( ymin - 0.1 ) : ymin;
-   zmin    = (double)( (int)( zmin * 10.0 )     ) * 0.1;
    zmax    = (double)( (int)( zmax * 10.0 ) + 1 ) * 0.1;
-   zmin    = ( zmin < 0.0 ) ? ( zmin - 0.1 ) : zmin;
+   zmin    = 0.0;
 DbgLv(2) << "P3D:sR:  xmin xmax" << xmin << xmax
  << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax;
 }

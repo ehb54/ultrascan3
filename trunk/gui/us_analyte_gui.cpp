@@ -686,6 +686,16 @@ void US_AnalyteGui::close( void )
    if ( analyte.type == US_Analyte::PROTEIN )
       analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
+   // Give a warning if the vbar implies a negative buoyancy
+   if ( ( 1.0 - analyte.vbar20 * DENS_20W ) <= 0.0 )
+   {
+      QMessageBox::warning( this, tr( "Negative Buoyancy Implied" ),
+         tr( "The current vbar value implies a non-positive buoyancy.\n"
+             "This will have to be changed with any 2DSA operations.\n\n"
+             "Floating data is indicated there by negative sedimentation\n"
+             "coefficient values, rather than negative buoyancy." ) );
+   }
+
    // If a signal is not wanted, just close
    if ( ! signal_wanted ) 
    {

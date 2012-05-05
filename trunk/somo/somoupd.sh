@@ -118,8 +118,15 @@ echo "   +++ making somo applications +++"
 make -j2 2>&1
 echo "   --- make somo applications COMPLETE ---"
  
+
 if [ $ISMAC  -ne 0 ]; then
   echo "   --- somo libnames, appnames ---"
   $us3/somo/bin/libnames.sh
   $us3/somo/bin/appnames.sh
+  echo "   --- somo demo copy ---"
+  if [ -d $us3/somo/demo ]; then
+    /bin/rm -rf $us3/somo/demo
+  fi
+  rsync -av --exclude=.svn $us2/somo/demo $us3/somo
 fi
+
