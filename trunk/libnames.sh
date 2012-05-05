@@ -44,7 +44,7 @@ for FILE in ${FILES} ; do
     if [ `echo ${NAMI} | grep -ci qca` -eq 0 ]; then
       #		give relative path to library
       if [ `echo ${NAMI} | grep -ci mysql` -ne 0 ]; then
-        NAMO=@executable_path/../../../../lib/libmysqlclient.16.dylib
+        NAMO=@executable_path/../../../../lib/libmysqlclient.18.dylib
       else
         if [ `echo ${NAMI} | grep -ci framework` -eq 0 ]; then
           NAMO=@executable_path/../../../../lib/${NAMI}

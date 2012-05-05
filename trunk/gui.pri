@@ -52,6 +52,6 @@ macx {
   LIBS       += $$QWTLIB 
   LIBS       += -L../../lib -lmysqlclient -framework QtOpenGL
   DEFINES    += MAC OSX 
-  INCLUDEPATH += ../../mysqldir/include
+  INCLUDEPATH += $$MYSQLPATH/include
 }
 
