@@ -1843,6 +1843,20 @@ for (int jj=0;jj<nenois;jj++)
 // Do model simulation
 void US_FeMatch::simulate_model( )
 {
+   double buoy    = 1.0 - vbar * DENS_20W;
+
+   if ( buoy <= 0.0 )
+   {
+      QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
+         tr( "The current Vbar value (%1) implies a buoyancy\n"
+             "value (%2) that is non-positive.\n\n"
+             "Simulate Model cannot proceed with this value. Click on\n"
+             "the <Solution> button and change the Vbar value.\n"
+             "Note that the Solution may be accepted without being saved." )
+             .arg( vbar ).arg( buoy ) );
+      return;
+   }
+
    int    drow    = lw_triples->currentRow();
    US_SimulationParameters simparams;
    US_DataIO2::RawData*    rdata   = &rawList[  drow ];
