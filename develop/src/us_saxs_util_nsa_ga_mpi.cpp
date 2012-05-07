@@ -6,6 +6,8 @@ extern int myrank;
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+// #define USUNGM_DEBUG
+
 bool US_Saxs_Util::nsa_run()
 {
    QString save_outputfile = control_parameters[ "outputfile" ];
@@ -159,17 +161,24 @@ bool US_Saxs_Util::nsa_run()
 
 bool US_Saxs_Util::nsa_ga_worker()
 {
-   // cout << QString( "%1: nsa_ga_worker starting\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa_ga_worker starting\n" ).arg( myrank ) );
+#endif
    int errorno = -23000;
 
-   // cout << QString("%1: enter nsa ga initial barrier\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString("%1: start nsa_worker: BARRIER enter nsa ga initial barrier\n" ).arg( myrank ) );
+#endif
+
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
       MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
       exit( errorno - myrank );
    }         
 
-   // cout << QString("%1: exit nsa ga initial barrier\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString("%1: exit nsa ga initial barrier\n" ).arg( myrank ) );
+#endif
    
    MPI_Status mpi_status;
 
@@ -182,6 +191,12 @@ bool US_Saxs_Util::nsa_ga_worker()
    message_sent[ 0 ] = 0.0;
 
    errorno = -24000;
+
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: SEND MPI send in nsa_ga_worker() initial registry\n" ).arg( myrank ) );
+   debug_mpi( QString( "%1: message_received.size %2 messsage_send.size %3\n" )
+              .arg( myrank ).arg( message_received.size() ).arg( message_sent.size() ) );
+#endif
 
    if ( MPI_SUCCESS != MPI_Send( &( message_sent[ 0 ] ),
                                  message_sent.size(),
@@ -199,6 +214,9 @@ bool US_Saxs_Util::nsa_ga_worker()
 
    do 
    {
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: RECV MPI  in nsa_ga_worker() receive msg\n" ).arg( myrank ) );
+#endif
       if ( MPI_SUCCESS != MPI_Recv( &( message_received[ 0 ] ),
                                     message_received.size(), 
                                     MPI_DOUBLE, 
@@ -211,9 +229,15 @@ bool US_Saxs_Util::nsa_ga_worker()
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: MPI  in nsa_ga_worker() msg received\n" ).arg( myrank ) );
+#endif
       
       if ( message_received[ 0 ] == 1.0 )
       {
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: MPI  in nsa_ga_worker() msg received is 1.0\n" ).arg( myrank ) );
+#endif
          for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
          {
             individual.v[ i ] = message_received[ i + 2 ];
@@ -228,19 +252,28 @@ bool US_Saxs_Util::nsa_ga_worker()
          
          // send results
 
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: MPI  in nsa_ga_worker() send results\n" ).arg( myrank ) );
+#endif
          message_sent[ 0 ] = 1.0;
          message_sent[ 1 ] = individual.fitness;
-         // QString vmsg;
+#if defined( USUNGM_DEBUG )
+         QString vmsg;
+#endif
          for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
          {
             message_sent[ i + 2 ] = individual.v[ i ];
-            // vmsg += QString( " %1" ).arg( individual.v[ i ] );
+#if defined( USUNGM_DEBUG )
+            vmsg += QString( " %1" ).arg( individual.v[ i ] );
+#endif
          }
 
-         // cout << QString( "%1: worker sending result (%2): %3\n" )
-         // .arg( myrank )
-         // .arg( individual.fitness )
-         // .arg( vmsg ) << flush;
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: SEND worker sending result (%2): %3\n" )
+          .arg( myrank )
+          .arg( individual.fitness )
+                    .arg( vmsg ) );
+#endif
 
          if ( MPI_SUCCESS != MPI_Send( &( message_sent[ 0 ] ),
                                        message_sent.size(),
@@ -254,24 +287,39 @@ bool US_Saxs_Util::nsa_ga_worker()
             MPI_Abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
+
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: worker sent result (%2): %3\n" )
+          .arg( myrank )
+          .arg( individual.fitness )
+                    .arg( vmsg ) );
+#endif
       }
    } while ( message_received[ 0 ] != 0.0 );
 
-   // cout << QString( "%1: nsa_ga_worker closing\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa_ga_worker closing\n" ).arg( myrank ) );
+#endif
    return true;
 }
 
 bool US_Saxs_Util::nsa_ga_close_workers()
 {
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa ga close workers\n" ).arg( myrank ) );
+#endif
    int errorno = -22000;
    vector < double > message_sent    ( nsa_var_ref.size() + 2 );
    message_sent[ 0 ] = 0.0;
 
-   for ( map < int, bool >::iterator it = waiting_workers.begin();
-         it != waiting_workers.end();
+   for ( map < int, bool >::iterator it = registered_workers.begin();
+         it != registered_workers.end();
          it++ )
    {
-      // cout << QString( "%1: sending close request to worker %2\n" ).arg( myrank ).arg(  it->first ) << flush;
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: SEND sending close request to worker %2\n" ).arg( myrank ).arg( it->first ) );
+#endif
+
       if ( MPI_SUCCESS != MPI_Send( &( message_sent[ 0 ] ),
                                     message_sent.size(),
                                     MPI_DOUBLE, 
@@ -284,7 +332,9 @@ bool US_Saxs_Util::nsa_ga_close_workers()
          exit( errorno );
       }
    }
-   // cout << QString( "%1: finished closing workers\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: finished closing workers\n" ).arg( myrank ) );
+#endif
    return true;
 }
 
@@ -293,6 +343,9 @@ bool US_Saxs_Util::nsa_ga_process_queue()
    // talk to workers
    // send jobs to fill up queue
    // retrieve results
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa ga process queue\n" ).arg( myrank ) );
+#endif
 
    MPI_Status mpi_status;
 
@@ -317,6 +370,9 @@ bool US_Saxs_Util::nsa_ga_process_queue()
 
    map < int, bool > still_waiting;
 
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa ga begin process queue %2\n" ).arg( myrank ).arg( waiting_workers.size() ) );
+#endif
    for ( map < int, bool >::iterator it = waiting_workers.begin();
          it != waiting_workers.end();
          it++ )
@@ -330,6 +386,9 @@ bool US_Saxs_Util::nsa_ga_process_queue()
          }
          queued_requests.pop_front();
 
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: SEND nsa ga begin process queue sending work assignment to worker %1 \n" ).arg( myrank ).arg( it->first ) );
+#endif
          if ( MPI_SUCCESS != MPI_Send( &( message_sent[ 0 ] ),
                                        message_sent.size(),
                                        MPI_DOUBLE, 
@@ -341,16 +400,45 @@ bool US_Saxs_Util::nsa_ga_process_queue()
             MPI_Abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString( "%1: nsa ga begin process queue  worker %2 busy worker \n" ).arg( myrank ).arg( it->first ) );
+#endif
          busy_workers[ it->first ] = true;
       } else {
+#if defined( USUNGM_DEBUG )
+         cout << QString( "%1: nsa ga begin process queue  worker %2 still_waiting \n" ).arg( myrank ).arg( it->first ) << flush;
+#endif
          still_waiting[ it->first ] = true;
       }
    }
 
    waiting_workers = still_waiting;
 
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa_ga_process_queue begin process queue: all requests queued, now wait \n"
+                       " : busy_workers       %2\n"
+                       " : queued_requests    %3\n"
+                       " : registered_workers %4\n" )
+              .arg( myrank )
+              .arg( busy_workers.size() )
+              .arg( queued_requests.size() )
+              .arg( registered_workers.size() )
+              );
+#endif
+
    while ( busy_workers.size() || queued_requests.size() || registered_workers.size() != npes - 1 )
    {
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: RECV nsa_ga_process_queue: waiting for message \n"
+                          " : busy_workers       %2\n"
+                          " : queued_requests    %3\n"
+                          " : registered_workers %4\n" )
+                 .arg( myrank )
+                 .arg( busy_workers.size() )
+                 .arg( queued_requests.size() )
+                 .arg( registered_workers.size() )
+                 );
+#endif
       if ( MPI_SUCCESS != MPI_Recv( &( message_received[ 0 ] ),
                                     message_received.size(), 
                                     MPI_DOUBLE, 
@@ -364,8 +452,30 @@ bool US_Saxs_Util::nsa_ga_process_queue()
          exit( errorno );
       }         
 
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: nsa_ga_process_queue: received message \n"
+                          " : busy_workers       %2\n"
+                          " : queued_requests    %3\n"
+                          " : registered_workers %4\n" )
+                 .arg( myrank )
+                 .arg( busy_workers.size() )
+                 .arg( queued_requests.size() )
+                 .arg( registered_workers.size() )
+                 );
+#endif
+
       registered_workers[ mpi_status.MPI_SOURCE ] = true;
       
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString(
+                         "%1: nsa_ga_process_queue: received message %2 from %3\n"
+                         )
+                 .arg( myrank )
+                 .arg( message_received[ 0 ] )
+                 .arg( mpi_status.MPI_SOURCE )
+                 );
+#endif
+
       if ( message_received[ 0 ] == 1.0 )
       {
          // have results
@@ -385,6 +495,13 @@ bool US_Saxs_Util::nsa_ga_process_queue()
                  
       if ( queued_requests.size() )
       {
+#if defined( USUNGM_DEBUG )
+         debug_mpi( QString(
+                            "%1: nsa_ga_process_queue: more queued requests \n"
+                            )
+                    .arg( myrank )
+                    );
+#endif
          message_sent[ 0 ] = 1.0;
          for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
          {
@@ -392,6 +509,10 @@ bool US_Saxs_Util::nsa_ga_process_queue()
          }
          queued_requests.pop_front();
 
+#if defined( USUNGM_DEBUG )
+         debug_mpi(  QString( "%1: SEND MPI send in nsa_ga_process_queue() normal work assignment %2\n" )
+                     .arg( myrank ).arg( mpi_status.MPI_SOURCE ) );
+#endif
          if ( MPI_SUCCESS != MPI_Send( &( message_sent[ 0 ] ),
                                        message_sent.size(),
                                        MPI_DOUBLE, 
@@ -406,16 +527,27 @@ bool US_Saxs_Util::nsa_ga_process_queue()
             
          busy_workers[ mpi_status.MPI_SOURCE ] = true;
       } else {
-         busy_workers.erase( mpi_status.MPI_SOURCE );
-         waiting_workers[ mpi_status.MPI_SOURCE ] = true;
+         if ( message_received[ 0 ] == 1.0 )
+         {
+            busy_workers.erase( mpi_status.MPI_SOURCE );
+            waiting_workers[ mpi_status.MPI_SOURCE ] = true;
+         }
       }
    }
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: nsa ga done with work requests\n" )
+              .arg( myrank )
+              );
+#endif
+
    return true;
 }
 
 bool US_Saxs_Util::nsa_ga_master_test( double & nrmsd )
 {
-   cout << QString("%1: enter nsa ga initial barrier\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString("%1: BARRIER enter nsa ga initial barrier\n" ).arg( myrank ) );
+#endif
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
       MPI_Abort( MPI_COMM_WORLD, -10000 - myrank );
@@ -490,7 +622,9 @@ bool US_Saxs_Util::nsa_ga_master_test( double & nrmsd )
 
 bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
 {
-   // cout << QString("%1: enter nsa ga initial barrier\n" ).arg( myrank ) << flush;
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString("%1: nsa_ga_master() start: BARRIER enter nsa ga initial barrier\n" ).arg( myrank ) );
+#endif
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
       MPI_Abort( MPI_COMM_WORLD, -10000 - myrank );
@@ -561,7 +695,13 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
             
       cout << QString( "nsa: gen %1 best individual fitness %2\n" )
          .arg( g )
-         .arg( nsa_pop.front().fitness );
+         .arg( nsa_pop.size() ? nsa_pop.front().fitness : 9e99 );
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: nsa: gen %2 best individual fitness %3\n" )
+                 .arg( myrank )
+                 .arg( g )
+                 .arg( nsa_pop.size() ? nsa_pop.front().fitness : 9e99 ) );
+#endif
 
       unsigned int elitism_count   = 0;
       unsigned int crossover_count = 0;
@@ -577,8 +717,10 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
          last_pop.push_back( *it );
       }
 
-      cout << QString( "start: nsa_pop.size() %1\n" ).arg( last_pop.size() );
-
+      cout << QString( "start: nsa_pop.size() %1\n" ).arg( last_pop.size() ) << flush;
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: start: nsa_pop.size() %2\n" ).arg( myrank ).arg( last_pop.size() ) );
+#endif
       nsa_pop.clear();
 
       for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
@@ -652,11 +794,31 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
          .arg( duplicate_count )
          .arg( random_count )
          .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( 
+                         "summary counts:\n"
+                         " elitism   %1\n"
+                         " mutate    %2\n"
+                         " crossover %3\n"
+                         " duplicate %4\n" 
+                         " random    %5\n" 
+                         " total     %6\n" 
+                         )
+                 .arg( elitism_count )
+                 .arg( mutate_count )
+                 .arg( crossover_count )
+                 .arg( duplicate_count )
+                 .arg( random_count )
+                 .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count ) );
+#endif
    }
 
    if ( queued_requests.size() )
    {
       cout << QString( "%1: queued %2 requests\n" ).arg( myrank ).arg( queued_requests.size() ) << flush;
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: queued %2 requests\n" ).arg( myrank ).arg( queued_requests.size() ) );
+#endif
       if ( !nsa_ga_process_queue() )
       {
          return false;
@@ -666,6 +828,12 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
          .arg( queued_requests.size() ) 
          .arg( received_results.size() ) 
            << flush;
+#if defined( USUNGM_DEBUG )
+      debug_mpi( QString( "%1: after processing %2 requests results size %3\n" )
+                 .arg( myrank )
+                 .arg( queued_requests.size() ) 
+                 .arg( received_results.size() ) );
+#endif
       
       nsa_pop = received_results;
       received_results.clear();

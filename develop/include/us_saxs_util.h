@@ -1114,4 +1114,8 @@ class US_EXTERN US_Saxs_Util
       bool                  write_timings        ( QString file, QString msg );
 };
 
+# if defined( USE_MPI )
+   extern void debug_mpi( QString );
+# endif
+
 #endif

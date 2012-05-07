@@ -16,6 +16,22 @@ QString outputData;
 
 #define SLASH QDir::separator()
 
+#if defined( USE_MPI )
+   extern void debug_mpi( QString );
+
+#  include <qdatetime.h>
+   void debug_mpi( QString msg )
+   {
+      QFile f( QString( "mpidebug-%1" ).arg( myrank ) );
+      if( f.open( IO_WriteOnly | IO_Append ) )
+      {
+         QTextStream ts( &f );
+         ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msg;
+         f.close();
+      }
+   }
+#endif
+
 bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 {
 
@@ -442,6 +458,13 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
 {
    // for now, everyone reads the control file & sets things up to the point of nsa run
 
+   if ( npes < 2 )
+   {
+      cerr << "ERROR: requires at least 2 processes to run nsa" << endl << flush;
+      MPI_Abort( MPI_COMM_WORLD, -10002 );
+      exit( -10002 );
+   }         
+
    QString qs_base_dir = QDir::currentDirPath();
 
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
@@ -689,3 +712,4 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    exit( 0 );
    return true;
 }
+

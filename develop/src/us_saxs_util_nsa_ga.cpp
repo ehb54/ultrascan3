@@ -1,6 +1,13 @@
 #include "../include/us_saxs_util.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
+// #define USUNG_DEBUG
+
+#if defined( USUNG_DEBUG )
+# if defined( USE_MPI ) 
+   extern int myrank;
+# endif
+#endif
 
 unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
 {
@@ -23,6 +30,18 @@ unsigned int US_Saxs_Util::nsa_pop_selection( unsigned int size )
 
 bool US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
 {
+   
+#if defined( USUNG_DEBUG )
+# if defined( USE_MPI )
+   debug_mpi( QString( "%1: entering nsa_ga_fitness individual size %2, var size %3\n" )
+              .arg( myrank )
+              .arg( individual.v.size() )
+              .arg( nsa_var_ref.size() ) );
+# else
+   cout << QString( "entering nsa_ga_fitness individual size %1\n" ).arg( individual.v.size() ) << fflush;
+# endif
+#endif
+
    our_vector *vi = new_our_vector( nsa_var_ref.size() );
    for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
    {
@@ -40,6 +59,17 @@ bool US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
       method = "ih";
    }
 
+#if defined( USUNG_DEBUG )
+# if defined( USE_MPI )
+   debug_mpi( QString( "%1: in nsa_ga_fitness: method %2\n" )
+              .arg( myrank )
+              .arg( method ) );
+# else
+   cout << QString( "in nsa_ga_fitness: method %1\n" )
+      .arg( method )
+      << fflush;
+# endif
+#endif
    nsa_gsm( individual.fitness, 
             vi,
             method );
@@ -50,6 +80,13 @@ bool US_Saxs_Util::nsa_ga_fitness( nsa_ga_individual & individual )
    }
 
    free_our_vector( vi );
+#if defined( USUNG_DEBUG )
+# if defined( USE_MPI )
+   debug_mpi( QString( "%1: leaving nsa_ga_fitness individual size %2\n" ).arg( myrank ).arg( nsa_var_ref.size() ) );
+# else
+   cout << QString( "leaving nsa_ga_fitness individual size %1\n" ).arg( nsa_var_ref.size() ) << fflush;
+# endif
+#endif
    return true;
 }
 

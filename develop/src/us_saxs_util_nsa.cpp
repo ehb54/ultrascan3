@@ -7,6 +7,8 @@
     extern int myrank;
 #endif
 
+// #define USUN_DEBUG
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 bool US_Saxs_Util::nsa_validate()
@@ -493,6 +495,14 @@ void US_Saxs_Util::nsa_gsm_df( our_vector *vd, our_vector *v )
 
 bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
 {
+#if defined( USUN_DEBUG )
+# if defined( USE_MPI )
+   cout << QString( "%1: entering nsa_gsm\n" ).arg( myrank ) << fflush;
+# else
+   cout << QString( "entering nsa_gsm vector\n" ) << fflush;
+# endif
+#endif
+
    errormsg = "";
    global_iter = 0;
    if ( !nsa_gsm_setup )
@@ -527,6 +537,10 @@ bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
       method = control_parameters[ "nsagsm" ];
    }
    
+#if defined( USUN_DEBUG )
+   method = "sd";
+#endif
+
    if ( method == "cg" )
    {
       gsm_method = CONJUGATE_GRADIENT;
@@ -539,6 +553,13 @@ bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
    {
       gsm_method = INVERSE_HESSIAN;
    }
+#if defined( USUN_DEBUG )
+# if defined( USE_MPI )
+   cout << QString( "%1: starting gsm\n" ).arg( myrank ) << fflush;
+# else
+   cout << QString( "starting gsm\n" ) << fflush;
+# endif
+#endif
 
    switch( gsm_method ) {
    case CONJUGATE_GRADIENT :
@@ -574,6 +595,13 @@ bool US_Saxs_Util::nsa_gsm( double &nrmsd, our_vector *vi, QString method )
       copy_our_vector( vi, v );
    }
    free_our_vector( v );
+#if defined( USUN_DEBUG )
+# if defined( USE_MPI )
+   cout << QString( "%1: leaving nsa_gsm\n" ).arg( myrank ) << fflush;
+# else
+   cout << QString( "leaving nsa_gsm vector\n" ) << fflush;
+# endif
+#endif
    return true;
 }
 

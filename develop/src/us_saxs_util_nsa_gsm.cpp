@@ -1,8 +1,22 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 
+#if defined( USE_MPI )
+    extern int myrank;
+#endif
+
+// #define USUNG_DEBUG
+
 long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter ) 
 {
+#if defined( USUNG_DEBUG )
+# if defined( USE_MPI )
+   debug_mpi ( QString( "%1: starting nsa_min_gsm_5_1: our_vector\n" ).arg( myrank ) );
+# else
+   cout << QString( "starting nsa_min_gsm_5_1\n" ) << fflush;
+# endif
+#endif
+
    /* try to find a local minimum via a gradient search method */
 #if defined(SHOW_TIMING)
    struct timeval tv1, tv2;
