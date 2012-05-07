@@ -60,139 +60,109 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rght->setSpacing        ( 0 );
    rght->setContentsMargins( 0, 1, 0, 1 );
 
-   int s_row = 0;
    dbg_level = US_Settings::us_debug();
 
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
-   spec->addWidget( lb_info1, s_row++, 0, 1, 2 );
 
    lb_nisols     = us_label( tr( "Number of Initial Solutes:" ) );
    lb_nisols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_nisols, s_row, 0 );
 
    ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
    ct_nisols->setStep( 1 );
    ct_nisols->setEnabled( true );
-   spec->addWidget( ct_nisols, s_row++, 1 );
    connect( ct_nisols, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_nisols( double ) ) );
 
    lb_wsbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wsbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_wsbuck, s_row, 0 );
 
    ct_wsbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_wsbuck->setStep( 1 );
-   spec->addWidget( ct_wsbuck, s_row++, 1 );
    connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_wsbuck( double ) ) );
 
    lb_hfbuck     = us_label( tr( "Height of f/f0 Bucket:" ) );
    lb_hfbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_hfbuck, s_row, 0 );
 
    ct_hfbuck     = us_counter( 3, 0.0, 1.0, 0.0 );
    ct_hfbuck->setStep( 1 );
-   spec->addWidget( ct_hfbuck, s_row++, 1 );
    connect( ct_hfbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_hfbuck( double ) ) );
 
    lb_info2      = us_banner( tr( "Pseudo-3D Controls" ) );
-   spec->addWidget( lb_info2, s_row++, 0, 1, 2 );
 
    lb_resolu     = us_label( tr( "Pseudo-3D Resolution:" ) );
    lb_resolu->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_resolu, s_row, 0 );
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_resolu->setStep( 1 );
-   spec->addWidget( ct_resolu, s_row++, 1 );
    connect( ct_resolu, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_resolu( double ) ) );
 
    lb_xreso      = us_label( tr( "X Resolution:" ) );
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_xreso, s_row, 0 );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xreso->setStep( 1 );
-   spec->addWidget( ct_xreso, s_row++, 1 );
    connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_xreso( double ) ) );
 
    lb_yreso      = us_label( tr( "Y Resolution:" ) );
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_yreso, s_row, 0 );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_yreso->setStep( 1 );
-   spec->addWidget( ct_yreso, s_row++, 1 );
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
    lb_zfloor     = us_label( tr( "Z Floor Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_zfloor, s_row, 0 );
 
    ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
    ct_zfloor->setStep( 1 );
-   spec->addWidget( ct_zfloor, s_row++, 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
 
    lb_autlim     = us_label( tr( "Automatic Plot Limits" ) );
    lb_autlim->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_autlim, s_row, 0 );
 
    us_checkbox( tr( "(unselect to override)             " ), cb_autlim, true );
-   spec->addWidget( cb_autlim, s_row++, 1 );
    connect( cb_autlim, SIGNAL( clicked() ),
             this,       SLOT( select_autolim() ) );
 
    lb_plfmin     = us_label( tr( "Plot Limit f/f0 Min:" ) );
    lb_plfmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plfmin, s_row, 0 );
 
    ct_plfmin     = us_counter( 3, 0.5, 50.0, 0.0 );
    ct_plfmin->setStep( 1 );
-   spec->addWidget( ct_plfmin, s_row++, 1 );
    connect( ct_plfmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plfmin( double ) ) );
    
    lb_plfmax     = us_label( tr( "Plot Limit f/f0 Max:" ) );
    lb_plfmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plfmax, s_row, 0 );
    
    ct_plfmax     = us_counter( 3, 1.0, 50.0, 1.0 );
    ct_plfmax->setStep( 1 );
    ct_plfmax->setValue( 1.34567e+01 );
-   spec->addWidget( ct_plfmax, s_row++, 1 );
    connect( ct_plfmax, SIGNAL( valueChanged( double ) ),
          this,         SLOT( update_plfmax( double ) ) );
 
    lb_plsmin     = us_label( tr( "Plot Limit s Min:" ) );
    lb_plsmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plsmin, s_row, 0 );
 
    ct_plsmin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
    ct_plsmin->setStep( 1 );
-   spec->addWidget( ct_plsmin, s_row++, 1 );
    connect( ct_plsmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plsmin( double ) ) );
 
    lb_plsmax     = us_label( tr( "Plot Limit s Max:" ) );
-   lb_plsmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plsmax, s_row, 0 );
-
    ct_plsmax     = us_counter( 3, 0.0, 10000.0, 0.0 );
    ct_plsmax->setStep( 1 );
-   spec->addWidget( ct_plsmax, s_row++, 1 );
    connect( ct_plsmax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plsmax( double ) ) );
 
    lw_sbin_data = us_listwidget( );
-   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 2 );
    lw_sbin_data->installEventFilter( this );
    connect( lw_sbin_data, SIGNAL( clicked(       const QModelIndex& ) ),
             this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
@@ -202,108 +172,94 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,         SLOT(   newrow_sbdata(     int )            ) );
 
    us_checkbox( tr( "Plot f/f0 VS s" ), cb_plot_s, true );
-   spec->addWidget( cb_plot_s, s_row, 0 );
    connect( cb_plot_s,  SIGNAL( clicked() ),
             this,       SLOT( select_plot_s() ) );
 
    us_checkbox( tr( "Plot f/f0 VS mw" ), cb_plot_mw, false );
-   spec->addWidget( cb_plot_mw, s_row++, 1 );
    connect( cb_plot_mw, SIGNAL( clicked() ),
             this,       SLOT( select_plot_mw() ) );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   spec->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
    pb_prefilt->setEnabled( true );
-   spec->addWidget( pb_prefilt, s_row, 0 );
    connect( pb_prefilt, SIGNAL( clicked() ),
             this,       SLOT(   select_prefilt() ) );
 
    le_prefilt    = us_lineedit  ( "", -1, true );
-   spec->addWidget( le_prefilt, s_row++, 1 );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
    pb_lddistr->setEnabled( true );
-   spec->addWidget( pb_lddistr, s_row, 0 );
    connect( pb_lddistr, SIGNAL( clicked() ),
             this,       SLOT(   load_distro() ) );
 
    us_checkbox( tr( "1-Dimensional Plot" ), cb_1dplot, false );
-   spec->addWidget( cb_1dplot, s_row++, 1 );
    connect( cb_1dplot,  SIGNAL( clicked() ),
             this,       SLOT(   select_plot1d() ) );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
    pb_ldcolor->setEnabled( true );
-   spec->addWidget( pb_ldcolor, s_row, 0 );
    connect( pb_ldcolor, SIGNAL( clicked() ),
             this,       SLOT(   load_color() ) );
 
    us_checkbox( tr( "2-Dimensional Plot" ), cb_2dplot, false );
-   spec->addWidget( cb_2dplot, s_row++, 1 );
    connect( cb_2dplot, SIGNAL( clicked() ),
             this,       SLOT(  select_plot2d() ) );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );
    pb_refresh->setEnabled(  false );
-   spec->addWidget( pb_refresh, s_row, 0 );
    connect( pb_refresh, SIGNAL( clicked() ),
             this,       SLOT(   replot_data() ) );
 
    us_checkbox( tr( "Pseudo 3-D Plot" ),    cb_3dplot, true  );
-   spec->addWidget( cb_3dplot, s_row++, 1 );
    connect( cb_3dplot, SIGNAL( clicked() ),
             this,       SLOT(  select_plot3d() ) );
 
    pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
    pb_mandrsb->setEnabled( false );
-   spec->addWidget( pb_mandrsb, s_row, 0 );
    connect( pb_mandrsb, SIGNAL( clicked() ),
             this,       SLOT(   manDrawSb() ) );
 
    pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps" ) );
    pb_ckovrlp->setEnabled( false );
-   spec->addWidget( pb_ckovrlp, s_row++, 1 );
    connect( pb_ckovrlp, SIGNAL( clicked()       ),
             this,       SLOT(   checkOverlaps() ) );
 
    pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
    pb_autassb->setEnabled( false );
-   spec->addWidget( pb_autassb, s_row, 0 );
    connect( pb_autassb, SIGNAL( clicked() ),
             this,       SLOT(   autoAssignSb() ) );
 
    pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
    pb_resetsb->setEnabled( false );
-   spec->addWidget( pb_resetsb, s_row++, 1 );
    connect( pb_resetsb, SIGNAL( clicked() ),
             this,       SLOT( resetSb() ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( false );
-   spec->addWidget( pb_reset, s_row, 0 );
    connect( pb_reset,   SIGNAL( clicked() ),
             this,       SLOT(   reset() ) );
 
+   pb_view       = us_pushbutton( tr( "View Statistics" ) );
+   pb_view ->setEnabled( false );
+   connect( pb_view,    SIGNAL( clicked() ),
+            this,       SLOT(   view()  ) );
+
    pb_save       = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
-   spec->addWidget( pb_save, s_row++, 1 );
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT(   save() ) );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   spec->addWidget( pb_help, s_row, 0 );
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help() ) );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   spec->addWidget( pb_close, s_row++, 1 );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close() ) );
 
@@ -319,7 +275,56 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    stnpline     = tr( "The number of distribution points is 0." );
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stnpline );
-   spec->addWidget( te_status, s_row++, 0, 1, 2 );
+
+   int s_row = 0;
+   spec->addWidget( lb_info1,     s_row++, 0, 1, 4 );
+   spec->addWidget( lb_nisols,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_nisols,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_wsbuck,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_wsbuck,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_hfbuck,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_hfbuck,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_info2,     s_row++, 0, 1, 4 );
+   spec->addWidget( lb_resolu,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_resolu,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_xreso,     s_row,   0, 1, 2 );
+   spec->addWidget( ct_xreso,     s_row++, 2, 1, 2 );
+   spec->addWidget( lb_yreso,     s_row,   0, 1, 2 );
+   spec->addWidget( ct_yreso,     s_row++, 2, 1, 2 );
+   spec->addWidget( lb_zfloor,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_zfloor,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_autlim,    s_row,   0, 1, 2 );
+   spec->addWidget( cb_autlim,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_plfmin,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_plfmin,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_plfmax,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_plfmax,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_plsmin,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_plsmin,    s_row++, 2, 1, 2 );
+   spec->addWidget( lb_plsmax,    s_row,   0, 1, 2 );
+   spec->addWidget( ct_plsmax,    s_row++, 2, 1, 2 );
+   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 4 );
+   spec->addWidget( cb_plot_s,    s_row,   0, 1, 2 );
+   spec->addWidget( cb_plot_mw,   s_row++, 2, 1, 2 );
+   spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 4 );
+   spec->addWidget( pb_prefilt,   s_row,   0, 1, 2 );
+   spec->addWidget( le_prefilt,   s_row++, 2, 1, 2 );
+   spec->addWidget( pb_lddistr,   s_row,   0, 1, 2 );
+   spec->addWidget( cb_1dplot,    s_row++, 2, 1, 2 );
+   spec->addWidget( pb_ldcolor,   s_row,   0, 1, 2 );
+   spec->addWidget( cb_2dplot,    s_row++, 2, 1, 2 );
+   spec->addWidget( pb_refresh,   s_row,   0, 1, 2 );
+   spec->addWidget( cb_3dplot,    s_row++, 2, 1, 2 );
+   spec->addWidget( pb_mandrsb,   s_row,   0, 1, 2 );
+   spec->addWidget( pb_ckovrlp,   s_row++, 2, 1, 2 );
+   spec->addWidget( pb_autassb,   s_row,   0, 1, 2 );
+   spec->addWidget( pb_resetsb,   s_row++, 2, 1, 2 );
+   spec->addWidget( pb_reset,     s_row,   0, 1, 2 );
+   spec->addWidget( pb_save,      s_row++, 2, 1, 2 );
+   spec->addWidget( pb_view,      s_row,   0, 1, 2 );
+   spec->addWidget( pb_help,      s_row,   2, 1, 1 );
+   spec->addWidget( pb_close,     s_row++, 3, 1, 1 );
+   spec->addWidget( te_status,    s_row++, 0, 1, 4 );
 
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
@@ -328,10 +333,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    xa_title    = xa_title_s;
 
    QBoxLayout* plot = new US_Plot( data_plot, 
-      tr( "Distribution Data" ),
-      xa_title,
-      tr( "Frictional Ratio f/f0" ) );
-
+      tr( "Distribution Data" ), xa_title, ya_title ); 
    rght->addLayout( plot );
    QBoxLayout* txed = new QHBoxLayout;
    te_pctl_help  = us_textedit( );
@@ -520,6 +522,7 @@ void US_GA_Initialize::save( void )
       // Copy the statistics file to the report directory
       QFile( fnam2 ).remove();
       QFile( fname ).copy( fnam2 );
+      pb_view   ->setEnabled( true );
    }
 
    // Report on files saved
@@ -668,6 +671,7 @@ void US_GA_Initialize::resetSb( void )
 
    nibuks   = 0;
    pb_save   ->setEnabled( false );
+   pb_view   ->setEnabled( false );
    pb_ckovrlp->setEnabled( false );
 
    data_plot->replot();
@@ -680,6 +684,9 @@ void US_GA_Initialize::replot_data()
       return;
 
    resetSb();
+   ya_title = cnstvbar ?
+              tr( "Frictional Ratio f/f0" ) :
+              tr( "Vbar at 20" ) + DEGC;
 
    if ( plot_dim == 1 )
    {
@@ -870,7 +877,7 @@ void US_GA_Initialize::plot_2dim( void )
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->enableAxis( QwtPlot::yRight, false );
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Frictional Ratio f/f0" ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
    data_plot->axisTitle( QwtPlot::yRight ).setFont(
          data_plot->axisTitle( QwtPlot::yLeft ).font() );
@@ -924,7 +931,7 @@ void US_GA_Initialize::plot_3dim( void )
    rightAxis->setColorBarEnabled( true );
    rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Frictional Ratio f/f0" ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
    data_plot->axisTitle( QwtPlot::yRight ).setFont(
          data_plot->axisTitle( QwtPlot::yLeft ).font() );
@@ -1262,6 +1269,7 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
    QString tstr = run_name+ "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
+   cnstvbar = model.constant_vbar();
 
    // read in and set distribution s,c,k,d values
    if ( model.analysis != US_Model::COFS )
@@ -1272,7 +1280,9 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
          sol_s.s  = model.components[ jj ].s * 1.0e13;
          sol_s.c  = model.components[ jj ].signal_concentration;
-         sol_s.k  = model.components[ jj ].f_f0;
+         sol_s.k  = cnstvbar ?
+                    model.components[ jj ].f_f0 :
+                    model.components[ jj ].vbar20;
          sol_s.d  = model.components[ jj ].D;
          sol_s.w  = model.components[ jj ].mw;
          sol_w.s  = sol_s.w;
@@ -1297,6 +1307,27 @@ for ( int jj=0;jj<qMin(s_distro.size(),w_distro.size());jj++ ) {
  DbgLv(2) << " jj" << jj << " s k d w" << s_distro[jj].s << s_distro[jj].k
     << s_distro[jj].d << s_distro[jj].w << " w k d s" << w_distro[jj].s
     << w_distro[jj].k << w_distro[jj].d << w_distro[jj].w; }
+   }
+
+DbgLv(1) << "Constant-Vbar" << cnstvbar;
+   if ( cnstvbar )
+   {
+      lb_plfmin->setText( tr( "Plot Limit f/f0 Min:" ) );
+      lb_plfmax->setText( tr( "Plot Limit f/f0 Max:" ) );
+      lb_hfbuck->setText( tr( "Height of f/f0 Bucket:" ) );
+      ct_plfmin->setRange( 0.5, 50, 0.01 );
+      ct_plfmax->setRange( 1.0, 50, 0.01 );
+      ct_hfbuck->setRange( 0, 50, 0.01 );
+   }
+
+   else
+   {
+      lb_plfmin->setText( tr( "Plot Limit Vbar Min:" ) );
+      lb_plfmax->setText( tr( "Plot Limit Vbar Max:" ) );
+      lb_hfbuck->setText( tr( "Height of Vbar Bucket:" ) );
+      ct_plfmin->setRange( 0.1, 1.5, 0.001 );
+      ct_plfmax->setRange( 0.2, 1.5, 0.001 );
+      ct_hfbuck->setRange( 0, 1.5, 0.001 );
    }
 
    if ( auto_lim )
@@ -2015,5 +2046,41 @@ void US_GA_Initialize::select_prefilt( void )
       pfmsg = tr( "%1 total Edit prefilter(s)" ).arg( nedits );
 
    le_prefilt->setText( pfmsg );
+}
+
+// View the statistics file produced in a file editor
+void US_GA_Initialize::view( )
+{
+qDebug() << "VIEW";
+   QString runid = run_name.section( ".", 0, -2 );
+   QString fdir  = US_Settings::resultDir() + "/" + runid;
+   QString fnsta = run_name + ".ga.stats";
+   QString fname = fdir + "/" + fnsta;
+qDebug() << "VIEW fname" << fname;
+
+   QFile filei( fname );
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+qDebug() << "VIEW OPENED";
+      QTextStream ts( &filei );
+      QString rtext = ts.readAll();
+      filei.close();
+
+      US_Editor* eddiag = new US_Editor( US_Editor::DEFAULT, true );
+      eddiag->setWindowTitle( tr( "Statistics File Contents" ) );
+      eddiag->move( this->pos() + QPoint( 30, 30 ) );
+      eddiag->resize( 600, 700 );
+      eddiag->e->setFont( US_Widgets::fixedFont() );
+      eddiag->e->setPlainText( rtext );
+qDebug() << "VIEW eddiag SHOW";
+      eddiag->show();
+   }
+
+   else
+   {
+qDebug() << "VIEW OPEN ERROR" << fname;
+      QMessageBox::critical( this, tr( "File Read Error" ),
+         tr( "Unable to open file\n\"%1\"\nfor read" ).arg( fname ) );
+   }
 }
 

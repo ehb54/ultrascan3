@@ -88,6 +88,7 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_close;
       QPushButton*  pb_save;
       QPushButton*  pb_reset;
+      QPushButton*  pb_view;
 
       QCheckBox*    cb_autlim;
       QCheckBox*    cb_1dplot;
@@ -139,6 +140,7 @@ class US_GA_Initialize : public US_Widgets
       bool          rbtn_click;
       bool          runsel;
       bool          latest;
+      bool          cnstvbar;
 
       QString       run_name;
       QString       analys_name;
@@ -146,6 +148,7 @@ class US_GA_Initialize : public US_Widgets
       QString       xa_title_s;
       QString       xa_title_mw;
       QString       xa_title;
+      QString       ya_title;
       QString       cmapname;
       QString       dfilname;
       QString       stcmline;
@@ -189,6 +192,7 @@ class US_GA_Initialize : public US_Widgets
       void resetSb(        void );
       void save(           void );
       void reset(          void );
+      void view(           void );
       void set_limits(     void );
       void sort_distro( QList< Solute >&, bool );
       void setBucketPens(  void );
