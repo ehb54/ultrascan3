@@ -6855,7 +6855,7 @@ bool US_Saxs_Util::iqq_sphere_fit(
    unsigned int best_pos  = 0;
    double       k;
    double       best_rmsd;
-   double       best_k;
+   double       best_k    = 0e0;
 
    nnls_fit(
             A[ 0 ],

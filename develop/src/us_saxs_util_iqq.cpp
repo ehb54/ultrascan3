@@ -1137,7 +1137,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    // put sgp_exp_I onto regular grid:
    vector < double > rq;
    for ( double d = control_parameters[ "startq" ].toDouble(); 
-         d <= control_parameters[ "endq" ].toDouble(); 
+         d <= ( control_parameters[ "endq" ].toDouble() + 5e-4 ); 
          d += control_parameters[ "deltaq" ].toDouble() )
    {
       rq.push_back( d );
@@ -1151,6 +1151,8 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       .arg( rq[ 0 ] )
       .arg( rq[ rq.size() - 1 ] );
 
+   cout << QString( "grid sizes experimental %1\n" ).arg( sgp_exp_I.size() );
+
    if ( !interpolate_iqq_by_case( sgp_exp_q,
                                   org_I,
                                   org_e,
@@ -1160,6 +1162,9 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    {
       return false;
    }
+   cout << QString( "grid size after interpolate original     %1\n" ).arg( org_I.size() );
+   cout << QString( "grid size after interpolate experimental %1\n" ).arg( sgp_exp_I.size() );
+
    sgp_exp_q = rq;
    if ( !org_e.size() )
    {

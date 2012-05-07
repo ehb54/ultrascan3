@@ -92,7 +92,11 @@ bool US_Saxs_Util::nsa_run()
 
       if ( !nsa_mpi || !myrank )
       {
+
          QString outname = 
+            ( control_parameters.count( "experimentgrid" ) ?
+              ( QFileInfo( control_parameters[ "experimentgrid" ] ).baseName() + "_" ) : "" )
+            +
             QString( "%1sa-%2%3%4%5" )
             .arg( i )
             .arg( control_parameters.count( "nsaga" ) ?
@@ -103,8 +107,18 @@ bool US_Saxs_Util::nsa_run()
                   "excl-" : "" )
             .arg( control_parameters[ "nsaiterations" ] );
 
-         QFile f( QString( "%1.bead_model" ).arg( outname ) );
+         QString original_outname = outname;
          
+         QString outfilename = QString( "%1.bead_model" ).arg( outname );
+         unsigned int ext = 0;
+         while ( QFile::exists( outfilename ) )
+         {
+            outname = QString( "%1-%2" ).arg( original_outname ).arg( ++ext );
+            outfilename = QString( "%1.bead_model" ).arg( outname );
+         }
+
+         QFile f( outfilename );
+            
          if ( f.open( IO_WriteOnly ) )
          {
             QTextStream ts( &f );

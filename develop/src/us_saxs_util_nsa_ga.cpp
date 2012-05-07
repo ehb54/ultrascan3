@@ -109,7 +109,7 @@ bool US_Saxs_Util::nsa_ga( double & nrmsd )
    }
 
    // sort by fitness
-   double       last_best_fitness;
+   double       last_best_fitness        = 1e99;
    unsigned int gens_with_no_improvement = 0;
 
    for ( unsigned int g = 0; g < control_parameters[ "nsagenerations" ].toUInt(); g++ )

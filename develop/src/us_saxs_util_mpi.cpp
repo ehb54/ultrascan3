@@ -46,7 +46,10 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    {
       outputData = "../outputData";
    }
-   cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
+   if ( !myrank )
+   {
+      cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
+   }
 
    int errorno = -1;
    QString original_controlfile = controlfile;
@@ -472,7 +475,10 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    {
       outputData = "../outputData";
    }
-   cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
+   if ( !myrank )
+   {
+      cout << QString( "Notice: outputData is \"%1\"\n" ).arg( outputData );
+   }
 
    int errorno = -1;
    nsa_mpi = true;
