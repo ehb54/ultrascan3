@@ -254,10 +254,16 @@ QString US_SoluteData::bucketLine(  int ix )
 
    limitBucket( buk );
 
-   return QString(
-      "Solute Bin %1: s_min=%2, s_max=%3, f/f0_min=%4, f/f0_max=%5" )
-      .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
-      .arg( buk.ff0_min ).arg( buk.ff0_max );
+   if ( buk.ff0_max > 1.0 )
+      return QString(
+         "Solute Bin %1: s_min=%2, s_max=%3, f/f0_min=%4, f/f0_max=%5" )
+         .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
+         .arg( buk.ff0_min ).arg( buk.ff0_max );
+   else
+      return QString(
+         "Solute Bin %1: s_min=%2, s_max=%3, vbar_min=%4, vbar_max=%5" )
+         .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
+         .arg( buk.ff0_min ).arg( buk.ff0_max );
 }
 
 void US_SoluteData::setDistro( SoluteList* a_distro )
@@ -767,6 +773,20 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
    SimCompList bcomp;        // sim component list
    QList< double > vals;
 
+   bool   cnstvbar = true;
+   double fvmax    = 0.0;
+   for ( int kk = 0; kk < nbuk; kk++ )
+   {
+      bcomp    = MC_solute.at( kk );
+      for ( int jj = 0; jj < bcomp.size(); jj++ )
+         fvmax    = qMax( fvmax, bcomp[ jj ].f );
+   }
+   cnstvbar        = ( fvmax > 1.1 );
+   QString ffvb    = cnstvbar ?
+                     tr( "Frictional ratio:          " ) :
+                     tr( "Vbar:                      " ); 
+   QString fv_titl = ffvb.simplified().replace( ":", "" );
+   
    QFile fileo( fname );
 
    if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -827,7 +847,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-            ts << tr( "Frictional ratio:           " );
+            ts << ffvb;
             vsum     = 0.0;
 
             for ( int jj = 0; jj < ksol; jj++ )
@@ -870,8 +890,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, concs, false,
-                  tr( "Frictional ratio:          " ) );
+            outputStats( ts, valus, concs, false, ffvb );
 
             for ( int jj = 0; jj < ksol; jj++ )
                vtotal    += bcomp.at( jj ).c;
@@ -925,7 +944,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                ts << bcomp.at( jj ).d << "  ";
             ts << endl;
 
-            ts << tr( "Frictional ratio:          " );
+            ts << ffvb;
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
             ts << endl;
@@ -963,8 +982,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, concs, true,
-                  tr( "Frictional Ratio" ) );
+            outputStats( ts, valus, concs, true, fv_titl );
          }
       }
 
@@ -1192,7 +1210,10 @@ void US_SoluteData::limitBucket( bucket& buk )
       buk.s_max   = -0.1;
    }
 
-   buk.ff0_min = qMax(  1.0, buk.ff0_min );
+   if ( buk.ff0_max > 1.0 )
+      buk.ff0_min = qMax(  1.0, buk.ff0_min );
+   else
+      buk.ff0_min = qMax(  0.1, buk.ff0_min );
    buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
 }
 

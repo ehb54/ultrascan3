@@ -274,6 +274,12 @@ DbgLv(1) << "StopFit test Thread" << ii + 1;
 DbgLv(1) << "  STOPTHR:  thread aborted";
       }
 
+      else if ( wthr != 0  &&  ! wthr->isFinished() )
+      {
+         delete wthr;
+DbgLv(1) << "  STOPTHR:  thread deleted";
+      }
+
       wthreads[ ii ] = 0;
    }
 
@@ -819,6 +825,9 @@ DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
       final_computes();
       return;
    }
+DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
+ << wkstates.indexOf( READY );
+   int kstsksv  = kstask;
 
    // Submit jobs while queue is not empty and a worker thread is ready
    while ( ! job_queue.isEmpty() && ( thrx = wkstates.indexOf( READY ) ) >= 0 )
@@ -835,6 +844,35 @@ DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
                         .arg( wtask.depth );
          emit message_update( pmsg, true );
 DbgLv(1) << pmsg;
+      }
+   }
+
+   if ( kstsksv == kstask )
+   {  // No new tasks got started:  what's going on?
+DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
+ << "ReadyWorkerNdx" << wkstates.indexOf( READY );
+      if ( depth < maxdepth )
+      {  // If done at depth less than max, see need to queue new task
+         int dd       = depth + 1;
+         if ( jobs_at_depth( dd ) == 0  &&  c_solutes[ dd ].size() > 0 )
+         {  // queue a task to handle remaining solutes at next depth
+            depth        = dd;
+            WorkPacket wtask = wresult;
+            int taskx    = tkdepths.size();
+DbgLv(1) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << depth
+ << c_solutes[dd].size();
+            queue_task( wtask, slolim, klolim, taskx, depth, jnois,
+                        c_solutes[ depth ] );
+
+            c_solutes[ depth ].clear();
+
+            wtask        = job_queue.takeFirst();
+            thrx         = wkstates.indexOf( READY );
+
+            submit_job( wtask, thrx );
+DbgLv(1) << "THR_FIN:    QT: /NONEW/ thrx" << thrx;
+            kstask++;                 // bump count of started worker threads
+         }
       }
    }
 

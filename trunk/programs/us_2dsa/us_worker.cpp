@@ -19,7 +19,7 @@ WorkerThread::WorkerThread( QObject* parent )
    abort      = false;
    solvesim   = NULL;
    thrn       = -1;
-//DbgLv(1) << "2P(WT): Thread created";
+DbgLv(1) << "2P(WT): Thread created";
 }
 
 // worker thread destructor
@@ -28,8 +28,13 @@ WorkerThread::~WorkerThread()
    //if ( solvesim != NULL )
    //   delete solvesim;
 
-   wait();
-//DbgLv(1) << "2P(WT):   Thread destroyed";
+DbgLv(1) << "2P(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
+   if ( ! wait( 2000 ) )
+   {
+      qDebug() << "Thread destroy wait timeout(2secs) : Thread" << thrn;
+   }
+DbgLv(1) << "2P(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
+DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
