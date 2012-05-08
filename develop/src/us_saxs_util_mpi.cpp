@@ -29,6 +29,17 @@ QString outputData;
          ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msg;
          f.close();
       }
+      if ( msg.contains( QRegExp( "^\\d+: (SEND|RECV) " ) ) )
+      {
+         QFile f( QString( "debug-%1" ).arg( myrank ) );
+         QStringList msgs = QStringList::split( "\n" , msg );
+         if( f.open( IO_WriteOnly | IO_Append ) )
+         {
+            QTextStream ts( &f );
+            ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msgs[ 0 ] << endl;
+            f.close();
+         }
+      }
    }
 #endif
 

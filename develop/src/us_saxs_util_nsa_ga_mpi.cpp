@@ -10,6 +10,17 @@ extern int myrank;
 
 bool US_Saxs_Util::nsa_run()
 {
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: run_mpi at beginning\n" 
+                       " : busy_workers       %2\n"
+                       " : queued_requests    %3\n"
+                       " : registered_workers %4\n" )
+              .arg( myrank )
+              .arg( busy_workers.size() )
+              .arg( queued_requests.size() )
+              .arg( registered_workers.size() )
+              );
+#endif
    QString save_outputfile = control_parameters[ "outputfile" ];
    if ( !nsa_validate() )
    {
@@ -170,6 +181,17 @@ bool US_Saxs_Util::nsa_run()
       control_parameters[ "outputfile" ] = save_outputfile;
    }
 
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: run_mpi at end\n" 
+                       " : busy_workers       %2\n"
+                       " : queued_requests    %3\n"
+                       " : registered_workers %4\n" )
+              .arg( myrank )
+              .arg( busy_workers.size() )
+              .arg( queued_requests.size() )
+              .arg( registered_workers.size() )
+              );
+#endif
    return true;
 }
 
@@ -188,7 +210,7 @@ bool US_Saxs_Util::nsa_ga_worker()
    {
       MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
       exit( errorno - myrank );
-   }         
+   }
 
 #if defined( USUNGM_DEBUG )
    debug_mpi( QString("%1: exit nsa ga initial barrier\n" ).arg( myrank ) );
@@ -349,6 +371,20 @@ bool US_Saxs_Util::nsa_ga_close_workers()
 #if defined( USUNGM_DEBUG )
    debug_mpi( QString( "%1: finished closing workers\n" ).arg( myrank ) );
 #endif
+   waiting_workers.clear();
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: after finished closing workers\n" 
+                       " : busy_workers       %2\n"
+                       " : queued_requests    %3\n"
+                       " : waiting_workers    %4\n"
+                       " : registered_workers %5\n" )
+              .arg( myrank )
+              .arg( busy_workers.size() )
+              .arg( queued_requests.size() )
+              .arg( waiting_workers.size() )
+              .arg( registered_workers.size() )
+              );
+#endif
    return true;
 }
 
@@ -359,6 +395,19 @@ bool US_Saxs_Util::nsa_ga_process_queue()
    // retrieve results
 #if defined( USUNGM_DEBUG )
    debug_mpi( QString( "%1: nsa ga process queue\n" ).arg( myrank ) );
+#endif
+#if defined( USUNGM_DEBUG )
+   debug_mpi( QString( "%1: beginning of process queue\n" 
+                       " : busy_workers       %2\n"
+                       " : queued_requests    %3\n"
+                       " : waiting workers    %4\n"
+                       " : registered_workers %5\n" )
+              .arg( myrank )
+              .arg( busy_workers.size() )
+              .arg( queued_requests.size() )
+              .arg( waiting_workers.size() )
+              .arg( registered_workers.size() )
+              );
 #endif
 
    MPI_Status mpi_status;
