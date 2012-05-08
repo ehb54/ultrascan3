@@ -1227,7 +1227,7 @@ void US_2dsaProcess::requeue_tasks()
 void US_2dsaProcess::set_gaussians()
 {
    sigmas.clear();
-DbgLv(1) << "MCARLO:setgau";
+DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints;
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
@@ -1235,11 +1235,11 @@ DbgLv(1) << "MCARLO:setgau";
 
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         vv[ rr ] = fabs( rdata.value( ss, rr ) );
+         vv[ rr ] = qAbs( rdata.value( ss, rr ) );
       }
 
       // Smooth using 5 points to the left and right of each point
-if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9];
+if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9] << "ss" << ss;
       US_Math2::gaussian_smoothing( vv, 5 );
 if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:smoothd vv9" << vv[9];
       sigmas << vv;

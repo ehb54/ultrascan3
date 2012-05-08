@@ -53,7 +53,11 @@ void WorkerThread::define_work( WorkPacket& workin )
 
    solutes_i   = workin.isolutes;
 
-   dsets << workin.dsets[ 0 ];
+   //dsets << workin.dsets[ 0 ];
+   dset_wk          = *(workin.dsets[ 0 ]);  // local copy of data set
+   dset_wk.run_data = workin.dsets[ 0 ]->run_data;
+   dsets << &dset_wk;                        // save its pointer
+
    sim_vals    = workin.sim_vals;
 }
 

@@ -39,6 +39,7 @@ typedef struct work_packet_s
    QList< US_SolveSim::DataSet* > dsets;     // list of data set object pointers
    US_SolveSim::Simulation        sim_vals;  // simulation values
 
+
 } WorkPacket;
 
 //! \brief Worker thread to do actual work of 2DSA analysis
@@ -104,6 +105,7 @@ class WorkerThread : public QThread
       QList< US_SolveSim::DataSet* > dsets;     // list of data set obj. ptrs.
       US_SolveSim::Simulation        sim_vals;  // simulation values
       US_SolveSim*                   solvesim;  // object for calc_residuals()
+      US_SolveSim::DataSet           dset_wk;   // local copy of data set
 
       QVector< US_Solute >    solutes_i;   // solutes input
       QVector< US_Solute >    solutes_c;   // solutes computed
