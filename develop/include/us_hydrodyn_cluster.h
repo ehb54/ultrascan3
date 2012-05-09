@@ -132,6 +132,12 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool >                     * cluster_additional_methods_options_active;
       map < QString, map < QString, QString > > * cluster_additional_methods_options_selected;
 
+      map < QString, bool >                       cluster_additional_methods_use_experimental_data;
+      map < QString, bool >                       cluster_additional_methods_require_experimental_data;
+      map < QString, bool >                       cluster_additional_methods_require_sleep;
+      map < QString, bool >                       cluster_additional_methods_parallel_mpi;
+      map < QString, QString >                    cluster_additional_methods_prepend;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -153,14 +159,24 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void          update_validator();
 
-      QStringList   active_additional_methods     ();
-      QStringList   additional_method_files       ( QString method );
-      QString       additional_method_package_text( QString method );
+      QStringList   active_additional_methods              ();
+      bool          active_additional_experimental_data    ();
+      bool          active_additional_mpi_mix_issue        ();
+      bool          active_additional_prepend_issue        ();
+      QString       job_prepend_name                       ();
 
-      void          create_additional_methods_pkg ( QString base_dir,
-                                                    QString filename, 
-                                                    QString common_prefix,
-                                                    bool    use_extension );
+      QStringList   additional_method_files                ( QString method );
+      QString       additional_method_package_text         ( QString method );
+
+      void          create_additional_methods_pkg          ( QString base_dir,
+                                                             QString filename, 
+                                                             QString common_prefix,
+                                                             bool    use_extension );
+
+      void          create_additional_methods_parallel_pkg ( QString base_dir,
+                                                             QString filename, 
+                                                             QString common_prefix,
+                                                             bool    use_extension );
 
    private slots:
 

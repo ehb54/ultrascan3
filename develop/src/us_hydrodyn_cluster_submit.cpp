@@ -555,9 +555,25 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
 
    unsigned int common_count = ( unsigned int ) tar_list.grep( QRegExp( "^common_" ) ).size();
 
+
+   unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
+   
+   {
+      QRegExp rx( "^bfnb_p(\\d+)_" );
+      if ( rx.search( file ) != -1 )
+      {
+         job_count = rx.cap( 1 ).toUInt();
+         cout << QString( "host count, %1\n" ).arg( job_count );
+         if ( job_count < 2 )
+         {
+            job_count = 2;
+         }
+      }
+   }
+
    unsigned int host_count      = 
-      ( ( ( unsigned int ) tar_list.size() - common_count - 1 ) 
-        / selected_system[ "corespernode" ].toUInt() ) + 1;
+      ( job_count / selected_system[ "corespernode" ].toUInt() ) + 1;
+
    unsigned int processor_count = host_count * selected_system[ "corespernode" ].toUInt();
    if ( processor_count > selected_system[ "maxcores" ].toUInt() )
    {
@@ -565,7 +581,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       host_count      = processor_count / selected_system[ "corespernode" ].toUInt();
    }
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.tar$" ), "" );
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
    xml = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                   "<Message>"
@@ -605,7 +621,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( selected_system[ "runtime" ].toUInt() )
       .arg( cluster_id )
       .arg( selected_system[ "executable" ].isEmpty() ? "" : QString( "<executable>%1</executable>" ).arg( selected_system[ "executable" ] ) )
-      .arg( file.contains( QRegExp( "^nsa_" ) ) ? "nsa" : "iq" )
+      .arg( file.contains( QRegExp( "^bfnb_" ) ) ? "nsa" : "iq" )
       .arg( QString( "%1/%2" )
             .arg( target_dir )
             .arg( file ) );
@@ -929,7 +945,7 @@ bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
    // followed by ftp.rmdir( );
    comm_active = true;
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.tar$" ), "" );
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
    cout 
       << QString( "ftp host   : %1\n"
@@ -1001,7 +1017,7 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
    // setup stuff for ftp
    comm_active = true;
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.tar$" ), "" );
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
    cout 
       << QString( "ftp host   : %1\n"

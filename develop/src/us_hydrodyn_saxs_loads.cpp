@@ -519,8 +519,8 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    }
    
    // find cropping for all plotted curves
-   double crop_min;
-   double crop_max;
+   double crop_min = 1e99;
+   double crop_max = -1e99;
    bool found_cropping = false;
    
    for ( unsigned int i = 0; i < (unsigned int)qsl_plotted_iq_names.size(); i++ )

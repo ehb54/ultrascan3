@@ -1258,7 +1258,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
 
    // ok now we have a bsub!
    bool         any_negative   = false;
-   unsigned int negative_pos;
+   unsigned int negative_pos   = 0;
    unsigned int negative_count = 0;
    double       minimum_positive = bsub_I[ 0 ];
 
@@ -1425,7 +1425,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
 
    unsigned int files_selected_count                      = 0;
    unsigned int non_buffer_non_empty_files_selected_count = 0;
-   unsigned int last_selected_pos;
+   unsigned int last_selected_pos                         = 0;
 
    map < QString, bool > selected_map;
 
@@ -2399,7 +2399,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          QString this_q_string = tokens[ 0 + offset ];
          double this_q         = tokens[ 0 + offset ].toDouble();
          double this_I         = tokens[ 1 + offset ].toDouble();
-         double this_e;
+         double this_e = 0e0;
          if ( (int)tokens.size() > 2 + offset)
          {
             this_e = tokens[ 2 + offset ].toDouble();
@@ -2521,7 +2521,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
-   double avg_conc;
+   double avg_conc = 0e0;
 
    // copies for potential cropping:
 
@@ -3349,7 +3349,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       }
    }
 
-   double avg_conc;
+   double avg_conc = 0e0;
 
    vector < double > nIs;
 
@@ -3795,7 +3795,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 void US_Hydrodyn_Saxs_Buffer::adjacent()
 {
    QString match_name;
-   int     match_pos;
+   int     match_pos = 0;
    QStringList turn_on;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -3876,7 +3876,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
 void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 {
    QString match_name;
-   int     match_pos;
+   int     match_pos = 0;
    QStringList turn_on;
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
@@ -4307,10 +4307,10 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
    bool all_lefts_visible = true;
    map < QString, bool > selected_files;
 
-   double minx;
-   double maxx;
-   double miny;
-   double maxy;
+   double minx = 0e0;
+   double maxx = 0e0;
+   double miny = 0e0;
+   double maxy = 0e0;
 
    bool first = true;
 
@@ -4537,10 +4537,10 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
    bool all_rights_visible = true;
    map < QString, bool > selected_files;
 
-   double minx;
-   double maxx;
-   double miny;
-   double maxy;
+   double minx = 0e0;
+   double maxx = 0e0;
+   double miny = 0e0;
+   double maxy = 0e0;
 
    bool first = true;
 
@@ -4862,13 +4862,13 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    bool all_lefts_visible = true;
    map < QString, bool > selected_files;
 
-   double minx;
-   double maxx;
-   double miny;
-   double maxy;
+   double minx = 0e0;
+   double maxx = 0e0;
+   double miny = 0e0;
+   double maxy = 0e0;
 
-   double maxminx;
-   double minmaxx;
+   double maxminx = 0e0;
+   double minmaxx = 0e0;
 
    bool first = true;
 

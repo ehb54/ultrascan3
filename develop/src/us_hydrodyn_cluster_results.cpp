@@ -521,6 +521,19 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          return false;
       }
       file = usg.last_written_name;
+
+      if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      {
+         // rename it to .tar (?) probably some error in us_gzip internal name storage
+         dest = file;
+         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
+         if ( !qd.rename( file, dest ) )
+         {
+            errormsg = QString( tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
+            return false;
+         }
+         file = dest;
+      }
    }
 
    // file should be .tar now

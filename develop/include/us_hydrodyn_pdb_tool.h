@@ -30,6 +30,7 @@
 
 #include "us_hydrodyn_comparative.h"
 #include "us_hydrodyn_pdb_tool_merge.h"
+#include "us_hydrodyn_pdb_tool_renum.h"
 #include "qwt_wheel.h"
 
 using namespace std;
@@ -65,6 +66,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_split_pdb;
       QPushButton   *pb_join_pdbs;
       QPushButton   *pb_merge;
+      QPushButton   *pb_renum_pdb;
       QPushButton   *pb_hybrid_split;
       QPushButton   *pb_h_to_chainX;
 
@@ -219,6 +221,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          select_chain           ( QListView *lv ); // selected a set of chains
       void          compute_angle          ( QListView *lv );
 
+      csv           reseq_csv              ( QListView *lv, csv &ref_csv, bool only_selected = false );
+
    private slots:
       
       void setupGUI();
@@ -230,6 +234,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void split_pdb();
       void join_pdbs();
       void merge();
+      void renum_pdb();
       void hybrid_split();
       void h_to_chainX();
 

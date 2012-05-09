@@ -185,6 +185,7 @@ SOURCES += \
   src/us_hydrodyn_cluster.cpp \
   src/us_hydrodyn_cluster_advanced.cpp \
   src/us_hydrodyn_cluster_additional.cpp \
+  src/us_hydrodyn_cluster_bfnb_nsa.cpp \
   src/us_hydrodyn_cluster_config.cpp \
   src/us_hydrodyn_cluster_config_server.cpp \
   src/us_hydrodyn_cluster_dmd.cpp \
@@ -213,6 +214,7 @@ SOURCES += \
   src/us_hydrodyn_pdb_parsing.cpp \
   src/us_hydrodyn_pdb_tool.cpp \
   src/us_hydrodyn_pdb_tool_merge.cpp \
+  src/us_hydrodyn_pdb_tool_renum.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
   src/us_hydrodyn_sas_options_saxs.cpp \
@@ -471,6 +473,7 @@ HEADERS += \
   include/us_hydrodyn_cluster.h \
   include/us_hydrodyn_cluster_additional.h \
   include/us_hydrodyn_cluster_advanced.h \
+  include/us_hydrodyn_cluster_bfnb_nsa.h \
   include/us_hydrodyn_cluster_config.h \
   include/us_hydrodyn_cluster_config_server.h \
   include/us_hydrodyn_cluster_dammin.h \
@@ -495,6 +498,7 @@ HEADERS += \
   include/us_hydrodyn_pdb_parsing.h \
   include/us_hydrodyn_pdb_tool.h \
   include/us_hydrodyn_pdb_tool_merge.h \
+  include/us_hydrodyn_pdb_tool_renum.h \
   include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
   include/us_hydrodyn_sas_options_saxs.h \

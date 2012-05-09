@@ -1235,13 +1235,13 @@ namespace fem {
       FEM_ZERO_IMPL(FEM_LOC, 0.L)
 #undef FEM_LOC
 
-      static const char byte0 = zero<char>();
+      //      static const char byte0 = zero<char>();
    static const char char0 = zero<char>();
    static const bool bool0 = zero<bool>();
    static const int int0 = zero<int>();
    static const float float0 = zero<float>();
-   static const double double0 = zero<double>();
-   static const long double long_double0 = zero<long double>();
+   //   static const double double0 = zero<double>();
+   // static const long double long_double0 = zero<long double>();
    static const std::complex<float> cfloat0;
    static const std::complex<double> cdouble0;
 

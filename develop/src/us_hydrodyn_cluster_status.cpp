@@ -870,7 +870,9 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
 
    QString get_file = file;
    get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
-   get_file += "_out.tar";
+   get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^bfnb_" ) ) ? "tgz" : "tar" );
+
+   cout << "get file: " << get_file << endl;
 
    ftp_file = new QFile( get_file );
    if ( !ftp_file->open( IO_WriteOnly ) )
@@ -881,7 +883,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       return false;
    }
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.tar$" ), "" );
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
    cout 
       << QString( "ftp host   : %1\n"

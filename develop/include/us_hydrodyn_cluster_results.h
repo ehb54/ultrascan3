@@ -69,10 +69,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
 
       bool          clean_dir( QString dir );
 
-      bool          load_one_result( QString file );
-      bool          merge_csvs( QStringList &final_results );
-      bool          move_to_results( QString jobname, QStringList final_results );
-      bool          merge_this_csv( QString dest, vector < QString > csvs );
+      bool          load_one_result        ( QString file );
+      bool          merge_csvs             ( QStringList &final_results );
+      bool          move_to_results        ( QString jobname, QStringList final_results );
+      bool          merge_this_csv         ( QString dest, vector < QString > csvs );
 
    private slots:
 

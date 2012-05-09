@@ -7309,7 +7309,7 @@ unsigned int US_Hydrodyn::number_of_active_beads( vector < PDB_atom > &bead_mode
 bool US_Hydrodyn::radii_all_equal( vector < PDB_atom > &bead_model )
 {
    bool  first_found = false;
-   float first_radius;
+   float first_radius = 0.0f;
 
    for ( unsigned int i = 0; i < bead_model.size(); i++ )
    {

@@ -12,12 +12,12 @@ namespace zeno {
 
    using namespace fem::major_types;
    
-   void
-   system(...)
-   {
-      throw std::runtime_error(
-                            "Missing function implementation: system");
-   }
+   // void
+   // system(...)
+   // {
+   // throw std::runtime_error(
+   // "Missing function implementation: system");
+   // }
    
    struct common_errors
    {
@@ -5395,21 +5395,17 @@ namespace zeno {
       if (!silent) {
          write(6, "(108('='))");
       }
-      int mout = 0;
+      // int mout = 0;
       //C
       int jax = fem::int0;
       int loop = fem::int0;
       arr_1d<3, fem::real_star_4> rt(fem::fill0);
       arr_1d<3, fem::integer_star_4> kk(fem::fill0);
       bool hit = fem::bool0;
-      int need = fem::int0;
+      // int need = fem::int0;
+      int steps = mtdo / 100;
+
       FEM_DO_SAFE(jax, 1, mtdo) {
-         qApp->processEvents();
-         if ( zeno_us_hydrodyn->stopFlag )
-         {
-            // somehow abort
-            return;
-         }
          loop = fem::mod(jax, 20) + 1;
          sum(loop) += 1.0e0;
          //C
@@ -5421,22 +5417,21 @@ namespace zeno {
             accume(rt, kk, khitp, khite, vp, ve, loop);
          }
          //C
-         need = fem::nint(108.0f * fem::ffloat(jax) / fem::ffloat(mtdo));
-         while (mout < need) {
-            if (!silent) {
-               std::cout << "X" << std::flush;
-               if ( zeno_progress )
-               {
-                  zeno_progress->setProgress( zeno_progress->progress() + 1 );
-                  qApp->processEvents();
-                  if ( zeno_us_hydrodyn->stopFlag )
-                  {
-                     // somehow abort
-                     return;
-                  }
-               }
+         // need = fem::nint(108.0f * fem::ffloat(jax) / fem::ffloat(mtdo));
+         // while (mout < need) {
+         // if (!silent) {
+         // std::cout << "X" << std::flush;
+         // mout++;
+         // }
+         if ( zeno_progress && !( jax % steps ) )
+         {
+            zeno_progress->setProgress( zeno_progress->progress() + 1 );
+            qApp->processEvents();
+            if ( zeno_us_hydrodyn->stopFlag )
+            {
+               // somehow abort
+               return;
             }
-            mout++;
          }
       }
       if (!silent) {
@@ -5870,7 +5865,7 @@ namespace zeno {
       arr_ref<fem::integer_star_4> errorlist(cmn.errorlist, dimension(100));
       //
       int i = fem::int0;
-      int mout = fem::int0;
+      // int mout = fem::int0;
       int k = fem::int0;
       arr_1d<20, fem::real_star_8> trials(fem::fill0);
       arr_1d<20, fem::real_star_8> sm1(fem::fill0);
@@ -5883,7 +5878,7 @@ namespace zeno {
       fem::str<10> mess = fem::char0;
       arr_1d<3, fem::real_star_4> rt2(fem::fill0);
       int jj = fem::int0;
-      int need = fem::int0;
+      // int need = fem::int0;
       float pi = fem::float0;
       float volsphere = fem::float0;
       arr_1d<20, fem::real_star_4> rad(fem::fill0);
@@ -5903,7 +5898,7 @@ namespace zeno {
          write(6, "(108('='))");
       }
       //C
-      mout = 0;
+      // mout = 0;
       //C
       FEM_DO_SAFE(k, 1, 20) {
          trials(k) = 0.0e0;
@@ -5912,13 +5907,10 @@ namespace zeno {
          rg2norm(k) = 0.0e0;
       }
       //C
+
+      int steps = m1 / 100;
+
       FEM_DO_SAFE(i, 1, m1) {
-         qApp->processEvents();
-         if ( zeno_us_hydrodyn->stopFlag )
-         {
-            // somehow abort
-            return;
-         }
          loop = fem::mod(i, 20) + 1;
          sm1(loop) += 1.0e0;
       statement_1:
@@ -5961,22 +5953,24 @@ namespace zeno {
          }
          rg2norm(loop) += 2.0e0;
          //C
-         need = fem::nint(108.0f * fem::ffloat(i) / fem::ffloat(m1));
-         while (mout < need) {
-            if (!silent) {
-               std::cout << "X" << std::flush;
-               if ( zeno_progress )
+         // need = fem::nint(108.0f * fem::ffloat(i) / fem::ffloat(m1));
+         // while (mout < need) {
+         // if (!silent) {
+         // std::cout << "X" << std::flush;
+         // }
+         // mout++;
+         // }
+         if ( zeno_progress && !( i % steps ) )
+         {
+            {
+               zeno_progress->setProgress( zeno_progress->progress() + 1 );
+               qApp->processEvents();
+               if ( zeno_us_hydrodyn->stopFlag )
                {
-                  zeno_progress->setProgress( zeno_progress->progress() + 1 );
-                  qApp->processEvents();
-                  if ( zeno_us_hydrodyn->stopFlag )
-                  {
-                     // somehow abort
-                     return;
-                  }
+                  // somehow abort
+                  return;
                }
             }
-            mout++;
          }
          //C
       }
@@ -7138,7 +7132,7 @@ namespace zeno {
          write(6, "(108('='))");
       }
       //C
-      int mout = 0;
+      // int mout = 0;
       //C
       int loop = fem::int0;
       arr_1d<3, fem::real_star_4> v1(fem::fill0);
@@ -7146,14 +7140,9 @@ namespace zeno {
       float rr2 = fem::float0;
       int j = fem::int0;
       float rr = fem::float0;
-      int need = fem::int0;
+      // int need = fem::int0;
+      int steps = m1do / 100;
       FEM_DO_SAFE(i, 1, m1do) {
-         qApp->processEvents();
-         if ( zeno_us_hydrodyn->stopFlag )
-         {
-            // somehow abort
-            return;
-         }
          loop = fem::mod(i, 20) + 1;
          getsurface(cmn, maxelts, eltype, bv, nelts, saar, total, v1,
                     trials, rotations, loop);
@@ -7170,22 +7159,24 @@ namespace zeno {
          rg2sum(loop) += fem::dble(rr2);
          rg2norm(loop) += 2.0e0;
          //C
-         need = fem::nint(108.0f * fem::ffloat(i) / fem::ffloat(m1do));
-         while (mout < need) {
-            if (!silent) {
-               std::cout << "X" << std::flush;
-               if ( zeno_progress )
+         // need = fem::nint(108.0f * fem::ffloat(i) / fem::ffloat(m1do));
+         // while (mout < need) {
+         // if (!silent) {
+         // std::cout << "X" << std::flush;
+         // }
+         // mout++;
+         // }
+         if ( zeno_progress && !( i % steps ) )
+         {
+            {
+               zeno_progress->setProgress( zeno_progress->progress() + 1 );
+               qApp->processEvents();
+               if ( zeno_us_hydrodyn->stopFlag )
                {
-                  zeno_progress->setProgress( zeno_progress->progress() + 1 );
-                  qApp->processEvents();
-                  if ( zeno_us_hydrodyn->stopFlag )
-                  {
-                     // somehow abort
-                     return;
-                  }
+                  // somehow abort
+                  return;
                }
             }
-            mout++;
          }
          //C
       }

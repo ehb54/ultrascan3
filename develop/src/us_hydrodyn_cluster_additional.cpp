@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_additional.h"
+#include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
 #include "../include/us_hydrodyn_cluster_dammin.h"
 #include "../include/us_hydrodyn.h"
 
@@ -21,6 +22,9 @@ US_Hydrodyn_Cluster_Additional::US_Hydrodyn_Cluster_Additional(
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: Cluster: Other Methods" ) );
+
+   QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
+   QDir::setCurrent( pkg_dir );
 
    setupGUI();
 
@@ -59,6 +63,20 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    pb_bfnb->setMinimumHeight(minHeight1);
    pb_bfnb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_bfnb, SIGNAL( clicked() ), SLOT( bfnb() ) );
+
+   cb_bfnb_nsa = new QCheckBox(this);
+   cb_bfnb_nsa->setText(tr(" Active "));
+   cb_bfnb_nsa->setChecked( options_active.count( "bfnb_nsa" ) && options_active[ "bfnb_nsa" ] );
+   cb_bfnb_nsa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bfnb_nsa->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_bfnb_nsa->setMinimumHeight( minHeight1 );
+   connect( cb_bfnb_nsa, SIGNAL( clicked() ), this, SLOT( set_bfnb_nsa() ) );
+
+   pb_bfnb_nsa = new QPushButton( "BFNB/NSA", this );
+   pb_bfnb_nsa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_bfnb_nsa->setMinimumHeight(minHeight1);
+   pb_bfnb_nsa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_bfnb_nsa, SIGNAL( clicked() ), SLOT( bfnb_nsa() ) );
 
    cb_csa = new QCheckBox(this);
    cb_csa->setText(tr(" Active "));
@@ -140,24 +158,28 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
 
    int j = 0;
 
-   gl_options->addWidget( cb_bfnb  , j, 0 );
-   gl_options->addWidget( pb_bfnb  , j, 1 );
+   gl_options->addWidget( cb_bfnb      , j, 0 );
+   gl_options->addWidget( pb_bfnb      , j, 1 );
    j++;
 
-   gl_options->addWidget( cb_csa   , j, 0 );
-   gl_options->addWidget( pb_csa   , j, 1 );
+   gl_options->addWidget( cb_bfnb_nsa  , j, 0 );
+   gl_options->addWidget( pb_bfnb_nsa  , j, 1 );
    j++;
 
-   gl_options->addWidget( cb_dammin, j, 0 );
-   gl_options->addWidget( pb_dammin, j, 1 );
+   gl_options->addWidget( cb_csa       , j, 0 );
+   gl_options->addWidget( pb_csa       , j, 1 );
    j++;
 
-   gl_options->addWidget( cb_dammif, j, 0 );
-   gl_options->addWidget( pb_dammif, j, 1 );
+   gl_options->addWidget( cb_dammin    , j, 0 );
+   gl_options->addWidget( pb_dammin    , j, 1 );
    j++;
 
-   gl_options->addWidget( cb_gasbor, j, 0 );
-   gl_options->addWidget( pb_gasbor, j, 1 );
+   gl_options->addWidget( cb_dammif    , j, 0 );
+   gl_options->addWidget( pb_dammif    , j, 1 );
+   j++;
+
+   gl_options->addWidget( cb_gasbor    , j, 0 );
+   gl_options->addWidget( pb_gasbor    , j, 1 );
    j++;
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
@@ -208,18 +230,20 @@ void US_Hydrodyn_Cluster_Additional::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster_Additional::update_enables()
 {
-   pb_bfnb  ->setEnabled( cb_bfnb  ->isChecked() );
-   pb_csa   ->setEnabled( cb_csa   ->isChecked() );
-   pb_dammin->setEnabled( cb_dammin->isChecked() );
-   pb_dammif->setEnabled( cb_dammif->isChecked() );
-   pb_gasbor->setEnabled( cb_gasbor->isChecked() );
+   pb_bfnb      ->setEnabled( cb_bfnb      ->isChecked() );
+   pb_bfnb_nsa  ->setEnabled( cb_bfnb_nsa  ->isChecked() );
+   pb_csa       ->setEnabled( cb_csa       ->isChecked() );
+   pb_dammin    ->setEnabled( cb_dammin    ->isChecked() );
+   pb_dammif    ->setEnabled( cb_dammif    ->isChecked() );
+   pb_gasbor    ->setEnabled( cb_gasbor    ->isChecked() );
    
    // disabled for now:
-   cb_bfnb  ->setEnabled( false );
-   cb_csa   ->setEnabled( false );
-   // cb_dammin->setEnabled( false );
-   cb_dammif->setEnabled( false );
-   cb_gasbor->setEnabled( false );
+   cb_bfnb      ->setEnabled( false );
+   // cb_bfnb_nsa  ->setEnabled( false );
+   cb_csa       ->setEnabled( false );
+   // cb_dammin    ->setEnabled( false );
+   cb_dammif    ->setEnabled( false );
+   cb_gasbor    ->setEnabled( false );
 }
 
 void US_Hydrodyn_Cluster_Additional::set_bfnb()
@@ -230,6 +254,31 @@ void US_Hydrodyn_Cluster_Additional::set_bfnb()
 
 void US_Hydrodyn_Cluster_Additional::bfnb()
 {
+}
+
+void US_Hydrodyn_Cluster_Additional::set_bfnb_nsa()
+{
+   options_active[ "bfnb_nsa" ] = cb_bfnb_nsa->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Additional::bfnb_nsa()
+{
+   map < QString, QString > parameters;
+   if ( options_selected.count( "bfnb_nsa" ) )
+   {
+      parameters = options_selected[ "bfnb_nsa" ];
+   }
+   US_Hydrodyn_Cluster_Bfnb_Nsa *hc = 
+      new US_Hydrodyn_Cluster_Bfnb_Nsa(
+                                       us_hydrodyn,
+                                       &parameters,
+                                       this 
+                                       );
+   US_Hydrodyn::fixWinButtons( hc );
+   hc->exec();
+   delete hc;
+   options_selected[ "bfnb_nsa" ] = parameters;
 }
 
 void US_Hydrodyn_Cluster_Additional::set_csa()

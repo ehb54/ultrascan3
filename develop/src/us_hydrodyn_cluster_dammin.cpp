@@ -55,7 +55,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammingnomfile ->setMinimumHeight( minHeight1 );
    lbl_dammingnomfile ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammingnomfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammingnomfile ->setMinimumWidth ( 585 );
+   lbl_dammingnomfile ->setMinimumWidth ( 1300 );
 
    le_dammingnomfile = new QLineEdit     ( this, "dammingnomfile Line Edit" );
    if ( !parameters->count( "dammingnomfile" ) )
@@ -75,7 +75,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminmode ->setMinimumHeight( minHeight1 );
    lbl_damminmode ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminmode ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminmode ->setMinimumWidth ( 585 );
+   lbl_damminmode ->setMinimumWidth ( 1300 );
 
    le_damminmode = new QLineEdit     ( this, "damminmode Line Edit" );
    if ( !parameters->count( "damminmode" ) )
@@ -95,7 +95,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammindescription ->setMinimumHeight( minHeight1 );
    lbl_dammindescription ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammindescription ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammindescription ->setMinimumWidth ( 585 );
+   lbl_dammindescription ->setMinimumWidth ( 1300 );
 
    le_dammindescription = new QLineEdit     ( this, "dammindescription Line Edit" );
    if ( !parameters->count( "dammindescription" ) )
@@ -115,7 +115,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminangularunits ->setMinimumHeight( minHeight1 );
    lbl_damminangularunits ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminangularunits ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminangularunits ->setMinimumWidth ( 585 );
+   lbl_damminangularunits ->setMinimumWidth ( 1300 );
 
    le_damminangularunits = new QLineEdit     ( this, "damminangularunits Line Edit" );
    if ( !parameters->count( "damminangularunits" ) )
@@ -135,7 +135,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminfitcurvelimit ->setMinimumHeight( minHeight1 );
    lbl_damminfitcurvelimit ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminfitcurvelimit ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminfitcurvelimit ->setMinimumWidth ( 585 );
+   lbl_damminfitcurvelimit ->setMinimumWidth ( 1300 );
 
    le_damminfitcurvelimit = new QLineEdit     ( this, "damminfitcurvelimit Line Edit" );
    if ( !parameters->count( "damminfitcurvelimit" ) )
@@ -155,7 +155,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminknotstofit ->setMinimumHeight( minHeight1 );
    lbl_damminknotstofit ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminknotstofit ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminknotstofit ->setMinimumWidth ( 585 );
+   lbl_damminknotstofit ->setMinimumWidth ( 1300 );
 
    le_damminknotstofit = new QLineEdit     ( this, "damminknotstofit Line Edit" );
    if ( !parameters->count( "damminknotstofit" ) )
@@ -175,7 +175,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminconstantsubtractionprocedure ->setMinimumHeight( minHeight1 );
    lbl_damminconstantsubtractionprocedure ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminconstantsubtractionprocedure ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminconstantsubtractionprocedure ->setMinimumWidth ( 585 );
+   lbl_damminconstantsubtractionprocedure ->setMinimumWidth ( 1300 );
 
    le_damminconstantsubtractionprocedure = new QLineEdit     ( this, "damminconstantsubtractionprocedure Line Edit" );
    if ( !parameters->count( "damminconstantsubtractionprocedure" ) )
@@ -195,7 +195,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminmaxharmonics ->setMinimumHeight( minHeight1 );
    lbl_damminmaxharmonics ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminmaxharmonics ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminmaxharmonics ->setMinimumWidth ( 585 );
+   lbl_damminmaxharmonics ->setMinimumWidth ( 1300 );
 
    le_damminmaxharmonics = new QLineEdit     ( this, "damminmaxharmonics Line Edit" );
    if ( !parameters->count( "damminmaxharmonics" ) )
@@ -215,7 +215,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammininitialdamtype ->setMinimumHeight( minHeight1 );
    lbl_dammininitialdamtype ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammininitialdamtype ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammininitialdamtype ->setMinimumWidth ( 585 );
+   lbl_dammininitialdamtype ->setMinimumWidth ( 1300 );
 
    le_dammininitialdamtype = new QLineEdit     ( this, "dammininitialdamtype Line Edit" );
    if ( !parameters->count( "dammininitialdamtype" ) )
@@ -235,7 +235,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminsymmetry ->setMinimumHeight( minHeight1 );
    lbl_damminsymmetry ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminsymmetry ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminsymmetry ->setMinimumWidth ( 585 );
+   lbl_damminsymmetry ->setMinimumWidth ( 1300 );
 
    le_damminsymmetry = new QLineEdit     ( this, "damminsymmetry Line Edit" );
    if ( !parameters->count( "damminsymmetry" ) )
@@ -255,7 +255,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminspherediameter ->setMinimumHeight( minHeight1 );
    lbl_damminspherediameter ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminspherediameter ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminspherediameter ->setMinimumWidth ( 585 );
+   lbl_damminspherediameter ->setMinimumWidth ( 1300 );
 
    le_damminspherediameter = new QLineEdit     ( this, "damminspherediameter Line Edit" );
    if ( !parameters->count( "damminspherediameter" ) )
@@ -275,7 +275,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminpackingradius ->setMinimumHeight( minHeight1 );
    lbl_damminpackingradius ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminpackingradius ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminpackingradius ->setMinimumWidth ( 585 );
+   lbl_damminpackingradius ->setMinimumWidth ( 1300 );
 
    le_damminpackingradius = new QLineEdit     ( this, "damminpackingradius Line Edit" );
    if ( !parameters->count( "damminpackingradius" ) )
@@ -295,7 +295,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminradius1stcoordinationsphere ->setMinimumHeight( minHeight1 );
    lbl_damminradius1stcoordinationsphere ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminradius1stcoordinationsphere ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminradius1stcoordinationsphere ->setMinimumWidth ( 585 );
+   lbl_damminradius1stcoordinationsphere ->setMinimumWidth ( 1300 );
 
    le_damminradius1stcoordinationsphere = new QLineEdit     ( this, "damminradius1stcoordinationsphere Line Edit" );
    if ( !parameters->count( "damminradius1stcoordinationsphere" ) )
@@ -315,7 +315,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminloosenesspenaltyweight ->setMinimumHeight( minHeight1 );
    lbl_damminloosenesspenaltyweight ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminloosenesspenaltyweight ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminloosenesspenaltyweight ->setMinimumWidth ( 585 );
+   lbl_damminloosenesspenaltyweight ->setMinimumWidth ( 1300 );
 
    le_damminloosenesspenaltyweight = new QLineEdit     ( this, "damminloosenesspenaltyweight Line Edit" );
    if ( !parameters->count( "damminloosenesspenaltyweight" ) )
@@ -335,7 +335,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammindisconnectivitypenaltyweight ->setMinimumHeight( minHeight1 );
    lbl_dammindisconnectivitypenaltyweight ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammindisconnectivitypenaltyweight ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammindisconnectivitypenaltyweight ->setMinimumWidth ( 585 );
+   lbl_dammindisconnectivitypenaltyweight ->setMinimumWidth ( 1300 );
 
    le_dammindisconnectivitypenaltyweight = new QLineEdit     ( this, "dammindisconnectivitypenaltyweight Line Edit" );
    if ( !parameters->count( "dammindisconnectivitypenaltyweight" ) )
@@ -355,7 +355,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminperipheralpenaltyweight ->setMinimumHeight( minHeight1 );
    lbl_damminperipheralpenaltyweight ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminperipheralpenaltyweight ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminperipheralpenaltyweight ->setMinimumWidth ( 585 );
+   lbl_damminperipheralpenaltyweight ->setMinimumWidth ( 1300 );
 
    le_damminperipheralpenaltyweight = new QLineEdit     ( this, "damminperipheralpenaltyweight Line Edit" );
    if ( !parameters->count( "damminperipheralpenaltyweight" ) )
@@ -375,7 +375,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminfixingthersholdsLosandRf ->setMinimumHeight( minHeight1 );
    lbl_damminfixingthersholdsLosandRf ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminfixingthersholdsLosandRf ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminfixingthersholdsLosandRf ->setMinimumWidth ( 585 );
+   lbl_damminfixingthersholdsLosandRf ->setMinimumWidth ( 1300 );
 
    le_damminfixingthersholdsLosandRf = new QLineEdit     ( this, "damminfixingthersholdsLosandRf Line Edit" );
    if ( !parameters->count( "damminfixingthersholdsLosandRf" ) )
@@ -395,7 +395,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminrandomizestructure ->setMinimumHeight( minHeight1 );
    lbl_damminrandomizestructure ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminrandomizestructure ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminrandomizestructure ->setMinimumWidth ( 585 );
+   lbl_damminrandomizestructure ->setMinimumWidth ( 1300 );
 
    le_damminrandomizestructure = new QLineEdit     ( this, "damminrandomizestructure Line Edit" );
    if ( !parameters->count( "damminrandomizestructure" ) )
@@ -415,7 +415,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminweight ->setMinimumHeight( minHeight1 );
    lbl_damminweight ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminweight ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminweight ->setMinimumWidth ( 585 );
+   lbl_damminweight ->setMinimumWidth ( 1300 );
 
    le_damminweight = new QLineEdit     ( this, "damminweight Line Edit" );
    if ( !parameters->count( "damminweight" ) )
@@ -435,7 +435,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammininitialscalefactor ->setMinimumHeight( minHeight1 );
    lbl_dammininitialscalefactor ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammininitialscalefactor ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammininitialscalefactor ->setMinimumWidth ( 585 );
+   lbl_dammininitialscalefactor ->setMinimumWidth ( 1300 );
 
    le_dammininitialscalefactor = new QLineEdit     ( this, "dammininitialscalefactor Line Edit" );
    if ( !parameters->count( "dammininitialscalefactor" ) )
@@ -455,7 +455,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminfixscalefactor ->setMinimumHeight( minHeight1 );
    lbl_damminfixscalefactor ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminfixscalefactor ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminfixscalefactor ->setMinimumWidth ( 585 );
+   lbl_damminfixscalefactor ->setMinimumWidth ( 1300 );
 
    le_damminfixscalefactor = new QLineEdit     ( this, "damminfixscalefactor Line Edit" );
    if ( !parameters->count( "damminfixscalefactor" ) )
@@ -475,7 +475,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_dammininitialannealingtemperature ->setMinimumHeight( minHeight1 );
    lbl_dammininitialannealingtemperature ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_dammininitialannealingtemperature ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_dammininitialannealingtemperature ->setMinimumWidth ( 585 );
+   lbl_dammininitialannealingtemperature ->setMinimumWidth ( 1300 );
 
    le_dammininitialannealingtemperature = new QLineEdit     ( this, "dammininitialannealingtemperature Line Edit" );
    if ( !parameters->count( "dammininitialannealingtemperature" ) )
@@ -495,7 +495,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminannealingschedulefactor ->setMinimumHeight( minHeight1 );
    lbl_damminannealingschedulefactor ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminannealingschedulefactor ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminannealingschedulefactor ->setMinimumWidth ( 585 );
+   lbl_damminannealingschedulefactor ->setMinimumWidth ( 1300 );
 
    le_damminannealingschedulefactor = new QLineEdit     ( this, "damminannealingschedulefactor Line Edit" );
    if ( !parameters->count( "damminannealingschedulefactor" ) )
@@ -515,7 +515,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminnumberofindependentatomstomodify ->setMinimumHeight( minHeight1 );
    lbl_damminnumberofindependentatomstomodify ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminnumberofindependentatomstomodify ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminnumberofindependentatomstomodify ->setMinimumWidth ( 585 );
+   lbl_damminnumberofindependentatomstomodify ->setMinimumWidth ( 1300 );
 
    le_damminnumberofindependentatomstomodify = new QLineEdit     ( this, "damminnumberofindependentatomstomodify Line Edit" );
    if ( !parameters->count( "damminnumberofindependentatomstomodify" ) )
@@ -535,7 +535,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminmaxnumberiterationseachT ->setMinimumHeight( minHeight1 );
    lbl_damminmaxnumberiterationseachT ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminmaxnumberiterationseachT ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminmaxnumberiterationseachT ->setMinimumWidth ( 585 );
+   lbl_damminmaxnumberiterationseachT ->setMinimumWidth ( 1300 );
 
    le_damminmaxnumberiterationseachT = new QLineEdit     ( this, "damminmaxnumberiterationseachT Line Edit" );
    if ( !parameters->count( "damminmaxnumberiterationseachT" ) )
@@ -555,7 +555,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminmaxnumbersuccesseseachT ->setMinimumHeight( minHeight1 );
    lbl_damminmaxnumbersuccesseseachT ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminmaxnumbersuccesseseachT ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminmaxnumbersuccesseseachT ->setMinimumWidth ( 585 );
+   lbl_damminmaxnumbersuccesseseachT ->setMinimumWidth ( 1300 );
 
    le_damminmaxnumbersuccesseseachT = new QLineEdit     ( this, "damminmaxnumbersuccesseseachT Line Edit" );
    if ( !parameters->count( "damminmaxnumbersuccesseseachT" ) )
@@ -575,7 +575,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminminnumbersuccessestocontinue ->setMinimumHeight( minHeight1 );
    lbl_damminminnumbersuccessestocontinue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminminnumbersuccessestocontinue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminminnumbersuccessestocontinue ->setMinimumWidth ( 585 );
+   lbl_damminminnumbersuccessestocontinue ->setMinimumWidth ( 1300 );
 
    le_damminminnumbersuccessestocontinue = new QLineEdit     ( this, "damminminnumbersuccessestocontinue Line Edit" );
    if ( !parameters->count( "damminminnumbersuccessestocontinue" ) )
@@ -595,7 +595,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminmaxnumberannealingsteps ->setMinimumHeight( minHeight1 );
    lbl_damminmaxnumberannealingsteps ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminmaxnumberannealingsteps ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminmaxnumberannealingsteps ->setMinimumWidth ( 585 );
+   lbl_damminmaxnumberannealingsteps ->setMinimumWidth ( 1300 );
 
    le_damminmaxnumberannealingsteps = new QLineEdit     ( this, "damminmaxnumberannealingsteps Line Edit" );
    if ( !parameters->count( "damminmaxnumberannealingsteps" ) )
@@ -615,7 +615,7 @@ void US_Hydrodyn_Cluster_Dammin::setupGUI()
    lbl_damminexpectedshape ->setMinimumHeight( minHeight1 );
    lbl_damminexpectedshape ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_damminexpectedshape ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_damminexpectedshape ->setMinimumWidth ( 585 );
+   lbl_damminexpectedshape ->setMinimumWidth ( 1300 );
 
    le_damminexpectedshape = new QLineEdit     ( this, "damminexpectedshape Line Edit" );
    if ( !parameters->count( "damminexpectedshape" ) )
@@ -869,6 +869,7 @@ void US_Hydrodyn_Cluster_Dammin::help()
 
 void US_Hydrodyn_Cluster_Dammin::closeEvent( QCloseEvent *e )
 {
+
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();

@@ -158,6 +158,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_merge, SIGNAL(clicked()), SLOT(merge()));
 
+   pb_renum_pdb = new QPushButton(tr("Renumber"), this);
+   pb_renum_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_renum_pdb->setMinimumHeight(minHeight1);
+   pb_renum_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_renum_pdb, SIGNAL(clicked()), SLOT(renum_pdb()));
+
    pb_hybrid_split = new QPushButton(tr("Hybrid extract"), this);
    pb_hybrid_split->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_hybrid_split->setMinimumHeight(minHeight1);
@@ -559,6 +565,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    
    QBoxLayout *hbl_left_buttons_row_2 = new QHBoxLayout;
    hbl_left_buttons_row_2->addWidget( pb_merge );
+   hbl_left_buttons_row_2->addWidget( pb_renum_pdb );
 
    QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
    hbl_left_buttons_row_3->addWidget( pb_hybrid_split );
@@ -987,6 +994,16 @@ void US_Hydrodyn_Pdb_Tool::csv_merge()
 
 void US_Hydrodyn_Pdb_Tool::csv_reseq()
 {
+   
+}
+
+csv US_Hydrodyn_Pdb_Tool::reseq_csv( 
+                                    QListView * /* lv           */, 
+                                    csv &       ref_csv, 
+                                    bool        /* only_selected */
+                                    )
+{
+   return ref_csv;
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_visualize()
@@ -4319,6 +4336,185 @@ void US_Hydrodyn_Pdb_Tool::merge()
       pdb_tool_merge_window = new US_Hydrodyn_Pdb_Tool_Merge( us_hydrodyn, this );
       pdb_tool_merge_window->show();
    }
+}
+
+void US_Hydrodyn_Pdb_Tool::renum_pdb()
+{
+   // read through a multi model pdb & create a file one per model
+
+   pb_renum_pdb->setEnabled( false );
+
+   QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir );
+
+
+   map < QString, QString > parameters;
+   US_Hydrodyn_Pdb_Tool_Renum *uhptr = 
+      new US_Hydrodyn_Pdb_Tool_Renum(
+                                     us_hydrodyn,
+                                     &parameters,
+                                     this 
+                                     );
+   US_Hydrodyn::fixWinButtons( uhptr );
+   uhptr->exec();
+   delete uhptr;
+
+   QString      filename            = 
+      parameters.count( "inputfile"           ) ?
+      parameters[ "inputfile"           ] : "";
+   unsigned int startatom           = 
+      parameters.count( "startatom"           ) ? 
+      parameters[ "startatom"           ].toUInt() : 1;
+   unsigned int startresidue        = 
+      parameters.count( "startresidue"        ) ? 
+      parameters[ "startresidue"        ].toUInt() : 1;
+   bool         modelrestartatom    = 
+      parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         modelrestartresidue = 
+      parameters.count( "modelrestartresidue" ) && parameters[ "modelrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         reseqatom           = 
+      parameters.count( "reseqatom"           ) && parameters[ "reseqatom"           ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         reseqresidue        = 
+      parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         striphydrogens      =
+      parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+
+   cout << QString( "startatom %1\n" ).arg( startatom );
+   cout << QString( "startresidue %1\n" ).arg( startresidue );
+   cout << QString( "modelrestartatom %1\n" ).arg( modelrestartatom );
+   cout << QString( "modelrestartresidue %1\n" ).arg( modelrestartresidue );
+   cout << QString( "reseqatom %1\n" ).arg( reseqatom );
+   cout << QString( "reseqresidue %1\n" ).arg( reseqresidue );
+   cout << QString( "striphydrogens %1\n" ).arg( striphydrogens );
+
+   if ( filename.isEmpty() )
+   {
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+
+   if ( !QFile::exists( filename ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString( tr( "An error occured when trying to open file\n"
+                                         "%1\n"
+                                         "The file does not exist" ) )
+                            .arg( filename )
+                            );
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+
+   QFile f( filename );
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      QMessageBox::warning( this,
+                            tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( filename )
+                            );
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+
+   QString foutname = QFileDialog::getSaveFileName(QString::null, 
+                                                   "*.pdb *.PDB",
+                                                   this, 
+                                                   "save file dialog", 
+                                                   tr("Choose a filename to save the renumbered pdb") );
+   if( foutname.isEmpty() )
+   {
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+      
+   if ( !foutname.contains( QRegExp( ".pdb$", false ) ) )
+   {
+      foutname += ".pdb";
+   }
+
+   QFile fout( foutname );
+
+   // read through & renumber
+   if ( !fout.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg( foutname ) );
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+   
+   QTextStream tsi( &f    );
+   QTextStream tso( &fout );
+
+   QRegExp rx_end ("^END");
+   QRegExp rx_atom("^ATOM|HETATM");
+
+   unsigned int atomno    = startatom;
+   unsigned int residueno = startresidue;
+
+   QString last_residue_id = "";
+
+   while( !tsi.atEnd() )
+   {
+      QString line = tsi.readLine();
+      if ( rx_end.search( line ) != -1 )
+      {
+         if ( modelrestartatom )
+         {
+            atomno = startatom;
+         }
+         if ( modelrestartresidue )
+         {
+            residueno = startresidue;
+         }
+      }
+
+      if ( rx_atom.search( line ) != -1 )
+      {
+         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^( H|H)" ) ) )
+         {
+            continue;
+         }
+         if ( reseqatom )
+         {
+            if ( atomno > 99999 )
+            {
+               editor_msg( "dark red", tr( "Warning: more than 99,999 atoms, numbering restarted at 1" ) );
+               atomno = 1;
+            }
+            line = line.replace( 6, 5, QString( "" ).sprintf( "%5d", atomno ++ ) );
+         }
+
+         if ( reseqresidue )
+         {
+            QString residue_id = line.mid( 17, 10 );
+            if ( !last_residue_id.isEmpty() &&
+                 last_residue_id != residue_id )
+            {
+               residueno++;
+               if ( residueno > 9999 )
+               {
+                  editor_msg( "dark red", tr( "Warning: more than 9,999 residues, numbering restarted at 1" ) );
+                  residueno = 1;
+               }
+            }
+            line = line.replace( 22, 4, QString( "" ).sprintf( "%4d", residueno ) );
+            last_residue_id = residue_id;
+         }
+      }
+      tso << line << endl;
+   }
+
+   f   .close();
+   fout.close();
+
+   editor_msg( "dark blue", QString( "Renumber done, written file %1" ).arg( foutname ) );
+   pb_renum_pdb->setEnabled( true );
+   return;
 }
 
 void US_Hydrodyn_Pdb_Tool::csv_clear()

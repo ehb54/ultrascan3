@@ -1990,7 +1990,7 @@ csv US_Hydrodyn_Saxs_Screen::plots_to_csv()
 
 void US_Hydrodyn_Saxs_Screen::csv_to_plots( csv plot_csv )
 {
-   unsigned int last_row;
+   unsigned int last_row = 0;
    for ( unsigned int i = 0; i < plot_csv.data.size(); i++ )
    {
       if ( plot_csv.data[ i ].size() < 12 )
