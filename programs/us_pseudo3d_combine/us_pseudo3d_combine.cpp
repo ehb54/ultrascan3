@@ -838,10 +838,10 @@ DbgLv(1) << "cd=0  cnst_vbar" << cnst_vbar;
          sort_distro( tsys.s_distro,  true );
          sort_distro( tsys.mw_distro, true );
 
-         ct_plt_fmin->setMinValue( 0.1   );
+         ct_plt_fmin->setMinValue( 0.01   );
          ct_plt_fmin->setMaxValue( 1.5   );
          ct_plt_fmin->setValue   ( ffmin );
-         ct_plt_fmax->setMinValue( 0.1   );
+         ct_plt_fmax->setMinValue( 0.01   );
          ct_plt_fmax->setMaxValue( 1.5   );
          ct_plt_fmax->setValue   ( ffmax );
          lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
@@ -1089,7 +1089,7 @@ void US_Pseudo3D_Combine::set_limits()
       else
       {
          fmax       += 0.005;
-         fmin       -= 0.005;
+         fmin       = 0.01;
       }
 
       if ( plot_s )

@@ -677,7 +677,7 @@ void US_AnalysisControl::kstep_change()
       int nthr     = US_Settings::threads();
       nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
       ct_thrdcnt ->setValue( nthr );
-      ct_grrefine->setValue( 6.0  );
+      ct_grrefine->setValue( 10.0  );
       ct_uplimitk->setEnabled( true );
       ct_thrdcnt ->setEnabled( true );
       ct_grrefine->setEnabled( true );
