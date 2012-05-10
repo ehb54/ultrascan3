@@ -43,7 +43,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_title -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_credits_1 =  new QLabel      ( "Cite: Brookes, E.", this );
+   lbl_credits_1 =  new QLabel      ( "Cite: US-SOMO", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
    lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
@@ -54,7 +54,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_inputfile ->setMinimumHeight( minHeight1 );
    lbl_inputfile ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_inputfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_inputfile ->setMinimumWidth ( QFontMetrics( lbl_inputfile->font() ).maxWidth() * 23 );
+   lbl_inputfile ->setMinimumWidth ( QFontMetrics( lbl_inputfile->font() ).maxWidth() * 29 );
 
    le_inputfile = new QLineEdit     ( this, "inputfile Line Edit" );
    le_inputfile ->setText           ( parameters->count( "inputfile" ) ? ( *parameters )[ "inputfile" ] : "" );
@@ -70,7 +70,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_reseqatom ->setMinimumHeight( minHeight1 );
    lbl_reseqatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_reseqatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_reseqatom ->setMinimumWidth ( QFontMetrics( lbl_reseqatom->font() ).maxWidth() * 23 );
+   lbl_reseqatom ->setMinimumWidth ( QFontMetrics( lbl_reseqatom->font() ).maxWidth() * 29 );
 
    le_reseqatom = new QLineEdit     ( this, "reseqatom Line Edit" );
    le_reseqatom ->setText           ( parameters->count( "reseqatom" ) ? ( *parameters )[ "reseqatom" ] : "" );
@@ -86,7 +86,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_startatom ->setMinimumHeight( minHeight1 );
    lbl_startatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_startatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_startatom ->setMinimumWidth ( QFontMetrics( lbl_startatom->font() ).maxWidth() * 23 );
+   lbl_startatom ->setMinimumWidth ( QFontMetrics( lbl_startatom->font() ).maxWidth() * 29 );
 
    le_startatom = new QLineEdit     ( this, "startatom Line Edit" );
    le_startatom ->setText           ( parameters->count( "startatom" ) ? ( *parameters )[ "startatom" ] : "" );
@@ -102,7 +102,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_modelrestartatom ->setMinimumHeight( minHeight1 );
    lbl_modelrestartatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_modelrestartatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_modelrestartatom ->setMinimumWidth ( QFontMetrics( lbl_modelrestartatom->font() ).maxWidth() * 23 );
+   lbl_modelrestartatom ->setMinimumWidth ( QFontMetrics( lbl_modelrestartatom->font() ).maxWidth() * 29 );
 
    le_modelrestartatom = new QLineEdit     ( this, "modelrestartatom Line Edit" );
    le_modelrestartatom ->setText           ( parameters->count( "modelrestartatom" ) ? ( *parameters )[ "modelrestartatom" ] : "" );
@@ -118,7 +118,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_reseqresidue ->setMinimumHeight( minHeight1 );
    lbl_reseqresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_reseqresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_reseqresidue ->setMinimumWidth ( QFontMetrics( lbl_reseqresidue->font() ).maxWidth() * 23 );
+   lbl_reseqresidue ->setMinimumWidth ( QFontMetrics( lbl_reseqresidue->font() ).maxWidth() * 29 );
 
    le_reseqresidue = new QLineEdit     ( this, "reseqresidue Line Edit" );
    le_reseqresidue ->setText           ( parameters->count( "reseqresidue" ) ? ( *parameters )[ "reseqresidue" ] : "" );
@@ -134,7 +134,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_startresidue ->setMinimumHeight( minHeight1 );
    lbl_startresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_startresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_startresidue ->setMinimumWidth ( QFontMetrics( lbl_startresidue->font() ).maxWidth() * 23 );
+   lbl_startresidue ->setMinimumWidth ( QFontMetrics( lbl_startresidue->font() ).maxWidth() * 29 );
 
    le_startresidue = new QLineEdit     ( this, "startresidue Line Edit" );
    le_startresidue ->setText           ( parameters->count( "startresidue" ) ? ( *parameters )[ "startresidue" ] : "" );
@@ -150,7 +150,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_modelrestartresidue ->setMinimumHeight( minHeight1 );
    lbl_modelrestartresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_modelrestartresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_modelrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_modelrestartresidue->font() ).maxWidth() * 23 );
+   lbl_modelrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_modelrestartresidue->font() ).maxWidth() * 29 );
 
    le_modelrestartresidue = new QLineEdit     ( this, "modelrestartresidue Line Edit" );
    le_modelrestartresidue ->setText           ( parameters->count( "modelrestartresidue" ) ? ( *parameters )[ "modelrestartresidue" ] : "" );
@@ -166,7 +166,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_striphydrogens ->setMinimumHeight( minHeight1 );
    lbl_striphydrogens ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_striphydrogens ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_striphydrogens ->setMinimumWidth ( QFontMetrics( lbl_striphydrogens->font() ).maxWidth() * 23 );
+   lbl_striphydrogens ->setMinimumWidth ( QFontMetrics( lbl_striphydrogens->font() ).maxWidth() * 29 );
 
    le_striphydrogens = new QLineEdit     ( this, "striphydrogens Line Edit" );
    le_striphydrogens ->setText           ( parameters->count( "striphydrogens" ) ? ( *parameters )[ "striphydrogens" ] : "" );
@@ -176,6 +176,22 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_striphydrogens ->setMinimumHeight  ( minHeight1 );
    le_striphydrogens ->setMinimumWidth   ( 150 );
    connect( le_striphydrogens, SIGNAL( textChanged( const QString & ) ), SLOT( update_striphydrogens( const QString & ) ) );
+
+   lbl_itassertemplate = new QLabel      ( tr( "Make i-tasser template {y|n}?" ), this );
+   lbl_itassertemplate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_itassertemplate ->setMinimumHeight( minHeight1 );
+   lbl_itassertemplate ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_itassertemplate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_itassertemplate ->setMinimumWidth ( QFontMetrics( lbl_itassertemplate->font() ).maxWidth() * 29 );
+
+   le_itassertemplate = new QLineEdit     ( this, "itassertemplate Line Edit" );
+   le_itassertemplate ->setText           ( parameters->count( "itassertemplate" ) ? ( *parameters )[ "itassertemplate" ] : "" );
+   le_itassertemplate ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_itassertemplate ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_itassertemplate ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_itassertemplate ->setMinimumHeight  ( minHeight1 );
+   le_itassertemplate ->setMinimumWidth   ( 150 );
+   connect( le_itassertemplate, SIGNAL( textChanged( const QString & ) ), SLOT( update_itassertemplate( const QString & ) ) );
 
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -241,6 +257,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_striphydrogens );
    hbl->addWidget( le_striphydrogens );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_itassertemplate );
+   hbl->addWidget( le_itassertemplate );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -312,6 +334,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "striphydrogens" );
    }
+   if ( parameters->count( "itassertemplate" ) &&
+        (*parameters)[ "itassertemplate" ].isEmpty() )
+   {
+      parameters->erase( "itassertemplate" );
+   }
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -367,5 +394,10 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_modelrestartresidue( const QString & )
 void US_Hydrodyn_Pdb_Tool_Renum::update_striphydrogens( const QString & )
 {
    ( *parameters )[ "striphydrogens" ] = le_striphydrogens->text();
+}
+
+void US_Hydrodyn_Pdb_Tool_Renum::update_itassertemplate( const QString & )
+{
+   ( *parameters )[ "itassertemplate" ] = le_itassertemplate->text();
 }
 

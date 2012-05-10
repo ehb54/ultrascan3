@@ -54,6 +54,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Renum : public QDialog
       QLineEdit *                             le_modelrestartresidue;
       QLabel *                                lbl_striphydrogens;
       QLineEdit *                             le_striphydrogens;
+      QLabel *                                lbl_itassertemplate;
+      QLineEdit *                             le_itassertemplate;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_close;
@@ -73,6 +75,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Renum : public QDialog
       void                                    update_startresidue( const QString & );
       void                                    update_modelrestartresidue( const QString & );
       void                                    update_striphydrogens( const QString & );
+      void                                    update_itassertemplate( const QString & );
 
       void                                    help();
       void                                    cancel();

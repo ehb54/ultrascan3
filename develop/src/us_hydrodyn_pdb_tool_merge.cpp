@@ -4,6 +4,7 @@
 // note: this program uses cout and/or cerr and this should be replaced
 
 #define SLASH QDir::separator()
+#define USPTM_DEBUG
 
 ostream& operator<<(ostream& out, const range_entry& c)
 {
@@ -1201,17 +1202,65 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
 
    for ( unsigned int i = 0; i < to_ranges.size(); i++ )
    {
+#if defined( USPTM_DEBUG )
+      cout << "checking to range: " << to_ranges[ i ] << endl;
+#endif
       if ( from_range_pos.count( to_ranges[ i ].chain ) )
       {
+#if defined( USPTM_DEBUG )
+         cout << "common chain: found matching from range: " << from_ranges[ from_range_pos[ to_ranges[ i ].chain ] ] << endl;
+#endif
          // common chain
          // only handling one end for now
          range_entry from_range = from_ranges[ from_range_pos[ to_ranges[ i ].chain ] ];
          range_entry new_merge_range;
          range_entry new_fit_range;
-         if ( from_range.start   <  to_ranges[ i ].start && 
-              from_range.end     >  to_ranges[ i ].start + 2 &&
-              to_ranges[ i ].end >= to_ranges[ i ].start + 2 )
+
+         bool start_good = 
+            ( from_range.start   <   to_ranges[ i ].start && 
+              from_range.end     >=  to_ranges[ i ].start + 2 &&
+              to_ranges[ i ].end >=  to_ranges[ i ].start + 2 );
+         bool start_ok = 
+            ( from_range.start   <=  to_ranges[ i ].start && 
+              from_range.end     >=  to_ranges[ i ].start + 2 &&
+              to_ranges[ i ].end >=  to_ranges[ i ].start + 2 );
+         bool end_good =
+            ( from_range.end       > to_ranges[ i ].end &&
+              from_range.start     <= to_ranges[ i ].end - 2 &&
+              to_ranges[ i ].start <= to_ranges[ i ].end - 2 );
+         bool end_ok =
+            ( from_range.end       >= to_ranges[ i ].end &&
+              from_range.start     <= to_ranges[ i ].end - 2 &&
+              to_ranges[ i ].start <= to_ranges[ i ].end - 2 );
+
+         bool use_start = false;
+         bool use_end   = false;
+
+         if ( start_good && !end_ok )
          {
+            use_start = true;
+         } else {
+            if ( end_good )
+            {
+               use_end = true;
+            } else {
+               if ( start_ok )
+               {
+                  use_start = true;
+               } else {
+                  if ( end_ok )
+                  {
+                     use_end = true;
+                  }
+               }
+            }
+         }
+
+         if ( use_start )
+         {
+#if defined( USPTM_DEBUG )
+            cout << "add at front\n";
+#endif
             // add at front
             // merge:
             new_merge_range.chain = to_ranges[ i ].chain;
@@ -1225,10 +1274,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
             new_merge_ranges.push_back( new_merge_range );
             new_fit_ranges  .push_back( new_fit_range   );
          } else {
-            if ( from_range.end       >  to_ranges[ i ].end &&
-                 from_range.start     <  to_ranges[ i ].end - 2 &&
-                 to_ranges[ i ].start <= to_ranges[ i ].end - 2 )
+            if ( use_end )
             {
+#if defined( USPTM_DEBUG )
+               cout << "add at end\n";
+#endif
                // add at end
                new_merge_range.chain = to_ranges[ i ].chain;
                new_merge_range.start = to_ranges[ i ].end + 1;
@@ -1241,6 +1291,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
                new_merge_ranges.push_back( new_merge_range );
                new_fit_ranges  .push_back( new_fit_range   );
             }
+#if defined( USPTM_DEBUG )
+            else 
+            {
+               cout << "neither front nor end\n";
+            }
+#endif
          }
       }
    }
@@ -1292,10 +1348,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_ent
       }
    }
 
-   // for ( unsigned int i = 0; i < ranges.size(); i++ )
-   // {
-   // cout << ranges[ i ] << endl;
-   // }
+#if defined( USPTM_DEBUG )
+   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   {
+      cout << ranges[ i ] << endl;
+   }
+#endif
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::make_csv_chain_map()
@@ -1584,7 +1642,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          if ( ( !cut_range.start && cut_range.end  ) ||
               ( cut_range.start  && !cut_range.end ) )
          {
-            editor_msg( "red", QString( "Error: Chain %1 cut must have both fields set or none" ).arg( cut_range.chain ) );
+            editor_msg( "red", QString( "Error: Chain %1 cut must have both cut range values set or none (zero is not a set value)" ).arg( cut_range.chain ) );
             errors++;
          }
          if ( cut_range.start > cut_range.end  )
@@ -1603,14 +1661,14 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             if ( to_range.start > cut_range.start ||
                  to_range.end < cut_range.end )
             {
-               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" does not have cut range" ).arg( cut_range.chain ) );
+               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" do not have residues in entire cut range" ).arg( cut_range.chain ) );
                errors++;
             } else {
                // make sure cut area touches one end
                if ( to_range.start != cut_range.start &&
                     to_range.end != cut_range.end )
                {
-                  editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" cut range must touch one end" ).arg( cut_range.chain ) );
+                  editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" cut start or cut end must equal one end of the chain" ).arg( cut_range.chain ) );
                   errors++;
                } else {
                   // make sure cut area doesn't touch both ends!
@@ -1646,7 +1704,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          if ( ( !merge_range.start && merge_range.end  ) ||
               ( merge_range.start  && !merge_range.end ) )
          {
-            editor_msg( "red", QString( "Error: Chain %1 merge must have both fields set or none" ).arg( merge_range.chain ) );
+            editor_msg( "red", QString( "Error: Chain %1 merge must have both merge range values set or none of them (zero is not a set value)" ).arg( merge_range.chain ) );
             errors++;
          }
          if ( merge_range.start > merge_range.end  )
@@ -1664,7 +1722,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             if ( from_range.start > merge_range.start ||
                  from_range.end < merge_range.end )
             {
-               editor_msg( "red", QString( "Error: Chain %1 \"Chains From\" does not have merge range" ).arg( merge_range.chain ) );
+               editor_msg( "red", QString( "Error: Chain %1 \"Chains From\" does not have residues in entire merge range" ).arg( merge_range.chain ) );
                errors++;
             }
          }
@@ -1678,7 +1736,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             // make sure merge area NOT present in "to" , could happen at either end
             if ( to_range.start <= merge_range.end && to_range.end >= merge_range.start )
             {
-               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" has merge range, needs to be cut" ).arg( merge_range.chain ) );
+               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" has values in merge range and therefore needs to be cut" ).arg( merge_range.chain ) );
                cut_back_ok = true;
                errors++;
             }
@@ -1691,7 +1749,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          if ( ( !fit_range.start && fit_range.end  ) ||
               ( fit_range.start  && !fit_range.end ) )
          {
-            editor_msg( "red", QString( "Error: Chain %1 fit must have both fields set or none" ).arg( fit_range.chain ) );
+            editor_msg( "red", QString( "Error: Chain %1 fit range must have both value set or none (zero not a set value)" ).arg( fit_range.chain ) );
             errors++;
          }
          if ( fit_range.start > fit_range.end  )
@@ -1709,7 +1767,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             if ( from_range.start > fit_range.start ||
                  from_range.end < fit_range.end )
             {
-               editor_msg( "red", QString( "Error: Chain %1 \"Chains From\" does not have fit range" ).arg( fit_range.chain ) );
+               editor_msg( "red", QString( "Error: Chain %1 \"Chains From\" does not have residues in entire fit range" ).arg( fit_range.chain ) );
                errors++;
             }
          }
@@ -1724,7 +1782,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             if ( to_range.start > fit_range.start ||
                  to_range.end < fit_range.end )
             {
-               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" does not have fit range" ).arg( fit_range.chain ) );
+               editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" does not have residues in entire fit range" ).arg( fit_range.chain ) );
                errors++;
             }
          }

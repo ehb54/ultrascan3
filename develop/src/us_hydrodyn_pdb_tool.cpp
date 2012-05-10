@@ -4377,6 +4377,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
    bool         striphydrogens      =
       parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         itassertemplate      =
+      parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
 
    cout << QString( "startatom %1\n" ).arg( startatom );
    cout << QString( "startresidue %1\n" ).arg( startresidue );
@@ -4385,6 +4387,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    cout << QString( "reseqatom %1\n" ).arg( reseqatom );
    cout << QString( "reseqresidue %1\n" ).arg( reseqresidue );
    cout << QString( "striphydrogens %1\n" ).arg( striphydrogens );
+   cout << QString( "itassertemplate %1\n" ).arg( itassertemplate );
 
    if ( filename.isEmpty() )
    {
@@ -4504,6 +4507,27 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
             }
             line = line.replace( 22, 4, QString( "" ).sprintf( "%4d", residueno ) );
             last_residue_id = residue_id;
+         }
+         if ( itassertemplate )
+         {
+            // Column 1 -30: Atom & Residue records of query sequence.
+            // Column 31-54: Coordinates of atoms in query copied from corresponding atoms in template.
+            // Column 55-59: Corresponding residue number in template based on alignment
+            // Column 60-64: Corresponding residue name in template
+            /* sequences, e.g.
+
+ATOM   2001  CA  MET     1      41.116 -30.727   6.866  129 THR
+ATOM   2002  CA  ALA     2      39.261 -27.408   6.496  130 ARG
+ATOM   2003  CA  ALA     3      35.665 -27.370   7.726  131 THR
+ATOM   2004  CA  ARG     4      32.662 -25.111   7.172  132 ARG
+ATOM   2005  CA  GLY     5      29.121 -25.194   8.602  133 ARG
+            */
+
+            QString residue_seq  = line.mid( 22, 4 );
+            QString residue_name = line.mid( 17, 3 );
+            line = line.left( 55 ) + QString( "" ).sprintf( "%4d ", residue_seq.toUInt() ) + residue_name;
+            // line = line.replace( 55, 4, residue_seq );
+            // line = line.replace( 61, 4, residue_name );
          }
       }
       tso << line << endl;
