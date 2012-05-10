@@ -3,39 +3,39 @@
 # user configs - please adjust for your installation:
 
 # the root directory of ultrascan-2:
-US2=/usr/local/ultrascan
+#US2=/export/home/user/demeler/us/ultrascan
 
 # change to bin64/lib64 for 64 bit distros:
-US2BIN=$US2/bin
-US2LIB=$US2/lib
+#US2BIN=$US2/bin
+#US2LIB=$US2/lib
 
 # the root directory of ultrascan-3:
-US3=/opt/ultrascan3
+US3=/export/home/user/demeler/ultrascan3
 
 # the library directory for the QT3 library:
-QT3=/usr/lib/qt/lib
+QT3=/opt/kde3/lib/qt3/lib
 
 # the root directory for the QT4 distribution: 
-QT4=/usr/local/qt4
+QT4=/usr/local/Trolltech/Qt-4.7.3
 
 # the library directory for the qt3 version of qwt:
 QWT3=/usr/local/qwt/lib
 
 # the library directory for the qt4 version of qwt:
-QWT4=/opt/qwt/lib/
+QWT4=/opt/qwt/lib
 
 # the library directory for the qt3 version of the qwtplot3d library:
 QWT3D3=/usr/local/qwtplot3d/lib
 
 # the library directory for the qt4 version of the qwtplot3d library:
-QWT3D4=/opt/ultrascan3/lib
+QWT3D4=/export/home/user/demeler/ultrascan3/lib
 
 # the mysql, crypt(o), png and jpg libraries linked to your distribution:
-MYSQL=/usr/lib/mysql/libmysqlclient.so.15*
+MYSQL=/export/home/user/demeler/ultrascan3/lib/libmysqlclient.so.16
 CRYPTO=/lib/libcrypto.so.0*
-CRYPT=/lib/libcrypt.so.1*
-PNG=/usr/lib/libpng.so.3*
-JPG=/usr/lib/libjpeg.so.62*
+CRYPT=/lib/libcrypt[-.]*
+PNG=/usr/lib/libpng14.so.14*
+JPG=/usr/X11R6/lib/libjpeg.so.*
 SSL=/lib/libssl.so.0*
 
 # a temporary directory for building the distribution:
@@ -83,12 +83,12 @@ cp -d $QWT3D4/* $BUILD/lib/.
 echo "Copying UltraScan-3 libraries..."
 cp -d $US2/lib/* $BUILD/lib/.
 
-echo "Copying UltraScan-2 binaries..."
-cp $US2BIN/us3* $BUILD/bin/.
-cp $US2BIN/rasmol* $BUILD/bin/.
+#echo "Copying UltraScan-2 binaries..."
+#cp $US2BIN/us3* $BUILD/bin/.
+#cp $US2BIN/rasmol* $BUILD/bin/.
 
-echo "Copying UltraScan-2 libraries..."
-cp -d $US2LIB/* $BUILD/lib/.
+#echo "Copying UltraScan-2 libraries..."
+#cp -d $US2LIB/* $BUILD/lib/.
 
 echo "Copying UltraScan-2 QT libraries..."
 cp -d $QT3/* $BUILD/lib/.
@@ -99,9 +99,9 @@ cp -a $QWT3/* $BUILD/lib/.
 echo "Copying UltraScan-2 QWT3DPLOT libraries..."
 cp -a $QWT3D3/* $BUILD/lib/.
 
-echo "Copying UltraScan-2 SOMO config files..."
-cp -a $US2/etc/somo* $BUILD/etc/.
-rm -f $BUILD/etc/somo*new
+#echo "Copying UltraScan-2 SOMO config files..."
+#cp -a $US2/etc/somo* $BUILD/etc/.
+rm -f $BUILD/etc/somo*prev
 
 echo "Removing unneeded files..."
 rm -rf $BUILD/lib/*prl
