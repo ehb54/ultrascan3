@@ -39,8 +39,23 @@ $errors .= "directory $us3stage does not exist\n" if !-d $us3stage;
 
 chdir $us3stage || die "can't change to dir $us3stage $!\n";
 
+mkdir "../develop" if !-e "../develop";
+
+if ( !-e "../develop/include" || 
+     !-e "../develop/src" ||
+     !-e "../develop/generic.pri" )
+{
+    $cmd = "find . -depth -print | cpio -pdmv ../develop/
+cd ../develop
+sh revision.sh
+";
+    print $cmd;
+    print `$cmd`;
+    exit;
+}
+
 print "getting file list\n";
-@list = `find . -name "*.cpp" -o -name "*.h" -o -name "*.pro" -o -name "*.pri"`;
+@list = `find . -name "*.cpp" -o -name "*.h" -o -name "*.pro" -o -name "*.pri" -o -name "*.xpm"`;
 
 grep chomp, @list;
 @list = grep !/src\/moc\/moc/, @list;
