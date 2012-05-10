@@ -40,7 +40,7 @@ $errors .= "directory $us3stage does not exist\n" if !-d $us3stage;
 chdir $us3stage || die "can't change to dir $us3stage $!\n";
 
 print "getting file list\n";
-@list = `find . -name "*.cpp" -o -name "*.h" -o -name "*.pro"`;
+@list = `find . -name "*.cpp" -o -name "*.h" -o -name "*.pro" -o -name "*.pri"`;
 
 grep chomp, @list;
 @list = grep !/src\/moc\/moc/, @list;
