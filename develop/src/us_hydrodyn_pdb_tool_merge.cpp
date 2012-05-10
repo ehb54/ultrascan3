@@ -32,8 +32,9 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
    reset_csv_commands();
 
    setupGUI();
-   running = false;
-   cut_back_ok = false;
+   running            = false;
+   cut_back_ok        = false;
+   extra_chains_list.clear();
 
    update_enables();
 
@@ -90,7 +91,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 
 void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 {
-   int minHeight1 = 30;
+   int minHeight1 = 22;
    int minHeight3 = 30;
 
    lbl_title = new QLabel(csv_commands.name.left(80), this);
@@ -98,14 +99,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    t_csv = new QTable(csv_commands.data.size(), csv_commands.header.size(), this);
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // t_csv->setMinimumHeight(minHeight1 * 3);
    // t_csv->setMinimumWidth(minWidth1);
    t_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    t_csv->setEnabled(true);
 
    for ( unsigned int i = 0; i < csv_commands.header.size(); i++ )
@@ -123,72 +124,91 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    //   t_csv->setColumnWidth(0, ?? );
    // t_csv->setColumnReadOnly(0, true);
    // t_csv->setColumnReadOnly(t_csv->numCols() - 1, true);
-   // t_csv->setSelectionMode( QTable::SingleRow );
+   t_csv->setSelectionMode( QTable::MultiRow );
 
    // connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
+   connect( t_csv, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
 
    pb_sel_auto = new QPushButton(tr("Compute Guess"), this);
-   pb_sel_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sel_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_sel_auto->setMinimumHeight(minHeight1);
    pb_sel_auto->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_auto, SIGNAL(clicked()), SLOT(sel_auto()));
 
    pb_cut_back = new QPushButton(tr("Cut back"), this);
-   pb_cut_back->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cut_back->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_cut_back->setMinimumHeight(minHeight1);
    pb_cut_back->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cut_back, SIGNAL(clicked()), SLOT(cut_back()));
 
    pb_sel_from_to_merge = new QPushButton(tr("From -> Merge"), this);
-   pb_sel_from_to_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sel_from_to_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_sel_from_to_merge->setMinimumHeight(minHeight1);
    pb_sel_from_to_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_from_to_merge, SIGNAL(clicked()), SLOT(sel_from_to_merge()));
 
    pb_sel_from_to_fit = new QPushButton(tr("From -> Fit"), this);
-   pb_sel_from_to_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sel_from_to_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_sel_from_to_fit->setMinimumHeight(minHeight1);
    pb_sel_from_to_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_from_to_fit, SIGNAL(clicked()), SLOT(sel_from_to_fit()));
 
    pb_sel_to_to_fit = new QPushButton(tr("To -> Fit"), this);
-   pb_sel_to_to_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sel_to_to_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_sel_to_to_fit->setMinimumHeight(minHeight1);
    pb_sel_to_to_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_to_to_fit, SIGNAL(clicked()), SLOT(sel_to_to_fit()));
 
    pb_sel_to_to_cut = new QPushButton(tr("To -> Cut"), this);
-   pb_sel_to_to_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_sel_to_to_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_sel_to_to_cut->setMinimumHeight(minHeight1);
    pb_sel_to_to_cut->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_to_to_cut, SIGNAL(clicked()), SLOT(sel_to_to_cut()));
 
+   pb_extra_chains = new QPushButton(tr("Extra Chains"), this);
+   pb_extra_chains->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_extra_chains->setMinimumHeight(minHeight1);
+   pb_extra_chains->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_extra_chains, SIGNAL(clicked()), SLOT(extra_chains()));
+
+   pb_only_closest = new QPushButton(tr("Only Closest"), this);
+   pb_only_closest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_only_closest->setMinimumHeight(minHeight1);
+   pb_only_closest->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_only_closest, SIGNAL(clicked()), SLOT(only_closest()));
+
+   pb_delete_row = new QPushButton(tr("Delete Rows"), this);
+   pb_delete_row->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_delete_row->setMinimumHeight(minHeight1);
+   pb_delete_row->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_delete_row, SIGNAL(clicked()), SLOT(delete_row()));
+
    pb_clear = new QPushButton(tr("Clear"), this);
-   pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_clear->setMinimumHeight(minHeight1);
    pb_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear, SIGNAL(clicked()), SLOT(clear()));
 
    pb_load = new QPushButton(tr("Load"), this);
-   pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_load->setMinimumHeight(minHeight1);
    pb_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
    pb_validate = new QPushButton(tr("Validate"), this);
-   pb_validate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_validate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_validate->setMinimumHeight(minHeight1);
    pb_validate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_validate, SIGNAL(clicked()), SLOT(validate()));
 
    pb_csv_save = new QPushButton(tr("Save"), this);
-   pb_csv_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_csv_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_save->setMinimumHeight(minHeight1);
    pb_csv_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_save, SIGNAL(clicked()), SLOT(csv_save()));
 
    pb_chains_from = new QPushButton(tr("Chains From"), this);
-   pb_chains_from->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_chains_from->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_chains_from->setMinimumHeight(minHeight1);
    pb_chains_from->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_chains_from, SIGNAL(clicked()), SLOT(chains_from()));
@@ -202,7 +222,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    le_chains_from->setReadOnly(true);
 
    pb_chains_to = new QPushButton(tr("Chains To"), this);
-   pb_chains_to->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_chains_to->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_chains_to->setMinimumHeight(minHeight1);
    pb_chains_to->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_chains_to, SIGNAL(clicked()), SLOT(chains_to()));
@@ -216,7 +236,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    le_chains_to->setReadOnly(true);
 
    pb_target = new QPushButton(tr("Target"), this);
-   pb_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_target->setMinimumHeight(minHeight1);
    pb_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_target, SIGNAL(clicked()), SLOT(target()));
@@ -235,19 +255,19 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    progress->reset();
 
    pb_start = new QPushButton(tr("Start"), this);
-   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
    pb_trial = new QPushButton(tr("Trial"), this);
-   pb_trial->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_trial->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_trial->setMinimumHeight(minHeight1);
    pb_trial->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_trial, SIGNAL(clicked()), SLOT(trial()));
 
    pb_stop = new QPushButton(tr("Stop"), this);
-   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
@@ -272,20 +292,20 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    editor->setMinimumHeight(100);
    
    pb_help = new QPushButton(tr("Help"), this);
-   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_pdb_tool = new QPushButton(tr("PDB Editor"), this);
-   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_pdb_tool->setMinimumHeight(minHeight1);
    pb_pdb_tool->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
-   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
@@ -309,6 +329,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_sel_cmds->addWidget( pb_sel_to_to_fit );
    hbl_sel_cmds->addWidget( pb_sel_to_to_cut );
 
+   QHBoxLayout *hbl_extra_chains = new QHBoxLayout(0);
+   hbl_extra_chains->addWidget( pb_extra_chains );
+   hbl_extra_chains->addWidget( pb_only_closest );
+   hbl_extra_chains->addWidget( pb_delete_row );
+
    QHBoxLayout *hbl_load_save = new QHBoxLayout(0);
    hbl_load_save->addWidget( pb_clear );
    hbl_load_save->addWidget( pb_load );
@@ -316,47 +341,49 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_load_save->addWidget( pb_csv_save );
 
    QHBoxLayout *hbl_controls = new QHBoxLayout(0);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_start);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_trial);
-   hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_stop);
-   hbl_controls->addSpacing(4);
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget ( pb_start );
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget ( pb_trial );
+   hbl_controls->addSpacing( 2 );
+   hbl_controls->addWidget ( pb_stop );
+   hbl_controls->addSpacing( 2 );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout(0);
-   hbl_bottom->addSpacing(4);
-   hbl_bottom->addWidget(pb_help);
-   hbl_bottom->addSpacing(4);
-   hbl_bottom->addWidget(pb_pdb_tool);
-   hbl_bottom->addSpacing(4);
-   hbl_bottom->addWidget(pb_cancel);
-   hbl_bottom->addSpacing(4);
+   hbl_bottom->addSpacing( 2 );
+   hbl_bottom->addWidget ( pb_help );
+   hbl_bottom->addSpacing( 2 );
+   hbl_bottom->addWidget ( pb_pdb_tool );
+   hbl_bottom->addSpacing( 2 );
+   hbl_bottom->addWidget ( pb_cancel );
+   hbl_bottom->addSpacing( 2 );
 
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
-   vbl_editor_group->addWidget(frame);
-   vbl_editor_group->addWidget(editor);
+   vbl_editor_group->addWidget( frame );
+   vbl_editor_group->addWidget( editor );
 
    QVBoxLayout *background = new QVBoxLayout(this);
-   background->addSpacing(4);
-   background->addWidget(lbl_title);
-   background->addSpacing(4);
-   background->addWidget(t_csv);
-   background->addSpacing(4);
-   background->addLayout(hbl_sel_cmds);
-   background->addSpacing(4);
-   background->addLayout(hbl_load_save);
-   background->addSpacing(4);
-   background->addLayout(vbl_editor_group);
-   background->addSpacing(4);
-   background->addLayout(gl_files);
-   background->addSpacing(4);
-   background->addWidget(progress);
-   background->addSpacing(4);
-   background->addLayout(hbl_controls);
-   background->addSpacing(4);
-   background->addLayout(hbl_bottom);
-   background->addSpacing(4);
+   background->addSpacing( 2 );
+   background->addWidget ( lbl_title );
+   background->addSpacing( 2 );
+   background->addWidget ( t_csv );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_sel_cmds );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_extra_chains );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_load_save );
+   background->addSpacing( 2 );
+   background->addLayout ( vbl_editor_group );
+   background->addSpacing( 2 );
+   background->addLayout ( gl_files );
+   background->addSpacing( 2 );
+   background->addWidget ( progress );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_controls );
+   background->addSpacing( 2 );
+   background->addLayout ( hbl_bottom );
+   background->addSpacing( 2 );
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::cancel()
@@ -708,27 +735,32 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          return;
       }
       
-      merge_range.chain = csv_commands.data[ i ][ 0 ];
-      merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
-      merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+      // not processing extra chains here
 
-      fit_range.chain   = csv_commands.data[ i ][ 0 ];
-      fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
-      fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
-
-      cut_range.chain   = csv_commands.data[ i ][ 0 ];
-      cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
-      cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
-
-      merge_map[ merge_range.chain ] = merge_range;
-      // cout << "merge map " << merge_range << endl;
-      fit_map  [ fit_range  .chain ] = fit_range;
-      // cout << "fit map " << fit_range << endl;
-      if ( cut_range.start )
+      if ( csv_commands.data[ i ][ 0 ].length() <= 1 )
       {
-         any_cuts = true;
-         cut_map  [ cut_range  .chain ] = cut_range;
-         // cout << "cut map " << cut_range << endl;
+         merge_range.chain = csv_commands.data[ i ][ 0 ];
+         merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
+         merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+
+         cut_range.chain   = csv_commands.data[ i ][ 0 ];
+         cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
+         cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
+
+         merge_map[ merge_range.chain ] = merge_range;
+         // cout << "merge map " << merge_range << endl;
+         fit_map  [ fit_range  .chain ] = fit_range;
+         // cout << "fit map " << fit_range << endl;
+         if ( cut_range.start )
+         {
+            any_cuts = true;
+            cut_map  [ cut_range  .chain ] = cut_range;
+            // cout << "cut map " << cut_range << endl;
+         }
       }
    }
 
@@ -1114,6 +1146,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_enables()
    pb_validate         ->setEnabled( !running && from_exists && to_exists && t_csv->numRows() );
    pb_csv_save         ->setEnabled( !running && t_csv->numRows() );
 
+   pb_extra_chains     ->setEnabled( !running && extra_chains_list.size() );
+   pb_only_closest     ->setEnabled( !running && extra_chains_list.size() );
+   pb_delete_row       ->setEnabled( !running && t_csv->numSelections() );
+
    pb_start            ->setEnabled( !running && from_exists && to_exists && t_csv->numRows() && target_set );
    pb_trial            ->setEnabled( !running && from_exists && to_exists && t_csv->numRows() );
    pb_stop             ->setEnabled( running );
@@ -1183,6 +1219,21 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
 
    sel_to_range( lv_csv_from, from_ranges, false );
    sel_to_range( lv_csv_to  , to_ranges  , false );
+
+   // setup extra chains
+   extra_chains_list.clear();
+   map < QString, bool > chains_in_to;
+   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   {
+      chains_in_to[ to_ranges[ i ].chain ] = true;
+   }
+   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   {
+      if ( !chains_in_to.count( from_ranges[ i ].chain ) )
+      {
+         extra_chains_list.push_back( from_ranges[ i ].chain );
+      }
+   }
 
    for ( unsigned int i = 0; i < from_ranges.size(); i++ )
    {
@@ -1424,6 +1475,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::clear()
    {
       t_csv->removeRow( i );
    }
+   extra_chains_list.clear();
    update_enables();
 }
 
@@ -1615,21 +1667,25 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          return false;
       }
       
-      merge_range.chain = csv_commands.data[ i ][ 0 ];
-      merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
-      merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+      // separate validation for extra chains
+      if ( csv_commands.data[ i ][ 0 ].length() <= 1 )
+      {
+         merge_range.chain = csv_commands.data[ i ][ 0 ];
+         merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
+         merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
 
-      fit_range.chain   = csv_commands.data[ i ][ 0 ];
-      fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
-      fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
 
-      cut_range.chain   = csv_commands.data[ i ][ 0 ];
-      cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
-      cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
+         cut_range.chain   = csv_commands.data[ i ][ 0 ];
+         cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
+         cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
 
-      merge_ranges.push_back( merge_range );
-      fit_ranges  .push_back( fit_range   );
-      cut_ranges  .push_back( cut_range   );
+         merge_ranges.push_back( merge_range );
+         fit_ranges  .push_back( fit_range   );
+         cut_ranges  .push_back( cut_range   );
+      }
    }
 
    unsigned int errors = 0;
@@ -2073,27 +2129,30 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          return;
       }
       
-      merge_range.chain = csv_commands.data[ i ][ 0 ];
-      merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
-      merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
-
-      fit_range.chain   = csv_commands.data[ i ][ 0 ];
-      fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
-      fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
-
-      cut_range.chain   = csv_commands.data[ i ][ 0 ];
-      cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
-      cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
-
-      merge_map[ merge_range.chain ] = merge_range;
-      // cout << "merge map " << merge_range << endl;
-      fit_map  [ fit_range  .chain ] = fit_range;
-      // cout << "fit map " << fit_range << endl;
-      if ( cut_range.start )
+      if ( csv_commands.data[ i ][ 0 ].length() <= 1 )
       {
-         any_cuts = true;
-         cut_map  [ cut_range  .chain ] = cut_range;
-         // cout << "cut map " << cut_range << endl;
+         merge_range.chain = csv_commands.data[ i ][ 0 ];
+         merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
+         merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+
+         cut_range.chain   = csv_commands.data[ i ][ 0 ];
+         cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
+         cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
+
+         merge_map[ merge_range.chain ] = merge_range;
+         // cout << "merge map " << merge_range << endl;
+         fit_map  [ fit_range  .chain ] = fit_range;
+         // cout << "fit map " << fit_range << endl;
+         if ( cut_range.start )
+         {
+            any_cuts = true;
+            cut_map  [ cut_range  .chain ] = cut_range;
+            // cout << "cut map " << cut_range << endl;
+         }
       }
    }
 
@@ -2451,5 +2510,58 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_clipboard = csv_to;
       ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_clipboard.name = "merged " + csv_to.name;
       ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_paste_new();
+   }
+}
+
+
+void US_Hydrodyn_Pdb_Tool_Merge::extra_chains()
+{
+   if ( !extra_chains_list.size() )
+   {
+      return;
+   }
+
+   // for each existing chain and each extra chain, add cross chain if it doesn't already exist
+   make_csv_chain_map();
+
+   for ( map < QString, unsigned int >::iterator it = csv_chain_map.begin();
+         it != csv_chain_map.end();
+         it++ )
+   {
+      if ( it->first.length() <= 1 )
+      {
+         for ( unsigned int i = 0; i < extra_chains_list.size(); i++ )
+         {
+            QString cross_chain = QString( "%1+%2" ).arg( it->first ).arg( extra_chains_list[ i ] );
+            if ( !csv_chain_map.count( cross_chain ) )
+            {
+               unsigned int pos = ( unsigned int ) t_csv->numRows();
+               t_csv->setNumRows( pos + 1 );
+               t_csv->setText( pos, 0, cross_chain );
+               t_csv->setText( pos, 3, t_csv->text( it->second, 3 ) );
+               t_csv->setText( pos, 4, t_csv->text( it->second, 4 ) );
+            }
+         }
+      }
+   }
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
+{
+   if ( !extra_chains_list.size() )
+   {
+      return;
+   }
+   // compute X ref chain pairs, find closest only report those
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::delete_row()
+{
+   for ( int i = t_csv->numRows() - 1; i >= 0; i-- )
+   {
+      if ( t_csv->isRowSelected( i ) )
+      {
+         t_csv->removeRow( i );
+      }
    }
 }

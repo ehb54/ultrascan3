@@ -92,6 +92,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       QPushButton          *pb_sel_to_to_fit;
       QPushButton          *pb_sel_to_to_cut;
 
+      QPushButton          *pb_extra_chains;
+      QPushButton          *pb_only_closest;
+      QPushButton          *pb_delete_row;
+
       QPushButton          *pb_clear;
       QPushButton          *pb_load;
       QPushButton          *pb_validate;
@@ -123,7 +127,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       void                 editor_msg( QString color, QString msg );
 
       bool                 running;
-      void                 update_enables();
 
       csv                  csv_commands;
       csv                  csv_from;
@@ -143,6 +146,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
 #endif
 
       map < QString, unsigned int > csv_chain_map;
+      vector < QString >            extra_chains_list;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -165,12 +169,18 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
 
       void setupGUI();
 
+      void update_enables();
+
       void sel_auto();
       void cut_back();
       void sel_from_to_merge();
       void sel_from_to_fit();
       void sel_to_to_fit();
       void sel_to_to_cut();
+
+      void extra_chains();
+      void only_closest();
+      void delete_row();
 
       void clear();
       void load();
