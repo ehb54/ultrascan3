@@ -54,7 +54,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_inputfile ->setMinimumHeight( minHeight1 );
    lbl_inputfile ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_inputfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_inputfile ->setMinimumWidth ( QFontMetrics( lbl_inputfile->font() ).maxWidth() * 29 );
+   lbl_inputfile ->setMinimumWidth ( QFontMetrics( lbl_inputfile->font() ).maxWidth() * 24 );
 
    le_inputfile = new QLineEdit     ( this, "inputfile Line Edit" );
    le_inputfile ->setText           ( parameters->count( "inputfile" ) ? ( *parameters )[ "inputfile" ] : "" );
@@ -65,12 +65,28 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_inputfile ->setMinimumWidth   ( 150 );
    connect( le_inputfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_inputfile( const QString & ) ) );
 
-   lbl_reseqatom = new QLabel      ( tr( "Resequence ATOM numbers {y|n}?" ), this );
+   lbl_usechainlist = new QLabel      ( tr( "Only apply to these chains\nleave blank for all chains\notherwise enter a list with no extra spaces" ), this );
+   lbl_usechainlist ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_usechainlist ->setMinimumHeight( minHeight1 *  3 );
+   lbl_usechainlist ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_usechainlist ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_usechainlist ->setMinimumWidth ( QFontMetrics( lbl_usechainlist->font() ).maxWidth() * 24 );
+
+   le_usechainlist = new QLineEdit     ( this, "usechainlist Line Edit" );
+   le_usechainlist ->setText           ( parameters->count( "usechainlist" ) ? ( *parameters )[ "usechainlist" ] : "" );
+   le_usechainlist ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_usechainlist ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_usechainlist ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_usechainlist ->setMinimumHeight  ( minHeight1 *  3 );
+   le_usechainlist ->setMinimumWidth   ( 150 );
+   connect( le_usechainlist, SIGNAL( textChanged( const QString & ) ), SLOT( update_usechainlist( const QString & ) ) );
+
+   lbl_reseqatom = new QLabel      ( tr( "Resequence ATOM/HETATM numbers {y|n}?" ), this );
    lbl_reseqatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_reseqatom ->setMinimumHeight( minHeight1 );
    lbl_reseqatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_reseqatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_reseqatom ->setMinimumWidth ( QFontMetrics( lbl_reseqatom->font() ).maxWidth() * 29 );
+   lbl_reseqatom ->setMinimumWidth ( QFontMetrics( lbl_reseqatom->font() ).maxWidth() * 24 );
 
    le_reseqatom = new QLineEdit     ( this, "reseqatom Line Edit" );
    le_reseqatom ->setText           ( parameters->count( "reseqatom" ) ? ( *parameters )[ "reseqatom" ] : "" );
@@ -81,12 +97,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_reseqatom ->setMinimumWidth   ( 150 );
    connect( le_reseqatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_reseqatom( const QString & ) ) );
 
-   lbl_startatom = new QLabel      ( tr( "Starting ATOM number" ), this );
+   lbl_startatom = new QLabel      ( tr( "Starting ATOM/HETATM number" ), this );
    lbl_startatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_startatom ->setMinimumHeight( minHeight1 );
    lbl_startatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_startatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_startatom ->setMinimumWidth ( QFontMetrics( lbl_startatom->font() ).maxWidth() * 29 );
+   lbl_startatom ->setMinimumWidth ( QFontMetrics( lbl_startatom->font() ).maxWidth() * 24 );
 
    le_startatom = new QLineEdit     ( this, "startatom Line Edit" );
    le_startatom ->setText           ( parameters->count( "startatom" ) ? ( *parameters )[ "startatom" ] : "" );
@@ -97,12 +113,28 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_startatom ->setMinimumWidth   ( 150 );
    connect( le_startatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_startatom( const QString & ) ) );
 
-   lbl_modelrestartatom = new QLabel      ( tr( "Restart ATOM numbers of each model {y|n}?" ), this );
+   lbl_chainrestartatom = new QLabel      ( tr( "Restart ATOM/HETATM numbers of each chain {y|n}?" ), this );
+   lbl_chainrestartatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_chainrestartatom ->setMinimumHeight( minHeight1 );
+   lbl_chainrestartatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_chainrestartatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_chainrestartatom ->setMinimumWidth ( QFontMetrics( lbl_chainrestartatom->font() ).maxWidth() * 24 );
+
+   le_chainrestartatom = new QLineEdit     ( this, "chainrestartatom Line Edit" );
+   le_chainrestartatom ->setText           ( parameters->count( "chainrestartatom" ) ? ( *parameters )[ "chainrestartatom" ] : "" );
+   le_chainrestartatom ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_chainrestartatom ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_chainrestartatom ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chainrestartatom ->setMinimumHeight  ( minHeight1 );
+   le_chainrestartatom ->setMinimumWidth   ( 150 );
+   connect( le_chainrestartatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_chainrestartatom( const QString & ) ) );
+
+   lbl_modelrestartatom = new QLabel      ( tr( "Restart ATOM/HETATM numbers of each model {y|n}?" ), this );
    lbl_modelrestartatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_modelrestartatom ->setMinimumHeight( minHeight1 );
    lbl_modelrestartatom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_modelrestartatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_modelrestartatom ->setMinimumWidth ( QFontMetrics( lbl_modelrestartatom->font() ).maxWidth() * 29 );
+   lbl_modelrestartatom ->setMinimumWidth ( QFontMetrics( lbl_modelrestartatom->font() ).maxWidth() * 24 );
 
    le_modelrestartatom = new QLineEdit     ( this, "modelrestartatom Line Edit" );
    le_modelrestartatom ->setText           ( parameters->count( "modelrestartatom" ) ? ( *parameters )[ "modelrestartatom" ] : "" );
@@ -118,7 +150,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_reseqresidue ->setMinimumHeight( minHeight1 );
    lbl_reseqresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_reseqresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_reseqresidue ->setMinimumWidth ( QFontMetrics( lbl_reseqresidue->font() ).maxWidth() * 29 );
+   lbl_reseqresidue ->setMinimumWidth ( QFontMetrics( lbl_reseqresidue->font() ).maxWidth() * 24 );
 
    le_reseqresidue = new QLineEdit     ( this, "reseqresidue Line Edit" );
    le_reseqresidue ->setText           ( parameters->count( "reseqresidue" ) ? ( *parameters )[ "reseqresidue" ] : "" );
@@ -134,7 +166,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_startresidue ->setMinimumHeight( minHeight1 );
    lbl_startresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_startresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_startresidue ->setMinimumWidth ( QFontMetrics( lbl_startresidue->font() ).maxWidth() * 29 );
+   lbl_startresidue ->setMinimumWidth ( QFontMetrics( lbl_startresidue->font() ).maxWidth() * 24 );
 
    le_startresidue = new QLineEdit     ( this, "startresidue Line Edit" );
    le_startresidue ->setText           ( parameters->count( "startresidue" ) ? ( *parameters )[ "startresidue" ] : "" );
@@ -145,12 +177,28 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_startresidue ->setMinimumWidth   ( 150 );
    connect( le_startresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_startresidue( const QString & ) ) );
 
+   lbl_chainrestartresidue = new QLabel      ( tr( "Restart RESIDUE numbers of each chain {y|n}?" ), this );
+   lbl_chainrestartresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_chainrestartresidue ->setMinimumHeight( minHeight1 );
+   lbl_chainrestartresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_chainrestartresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_chainrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_chainrestartresidue->font() ).maxWidth() * 24 );
+
+   le_chainrestartresidue = new QLineEdit     ( this, "chainrestartresidue Line Edit" );
+   le_chainrestartresidue ->setText           ( parameters->count( "chainrestartresidue" ) ? ( *parameters )[ "chainrestartresidue" ] : "" );
+   le_chainrestartresidue ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_chainrestartresidue ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_chainrestartresidue ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chainrestartresidue ->setMinimumHeight  ( minHeight1 );
+   le_chainrestartresidue ->setMinimumWidth   ( 150 );
+   connect( le_chainrestartresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_chainrestartresidue( const QString & ) ) );
+
    lbl_modelrestartresidue = new QLabel      ( tr( "Restart RESIDUE numbers of each model {y|n}?" ), this );
    lbl_modelrestartresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_modelrestartresidue ->setMinimumHeight( minHeight1 );
    lbl_modelrestartresidue ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_modelrestartresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_modelrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_modelrestartresidue->font() ).maxWidth() * 29 );
+   lbl_modelrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_modelrestartresidue->font() ).maxWidth() * 24 );
 
    le_modelrestartresidue = new QLineEdit     ( this, "modelrestartresidue Line Edit" );
    le_modelrestartresidue ->setText           ( parameters->count( "modelrestartresidue" ) ? ( *parameters )[ "modelrestartresidue" ] : "" );
@@ -166,7 +214,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_striphydrogens ->setMinimumHeight( minHeight1 );
    lbl_striphydrogens ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_striphydrogens ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_striphydrogens ->setMinimumWidth ( QFontMetrics( lbl_striphydrogens->font() ).maxWidth() * 29 );
+   lbl_striphydrogens ->setMinimumWidth ( QFontMetrics( lbl_striphydrogens->font() ).maxWidth() * 24 );
 
    le_striphydrogens = new QLineEdit     ( this, "striphydrogens Line Edit" );
    le_striphydrogens ->setText           ( parameters->count( "striphydrogens" ) ? ( *parameters )[ "striphydrogens" ] : "" );
@@ -177,12 +225,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_striphydrogens ->setMinimumWidth   ( 150 );
    connect( le_striphydrogens, SIGNAL( textChanged( const QString & ) ), SLOT( update_striphydrogens( const QString & ) ) );
 
-   lbl_itassertemplate = new QLabel      ( tr( "Make i-tasser template {y|n}?" ), this );
+   lbl_itassertemplate = new QLabel      ( tr( "Make 3D format (I-TASSER) template {y|n}?" ), this );
    lbl_itassertemplate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_itassertemplate ->setMinimumHeight( minHeight1 );
    lbl_itassertemplate ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_itassertemplate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_itassertemplate ->setMinimumWidth ( QFontMetrics( lbl_itassertemplate->font() ).maxWidth() * 29 );
+   lbl_itassertemplate ->setMinimumWidth ( QFontMetrics( lbl_itassertemplate->font() ).maxWidth() * 24 );
 
    le_itassertemplate = new QLineEdit     ( this, "itassertemplate Line Edit" );
    le_itassertemplate ->setText           ( parameters->count( "itassertemplate" ) ? ( *parameters )[ "itassertemplate" ] : "" );
@@ -219,6 +267,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_usechainlist );
+   hbl->addWidget( le_usechainlist );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_reseqatom );
    hbl->addWidget( le_reseqatom );
    hbl->addSpacing( 4 );
@@ -227,6 +281,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_startatom );
    hbl->addWidget( le_startatom );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_chainrestartatom );
+   hbl->addWidget( le_chainrestartatom );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -245,6 +305,12 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_startresidue );
    hbl->addWidget( le_startresidue );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_chainrestartresidue );
+   hbl->addWidget( le_chainrestartresidue );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -299,6 +365,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "inputfile" );
    }
+   if ( parameters->count( "usechainlist" ) &&
+        (*parameters)[ "usechainlist" ].isEmpty() )
+   {
+      parameters->erase( "usechainlist" );
+   }
    if ( parameters->count( "reseqatom" ) &&
         (*parameters)[ "reseqatom" ].isEmpty() )
    {
@@ -308,6 +379,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::closeEvent( QCloseEvent *e )
         (*parameters)[ "startatom" ].isEmpty() )
    {
       parameters->erase( "startatom" );
+   }
+   if ( parameters->count( "chainrestartatom" ) &&
+        (*parameters)[ "chainrestartatom" ].isEmpty() )
+   {
+      parameters->erase( "chainrestartatom" );
    }
    if ( parameters->count( "modelrestartatom" ) &&
         (*parameters)[ "modelrestartatom" ].isEmpty() )
@@ -323,6 +399,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::closeEvent( QCloseEvent *e )
         (*parameters)[ "startresidue" ].isEmpty() )
    {
       parameters->erase( "startresidue" );
+   }
+   if ( parameters->count( "chainrestartresidue" ) &&
+        (*parameters)[ "chainrestartresidue" ].isEmpty() )
+   {
+      parameters->erase( "chainrestartresidue" );
    }
    if ( parameters->count( "modelrestartresidue" ) &&
         (*parameters)[ "modelrestartresidue" ].isEmpty() )
@@ -361,6 +442,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_inputfile( const QString & )
    ( *parameters )[ "inputfile" ] = le_inputfile->text();
 }
 
+void US_Hydrodyn_Pdb_Tool_Renum::update_usechainlist( const QString & )
+{
+   ( *parameters )[ "usechainlist" ] = le_usechainlist->text();
+}
+
 void US_Hydrodyn_Pdb_Tool_Renum::update_reseqatom( const QString & )
 {
    ( *parameters )[ "reseqatom" ] = le_reseqatom->text();
@@ -369,6 +455,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_reseqatom( const QString & )
 void US_Hydrodyn_Pdb_Tool_Renum::update_startatom( const QString & )
 {
    ( *parameters )[ "startatom" ] = le_startatom->text();
+}
+
+void US_Hydrodyn_Pdb_Tool_Renum::update_chainrestartatom( const QString & )
+{
+   ( *parameters )[ "chainrestartatom" ] = le_chainrestartatom->text();
 }
 
 void US_Hydrodyn_Pdb_Tool_Renum::update_modelrestartatom( const QString & )
@@ -384,6 +475,11 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_reseqresidue( const QString & )
 void US_Hydrodyn_Pdb_Tool_Renum::update_startresidue( const QString & )
 {
    ( *parameters )[ "startresidue" ] = le_startresidue->text();
+}
+
+void US_Hydrodyn_Pdb_Tool_Renum::update_chainrestartresidue( const QString & )
+{
+   ( *parameters )[ "chainrestartresidue" ] = le_chainrestartresidue->text();
 }
 
 void US_Hydrodyn_Pdb_Tool_Renum::update_modelrestartresidue( const QString & )

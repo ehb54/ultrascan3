@@ -40,16 +40,22 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Renum : public QDialog
       QLabel *                                lbl_credits_1;
       QLabel *                                lbl_inputfile;
       QLineEdit *                             le_inputfile;
+      QLabel *                                lbl_usechainlist;
+      QLineEdit *                             le_usechainlist;
       QLabel *                                lbl_reseqatom;
       QLineEdit *                             le_reseqatom;
       QLabel *                                lbl_startatom;
       QLineEdit *                             le_startatom;
+      QLabel *                                lbl_chainrestartatom;
+      QLineEdit *                             le_chainrestartatom;
       QLabel *                                lbl_modelrestartatom;
       QLineEdit *                             le_modelrestartatom;
       QLabel *                                lbl_reseqresidue;
       QLineEdit *                             le_reseqresidue;
       QLabel *                                lbl_startresidue;
       QLineEdit *                             le_startresidue;
+      QLabel *                                lbl_chainrestartresidue;
+      QLineEdit *                             le_chainrestartresidue;
       QLabel *                                lbl_modelrestartresidue;
       QLineEdit *                             le_modelrestartresidue;
       QLabel *                                lbl_striphydrogens;
@@ -68,11 +74,14 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Renum : public QDialog
    private slots:
 
       void                                    update_inputfile( const QString & );
+      void                                    update_usechainlist( const QString & );
       void                                    update_reseqatom( const QString & );
       void                                    update_startatom( const QString & );
+      void                                    update_chainrestartatom( const QString & );
       void                                    update_modelrestartatom( const QString & );
       void                                    update_reseqresidue( const QString & );
       void                                    update_startresidue( const QString & );
+      void                                    update_chainrestartresidue( const QString & );
       void                                    update_modelrestartresidue( const QString & );
       void                                    update_striphydrogens( const QString & );
       void                                    update_itassertemplate( const QString & );

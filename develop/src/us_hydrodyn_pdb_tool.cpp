@@ -2388,6 +2388,50 @@ void US_Hydrodyn_Pdb_Tool::select_model( QListView *lv, QString model )
    clean_selection( lv );
 }
 
+void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv, QString chain )
+{
+   QStringList chains;
+   chains << chain;
+   return select_chain( lv, chains );
+}
+
+void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv, QStringList chains )
+{
+   lv->selectAll( false );
+   update_enables_csv();
+   if ( !chains.size() )
+   {
+      return;
+   }
+
+   map < QString, bool > chains_to_select;
+   for ( unsigned int i = 0; i < chains.size(); i++ )
+   {
+      chains_to_select[ chains[ i ] ] = true;
+   }
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( item1->depth() == 1 &&
+           chains_to_select.count( item1->text( 0 ) ) )
+      {
+         item1->setSelected( true );
+      }
+      ++it1;
+   }
+   clean_selection( lv );
+   if ( lv == lv_csv )
+   {
+      selection_since_count_csv1 = true;
+      csv_sel_msg();
+   } else {
+      selection_since_count_csv2 = true;
+      csv2_sel_msg();
+   }
+}
+
 void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv )
 {
    pdb_sel_count counts = count_selected( lv );
@@ -2866,9 +2910,22 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_name( QListViewItem *lvi )
       .replace( QRegExp( "^\\S+" ), "" )
       .replace( QRegExp( "\\S+$" ), "" )
       .stripWhiteSpace();
-   // for some reason teh qregexp's aren't working correctly, thus the stripwhitespace at the end
+   // for some reason the qregexp's aren't working correctly, thus the stripwhitespace at the end
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_chain_id( QListViewItem *lvi )
+{
+   if ( lvi->depth() < 1 )
+   {
+      return "unknown";
+   }
+   while( lvi->depth() > 1 )
+   {
+      lvi = lvi->parent();
+   }
+   return lvi->text( 0 );
 }
 
 QStringList US_Hydrodyn_Pdb_Tool::atom_set( QListView *lv )
@@ -4367,6 +4424,13 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    unsigned int startresidue        = 
       parameters.count( "startresidue"        ) ? 
       parameters[ "startresidue"        ].toUInt() : 1;
+   bool         chainrestartatom    = 
+      parameters.count( "chainrestartatom"    ) && parameters[ "chainrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   bool         chainrestartresidue  = 
+      parameters.count( "chainrestartresidue" ) && parameters[ "chainrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+   QString      usechainlist = 
+      parameters.count( "usechainlist"        ) ? 
+      parameters[ "usechainlist"        ] : "";
    bool         modelrestartatom    = 
       parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
    bool         modelrestartresidue = 
@@ -4380,12 +4444,15 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    bool         itassertemplate      =
       parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
 
+   cout << QString( "usechainlist %1\n" ).arg( usechainlist );
+   cout << QString( "reseqatom %1\n" ).arg( reseqatom );
    cout << QString( "startatom %1\n" ).arg( startatom );
    cout << QString( "startresidue %1\n" ).arg( startresidue );
+   cout << QString( "chainrestartatom %1\n" ).arg( chainrestartatom );
    cout << QString( "modelrestartatom %1\n" ).arg( modelrestartatom );
-   cout << QString( "modelrestartresidue %1\n" ).arg( modelrestartresidue );
-   cout << QString( "reseqatom %1\n" ).arg( reseqatom );
    cout << QString( "reseqresidue %1\n" ).arg( reseqresidue );
+   cout << QString( "chainrestartresidue %1\n" ).arg( chainrestartresidue );
+   cout << QString( "modelrestartresidue %1\n" ).arg( modelrestartresidue );
    cout << QString( "striphydrogens %1\n" ).arg( striphydrogens );
    cout << QString( "itassertemplate %1\n" ).arg( itassertemplate );
 
@@ -5072,4 +5139,70 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
    }
       
    return qs;
+}
+
+double US_Hydrodyn_Pdb_Tool::minimum_pair_distance  ( QListView *lv,
+                                                      QString    chain_1,
+                                                      QString    chain_2,
+                                                      QString  & key_1,
+                                                      QString  & key_2 )
+{
+   vector < QListViewItem * > items_chain_1;
+   vector < QListViewItem * > items_chain_2;
+
+   {
+      QListViewItemIterator it1( lv );
+      while ( it1.current() ) 
+      {
+         QListViewItem *item1 = it1.current();
+         if ( !item1->childCount() )
+         {
+            if ( chain_1 == get_chain_id( item1 ) )
+            {
+               items_chain_1.push_back( item1 );
+            }
+         }
+         it1++;
+      }
+   }
+
+   {
+      QListViewItemIterator it2( lv );
+      while ( it2.current() ) 
+      {
+         QListViewItem *item2 = it2.current();
+         if ( !item2->childCount() )
+         {
+            if ( chain_2 == get_chain_id( item2 ) )
+            {
+               items_chain_2.push_back( item2 );
+            }
+         }
+         it2++;
+      }
+   }
+
+   lvipair min_lvp;
+   double  min_distance = 9e99;
+
+   for ( unsigned int i = 0; i < items_chain_1.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < items_chain_2.size(); j++ )
+      {
+         lvipair lvp;
+         lvp.lvi1 = items_chain_1[ i ];
+         lvp.lvi2 = items_chain_2[ j ];
+         double distance = pair_dist( lvp.lvi1, lvp.lvi2 );
+         if ( ( !i && !j ) || min_distance > distance )
+         {
+            min_lvp      = lvp;
+            min_distance = distance;
+         }         
+      }
+   }
+         
+   key_1 = key( min_lvp.lvi1 );
+   key_2 = key( min_lvp.lvi2 );
+   return min_distance;
+   update_enables();
 }

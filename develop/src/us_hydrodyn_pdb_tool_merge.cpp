@@ -171,7 +171,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    pb_extra_chains->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_extra_chains, SIGNAL(clicked()), SLOT(extra_chains()));
 
-   pb_only_closest = new QPushButton(tr("Only Closest"), this);
+   pb_only_closest = new QPushButton(tr("Only Closest Chains"), this);
    pb_only_closest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_only_closest->setMinimumHeight(minHeight1);
    pb_only_closest->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -2552,7 +2552,130 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
    {
       return;
    }
-   // compute X ref chain pairs, find closest only report those
+
+   // for each existing chain and each extra chain, add cross chain if it doesn't already exist
+   make_csv_chain_map();
+
+   map < QString, QStringList > chains_to_check;
+   unsigned int size = 0;
+
+   for ( map < QString, unsigned int >::iterator it = csv_chain_map.begin();
+         it != csv_chain_map.end();
+         it++ )
+   {
+      if ( it->first.length() <= 1 )
+      {
+         for ( unsigned int i = 0; i < extra_chains_list.size(); i++ )
+         {
+            QString cross_chain = QString( "%1+%2" ).arg( it->first ).arg( extra_chains_list[ i ] );
+            if ( !csv_chain_map.count( cross_chain ) )
+            {
+               chains_to_check[ extra_chains_list[ i ] ] << it->first;
+               size++;
+            }
+         }
+      }
+   }
+   
+   if ( !size )
+   {
+      return;
+   }
+
+   running = true;
+   update_enables();
+
+   unsigned int pos = 0;
+   progress->setProgress( pos, size );
+
+   for ( map < QString, QStringList >::iterator it = chains_to_check.begin();
+         it != chains_to_check.end();
+         it++ )
+   {
+      double  minimum_distance = 1e99;
+      QString minimum_key_a;
+      QString minimum_key_b;
+
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         progress->setProgress( pos++ ); 
+         qApp->processEvents();
+         if ( !running )
+         {
+            return;
+         }
+         
+         // find distance of nearest residue pair in chain
+         editor_msg( "dark gray", QString( tr( "Finding closest pair of chain %1 and %2" ) ).arg( it->first ).arg( it->second[ i ] ) );
+         // select chains in pdb editor for the fun of it
+         cout << "select chain\n" << flush;
+         {
+            QStringList chains;
+            chains << it->first;
+            chains << it->second[ i ];
+            ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->select_chain( lv_csv_from, chains );
+         }
+         QString key_chain_a;
+         QString key_chain_b;
+
+         cout << "compute dist\n" << flush;
+         double distance = 
+            ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)
+            ->minimum_pair_distance( lv_csv_from, it->first, it->second[ i ], key_chain_a, key_chain_b );
+
+         if ( !i )
+         {
+            minimum_distance = distance;
+            minimum_key_a    = key_chain_a;
+            minimum_key_b    = key_chain_b;
+         } else {
+            if ( minimum_distance > distance )
+            {
+               minimum_distance = distance;
+               minimum_key_a    = key_chain_a;
+               minimum_key_b    = key_chain_b;
+            }               
+         }
+      }
+      editor_msg( "blue", QString( tr( "Closest chain to %1 with key %2 has key %3 distance %4" ) )
+                  .arg( it->first )
+                  .arg( minimum_key_a )
+                  .arg( minimum_key_b )
+                  .arg( minimum_distance )
+                  );
+
+      {
+         QStringList chain_a_list = QStringList::split( "~", minimum_key_a );
+         QStringList chain_b_list = QStringList::split( "~", minimum_key_b );
+
+         QString chain_a = chain_a_list.size() > 1 ? chain_a_list[ 1 ] : "?";
+         QString chain_b = chain_b_list.size() > 1 ? chain_b_list[ 1 ] : "?";
+
+         // QString residue_a = chain_a_list.size() > 2 ? chain_a_list[ 2 ] : "?";
+         // residue_a.replace( QRegExp( "^\\D*" ), "" );
+         // unsigned int residue_a_pos = residue_a.toUInt();
+
+         QString residue_b = chain_b_list.size() > 2 ? chain_b_list[ 2 ] : "?";
+         residue_b.replace( QRegExp( "^\\D*" ), "" );
+         unsigned int residue_b_pos = residue_b.toUInt();
+
+         if ( residue_b_pos < 2 )
+         {
+            residue_b_pos = 2;
+         }
+
+         QString cross_chain = QString( "%1+%2" ).arg( chain_b ).arg( chain_a );
+
+         unsigned int pos = ( unsigned int ) t_csv->numRows();
+         t_csv->setNumRows( pos + 1 );
+         t_csv->setText( pos, 0, cross_chain );
+         t_csv->setText( pos, 3, QString( "%1" ).arg( residue_b_pos - 1 ) );
+         t_csv->setText( pos, 4, QString( "%1" ).arg( residue_b_pos + 1 ) );
+      }
+   }
+   progress->setProgress( 1, 1 );
+   running = false;
+   update_enables();
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::delete_row()

@@ -201,6 +201,13 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          sel_nearest_atoms      ( QListView *lv );
       double        pair_dist              ( QListViewItem *item1, QListViewItem *item2 );
 
+      // compute minimum pair distance between chains return respective keys in key_1, key_2
+      double        minimum_pair_distance  ( QListView *lv,
+                                             QString    chain_1,
+                                             QString    chain_2,
+                                             QString  & key_1,
+                                             QString  & key_2 );
+
       US_Hydrodyn_Pdb_Tool_Merge   *pdb_tool_merge_window;
       bool          pdb_tool_merge_widget;
 
@@ -214,11 +221,14 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          replace_selected_residues ( QListView *lv, csv &csv_use, QString from, QString to );
       void          distances              ( QListView *lv );
       QString       get_atom_name          ( QListViewItem *lvi );
+      QString       get_chain_id           ( QListViewItem *lvi );
       QStringList   atom_set               ( QListView *lv ); // returns a list of selected atoms
       QStringList   chain_set              ( QListView *lv ); // returns a list of selected chains
       QStringList   model_set              ( QListView *lv ); // returns a list of selected models
       void          select_model           ( QListView *lv, QString model ); // selects just that model
       void          select_chain           ( QListView *lv ); // selected a set of chains
+      void          select_chain           ( QListView *lv, QStringList chains ); // selected a set of chains
+      void          select_chain           ( QListView *lv, QString chain ); // selected one chain
       void          compute_angle          ( QListView *lv );
 
       csv           reseq_csv              ( QListView *lv, csv &ref_csv, bool only_selected = false );
