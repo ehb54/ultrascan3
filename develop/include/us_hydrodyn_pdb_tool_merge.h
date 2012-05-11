@@ -148,12 +148,20 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       map < QString, unsigned int > csv_chain_map;
       vector < QString >            extra_chains_list;
 
+      vector < range_entry >        cache_from_ranges;
+      vector < range_entry >        cache_to_ranges;
+      map < QString, unsigned int > cache_from_range_pos;
+      map < QString, unsigned int > cache_to_range_pos;
+      map < QString, bool >         cache_use_start;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-      void make_csv_chain_map();
-      void update_t_csv_range( vector < range_entry > &ranges,
+      bool         cache_range_ok;
+
+      void         make_csv_chain_map();
+      void         update_t_csv_range( vector < range_entry > &ranges,
                                unsigned int col_start,
                                unsigned int col_end );
 
@@ -164,10 +172,13 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       bool         validate_commands();
       bool         cut_back_ok;
       void         run_one();
+      bool         extra_chains_done;
 
    private slots:
 
       void setupGUI();
+
+      void table_value( int, int );
 
       void update_enables();
 
