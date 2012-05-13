@@ -128,13 +128,11 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    xmax        = drecti.right();
 
    if ( xmin == xmax )
-   {  // Auto-limits:  calculate x,y,z ranges
+   {  // Auto-limits:  calculate x,y ranges
       xmin        = solu.at( 0 ).s;    // initial minima,maxima
       ymin        = solu.at( 0 ).k;
-      zmin        = solu.at( 0 ).c;
       xmax        = xmin;
       ymax        = ymin;
-      zmax        = zmin;
 
       // scan solute distribution for ranges
 
@@ -147,8 +145,6 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
          xmax    = qMax( xval, xmax );
          ymin    = qMin( yval, ymin );
          ymax    = qMax( yval, ymax );
-         zmin    = qMin( zval, zmin );
-         zmax    = qMax( zval, zmax );
       }
 
       xrng    = xmax - xmin;          // initial ranges and pixel/data ratios

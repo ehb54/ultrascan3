@@ -32,6 +32,7 @@ typedef struct distro_sys
    QString         analys_name;
    QString         method;
    QString         cmapname;
+   QString         editGUID;
    int             distro_type;
    bool            monte_carlo;
 } DisSys;
@@ -88,7 +89,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_close;
       QPushButton*  pb_rmvdist;
 
-      QCheckBox*    cb_autolim;
+      QCheckBox*    cb_autosxy;
+      QCheckBox*    cb_autoscz;
       QCheckBox*    cb_conloop;
       QCheckBox*    cb_plot_s;
       QCheckBox*    cb_plot_mw;
@@ -121,7 +123,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       int           dbg_level;
 
       bool          cnst_vbar;
-      bool          auto_lim;
+      bool          auto_sxy;
+      bool          auto_scz;
       bool          cont_loop;
       bool          plot_s;
       bool          looping;
@@ -154,7 +157,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       void update_plot_smax(  double );
       void plot_data(      int );
       void plot_data(      void );
-      void select_autolim( void );
+      void select_autosxy( void );
+      void select_autoscz( void );
       void select_conloop( void );
       void select_plot_s(  void );
       void select_plot_mw( void );
