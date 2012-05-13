@@ -392,9 +392,11 @@ void US_Pseudo3D_Combine::reset( void )
 
    stop();
    system.clear();
+   pfilts.clear();
    pb_pltall ->setEnabled( false );
    pb_refresh->setEnabled( false );
    pb_rmvdist->setEnabled( false );
+   le_prefilt->setText( tr( "(no prefilter)" ) );
 }
 
 // plot the data
@@ -1292,7 +1294,7 @@ void US_Pseudo3D_Combine::select_prefilt( void )
    QString pfmsg;
 
    if ( nedits == 0 )
-      pfmsg = tr( "(none chosen)" );
+      pfmsg = tr( "(no prefilter)" );
 
    else if ( runsel )
       pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );

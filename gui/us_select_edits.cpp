@@ -40,6 +40,15 @@ qDebug() << "SE:sel_late" << sel_late;
    QGridLayout* top  = new QGridLayout;
    int row           = 0;
 
+   pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
+   QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
+   QString invusr      = US_Settings::us_inv_name();
+   le_invest           = us_lineedit( invnum + invusr, 0, true );
+   connect( pb_invest, SIGNAL( clicked()    ),
+                       SLOT  ( get_person() ) );
+   top->addWidget( pb_invest, row,   0, 1, 1 );
+   top->addWidget( le_invest, row++, 1, 1, 2 );
+
    QButtonGroup* selButtons = new QButtonGroup( this );
    QGridLayout* rb1 = us_radiobutton( tr( "by Run ID" ),
       rb_runid,   sel_run );
@@ -468,5 +477,26 @@ void US_SelectEdits::pare_to_latest( void )
 
       // Need to repeat above when any removed was later in list
    }
+}
+
+// Investigator button clicked:  get investigator from dialog
+void US_SelectEdits::get_person()
+{
+   int invID     = US_Settings::us_inv_ID();
+   US_Investigator* dialog = new US_Investigator( true, invID );
+
+   connect( dialog, SIGNAL( investigator_accepted( int ) ),
+                    SLOT(   update_person(         int ) ) );
+
+   dialog->exec();
+}
+
+// Slot to handle accept in investigator dialog
+void US_SelectEdits::update_person( int ID )
+{
+   QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
+   le_invest->setText( number + US_Settings::us_inv_name() );
+
+   list_data();
 }
 

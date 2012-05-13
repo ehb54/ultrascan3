@@ -17,7 +17,7 @@
     After one or more data sets are selected in the list, a button labelled
     "Select PreFilter(s)" passes experiment data to the caller which passes
     selections to the <a href="load_model_distrib.html">LoadModel Dialog</a>.
-    
+
     <table>
       <tr>
         <td>
@@ -26,24 +26,32 @@
         <td>
           <ul>
             <li>
+              <b>Select Investigator</b> This button brings up an
+              <a href="us_investigator.html">Investigator Dialog</a> that allows
+              selecting the current investigator for whom to list runs/edits.
+            </li>
+
+            <li>
               <b>by Run ID</b> Check this radio button to generate a list
               of run IDs by which to filter models.
             </li>
-            
+
             <li>
               <b>by Latest Edit</b> Check this radio button to generate a list
               of Run/Triple/Edit entries that are limited to the latest edits
               of each triple and by which to filter.
             </li>
-            
+
             <li>
               <b>by Edit</b> Check this radio button to generate a list
               of all Run/Triple/Edit entries by which to filter.
             </li>
-            
+
             <li>
-              <b>Local Disk</b> Check this radio button to generate an edit
-              list from local disk */ultrascan/results files.
+              <b>Search</b> As characters are entered in the text box to the
+              right of the Search label, the list of data sets is modified to
+              consist of matching entries. A blank field restores the full
+              list. Note that the search is case-insensitive.
             </li>
 
             <li>
@@ -51,22 +59,15 @@
               runs or edits. You may select a single entry or multiple entries
               using ctrl-click or shift-click in the normal way.
             </li>
-            
-            <li>
-              <b>Search</b> As characters are entered in the text box to the
-              right of the Search label, the list of data sets is modified to
-              consist of matching entries. A blank field restores the full
-              list. Note that the search is case-insensitive.
-            </li>
-            
+
             <li>
               <b>Help</b> Click to bring up this documentation.
             </li>
-            
+
             <li>
               <b>Cancel</b> Click to close the dialog with no choices made.
             </li>
-            
+
             <li>
               <b>Select PreFilter(s)</b> Click to accept the choice(s)
               highlighted in the data list and pass data back to the caller.
