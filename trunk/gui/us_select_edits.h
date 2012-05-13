@@ -50,10 +50,13 @@ class US_GUI_EXTERN US_SelectEdits : public US_WidgetsDialog
       QStringList    elabels;     // Keys for editmap
       QStringList    rlabels;     // RunIDs in editmap
 
+      QPushButton*   pb_invest;   // Investigator button
+
       QRadioButton*  rb_runid;    // RunID radio button
       QRadioButton*  rb_latest;   // Latest-edit radio button
       QRadioButton*  rb_alledit;  // All-edits radio button
 
+      QLineEdit*     le_invest;   // Investigator id:name text entry
       QLineEdit*     le_dfilter;  // Data search filter text entry
 
       QLabel*        lb_list;     // Label at top of data list
@@ -72,6 +75,8 @@ class US_GUI_EXTERN US_SelectEdits : public US_WidgetsDialog
       void search         ( const QString& );
       void cancelled      ( void );
       void accepted       ( void );
+      void get_person     ( void );
+      void update_person  ( int  );
       void help           ( void )
       { showHelp.show_help( "select_edits.html" ); };
 
