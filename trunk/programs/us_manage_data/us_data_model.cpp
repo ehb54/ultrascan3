@@ -851,7 +851,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
          descd.contents     = descd.contents + " " + descl.contents;
 
          adescs << descd;                  // output combo record
-//DbgLv(2) << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
+DbgLv(2) << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )              // bump db count and test if done
@@ -877,7 +877,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
       while ( descd.recType > descl.recType )
       {  // output db records that are left-over children
          adescs << descd;
-//DbgLv(2) << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
+DbgLv(2) << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )
@@ -892,7 +892,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
       while ( descl.recType > descd.recType )
       {  // output local records that are left-over children
          adescs << descl;
-//DbgLv(2) << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
+DbgLv(2) << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr < nldes )
@@ -921,11 +921,12 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
          dlabel = descd.description;
          llabel = descl.description;
       }
+DbgLv(2) << "MERGE: rtype dlabel llabel" << descd.recType << dlabel << llabel;
 
       if ( dlabel < llabel )
       {  // output db record first based on alphabetic label sort
          adescs << descd;
-//DbgLv(2) << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
+DbgLv(2) << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )
@@ -937,7 +938,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
       else
       {  // output local record first based on alphabetic label sort
          adescs << descl;
-//DbgLv(2) << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
+DbgLv(2) << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr < nldes )
@@ -957,7 +958,7 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
    while ( jdr < nddes )
    {
       adescs << ddescs.at( jdr++ );
-//descd=ddescs.at(jlr-1);
+//descd=ddescs.at(jdr-1);
 //DbgLv(2) << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
       progress->setValue( ++kar );
       qApp->processEvents();
@@ -972,8 +973,8 @@ DbgLv(1) << "MERGE: nd nl dlab llab"
       qApp->processEvents();
    }
 
-//DbgLv(2) << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
-//DbgLv(2) << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
+DbgLv(2) << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
+DbgLv(2) << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Data Merge Complete" ) );

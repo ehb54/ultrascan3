@@ -14,6 +14,8 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_sleep.h"
+#include "us_passwd.h"
+#include "us_report.h"
 #include "us_constants.h"
 
 #define PA_TMDIS_MS 2000  // default Plotall time per distro in milliseconds
@@ -63,121 +65,100 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Pseudo-3D Plotting Controls" ) );
-   spec->addWidget( lb_info1, s_row++, 0, 1, 2 );
 
    // Series of rows: most of them label on left, counter/box on right
    QLabel* lb_resolu     = us_label( tr( "Pseudo-3D Resolution:" ) );
    lb_resolu->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_resolu, s_row, 0 );
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_resolu->setStep( 1 );
-   spec->addWidget( ct_resolu, s_row++, 1 );
    connect( ct_resolu, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_resolu( double ) ) );
 
    QLabel* lb_xreso      = us_label( tr( "X Resolution:" ) );
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_xreso, s_row, 0 );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xreso->setStep( 1 );
-   spec->addWidget( ct_xreso, s_row++, 1 );
    connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_xreso( double ) ) );
 
    QLabel* lb_yreso      = us_label( tr( "Y Resolution:" ) );
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_yreso, s_row, 0 );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_yreso->setStep( 1 );
-   spec->addWidget( ct_yreso, s_row++, 1 );
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
    QLabel* lb_zfloor     = us_label( tr( "Z Floor Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_zfloor, s_row, 0 );
 
    ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
    ct_zfloor->setStep( 1 );
-   spec->addWidget( ct_zfloor, s_row++, 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
 
-   QLabel* lb_autolim    = us_label( tr( "Automatic Plot Limits" ) );
-   lb_autolim->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_autolim, s_row, 0 );
+   us_checkbox( tr( "Autoscale X and Y" ), cb_autosxy, true );
+   connect( cb_autosxy, SIGNAL( clicked() ),
+            this,       SLOT( select_autosxy() ) );
 
-   us_checkbox( tr( "(unselect to override)" ), cb_autolim, true );
-   spec->addWidget( cb_autolim, s_row++, 1 );
-   connect( cb_autolim, SIGNAL( clicked() ),
-            this,       SLOT( select_autolim() ) );
+   us_checkbox( tr( "Autoscale Z" ), cb_autoscz, true );
+   connect( cb_autoscz, SIGNAL( clicked() ),
+            this,       SLOT( select_autoscz() ) );
+
+   us_checkbox( tr( "Continuous Loop" ), cb_conloop, true );
+   connect( cb_conloop, SIGNAL( clicked() ),
+            this,       SLOT( select_conloop() ) );
+
+   us_checkbox( tr( "Z as Percentage" ), cb_zpcent, false );
 
    lb_plt_fmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
    lb_plt_fmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plt_fmin, s_row, 0 );
 
    ct_plt_fmin   = us_counter( 3, 1.0, 50.0, 0.0 );
    ct_plt_fmin->setStep( 1 );
-   spec->addWidget( ct_plt_fmin, s_row++, 1 );
    connect( ct_plt_fmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_fmin( double ) ) );
 
    lb_plt_fmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
    lb_plt_fmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plt_fmax, s_row, 0 );
 
    ct_plt_fmax   = us_counter( 3, 1.0, 50.0, 1.0 );
    ct_plt_fmax->setStep( 1 );
-   spec->addWidget( ct_plt_fmax, s_row++, 1 );
    connect( ct_plt_fmax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_fmax( double ) ) );
 
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plt_smin, s_row, 0 );
 
    ct_plt_smin   = us_counter( 3, -10.0, 10000.0, 0.0 );
    ct_plt_smin->setStep( 1 );
-   spec->addWidget( ct_plt_smin, s_row++, 1 );
    connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smin( double ) ) );
 
    lb_plt_smax   = us_label( tr( "Plot Limit s Maximum:" ) );
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plt_smax, s_row, 0 );
 
    ct_plt_smax   = us_counter( 3, 0.0, 10000.0, 0.0 );
    ct_plt_smax->setStep( 1 );
-   spec->addWidget( ct_plt_smax, s_row++, 1 );
    connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smax( double ) ) );
 
    QLabel* lb_plt_dlay   = us_label( tr( "Plot Loop Delay Seconds:" ) );
    lb_plt_dlay->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_plt_dlay, s_row, 0 );
 
    ct_plt_dlay   = us_counter( 3, 0.1, 30.0, 0.0 );
    ct_plt_dlay->setStep( 0.1 );
-   spec->addWidget( ct_plt_dlay, s_row++, 1 );
    QSettings settings( "UltraScan3", "UltraScan" );
    patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
    ct_plt_dlay->setValue( (double)( patm_dlay ) / 1000.0 );
 
-   us_checkbox( tr( "Continuous Loop" ), cb_conloop, true );
-   spec->addWidget( cb_conloop, s_row++, 1 );
-   connect( cb_conloop, SIGNAL( clicked() ),
-            this,       SLOT( select_conloop() ) );
-
    QLabel* lb_curr_distr = us_label( tr( "Current Distro:" ) );
    lb_curr_distr->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_curr_distr, s_row, 0 );
 
    ct_curr_distr = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_curr_distr->setStep( 1 );
-   spec->addWidget( ct_curr_distr, s_row++, 1 );
    connect( ct_curr_distr, SIGNAL( valueChanged( double ) ),
             this,          SLOT( update_curr_distr( double ) ) );
 
@@ -185,97 +166,119 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
             + tr( "    analysisID" ) );
    us_setReadOnly( te_distr_info, true );
-   spec->addWidget( te_distr_info, s_row,   0, 2, 2 );
-   s_row += 2;
 
    le_cmap_name  = us_lineedit(
          tr( "Default Color Map: w-cyan-magenta-red-black" ), -1, true );
-   spec->addWidget( le_cmap_name,  s_row++, 0, 1, 2 );
    te_distr_info->setMaximumHeight( le_cmap_name->height() * 2 );
 
    us_checkbox( tr( "Plot f/f0 vs s" ), cb_plot_s, true );
-   spec->addWidget( cb_plot_s, s_row, 0 );
    connect( cb_plot_s,  SIGNAL( clicked() ),
             this,       SLOT( select_plot_s() ) );
 
    us_checkbox( tr( "Plot f/f0 vs MW" ), cb_plot_mw, false );
-   spec->addWidget( cb_plot_mw, s_row++, 1 );
    connect( cb_plot_mw, SIGNAL( clicked() ),
             this,       SLOT( select_plot_mw() ) );
 
    pb_pltall     = us_pushbutton( tr( "Plot All Distros" ) );
    pb_pltall->setEnabled( false );
-   spec->addWidget( pb_pltall, s_row, 0 );
    connect( pb_pltall,  SIGNAL( clicked() ),
             this,       SLOT( plotall() ) );
 
    pb_stopplt    = us_pushbutton( tr( "Stop Plotting Loop" ) );
    pb_stopplt->setEnabled( false );
-   spec->addWidget( pb_stopplt, s_row++, 1 );
    connect( pb_stopplt, SIGNAL( clicked() ),
             this,       SLOT( stop() ) );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Pseudo-3D Plot" ) );
    pb_refresh->setEnabled(  false );
-   spec->addWidget( pb_refresh, s_row, 0 );
    connect( pb_refresh, SIGNAL( clicked() ),
             this,       SLOT( plot_data() ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   spec->addWidget( pb_reset, s_row++, 1 );
    connect( pb_reset,   SIGNAL( clicked() ),
             this,       SLOT( reset() ) );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   spec->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
-   spec->addWidget( pb_prefilt, s_row, 0 );
+
+   pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
+   pb_ldcolor->setEnabled( true );
+   connect( pb_ldcolor, SIGNAL( clicked() ),
+            this,       SLOT( load_color() ) );
+
    le_prefilt    = us_lineedit( tr( "" ), -1, true );
-   spec->addWidget( le_prefilt,    s_row++, 1, 1, 1 );
    connect( pb_prefilt, SIGNAL( clicked() ),
             this,       SLOT( select_prefilt() ) );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution(s)" ) );
    pb_lddistr->setEnabled( true );
-   spec->addWidget( pb_lddistr, s_row, 0 );
    connect( pb_lddistr, SIGNAL( clicked() ),
             this,       SLOT( load_distro() ) );
 
-   pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
-   pb_ldcolor->setEnabled( true );
-   spec->addWidget( pb_ldcolor, s_row++, 1 );
-   connect( pb_ldcolor, SIGNAL( clicked() ),
-            this,       SLOT( load_color() ) );
-
    pb_rmvdist    = us_pushbutton( tr( "Remove Distribution(s)" ) );
    pb_rmvdist->setEnabled( true );
-   spec->addWidget( pb_rmvdist, s_row, 0 );
    connect( pb_rmvdist, SIGNAL( clicked() ),
             this,       SLOT( remove_distro() ) );
 
-   us_checkbox( tr( "Z as Percentage" ), cb_zpcent, false );
-   spec->addWidget( cb_zpcent, s_row++, 1 );
-//pb_rmvdist->setEnabled(false);
-//cb_zpcent ->setEnabled(false);
-
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   spec->addWidget( pb_help, s_row, 0 );
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT( help() ) );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   spec->addWidget( pb_close, s_row++, 1 );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT( close() ) );
 
-   // set up plot component window on right side
+   // Order plot components on the left side
+   spec->addWidget( lb_info1,      s_row++, 0, 1, 2 );
+   spec->addWidget( lb_resolu,     s_row,   0 );
+   spec->addWidget( ct_resolu,     s_row++, 1 );
+   spec->addWidget( lb_xreso,      s_row,   0 );
+   spec->addWidget( ct_xreso,      s_row++, 1 );
+   spec->addWidget( lb_yreso,      s_row,   0 );
+   spec->addWidget( ct_yreso,      s_row++, 1 );
+   spec->addWidget( lb_zfloor,     s_row,   0 );
+   spec->addWidget( ct_zfloor,     s_row++, 1 );
+   spec->addWidget( cb_autosxy,    s_row,   0 );
+   spec->addWidget( cb_autoscz,    s_row++, 1 );
+   spec->addWidget( cb_conloop,    s_row,   0 );
+   spec->addWidget( cb_zpcent,     s_row++, 1 );
+   spec->addWidget( lb_plt_fmin,   s_row,   0 );
+   spec->addWidget( ct_plt_fmin,   s_row++, 1 );
+   spec->addWidget( lb_plt_fmax,   s_row,   0 );
+   spec->addWidget( ct_plt_fmax,   s_row++, 1 );
+   spec->addWidget( lb_plt_smin,   s_row,   0 );
+   spec->addWidget( ct_plt_smin,   s_row++, 1 );
+   spec->addWidget( lb_plt_smax,   s_row,   0 );
+   spec->addWidget( ct_plt_smax,   s_row++, 1 );
+   spec->addWidget( lb_plt_dlay,   s_row,   0 );
+   spec->addWidget( ct_plt_dlay,   s_row++, 1 );
+   spec->addWidget( lb_curr_distr, s_row,   0 );
+   spec->addWidget( ct_curr_distr, s_row++, 1 );
+   spec->addWidget( te_distr_info, s_row,   0, 2, 2 ); s_row += 2;
+   spec->addWidget( le_cmap_name,  s_row++, 0, 1, 2 );
+   spec->addWidget( cb_plot_s,     s_row,   0 );
+   spec->addWidget( cb_plot_mw,    s_row++, 1 );
+   spec->addWidget( pb_pltall,     s_row,   0 );
+   spec->addWidget( pb_stopplt,    s_row++, 1 );
+   spec->addWidget( pb_refresh,    s_row,   0 );
+   spec->addWidget( pb_reset,      s_row++, 1 );
+   spec->addLayout( dkdb_cntrls,   s_row++, 0, 1, 2 );
+   spec->addWidget( le_prefilt,    s_row++, 0, 1, 2 );
+   spec->addWidget( pb_prefilt,    s_row,   0 );
+   spec->addWidget( pb_ldcolor,    s_row++, 1 );
+   spec->addWidget( pb_lddistr,    s_row,   0 );
+   spec->addWidget( pb_rmvdist,    s_row++, 1 );
+   spec->addWidget( pb_help,       s_row,   0 );
+   spec->addWidget( pb_close,      s_row++, 1 );
+
+   // Set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient (1e-13)"
                      " for water at 20" ) + DEGC;
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
@@ -350,8 +353,10 @@ void US_Pseudo3D_Combine::reset( void )
    ct_zfloor->setRange( 0, 50, 1 );
    ct_zfloor->setValue( (double)zfloor );
 
-   auto_lim   = true;
-   cb_autolim->setChecked( auto_lim );
+   auto_sxy   = true;
+   cb_autosxy->setChecked( auto_sxy );
+   auto_scz   = true;
+   cb_autoscz->setChecked( auto_scz );
    cont_loop  = false;
    cb_conloop->setChecked( cont_loop );
 
@@ -442,20 +447,30 @@ void US_Pseudo3D_Combine::plot_data( void )
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
    QwtDoubleRect drect;
-   plt_zmin = zpcent ? plt_zmin_zp : plt_zmin_co;
-   plt_zmax = zpcent ? plt_zmax_zp : plt_zmax_co;
 
-   if ( auto_lim )
+   if ( auto_sxy )
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
 
    else
    {
       drect = QwtDoubleRect( plt_smin, plt_fmin,
             ( plt_smax - plt_smin ), ( plt_fmax - plt_fmin ) );
-      plt_zmin = zpcent ? 100.0 :  1e+8;
-      plt_zmax = zpcent ?   0.0 : -1e+8;
+   }
 
-      // find Z min,max for all distributions
+   plt_zmin = zpcent ? 100.0 :  1e+8;
+   plt_zmax = zpcent ?   0.0 : -1e+8;
+
+   if ( auto_scz )
+   {  // Find Z min,max for current distribution
+      for ( int jj = 0; jj < sol_d->size(); jj++ )
+      {
+         double zval = sol_d->at( jj ).c;
+         plt_zmin    = qMin( plt_zmin, zval );
+         plt_zmax    = qMax( plt_zmax, zval );
+      }
+   }
+   else
+   {  // Find Z min,max for all distributions
       for ( int ii = 0; ii < system.size(); ii++ )
       {
          DisSys* tsys = (DisSys*)&system.at( ii );
@@ -500,26 +515,24 @@ void US_Pseudo3D_Combine::plot_data( void )
       cb_plot_mw ->setText( tr( "Plot vbar vs MW" ) );
    }
 
-   if ( auto_lim )
-   {   // Auto limits
-      rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
+   if ( auto_sxy )
+   { // Auto scale x and y
       data_plot->setAxisScale( QwtPlot::yLeft,
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
       data_plot->setAxisScale( QwtPlot::xBottom,
          spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
-      data_plot->setAxisScale( QwtPlot::yRight,
-         spec_dat.range() .minValue(), spec_dat.range() .maxValue() );
    }
    else
-   {   // Manual limits
+   { // Manual limits on x and y
       double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
       double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
-      rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
-         d_spectrogram->colorMap() );
       data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax, lStep );
-      data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
    }
+
+   rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
+      d_spectrogram->colorMap() );
+   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
 
    data_plot->replot();
 
@@ -540,17 +553,36 @@ DbgLv(2) << "(3)   need_save do_plot" << need_save << do_plot;
 
       QString runid  = tsys->run_name.section( ".",  0, -2 );
       QString triple = tsys->run_name.section( ".", -1, -1 );
-      QString report = QString( "pseudo3d_ff0_" ) + ( plot_s ? "s" : "MW" );
+      QString report = QString( "pseudo3d_" )
+         + ( cnst_vbar ? "ff0_" : "vbar_" ) + ( plot_s ? "s" : "MW" );
 
       QString ofdir  = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
       if ( !dirof.exists( ) )
          QDir( US_Settings::reportDir() ).mkdir( runid );
-      QString ofname = ofdir + "/" + tsys->method + "." + triple
-         + "." + report + ".png";
+      QString ofname = tsys->method + "." + triple + "." + report + ".png";
+      QString ofpath = ofdir + "/" + ofname;
 
       data_plot->print( plotmap );
-      plotmap.save( ofname );
+      plotmap.save( ofpath );
+
+      if ( dkdb_cntrls->db() )
+      {  // Save a copy to the database
+QDateTime time0=QDateTime::currentDateTime();
+         US_Passwd   pw;
+         US_DB2      db( pw.getPasswd() );
+         QStringList query;
+         query << "get_editID" << tsys->editGUID;
+         db.query( query );
+         db.next();
+         int         idEdit   = db.value( 0 ).toString().toInt();
+         US_Report   freport;
+         freport.runID        = runid;
+         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
+QDateTime time1=QDateTime::currentDateTime();
+qDebug() << "DB-save: currdist" << curr_distr
+ << "svtime:" << time0.msecsTo(time1);
+      }
    }
 
 }
@@ -626,13 +658,20 @@ void US_Pseudo3D_Combine::update_plot_fmax( double dval )
    plt_fmax = dval;
 }
 
-void US_Pseudo3D_Combine::select_autolim()
+void US_Pseudo3D_Combine::select_autosxy()
 {
-   auto_lim   = cb_autolim->isChecked();
-   ct_plt_fmin->setEnabled( !auto_lim );
-   ct_plt_fmax->setEnabled( !auto_lim );
-   ct_plt_smin->setEnabled( !auto_lim );
-   ct_plt_smax->setEnabled( !auto_lim );
+   auto_sxy   = cb_autosxy->isChecked();
+   ct_plt_fmin->setEnabled( !auto_sxy );
+   ct_plt_fmax->setEnabled( !auto_sxy );
+   ct_plt_smin->setEnabled( !auto_sxy );
+   ct_plt_smax->setEnabled( !auto_sxy );
+
+   set_limits();
+}
+
+void US_Pseudo3D_Combine::select_autoscz()
+{
+   auto_scz   = cb_autoscz->isChecked();
 
    set_limits();
 }
@@ -725,6 +764,7 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    tsys.analys_name  = asys.section( "_",  0, -4 ) + "_"
                      + asys.section( "_", -2, -1 );
    tsys.method       = model.typeText();
+   tsys.editGUID     = model.editGUID;
 
    tsys.distro_type  = (int)model.analysis;
    tsys.monte_carlo  = model.monteCarlo;
@@ -880,13 +920,15 @@ DbgLv(1) << "cd=0  cnst_vbar" << cnst_vbar;
          QMessageBox::warning( this, tr( "Inconsistent Distributions" ), msg );
          curr_distr = 0;
          ct_curr_distr->setValue( 1 );
-         cb_autolim->setChecked( true  );
+         cb_autosxy->setChecked( true  );
+         cb_autoscz->setChecked( true  );
          plot_data();
-         cb_autolim->setChecked( false );
+         cb_autosxy->setChecked( false );
+         cb_autoscz->setChecked( false );
       }
    }
 
-   if ( auto_lim )
+   if ( auto_sxy )
    {
       set_limits();
       ct_plt_fmin->setEnabled( false );
@@ -1045,10 +1087,8 @@ void US_Pseudo3D_Combine::set_limits()
    double rmin = smax * 10.0;
    double rinc = pow( 10.0, qRound( log10( smax ) ) - 2.0 );
 
-   if ( auto_lim )
-   {
-      // set auto limits
-
+   if ( auto_sxy )
+   {  // Set auto limits on X and Y
       if ( plot_s )
       {
          ct_plt_smax->setRange( 0.0, rmin, rinc );
