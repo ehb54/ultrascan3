@@ -34,9 +34,11 @@ using namespace std;
 class range_entry
 {
  public: 
-   QString      chain;
-   unsigned int start;
-   unsigned int end;
+   QString                     chain;
+   unsigned int                start;
+   unsigned int                end;
+   map  < unsigned int, bool > gaps;
+   map  < unsigned int, bool > residues;
    friend ostream& operator<<(ostream&, const range_entry&);
 };
 
@@ -173,6 +175,21 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       bool         cut_back_ok;
       void         run_one();
       bool         extra_chains_done;
+
+      void         update_cache_range();
+      void         recalc_from_merge ( int row, int col );
+      void         recalc_from_fit   ( int row, int col );
+      void         recalc_from_cut   ( int row, int col );
+
+      unsigned int residue_length( bool         use_from,
+                                   QString      chain, 
+                                   unsigned int start_residue, 
+                                   unsigned int end_residue );
+
+      unsigned int residue_offset_position( bool         use_from,
+                                            QString      chain, 
+                                            unsigned int start_residue, 
+                                            int          offset );
 
    private slots:
 

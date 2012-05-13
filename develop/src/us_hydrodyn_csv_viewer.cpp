@@ -146,6 +146,70 @@ void US_Hydrodyn_Csv_Viewer::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Csv_Viewer::sort_column( int section )
 {
-   t_csv->sortColumn(section, order_ascending, true);
+   if ( section == 0 )
+   {
+      t_csv->sortColumn(section, order_ascending, true);
+   } else {
+      numeric_sort( section );
+   }
+
    order_ascending = !order_ascending;
+}
+
+class uhcv_sortable_double {
+public:
+   double       x;
+   unsigned int row;
+   bool operator < (const uhcv_sortable_double& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
+void US_Hydrodyn_Csv_Viewer::numeric_sort( int section )
+{
+   list < uhcv_sortable_double > luhcvsd;
+   uhcv_sortable_double uhcvsd;
+
+   vector < unsigned int > avgstdrows;
+
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      if ( csv1.data[ i ][ 0 ].contains( QRegExp( "^(Average|Standard deviation): " ) ) )
+      {
+         avgstdrows.push_back( i );
+      } else {
+         uhcvsd.row = i;
+         uhcvsd.x   = csv1.num_data[ i ][ section ];
+         luhcvsd.push_back( uhcvsd );
+      }
+   }
+
+   if ( avgstdrows.size() == csv1.data.size() )
+   {
+      return;
+   }
+
+   luhcvsd.sort();
+
+   unsigned int pos = order_ascending ? 0 : csv1.data.size() - 1 - avgstdrows.size();
+   for (    list < uhcv_sortable_double >::iterator it = luhcvsd.begin();
+            it != luhcvsd.end();
+            it++ )
+   {
+      for ( unsigned int j = 0; j < csv1.num_data[ it->row ].size(); j++ )
+      {
+         t_csv->setText( pos, j, csv1.data[ it->row ][ j ]);
+      }
+      order_ascending ? pos++ : pos--;
+   }
+
+   for ( unsigned int i = 0; i < avgstdrows.size(); i++ )
+   {
+      unsigned int row = csv1.data.size() - avgstdrows.size() + i;
+      for ( unsigned int j = 0; j < csv1.num_data[ avgstdrows[ i ] ].size(); j++ )
+      {
+         t_csv->setText( row, j, csv1.data[ avgstdrows[ i ] ][ j ]);
+      }
+   }
 }

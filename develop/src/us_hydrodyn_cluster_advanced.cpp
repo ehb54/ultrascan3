@@ -22,6 +22,8 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: Cluster Advanced Options"));
 
+   QDir::setCurrent( USglobal->config_list.root_dir + SLASH +  "somo" + SLASH + "cluster" );
+
    setupGUI();
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );

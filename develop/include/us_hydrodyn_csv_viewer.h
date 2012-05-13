@@ -60,6 +60,8 @@ class US_EXTERN US_Hydrodyn_Csv_Viewer : public QFrame
 
       bool          order_ascending;
 
+      void          numeric_sort( int section );
+
    private slots:
       
       void setupGUI();
