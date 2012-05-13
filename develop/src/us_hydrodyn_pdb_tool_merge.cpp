@@ -2925,220 +2925,93 @@ void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
       return recalc_from_merge( row, col );
    }
 
-   unsigned current_merge_start = t_csv->text( row, 1 ).toUInt();
-   unsigned current_merge_end   = t_csv->text( row, 2 ).toUInt();
-   unsigned current_fit_start   = t_csv->text( row, 3 ).toUInt();
-   unsigned current_fit_end     = t_csv->text( row, 4 ).toUInt();
-   unsigned current_cut_start   = t_csv->text( row, 5 ).toUInt();
-   unsigned current_cut_end     = t_csv->text( row, 6 ).toUInt();
-
-   bool     current_merge_start_changed = false;
-   bool     current_merge_end_changed   = false;
-   bool     current_fit_start_changed   = false;
-   bool     current_fit_end_changed     = false;
-   bool     current_cut_start_changed   = false;
-   bool     current_cut_end_changed     = false;
-   bool     any_changed                 = false;
-
-   range_entry from_range = cache_from_ranges[ cache_from_range_pos[ chain ] ];
-   range_entry to_range   = cache_to_ranges  [ cache_to_range_pos  [ chain ] ];
-   bool        use_start  = cache_use_start  [ chain ];
-
    if ( col == 3 || col == 4 )
    {
-      // fit range, must be in both from & to ranges
-      unsigned min_start = from_range.start;
-      if ( min_start < to_range.start )
-      {
-         min_start = to_range.start;
-      }
-      unsigned max_start = from_range.end - 2;
-      if ( max_start > to_range.end - 2 )
-      {
-         max_start = to_range.end - 2;
-      }
-      unsigned min_end = from_range.start + 2;
-      if ( min_end < to_range.start + 2 )
-      {
-         min_end = to_range.start + 2;
-      }
-      unsigned max_end = from_range.end;
-      if ( max_end < to_range.end )
-      {
-         max_end = to_range.end;
-      }
-
-      if ( col == 3 )
-      {
-         if ( min_start > current_fit_start )
-         {
-            current_fit_start         = min_start;
-            current_fit_start_changed = true;
-            any_changed               = true;
-         }
-         if ( max_start < current_fit_start ) 
-         {
-            current_fit_start         = max_start;
-            current_fit_start_changed = true;
-            any_changed               = true;
-         }
-         if ( current_fit_end < current_fit_start  + 2 )
-         {
-            current_fit_end           = current_fit_start + 2;
-            current_fit_end_changed   = true;
-            any_changed               = true;
-         }            
-      }
-
-      if ( col == 4 )
-      {
-         if ( min_end > current_fit_end )
-         {
-            current_fit_end           = min_end;
-            current_fit_end_changed   = true;
-            any_changed               = true;
-         }
-         if ( max_end < current_fit_end )
-         {
-            current_fit_end           = max_end;
-            current_fit_end_changed   = true;
-            any_changed               = true;
-         }
-         if ( current_fit_start > current_fit_end - 2 )
-         {
-            current_fit_start         = current_fit_end - 2;
-            current_fit_start_changed = true;
-            any_changed               = true;
-         }            
-      }
-
-      if ( current_cut_start && current_cut_end )
-      {
-         // fit range must be uncut
-         if ( use_start )
-         {
-            // we are cutting from the low numbers
-            if ( current_cut_end >= current_fit_start )
-            {
-               current_cut_end            = current_fit_start - 1;
-               current_cut_end_changed    = true;
-               any_changed                = true;
-            }
-            if ( current_cut_end < current_cut_start )
-            {
-               current_cut_start          = current_cut_end;
-               current_cut_start_changed  = true;
-               any_changed                = true;
-               if ( current_cut_start < to_range.start )
-               {
-                  current_cut_start         = 0;
-                  current_cut_end           = 0;
-                  current_cut_end_changed  = true;
-               }
-            }
-         } else {
-            // we are cutting from the high numbers
-            if ( current_cut_start <= current_fit_end )
-            {
-               current_cut_start          = current_fit_end + 1;
-               current_cut_end_changed    = true;
-               any_changed                = true;
-            }
-            if ( current_cut_start > current_cut_end )
-            {
-               current_cut_end            = current_cut_start;
-               current_cut_end_changed    = true;
-               any_changed                = true;
-               if ( current_cut_end > to_range.end )
-               {
-                  current_cut_start         = 0;
-                  current_cut_end           = 0;
-                  current_cut_start_changed = true;
-               }
-            }
-         }
-      }           
-
-      // check merge range to make sure we aren't overlapping with fit
-      if ( use_start )
-      {
-         if ( current_merge_end >= current_fit_start )
-         {
-            current_merge_end           = current_fit_start - 1;
-            current_merge_end_changed   = true;
-            any_changed                 = true;
-         }
-         if ( current_merge_start > current_merge_end )
-         {
-            current_merge_start         = current_merge_end;
-            current_merge_start_changed = true;
-            any_changed                 = true;
-            if ( current_merge_start < from_range.start )
-            {
-               current_merge_start         = 0;
-               current_merge_end           = 0;
-               current_merge_end_changed   = true;
-            }
-         }
-      } else {
-         if ( current_merge_start <= current_fit_end )
-         {
-            current_merge_start         = current_fit_end + 1;
-            current_merge_start_changed = true;
-            any_changed                 = true;
-         }
-         if ( current_merge_end < current_merge_start )
-         {
-            current_merge_end           = current_merge_start;
-            current_merge_end_changed   = true;
-            any_changed                 = true;
-            if ( current_merge_end > from_range.end )
-            {
-               current_merge_start         = 0;
-               current_merge_end           = 0;
-               current_merge_start_changed = true;
-            }
-         }
-      }
+      return recalc_from_fit  ( row, col );
    }
 
-   if ( any_changed )
+   if ( col == 5 || col == 6 )
    {
-      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
-      if ( current_merge_start_changed )
-      {
-         t_csv->setText( row, 1, current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "" );
-      }
-      if ( current_merge_end_changed  )
-      {
-         t_csv->setText( row, 2, current_merge_end   ? QString( "%1" ).arg( current_merge_end   ) : "" );
-      }
-      if ( current_fit_start_changed )
-      {
-         t_csv->setText( row, 3, current_fit_start   ? QString( "%1" ).arg( current_fit_start   ) : "" );
-      }
-      if ( current_fit_end_changed  )
-      {
-         t_csv->setText( row, 4, current_fit_end     ? QString( "%1" ).arg( current_fit_end     ) : "" );
-      }
-      if ( current_cut_start_changed )
-      {
-         t_csv->setText( row, 5, current_cut_start ? QString( "%1" ).arg( current_cut_start     ) : "" );
-      }
-      if ( current_cut_end_changed  )
-      {
-         t_csv->setText( row, 6, current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "" );
-      }
-      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+      return recalc_from_cut  ( row, col );
    }
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
+         
+unsigned int US_Hydrodyn_Pdb_Tool_Merge::residue_length( bool         use_from,
+                                                         QString      chain, 
+                                                         unsigned int start_residue, 
+                                                         unsigned int end_residue 
+                                                        )
 {
+   update_cache_range();
+   if ( use_from ? !cache_from_range_pos.count( chain ) : !cache_to_range_pos.count( chain ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( chain ) );
+      return 0;
+   }
+
+   range_entry * re =
+      use_from ?
+      & cache_from_ranges[ cache_from_range_pos[ chain ] ] :
+      & cache_to_ranges  [ cache_to_range_pos  [ chain ] ] ;
+
+   unsigned int count = 0;
+
+   for ( unsigned int i = start_residue; i <= end_residue; i++ )
+   {
+      if ( !re->gaps.count( i ) )
+      {
+         count++;
+      }
+   }
+   return count;
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
+unsigned int US_Hydrodyn_Pdb_Tool_Merge::residue_offset_position( bool         use_from,
+                                                                  QString      chain, 
+                                                                  unsigned int start_residue, 
+                                                                  int          offset
+                                                                  )
 {
+   if ( offset == 0 )
+   {
+      return start_residue;
+   }
+
+   update_cache_range();
+   if ( use_from ? !cache_from_range_pos.count( chain ) : !cache_to_range_pos.count( chain ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( chain ) );
+      return 0;
+   }
+
+   range_entry * re =
+      use_from ?
+      & cache_from_ranges[ cache_from_range_pos[ chain ] ] :
+      & cache_to_ranges  [ cache_to_range_pos  [ chain ] ] ;
+
+   int count = 0;
+   int step  = offset > 0 ? 1 : -1;
+   int pos   = start_residue;
+
+   while ( count != offset )
+   {
+      pos += step;
+      if ( !re->gaps.count( pos ) )
+      {
+         count += step;
+      }
+   }
+   if ( pos < ( int ) re->start )
+   {
+      pos = ( int ) re->start;
+   }
+   if ( pos > ( int ) re->end )
+   {
+      pos = ( int ) re->end;
+   }
+
+   return ( unsigned int ) pos;
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
@@ -3222,6 +3095,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
       any_changed                 = true;
       col                         = 1;
    }
+
    if ( current_merge_end > max_merge_end )
    {
       current_merge_end           = max_merge_end;
@@ -3248,11 +3122,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
 
    if ( use_start )
    {
-      if ( from_range.start <= current_merge_end )
+      if ( current_cut_end <= current_merge_end )
       {
-         current_cut_start         = from_range.start;
+         current_cut_start         = to_range.start;
          current_cut_end           = current_merge_end;
-         while ( from_range.gaps.count( current_cut_end ) && current_cut_end <= from_range.end )
+         while ( to_range.gaps.count( current_cut_end ) && current_cut_end < to_range.end )
          {
             current_cut_end++;
          }
@@ -3261,14 +3135,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
          any_changed               = true;
       }
    } else {
-      if ( from_range.end >= current_merge_start )
+      if ( current_cut_start >= current_merge_start )
       {
          current_cut_start         = current_merge_start;
-         while ( from_range.gaps.count( current_cut_start ) && current_cut_start >= from_range.start )
+         while ( to_range.gaps.count( current_cut_start ) && current_cut_start > to_range.start )
          {
-            current_cut_end++;
+            current_cut_start--;
          }
-         current_cut_end           = from_range.end;
+         current_cut_end           = to_range.end;
          current_cut_start_changed = true;
          current_cut_end_changed   = true;
          any_changed               = true;
@@ -3363,80 +3237,484 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
       connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
 }         
-         
-unsigned int US_Hydrodyn_Pdb_Tool_Merge::residue_length( bool         use_from,
-                                                         QString      chain, 
-                                                         unsigned int start_residue, 
-                                                         unsigned int end_residue 
-                                                        )
+
+void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
 {
+   if ( row >= t_csv->numRows() )
+   {
+      editor_msg( "red", QString( tr( "Internal error: row out of range  <%1>" ) ).arg( row + 1 ) );
+      return;
+   }
+      
    update_cache_range();
-   if ( use_from ? !cache_from_range_pos.count( chain ) : !cache_to_range_pos.count( chain ) )
+
+   QString chain       = t_csv->text( row, 0 );
+   bool    extra_chain = chain.length() > 2;
+   
+   if ( extra_chain )
+   {
+      // editor_msg( "red", QString( tr( "Internal error: update fit, but fit not valid for row <%1>" ) ).arg( row + 1 ) );
+      return;
+   }
+      
+   if ( !cache_from_range_pos.count( chain ) || !cache_to_range_pos.count( chain ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: chain dereferencing <%1>" ) ).arg( chain ) );
+      return;
+   }
+
+   if ( !cache_use_start.count( chain ) )
    {
       editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( chain ) );
-      return 0;
+      return;
    }
 
-   range_entry * re =
-      use_from ?
-      & cache_from_ranges[ cache_from_range_pos[ chain ] ] :
-      & cache_to_ranges  [ cache_to_range_pos  [ chain ] ] ;
+   unsigned current_merge_start = t_csv->text( row, 1 ).toUInt();
+   unsigned current_merge_end   = t_csv->text( row, 2 ).toUInt();
+   unsigned current_fit_start   = t_csv->text( row, 3 ).toUInt();
+   unsigned current_fit_end     = t_csv->text( row, 4 ).toUInt();
+   unsigned current_cut_start   = t_csv->text( row, 5 ).toUInt();
+   unsigned current_cut_end     = t_csv->text( row, 6 ).toUInt();
 
-   unsigned int count = 0;
+   bool     current_merge_start_changed = false;
+   bool     current_merge_end_changed   = false;
+   bool     current_fit_start_changed   = false;
+   bool     current_fit_end_changed     = false;
+   bool     current_cut_start_changed   = false;
+   bool     current_cut_end_changed     = false;
+   bool     any_changed                 = false;
 
-   for ( unsigned int i = start_residue; i <= end_residue; i++ )
+   range_entry from_range = cache_from_ranges[ cache_from_range_pos[ chain ] ];
+   range_entry to_range   = cache_to_ranges  [ cache_to_range_pos  [ chain ] ];
+   bool        use_start  = cache_use_start  [ chain ];
+
+   unsigned int current_fit_length_from = residue_length( true , chain, current_fit_start  , current_fit_end   );
+   unsigned int current_fit_length_to   = residue_length( false, chain, current_fit_start  , current_fit_end   );
+   unsigned int current_fit_length      = 
+      current_fit_length_from < current_fit_length_to ?
+      current_fit_length_from : current_fit_length_to;
+
+   unsigned int current_merge_length    = residue_length( true , chain, current_merge_start, current_merge_end );
+   unsigned int current_cut_length      = residue_length( false, chain, current_cut_start  , current_cut_end   );
+
+   cout << QString( "current_fit_length %1\n" ).arg( current_fit_length );
+   cout << QString( "current_merge_length %1\n" ).arg( current_merge_length );
+   cout << QString( "current_cut_length %1\n" ).arg( current_cut_length );
+
+   unsigned int min_fit_start     = residue_offset_position( true , chain, from_range.start, 1 );
+   unsigned int alt_min_fit_start = residue_offset_position( false, chain, to_range.start  , 1 );
+   if ( min_fit_start < alt_min_fit_start )
    {
-      if ( !re->gaps.count( i ) )
+      min_fit_start = alt_min_fit_start;
+   }
+
+   unsigned int max_fit_end       = residue_offset_position( true , chain, from_range.end , -1 );
+   unsigned int alt_max_fit_end   = residue_offset_position( false, chain, to_range.end   , -1 );
+   if ( max_fit_end > alt_max_fit_end )
+   {
+      max_fit_end = alt_max_fit_end;
+   }
+
+   cout << QString( "checking fit change:col %1 start %2 end %3 len %4\n" )
+      .arg( col )
+      .arg( current_fit_start )
+      .arg( current_fit_end )
+      .arg( current_fit_length )
+      ;
+
+   if ( current_fit_length < 3 )
+   {
+      if ( col == 3 )
       {
-         count++;
+         current_fit_end          = residue_offset_position( false, chain, current_fit_start , 3 );
+         unsigned int alt_fit_end = residue_offset_position( true , chain, current_fit_start , 3 );
+
+         if ( current_fit_end < alt_fit_end )
+         {
+            current_fit_end = alt_fit_end;
+         }
+         current_fit_end_changed   = true;
+         any_changed               = true;
+      } else {
+         current_fit_start          = residue_offset_position( false, chain, current_fit_end , -3 );
+         unsigned int alt_fit_start = residue_offset_position( true , chain, current_fit_end , -3 );
+
+         if ( current_fit_start > alt_fit_start )
+         {
+            current_fit_start = alt_fit_start;
+         }
+         current_fit_start_changed = true;
+         any_changed               = true;
+      }
+      current_fit_length        = 3;
+   }
+
+   if ( current_fit_start < min_fit_start )
+   {
+      current_fit_start         = min_fit_start;
+      current_fit_start_changed = true;
+      any_changed               = true;
+   }
+   if ( current_fit_end   > max_fit_end )
+   {
+      current_fit_end           = max_fit_end;
+      current_fit_end_changed   = true;
+      any_changed               = true;
+   }
+
+   current_fit_length_from = residue_length( true , chain, current_fit_start  , current_fit_end   );
+   current_fit_length_to   = residue_length( false, chain, current_fit_start  , current_fit_end   );
+   current_fit_length      = 
+      current_fit_length_from < current_fit_length_to ?
+      current_fit_length_from : current_fit_length_to;
+   if ( current_fit_length < 3 )
+   {
+      //      current_fit_end = residue_offset_position( false, chain, current_
+
+      editor_msg( "red", tr( "Error: could not find 3 residues to fit in this chain\n" ) );
+      current_fit_start         = 0;
+      current_fit_end           = 0;
+      current_fit_start_changed = true;
+      current_fit_end_changed   = true;
+      any_changed               = true;
+   }
+
+   // fit range must not be cut
+
+   if ( use_start )
+   {
+      if ( current_cut_end >= current_fit_start )
+      {
+         current_cut_start         = to_range.start;
+         current_cut_end           = residue_offset_position( true , chain, current_fit_start, -1 );
+         while ( to_range.gaps.count( current_cut_end ) && current_cut_end >= to_range.start )
+         {
+            current_cut_end--;
+         }
+         current_cut_start_changed = true;
+         current_cut_end_changed   = true;
+         any_changed               = true;
+      }
+   } else {
+      if ( current_cut_start <= current_fit_end )
+      {
+         current_cut_start         = residue_offset_position( true , chain, current_fit_end, 1 );
+         while ( to_range.gaps.count( current_cut_start ) && current_cut_start <  to_range.end )
+         {
+            current_cut_start++;
+         }
+         current_cut_end           = to_range.end;
+         current_cut_start_changed = true;
+         current_cut_end_changed   = true;
+         any_changed               = true;
       }
    }
-   return count;
+
+   // fit range must not be in merge
+
+   if ( use_start )
+   {
+      if ( current_merge_end >= current_fit_start )
+      {
+         current_merge_end         = residue_offset_position( true , chain, current_fit_start, -1 );
+         while ( from_range.gaps.count( current_merge_end ) && current_merge_end >= from_range.start )
+         {
+            current_merge_end--;
+         }
+         current_merge_end_changed = true;
+         any_changed               = true;
+      }
+   } else {
+      if ( current_merge_start <= current_fit_end )
+      {
+         current_merge_start       = residue_offset_position( true , chain, current_fit_end, 1 );
+         while ( from_range.gaps.count( current_merge_start ) && current_merge_start < from_range.end )
+         {
+            current_merge_start++;
+         }
+         current_merge_start_changed = true;
+         any_changed                 = true;
+      }
+   }
+
+   if ( any_changed )
+   {
+      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+      if ( current_merge_start_changed )
+      {
+         t_csv->setText( row, 1, current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "" );
+      }
+      if ( current_merge_end_changed  )
+      {
+         t_csv->setText( row, 2, current_merge_end   ? QString( "%1" ).arg( current_merge_end   ) : "" );
+      }
+      if ( current_fit_start_changed )
+      {
+         t_csv->setText( row, 3, current_fit_start   ? QString( "%1" ).arg( current_fit_start   ) : "" );
+      }
+      if ( current_fit_end_changed  )
+      {
+         t_csv->setText( row, 4, current_fit_end     ? QString( "%1" ).arg( current_fit_end     ) : "" );
+      }
+      if ( current_cut_start_changed )
+      {
+         t_csv->setText( row, 5, current_cut_start ? QString( "%1" ).arg( current_cut_start     ) : "" );
+      }
+      if ( current_cut_end_changed  )
+      {
+         t_csv->setText( row, 6, current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "" );
+      }
+      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+   }
 }
 
-unsigned int US_Hydrodyn_Pdb_Tool_Merge::residue_offset_position( bool         use_from,
-                                                                  QString      chain, 
-                                                                  unsigned int start_residue, 
-                                                                  int          offset
-                                                                  )
+void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
 {
-   if ( offset == 0 )
+   if ( row >= t_csv->numRows() )
    {
-      return start_residue;
+      editor_msg( "red", QString( tr( "Internal error: row out of range  <%1>" ) ).arg( row + 1 ) );
+      return;
+   }
+      
+   update_cache_range();
+
+   QString chain       = t_csv->text( row, 0 );
+   bool    extra_chain = chain.length() > 2;
+   
+   if ( extra_chain )
+   {
+      // editor_msg( "red", QString( tr( "Internal error: update cut, but cut not valid for row <%1>" ) ).arg( row + 1 ) );
+      return;
+   }
+      
+   if ( !cache_from_range_pos.count( chain ) || !cache_to_range_pos.count( chain ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: chain dereferencing <%1>" ) ).arg( chain ) );
+      return;
    }
 
-   update_cache_range();
-   if ( use_from ? !cache_from_range_pos.count( chain ) : !cache_to_range_pos.count( chain ) )
+   if ( !cache_use_start.count( chain ) )
    {
       editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( chain ) );
-      return 0;
+      return;
    }
 
-   range_entry * re =
-      use_from ?
-      & cache_from_ranges[ cache_from_range_pos[ chain ] ] :
-      & cache_to_ranges  [ cache_to_range_pos  [ chain ] ] ;
+   unsigned current_merge_start = t_csv->text( row, 1 ).toUInt();
+   unsigned current_merge_end   = t_csv->text( row, 2 ).toUInt();
+   unsigned current_fit_start   = t_csv->text( row, 3 ).toUInt();
+   unsigned current_fit_end     = t_csv->text( row, 4 ).toUInt();
+   unsigned current_cut_start   = t_csv->text( row, 5 ).toUInt();
+   unsigned current_cut_end     = t_csv->text( row, 6 ).toUInt();
 
-   int count = 0;
-   int step  = offset > 0 ? 1 : -1;
-   int pos   = start_residue;
+   bool     current_merge_start_changed = false;
+   bool     current_merge_end_changed   = false;
+   bool     current_fit_start_changed   = false;
+   bool     current_fit_end_changed     = false;
+   bool     current_cut_start_changed   = false;
+   bool     current_cut_end_changed     = false;
+   bool     any_changed                 = false;
 
-   while ( count != offset )
+   range_entry from_range = cache_from_ranges[ cache_from_range_pos[ chain ] ];
+   range_entry to_range   = cache_to_ranges  [ cache_to_range_pos  [ chain ] ];
+   bool        use_start  = cache_use_start  [ chain ];
+
+   unsigned int current_fit_length_from = residue_length( true , chain, current_fit_start  , current_fit_end   );
+   unsigned int current_fit_length_to   = residue_length( false, chain, current_fit_start  , current_fit_end   );
+   unsigned int current_fit_length      = 
+      current_fit_length_from < current_fit_length_to ?
+      current_fit_length_from : current_fit_length_to;
+
+   if ( current_fit_length < 3 )
    {
-      pos += step;
-      if ( !re->gaps.count( pos ) )
+      current_fit_length = 3;
+   }
+
+   unsigned int current_merge_length    = residue_length( true , chain, current_merge_start, current_merge_end );
+   unsigned int current_cut_length      = residue_length( false, chain, current_cut_start  , current_cut_end   );
+
+   cout << QString( "current_fit_length %1\n" ).arg( current_fit_length );
+   cout << QString( "current_merge_length %1\n" ).arg( current_merge_length );
+   cout << QString( "current_cut_length %1\n" ).arg( current_cut_length );
+
+   // clear if current set one is zero
+
+   if ( col == 5 && !current_cut_start )
+   {
+      current_cut_end         = 0;
+      current_cut_end_changed = true;
+      any_changed             = true;
+   } else {
+      if ( col == 6 && !current_cut_end )
       {
-         count += step;
+         current_cut_start         = 0;
+         current_cut_start_changed = true;
+         any_changed               = true;
       }
    }
-   if ( pos < ( int ) re->start )
+
+   if ( current_cut_start )
    {
-      pos = ( int ) re->start;
-   }
-   if ( pos > ( int ) re->end )
-   {
-      pos = ( int ) re->end;
+      if ( use_start )
+      {
+         if ( current_cut_start != to_range.start )
+         {
+            current_cut_start         = to_range.start;
+            current_cut_start_changed = true;
+            any_changed               = true;
+         }
+         unsigned int max_cut_end = 
+            residue_offset_position( false, chain, to_range.end, -3 );
+         if ( current_cut_end > max_cut_end )
+         {
+            current_cut_end           = max_cut_end;
+            current_cut_end_changed  = true;
+            any_changed               = true;
+         }
+      } else {
+         if ( current_cut_end != to_range.end )
+         {
+            current_cut_end           = to_range.end;
+            current_cut_end_changed   = true;
+            any_changed               = true;
+         }
+         unsigned int min_cut_start = 
+            residue_offset_position( false, chain, to_range.start, 3 );
+         if ( current_cut_start < min_cut_start )
+         {
+            current_cut_start         = min_cut_start;
+            current_cut_start_changed = true;
+            any_changed               = true;
+         }
+      }
    }
 
-   return ( unsigned int ) pos;
+   if ( current_cut_start > current_cut_end )
+   {
+      current_cut_start         = 0;
+      current_cut_end           = 0;
+      current_cut_end_changed   = true;
+      current_cut_start_changed = true;
+      any_changed               = true;
+   }
+
+   // set merge ragne
+   if ( use_start )
+   {
+      if ( current_merge_end > current_cut_end )
+      {
+         current_merge_end         = current_cut_end;
+         while ( from_range.gaps.count( current_merge_end ) && current_merge_end >= from_range.start )
+         {
+            current_merge_end--;
+         }
+         current_merge_end_changed = true;
+         any_changed               = true;
+         if ( current_merge_start > current_merge_end )
+         {
+            current_merge_start         = current_merge_end;
+            current_merge_start_changed = true;
+         }
+      }
+   } else {
+      if ( current_merge_start < current_cut_start )
+      {
+         current_merge_start       = current_cut_start;
+         while ( from_range.gaps.count( current_merge_start ) && current_merge_start <= from_range.start )
+         {
+            current_merge_start++;
+         }
+         current_merge_start_changed = true;
+         any_changed                 = true;
+         if ( current_merge_end < current_merge_start )
+         {
+            current_merge_end         = current_merge_start;
+            current_merge_end_changed = true;
+         }
+      }
+   }
+
+   // did fit range get effected by cut?
+   // i.e. fit can not be cut
+   if ( use_start )
+   {
+      if ( current_fit_start <= current_cut_end )
+      {
+         current_fit_start          = residue_offset_position( true,  chain, current_cut_end, 1 );
+         unsigned int alt_fit_start = residue_offset_position( false, chain, current_cut_end, 1 );
+         if ( current_fit_start < alt_fit_start )
+         {
+            current_fit_start = alt_fit_start;
+         }
+         current_fit_end            = residue_offset_position( true,  chain, current_fit_start, current_fit_length - 1 );
+         unsigned int alt_fit_end   = residue_offset_position( false, chain, current_fit_start, current_fit_length - 1 );
+         if ( current_fit_end < alt_fit_end )
+         {
+            current_fit_end = alt_fit_end;
+         }
+         if ( current_fit_end > to_range.end ||
+              current_fit_end > from_range.end )
+         {
+            current_fit_start = 0;
+            current_fit_end   = 0;
+         }
+         current_fit_start_changed = true;
+         current_fit_end_changed   = true;
+         any_changed               = true;
+      }
+   } else {
+      if ( current_fit_end >= current_cut_start )
+      {
+         current_fit_end            = residue_offset_position( true,  chain, current_cut_start, -1 );
+         unsigned int alt_fit_end   = residue_offset_position( false, chain, current_cut_start, -1 );
+         if ( current_fit_end < alt_fit_end  )
+         {
+            current_fit_end = alt_fit_end;
+         }
+         current_fit_start          = residue_offset_position( true,  chain, current_fit_end, - ( current_fit_length - 1 ) );
+         unsigned int alt_fit_start = residue_offset_position( false, chain, current_fit_end, - ( current_fit_length - 1 ) );
+         if ( current_fit_start < alt_fit_start )
+         {
+            current_fit_start = alt_fit_start;
+         }
+         if ( current_fit_start < to_range.start ||
+              current_fit_start < from_range.start )
+         {
+            current_fit_start = 0;
+            current_fit_end   = 0;
+         }
+         current_fit_start_changed = true;
+         current_fit_end_changed   = true;
+         any_changed               = true;
+      }
+   }
+
+   if ( any_changed )
+   {
+      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+      if ( current_merge_start_changed )
+      {
+         t_csv->setText( row, 1, current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "" );
+      }
+      if ( current_merge_end_changed  )
+      {
+         t_csv->setText( row, 2, current_merge_end   ? QString( "%1" ).arg( current_merge_end   ) : "" );
+      }
+      if ( current_fit_start_changed )
+      {
+         t_csv->setText( row, 3, current_fit_start   ? QString( "%1" ).arg( current_fit_start   ) : "" );
+      }
+      if ( current_fit_end_changed  )
+      {
+         t_csv->setText( row, 4, current_fit_end     ? QString( "%1" ).arg( current_fit_end     ) : "" );
+      }
+      if ( current_cut_start_changed )
+      {
+         t_csv->setText( row, 5, current_cut_start ? QString( "%1" ).arg( current_cut_start     ) : "" );
+      }
+      if ( current_cut_end_changed  )
+      {
+         t_csv->setText( row, 6, current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "" );
+      }
+      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+   }
 }
