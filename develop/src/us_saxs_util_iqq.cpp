@@ -1145,11 +1145,25 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    vector < double > org_I = sgp_exp_I;
    vector < double > org_e = sgp_exp_e;
 
+   {
+      unsigned int cropped_pts = 0;
+      while ( rq.size() && rq.back() > sgp_exp_q.back() )
+      {
+         cropped_pts++;
+         rq.pop_back();
+      }
+      if ( cropped_pts )
+      {
+         cout << QString( "Notice: cropped %1 points off originally computed grid\n" ).arg( cropped_pts );
+      }
+   }
+
    cout << QString( "exp q [%1:%2] rq [%3:%4]\n" )
       .arg( sgp_exp_q[ 0 ] )
       .arg( sgp_exp_q[ sgp_exp_q.size() - 1 ] )
       .arg( rq[ 0 ] )
       .arg( rq[ rq.size() - 1 ] );
+
 
    cout << QString( "grid sizes experimental %1\n" ).arg( sgp_exp_I.size() );
 
