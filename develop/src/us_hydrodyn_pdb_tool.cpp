@@ -1980,6 +1980,7 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
       line_count++;
 
       QString left6 = qs.left( 6 ).upper();
+      QString left5 = qs.left( 5 ).upper();
 
       if ( left6 == "TITLE " )
       {
@@ -2010,15 +2011,15 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
          continue;
       }
 
-      if ( ( left6 == "ATOM  " ||
-             left6 == "HETATM" ) && 
+      if ( ( left5 == "ATOM " ||
+             left5 == "HETAT" ) && 
            last_was_ENDMDL )
       {
          model++;
          last_was_ENDMDL = false;
       }
 
-      if ( left6 != "ATOM  " && left6 != "HETATM" ) 
+      if ( left5 != "ATOM " && left5 != "HETAT" ) 
       {
          // not supporting anything else for now
          // later we should store, save remarks connct's etc
@@ -2127,6 +2128,7 @@ void US_Hydrodyn_Pdb_Tool::load_from_qsl( QListView *lv, QStringList &pdb_text, 
       line_count++;
 
       QString left6 = qs.left( 6 ).upper();
+      QString left5 = qs.left( 5 ).upper();
 
       if ( left6 == "TITLE " )
       {
@@ -2153,15 +2155,15 @@ void US_Hydrodyn_Pdb_Tool::load_from_qsl( QListView *lv, QStringList &pdb_text, 
          continue;
       }
 
-      if ( ( left6 == "ATOM  " ||
-             left6 == "HETATM" ) && 
+      if ( ( left5 == "ATOM " ||
+             left5 == "HETAT" ) && 
            last_was_ENDMDL )
       {
          model++;
          last_was_ENDMDL = false;
       }
 
-      if ( left6 != "ATOM  " && left6 != "HETATM" ) 
+      if ( left5 != "ATOM " && left5 != "HETAT" ) 
       {
          // not supporting anything else for now
          // later we should store, save remarks connct's etc
@@ -4522,6 +4524,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
 
    QRegExp rx_end ("^END");
    QRegExp rx_atom("^ATOM|HETATM");
+   QRegExp rx_hetatm("^HETATM");
 
    unsigned int atomno    = startatom;
    unsigned int residueno = startresidue;
@@ -4557,6 +4560,12 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
                atomno = 1;
             }
             line = line.replace( 6, 5, QString( "" ).sprintf( "%5d", atomno ++ ) );
+            if ( rx_hetatm.search( line ) == -1 )
+            {
+               line = line.replace( 5, 1, " " );
+            } else {
+               line = line.replace( 5, 1, "M" );
+            }
          }
 
          if ( reseqresidue )
