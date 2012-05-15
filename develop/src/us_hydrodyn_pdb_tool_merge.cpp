@@ -56,7 +56,6 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
 
    setupGUI();
    running             = false;
-   cut_back_ok         = false;
    cache_range_ok      = false;
    extra_chains_done   = false;
 
@@ -161,12 +160,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    pb_sel_auto->setMinimumHeight(minHeight1);
    pb_sel_auto->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sel_auto, SIGNAL(clicked()), SLOT(sel_auto()));
-
-   pb_cut_back = new QPushButton(tr("Cut back"), this);
-   pb_cut_back->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   pb_cut_back->setMinimumHeight(minHeight1);
-   pb_cut_back->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_cut_back, SIGNAL(clicked()), SLOT(cut_back()));
 
    pb_sel_from_to_merge = new QPushButton(tr("From -> Merge"), this);
    pb_sel_from_to_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -350,7 +343,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 
    QHBoxLayout *hbl_sel_cmds = new QHBoxLayout(0);
    hbl_sel_cmds->addWidget( pb_sel_auto );
-   hbl_sel_cmds->addWidget( pb_cut_back );
    hbl_sel_cmds->addWidget( pb_sel_from_to_merge );
    hbl_sel_cmds->addWidget( pb_sel_from_to_fit );
    hbl_sel_cmds->addWidget( pb_sel_to_to_fit );
@@ -474,12 +466,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
 {
    running = true;
    update_enables();
-
-   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
-   QString filename = le_chains_to->text();
-   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
-                                                    filename,
-                                                    true );
 
    if ( !validate_commands() )
    {
@@ -746,6 +732,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    map < QString, range_entry > fit_map;
    map < QString, range_entry > cut_map;
 
+   map < QString, vector < QString > > cross_fit_chains;
+   map < QString, vector < QString > > cross_cross_chains;
+
    range_entry merge_range;
    range_entry fit_range;
    range_entry cut_range;
@@ -762,8 +751,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          return;
       }
       
-      // not processing extra chains here
-
       if ( csv_commands.data[ i ][ 0 ].length() <= 1 )
       {
          merge_range.chain = csv_commands.data[ i ][ 0 ];
@@ -788,6 +775,69 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
             cut_map  [ cut_range  .chain ] = cut_range;
             // cout << "cut map " << cut_range << endl;
          }
+      } else {
+         merge_range.chain = csv_commands.data[ i ][ 0 ];
+         merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
+         merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+
+         merge_map[ merge_range.chain ] = merge_range;
+         fit_map  [ fit_range  .chain ] = fit_range;
+         
+         QString fit_chain;
+         QString cross_chain;
+         if ( !get_chains( merge_range.chain, fit_chain, cross_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( merge_range.chain ) );
+            continue;
+         }
+         cross_fit_chains  [ fit_chain   ].push_back( cross_chain );
+         cross_cross_chains[ cross_chain ].push_back( fit_chain   );
+      }
+   }
+
+   // check cross fit chains ranges,
+   // if they are in the merge ranges, copy over the to range for the base chain
+
+   for ( map < QString, range_entry >::iterator it = fit_map.begin();
+         it != fit_map.end();
+         it++ )
+   {
+      QString fit_chain;
+      QString cross_chain;
+      if ( get_chains( it->first, fit_chain, cross_chain ) )
+      {
+         update_cache_range();
+         if ( !cache_from_range_pos.count( fit_chain ) || !cache_to_range_pos.count( fit_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: chain dereferencing <%1>" ) ).arg( fit_chain ) );
+            continue;
+         }
+         if ( !cache_use_start.count( fit_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( fit_chain ) );
+            continue;
+         }
+
+         range_entry from_range = cache_from_ranges[ cache_from_range_pos[ fit_chain ] ];
+         range_entry to_range   = cache_to_ranges  [ cache_to_range_pos  [ fit_chain ] ];
+         bool        use_start  = cache_use_start  [ fit_chain ];
+
+         // is are fit range for the cross outside of the to_range ?
+         if ( ( use_start  && it->second.start < to_range.start ) ||
+              ( !use_start && it->second.end   > to_range.end   ) )
+         {
+            if ( !fit_map.count( fit_chain ) )
+            {
+               editor_msg( "red", QString( tr( "Internal error: chain fit map entry missing  <%1>" ) ).arg( fit_chain ) );
+               continue;
+            }
+            editor_msg( "blue", QString( tr( "Notice: setting fitting for extra chain %1 to fit region for chain %2" ) ).arg( cross_chain ).arg( fit_chain ) );
+            it->second = fit_map[ fit_chain ];
+         }
       }
    }
 
@@ -801,6 +851,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    // vector of merge_data for each chain
 
    map < QString, vector < vector < QString > > > merge_data;
+
+   map < QString, bool > extra_chain_reported;
+   map < QString, bool > extra_cross_chain_reported;
 
    // extract the merge & fit bits
    {
@@ -851,6 +904,53 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
             from_fit_points[ chain ].push_back( p );
             // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
          }
+
+         // check for cross/extra chains
+
+         if ( cross_fit_chains.count( chain ) )
+         {
+            for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+            {
+               QString fit_chain   = chain;
+               QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
+               QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+               if ( !extra_chain_reported.count( chain ) )
+               {
+                  editor_msg( "blue", QString( "Adding extra fit chains for %1" ).arg( chain ) );
+                  extra_chain_reported[ chain ] = true;
+               }
+
+               if ( fit_map.count( chain ) &&
+                    fit_map[ chain ].start <= pos &&
+                    fit_map[ chain ].end   >= pos &&
+                    atom == " CA " ) 
+               {
+                  point p;
+                  p.axis[ 0 ] = csv_from.data[ i ][ 8  ].toDouble();
+                  p.axis[ 1 ] = csv_from.data[ i ][ 9  ].toDouble();
+                  p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
+                  from_fit_points[ chain ].push_back( p );
+                  // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
+               }
+            }
+         }               
+
+         if ( cross_cross_chains.count( chain ) )
+         {
+            for ( unsigned int j = 0; j < cross_cross_chains[ chain ].size(); j++ )
+            {
+               QString cross_chain = chain;
+               QString fit_chain   = cross_cross_chains[ cross_chain ][ j ];
+               QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+               if ( !extra_cross_chain_reported.count( chain ) )
+               {
+                  editor_msg( "blue", QString( "Adding extra merge chains for %1" ).arg( chain ) );
+                  extra_cross_chain_reported[ chain ] = true;
+               }
+               // csv_merge.data.push_back( csv_from.data[ i ] );
+               merge_data[ chain ].push_back( csv_from.data[ i ] );
+            }
+         }               
       }
       //      ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_setup_keys( csv_merge );
       //      ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_clipboard = csv_merge;
@@ -898,7 +998,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    // determine to ranges for merge position 
    map < QString, range_entry > to_range_map;
 
-
    for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
@@ -940,7 +1039,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          // editor_msg( "blue", QString("Chain %1, merge chain to be added %2").arg( it->first ).arg( chain_to_front[ it->first ] ? "front" : "back" ) );
       }
    }
+
    // extract to fit points
+   extra_chain_reported.clear();
+
    for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
@@ -951,9 +1053,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          return;
       }
 
-      QString chain    = csv_to.data[ i ][ 1 ];
-      unsigned int pos = csv_to.data[ i ][ 3 ].toUInt();
-      QString atom     = csv_to.data[ i ][ 4 ];
+      QString      chain = csv_to.data[ i ][ 1 ];
+      unsigned int pos   = csv_to.data[ i ][ 3 ].toUInt();
+      QString      atom  = csv_to.data[ i ][ 4 ];
       if ( fit_map.count( chain ) &&
            fit_map[ chain ].start <= pos &&
            fit_map[ chain ].end   >= pos &&
@@ -965,6 +1067,33 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
          to_fit_points[ chain ].push_back( p );
       }
+
+      if ( cross_fit_chains.count( chain ) )
+      {
+         for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+         {
+            QString fit_chain   = chain;
+            QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
+            QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+            if ( !extra_chain_reported.count( chain ) )
+            {
+               editor_msg( "blue", QString( "Adding to extra fit chains for %1" ).arg( chain ) );
+               extra_chain_reported[ chain ] = true;
+            }
+
+            if ( fit_map.count( chain ) &&
+                 fit_map[ chain ].start <= pos &&
+                 fit_map[ chain ].end   >= pos &&
+                 atom == " CA " ) 
+            {
+               point p;
+               p.axis[ 0 ] = csv_to.data[ i ][ 8  ].toDouble();
+               p.axis[ 1 ] = csv_to.data[ i ][ 9  ].toDouble();
+               p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
+               to_fit_points[ chain ].push_back( p );
+            }
+         }
+      }               
    }
 
    // validate from/to fit points
@@ -1123,7 +1252,90 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
             new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
          }
       }            
+
+      // add extra chains if present
       
+      // this could also be run over the merge map:
+      //  for ( map < QString, vector < vector < QString > > > merge_data.begin(); etc
+
+      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      {
+         if ( csv_from.data[ i ].size() < 14 )
+         {
+            editor_msg( "red", tr( "Internal error: Invalid \"from\" csv" ) );
+            running = false;
+            update_enables();
+            return;
+         }
+
+         QString chain    = csv_from.data[ i ][ 1 ];
+
+         // is this a chain we need to add ?
+         if ( !cross_cross_chains.count( chain ) )
+         {
+            continue;
+         }
+
+         if ( cross_cross_chains[ chain ].size() != 1 )
+         {
+            editor_msg( "red", QString( tr( "Error: only one fitting chain currently allowed per extra chain %1" ) ).arg( chain ) );
+            running = false;
+            update_enables();
+            return;
+         }
+
+         {
+            QString cross_chain = chain;
+            QString fit_chain   = cross_cross_chains[ chain ][ 0 ];
+            QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+
+            if ( !from_fit_points.count( chain ) || !to_fit_points.count( chain ) )
+            {
+               editor_msg( "red", QString( tr( "Error: missing fit points for %1" ) ).arg( chain ) );
+               running = false;
+               update_enables();
+               return;
+            }
+
+            if ( !merge_data.count( chain ) )
+            {
+               editor_msg( "red", QString( tr( "Error: merge data for %1" ) ).arg( chain ) );
+               running = false;
+               update_enables();
+               return;
+            }
+
+            // make the transform:
+         
+            {
+               vector < point > ps;
+               point p;
+
+               p.axis[ 0 ] = csv_from.data[ i ][ 8  ].toDouble();
+               p.axis[ 1 ] = csv_from.data[ i ][ 9  ].toDouble();
+               p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
+               ps.push_back( p );
+               vector < point > result;
+               QString error_msg;
+               if ( !((US_Hydrodyn *)us_hydrodyn)->atom_align( from_fit_points[ chain ], 
+                                                               to_fit_points  [ chain ], 
+                                                               ps, 
+                                                               result,
+                                                               error_msg ) )
+               {
+                  editor_msg( "red", error_msg );
+                  running = false;
+                  update_enables();
+                  return;
+               }
+               unsigned int datapos = new_csv.data.size();
+               new_csv.data.push_back( csv_from.data[ i ] );
+               new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
+               new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
+               new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+            }
+         }
+      }            
 
       last_chain = "__first__";
       unsigned atompos = 0;
@@ -1131,7 +1343,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       {
          QString chain    = new_csv.data[ i ][ 1 ];
          if ( chain != last_chain )
-         {
+          {
             // editor_msg("red", QString("chain <%1> last chain <%2>").arg( chain ).arg(last_chain));
             atompos = 0;
             last_chain = chain;
@@ -1182,7 +1394,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_enables()
    pb_stop             ->setEnabled( running );
 
    pb_sel_auto         ->setEnabled( !running && from_exists && to_exists );
-   pb_cut_back         ->setEnabled( !running && from_exists && to_exists && cut_back_ok );
    pb_sel_from_to_merge->setEnabled( !running && any_from_selected );
    pb_sel_from_to_fit  ->setEnabled( !running && any_from_selected );
    pb_sel_to_to_fit    ->setEnabled( !running && any_to_selected );
@@ -1556,6 +1767,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_merge()
    vector < range_entry > ranges;
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 1, 2 );
+   update_cache_range();
+   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   {
+      QString chain = ranges[ i ].chain;
+      if ( cache_to_range_pos.count( chain ) )
+      {
+         recalc_from_merge( cache_to_range_pos[ chain ], 1 );
+      }
+   }
    update_enables();
 }
 
@@ -1564,6 +1784,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_fit()
    vector < range_entry > ranges;
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 3, 4 );
+   update_cache_range();
+   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   {
+      QString chain = ranges[ i ].chain;
+      if ( cache_to_range_pos.count( chain ) )
+      {
+         recalc_from_fit( cache_to_range_pos[ chain ], 3 );
+      }
+   }
    update_enables();
 }
 
@@ -1572,6 +1801,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_fit()
    vector < range_entry > ranges;
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 3, 4 );
+   update_cache_range();
+   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   {
+      QString chain = ranges[ i ].chain;
+      if ( cache_to_range_pos.count( chain ) )
+      {
+         recalc_from_fit( cache_to_range_pos[ chain ], 3 );
+      }
+   }
    update_enables();
 }
 
@@ -1580,6 +1818,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_cut()
    vector < range_entry > ranges;
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 5, 6 );
+   update_cache_range();
+   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   {
+      QString chain = ranges[ i ].chain;
+      if ( cache_to_range_pos.count( chain ) )
+      {
+         recalc_from_cut( cache_to_range_pos[ chain ], 5 );
+      }
+   }
    update_enables();
 }
 
@@ -1606,6 +1853,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::validate()
 {
    running = true;
    update_enables();
+
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+   QString filename = le_chains_to->text();
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
+                                                    filename,
+                                                    true );
+
    if ( validate_commands() )
    {
       editor_msg( "dark blue", "Validation OK" );
@@ -1616,141 +1870,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::validate()
    update_enables();
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::cut_back()
-{
-   running = true;
-   update_enables();
-
-   cut_back_ok = false;
-
-   vector < range_entry > from_ranges;
-   vector < range_entry > to_ranges;
-
-   sel_to_range( lv_csv_from, from_ranges, false );
-   sel_to_range( lv_csv_to  , to_ranges  , false );
-
-   map < QString, unsigned int > from_range_pos;
-   map < QString, unsigned int > to_range_pos;
-
-   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
-   {
-      from_range_pos[ from_ranges[ i ].chain ] = i;
-   }
-
-   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
-   {
-      to_range_pos[ to_ranges[ i ].chain ] = i;
-   }
-
-   update_csv_commands_from_table();
-
-   vector < range_entry > merge_ranges;
-   vector < range_entry > fit_ranges;
-   vector < range_entry > cut_ranges;
-
-   range_entry merge_range;
-   range_entry fit_range;
-   range_entry cut_range;
-
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
-   {
-      if ( csv_commands.data[ i ].size() < 7 ||
-           csv_commands.num_data[ i ].size() < 7 )
-      {
-         editor_msg( "red", tr( "Internal error: Invalid command directive format" ) );
-         return;
-      }
-      
-      merge_range.chain = csv_commands.data[ i ][ 0 ];
-      merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
-      merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
-
-      fit_range.chain   = csv_commands.data[ i ][ 0 ];
-      fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
-      fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
-
-      cut_range.chain   = csv_commands.data[ i ][ 0 ];
-      cut_range.start   = (unsigned int) csv_commands.num_data[ i ][ 5 ];
-      cut_range.end     = (unsigned int) csv_commands.num_data[ i ][ 6 ];
-
-      merge_ranges.push_back( merge_range );
-      fit_ranges  .push_back( fit_range   );
-      cut_ranges  .push_back( cut_range   );
-   }
-
-   vector < range_entry > new_cut_ranges;
-   vector < range_entry > new_fit_ranges;
-
-   for ( unsigned int i = 0; i < merge_ranges.size(); i++ )
-   {
-      // set cut back to merge range overlap 
-      unsigned int errors = 0;
-      merge_range = merge_ranges[ i ];
-      fit_range   = fit_ranges  [ i ];
-      if ( merge_range.start || merge_range.end )
-      {
-         if ( ( !merge_range.start && merge_range.end  ) ||
-              ( merge_range.start  && !merge_range.end ) )
-         {
-            errors++;
-         }
-         if ( merge_range.start > merge_range.end  )
-         {
-            errors++;
-         }
-               
-         if ( !to_range_pos.count( merge_range.chain ) )
-         {
-            errors++;
-         } else {
-            range_entry to_range = to_ranges[ to_range_pos[ merge_range.chain ] ];
-            // make sure merge area NOT present in "to" , could happen at either end
-            if ( to_range.start <= merge_range.end && to_range.end >= merge_range.start )
-            {
-               if ( !errors )
-               {
-                  range_entry new_cut;
-                  range_entry new_fit;
-                  new_cut.chain = merge_range.chain;
-                  new_fit.chain = merge_range.chain;
-
-                  // nicer to set the fit ranges to the same number of residues as previously set
-
-                  if ( merge_range.start <= to_range.start )
-                  {
-                     // cut to the start
-                     new_cut.start = to_range.start;
-                     new_cut.end   = merge_range.end;
-
-                     // reset fit
-                     new_fit.start = merge_range.end + 1;
-                     new_fit.end   = merge_range.end + 3;
-                  } else {
-                     new_cut.start = merge_range.start;
-                     new_cut.end   = to_range.end;
-
-                     new_fit.start = merge_range.start - 3;
-                     new_fit.end   = merge_range.start - 1;
-                  }
-
-                  new_cut_ranges.push_back( new_cut );
-                  new_fit_ranges.push_back( new_fit );
-               }
-            }
-         }
-      }
-   }
-
-   update_t_csv_range( new_fit_ranges, 3, 4 );
-   update_t_csv_range( new_cut_ranges, 5, 6 );
-
-   validate();
-   // validate() sets running = false at end & calls update_enables()
-}
-
 bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
 {
-   cut_back_ok = false;
 
    vector < range_entry > from_ranges;
    vector < range_entry > to_ranges;
@@ -1787,6 +1908,12 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
    range_entry fit_range;
    range_entry cut_range;
 
+   map < QString, QString > dup_extra_chains;
+   QString fit_chain;
+   QString cross_chain;
+
+   unsigned int errors = 0;
+
    for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
    {
       if ( csv_commands.data[ i ].size() < 7 ||
@@ -1796,8 +1923,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          return false;
       }
       
-      // separate validation for extra chains
-      if ( csv_commands.data[ i ][ 0 ].length() <= 1 )
+      if ( !get_chains( csv_commands.data[ i ][ 0 ], fit_chain, cross_chain ) )
       {
          merge_range.chain = csv_commands.data[ i ][ 0 ];
          merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
@@ -1814,10 +1940,55 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          merge_ranges.push_back( merge_range );
          fit_ranges  .push_back( fit_range   );
          cut_ranges  .push_back( cut_range   );
+      } else {
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+         
+         fit_ranges  .push_back( fit_range   );
+
+         if ( !dup_extra_chains.count( cross_chain ) )
+         {
+            dup_extra_chains[ cross_chain ] = csv_commands.data[ i ][ 0 ];
+         } else {
+            editor_msg( "red", 
+                        QString( tr( "Error: Extra chain %1 has repeated usage: %2 and %3, only one usage allowed\n" ) )
+                        .arg( cross_chain )
+                        .arg( csv_commands.data[ i ][ 0 ] )
+                        .arg( dup_extra_chains[ cross_chain ] ) );
+            errors++;
+         }
       }
    }
 
-   unsigned int errors = 0;
+   for ( unsigned int i = 0; i < fit_ranges.size(); i++ )
+   {
+      if ( !get_chains( fit_ranges[ i ].chain, fit_chain, cross_chain ) )
+      {
+         continue;
+      }
+
+      if ( !from_range_pos.count( fit_chain ) )
+      {
+         editor_msg( "red", QString( "Error: Chain %1 missing in \"Chains From\" PDB" ).arg( fit_chain ) );
+         errors++;
+      } else {
+         range_entry from_range = from_ranges[ from_range_pos[ fit_chain ] ];
+         if ( from_range.start > fit_ranges[ i ].start ||
+              from_range.end   < fit_ranges[ i ].end )
+         {
+            editor_msg( "red", QString( "Error: Chain %1 \"Chains From\" does not have residues in fit range" ).arg( fit_ranges[ i ].chain ) );
+            errors++;
+         }
+      }
+         
+      if ( !to_range_pos.count( fit_chain ) )
+      {
+         editor_msg( "red", QString( "Error: Chain %1 missing in \"Chains To\" PDB" ).arg( fit_chain ) );
+         errors++;
+      }
+   }      
+
    for ( unsigned int i = 0; i < merge_ranges.size(); i++ )
    {
       cut_range = cut_ranges[ i ];
@@ -1921,7 +2092,6 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
             if ( to_range.start <= merge_range.end && to_range.end >= merge_range.start )
             {
                editor_msg( "red", QString( "Error: Chain %1 \"Chains To\" has values in merge range and therefore needs to be cut" ).arg( merge_range.chain ) );
-               cut_back_ok = true;
                errors++;
             }
          }
@@ -1972,6 +2142,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
          }
       }
    }
+
    return errors == 0;
 }
 
@@ -2241,6 +2412,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    map < QString, range_entry > fit_map;
    map < QString, range_entry > cut_map;
 
+   map < QString, vector < QString > > cross_fit_chains;
+   map < QString, vector < QString > > cross_cross_chains;
+
    range_entry merge_range;
    range_entry fit_range;
    range_entry cut_range;
@@ -2281,6 +2455,69 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             cut_map  [ cut_range  .chain ] = cut_range;
             // cout << "cut map " << cut_range << endl;
          }
+      } else {
+         merge_range.chain = csv_commands.data[ i ][ 0 ];
+         merge_range.start = (unsigned int) csv_commands.num_data[ i ][ 1 ];
+         merge_range.end   = (unsigned int) csv_commands.num_data[ i ][ 2 ];
+
+         fit_range.chain   = csv_commands.data[ i ][ 0 ];
+         fit_range.start   = (unsigned int) csv_commands.num_data[ i ][ 3 ];
+         fit_range.end     = (unsigned int) csv_commands.num_data[ i ][ 4 ];
+
+         merge_map[ merge_range.chain ] = merge_range;
+         fit_map  [ fit_range  .chain ] = fit_range;
+         
+         QString fit_chain;
+         QString cross_chain;
+         if ( !get_chains( merge_range.chain, fit_chain, cross_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( merge_range.chain ) );
+            continue;
+         }
+         cross_fit_chains  [ fit_chain   ].push_back( cross_chain );
+         cross_cross_chains[ cross_chain ].push_back( fit_chain   );
+      }
+   }
+
+   // check cross fit chains ranges,
+   // if they are in the merge ranges, copy over the to range for the base chain
+
+   for ( map < QString, range_entry >::iterator it = fit_map.begin();
+         it != fit_map.end();
+         it++ )
+   {
+      QString fit_chain;
+      QString cross_chain;
+      if ( get_chains( it->first, fit_chain, cross_chain ) )
+      {
+         update_cache_range();
+         if ( !cache_from_range_pos.count( fit_chain ) || !cache_to_range_pos.count( fit_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: chain dereferencing <%1>" ) ).arg( fit_chain ) );
+            continue;
+         }
+         if ( !cache_use_start.count( fit_chain ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: chain start map entry missing  <%1>" ) ).arg( fit_chain ) );
+            continue;
+         }
+
+         range_entry from_range = cache_from_ranges[ cache_from_range_pos[ fit_chain ] ];
+         range_entry to_range   = cache_to_ranges  [ cache_to_range_pos  [ fit_chain ] ];
+         bool        use_start  = cache_use_start  [ fit_chain ];
+
+         // is are fit range for the cross outside of the to_range ?
+         if ( ( use_start  && it->second.start < to_range.start ) ||
+              ( !use_start && it->second.end   > to_range.end   ) )
+         {
+            if ( !fit_map.count( fit_chain ) )
+            {
+               editor_msg( "red", QString( tr( "Internal error: chain fit map entry missing  <%1>" ) ).arg( fit_chain ) );
+               continue;
+            }
+            editor_msg( "blue", QString( tr( "Notice: setting fitting for extra chain %1 to fit region for chain %2" ) ).arg( cross_chain ).arg( fit_chain ) );
+            it->second = fit_map[ fit_chain ];
+         }
       }
    }
 
@@ -2294,6 +2531,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    // vector of merge_data for each chain
 
    map < QString, vector < vector < QString > > > merge_data;
+
+   map < QString, bool > extra_chain_reported;
+   map < QString, bool > extra_cross_chain_reported;
 
    // extract the merge & fit bits
    {
@@ -2344,6 +2584,53 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             from_fit_points[ chain ].push_back( p );
             // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
          }
+
+         // check for cross/extra chains
+
+         if ( cross_fit_chains.count( chain ) )
+         {
+            for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+            {
+               QString fit_chain   = chain;
+               QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
+               QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+               if ( !extra_chain_reported.count( chain ) )
+               {
+                  editor_msg( "blue", QString( "Adding extra fit chains for %1" ).arg( chain ) );
+                  extra_chain_reported[ chain ] = true;
+               }
+
+               if ( fit_map.count( chain ) &&
+                    fit_map[ chain ].start <= pos &&
+                    fit_map[ chain ].end   >= pos &&
+                    atom == " CA " ) 
+               {
+                  point p;
+                  p.axis[ 0 ] = csv_from.data[ i ][ 8  ].toDouble();
+                  p.axis[ 1 ] = csv_from.data[ i ][ 9  ].toDouble();
+                  p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
+                  from_fit_points[ chain ].push_back( p );
+                  // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
+               }
+            }
+         }               
+
+         if ( cross_cross_chains.count( chain ) )
+         {
+            for ( unsigned int j = 0; j < cross_cross_chains[ chain ].size(); j++ )
+            {
+               QString cross_chain = chain;
+               QString fit_chain   = cross_cross_chains[ cross_chain ][ j ];
+               QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+               if ( !extra_cross_chain_reported.count( chain ) )
+               {
+                  editor_msg( "blue", QString( "Adding extra merge chains for %1" ).arg( chain ) );
+                  extra_cross_chain_reported[ chain ] = true;
+               }
+               // csv_merge.data.push_back( csv_from.data[ i ] );
+               merge_data[ chain ].push_back( csv_from.data[ i ] );
+            }
+         }               
       }
       //      ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_setup_keys( csv_merge );
       //      ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_clipboard = csv_merge;
@@ -2390,7 +2677,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
    // determine to ranges for merge position 
    map < QString, range_entry > to_range_map;
-
 
    for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
    {
@@ -2457,6 +2743,33 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          p.axis[ 1 ] = csv_to.data[ i ][ 9  ].toDouble();
          p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
          to_fit_points[ chain ].push_back( p );
+      }
+
+      if ( cross_fit_chains.count( chain ) )
+      {
+         for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+         {
+            QString fit_chain   = chain;
+            QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
+            QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+            if ( !extra_chain_reported.count( chain ) )
+            {
+               editor_msg( "blue", QString( "Adding to extra fit chains for %1" ).arg( chain ) );
+               extra_chain_reported[ chain ] = true;
+            }
+
+            if ( fit_map.count( chain ) &&
+                 fit_map[ chain ].start <= pos &&
+                 fit_map[ chain ].end   >= pos &&
+                 atom == " CA " ) 
+            {
+               point p;
+               p.axis[ 0 ] = csv_to.data[ i ][ 8  ].toDouble();
+               p.axis[ 1 ] = csv_to.data[ i ][ 9  ].toDouble();
+               p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
+               to_fit_points[ chain ].push_back( p );
+            }
+         }
       }
    }
 
@@ -2617,6 +2930,89 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          }
       }            
       
+      // add extra chains if present
+      
+      // this could also be run over the merge map:
+      //  for ( map < QString, vector < vector < QString > > > merge_data.begin(); etc
+
+      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      {
+         if ( csv_from.data[ i ].size() < 14 )
+         {
+            editor_msg( "red", tr( "Internal error: Invalid \"from\" csv" ) );
+            running = false;
+            update_enables();
+            return;
+         }
+
+         QString chain    = csv_from.data[ i ][ 1 ];
+
+         // is this a chain we need to add ?
+         if ( !cross_cross_chains.count( chain ) )
+         {
+            continue;
+         }
+
+         if ( cross_cross_chains[ chain ].size() != 1 )
+         {
+            editor_msg( "red", QString( tr( "Error: only one fitting chain currently allowed per extra chain %1" ) ).arg( chain ) );
+            running = false;
+            update_enables();
+            return;
+         }
+
+         {
+            QString cross_chain = chain;
+            QString fit_chain   = cross_cross_chains[ chain ][ 0 ];
+            QString chain       = QString( "%1+%2" ).arg( fit_chain ).arg( cross_chain );
+
+            if ( !from_fit_points.count( chain ) || !to_fit_points.count( chain ) )
+            {
+               editor_msg( "red", QString( tr( "Error: missing fit points for %1" ) ).arg( chain ) );
+               running = false;
+               update_enables();
+               return;
+            }
+
+            if ( !merge_data.count( chain ) )
+            {
+               editor_msg( "red", QString( tr( "Error: merge data for %1" ) ).arg( chain ) );
+               running = false;
+               update_enables();
+               return;
+            }
+
+            // make the transform:
+         
+            {
+               vector < point > ps;
+               point p;
+
+               p.axis[ 0 ] = csv_from.data[ i ][ 8  ].toDouble();
+               p.axis[ 1 ] = csv_from.data[ i ][ 9  ].toDouble();
+               p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
+               ps.push_back( p );
+               vector < point > result;
+               QString error_msg;
+               if ( !((US_Hydrodyn *)us_hydrodyn)->atom_align( from_fit_points[ chain ], 
+                                                               to_fit_points  [ chain ], 
+                                                               ps, 
+                                                               result,
+                                                               error_msg ) )
+               {
+                  editor_msg( "red", error_msg );
+                  running = false;
+                  update_enables();
+                  return;
+               }
+               unsigned int datapos = new_csv.data.size();
+               new_csv.data.push_back( csv_from.data[ i ] );
+               new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
+               new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
+               new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+            }
+         }
+      }            
 
       last_chain = "__first__";
       unsigned atompos = 0;
@@ -2765,7 +3161,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
             }               
          }
       }
-      editor_msg( "blue", QString( tr( "Closest chain to %1 with key %2 has key %3 distance %4" ) )
+      editor_msg( "blue", QString( tr( "Closest chain to %1 [%2] is [%3] distance %4" ) )
                   .arg( it->first )
                   .arg( minimum_key_a )
                   .arg( minimum_key_b )
@@ -2794,6 +3190,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
 
          QString cross_chain = QString( "%1+%2" ).arg( chain_b ).arg( chain_a );
 
+         // need to add gap check here:
          unsigned int pos = ( unsigned int ) t_csv->numRows();
          t_csv->setNumRows( pos + 1 );
          t_csv->setText( pos, 0, cross_chain );
@@ -2816,6 +3213,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::delete_row()
          t_csv->removeRow( i );
       }
    }
+   update_enables();
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::update_cache_range()
@@ -3122,7 +3520,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
 
    if ( use_start )
    {
-      if ( current_cut_end <= current_merge_end )
+      if ( to_range.start <= current_merge_end && current_cut_end <= current_merge_end )
       {
          current_cut_start         = to_range.start;
          current_cut_end           = current_merge_end;
@@ -3135,7 +3533,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
          any_changed               = true;
       }
    } else {
-      if ( current_cut_start >= current_merge_start )
+      if ( to_range.end >= current_merge_start && ( !current_cut_start || current_cut_start >= current_merge_start ) )
       {
          current_cut_start         = current_merge_start;
          while ( to_range.gaps.count( current_cut_start ) && current_cut_start > to_range.start )
@@ -3301,15 +3699,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
    cout << QString( "current_merge_length %1\n" ).arg( current_merge_length );
    cout << QString( "current_cut_length %1\n" ).arg( current_cut_length );
 
-   unsigned int min_fit_start     = residue_offset_position( true , chain, from_range.start, 1 );
-   unsigned int alt_min_fit_start = residue_offset_position( false, chain, to_range.start  , 1 );
+   unsigned int min_fit_start     = from_range.start; // residue_offset_position( true , chain, from_range.start, 1 );
+   unsigned int alt_min_fit_start = to_range.start;   // residue_offset_position( false, chain, to_range.start  , 1 );
    if ( min_fit_start < alt_min_fit_start )
    {
       min_fit_start = alt_min_fit_start;
    }
 
-   unsigned int max_fit_end       = residue_offset_position( true , chain, from_range.end , -1 );
-   unsigned int alt_max_fit_end   = residue_offset_position( false, chain, to_range.end   , -1 );
+   unsigned int max_fit_end       = from_range.end; // residue_offset_position( true , chain, from_range.end , -1 );
+   unsigned int alt_max_fit_end   = to_range.end;   // residue_offset_position( false, chain, to_range.end   , -1 );
    if ( max_fit_end > alt_max_fit_end )
    {
       max_fit_end = alt_max_fit_end;
@@ -3351,12 +3749,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
 
    if ( current_fit_start < min_fit_start )
    {
+      cout << "m1\n";
       current_fit_start         = min_fit_start;
       current_fit_start_changed = true;
       any_changed               = true;
    }
    if ( current_fit_end   > max_fit_end )
    {
+      cout << "m2\n";
       current_fit_end           = max_fit_end;
       current_fit_end_changed   = true;
       any_changed               = true;
@@ -3385,6 +3785,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
    {
       if ( current_cut_end >= current_fit_start )
       {
+         cout << "m4\n";
          current_cut_start         = to_range.start;
          current_cut_end           = residue_offset_position( true , chain, current_fit_start, -1 );
          while ( to_range.gaps.count( current_cut_end ) && current_cut_end >= to_range.start )
@@ -3396,8 +3797,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
          any_changed               = true;
       }
    } else {
-      if ( current_cut_start <= current_fit_end )
+      if ( current_cut_start && current_cut_start <= current_fit_end )
       {
+         cout << "m5\n";
          current_cut_start         = residue_offset_position( true , chain, current_fit_end, 1 );
          while ( to_range.gaps.count( current_cut_start ) && current_cut_start <  to_range.end )
          {
@@ -3552,7 +3954,26 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
       }
    }
 
-   if ( current_cut_start )
+   if ( col == 5 && current_cut_start )
+   {
+      if ( !current_cut_end || current_cut_start > current_cut_end )
+      {
+         current_cut_end           = current_cut_start;
+         current_cut_end_changed   = true;
+         any_changed               = true;
+      }
+   }
+   if ( col == 6 && current_cut_end )
+   {
+      if ( !current_cut_start || current_cut_start > current_cut_end )
+      {
+         current_cut_start         = current_cut_end;
+         current_cut_start_changed = true;
+         any_changed               = true;
+      }
+   }
+
+   if ( current_cut_start || current_cut_end )
    {
       if ( use_start )
       {
@@ -3567,7 +3988,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
          if ( current_cut_end > max_cut_end )
          {
             current_cut_end           = max_cut_end;
-            current_cut_end_changed  = true;
+            current_cut_end_changed   = true;
             any_changed               = true;
          }
       } else {
@@ -3717,4 +4138,40 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
       }
       connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
+}
+
+bool US_Hydrodyn_Pdb_Tool_Merge::get_chains( QString chain )
+{
+   if ( chain.length() <= 1 )
+   {
+      return false;
+   }
+   QStringList qsl = QStringList::split( "+", chain );
+   if ( qsl.size() != 2 )
+   {
+      editor_msg( "red", QString( tr( "Error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( chain ) );
+      return false;
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Pdb_Tool_Merge::get_chains( QString chain, QString &fit_chain, QString &cross_chain )
+{
+   fit_chain = chain;
+   if ( fit_chain.length() <= 1 )
+   {
+      cross_chain = "";
+      return false;
+   }
+   QStringList qsl = QStringList::split( "+", chain );
+   if ( qsl.size() != 2 )
+   {
+      editor_msg( "red", QString( tr( "Error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( chain ) );
+      cross_chain = "";
+      return false;
+   }
+
+   fit_chain   = qsl[ 0 ];
+   cross_chain = qsl[ 1 ];
+   return true;
 }

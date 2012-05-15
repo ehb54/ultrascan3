@@ -88,7 +88,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       // set selected to cut, fit, merge
 
       QPushButton          *pb_sel_auto;
-      QPushButton          *pb_cut_back;
       QPushButton          *pb_sel_from_to_merge;
       QPushButton          *pb_sel_from_to_fit;
       QPushButton          *pb_sel_to_to_fit;
@@ -172,7 +171,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       QStringList  csv_parse_line( QString qs );
 
       bool         validate_commands();
-      bool         cut_back_ok;
       void         run_one();
       bool         extra_chains_done;
 
@@ -191,6 +189,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
                                             unsigned int start_residue, 
                                             int          offset );
 
+      bool         get_chains( QString chain, QString &fit_chain, QString &cross_chain );
+      bool         get_chains( QString chain );
+
    private slots:
 
       void setupGUI();
@@ -200,7 +201,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       void update_enables();
 
       void sel_auto();
-      void cut_back();
       void sel_from_to_merge();
       void sel_from_to_fit();
       void sel_to_to_fit();
