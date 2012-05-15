@@ -48,9 +48,9 @@
     <report name="ff0_vs_mw" label="f/f0-vs-mw 2-d Model" />
     <report name="vbar_vs_s" label="vbar-vs-s 2-d Model" />
     <report name="vbar_vs_mw" label="vbar-vs-mw 2-d Model" />
-    <report name="x-to-radius" label="G*(s)-to-radius" />
-    <report name="x-to-S" label="G*(s)-to-s" />
-    <report name="average-S" label="average-G*(s)-to-s" />
+    <report name="x-to-radius" label="g*(s)-to-radius" />
+    <report name="x-to-S" label="g*(s)-to-s" />
+    <report name="average-S" label="average-g*(s)-to-s" />
     <report name="extrap" label="vHW Extrapolation" />
     <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
     <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
