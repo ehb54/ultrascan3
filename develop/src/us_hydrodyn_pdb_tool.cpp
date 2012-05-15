@@ -4360,6 +4360,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
                ts_out << "ENDMDL\n";
             }
             in_model = false;
+         } else {
+            ts_out << qs << "\n";
          }
       }
       f_in.close();
