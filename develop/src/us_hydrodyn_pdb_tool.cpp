@@ -5212,6 +5212,6 @@ double US_Hydrodyn_Pdb_Tool::minimum_pair_distance  ( QListView *lv,
          
    key_1 = key( min_lvp.lvi1 );
    key_2 = key( min_lvp.lvi2 );
-   return min_distance;
    update_enables();
+   return min_distance;
 }
