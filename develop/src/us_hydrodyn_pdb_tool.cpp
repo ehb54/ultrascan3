@@ -3395,12 +3395,11 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    map    < QString, bool > model_names;
    vector < QString >       model_name_vector;
-   unsigned int             max_model_name_len = 0;
+   unsigned int             max_model_name_len      = 0;
    QString                  model_header;
-
-   bool dup_model_name_msg_done = false;
-
-   unsigned int end_count = 0;
+   bool                     dup_model_name_msg_done = false;
+   unsigned int             end_count               = 0;
+   bool                     found_model             = false;
    
    {
       QTextStream ts( &f );
@@ -3415,7 +3414,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
             editor_msg( "dark blue", QString( tr( "Lines read %1" ).arg( line_count ) ) );
             qApp->processEvents();
          }
-         if ( qs.contains( rx_save_header ) )
+         if ( !found_model && qs.contains( rx_save_header ) )
          {
             model_header += qs + "\n";
          }
@@ -3427,6 +3426,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
          if ( qs.contains( rx_model ) )
          {
+            found_model = true;
             model_count++;
             QStringList qsl = QStringList::split( QRegExp("\\s+"), qs.left(20) );
             QString model_name;
@@ -4308,6 +4308,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    QTextStream ts_out( &f_out );
 
    QRegExp rx_model("^MODEL");
+   QRegExp rx_get_model("^MODEL\\s+(\\S+)");
    QRegExp rx_end("^END");
    QRegExp rx_atom("^(ATOM|HETATM|TER)");
 
@@ -4318,6 +4319,9 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
       .arg( join_files.size() )
       .arg( QFileInfo( join_files[ 0 ] ).fileName() )
       .arg( QFileInfo( join_files[ 1 ] ).fileName() );
+
+   map < QString, bool > used_model;
+   unsigned int actual_model_count = 0;
 
    for ( unsigned int i = 0; i < join_files.size(); i++ )
    {
@@ -4340,27 +4344,71 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
 
       QTextStream ts_in( &f_in );
 
+      bool                  atom_or_model_found = false;
+      bool                  has_model_line      = false;
+      QString               last_model          = "";
+
       while ( !ts_in.atEnd() )
       {
          QString qs = ts_in.readLine();
+
+         bool line_written = false;
 
          if ( rx_atom.search( qs ) != -1 )
          {
             if ( !in_model )
             {
-               ts_out << QString( "MODEL        %1\n" ).arg( ++model );
+               if ( last_model.isEmpty() )
+               {
+                  ++model;
+                  while( used_model.count( QString( "%1" ).arg( model ) ) )
+                  {
+                     model++;
+                  }
+                  used_model[ QString( "%1" ).arg( model ) ] = true;
+                  ts_out << QString( "MODEL        %1\n" ).arg( model );
+               }
+               actual_model_count++;
                in_model = true;
             }
+
+            has_model_line      = false;
+            atom_or_model_found = true;
             ts_out << qs << "\n";
+            line_written = true;
          }
          if ( rx_model.search( qs ) != -1 )
          {
+            atom_or_model_found = true;
+            has_model_line      = true;
+            if ( rx_get_model.search( qs ) != -1 )
+            {
+               last_model = rx_get_model.cap( 1 );
+               if ( used_model.count( last_model ) )
+               {
+                  unsigned int ext = 0;
+                  QString use_model = QString( "%1-%2" ).arg( last_model ).arg( ++ext );
+                  while ( used_model.count( use_model ) )
+                  {
+                     use_model = QString( "%1-%2" ).arg( last_model ).arg( ++ext );
+                  }
+                  qs = "MODEL     " + use_model;
+                  last_model = use_model;
+               }
+               used_model[ last_model ] = true;
+            } else {
+               last_model = "";
+            }
             if ( in_model )
             {
                ts_out << "ENDMDL\n";
+               line_written = true;
+               in_model = false;
             }
-            in_model = false;
-         } else {
+            
+         } 
+         if ( !line_written && atom_or_model_found && rx_end.search( qs ) == -1 )
+         {
             ts_out << qs << "\n";
          }
       }
@@ -4375,7 +4423,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    f_out.close();
    QMessageBox::information( this, 
                              tr( "US-SOMO: PDB editor : Join" ) ,
-                             QString( tr( "File %1 created with %2 models" ) ).arg( save_file ).arg( model ) );
+                             QString( tr( "File %1 created with %2 models" ) ).arg( save_file ).arg( actual_model_count ) );
 }
 
 void US_Hydrodyn_Pdb_Tool::merge()
@@ -4510,6 +4558,19 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       foutname += ".pdb";
    }
 
+   if ( foutname == filename )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("The output file must not be the same as the inpufile %1!")).arg( foutname ) );
+      pb_renum_pdb->setEnabled( true );
+      return;
+   }
+      
+   if ( QFile::exists( foutname ) )
+   {
+      foutname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( foutname, 0, this );
+   }
+
    QFile fout( foutname );
 
    // read through & renumber
@@ -4550,7 +4611,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
 
       if ( rx_atom.search( line ) != -1 )
       {
-         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^( H|H)" ) ) )
+         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^((\\d| )H|H)" ) ) )
          {
             continue;
          }
