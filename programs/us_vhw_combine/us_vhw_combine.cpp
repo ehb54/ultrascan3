@@ -3,6 +3,7 @@
 #include <QApplication>
 
 #include "us_vhw_combine.h"
+#include "us_select_runid.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -10,6 +11,9 @@
 #include "us_gui_util.h"
 #include "us_matrix.h"
 #include "us_constants.h"
+#include "us_passwd.h"
+#include "us_report.h"
+#include "us_dataIO2.h"
 #include "qwt_legend.h"
 
 // main program
@@ -45,6 +49,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    rightLayout->setSpacing        ( 0 );
    rightLayout->setContentsMargins( 0, 1, 0, 1 );
 
+   dkdb_cntrls             = new US_Disk_DB_Controls(
+         US_Settings::default_data_location() );
    QPushButton* pb_loadda  = us_pushbutton( tr( "Load Data"  ) );
    QPushButton* pb_saveda  = us_pushbutton( tr( "Save Data"  ) );
    QPushButton* pb_resetd  = us_pushbutton( tr( "Reset Data" ) );
@@ -69,6 +75,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    lw_triples    = us_listwidget();
 
    int row = 0;
+   leftLayout->addLayout( dkdb_cntrls,  row++, 0, 1, 8 );
    leftLayout->addWidget( pb_loadda,    row,   0, 1, 4 );
    leftLayout->addWidget( pb_saveda,    row++, 4, 1, 4 );
    leftLayout->addWidget( pb_resetd,    row,   0, 1, 4 );
@@ -90,6 +97,9 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( lw_triples,   row,   0, 5, 8 );
    row    += 5;
    leftLayout->setRowStretch( row, 1 );
+
+   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
+            this,    SLOT( update_disk_db( bool ) ) );
 
    connect( pb_loadda, SIGNAL( clicked()    ),
             this,      SLOT(   load()       ) );
@@ -166,129 +176,203 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 // Load data
 void US_vHW_Combine::load( void )
 {
-   QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select Run ID Directory:" ),
-         US_Settings::resultDir(),
-         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
+   QStringList runids;
+   QString     runid;
 
-   if ( dir.isEmpty() )   return;
+   // Open a dialog and get the runID(s)
+   US_SelectRunid srdiag( dkdb_cntrls->db(), runids );
+   connect( &srdiag,      SIGNAL( changed( bool ) ),
+            this,    SLOT( update_disk_db( bool ) ) );
+   srdiag.exec();
 
-   QString runid = dir.section( "/", -1, -1 );
+   int nruns    = runids.size();
+   if ( nruns < 1 )   return;
+DbgLv(1) << "Selected runIDs[0]" << runids[0] << "count" << nruns;
 
-   QStringList datfilt( "vHW.*.distrib.dat" );
-   QStringList dfiles = QDir( dir )
-      .entryList( datfilt, QDir::Files, QDir::Name );
-   int ndfile = dfiles.size();
-   int distx  = distros.size();
+   if ( dkdb_cntrls->db() )
+   {  // Plot reports are in the database
+      US_Passwd    pw;
+      US_DB2       db( pw.getPasswd() );
 
-   if ( ndfile == 0 )     return;
+      QString      tmpdir = US_Settings::tmpDir();
+      US_Report    freport;
 
-   for ( int ii = 0; ii < ndfile; ii++ )
-   {
-      QString fname = dfiles[ ii ];
-      QString fpath = dir + "/" + fname;
-      QString tripl = fname.section( ".", 1, 1 );
-      DistrDesc ddesc;
-      ddesc.runID   = runid;
-      ddesc.triple  = tripl;
-      QFile fi( fpath );
-
-      if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      for ( int ii = 0; ii < nruns; ii++ )
       {
-         QTextStream ts( &fi );
-         QString fline = ts.readLine().simplified();
+         runid          = runids[ ii ];
+         freport.readDB( runid, &db );
+         int ntripl     = freport.triples.count();
+         int distx      = distros.size();
+DbgLv(1) << " ii,runid,ntrip,dists" << ii << runid << ntripl << distx;
 
-         if ( fline.contains( "%Boundary" ) )
-            ddesc.tdescr  = tr( "(Unknown description)" );
-         else
+         for ( int jj = 0; jj < ntripl; jj++ )
          {
-            ddesc.tdescr  = fline;
-            fline = ts.readLine();
-         }
+            US_Report::ReportTriple* tripl = &freport.triples[ jj ];
+            QString trname = collapsedTriple( tripl->triple ); 
+            int ndocs      = tripl->docs.count();
+DbgLv(1) << "   jj,ndocs" << jj << ndocs;
+            bool havedis   = false;
+            bool haveenv   = false;
+            US_Report::ReportDocument* ddoc = NULL;
+            US_Report::ReportDocument* edoc = NULL;
+            QString dpath;
+            QString epath;
 
-         while ( !ts.atEnd() )
-         {
-            fline = ts.readLine().simplified();
-            double bound = fline.section( " ", 0, 0 ).toDouble();
-            double sedc  = fline.section( " ", 3, 3 ).toDouble();
-
-            ddesc.dsedcs << sedc;
-            ddesc.bfracs << bound;
-         }
-int kk = ddesc.dsedcs.size()-1;
-DbgLv(1) << "Distro runid" << ddesc.runID << " triple" << ddesc.triple << kk;
-DbgLv(1) << "  0 sed frac" << ddesc.dsedcs[0] << ddesc.bfracs[0];
-DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
-         fi.close();
-         setSymbol( ddesc, distx );
-
-         fpath         = fpath.replace( ".distrib.", ".envelope." );
-         QFile fe( fpath );
-
-         if ( fe.open( QIODevice::ReadOnly | QIODevice::Text ) )
-         {  // Read in  envelope data
-            QTextStream ts( &fe );
-            fline = ts.readLine();
-            int     fnz   = -1;
-            int     lnz   = 0;
-
-            while ( !ts.atEnd() )
+            for ( int kk = 0; kk < ndocs; kk++ )
             {
-               fline = ts.readLine().simplified();
-               double sedc  = fline.section( " ", 0, 0 ).toDouble();
-               double freq  = fline.section( " ", 1, 1 ).toDouble();
+               US_Report::ReportDocument* doc = &tripl->docs[ kk ];
+               QString fname  = doc->filename;
+DbgLv(1) << "     kk,fname" << kk << fname;
 
-               if ( freq != 0.0 )
+               if ( fname.contains( "s-c-distrib.dat" ) )
                {
-                  lnz      = ddesc.esedcs.size();
-                  if ( fnz < 0 ) fnz = lnz;
+                  ddoc     = doc;
+                  dpath    = tmpdir + "/" + runid + "." + fname;
+                  int stat = db.readBlobFromDB( dpath,
+                     QString( "download_reportContents" ), ddoc->documentID );
+DbgLv(1) << "      readBlob stat" << stat;
+DbgLv(1) << "       dpath" << dpath;
+
+                  if ( stat != US_DB2::OK )
+                  {
+                     qDebug() << "*ERROR* download_reportContents" << stat;
+                     qDebug() << "        DPATH" << dpath;
+                     havedis  = false;
+                  }
+                  else
+                     havedis  = true;
                }
 
-               ddesc.esedcs << sedc;
-               ddesc.efreqs << freq;
-            }
+               else if ( fname.contains( "s-c-envelope.dat" ) )
+               {
+                  edoc     = doc;
+                  epath    = tmpdir + "/" + runid + "." + fname;
+DbgLv(1) << "       epath" << epath;
+                  int stat = db.readBlobFromDB( epath,
+                     QString( "download_reportContents" ), edoc->documentID );
+DbgLv(1) << "      readBlob stat" << stat;
 
-            fe.close();
-            int nepts = ddesc.esedcs.size();
-            fnz       = qMax( ( fnz - 2 ), 0 );
-            lnz       = qMin( ( lnz + 2 ), nepts );
-            nepts     = 0;
+                  if ( stat != US_DB2::OK )
+                  {
+                     qDebug() << "*ERROR* download_reportContents" << stat;
+                     qDebug() << "        EPATH" << epath;
+                     haveenv  = false;
+                  }
+                  else
+                     haveenv  = true;
+               }
+            }  // END: documents loop
 
-            for ( int jj = fnz; jj < lnz; jj++ )
-            {  // Reduce array to Y's from first to last non-zero
-               ddesc.esedcs[ nepts ] = ddesc.esedcs[ jj ];
-               ddesc.efreqs[ nepts ] = ddesc.efreqs[ jj ];
-               nepts++;
-            }
-
-            if ( nepts < ddesc.esedcs.size() )
+            if ( havedis )
             {
-               ddesc.esedcs.resize( nepts );
-               ddesc.efreqs.resize( nepts );
+               QString fname = dpath.section( "/", -1, -1 );
+               DistrDesc ddesc;
+               ddesc.runID   = runid;
+               ddesc.triple  = trname;
+DbgLv(1) << " havedis run trip" << runid << tripl << "haveenv" << haveenv;
+DbgLv(1) << "  dpath" << dpath;
+DbgLv(1) << "  epath" << epath;
+               QFile fid( dpath );
+
+               if ( fid.open( QIODevice::ReadOnly | QIODevice::Text ) )
+               {
+                  QTextStream tsd( &fid );
+                  QTextStream tse;
+                  QFile fie( epath );
+                  if ( haveenv  &&
+                       fie.open( QIODevice::ReadOnly | QIODevice::Text ) )
+                     tse.setDevice( &fie );
+                  else
+                     haveenv = false;
+
+                  fill_in_desc( tsd, tse, ddesc, haveenv, distx );
+
+
+                  distros << ddesc;
+                  distIDs << runid + "." + trname;
+                  distx++;
+                  fid.close();
+                  if ( haveenv )
+                     fie.close();
+               }
             }
-DbgLv(1) << " Envel nepts" << nepts << ddesc.esedcs.size();
-int kk = ddesc.esedcs.size()-1;
-DbgLv(1) << "  0 sed frac" << ddesc.esedcs[0] << ddesc.efreqs[0];
-DbgLv(1) << "  kk sed frac" << ddesc.esedcs[kk] << ddesc.efreqs[kk];
+         } // END: triples loop
+      } // END: runids loop
+   }
+
+   else
+   {  // Plot reports are on local disk
+
+      QString resdir = US_Settings::resultDir() + "/";
+
+      for ( int ii = 0; ii < nruns; ii++ )
+      {
+         runid          = runids[ ii ];
+         QString rundir = resdir + runid + "/";
+
+         QStringList datfilt( "vHW.*distrib.dat" );
+         QStringList dfiles = QDir( rundir )
+            .entryList( datfilt, QDir::Files, QDir::Name );
+
+         int distx   = distros.size();
+         int  ndfile = dfiles.count();
+
+         if ( ndfile == 0 )
+         {
+            QMessageBox::information( this, tr( "No Distribution Plots" ),
+                tr( "The selected Run ID Directory\n  %1\n"
+                    "contained no vHW distribution plots." )
+                .arg( rundir ) );
          }
 
-         else
-         {  // Calculate envelope data from distribution data
-            envel_data( ddesc );
-         }
+         for ( int ii = 0; ii < ndfile; ii++ )
+         {
+            QString fname = dfiles[ ii ];
+            QString fpath = rundir + "/" + fname;
+            QString epath = QString( fpath ).replace( "distrib.dat",
+                                                      "envelope.dat" );
+            QString tripl = fname.section( ".", 1, 1 );
+            DistrDesc ddesc;
+            ddesc.runID   = runid;
+            ddesc.triple  = tripl;
+            QFile fid( fpath );
 
-         distros << ddesc;
-         distIDs << runid + "." + tripl;
-         distx++;
+            if ( fid.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            {
+               QTextStream tsd( &fid );
+               QTextStream tse;
+               QFile fie( epath );
+               bool haveenv = fie.open( QIODevice::ReadOnly | QIODevice::Text );
+               if ( haveenv )
+                  tse.setDevice( &fie );
+
+               fill_in_desc( tsd, tse, ddesc, haveenv, distx );
+
+
+               distros << ddesc;
+               distIDs << runid + "." + tripl;
+               distx++;
+               fid.close();
+               if ( haveenv )
+                  fie.close();
+            }
+         }
       }
    }
 
-   lw_runids->addItem( runid );
-   le_runid ->setText( runid );
+   int nrunids = runids.count();
 
-   if ( distros.size() == ndfile )
+   for ( int ii = 0; ii < nrunids; ii++ )
    {
-      le_distname->setText( runid );
+      lw_runids->addItem( runids[ ii ] );
+   }
+
+   int nlitems = lw_runids->count();
+   le_runid->setText( runids[ 0 ] );
+
+   if ( nrunids == nlitems )
+   {
+      le_distname->setText( runids[ 0 ] );
       adjustSize();
    }
 }
@@ -410,17 +494,66 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
 // Save the plot data
 void US_vHW_Combine::save( void )
 {
-   QString fdir     = US_Settings::reportDir() + "/" + pdistrs[ 0 ].runID;
-   QString fname    = "vHW." + pdistrs[ 0 ].triple + ".combo-distrib.svg";
+   QString trname   = pdistrs[ 0 ].triple;
+   QString runID    = pdistrs[ 0 ].runID;
+   QString fdir     = US_Settings::reportDir() + "/" + runID;
+   QString fname    = "vHW." + trname + ".combo-distrib.svg";
    QString plotFile = fdir + "/" + fname;
 
    // Save plot file as SVG and as PNG
    write_plot( plotFile, data_plot1 );
+   QString svmsg =
+       tr( "Saved:" )        + "\n    " + fname + " (/.png)\n" +
+       tr( "in directory:" ) + "\n    " + fdir;
+
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd    pw;
+      US_DB2       db( pw.getPasswd() );
+      int          idEdit = 0;
+
+      QString      resdir = US_Settings::resultDir() + "/" + runID + "/";
+      QString      trpart = expandedTriple( trname ).replace( " / ", "." );
+      QStringList ffilt( runID + ".*.*" + trpart + ".xml" );
+      QStringList files = QDir( resdir )
+            .entryList( ffilt, QDir::Files, QDir::Name );
+      QString      efname;
+
+      for ( int ii = 0; ii < files.count(); ii++ )
+      {  // Look for files that match the edit file template
+         QString fname = resdir + files[ ii ];
+DbgLv(1) << "SV:  fname" << fname;
+         if ( QFile( fname ).exists() )
+         {  // File named matches, so save its name
+            efname     = fname;
+DbgLv(1) << "SV:   efname" << efname;
+         }
+      }
+
+      if ( ! efname.isEmpty() )
+      {  // Use last matching edit file: get the editGUID, then idEdit
+         US_DataIO2::EditValues edvals;
+         US_DataIO2::readEdits( efname, edvals );
+
+         QStringList  query;
+         query << "get_editID" << edvals.editGUID;
+         db.query( query );
+         db.next();
+         idEdit              = db.value( 0 ).toString().toInt();
+DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
+      }
+
+      US_Report    freport;
+      freport.runID          = runID;
+      freport.saveDocumentFromFile( fdir, fname, &db, idEdit );
+      fname.replace( ".svg", ".png" );
+      freport.saveDocumentFromFile( fdir, fname, &db, idEdit );
+DbgLv(1) << "SV:runID,idEdit,fname" << runID << idEdit << fname;
+      svmsg += tr( "\n\nThe plot was also saved to the database" );
+   }
 
    // Report saved files
-   QMessageBox::information( this, tr( "Combo Distro Plot File Save" ),
-       tr( "Saved:" )        + "\n    " + fname + " (/.png)\n" +
-       tr( "in directory:" ) + "\n    " + fdir );
+   QMessageBox::information( this, tr( "Combo Distro Plot File Save" ), svmsg );
 }
 
 // RunID selected
@@ -430,13 +563,14 @@ DbgLv(1) << "RunIDSel:row" << row;
    if ( row < 0 )  return;
    QListWidgetItem* item = lw_runids->item( row );
    runID    = item->text();
-DbgLv(1) << "RunIDSel:runID" << runID;
+DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
    le_runid ->setText( runID );
 
    lw_triples->clear();
 
    for ( int ii = 0; ii < distros.size(); ii++ )
    {
+DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
       if ( distros[ ii ].runID == runID )
       {
          lw_triples->addItem( expandedTriple(
@@ -567,6 +701,10 @@ QString US_vHW_Combine::collapsedTriple( QString etriple )
 
    if ( ctriple.contains( " / " ) )
       ctriple = ctriple.replace( " / ", "" ).simplified();
+   else if ( ctriple.contains( "/" ) )
+      ctriple = ctriple.replace( "/",   "" ).simplified();
+   else if ( ctriple.contains( "." ) )
+      ctriple = ctriple.replace( ".",   "" ).simplified();
 
    return ctriple;
 }
@@ -691,5 +829,94 @@ DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
    ddesc.efreqs.resize( nepts );
 
    return nepts;                        // return arrays' size
+}
+
+// Reset Disk_DB control whenever data source is changed in any dialog
+void US_vHW_Combine::update_disk_db( bool isDB )
+{
+   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+
+   reset_data();
+}
+
+void US_vHW_Combine::fill_in_desc( QTextStream& tsd, QTextStream& tse,
+      DistrDesc& ddesc, bool haveenv, int distx )
+{
+   // Read distribution stream to set sed and bound values
+   QString fline = tsd.readLine().simplified();
+DbgLv(1) << "FID: fline0" << fline;
+
+   if ( fline.contains( "%Boundary" ) )
+      ddesc.tdescr  = tr( "(Unknown description)" );
+   else
+   {
+      ddesc.tdescr  = fline;
+      fline = tsd.readLine();
+   }
+
+   while ( !tsd.atEnd() )
+   {
+      fline = tsd.readLine().simplified();
+      double bound = fline.section( " ", 0, 0 ).toDouble();
+      double sedc  = fline.section( " ", 3, 3 ).toDouble();
+
+      ddesc.dsedcs << sedc;
+      ddesc.bfracs << bound;
+   }
+int kk = ddesc.dsedcs.size()-1;
+DbgLv(1) << "Distro runid" << ddesc.runID << " triple" << ddesc.triple << kk;
+DbgLv(1) << "  0 sed frac" << ddesc.dsedcs[0] << ddesc.bfracs[0];
+DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
+   setSymbol( ddesc, distx );
+
+   if ( haveenv )
+   {  // Read in envelope data
+      fline = tse.readLine();
+      int     fnz   = -1;
+      int     lnz   = 0;
+
+      while ( !tse.atEnd() )
+      {
+         fline = tse.readLine().simplified();
+         double sedc  = fline.section( " ", 0, 0 ).toDouble();
+         double freq  = fline.section( " ", 1, 1 ).toDouble();
+
+         if ( freq != 0.0 )
+         {
+            lnz      = ddesc.esedcs.size();
+            if ( fnz < 0 ) fnz = lnz;
+         }
+
+         ddesc.esedcs << sedc;
+         ddesc.efreqs << freq;
+      }
+
+      int nepts = ddesc.esedcs.size();
+      fnz       = qMax( ( fnz - 2 ), 0 );
+      lnz       = qMin( ( lnz + 2 ), nepts );
+      nepts     = 0;
+
+      for ( int jj = fnz; jj < lnz; jj++ )
+      {  // Reduce array to Y's from first to last non-zero
+         ddesc.esedcs[ nepts ] = ddesc.esedcs[ jj ];
+         ddesc.efreqs[ nepts ] = ddesc.efreqs[ jj ];
+         nepts++;
+      }
+
+      if ( nepts < ddesc.esedcs.size() )
+      {
+         ddesc.esedcs.resize( nepts );
+         ddesc.efreqs.resize( nepts );
+      }
+DbgLv(1) << " Envel nepts" << nepts << ddesc.esedcs.size();
+int kk = ddesc.esedcs.size()-1;
+DbgLv(1) << "  0 sed frac" << ddesc.esedcs[0] << ddesc.efreqs[0];
+DbgLv(1) << "  kk sed frac" << ddesc.esedcs[kk] << ddesc.efreqs[kk];
+   }
+
+   else
+   {  // Calculate envelope data from distribution data
+      envel_data( ddesc );
+   }
 }
 

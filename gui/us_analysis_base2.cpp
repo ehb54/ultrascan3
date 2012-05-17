@@ -1510,15 +1510,17 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    db.next();
    int     idEdit = db.value( 0 ).toString().toInt();
 
-   // Parse the plot files directory and set the runID for the report
-   QString pfdir  = files[ 0 ].left( files[ 0 ].lastIndexOf( "/" ) );
+   // Set the runID for the report
    US_Report freport;
    freport.runID  = runID;
 
    // Loop to parse each file name and write the record to the database
    for ( int ii = 0; ii < files.size(); ii++ )
    {
-      QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
+      QString fpath = files[ ii ];
+      int     jjp   = fpath.lastIndexOf( "/" );
+      QString pfdir = fpath.left( jjp );
+      QString fname = fpath.mid ( jjp + 1 );
       int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
 
       if ( fname.endsWith( ".svg" ) )

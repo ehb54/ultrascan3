@@ -43,6 +43,8 @@ class US_vHW_Combine : public US_Widgets
       QList< int >        symbols;     // Possible symbol shapes
       QList< QColor >     colors;      // Possible colors
 
+      US_Disk_DB_Controls*  dkdb_cntrls;  // Disk-or-DB controls
+
       QStringList    distIDs;          // All distribs. IDs
       QStringList    pdisIDs;          // Plotted distribs. IDs
 
@@ -78,6 +80,9 @@ class US_vHW_Combine : public US_Widgets
       void setSymbol      ( DistrDesc&, int );
       int  envel_data     ( DistrDesc& );
       void possibleSymbols( void );
+      void update_disk_db ( bool );
+      void fill_in_desc   ( QTextStream&, QTextStream&, DistrDesc&,
+                            bool, int );
       QString expandedTriple ( QString );
       QString collapsedTriple( QString );
 

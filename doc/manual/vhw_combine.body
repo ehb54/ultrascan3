@@ -34,14 +34,26 @@
 
     <ul>
         <li>
-            <b>Load Data</b> Click on this button and, in the resulting
-            standard file directory dialog, select a run directory to search
-            for distribution data files.
+            <b>Database</b> Check this radio button to indicate that
+            distribution data to be selected is in the database.
+        </li>
+             
+        <li>
+            <b>Local Disk</b> Check this radio button to indicate that
+            distribution data to be selected is on local disk file systems.
+        </li>
+             
+        <li>
+            <b>Load Data</b> Click on this button to open a
+            <a href="images/vhw_combine-selrun.png">RunID Select Dialog</a>
+            in which one or more run IDs may be selected from which
+            distribution data files can be taken.
         </li>
             
         <li>
             <b>Save Data</b> Save combined integral distribution and
-            envelope data into a data file.
+            envelope data to a local data file and, if input source so
+            indicates, to the database.
         </li>
 
         <li>

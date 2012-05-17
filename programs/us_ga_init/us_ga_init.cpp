@@ -493,13 +493,13 @@ void US_GA_Initialize::save( void )
    }
 
    QString runid = run_name.section( ".", 0, -2 );
-   QString fdir  = US_Settings::resultDir() + "/" + runid;
-   QString fndat = run_name + ".gadistro.dat";
-   QString fnsta = run_name + ".ga.stats";
-   QString fname = fdir + "/" + fndat;
    QString trpid = run_name.section( ".", -1, -1 );
+   QString fdir  = US_Settings::resultDir() + "/" + runid;
+   QString fndat = "gainit." + trpid + ".gadistro.dat";
+   QString fnsta = "gainit." + trpid + ".ga.stats";
+   QString fname = fdir + "/" + fndat;
    QString fdir2 = US_Settings::reportDir() + "/" + runid;
-   QString fnst2 = "gain." + trpid + ".ga_stats.rpt";
+   QString fnst2 = "gainit." + trpid + ".ga_stats.rpt";
    QString fnam2 = fdir2 + "/" + fnst2;
 
    QDir dirp( US_Settings::resultDir() );
@@ -2054,7 +2054,7 @@ void US_GA_Initialize::view( )
 qDebug() << "VIEW";
    QString runid = run_name.section( ".", 0, -2 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
-   QString fnsta = run_name + ".ga.stats";
+   QString fnsta = "gainit.ga.stats";
    QString fname = fdir + "/" + fnsta;
 qDebug() << "VIEW fname" << fname;
 

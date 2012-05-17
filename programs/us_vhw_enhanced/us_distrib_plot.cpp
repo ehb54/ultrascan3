@@ -138,7 +138,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    // Also save the envelope data with present parameters
    QString dat2File = US_Settings::resultDir() + "/" + runID + "/"
       + plot1File.section( "/", -1, -1 ).section( ".", 0, 1 )
-      + ".envelope.dat";
+      + ".s-c-envelope.dat";
 
    save_data_file( dat2File );
 }
@@ -601,7 +601,7 @@ void US_DistribPlot::save_and_close()
    QString basename   = US_Settings::tmpDir() + "/vHW.temp.";
    QString tplot1File = basename + "s-c-distrib.svg";
    QString tplot2File = basename + "s-c-histo.svg";
-   QString tdata2File = basename + "envelope.dat";
+   QString tdata2File = basename + "s-c-envelope.dat";
 
    save_plots(     tplot1File, tplot2File );
    save_data_file( tdata2File );
