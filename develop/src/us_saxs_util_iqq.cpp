@@ -1435,7 +1435,7 @@ bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < d
       // cout << "write output for ssaxs or dat\n";
       QString fsaxs_part_1_name = 
          control_parameters[ "outputfile" ] +
-         QString("_%1").arg( model + 1 );
+         QString("_%1").arg( model );
 
       QString fsaxs_part_2_name =
          ( control_parameters.count( "grid_tag" ) ? control_parameters[ "grid_tag" ] : "" ) +
