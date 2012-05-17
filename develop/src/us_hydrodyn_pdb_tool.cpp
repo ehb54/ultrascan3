@@ -4621,7 +4621,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
          {
             continue;
          }
-         QString chain_id = line.mid( 21, 1 );
+         QString chain_id   = line.mid( 21, 1 );
+         QString residue_id = line.mid( 17, 10 );
          if ( chain_id != last_chain_id )
          {
             if ( chainrestartatom )
@@ -4632,7 +4633,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
             {
                residueno = startresidue;
             }
-            last_chain_id = chain_id;
+            last_chain_id   = chain_id;
+            last_residue_id = residue_id;
          }
          if ( !usechainlist.length() || use_chain_map.count( chain_id ) )
          {
@@ -4654,7 +4656,6 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
 
             if ( reseqresidue )
             {
-               QString residue_id = line.mid( 17, 10 );
                if ( !last_residue_id.isEmpty() &&
                     last_residue_id != residue_id )
                {
