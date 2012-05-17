@@ -2052,9 +2052,10 @@ void US_GA_Initialize::select_prefilt( void )
 void US_GA_Initialize::view( )
 {
 qDebug() << "VIEW";
-   QString runid = run_name.section( ".", 0, -2 );
+   QString runid = run_name.section( ".",  0, -2 );
+   QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
-   QString fnsta = "gainit.ga.stats";
+   QString fnsta = "gainit." + trpid + ".ga.stats";
    QString fname = fdir + "/" + fnsta;
 qDebug() << "VIEW fname" << fname;
 
