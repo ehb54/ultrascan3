@@ -923,9 +923,11 @@ QDateTime time0=QDateTime::currentDateTime();
    // Write results files
    write_vhw();
    write_dis();
-   files << basernam + "extrap.dat";
-   files << basernam + "distrib.dat";
-   QString data2File = basernam + "envelope.dat";
+   QString data0File = basernam + "extrap.dat";
+   QString data1File = basernam + "s-c-distrib.dat";
+   QString data2File = basernam + "s-c-envelope.dat";
+   files << data0File;
+   files << data1File;
    files << data2File;
 
    if ( groupdat.size() > 0 )
@@ -995,6 +997,9 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    repfiles << plot2File;
    repfiles << plot3File;
    repfiles << plot4File;
+   repfiles << data0File;
+   repfiles << data1File;
+   repfiles << data2File;
 
    // Report files created to the user
    QString wmsg = tr( "In directories\n%1,\n%2;\nwrote:\n\n" )
@@ -1631,7 +1636,7 @@ void US_vHW_Enhanced::write_dis()
 {
    QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
       + QString( triples.at( row ) ).replace( " / ", "" )
-      + ".distrib.dat";
+      + ".s-c-distrib.dat";
    QFile   res_f( filename );
    double  pterm    = 100.0 * positPct;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
@@ -1915,7 +1920,7 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
    QString tempbase   = US_Settings::tmpDir() + "/vHW.temp.";
    QString tplot1File = tempbase + "s-c-distrib.svg";
    QString tplot2File = tempbase + "s-c-histo.svg";
-   QString tdata2File = tempbase + "envelope.dat";
+   QString tdata2File = tempbase + "s-c-envelope.dat";
    QString tplot3File = tempbase + "s-c-distrib.png";
    QString tplot4File = tempbase + "s-c-histo.png";
    QString plot3File  = QString( plot1File ).replace( ".svg", ".png" );

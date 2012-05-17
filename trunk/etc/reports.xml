@@ -21,6 +21,7 @@
     <application name="GA-MW-MC"
     label="Genetic Algorithm with MW constraints - Monte Carlo" />
     <application name="gain" label="Genetic Algorithm Initialize" />
+    <application name="gainit" label="Genetic Algorithm Initialize" />
     <application name="secmo" label="Second Moment Analysis" />
     <application name="global" label="Global Analysis" />
     <application name="globeq" label="Global Equilibrium Fit" />
@@ -54,6 +55,7 @@
     <report name="extrap" label="vHW Extrapolation" />
     <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
     <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
+    <report name="s-c-envelope" label="Sedimentation Coeff. Envelope" />
     <report name="2ndmoment" label="Second Moment" />
     <report name="diagnostics" label="Scan Diagnostics" />
     <report name="scan_check" label="Scan Fit Check" />
