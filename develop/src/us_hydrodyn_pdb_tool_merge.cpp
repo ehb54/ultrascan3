@@ -519,10 +519,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
 
    editor_msg( "dark blue", QString( tr( "Checking file %1" ).arg( f.name() ) ) );
 
-   map    < QString, bool > model_names;
-   vector < QString >       model_name_vector;
-   unsigned int             max_model_name_len = 0;
-   QString                  model_header;
+   map    < QString, bool >     model_names;
+   vector < QString >           model_name_vector;
+   unsigned int                 max_model_name_len = 0;
+   QString                      model_header;
+   map    < QString, QString >  model_remarks;
+   QString                      last_model_name;
+   bool                         in_model = false;
 
    bool dup_model_name_msg_done = false;
    
@@ -541,7 +544,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          }
          if ( qs.contains( rx_save_header ) )
          {
-            model_header += qs + "\n";
+            if ( in_model )
+            {
+               model_remarks[ last_model_name ] += qs + "\n";
+            } else {
+               model_header += qs + "\n";
+            }
          }
          
          if ( qs.contains( rx_model ) )
@@ -569,6 +577,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   // editor_msg( "red", tr( "Duplicate or missing model names found, -# extensions added" ) );
                }
             }
+            last_model_name = model_name;
+            in_model = true;
             model_names[ model_name ] = true;
             model_name_vector.push_back ( model_name );
             if ( model_name.length() > max_model_name_len )
@@ -591,7 +601,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
    progress->setProgress( 1, model_count + 1 );
    qApp->processEvents();
 
+   if ( QFile::exists( le_target->text() ) )
+   {
+      le_target->setText( ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( le_target->text(), 0, this ) );
+   }
+
    QFile fn( le_target->text() );
+
    if ( !fn.open( IO_WriteOnly ) )
    {
       QMessageBox::warning( this, "US-SOMO: PDB Editor : Cut/Splice",
@@ -624,8 +640,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
    tso << model_header;
 
    QStringList   model_lines;
-   bool          in_model = false;
    unsigned int  pos = 0;
+   in_model = false;
 
    if ( !ts.atEnd() )
    {
@@ -658,8 +674,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                }
                
                tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
+               tso << model_remarks[ model_name_vector[ pos ] ];
                tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
-               tso << "ENDMDL\nEND\n";
+               tso << "ENDMDL\n";
                in_model = false;
                model_lines.clear();
                editor_msg( "dark blue", QString( "Processing model %1 done\n" ).arg( model_name_vector[ pos ] ) );
@@ -678,6 +695,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          }
       } while ( !ts.atEnd() );
    }
+   tso << "END\n";
    f.close();
    fn.close();
    progress->setProgress( 1, 1 );
@@ -1435,7 +1453,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
                                                     this,
                                                     "select target",
                                                     "Choose a name to save the result" );
-   
+
+   if ( !filename.contains( QRegExp( ".pdb$", false ) ) )
+   {
+      filename += ".pdb";
+   }
+
    le_target->setText( filename );
 
    if ( filename.isEmpty() )
