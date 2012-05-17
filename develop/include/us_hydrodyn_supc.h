@@ -26,17 +26,18 @@ struct dati1_supc
 
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
-            hydro_options *hydro, 
-            double use_overlap_tolerance,
-            vector < vector <PDB_atom> > *bead_models, 
-            vector <int> *somo_processed,
-            vector <PDB_model> *model_vector,
-            QListBox *lb_model,
-            const char *filename,
-            const char *res_filename,
-            QProgressBar *progress,
-            QTextEdit *editor,
-            US_Hydrodyn *us_hydrodyn);
+                      hydro_options *hydro, 
+                      double use_overlap_tolerance,
+                      vector < vector <PDB_atom> > *bead_models, 
+                      vector <int> *somo_processed,
+                      vector <PDB_model> *model_vector,
+                      QListBox *lb_model,
+                      const char *filename,
+                      const char *res_filename,
+                      vector < QString > model_names,
+                      QProgressBar *progress,
+                      QTextEdit *editor,
+                      US_Hydrodyn *us_hydrodyn);
 
 #define US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC   -1
 #define US_HYDRODYN_SUPC_FILE_NOT_FOUND     -5

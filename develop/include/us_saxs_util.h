@@ -840,7 +840,7 @@ class US_EXTERN US_Saxs_Util
       map < QString, bool >               global_residue_errors;  // chain indepdendent
 
       vector < QString >                  saxs_inputfile_for_csv;
-      vector < unsigned int >             saxs_model_for_csv;
+      vector < QString >                  saxs_model_for_csv;
       vector < QString >                  saxs_tag_for_csv;
       vector < QString >                  saxs_grid_tag_for_csv;
       vector < QString >                  saxs_cuda_tag_for_csv;
@@ -864,7 +864,7 @@ class US_EXTERN US_Saxs_Util
       bool create_tar_output( QString filename );
       bool create_tgz_output( QString filename );
       QString vector_double_to_csv( vector < double > &vd );
-      bool write_output( unsigned int model, vector < double > &q, vector < double > &I );
+      bool write_output( QString model, vector < double > &q, vector < double > &I );
       bool flush_output();
       bool flush_output_one();
 

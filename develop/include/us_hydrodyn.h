@@ -720,6 +720,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    public:
 
+      QString      model_name( int val );
+
       bool rotamer_changed;  // toggles need for reloading rotamer file
 
    public slots:

@@ -1584,14 +1584,14 @@ void US_Hydrodyn::reload_pdb()
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
-      editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
+      editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
          errors_found++;
          editor->append(QString("Encountered errors with your PDB structure for model %1:\n").
-                        arg(i + 1) + error_string);
+                        arg( model_name( i ) ) + error_string);
          printError(QString("Encountered errors with your PDB structure for model %1:\n").
-                    arg(i + 1) + "please check the text window");
+                    arg( model_name( i ) ) + "please check the text window");
       }
    }
    model_vector_as_loaded = model_vector;
@@ -1804,14 +1804,14 @@ void US_Hydrodyn::load_pdb()
       QString error_string = "";
       for(unsigned int i = 0; i < model_vector.size(); i++)
       {
-         editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
+         editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
          if (check_for_missing_atoms(&error_string, &model_vector[i]))
          {
             errors_found++;
             editor->append(QString("Encountered errors with your PDB structure for model %1:\n").
-                           arg(i + 1) + error_string);
+                           arg( model_name( i ) ) + error_string);
             printError(QString("Encountered errors with your PDB structure for model %1:\n").
-                       arg(i + 1) + "please check the text window");
+                       arg( model_name( i ) ) + "please check the text window");
          }
       }
       model_vector_as_loaded = model_vector;
@@ -1932,14 +1932,14 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
-      editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
+      editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
          errors_found++;
          editor->append(QString("Encountered errors with your PDB structure for model %1:\n").
-                        arg(i + 1) + error_string);
+                        arg( model_name( i ) ) + error_string);
          printError(QString("Encountered errors with your PDB structure for model %1:\n").
-                    arg(i + 1) + "please check the text window");
+                    arg( model_name( i ) ) + "please check the text window");
       }
    }
    if ( !errors_found )
@@ -2050,20 +2050,26 @@ void US_Hydrodyn::view_pdb()
    }
 }
 
-void US_Hydrodyn::select_model(int val)
+QString US_Hydrodyn::model_name( int val )
+{
+   return QString( "%1" ).arg( lb_model->item( val )->text() ).replace( "Model: ", "" );
+}
+
+void US_Hydrodyn::select_model( int val )
 {
    current_model = val;
-   QString msg = QString("\n%1 models selected:").arg(project);
-   for(int i = 0; i < lb_model->numRows(); i++)
+   QString msg = QString( "\n%1 models selected:" ).arg( project );
+   for( int i = 0; i < lb_model->numRows(); i++ )
    {
-      if (lb_model->isSelected(i))
+      if ( lb_model->isSelected( i ) )
       {
          current_model = i;
-         msg += QString(" %1").arg(i+1);
+         // msg += QString( " %1" ).arg( i + 1 );
+         msg += " " + model_name( i );
       }
    }
    msg += "\n";
-   editor->append(msg);
+   editor->append( msg );
 
    // check integrity of PDB file and confirm that all residues are correctly defined in residue table
    if (results_widget)
@@ -2318,7 +2324,8 @@ int US_Hydrodyn::calc_somo()
       somo_processed[i] = 0;
       if (lb_model->isSelected(i)) {
          current_model = i;
-         msg += QString(" %1").arg(i+1);
+         // msg += QString( " %1" ).arg( i + 1 );
+         msg += " " + model_name( i );
       }
    }
    msg += "\n";
@@ -3328,6 +3335,7 @@ int US_Hydrodyn::do_calc_hydro()
 
    int models_to_proc = 0;
    int first_model_no = 0;
+   vector < QString > model_names;
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if (somo_processed[current_model]) {
@@ -3335,17 +3343,18 @@ int US_Hydrodyn::do_calc_hydro()
                first_model_no = current_model + 1;
             }
             models_to_proc++;
-            editor->append(QString("Model %1 will be included\n").arg(current_model + 1));
+            editor->append( QString( "Model %1 will be included\n").arg( model_name( current_model ) ) );
+            model_names.push_back( model_name( current_model ) );
             bead_model = bead_models[current_model];
 
             // write_bead_spt(somo_dir + SLASH + project +
-            //          (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+            //          (bead_model_from_file ? "" : QString("_%1").arg( model_name( current_model ) ) ) +
             //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
             //          DOTSOMO, &bead_model, bead_model_from_file);
          }
          else
          {
-            editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
+            editor->append(QString("Model %1 - selected but bead model not built\n").arg( model_name( current_model ) ) );
          }
       }
    }
@@ -3384,9 +3393,10 @@ int US_Hydrodyn::do_calc_hydro()
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                                               DOTSOMO + ".beams").ascii(),
                                       QString(project +
-                                              (bead_model_from_file ? "" : QString("_%1").arg(first_model_no)) +
+                                              (bead_model_from_file ? "" : QString("_%1").arg( model_name( first_model_no - 1 ) ) ) +
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                                               DOTSOMO + ".beams").ascii(),
+                                      model_names,
                                       progress,
                                       editor,
                                       this);

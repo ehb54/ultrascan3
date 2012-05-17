@@ -22,7 +22,7 @@
 // #define  TE 293.15
 #define  AVO AVOGADRO
 #define  KB  (8.314472e+07/AVOGADRO)
-#define  SMAX 256
+#define  SMAX 512
 #define  RM_COMMAND "rm "
 #include <stdlib.h>      /* Added for 'print_time' function use */
 
@@ -626,6 +626,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                       QListBox *lb_model,
                       const char *filename,
                       const char *res_filename,
+                      vector < QString > model_names,
                       QProgressBar *use_progress,
                       QTextEdit *use_editor,
                       US_Hydrodyn *use_us_hydrodyn)
@@ -641,6 +642,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    a = 0;   
    tot_partvol = 0.0;
 
+   cout << "supc:filename    : " << filename << endl;
+   cout << "supc:res_filename: " << res_filename << endl;
 #if !defined(CREATE_TOT_MOL)
    molecola_v.clear();
    nat_v.clear();
@@ -1111,7 +1114,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    unlink(risultati);
    flag_mem = 1;
     
-   strncpy(molecola, use_filename.contains("%1") ? QString(use_filename).arg(model_idx[0] + 1).ascii() : use_filename.ascii() , SMAX); // first model
+   strncpy(molecola, use_filename.contains( "%1" ) ? 
+           QString( use_filename ).arg( model_names[ 0 ] ).ascii() :
+           use_filename.ascii() , SMAX); // first model
    molecola[SMAX-1] = 0;
    strncpy(molecola_nb, molecola, SMAX);
    molecola_nb[SMAX-1] = 0;
@@ -1245,8 +1250,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
          init_da_a();
 #endif
-         printf("opening file: %s\n",  use_filename.contains("%1") ? QString(use_filename).arg(model_idx[k] + 1).ascii() : use_filename.ascii());
-         strncpy(molecola, use_filename.contains("%1") ? QString(use_filename).arg(model_idx[k] + 1).ascii() : use_filename.ascii(), SMAX); // first model
+         printf( "opening file: %s\n", 
+                 use_filename.contains( "%1" ) ? 
+                 QString( use_filename ).arg( model_names[ k ] ).ascii() :
+                 use_filename.ascii() );
+         strncpy( molecola, 
+                  use_filename.contains( "%1" ) ? 
+                  QString( use_filename ).arg( model_names[ k ] ).ascii() :
+                  use_filename.ascii(), SMAX); // first model
          molecola[SMAX-1] = 0;
          strncpy(molecola_nb, molecola, SMAX);
          molecola_nb[SMAX-1] = 0;

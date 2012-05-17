@@ -453,8 +453,15 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       {
          last_was_ENDMDL = false;
          model_flag = true; // we are using model descriptions (possibly multiple models)
-         str2 = str1.mid(6, 15);
-         temp_model.model_id = str2.toUInt();
+         QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
+         // str2 = str1.mid(6, 15);
+         // temp_model.model_id = str2.toUInt();
+         if ( rx_get_model.search( str1 ) != -1 )
+         {
+            temp_model.model_id = rx_get_model.cap( 1 );
+         } else {
+            temp_model.model_id = str1.mid( 6, 15 );
+         }
          chain_flag = false; // we are starting a new molecule
          temp_model.molecule.clear();
          temp_model.residue.clear();
@@ -569,15 +576,11 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       //   str += temp_model.residue[m].name + " ";
       // }
       noticemsg += str;
-      temp_model.model_id = 1;
+      temp_model.model_id = "1";
       // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
       calc_vbar(&temp_model); // update the calculated vbar for this model
       model_vector.push_back(temp_model);
       clear_temp_chain(&temp_chain);
-   }
-   for (unsigned int i=0; i<model_vector.size(); i++)
-   {
-      str1.sprintf("Model: %d", model_vector[i].model_id);
    }
    if ( !dna_rna_resolve() )
    {
@@ -658,8 +661,15 @@ bool US_Saxs_Util::read_pdb( QString filename )
          {
             last_was_ENDMDL = false;
             model_flag = true; // we are using model descriptions (possibly multiple models)
-            str2 = str1.mid(6, 15);
-            temp_model.model_id = str2.toUInt();
+            // str2 = str1.mid(6, 15);
+            // temp_model.model_id = str2.toUInt();
+            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
+            if ( rx_get_model.search( str1 ) != -1 )
+            {
+               temp_model.model_id = rx_get_model.cap( 1 );
+            } else {
+               temp_model.model_id = str1.mid( 6, 15 );
+            }
             chain_flag = false; // we are starting a new molecule
             temp_model.molecule.clear();
             temp_model.residue.clear();
@@ -781,15 +791,11 @@ bool US_Saxs_Util::read_pdb( QString filename )
       //   str += temp_model.residue[m].name + " ";
       // }
       noticemsg += str;
-      temp_model.model_id = 1;
+      temp_model.model_id = "1";
       // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
       calc_vbar(&temp_model); // update the calculated vbar for this model
       model_vector.push_back(temp_model);
       clear_temp_chain(&temp_chain);
-   }
-   for (unsigned int i=0; i<model_vector.size(); i++)
-   {
-      str1.sprintf("Model: %d", model_vector[i].model_id);
    }
    if ( !dna_rna_resolve() )
    {

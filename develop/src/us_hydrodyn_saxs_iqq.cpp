@@ -49,7 +49,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for SAXS plot.\n\n")
                      .arg(te_filename2->text())
-                     .arg(current_model + 1));
+                     .arg( model_vector[ current_model ].model_id ) );
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -247,7 +247,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
          SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
-         QString("_%1").arg(current_model + 1) + 
+         QString("_%1").arg( model_vector[ current_model ].model_id ) + 
          ".atoms";
 
       FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
@@ -646,7 +646,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       QString name = 
          QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1)
+         .arg( model_vector[ current_model ].model_id )
          .arg(iqq_suffix());
 
       QString plot_name = name;
@@ -1124,7 +1124,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for SAXS plot.\n\n")
                      .arg(te_filename2->text())
-                     .arg(current_model + 1));
+                     .arg( model_vector[ current_model ].model_id ));
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -1345,7 +1345,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
          SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
-         QString("_%1").arg(current_model + 1) + 
+         QString("_%1").arg( model_vector[ current_model ].model_id ) + 
          ".atoms";
 
       FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
@@ -1747,7 +1747,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       QString name = 
          QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1)
+         .arg( model_vector[ current_model ].model_id )
          .arg(iqq_suffix());
 
       QString plot_name = name;
@@ -1980,7 +1980,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for SAXS plot.\n\n")
                      .arg(te_filename2->text())
-                     .arg(current_model + 1));
+                     .arg( model_vector[ current_model ].model_id ));
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -2172,7 +2172,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
          SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
-         QString("_%1").arg(current_model + 1) + 
+         QString("_%1").arg(model_vector[ current_model ].model_id ) + 
          ".atoms";
 
       FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
@@ -2667,7 +2667,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       QString name = 
          QString("%1_%2%3")
          .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1)
+         .arg( model_vector[ current_model ].model_id )
          .arg(iqq_suffix());
 
       QString plot_name = name;

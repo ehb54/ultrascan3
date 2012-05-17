@@ -4393,7 +4393,7 @@ void US_Hydrodyn::radial_reduction()
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
@@ -4406,7 +4406,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 {
    QString error_string = "";
    progress->reset();
-   editor->append(QString("\nBuilding the bead model for %1 model %2\n").arg(project).arg(current_model+1));
+   editor->append(QString("\nBuilding the bead model for %1 model %2\n").arg(project).arg( model_name( current_model ) ) );
    editor->append("Checking the pdb structure\n");
    if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
       editor->append("Encountered the following errors with your PDB structure:\n" +
@@ -5623,7 +5623,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 #endif
 
    write_bead_asa(somo_dir + SLASH +
-                  project + QString("_%1").arg(current_model + 1) +
+                  project + QString("_%1").arg( model_name( current_model ) ) +
                   QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                   + DOTSOMO + ".asa_res", &bead_model);
 
@@ -6970,10 +6970,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
    write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    if ( bd_options.do_rr || !bd_mode  )
@@ -7043,8 +7043,8 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    int e2b = 0;
 #endif
 
-   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
-   //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
+   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
+   //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
 
    for (unsigned int i = 0; i < bead_model.size(); i++)
    {
@@ -7099,10 +7099,10 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
              );
 #endif
    }
-   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                     DOTSOMO, &bead_model);
 #if defined(EXPOSED_TO_BURIED)
@@ -7153,7 +7153,7 @@ void US_Hydrodyn::calc_mw()
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
-                      .arg(model_vector[i].model_id)
+                      .arg( model_vector[i].model_id )
                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
                      
       current_model = i;

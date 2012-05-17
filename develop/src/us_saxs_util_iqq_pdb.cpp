@@ -33,10 +33,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       iqq_timers.start_timer( "iqq fast debye" );
       iqq_timers.start_timer( "iqq fast debye setup" );
 #endif
-      double tot_excl_vol      = 0e0;
-      double tot_excl_vol_noh  = 0e0;
-      unsigned int total_e     = 0;
-      unsigned int total_e_noh = 0;
+      double tot_excl_vol        = 0e0;
+      double tot_excl_vol_noh    = 0e0;
+      unsigned int total_e       = 0;
+      unsigned int total_e_noh   = 0;
       unsigned int current_model = i;
       noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
       
@@ -430,7 +430,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       QString name = 
          QString("%1_%2%3")
          .arg(QFileInfo(control_parameters[ "inputfile" ]).fileName())
-         .arg(current_model + 1)
+         .arg( model_vector[ current_model ].model_id )
          .arg(iqq_suffix());
 
       // save the data to a file
@@ -585,7 +585,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
          QString file = 
             QString( "%1_%2_q%3-%4.timing" )
             .arg( control_parameters[ "outputfile" ] )
-            .arg( current_model + 1 )
+            .arg( model_vector[ current_model ].model_id )
             .arg( q_points )
             .arg( control_parameters[ "iqmethod" ] )
             ;
@@ -595,7 +595,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( model_vector[ current_model ].model_id, q, I ) )
       {
          return false;
       }
@@ -633,7 +633,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       unsigned int total_e     = 0;
       unsigned int total_e_noh = 0;
       unsigned int current_model = i;
-      noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
+      noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(model_vector[ current_model ].model_id);
          
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
@@ -974,7 +974,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
          QString file = 
             QString( "%1_%2_q%3-%4%5.timing" )
             .arg( control_parameters[ "outputfile" ] )
-            .arg( current_model + 1 )
+            .arg( model_vector[ current_model ].model_id )
             .arg( q_points )
             .arg( control_parameters[ "iqmethod" ] )
             .arg( control_parameters.count( "iqcuda" ) ?
@@ -997,7 +997,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       } else {
          control_parameters.erase( "cuda_tag" );
       }
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( model_vector[ current_model ].model_id, q, I ) )
       {
          return false;
       }
@@ -1036,7 +1036,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
       unsigned int total_e     = 0;
       unsigned int total_e_noh = 0;
       unsigned int current_model = i;
-      noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
+      noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(model_vector[ current_model ].model_id);
          
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
@@ -1451,7 +1451,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
          QString file = 
             QString( "%1_%2_q%3-%4.timing" )
             .arg( control_parameters[ "outputfile" ] )
-            .arg( current_model + 1 )
+            .arg( model_vector[ current_model ].model_id )
             .arg( q_points )
             .arg( control_parameters[ "iqmethod" ] )
             ;
@@ -1460,7 +1460,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
 #endif
       noticemsg += "I(q) computed.\n";
 
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( model_vector[ current_model ].model_id, q, I ) )
       {
          return false;
       }

@@ -237,7 +237,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast_bead_model()
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( QString( "%1" ).arg( current_model ), q, I ) )
       {
          return false;
       }
@@ -472,7 +472,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
       noticemsg += "I(q) computed.\n";
 
       // save the data to a file
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( QString( "%1" ).arg( current_model ), q, I ) )
       {
          return false;
       }
@@ -846,7 +846,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
       noticemsg += "I(q) computed.\n";
       
       // save the data to a file
-      if ( !write_output( current_model, q, I ) )
+      if ( !write_output( QString( "%1" ).arg( current_model ), q, I ) )
       {
          return false;
       }

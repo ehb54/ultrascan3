@@ -146,7 +146,7 @@ struct PDB_model
    vector <struct residue> residue;         // keep track of amino acid sequence in molecule for vbar calculation
    float vbar;
    float mw;                                // mw of model
-   unsigned int model_id;
+   QString  model_id;
 };
 
 struct bead

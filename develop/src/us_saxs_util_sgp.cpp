@@ -475,7 +475,7 @@ double US_Saxs_Util::sgp_fitness( sgp_node *node )
          return false;
       }
       sgp_last_I = wave[ "tmp" ].r;
-      write_output( 0, wave[ "tmp" ].q, wave[ "tmp" ].r );
+      write_output( "0", wave[ "tmp" ].q, wave[ "tmp" ].r );
    }
 
    // values stored in last_q, last_I, experiment in sgp_exp_q,I,e

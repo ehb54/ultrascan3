@@ -3937,7 +3937,7 @@ QString US_Hydrodyn_Saxs::saxs_filestring()
 {
    QString result = 
       QString("%1").arg(te_filename2->text()) +
-      QString("_%1").arg(current_model + 1) + 
+      QString("_%1").arg( model_vector[ current_model ].model_id ) + 
       iqq_suffix() +
       ".ssaxs";
    return result;
@@ -3948,7 +3948,7 @@ QString US_Hydrodyn_Saxs::sprr_filestring()
    QString result = 
       QString("%1_%2b%3")
       .arg(te_filename2->text())
-      .arg(current_model + 1)
+      .arg( model_vector[ current_model ].model_id )
       .arg(our_saxs_options->bin_size);
 
    if ( rb_curve_sans->isChecked() )

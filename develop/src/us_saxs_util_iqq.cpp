@@ -1400,7 +1400,7 @@ QString US_Saxs_Util::vector_double_to_csv( vector < double > &vd )
    return result;
 }
 
-bool US_Saxs_Util::write_output( unsigned int model, vector < double > &q, vector < double > &I )
+bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < double > &I )
 {
    // cout << "write output\n";
    if ( control_parameters.count( "sgp_running" ) ||

@@ -483,7 +483,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
 
       if ( q.size() )
       {
-         if ( !write_output( 0, q, I ) )
+         if ( !write_output( "0", q, I ) )
          {
             return false;
          }

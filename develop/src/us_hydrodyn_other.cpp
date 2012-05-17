@@ -553,8 +553,15 @@ int US_Hydrodyn::read_pdb(const QString &filename)
          {
             last_was_ENDMDL = false;
             model_flag = true; // we are using model descriptions (possibly multiple models)
-            str2 = str1.mid(6, 15);
-            temp_model.model_id = str2.toUInt();
+            // str2 = str1.mid(6, 15);
+            // temp_model.model_id = str2.toUInt();
+            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
+            if ( rx_get_model.search( str1 ) != -1 )
+            {
+               temp_model.model_id = rx_get_model.cap( 1 );
+            } else {
+               temp_model.model_id = str1.mid( 6, 15 );
+            }
             chain_flag = false; // we are starting a new molecule
             temp_model.molecule.clear();
             temp_model.residue.clear();
@@ -565,7 +572,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             last_was_ENDMDL = true;
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             editor->append("\nResidue sequence from " + project +".pdb model " +
-                           QString("%1").arg(model_vector.size() + 1) + ": \n");
+                           QString("%1").arg( temp_model.model_id ) + ": \n");
             str = "";
             QString sstr = "";
             int sstr_pos = 0;
@@ -724,7 +731,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
          editor->append(sstr + "\n\n");
          editor->setCurrentFont(save_font);
       }
-      temp_model.model_id = 1;
+      temp_model.model_id = "1";
       // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
       calc_vbar(&temp_model); // update the calculated vbar for this model
       model_vector.push_back(temp_model);
@@ -732,8 +739,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
    }
    for (unsigned int i=0; i<model_vector.size(); i++)
    {
-      str1.sprintf("Model: %d", model_vector[i].model_id);
-      lb_model->insertItem(str1);
+      lb_model->insertItem( "Model: " + model_vector[i].model_id );
    }
    lb_model->setEnabled(true);
    lb_model->setSelected(0, true);
@@ -1609,7 +1615,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             {
                setSomoGridFile(false);
             }
-            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
                              QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                              , &bead_model);
          }
@@ -6017,7 +6023,7 @@ void US_Hydrodyn::rescale_bead_model()
          bead_model = bead_models[current_model];
          if ( misc.target_volume != 0e0 )
          {
-            editor->append(QString("Rescaling bead model %1\n").arg(current_model + 1 ) );
+            editor->append(QString("Rescaling bead model %1\n").arg( model_name( current_model ) ) );
             double current_volume = total_volume_of_bead_model( bead_model );
             editor_msg("black", 
                        QString( tr( "Current volume %1 A^3, target volume %2 A^3\n") )
@@ -6045,7 +6051,7 @@ void US_Hydrodyn::rescale_bead_model()
          }
          if ( misc.equalize_radii )
          {
-            editor->append(QString("Equalizing radii for bead model %1\n").arg(current_model + 1 ) );
+            editor->append(QString("Equalizing radii for bead model %1\n").arg( model_name( current_model ) ) );
             if ( radii_all_equal( bead_model ) )
             {
                editor_msg("blue", tr("Skipped, radii already equalized") );
