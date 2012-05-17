@@ -809,7 +809,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       {
          return 2;
       }
-      qreal concsum = 0.0;
       qreal vsum    = 0.0;
       qreal vsiz    = 0.0;
 
@@ -858,7 +857,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             vsum     = tconc;
             ts << ( vsum / vsiz ) << endl;
             csums.append( vsum );
-            concsum += vsum;
          }
 
          else
@@ -895,12 +893,16 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             for ( int jj = 0; jj < ksol; jj++ )
                vtotal    += bcomp.at( jj ).c;
             csums.append( vtotal );
-            concsum   += vtotal;
             ts << tr( "Partial concentration:     " ) <<
                str1.sprintf( " %6.4e\n", vtotal );
 
          }
       }
+
+      qreal concsum = 0.0;
+
+      for ( int jj = 0; jj < distro->size(); jj++ )
+         concsum   += distro->at( jj ).c;
 
       ts << tr( "\nMonte Carlo iterations:   " ) << mc_iters;
       ts << tr( "\n\nRelative Concentrations:\n\n" );
@@ -1179,7 +1181,7 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    else
    {  // Summary
       ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
-            mode_cen, conf95lo, conf95hi );
+            vmean, conf95lo, conf95hi );
    }
 }
 
