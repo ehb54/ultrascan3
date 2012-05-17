@@ -4508,6 +4508,12 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    cout << QString( "striphydrogens %1\n" ).arg( striphydrogens );
    cout << QString( "itassertemplate %1\n" ).arg( itassertemplate );
 
+   map < QString, bool > use_chain_map;
+   for ( unsigned int i = 0; i < usechainlist.length(); i++ )
+   {
+      use_chain_map[ QString( "%1" ).arg( usechainlist[ i ] ) ] = true;
+   }
+
    if ( filename.isEmpty() )
    {
       pb_renum_pdb->setEnabled( true );
@@ -4593,6 +4599,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    unsigned int residueno = startresidue;
 
    QString last_residue_id = "";
+   QString last_chain_id   = "";
 
    while( !tsi.atEnd() )
    {
@@ -4608,44 +4615,59 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
             residueno = startresidue;
          }
       }
-
       if ( rx_atom.search( line ) != -1 )
       {
          if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^((\\d| )H|H)" ) ) )
          {
             continue;
          }
-         if ( reseqatom )
+         QString chain_id = line.mid( 21, 1 );
+         if ( chain_id != last_chain_id )
          {
-            if ( atomno > 99999 )
+            if ( chainrestartatom )
             {
-               editor_msg( "dark red", tr( "Warning: more than 99,999 atoms, numbering restarted at 1" ) );
-               atomno = 1;
+               atomno = startatom;
             }
-            line = line.replace( 6, 5, QString( "" ).sprintf( "%5d", atomno ++ ) );
-            if ( rx_hetatm.search( line ) == -1 )
+            if ( chainrestartresidue )
             {
-               line = line.replace( 5, 1, " " );
-            } else {
-               line = line.replace( 5, 1, "M" );
+               residueno = startresidue;
             }
+            last_chain_id = chain_id;
          }
-
-         if ( reseqresidue )
+         if ( !usechainlist.length() || use_chain_map.count( chain_id ) )
          {
-            QString residue_id = line.mid( 17, 10 );
-            if ( !last_residue_id.isEmpty() &&
-                 last_residue_id != residue_id )
+            if ( reseqatom )
             {
-               residueno++;
-               if ( residueno > 9999 )
+               if ( atomno > 99999 )
                {
-                  editor_msg( "dark red", tr( "Warning: more than 9,999 residues, numbering restarted at 1" ) );
-                  residueno = 1;
+                  editor_msg( "dark red", tr( "Warning: more than 99,999 atoms, numbering restarted at 1" ) );
+                  atomno = 1;
+               }
+               line = line.replace( 6, 5, QString( "" ).sprintf( "%5d", atomno ++ ) );
+               if ( rx_hetatm.search( line ) == -1 )
+               {
+                  line = line.replace( 5, 1, " " );
+               } else {
+                  line = line.replace( 5, 1, "M" );
                }
             }
-            line = line.replace( 22, 4, QString( "" ).sprintf( "%4d", residueno ) );
-            last_residue_id = residue_id;
+
+            if ( reseqresidue )
+            {
+               QString residue_id = line.mid( 17, 10 );
+               if ( !last_residue_id.isEmpty() &&
+                    last_residue_id != residue_id )
+               {
+                  residueno++;
+                  if ( residueno > 9999 )
+                  {
+                     editor_msg( "dark red", tr( "Warning: more than 9,999 residues, numbering restarted at 1" ) );
+                     residueno = 1;
+                  }
+               }
+               line = line.replace( 22, 4, QString( "" ).sprintf( "%4d", residueno ) );
+               last_residue_id = residue_id;
+            }
          }
          if ( itassertemplate )
          {
