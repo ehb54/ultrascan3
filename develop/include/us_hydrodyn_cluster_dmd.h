@@ -91,9 +91,29 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 
       void          sync_csv_with_selected();
       void          reset_csv();
+      void          init_csv();
 
       QString       dmd_dir;
       QStringList   csv_parse_line( QString qs );
+
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      map < QString, QString >                 full_filenames;
+      map < QString, vector < QString > >      residues_chain;
+      map < QString, map < QString, bool > >   residues_chain_map;
+      map < QString, vector < unsigned int > > residues_number;
+      map < QString, vector < unsigned int > > residues_range_start;
+      map < QString, vector < unsigned int > > residues_range_end;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      bool          setup_residues ( QString filename );
+      void          residue_summary( QString filename );
+      bool          gui_setup;
 
    private slots:
 
