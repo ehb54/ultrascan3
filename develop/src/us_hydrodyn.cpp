@@ -3222,17 +3222,32 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool black_background)
+void US_Hydrodyn::visualize( bool movie_frame, 
+                             QString dir, 
+                             float scale, 
+                             bool black_background )
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
+
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if (somo_processed[current_model]) {
             bead_model = bead_models[current_model];
-            write_bead_spt(use_dir + SLASH + project +
-                           (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                           QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                           DOTSOMO, &bead_model, movie_frame, scale, black_background);
+            QString spt_name = 
+               project +
+               ( bead_model_from_file ? 
+                 "" 
+                 : 
+                 ( QString("_%1").arg( current_model + 1 ) +
+                   QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" ) ) );
+            spt_name = spt_name.left( 30 );
+
+            write_bead_spt( use_dir + SLASH + spt_name,
+                            &bead_model, 
+                            movie_frame, 
+                            scale, 
+                            black_background );
+
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
 #if !defined(WIN32) && !defined(MAC)
@@ -3251,11 +3266,7 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool bla
             if ( !movie_frame )
             {
                argument.append("-script");
-               argument.append(
-                               project +
-                               (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                               DOTSOMO + ".spt");
+               argument.append( spt_name + ".spt" ); 
             }
          
             rasmol->setWorkingDirectory(use_dir);

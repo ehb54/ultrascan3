@@ -4592,7 +4592,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    QTextStream tso( &fout );
 
    QRegExp rx_end ("^END");
-   QRegExp rx_atom("^ATOM|HETATM");
+   QRegExp rx_atom("^(ATOM|HETATM)");
    QRegExp rx_hetatm("^HETATM");
 
    unsigned int atomno    = startatom;
