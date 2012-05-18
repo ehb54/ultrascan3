@@ -214,6 +214,32 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
       new_r.push_back( this_r );
    }
 
+   // fix r for duplicate values:
+
+   vector < double > org_r;
+   vector < double > org_pr;
+
+   {
+      map < double, double       > fixed_pr;
+      map < double, unsigned int > fixed_pr_count;
+      
+      for ( unsigned int i = 0; i < r.size(); i++ )
+      {
+         fixed_pr      [ r[ i ] ] += pr[ i ];
+         fixed_pr_count[ r[ i ] ] ++;
+      }
+      for ( map < double, double >::iterator it = fixed_pr.begin();
+            it != fixed_pr.end();
+            it++ )
+      {
+         
+         org_r .push_back( it->first );
+         org_pr.push_back( it->second / fixed_pr_count[ it->first ] );
+      }
+      r  = org_r;
+      pr = org_pr;
+   }
+
    US_Saxs_Util usu;
    vector < double > y2;
    usu.natural_spline( r, pr, y2 );
