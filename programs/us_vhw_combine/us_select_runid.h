@@ -15,7 +15,7 @@
 #endif
 
 //! \brief A dialog class to select run ID for vHW plot distributions
-class US_GUI_EXTERN US_SelectRunid : public US_WidgetsDialog
+class US_SelectRunid : public US_WidgetsDialog
 {
    Q_OBJECT
 
