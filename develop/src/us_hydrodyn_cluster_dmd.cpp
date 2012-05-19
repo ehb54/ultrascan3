@@ -110,6 +110,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       << 100
       << 108
       << 100
+      << 200
       << 200;
       
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
@@ -123,7 +124,8 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    t_csv->setColumnMovingEnabled(false);
    t_csv->setReadOnly(false);
 
-   t_csv->setColumnReadOnly( 0, true );
+   t_csv->setColumnReadOnly( 0,  true );
+   t_csv->setColumnReadOnly( 11, true );
 
    // probably I'm not understanding something, but these next two lines don't seem to do anything
    t_csv->horizontalHeader()->adjustHeaderSize();
@@ -307,7 +309,7 @@ void US_Hydrodyn_Cluster_Dmd::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-void US_Hydrodyn_Cluster_Dmd::table_value( int /* row */, int col )
+void US_Hydrodyn_Cluster_Dmd::table_value( int row, int col )
 {
    if ( col == 3 || col == 4 )
    {
@@ -326,7 +328,10 @@ void US_Hydrodyn_Cluster_Dmd::table_value( int /* row */, int col )
    {
       recompute_points_from_interval( 7 );
    }
-
+   if ( col == 10 )
+   {
+      convert_static_range( row );
+   }
 }
 
 void US_Hydrodyn_Cluster_Dmd::clear_display()
@@ -459,8 +464,8 @@ void US_Hydrodyn_Cluster_Dmd::init_csv()
    csv1.header.push_back("Run PDB\noutput\ntimestep");        // 8
    csv1.header.push_back("Run PDB\noutput\ncount");           // 9
    csv1.header.push_back("Static range");                     // 10
+   csv1.header.push_back("Static range (native)");            // 11
 }
-
 
 void US_Hydrodyn_Cluster_Dmd::reset_csv()
 {
@@ -468,6 +473,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
 
    full_filenames.clear();
    residues_chain          .clear();
+   residues_chain_map      .clear();
    residues_number         .clear();
    residues_range_start    .clear();
    residues_range_end      .clear();
@@ -489,9 +495,9 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       } else {
          if ( full_filenames[ filename  ] != full_filename )
          {
-             editor_msg( "red", QString( tr( "WARNING: The same file name has been referenced in multiple file locations.\n"
-                                             "%1 vs %2\n"
-                                             "This will cause problems.  Duplicate reference skipped.\n" ) )
+             editor_msg( "dark red", QString( tr( "Warning: The same file name has been referenced in multiple file locations.\n"
+                                                  "%1 vs %2\n"
+                                                  "This will cause problems.  Duplicate reference skipped.\n" ) )
                          .arg( full_filenames[ filename ] )
                          .arg( full_filename )
                          );
@@ -515,6 +521,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       tmp_data.push_back("10000");
       tmp_data.push_back("200");
       tmp_data.push_back("50");
+      tmp_data.push_back("");
       tmp_data.push_back("");
 
       csv1.prepended_names.push_back(tmp_data[0]);
@@ -929,7 +936,13 @@ QString US_Hydrodyn_Cluster_Dmd::csv_to_qstring( csv &from_csv )
    {
       for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
       {
-         qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j]);
+         qs += 
+            QString("%1%2")
+            .arg( j ? "," : "" )
+            .arg( from_csv.data[i][j] == QString( "%1" ).arg( from_csv.data[i][j].toDouble() ) ?
+                  from_csv.data[i][j] :
+                  QString( "\"%1\"" ).arg( from_csv.data[i][j] ) )
+            ;
       }
       qs += "\n";
    }
@@ -960,6 +973,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    
    full_filenames.clear();
    residues_chain          .clear();
+   residues_chain_map      .clear();
    residues_number         .clear();
    residues_range_start    .clear();
    residues_range_end      .clear();
@@ -1027,6 +1041,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
          tmp_data.push_back("10000");
          tmp_data.push_back("200");
          tmp_data.push_back("50");
+         tmp_data.push_back("");
          tmp_data.push_back("");
          
          csv_new.prepended_names.push_back( tmp_data[ 0 ] );
@@ -1135,6 +1150,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    QString last_key = "";
    
    residues_chain          [ filename ].clear();
+   residues_chain_map      [ filename ].clear();
    residues_number         [ filename ].clear();
    residues_range_chain    [ filename ].clear();
    residues_range_chain_pos[ filename ].clear();
@@ -1179,6 +1195,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
             last_key = this_key;
             residues_chain    [ filename ].push_back( chain_id   );
             residues_number   [ filename ].push_back( residue_no );
+            residues_chain_map[ filename ][ chain_id ] = true;
          }
       }
    }
@@ -1292,4 +1309,157 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
                   );
       // }
    }
+}
+
+bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
+{
+   QString filename     = t_csv->text( row, 0  );
+   QString static_range = t_csv->text( row, 10 ).stripWhiteSpace();
+   if ( static_range.isEmpty() )
+   {
+      t_csv->setText( row, 11, "" );
+      return true;
+   }
+
+   QStringList qsl = QStringList::split( QRegExp( "\\s*(\\s|,|;)+\\s*" ), static_range );
+
+   cout << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
+
+   QRegExp rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
+
+   QString native_range = "";
+
+   bool has_errors = false;
+   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   {
+      qsl[ i ] = qsl[ i ].stripWhiteSpace();
+      if ( qsl[ i ].isEmpty() )
+      {
+         continue;
+      }
+      if ( rx.search( qsl[ i ] ) == -1 )
+      {
+         editor_msg( "red",
+                     QString( tr( "Error: Static range \"%1\" has an invalid format.\n"
+                                  "The format must be \"Chain:residue_number\" or \"Chain:start_residue_number-end_residue_residue_number\"\n" ) )
+                     .arg( qsl[ i ] ) 
+                     );
+         has_errors = true;
+         continue;
+      }
+      QString      chain_id      = rx.cap( 1 );
+      unsigned int start_residue = rx.cap( 2 ).toUInt();
+      unsigned int end_residue   = rx.cap( 4 ).toUInt();
+      if ( rx.cap( 4 ).isEmpty() )
+      {
+         end_residue = start_residue;
+      }
+      if ( start_residue > end_residue )
+      {
+         editor_msg( "red",
+                     QString( tr( "Error: Static range \"%1\" has an invalid format.\n"
+                                  "The end residue number is less that the start residue number\n" ) )
+                     .arg( qsl[ i ] ) 
+                     );
+         has_errors = true;
+         continue;
+      }
+         
+      if ( chain_id.isEmpty() )
+      {
+         chain_id = " ";
+      }
+      //      editor_msg( "dark gray", QString( "chain %1 residues: [%2-%3]" )
+      //                  .arg( chain_id )
+      //                  .arg( start_residue )
+      //                  .arg( end_residue ) );
+
+      if ( !residues_chain_map.count( filename ) ||
+           !residues_chain_map[ filename ].count( chain_id ) )
+      {
+         editor_msg( "red",
+                     QString( tr( "Error: No matching chain found for static range \"%1\" chain %2." ) )
+                     .arg( qsl[ i ] ) 
+                     .arg( chain_id ) 
+                     );
+         has_errors = true;
+         continue;
+      }
+      // now intersect the selected range with each of the recognized ranges
+      // offset and append to native_range
+      map < unsigned int, unsigned int > used_bits;
+      for ( unsigned int j = start_residue; j <= end_residue; j++ )
+      {
+         used_bits[ j ] = 0;
+      }
+      unsigned int pos = 0;
+      for ( unsigned int j = 0; j < residues_range_chain[ filename ].size(); j++ )
+      {
+         QString key = residues_range_chain[ filename ][ j ];
+         if ( chain_id !=  key.right( 1 ) )
+         {
+            pos += residues_range_start[ key ].size();
+            continue;
+         }
+         pos++;
+         unsigned int chain_pos        = residues_range_chain_pos[ filename ][ j         ];
+         unsigned int this_chain_start = residues_range_start    [ key      ][ chain_pos ];
+         unsigned int this_chain_base  = this_chain_start;
+         unsigned int this_chain_end   = residues_range_end      [ key      ][ chain_pos ];
+         if ( this_chain_start < start_residue )
+         {
+            this_chain_start = start_residue;
+         }
+         if ( this_chain_end > end_residue )
+         {
+            this_chain_end = end_residue;
+         }
+         if ( this_chain_start <= this_chain_end )
+         {
+            native_range += QString( "%1%2.%3.*" )
+               .arg( native_range.isEmpty() ? "" : "," )
+               .arg( pos )
+               .arg( this_chain_start < this_chain_end ? 
+                     QString( "%1-%2" )
+                     .arg( this_chain_start - this_chain_base + 1 )
+                     .arg( this_chain_end   - this_chain_base + 1 ) :
+                     QString( "%1" ).arg( this_chain_start - this_chain_base + 1 ) )
+               ;
+            for ( unsigned int k = this_chain_start; k <= this_chain_end; k++ )
+            {
+               used_bits[ k ]++;
+            }
+         }
+      }
+      for ( unsigned int j = start_residue; j <= end_residue; j++ )
+      {
+         if ( used_bits[ j ] == 1 )
+         {
+            continue;
+         }
+         if ( used_bits[ j ] == 0 )
+         {
+            editor_msg( "dark red",
+                        QString( tr( "Warning: Unused static residue %1:%2 from static entry %3" ) )
+                        .arg( chain_id ) 
+                        .arg( j ) 
+                        .arg( qsl[ i ] ) 
+                        );
+            continue;
+         }
+         editor_msg( "dark red",
+                     QString( tr( "Warning: Multiply used static residue %1:%2 from static entry %3" ) )
+                     .arg( chain_id ) 
+                     .arg( j ) 
+                     .arg( qsl[ i ] ) 
+                     );
+      }
+   }
+   if ( has_errors )
+   {
+      t_csv->setText( row, 11, "" );
+      return false;
+   }
+   t_csv->setText( row, 11, native_range );
+   return true;
 }

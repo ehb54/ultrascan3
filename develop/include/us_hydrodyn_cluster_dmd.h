@@ -113,9 +113,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
-      bool          setup_residues ( QString filename );
-      void          residue_summary( QString filename );
+      bool          setup_residues      ( QString filename );
+      void          residue_summary     ( QString filename );
       bool          gui_setup;
+      bool          convert_static_range( int row );
 
    private slots:
 
