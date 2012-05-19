@@ -31,10 +31,9 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    setupGUI();
 
    // reset_csv();
+   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 
    sync_csv_with_selected();
-
-   editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT." );
 
    dmd_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster" + SLASH + "dmd";
    QDir dir1( dmd_dir );
@@ -468,11 +467,12 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
    init_csv();
 
    full_filenames.clear();
-   residues_chain      .clear();
-   residues_chain_map  .clear();
-   residues_number     .clear();
-   residues_range_start.clear();
-   residues_range_end  .clear();
+   residues_chain          .clear();
+   residues_number         .clear();
+   residues_range_start    .clear();
+   residues_range_end      .clear();
+   residues_range_chain    .clear();
+   residues_range_chain_pos.clear();
 
    for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
@@ -958,12 +958,39 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    map < QString, bool > selected_map;
    map < QString, bool > present_map;
    
+   full_filenames.clear();
+   residues_chain          .clear();
+   residues_number         .clear();
+   residues_range_start    .clear();
+   residues_range_end      .clear();
+   residues_range_chain    .clear();
+   residues_range_chain_pos.clear();
+
    for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
       selected_map[ QFileInfo( ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ] ).fileName() ] = true;
+
+      QString full_filename = ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ];
+      QString filename      = QFileInfo( full_filename ).fileName();
+
+      if ( !full_filenames.count( filename ) )
+      {
+         full_filenames[ filename ] = full_filename;
+      } else {
+         if ( full_filenames[ filename  ] != full_filename )
+         {
+             editor_msg( "red", QString( tr( "WARNING: The same file name has been referenced in multiple file locations.\n"
+                                             "%1 vs %2\n"
+                                             "This will cause problems.  Duplicate reference skipped.\n" ) )
+                         .arg( full_filenames[ filename ] )
+                         .arg( full_filename )
+                         );
+             continue;
+         }
+      }                                             
    }
 
-   // add existing ones
+   // add existing ones that are selected
    for ( unsigned int i = 0; i < csv1.prepended_names.size(); i++ )
    {
       if ( selected_map.count( csv1.prepended_names[ i ] ) )
@@ -980,12 +1007,16 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
          it != selected_map.end();
          it++ )
    {
+      if ( !setup_residues( it->first ) )
+      {
+         continue;
+      }
+      residue_summary( it->first );
+
       if ( !present_map.count( it->first ) )
       {
          vector < QString > tmp_data;
-         
-         // FIX THIS: read to see if fileName.dmd_info exists (?)
-         
+                  
          tmp_data.push_back( it->first );
          tmp_data.push_back( "Y" );
          tmp_data.push_back(".7");
@@ -1103,9 +1134,20 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    QString last_key = "";
    
-   residues_chain    [ filename ].clear();
-   residues_chain_map[ filename ].clear();
-   residues_number   [ filename ].clear();
+   residues_chain          [ filename ].clear();
+   residues_number         [ filename ].clear();
+   residues_range_chain    [ filename ].clear();
+   residues_range_chain_pos[ filename ].clear();
+
+   for ( map < QString, vector < unsigned int > >::iterator it = residues_range_start.begin();
+         it != residues_range_start.end();
+         it++ )
+   {
+      if ( it->first.contains( QRegExp( QString( "^%1:" ).arg( filename ) ) ) )
+      {
+         it->second.clear();
+      }
+   }
 
    while( !ts.atEnd() )
    {
@@ -1120,7 +1162,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          QString      chain_id   = line.mid( 21, 1 );
          unsigned int residue_no = line.mid( 22, 4 ).stripWhiteSpace().toUInt();
          QString      this_key   = chain_id + line.mid( 22, 4 ).stripWhiteSpace();
-         cout << QString( "line <%1> chain id <%2> key <%3>\n" ).arg( line.left(30) ).arg( chain_id ).arg( this_key );
+         // cout << QString( "line <%1> chain id <%2> key <%3>\n" ).arg( line.left(30) ).arg( chain_id ).arg( this_key );
 
          if ( last_key.isEmpty() ||
               this_key != last_key )
@@ -1137,7 +1179,6 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
             last_key = this_key;
             residues_chain    [ filename ].push_back( chain_id   );
             residues_number   [ filename ].push_back( residue_no );
-            residues_chain_map[ filename ][ chain_id ] = true;
          }
       }
    }
@@ -1172,10 +1213,13 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
       if ( last_chain != residues_chain[ filename ][ i ] )
       {
          pos = this_pos;
-         residues_range_start[ key ].clear();
-         residues_range_end  [ key ].clear();
-         residues_range_start[ key ].push_back( this_pos );
-         residues_range_end  [ key ].push_back( this_pos );
+         // residues_range_start[ key      ].clear();
+         // residues_range_end  [ key      ].clear();
+         residues_range_start[ key      ].push_back( this_pos );
+         residues_range_end  [ key      ].push_back( this_pos );
+         residues_range_chain    [ filename ].push_back( key );
+         residues_range_chain_pos[ filename ].push_back( residues_range_start[ key ].size() - 1 );
+         // cout << "in residues_chain - pushback: " << key << " chain " << residues_chain[ filename ][ i ] << endl;
          last_chain = residues_chain[ filename ][ i ];
          continue;
       }
@@ -1184,8 +1228,10 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
       {
          // break in chain
          pos = this_pos;
-         residues_range_start[ key ].push_back( this_pos );
-         residues_range_end  [ key ].push_back( this_pos );
+         residues_range_start    [ key      ].push_back( this_pos );
+         residues_range_end      [ key      ].push_back( this_pos );
+         residues_range_chain    [ filename ].push_back( key );
+         residues_range_chain_pos[ filename ].push_back( residues_range_start[ key ].size() - 1 );
          continue;
       }
       residues_range_end  [ key ].back() = pos;
@@ -1196,19 +1242,19 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
 void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
 {
-   cout << "residue summary: " << filename << endl;
+   // cout << "residue summary: " << filename << endl;
    if ( !residues_chain.count( filename ) )
    {
       editor_msg( "red", QString( tr( "Internal Error: filename %1 not prepared for summary" ) ).arg( filename ) );
       return;
    }
       
-   for ( map < QString, bool >::iterator it = residues_chain_map[ filename ].begin();
-         it != residues_chain_map[ filename ].end();
-         it++ )
+   unsigned int pos = 0;
+   for ( unsigned int i = 0; i < residues_range_chain[ filename ].size(); i++ )
    {
-      QString key = filename + ":" + it->first;
-      cout << "key " << key << endl;
+      QString key = residues_range_chain[ filename ][ i ];
+      QString chain_id = key.right( 1 );
+      // cout << "key " << key << endl;
       if ( !residues_range_start.count( key ) )
       {
          editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 not prepared for summary" ) ).arg( filename ).arg( key ) );
@@ -1234,15 +1280,16 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
          editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 start end mismatch" ) ).arg( filename ).arg( key ) );
          return;
       }
-      for ( unsigned int j = 0; j < residues_range_start[ key ].size(); j++ )
-      {
-         editor_msg( "blue", QString( tr( "%1: Chain %2 residue range: start %3 end %4\n" ) )
-                     .arg( filename )
-                     .arg( it->first  )
-                     .arg( residues_range_start[ key ][ j ] )
-                     .arg( residues_range_end  [ key ][ j ] )
-                     );
-      }
+      // for ( unsigned int j = 0; j < residues_range_start[ key ].size(); j++ )
+      // {
+      pos++;
+      editor_msg( "dark blue", QString( tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
+                  .arg( filename )
+                  .arg( chain_id )
+                  .arg( pos )
+                  .arg( residues_range_start[ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                  .arg( residues_range_end  [ key ][ residues_range_chain_pos[ filename ][ i ] ] )
+                  );
+      // }
    }
 }
-

@@ -107,6 +107,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       map < QString, vector < unsigned int > > residues_number;
       map < QString, vector < unsigned int > > residues_range_start;
       map < QString, vector < unsigned int > > residues_range_end;
+      map < QString, vector < QString > >      residues_range_chain;
+      map < QString, vector < unsigned int > > residues_range_chain_pos;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
