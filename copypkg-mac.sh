@@ -17,7 +17,7 @@ done
 echo "Enter Admin password --"
 sudo chown -R $ME:admin ${PDIRS}
 
-for D in doc etc bin lib; do
+for D in Developer etc bin lib; do
   SDIR=${SRCDIR}/${D}
   DDIR=${PKGDIR}/ultrascan3
   echo "${RSYNC} ${SDIR} ${DDIR}"
