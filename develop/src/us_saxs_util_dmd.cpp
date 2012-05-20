@@ -156,11 +156,11 @@ bool US_Saxs_Util::dmd_prepare()
    QString base_pdb = QFileInfo( pdb ).baseName();
    QString constraints_file = base_pdb + ".constr";
 
-   if ( control_parameters.count( "dmdstatic" ) )
-   {
-      errormsg = QString( "DMDStatic not currently supported\n" ).arg( pdb );
-      return false;
-   }
+   // if ( control_parameters.count( "dmdstatic" ) )
+   // {
+   // errormsg = QString( "DMDStatic not currently supported\n" ).arg( pdb );
+   // return false;
+   // }
       
    // create constraints file
    {
@@ -177,6 +177,16 @@ bool US_Saxs_Util::dmd_prepare()
       if ( control_parameters.count( "dmd:ss" ) )
       {
          ts << control_parameters[ "dmd:ss" ];
+      }
+      if ( control_parameters.count( "dmdstatic" ) &&
+           !control_parameters[ "dmdstatic" ].isEmpty() &&
+           control_parameters[ "dmdstatic" ] != "none" )
+      {
+         QStringList qsl = QStringList::split( ",", control_parameters[ "dmdstatic" ] );
+         for ( unsigned int i = 0; i < qsl.size(); i++ )
+         {
+            ts << QString( "Static %1\n" ).arg( qsl[ i ] );
+         }
       }
       f.close();
    }
@@ -375,6 +385,8 @@ bool US_Saxs_Util::dmd_strip_pdb()
 {
    // remove dmd unrecognized atoms from pdb
    // add -stripped to name
+   // insert TER for unmarked chain breaks
+
    if ( !control_parameters.count( "inputfile" ) )
    {
       errormsg = "DMDStrip: InputFile must be defined";
@@ -432,7 +444,9 @@ bool US_Saxs_Util::dmd_strip_pdb()
    QStringList exclude_atoms_list;
    QStringList exclude_residues_list;
    exclude_residues_list
-      << "HOH";
+      << "HOH"
+      << "SWH"
+      ;
    
    map < QString, bool > exclude_atoms;
    map < QString, bool > exclude_residues;
@@ -452,6 +466,13 @@ bool US_Saxs_Util::dmd_strip_pdb()
    QTextStream tsol( &fol );
 
    QRegExp rx_check_line( "^(ATOM|HETATM)" );
+
+   QRegExp rx_ter       ( "^(TER)" );
+
+   unsigned int last_chain_residue_no = 0;
+   QString      last_key;
+   QString      last_chain_id;
+
    while ( !tsi.atEnd() )
    {
       QString qs = tsi.readLine();
@@ -466,8 +487,48 @@ bool US_Saxs_Util::dmd_strip_pdb()
             keep = false;
          }
       }
+      if ( rx_ter.search( qs ) != -1 )
+      {
+         keep = false;
+      }
       if ( keep )
       {
+         if ( rx_check_line.search( qs ) != -1 )
+         {
+            QString      chain_id   = qs.mid( 21, 1 );
+            unsigned int residue_no = qs.mid( 22, 4 ).stripWhiteSpace().toUInt();
+            QString      this_key   = chain_id + qs.mid( 22, 4 ).stripWhiteSpace();
+            cout << QString( "chain_id [%1] last [%2] residue_no [%3] last [%4] key [%5] last [%6]\n" )
+               .arg( chain_id )
+               .arg( last_chain_id )
+               .arg( residue_no )
+               .arg( last_chain_residue_no )
+               .arg( this_key )
+               .arg( last_key )
+               ;
+            // if we start a new chain, we're ok
+            if ( chain_id != last_chain_id )
+            {
+               if ( !last_chain_id.isEmpty() )
+               {
+                  tso << "TER\n";
+               }
+               last_chain_id         = chain_id;
+               last_key              = this_key;
+               last_chain_residue_no = residue_no;
+            }
+            if ( last_key != this_key )
+            {
+               last_chain_residue_no++;
+               if ( last_chain_residue_no != residue_no )
+               {
+                  tso << "TER\n";
+                  last_chain_id         = chain_id;
+                  last_chain_residue_no = residue_no;
+               }
+               last_key              = this_key;
+            }
+         }
          tso << qs << endl;
       } else {
          tsol << qs << endl;

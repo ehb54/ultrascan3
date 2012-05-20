@@ -1862,7 +1862,7 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile,
    {
       if ( use_entry >= (int) active_csv_rows.size() )
       {
-         editor_msg( "red", QString( tr( "Error: internal issue creating dmd entry for %1 position %2. Insufficient dmd entries (%3)\n" ) )
+         editor_msg( "red", QString( tr( "Internal Error: issue creating dmd entry for %1 position %2. Insufficient dmd entries (%3)\n" ) )
                      .arg( inputfile )
                      .arg( use_entry )
                      .arg( active_csv_rows.size() )
@@ -1873,8 +1873,57 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile,
       active_csv_rows.resize( 1 );
    }
 
+   if ( use_entry == -1 &&
+        active_csv_rows.size() > 1 )
+   {
+      // must all have matching static ranges
+      QString static_range = "";
+      for ( unsigned int j = 0; j < active_csv_rows.size(); j++ )
+      {
+         unsigned int i = active_csv_rows[ j ];
+         QString this_static_range = "";
+         if ( csv_dmd.data[ i ].size() > 11 )
+         {
+            this_static_range = csv_dmd.data[ i ][ 11 ];
+            if ( j == 0 )
+            {
+               static_range = this_static_range;
+            }
+         }
+         if ( this_static_range != static_range )
+         {
+            editor_msg( "red", QString( tr( "Error: multiple (%1) same named DMD (%2) entries with varying static ranges not supported for simultaneous execution on one core in one job\n" ) )
+                        .arg( active_csv_rows.size() )
+                        .arg( inputfile )
+                        );
+            return "";
+         }
+      }
+   }
+
    // we should probably parameterize this, maybe system dependent
    out += "DMDBoxSpacing   +10\n";
+   
+   if ( active_csv_rows.size() < 1 )
+   {
+      editor_msg( "red", QString( tr( "Internal Error: no active DMD rows %1 position %2.\n" ) )
+                  .arg( inputfile )
+                  .arg( use_entry )
+                  );
+      return "";
+   }
+
+   {
+      // the static range should all be identical if we got this far
+      unsigned int i = active_csv_rows[ 0 ];
+      if ( csv_dmd.data[ i ].size() > 11 &&
+           !csv_dmd.data[ i ][ 11 ].isEmpty() )
+      {
+         out += QString( "DMDStatic       %1\n" ).arg( csv_dmd.data[ i ][ 11 ] );
+      } else {
+         out += QString( "DMDStatic       none\n" );
+      }
+   }
 
    out += 
       "DMDStripPdb\n"

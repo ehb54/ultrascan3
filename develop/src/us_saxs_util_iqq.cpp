@@ -182,6 +182,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdrun|"
                       "dmdrelaxheatxc|"
                       "dmdequiheatxc|"
+                      "dmdstatic|"
 
                       "sgppopulation|"
                       "sgpgenerations|"
@@ -325,6 +326,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdrun|"
                       "dmdrelaxheatxc|"
                       "dmdequiheatxc|"
+                      "dmdstatic|"
 
                       "sleep|"
 

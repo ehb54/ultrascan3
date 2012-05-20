@@ -1396,12 +1396,12 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
       for ( unsigned int j = 0; j < residues_range_chain[ filename ].size(); j++ )
       {
          QString key = residues_range_chain[ filename ][ j ];
+         pos++;
          if ( chain_id !=  key.right( 1 ) )
          {
-            pos += residues_range_start[ key ].size();
+            // pos += residues_range_start[ key ].size();
             continue;
          }
-         pos++;
          unsigned int chain_pos        = residues_range_chain_pos[ filename ][ j         ];
          unsigned int this_chain_start = residues_range_start    [ key      ][ chain_pos ];
          unsigned int this_chain_base  = this_chain_start;
