@@ -547,11 +547,16 @@ void US_GA_Initialize::save( void )
          query << "get_editID" << editGUID;
          db.query( query );
          db.next();
-         int         idEdit = db.value( 0 ).toString().toInt();
+         QString     editID = db.value( 0 ).toString();
+         int         idEdit = editID.toInt();
+         query.clear();
+         query << "get_editedData" << editID;
+         db.query( query );
+         QString     trDesc = db.value( 4 ).toString();
          US_Report   freport;
          freport.runID      = runid;
 
-         freport.saveDocumentFromFile( fdir2, fnst2, dbP, idEdit );
+         freport.saveDocumentFromFile( fdir2, fnst2, dbP, idEdit, trDesc );
 
          msg     += tr( "\n\nThe report file was also saved to the database" );
       }

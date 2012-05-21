@@ -577,10 +577,16 @@ QDateTime time0=QDateTime::currentDateTime();
          query << "get_editID" << tsys->editGUID;
          db.query( query );
          db.next();
-         int         idEdit   = db.value( 0 ).toString().toInt();
+         QString     editID   = db.value( 0 ).toString();
+         int         idEdit   = editID.toInt();
+         query.clear();
+         query << "get_editedData" << editID;
+         db.query( query );
+         db.next();
+         QString     trdesc   = db.value( 4 ).toString();
          US_Report   freport;
          freport.runID        = runid;
-         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
+         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit, trdesc );
 QDateTime time1=QDateTime::currentDateTime();
 qDebug() << "DB-save: currdist" << curr_distr
  << "svtime:" << time0.msecsTo(time1);
