@@ -1503,9 +1503,11 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    US_DB2      db( pw.getPasswd() );
    US_DB2*     dbP = &db;
    QStringList query;
+   US_DataIO2::EditedData* edata = &dataList[ lw_triples->currentRow() ];
+   QString tripdesc = edata->description;
 
    // Get the ID of the EditedData DB record associated with the report
-   query << "get_editID" << dataList[ lw_triples->currentRow() ].editGUID;
+   query << "get_editID" << edata->editGUID;
    db.query( query );
    db.next();
    int     idEdit = db.value( 0 ).toString().toInt();
@@ -1521,12 +1523,15 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
       int     jjp   = fpath.lastIndexOf( "/" );
       QString pfdir = fpath.left( jjp );
       QString fname = fpath.mid ( jjp + 1 );
-      int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
+      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
+      int     st    = freport.saveDocumentFromFile( pfdir, fname, dbP,
+                                                    idEdit, tripdesc );
 
       if ( fname.endsWith( ".svg" ) )
       {
          QString fnpng  = QString( fname ).replace( ".svg", ".png" );
-         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit );
+         //freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit );
+         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
       }
 
       if ( st != US_DB2::OK )

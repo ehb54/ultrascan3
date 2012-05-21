@@ -518,6 +518,7 @@ void US_vHW_Combine::save( void )
       QStringList files = QDir( resdir )
             .entryList( ffilt, QDir::Files, QDir::Name );
       QString      efname;
+      QString      trdesc;
 
       for ( int ii = 0; ii < files.count(); ii++ )
       {  // Look for files that match the edit file template
@@ -539,15 +540,21 @@ DbgLv(1) << "SV:   efname" << efname;
          query << "get_editID" << edvals.editGUID;
          db.query( query );
          db.next();
-         idEdit              = db.value( 0 ).toString().toInt();
+         QString editID      = db.value( 0 ).toString();
+         idEdit              = editID.toInt();
 DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
+         query.clear();
+         query << "get_editedData" << editID;
+         db.query( query );
+         db.next();
+         trdesc              = db.value( 4 ).toString();
       }
 
       US_Report    freport;
       freport.runID          = runID;
-      freport.saveDocumentFromFile( fdir, fname, &db, idEdit );
+      freport.saveDocumentFromFile( fdir, fname, &db, idEdit, trdesc );
       fname.replace( ".svg", ".png" );
-      freport.saveDocumentFromFile( fdir, fname, &db, idEdit );
+      freport.saveDocumentFromFile( fdir, fname, &db, idEdit, trdesc );
 DbgLv(1) << "SV:runID,idEdit,fname" << runID << idEdit << fname;
       svmsg += tr( "\n\nThe plot was also saved to the database" );
    }
