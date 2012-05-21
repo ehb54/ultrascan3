@@ -718,6 +718,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool calc_zeno();
       int do_calc_hydro();
 
+      void         reset_chain_residues( PDB_model *);
+
    public:
 
       QString      model_name( int val );

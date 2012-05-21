@@ -1593,6 +1593,7 @@ void US_Hydrodyn::reload_pdb()
          printError(QString("Encountered errors with your PDB structure for model %1:\n").
                     arg( model_name( i ) ) + "please check the text window");
       }
+      reset_chain_residues( &model_vector[ i ] );
    }
    model_vector_as_loaded = model_vector;
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
@@ -1813,6 +1814,7 @@ void US_Hydrodyn::load_pdb()
             printError(QString("Encountered errors with your PDB structure for model %1:\n").
                        arg( model_name( i ) ) + "please check the text window");
          }
+         reset_chain_residues( &model_vector[ i ] );
       }
       model_vector_as_loaded = model_vector;
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
@@ -1941,11 +1943,13 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
          printError(QString("Encountered errors with your PDB structure for model %1:\n").
                     arg( model_name( i ) ) + "please check the text window");
       }
+      reset_chain_residues( &model_vector[ i ] );
    }
    if ( !errors_found )
    {
       calc_mw();
    }
+
    model_vector_as_loaded = model_vector;
    if ( !model_vector.size() ||
         !model_vector[0].molecule.size() )

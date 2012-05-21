@@ -758,6 +758,7 @@ class US_EXTERN US_Saxs_Util
       bool select_residue_file( QString );
       void calc_bead_mw( residue *res );
       void calc_vbar( PDB_model *);
+      void reset_chain_residues( PDB_model *model );
       bool read_pdb( QString filename );
       bool read_pdb( QStringList &qsl );
       bool dna_rna_resolve();

@@ -85,6 +85,7 @@ struct PDB_atom
    bool active;
    float asa;           // maximum accessible surface area (A^2)
    struct residue *p_residue;        // NULL if not found
+   int    model_residue_pos;
    struct atom *p_atom;              // NULL if not found
    float radius;
 

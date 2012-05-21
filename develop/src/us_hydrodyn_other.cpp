@@ -326,7 +326,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
       mw_vbar_sum += mw * (*model).residue[i].vbar;
    }
    (*model).vbar = (mw_vbar_sum/mw_sum); //  - 0.002125;
-   //cout << "VBAR: " << (*model).vbar << endl;
+   cout << "calc VBAR: " << (*model).vbar << endl;
 }
 
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
@@ -390,6 +390,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    QString str2;
    bool flag;
    struct PDB_atom temp_atom;
+   temp_atom.model_residue_pos = -1;
    str2 = str1.mid(6, 5);
    temp_atom.serial = str2.toUInt();
 
@@ -451,6 +452,8 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    {
       if (temp_atom.resName == residue_list[m].name)
       {
+         // this can be wrong, as there can be multiple entries for the same residue name
+         // fixed up with reset_chain_residues()
          current_residue = residue_list[m];
          found = true;
          break;
@@ -464,7 +467,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    return(flag);
 }
 
-int US_Hydrodyn::read_pdb(const QString &filename)
+int US_Hydrodyn::read_pdb( const QString &filename )
 {
    lb_model->clear();
    QString str, str1, str2, temp;
@@ -507,13 +510,13 @@ int US_Hydrodyn::read_pdb(const QString &filename)
       }
    }
 
-   if (f.open(IO_ReadOnly))
+   if ( f.open( IO_ReadOnly ) )
    {
       last_pdb_header.clear();
       last_pdb_title .clear();
       last_pdb_filename = f.name();
       QTextStream ts(&f);
-      while (!ts.atEnd())
+      while ( !ts.atEnd() )
       {
          str1 = ts.readLine();
          if ( str1.left(3) == "TER" )
@@ -675,6 +678,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
                   { // if true, we have new residue and need to add it to the residue vector
                      temp_model.residue.push_back(current_residue); // add the next residue of this model
                   }
+                  temp_chain.atom.back().model_residue_pos = temp_model.residue.size() - 1;
                }
             }
          }
@@ -6409,4 +6413,35 @@ void US_Hydrodyn::config()
          run_us_admin();
       }
    }
+}
+
+void US_Hydrodyn::reset_chain_residues( PDB_model *model )
+{
+   // build_molecule_maps( &model_vector[ i ] );
+   map < QString, bool > checked;
+
+   for ( unsigned int j = 0; j < model->molecule.size(); j++ )
+   {
+      for (unsigned int k = 0; k < model->molecule[ j ].atom.size(); k++)
+      {
+         PDB_atom *this_atom = &(model->molecule[ j ].atom[ k ]);
+         QString idx = QString("%1|%2").arg( j ).arg( this_atom->resSeq );
+         if ( !checked.count( idx ) )
+         {
+            checked[ idx ] = true;
+            if ( this_atom->p_residue &&
+                 this_atom->model_residue_pos != -1 )
+            {
+               if ( model->residue[ this_atom->model_residue_pos ].unique_name != this_atom->p_residue->unique_name )
+               {
+                  cout << QString( "found residue difference %1 %2, fixing\n" )
+                     .arg( model->residue[ this_atom->model_residue_pos ].unique_name )
+                     .arg( this_atom->p_residue->unique_name );
+                  model->residue[ this_atom->model_residue_pos ] = *this_atom->p_residue;                        
+               }
+            }
+         }
+      }
+   }
+   calc_vbar( model );
 }

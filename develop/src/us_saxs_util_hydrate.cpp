@@ -190,6 +190,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
       return false;
    }
 
+   reset_chain_residues( &model_vector[ current_model ] );
+
    // probably don't need this:
    hydro_results results;
    results.asa_rg_pos = 0.0;
@@ -4322,4 +4324,35 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
    // cout << "check for miss atms:\n";
    // cout << errormsg << endl;
    return true;
+}
+
+void US_Saxs_Util::reset_chain_residues( PDB_model *model )
+{
+   // build_molecule_maps( &model_vector[ i ] );
+   map < QString, bool > checked;
+
+   for ( unsigned int j = 0; j < model->molecule.size(); j++ )
+   {
+      for (unsigned int k = 0; k < model->molecule[ j ].atom.size(); k++)
+      {
+         PDB_atom *this_atom = &(model->molecule[ j ].atom[ k ]);
+         QString idx = QString("%1|%2").arg( j ).arg( this_atom->resSeq );
+         if ( !checked.count( idx ) )
+         {
+            checked[ idx ] = true;
+            if ( this_atom->p_residue &&
+                 this_atom->model_residue_pos != -1 )
+            {
+               if ( model->residue[ this_atom->model_residue_pos ].unique_name != this_atom->p_residue->unique_name )
+               {
+                  cout << QString( "found residue difference %1 %2, fixing\n" )
+                     .arg( model->residue[ this_atom->model_residue_pos ].unique_name )
+                     .arg( this_atom->p_residue->unique_name );
+                  model->residue[ this_atom->model_residue_pos ] = *this_atom->p_residue;                        
+               }
+            }
+         }
+      }
+   }
+   calc_vbar( model );
 }
