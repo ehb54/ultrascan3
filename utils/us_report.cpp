@@ -296,7 +296,8 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
       q << this->tripleGUID
         << QString::number( reportID )
         << QString::number( -1 )        // resultID unknown in this context
-        << this->triple;
+        << this->triple
+        << this->dataDescription;
       db->query( q );
 
       int newStatus = db->lastErrno();
@@ -436,10 +437,11 @@ int US_Report::ReportTriple::findDocument(
 // Function to clear out the entire report triple structure
 void US_Report::ReportTriple::reset( void )
 {
-   tripleID     = -1;
-   tripleGUID   = "";
-   resultID     = -1;
-   triple       = "";
+   tripleID        = -1;
+   tripleGUID      = "";
+   resultID        = -1;
+   triple          = "";
+   dataDescription = "";
 
    docs.clear();
 }
@@ -447,10 +449,11 @@ void US_Report::ReportTriple::reset( void )
 // Function to show the current values of the class variables
 void US_Report::ReportTriple::show( void )
 {
-   qDebug() << "  tripleID =     " <<  tripleID     ;
-   qDebug() << "  tripleGUID =   " <<  tripleGUID   ;
-   qDebug() << "  resultID =     " <<  resultID     ;
-   qDebug() << "  triple =       " <<  triple       ;
+   qDebug() << "  tripleID =        " <<  tripleID        ;
+   qDebug() << "  tripleGUID =      " <<  tripleGUID      ;
+   qDebug() << "  resultID =        " <<  resultID        ;
+   qDebug() << "  triple =          " <<  triple          ;
+   qDebug() << "  dataDescription = " <<  dataDescription ;
    qDebug() << "";
 
    if ( docs.size() > 0 )
@@ -507,10 +510,11 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db )
       {
          US_Report::ReportTriple t;
 
-         t.tripleID     = db->value(0).toInt();
-         t.tripleGUID   = db->value(1).toString();
-         t.resultID     = db->value(2).toInt();
-         t.triple       = db->value(3).toString();
+         t.tripleID        = db->value(0).toInt();
+         t.tripleGUID      = db->value(1).toString();
+         t.resultID        = db->value(2).toInt();
+         t.triple          = db->value(3).toString();
+         t.dataDescription = db->value(4).toString();
 
          triples << t;
       }
@@ -615,11 +619,13 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 // Function to add a new, empty triple record, both in the object and the DB
 US_Report::Status US_Report::addTriple(
    QString triple, 
+   QString dataDescription,
    US_DB2* db )
 {
    US_Report::ReportTriple d;
 
-   d.triple = triple;
+   d.triple          = triple;
+   d.dataDescription = dataDescription;
 
    return this->addTriple( d, db );
 }
@@ -680,7 +686,7 @@ int US_Report::findTriple( QString searchTriple )
 // For example, dir = /home/user/ultrascan/reports/demo1_veloc
 //     and filename = 2dsa.2A260.tinoise.svg
 US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
-      const QString& filename, US_DB2* db, int idEdit )
+      const QString& filename, US_DB2* db, int idEdit, const QString dataDescription )
 {
    // Parse the directory for the runID
    QStringList parts  = dir.split( "/" );
@@ -728,7 +734,7 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    if ( tripNdx == -1 )
    {
       // Not found
-      status = this->addTriple( newTriple, db );
+      status = this->addTriple( newTriple, dataDescription, db );
       if ( status != US_Report::REPORT_OK )
       {
          qDebug() << "saveDocumentFromFile.addTriple error"
