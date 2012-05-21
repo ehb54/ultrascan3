@@ -678,7 +678,8 @@ CREATE PROCEDURE new_reportTriple ( p_personGUID        CHAR(36),
                                     p_reportTripleGUID  CHAR(36),
                                     p_reportID          INT,
                                     p_resultID          INT,
-                                    p_triple            VARCHAR(20) )
+                                    p_triple            VARCHAR(20),
+                                    p_dataDescription   VARCHAR(255) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -707,7 +708,8 @@ BEGIN
       reportTripleGUID  = p_reportTripleGUID,
       reportID          = p_reportID,
       resultID          = p_resultID,
-      triple            = p_triple;
+      triple            = p_triple,
+      dataDescription   = p_dataDescription ;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -871,7 +873,7 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportTripleID, reportTripleGUID, resultID, triple
+     SELECT    reportTripleID, reportTripleGUID, resultID, triple, dataDescription
      FROM      reportTriple
      WHERE     reportID = p_reportID
      ORDER BY  triple;
@@ -920,7 +922,7 @@ BEGIN
   ELSE
      SELECT @OK AS status;
 
-     SELECT    reportTripleGUID, resultID, triple
+     SELECT    reportTripleGUID, resultID, triple, dataDescription
      FROM      reportTriple
      WHERE     reportTripleID = p_reportTripleID;
    

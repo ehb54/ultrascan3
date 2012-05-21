@@ -1493,6 +1493,7 @@ CREATE  TABLE IF NOT EXISTS reportTriple (
   reportID int(11) NOT NULL,
   resultID int(11) DEFAULT NULL,
   triple varchar(20) NOT NULL DEFAULT '',     -- cell/channel/wavelength format
+  dataDescription varchar(255) NOT NULL DEFAULT '', -- from 1st line in data file
   PRIMARY KEY (reportTripleID),
   INDEX ndx_reportTriple_reportID (reportID),
   CONSTRAINT fk_reportTriple_reportID 

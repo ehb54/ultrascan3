@@ -106,6 +106,8 @@ class US_UTIL_EXTERN US_Report
                                 //!< that this triple was derived from
          QString triple;        //!< The cell/channel/wavelength identifying which channel 
                                 //!< this triple was derived from (Format: c/c/w)
+         QString dataDescription; //!< The data description from the first line of the
+                                  //!< original data file
          QVector< ReportDocument > docs; //!< The report documents themselves
 
          //! \brief Generic constructor for the ReportTriple class.
@@ -220,11 +222,12 @@ class US_UTIL_EXTERN US_Report
 
       /*! \brief    Function to add a new empty triple record to the report
 
-          \param    triple       The triple identifying which channel
+          \param    triple          The triple identifying which channel
+          \param    dataDescription The data description from the original file
           \param    db For database access, an open database connection
           \return   One of the US_Report error codes
       */
-      Status        addTriple( QString, US_DB2* = 0 );
+      Status        addTriple( QString, QString = "", US_DB2* = 0 );
 
       /*! \brief    Function to add or replace an entire triple
 
@@ -267,10 +270,12 @@ class US_UTIL_EXTERN US_Report
                              2dsa.2A260.tinoise.svg
           \param    db       For database access, an open database connection
           \param    idEdit   ID of EditedData with which document is associated.
+          \param    dataDescription The data description from the first line of the
+                             original file
           \return   One of the US_Report error codes
       */
       Status        saveDocumentFromFile( const QString&, const QString&,
-                                          US_DB2*, int = 1 );
+                                          US_DB2*, int = 1, const QString = "" );
 
       /*! \brief    Function to delete the specified report from the DB
           
