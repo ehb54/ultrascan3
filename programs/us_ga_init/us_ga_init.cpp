@@ -552,6 +552,7 @@ void US_GA_Initialize::save( void )
          query.clear();
          query << "get_editedData" << editID;
          db.query( query );
+         db.next();
          QString     trDesc = db.value( 4 ).toString();
          US_Report   freport;
          freport.runID      = runid;

@@ -1523,14 +1523,12 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
       int     jjp   = fpath.lastIndexOf( "/" );
       QString pfdir = fpath.left( jjp );
       QString fname = fpath.mid ( jjp + 1 );
-      //int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit );
       int     st    = freport.saveDocumentFromFile( pfdir, fname, dbP,
                                                     idEdit, tripdesc );
 
-      if ( fname.endsWith( ".svg" ) )
+      if ( st == US_DB2::OK  &&  fname.endsWith( ".svg" ) )
       {
          QString fnpng  = QString( fname ).replace( ".svg", ".png" );
-         //freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit );
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
       }
 
