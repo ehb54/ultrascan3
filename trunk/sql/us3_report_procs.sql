@@ -740,7 +740,8 @@ CREATE PROCEDURE update_reportTriple ( p_personGUID        CHAR(36),
                                        p_password          VARCHAR(80),
                                        p_reportTripleID    INT,
                                        p_resultID          INT,
-                                       p_triple            VARCHAR(20) )
+                                       p_triple            VARCHAR(20),
+                                       p_dataDescription   VARCHAR(255) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -776,7 +777,8 @@ BEGIN
   ELSE
     UPDATE reportTriple SET
       resultID          = p_resultID,
-      triple            = p_triple
+      triple            = p_triple,
+      dataDescription   = p_dataDescription 
     WHERE reportTripleID = p_reportTripleID;
 
     IF ( not_found = 1 ) THEN

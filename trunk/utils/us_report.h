@@ -271,7 +271,7 @@ class US_UTIL_EXTERN US_Report
           \param    db       For database access, an open database connection
           \param    idEdit   ID of EditedData with which document is associated.
           \param    dataDescription The data description from the first line of the
-                             original file
+                             original file, in case adding new triple
           \return   One of the US_Report error codes
       */
       Status        saveDocumentFromFile( const QString&, const QString&,
