@@ -775,11 +775,22 @@ BEGIN
     SELECT @US3_LAST_ERRNO AS status;
 
   ELSE
-    UPDATE reportTriple SET
-      resultID          = p_resultID,
-      triple            = p_triple,
-      dataDescription   = p_dataDescription 
-    WHERE reportTripleID = p_reportTripleID;
+    -- Let's guard against updating dataDescription with an empty string
+    SET p_dataDescription = TRIM( p_dataDescription );
+
+    IF ( LENGTH( p_dataDescription ) < 1 ) THEN
+      UPDATE reportTriple SET
+        resultID          = p_resultID,
+        triple            = p_triple
+      WHERE reportTripleID = p_reportTripleID;
+
+    ELSE
+      UPDATE reportTriple SET
+        resultID          = p_resultID,
+        triple            = p_triple,
+        dataDescription   = p_dataDescription 
+      WHERE reportTripleID = p_reportTripleID;
+    END IF;
 
     IF ( not_found = 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_REPORT_TRIPLE;
