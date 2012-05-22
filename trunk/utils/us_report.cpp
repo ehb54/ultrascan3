@@ -750,8 +750,7 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    {
       // Then the data description field has changed and needs to be updated
       this->triples[tripNdx].dataDescription = dataDescription;
-      int resultID = this->triples[tripNdx].resultID;
-      this->triples[tripNdx].saveDB( resultID, db );
+      this->triples[tripNdx].saveDB( this->ID, db );
    }
 
    // Refresh tripNdx
