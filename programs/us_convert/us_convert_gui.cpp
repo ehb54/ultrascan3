@@ -20,6 +20,7 @@
 #include "us_constants.h"
 #include "us_report.h"
 #include "us_gui_util.h"
+#include "us_util.h"
 
 #ifdef WIN32
   #include <float.h>
@@ -1490,8 +1491,14 @@ void US_ConvertGui::runDetails( void )
 
 void US_ConvertGui::changeDescription( void )
 {
-   allData[ currentTriple ].description = le_description->text();
-   allData[ currentTriple ].description = allData[ currentTriple ].description.trimmed();
+   if ( le_description->text().size() < 1 )
+      le_description->setText( allData[ currentTriple ].description );
+
+   else
+   {
+      allData[ currentTriple ].description = le_description->text();
+      allData[ currentTriple ].description = allData[ currentTriple ].description.trimmed();
+   }
 }
 
 void US_ConvertGui::changeTriple( QListWidgetItem* )
@@ -2429,9 +2436,24 @@ void US_ConvertGui::saveReportsToDB( void )
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    foreach( QString file, files )
    {
+      // Get description info for the correct triple
+      QStringList parts = file.split( "." );
+      QString fileTriple = US_Util::expanded_triple( parts[ 1 ], true );
+
+      // Match the triple to find the correct description in memory
+      QString description = {""};
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         if ( fileTriple == triples[ i ].tripleDesc )
+         {
+            description = allData[ i ].description;
+            break;
+         }
+      }
+
       // Edit data ID is not known yet, so use 1. It goes in the report document
       //   table itself, so we're not overwriting anything.
-      US_Report::Status status = myReport.saveDocumentFromFile( dir, file, &db, 1 );
+      US_Report::Status status = myReport.saveDocumentFromFile( dir, file, &db, 1, description );
       if ( status != US_Report::REPORT_OK )
       {
          errorMsg += file + " was not saved to report database; error code: "

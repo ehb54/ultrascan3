@@ -403,11 +403,33 @@ CREATE PROCEDURE delete_rawData ( p_personGUID   CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  -- Set up to delete any number of reports with this experimentID
+  DECLARE l_last_row INT DEFAULT 0;
+  DECLARE l_reportID INT;
+  DECLARE get_reports CURSOR FOR
+    SELECT reportID
+    FROM   report
+    WHERE  experimentID = p_experimentID;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET l_last_row = 1;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    -- Get all associated reportID's and delete them
+    OPEN get_reports;
+    rpt_cursor: LOOP
+      FETCH get_reports INTO l_reportID;
+      IF ( l_last_row = 1 ) THEN
+         LEAVE rpt_cursor;
+      END IF;
+
+      -- Not the end of the data, so let's delete this one
+      CALL delete_report( p_personGUID, p_password, l_reportID );
+
+    END LOOP rpt_cursor;
+    CLOSE get_reports;
 
     -- Make sure records match if they have related tables or not
     -- Have to do it in a couple of stages because of the constraints
