@@ -2441,7 +2441,7 @@ void US_ConvertGui::saveReportsToDB( void )
       QString fileTriple = US_Util::expanded_triple( parts[ 1 ], true );
 
       // Match the triple to find the correct description in memory
-      QString description = {""};
+      QString description = QString( "" );
       for ( int i = 0; i < triples.size(); i++ )
       {
          if ( fileTriple == triples[ i ].tripleDesc )
