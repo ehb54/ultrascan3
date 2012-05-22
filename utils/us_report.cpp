@@ -276,7 +276,8 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
       QStringList q( "update_reportTriple" );
       q << QString::number( this->tripleID )
         << QString::number( -1 )        // resultID unknown in this context
-        << this->triple;
+        << this->triple
+        << this->dataDescription;
       db->query( q );
 
       int updateStatus = db->lastErrno();
