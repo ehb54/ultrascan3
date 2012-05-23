@@ -54,22 +54,26 @@ US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( 0, 0 )
       "<b>Note:</b> Proceeding may result in local reports<br/>"
       "being replaced from the database.<ul>"
       "<li><b>Cancel</b>   to abort synchronizing from the DB.</li>"
-      "<li><b>Download</b> to proceed with DB synchronization.</li></ul>" );
+      "<li><b>Download</b> to proceed with DB synchronization.</li>"
+      "<li><b>New Only</b> to only download new DB records.</li></ul>" );
    te_desc->setHtml( desc );
    top->addWidget( te_desc,   row,   0, 4, 2 );
 
    main->addLayout( top );
 
    // Button Row
-   QHBoxLayout* buttons = new QHBoxLayout;
+   QHBoxLayout* buttons    = new QHBoxLayout;
+   QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
+   QPushButton* pb_accept  = us_pushbutton( tr( "Download" ) );
+   QPushButton* pb_newonly = us_pushbutton( tr( "New Only" ) );
 
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   buttons->addWidget( pb_cancel );
+   connect( pb_cancel,  SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_accept,  SIGNAL( clicked() ), SLOT( accepted()  ) );
+   connect( pb_newonly, SIGNAL( clicked() ), SLOT( downnew()   ) );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Download" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
-   buttons->addWidget( pb_accept );
+   buttons->addWidget( pb_cancel  );
+   buttons->addWidget( pb_accept  );
+   buttons->addWidget( pb_newonly );
 
    main->addLayout( buttons );
 
@@ -92,11 +96,23 @@ qDebug() << "CANCELED";
    close();
 }
 
-// Accept button:  set up to return data information
+// Download button:  download all DB records and return accepted
 void US_SyncWithDB::accepted()
 {
-qDebug() << "ACCEPTED";
+qDebug() << "DOWNLOAD";
+   newonly   = false;
    scan_db_reports();     // Download reports from the database
+
+   accept();              // Signal that selection was accepted
+   close();
+}
+
+// New Only button:  download only new DB records and return accepted
+void US_SyncWithDB::downnew()
+{
+qDebug() << "NEWONLY";
+   newonly   = true;
+   scan_db_reports();     // Download new reports from the database
 
    accept();              // Signal that selection was accepted
    close();
@@ -122,7 +138,8 @@ void US_SyncWithDB::scan_db_reports()
       "<b>Note:</b> Proceeding may result in local reports<br/>"
       "being replaced from the database.<ul>"
       "<li><b>Cancel</b>   to abort synchronizing from the DB.</li>"
-      "<li><b>Download</b> to proceed with DB synchronization.</li></ul>"
+      "<li><b>Download</b> to proceed with DB synchronization.</li>"
+      "<li><b>New Only</b> to only download new DB records.</li></ul>"
       "<b>Downloading report records from the database...</b>" );
    te_desc->setHtml( desc );
    qApp->processEvents();
@@ -171,6 +188,7 @@ qDebug() << "  Report" << ii << "triples count" << ntriples << "runID" << runid;
       {
          if ( QDir( rundir ).exists() )
          {
+            if ( newonly )  continue;
             nrunrpl++;
          }
 
@@ -180,6 +198,8 @@ qDebug() << "  Report" << ii << "triples count" << ntriples << "runID" << runid;
             dirrpt.mkdir( runid );
          }
       }
+
+      int kdocadd = 0;
 
       for ( int jj = 0; jj < ntriples; jj++ )
       {
@@ -196,6 +216,7 @@ qDebug() << "      Doc" << kk << "filename" << fname << "ID" << doc->documentID;
 
             if ( dfile.exists() )
             {
+               if ( newonly )  continue;
                ndocrpl++;
             }
 
@@ -212,12 +233,16 @@ qDebug() << "      Doc" << kk << "filename" << fname << "ID" << doc->documentID;
             }
          }
       }
+
+      if ( newonly  &&  kdocadd != ndocadd )
+         nrunrpl++;
+
    }
    QApplication::restoreOverrideCursor();
         
    QMessageBox::information( this,
          tr( "DB Reports Downloaded" ),
-         tr( "Run IDs: %1 replaced, %2 added.\n"
+         tr( "Run IDs: %1 updated, %2 added.\n"
              "Documents: %3 replaced, %4 added." )
          .arg( nrunrpl ).arg( nrunadd ).arg( ndocrpl ).arg( ndocadd ) );
 qDebug() << "nrunrpl nrunadd ndocrpl ndocadd" << nrunrpl << nrunadd

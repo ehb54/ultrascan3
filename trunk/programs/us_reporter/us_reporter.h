@@ -37,6 +37,7 @@ class US_Reporter : public US_Widgets
          QString   triple;            // triple (e.g., "2/A/280")
          QString   analysis;          // analysis
          QString   lastmodDate;       // file last modification date/time
+         QString   description;       // triple data set description
       };
 
    private:

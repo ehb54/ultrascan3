@@ -16,6 +16,7 @@
 #include "us_editor.h"
 #include "us_util.h"
 #include "us_sleep.h"
+#include "us_dataIO2.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -339,6 +340,7 @@ DbgLv(1) << "build_descs runID" << runID << " linex" << linex;
    cdesc.triple      = "all";
    cdesc.analysis    = "all";
    cdesc.lastmodDate = "";
+   cdesc.description = "";
 
    QString path      = cdesc.filepath;
    adescs << cdesc;                // Update the list and line count
@@ -382,6 +384,20 @@ DbgLv(1) << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
       cdesc.triple      = tripl;
       cdesc.analysis    = "all";
       cdesc.lastmodDate = "";
+      cdesc.description = "";
+
+      // Attempt to add a triple description to the label
+      US_DataIO2::RawData rdata;
+      int rstat = US_DataIO2::readRawData( cdesc.filepath, rdata );
+      if ( rstat == US_DataIO2::OK )
+      {
+         QString trdesc = rdata.description;
+         if ( ! trdesc.isEmpty() )
+         {
+            cdesc.label       = QString( cdesc.label ) + "   " + trdesc;
+            cdesc.description = trdesc;
+         }
+      }
 
       adescs << cdesc;
       linex++;
@@ -585,7 +601,7 @@ void US_Reporter::build_tree()
       }
    }
 
-   resize( 860, 240 );
+   resize( 1060, 240 );
 DbgLv(1) << "WIDGET SIZE" << size();
 
    change_tree = true;
@@ -956,9 +972,15 @@ DbgLv(1) << "++comb.height" << (chght+phght) << "NEW PAGE" << idesc->filename;
          rptpage   += pheadclass;
       }
 
+      QString trdesc = idesc->triple;
+      if ( ! idesc->description.isEmpty() )
+      {
+         trdesc         = trdesc + " &nbsp;&nbsp;&nbsp;" + idesc->description;
+      }
+
       // Display a title for the item
       rptpage   += "      " + idesc->runid + " &nbsp;&nbsp;&nbsp;";
-      rptpage   += idesc->triple + "<br/>\n      ";
+      rptpage   += trdesc + "<br/>\n      ";
       rptpage   += idesc->analysis + "<br/>\n       &nbsp;&nbsp;&nbsp;";
       rptpage   += idesc->label + "\n    </p>\n";
 
