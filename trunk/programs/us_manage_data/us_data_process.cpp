@@ -360,6 +360,8 @@ DbgLv(1) << "EDT_RMV:    stat" << stat;
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
          errMsg = tr( "delete_model status=%1" ).arg( stat );
+DbgLv(1) << "MOD_RMV:   dataID" << dataID << "errMsg:" << errMsg;
+DbgLv(1) << "MOD_RMV:    lastErr" << db->lastError() << db->lastErrno();
          stat   = 2013;
       }
       else

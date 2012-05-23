@@ -577,16 +577,10 @@ QDateTime time0=QDateTime::currentDateTime();
          query << "get_editID" << tsys->editGUID;
          db.query( query );
          db.next();
-         QString     editID   = db.value( 0 ).toString();
-         int         idEdit   = editID.toInt();
-         query.clear();
-         query << "get_editedData" << editID;
-         db.query( query );
-         db.next();
-         QString     trdesc   = db.value( 4 ).toString();
+         int         idEdit   = db.value( 0 ).toString().toInt();
          US_Report   freport;
          freport.runID        = runid;
-         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit, trdesc );
+         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
 QDateTime time1=QDateTime::currentDateTime();
 qDebug() << "DB-save: currdist" << curr_distr
  << "svtime:" << time0.msecsTo(time1);
@@ -1259,13 +1253,14 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
       if ( jdistr > maxsiz )
       {
          jdistr     = 0;
-         need_save  = false;
 
          if ( ! cont_loop )
          {
             jdistr     = curr_distr;
             looping    = false;
          }
+         else
+            need_save  = false;
       }
       curr_distr = jdistr;
       plot_data();

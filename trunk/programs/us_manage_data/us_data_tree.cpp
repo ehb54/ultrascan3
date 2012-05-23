@@ -896,6 +896,7 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
          int irow   = actrows[ jj ];
          US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
          int ityp   = ddesc.recType;
+DbgLv(1) << "RMV_REC: irow ityp lrtyp" << irow << ityp << lrtyp;
 
          if ( ityp > lrtyp )
          {  // Just mark as deleted if descendant of last removed
@@ -907,6 +908,7 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
          lrtyp      = ityp;              // save type of last removed
          karows++;
          int stat1  = da_process->record_remove_db( irow );
+DbgLv(1) << "RMV_REC:   karows stat1" << karows << stat1;
 
          if ( stat1 != 0 )
          {
