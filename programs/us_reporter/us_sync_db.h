@@ -33,11 +33,14 @@ class US_SyncWithDB : public US_WidgetsDialog
       int        ndocrpl;     // Number of documents replaced
       int        ndocadd;     // Number of documents newly added
 
+      bool       newonly;     // Flag if downloads are only of new records
+
    private slots:
       void get_person     ( void );
       void scan_db_reports( void );
       void cancelled      ( void );
       void accepted       ( void );
+      void downnew        ( void );
 
 };
 #endif
