@@ -146,6 +146,14 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_iqq_scale_chi2_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_scale_chi2_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scale_chi2_fitting()));
 
+   cb_iqq_kratky_fit = new QCheckBox(this);
+   cb_iqq_kratky_fit->setText(tr("Kratky fit"));
+   cb_iqq_kratky_fit->setEnabled(true);
+   cb_iqq_kratky_fit->setChecked((*saxs_options).iqq_kratky_fit);
+   cb_iqq_kratky_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq_kratky_fit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq_kratky_fit, SIGNAL(clicked()), this, SLOT(set_iqq_kratky_fit()));
+
    lbl_swh_excl_vol = new QLabel(tr(" Excluded volume SWH [A^3]: "), this);
    lbl_swh_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_swh_excl_vol->setMinimumHeight(minHeight1);
@@ -258,6 +266,11 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    hbl_various_1->addWidget(cb_disable_iq_scaling);
    hbl_various_1->addWidget(cb_iqq_scale_chi2_fitting);
    background->addMultiCellLayout(hbl_various_1, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_1b = new QHBoxLayout;
+   hbl_various_1->addWidget(cb_iqq_kratky_fit);
+   background->addMultiCellLayout(hbl_various_1b, j, j, 0, 1);
    j++;
 
    QHBoxLayout *hbl_various_2b = new QHBoxLayout;
@@ -440,6 +453,12 @@ void US_Hydrodyn_SasOptionsMisc::set_disable_iq_scaling()
 void US_Hydrodyn_SasOptionsMisc::set_iqq_scale_chi2_fitting()
 {
    (*saxs_options).iqq_scale_chi2_fitting = cb_iqq_scale_chi2_fitting->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_iqq_kratky_fit()
+{
+   (*saxs_options).iqq_kratky_fit = cb_iqq_kratky_fit->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

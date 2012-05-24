@@ -288,7 +288,7 @@ struct saxs_options
    bool    bead_model_rayleigh;
 
    bool    iqq_log_fitting;
-   bool    iqq_scaled_fitting;
+   bool    iqq_kratky_fit;
 
    bool    iqq_use_atomic_ff;
    bool    iqq_use_saxs_excl_vol;

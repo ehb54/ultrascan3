@@ -101,14 +101,6 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_iqq_log_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_log_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_log_fitting()));
 
-   cb_iqq_scaled_fitting = new QCheckBox(this);
-   cb_iqq_scaled_fitting->setText(tr(" I(q) NNLS q^2*I fit"));
-   cb_iqq_scaled_fitting->setEnabled(true);
-   cb_iqq_scaled_fitting->setChecked((*saxs_options).iqq_scaled_fitting);
-   cb_iqq_scaled_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iqq_scaled_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_iqq_scaled_fitting, SIGNAL(clicked()), this, SLOT(set_iqq_scaled_fitting()));
-
    cb_iqq_scale_play = new QCheckBox(this);
    cb_iqq_scale_play->setText(tr(" Manually adjust scaling"));
    cb_iqq_scale_play->setEnabled(true);
@@ -158,7 +150,6 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    
    hbl_various_3->addWidget(cb_iqq_scale_nnls);
    hbl_various_3->addWidget(cb_iqq_log_fitting);
-   hbl_various_3->addWidget(cb_iqq_scaled_fitting);
    hbl_various_3->addWidget(cb_iqq_scale_play);
    background->addMultiCellLayout(hbl_various_3, j, j, 0, 1);
    j++;
@@ -233,12 +224,6 @@ void US_Hydrodyn_SasOptionsExperimental::set_iqq_scale_nnls()
 void US_Hydrodyn_SasOptionsExperimental::set_iqq_log_fitting()
 {
    (*saxs_options).iqq_log_fitting = cb_iqq_log_fitting->isChecked();
-   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
-
-void US_Hydrodyn_SasOptionsExperimental::set_iqq_scaled_fitting()
-{
-   (*saxs_options).iqq_scaled_fitting = cb_iqq_scaled_fitting->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

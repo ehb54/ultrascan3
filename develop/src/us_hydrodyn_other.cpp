@@ -2813,7 +2813,7 @@ int US_Hydrodyn::read_config(QFile& f)
    saxs_options.iqq_log_fitting       = (bool)str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -11675;
-   saxs_options.iqq_scaled_fitting    = (bool)str.toInt();
+   saxs_options.iqq_kratky_fit        = (bool)str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -11676;
    saxs_options.iqq_use_atomic_ff     = (bool)str.toInt();
@@ -3302,7 +3302,7 @@ void US_Hydrodyn::write_config(const QString& fname)
 
       ts << saxs_options.bead_model_rayleigh   << "\t\t#saxs_options.bead_model_rayleigh  \n";
       ts << saxs_options.iqq_log_fitting       << "\t\t#saxs_options.iqq_log_fitting      \n";
-      ts << saxs_options.iqq_scaled_fitting    << "\t\t#saxs_options.iqq_scaled_fitting   \n";
+      ts << saxs_options.iqq_kratky_fit        << "\t\t#saxs_options.iqq_kratky_fit       \n";
       ts << saxs_options.iqq_use_atomic_ff     << "\t\t#saxs_options.iqq_use_atomic_ff    \n";
       ts << saxs_options.iqq_use_saxs_excl_vol << "\t\t#saxs_options.iqq_use_saxs_excl_vol\n";
       ts << saxs_options.alt_hydration         << "\t\t#saxs_options.alt_hydration        \n";
@@ -3750,7 +3750,7 @@ void US_Hydrodyn::set_default()
 
       saxs_options.bead_model_rayleigh   = true;
       saxs_options.iqq_log_fitting       = false;
-      saxs_options.iqq_scaled_fitting    = false;
+      saxs_options.iqq_kratky_fit        = false;
       saxs_options.iqq_use_atomic_ff     = false;
       saxs_options.iqq_use_saxs_excl_vol = false;
       saxs_options.alt_hydration         = false;
@@ -6430,7 +6430,8 @@ void US_Hydrodyn::reset_chain_residues( PDB_model *model )
          {
             checked[ idx ] = true;
             if ( this_atom->p_residue &&
-                 this_atom->model_residue_pos != -1 )
+                 this_atom->model_residue_pos != -1 &&
+                 ( int ) model->residue.size() < this_atom->model_residue_pos )
             {
                if ( model->residue[ this_atom->model_residue_pos ].unique_name != this_atom->p_residue->unique_name )
                {

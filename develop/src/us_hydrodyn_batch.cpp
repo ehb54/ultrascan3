@@ -60,6 +60,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    // should move to save/restore
    batch->mm_first = true;
    batch->mm_all = false;
+
    disable_updates = false;
    any_pdb_in_list = false;
    batch->prr = false;
@@ -1414,6 +1415,7 @@ void US_Hydrodyn_Batch::start()
       }
    }
 
+   US_Timer job_timer;
    bool overwriteForcedOn = false;
    if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite )
    {
@@ -1480,6 +1482,8 @@ void US_Hydrodyn_Batch::start()
       qApp->processEvents();
       if ( lb_files->isSelected(i) )
       {
+         job_timer.init_timer ( QString( "%1 process" ).arg( get_file_name( i ) ) );
+         job_timer.start_timer( QString( "%1 process" ).arg( get_file_name( i ) ) );
          QString file = get_file_name(i);
          // editor->append(QString(tr("Screening: %1\r").arg(file)));
          if ( stopFlag )
@@ -1502,12 +1506,15 @@ void US_Hydrodyn_Batch::start()
          lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, false);
          qApp->processEvents();
+         job_timer.init_timer ( QString( "%1 screen" ).arg( get_file_name( i ) ) );
+         job_timer.start_timer( QString( "%1 screen" ).arg( get_file_name( i ) ) );
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
             result = screen_pdb(file);
          } else {
             result = screen_bead_model(file);
          }
+         job_timer.end_timer  ( QString( "%1 screen" ).arg( get_file_name( i ) ) );
          if ( result ) 
          {
             editor->setColor("dark blue");
@@ -1540,11 +1547,17 @@ void US_Hydrodyn_Batch::start()
                }
                if ( batch->somo )
                {
+                  job_timer.init_timer ( QString( "%1 somo" ).arg( get_file_name( i ) ) );
+                  job_timer.start_timer( QString( "%1 somo" ).arg( get_file_name( i ) ) );
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_somo() ? false : true;
+                  job_timer.end_timer  ( QString( "%1 somo" ).arg( get_file_name( i ) ) );
                } 
                if ( batch->grid )
                {
+                  job_timer.init_timer ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+                  job_timer.start_timer( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_grid_pdb() ? false : true;
+                  job_timer.end_timer  ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                }
                restore_us_hydrodyn_settings();
             } 
@@ -1612,7 +1625,10 @@ void US_Hydrodyn_Batch::start()
                            // but possible some sort of DAM model might...
                            editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                         } else {
+                           job_timer.init_timer ( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
+                           job_timer.start_timer( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
                            result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
+                           job_timer.end_timer  ( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
                         }
                      }
                      if ( result )
@@ -1628,16 +1644,22 @@ void US_Hydrodyn_Batch::start()
                         {
                            if ( activate_saxs_search_window() )
                            {
+                              job_timer.init_timer ( QString( "%1 saxs_search" ).arg( get_file_name( i ) ) );
+                              job_timer.start_timer( QString( "%1 saxs_search" ).arg( get_file_name( i ) ) );
                               ((US_Hydrodyn *) us_hydrodyn)->saxs_search_window->start();
+                              job_timer.end_timer  ( QString( "%1 saxs_search" ).arg( get_file_name( i ) ) );
                               result = true; // probably should grab status
                            } else {
                               result = false;
                            }
                            raise();
                         } else {
+                           job_timer.init_timer ( QString( "%1 calc iqq" ).arg( get_file_name( i ) ) );
+                           job_timer.start_timer( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                            result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
                                                                            !batch->csv_saxs || batch->create_native_saxs
                                                                            ) ? false : true;
+                           job_timer.end_timer  ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                         }
 #if defined(USE_H)
                         if ( batch->hydrate && 
@@ -1756,9 +1778,12 @@ void US_Hydrodyn_Batch::start()
                         }
                         raise();
                      } else {
+                        job_timer.init_timer ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
+                        job_timer.start_timer( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
                                                                         !batch->csv_saxs || batch->create_native_saxs
                                                                         ) ? false : true;
+                        job_timer.end_timer  ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                      }
 #if defined(USE_H)
                      if ( batch->hydrate && 
@@ -1899,9 +1924,12 @@ void US_Hydrodyn_Batch::start()
                      {
                         hydrated_pdb_nmr_text += ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_text;
 #endif
+                        job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
+                        job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
                                                                         !batch->csv_saxs || batch->create_native_saxs
                                                                         ) ? false : true;
+                        job_timer.end_timer  ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         if ( batch->csv_saxs )
                         {
 #if defined(USE_H)
@@ -1966,15 +1994,21 @@ void US_Hydrodyn_Batch::start()
                         editor_msg("dark red", "Bead models can not be hydrated, continuing without hydration\n");
                      } else {
                         ((US_Hydrodyn *)us_hydrodyn)->save_state();
+                        job_timer.init_timer ( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
+                        job_timer.start_timer( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->pdb_hydrate_for_saxs( true ) != 0 ? false : true;
+                        job_timer.end_timer  ( QString( "%1 hydrate" ).arg( get_file_name( i ) ) );
                      }
                   }
                   if ( result )
                   {
 #endif
+                     job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
+                     job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
                                                                      !batch->csv_saxs || batch->create_native_saxs
                                                                      ) ? false : true;
+                     job_timer.end_timer  ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      if ( batch->csv_saxs )
                      {
 #if defined(USE_H)
@@ -2012,7 +2046,7 @@ void US_Hydrodyn_Batch::start()
 #endif
                }   
                restore_us_hydrodyn_settings();
-            } 
+            }
             progress->setProgress( 1 + i * 2 );
             if ( stopFlag )
             {
@@ -2034,7 +2068,10 @@ void US_Hydrodyn_Batch::start()
                  ( !pdb_mode || batch->somo || batch->grid ) )
             {
                save_us_hydrodyn_settings();
+               job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
+               job_timer.start_timer ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
+               job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();
             }
             if ( result ) 
@@ -2054,6 +2091,7 @@ void US_Hydrodyn_Batch::start()
          lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, result);
          editor->setColor(save_color);
+         job_timer.end_timer( QString( "%1 process" ).arg( get_file_name( i ) ) );
       }
       this->isVisible() ? this->raise() : this->show();
       qApp->processEvents();
@@ -2134,6 +2172,7 @@ void US_Hydrodyn_Batch::start()
       ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
+   cout << job_timer.list_times();
 }
 
 void US_Hydrodyn_Batch::stop()

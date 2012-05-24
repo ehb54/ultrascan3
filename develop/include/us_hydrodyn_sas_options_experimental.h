@@ -52,7 +52,6 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       QCheckBox   *cb_iqq_scale_nnls;
       QCheckBox   *cb_iqq_log_fitting;
-      QCheckBox   *cb_iqq_scaled_fitting;
       QCheckBox   *cb_iqq_scale_play;
 
       QPushButton *pb_help;
@@ -70,7 +69,6 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       void set_iqq_use_saxs_excl_vol();
       void set_iqq_scale_nnls();
       void set_iqq_log_fitting();
-      void set_iqq_scaled_fitting();
       void set_iqq_scale_play();
 
       void cancel();

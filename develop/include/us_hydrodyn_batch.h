@@ -224,7 +224,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool         cluster_dmd;
       csv          cluster_csv_advanced;
       csv          cluster_csv_dmd;
-      
+
    public :
       void add_file( QString filename );
       void add_files( vector < QString > filenames );

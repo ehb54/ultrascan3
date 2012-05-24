@@ -97,6 +97,22 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    vector < double > nnls_zzp(use_B.size());
    vector < int > nnls_indexp(nnls_A.size());
 
+   if ( our_saxs_options->iqq_kratky_fit )
+   {
+      // first check for non-zero
+      editor_msg( "blue",
+                  "Notice: Kratky fit (q^2*I)\n" );
+      for ( unsigned int i = 0; i < use_A.size(); i++ )
+      {
+         double q2 = use_q[ i % use_B.size() ] * use_q[ i % use_B.size() ];
+         use_A[ i ] *= q2;
+      }
+      for ( unsigned int i = 0; i < use_B.size(); i++ )
+      {
+         use_B[ i ] *= use_q[ i ] * use_q[ i ];
+      }
+   }
+
    if ( use_errors )
    {
       for ( unsigned int i = 0; i < nnls_errors.size(); i++ )
@@ -151,22 +167,6 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
          {
             use_A[ i ] = log10( use_A[ i ] );
          }
-      }
-   }
-
-   if ( our_saxs_options->iqq_scaled_fitting )
-   {
-      // first check for non-zero
-      editor_msg( "blue",
-                  "Notice: q^2*I Scaled fitting\n" );
-      for ( unsigned int i = 0; i < use_A.size(); i++ )
-      {
-         double q2 = use_q[ i % use_B.size() ] * use_q[ i % use_B.size() ];
-         use_A[ i ] *= q2;
-      }
-      for ( unsigned int i = 0; i < use_B.size(); i++ )
-      {
-         use_B[ i ] *= use_q[ i ] * use_q[ i ];
       }
    }
 
@@ -408,6 +408,8 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
 
    editor->append("Running best fit\n");
    clear_plot_saxs( true );
+
+
 
    if ( is_nonzero_vector( nnls_errors ) )
    {

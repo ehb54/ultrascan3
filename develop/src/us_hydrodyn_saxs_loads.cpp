@@ -2990,14 +2990,38 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    double k;
    double chi2;
 
-   bool do_chi2_fitting = our_saxs_options->iqq_scale_chi2_fitting;
+   bool do_chi2_fitting        = our_saxs_options->iqq_scale_chi2_fitting;
    bool do_scale_linear_offset = our_saxs_options->iqq_scale_linear_offset;
+   bool do_kratky              = our_saxs_options->iqq_kratky_fit;
+
 
    if ( is_zero_vector( use_I_error ) )
    {
       editor_msg( "red", tr("Chi^2 fitting requested, but target data has no standard deviation data\n"
                             "Chi^2 fitting not used\n") );
       do_chi2_fitting = false;
+   }
+
+   if ( do_kratky )
+   {
+      editor_msg( "blue", tr( "Kratky fit (q^2*I)\n" ) );
+      for ( unsigned int i = 0; i < use_source_I.size(); i++ )
+      {
+         use_source_I[ i ] *= use_q[ i ] * use_q[ i ];
+         use_I       [ i ] *= use_q[ i ] * use_q[ i ];
+         if ( do_chi2_fitting )
+         {
+            use_I_error[ i ] *= use_q[ i ] * use_q[ i ];
+         }
+      }
+   }
+
+   for ( unsigned int i = 0; i < use_source_I.size(); i++ )
+   {
+      cout << QString( "q %1 use_source_I %2 use_I %3\n" )
+         .arg( q[ i ] )
+         .arg( use_source_I[ i ] )
+         .arg( use_I[ i ] );
    }
 
    if ( our_saxs_options->iqq_scale_nnls )
