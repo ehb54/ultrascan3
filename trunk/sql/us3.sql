@@ -1140,6 +1140,7 @@ CREATE  TABLE IF NOT EXISTS image (
   imageGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL DEFAULT 'No description was entered for this image' ,
   gelPicture LONGBLOB NOT NULL ,
+  filename VARCHAR(255) NOT NULL DEFAULT '',
   date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   PRIMARY KEY (imageID) )
 ENGINE = InnoDB;
