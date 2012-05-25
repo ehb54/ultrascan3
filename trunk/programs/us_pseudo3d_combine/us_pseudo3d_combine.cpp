@@ -538,17 +538,23 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    data_plot->replot();
 
-   bool do_plot = ( looping && cb_conloop->isChecked() ) ? false : true;
-DbgLv(2) << "(1) do_plot" << do_plot << "looping" << looping;
+   //QString dtext = te_distr_info->toPlainText().section( "\n", 0, 1 );
+   QString dtext  = tr( "Run:  " ) + tsys->run_name
+         + " (" + tsys->method + ")\n    " + tsys->analys_name;
+
+   //bool sv_plot = ( looping && cb_conloop->isChecked() ) ? false : true;
+   bool sv_plot = need_save;
+DbgLv(2) << "(1) sv_plot" << sv_plot << "looping" << looping;
 
    if ( tsys->method.contains( "-MC" ) )
    {  // Test if some MC should be skipped
-      do_plot   = do_plot && tsys->monte_carlo;   // Only plot if MC composite
-DbgLv(2) << "(2)   do_plot" << do_plot;
+      sv_plot   = sv_plot && tsys->monte_carlo;   // Only plot if MC composite
+DbgLv(2) << "(2)   sv_plot" << sv_plot;
    }
 
-DbgLv(2) << "(3)   need_save do_plot" << need_save << do_plot;
-   if ( need_save  &&  do_plot )
+DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
+   //if ( need_save  &&  sv_plot )
+   if ( sv_plot )
    {  // Automatically save plot image in a PNG file
       QPixmap plotmap( data_plot->size() );
       plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
@@ -567,6 +573,8 @@ DbgLv(2) << "(3)   need_save do_plot" << need_save << do_plot;
 
       data_plot->print( plotmap );
       plotmap.save( ofpath );
+      dtext          = dtext + tr( "\nPLOT %1 SAVED to local" )
+         .arg( curr_distr + 1 );
 
       if ( dkdb_cntrls->db() )
       {  // Save a copy to the database
@@ -584,8 +592,14 @@ QDateTime time0=QDateTime::currentDateTime();
 QDateTime time1=QDateTime::currentDateTime();
 qDebug() << "DB-save: currdist" << curr_distr
  << "svtime:" << time0.msecsTo(time1);
+         dtext          = dtext + tr( " and DB" );
       }
    }
+
+   else
+      dtext          = dtext + tr( "\n(no plot saved)" );
+
+   te_distr_info->setText( dtext );
 
 }
 
@@ -621,11 +635,12 @@ void US_Pseudo3D_Combine::update_curr_distr( double dval )
    if ( curr_distr > (-1)  &&  curr_distr < system.size() )
    {
       DisSys* tsys = (DisSys*)&system.at( curr_distr );
-      te_distr_info->setText( tr( "Run:  " ) + tsys->run_name
-         + " (" + tsys->method + ")\n    " + tsys->analys_name );
       cmapname     = tsys->cmapname;
       le_cmap_name->setText( cmapname );
       colormap     = tsys->colormap;
+      if ( ! looping )
+         te_distr_info->setText( tr( "Run:  " ) + tsys->run_name
+            + " (" + tsys->method + ")\n    " + tsys->analys_name );
    }
 
 }
@@ -688,8 +703,8 @@ void US_Pseudo3D_Combine::select_conloop()
    if ( cont_loop )
    {
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
-      dtext          = dtext
-         + tr( "\nWith continuous loop, no plot files will be saved." );
+      dtext          = dtext +
+         tr( "\nWith continuous loop, plot files only saved during 1st pass." );
    }
    else
       pb_pltall->setText( tr( "Plot All Distros" ) );
@@ -1251,16 +1266,19 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
    if ( syssiz > 0  &&  looping )
    {   // If still looping, plot the next distribution
       if ( jdistr > maxsiz )
-      {
+      {  // If we have passed the end in looping, reset
          jdistr     = 0;
 
          if ( ! cont_loop )
-         {
+         {  // If not in continuous loop, turn off looping flag
             jdistr     = curr_distr;
             looping    = false;
          }
+
          else
+         {  // If in continuous loop, turn off save-plot flag
             need_save  = false;
+         }
       }
       curr_distr = jdistr;
       plot_data();
