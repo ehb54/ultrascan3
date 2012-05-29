@@ -1,6 +1,7 @@
 #include "../include/us_saxs_cmds_t.h"
 #include "../include/us_cmdline_app.h"
 #include "../include/us_revision.h"
+#include "../include/us_multi_column.h"
 #include "us_cuda.h"
 
 // globals to remove dependencies on libus
@@ -10,6 +11,7 @@ QString US_Version = REVISION;
 
 
 // note: this program uses cout and/or cerr and this should be replaced
+
 
 int main (int argc, char **argv)
 {
@@ -66,6 +68,8 @@ int main (int argc, char **argv)
 #if defined( CUDA )
              "cuda          \tcuda test\n"
 #endif
+             "sjoin         \toutfile infile1 infile2 indep1 dep1 indep2 dep2\n"
+             "              \tfind peak, compute splines and join infile2 indep2 to infile1 and output\n"
              , argv[0]
              );
       exit(-1);
@@ -1718,6 +1722,162 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 #endif
+
+   if ( cmds[0].lower() == "sjoin" ) 
+   {
+      if ( cmds.size() != 8 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile1 infile2 indep1 dep1 indep2 dep2\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile1         = cmds[ p++ ];
+      QString      infile2         = cmds[ p++ ];
+      unsigned int indep1          = cmds[ p++ ].toUInt();
+      unsigned int dep1            = cmds[ p++ ].toUInt();
+      unsigned int indep2          = cmds[ p++ ].toUInt();
+      unsigned int dep2            = cmds[ p++ ].toUInt();
+
+      US_Multi_Column mc1( infile1 );
+      US_Multi_Column mc2( infile2 );
+      if ( !mc1.read() ||
+           !mc2.read() )
+      {
+         cout << mc1.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc1.info();
+      cout << mc2.info();
+
+      US_Multi_Column mc1_asc;
+      US_Multi_Column mc1_des;
+
+      US_Multi_Column mc2_asc;
+      US_Multi_Column mc2_des;
+
+      if ( !mc1.split_on_peak( mc1_asc,
+                               mc1_des,
+                               indep1,
+                               dep1 ) ||
+           !mc2.split_on_peak( mc2_asc,
+                               mc2_des,
+                               indep2,
+                               dep2 ) )
+      {
+         cout << mc1.errormsg << endl;
+         cout << mc2.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+         
+      cout << mc1_asc.info();
+      cout << mc1_des.info();
+      cout << mc2_asc.info();
+      cout << mc2_des.info();
+
+      US_Multi_Column mc1_asc_mono;
+      US_Multi_Column mc1_des_mono;
+
+      US_Multi_Column mc2_asc_mono;
+      US_Multi_Column mc2_des_mono;
+           
+      if ( !mc1_asc.monotonize( mc1_asc_mono, dep1 ) ||
+           !mc1_des.monotonize( mc1_des_mono, dep1 ) ||
+           !mc2_asc.monotonize( mc2_asc_mono, dep2 ) ||
+           !mc2_des.monotonize( mc2_des_mono, dep2 ) )
+      {
+         cout << mc1_asc.errormsg << endl;
+         cout << mc1_des.errormsg << endl;
+         cout << mc2_asc.errormsg << endl;
+         cout << mc2_des.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      cout << mc1_asc_mono.info();
+      cout << mc1_des_mono.info();
+      cout << mc2_asc_mono.info();
+      cout << mc2_des_mono.info();
+
+
+      US_Multi_Column mc1_mono_joined;
+      US_Multi_Column mc2_mono_joined;
+
+      if ( !mc1_mono_joined.join( mc1_asc_mono, mc1_des_mono, "mc1_mono_joined.txt" ) ||
+           !mc2_mono_joined.join( mc2_asc_mono, mc2_des_mono, "mc2_mono_joined.txt" ) )
+      {
+         cout << mc1_mono_joined.errormsg << endl;
+         cout << mc2_mono_joined.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      cout << mc1_mono_joined.info();
+      cout << mc2_mono_joined.info();
+
+      US_Multi_Column result_asc;
+      US_Multi_Column result_des;
+      US_Multi_Column result_join;
+
+      if ( 
+          !result_asc.spline( mc1_asc,
+                              mc2_asc_mono,
+                              dep1,
+                              indep2,
+                              dep2,
+                              "splined-asc.txt"
+                              ) ||
+          !result_des.spline( mc1_des,
+                              mc2_des_mono,
+                              dep1,
+                              indep2,
+                              dep2,
+                              "splined-des.txt"
+                              ) ||
+          !result_join.join( result_asc, result_des, outfile ) 
+          )
+      {
+         cout << result_asc.errormsg << endl;
+         cout << result_des.errormsg << endl;
+         cout << result_join.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      if ( 
+          !mc1_asc.write( "", true ) ||
+          !mc1_des.write( "", true ) ||
+          !mc2_asc.write( "", true ) ||
+          !mc2_des.write( "", true ) ||
+          !mc1_asc_mono.write( "", true ) ||
+          !mc1_des_mono.write( "", true ) ||
+          !mc2_asc_mono.write( "", true ) ||
+          !mc2_des_mono.write( "", true ) ||
+          !mc1_mono_joined.write( "", true ) ||
+          !mc2_mono_joined.write( "", true ) ||
+          !result_asc.write( "", true ) ||
+          !result_des.write( "", true ) ||
+          !result_join.write( "", true )
+          )
+      {
+         cout << mc1.errormsg << endl;
+         cout << mc2.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      cout << "not yet\n";
+      exit( 0 );
+   }
+   errorbase -= 1000;
 
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
    exit(-2);
