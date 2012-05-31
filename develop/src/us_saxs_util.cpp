@@ -7381,6 +7381,56 @@ bool US_Saxs_Util::linear_interpolate_iq_curve(
    return true;
 }
 
+bool US_Saxs_Util::linear_interpolate( 
+                                      vector < double > &x1,
+                                      vector < double > &y1, 
+                                      vector < double > &x2,
+                                      vector < double > &y2
+                                      )
+{
+   errormsg = "";
+   if ( x1.size() != y1.size() )
+   {
+      errormsg = "US_Saxs_Util::linear_interpolate x1 & y1 must be the same size";
+      return false;
+   }
+
+   if ( !x2.size() )
+   {
+      errormsg = "US_Saxs_Util::linear_interpolate target length needs at least 1 point";
+      return false;
+   }
+
+   if ( x2[ 0 ] < x1[ 0 ] || x2.back() > x1.back() )
+   {
+      errormsg = "US_Saxs_Util::linear_interpolate can not extrapolate";
+      return false;
+   }
+      
+   y2.resize( x2.size() );
+
+   for ( unsigned int i = 0; i < x2.size(); i++ )
+   {
+      bool found = false;
+      for ( unsigned int j = 0; !found && j < x1.size() - 1; j++ )
+      {
+         if ( x2[ i ] >= x1[ j ] &&
+              x2[ i ] <= x1[ j + 1 ] )
+         {
+            double pos = ( x2[ i ] - x1[ j ] ) / ( x1[ j + 1 ] - x1[ j ] );
+            y2[ i ] = y1[ j ] * ( 1e0 - pos ) + y1[ j + 1 ] * pos;
+            found = true;
+         }
+      }
+      if ( !found )
+      {
+         errormsg = QString( "point %1 not found\n" ).arg( x2[ i ] );
+         return false;
+      }
+   }
+   return true;
+}
+
 // takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
 bool US_Saxs_Util::quadratic_interpolate_iq_curve( 
                                                   vector < double >       &q,
@@ -7502,6 +7552,137 @@ bool US_Saxs_Util::quadratic_interpolate_iq_curve(
    return true;
 }
 
+// takes y on grid x1 and interpolates to grid x2 and puts result into y2
+
+bool US_Saxs_Util::quadratic_interpolate( 
+                                         vector < double > &x1,
+                                         vector < double > &y1, 
+                                         vector < double > &x2,
+                                         vector < double > &y2
+                                         )
+{
+   errormsg = "";
+   if ( x1.size() != y1.size() )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate x1 & y1 must be the same size";
+      return false;
+   }
+
+   if ( x1.size() < 3 )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate needs at least 3 points";
+      return false;
+   }
+
+   if ( !x2.size() )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate target length needs at least 1 point";
+      return false;
+   }
+
+   if ( x2[ 0 ] < x1[ 0 ] || x2.back() > x1.back() )
+   {
+      errormsg = "US_Saxs_Util::quadratic_interpolate can not extrapolate";
+      return false;
+   }
+      
+   y2.resize( x2.size() );
+
+   for ( unsigned int i = 0; i < x2.size(); i++ )
+   {
+      bool found = false;
+      for ( unsigned int j = 0; !found && j < x1.size() - 1; j++ )
+      {
+         if ( x2[ i ] >= x1[ j ] &&
+              x2[ i ] <= x1[ j + 1 ] )
+         {
+            if ( j == 0 )
+            {
+               vector < double > x( 3 );
+               vector < double > y( 3 );
+               vector < double > c( 3 );
+
+               for ( unsigned int k = 0; k < 3; k++ )
+               {
+                  x[ k ] = x1[ k ];
+                  y[ k ] = y1[ k ];
+               }
+               if ( !get_quadratic_interpolation_coefficients( x, y, c ) )
+               {
+                  cout << errormsg << endl;
+                  cout << "resorting to linear interpolation\n";
+                  return linear_interpolate( x1, y1, x2, y2 );
+               }
+               y2[ i ] = c[ 0 ] + c[ 1 ] * x2[ i ] + c[ 2 ] * x2[ i ] * x2[ i ];
+               found = true;
+               continue;
+            }
+         
+            if ( j >= x1.size() - 2 )
+            {
+               vector < double > x( 3 );
+               vector < double > y( 3 );
+               vector < double > c( 3 );
+
+               for ( unsigned int k = 0; k < 3; k++ )
+               {
+                  x[ k ] = x1[ x1.size() + k - 3 ];
+                  y[ k ] = y1[ x1.size() + k - 3 ];
+               }
+               if ( !get_quadratic_interpolation_coefficients( x, y, c ) )
+               {
+                  cout << errormsg << endl;
+                  cout << "resorting to linear interpolation\n";
+                  return linear_interpolate( x1, y1, x2, y2 );
+               }
+               y2[ i ] = c[ 0 ] + c[ 1 ] * x2[ i ] + c[ 2 ] * x2[ i ] * x2[ i ];
+               found = true;
+               continue;
+            }
+            {
+               vector < double > xa(3);
+               vector < double > ya(3);
+               vector < double > ca(3);
+
+               vector < double > xb(3);
+               vector < double > yb(3);
+               vector < double > cb(3);
+      
+               for ( unsigned int k = 0; k < 3; k++ )
+               {
+                  xa[k] = x1[ j + k - 1 ];
+                  ya[k] = y1[ j + k - 1 ];
+                  xb[k] = x1[ j + k ];
+                  yb[k] = y1[ j + k ];
+               }
+               if ( 
+                   !get_quadratic_interpolation_coefficients( xa, ya, ca ) ||
+                   !get_quadratic_interpolation_coefficients( xb, yb, cb )
+                   )
+               {
+                  cout << errormsg << endl;
+                  cout << "resorting to linear interpolation\n";
+                  return linear_interpolate( x1, y1, x2, y2 );
+               }
+               
+               y2[ i ] =  0.5 * ( ca[ 0 ] + cb[ 0 ] + 
+                                  ( ca[ 1 ] + cb[ 1 ] ) * x2[ i ] + 
+                                  ( ca[ 2 ] + cb[ 2 ] ) * x2[ i ] * x2[ i ] );
+               
+               found = true;
+               continue;
+            }
+         }
+      }
+      if ( !found )
+      {
+         errormsg = QString( "point %1 not found\n" ).arg( x2[ i ] );
+         return false;
+      }
+   }
+   return true;
+}
+
 // takes x1 on grid q1 and interpolates to x2 on use_q indexed points of q, putting the result in r (on q2)
 bool US_Saxs_Util::cubic_spline_interpolate_iq_curve( 
                                                      vector < double >       &q,
@@ -7572,6 +7753,46 @@ void US_Saxs_Util::natural_spline( vector < double > &x,
    qn = un = 0e0;
    
    y2[ x.size() - 1 ] = 0e0;
+   
+   for (unsigned int k = x.size() - 2; k >= 1 ; k-- )
+   {
+      y2[ k ] = y2[ k ] * y2[ k + 1 ] + u[ k ];
+   }
+}
+
+void US_Saxs_Util::natural_spline( vector < double > &x, 
+                                   vector < double > &y,
+                                   vector < double > &y2,
+                                   double            yp1,
+                                   double            ypn
+                                   )
+{
+   double  p;
+   double  qn;
+   double  sig;
+   double  un;
+   vector < double > u(x.size());
+
+   unsigned int n = x.size();
+
+   y2.resize(x.size());
+   
+   y2[ 0 ] = -0.5e0;
+   u [ 0 ] = ( 3.0 / ( x[ 1 ] - x[0] ) ) * ( ( y[ 1 ] -y[ 0 ] ) / ( x[ 1 ] - x[ 0 ] ) - yp1 );
+   
+   for ( unsigned int i = 1; i < x.size() - 1; i++ ) 
+   {
+      sig     = ( x[ i ] - x[ i - 1 ] ) / ( x[ i + 1 ] - x[ i - 1 ] );
+      p       = sig * y2[ i - 1 ] + 2e0;
+      y2[ i ] = ( sig -1e0 ) / p;
+      u [ i ] = ( y[ i + 1 ] - y[ i ] ) / ( x[ i + 1 ] - x[ i ]) - ( y[ i ] - y[ i - 1 ] ) / ( x[ i ] - x[ i - 1 ]);
+      u [ i ] = ( 6e0 * u[ i ] / ( x[ i + 1 ] - x[ i - 1 ] ) - sig * u[ i - 1 ] ) / p;
+   }
+   
+   qn = 0.5e0;
+   un = ( 3.0 / ( x[ n - 1 ] - x[ n - 2 ] ) ) * ( ypn - ( y[ n - 1 ] - y[ n - 2 ] ) / ( x[ n - 1 ] - x[ n - 2 ] ) );
+
+   y2[ n - 1 ] = ( un - qn * u[ n - 2 ] ) / ( qn * y2[ n - 2 ] + 1e0 );
    
    for (unsigned int k = x.size() - 2; k >= 1 ; k-- )
    {

@@ -514,6 +514,21 @@ class US_EXTERN US_Saxs_Util
                                              vector < double >       &r
                                              );
       
+      bool quadratic_interpolate( 
+                                 vector < double >       &x1,
+                                 vector < double >       &y1, 
+                                 vector < double >       &x2,
+                                 vector < double >       &y2
+                                 );
+
+      bool linear_interpolate( 
+                              vector < double >       &x1,
+                              vector < double >       &y1, 
+                              vector < double >       &x2,
+                              vector < double >       &y2
+                              );
+
+
       // computes 2nd derivatives on y=f(x) and distributes n points proportionately to abs(f'') and returns in r
       bool create_adaptive_grid( 
                                 vector < double >       &x,
@@ -531,6 +546,13 @@ class US_EXTERN US_Saxs_Util
       static void natural_spline( vector < double > &x, 
                                   vector < double > &y,
                                   vector < double > &y2 );
+
+
+      static void natural_spline( vector < double > &x, 
+                                  vector < double > &y,
+                                  vector < double > &y2,
+                                  double            yp1,
+                                  double            ypn);
 
       // takes from_data with from_errors and places on to_grid resulting in to_data & to_errors
       // for systems without errors, these are assumed to be computed iq curves so a natural spline interpolation
