@@ -770,7 +770,7 @@ class US_Multi_Column
          // setup this
          if ( use_filename.isEmpty() )
          {
-            filename = part1.filename + "-" + part2.filename + "-lineard";
+            filename = part1.filename + "-" + part2.filename + "-linear";
          } else {
             filename = use_filename;
          }

@@ -6,8 +6,6 @@ zeno_main(
   int argc,
   char const* argv[]);
 
-#include "us_fable.h"
-
 #include "qstring.h"
 #include "qdatetime.h"
 #include "qfile.h"

@@ -1850,7 +1850,7 @@ int main (int argc, char **argv)
                                      dep2,
                                      "spline-des.txt"
                                      ) ||
-          !result_spline_join.join( result_spline_asc, result_spline_des, outfile + "-spline" ) 
+          !result_spline_join.join( result_spline_asc, result_spline_des, outfile + "-spline.txt" ) 
           )
       {
          cout << result_spline_asc.errormsg << endl;
@@ -1879,7 +1879,7 @@ int main (int argc, char **argv)
                                            dep2,
                                            "quadratic-des.txt"
                                            ) ||
-          !result_quadratic_join.join( result_quadratic_asc, result_quadratic_des, outfile + "-quadratic" ) 
+          !result_quadratic_join.join( result_quadratic_asc, result_quadratic_des, outfile + "-quadratic.txt" ) 
           )
       {
          cout << result_quadratic_asc.errormsg << endl;
@@ -1908,7 +1908,7 @@ int main (int argc, char **argv)
                                      dep2,
                                      "linear-des.txt"
                                      ) ||
-          !result_linear_join.join( result_linear_asc, result_linear_des, outfile  + "linear" ) 
+          !result_linear_join.join( result_linear_asc, result_linear_des, outfile  + "-linear.txt" ) 
           )
       {
          cout << result_linear_asc.errormsg << endl;
