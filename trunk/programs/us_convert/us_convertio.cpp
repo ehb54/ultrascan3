@@ -376,14 +376,24 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
          triple.excluded       = false;
 
          // Now try to find the centerpiece ID from the info we grabbed earlier
+         bool found = false;
          foreach ( struct cellInfo cell, cells )
          {
             if ( part[ 2 ] == cell.cellName &&
                  part[ 3 ] == cell.channelName )
             {
+               found = true;
                triple.centerpiece = cell.centerpieceID;
                break;
             }
+
+         }
+
+         if ( ! found )
+         {
+            // if we're here, then it's old data and needs to find the centerpiece
+            // in the old manner, which is to say, always the first one
+            triple.centerpiece = cells[ 0 ].centerpieceID;
          }
 
          // Try to get more solution info
