@@ -157,10 +157,14 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
       QString cellGUID     = US_Util::new_guid();
       QStringList parts    = triple.tripleDesc.split(" / ");
       QString cell         = parts[ 0 ];
+      QString letters("0ABCDEFGH");
+      QString channel      = parts[ 1 ];
+      int channelNum     = letters.indexOf( channel );
       q.clear();
       q  << "new_cell_experiment"
          << cellGUID
          << cell
+         << QString::number( channelNum )
          << QString::number( triple.centerpiece )
          << QString::number( ExpData.expID );
       int status = db->statusQuery( q );
@@ -325,13 +329,20 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
       return( error );
 
    // Now get the centerpiece info
-   int commonCenterpiece = 0;
+   QList<cellInfo> cells; 
    q.clear();
    q  << "all_cell_experiments"
       << QString::number( ExpData.expID );
    db->query( q );
-   if ( db->next() )
-      commonCenterpiece = db->value( 3 ).toInt();
+   while ( db->next() )
+   {
+      struct cellInfo cell;
+      QString letters("0ABCDEFGH");
+      cell.cellName      = db->value( 2 ).toString();
+      cell.channelName   = QString( letters[ db->value( 3 ).toInt() ] );
+      cell.centerpieceID = db->value( 4 ).toInt();
+      cells << cell;
+   }
 
    // Get the other db info and create triples
    triples.clear();
@@ -348,9 +359,9 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
       {
          QString uuidc         = db->value( 0 ).toString();
          US_Util::uuid_parse( uuidc, (unsigned char*) triple.tripleGUID );
-         //triple.label             = db->value( 1 ).toString();
+         // triple.label               = db->value( 1 ).toString();
          triple.tripleFilename      = db->value( 2 ).toString();
-         //triple.tripleComments    = db->value( 3 ).toString();
+         // triple.tripleComments      = db->value( 3 ).toString();
          triple.tripleID            = rawDataIDs[ i ].toInt();
          triple.solution.solutionID = db->value( 5 ).toInt();
 
@@ -364,7 +375,16 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
          triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + wl;
          triple.excluded       = false;
 
-         triple.centerpiece    = commonCenterpiece;
+         // Now try to find the centerpiece ID from the info we grabbed earlier
+         foreach ( struct cellInfo cell, cells )
+         {
+            if ( part[ 2 ] == cell.cellName &&
+                 part[ 3 ] == cell.channelName )
+            {
+               triple.centerpiece = cell.centerpieceID;
+               break;
+            }
+         }
 
          // Try to get more solution info
          int status = triple.solution.readFromDB( triple.solution.solutionID, db );

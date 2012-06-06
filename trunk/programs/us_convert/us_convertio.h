@@ -10,6 +10,13 @@
 #include "us_experiment.h"
 #include "us_db2.h"
 
+struct cellInfo
+{
+  QString     cellName;
+  QString     channelName;
+  int         centerpieceID;
+};
+
 /*! \class US_ConvertIO
            This class provides the ability to save converted US3
            data to the disk and the database.
