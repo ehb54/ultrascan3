@@ -784,6 +784,7 @@ CREATE PROCEDURE new_cell_experiment ( p_personGUID   CHAR(36),
                                        p_password     VARCHAR(80),
                                        p_cellGUID     CHAR(36),
                                        p_name         TEXT,
+                                       p_holeNumber   INT(11),
                                        p_abstractCenterpieceID INT,
                                        p_experimentID INT )
   MODIFIES SQL DATA
@@ -799,6 +800,7 @@ BEGIN
     INSERT INTO cell SET
       cellGUID     = p_cellGUID,
       name         = p_name,
+      holeNumber   = p_holeNumber,
       experimentID = p_experimentID,
       abstractCenterpieceID = p_abstractCenterpieceID,
       dateUpdated  = NOW();
@@ -826,7 +828,7 @@ BEGIN
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
     SELECT @OK AS status;
 
-    SELECT   cellID, cellGUID, name, abstractCenterpieceID
+    SELECT   cellID, cellGUID, name, holeNumber, abstractCenterpieceID
     FROM     cell
     WHERE    experimentID = p_experimentID
     ORDER BY dateUpdated DESC;
