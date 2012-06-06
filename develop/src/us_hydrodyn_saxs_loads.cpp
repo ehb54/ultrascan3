@@ -2994,6 +2994,12 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    bool do_scale_linear_offset = our_saxs_options->iqq_scale_linear_offset;
    bool do_kratky              = our_saxs_options->iqq_kratky_fit;
 
+   if ( our_saxs_options->ignore_errors &&
+        !is_zero_vector( use_I_error ) )
+   {
+      editor_msg( "dark red", tr( "Ignoring experimental errors" ) );
+      do_chi2_fitting = false;
+   }
 
    if ( is_zero_vector( use_I_error ) )
    {

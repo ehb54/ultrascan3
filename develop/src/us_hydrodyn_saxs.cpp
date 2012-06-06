@@ -5741,6 +5741,12 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                               vector < double > I_errors)
 {
    // make sure things aren't to big
+   if ( our_saxs_options->ignore_errors &&
+        I_errors.size() )
+   {
+      editor_msg( "dark red", tr( "Ignoring experimental errors" ) );
+      I_errors.clear();
+   }
 
    unsigned int min_len = q.size();
    if ( I1.size() <  min_len ) 

@@ -10976,6 +10976,10 @@ that is less than 1.
          zeno_us_hydrodyn->editor->append( "ZENO interior calculation start\n" );
          qApp->processEvents();
       }
+
+      // I think we can simply parallize on these trials
+      // i.e. upto a max of 20 threads
+
       for(k=0; k<20; k++) {
          trials[k] = 0.0e0;
          rg2sum[k] = 0.0e0;

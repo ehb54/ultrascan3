@@ -294,6 +294,7 @@ struct saxs_options
    bool    iqq_use_saxs_excl_vol;
 
    bool    alt_hydration;
+   bool    ignore_errors;
 
    unsigned int xsr_symmop;
    unsigned int xsr_nx;

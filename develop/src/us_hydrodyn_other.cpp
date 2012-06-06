@@ -3783,6 +3783,8 @@ void US_Hydrodyn::set_default()
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
+   saxs_options.ignore_errors = false;
+
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
    if ( pdb_vis.filename.isEmpty() )
