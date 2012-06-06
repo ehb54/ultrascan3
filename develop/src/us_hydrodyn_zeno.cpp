@@ -13638,7 +13638,7 @@ bool US_Hydrodyn::calc_zeno()
       }
    }
 
-   chdir(somo_dir);
+   QDir::setCurrent(somo_dir);
 
    qApp->processEvents();
    if (stopFlag)
@@ -13694,7 +13694,7 @@ bool US_Hydrodyn::calc_zeno()
       }
    }
 
-   chdir(somo_tmp_dir);
+   QDir::setCurrent(somo_tmp_dir);
 
    pb_show_hydro_results->setEnabled( true );
    pb_calc_hydro->setEnabled(true);

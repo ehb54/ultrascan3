@@ -2635,7 +2635,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
          return false;
       }
       
-      float        best_fitness     = 1e99;
+      float        best_fitness     = 1e30f;
       unsigned int best_fitness_pos = 0;
 
       for ( unsigned int i = 0; i < rotamers[ resName ].size(); i++ )

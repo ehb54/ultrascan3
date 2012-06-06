@@ -1620,9 +1620,7 @@
    int      ChrRoundValue(char* dspdig,int ndigit,int length);
    void     ChrShiftLeft(char* s, int n);
    void     ChrShiftRight(char* s, int n, int fill);
-#ifndef WIN32
    int      ChrShortFromString(const char** s,int blank);
-#endif
    int      ChrShortFromString(char** s,int blank);
    int      ChrShortString(int Value,char* String,int nDecimal);
    int      ChrShortValue(char* String,int nString,int nDecimal);
@@ -16214,7 +16212,7 @@
      ;
      ;/doc/ ************************************************************************
    */
-#ifndef WIN32
+// #ifndef WIN32
 #ifdef FPROTOTYPE
    int ChrShortFromString(const char** s,int blank)
 #else
@@ -16286,7 +16284,7 @@
       return iv;
    }
 
-#endif
+// #endif
 
 #ifdef FPROTOTYPE
    int ChrShortFromString(char** s,int blank)

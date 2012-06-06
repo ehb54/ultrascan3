@@ -4511,7 +4511,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    map < QString, bool > use_chain_map;
    for ( unsigned int i = 0; i < usechainlist.length(); i++ )
    {
-      use_chain_map[ QString( "%1" ).arg( usechainlist[ i ] ) ] = true;
+      use_chain_map[ QString( "%1" ).arg( usechainlist[ (int) i ] ) ] = true;
    }
 
    if ( filename.isEmpty() )
