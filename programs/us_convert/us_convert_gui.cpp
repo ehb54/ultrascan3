@@ -393,7 +393,7 @@ void US_ConvertGui::reset( void )
    triples.clear();
    allData.clear();
    show_plot_progress = true;
-   ExpData.rpms.clear();
+   ExpData.clear();
 
    // Erase the todo list
    lw_todoinfo->clear();
@@ -442,7 +442,6 @@ void US_ConvertGui::resetAll( void )
 
    reset();
 
-   ExpData.clear();
    subsets.clear();
    reference_start = 0;
    reference_end   = 0;
@@ -927,9 +926,6 @@ void US_ConvertGui::editRuninfo( void )
 {
    if ( saveStatus == NOT_SAVED )
    {
-      // First time for this data, so clear ExpData out
-      ExpData.clear();
-   
       // Create a new GUID for the experiment as a whole
       ExpData.expGUID = US_Util::new_guid();
 
