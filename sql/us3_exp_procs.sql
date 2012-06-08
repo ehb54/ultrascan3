@@ -614,6 +614,7 @@ CREATE PROCEDURE delete_experiment ( p_personGUID   CHAR(36),
 BEGIN
   DECLARE no_more_requestIDs TINYINT DEFAULT 0;
   DECLARE l_requestID INT;
+  DECLARE l_reportID  INT;
 
   -- Cursor for iterating through HPC requestID's
   DECLARE request_csr CURSOR FOR
@@ -658,6 +659,13 @@ BEGIN
     -- END REPEAT request_loop;
     -- CLOSE request_csr;
     -- SET no_more_requestIDs = 0;
+
+    -- Delete any associated reports
+    SELECT reportID INTO l_reportID
+    FROM   report
+    WHERE  experimentID = p_experimentID;
+
+    CALL delete_report( p_personGUID, p_password, l_reportID );
 
     DELETE      editedData
     FROM        rawData
