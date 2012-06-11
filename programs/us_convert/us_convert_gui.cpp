@@ -1919,7 +1919,10 @@ void US_ConvertGui::PseudoCalcAvg( void )
             // Protect against possible inf's and nan's, if a reading 
             // evaluates to 0 or wherever log function is undefined or -inf
             if ( r->value < 1.0 ) r->value = 1.0;
-            r->value = log10(ExpData.RIProfile[ j ] / r->value );
+
+            // Check for boundary condition
+            int ndx = ( j < ExpData.RIProfile.size() ) ? j : ExpData.RIProfile.size() - 1;
+            r->value = log10(ExpData.RIProfile[ ndx ] / r->value );
          }
       }
 
