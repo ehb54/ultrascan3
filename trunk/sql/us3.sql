@@ -55,6 +55,7 @@ CREATE  TABLE IF NOT EXISTS project (
   bufferComponents TEXT NULL ,
   saltInformation TEXT NULL ,
   AUC_questions TEXT NULL ,
+  expDesign TEXT NULL ,
   notes TEXT NULL ,
   description TEXT NULL ,
   status ENUM('submitted', 'designed', 'scheduled','uploaded', 'anlyzed', 'invoiced', 'paid', 'other') NOT NULL ,
@@ -1170,6 +1171,30 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table imageBuffer
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS imageBuffer ;
+
+CREATE  TABLE IF NOT EXISTS imageBuffer (
+  imageID int(11) NOT NULL ,
+  bufferID int(11) NOT NULL ,
+  PRIMARY KEY (imageID) ,
+  INDEX ndx_imageBuffer_imageID   (imageID ASC) ,
+  INDEX ndx_imageBuffer_bufferID (bufferID ASC) ,
+  CONSTRAINT fk_imageBuffer_imageID
+    FOREIGN KEY (imageID )
+    REFERENCES image (imageID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_imageBuffer_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table imageAnalyte
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS imageAnalyte ;
@@ -1414,7 +1439,7 @@ CREATE  TABLE IF NOT EXISTS permits (
   permitID int(11) NOT NULL AUTO_INCREMENT ,
   personID int(11) NOT NULL ,
   collaboratorID int(11) default NULL ,
-  instrumentID int(11) NOT NULL ,
+  instrumentID int(11) default NULL ,
   PRIMARY KEY (permitID) ,
   INDEX ndx_permits_personID (personID ASC) ,
   INDEX ndx_permits_collaboratorID (collaboratorID ASC) ,
@@ -1428,12 +1453,7 @@ CREATE  TABLE IF NOT EXISTS permits (
     FOREIGN KEY (collaboratorID )
     REFERENCES people (personID )
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_permits_instrumentID
-    FOREIGN KEY (instrumentID )
-    REFERENCES instrument (instrumentID )
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION)
+    ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
