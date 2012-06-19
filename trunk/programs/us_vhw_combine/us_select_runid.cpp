@@ -20,7 +20,6 @@ US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs )
    runIDs     ( runIDs )
 {
    sel_db        = dbase;
-   bool sel_dk   = !sel_db;
    dbg_level     = US_Settings::us_debug();
 
    setWindowTitle( tr( "Select Run ID for vHW Distributions (%1)" )
@@ -37,7 +36,8 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout;
 
-   dkdb_cntrls         = new US_Disk_DB_Controls( sel_dk );
+   dkdb_cntrls         = new US_Disk_DB_Controls(
+      sel_db ? US_Disk_DB_Controls::DB : US_Disk_DB_Controls::Disk );
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
    QString invusr      = US_Settings::us_inv_name();
@@ -218,7 +218,6 @@ void US_SelectRunid::scan_dbase_runs()
       return;
    }
 
-   QStringList rawruns;
    QStringList docruns;
    QString     runid;
 
@@ -226,37 +225,18 @@ void US_SelectRunid::scan_dbase_runs()
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
    query.clear();
-   query << "all_rawDataIDs" << invID;
+   query << "get_report_desc" << invID;
    db.query( query );
 
    while ( db.next() )
    {
-      runid   = db.value( 1 ).toString();
-DbgLv(1) << "ScDB:   raw runid" << runid;
-
-      if ( !rawruns.contains( runid ) )
-         rawruns << runid;
-   }
-
-   int count_raw = rawruns.count();
-DbgLv(1) << "ScDB:count_raw" << count_raw;
-
-   if ( count_raw > 0 )
-   {
-      query.clear();
-      query << "get_report_desc" << invID;
-      db.query( query );
-
-      while ( db.next() )
-      {
-         runid            = db.value( 4 ).toString();
+      runid            = db.value( 4 ).toString();
 DbgLv(1) << "ScDB:     report runid" << runid;
 
-         if ( rawruns.contains( runid ) )
-         {
-            count_allr++;
-            docruns << runid;
-         }
+      if ( ! docruns.contains( runid ) )
+      {
+         count_allr++;
+         docruns << runid;
       }
    }
 
@@ -268,6 +248,7 @@ DbgLv(1) << "ScDB: nreps" << nreps;
       US_Report freport;
       freport.readDB( runid, &db );
       int ntrip  = freport.triples.count();
+DbgLv(1) << "ScDB:  ntrip" << ntrip;
       int ndats  = 0;
 
       for ( int jj = 0; jj < ntrip; jj++ )
@@ -280,6 +261,7 @@ DbgLv(1) << "ScDB: nreps" << nreps;
             US_Report::ReportDocument* doc = &tripl->docs[ kk ];
             QString fname = doc->filename;
 
+DbgLv(1) << "ScDB:    kk fname" << kk << fname;
             if ( fname.contains( "distrib.dat" ) )
                ndats++;
          }

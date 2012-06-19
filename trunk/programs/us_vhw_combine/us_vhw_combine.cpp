@@ -69,8 +69,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    QLayout* lo_distrib  = us_checkbox( tr( "Integral" ), ck_distrib,  true  );
    QLayout* lo_envelope = us_checkbox( tr( "Envelope" ), ck_envelope, false );
 
-   le_runid      = us_lineedit( "(current run ID)" );
-   le_distname   = us_lineedit( "(output distribution name)" );
+   le_runid      = us_lineedit( "(current run ID)", -1, true );
+   le_distname   = us_lineedit( "(output distribution name)", -1, true );
    lw_runids     = us_listwidget();
    lw_triples    = us_listwidget();
 
@@ -500,6 +500,11 @@ void US_vHW_Combine::save( void )
    QString fname    = "vHW." + trname + ".combo-distrib.svg";
    QString plotFile = fdir + "/" + fname;
 
+   if ( ! QFile( fdir ).exists() )
+   {  // If need be, create runID directory
+      QDir().mkpath( fdir );
+   }
+
    // Save plot file as SVG and as PNG
    write_plot( plotFile, data_plot1 );
    QString svmsg =
@@ -842,6 +847,7 @@ DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
 void US_vHW_Combine::update_disk_db( bool isDB )
 {
    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+DbgLv(1) << "Upd_Dk_Db isDB" << isDB;
 
    reset_data();
 }
