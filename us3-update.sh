@@ -20,37 +20,37 @@ CONFILE=$HOME/.config/UltraScan3/UltraScan.conf
 if [ -f ${CONFILE} ]; then
   #      Existing config file implies UPDATE
   UBFILES="ArchiveDir|tmpDir"
-  UWFILES="dataDir|resultDir|reportDir"
+  UDFILES="dataDir|resultDir|reportDir"
   echo "This appears to be an UPDATE"
-  #      Get bin,work base directories from config
+  #      Get bin,data base directories from config
   UBINDIR=`egrep "${UBFILES}" ${CONFILE}|sed -n 1p|cut -d "=" -f2`
-  UWRKDIR=`egrep "${UWFILES}" ${CONFILE}|sed -n 1p|cut -d "=" -f2`
-         echo "   (1)UBINDIR=${UBINDIR}"
-         echo "   (1)UWRKDIR=${UWRKDIR}"
+  UDATDIR=`egrep "${UDFILES}" ${CONFILE}|sed -n 1p|cut -d "=" -f2`
+##         echo "   (1)UBINDIR=${UBINDIR}"
+##         echo "   (1)UDATDIR=${UDATDIR}"
   if [ -z "${UBINDIR}" ]; then
     UBINDIR=${HOME}/ultrascan3
   else
     UBINDIR=`dirname ${UBINDIR}`
   fi
-  if [ -z "${UWRKDIR}" ]; then
-    UWRKDIR=${HOME}/ultrascan
+  if [ -z "${UDATDIR}" ]; then
+    UDATDIR=${HOME}/ultrascan
   else
-    UWRKDIR=`dirname ${UWRKDIR}`
+    UDATDIR=`dirname ${UDATDIR}`
   fi
-         echo "   (2)UBINDIR=${UBINDIR}"
-         echo "   (2)UWRKDIR=${UWRKDIR}"
+##         echo "   (2)UBINDIR=${UBINDIR}"
+##         echo "   (2)UDATDIR=${UDATDIR}"
 else
   #      Non-existing config file implies new INSTALL
-  echo "This appears to be an new INSTALL";
+  echo "This appears to be a new INSTALL";
   UBINDIR=${HOME}/ultrascan3
-  UWRKDIR=${HOME}/ultrascan
-         echo "   (3)UBINDIR=${UBINDIR}"
-         echo "   (3)UWRKDIR=${UWRKDIR}"
+  UDATDIR=${HOME}/ultrascan
+##         echo "   (3)UBINDIR=${UBINDIR}"
+##         echo "   (3)UDATDIR=${UDATDIR}"
 fi
 
-echo "Inferred install directories are:"
+echo "Inferred base install directories are:"
 echo "  bin,... : ${UBINDIR}"
-echo "  data,...: ${UWRKDIR}"
+echo "  data,...: ${UDATDIR}"
  
 echo "Are these the correct destination directories? (y|n, def=y)"
 read ANS
@@ -60,13 +60,13 @@ if [ "X${ANS}" != "X" -a "X${ANS}" != "Xy" ]; then
   if [ "X${ANS}" != "X" ]; then
     UBINDIR=${ANS}
   fi
-  echo "Enter base 'data,...' directory (def=${UWRKDIR}) : "
+  echo "Enter base 'data,...' directory (def=${UDATDIR}) : "
   read ANS
   if [ "X${ANS}" != "X" ]; then
-    UWRKDIR=${ANS}
+    UDATDIR=${ANS}
   fi
-         echo "   (4)UBINDIR=${UBINDIR}"
-         echo "   (4)UWRKDIR=${UWRKDIR}"
+##         echo "   (4)UBINDIR=${UBINDIR}"
+##         echo "   (4)UDATDIR=${UDATDIR}"
 fi
 
 if [ -d ${UBINDIR} ]; then
@@ -88,14 +88,14 @@ else
   fi
 fi
 
-if [ ! -d ${UWRKDIR} ]; then
+if [ ! -d ${UDATDIR} ]; then
   # Data base does not exist:  make directories
-  TEMP=`dirname ${UWRKDIR}`
+  TEMP=`dirname ${UDATDIR}`
   if [ ! -d ${TEMP} ]; then
     echo "*** Error:  ${TEMP} does not exist ***"
     exit 1
   else
-    mkdir ${UWRKDIR}
+    mkdir ${UDATDIR}
   fi
 fi
 
