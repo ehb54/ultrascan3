@@ -135,4 +135,30 @@
       <row pathlen="1.2" bottom="7.2" />
    </abstractCenterpiece> 
 
+   <abstractCenterpiece
+     id="11"
+     guid="9ad4affd-8ffc-1234-1986-d2cb21f37dec"
+     name="Titanium 2-channel 6 mm"
+     materialName="Titanium"
+     channels="1"
+     shape="sector"
+     maxRPM="60000"
+     angle="2.5"
+     width="0" >
+      <row pathlen="0.6" bottom="7.10" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="12"
+     guid="76054842-eb0d-0ee4-2d62-37fea4ce39ef"
+     name="Titanium 2-channel 3 mm"
+     materialName="Titanium"
+     channels="1"
+     shape="sector"
+     maxRPM="60000"
+     angle="2.5"
+     width="0" >
+      <row pathlen="0.3" bottom="7.10" />
+   </abstractCenterpiece> 
+
 </abstractCenterpieces>

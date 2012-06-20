@@ -250,7 +250,7 @@ DROP TABLE IF EXISTS abstractCenterpiece ;
 
 CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
   abstractCenterpieceID int(11) NOT NULL UNIQUE ,
-  loadMethod enum('top', 'fill') NULL ,
+  loadMethod enum('top', 'side') NULL ,
   abstractCenterpieceGUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
