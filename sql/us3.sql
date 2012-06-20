@@ -256,7 +256,8 @@ CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
   materialName TEXT NULL ,
   channels INT NOT NULL ,
   bottom VARCHAR(20) NOT NULL ,
-  shape enum( 'standard', 'rectangular', 'circular', 'synthetic', 'band forming', 'meniscus matching' )
+  shape enum( 'standard', 'rectangular', 'circular', 'synthetic', 
+              'band forming', 'meniscus matching', 'sector' )
               NOT NULL DEFAULT 'standard',
   maxRPM INT NULL ,
   pathLength FLOAT NULL ,
