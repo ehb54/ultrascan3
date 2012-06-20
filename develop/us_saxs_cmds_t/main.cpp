@@ -72,6 +72,8 @@ int main (int argc, char **argv)
              "              \tfind peak, compute splines and join infile2 indep2 to infile1 and output\n"
              "smooth        \toutfile infile col points\n"
              "              \t( 2 * points + 1 ) smooths col of input file\n"
+             "uniquify      \toutfile infile col sumcol\n"
+             "              \tmake col unique and sum up somcol\n"
              "repeak        \toutfile infile col\n"
              "              \trescales col to have max 1.0\n"
              "sort          \toutfile infile col\n"
@@ -1815,7 +1817,6 @@ int main (int argc, char **argv)
       cout << mc2_asc_mono.info();
       cout << mc2_des_mono.info();
 
-
       US_Multi_Column mc1_mono_joined;
       US_Multi_Column mc2_mono_joined;
 
@@ -1831,63 +1832,63 @@ int main (int argc, char **argv)
       cout << mc1_mono_joined.info();
       cout << mc2_mono_joined.info();
 
-      US_Multi_Column result_spline_asc;
-      US_Multi_Column result_spline_des;
-      US_Multi_Column result_spline_join;
+//       US_Multi_Column result_spline_asc;
+//       US_Multi_Column result_spline_des;
+//       US_Multi_Column result_spline_join;
 
-      if ( 
-          !result_spline_asc.spline( mc1_asc,
-                                     mc2_asc_mono,
-                                     dep1,
-                                     indep2,
-                                     dep2,
-                                     "spline-asc.txt"
-                                     ) ||
-          !result_spline_des.spline( mc1_des,
-                                     mc2_des_mono,
-                                     dep1,
-                                     indep2,
-                                     dep2,
-                                     "spline-des.txt"
-                                     ) ||
-          !result_spline_join.join( result_spline_asc, result_spline_des, outfile + "-spline.txt" ) 
-          )
-      {
-         cout << result_spline_asc.errormsg << endl;
-         cout << result_spline_des.errormsg << endl;
-         cout << result_spline_join.errormsg << endl;
-         exit( errorbase );
-      }
-      errorbase--;
+//       if ( 
+//           !result_spline_asc.spline( mc1_asc,
+//                                      mc2_asc_mono,
+//                                      dep1,
+//                                      indep2,
+//                                      dep2,
+//                                      "spline-asc.txt"
+//                                      ) ||
+//           !result_spline_des.spline( mc1_des,
+//                                      mc2_des_mono,
+//                                      dep1,
+//                                      indep2,
+//                                      dep2,
+//                                      "spline-des.txt"
+//                                      ) ||
+//           !result_spline_join.join( result_spline_asc, result_spline_des, outfile + "-spline.txt" ) 
+//           )
+//       {
+//          cout << result_spline_asc.errormsg << endl;
+//          cout << result_spline_des.errormsg << endl;
+//          cout << result_spline_join.errormsg << endl;
+//          exit( errorbase );
+//       }
+//      errorbase--;
 
-      US_Multi_Column result_quadratic_asc;
-      US_Multi_Column result_quadratic_des;
-      US_Multi_Column result_quadratic_join;
+//       US_Multi_Column result_quadratic_asc;
+//       US_Multi_Column result_quadratic_des;
+//       US_Multi_Column result_quadratic_join;
 
-      if ( 
-          !result_quadratic_asc.quadratic( mc1_asc,
-                                           mc2_asc_mono,
-                                           dep1,
-                                           indep2,
-                                           dep2,
-                                           "quadratic-asc.txt"
-                                           ) ||
-          !result_quadratic_des.quadratic( mc1_des,
-                                           mc2_des_mono,
-                                           dep1,
-                                           indep2,
-                                           dep2,
-                                           "quadratic-des.txt"
-                                           ) ||
-          !result_quadratic_join.join( result_quadratic_asc, result_quadratic_des, outfile + "-quadratic.txt" ) 
-          )
-      {
-         cout << result_quadratic_asc.errormsg << endl;
-         cout << result_quadratic_des.errormsg << endl;
-         cout << result_quadratic_join.errormsg << endl;
-         exit( errorbase );
-      }
-      errorbase--;
+//       if ( 
+//           !result_quadratic_asc.quadratic( mc1_asc,
+//                                            mc2_asc_mono,
+//                                            dep1,
+//                                            indep2,
+//                                            dep2,
+//                                            "quadratic-asc.txt"
+//                                            ) ||
+//           !result_quadratic_des.quadratic( mc1_des,
+//                                            mc2_des_mono,
+//                                            dep1,
+//                                            indep2,
+//                                            dep2,
+//                                            "quadratic-des.txt"
+//                                            ) ||
+//           !result_quadratic_join.join( result_quadratic_asc, result_quadratic_des, outfile + "-quadratic.txt" ) 
+//           )
+//       {
+//          cout << result_quadratic_asc.errormsg << endl;
+//          cout << result_quadratic_des.errormsg << endl;
+//          cout << result_quadratic_join.errormsg << endl;
+//          exit( errorbase );
+//       }
+//       errorbase--;
 
       US_Multi_Column result_linear_asc;
       US_Multi_Column result_linear_des;
@@ -1929,12 +1930,12 @@ int main (int argc, char **argv)
           !mc2_des_mono.write( "", true ) ||
           !mc1_mono_joined.write( "", true ) ||
           !mc2_mono_joined.write( "", true ) ||
-          !result_spline_asc.write( "", true ) ||
-          !result_spline_des.write( "", true ) ||
-          !result_spline_join.write( "", true ) ||
-          !result_quadratic_asc.write( "", true ) ||
-          !result_quadratic_des.write( "", true ) ||
-          !result_quadratic_join.write( "", true ) ||
+          // !result_spline_asc.write( "", true ) ||
+          // !result_spline_des.write( "", true ) ||
+          // !result_spline_join.write( "", true ) ||
+          // !result_quadratic_asc.write( "", true ) ||
+          // !result_quadratic_des.write( "", true ) ||
+          // !result_quadratic_join.write( "", true ) ||
           !result_linear_asc.write( "", true ) ||
           !result_linear_des.write( "", true ) ||
           !result_linear_join.write( "", true )
@@ -2046,7 +2047,6 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-
    if ( cmds[0].lower() == "reverse" ) 
    {
       if ( cmds.size() != 3 ) 
@@ -2068,6 +2068,39 @@ int main (int argc, char **argv)
       if ( !mc.read   () ||
            !mc.reverse() ||
            !mc.write  ( outfile, true ) )
+      {
+         cout << mc.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc.info();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "uniquify" ) 
+   {
+      if ( cmds.size() != 5 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile col sumcol\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile          = cmds[ p++ ];
+      unsigned int col             = cmds[ p++ ].toUInt();
+      unsigned int sumcol          = cmds[ p++ ].toUInt();
+
+      US_Multi_Column mc( infile );
+      if ( !mc.read    () ||
+           !mc.uniquify( col, sumcol ) ||
+           !mc.write   ( outfile, true ) )
       {
          cout << mc.errormsg << endl;
          exit( errorbase );

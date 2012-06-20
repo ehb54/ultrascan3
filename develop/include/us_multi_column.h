@@ -1107,6 +1107,62 @@ class US_Multi_Column
          return true;
       }      
 
+   bool uniquify( unsigned int col,
+                  unsigned int sumcol )
+      {
+         errormsg = "";
+         if ( !col )
+         {
+            errormsg = QString( "Error: uniquify: %1, col must be nonzero" ).arg( filename );
+            return false;
+         }
+
+         if ( !data.size() )
+         {
+            errormsg = QString( "Error: uniquify: %1 has no data" ).arg( filename );
+            return false;
+         }
+
+         if ( data[ 0 ].size() < col ||
+              data[ 0 ].size() < sumcol )
+         {
+            errormsg = QString( "Error: uniquify: %1 has %2 columns and columns %3 and %4 requested" )
+               .arg( filename )
+               .arg( data[ 0 ].size() )
+               .arg( col )
+               .arg( sumcol )
+               ;
+            return false;
+         }
+
+         col--;
+         sumcol--;
+
+         vector < vector < double > > new_data;
+
+         map < double, unsigned int > ref_map;
+         
+         unsigned int tot = 0;
+         unsigned int rows = 0;
+
+         for( unsigned int i = 0; i < data.size(); i++ )
+         {
+            double ref = data[ i ][ col ];
+            tot++;
+            if ( ref_map.count( ref ) )
+            {
+               new_data[ ref_map[ ref ] ][ sumcol ] += data[ i ][ sumcol ];
+            } else {
+               rows++;
+               ref_map[ ref ] = new_data.size();
+               new_data.push_back( data[ i ] );
+            }
+         }                 
+         data = new_data;
+         cout << QString( "rows %1 from %2\n" ).arg( rows ).arg( tot );
+         return true;
+      }      
+
  private:
    double normal( double x )
       {

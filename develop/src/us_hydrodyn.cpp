@@ -23,6 +23,8 @@
 #include <fcntl.h>
 #include <qtimer.h>
 
+// #define NO_BD
+
 #undef DEBUG
 
 #ifndef WIN32
@@ -770,7 +772,11 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_bd);
    pb_bd->setMinimumHeight(minHeight1);
    pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+#ifdef NO_BD
    pb_bd->setEnabled(false);
+#else
+   pb_bd->setEnabled(true);
+#endif
    pb_bd->setPalette( PALET_PUSHB );
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
 
@@ -1288,9 +1294,11 @@ void US_Hydrodyn::show_dmd_options()
 
 void US_Hydrodyn::show_bd()
 {
+#ifdef NO_BD
    QMessageBox::message(tr("Please note:"),
                         tr("Function not available in this version." ) );
    return;
+#endif
 
    if (bd_widget)
    {
@@ -1315,9 +1323,11 @@ void US_Hydrodyn::show_bd()
 
 void US_Hydrodyn::show_bd_options()
 {
+#ifdef NO_BD
    QMessageBox::message(tr("Please note:"),
                         tr("Function not available in this version." ) );
    return;
+#endif
    if (bd_options_widget)
    {
       if (bd_options_window->isVisible())
@@ -1340,9 +1350,11 @@ void US_Hydrodyn::show_bd_options()
 
 void US_Hydrodyn::show_anaflex_options()
 {
+#ifdef NO_BD
    QMessageBox::message(tr("Please note:"),
                         tr("Function not available in this version." ) );
    return;
+#endif
    if (anaflex_options_widget)
    {
       if (anaflex_options_window->isVisible())
