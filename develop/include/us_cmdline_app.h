@@ -40,7 +40,6 @@ class US_Cmdline_App : public QObject
                      QStringList    response,
                      QString      * error_msg,
                      int            timer_delay_ms = 0
-                     
                      );
       ~US_Cmdline_App();
       QString      * error_msg;

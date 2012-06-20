@@ -452,7 +452,26 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "damminrun" )
       {
-         if ( !run_dammin() )
+         unsigned int retries = 1;
+         if ( control_parameters.count( "damminrun" ) &&
+              control_parameters[ "damminrun" ].toUInt() > 1 )
+         {
+            retries = control_parameters[ "damminrun" ].toUInt();
+         }
+
+         bool         ok    = false;
+         unsigned int trial = 0;
+         while( !ok && trial < retries )
+         {
+            trial++;
+            ok = run_dammin();
+            if ( !ok && trial < retries )
+            {
+               cout << QString( "DAMMIN: failed, retrying %1 of %2" ).arg( trial ).arg( retries );
+               sleep( trial * trial * 60 );
+            }
+         }
+         if ( !ok )
          {
             errormsg = QString( "Error %1 line %2 : %3" )
                .arg( controlfile )

@@ -313,6 +313,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    US_Tar ust;
 
    QStringList full_output_list;
+   map < QString, bool > in_output;
 
    for ( unsigned int i = myrank; i < qslt.size(); i += npes )
    {
@@ -329,8 +330,20 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       if ( !read_control( QString( "../%1" ).arg( qslt[ i ] ) ) )
       {
          cout << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
-         exit( errorno );
+         // MPI_Abort( MPI_COMM_WORLD, errorno );
+         // exit( errorno );
+         QFile f( QString( "errors-%1" ).arg( i ) );
+         if( f.open( IO_WriteOnly | IO_Append ) )
+         {
+            QTextStream ts( &f );
+            ts << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
+            f.close();
+         }
+         if ( !in_output.count( f.name() ) )
+         {
+            in_output[ f.name() ] = true;
+            full_output_list << f.name();
+         }
       }         
       errorno--;
 
