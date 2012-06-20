@@ -438,7 +438,7 @@ void US_License::update( void )
     QMessageBox::information ( this, 
       tr( "Request Error" ),
       tr( "Your request is incomplete.\n"
-          "Pleease fill out all requested information." ) );
+          "Please fill out all requested information." ) );
 
     return;
   }

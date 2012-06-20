@@ -61,7 +61,7 @@ INSERT INTO abstractRotor SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 1,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = '08cbd35f-151c-4814-8457-6ef8dd523a23',
   name              = 'Simulation 1-channel standard',
   materialName      = 'Simulated',
@@ -80,7 +80,7 @@ INSERT INTO abstractCenterpiece SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 2,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = '340540ba-a225-4214-9136-2b4003af772e',
   name              = 'Epon 2-channel standard',
   materialName      = 'Epon',
@@ -99,7 +99,7 @@ INSERT INTO abstractCenterpiece SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 3,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = 'e1dfbc5b-ceeb-4275-a280-0e3a5ab0c490',
   name              = 'Aluminum 2-channel standard',
   materialName      = 'Aluminum',
@@ -137,7 +137,7 @@ INSERT INTO abstractCenterpiece SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 5,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = 'd8eec2e8-cc11-46fd-b96e-8fe82059317d',
   name              = 'Titanium 2-channel standard',
   materialName      = 'Titanium',
@@ -213,7 +213,7 @@ INSERT INTO abstractCenterpiece SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 9,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = '2e4414c9-babf-4505-8556-4bd492b9fb27',
   name              = 'SVEL60 2-channel standard',
   materialName      = 'SVEL60',
@@ -232,7 +232,7 @@ INSERT INTO abstractCenterpiece SET
 -- either angle or width will be null, depending on shape
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 10,
-  loadMethod        = 'top',
+  loadMethod        = 'side',
   abstractCenterpieceGUID = 'd8e93427-eb88-42d1-b459-ab6787e571c6',
   name              = 'SVEL60 2-channel meniscus matching',
   materialName      = 'SVEL60',
@@ -242,6 +242,42 @@ INSERT INTO abstractCenterpiece SET
   maxRPM            = 60000,
   pathLength        = 1.2,
   angle             = 2.0,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 11,
+  loadMethod        = 'side',
+  abstractCenterpieceGUID = '9ad4affd-8ffc-1234-1986-d2cb21f37dec',
+  name              = 'Titanium 2-channel 6 mm',
+  materialName      = 'Titanium',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.10',
+  shape             = 'sector',
+  maxRPM            = 60000,
+  pathLength        = 0.6,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 12,
+  loadMethod        = 'side',
+  abstractCenterpieceGUID = '76054842-eb0d-0ee4-2d62-37fea4ce39ef',
+  name              = 'Titanium 2-channel 3 mm',
+  materialName      = 'Titanium',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.10',
+  shape             = 'sector',
+  maxRPM            = 60000,
+  pathLength        = 0.3,
+  angle             = 2.5,
   width             = NULL,
   canHoldSample     = 1,
   materialRefURI    = '',
