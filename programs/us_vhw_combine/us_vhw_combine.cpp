@@ -495,73 +495,102 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
 void US_vHW_Combine::save( void )
 {
    QString trname   = pdistrs[ 0 ].triple;
+   QString trfirst  = pdistrs[ 0 ].triple;
    QString runID    = pdistrs[ 0 ].runID;
    QString fdir     = US_Settings::reportDir() + "/" + runID;
-   QString fname    = "vHW." + trname + ".combo-distrib.svg";
-   QString plotFile = fdir + "/" + fname;
+   QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
+   QString fnampng  = "vHW.0Z9999.combo-distrib.png";
+   QString plotFile = fdir + "/" + fnamsvg;
+   QStringList prunids;
+   QList< int > prndxs;
+   prunids << runID;
+   prndxs  << 0;
+   int     nruns    = 1;
+   int     iruns    = 0;
+   QString svmsg    = tr( "Saved:\n    " ) + fnampng + "\n    " + fnamsvg + "\n";
 
-   if ( ! QFile( fdir ).exists() )
-   {  // If need be, create runID directory
-      QDir().mkpath( fdir );
+   // Look for multiple run IDs
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+      QString prun     = pdistrs[ ii ].runID;
+      if ( ! prunids.contains( prun ) )
+      {
+         prunids << prun;
+         prndxs  << ii;
+      }
    }
 
-   // Save plot file as SVG and as PNG
-   write_plot( plotFile, data_plot1 );
-   QString svmsg =
-       tr( "Saved:" )        + "\n    " + fname + " (/.png)\n" +
-       tr( "in directory:" ) + "\n    " + fdir;
+   nruns   = prunids.size();
 
-   if ( dkdb_cntrls->db() )
+   while( iruns < nruns )
    {
-      US_Passwd    pw;
-      US_DB2       db( pw.getPasswd() );
-      int          idEdit = 0;
+      if ( ! QFile( fdir ).exists() )
+      {  // If need be, create runID directory
+         QDir().mkpath( fdir );
+      }
 
-      QString      resdir = US_Settings::resultDir() + "/" + runID + "/";
-      QString      trpart = expandedTriple( trname ).replace( " / ", "." );
-      QStringList ffilt( runID + ".*.*" + trpart + ".xml" );
-      QStringList files = QDir( resdir )
-            .entryList( ffilt, QDir::Files, QDir::Name );
-      QString      efname;
-      QString      trdesc;
+      // Save plot file as SVG and as PNG
+      write_plot( plotFile, data_plot1 );
+      svmsg += tr( "in directory:" ) + "\n    " + fdir + "\n";
 
-      for ( int ii = 0; ii < files.count(); ii++ )
-      {  // Look for files that match the edit file template
-         QString fname = resdir + files[ ii ];
+      if ( dkdb_cntrls->db() )
+      {
+         US_Passwd    pw;
+         US_DB2       db( pw.getPasswd() );
+         int          idEdit = 0;
+
+         QString      resdir = US_Settings::resultDir() + "/" + runID + "/";
+         QString      trpart = expandedTriple( trname ).replace( " / ", "." );
+         QStringList ffilt( runID + ".*.*" + trpart + ".xml" );
+         QStringList files = QDir( resdir )
+               .entryList( ffilt, QDir::Files, QDir::Name );
+         QString      efname;
+         QString      trdesc;
+
+         for ( int ii = 0; ii < files.count(); ii++ )
+         {  // Look for files that match the edit file template
+            QString fname = resdir + files[ ii ];
 DbgLv(1) << "SV:  fname" << fname;
-         if ( QFile( fname ).exists() )
-         {  // File named matches, so save its name
-            efname     = fname;
+            if ( QFile( fname ).exists() )
+            {  // File named matches, so save its name
+               efname     = fname;
 DbgLv(1) << "SV:   efname" << efname;
+            }
          }
-      }
 
-      if ( ! efname.isEmpty() )
-      {  // Use last matching edit file: get the editGUID, then idEdit
-         US_DataIO2::EditValues edvals;
-         US_DataIO2::readEdits( efname, edvals );
+         if ( ! efname.isEmpty() )
+         {  // Use last matching edit file: get the editGUID, then idEdit
+            US_DataIO2::EditValues edvals;
+            US_DataIO2::readEdits( efname, edvals );
 
-         QStringList  query;
-         query << "get_editID" << edvals.editGUID;
-         db.query( query );
-         db.next();
-         QString editID      = db.value( 0 ).toString();
-         idEdit              = editID.toInt();
+            QStringList  query;
+            query << "get_editID" << edvals.editGUID;
+            db.query( query );
+            db.next();
+            QString editID      = db.value( 0 ).toString();
+            idEdit              = editID.toInt();
 DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
-         query.clear();
-         query << "get_editedData" << editID;
-         db.query( query );
-         db.next();
-         trdesc              = db.value( 4 ).toString();
+            QString trlast      = pdistrs[ pdistrs.size() - 1 ].triple;
+            trdesc              = "Combined Analyses ("
+               + trfirst + "..." + trlast + ")";
+         }
+
+         US_Report    freport;
+         freport.runID          = runID;
+         freport.saveDocumentFromFile( fdir, fnamsvg, &db, idEdit, trdesc );
+         freport.saveDocumentFromFile( fdir, fnampng, &db, idEdit, trdesc );
+DbgLv(1) << "SV:runID,idEdit,fnamsvg" << runID << idEdit << fnamsvg;
+         if ( iruns == ( nruns - 1 ) )
+            svmsg += tr( "\nThe plot was also saved to the database" );
       }
 
-      US_Report    freport;
-      freport.runID          = runID;
-      freport.saveDocumentFromFile( fdir, fname, &db, idEdit, trdesc );
-      fname.replace( ".svg", ".png" );
-      freport.saveDocumentFromFile( fdir, fname, &db, idEdit, trdesc );
-DbgLv(1) << "SV:runID,idEdit,fname" << runID << idEdit << fname;
-      svmsg += tr( "\n\nThe plot was also saved to the database" );
+      if ( ++iruns >= nruns )  break;
+
+      runID         = prunids[ iruns ];
+      int jj        = prndxs [ iruns ];
+      trname        = pdistrs[ jj ].triple;
+      fdir          = US_Settings::reportDir() + "/" + runID;
+      plotFile      = fdir + "/" + fnamsvg;
    }
 
    // Report saved files
