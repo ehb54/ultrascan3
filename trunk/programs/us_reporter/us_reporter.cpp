@@ -355,13 +355,29 @@ DbgLv(1) << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
    int naucf = afiles.size();
 DbgLv(1) << " BD:  naucf" << naucf << "aucfil" << aucfil[0];
 
-   for ( int ii = 0; ii < naucf; ii++ )
+   for ( int ii = 0; ii <= naucf; ii++ )
    {  // Examine the AUC files in the Run's results subdirectory
-      QString fname = afiles.at( ii );
-      QString trnam = fname.section( ".", -4, -2 ).replace( ".", "" );
-      QString tripl = fname.section( ".", -4, -4 ) + " / "
+      QString fname;
+      QString trnam;
+      QString tripl;
+
+      if ( ii < naucf )
+      {
+         fname = afiles.at( ii );
+         trnam = fname.section( ".", -4, -2 ).replace( ".", "" );
+         tripl = fname.section( ".", -4, -4 ) + " / "
                     + fname.section( ".", -3, -3 ) + " / "
                     + fname.section( ".", -2, -2 );
+      }
+
+      else
+      {
+         fname = "vHW.0Z9999.combo-distrib.svg";
+         trnam = "0Z9999";
+         tripl = "0 / Z / 9999";
+         cdesc.label = "Combined Analyses";
+      }
+
       QStringList trifil( "*." + trnam + ".*.*" );
       QStringList rfiles = QDir( path )
          .entryList( trifil, QDir::Files, QDir::Name );
@@ -385,18 +401,29 @@ DbgLv(1) << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
       cdesc.analysis    = "all";
       cdesc.lastmodDate = "";
       cdesc.description = "";
+      QString trdesc;
 
       // Attempt to add a triple description to the label
-      US_DataIO2::RawData rdata;
-      int rstat = US_DataIO2::readRawData( cdesc.filepath, rdata );
-      if ( rstat == US_DataIO2::OK )
+      if ( ii < naucf )
       {
-         QString trdesc = rdata.description;
+         US_DataIO2::RawData rdata;
+         int rstat = US_DataIO2::readRawData( cdesc.filepath, rdata );
+         if ( rstat == US_DataIO2::OK )
+         {
+            trdesc = rdata.description;
+         }
          if ( ! trdesc.isEmpty() )
          {
             cdesc.label       = QString( cdesc.label ) + "   " + trdesc;
             cdesc.description = trdesc;
          }
+      }
+
+      else
+      {
+         trdesc            = "Combined Analyses";
+         cdesc.label       = trdesc;
+         cdesc.description = trdesc;
       }
 
       adescs << cdesc;

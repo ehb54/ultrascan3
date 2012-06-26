@@ -618,6 +618,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
                         "exiting...";
+qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
+ << tmp_data.radius[jj-1] << expdata.radius[ii];
 #if defined(USE_MPI)
             MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif

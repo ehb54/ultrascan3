@@ -421,6 +421,9 @@ void US_DB2::query( const QString& sqlQuery )
          result = NULL;
       }
    }
+
+   else
+      error     = "";
 }
 #endif
 
