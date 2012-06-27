@@ -52,17 +52,21 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    dkdb_cntrls             = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
    QPushButton* pb_loadda  = us_pushbutton( tr( "Load Data"  ) );
-   QPushButton* pb_saveda  = us_pushbutton( tr( "Save Data"  ) );
-   QPushButton* pb_resetd  = us_pushbutton( tr( "Reset Data" ) );
-   QPushButton* pb_resetp  = us_pushbutton( tr( "Reset Plot" ) );
+                pb_saveda  = us_pushbutton( tr( "Save Data"  ) );
+                pb_resetd  = us_pushbutton( tr( "Reset Data" ) );
+                pb_resetp  = us_pushbutton( tr( "Reset Plot" ) );
    QPushButton* pb_help    = us_pushbutton( tr( "Help"       ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close"      ) );
+
+   pb_saveda->setEnabled( false );
+   pb_resetd->setEnabled( false );
+   pb_resetp->setEnabled( false );
 
    QLabel* lb_distrtype  = us_banner(
          tr( "Select Distribution Plot Type(s):" ) );
    QLabel* lb_runinfo    = us_banner( tr( "Information for this Run:" ) );
    QLabel* lb_runid      = us_label ( tr( "Current Run ID:" ) );
-   QLabel* lb_distname   = us_label ( tr( "Distribution Name:" ) );
+   QLabel* lb_svproj     = us_label ( tr( "Save Plot to Project:" ) );
    QLabel* lb_runids     = us_banner( tr( "Run IDs:"                  ) );
    QLabel* lb_triples    = us_banner( tr( "Cell / Channel / Wavelength:" ) );
 
@@ -70,7 +74,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    QLayout* lo_envelope = us_checkbox( tr( "Envelope" ), ck_envelope, false );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
-   le_distname   = us_lineedit( "(output distribution name)", -1, true );
+   cmb_svproj    = us_comboBox();
    lw_runids     = us_listwidget();
    lw_triples    = us_listwidget();
 
@@ -88,8 +92,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
-   leftLayout->addWidget( lb_distname,  row,   0, 1, 3 );
-   leftLayout->addWidget( le_distname,  row++, 3, 1, 5 );
+   leftLayout->addWidget( lb_svproj,    row,   0, 1, 3 );
+   leftLayout->addWidget( cmb_svproj,   row++, 3, 1, 5 );
    leftLayout->addWidget( lb_runids,    row++, 0, 1, 8 );
    leftLayout->addWidget( lw_runids,    row,   0, 3, 8 );
    row    += 3;
@@ -158,14 +162,14 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    mainLayout ->setStretchFactor( rightLayout, 5 );
 
    le_runid   ->setText( "(current run ID)" );
-   le_distname->setText( "(output distribution name)" );
+   cmb_svproj ->addItem( "(project name for plot save)" );
 
    adjustSize();
-   int hh  = lb_distname->height();
-   int ww  = lb_distname->width() / 3;
+   int hh  = lb_svproj->height();
+   int ww  = lb_svproj->width() / 3;
    lw_runids  ->setMinimumHeight( hh * 3 );
    lw_triples ->setMinimumHeight( hh * 5 );
-   le_distname->setMinimumWidth ( ww * 5 );
+   cmb_svproj ->setMinimumWidth ( ww * 5 );
    for ( int ii = 0; ii < 8; ii++ )
       leftLayout ->setColumnMinimumWidth( ii, ww );
    leftLayout ->setColumnStretch     ( 0, 1  );
@@ -361,20 +365,30 @@ DbgLv(1) << "  epath" << epath;
    }
 
    int nrunids = runids.count();
+   int nsprojs = cmb_svproj->count();
+
+   if ( nsprojs == 1 )
+      cmb_svproj->clear();
+   else
+      cmb_svproj->removeItem( nsprojs - 1 );
 
    for ( int ii = 0; ii < nrunids; ii++ )
    {
       lw_runids->addItem( runids[ ii ] );
+      cmb_svproj->addItem( runids[ ii ] );
    }
+
+   cmb_svproj->addItem( "All" );
 
    int nlitems = lw_runids->count();
    le_runid->setText( runids[ 0 ] );
 
    if ( nrunids == nlitems )
    {
-      le_distname->setText( runids[ 0 ] );
       adjustSize();
    }
+
+   pb_resetd->setEnabled( true );
 }
 
 // Reset data: remove all loaded data and clear plots
@@ -386,9 +400,12 @@ void US_vHW_Combine::reset_data( void )
    lw_runids  ->clear();
    lw_triples ->clear();
    le_runid   ->clear();
-   le_distname->clear();
+   cmb_svproj ->clear();
 
    reset_plot();
+
+   pb_resetd->setEnabled( false );
+   pb_resetp->setEnabled( false );
 }
 
 // Reset plot:  Clear plots and lists of plotted data
@@ -400,6 +417,7 @@ void US_vHW_Combine::reset_plot( void )
 
    pdistrs.clear();
    pdisIDs.clear();
+   pb_saveda->setEnabled( false );
 
    lw_triples ->setCurrentRow( -1 );
 }
@@ -494,33 +512,41 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
 // Save the plot data
 void US_vHW_Combine::save( void )
 {
+   QString oproj    = cmb_svproj->currentText();
+   QString runID    = ( oproj == "All" ) ? pdistrs[ 0 ].runID : oproj;
    QString trname   = pdistrs[ 0 ].triple;
    QString trfirst  = pdistrs[ 0 ].triple;
-   QString runID    = pdistrs[ 0 ].runID;
    QString fdir     = US_Settings::reportDir() + "/" + runID;
    QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
    QString plotFile = fdir + "/" + fnamsvg;
    QStringList prunids;
    QList< int > prndxs;
-   prunids << runID;
-   prndxs  << 0;
-   int     nruns    = 1;
-   int     iruns    = 0;
-   QString svmsg    = tr( "Saved:\n    " ) + fnampng + "\n    " + fnamsvg + "\n";
+   QString svmsg   = tr( "Saved:\n    " ) + fnampng + "\n    " + fnamsvg + "\n";
 
    // Look for multiple run IDs
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
    {
       QString prun     = pdistrs[ ii ].runID;
-      if ( ! prunids.contains( prun ) )
-      {
+      if ( oproj == "All" )
+      {  // If save-plot project is "All", save lists of runids and indexes
+         if ( ! prunids.contains( prun ) )
+         {
+            prunids << prun;
+            prndxs  << ii;
+         }
+      }
+
+      else if ( prun == runID )
+      {  // If save-plot project matches current run, save it and its index
          prunids << prun;
          prndxs  << ii;
+         break;
       }
    }
 
-   nruns   = prunids.size();
+   int     iruns   = 0;
+   int     nruns   = prunids.size();
 
    while( iruns < nruns )
    {
@@ -618,6 +644,11 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
             distros[ ii ].triple ) + " : " + distros[ ii ].tdescr );
       }
    }
+
+   if ( pdistrs.size() == 0 )
+   {
+      cmb_svproj->setCurrentIndex( cmb_svproj->findText( runID ) );
+   }
 }
 
 // Triple selected
@@ -651,6 +682,10 @@ DbgLv(1) << "TripleSel:triple" << triple;
 
    else
       plot_data();
+
+   pb_saveda->setEnabled( true );
+   pb_resetd->setEnabled( true );
+   pb_resetp->setEnabled( true );
 }
 
 // Assign symbol and color for a distribution
