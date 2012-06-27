@@ -189,6 +189,75 @@ BEGIN
 
 END$$
 
+-- INSERTs a new project with the specified information
+DROP PROCEDURE IF EXISTS new_project2$$
+CREATE PROCEDURE new_project2 ( p_personGUID       CHAR(36),
+                               p_password         VARCHAR(80),
+                               p_projectGUID      CHAR(36),
+                               p_goals            TEXT,
+                               p_molecules        TEXT,
+                               p_purity           TEXT,
+                               p_expense          TEXT,
+                               p_bufferComponents TEXT,
+                               p_saltInformation  TEXT,
+                               p_AUC_questions    TEXT,
+                               p_expDesign        TEXT,
+                               p_notes            TEXT,
+                               p_description      TEXT,
+                               p_status           ENUM('submitted', 'designed', 
+                                                       'scheduled', 'uploaded', 
+                                                       'anlyzed',   'invoiced', 
+                                                       'paid',      'other'),
+                               p_ownerID          INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_projectID INT;
+  DECLARE duplicate_key  TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+ 
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK               )   &&
+       ( check_GUID( p_personGUID, p_password, p_projectGUID ) = @OK ) ) THEN
+    INSERT INTO project SET
+      projectGUID      = p_projectGUID,
+      goals            = p_goals,
+      molecules        = p_molecules,
+      purity           = p_purity,
+      expense          = p_expense,
+      bufferComponents = p_bufferComponents,
+      saltInformation  = p_saltInformation,
+      AUC_questions    = p_AUC_questions,
+      expDesign        = p_expDesign,
+      notes            = p_notes,
+      description      = p_description,
+      status           = p_status ;
+
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for projectGUID field";
+
+    ELSE
+      SET @LAST_INSERT_ID  = LAST_INSERT_ID();
+    
+      INSERT INTO projectPerson SET
+        projectID = @LAST_INSERT_ID,
+        personID  = p_ownerID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 -- UPDATEs an existing project with the specified information
 DROP PROCEDURE IF EXISTS update_project$$
 CREATE PROCEDURE update_project ( p_personGUID       CHAR(36),
@@ -231,6 +300,67 @@ BEGIN
            bufferComponents = p_bufferComponents,
            saltInformation  = p_saltInformation,
            AUC_questions    = p_AUC_questions,
+           notes            = p_notes,
+           description      = p_description,
+           status           = p_status 
+    WHERE  projectID        = p_projectID;
+
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for projectGUID field";
+
+    END IF;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs an existing project with the specified information
+DROP PROCEDURE IF EXISTS update_project2$$
+CREATE PROCEDURE update_project2 ( p_personGUID       CHAR(36),
+                                  p_password         VARCHAR(80),
+                                  p_projectID        INT,
+                                  p_projectGUID      CHAR(36),
+                                  p_goals            TEXT,
+                                  p_molecules        TEXT,
+                                  p_purity           TEXT,
+                                  p_expense          TEXT,
+                                  p_bufferComponents TEXT, 
+                                  p_saltInformation  TEXT,
+                                  p_AUC_questions    TEXT,
+                                  p_expDesign        TEXT,
+                                  p_notes            TEXT,
+                                  p_description      TEXT,
+                                  p_status           ENUM('submitted', 'designed', 
+                                                          'scheduled', 'uploaded', 
+                                                          'anlyzed',   'invoiced', 
+                                                          'paid',      'other') )
+  MODIFIES SQL DATA               
+                                  
+BEGIN                             
+  DECLARE duplicate_key  TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+                                  
+  CALL config();                  
+  SET @US3_LAST_ERRNO = @OK;      
+  SET @US3_LAST_ERROR = '';
+
+  IF ( ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) &&
+       ( check_GUID( p_personGUID, p_password, p_projectGUID )              = @OK ) ) THEN
+    UPDATE project SET
+           projectGUID      = p_projectGUID,
+           goals            = p_goals,
+           molecules        = p_molecules,
+           purity           = p_purity,
+           expense          = p_expense,
+           bufferComponents = p_bufferComponents,
+           saltInformation  = p_saltInformation,
+           AUC_questions    = p_AUC_questions,
+           expDesign        = p_expDesign,
            notes            = p_notes,
            description      = p_description,
            status           = p_status 
@@ -351,7 +481,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   j.projectID, projectGUID, goals, molecules, purity, expense, bufferComponents,
-               saltInformation, AUC_questions, notes, description, status, personID
+               saltInformation, AUC_questions, notes, description, status, personID, expDesign
       FROM     project j, projectPerson p
       WHERE    j.projectID = p.projectID
       AND      j.projectID = p_projectID;

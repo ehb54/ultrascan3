@@ -12,7 +12,7 @@
            This class forms the content of the general tab in the US_Project GUI.
            Most management of the information itself takes place here.
 */
-class US_GUI_EXTERN US_ProjectGuiGeneral : public US_Widgets
+class US_ProjectGuiGeneral : public US_Widgets
 {
    Q_OBJECT
 
@@ -87,6 +87,249 @@ private:
    void assign_investigator( int  );
 };
     
+/*! \class GoalsTab
+    \brief This class forms the content of the Goals tab in the US_Project GUI.
+*/
+class US_ProjectGuiGoals : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiGoals class
+   US_ProjectGuiGoals   ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getGoals        ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newGoals The text to load into the text widget 
+   void    setGoals        ( QString );
+
+signals:
+   //! \brief Emitted when the text in the goals tab changes
+   void goalsTabChanged     ( void );
+
+private:
+   QTextEdit*              te_goals;
+         
+};
+    
+/*! \class US_ProjectGuiMolecules
+    \brief This class forms the content of the molecules tab in the US_Project GUI.
+*/
+class US_ProjectGuiMolecules : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiMolecules class
+   US_ProjectGuiMolecules  ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getMolecules    ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newMolecules The text to load into the text widget 
+   void    setMolecules    ( QString );
+
+signals:
+   //! \brief Emitted when the text in the molecules tab changes
+   void moleculesTabChanged ( void );
+
+private:
+   QTextEdit*              te_molecules;
+   
+};
+    
+/*! \class US_ProjectGuiPurity
+    \brief This class forms the content of the purity tab in the US_Project GUI.
+*/
+class US_ProjectGuiPurity : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiPurity class
+   US_ProjectGuiPurity               ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getPurity       ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newPurity The text to load into the text widget 
+   void    setPurity       ( QString );
+
+signals:
+   //! \brief Emitted when the text in the purity tab changes
+   void purityTabChanged ( const QString& );
+
+private:
+   QLineEdit*              le_purity;
+   
+};
+
+/*! \class US_ProjectGuiExpense
+    \brief This class forms the content of the expense tab in the US_Project GUI.
+*/
+class US_ProjectGuiExpense : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiExpense class
+   US_ProjectGuiExpense              ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getExpense      ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newExpense The text to load into the text widget 
+   void    setExpense      ( QString );
+
+signals:
+   //! \brief Emitted when the text in the expense tab changes
+   void expenseTabChanged ( void );
+
+private:
+   QTextEdit*              te_expense;
+   
+};
+
+/*! \class US_ProjectGuiBufferComponents
+    \brief This class forms the content of the buffer components tab in the US_Project GUI.
+*/
+class US_ProjectGuiBufferComponents : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiBufferComponents class
+   US_ProjectGuiBufferComponents         ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getBufferComponents ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newBufferComponents The text to load into the text widget 
+   void    setBufferComponents ( QString );
+
+signals:
+   //! \brief Emitted when the text in the bufferComponents tab changes
+   void bufferComponentsTabChanged ( void );
+
+private:
+   QTextEdit*                  te_bufferComponents;
+   
+};
+
+/*! \class US_ProjectGuiSaltInformation
+    \brief This class forms the content of the salt information tab in the US_Project GUI.
+*/
+class US_ProjectGuiSaltInformation : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiSaltInformation class
+   US_ProjectGuiSaltInformation          ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getSaltInformation  ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newSaltInformation The text to load into the text widget 
+   void    setSaltInformation  ( QString );
+
+signals:
+   //! \brief Emitted when the text in the saltInformation tab changes
+   void saltInformationTabChanged ( void );
+
+private:
+   QTextEdit*                  te_saltInformation;
+   
+};
+
+/*! \class US_ProjectGuiAUC_questions
+    \brief This class forms the content of the AUC_questions tab in the US_Project GUI.
+*/
+class US_ProjectGuiAUC_questions : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiAUC_questions class
+   US_ProjectGuiAUC_questions            ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getAUC_questions    ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newAUC_questions The text to load into the text widget 
+   void    setAUC_questions    ( QString );
+
+signals:
+   //! \brief Emitted when the text in the AUC_questions tab changes
+   void AUC_questionsTabChanged ( void );
+
+private:
+   QTextEdit*                  te_auc_questions;
+   
+};
+
+/*! \class US_ProjectGuiExpDesign
+    \brief This class forms the content of the expDesign tab in the US_Project GUI.
+*/
+class US_ProjectGuiExpDesign : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the expDesignTab class
+   US_ProjectGuiExpDesign            ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getExpDesign    ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newExpDesign The text to load into the text widget 
+   void    setExpDesign    ( QString );
+
+signals:
+   //! \brief Emitted when the text in the expDesign tab changes
+   void expDesignTabChanged ( void );
+
+private:
+   QTextEdit*                  te_exp_design;
+   
+};
+
+/*! \class US_ProjectGuiNotes
+    \brief This class forms the content of the notes tab in the US_Project GUI.
+*/
+class US_ProjectGuiNotes : public US_Widgets
+{
+   Q_OBJECT
+
+public:
+   //! \brief Generic constructor for the US_ProjectGuiNotes class
+   US_ProjectGuiNotes                    ( void );
+
+   //! \brief Returns the content entered by the user
+   QString getNotes            ( void );
+
+   //! \brief Loads the content of this tab
+   //! \param newNotes The text to load into the text widget 
+   void    setNotes            ( QString );
+
+signals:
+   //! \brief Emitted when the text in the notes tab changes
+   void notesTabChanged ( void );
+
+private:
+   QTextEdit*                  te_notes;
+   
+};
+
 /*! \class US_ProjectGui
            This class provides the ability to enter/edit the project
            parameters.
@@ -128,174 +371,6 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
          int        index;        //!< Used when indexing the information
       };
    
-      /*! \class GoalsTab
-          \brief This class forms the content of the Goals tab in the US_Project GUI.
-      */
-      class GoalsTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the GoalsTab class
-         GoalsTab                ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getGoals        ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newGoals The text to load into the text widget 
-         void    setGoals        ( QString );
-    
-         private:
-         QTextEdit*              te_goals;
-         
-      };
-    
-      /*! \class MoleculesTab
-          \brief This class forms the content of the molecules tab in the US_Project GUI.
-      */
-      class MoleculesTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the MoleculesTab class
-         MoleculesTab            ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getMolecules    ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newMolecules The text to load into the text widget 
-         void    setMolecules    ( QString );
-    
-         private:
-         QTextEdit*              te_molecules;
-         
-      };
-    
-      /*! \class PurityTab
-          \brief This class forms the content of the purity tab in the US_Project GUI.
-      */
-      class PurityTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the PurityTab class
-         PurityTab               ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getPurity       ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newPurity The text to load into the text widget 
-         void    setPurity       ( QString );
-    
-         private:
-         QLineEdit*              le_purity;
-         
-      };
-    
-      /*! \class ExpenseTab
-          \brief This class forms the content of the expense tab in the US_Project GUI.
-      */
-      class ExpenseTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the ExpenseTab class
-         ExpenseTab              ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getExpense      ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newExpense The text to load into the text widget 
-         void    setExpense      ( QString );
-    
-         private:
-         QTextEdit*              te_expense;
-         
-      };
-    
-      /*! \class BufferComponentsTab
-          \brief This class forms the content of the buffer components tab in the US_Project GUI.
-      */
-      class BufferComponentsTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the BufferComponentsTab class
-         BufferComponentsTab         ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getBufferComponents ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newBufferComponents The text to load into the text widget 
-         void    setBufferComponents ( QString );
-    
-         private:
-         QTextEdit*                  te_bufferComponents;
-         
-      };
-    
-      /*! \class SaltInformationTab
-          \brief This class forms the content of the salt information tab in the US_Project GUI.
-      */
-      class SaltInformationTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the SaltInformationTab class
-         SaltInformationTab          ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getSaltInformation  ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newSaltInformation The text to load into the text widget 
-         void    setSaltInformation  ( QString );
-    
-         private:
-         QTextEdit*                  te_saltInformation;
-         
-      };
-
-      /*! \class AUC_questionsTab
-          \brief This class forms the content of the AUC_questions tab in the US_Project GUI.
-      */
-      class AUC_questionsTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the AUC_questionsTab class
-         AUC_questionsTab            ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getAUC_questions    ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newAUC_questions The text to load into the text widget 
-         void    setAUC_questions    ( QString );
-      
-         private:
-         QTextEdit*                  te_auc_questions;
-         
-      };
-
-      /*! \class NotesTab
-          \brief This class forms the content of the notes tab in the US_Project GUI.
-      */
-      class NotesTab : public US_Widgets
-      {
-         public:
-         //! \brief Generic constructor for the NotesTab class
-         NotesTab                    ( void );
-
-         //! \brief Returns the content entered by the user
-         QString getNotes            ( void );
-
-         //! \brief Loads the content of this tab
-         //! \param newNotes The text to load into the text widget 
-         void    setNotes            ( QString );
-      
-         private:
-         QTextEdit*                  te_notes;
-         
-      };
-
       QList< ProjectInfo >  info;      //!< Information to populate the project list widget
       int           investigatorID;    //!< Stores the ID of the current investigator
       US_Project    project;           //!< Stores all the information about the project
@@ -330,20 +405,22 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
 
    private:
       bool                    signal;
+      bool                    text_changed;
 
       US_Help                 showHelp;
 
       QTabWidget*             tabWidget;
 
       US_ProjectGuiGeneral*   generalTab;
-      GoalsTab*               goalsTab;
-      MoleculesTab*           moleculesTab;
-      PurityTab*              purityTab;
-      ExpenseTab*             expenseTab;
-      BufferComponentsTab*    bufferComponentsTab;
-      SaltInformationTab*     saltInformationTab;
-      AUC_questionsTab*       auc_questionsTab;
-      NotesTab*               notesTab;
+      US_ProjectGuiGoals*     goalsTab;
+      US_ProjectGuiMolecules* moleculesTab;
+      US_ProjectGuiPurity*    purityTab;
+      US_ProjectGuiExpense*   expenseTab;
+      US_ProjectGuiBufferComponents* bufferComponentsTab;
+      US_ProjectGuiSaltInformation* saltInformationTab;
+      US_ProjectGuiAUC_questions* auc_questionsTab;
+      US_ProjectGuiExpDesign* expDesignTab;
+      US_ProjectGuiNotes*     notesTab;
 
       QPushButton*            pb_accept;
 
@@ -368,6 +445,9 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
 
       //! \brief Change data source (disk/db)
       void source_changed     ( bool );
+
+      //! \brief Helps to keep track if the text in any tab has changed
+      void tabTextChanged     ( const QString& = "" );
 
    private slots:
       void reset              ( void );

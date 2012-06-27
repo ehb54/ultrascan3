@@ -33,6 +33,7 @@ class US_UTIL_EXTERN US_Project
       QString          bufferComponents;   //!< A text listing of buffer components
       QString          saltInformation;    //!< Explanation of an acceptable salt concentration 
       QString          AUC_questions;      //!< Questions research is attempting to answer with the AUC
+      QString          expDesign;          //!< Experiment design
       QString          notes;              //!< Special instructions, notes, questions
       QString          projectDesc;        //!< A description of the project 
       QString          status;             //!< Project status
