@@ -39,14 +39,15 @@ US_ProjectGui::US_ProjectGui(
    // Second row - tab widget
    tabWidget           = us_tabwidget();
    generalTab          = new US_ProjectGuiGeneral( &investigatorID, select_db_disk );
-   goalsTab            = new GoalsTab( );
-   moleculesTab        = new MoleculesTab( );
-   purityTab           = new PurityTab( );
-   expenseTab          = new ExpenseTab( );
-   bufferComponentsTab = new BufferComponentsTab( );
-   saltInformationTab  = new SaltInformationTab( );
-   auc_questionsTab    = new AUC_questionsTab( );
-   notesTab            = new NotesTab( );
+   goalsTab            = new US_ProjectGuiGoals( );
+   moleculesTab        = new US_ProjectGuiMolecules( );
+   purityTab           = new US_ProjectGuiPurity( );
+   expenseTab          = new US_ProjectGuiExpense( );
+   bufferComponentsTab = new US_ProjectGuiBufferComponents( );
+   saltInformationTab  = new US_ProjectGuiSaltInformation( );
+   auc_questionsTab    = new US_ProjectGuiAUC_questions( );
+   expDesignTab        = new US_ProjectGuiExpDesign( );
+   notesTab            = new US_ProjectGuiNotes( );
 
    tabWidget -> addTab( generalTab,          tr( "1: General"           ) );
    tabWidget -> addTab( goalsTab,            tr( "2: Goals"             ) );
@@ -56,7 +57,8 @@ US_ProjectGui::US_ProjectGui(
    tabWidget -> addTab( bufferComponentsTab, tr( "6: Buffer Components" ) );
    tabWidget -> addTab( saltInformationTab,  tr( "7: Salt Information"  ) );
    tabWidget -> addTab( auc_questionsTab,    tr( "8: AUC Questions"     ) );
-   tabWidget -> addTab( notesTab,            tr( "9: Notes"             ) );
+   tabWidget -> addTab( expDesignTab,        tr( "9: Experiment Design" ) );
+   tabWidget -> addTab( notesTab,            tr( "10: Notes"             ) );
 
    main->addWidget( tabWidget );
 
@@ -107,6 +109,33 @@ US_ProjectGui::US_ProjectGui(
    connect( generalTab, SIGNAL( deleteProject  ( ) ),
                         SLOT  ( deleteProject  ( ) ) );
 
+   connect( goalsTab,   SIGNAL( goalsTabChanged ( ) ),
+                        SLOT  ( tabTextChanged  ( ) ) );
+
+   connect( moleculesTab,SIGNAL( moleculesTabChanged ( ) ),
+                         SLOT  ( tabTextChanged      ( ) ) );
+
+   connect( purityTab,   SIGNAL( purityTabChanged ( const QString& ) ),
+                         SLOT  ( tabTextChanged   ( const QString& ) ) );
+
+   connect( expenseTab,  SIGNAL( expenseTabChanged ( ) ),
+                         SLOT  ( tabTextChanged    ( ) ) );
+
+   connect( bufferComponentsTab,SIGNAL( bufferComponentsTabChanged ( ) ),
+                                SLOT  ( tabTextChanged             ( ) ) );
+
+   connect( saltInformationTab, SIGNAL( saltInformationTabChanged ( ) ),
+                                SLOT  ( tabTextChanged            ( ) ) );
+
+   connect( auc_questionsTab,   SIGNAL( AUC_questionsTabChanged ( ) ),
+                                SLOT  ( tabTextChanged          ( ) ) );
+
+   connect( expDesignTab,SIGNAL( expDesignTabChanged ( ) ),
+                         SLOT  ( tabTextChanged      ( ) ) );
+
+   connect( notesTab,    SIGNAL( notesTabChanged ( ) ),
+                         SLOT  ( tabTextChanged  ( ) ) );
+
    // Now let's assemble the page
    
    main->addLayout( buttons );
@@ -140,6 +169,7 @@ US_ProjectGui::~US_ProjectGui()
    delete bufferComponentsTab         ;
    delete saltInformationTab          ;
    delete auc_questionsTab            ;
+   delete expDesignTab                ;
    delete notesTab                    ;
    delete tabWidget                   ;
 }
@@ -156,7 +186,10 @@ void US_ProjectGui::reset( void )
    bufferComponentsTab ->setBufferComponents ( project.bufferComponents );
    saltInformationTab  ->setSaltInformation  ( project.saltInformation  );
    auc_questionsTab    ->setAUC_questions    ( project.AUC_questions    );
+   expDesignTab        ->setExpDesign        ( project.expDesign        );
    notesTab            ->setNotes            ( project.notes            );
+
+   text_changed = false;
 
    enableButtons();
 
@@ -167,20 +200,7 @@ void US_ProjectGui::reset( void )
 void US_ProjectGui::enableButtons( void )
 {
    // Let's calculate if we're eligible to save this project
-   generalTab->pb_save-> setEnabled( false );
-
-   if ( ! goalsTab            ->getGoals().isEmpty()            &&
-        ! moleculesTab        ->getMolecules().isEmpty()        &&
-        ! purityTab           ->getPurity().isEmpty()           &&
-        ! expenseTab          ->getExpense().isEmpty()          &&
-        ! bufferComponentsTab ->getBufferComponents().isEmpty() &&
-        ! saltInformationTab  ->getSaltInformation().isEmpty()  &&
-        ! auc_questionsTab    ->getAUC_questions().isEmpty()    &&
-        ! notesTab            ->getNotes().isEmpty()            &&
-        ! generalTab          ->getDesc().isEmpty()             )
-   {
-      generalTab->pb_save->setEnabled( true );
-   }
+   generalTab->pb_save-> setEnabled( text_changed );
 
    // We can always delete something, even if it's just what's in the dialog
    generalTab->pb_del->setEnabled( false );
@@ -287,6 +307,7 @@ void US_ProjectGui::newProject( void )
    saltInformationTab  ->setSaltInformation  ( tr( "If not, please explain why not." ) );
    auc_questionsTab    ->setAUC_questions    ( tr( "How do you propose to approach the research with "
                                                    "AUC experiments?" ) );
+   expDesignTab        ->setExpDesign        ( tr( "Please enter any notes about the experiment design." ) );
    notesTab            ->setNotes            ( tr( "Special instructions, questions, and notes (optional)" ) );
 
    enableButtons();
@@ -300,6 +321,10 @@ void US_ProjectGui::load( void )
 
    else
       loadDisk();
+
+   text_changed = false;
+   enableButtons();
+
 }
 
 // Function to load projects from disk
@@ -496,6 +521,10 @@ void US_ProjectGui::saveDescription( const QString& )
       item->setText( project.projectDesc );
       generalTab->lw_projects->setCurrentItem( item );
    }
+
+   // Enable save
+   text_changed = true;
+   generalTab->pb_save-> setEnabled( true );
 }
 
 // Function to save project information from all tabs to disk or db
@@ -510,6 +539,7 @@ void US_ProjectGui::saveProject( void )
    project.bufferComponents = bufferComponentsTab ->getBufferComponents();
    project.saltInformation  = saltInformationTab  ->getSaltInformation();
    project.AUC_questions    = auc_questionsTab    ->getAUC_questions();
+   project.expDesign        = expDesignTab        ->getExpDesign();
    project.notes            = notesTab            ->getNotes();
 
    if ( generalTab->disk_controls->db() )
@@ -616,6 +646,12 @@ void US_ProjectGui::source_changed( bool db )
 
    load();
    reset();
+}
+
+void US_ProjectGui::tabTextChanged( const QString& )
+{
+   text_changed = true;
+   generalTab->pb_save-> setEnabled( true );
 }
 
 // Function to display an error returned from the database
@@ -781,7 +817,7 @@ QString US_ProjectGuiGeneral::getDesc( void )
    return( le_projectDesc->text() );
 }
 
-US_ProjectGui::GoalsTab::GoalsTab( void ) : US_Widgets()
+US_ProjectGuiGoals::US_ProjectGuiGoals( void ) : US_Widgets()
 {
    QVBoxLayout* goals = new QVBoxLayout;
 
@@ -792,6 +828,8 @@ US_ProjectGui::GoalsTab::GoalsTab( void ) : US_Widgets()
    goals->addWidget( lb_goals );
 
    te_goals = us_textedit();
+   connect( te_goals, SIGNAL( textChanged   () ), 
+                      SIGNAL( goalsTabChanged() ) );
    goals->addWidget( te_goals );
    te_goals->setMinimumHeight( 200 );
    te_goals->setReadOnly( false );
@@ -800,17 +838,17 @@ US_ProjectGui::GoalsTab::GoalsTab( void ) : US_Widgets()
    setLayout( goals );
 }
 
-void US_ProjectGui::GoalsTab::setGoals( QString newGoals )
+void US_ProjectGuiGoals::setGoals( QString newGoals )
 {
    te_goals->setText( newGoals );
 }
 
-QString US_ProjectGui::GoalsTab::getGoals( void )
+QString US_ProjectGuiGoals::getGoals( void )
 {
    return( te_goals->toPlainText() );
 }
 
-US_ProjectGui::MoleculesTab::MoleculesTab( void ) : US_Widgets()
+US_ProjectGuiMolecules::US_ProjectGuiMolecules( void ) : US_Widgets()
 {
    QVBoxLayout* molecules = new QVBoxLayout;
 
@@ -820,6 +858,8 @@ US_ProjectGui::MoleculesTab::MoleculesTab( void ) : US_Widgets()
    molecules->addWidget( lb_molecules );
 
    te_molecules = us_textedit();
+   connect( te_molecules, SIGNAL( textChanged        () ), 
+                          SIGNAL( moleculesTabChanged() ) );
    molecules->addWidget( te_molecules );
    te_molecules->setMinimumHeight( 200 );
    te_molecules->setReadOnly( false );
@@ -828,17 +868,17 @@ US_ProjectGui::MoleculesTab::MoleculesTab( void ) : US_Widgets()
    setLayout( molecules );
 }
 
-void US_ProjectGui::MoleculesTab::setMolecules( QString newMolecules )
+void US_ProjectGuiMolecules::setMolecules( QString newMolecules )
 {
    te_molecules->setText( newMolecules );
 }
 
-QString US_ProjectGui::MoleculesTab::getMolecules( void )
+QString US_ProjectGuiMolecules::getMolecules( void )
 {
    return( te_molecules->toPlainText() );
 }
 
-US_ProjectGui::PurityTab::PurityTab( void ) : US_Widgets()
+US_ProjectGuiPurity::US_ProjectGuiPurity( void ) : US_Widgets()
 {
    QVBoxLayout* purity = new QVBoxLayout;
 
@@ -848,6 +888,8 @@ US_ProjectGui::PurityTab::PurityTab( void ) : US_Widgets()
    purity->addWidget( lb_purity );
 
    le_purity = us_lineedit();
+   connect( le_purity, SIGNAL( textChanged     ( const QString& ) ), 
+                       SIGNAL( purityTabChanged( const QString& ) ) );
    purity->addWidget( le_purity );
 //   le_purity->setMinimumHeight( 200 );
    le_purity->setReadOnly( false );
@@ -856,17 +898,17 @@ US_ProjectGui::PurityTab::PurityTab( void ) : US_Widgets()
    setLayout( purity );
 }
 
-void US_ProjectGui::PurityTab::setPurity( QString newPurity )
+void US_ProjectGuiPurity::setPurity( QString newPurity )
 {
    le_purity->setText( newPurity );
 }
 
-QString US_ProjectGui::PurityTab::getPurity( void )
+QString US_ProjectGuiPurity::getPurity( void )
 {
    return( le_purity->text() );
 }
 
-US_ProjectGui::ExpenseTab::ExpenseTab( void ) : US_Widgets()
+US_ProjectGuiExpense::US_ProjectGuiExpense( void ) : US_Widgets()
 {
    QVBoxLayout* expense = new QVBoxLayout;
 
@@ -876,6 +918,8 @@ US_ProjectGui::ExpenseTab::ExpenseTab( void ) : US_Widgets()
    expense->addWidget( lb_expense );
 
    te_expense = us_textedit();
+   connect( te_expense, SIGNAL( textChanged      () ), 
+                        SIGNAL( expenseTabChanged() ) );
    expense->addWidget( te_expense );
    te_expense->setMinimumHeight( 200 );
    te_expense->setReadOnly( false );
@@ -884,17 +928,17 @@ US_ProjectGui::ExpenseTab::ExpenseTab( void ) : US_Widgets()
    setLayout( expense );
 }
 
-void US_ProjectGui::ExpenseTab::setExpense( QString newExpense )
+void US_ProjectGuiExpense::setExpense( QString newExpense )
 {
    te_expense->setText( newExpense );
 }
 
-QString US_ProjectGui::ExpenseTab::getExpense( void )
+QString US_ProjectGuiExpense::getExpense( void )
 {
    return( te_expense->toPlainText() );
 }
 
-US_ProjectGui::BufferComponentsTab::BufferComponentsTab( void ) : US_Widgets()
+US_ProjectGuiBufferComponents::US_ProjectGuiBufferComponents( void ) : US_Widgets()
 {
    QVBoxLayout* bufferComponents = new QVBoxLayout;
 
@@ -904,6 +948,8 @@ US_ProjectGui::BufferComponentsTab::BufferComponentsTab( void ) : US_Widgets()
    bufferComponents->addWidget( lb_bufferComponents );
 
    te_bufferComponents = us_textedit();
+   connect( te_bufferComponents, SIGNAL( textChanged               () ), 
+                                 SIGNAL( bufferComponentsTabChanged() ) );
    bufferComponents->addWidget( te_bufferComponents );
    te_bufferComponents->setMinimumHeight( 200 );
    te_bufferComponents->setReadOnly( false );
@@ -912,17 +958,17 @@ US_ProjectGui::BufferComponentsTab::BufferComponentsTab( void ) : US_Widgets()
    setLayout( bufferComponents );
 }
 
-void US_ProjectGui::BufferComponentsTab::setBufferComponents( QString newBufferComponents )
+void US_ProjectGuiBufferComponents::setBufferComponents( QString newBufferComponents )
 {
    te_bufferComponents->setText( newBufferComponents );
 }
 
-QString US_ProjectGui::BufferComponentsTab::getBufferComponents( void )
+QString US_ProjectGuiBufferComponents::getBufferComponents( void )
 {
    return( te_bufferComponents->toPlainText() );
 }
 
-US_ProjectGui::SaltInformationTab::SaltInformationTab( void ) : US_Widgets()
+US_ProjectGuiSaltInformation::US_ProjectGuiSaltInformation( void ) : US_Widgets()
 {
    QVBoxLayout* saltInformation = new QVBoxLayout;
 
@@ -931,6 +977,8 @@ US_ProjectGui::SaltInformationTab::SaltInformationTab( void ) : US_Widgets()
    saltInformation->addWidget( lb_saltInformation );
 
    te_saltInformation = us_textedit();
+   connect( te_saltInformation, SIGNAL( textChanged              () ), 
+                                SIGNAL( saltInformationTabChanged() ) );
    saltInformation->addWidget( te_saltInformation );
    te_saltInformation->setMinimumHeight( 200 );
    te_saltInformation->setReadOnly( false );
@@ -939,17 +987,17 @@ US_ProjectGui::SaltInformationTab::SaltInformationTab( void ) : US_Widgets()
    setLayout( saltInformation );
 }
 
-void US_ProjectGui::SaltInformationTab::setSaltInformation( QString newSaltInformation )
+void US_ProjectGuiSaltInformation::setSaltInformation( QString newSaltInformation )
 {
    te_saltInformation->setText( newSaltInformation );
 }
 
-QString US_ProjectGui::SaltInformationTab::getSaltInformation( void )
+QString US_ProjectGuiSaltInformation::getSaltInformation( void )
 {
    return( te_saltInformation->toPlainText() );
 }
 
-US_ProjectGui::AUC_questionsTab::AUC_questionsTab( void ) : US_Widgets()
+US_ProjectGuiAUC_questions::US_ProjectGuiAUC_questions( void ) : US_Widgets()
 {
    QVBoxLayout* auc_questions = new QVBoxLayout;
 
@@ -958,6 +1006,8 @@ US_ProjectGui::AUC_questionsTab::AUC_questionsTab( void ) : US_Widgets()
    auc_questions->addWidget( lb_auc_questions );
 
    te_auc_questions = us_textedit();
+   connect( te_auc_questions, SIGNAL( textChanged            () ), 
+                              SIGNAL( AUC_questionsTabChanged() ) );
    auc_questions->addWidget( te_auc_questions );
    te_auc_questions->setMinimumHeight( 200 );
    te_auc_questions->setReadOnly( false );
@@ -966,17 +1016,46 @@ US_ProjectGui::AUC_questionsTab::AUC_questionsTab( void ) : US_Widgets()
    setLayout( auc_questions );
 }
 
-void US_ProjectGui::AUC_questionsTab::setAUC_questions( QString newAUC_questions )
+void US_ProjectGuiAUC_questions::setAUC_questions( QString newAUC_questions )
 {
    te_auc_questions->setText( newAUC_questions );
 }
 
-QString US_ProjectGui::AUC_questionsTab::getAUC_questions( void )
+QString US_ProjectGuiAUC_questions::getAUC_questions( void )
 {
    return( te_auc_questions->toPlainText() );
 }
 
-US_ProjectGui::NotesTab::NotesTab( void ) : US_Widgets()
+US_ProjectGuiExpDesign::US_ProjectGuiExpDesign( void ) : US_Widgets()
+{
+   QVBoxLayout* exp_design = new QVBoxLayout;
+
+   QLabel* lb_exp_design = 
+      us_label( tr( "Do you have any notes about the design of the experiment?" ) );
+   exp_design->addWidget( lb_exp_design );
+
+   te_exp_design = us_textedit();
+   connect( te_exp_design, SIGNAL( textChanged        () ), 
+                           SIGNAL( expDesignTabChanged() ) );
+   exp_design->addWidget( te_exp_design );
+   te_exp_design->setMinimumHeight( 200 );
+   te_exp_design->setReadOnly( false );
+
+   exp_design -> addStretch( 1 );
+   setLayout( exp_design );
+}
+
+void US_ProjectGuiExpDesign::setExpDesign( QString newExpDesign )
+{
+   te_exp_design->setText( newExpDesign );
+}
+
+QString US_ProjectGuiExpDesign::getExpDesign( void )
+{
+   return( te_exp_design->toPlainText() );
+}
+
+US_ProjectGuiNotes::US_ProjectGuiNotes( void ) : US_Widgets()
 {
    QVBoxLayout* notes = new QVBoxLayout;
 
@@ -984,6 +1063,8 @@ US_ProjectGui::NotesTab::NotesTab( void ) : US_Widgets()
    notes->addWidget( lb_notes );
 
    te_notes = us_textedit();
+   connect( te_notes, SIGNAL( textChanged    () ), 
+                      SIGNAL( notesTabChanged() ) );
    notes->addWidget( te_notes );
    te_notes->setMinimumHeight( 200 );
    te_notes->setReadOnly( false );
@@ -992,12 +1073,12 @@ US_ProjectGui::NotesTab::NotesTab( void ) : US_Widgets()
    setLayout( notes );
 }
 
-void US_ProjectGui::NotesTab::setNotes( QString newNotes )
+void US_ProjectGuiNotes::setNotes( QString newNotes )
 {
    te_notes->setText( newNotes );
 }
 
-QString US_ProjectGui::NotesTab::getNotes( void )
+QString US_ProjectGuiNotes::getNotes( void )
 {
    return( te_notes->toPlainText() );
 }

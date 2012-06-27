@@ -121,6 +121,12 @@ void US_Project::readProjectInfo( QXmlStreamReader& xml )
             AUC_questions = xml.text().toString();
          }
 
+         else if ( xml.name() == "expDesign" )
+         {
+            xml.readNext();
+            expDesign = xml.text().toString();
+         }
+
          else if ( xml.name() == "notes" )
          {
             xml.readNext();
@@ -158,6 +164,8 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
       notes            = db->value(  9 ).toString();
       projectDesc      = db->value( 10 ).toString();
       status           = db->value( 11 ).toString();
+      // value 12 is personID
+      expDesign        = db->value( 13 ).toString();
 
    }
 
@@ -217,6 +225,7 @@ void US_Project::saveToDisk( void )
    xml.writeTextElement( "bufferComponents", bufferComponents );
    xml.writeTextElement( "saltInformation",  saltInformation  );
    xml.writeTextElement( "AUC_questions",    AUC_questions    );
+   xml.writeTextElement( "expDesign",        expDesign        );
    xml.writeTextElement( "notes",            notes            );
    xml.writeTextElement( "description",      projectDesc      );
 
@@ -247,7 +256,7 @@ int US_Project::saveToDB( US_DB2* db )
       db->next();
       projectID = db->value( 0 ).toInt();
       q.clear();
-      q  << "update_project"
+      q  << "update_project2"
          << QString::number( projectID )
          << projectGUID
          << goals
@@ -257,6 +266,7 @@ int US_Project::saveToDB( US_DB2* db )
          << bufferComponents
          << saltInformation
          << AUC_questions
+         << expDesign
          << notes
          << projectDesc
          << status;
@@ -268,7 +278,7 @@ int US_Project::saveToDB( US_DB2* db )
    {
       // Create new project entry
       q.clear();
-      q  << "new_project"
+      q  << "new_project2"
          << projectGUID
          << goals
          << molecules
@@ -277,6 +287,7 @@ int US_Project::saveToDB( US_DB2* db )
          << bufferComponents
          << saltInformation
          << AUC_questions
+         << expDesign
          << notes
          << projectDesc
          << status
@@ -489,6 +500,7 @@ void US_Project::clear( void )
    bufferComponents = QString( "" );
    saltInformation  = QString( "" );
    AUC_questions    = QString( "" );
+   expDesign   = QString( "" );
    notes       = QString( "" );
    projectDesc = QString( "" );
    status      = QString( "submitted" );
@@ -507,6 +519,7 @@ void US_Project::show( void )
             << "bufferComponents = " << bufferComponents << '\n'
             << "saltInformation  = " << saltInformation  << '\n'
             << "AUC_questions    = " << AUC_questions    << '\n'
+            << "expDesign        = " << expDesign        << '\n'
             << "notes            = " << notes            << '\n'
             << "projectDesc      = " << projectDesc      << '\n'
             << "status           = " << status           << '\n'
