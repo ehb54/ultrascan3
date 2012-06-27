@@ -48,8 +48,13 @@ class US_vHW_Combine : public US_Widgets
       QStringList    distIDs;          // All distribs. IDs
       QStringList    pdisIDs;          // Plotted distribs. IDs
 
+      QPushButton*   pb_saveda;
+      QPushButton*   pb_resetd;
+      QPushButton*   pb_resetp;
+
       QLineEdit*     le_runid;
-      QLineEdit*     le_distname;
+
+      QComboBox*     cmb_svproj;
 
       QListWidget*   lw_runids;
       QListWidget*   lw_triples;

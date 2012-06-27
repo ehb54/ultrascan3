@@ -91,10 +91,12 @@
         </li>
             
         <li>
-            <b>Distribution Name:</b> The name shown to the right of this
-            label is to be used for any saved combination distribution
-            data files. By default, the name shown is the first run selected,
-            but this can be changed by the user to any desired name.
+            <b>Save Plot to Project:</b> The name shown to the right of this
+            label specifies the project subdirectory under which the combination
+            is to be saved. By default, the name shown is the first run
+            selected for plotting, but this can be changed by the user to any
+            listed name. If "All" is selected, plot copies will be saved to all
+            of the component run IDs.
         </li>
             
         <li>
