@@ -66,7 +66,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
          tr( "Select Distribution Plot Type(s):" ) );
    QLabel* lb_runinfo    = us_banner( tr( "Information for this Run:" ) );
    QLabel* lb_runid      = us_label ( tr( "Current Run ID:" ) );
-   QLabel* lb_svproj     = us_label ( tr( "Save Plot to Project:" ) );
+   QLabel* lb_svproj     = us_label ( tr( "Save Plot under Project:" ) );
    QLabel* lb_runids     = us_banner( tr( "Run IDs:"                  ) );
    QLabel* lb_triples    = us_banner( tr( "Cell / Channel / Wavelength:" ) );
 
@@ -1027,37 +1027,40 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    dat1File = dataFile;
    lis1File = listFile;
 
-   QFile fileo( dataFile );
+   QFile dfile( dataFile );
 
-   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   if ( ! dfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      qDebug() << "***Error opening output file" << dataFile;
       return;
+   }
 
-   QTextStream ts( &fileo );
+   QTextStream tsd( &dfile );
 
    int nplots = pdistrs.size();
    int maxnvl = 0;
    line       = "";
       
    for ( int ii = 0; ii < nplots; ii++ )
-   {
+   {  // Accumulate long descriptions and build header line
       maxnvl     = qMax( maxnvl, pdistrs[ ii ].dsedcs.size() );
       QString pd = pdisIDs[ ii ];
       pdlong << pd;
-      pd         = pd.section( ":", 0, 0 );
-      line      += pd;
+      pd         = pd.section( ":", 0, 0 ).simplified();
+      line      += pd + ".X " + pd + ".Y"; // X,Y header entries for contributor
       if ( ii < ( nplots - 1 ) )
          line     += "  ";
       else
          line     += "\n";
    }
-   ts << line;
+   tsd << line;                             // Write header line
 
    line       = "";
 
    for ( int jj = 0; jj < maxnvl; jj++ )
-   {
+   {  // Build and write svalue+boundary data line
       for ( int ii = 0; ii < nplots; ii++ )
-      {
+      {  // Add each X,Y data pair
          int nvals   = pdistrs[ ii ].dsedcs.size();
          double* xx  = pdistrs[ ii ].dsedcs.data();
          double* yy  = pdistrs[ ii ].bfracs.data();
@@ -1068,24 +1071,27 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
          line       += QString().sprintf( "%12.5f %10.5f", sval, boun );
       }
       line       += "\n";
-      ts << line;
+      tsd << line;                           // Write data line
    }
 
-   fileo.close();
+   dfile.close();
 
    // Write list-of-included file
-   QFile filel( listFile );
-   if ( ! filel.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   QFile lfile( listFile );
+   if ( ! lfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      qDebug() << "***Error opening output file" << listFile;
       return;
-   QTextStream tl( &filel );
+   }
+   QTextStream tsl( &lfile );
 
    for ( int ii = 0; ii < nplots; ii++ )
-   {
+   {  // Build and write each long-description line
       line       = pdlong[ ii ] + "\n";
-      tl << line;
+      tsl << line;
    }
 
-   filel.close();
+   lfile.close();
 
    return;
 }
