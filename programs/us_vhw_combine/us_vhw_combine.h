@@ -69,6 +69,8 @@ class US_vHW_Combine : public US_Widgets
 
       QString        runID;
       QString        triple;
+      QString        dat1File;
+      QString        lis1File;
 
       int            dbg_level;
 
@@ -88,6 +90,7 @@ class US_vHW_Combine : public US_Widgets
       void update_disk_db ( bool );
       void fill_in_desc   ( QTextStream&, QTextStream&, DistrDesc&,
                             bool, int );
+      void write_data     ( QString&, QString&, int& );
       QString expandedTriple ( QString );
       QString collapsedTriple( QString );
 
