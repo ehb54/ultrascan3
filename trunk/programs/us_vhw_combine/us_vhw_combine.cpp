@@ -314,7 +314,7 @@ DbgLv(1) << "  epath" << epath;
          runid          = runids[ ii ];
          QString rundir = resdir + runid + "/";
 
-         QStringList datfilt( "vHW.*distrib.dat" );
+         QStringList datfilt( "vHW.*s-c-distrib.dat" );
          QStringList dfiles = QDir( rundir )
             .entryList( datfilt, QDir::Files, QDir::Name );
 
@@ -519,10 +519,17 @@ void US_vHW_Combine::save( void )
    QString fdir     = US_Settings::reportDir() + "/" + runID;
    QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
+   QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.dat";
+   QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";
    QString plotFile = fdir + "/" + fnamsvg;
+   QString dataFile = fdir + "/" + fnamdat;
+   QString listFile = fdir + "/" + fnamlst;
    QStringList prunids;
    QList< int > prndxs;
-   QString svmsg   = tr( "Saved:\n    " ) + fnampng + "\n    " + fnamsvg + "\n";
+   QString svmsg   = tr( "Saved:\n    " ) + fnampng + "\n    "
+                                          + fnamsvg + "\n    "
+                                          + fnamdat + "\n    "
+                                          + fnamlst + "\n";
 
    // Look for multiple run IDs
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
@@ -547,6 +554,7 @@ void US_vHW_Combine::save( void )
 
    int     iruns   = 0;
    int     nruns   = prunids.size();
+   int     jdist   = 0;
 
    while( iruns < nruns )
    {
@@ -555,8 +563,9 @@ void US_vHW_Combine::save( void )
          QDir().mkpath( fdir );
       }
 
-      // Save plot file as SVG and as PNG
+      // Save plot file as SVG and as PNG; write data and list files
       write_plot( plotFile, data_plot1 );
+      write_data( dataFile, listFile, iruns );
       svmsg += tr( "in directory:" ) + "\n    " + fdir + "\n";
 
       if ( dkdb_cntrls->db() )
@@ -605,6 +614,8 @@ DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
          freport.runID          = runID;
          freport.saveDocumentFromFile( fdir, fnamsvg, &db, idEdit, trdesc );
          freport.saveDocumentFromFile( fdir, fnampng, &db, idEdit, trdesc );
+         freport.saveDocumentFromFile( fdir, fnamdat, &db, idEdit, trdesc );
+         freport.saveDocumentFromFile( fdir, fnamlst, &db, idEdit, trdesc );
 DbgLv(1) << "SV:runID,idEdit,fnamsvg" << runID << idEdit << fnamsvg;
          if ( iruns == ( nruns - 1 ) )
             svmsg += tr( "\nThe plot was also saved to the database" );
@@ -613,10 +624,12 @@ DbgLv(1) << "SV:runID,idEdit,fnamsvg" << runID << idEdit << fnamsvg;
       if ( ++iruns >= nruns )  break;
 
       runID         = prunids[ iruns ];
-      int jj        = prndxs [ iruns ];
-      trname        = pdistrs[ jj ].triple;
+      jdist         = prndxs [ iruns ];
+      trname        = pdistrs[ jdist ].triple;
       fdir          = US_Settings::reportDir() + "/" + runID;
       plotFile      = fdir + "/" + fnamsvg;
+      dataFile      = fdir + "/" + fnamdat;
+      listFile      = fdir + "/" + fnamlst;
    }
 
    // Report saved files
@@ -995,5 +1008,85 @@ DbgLv(1) << "  kk sed frac" << ddesc.esedcs[kk] << ddesc.efreqs[kk];
    {  // Calculate envelope data from distribution data
       envel_data( ddesc );
    }
+}
+
+// Write data and list report files
+void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
+      int& irun )
+{
+   if ( irun > 0 )
+   {  // After first/only time:  just make a copy of the files
+      QFile( dat1File ).copy( dataFile );
+      QFile( lis1File ).copy( listFile );
+      return;
+   }
+
+   // First/only time through:  compute the data and create files
+   QStringList pdlong;
+   QString line;
+   dat1File = dataFile;
+   lis1File = listFile;
+
+   QFile fileo( dataFile );
+
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream ts( &fileo );
+
+   int nplots = pdistrs.size();
+   int maxnvl = 0;
+   line       = "";
+      
+   for ( int ii = 0; ii < nplots; ii++ )
+   {
+      maxnvl     = qMax( maxnvl, pdistrs[ ii ].dsedcs.size() );
+      QString pd = pdisIDs[ ii ];
+      pdlong << pd;
+      pd         = pd.section( ":", 0, 0 );
+      line      += pd;
+      if ( ii < ( nplots - 1 ) )
+         line     += "  ";
+      else
+         line     += "\n";
+   }
+   ts << line;
+
+   line       = "";
+
+   for ( int jj = 0; jj < maxnvl; jj++ )
+   {
+      for ( int ii = 0; ii < nplots; ii++ )
+      {
+         int nvals   = pdistrs[ ii ].dsedcs.size();
+         double* xx  = pdistrs[ ii ].dsedcs.data();
+         double* yy  = pdistrs[ ii ].bfracs.data();
+         int kk      = qMin( jj, ( nvals - 1 ) );
+         double sval = xx[ kk ];
+         double boun = yy[ kk ];
+
+         line       += QString().sprintf( "%12.5f %10.5f", sval, boun );
+      }
+      line       += "\n";
+      ts << line;
+   }
+
+   fileo.close();
+
+   // Write list-of-included file
+   QFile filel( listFile );
+   if ( ! filel.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+   QTextStream tl( &filel );
+
+   for ( int ii = 0; ii < nplots; ii++ )
+   {
+      line       = pdlong[ ii ] + "\n";
+      tl << line;
+   }
+
+   filel.close();
+
+   return;
 }
 

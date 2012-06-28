@@ -63,6 +63,8 @@
     <report name="eqfit" label="Equilibrium Fit Analysis" />
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
     <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
+    <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
+    <report name="combo-list-include" label="Combo List of Included Sets" />
     <report name="pseudo3d_ff0_s" label="Pseudo3d ff0_vs_s Distribution" />
     <report name="pseudo3d_ff0_MW" label="Pseudo3d ff0_vs_MW Distribution" />
     <report name="pseudo3d_vbar_s" label="Pseudo3d vbar_vs_s Distribution" />
