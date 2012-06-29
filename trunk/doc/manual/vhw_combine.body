@@ -91,7 +91,7 @@
         </li>
             
         <li>
-            <b>Save Plot to Project:</b> The name shown to the right of this
+            <b>Save Plot under Project:</b> The name shown to the right of this
             label specifies the project subdirectory under which the combination
             is to be saved. By default, the name shown is the first run
             selected for plotting, but this can be changed by the user to any

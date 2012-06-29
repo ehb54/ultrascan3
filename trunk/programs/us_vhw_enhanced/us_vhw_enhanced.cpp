@@ -1587,9 +1587,22 @@ void US_vHW_Enhanced::add_group_info( )
 // write a file of vHW extrapolation data
 void US_vHW_Enhanced::write_vhw()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
-      + QString( triples.at( row ) ).replace( " / ", "" )
-      + ".extrap.dat";
+   QString dirres   = US_Settings::resultDir();
+   QString dirrep   = US_Settings::reportDir();
+   QString dirname  = dirres + "/" + d->runID;
+   QString dirrept  = dirrep + "/" + d->runID;
+
+   QDir dirr( dirres );
+   QDir dirp( dirrep );
+
+   if ( ! dirr.exists( dirname ) )
+      dirr.mkpath( dirname );
+
+   if ( ! dirp.exists( dirrept ) )
+      dirp.mkpath( dirrept );
+
+   QString filename = dirname + "/vHW."
+      + QString( triples.at( row ) ).replace( " / ", "" ) + ".extrap.dat";
 
    QFile   res_f( filename );
    double  sedc;
