@@ -580,7 +580,7 @@ void US_vHW_Combine::save( void )
          QStringList files = QDir( resdir )
                .entryList( ffilt, QDir::Files, QDir::Name );
          QString      efname;
-         QString      trdesc;
+         QString      trdesc = "Combined Analyses";
 
          for ( int ii = 0; ii < files.count(); ii++ )
          {  // Look for files that match the edit file template
@@ -616,7 +616,8 @@ DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
          freport.saveDocumentFromFile( fdir, fnampng, &db, idEdit, trdesc );
          freport.saveDocumentFromFile( fdir, fnamdat, &db, idEdit, trdesc );
          freport.saveDocumentFromFile( fdir, fnamlst, &db, idEdit, trdesc );
-DbgLv(1) << "SV:runID,idEdit,fnamsvg" << runID << idEdit << fnamsvg;
+DbgLv(1) << "SV:runID,idEdit,fnamsvg,trdesc" << runID << idEdit << fnamsvg
+   << trdesc;
          if ( iruns == ( nruns - 1 ) )
             svmsg += tr( "\nThe plot was also saved to the database" );
       }
