@@ -85,6 +85,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLineEdit     *le_sample_rotations;
 
       QCheckBox     *cb_save_pdbs;
+      QCheckBox     *cb_memory_conserve;
 
       QProgressBar  *progress;
 
