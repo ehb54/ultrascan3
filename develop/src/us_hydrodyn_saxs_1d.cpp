@@ -1111,7 +1111,7 @@ void US_Hydrodyn_Saxs_1d::start()
       // for each atom, compute presence in 3d space defined by deltaR
       editor_msg( "gray", QString( tr( "Computing occupancy" ) ) );
 
-      map < double, map < double , map < double, bool > > > occupancy;
+      map < float, map < float , map < float, bool > > > occupancy;
       for ( unsigned int a = 0; a < atoms.size(); a++ )
       {
          // occupy sphere defined by radius in resolution of deltaR
@@ -1141,7 +1141,7 @@ void US_Hydrodyn_Saxs_1d::start()
                       ( x[ 2 ] - atoms[ a ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 2 ] ) <= 
                       atoms[ a ].radius * atoms[ a ].radius )
                   {
-                     occupancy[ x[ 0 ] ][ x[ 1 ] ][ x[ 2 ] ] = true;
+                     occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ][ (float) x[ 2 ] ] = true;
                   }
                }
             }
@@ -1258,24 +1258,24 @@ void US_Hydrodyn_Saxs_1d::start()
          Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
          Q[ 2 ] = 0e0;
 
-         for ( map < double, map < double , map < double, bool > > >::iterator it = occupancy.begin();
+         for ( map < float, map < float , map < float, bool > > >::iterator it = occupancy.begin();
                it != occupancy.end();
                it++ )
          {
-            for ( map < double , map < double, bool > >::iterator it2 = it->second.begin();
+            for ( map < float , map < float, bool > >::iterator it2 = it->second.begin();
                   it2 != it->second.end();
                   it2++ )
             {
-               for ( map < double, bool >::iterator it3 = it2->second.begin();
+               for ( map < float, bool >::iterator it3 = it2->second.begin();
                      it3 != it2->second.end();
                      it3++ )
                {
                   if ( it3->second )
                   {
                      double QdotR = 
-                        Q[ 0 ] * it->first +
-                        Q[ 1 ] * it2->first +
-                        Q[ 2 ] * it3->first;
+                        Q[ 0 ] * (double) it->first +
+                        Q[ 1 ] * (double) it2->first +
+                        Q[ 2 ] * (double) it3->first;
 
                      complex < double > iQdotR = complex < double > ( 0e0, QdotR );
 
