@@ -15,7 +15,6 @@
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qtable.h>
-#include <qimage.h>
 
 #include "us_util.h"
 
@@ -30,40 +29,15 @@
 #include <complex>
 
 #include "us_hydrodyn_saxs.h"
-#include "qwt_wheel.h"
+
+#include <qwt_plot.h>
+#ifdef QT4
+# include "qwt_legend.h"
+# include "qwt_plot_grid.h"
+# include "qwt_plot_curve.h"
+#endif
 
 using namespace std;
-
-struct ush1d_data
-{
-#ifdef WIN32
-  #pragma warning ( disable: 4251 )
-#endif
-      vector < vector < complex < double > > >   data;
-#ifdef WIN32
-  #pragma warning ( default: 4251 )
-#endif
-
-      QImage         i_2d;
-
-      double         lambda;
-
-      double         beam_center_pixels_height;
-      double         beam_center_pixels_width;
-      double         beam_center_height;
-      double         beam_center_width;
-
-      int            detector_pixels_height;
-      int            detector_pixels_width;
-      double         detector_height;
-      double         detector_width;
-      double         detector_height_per_pixel;
-      double         detector_width_per_pixel;
-
-      double         atomic_scaling;
-
-      double         detector_distance;
-};
 
 class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 {
@@ -96,19 +70,16 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLineEdit     *le_detector_distance;
 
       QLabel        *lbl_detector_geometry;
-      QLineEdit     *le_detector_height;
       QLineEdit     *le_detector_width;
 
       QLabel        *lbl_detector_pixels;
-      QLineEdit     *le_detector_pixels_height;
       QLineEdit     *le_detector_pixels_width;
 
-      QLabel        *lbl_beam_center;
-      QLineEdit     *le_beam_center_pixels_height;
-      QLineEdit     *le_beam_center_pixels_width;
+      QLabel        *lbl_rho0;
+      QLineEdit     *le_rho0;
 
-      QLabel        *lbl_atomic_scaling;
-      QLineEdit     *le_atomic_scaling;
+      QLabel        *lbl_deltaR;
+      QLineEdit     *le_deltaR;
 
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
@@ -117,11 +88,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       QProgressBar  *progress;
 
-      QPushButton   *pb_integrate;
-
-      QLabel        *lbl_2d;
-      QwtWheel      *qwtw_wheel;
-      QLabel        *lbl_wheel_pos;
+      QLabel        *lbl_1d;
 
       QPushButton   *pb_info;
       QPushButton   *pb_start;
@@ -130,6 +97,15 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QFont         ft;
       QTextEdit     *editor;
       QMenuBar      *m;
+
+      QwtPlot       *plot_saxs;
+      ScrollZoomer  *plot_saxs_zoomer;
+#ifdef QT4
+      QwtPlotGrid   *grid_pr;
+      QwtPlotGrid   *grid_saxs;
+#endif
+      QPushButton   *pb_save_data;
+      QPushButton   *pb_to_somo;
 
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
@@ -145,7 +121,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       void             run_one();
 
       bool          validate( bool quiet = false );
-      void          reset_2d();
+      void          reset_1d();
       bool          update_image();
 
       saxs_options *our_saxs_options;
@@ -155,7 +131,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      vector < vector < complex < double > > >        data;
+      vector < complex < double > >                   data;
 
       vector < atom >                                 atom_list;
       vector < hybridization >                        hybrid_list;
@@ -170,41 +146,29 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       map < QString, atom >                           atom_map;
       map < QString, QString >                        residue_atom_hybrid_map;
 
-      vector < ush1d_data >                           data_stack;
-
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-      void           compute_variables();
-      void           report_variables();
-      double         q_of_pixel( int pixels_height, int pixels_width );
-      double         q_of_pixel( double height    , double width );
+      void                                            compute_variables();
+      void                                            report_variables();
+      double                                          q_of_pixel( int pixels_width );
+      double                                          q_of_pixel( double width );
 
-      QImage         i_2d;
+      double                                          lambda;
 
-      double         lambda;
+      int                                             detector_pixels_width;
+      double                                          detector_width;
+      double                                          detector_width_per_pixel;
 
-      double         beam_center_pixels_height;
-      double         beam_center_pixels_width;
-      double         beam_center_height;
-      double         beam_center_width;
+      double                                          rho0;
+      double                                          deltaR;
 
-      int            detector_pixels_height;
-      int            detector_pixels_width;
-      double         detector_height;
-      double         detector_width;
-      double         detector_height_per_pixel;
-      double         detector_width_per_pixel;
+      double                                          detector_distance;
 
-      double         atomic_scaling;
-
-      double         detector_distance;
-
-      void           push();
-      void           set_pos( unsigned int i );
-
-      unsigned int   last_wheel_pos;
+      vector < QColor >                               plot_colors;
+      unsigned int                                    plot_count;
+      vector < double >                               total_modulii;
 
    private slots:
 
@@ -212,26 +176,23 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       void update_lambda                      ( const QString & );
       void update_detector_distance           ( const QString & );
-      void update_detector_height             ( const QString & );
       void update_detector_width              ( const QString & );
-      void update_detector_pixels_height      ( const QString & );
       void update_detector_pixels_width       ( const QString & );
-      void update_beam_center_pixels_height   ( const QString & );
-      void update_beam_center_pixels_width    ( const QString & );
       void update_sample_rotations            ( const QString & );
-
-      void adjust_wheel ( double );
+      void update_rho0                        ( const QString & );
+      void update_deltaR                      ( const QString & );
 
       void info();
 
       void start();
       void stop();
 
-      void integrate();
-
       void clear_display();
       void update_font();
       void save();
+
+      void save_data();
+      void to_somo();
 
       void cancel();
       void help();

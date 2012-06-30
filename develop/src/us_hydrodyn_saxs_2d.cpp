@@ -1065,6 +1065,7 @@ void US_Hydrodyn_Saxs_2d::start()
    for ( unsigned int r = 0; r < rotations.size(); r++ )
    {
       editor_msg( "gray", tr( "Initializing data" ) );
+      // cout << tr( "Initializing data" ) << endl;
       data.resize( i_2d.width() );
       for ( int i = 0; i < i_2d.width(); i++ )
       {
@@ -1074,7 +1075,6 @@ void US_Hydrodyn_Saxs_2d::start()
             data[ i ][ j ] = complex < double > ( 0.0, 0.0 );
          }
       }
-
       if ( rotations.size() > 1 )
       {
          transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
@@ -1132,6 +1132,7 @@ void US_Hydrodyn_Saxs_2d::start()
             update_enables();
             return;
          }
+
 
 #if defined( UHS2D_ROTATIONS_DEBUG )
          for ( unsigned int a = 0; a < atom_positions.size(); a++ )
@@ -1239,11 +1240,15 @@ void US_Hydrodyn_Saxs_2d::start()
                ts << "ENDMDL\n";
                f.close();
                editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+               // cout << QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) << endl;
+               
             }
          }
       }
 
       editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+
+      // cout << QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) << endl;
 
       // for each atom, compute scattering factor for each element on the detector
 
@@ -1251,6 +1256,7 @@ void US_Hydrodyn_Saxs_2d::start()
       {
          progress->setProgress( a + r * atoms.size(), atoms.size() * rotations.size() );
          editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+         // cout << QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) << endl;
          qApp->processEvents();
          for ( unsigned int i = 0; i < data.size(); i++ )
          {
@@ -1263,7 +1269,7 @@ void US_Hydrodyn_Saxs_2d::start()
                vector < double > Q( 3 );
                Q[ 0 ] = 2.0 * M_PI * ( pixpos[ 0 ]       - ( double ) atoms[ a ].pos[ 0 ] );
                Q[ 1 ] = 2.0 * M_PI * ( pixpos[ 1 ]       - ( double ) atoms[ a ].pos[ 1 ] );
-               Q[ 2 ] = 2.0 * M_PI * ( detector_distance - ( double ) atoms[ a ].pos[ 1 ] );
+               Q[ 2 ] = 2.0 * M_PI * ( detector_distance - ( double ) atoms[ a ].pos[ 2 ] ); // ?? I had 1 here
                
                vector < double > Rv( 3 );
                Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
@@ -1568,7 +1574,7 @@ void US_Hydrodyn_Saxs_2d::compute_variables()
    atomic_scaling                = le_atomic_scaling            ->text().toDouble();
 
    detector_height_per_pixel     = detector_height / detector_pixels_height;
-   detector_width_per_pixel      = detector_width  / detector_pixels_height;
+   detector_width_per_pixel      = detector_width  / detector_pixels_width;
 
    beam_center_height            = beam_center_pixels_height * detector_height_per_pixel;
    beam_center_width             = beam_center_pixels_width  * detector_width_per_pixel ;

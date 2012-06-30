@@ -85,17 +85,38 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
       }
    }
 
+#if defined( DEBUG_ALIGN )
+   puts( "svd\n" );
+   printf( "det H %g\n", det( H ) );
+#endif
    JAMA::SVD < float >    svd( H );
    TNT::Array2D < float > U(3, 3);
    TNT::Array2D < float > V(3, 3);
+
+#if defined( DEBUG_ALIGN )
+   printf( "iter for svd %s\n", svd.over_iter_limit ? "true" : "no, it's ok" );
+   puts( "getU\n" );
+#endif
    svd.getU( U );
+#if defined( DEBUG_ALIGN )
+   puts( "getV\n" );
+#endif
    svd.getV( V );
 
+#if defined( DEBUG_ALIGN )
+   puts( "transpose\n" );
+#endif
    // the rotation matrix is R = VU^T
    TNT::Array2D < float > UT = transpose( U );
    TNT::Array2D < float > rot(3, 3);
+#if defined( DEBUG_ALIGN )
+   puts( "mat mult\n" );
+#endif
    rot = matmult( V, UT );
 
+#if defined( DEBUG_ALIGN )
+   puts( "check for reflection\n" );
+#endif
    // check for reflection
    if ( det( rot ) < 0) {
       TNT::Array2D < float > VT = transpose( V );
@@ -144,7 +165,7 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    cout << "test on transform_from:\n";
    vector < point > test_to( save_from.size() );
-   for ( int i = 0; i < save_from.size(); i++ )
+   for ( int i = 0; i < (int) save_from.size(); i++ )
    {
       for ( int j = 0; j < 3; j++ )
       {

@@ -25,12 +25,29 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption( tr( "US-SOMO: SAXS 2D Simulation" ) );
+   setCaption( tr( "US-SOMO: SAXS 1D Simulation" ) );
 
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_1d_widget = true;
    unit = ((US_Hydrodyn *) us_hydrodyn)->hydro.unit;
+
+   plot_colors.clear();
+   plot_colors.push_back(Qt::yellow);
+   plot_colors.push_back(Qt::green);
+   plot_colors.push_back(Qt::cyan);
+   plot_colors.push_back(Qt::blue);
+   plot_colors.push_back(Qt::red);
+   plot_colors.push_back(Qt::magenta);
+   plot_colors.push_back(Qt::darkYellow);
+   plot_colors.push_back(Qt::darkGreen);
+   plot_colors.push_back(Qt::darkCyan);
+   plot_colors.push_back(Qt::darkBlue);
+   //   plot_colors.push_back(Qt::darkRed);
+   plot_colors.push_back(Qt::darkMagenta);
+   plot_colors.push_back(Qt::white);
+
+   plot_saxs_zoomer = (ScrollZoomer *)0;
 
    our_saxs_options            = saxs_window->our_saxs_options;
    atom_list                   = saxs_window->atom_list;
@@ -68,7 +85,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    int minHeight1 = 30;
    int minHeight3 = 30;
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS 2D Simulation" ), this);
+   lbl_title = new QLabel( tr( "US-SOMO: SAXS 1D Simulation" ), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
@@ -86,6 +103,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_atom_file->setAlignment(Qt::AlignVCenter);
    le_atom_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_atom_file->setMinimumWidth( 100 );
 
    lbl_lambda = new QLabel(tr(" Wavelength of beam (A):"), this );
    lbl_lambda->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -105,79 +123,60 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_detector_distance = new QLineEdit( this, "Detector_Distance Line Edit");
-   le_detector_distance->setText( QString( "" ).sprintf("%g", 10.0 ));
+   le_detector_distance->setText( QString( "" ).sprintf("%g", 1.33 ));
    le_detector_distance->setAlignment(Qt::AlignVCenter);
    le_detector_distance->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_distance, SIGNAL(textChanged(const QString &)), SLOT(update_detector_distance(const QString &)));
 
-   lbl_detector_geometry = new QLabel(tr(" Detector height, width (mm):"), this );
+   lbl_detector_geometry = new QLabel(tr(" Detector width (mm):"), this );
    lbl_detector_geometry->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_geometry->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_detector_geometry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_height = new QLineEdit( this, "Detector_Height Line Edit");
-   le_detector_height->setText( QString( "" ).sprintf("%g", 10.0 ));
-   le_detector_height->setAlignment(Qt::AlignVCenter);
-   le_detector_height->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_detector_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_detector_height, SIGNAL(textChanged(const QString &)), SLOT(update_detector_height(const QString &)));
-
    le_detector_width = new QLineEdit( this, "Detector_Width Line Edit");
-   le_detector_width->setText( QString( "" ).sprintf("%g", 10.0 ));
+   le_detector_width->setText( QString( "" ).sprintf("%g", 165.0 ));
    le_detector_width->setAlignment(Qt::AlignVCenter);
    le_detector_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_detector_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_width(const QString &)));
 
-   lbl_detector_pixels = new QLabel(tr(" Detector pixels count height, width:"), this );
+   lbl_detector_pixels = new QLabel(tr(" Detector pixels count:"), this );
    lbl_detector_pixels->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_pixels->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_detector_pixels->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_pixels_height = new QLineEdit( this, "Detector_Pixels_Height Line Edit");
-   // le_detector_pixels_height->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_height));
-   le_detector_pixels_height->setAlignment(Qt::AlignVCenter);
-   le_detector_pixels_height->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_detector_pixels_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_detector_pixels_height, SIGNAL(textChanged(const QString &)), SLOT(update_detector_pixels_height(const QString &)));
-
    le_detector_pixels_width = new QLineEdit( this, "Detector_Pixels_Width Line Edit");
    // le_detector_pixels_width->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_width));
+   le_detector_pixels_width->setText( QString( "" ).sprintf( "%d", 512 ) );
    le_detector_pixels_width->setAlignment(Qt::AlignVCenter);
    le_detector_pixels_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_detector_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_pixels_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_pixels_width(const QString &)));
 
-   lbl_beam_center = new QLabel(tr(" Beam center over height, width (pixels):"), this );
-   lbl_beam_center->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_beam_center->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_beam_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_rho0 = new QLabel(tr("rho0 (1/A^3):"), this );
+   lbl_rho0->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_rho0->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_beam_center_pixels_height = new QLineEdit( this, "Beam_Center_Pixels_Height Line Edit");
-   le_beam_center_pixels_height->setText( "" );
-   le_beam_center_pixels_height->setAlignment(Qt::AlignVCenter);
-   le_beam_center_pixels_height->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_beam_center_pixels_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_beam_center_pixels_height, SIGNAL(textChanged(const QString &)), SLOT(update_beam_center_pixels_height(const QString &)));
+   le_rho0 = new QLineEdit( this, "rho0 (1/A^3):");
+   le_rho0->setText( QString( "" ).sprintf( "%g", 0.334 ) );
+   le_rho0->setAlignment(Qt::AlignVCenter);
+   le_rho0->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_rho0, SIGNAL(textChanged(const QString &)), SLOT(update_rho0(const QString &)));
 
-   le_beam_center_pixels_width = new QLineEdit( this, "Beam_Center_Pixels_Width Line Edit");
-   le_beam_center_pixels_width->setText( "" );
-   le_beam_center_pixels_width->setAlignment(Qt::AlignVCenter);
-   le_beam_center_pixels_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_beam_center_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_beam_center_pixels_width, SIGNAL(textChanged(const QString &)), SLOT(update_beam_center_pixels_width(const QString &)));
+   lbl_deltaR = new QLabel(tr(" Delta x,y,z for integration (A)"), this );
+   lbl_deltaR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_deltaR->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lbl_atomic_scaling = new QLabel(tr(" Atomic scaling (multiplier):"), this );
-   lbl_atomic_scaling->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_atomic_scaling->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_atomic_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_atomic_scaling = new QLineEdit( this, "Atomic_Scaling Line Edit");
-   le_atomic_scaling->setText( QString( "" ).sprintf( "%u", 1 ) );
-   le_atomic_scaling->setAlignment(Qt::AlignVCenter);
-   le_atomic_scaling->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_atomic_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_deltaR = new QLineEdit( this, "DeltaR Line Edit");
+   le_deltaR->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_deltaR->setAlignment(Qt::AlignVCenter);
+   le_deltaR->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_deltaR, SIGNAL(textChanged(const QString &)), SLOT(update_deltaR(const QString &)));
 
    lbl_sample_rotations = new QLabel(tr(" Sample rotations (best equalized over sphere):"), this );
    lbl_sample_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -203,6 +202,18 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    pb_info->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_info, SIGNAL(clicked()), SLOT(info()));
 
+   pb_save_data = new QPushButton(tr("Average and save results"), this);
+   pb_save_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_save_data->setMinimumHeight(minHeight1);
+   pb_save_data->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_data, SIGNAL(clicked()), SLOT(save_data()));
+
+   pb_to_somo = new QPushButton(tr("To main SAS window"), this);
+   pb_to_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_to_somo->setMinimumHeight(minHeight1);
+   pb_to_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_to_somo, SIGNAL(clicked()), SLOT(to_somo()));
+
    pb_start = new QPushButton(tr("Start"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_start->setMinimumHeight(minHeight1);
@@ -215,30 +226,12 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   pb_integrate = new QPushButton(tr("Integrate and save as 1d .DAT file"), this);
-   pb_integrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_integrate->setMinimumHeight(minHeight1);
-   pb_integrate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_integrate->setEnabled( false );
-   connect(pb_integrate, SIGNAL(clicked()), SLOT(integrate()));
-
-   lbl_2d = new QLabel( this );
+   lbl_1d = new QLabel( this );
 
    progress = new QProgressBar(this, "Progress");
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress->reset();
-
-   lbl_wheel_pos = new QLabel("0 of 0", this);
-   lbl_wheel_pos->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
-   lbl_wheel_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_wheel_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
-
-   qwtw_wheel = new QwtWheel( this );
-   qwtw_wheel->setMass         ( 1.0 );
-   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
-   qwtw_wheel->setMinimumWidth ( 2 * minHeight1 );
-   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -271,6 +264,58 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
+   plot_saxs = new QwtPlot(this);
+#ifndef QT4
+   // plot_saxs->enableOutline(true);
+   plot_saxs->setOutlinePen(Qt::white);
+   plot_saxs->setOutlineStyle(Qwt::VLine);
+   plot_saxs->enableGridXMin();
+   plot_saxs->enableGridYMin();
+#else
+   grid_saxs = new QwtPlotGrid;
+   grid_saxs->enableXMin( true );
+   grid_saxs->enableYMin( true );
+#endif
+   plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+#ifndef QT4
+   plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_saxs->attach( plot_saxs );
+#endif
+   plot_saxs->setAxisTitle( QwtPlot::xBottom, false /* cb_guinier->isChecked() */ ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   false /* cb_kratky ->isChecked() */ ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+#ifndef QT4
+   plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_saxs->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_saxs->setMargin(USglobal->config_list.margin);
+   plot_saxs->setTitle("");
+#ifndef QT4
+   plot_saxs->setAxisOptions(QwtPlot::yLeft, 
+                             false ? // kratky option
+                             QwtAutoScale::None :
+                             QwtAutoScale::Logarithmic
+                             );
+#else
+   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
+                                 false ?  // kratky option
+                                 new QwtLog10ScaleEngine :  
+                                 new QwtLog10ScaleEngine);
+#endif
+   plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
+
    // build layout
    // grid for options
 
@@ -278,35 +323,32 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    {
       int j = 0;
       gl_options->addWidget         ( lbl_atom_file                   , j, 0 );
-      gl_options->addMultiCellWidget( le_atom_file                    , j, j, 1, 2 );
+      gl_options->addWidget         ( le_atom_file                    , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_lambda                      , j, 0 );
-      gl_options->addMultiCellWidget( le_lambda                       , j, j, 1, 2 );
+      gl_options->addWidget         ( le_lambda                       , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_detector_distance           , j, 0 );
-      gl_options->addMultiCellWidget( le_detector_distance            , j, j, 1, 2 );
+      gl_options->addWidget         ( le_detector_distance            , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_detector_geometry           , j, 0 );
-      gl_options->addWidget         ( le_detector_height              , j, 1 );
-      gl_options->addWidget         ( le_detector_width               , j, 2 );
+      gl_options->addWidget         ( le_detector_width               , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_detector_pixels             , j, 0 );
-      gl_options->addWidget         ( le_detector_pixels_height       , j, 1 );
-      gl_options->addWidget         ( le_detector_pixels_width        , j, 2 );
+      gl_options->addWidget         ( le_detector_pixels_width        , j, 1 );
       j++;
-      gl_options->addWidget         ( lbl_beam_center                 , j, 0 );
-      gl_options->addWidget         ( le_beam_center_pixels_height    , j, 1 );
-      gl_options->addWidget         ( le_beam_center_pixels_width     , j, 2 );
+      gl_options->addWidget         ( lbl_rho0                        , j, 0 );
+      gl_options->addWidget         ( le_rho0                         , j, 1 );
       j++;
-      gl_options->addWidget         ( lbl_atomic_scaling              , j, 0 );
-      gl_options->addMultiCellWidget( le_atomic_scaling               , j, j, 1, 2 );
+      gl_options->addWidget         ( lbl_deltaR                      , j, 0 );
+      gl_options->addWidget         ( le_deltaR                       , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
-      gl_options->addMultiCellWidget( le_sample_rotations             , j, j, 1, 2 );
+      gl_options->addWidget         ( le_sample_rotations             , j, 1 );
       j++;
-      gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 2 );
+      gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 1 );
       j++;
-      gl_options->addMultiCellWidget( pb_info                         , j, j, 0, 2 );
+      gl_options->addMultiCellWidget( pb_info                         , j, j, 0, 1 );
       j++;
    }
 
@@ -315,26 +357,29 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    vbl_editor_group->addWidget( frame      );
    vbl_editor_group->addWidget( editor     );
 
-   QBoxLayout *hbl_wheel     = new QHBoxLayout( 0 );
-   hbl_wheel->addWidget( qwtw_wheel );
-   hbl_wheel->addWidget( lbl_wheel_pos );
+   QBoxLayout *hbl_plot_buttons     = new QHBoxLayout( 0 );
+   hbl_plot_buttons->addSpacing( 4 );
+   hbl_plot_buttons->addWidget ( pb_save_data );
+   hbl_plot_buttons->addSpacing( 4 );
+   hbl_plot_buttons->addWidget ( pb_to_somo   );
+   hbl_plot_buttons->addSpacing( 4 );
 
-   QBoxLayout *vbl_image_wheel     = new QVBoxLayout( 0 );
-   vbl_image_wheel->addWidget( lbl_2d );
-   vbl_image_wheel->addLayout( hbl_wheel );
+   QBoxLayout *vbl_plot_area     = new QVBoxLayout( 0 );
+   vbl_plot_area->addWidget( lbl_1d );
+   vbl_plot_area->addWidget( plot_saxs );
+   vbl_plot_area->addLayout( hbl_plot_buttons );
 
-   QHBoxLayout *hbl_editor_2d = new QHBoxLayout( 0 );
-   hbl_editor_2d->addLayout( vbl_editor_group );
-   hbl_editor_2d->addLayout( vbl_image_wheel );
+   QHBoxLayout *hbl_editor_1d = new QHBoxLayout( 0 );
+   hbl_editor_1d->addLayout( vbl_editor_group );
+   hbl_editor_1d->addLayout( vbl_plot_area );
 
    QHBoxLayout *hbl_controls = new QHBoxLayout( 0 );
    hbl_controls->addSpacing(4);
    hbl_controls->addWidget(pb_start);
    hbl_controls->addSpacing(4);
    hbl_controls->addWidget(progress);
-   hbl_controls->addWidget(pb_stop);
    hbl_controls->addSpacing(4);
-   hbl_controls->addWidget(pb_integrate);
+   hbl_controls->addWidget(pb_stop);
    hbl_controls->addSpacing(4);
 
    QVBoxLayout *vbl_target_controls = new QVBoxLayout( 0 );
@@ -351,7 +396,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
-   background->addLayout ( hbl_editor_2d );
+   background->addLayout ( hbl_editor_1d );
    background->addSpacing( 4);
    background->addLayout ( vbl_target_controls );
    background->addSpacing( 4 );
@@ -420,134 +465,114 @@ void US_Hydrodyn_Saxs_1d::save()
 
 bool US_Hydrodyn_Saxs_1d::update_image()
 {
-   if ( !data.size() || !data[ 0 ].size() )
+   if ( !data.size() )
    {
       editor_msg( "red", "Internal error: update_image(): zero data size" );
       return false;
    }
 
-   if ( i_2d.width() != ( int ) data.size() ||
-        i_2d.height() != ( int ) data[ 0 ].size() )
+   if ( detector_pixels_width != ( int ) data.size() )
    {
       editor_msg( "red", "Internal error: update_image(): detector data mismatch" );
       return false;
    }
 
+   if ( detector_pixels_width != ( int ) total_modulii.size() )
+   {
+      editor_msg( "red", "Internal error: update_image(): saved q point count mismatch, did you change the parameters during the run?" );
+      return false;
+   }
+
    // compute modulii
 
-   vector < vector < double > > modulii( data.size() );
+   vector < double > modulii( data.size() );
 
    double max_modulii = 0e0;
    double min_modulii = 1e99;
    
    for ( unsigned int i = 0; i < data.size(); i++ )
    {
-      modulii[ i ].resize( data[ i ].size() );
-      for ( unsigned int j = 0; j < data[ i ].size(); j++ )
+      modulii[ i ] = sqrt( real( data[ i ] * conj( data[ i ] ) ) );
+      if ( max_modulii < modulii[ i ] )
       {
-#if defined( UHS2_IMAGE_DEBUG )
-         cout << QString( "data[ %1 ][ %2 ]: " ).arg( i ).arg( j ) << data[ i ][ j ] << endl;
-         cout << QString( "conj( data[ %1 ][ %2 ]): " ).arg( i ).arg( j ) << conj( data[ i ][ j ] ) << endl;
-         cout << QString( "product( data[ %1 ][ %2 ]*conj(!) ): " ).arg( i ).arg( j ) << 
-             data[ i ][ j ] * conj( data[ i ][ j ] ) << endl;
-         cout << QString( "modulus( data[ %1 ][ %2 ] ): " ).arg( i ).arg( j ) << 
-            real( data[ i ][ j ] * conj( data[ i ][ j ] ) ) << endl;
+         max_modulii = modulii[ i ];
+      }
+      if ( min_modulii > modulii[ i ] )
+      {
+         min_modulii = modulii[ i ];
+      }
+   }
+
+   // now plot this data
+
+//    for ( int i = 0; i < (int)modulii.size(); i++ )
+//    {
+//       printf( "%g,", modulii[ i ]);
+//    }
+//    puts("");
+
+   QString name = "saxs data";
+
+#ifndef QT4
+   long Iq = plot_saxs->insertCurve( name );
+   plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( name );
+   curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-         modulii[ i ][ j ] = real( data[ i ][ j ] * conj( data[ i ][ j ] ) );
-         if ( max_modulii < modulii[ i ][ j ] )
-         {
-            max_modulii = modulii[ i ][ j ];
-         }
-         if ( min_modulii > modulii[ i ][ j ] )
-         {
-            min_modulii = modulii[ i ][ j ];
-         }
-      }
+   vector < double > q( detector_pixels_width );
+   for ( int i = 0; i < ( int ) q.size(); i++ )
+   {
+      q[ i ] = q_of_pixel( i );
    }
 
-   double scaling = 256 / ( max_modulii - min_modulii );
-
-   editor_msg( "gray", 
-               QString( tr( "update_image(): max modulii %1 scaling factor %2\n" ) )
-               .arg( max_modulii ).arg( scaling ) );
-
-   for ( unsigned int i = 0; i < data.size(); i++ )
-   {
-      for ( unsigned int j = 0; j < data[ 0 ].size(); j++ )
-      {
-         int val = (int) ( scaling * ( modulii[ i ][ j ] - min_modulii ) );
-#if defined( UHS2_IMAGE_DEBUG )
-         if ( i < 5 && j < 5 )
-         {
-            cout << QString( "set pixed %1 %2 to qrgb( %3 )\n" ).arg( i ).arg( j ).arg( val );
-         }
+#ifndef QT4
+   plot_saxs->setCurveData(Iq, 
+                           ( double *)& q      [0],
+                           ( double *)& modulii[0],
+                           detector_pixels_width );
+   plot_saxs->setCurvePen(Iq, QPen(plot_colors[plot_count % plot_colors.size()], 2, SolidLine));
+#else
+   curve->setData(
+                  ( double *)& q      [0],
+                  ( doulbe *)& modulii[0],
+                  detector_pixels_width
+                  );
+   curve->setPen( QPen( plot_colors[ plot_count % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->attach( plot_saxs );
 #endif
-         i_2d.setPixel( i, j, qRgb( val, val, val ) );
-      }
-   }
 
-   // place center target
-   int center_h = le_beam_center_pixels_height->text().toInt();
-   int center_w = le_beam_center_pixels_width ->text().toInt();
-
-   if ( 
-       center_h < i_2d.height() &&
-       center_h >= 0 &&
-       center_w < i_2d.width() &&
-       center_w >= 0 )
+   if ( plot_saxs_zoomer )
    {
-      int min_h = center_h - US_SAXS_1D_CENTER_PIXLEN_2;
-      int max_h = center_h + US_SAXS_1D_CENTER_PIXLEN_2;
-      int min_w = center_w - US_SAXS_1D_CENTER_PIXLEN_2;
-      int max_w = center_w + US_SAXS_1D_CENTER_PIXLEN_2;
-
-      if ( min_h < 0 )
-      {
-         min_h = 0;
-      }
-      if ( max_h >= i_2d.height() )
-      {
-         max_h = i_2d.height() - 1;
-      }
-      if ( min_w < 0 )
-      {
-         min_w = 0;
-      }
-      if ( max_w >= i_2d.width() )
-      {
-         max_w = i_2d.width() - 1;
-      }
-      for ( int i = min_h; i <= max_h; i++ )
-      {
-         i_2d.setPixel( i, center_w, qRgb( 255, 0, 0 ) );
-      }
-      for ( int i = min_w; i <= max_w; i++ )
-      {
-         i_2d.setPixel( center_h, i, qRgb( 255, 0, 0 ) );
-      }
+      delete plot_saxs_zoomer;
    }
-      
-   QPixmap pm;
-   pm.convertFromImage( i_2d.smoothScale( 
-                                          i_2d.width() > US_SAXS_1D_PIXMAX ?
-                                          US_SAXS_1D_PIXMAX : 
-                                          ( i_2d.width() < US_SAXS_1D_PIXMIN ?
-                                            US_SAXS_1D_PIXMIN : i_2d.width() ) ,
-                                          i_2d.height() > US_SAXS_1D_PIXMAX ?
-                                          US_SAXS_1D_PIXMAX : 
-                                          ( i_2d.height() < US_SAXS_1D_PIXMIN ?
-                                            US_SAXS_1D_PIXMIN : i_2d.height() ) ,
-                                          QImage::ScaleMin 
-                                          ) );
-   lbl_2d->setPixmap( pm );
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+#ifndef QT4
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+#endif
+
+   plot_saxs->replot();
+   plot_count++;
+
+   for ( int i = 0; i < ( int ) modulii.size(); i++ )
+   {
+      total_modulii[ i ] += modulii[ i ];
+   }
+
    return true;
 }
 
 void US_Hydrodyn_Saxs_1d::start()
 {
-   // compute complex curves, display modulus on 2d array
+   // compute complex curves, display modulus on 1d array
    // compute for each point on detector
+   plot_saxs->clear();
+   plot_count = 0;
 
    compute_variables();
 
@@ -624,7 +649,8 @@ void US_Hydrodyn_Saxs_1d::start()
 
    progress->setProgress( 0, 1 );
 
-   double atomic_scaler     = pow( 10e0, unit ) * atomic_scaling;
+   double atomic_scaler     = pow( 10e0, unit );
+   atomic_scaler = 1e0; // pdbs and Q in Angstrom units
    double atomic_scaler_inv = 1e0 / atomic_scaler;
 
    cout << QString( "atomic scaler %1\n"
@@ -847,7 +873,6 @@ void US_Hydrodyn_Saxs_1d::start()
    atoms[ 0 ].pos[ 1 ] = 0.0f;
    atoms[ 0 ].pos[ 2 ] = 0.0f;
 
-
    vector < point > atom_positions;
 
    for ( unsigned int a = 0; a < atoms.size(); a++ )
@@ -897,17 +922,19 @@ void US_Hydrodyn_Saxs_1d::start()
    double one_over_4pi   = 1.0 / (4.0 * M_PI);
    double one_over_4pi_2 = one_over_4pi * one_over_4pi;
 
+   total_modulii.resize( detector_pixels_width );
+   for ( int i = 0; i < ( int ) total_modulii.size(); i++ )
+   {
+      total_modulii[ i ] = 0e0;
+   }
+
    for ( unsigned int r = 0; r < rotations.size(); r++ )
    {
       editor_msg( "gray", tr( "Initializing data" ) );
-      data.resize( i_2d.width() );
-      for ( int i = 0; i < i_2d.width(); i++ )
+      data.resize( detector_pixels_width );
+      for ( int i = 0; i < ( int ) data.size(); i++ )
       {
-         data[ i ].resize( i_2d.height() );
-         for ( int j = 0; j < i_2d.height(); j++ )
-         {
-            data[ i ][ j ] = complex < double > ( 0.0, 0.0 );
-         }
+         data[ i ] = complex < double > ( 0.0, 0.0 );
       }
 
       if ( rotations.size() > 1 )
@@ -1079,82 +1106,122 @@ void US_Hydrodyn_Saxs_1d::start()
       }
 
       editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+      cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
+
+      // for each atom, compute presence in 3d space defined by deltaR
+      editor_msg( "gray", QString( tr( "Computing occupancy" ) ) );
+
+      map < double, map < double , map < double, bool > > > occupancy;
+      for ( unsigned int a = 0; a < atoms.size(); a++ )
+      {
+         // occupy sphere defined by radius in resolution of deltaR
+         double mins[ 3 ];
+         double maxs[ 3 ];
+         double x[ 3 ];
+//          cout << QString( "atom at %1, %2, %3:\n" )
+//             .arg( atoms[ a ].pos[ 0 ] )
+//             .arg( atoms[ a ].pos[ 1 ] )
+//             .arg( atoms[ a ].pos[ 2 ] );
+
+         for ( int j = 0; j < 3; j++ )
+         {
+            mins[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] - atoms[ a ].radius ) / deltaR ) * deltaR - deltaR;
+            maxs[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] + atoms[ a ].radius ) / deltaR ) * deltaR + deltaR;
+//             cout << QString( "             range coordinate %1: %2 to %3\n" ).arg( j ).arg( mins[ j ] ).arg( maxs[ j ] );
+         }
+         for ( x[ 0 ] = mins[ 0 ]; x[ 0 ] <= maxs[ 0 ]; x[ 0 ] += deltaR )
+         {
+            for ( x[ 1 ] = mins[ 1 ]; x[ 1 ] <= maxs[ 1 ]; x[ 1 ] += deltaR )
+            {
+               for ( x[ 2 ] = mins[ 2 ]; x[ 2 ] <= maxs[ 2 ]; x[ 2 ] += deltaR )
+               {
+                  if ( 
+                      ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) +
+                      ( x[ 1 ] - atoms[ a ].pos[ 1 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 1 ] ) +
+                      ( x[ 2 ] - atoms[ a ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 2 ] ) <= 
+                      atoms[ a ].radius * atoms[ a ].radius )
+                  {
+                     occupancy[ x[ 0 ] ][ x[ 1 ] ][ x[ 2 ] ] = true;
+                  }
+               }
+            }
+         }
+      }
 
       // for each atom, compute scattering factor for each element on the detector
 
       for ( unsigned int a = 0; a < atoms.size(); a++ )
       {
-         progress->setProgress( a + r * atoms.size(), atoms.size() * rotations.size() );
-         editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+//          cout << QString( "atoms progress %1 of %2\n" )
+//             .arg( a + r * ( atoms.size() + detector_pixels_width ) )
+//             .arg( ( atoms.size() + detector_pixels_width ) * rotations.size() );
+         progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+         // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
          qApp->processEvents();
          for ( unsigned int i = 0; i < data.size(); i++ )
          {
-            for ( unsigned int j = 0; j < data[ 0 ].size(); j++ )
-            {
-               vector < double > pixpos( 2 );
-               pixpos[ 0 ] = ( double ) i * detector_width_per_pixel  - beam_center_width;
-               pixpos[ 1 ] = ( double ) j * detector_height_per_pixel - beam_center_height;
+            double pixpos = ( double ) i * detector_width_per_pixel;
+
+            double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+            vector < double > Q( 3 );
+            Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+            Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+            Q[ 2 ] = 0e0;
                
-               vector < double > Q( 3 );
-               Q[ 0 ] = 2.0 * M_PI * ( pixpos[ 0 ]       - ( double ) atoms[ a ].pos[ 0 ] );
-               Q[ 1 ] = 2.0 * M_PI * ( pixpos[ 1 ]       - ( double ) atoms[ a ].pos[ 1 ] );
-               Q[ 2 ] = 2.0 * M_PI * ( detector_distance - ( double ) atoms[ a ].pos[ 1 ] );
+            vector < double > Rv( 3 );
+            Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
+            Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
+            Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
                
-               vector < double > Rv( 3 );
-               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
-               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
-               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+            double QdotR = 
+               Q[ 0 ] * Rv[ 0 ] +
+               Q[ 1 ] * Rv[ 1 ] +
+               Q[ 2 ] * Rv[ 2 ];
                
-               double QdotR = 
-                  Q[ 0 ] * Rv[ 0 ] +
-                  Q[ 1 ] * Rv[ 1 ] +
-                  Q[ 2 ] * Rv[ 2 ];
+            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+            
+            complex < double > expiQdotR = exp( iQdotR );
                
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+            // F_atomic
                
-               complex < double > expiQdotR = exp( iQdotR );
+            saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
-               // F_atomic
-               
-               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
-               
-               double q = q_of_pixel( ( int ) j, ( int ) i );
+            double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
                
 #if defined( UHS2_SCAT_DEBUG )
-               cout << QString( 
-                               "atom                %1\n"
-                               "pixel               %2 %3\n"
-                               "relative to beam    %4 %5\n"
-                               "distance            %6\n"
-                               "q of pixel          %7\n"
-                               "expIQdotr           "
-                               )
-                  .arg( atoms[ a ].hybrid_name )
-                  .arg( i ).arg( j )
-                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-                  .arg( pix_dist_from_beam_center )
-                  .arg( q )
-                  .ascii();
+            cout << QString( 
+                            "atom                %1\n"
+                            "pixel               %2 %3\n"
+                            "relative to beam    %4 %5\n"
+                            "distance            %6\n"
+                            "q of pixel          %7\n"
+                            "expIQdotr           "
+                            )
+               .arg( atoms[ a ].hybrid_name )
+               .arg( i ).arg( j )
+               .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+               .arg( pix_dist_from_beam_center )
+               .arg( q )
+               .ascii();
                
-               cout << expiQdotR << endl;
+            cout << expiQdotR << endl;
 #endif
+            double q_2_over_4pi = q * q * one_over_4pi_2;
                
-               double q_2_over_4pi = q * q * one_over_4pi_2;
+            double F_at =
+               saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+               saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+               saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+               saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+               atoms[ a ].hydrogens * 
+               ( saxsH.c + 
+                 saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+                 saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+                 saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+                 saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
-               double F_at =
-                  saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-                  saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-                  saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-                  saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-                  atoms[ a ].hydrogens * 
-                  ( saxsH.c + 
-                    saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                    saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                    saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                    saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
-               
-               data[ i ][ j ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
-            }
+            data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
             if ( !running ) 
             {
                update_image();
@@ -1162,17 +1229,77 @@ void US_Hydrodyn_Saxs_1d::start()
                return;
             }
          }
-         if ( !update_image() )
-         {
-            running = false;
-         }
+      }
+
+      // now compute subtraction for excluded volume
+      editor_msg( "gray", QString( tr( "Subtracting excluded volume" ) ) );
+
+      for ( unsigned int i = 0; i < data.size(); i++ )
+      {
+//          cout << QString( "occupancy progress %1 of %2\n" )
+//             .arg( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ) )
+//             .arg( ( atoms.size() + detector_pixels_width ) * rotations.size() );
+
+         progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+         qApp->processEvents();
          if ( !running ) 
          {
+            update_image();
             update_enables();
             return;
          }
+
+         double pixpos = ( double ) i * detector_width_per_pixel;
+
+         double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+         vector < double > Q( 3 );
+         Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+         Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+         Q[ 2 ] = 0e0;
+
+         for ( map < double, map < double , map < double, bool > > >::iterator it = occupancy.begin();
+               it != occupancy.end();
+               it++ )
+         {
+            for ( map < double , map < double, bool > >::iterator it2 = it->second.begin();
+                  it2 != it->second.end();
+                  it2++ )
+            {
+               for ( map < double, bool >::iterator it3 = it2->second.begin();
+                     it3 != it2->second.end();
+                     it3++ )
+               {
+                  if ( it3->second )
+                  {
+                     double QdotR = 
+                        Q[ 0 ] * it->first +
+                        Q[ 1 ] * it2->first +
+                        Q[ 2 ] * it3->first;
+
+                     complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+
+                     complex < double > expiQdotR = exp( iQdotR );
+
+                     complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+
+                     data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+                  }
+               }
+            }
+         }
       }
-      push();
+      editor_msg( "gray", QString( tr( "Done ubtracting excluded volume" ) ) );
+            
+      if ( !update_image() )
+      {
+         running = false;
+      }
+      if ( !running ) 
+      {
+         update_enables();
+         return;
+      }
    }
 
 #if defined( UHS2_IMAGE_DEBUG )
@@ -1187,12 +1314,6 @@ void US_Hydrodyn_Saxs_1d::start()
       }
    }
 #endif
-   if ( !update_image() )
-   {
-      running = false;
-      update_enables();
-      return;
-   }
 
    editor_msg( "black", tr( "Completed" ) );
    progress->setProgress(1, 1);
@@ -1222,11 +1343,11 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
 
    compute_variables();
 
-   if ( i_2d.height() <= 0 || i_2d.height() <= 0 )
+   if ( detector_pixels_width <= 0 )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector pixel counts must be positive" ) );
+         editor_msg( "red", tr( "Detector pixel count must be positive" ) );
       }
       is_ok = false;
    }
@@ -1240,11 +1361,11 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
       is_ok = false;
    }
       
-   if ( detector_height <= 0 || detector_width <= 0 )
+   if ( detector_width <= 0 )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector geometry must be positive" ) );
+         editor_msg( "red", tr( "Detector width must be positive" ) );
       }
       is_ok = false;
    }
@@ -1258,15 +1379,6 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
       is_ok = false;
    }
 
-   if ( beam_center_pixels_height >= ( double ) i_2d.height() ||
-        beam_center_pixels_width  >= ( double ) i_2d.width() )
-   {
-      if ( !quiet )
-      {
-         editor_msg( "dark red", tr( "Note: The beam center is outside of the detector" ) );
-      }
-   }
-        
    return is_ok;
 }
 
@@ -1299,68 +1411,28 @@ void US_Hydrodyn_Saxs_1d::update_detector_distance( const QString & /* str */ )
 {
 }
 
-void US_Hydrodyn_Saxs_1d::update_detector_height( const QString & /* str */ )
-{
-}
-
 void US_Hydrodyn_Saxs_1d::update_detector_width( const QString & /* str */ )
 {
 }
 
-void US_Hydrodyn_Saxs_1d::update_detector_pixels_height( const QString & /* str */ )
-{
-   reset_2d();
-}
-
 void US_Hydrodyn_Saxs_1d::update_detector_pixels_width( const QString & /* str */ )
 {
-   reset_2d();
 }
 
-void US_Hydrodyn_Saxs_1d::reset_2d()
+void US_Hydrodyn_Saxs_1d::update_rho0( const QString & /* str */ )
+{
+}
+
+void US_Hydrodyn_Saxs_1d::update_deltaR( const QString & /* str */ )
+{
+}
+
+void US_Hydrodyn_Saxs_1d::reset_1d()
 {
    compute_variables();
-
-   if ( 
-       detector_pixels_height  > 0 &&
-       detector_pixels_width   > 0 &&
-       ( 
-        detector_pixels_height != i_2d.height() ||
-        detector_pixels_width  != i_2d.width() ) )
-   {
-      i_2d.reset();
-      
-      i_2d.create(
-                   detector_pixels_width,
-                   detector_pixels_height,
-                   32
-                   );
-      i_2d.fill( qRgb( 0, 0, 0 ) );
-      QPixmap pm;
-      pm.convertFromImage( i_2d.smoothScale( 
-                                             i_2d.width() > US_SAXS_1D_PIXMAX ?
-                                             US_SAXS_1D_PIXMAX : i_2d.width(),
-                                             i_2d.height() > US_SAXS_1D_PIXMAX ?
-                                             US_SAXS_1D_PIXMAX : i_2d.height(),
-                                             QImage::ScaleMin 
-                                             ) );
-      lbl_2d->setPixmap( pm );
-   }
-}
-
-void US_Hydrodyn_Saxs_1d::update_beam_center_pixels_height( const QString & /* str */ )
-{
-}
-
-void US_Hydrodyn_Saxs_1d::update_beam_center_pixels_width( const QString & /* str */ )
-{
 }
 
 void US_Hydrodyn_Saxs_1d::update_sample_rotations( const QString & /* str */ )
-{
-}
-
-void US_Hydrodyn_Saxs_1d::integrate() 
 {
 }
 
@@ -1389,36 +1461,25 @@ void US_Hydrodyn_Saxs::saxs_1d()
 
 void US_Hydrodyn_Saxs_1d::compute_variables()
 {
-   beam_center_pixels_height     = le_beam_center_pixels_height ->text().toDouble();
-   beam_center_pixels_width      = le_beam_center_pixels_width  ->text().toDouble();
-
-   detector_pixels_height        = le_detector_pixels_height    ->text().toInt();
    detector_pixels_width         = le_detector_pixels_width     ->text().toInt();
 
    detector_distance             = le_detector_distance         ->text().toDouble();
-   detector_height               = le_detector_height           ->text().toDouble() * 1e-3;
    detector_width                = le_detector_width            ->text().toDouble() * 1e-3;
 
    lambda                        = le_lambda                    ->text().toDouble();
-   atomic_scaling                = le_atomic_scaling            ->text().toDouble();
 
-   detector_height_per_pixel     = detector_height / detector_pixels_height;
-   detector_width_per_pixel      = detector_width  / detector_pixels_height;
+   rho0                          = le_rho0                      ->text().toDouble();
+   deltaR                        = le_deltaR                    ->text().toDouble();
 
-   beam_center_height            = beam_center_pixels_height * detector_height_per_pixel;
-   beam_center_width             = beam_center_pixels_width  * detector_width_per_pixel ;
-
+   detector_width_per_pixel      = detector_width  / detector_pixels_width;
+   plot_saxs->setAxisScale( QwtPlot::xBottom, 0, q_of_pixel( detector_pixels_width - 1 ) );
+   plot_saxs->replot();
 }
 
 void US_Hydrodyn_Saxs_1d::report_variables()
 {
-   editor_msg( "black", QString( tr( "Detector height per pixel %1 m, width %2 m" ) )
-               .arg( detector_height_per_pixel )
+   editor_msg( "black", QString( tr( "Detector width per pixel %1 m" ) )
                .arg( detector_width_per_pixel ) );
-
-   editor_msg( "black", QString( tr( "Pixel zero, zero (top, left!) is at %1 m, %2 m from beam center" ) )
-               .arg( -beam_center_height )
-               .arg( -beam_center_width  ) );
 
    editor_msg( "black", 
                QString( tr( "detector distance %1 m\n"
@@ -1426,57 +1487,32 @@ void US_Hydrodyn_Saxs_1d::report_variables()
                .arg( detector_distance )
                .arg( lambda ) );
 
-
    editor_msg( "black",
-               QString( tr( "q of pixel 0, 0: %1\n" ) )
-               .arg( q_of_pixel( (int) 0, (int) 0 ) )
+               QString( tr( "q of pixel 0: %1\n" ) )
+               .arg( q_of_pixel( (int) 0 ) )
                );
 
    editor_msg( "black",
-               QString( tr( "q of pixel 0, %1: %2 (1/A)\n" ) )
+               QString( tr( "q of pixel %1: %2 (1/A)\n" ) )
                .arg( detector_pixels_width - 1 )
-               .arg( q_of_pixel( ( int ) 0, detector_pixels_width - 1 ) )
-               );
-
-   editor_msg( "black",
-               QString( tr( "q of pixel %1, 0: %2 (1/A)\n" ) )
-               .arg( detector_pixels_height - 1 )
-               .arg( q_of_pixel( detector_pixels_height - 1, ( int ) 0 ) )
-               );
-
-
-   editor_msg( "black",
-               QString( tr( "q of pixel %1, %2: %3 (1/A)\n" ) )
-               .arg( detector_pixels_height - 1 )
-               .arg( detector_pixels_width  - 1 )
-               .arg( q_of_pixel( detector_pixels_height - 1, 
-                                 detector_pixels_width  - 1 ) )
-               );
-
-   editor_msg( "black",
-               QString( tr( "q of beam center: %1 (1/A)\n" ) )
-               .arg( q_of_pixel( beam_center_pixels_height * detector_height_per_pixel,
-                                 beam_center_pixels_width  * detector_height_per_pixel ) )
+               .arg( q_of_pixel( detector_pixels_width - 1 ) )
                );
 }
 
-double US_Hydrodyn_Saxs_1d::q_of_pixel( int pixels_height, int pixels_width )
+double US_Hydrodyn_Saxs_1d::q_of_pixel( int pixels_width )
 {
-   return q_of_pixel( pixels_height * detector_height_per_pixel, 
-                      pixels_width  * detector_width_per_pixel );
+   return q_of_pixel( ( double ) pixels_width * detector_width_per_pixel );
 }
 
-double US_Hydrodyn_Saxs_1d::q_of_pixel( double height, double width )
+double US_Hydrodyn_Saxs_1d::q_of_pixel( double width )
 {
-   double delta_height = height - beam_center_height;
-   double delta_width  = width  - beam_center_width;
+   double S_length = sqrt( detector_distance * detector_distance + width * width);
 
-   double distance_to_beam_center = sqrt( delta_height * delta_height +
-                                          delta_width  * delta_width  );
-
-   double theta = atan2( distance_to_beam_center, detector_distance ) * 5e-1;
-
-   return 4e0 * M_PI * sin( theta ) / lambda;
+   vector < double > Q( 2 );
+   Q[ 0 ] = 2.0 * M_PI * ( ( width / S_length ) / lambda );
+   Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+               
+   return sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] );
 }
 
 void US_Hydrodyn_Saxs_1d::info()
@@ -1485,96 +1521,91 @@ void US_Hydrodyn_Saxs_1d::info()
    report_variables();
 }
 
-void US_Hydrodyn_Saxs_1d::push()
+void US_Hydrodyn_Saxs_1d::save_data()
 {
-   ush1d_data this_data;
+   vector < double > q( detector_pixels_width );
+   vector < double > I = total_modulii;
+   for ( int i = 0; i < ( int ) q.size(); i++ )
+   {
+      q[ i ] = q_of_pixel( i );
+      I[ i ] /= ( double ) plot_count;
+   }
 
-   this_data.data                         = data;
-   this_data.i_2d                         = i_2d;
-   this_data.lambda                       = lambda;
-   this_data.beam_center_pixels_height    = beam_center_pixels_height;
-   this_data.beam_center_pixels_width     = beam_center_pixels_width;
-   this_data.beam_center_height           = beam_center_height;
-   this_data.beam_center_width            = beam_center_width;
-   this_data.detector_pixels_height       = detector_pixels_height;
-   this_data.detector_pixels_width        = detector_pixels_width;
-   this_data.detector_height              = detector_height * 1e3;
-   this_data.detector_width               = detector_width  * 1e3;
-   this_data.detector_height_per_pixel    = detector_height_per_pixel;
-   this_data.detector_width_per_pixel     = detector_width_per_pixel;
-   this_data.atomic_scaling               = atomic_scaling;
-   this_data.detector_distance            = detector_distance;
-
-   data_stack.push_back( this_data );
-
-   qwtw_wheel->setRange( 0.5, 
-                         ( double ) data_stack.size() + 0.5, 
-                         data_stack.size() < 10 ? 
-                         data_stack.size() * 0.2 : 1.0 
-                         );
-   qwtw_wheel->setValue( (double) data_stack.size() );
-
-   last_wheel_pos = data_stack.size();
-
-   lbl_wheel_pos->setText( QString( "%1 of %2" )
-                           .arg( data_stack.size() )
-                           .arg( data_stack.size() ) );
-}
-
-void US_Hydrodyn_Saxs_1d::set_pos( unsigned int i )
-{
-   last_wheel_pos = i;
-
-   lbl_wheel_pos->setText( QString( "%1 of %2" )
-                           .arg( i )
-                           .arg( data_stack.size() ) );
-
-   i--;
-
-   if ( i >= data_stack.size() )
+   QString fname = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+   bool ok_to_write = true;
+   if ( fname.isEmpty() )
    {
       return;
    }
 
-   data                         = data_stack[ i ].data;
-   i_2d                         = data_stack[ i ].i_2d;
-   lambda                       = data_stack[ i ].lambda;
-   beam_center_pixels_height    = data_stack[ i ].beam_center_pixels_height;
-   beam_center_pixels_width     = data_stack[ i ].beam_center_pixels_width;
-   beam_center_height           = data_stack[ i ].beam_center_height;
-   beam_center_width            = data_stack[ i ].beam_center_width;
-   detector_pixels_height       = data_stack[ i ].detector_pixels_height;
-   detector_pixels_width        = data_stack[ i ].detector_pixels_width;
-   detector_height              = data_stack[ i ].detector_height;
-   detector_width               = data_stack[ i ].detector_width;
-   detector_height_per_pixel    = data_stack[ i ].detector_height_per_pixel;
-   detector_width_per_pixel     = data_stack[ i ].detector_width_per_pixel;
-   atomic_scaling               = data_stack[ i ].atomic_scaling;
-   detector_distance            = data_stack[ i ].detector_distance;
+   if ( QFile::exists(fname) &&
+        !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+   {
+      
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+      ok_to_write = true;
+   }
 
-   le_lambda                    ->setText( QString( "" ).sprintf( "%g", lambda ) );
-   le_beam_center_pixels_height ->setText( QString( "" ).sprintf( "%g", beam_center_pixels_height ) );
-   le_beam_center_pixels_width  ->setText( QString( "" ).sprintf( "%g", beam_center_pixels_width ) );
-   le_detector_pixels_height    ->setText( QString( "" ).sprintf( "%d", detector_pixels_height ) );
-   le_detector_pixels_width     ->setText( QString( "" ).sprintf( "%d", detector_pixels_width ) );
-   le_detector_height           ->setText( QString( "" ).sprintf( "%g", detector_height ) );
-   le_detector_width            ->setText( QString( "" ).sprintf( "%g", detector_width ) );
-   le_atomic_scaling            ->setText( QString( "" ).sprintf( "%g", atomic_scaling ) );
-   le_detector_distance         ->setText( QString( "" ).sprintf( "%g", detector_distance ) );
+   if ( !ok_to_write )
+   {
+      return;
+   }
    
-   compute_variables();
-   update_image();
+   QFile f( fname );
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      editor_msg( "red", QString( tr( "can not open %1 for writing" ) ).arg( fname ) );
+      return;
+   }
+
+   QTextStream ts( &f );
+
+   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %3 rho0 %4\n" ).arg( le_atom_file->text() ).arg( plot_count ).arg( deltaR ).arg( rho0 );
+   for ( int i = 0; i < ( int ) q.size(); i++ )
+   {
+      ts << QString( "%1 %2\n" ).arg( q[ i ] ).arg( I[ i ] );
+   }
+   f.close();
 }
 
-void US_Hydrodyn_Saxs_1d::adjust_wheel( double pos )
+void US_Hydrodyn_Saxs_1d::to_somo()
 {
-   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).ascii();
-   if ( pos < 1e0 )
+   if ( !activate_saxs_window() )
    {
-      pos = 1e0;
+      return;
    }
-   if ( last_wheel_pos != (unsigned int) pos )
+
+   vector < double > q( detector_pixels_width );
+   vector < double > I = total_modulii;
+   for ( int i = 0; i < ( int ) q.size(); i++ )
    {
-      set_pos( (unsigned int) pos );
+      q[ i ] = q_of_pixel( i );
+      I[ i ] /= ( double ) plot_count;
    }
+
+   saxs_window->plot_one_iqq( q, 
+                              I, 
+                              QString( "%1 rotational average of %2 directions, d3R %3, rho0 %4" )
+                              .arg( le_atom_file->text() )
+                              .arg( plot_count ) 
+                              .arg( deltaR ) 
+                              .arg( rho0 ) 
+                              );
+}
+
+bool US_Hydrodyn_Saxs_1d::activate_saxs_window()
+{
+   if ( !*saxs_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+      raise();
+      setFocus();
+      if ( !*saxs_widget )
+      {
+         editor_msg("red", tr("Could not activate SAXS window!\n"));
+         return false;
+      }
+   }
+   saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
+   return true;
 }

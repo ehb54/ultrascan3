@@ -4063,6 +4063,7 @@ using namespace std;
 
 namespace JAMA
 {
+#define TNT_JAMA_MAX_SVD_ITER 200000
    /** Singular Value Decomposition.
    <P>
    For an m-by-n matrix A with m >= n, the singular value decomposition is
@@ -4091,9 +4092,9 @@ class SVD
 
   public:
 
+        bool over_iter_limit;
 
    SVD (const Array2D<Real> &Arg) {
-
 
       m = Arg.dim1();
       n = Arg.dim2();
@@ -4103,10 +4104,10 @@ class SVD
       V = Array2D<Real>(n,n);
       Array1D<Real> e(n);
       Array1D<Real> work(m);
-	  Array2D<Real> A(Arg.copy());
+      Array2D<Real> A(Arg.copy());
       int wantu = 1;  					/* boolean */
       int wantv = 1;  					/* boolean */
-	  int i=0, j=0, k=0;
+      int i=0, j=0, k=0;
 
       // Reduce A to bidiagonal form, storing the diagonal elements
       // in s and the super-diagonal elements in e.
@@ -4292,11 +4293,17 @@ class SVD
       int pp = p-1;
       int iter = 0;
       Real eps(pow(2.0,-52.0));
+      over_iter_limit = false;
       while (p > 0) {
          int k=0;
-		 int kase=0;
+         int kase=0;
 
          // Here is where a test for too many iterations would go.
+
+         if ( iter > TNT_JAMA_MAX_SVD_ITER )
+         {
+            over_iter_limit = true;
+         }
 
          // This section of the program inspects for
          // negligible elements in the s and e arrays.  On
@@ -4317,7 +4324,7 @@ class SVD
                break;
             }
          }
-         if (k == p-2) {
+         if ( k == p-2 ) {
             kase = 4;
          } else {
             int ks;
@@ -4344,6 +4351,11 @@ class SVD
          k++;
 
          // Perform the task indicated by kase.
+
+         if ( over_iter_limit )
+         {
+            kase = 4;
+         }
 
          switch (kase) {
 
@@ -4506,7 +4518,6 @@ class SVD
          }
       }
    }
-
 
    void getU (Array2D<Real> &A) 
    {
