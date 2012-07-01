@@ -515,7 +515,6 @@ void US_vHW_Combine::save( void )
    QString oproj    = cmb_svproj->currentText();
    QString runID    = ( oproj == "All" ) ? pdistrs[ 0 ].runID : oproj;
    QString trname   = pdistrs[ 0 ].triple;
-   QString trfirst  = pdistrs[ 0 ].triple;
    QString fdir     = US_Settings::reportDir() + "/" + runID;
    QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
@@ -580,7 +579,6 @@ void US_vHW_Combine::save( void )
          QStringList files = QDir( resdir )
                .entryList( ffilt, QDir::Files, QDir::Name );
          QString      efname;
-         QString      trdesc = "Combined Analyses";
 
          for ( int ii = 0; ii < files.count(); ii++ )
          {  // Look for files that match the edit file template
@@ -605,11 +603,12 @@ DbgLv(1) << "SV:   efname" << efname;
             QString editID      = db.value( 0 ).toString();
             idEdit              = editID.toInt();
 DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
-            QString trlast      = pdistrs[ pdistrs.size() - 1 ].triple;
-            trdesc              = "Combined Analyses ("
-               + trfirst + "..." + trlast + ")";
          }
 
+         QString trfirst  = pdistrs[ 0 ].triple;
+         QString trlast   = pdistrs[ pdistrs.size() - 1 ].triple;
+         QString trdesc   = "Combined Analyses (" + trfirst
+            + "..." + trlast + ")";
          US_Report    freport;
          freport.runID          = runID;
          freport.saveDocumentFromFile( fdir, fnamsvg, &db, idEdit, trdesc );
