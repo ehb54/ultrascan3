@@ -171,7 +171,7 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
    vector < rotorInfo > alt_rotor_list;
    if ( !rotor_list ) 
    {
-      printf("reading rotor list\n");
+      // printf("reading rotor list\n");
       readRotorInfo(&alt_rotor_list);
       rotor_list = &alt_rotor_list;
    }
