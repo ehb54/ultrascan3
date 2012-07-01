@@ -1146,7 +1146,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 #endif
 
 // wmc test
-      print_af();
+   // print_af();
 // end test
 
    (*simdata).radius.clear();
