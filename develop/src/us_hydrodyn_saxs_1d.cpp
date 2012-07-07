@@ -1732,8 +1732,8 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
                           "__EOF\n" )
       .arg( rasmol )
       .arg( filepathname )
-      .arg( QString( "" ).sprintf( "%.2f", probe_radius ) )
-      .arg( QString( "" ).sprintf( "%.2f", deltaR ) )
+      .arg( QString( "" ).sprintf( "%.5f", probe_radius ) )
+      .arg( QString( "" ).sprintf( "%.5f", deltaR ) )
       .arg( mapname );
 
    cout << cmd;
