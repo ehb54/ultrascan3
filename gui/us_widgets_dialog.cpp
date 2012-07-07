@@ -294,11 +294,27 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
      }
   }
 #endif
+  QFont vfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+  QFontMetrics fm( vfont );
   counter->setNumButtons( buttons );
   counter->setRange     ( low, high );
   counter->setValue     ( value );
   counter->setPalette   ( US_GuiSettings::normalColor() );
+  counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
+
+  // Set width based on current value and high-value sizes
+  int ncv    = int( log10( value ) ) + 1;
+  int nch    = int( log10( high  ) ) + 1;
+  ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
+  nch        = ( nch > 0 ) ? nch : ( 4 - nch );
+  nch        = qMax( nch, ncv );
+  int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
+  int widh   = fm.width( QString( "12345678901234" ).left( nch ) );
+  counter->adjustSize();
+  int mwidth = counter->width() + widh - widv;
+  counter->resize         ( mwidth, counter->height() );
+  counter->setMinimumWidth( mwidth - fm.width( "A" ) );
 
   return counter;
 }
