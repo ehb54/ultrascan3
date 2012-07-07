@@ -235,6 +235,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT( close() ) );
 
+   QFontMetrics fm( ct_plt_smax->font() );
+   ct_plt_smax->adjustSize();
+   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.width( "12" ) );
+
    // Order plot components on the left side
    spec->addWidget( lb_info1,      s_row++, 0, 1, 2 );
    spec->addWidget( lb_resolu,     s_row,   0 );
@@ -657,10 +661,15 @@ void US_Pseudo3D_Combine::update_plot_smax( double dval )
    // Use logarithmic steps if MW
    if ( ! plot_s )
    {
-      double rinc = qMax( pow( 10.0, qRound( log10( dval ) ) - 2.0 ), 10.0 );
+      double r10p = double( int( log10( dval ) ) - 2 );
+      r10p        = qMax( r10p, 0.0 );
+      double r10v = pow( 10.0, r10p + 2.0 );
+      if ( ( dval - r10v ) <= 0.0 )
+         r10p        = qMax( r10p - 1.0, 0.0 );
+      double rinc = qMax( pow( 10.0, r10p ), 1.0 );
 
-      ct_plt_smin->setRange( 0.0, 1.e+5, rinc );
-      ct_plt_smax->setRange( 0.0, 1.e+8, rinc );
+      ct_plt_smin->setRange( 0.0, 1.e+6, rinc );
+      ct_plt_smax->setRange( 0.0, 1.e+9, rinc );
 //DbgLv(1) << "plt_smax" << plt_smax << " rinc" << rinc;
    }
 }
@@ -1097,12 +1106,11 @@ void US_Pseudo3D_Combine::set_limits()
    rdif      = ( smax - smin ) / 10.0;
    smin     -= rdif;
    smax     += rdif;
-   smin      = ( smin < 0.0 ) ? 0.0 : smin;
    rdif      = ( fmax - fmin ) / 10.0;
    fmin     -= rdif;
    fmax     += rdif;
    double rmin = smax * 10.0;
-   double rinc = pow( 10.0, qRound( log10( smax ) ) - 2.0 );
+   double rinc = pow( 10.0, double( int( log10( smax ) ) - 2 ) );
 
    if ( auto_sxy )
    {  // Set auto limits on X and Y
@@ -1122,6 +1130,7 @@ void US_Pseudo3D_Combine::set_limits()
          ct_plt_smin->setRange( 0.0, rmin, rinc );
          smax       += ( ( smax - smin ) / 100.0 );
          smin       -= ( ( smax - smin ) / 100.0 );
+         smin        = ( smin < 0.0 ) ? 0.0 : smin;
       }
 
       if ( ( smax - smin ) < 1.0e-100 )
@@ -1178,7 +1187,11 @@ void US_Pseudo3D_Combine::set_limits()
       plt_fmin    = ct_plt_fmin->value();
       plt_fmax    = ct_plt_fmax->value();
       ct_plt_smax->setRange( 0.0, rmin, rinc );
-      ct_plt_smin->setRange( 0.0, rmin, rinc );
+
+      if ( plot_s )
+         ct_plt_smin->setRange( -rmin, rmin, rinc );
+      else
+         ct_plt_smin->setRange( 0.0, rmin, rinc );
    }
 }
 
