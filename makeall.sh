@@ -71,9 +71,15 @@ if [ $ISMAC -eq 0 ]; then
   if [ $ISWIN -eq 0 ]; then
     if [ -d somo ]; then
       # insure doxygen skips somo source
-      mv somo ../
+      if [ ! -d tcl ]; then
+        mkdir tcl
+      fi
+      if [ ! -d tk ]; then
+        mkdir tk
+      fi
+      mv somo tcl tk ../
       doxygen >> $DIR/build.log
-      mv ../somo .
+      mv ../somo ../tcl ../tk .
     else
       doxygen >> $DIR/build.log
     fi

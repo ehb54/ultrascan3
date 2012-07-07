@@ -87,7 +87,7 @@ private:
    void assign_investigator( int  );
 };
     
-/*! \class GoalsTab
+/*! \class US_ProjectGuiGoals
     \brief This class forms the content of the Goals tab in the US_Project GUI.
 */
 class US_ProjectGuiGoals : public US_Widgets
