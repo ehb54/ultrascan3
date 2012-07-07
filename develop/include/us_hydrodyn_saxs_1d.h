@@ -81,6 +81,12 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLabel        *lbl_deltaR;
       QLineEdit     *le_deltaR;
 
+      QLabel        *lbl_probe_radius;
+      QLineEdit     *le_probe_radius;
+
+      QLabel        *lbl_threshold;
+      QLineEdit     *le_threshold;
+
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
 
@@ -147,6 +153,11 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       map < QString, atom >                           atom_map;
       map < QString, QString >                        residue_atom_hybrid_map;
 
+      vector < QColor >                               plot_colors;
+      vector < double >                               total_modulii;
+
+      vector < point >                                excluded_volume;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -167,9 +178,16 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       double                                          detector_distance;
 
-      vector < QColor >                               plot_colors;
       unsigned int                                    plot_count;
-      vector < double >                               total_modulii;
+
+      QString                                         errormsg;
+      QString                                         filepathname;
+      QString                                         mapname;
+      bool                                            setup_excluded_volume_map();
+      bool                                            get_excluded_volume_map();
+
+      double                                          probe_radius;
+      double                                          threshold;
 
    private slots:
 
@@ -182,6 +200,8 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       void update_sample_rotations            ( const QString & );
       void update_rho0                        ( const QString & );
       void update_deltaR                      ( const QString & );
+      void update_probe_radius                ( const QString & );
+      void update_threshold                   ( const QString & );
 
       void info();
 

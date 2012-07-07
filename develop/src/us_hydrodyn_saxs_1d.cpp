@@ -3,6 +3,10 @@
 #include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
 
+#if defined( HAS_CBF )
+#  include <cbf.h>
+#endif
+
 #define SLASH QDir::separator()
 
 // configurable max size of 2d detector image
@@ -33,7 +37,7 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_1d_widget = true;
    unit = ((US_Hydrodyn *) us_hydrodyn)->hydro.unit;
-
+   filepathname = saxs_window->model_filepathname;
    plot_colors.clear();
    plot_colors.push_back(Qt::yellow);
    plot_colors.push_back(Qt::green);
@@ -179,6 +183,30 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_deltaR->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_deltaR, SIGNAL(textChanged(const QString &)), SLOT(update_deltaR(const QString &)));
+
+   lbl_probe_radius = new QLabel(tr(" Excluded volume LR probe radius(A)"), this );
+   lbl_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_probe_radius = new QLineEdit( this, "probe radius Line Edit");
+   le_probe_radius->setText( QString( "" ).sprintf( "%g", 1.4 ) );
+   le_probe_radius->setAlignment(Qt::AlignVCenter);
+   le_probe_radius->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_probe_radius, SIGNAL(textChanged(const QString &)), SLOT(update_probe_radius(const QString &)));
+
+   lbl_threshold = new QLabel(tr(" Surface value threshold"), this );
+   lbl_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_threshold = new QLineEdit( this, "threshold Line Edit");
+   le_threshold->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_threshold->setAlignment(Qt::AlignVCenter);
+   le_threshold->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_threshold, SIGNAL(textChanged(const QString &)), SLOT(update_threshold(const QString &)));
 
    lbl_sample_rotations = new QLabel(tr(" Sample rotations (best equalized over sphere):"), this );
    lbl_sample_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -350,6 +378,12 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       j++;
       gl_options->addWidget         ( lbl_deltaR                      , j, 0 );
       gl_options->addWidget         ( le_deltaR                       , j, 1 );
+      j++;
+      gl_options->addWidget         ( lbl_probe_radius                , j, 0 );
+      gl_options->addWidget         ( le_probe_radius                 , j, 1 );
+      j++;
+      gl_options->addWidget         ( lbl_threshold                   , j, 0 );
+      gl_options->addWidget         ( le_threshold                    , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
       gl_options->addWidget         ( le_sample_rotations             , j, 1 );
@@ -592,12 +626,24 @@ void US_Hydrodyn_Saxs_1d::start()
    }
    report_variables();
 
+   if ( !setup_excluded_volume_map() )
+   {
+      editor_msg( "red", errormsg );
+      return;
+   }
+
    vector < vector < double > > rotations;
+
+   editor_msg( "gray", "computing rotations\n" );
+   qApp->processEvents();
 
    {
       using namespace bulatov;
       rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
    }
+
+   editor_msg( "gray", "done computing rotations\n" );
+   qApp->processEvents();
 
 #if defined( UHS2D_ROTATIONS_DEBUG )
    if ( le_sample_rotations->text().toUInt() == 91 ||
@@ -872,6 +918,12 @@ void US_Hydrodyn_Saxs_1d::start()
 
    // place 1st atom at 0,0,0
 
+   // save value for excluded volume
+   point zerooffset;
+   zerooffset.axis[ 0 ] = atoms[ 0 ].pos[ 0 ];
+   zerooffset.axis[ 1 ] = atoms[ 0 ].pos[ 1 ];
+   zerooffset.axis[ 2 ] = atoms[ 0 ].pos[ 2 ];
+
    for ( unsigned int a = 1; a < atoms.size(); a++ )
    {
       atoms[ a ].pos[ 0 ] -= atoms[ 0 ].pos[ 0 ];
@@ -948,7 +1000,23 @@ void US_Hydrodyn_Saxs_1d::start()
 
    for ( unsigned int r = 0; r < rotations.size(); r++ )
    {
+      if ( !get_excluded_volume_map() )
+      {
+         editor_msg( "red", errormsg );
+         running = false;
+         update_enables();
+         return;
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int )excluded_volume.size(); i++ )
+      {
+         excluded_volume[ i ].axis[ 0 ] -= zerooffset.axis[ 0 ];
+         excluded_volume[ i ].axis[ 1 ] -= zerooffset.axis[ 1 ];
+         excluded_volume[ i ].axis[ 2 ] -= zerooffset.axis[ 2 ];
+      }
+
       editor_msg( "gray", tr( "Initializing data" ) );
+      qApp->processEvents();
       data.resize( detector_pixels_width );
       for ( int i = 0; i < ( int ) data.size(); i++ )
       {
@@ -1013,6 +1081,7 @@ void US_Hydrodyn_Saxs_1d::start()
             return;
          }
 
+
 #if defined( UHS2D_ROTATIONS_DEBUG )
          for ( unsigned int a = 0; a < atom_positions.size(); a++ )
          {
@@ -1027,6 +1096,29 @@ void US_Hydrodyn_Saxs_1d::start()
             atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ] * atomic_scaler;
          }
          
+         // and rotate excluded volume (this may have to be done piecemeal to save memory
+         editor_msg( "gray", tr( "Rotating excluded volume" ) );
+         qApp->processEvents();
+
+         if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
+                                                             transform_from, 
+                                                             transform_to, 
+                                                             excluded_volume,
+                                                             result,
+                                                             error_msg,
+                                                             true ) )
+         {
+            editor_msg( "red", error_msg );
+            running = false;
+            update_enables();
+            return;
+         }
+
+         editor_msg( "gray", tr( "Done rotating excluded volume" ) );
+         qApp->processEvents();
+         excluded_volume = result;
+         result.clear();
+
          if ( cb_save_pdbs->isChecked() )
          {
             QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
@@ -1126,179 +1218,16 @@ void US_Hydrodyn_Saxs_1d::start()
       editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
       cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
 
-      if ( cb_memory_conserve->isChecked() )
+      // for each atom, compute scattering factor for each element on the detector
+
+      for ( unsigned int a = 0; a < atoms.size(); a++ )
       {
-         // for each atom, find occupancy overlaps:
-
-         map < float, map < float , map < float, bool > > > overlaps;
-
-         for ( unsigned int a = 0; a < atoms.size() - 1; a++ )
-         {
-            map < float, map < float , map < float, bool > > > occupancy;
-            // occupy sphere defined by radius in resolution of deltaR
-            double mins[ 3 ];
-            double maxs[ 3 ];
-            double x[ 3 ];
-            for ( int j = 0; j < 3; j++ )
-            {
-               mins[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] - atoms[ a ].radius ) / deltaR ) * deltaR - deltaR;
-               maxs[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] + atoms[ a ].radius ) / deltaR ) * deltaR + deltaR;
-            }
-            for ( x[ 0 ] = mins[ 0 ]; x[ 0 ] <= maxs[ 0 ]; x[ 0 ] += deltaR )
-            {
-               for ( x[ 1 ] = mins[ 1 ]; x[ 1 ] <= maxs[ 1 ]; x[ 1 ] += deltaR )
-               {
-                  for ( x[ 2 ] = mins[ 2 ]; x[ 2 ] <= maxs[ 2 ]; x[ 2 ] += deltaR )
-                  {
-                     if ( 
-                         ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) +
-                         ( x[ 1 ] - atoms[ a ].pos[ 1 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 1 ] ) +
-                         ( x[ 2 ] - atoms[ a ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 2 ] ) <= 
-                         atoms[ a ].radius * atoms[ a ].radius )
-                     {
-                        occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ][ (float) x[ 2 ] ] = true;
-                     }
-                  }
-               }
-            }
-            for ( unsigned int a2 = a + 1; a2 < atoms.size(); a2++ )
-            {
-               if ( 
-                   ( atoms[ a ].pos[ 0 ] - atoms[ a2 ].pos[ 0 ] ) * ( atoms[ a ].pos[ 0 ] - atoms[ a2 ].pos[ 0 ] ) +
-                   ( atoms[ a ].pos[ 1 ] - atoms[ a2 ].pos[ 1 ] ) * ( atoms[ a ].pos[ 1 ] - atoms[ a2 ].pos[ 1 ] ) +
-                   ( atoms[ a ].pos[ 2 ] - atoms[ a2 ].pos[ 2 ] ) * ( atoms[ a ].pos[ 2 ] - atoms[ a2 ].pos[ 2 ] ) 
-                   <= ( atoms[ a ].radius + atoms[ a2 ].radius ) * ( atoms[ a ].radius + atoms[ a2 ].radius ) )
-               {
-                  double mins[ 3 ];
-                  double maxs[ 3 ];
-                  double x[ 3 ];
-                  for ( int j = 0; j < 3; j++ )
-                  {
-                     mins[ j ] = (double)( (int) ( atoms[ a2 ].pos[ j ] - atoms[ a2 ].radius ) / deltaR ) * deltaR - deltaR;
-                     maxs[ j ] = (double)( (int) ( atoms[ a2 ].pos[ j ] + atoms[ a2 ].radius ) / deltaR ) * deltaR + deltaR;
-                  }
-                  for ( x[ 0 ] = mins[ 0 ]; x[ 0 ] <= maxs[ 0 ]; x[ 0 ] += deltaR )
-                  {
-                     for ( x[ 1 ] = mins[ 1 ]; x[ 1 ] <= maxs[ 1 ]; x[ 1 ] += deltaR )
-                     {
-                        for ( x[ 2 ] = mins[ 2 ]; x[ 2 ] <= maxs[ 2 ]; x[ 2 ] += deltaR )
-                        {
-                           if ( 
-                               ( x[ 0 ] - atoms[ a2 ].pos[ 0 ] ) * ( x[ 0 ] - atoms[ a2 ].pos[ 0 ] ) +
-                               ( x[ 1 ] - atoms[ a2 ].pos[ 1 ] ) * ( x[ 0 ] - atoms[ a2 ].pos[ 1 ] ) +
-                               ( x[ 2 ] - atoms[ a2 ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a2 ].pos[ 2 ] ) <= 
-                               atoms[ a2 ].radius * atoms[ a2 ].radius &&
-                               occupancy.count( ( (float) x[ 0 ] ) ) &&
-                               occupancy[ (float) x[ 0 ] ].count( ( (float) x[ 1 ] ) ) &&
-                               occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ].count( ( (float) x[ 2 ] ) ) )
-                           {
-                              overlaps[ (float) x[ 0 ] ][ (float) x[ 1 ] ][ (float) x[ 2 ] ] = true;
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                              pts_fnd_overlap++;
-#endif
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-         cout << QString( "overlaps found %1\n" ).arg( pts_fnd_overlap );
-#endif
-
-         // for each atom, compute scattering factor for each element on the detector
-
-         for ( unsigned int a = 0; a < atoms.size(); a++ )
-         {
-            progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            qApp->processEvents();
-            // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
-
-            for ( unsigned int i = 0; i < data.size(); i++ )
-            {
-               double pixpos = ( double ) i * detector_width_per_pixel;
-
-               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-               vector < double > Q( 3 );
-               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-               Q[ 2 ] = 0e0;
-               
-               vector < double > Rv( 3 );
-               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
-               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
-               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
-               
-               double QdotR = 
-                  Q[ 0 ] * Rv[ 0 ] +
-                  Q[ 1 ] * Rv[ 1 ] +
-                  Q[ 2 ] * Rv[ 2 ];
-               
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
-            
-               complex < double > expiQdotR = exp( iQdotR );
-               
-               // F_atomic
-               
-               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
-               
-               double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
-               
-#if defined( UHS2_SCAT_DEBUG )
-               cout << QString( 
-                               "atom                %1\n"
-                               "pixel               %2 %3\n"
-                               "relative to beam    %4 %5\n"
-                               "distance            %6\n"
-                               "q of pixel          %7\n"
-                               "expIQdotr           "
-                               )
-                  .arg( atoms[ a ].hybrid_name )
-                  .arg( i ).arg( j )
-                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-                  .arg( pix_dist_from_beam_center )
-                  .arg( q )
-                  .ascii();
-               
-               cout << expiQdotR << endl;
-#endif
-               double q_2_over_4pi = q * q * one_over_4pi_2;
-               
-               double F_at =
-                  saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-                  saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-                  saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-                  saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-                  atoms[ a ].hydrogens * 
-                  ( saxsH.c + 
-                    saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                    saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                    saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                    saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
-               
-               data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
-
-               if ( !running ) 
-               {
-                  update_image();
-                  update_enables();
-                  return;
-               }
-            }
-         }
-
-         // now subtract excluded volume
+         progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+         qApp->processEvents();
+         // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
 
          for ( unsigned int i = 0; i < data.size(); i++ )
          {
-            progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            qApp->processEvents();
-
-            map < float, map < float , map < float, bool > > > overlaps_used = overlaps;
-
             double pixpos = ( double ) i * detector_width_per_pixel;
 
             double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
@@ -1308,306 +1237,110 @@ void US_Hydrodyn_Saxs_1d::start()
             Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
             Q[ 2 ] = 0e0;
                
-            for ( unsigned int a = 0; a < atoms.size(); a++ )
-            {
-               progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-               qApp->processEvents();
-               // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
-
-               // editor_msg( "gray", QString( tr( "Computing occupancy" ) ) );
-         
-               map < float, map < float , map < float, bool > > > occupancy;
-               // occupy sphere defined by radius in resolution of deltaR
-               double mins[ 3 ];
-               double maxs[ 3 ];
-               double x[ 3 ];
-               for ( int j = 0; j < 3; j++ )
-               {
-                  mins[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] - atoms[ a ].radius ) / deltaR ) * deltaR - deltaR;
-                  maxs[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] + atoms[ a ].radius ) / deltaR ) * deltaR + deltaR;
-               }
-               for ( x[ 0 ] = mins[ 0 ]; x[ 0 ] <= maxs[ 0 ]; x[ 0 ] += deltaR )
-               {
-                  for ( x[ 1 ] = mins[ 1 ]; x[ 1 ] <= maxs[ 1 ]; x[ 1 ] += deltaR )
-                  {
-                     for ( x[ 2 ] = mins[ 2 ]; x[ 2 ] <= maxs[ 2 ]; x[ 2 ] += deltaR )
-                     {
-                        if ( 
-                            ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) +
-                            ( x[ 1 ] - atoms[ a ].pos[ 1 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 1 ] ) +
-                            ( x[ 2 ] - atoms[ a ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 2 ] ) <= 
-                            atoms[ a ].radius * atoms[ a ].radius )
-                        {
-                           occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ][ (float) x[ 2 ] ] = true;
-                        }
-                     }
-                  }
-               }
-
-               for ( map < float, map < float , map < float, bool > > >::iterator it = occupancy.begin();
-                     it != occupancy.end();
-                     it++ )
-               {
-                  for ( map < float , map < float, bool > >::iterator it2 = it->second.begin();
-                        it2 != it->second.end();
-                        it2++ )
-                  {
-                     for ( map < float, bool >::iterator it3 = it2->second.begin();
-                           it3 != it2->second.end();
-                           it3++ )
-                     {
-                        if ( it3->second )
-                        {
-                           bool exclude = false;
-                           if (
-                               overlaps_used.count( ( it->first ) ) &&
-                               overlaps_used[ it->first ].count( it2->first ) &&
-                               overlaps_used[ it->first ][ it2->first ].count( it3->first ) 
-                               )
-                           {
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                              pts_overlaps_used_fnd++;
-#endif
-                              if ( overlaps_used[ it->first ][ it2->first ][ it3->first ] )
-                              {
-                                 overlaps_used[ it->first ][ it2->first ][ it3->first ] = false;
-                              } else {
-                                 exclude = true;
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                                 pts_excl++;
-#endif
-                              }
-                           }
-
-                           if ( !exclude )
-                           {
-                              double QdotR = 
-                                 Q[ 0 ] * (double) it->first +
-                                 Q[ 1 ] * (double) it2->first +
-                                 Q[ 2 ] * (double) it3->first;
-
-                              complex < double > iQdotR = complex < double > ( 0e0, QdotR );
-
-                              complex < double > expiQdotR = exp( iQdotR );
-
-                              complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
-
-                              data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
-
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                              pts_subd++;
-#endif
-                           }
-                        }
-                     }
-                  }
-               }
-
-               // editor_msg( "gray", QString( tr( "Done subtracting excluded volume" ) ) );
-
-               if ( !running ) 
-               {
-                  update_image();
-                  update_enables();
-                  return;
-               }
-            }
-         }
-      } else { 
-         // faster, more memory usage version
-         // for each atom, compute presence in 3d space defined by deltaR
-         editor_msg( "gray", QString( tr( "Computing occupancy" ) ) );
-
-         map < float, map < float , map < float, bool > > > occupancy;
-         for ( unsigned int a = 0; a < atoms.size(); a++ )
-         {
-            // occupy sphere defined by radius in resolution of deltaR
-            double mins[ 3 ];
-            double maxs[ 3 ];
-            double x[ 3 ];
-            //          cout << QString( "atom at %1, %2, %3:\n" )
-            //             .arg( atoms[ a ].pos[ 0 ] )
-            //             .arg( atoms[ a ].pos[ 1 ] )
-            //             .arg( atoms[ a ].pos[ 2 ] );
-
-            for ( int j = 0; j < 3; j++ )
-            {
-               mins[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] - atoms[ a ].radius ) / deltaR ) * deltaR - deltaR;
-               maxs[ j ] = (double)( (int) ( atoms[ a ].pos[ j ] + atoms[ a ].radius ) / deltaR ) * deltaR + deltaR;
-               //             cout << QString( "             range coordinate %1: %2 to %3\n" ).arg( j ).arg( mins[ j ] ).arg( maxs[ j ] );
-            }
-            for ( x[ 0 ] = mins[ 0 ]; x[ 0 ] <= maxs[ 0 ]; x[ 0 ] += deltaR )
-            {
-               for ( x[ 1 ] = mins[ 1 ]; x[ 1 ] <= maxs[ 1 ]; x[ 1 ] += deltaR )
-               {
-                  for ( x[ 2 ] = mins[ 2 ]; x[ 2 ] <= maxs[ 2 ]; x[ 2 ] += deltaR )
-                  {
-                     if ( 
-                         ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 0 ] ) +
-                         ( x[ 1 ] - atoms[ a ].pos[ 1 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 1 ] ) +
-                         ( x[ 2 ] - atoms[ a ].pos[ 2 ] ) * ( x[ 0 ] - atoms[ a ].pos[ 2 ] ) <= 
-                         atoms[ a ].radius * atoms[ a ].radius )
-                     {
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                        if ( occupancy.count( ( (float) x[ 0 ] ) ) &&
-                             occupancy[ (float) x[ 0 ] ].count( ( (float) x[ 1 ] ) ) &&
-                             occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ].count( ( (float) x[ 2 ] ) ) )
-                        {
-                           pts_dup++;
-                        }
-#endif
-                        occupancy[ (float) x[ 0 ] ][ (float) x[ 1 ] ][ (float) x[ 2 ] ] = true;
-                     }
-                  }
-               }
-            }
-         }
-
-         // for each atom, compute scattering factor for each element on the detector
-
-         for ( unsigned int a = 0; a < atoms.size(); a++ )
-         {
-            //          cout << QString( "atoms progress %1 of %2\n" )
-            //             .arg( a + r * ( atoms.size() + detector_pixels_width ) )
-            //             .arg( ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
-            qApp->processEvents();
-            for ( unsigned int i = 0; i < data.size(); i++ )
-            {
-               double pixpos = ( double ) i * detector_width_per_pixel;
-
-               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-               vector < double > Q( 3 );
-               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-               Q[ 2 ] = 0e0;
+            vector < double > Rv( 3 );
+            Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
+            Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
+            Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
                
-               vector < double > Rv( 3 );
-               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
-               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
-               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+            double QdotR = 
+               Q[ 0 ] * Rv[ 0 ] +
+               Q[ 1 ] * Rv[ 1 ] +
+               Q[ 2 ] * Rv[ 2 ];
                
-               double QdotR = 
-                  Q[ 0 ] * Rv[ 0 ] +
-                  Q[ 1 ] * Rv[ 1 ] +
-                  Q[ 2 ] * Rv[ 2 ];
-               
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
             
-               complex < double > expiQdotR = exp( iQdotR );
+            complex < double > expiQdotR = exp( iQdotR );
                
-               // F_atomic
+            // F_atomic
                
-               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+            saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
-               double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
+            double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
                
 #if defined( UHS2_SCAT_DEBUG )
-               cout << QString( 
-                               "atom                %1\n"
-                               "pixel               %2 %3\n"
-                               "relative to beam    %4 %5\n"
-                               "distance            %6\n"
-                               "q of pixel          %7\n"
-                               "expIQdotr           "
-                               )
-                  .arg( atoms[ a ].hybrid_name )
-                  .arg( i ).arg( j )
-                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-                  .arg( pix_dist_from_beam_center )
-                  .arg( q )
-                  .ascii();
+            cout << QString( 
+                            "atom                %1\n"
+                            "pixel               %2 %3\n"
+                            "relative to beam    %4 %5\n"
+                            "distance            %6\n"
+                            "q of pixel          %7\n"
+                            "expIQdotr           "
+                            )
+               .arg( atoms[ a ].hybrid_name )
+               .arg( i ).arg( j )
+               .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+               .arg( pix_dist_from_beam_center )
+               .arg( q )
+               .ascii();
                
-               cout << expiQdotR << endl;
+            cout << expiQdotR << endl;
 #endif
-               double q_2_over_4pi = q * q * one_over_4pi_2;
+            double q_2_over_4pi = q * q * one_over_4pi_2;
                
-               double F_at =
-                  saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-                  saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-                  saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-                  saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-                  atoms[ a ].hydrogens * 
-                  ( saxsH.c + 
-                    saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                    saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                    saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                    saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+            double F_at =
+               saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+               saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+               saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+               saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+               atoms[ a ].hydrogens * 
+               ( saxsH.c + 
+                 saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+                 saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+                 saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+                 saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
-               data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
-               if ( !running ) 
-               {
-                  update_image();
-                  update_enables();
-                  return;
-               }
-            }
-         }
+            data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
 
-         // now compute subtraction for excluded volume
-         editor_msg( "gray", QString( tr( "Subtracting excluded volume" ) ) );
-
-         for ( unsigned int i = 0; i < data.size(); i++ )
-         {
-            //          cout << QString( "occupancy progress %1 of %2\n" )
-            //             .arg( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ) )
-            //             .arg( ( atoms.size() + detector_pixels_width ) * rotations.size() );
-
-            progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            qApp->processEvents();
             if ( !running ) 
             {
                update_image();
                update_enables();
                return;
             }
-
-            double pixpos = ( double ) i * detector_width_per_pixel;
-
-            double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-            vector < double > Q( 3 );
-            Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-            Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-            Q[ 2 ] = 0e0;
-
-            for ( map < float, map < float , map < float, bool > > >::iterator it = occupancy.begin();
-                  it != occupancy.end();
-                  it++ )
-            {
-               for ( map < float , map < float, bool > >::iterator it2 = it->second.begin();
-                     it2 != it->second.end();
-                     it2++ )
-               {
-                  for ( map < float, bool >::iterator it3 = it2->second.begin();
-                        it3 != it2->second.end();
-                        it3++ )
-                  {
-                     if ( it3->second )
-                     {
-                        double QdotR = 
-                           Q[ 0 ] * (double) it->first +
-                           Q[ 1 ] * (double) it2->first +
-                           Q[ 2 ] * (double) it3->first;
-
-                        complex < double > iQdotR = complex < double > ( 0e0, QdotR );
-
-                        complex < double > expiQdotR = exp( iQdotR );
-
-                        complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
-
-                        data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-                        pts_subd++;
-#endif
-                     }
-                  }
-               }
-            }
          }
-         editor_msg( "gray", QString( tr( "Done subtracting excluded volume" ) ) );
+      }
+
+      // now subtract excluded volume
+
+      for ( unsigned int i = 0; i < data.size(); i++ )
+      {
+         progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+         qApp->processEvents();
+
+         double pixpos = ( double ) i * detector_width_per_pixel;
+
+         double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+         vector < double > Q( 3 );
+         Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+         Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+         Q[ 2 ] = 0e0;
+               
+         for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
+         {
+            double QdotR = 
+               Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
+               Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
+               Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
+
+            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+
+            complex < double > expiQdotR = exp( iQdotR );
+
+            complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+
+            data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+         }
+
+#if defined( UHS1D_EXCL_VOL_DEBUG )
+         pts_subd++;
+#endif
+         if ( !running ) 
+         {
+            update_image();
+            update_enables();
+            return;
+         }
       }
 
 #if defined( UHS1D_EXCL_VOL_DEBUG )
@@ -1752,6 +1485,14 @@ void US_Hydrodyn_Saxs_1d::update_deltaR( const QString & /* str */ )
 {
 }
 
+void US_Hydrodyn_Saxs_1d::update_probe_radius( const QString & /* str */ )
+{
+}
+
+void US_Hydrodyn_Saxs_1d::update_threshold( const QString & /* str */ )
+{
+}
+
 void US_Hydrodyn_Saxs_1d::reset_1d()
 {
    compute_variables();
@@ -1778,6 +1519,7 @@ void US_Hydrodyn_Saxs::saxs_1d()
    //   {
 
    US_Hydrodyn_Saxs_1d * uhs1d = new US_Hydrodyn_Saxs_1d( us_hydrodyn );
+
    uhs1d->show();
    //      ((US_Hydrodyn *)us_hydrodyn)->saxs_1d_window = 
    //      ((US_Hydrodyn *)us_hydrodyn)->saxs_1d_window->show();
@@ -1795,6 +1537,9 @@ void US_Hydrodyn_Saxs_1d::compute_variables()
 
    rho0                          = le_rho0                      ->text().toDouble();
    deltaR                        = le_deltaR                    ->text().toDouble();
+
+   probe_radius                  = le_probe_radius              ->text().toDouble();
+   threshold                     = le_threshold                 ->text().toDouble();
 
    detector_width_per_pixel      = detector_width  / detector_pixels_width;
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0, q_of_pixel( detector_pixels_width - 1 ) );
@@ -1885,7 +1630,14 @@ void US_Hydrodyn_Saxs_1d::save_data()
 
    QTextStream ts( &f );
 
-   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %3 rho0 %4\n" ).arg( le_atom_file->text() ).arg( plot_count ).arg( deltaR ).arg( rho0 );
+   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %3 rho0 %4 probe radius %5 threshold %6\n" )
+      .arg( le_atom_file->text() )
+      .arg( plot_count )
+      .arg( deltaR )
+      .arg( rho0 )
+      .arg( probe_radius ) 
+      .arg( threshold );
+
    for ( int i = 0; i < ( int ) q.size(); i++ )
    {
       ts << QString( "%1 %2\n" ).arg( q[ i ] ).arg( I[ i ] );
@@ -1910,11 +1662,13 @@ void US_Hydrodyn_Saxs_1d::to_somo()
 
    saxs_window->plot_one_iqq( q, 
                               I, 
-                              QString( "%1 rotational average of %2 directions, d3R %3, rho0 %4" )
+                              QString( "%1 rotational average of %2 directions, d3R %3, rho0 %4, probe radius %5, threshold %6" )
                               .arg( le_atom_file->text() )
                               .arg( plot_count ) 
                               .arg( deltaR ) 
                               .arg( rho0 ) 
+                              .arg( probe_radius ) 
+                              .arg( threshold ) 
                               );
 }
 
@@ -1933,4 +1687,401 @@ bool US_Hydrodyn_Saxs_1d::activate_saxs_window()
    }
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    return true;
+}
+
+bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
+{
+#if !defined( HAS_CBF )
+   errormsg = "No CBF linked in this version\n";
+   return false;
+#else 
+   // run rasmol & get the map
+   // simple linux version for now
+   QString rasmol = 
+      USglobal->config_list.system_dir + QDir::separator() +
+#if defined(BIN64)
+      "bin64"
+#else
+      "bin"
+#endif
+      +  QDir::separator() + "rasmol";
+
+   if ( !QFile::exists( rasmol ) )
+   {
+      errormsg = QString( "Error: rasmol not found (%1)" ).arg( rasmol );
+   }
+
+   if ( !QFile::exists( filepathname ) )
+   {
+      errormsg = QString( "Error: pdb file not found (%1)" ).arg( filepathname );
+   }
+
+   mapname = QString( "%1_p%2_t%3_r%4.rasmol_map" )
+      .arg( QFileInfo( filepathname ).fileName() )
+      .arg( probe_radius )
+      .arg( threshold )
+      .arg( deltaR );
+   
+   QString cmd = QString( "env DISPLAY= %1 %2 <<__EOF\n"
+                          "set solvent true\n"
+                          "set radius %3\n"
+                          "map resolution %4\n"
+                          "map generate lrsurf dots\n"
+                          "map save %5\n"
+                          "exit\n"
+                          "__EOF\n" )
+      .arg( rasmol )
+      .arg( filepathname )
+      .arg( QString( "" ).sprintf( "%.2f", probe_radius ) )
+      .arg( QString( "" ).sprintf( "%.2f", deltaR ) )
+      .arg( mapname );
+
+   cout << cmd;
+   editor_msg( "gray", "starting RasMol to compute excluded volume\n" );
+   qApp->processEvents();
+   system( cmd.ascii() );
+   editor_msg( "gray", "RasMol done\n" );
+   qApp->processEvents();
+   return true;
+#endif
+}
+
+bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
+{
+#if !defined( HAS_CBF )
+   errormsg = "No CBF linked in this version\n";
+   return false;
+#else 
+   errormsg = "";
+   excluded_volume.clear();
+
+   editor_msg( "gray", "loading excluded volume map\n" );
+   qApp->processEvents();
+
+   FILE *fp = fopen( mapname.ascii(), "rb");
+   if (  (FILE *)NULL == fp )
+   {
+      errormsg = QString( "Error: could not open file %1\n" ).arg( mapname );
+   }
+
+   cbf_handle cbf;
+
+   char * map_structure_id;
+
+   int res;
+
+   if ( ( res = cbf_make_handle (&cbf) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf make handle error %d\n", res );
+      return false;
+   }
+
+   if ( ( res = cbf_read_widefile(cbf, fp, MSG_DIGEST) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf read widefile %d\n", res );
+      return false;
+   }
+
+   // get map structure id
+
+   if ( ( res = cbf_find_category( cbf, "map_segment" ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find category 'map_segment' %d\n", res );
+      return false;
+   }
+
+   if ( ( res = cbf_find_column( cbf, "array_id" ) )  )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+      return false;
+   }
+      
+   if ( ( res = cbf_get_value( cbf, (const char **)&map_structure_id ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
+      return false;
+   }
+
+   // get displacements, increments
+   double     map_displacement          [ 3 ];
+   double     map_displacement_increment[ 3 ];
+
+   if ( ( res = cbf_find_category( cbf, "array_structure_list_axis" ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
+      return false;
+   }
+      
+   unsigned int rows;
+   if ( ( res = cbf_count_rows( cbf, &rows ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf count rows %d\n", res );
+      return false;
+   }
+
+   if ( rows != 3 )
+   {
+      errormsg = QString( "" ).sprintf( "Error: rows != 3\n" );
+      return false;
+   }
+      
+   for ( unsigned int row = 0; row < rows; row++ )
+   {
+      if ( ( res = cbf_find_column( cbf, "axis_id" ) )  )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'axis_id' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_select_row( cbf, row ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf select row %d %d\n", row, res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "displacement" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement' %d\n", res );
+         return false;
+      }
+      
+      if ( ( res = cbf_get_doublevalue( cbf, &map_displacement[ row ] ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "displacement_increment" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
+         return false;
+      }
+      
+      if ( ( res = cbf_get_doublevalue( cbf, &map_displacement_increment[ row ] ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
+         return false;
+      }
+   }
+   
+   for ( int i = 0; i < 3; i++ )
+   {
+      printf( "axis: %d displacement %g increment %g\n",
+              i,
+              map_displacement[ i ],
+              map_displacement_increment[ i ] );
+   }
+      
+   // get binary data
+
+   {
+      int          binary_id;
+      int          elsigned;
+      int          elunsigned;
+      size_t       elements;
+      size_t       elements_read;
+      size_t       elsize;
+      int          minelement;
+      int          maxelement;
+      unsigned int cifcompression;
+      int          realarray;
+      const char * byteorder;
+      size_t       dim1;
+      size_t       dim2;
+      size_t       dim3;
+      size_t       padding;
+      
+      if ( ( res = cbf_find_category( cbf, "array_data" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find category 'array_data' %d\n", res );
+         return false;
+      }
+         
+      if ( ( res = cbf_find_column( cbf, "array_id" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+         return false;
+      }
+         
+      if ( ( res = cbf_rewind_row( cbf ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf rewind row %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_nextrow( cbf, map_structure_id ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "binary_id" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_get_integervalue( cbf, &binary_id ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         return false;
+      }
+
+      printf( "binary_id is %d\n", binary_id );
+
+      if ( ( res = cbf_find_column( cbf, "data" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'data' %d\n", res );
+         return false;
+      }
+
+      printf( "found data column\n" );
+            
+      if ( ( res = cbf_get_arrayparameters_wdims(
+                                                 cbf, 
+                                                 &cifcompression,
+                                                 &binary_id, 
+                                                 &elsize, 
+                                                 &elsigned, 
+                                                 &elunsigned,
+                                                 &elements, 
+                                                 &minelement, 
+                                                 &maxelement, 
+                                                 &realarray,
+                                                 &byteorder, 
+                                                 &dim1, 
+                                                 &dim2, 
+                                                 &dim3, 
+                                                 &padding) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get arrayparameters wdims %d\n", res );
+         return false;
+      }
+
+      puts( "cbf_get_realarray" );
+      printf( "dim1 %d, dim2 %d dim3 %d\n", dim1, dim2, dim3 );
+      if ( elsize != sizeof( double ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
+         return false;
+      }
+
+      vector < double > map_data( elements );
+
+      if ( ( res = cbf_get_realarray(
+                                     cbf, 
+                                     &binary_id, 
+                                     (void *)(& map_data[0] ), 
+                                     elsize,
+                                     elements, 
+                                    &elements_read ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get realarray error %d\n", res );
+         return false;
+      }
+            
+      if ( elements != elements_read )
+      {
+         errormsg = QString( "" ).sprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
+         return false;
+      }
+
+      puts( "doubles" );
+      printf( "elements %d, read %d\n", elements, elements_read );
+      {
+         unsigned int i;
+         unsigned int j;
+         unsigned int k;
+         unsigned int e = 0;
+         double mins[ 3 ];
+         double maxs[ 3 ];
+         bool   done = false;
+         // simply for gcc's warning about uninitialized variables
+         mins[ 0 ] = 0e0;
+         maxs[ 0 ] = 0e0;
+         mins[ 1 ] = 0e0;
+         maxs[ 1 ] = 0e0;
+         mins[ 2 ] = 0e0;
+         maxs[ 2 ] = 0e0;
+
+         for ( i = 0; i < 3; i++ )
+         {
+            printf( "axis: %d displacement %g increment %g\n",
+                    i,
+                    map_displacement[ i ],
+                    map_displacement_increment[ i ] );
+         }
+                      
+         for ( k = 0; k < dim3; k++ )
+         {
+            for ( j = 0; j < dim2; j++ )
+            {
+               for ( i = 0; i < dim1; i++ )
+               {
+                  double val = map_data[ e ];
+                  if ( val >= threshold )
+                  {
+                     double x = 1e7 * ( map_displacement[ 0 ] + i * map_displacement_increment[ 0 ] );
+                     double y = 1e7 * ( map_displacement[ 1 ] + j * map_displacement_increment[ 1 ] );
+                     double z = 1e7 * ( map_displacement[ 2 ] + k * map_displacement_increment[ 2 ] );
+//                      printf( "%g %g %g %g\n", x, y, z, val );
+                     point tmp_point;
+                     tmp_point.axis[ 0 ] = ( float )x;
+                     tmp_point.axis[ 1 ] = ( float )y;
+                     tmp_point.axis[ 2 ] = ( float )z;
+                     excluded_volume.push_back( tmp_point );
+                     if ( !done )
+                     {
+                        mins[ 0 ] = x;
+                        maxs[ 0 ] = x;
+                        mins[ 1 ] = y;
+                        maxs[ 1 ] = y;
+                        mins[ 2 ] = z;
+                        maxs[ 2 ] = z;
+                        done = true;
+                     } else {
+                        if ( mins[ 0 ] > x )
+                        {
+                           mins[ 0 ] = x;
+                        }
+                        if ( maxs[ 0 ] < x )
+                        {
+                           maxs[ 0 ] = x;
+                        }
+                        if ( mins[ 1 ] > y )
+                        {
+                           mins[ 1 ] = y;
+                        }
+                        if ( maxs[ 1 ] < y )
+                        {
+                           maxs[ 1 ] = y;
+                        }
+                        if ( mins[ 2 ] > z )
+                        {
+                           mins[ 2 ] = z;
+                        }
+                        if ( maxs[ 2 ] < z )
+                        {
+                           maxs[ 2 ] = z;
+                        }
+                     }
+                  }
+                  e++;
+               }
+            }
+         }
+         printf( "x [%g:%g] y [%g:%g] z [%g:%g]\n",
+                 mins[ 0 ], maxs[ 0 ],
+                 mins[ 1 ], maxs[ 1 ],
+                 mins[ 2 ], maxs[ 2 ] );
+      }
+   }
+    
+   cbf_free_handle( cbf );
+    
+   /*  fclose(f);*/ /* let cbflib handle the closing of a file */
+   editor_msg( "gray", QString( "done loading excluded volume map of %1 points\n" ).arg( excluded_volume.size() ) );
+   qApp->processEvents();
+   return true;
+#endif
 }
