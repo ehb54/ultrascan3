@@ -28,17 +28,21 @@ class US_Zoomer: public QwtPlotZoomer
 };
 
 //! \brief Customize plot widgets
+class US_PlotConfig;
 
+//! \brief A class to configure the axis elements of the plot
+class US_PlotAxisConfig;
+
+//! \brief A class to configure the x/y grid of a plot
+class US_PlotGridConfig;
+
+//! \brief A class to configure the appearance of a curve
+class US_PlotCurveConfig;
+
+//! \brief A class that provides plot widgets
 /*! \class US_Plot
   Provides functions to allow configuration of plot widgets
 */
-
-class US_PlotConfig;
-class US_PlotAxisConfig;
-class US_PlotGridConfig;
-class US_PlotCurveConfig;
-
-//class US_GUI_EXTERN US_Plot : public QwtPlot
 class US_GUI_EXTERN US_Plot : public QHBoxLayout
 {
    Q_OBJECT
