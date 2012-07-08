@@ -212,7 +212,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    main->addLayout( right );
    main->setStretchFactor( left, 2 );
    main->setStretchFactor( right, 6 );
-
    reset();
 }
 
@@ -231,14 +230,14 @@ void US_Grid_Editor::reset( void )
 	zVal = 0.72;
 	vbar = 0.72;
 	ff0  = 1.0;
+	plot_x = 0; // plot s
+	plot_y = 0; // plot f/f0
 
    ct_xRes->setRange( 10.0, 1000.0, 1.0 );
    ct_xRes->setValue( (double) xRes );
    ct_yRes->setRange( 10.0, 1000.0, 1.0 );
    ct_yRes->setValue( (double) yRes );
 
-	plot_x = 0; // plot s
-	plot_y = 0; // plot f/f0
 	rb_x_s->setChecked(true);
 	rb_y_ff0->setChecked(true);
 	select_x_axis(plot_x);
@@ -327,11 +326,11 @@ void US_Grid_Editor::update_plot( void )
 {
 	calc_gridpoints();
 	data_plot->clear();
-	xData.resize(xRes * yRes);
-	yData.resize(xRes * yRes);
+	xData.resize(gridsize);
+	yData.resize(gridsize);
 	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
 	{
-		for (int i=0; i<xRes*yRes; i++)
+		for (int i=0; i<gridsize; i++)
 		{
 			xData [i] = grid[i].s;
 			yData [i] = grid[i].ff0;
@@ -339,7 +338,7 @@ void US_Grid_Editor::update_plot( void )
 	}
 	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
 	{
-		for (int i=0; i<xRes*yRes; i++)
+		for (int i=0; i<gridsize; i++)
 		{
 			xData [i] = grid[i].s;
 			yData [i] = grid[i].vbar;
@@ -347,7 +346,7 @@ void US_Grid_Editor::update_plot( void )
 	}
 	if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
 	{
-		for (int i=0; i<xRes*yRes; i++)
+		for (int i=0; i<gridsize; i++)
 		{
 			xData [i] = grid[i].mw;
 			yData [i] = grid[i].ff0;
@@ -355,7 +354,7 @@ void US_Grid_Editor::update_plot( void )
 	}
 	if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
 	{
-		for (int i=0; i<xRes*yRes; i++)
+		for (int i=0; i<gridsize; i++)
 		{
 			xData [i] = grid[i].mw;
 			yData [i] = grid[i].vbar;
@@ -395,6 +394,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 	mingridpoint.ff0  =  9.9e99;
 	mingridpoint.f0   =  9.9e99;
 	mingridpoint.f    =  9.9e99;
+	gridsize = 0;
 	struct gridpoint tmp_point;
 	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
 	{
@@ -402,9 +402,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 		double ff0_inc = (yMax - yMin)/yRes;
 		for (int i=0; i< (int) xRes; i++)
 		{
+			tmp_point.s    = xMin + i * s_inc;
 			for (int j=0; j< (int) yRes; j++)
 			{
-				tmp_point.s    = xMin + i * s_inc;
 				tmp_point.ff0  = yMin + j * ff0_inc;
 				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
 				                 pow((viscosity * 0.1 * tmp_point.ff0), (3.0/2.0)) *
@@ -415,7 +415,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.f0   = tmp_point.f/tmp_point.ff0;
 				tmp_point.vbar = vbar;
-				grid.push_back(tmp_point);
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				{
+					grid.push_back(tmp_point);
+					gridsize++;
+				}
 				set_minmax(tmp_point);
 			} 
 		}
@@ -426,9 +430,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 		double ff0_inc = (yMax - yMin)/yRes;
 		for (int i=0; i< (int) xRes; i++)
 		{
+			tmp_point.mw   = xMin + i * mw_inc;
 			for (int j=0; j< (int) yRes; j++)
 			{
-				tmp_point.mw   = xMin + i * mw_inc;
 				tmp_point.ff0  = yMin + j * ff0_inc;
 				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
@@ -437,7 +441,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 						  			/ (AVOGADRO * tmp_point.f);
 				tmp_point.D    = R * K20/(AVOGADRO * tmp_point.f);
 				tmp_point.vbar = vbar;
-				grid.push_back(tmp_point);
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				{
+					grid.push_back(tmp_point);
+					gridsize++;
+				}
 				set_minmax(tmp_point);
 			} 
 		}
@@ -448,9 +456,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 		double vbar_inc = (yMax - yMin)/yRes;
 		for (int i=0; i< (int) xRes; i++)
 		{
+			tmp_point.s    = xMin + i * s_inc;
 			for (int j=0; j< (int) yRes; j++)
 			{
-				tmp_point.s    = xMin + i * s_inc;
 				tmp_point.vbar = yMin + j * vbar_inc;
 				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
 				                 pow((viscosity * 0.1 * ff0), (3.0/2.0)) *
@@ -462,7 +470,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
-				grid.push_back(tmp_point);
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				{
+					grid.push_back(tmp_point);
+					gridsize ++;
+				}
 				set_minmax(tmp_point);
 			} 
 		}
@@ -473,9 +485,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 		double vbar_inc = (yMax - yMin)/yRes;
 		for (int i=0; i< (int) xRes; i++)
 		{
+			tmp_point.mw   = xMin + i * mw_inc;
 			for (int j=0; j< (int) yRes; j++)
 			{
-				tmp_point.mw   = xMin + i * mw_inc;
 				tmp_point.vbar = yMin + j * vbar_inc;
 				tmp_point.ff0  = ff0;
 				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
@@ -484,7 +496,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - tmp_point.vbar * density )
 						  			/ (AVOGADRO * tmp_point.f);
 				tmp_point.D    = R * K20/(AVOGADRO * tmp_point.f);
-				grid.push_back(tmp_point);
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				{
+					grid.push_back(tmp_point);
+					gridsize++;
+				}
 				set_minmax(tmp_point);
 			} 
 		}
