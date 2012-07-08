@@ -96,9 +96,10 @@ class US_Grid_Editor : public US_Widgets
 		double		  vbar;
 		double		  ff0;
 
-      int           dbg_level;
-		int			  plot_x; // 0 = s, 1 = MW
-		int			  plot_y; // 0 = ff0, 1 = vbar
+      int dbg_level;
+		int plot_x; // 0 = s, 1 = MW
+		int plot_y; // 0 = ff0, 1 = vbar
+		int gridsize;			
 
    private slots:
 
