@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_file_util.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -145,6 +146,13 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
 bool US_Saxs_Util::run_saxs_iq_crysol()
 {
    QString pdb = control_parameters[ "inputfile" ];
+   if ( pdb.contains( "../common/" ) )
+   {
+      QString pdb_local = QFileInfo( pdb ).fileName();
+      US_File_Util  ufu;
+      ufu.copy( pdb, pdb_local );
+      pdb = pdb_local;
+   }
 
    QString prog = 
       env_ultrascan + SLASH +
