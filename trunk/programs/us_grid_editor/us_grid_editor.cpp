@@ -502,7 +502,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
-				tmp_point.f0   = viscosity * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - vbar * density )
