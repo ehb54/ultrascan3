@@ -53,8 +53,10 @@ class US_Grid_Editor : public US_Widgets
 
       US_Help       showHelp;
 		QList <gridpoint> grid;
-		QVector <double> xData;
-		QVector <double> yData;
+		QVector <double> xData1;
+		QVector <double> yData1;
+		QVector <double> xData2;
+		QVector <double> yData2;
 		gridpoint maxgridpoint;
 		gridpoint mingridpoint;
  
@@ -66,11 +68,11 @@ class US_Grid_Editor : public US_Widgets
       QwtCounter*   ct_xMax;     
       QwtCounter*   ct_zVal;     
 
-      QwtPlot*            data_plot;
-      QwtPlotCurve*       pc1;
+      QwtPlot*            data_plot1;
+      QwtPlot*            data_plot2;
       QwtLinearColorMap*  colormap;
-      US_PlotPicker*      pick;
-      US_Disk_DB_Controls* dkdb_cntrls;
+      US_PlotPicker*      pick1;
+      US_PlotPicker*      pick2;
 
       QPushButton*  pb_help;
       QPushButton*  pb_close;
@@ -81,8 +83,15 @@ class US_Grid_Editor : public US_Widgets
       QRadioButton* rb_x_mw;
       QRadioButton* rb_y_ff0;
       QRadioButton* rb_y_vbar;
+      QRadioButton* rb_plot1;
+      QRadioButton* rb_plot2;
 		QButtonGroup* bg_x_axis;
 		QButtonGroup* bg_y_axis;
+		QButtonGroup* toggle_plot;
+
+		QVBoxLayout*  right;
+		QBoxLayout*	  plot1;
+		QBoxLayout*	  plot2;
 
       double        xMin;
       double        xMax;
@@ -100,6 +109,7 @@ class US_Grid_Editor : public US_Widgets
 		int plot_x; // 0 = s, 1 = MW
 		int plot_y; // 0 = ff0, 1 = vbar
 		int gridsize;			
+		int selected_plot; 
 
    private slots:
 
@@ -115,6 +125,7 @@ class US_Grid_Editor : public US_Widgets
       void update_plot( void );
       void select_x_axis( int );
       void select_y_axis( int );
+      void select_plot( int );
       void save( void );
       void reset( void );
       void help( void ) { showHelp.show_help( "create_grid.html" ); };

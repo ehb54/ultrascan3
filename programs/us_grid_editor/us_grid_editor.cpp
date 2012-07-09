@@ -30,7 +30,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    // primary layouts
    QHBoxLayout* main  = new QHBoxLayout( this );
-   QVBoxLayout* right  = new QVBoxLayout();
+   QVBoxLayout* right = new QVBoxLayout();
    QGridLayout* left  = new QGridLayout();
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
@@ -46,25 +46,31 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_info1      = us_banner( tr( "Grid Editor Controls" ) );
    left->addWidget( lbl_info1, s_row++, 0, 1, 2 );
 
-   lbl_xaxis      = us_label( tr( "Plot X-Axis as:" ) );
+   lbl_xaxis      = us_label( tr( "Adjust X-Axis as:" ) );
    lbl_xaxis->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xaxis, s_row, 0 );
 
-   lbl_yaxis      = us_label( tr( "Plot Y-Axis as:" ) );
+	lbl_yaxis      = us_label( tr( "Adjust Y-Axis as:" ) );
    lbl_yaxis->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yaxis, s_row++, 1 );
 
-	QGridLayout* x_s = us_radiobutton( "Sedimentation Coeff.", rb_x_s, true );
+	QGridLayout* x_s = us_radiobutton( tr("Sedimentation Coeff."), rb_x_s, true );
 	left->addLayout( x_s, s_row, 0 );
 
-	QGridLayout* y_ff0 = us_radiobutton( "Frictional Ratio", rb_y_ff0, true );
+	QGridLayout* y_ff0 = us_radiobutton( tr("Frictional Ratio"), rb_y_ff0, true );
 	left->addLayout( y_ff0, s_row++, 1 );
 
-	QGridLayout* x_mw = us_radiobutton( "Molecular Weight", rb_x_mw, true );
+	QGridLayout* x_mw = us_radiobutton( tr("Molecular Weight"), rb_x_mw, true );
 	left->addLayout( x_mw, s_row, 0 );
 
-	QGridLayout* y_vbar = us_radiobutton( "Partial Specific Volume", rb_y_vbar, true );
+	QGridLayout* y_vbar = us_radiobutton( tr("Partial Specific Volume"), rb_y_vbar, true );
 	left->addLayout( y_vbar, s_row++, 1 );
+
+	QGridLayout* toggle1 = us_radiobutton( tr("Sedimentation View"), rb_plot1, true );
+	left->addLayout( toggle1, s_row, 0 );
+
+	QGridLayout* toggle2 = us_radiobutton( tr("Molecular Weight View"), rb_plot2, true );
+	left->addLayout( toggle2, s_row++, 1 );
 
 	QButtonGroup* x_axis = new QButtonGroup( this );
 	x_axis->addButton( rb_x_s, 0);
@@ -76,15 +82,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 	y_axis->addButton( rb_y_vbar, 1);
 	connect( y_axis, SIGNAL( buttonReleased( int )), SLOT( select_y_axis( int )));
 
+	QButtonGroup* toggle_plot = new QButtonGroup( this );
+	toggle_plot->addButton( rb_plot1, 0);
+	toggle_plot->addButton( rb_plot2, 1);
+	connect( toggle_plot, SIGNAL( buttonReleased( int )), SLOT( select_plot( int )));
+
    lbl_xRes      = us_label( tr( "X Resolution:" ) );
    lbl_xRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xRes, s_row, 0 );
 
    ct_xRes      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xRes->setStep( 1 );
-	QFontMetrics fm( ct_xRes->font() ); 
-	ct_xRes->adjustSize(); 
-	ct_xRes->setMinimumWidth( ct_xRes->width() ); 
    left->addWidget( ct_xRes, s_row++, 1 );
    connect( ct_xRes,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_xRes( double ) ) );
@@ -193,20 +201,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    // set up plot component window on right side
 
-   QBoxLayout* plot = new US_Plot( data_plot, 
+   QBoxLayout* plot1 = new US_Plot( data_plot1, 
       tr( "Grid Layout" ),
       tr( "Sedimentation Coefficient (s20,W)"),
       tr( "Frictional Ratio f/f0" ) );
-
-   right->addLayout( plot );
-
-   data_plot->setAutoDelete( true );
-   data_plot->setMinimumSize( 640, 480 );
-
-   data_plot->enableAxis( QwtPlot::xBottom, true );
-   data_plot->enableAxis( QwtPlot::yLeft,   true );
-   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
-   data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
+   right->addLayout( plot1 );
+   data_plot1->setAutoDelete( true );
+   data_plot1->setMinimumSize( 640, 480 );
+   data_plot1->enableAxis( QwtPlot::xBottom, true );
+   data_plot1->enableAxis( QwtPlot::yLeft,   true );
+   data_plot1->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
 
    main->addLayout( left );
    main->addLayout( right );
@@ -218,8 +223,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   data_plot->detachItems( );
-   pick = new US_PlotPicker( data_plot );
+   data_plot1->detachItems( );
+   pick1 = new US_PlotPicker( data_plot1 );
 
    xRes = 60.0;
    yRes = 60.0;
@@ -232,6 +237,7 @@ void US_Grid_Editor::reset( void )
 	ff0  = 1.0;
 	plot_x = 0; // plot s
 	plot_y = 0; // plot f/f0
+	selected_plot = 0;
 
    ct_xRes->setRange( 10.0, 1000.0, 1.0 );
    ct_xRes->setValue( (double) xRes );
@@ -240,8 +246,11 @@ void US_Grid_Editor::reset( void )
 
 	rb_x_s->setChecked(true);
 	rb_y_ff0->setChecked(true);
+	rb_plot1->setChecked(true);
 	select_x_axis(plot_x);
 	select_y_axis(plot_y);
+	select_y_axis(plot_y);
+	select_plot(selected_plot);
 	update_plot();
 }
 
@@ -325,65 +334,105 @@ void US_Grid_Editor::update_viscosity( const QString & str )
 void US_Grid_Editor::update_plot( void )
 {
 	calc_gridpoints();
-	data_plot->clear();
-	xData.resize(gridsize);
-	yData.resize(gridsize);
+	data_plot1->clear();
+	xData1.resize(gridsize);
+	yData1.resize(gridsize);
 	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
 	{
-		for (int i=0; i<gridsize; i++)
+		if (selected_plot == 0)
 		{
-			xData [i] = grid[i].s;
-			yData [i] = grid[i].ff0;
-//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].s;
+				yData1 [i] = grid[i].ff0;
+			}
+		}
+		if (selected_plot == 1)
+		{
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].mw;
+				yData1 [i] = grid[i].ff0;
+			}
 		}
 	}
 	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
 	{
-		for (int i=0; i<gridsize; i++)
+		if (selected_plot == 0)
 		{
-			xData [i] = grid[i].s;
-			yData [i] = grid[i].vbar;
-//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].s;
+				yData1 [i] = grid[i].vbar;
+			}
+		}
+		if (selected_plot == 1)
+		{
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].mw;
+				yData1 [i] = grid[i].vbar;
+			}
 		}
 	}
 	if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
 	{
-		for (int i=0; i<gridsize; i++)
+		if (selected_plot == 0)
 		{
-			xData [i] = grid[i].mw;
-			yData [i] = grid[i].ff0;
-//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].s;
+				yData1 [i] = grid[i].ff0;
+			}
+		}
+		if (selected_plot == 1)
+		{
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].mw;
+				yData1 [i] = grid[i].ff0;
+			}
 		}
 	}
 	if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
 	{
-		for (int i=0; i<gridsize; i++)
+		if (selected_plot == 0)
 		{
-			xData [i] = grid[i].mw;
-			yData [i] = grid[i].vbar;
-//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].s;
+				yData1 [i] = grid[i].vbar;
+			}
+		}
+		if (selected_plot == 1)
+		{
+			for (int i=0; i<gridsize; i++)
+			{
+				xData1 [i] = grid[i].mw;
+				yData1 [i] = grid[i].vbar;
+			}
 		}
 	}
-	QwtPlotCurve* c;
+	QwtPlotCurve *c1;
 	QwtSymbol sym;
 	sym.setStyle( QwtSymbol::Ellipse );
 	sym.setBrush( QColor( Qt::yellow ) );
 	sym.setPen  ( QColor( Qt::yellow ) );
 	sym.setSize( 3 );
 
-	c = us_curve( data_plot, "Grid points" );
-	c->setData  ( xData.data(), yData.data(), gridsize);
-	c->setSymbol( sym );
-	c->setStyle ( QwtPlotCurve::NoCurve );
-
-	data_plot->setAxisAutoScale( QwtPlot::xBottom );
-	data_plot->setAxisAutoScale( QwtPlot::yLeft );
-	data_plot->replot();
+	c1 = us_curve( data_plot1, "Grid points 1" );
+	c1->setData  ( xData1.data(), yData1.data(), gridsize);
+	c1->setSymbol( sym );
+	c1->setStyle ( QwtPlotCurve::NoCurve );
+	data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+	data_plot1->setAxisAutoScale( QwtPlot::yLeft );
+	data_plot1->replot();
 }
 
 void US_Grid_Editor::calc_gridpoints( void )
 {
 	grid.clear();
+	bool flag = true;
 	maxgridpoint.s    = -9.9e99;
 	maxgridpoint.D    =  0.0;
 	maxgridpoint.vbar =  0.0;
@@ -414,12 +463,27 @@ void US_Grid_Editor::calc_gridpoints( void )
 				                 pow((viscosity * 0.1 * tmp_point.ff0), (3.0/2.0)) *
 			  	                 pow((tmp_point.s * 1.0e-13 * vbar 
 									/ (2 * (1-vbar*density))), 0.5));
-				tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20 
-						         / (tmp_point.D * (1 - vbar *density ));
+// 
+// check to make sure there aren't any nonsensical settings selected by
+// the user. If so, mark the molecular weight negative (-1) and exclude
+// the point from the grid point list:
+//
+				if ((1 - vbar * density) == 0 ||
+			  		(tmp_point.s < 0 && (1 - vbar * density) > 0 ) ||
+			  		(tmp_point.s > 0 && (1 - vbar * density) < 0 ))
+				{
+					tmp_point.mw = -1.0;
+					flag = false;
+				} 
+				else
+				{
+					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20 
+							         / (tmp_point.D * (1 - vbar * density ));
+				}
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.f0   = tmp_point.f/tmp_point.ff0;
 				tmp_point.vbar = vbar;
-				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1 && tmp_point.mw > 0)
 				{
 					grid.push_back(tmp_point);
 					gridsize++;
@@ -438,7 +502,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
-				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - vbar * density )
@@ -468,13 +532,28 @@ void US_Grid_Editor::calc_gridpoints( void )
 				                 pow((viscosity * 0.1 * ff0), (3.0/2.0)) *
 			  	                 pow((tmp_point.s * 1.0e-13 * tmp_point.vbar 
 									/ (2 * (1.0 - vbar * density))), 0.5));
-				tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
-						  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
+// 
+// check to make sure there aren't any nonsensical settings selected by
+// the user. If so, mark the molecular weight negative (-1) and exclude
+// the point from the grid point list:
+//
+				if ((1.0 - tmp_point.vbar * density) == 0 ||
+			  		(tmp_point.s < 0 && (1.0 - tmp_point.vbar * density) > 0 ) ||
+			  		(tmp_point.s > 0 && (1.0 - tmp_point.vbar * density) < 0 ))
+				{
+					tmp_point.mw = -1.0;
+					flag = false;
+				} 
+				else
+				{
+					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
+							  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
+				}
 				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
-				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
+				if (tmp_point.s < -0.1 || tmp_point.s > 0.1 && tmp_point.mw > 0)
 				{
 					grid.push_back(tmp_point);
 					gridsize ++;
@@ -490,7 +569,6 @@ void US_Grid_Editor::calc_gridpoints( void )
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.mw   = xMin + i * mw_inc;
-			//qDebug() << i << "- xMin:" << xMin << "xMax:" << xMax << "mw_inc" << mw_inc << tmp_point.mw ;
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
@@ -503,13 +581,25 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.D    = R * K20/(AVOGADRO * tmp_point.f);
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
-				//qDebug() << gridsize << "- s:" << tmp_point.s << "vbar:" << tmp_point.vbar << "ffo:" << tmp_point.ff0 << "mw:" << tmp_point.mw;
 					grid.push_back(tmp_point);
 					gridsize++;
 				}
 				set_minmax(tmp_point);
 			} 
 		}
+	}
+	if (flag == false)
+	{
+		int status = QMessageBox::information( this,
+		tr( "Warning" ),
+		tr( "You have selected a nonsensical parameter setting. The product " ) +
+		tr( "of the sedimentation coefficient, s, and the buoyancy term, "    ) +
+	   tr( "(1 - vbar * Density), must be positive. Please examine your "    ) +
+		tr( "settings for the sedimentation coefficient range, the density, " ) +
+		tr( "and the partial specific volume before proceeding." ),
+		tr( "&OK" ), tr( "&Cancel" ),
+		0, 0, 1 );
+		if ( status != 0 ) return;
 	}
 }
 
@@ -532,6 +622,21 @@ void US_Grid_Editor::set_minmax( const struct gridpoint & tmp_point)
 }
 
 // select coordinate for horizontal axis
+void US_Grid_Editor::select_plot( int ival )
+{
+	selected_plot = ival;
+	if (selected_plot == 0)
+	{
+		data_plot1->setAxisTitle( QwtPlot::xBottom, tr("Sedimentation Coefficient (s20,W)"));
+	}
+	if (selected_plot == 1)
+	{
+		data_plot1->setAxisTitle( QwtPlot::xBottom, tr("Molecular Weight (Dalton)"));
+	}
+	update_plot();
+}
+
+// select coordinate for horizontal axis
 void US_Grid_Editor::select_x_axis( int ival )
 {
 	plot_x = ival;
@@ -539,7 +644,6 @@ void US_Grid_Editor::select_x_axis( int ival )
 	{
 		case 0:
 		{
-			data_plot->setAxisTitle( QwtPlot::xBottom, tr("Sedimentation Coefficient (s20,W)"));
 			lbl_xRes->setText(tr("s-value Resolution:"));
 			lbl_xMin->setText(tr("s-value Minimum:"));
 			lbl_xMax->setText(tr("s-value Maximum:"));
@@ -559,7 +663,6 @@ void US_Grid_Editor::select_x_axis( int ival )
 		}
 		case 1:
 		{	
-			data_plot->setAxisTitle( QwtPlot::xBottom, "Molecular Weight (Dalton)");
 			lbl_xRes->setText(tr("Mol. Weight Resolution:"));
 			lbl_xMin->setText(tr("Mol. Weight Minimum:"));
 			lbl_xMax->setText(tr("Mol. Weight Maximum:"));
@@ -589,7 +692,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 	{
 		case 0:
 		{
-			data_plot->setAxisTitle( QwtPlot::yLeft, tr("Frictional Ratio f/f0"));
+			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Frictional Ratio f/f0"));
 			lbl_yRes->setText(tr("f/f0 Resolution:"));
 			lbl_yMin->setText(tr("f/f0 Minimum:"));
 			lbl_yMax->setText(tr("f/f0 Maximum:"));
@@ -617,7 +720,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 		case 1:
 		{
 			vbar = 0.72;
-			data_plot->setAxisTitle( QwtPlot::yLeft, tr("Partial Specific Volume (ml/mg)"));
+			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Partial Specific Volume (ml/mg)"));
 			lbl_yRes->setText(tr("vbar Resolution:"));
 			lbl_yMin->setText(tr("vbar Minimum:"));
 			lbl_yMax->setText(tr("vbar Maximum:"));
