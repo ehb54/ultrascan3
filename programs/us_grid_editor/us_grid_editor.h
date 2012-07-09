@@ -69,7 +69,6 @@ class US_Grid_Editor : public US_Widgets
       QwtCounter*   ct_zVal;     
 
       QwtPlot*            data_plot1;
-      QwtPlot*            data_plot2;
       QwtLinearColorMap*  colormap;
       US_PlotPicker*      pick1;
       US_PlotPicker*      pick2;
@@ -88,10 +87,6 @@ class US_Grid_Editor : public US_Widgets
 		QButtonGroup* bg_x_axis;
 		QButtonGroup* bg_y_axis;
 		QButtonGroup* toggle_plot;
-
-		QVBoxLayout*  right;
-		QBoxLayout*	  plot1;
-		QBoxLayout*	  plot2;
 
       double        xMin;
       double        xMax;
