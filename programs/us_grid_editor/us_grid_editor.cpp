@@ -69,12 +69,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 	QButtonGroup* x_axis = new QButtonGroup( this );
 	x_axis->addButton( rb_x_s, 0);
 	x_axis->addButton( rb_x_mw, 1);
-	connect( x_axis, SIGNAL( buttonClicked( int )), SLOT( select_x_axis( int )));
+	connect( x_axis, SIGNAL( buttonReleased( int )), SLOT( select_x_axis( int )));
 
 	QButtonGroup* y_axis = new QButtonGroup( this );
 	y_axis->addButton( rb_y_ff0, 0);
 	y_axis->addButton( rb_y_vbar, 1);
-	connect( y_axis, SIGNAL( buttonClicked( int )), SLOT( select_y_axis( int )));
+	connect( y_axis, SIGNAL( buttonReleased( int )), SLOT( select_y_axis( int )));
 
    lbl_xRes      = us_label( tr( "X Resolution:" ) );
    lbl_xRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -298,11 +298,11 @@ void US_Grid_Editor::update_zVal( double dval )
    zVal    = dval;
 	if (plot_y == 0)
 	{
-		ff0 = zVal;
+		vbar = zVal;
 	}
 	if (plot_y == 1)
 	{
-		vbar = zVal;
+		ff0 = zVal;
 	}
 	update_plot();
 }
@@ -334,6 +334,7 @@ void US_Grid_Editor::update_plot( void )
 		{
 			xData [i] = grid[i].s;
 			yData [i] = grid[i].ff0;
+//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
 		}
 	}
 	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
@@ -342,6 +343,7 @@ void US_Grid_Editor::update_plot( void )
 		{
 			xData [i] = grid[i].s;
 			yData [i] = grid[i].vbar;
+//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
 		}
 	}
 	if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
@@ -350,6 +352,7 @@ void US_Grid_Editor::update_plot( void )
 		{
 			xData [i] = grid[i].mw;
 			yData [i] = grid[i].ff0;
+//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
 		}
 	}
 	if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
@@ -358,6 +361,7 @@ void US_Grid_Editor::update_plot( void )
 		{
 			xData [i] = grid[i].mw;
 			yData [i] = grid[i].vbar;
+//qDebug() << i << "- MW:" << grid[i].mw << "vbar:" << grid[i].vbar << "ff0:" << grid[i].ff0 << "s:" << grid[i].s;
 		}
 	}
 	QwtPlotCurve* c;
@@ -368,7 +372,7 @@ void US_Grid_Editor::update_plot( void )
 	sym.setSize( 3 );
 
 	c = us_curve( data_plot, "Grid points" );
-	c->setData  ( xData.data(), yData.data(), xRes * yRes);
+	c->setData  ( xData.data(), yData.data(), gridsize);
 	c->setSymbol( sym );
 	c->setStyle ( QwtPlotCurve::NoCurve );
 
@@ -486,6 +490,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.mw   = xMin + i * mw_inc;
+			//qDebug() << i << "- xMin:" << xMin << "xMax:" << xMax << "mw_inc" << mw_inc << tmp_point.mw ;
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
@@ -498,6 +503,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.D    = R * K20/(AVOGADRO * tmp_point.f);
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
+				//qDebug() << gridsize << "- s:" << tmp_point.s << "vbar:" << tmp_point.vbar << "ffo:" << tmp_point.ff0 << "mw:" << tmp_point.mw;
 					grid.push_back(tmp_point);
 					gridsize++;
 				}
@@ -537,12 +543,18 @@ void US_Grid_Editor::select_x_axis( int ival )
 			lbl_xRes->setText(tr("s-value Resolution:"));
 			lbl_xMin->setText(tr("s-value Minimum:"));
 			lbl_xMax->setText(tr("s-value Maximum:"));
+			ct_xMin->disconnect();
+			ct_xMax->disconnect();
    		ct_xMin->setRange( -10000.0, 10000.0, 0.01 );
 			xMin = 1;
    		ct_xMin->setValue( xMin );
    		ct_xMax->setRange( -10000.0, 10000.0, 0.01 );
 			xMax = 10;
-  		   ct_xMax->setValue( xMax );
+  	  		ct_xMax->setValue( xMax );
+   		connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_xMin( double ) ) );
+   		connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_xMax( double ) ) );
 			break;
 		}
 		case 1:
@@ -551,12 +563,18 @@ void US_Grid_Editor::select_x_axis( int ival )
 			lbl_xRes->setText(tr("Mol. Weight Resolution:"));
 			lbl_xMin->setText(tr("Mol. Weight Minimum:"));
 			lbl_xMax->setText(tr("Mol. Weight Maximum:"));
-   		ct_xMin->setRange( -1e4, 1e10, 10 );
-			xMin = 1e4;
-   		ct_xMin->setValue( xMin );
-   		ct_xMax->setRange( 0.0, 1e10, 10 );
-			xMax = 1e5;
-  		   ct_xMax->setValue( xMax );
+			ct_xMin->disconnect();
+			ct_xMax->disconnect();
+      	ct_xMin->setRange( 0.0, 1e10, 10 );
+			xMin = 1.0e4;
+      	ct_xMin->setValue( xMin );
+      	ct_xMax->setRange( 0.0, 1e10, 10 );
+			xMax = 1.0e5;
+  	  	   ct_xMax->setValue( xMax );
+      	connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_xMin( double ) ) );
+      	connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_xMax( double ) ) );
 			break;
 		}
 	}
@@ -576,6 +594,9 @@ void US_Grid_Editor::select_y_axis( int ival )
 			lbl_yMin->setText(tr("f/f0 Minimum:"));
 			lbl_yMax->setText(tr("f/f0 Maximum:"));
 			lbl_zVal->setText(tr("Partial Spec. Volume:"));
+			ct_yMin->disconnect();
+			ct_yMax->disconnect();
+			ct_zVal->disconnect();
    		ct_yMin->setRange( 1.0, 50, 0.01 );
 			yMin = 1;
    		ct_yMin->setValue( yMin );
@@ -585,6 +606,12 @@ void US_Grid_Editor::select_y_axis( int ival )
    		ct_zVal->setRange( 0.01, 3, 0.001 );
 			zVal = vbar;
    		ct_zVal->setValue( zVal );
+      	connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_yMin( double ) ) );
+      	connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_yMax( double ) ) );
+      	connect( ct_zVal, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_zVal( double ) ) );
 			break;
 		}
 		case 1:
@@ -595,6 +622,9 @@ void US_Grid_Editor::select_y_axis( int ival )
 			lbl_yMin->setText(tr("vbar Minimum:"));
 			lbl_yMax->setText(tr("vbar Maximum:"));
 			lbl_zVal->setText(tr("Frictional Ratio:"));
+			ct_yMin->disconnect();
+			ct_yMax->disconnect();
+			ct_zVal->disconnect();
    		ct_yMin->setRange( 0.01, 3, 0.001 );
 			yMin = 0.1;
    		ct_yMin->setValue( yMin );
@@ -604,6 +634,12 @@ void US_Grid_Editor::select_y_axis( int ival )
    		ct_zVal->setRange( 1.0, 50, 0.01 );
 			zVal = ff0;
    		ct_zVal->setValue( zVal );
+      	connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_yMin( double ) ) );
+      	connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_yMax( double ) ) );
+      	connect( ct_zVal, SIGNAL( valueChanged( double ) ),
+               this,        SLOT( update_zVal( double ) ) );
 			break;
 		}
 	}
