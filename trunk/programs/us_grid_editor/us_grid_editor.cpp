@@ -460,9 +460,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
 				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
-				                 pow((viscosity * 0.1 * tmp_point.ff0), (3.0/2.0)) *
+				                 pow((viscosity * 0.01 * tmp_point.ff0), (3.0/2.0)) *
 			  	                 pow((tmp_point.s * 1.0e-13 * vbar 
-									/ (2 * (1-vbar*density))), 0.5));
+									/ (2.0 * (1.0 - vbar * density))), 0.5));
 // 
 // check to make sure there aren't any nonsensical settings selected by
 // the user. If so, mark the molecular weight negative (-1) and exclude
@@ -502,7 +502,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
-				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - vbar * density )
@@ -529,7 +529,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
 				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
-				                 pow((viscosity * 0.1 * ff0), (3.0/2.0)) *
+				                 pow((viscosity * 0.01 * ff0), (3.0/2.0)) *
 			  	                 pow((tmp_point.s * 1.0e-13 * tmp_point.vbar 
 									/ (2 * (1.0 - vbar * density))), 0.5));
 // 
@@ -549,7 +549,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
 				}
-				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
@@ -573,7 +573,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
 				tmp_point.ff0  = ff0;
-				tmp_point.f0   = viscosity * 0.1 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
 								   * tmp_point.vbar / AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - tmp_point.vbar * density )
