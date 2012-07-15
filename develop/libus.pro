@@ -26,8 +26,13 @@ unix {
   TARGET                  = us
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
-  #CONFIG                 += qt thread warn release 
-  CONFIG                 += qt thread warn debug
+  CONFIG                 += qt thread warn release 
+  #CONFIG                 += qt thread warn debug
+
+  # make sure CBFDIR is set if HAS_CBF is defined
+  #  DEFINES               += HAS_CBF
+  #  INCLUDEPATH           += $(CBFDIR)/include
+  #  LIBS                  += -L$(CBFDIR)/lib -lcbf
 
   contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
@@ -289,6 +294,7 @@ SOURCES += \
   src/us_saxs_gp.cpp \
   src/us_saxs_util.cpp \
   src/us_saxs_util_a2sb.cpp \
+  src/us_saxs_util_crysol.cpp \
   src/us_saxs_util_cuda.cpp \
   src/us_saxs_util_dammin.cpp \
   src/us_saxs_util_dmd.cpp \

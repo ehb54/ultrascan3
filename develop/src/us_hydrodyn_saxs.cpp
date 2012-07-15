@@ -2594,6 +2594,7 @@ void saxs_Iq_thr_t::run()
 void US_Hydrodyn_Saxs::show_plot_saxs()
 {
    external_running = false;
+   specname = "";
 
    if ( our_saxs_options->iqq_ask_target_grid &&
         plotted_q.size() )
@@ -2618,6 +2619,19 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       run_saxs_iq_crysol( model_filepathname );
       return;
    }
+
+   if ( our_saxs_options->alt_ff )
+   {
+      editor_msg( "blue", "Alternate FF method on\n" );
+   }
+
+   if ( our_saxs_options->use_somo_ff )
+   {
+      editor_msg( "blue", "Use somo ff on\n" );
+      ff_sent_msg1.clear();
+      load_ff_table( our_saxs_options->default_ff_filename );
+   }
+
    if ( our_saxs_options->saxs_iq_native_fast ) 
    {
       // calc_saxs_iq_native_debye();
@@ -2626,7 +2640,68 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    }
    if ( our_saxs_options->saxs_iq_native_debye ) 
    {
-      source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
+#if defined( UHS_SAXSCMDS_SUPPORT )
+      QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "saxscmds" );
+      if ( f.exists() && f.open( IO_ReadOnly ) )
+      {
+         editor_msg( "blue", "found somo/tmp/saxscmds" );
+         QTextStream ts( &f );
+         unsigned int line = 0;
+         QRegExp rx_blank  ( "^\\s*$" );
+         QRegExp rx_comment( "#.*$" );
+
+         while ( !ts.atEnd() )
+         {
+            QString     qs = ts.readLine();
+            line++;
+            if ( qs.contains( rx_blank ) || qs.contains( rx_comment ) )
+            {
+               continue;
+            }
+            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+            if ( qsl[ 0 ] == "run" )
+            {
+               editor_msg( "blue", QString( "saxscmds: running for: %1" ).arg( specname ) );
+               source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
+               specname = "";
+               continue;
+            }
+            if ( qsl[ 0 ] == "pos" &&
+                 qsl.size() == 7 )
+            {
+               unsigned int nmodel = qsl[ 1 ].toUInt();
+               unsigned int nchain = qsl[ 2 ].toUInt();
+               unsigned int natom  = qsl[ 3 ].toUInt();
+               if ( model_vector.size() > nmodel &&
+                    model_vector[ nmodel ].molecule.size() > nchain &&
+                    model_vector[ nmodel ].molecule[ nchain ].atom.size() > natom )
+               {
+                  model_vector[ nmodel ].molecule[ nchain ].atom[ natom ].coordinate.axis[ 0 ] = qsl[ 4 ].toFloat();
+                  model_vector[ nmodel ].molecule[ nchain ].atom[ natom ].coordinate.axis[ 1 ] = qsl[ 5 ].toFloat();
+                  model_vector[ nmodel ].molecule[ nchain ].atom[ natom ].coordinate.axis[ 2 ] = qsl[ 6 ].toFloat();
+                  specname += QString( "_pos_%1_%2_%3_%4_%5_%6" )
+                     .arg( qsl[ 1 ] )
+                     .arg( qsl[ 2 ] )
+                     .arg( qsl[ 3 ] )
+                     .arg( qsl[ 4 ] )
+                     .arg( qsl[ 5 ] )
+                     .arg( qsl[ 6 ] );
+               } else {
+                  editor_msg( "red", QString( "atom not found line %1, running once & quitting\n" ).arg( line ) );
+                  source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
+                  specname = "";
+                  return;
+               }
+               continue;
+            }
+            editor_msg( "red", QString( "unrecogized or misformatted command in somo/tmp/saxscmds line %1\n" ).arg( line ) );
+            return;
+         }
+      } else 
+#endif
+      {
+         source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
+      }
       return;
    }
    if ( our_saxs_options->saxs_iq_native_hybrid ||
@@ -3931,6 +4006,161 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       }
       f.close();
    }
+
+   // setup for ff calc of hybridizations
+   // later push this out to config file
+
+   hybrid_coords.clear();
+   point p;
+
+#if defined( UHS_ALEXANDROS_POINTS )
+
+   p.axis[ 0 ] = 0.0;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.005;
+   p.axis[ 1 ] = 1.012;
+   p.axis[ 2 ] = 0.341;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 1.032;
+   p.axis[ 1 ] = -0.268;
+   p.axis[ 2 ] = -0.099;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.469;
+   p.axis[ 1 ] = -0.652;
+   p.axis[ 2 ] = 0.706;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.067;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.438;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = 0.825;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.495;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = -0.792;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.934;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = -0.033;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.960;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 1.340;
+   hybrid_coords[ "S" ].push_back( p );
+#else
+   p.axis[ 0 ] = 0.0;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 1.070;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.366;
+   p.axis[ 1 ] = 1.039;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.222;
+   p.axis[ 1 ] = -0.722;
+   p.axis[ 2 ] = -0.724;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 1.000;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.531;
+   p.axis[ 1 ] = 0.868;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.314;
+   p.axis[ 1 ] = 1.039;
+   p.axis[ 2 ] = -0.414;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.960;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.00;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+
+   p.axis[ 0 ] = 1.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+#endif
+   // compute pairwise distances
+
+   hybrid_r.clear();
+
+   for ( map < QString, vector < point > >::iterator it = hybrid_coords.begin();
+         it != hybrid_coords.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) it->second.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < ( unsigned int ) it->second.size(); j++ )
+         {
+            hybrid_r[ it->first ][ i ][ j ] =
+               sqrt( 
+                    ( it->second[ i ].axis[ 0 ] - it->second[ j ].axis[ 0 ] ) *
+                    ( it->second[ i ].axis[ 0 ] - it->second[ j ].axis[ 0 ] ) 
+                    +
+                    ( it->second[ i ].axis[ 1 ] - it->second[ j ].axis[ 1 ] ) *
+                    ( it->second[ i ].axis[ 1 ] - it->second[ j ].axis[ 1 ] ) 
+                    +
+                    ( it->second[ i ].axis[ 2 ] - it->second[ j ].axis[ 2 ] ) *
+                    ( it->second[ i ].axis[ 2 ] - it->second[ j ].axis[ 2 ] ) 
+                    );
+         }
+      }                    
+   }
 }
 
 QString US_Hydrodyn_Saxs::saxs_filestring()
@@ -4222,6 +4452,21 @@ void US_Hydrodyn_Saxs::saxs_buffer()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window = new US_Hydrodyn_Saxs_Buffer( buffer_csv, us_hydrodyn );
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window );
       ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->show();
+   }
+
+   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+   {
+      if ( plotted_I_error[ i ].size() == plotted_I.size() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                     plotted_q[ i ],
+                                                                     plotted_I[ i ],
+                                                                     plotted_I_error[ i ] );
+      } else {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                     plotted_q[ i ],
+                                                                     plotted_I[ i ] );
+      }
    }
 }
 

@@ -49,6 +49,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       QLineEdit   *le_default_hybrid_filename;
       QPushButton *pb_default_saxs_filename;
       QLineEdit   *le_default_saxs_filename;
+      QPushButton *pb_default_ff_filename;
+      QLineEdit   *le_default_ff_filename;
 
       QCheckBox   *cb_iq_ask;
 
@@ -85,6 +87,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       void default_atom_filename();
       void default_hybrid_filename();
       void default_saxs_filename();
+      void default_ff_filename();
 
       void set_iq_ask();
 

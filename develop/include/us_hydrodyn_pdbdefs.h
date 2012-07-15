@@ -304,12 +304,19 @@ struct saxs_options
    double       xsr_compactness_weight;
    double       xsr_looseness_weight;
    double       xsr_temperature;
+
+   bool         alt_ff;
+   bool         crysol_explicit_hydrogens;
+   bool         use_somo_ff;
+   QString      default_ff_filename;
 };
 
 struct saxs_atom
 {
    QString saxs_name;
    QString hybrid_name;
+   QString residue_name;
+   QString atom_name;
    int hydrogens;    
    float pos[3];
    float excl_vol;

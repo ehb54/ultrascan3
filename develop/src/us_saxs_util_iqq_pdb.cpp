@@ -2,7 +2,7 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
-#define IQQ_TIMER
+// #define IQQ_TIMER
 
 #if defined(IQQ_TIMER)
 #  include "../include/us_timer.h"
@@ -50,8 +50,19 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             new_atom.pos[0] = this_atom->coordinate.axis[0];
             new_atom.pos[1] = this_atom->coordinate.axis[1];
             new_atom.pos[2] = this_atom->coordinate.axis[2];
+
+            if ( this_atom->name == "XH" && !our_saxs_options.iqq_use_atomic_ff )
+            {
+               continue;
+            }
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
             
-            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
             if ( this_atom->name == "OXT" )
             {
                mapkey = "OXT|OXT";
@@ -64,7 +75,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq);
                continue;
             }
@@ -75,7 +86,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
@@ -92,7 +103,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
                   .arg(this_atom->name)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
@@ -109,6 +120,22 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             
             // this is probably correct but FoXS uses the saxs table excluded volume
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options.use_somo_ff )
+            {
+               double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+//                      .arg( new_atom.atom_name )
+//                      .arg( this_ev );
+               }
+            }
+
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
             {
@@ -137,7 +164,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name)
                   .arg(hybrid_map[hybrid_name].saxs_name);
@@ -208,18 +235,29 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
          // possibly saving time... but this isn't our most computationally intensive step
          // so I'm holding off for now.
          
+
          f[0][i] = 
-            saxs.c +
-            saxs.a[0] +
-            saxs.a[1] +
-            saxs.a[2] +
-            saxs.a[3] +
-            atoms[i].hydrogens * 
-            ( saxsH.c +
-              saxsH.a[0] +
-              saxsH.a[1] +
-              saxsH.a[2] +
-              saxsH.a[3] );
+            compute_ff(
+                       saxs,
+                       saxsH,
+                       atoms[ i ].residue_name,
+                       atoms[ i ].saxs_name,
+                       atoms[ i ].atom_name,
+                       atoms[ i ].hydrogens,
+                       0.0,
+                       0.0 );
+//          f[0][i] = 
+//             saxs.c +
+//             saxs.a[0] +
+//             saxs.a[1] +
+//             saxs.a[2] +
+//             saxs.a[3] +
+//             atoms[i].hydrogens * 
+//             ( saxsH.c +
+//               saxsH.a[0] +
+//               saxsH.a[1] +
+//               saxsH.a[2] +
+//               saxsH.a[3] );
 
          fc[0][i] = vie;
          fp[0][i] = f[0][i] - fc[0][i];
@@ -646,7 +684,18 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             new_atom.pos[1] = this_atom->coordinate.axis[1];
             new_atom.pos[2] = this_atom->coordinate.axis[2];
 
-            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            if ( this_atom->name == "XH" && !our_saxs_options.iqq_use_atomic_ff )
+            {
+               continue;
+            }
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
             if ( this_atom->name == "OXT" )
             {
                mapkey = "OXT|OXT";
@@ -656,11 +705,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
 
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
-               cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq);
                continue;
             }
@@ -670,7 +719,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
@@ -682,7 +731,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                   .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                   .arg(j+1)
                   .arg(this_atom->name)
-                  .arg(this_atom->resName)
+                  .arg(use_resname)
                   .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
@@ -696,6 +745,19 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             // ;
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( our_saxs_options.use_somo_ff )
+            {
+               double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+//                      .arg( new_atom.atom_name )
+//                      .arg( this_ev );
+               }
+            }
+
+
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
             {
@@ -717,7 +779,8 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( !our_saxs_options.iqq_use_atomic_ff &&
+                 count_hydrogens.search(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -727,7 +790,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
-                              .arg(this_atom->resName)
+                              .arg(use_resname)
                               .arg(this_atom->resSeq)
                               .arg(hybrid_name)
                   .arg(hybrid_map[hybrid_name].saxs_name);
@@ -804,17 +867,27 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             // possibly saving time... but this isn't our most computationally intensive step
             // so I'm holding off for now.
 
-            f[j][i] = saxs.c + 
-               saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-               saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-               saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-               atoms[i].hydrogens * 
-               ( saxsH.c + 
-                 saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-                 saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-                 saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-                 saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+            f[ j ][ i ] = compute_ff( saxs,
+                                      saxsH,
+                                      atoms[ i ].residue_name,
+                                      atoms[ i ].saxs_name,
+                                      atoms[ i ].atom_name,
+                                      atoms[ i ].hydrogens,
+                                      q[ j ],
+                                      q_over_4pi_2[ j ] );
+
+//             f[j][i] = saxs.c + 
+//                saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+//                saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+//                saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+//                saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
+//                atoms[i].hydrogens * 
+//                ( saxsH.c + 
+//                  saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
+//                  saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
+//                  saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
+//                  saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+
             fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
             fp[j][i] = f[j][i] - fc[j][i];
 #if defined(ONLY_PHYSICAL_F)
@@ -1049,7 +1122,18 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             new_atom.pos[1] = this_atom->coordinate.axis[1];
             new_atom.pos[2] = this_atom->coordinate.axis[2];
 
-            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            if ( this_atom->name == "XH" && !our_saxs_options.iqq_use_atomic_ff )
+            {
+               continue;
+            }
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
             if ( this_atom->name == "OXT" )
             {
                mapkey = "OXT|OXT";
@@ -1059,11 +1143,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
 
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
-               cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
-                              .arg(this_atom->resName)
+                              .arg(use_resname)
                               .arg(this_atom->resSeq);
                continue;
             }
@@ -1073,7 +1157,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
-                              .arg(this_atom->resName)
+                              .arg(use_resname)
                               .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
@@ -1085,13 +1169,29 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
                               .arg(this_atom->name)
-                              .arg(this_atom->resName)
+                              .arg(use_resname)
                               .arg(this_atom->resSeq)
                   .arg(hybrid_name);
                continue;
             }
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options.use_somo_ff )
+            {
+               double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+//                      .arg( new_atom.atom_name )
+//                      .arg( this_ev );
+               }
+            }
+
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
             {
@@ -1123,7 +1223,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
                noticemsg += QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
-                              .arg(this_atom->resName)
+                              .arg(use_resname)
                               .arg(this_atom->resSeq)
                               .arg(hybrid_name)
                   .arg(hybrid_map[hybrid_name].saxs_name);
@@ -1200,17 +1300,28 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             // possibly saving time... but this isn't our most computationally intensive step
             // so I'm holding off for now.
 
-            f[j][i] = saxs.c + 
-               saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-               saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-               saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-               atoms[i].hydrogens * 
-               ( saxsH.c + 
-                 saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-                 saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-                 saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-                 saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+            f[ j ][ i ] = 
+               compute_ff( saxs,
+                           saxsH,
+                           atoms[ i ].residue_name,
+                           atoms[ i ].saxs_name,
+                           atoms[ i ].atom_name,
+                           atoms[ i ].hydrogens,
+                           q[ j ],
+                           q_over_4pi_2[ j ] );
+
+//             f[j][i] = saxs.c + 
+//                saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+//                saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+//                saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+//                saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
+//                atoms[i].hydrogens * 
+//                ( saxsH.c + 
+//                  saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
+//                  saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
+//                  saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
+//                  saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+
             fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
             fp[j][i] = f[j][i] - fc[j][i];
 #if defined(ONLY_PHYSICAL_F)
@@ -1633,6 +1744,24 @@ void US_Saxs_Util::setup_saxs_options()
 
    our_saxs_options.bead_model_rayleigh = true;
 
+   our_saxs_options.use_somo_ff = false;
+   if ( control_parameters.count( "fffile" ) )
+   {
+      our_saxs_options.use_somo_ff = true;
+   }
+
+   our_saxs_options.alt_ff = false;
+   if ( control_parameters.count( "testingff" ) )
+   {
+      our_saxs_options.alt_ff = true;
+   }
+
+   our_saxs_options.iqq_use_atomic_ff = false;
+   if ( control_parameters.count( "explicith" ) )
+   {
+      our_saxs_options.iqq_use_atomic_ff = true;
+   }
+
    if ( control_parameters.count( "wateredensity" ) )
    {
       our_saxs_options.water_e_density = control_parameters[ "wateredensity" ].toFloat();
@@ -1802,4 +1931,366 @@ bool US_Saxs_Util::run_iqq()
       }
    }
    return true;
+}
+
+double US_Saxs_Util::compute_ff(
+                                    saxs     &sa,        // gaussian decomposition for the main atom
+                                    saxs     &sh,        // gaussian decomposition for hydrogen
+                                    QString  &nr,     // name of residue
+                                    QString  &na,     // name of atom
+                                    QString  &naf,    // full name of atom
+                                    unsigned int h,      // number of hydrogens
+                                    double   q,
+                                    double   q_o_4pi2 
+                                    )
+{
+   errormsg  = "";
+   noticemsg = "";
+
+   if ( our_saxs_options.use_somo_ff )
+   {
+      QString ffkey = nr + "|" + naf;
+      if ( ff_table.count( ffkey ) )
+      {
+         // ok
+         double  ff;
+         if ( !apply_natural_spline( ff_q [ ff_table[ ffkey ] ],
+                                     ff_ff[ ff_table[ ffkey ] ],
+                                     ff_y2[ ff_table[ ffkey ] ],
+                                     q,
+                                     ff ) )
+         {
+            noticemsg += QString( "Warning: error applying natural spline to %1 at %2 <%3>" )
+               .arg( ffkey ) 
+               .arg( q ) 
+               .arg( errormsg );
+            errormsg = "";
+         } else {
+            return ff;
+         }
+      } else {
+         if ( !ff_sent_msg1.count( ffkey ) )
+         {
+            noticemsg += QString( "Warning: key %1 not found in ff_table" ).arg( ffkey );
+            ff_sent_msg1[ ffkey ] = true;
+         }
+      }
+   }
+
+   if ( !h )
+   {
+      return 
+         sa.c +
+         sa.a[ 0 ] + exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+         sa.a[ 1 ] + exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+         sa.a[ 2 ] + exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+         sa.a[ 3 ] + exp( -sa.b[ 3 ] * q_o_4pi2 );
+   }
+
+   if ( !our_saxs_options.alt_ff )
+   {
+      return sa.c + 
+         sa.a[0] * exp(-sa.b[0] * q_o_4pi2) +
+         sa.a[1] * exp(-sa.b[1] * q_o_4pi2) +
+         sa.a[2] * exp(-sa.b[2] * q_o_4pi2) +
+         sa.a[3] * exp(-sa.b[3] * q_o_4pi2) +
+         h *
+         ( sh.c + 
+           sh.a[0] * exp(-sh.b[0] * q_o_4pi2) +
+           sh.a[1] * exp(-sh.b[1] * q_o_4pi2) +
+           sh.a[2] * exp(-sh.b[2] * q_o_4pi2) +
+           sh.a[3] * exp(-sh.b[3] * q_o_4pi2) );
+   }
+
+//    q_o_4pi2 = 
+//       ( q / ( 2.0 * 3.1415926535 ) ) / ( 4.0 * 3.1415926535 ) *
+//       ( q / ( 2.0 * 3.1415926535 ) ) / ( 4.0 * 3.1415926535 );
+
+//    cout << "q|q/4pi2|name|hydrogens|a1|b1|a2|b2|a3|b3|a4|b4|c|ff\n";
+//    cout << 
+//       QString( "%1|%2|%3|%4|" )
+//       .arg( q )
+//       .arg( q_o_4pi2 )
+//       .arg( na )
+//       .arg( h );
+
+//    for ( int i = 0; i < 4; i++ )
+//    {
+//       cout << QString( "%1|%2|" ).arg( sa.a[ i ] ).arg( sa.b[ i ] );
+//    }
+
+//    cout << QString( "%1|%2\n" )
+//       .arg( sa.c )
+//       .arg( sa.c +
+//             sa.a[ 0 ] + exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+//             sa.a[ 1 ] + exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+//             sa.a[ 2 ] + exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+//             sa.a[ 3 ] + exp( -sa.b[ 3 ] * q_o_4pi2 ) );
+
+   if ( !hybrid_coords.count( na ) )
+   {
+      noticemsg +=  QString( "ERROR: No hybrid info for atom %1, computing for ZERO hydrogens" ).arg( na );
+      return compute_ff( sa, sh, nr, na, naf, 0, q, q_o_4pi2 );
+   }
+
+   if ( hybrid_coords[ na ].size() <= h )
+   {
+      noticemsg += 
+         QString( "ERROR: More hydrogens requested (%1) than available (%2) for atom %2, computing for available hydrogens" )
+         .arg( h ) 
+         .arg( hybrid_coords[ na ].size() - 1 )
+         .arg( na ) ;
+      h = hybrid_coords[ na ].size();
+   }
+
+   // now compute debye for "mini" system at q, return square root of intensity
+
+   double ff_a = compute_ff( sa, sh, nr, na, naf, 0, q, q_o_4pi2 );
+   QString nh = "H";
+   double ff_h = compute_ff( sh, sh, nr, nh, nh,  0, q, q_o_4pi2 );
+
+   vector < double > ff( h + 1 );
+   ff[ 0 ] = ff_a;
+   for ( unsigned int i = 1; i <= h; i++ )
+   {
+      ff[ i ] = ff_h;
+   }
+
+   double I = 0e0;
+
+   double qrik;
+   double sqrikd;
+
+   for ( unsigned int i = 0; i < h; i++ )
+   {
+      for ( unsigned int k = i + 1; k <= h; k++ )
+      {
+         qrik = hybrid_r[ na ][ i ][ k ] * q;
+         sqrikd = ( fabs( qrik ) < 1e-30 ) ? 1.0 : sin(qrik) / qrik;
+         I += 2.0 * ff[ i ] * ff[ k ] * sqrikd;
+      }
+   }
+
+   if ( our_saxs_options.autocorrelate )
+   {
+      for ( unsigned int i = 0; i <= h; i++ )
+      {
+         I += ff[ i ] * ff[ i ];
+      }
+   }
+
+   return sqrt( I );
+}                                    
+
+bool US_Saxs_Util::load_ff_table( QString filename )
+{
+   if ( ff_table_loaded &&
+        last_ff_filename == filename )
+   {
+      return true;
+   }
+
+   noticemsg += QString(  "Loading ff table %1" ).arg( filename );
+
+   QFile f( filename );
+   if ( !f.exists() )
+   {
+      errormsg =  QString( "Error: load ff table %1 does not exist" ).arg( filename );
+      return false;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = QString("Error: load ff table %1 can not be opened" ).arg( filename );
+      return false;
+   }
+
+   ff_table_loaded = false;
+
+   ff_table.clear();
+   ff_q    .clear();
+   ff_ff   .clear();
+   ff_y2   .clear();
+   ff_ev   .clear();
+
+   QTextStream ts( &f );
+   
+   unsigned int line = 0;
+
+   QRegExp rx_blank  ( "^\\s*$" );
+   QRegExp rx_comment( "#.*$" );
+
+   while ( !ts.atEnd() )
+   {
+      QString     qs  = ts.readLine();
+
+      line++;
+
+      if ( qs.contains( rx_blank ) || qs.contains( rx_comment ) )
+      {
+         continue;
+      }
+
+      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+
+      // expect:
+      //   residueatom (possibly multiple)
+      //   excludedvolume (once)
+      //   startdata
+      // ... data ...
+      //   enddata
+
+      unsigned int pos = ff_q.size();
+
+      if ( qsl[ 0 ] == "residueatom" )
+      {
+         qsl.pop_front();
+         while ( qsl.count() > 1 )
+         {
+            QString res = qsl[ 0 ];
+            qsl.pop_front();
+            QString atm = qsl[ 0 ];
+            qsl.pop_front();
+
+            QString this_key = QString( "%1|%2" ).arg( res ).arg( atm );
+            ff_table[ this_key ] = pos;
+         }
+         if ( qsl.count() )
+         {
+            errormsg =  QString( "Error: load_ff line %1, residue/atoms not paired" ).arg( line );
+            return false;
+         }
+         continue;
+      }
+
+      if ( qsl[ 0 ] == "excludedvolume" )
+      {
+         qsl.pop_front();
+         if ( qsl.count() !=  1 )
+         {
+            errormsg = QString( "Error: load_ff line %1, excluded volume requires exactly one parameter" ).arg( line );
+            return false;
+         }
+
+         if ( ff_ev.size() != pos )
+         {
+            errormsg = QString( "Error: load_ff line %1, excluded volume multiply defined" ).arg( line );
+            return false;
+         }
+         
+         ff_ev.push_back( qsl[ 0 ].toDouble() );
+         continue;
+      }
+
+      if ( qsl[ 0 ] == "startdata" )
+      {
+         vector < double > new_q;
+         vector < double > new_ff;
+
+         bool ok = false;
+
+         if ( ff_ev.size() != ff_ff.size() + 1 )
+         {
+            errormsg = QString( "Error: load_ff line %1, startdata with no excluded volume defined" ).arg( line );
+            return false;
+         }
+
+         cout << QString( "pos %1 ev %2\n" ).arg( ff_ev.size() ).arg( ff_ev.back() );
+
+         while ( !ts.atEnd() )
+         {
+            QString     qs  = ts.readLine();
+            line++;
+
+            if ( qs.contains( rx_blank ) || qs.contains( rx_comment ) )
+            {
+               continue;
+            }
+
+            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+
+            if ( qsl[ 0 ] == "enddata" )
+            {
+               if ( new_q.size() < 10 )
+               {
+                  errormsg = QString( "Error: load_ff line %1, empty or insufficient data" ).arg( line );
+                  return false;
+               }
+                  
+               ff_q .push_back( new_q  );
+               ff_ff.push_back( new_ff );
+               // compute natural spline info
+               vector < double > new_y2;
+               US_Saxs_Util::natural_spline( new_q, new_ff, new_y2 );
+               ff_y2.push_back( new_y2 );
+               ok = true;
+               break;
+            }
+
+            if ( qsl.size() != 2 )
+            {
+               errormsg = QString( "Error: load_ff line %1, data lines must have exactly two fields" ).arg( line );
+               return false;
+            }
+
+            new_q.push_back ( qsl[ 0 ].toDouble() );
+            new_ff.push_back( qsl[ 1 ].toDouble() );
+
+         }
+         if ( !ok )
+         {
+            errormsg = QString( "Error: load_ff line %1, permature eof: no enddata token found" ).arg( line );
+            return false;
+         }
+         continue;
+      }
+      errormsg = QString( "Error: load_ff line %1, unknown token %2" ).arg( line ).arg( qsl[ 0 ] );
+      return false;
+   }
+   f.close();
+
+   errormsg = QString( "ff table %1 loaded ok" ).arg( filename );
+
+   ff_table_loaded  = true;
+   last_ff_filename = filename;
+
+   cout << ff_info();
+
+   return true;
+}
+
+
+QString US_Saxs_Util::ff_info()
+{
+   QString qs;
+   
+   for ( map < QString, unsigned int >::iterator it = ff_table.begin();
+         it != ff_table.end();
+         it++ )
+   {
+      qs += QString( "%1 %2\n" ).arg( it->first ).arg( it->second );
+   }
+
+   for ( unsigned int i = 0; i < ff_q.size(); i++ )
+   {
+      qs += QString( "id:%1 q:%2 I:%3 y2:%4 ev:%5\n" )
+         .arg( i )
+         .arg( ff_q [ i ].size() )
+         .arg( ff_ff[ i ].size() )
+         .arg( ff_y2[ i ].size() )
+         .arg( ff_ev[ i ] );
+   }
+   return qs;
+}
+
+double US_Saxs_Util::get_ff_ev( QString res, QString atm )
+{
+   QString ffkey = res + "|" + atm;
+   if ( !ff_table.count( ffkey ) )
+   {
+      errormsg = QString( "Warning: key %1 not found in ff_table" ).arg( ffkey );
+      return 0e0;
+   }
+
+   return ff_ev[ ff_table[ ffkey ] ];
 }

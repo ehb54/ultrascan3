@@ -75,6 +75,13 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
 
    editor_msg("blue", "THIS WINDOW IS UNDER DEVELOPMENT" );
 
+   if ( our_saxs_options->use_somo_ff )
+   {
+      editor_msg( "blue", "Use somo ff on\n" );
+      saxs_window->ff_sent_msg1.clear();
+      saxs_window->load_ff_table( our_saxs_options->default_ff_filename );
+   }
+
    global_Xpos += 30;
    global_Ypos += 30;
 
@@ -166,7 +173,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_rho0 = new QLineEdit( this, "rho0 (1/A^3):");
-   le_rho0->setText( QString( "" ).sprintf( "%g", 0.334 ) );
+   le_rho0->setText( QString( "" ).sprintf( "%g", our_saxs_options->water_e_density ) );
    le_rho0->setAlignment(Qt::AlignVCenter);
    le_rho0->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -528,7 +535,6 @@ bool US_Hydrodyn_Saxs_1d::update_image()
    }
 
    // compute modulii
-
    vector < double > modulii( data.size() );
 
    double max_modulii = 0e0;
@@ -536,7 +542,7 @@ bool US_Hydrodyn_Saxs_1d::update_image()
    
    for ( unsigned int i = 0; i < data.size(); i++ )
    {
-      modulii[ i ] = sqrt( real( data[ i ] * conj( data[ i ] ) ) );
+      modulii[ i ] = real( data[ i ] * conj( data[ i ] ) );
       if ( max_modulii < modulii[ i ] )
       {
          max_modulii = modulii[ i ];
@@ -635,11 +641,14 @@ void US_Hydrodyn_Saxs_1d::start()
    vector < vector < double > > rotations;
 
    editor_msg( "gray", "computing rotations\n" );
+   progress->setProgress( 0, 1 );
    qApp->processEvents();
 
+   if ( !load_rotations( le_sample_rotations->text().toInt(), rotations ) )
    {
       using namespace bulatov;
       rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
+      save_rotations( rotations );
    }
 
    editor_msg( "gray", "done computing rotations\n" );
@@ -744,7 +753,7 @@ void US_Hydrodyn_Saxs_1d::start()
          {
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
-            // keep everything in meters
+            // keep everything in angstroms!
             new_atom.pos[ 0 ] = this_atom->coordinate.axis[ 0 ] * atomic_scaler;
             new_atom.pos[ 1 ] = this_atom->coordinate.axis[ 1 ] * atomic_scaler;
             new_atom.pos[ 2 ] = this_atom->coordinate.axis[ 2 ] * atomic_scaler;
@@ -754,7 +763,13 @@ void US_Hydrodyn_Saxs_1d::start()
                continue;
             }
 
-            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
             if ( this_atom->name == "OXT" )
             {
                mapkey = "OXT|OXT";
@@ -765,13 +780,13 @@ void US_Hydrodyn_Saxs_1d::start()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
 #if defined( UHS2_ATOMS_DEBUG )
-               cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
 #endif
                editor_msg( "red" ,
                            QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq ) );
                qApp->processEvents();
                if ( !running ) 
@@ -791,7 +806,7 @@ void US_Hydrodyn_Saxs_1d::start()
                            QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            );
@@ -819,7 +834,7 @@ void US_Hydrodyn_Saxs_1d::start()
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
                            .arg(this_atom->name)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            );
@@ -840,8 +855,23 @@ void US_Hydrodyn_Saxs_1d::start()
                .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
                ;
 #endif
-
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options->use_somo_ff )
+            {
+               double this_ev = saxs_window->get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+//                      .arg( new_atom.atom_name )
+//                      .arg( this_ev );
+               }
+            }
+
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
@@ -858,7 +888,6 @@ void US_Hydrodyn_Saxs_1d::start()
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
 
-               
             if ( our_saxs_options->iqq_use_saxs_excl_vol )
             {
                new_atom.excl_vol = saxs_map[hybrid_map[hybrid_name].saxs_name].volume;
@@ -896,7 +925,7 @@ void US_Hydrodyn_Saxs_1d::start()
                            QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            .arg(hybrid_map[hybrid_name].saxs_name)
@@ -916,6 +945,12 @@ void US_Hydrodyn_Saxs_1d::start()
       // ok now we have all the atoms
    }
 
+   if ( !atoms.size() )
+   {
+      editor_msg( "red", QString( tr( "Error: no atoms found!\n" ) ) );
+      return;
+   }
+
    // place 1st atom at 0,0,0
 
    // save value for excluded volume
@@ -924,11 +959,14 @@ void US_Hydrodyn_Saxs_1d::start()
    zerooffset.axis[ 1 ] = atoms[ 0 ].pos[ 1 ];
    zerooffset.axis[ 2 ] = atoms[ 0 ].pos[ 2 ];
 
-   for ( unsigned int a = 1; a < atoms.size(); a++ )
+   if ( atoms.size() > 1 )
    {
-      atoms[ a ].pos[ 0 ] -= atoms[ 0 ].pos[ 0 ];
-      atoms[ a ].pos[ 1 ] -= atoms[ 0 ].pos[ 1 ];
-      atoms[ a ].pos[ 2 ] -= atoms[ 0 ].pos[ 2 ];
+      for ( unsigned int a = 1; a < atoms.size(); a++ )
+      {
+         atoms[ a ].pos[ 0 ] -= atoms[ 0 ].pos[ 0 ];
+         atoms[ a ].pos[ 1 ] -= atoms[ 0 ].pos[ 1 ];
+         atoms[ a ].pos[ 2 ] -= atoms[ 0 ].pos[ 2 ];
+      }
    }
 
    atoms[ 0 ].pos[ 0 ] = 0.0f;
@@ -1031,6 +1069,7 @@ void US_Hydrodyn_Saxs_1d::start()
          
          transform_to[ 2 ].axis[ 0 ] = -rotations[ r ][ 1 ];
          transform_to[ 2 ].axis[ 1 ] = rotations[ r ][ 0 ];
+         // check this!
          transform_to[ 2 ].axis[ 2 ] = 0.0f; // rotations[ r ][ 2 ];
 
          transform_to[ 3 ] = 
@@ -1256,7 +1295,7 @@ void US_Hydrodyn_Saxs_1d::start()
             saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
             double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
-               
+
 #if defined( UHS2_SCAT_DEBUG )
             cout << QString( 
                             "atom                %1\n"
@@ -1276,18 +1315,28 @@ void US_Hydrodyn_Saxs_1d::start()
             cout << expiQdotR << endl;
 #endif
             double q_2_over_4pi = q * q * one_over_4pi_2;
-               
+
             double F_at =
-               saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-               saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-               saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-               saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-               atoms[ a ].hydrogens * 
-               ( saxsH.c + 
-                 saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                 saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                 saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                 saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+               saxs_window->compute_ff( saxs,
+                                        saxsH,
+                                        atoms[ a ].residue_name,
+                                        atoms[ a ].saxs_name,
+                                        atoms[ a ].atom_name,
+                                        atoms[ a ].hydrogens,
+                                        q,
+                                        q_2_over_4pi );
+
+//              double F_at =
+//                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+//                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+//                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+//                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+//                 atoms[ a ].hydrogens * 
+//                 ( saxsH.c + 
+//                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+//                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+//                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+//                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
             data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
 
@@ -1302,34 +1351,37 @@ void US_Hydrodyn_Saxs_1d::start()
 
       // now subtract excluded volume
 
-      for ( unsigned int i = 0; i < data.size(); i++ )
+      if ( rho0 )
       {
-         progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-         qApp->processEvents();
-
-         double pixpos = ( double ) i * detector_width_per_pixel;
-
-         double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-         vector < double > Q( 3 );
-         Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-         Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-         Q[ 2 ] = 0e0;
-               
-         for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
+         for ( unsigned int i = 0; i < data.size(); i++ )
          {
-            double QdotR = 
-               Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
-               Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
-               Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
+            progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+            qApp->processEvents();
 
-            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+            double pixpos = ( double ) i * detector_width_per_pixel;
 
-            complex < double > expiQdotR = exp( iQdotR );
+            double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
 
-            complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+            vector < double > Q( 3 );
+            Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+            Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+            Q[ 2 ] = 0e0;
+               
+            for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
+            {
+               double QdotR = 
+                  Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
+                  Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
+                  Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
 
-            data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+
+               complex < double > expiQdotR = exp( iQdotR );
+
+               complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+
+               data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+            }
          }
 
 #if defined( UHS1D_EXCL_VOL_DEBUG )
@@ -1691,6 +1743,10 @@ bool US_Hydrodyn_Saxs_1d::activate_saxs_window()
 
 bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
 {
+   if ( !rho0 )
+   {
+      return true;
+   }
 #if !defined( HAS_CBF )
    errormsg = "No CBF linked in this version\n";
    return false;
@@ -1754,6 +1810,11 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 #else 
    errormsg = "";
    excluded_volume.clear();
+
+   if ( !rho0 )
+   {
+      return true;
+   }
 
    editor_msg( "gray", "loading excluded volume map\n" );
    qApp->processEvents();
@@ -2084,4 +2145,112 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
    qApp->processEvents();
    return true;
 #endif
+}
+
+bool US_Hydrodyn_Saxs_1d::save_rotations( vector < vector < double > > &rotations )
+{
+   QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+            QDir::separator() + "tmp" + QDir::separator() +
+            QString( "rots1d_%1.dat" ).arg( rotations.size() ) );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: could not create cached rotations file %1" ) )
+                  .arg( f.name() ) );
+      return false;
+   }
+
+   QTextStream ts( &f );
+   for ( unsigned int i = 0; i < ( unsigned int )rotations.size(); i++ )
+   {
+      if ( rotations[ i ].size() != 3 )
+      {
+         editor_msg( "dark red", QString( tr( "Notice: error creating cached rotations file %1: expected 3 doubles at pos %2 but only found %3" ) )
+                     .arg( f.name() ) 
+                     .arg( i )
+                     .arg( rotations[ i ].size() ) 
+                     );
+         f.close();
+         return false;
+      }
+         
+      ts << QString( "%1 %2 %3\n" )
+         .arg( rotations[ i ][ 0 ], 0, 'g', 17 )
+         .arg( rotations[ i ][ 1 ], 0, 'g', 17 )
+         .arg( rotations[ i ][ 2 ], 0, 'g', 17 );
+   }
+   f.close();
+   editor_msg( "blue", 
+               QString( tr( "Notice: created cached rotations file %1" ) )
+               .arg( f.name() ) );
+               
+   return true;
+}
+
+
+bool US_Hydrodyn_Saxs_1d::load_rotations( int number, 
+                                          vector < vector < double > > &rotations )
+{
+   QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+            QDir::separator() + "tmp" + QDir::separator() +
+            QString( "rots1d_%1.dat" ).arg( number ) );
+   if ( !f.exists() )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: cached rotations file %1 does not exist, so computing it" ) )
+                  .arg( f.name() ) );
+      return false;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: found cached rotations file %1 but could not open it" ) )
+                  .arg( f.name() ) );
+      return false;
+   }
+
+   QTextStream ts( &f );
+
+   unsigned int line = 0;
+
+   vector < double > p(3);
+   rotations.clear();
+
+   while ( !ts.atEnd() )
+   {
+      QString     qs  = ts.readLine();
+      line++;
+
+      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+
+      if ( qsl.size() != 3 )
+      {
+         editor_msg( "dark red", QString( tr( "Notice: error in found cached rotations file %1 line %2, does not contain 3 tokens" ) )
+                     .arg( f.name() )
+                     .arg( line )
+                     );
+         f.close();
+         return false;
+      }
+      p[ 0 ] = qsl[ 0 ].toDouble();
+      p[ 1 ] = qsl[ 1 ].toDouble();
+      p[ 2 ] = qsl[ 2 ].toDouble();
+      rotations.push_back( p );
+   }
+   f.close();
+   if ( ( int )rotations.size() != number )
+   {
+      editor_msg( "dark red", 
+                  QString( tr( "Notice: error:  cached rotations file %1 line %2, does not contains the expected number of rotations (%3 requested vs %4 found)" ) )
+                  .arg( f.name() )
+                  .arg( line )
+                  .arg( number )
+                  .arg( rotations.size() )
+                  );
+      rotations.clear();
+      return false;
+   }
+   editor_msg( "blue", 
+               QString( tr( "Notice: loaded cached rotations file %1" ) )
+               .arg( f.name() ) );
+   return true;
 }

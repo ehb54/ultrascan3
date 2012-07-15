@@ -143,6 +143,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "asastep|"
                       "hydrate|"
                       "saxsfile|"
+                      "fffile|"
                       "hydrationscd|"
                       "saxs|"
                       "iqmethod|"
@@ -154,6 +155,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "crysolharm|"
                       "crysolgrid|"
                       "crysolchs|"
+                      "explicith|"
                       "wateredensity|"
                       "targetedensity|"
                       "swhexclvol|"
@@ -183,6 +185,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "dmdrelaxheatxc|"
                       "dmdequiheatxc|"
                       "dmdstatic|"
+
+                      "gridsearch|"
 
                       "sgppopulation|"
                       "sgpgenerations|"
@@ -259,6 +263,20 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "damminmaxnumberannealingsteps|"
                       "damminexpectedshape|"
 
+                      "crysolrun|"
+                      "crysolpdb|"
+                      "crysolmode|"
+                      "crysolharmonics|"
+                      "crysolfibgrid|"
+                      "crysolmaxq|"
+                      "crysolpoints|"
+                      "crysolexplicithydrogens|"
+                      "crysolfitexperiment|"
+                      "crysoledensity|"
+                      "crysolcontrast|"
+                      "crysolatomicradius|"
+                      "crysolexcludedvolume|"
+
                       "a2sbrun|"
                       "a2sbcubeside|"
                       "a2sbequalize|"
@@ -275,6 +293,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hybridfile|"
                       "hydrationfile|"
                       "saxsfile|"
+                      "fffile|"
                       "dammingnomfile|"
                       "experimentgrid|"
                       "additionalexperimentgrid|"
@@ -296,6 +315,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "asacalculation|"
                       "asastep|"
                       "saxsfile|"
+                      "fffile|"
                       "hydrationscd|"
                       "iqmethod|"
                       "fdbinsize|"
@@ -360,6 +380,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsasgaincrement|"
 
                       "a2sbcubeside|"
+
+                      "crysolpdb|"
 
                       "outputfile)$"
                       );
@@ -446,6 +468,18 @@ bool US_Saxs_Util::read_control( QString controlfile )
       {
          if ( !flush_output() )
          {
+            return false;
+         }
+      }         
+
+      if ( option == "crysolrun" )
+      {
+         if ( !run_crysol() )
+         {
+            errormsg = QString( "Error %1 line %2 : %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( errormsg );
             return false;
          }
       }         
@@ -656,6 +690,21 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }
 
+      if ( option == "fffile" )
+      {
+#if !defined( USE_MPI )
+         cout << QString("read ff table %1\n").arg( qsl[ 0 ] );
+#endif
+         if ( !load_ff_table( qsl[ 0 ] ) )
+         {
+            errormsg = QString( "Error %1 line %2 : %3" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( errormsg );
+            return false;
+         }
+      }
+      
       if ( option == "iqmethod" )
       {
          if ( rx_valid_saxs_iqmethod.search( qsl[ 0 ] ) == -1 )
@@ -887,6 +936,141 @@ bool US_Saxs_Util::read_control( QString controlfile )
                }
             }
          }
+      }
+      if ( option == "gridsearch" )
+      {
+         if ( experimental_grids.size() != 1 )
+         {
+            errormsg = QString( "Error %1 line %2 : exactly one experiment grid needed" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+         if ( !control_parameters.count( "inputfile" ) )
+         {
+            errormsg = QString( "Error %1 line %2 : InputFile not defined" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+         if ( qsl.size() != 8 )
+         {
+            errormsg = QString( "Error %1 line %2 : 8 parameters needed" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+
+         if ( model_vector.size() != 1 )
+         {
+            errormsg = QString( "Error %1 line %2 : single model inputfile required" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+
+         if ( model_vector[ 0 ].molecule.size() < 1 )
+         {
+            errormsg = QString( "Error %1 line %2 : model has no molecules!" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+
+         unsigned int atom_num = qsl[ 0 ].toUInt();
+
+         if ( !atom_num )
+         {
+            errormsg = QString( "Error %1 line %2 : selected atom numbers are relative and start with 1" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+
+         if ( !validate_control_parameters() )
+         {
+            return false;
+         }
+         setup_saxs_options();
+         cout << QString("Grid before run_iqq q(%1:%2) deltaq %3\n")
+            .arg( control_parameters[ "startq" ] )
+            .arg( control_parameters[ "endq" ] )
+            .arg( control_parameters[ "deltaq" ] );
+         
+         if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+         {
+            return false;
+         }
+         
+         if ( ( unsigned int ) model_vector[ 0 ].molecule[ 0 ].atom.size() < atom_num )
+         {
+            errormsg = QString( "Error %1 line %2 : model's 1st molecule has insufficient atoms!" )
+               .arg( controlfile )
+               .arg( line );
+            return false;
+         }
+
+         atom_num--; // start with offset 0
+
+         double startx = qsl[ 1 ].toDouble();
+         double endx   = qsl[ 2 ].toDouble();
+         double starty = qsl[ 3 ].toDouble();
+         double endy   = qsl[ 4 ].toDouble();
+         double startz = qsl[ 5 ].toDouble();
+         double endz   = qsl[ 6 ].toDouble();
+         double delta  = qsl[ 7 ].toDouble();
+
+         double x;
+         double y;
+         double z;
+
+         QString org_model = model_vector[ 0 ].model_id;
+
+         control_parameters[ "gridsearch_running" ] = "running"; 
+         double best_msd = 9e99;
+         double best_x   = 0e0;
+         double best_y   = 0e0;
+         double best_z   = 0e0;
+
+         for ( x = startx; x <= endx; x += delta )
+         {
+            cout << QString( "new x %1\n" ).arg( x );
+            for ( y = starty; y <= endy; y += delta )
+            {
+               for ( z = startz; z <= endz; z += delta )
+               {
+                  model_vector[ 0 ].molecule[ 0 ].atom[ atom_num ].coordinate.axis[ 0 ] = x;
+                  model_vector[ 0 ].molecule[ 0 ].atom[ atom_num ].coordinate.axis[ 1 ] = y;
+                  model_vector[ 0 ].molecule[ 0 ].atom[ atom_num ].coordinate.axis[ 2 ] = z;
+                  // need to do this silently
+                  // cout << QString( "running for %1 %2 %3\n" ).arg( x ).arg( y ).arg( z ) << flush;
+                  model_vector[ 0 ].model_id = org_model + QString( "p%1_%2_%3" ).arg( x ).arg( y ).arg( z );
+                  if ( !run_iqq() )
+                  {
+                     control_parameters.erase( "gridsearch_running" );
+                     return false;
+                  }
+                  // compute fitness and report
+                  // compare sgp_exp_q, I to sgp_last_q, sgp_last_I
+                  double msd = 0e0;
+                  
+                  for ( unsigned int i = 0; i < sgp_last_q.size(); i++ )
+                  {
+                     msd += ( sgp_last_I[ i ] - sgp_exp_I[ i ] ) * ( sgp_last_I[ i ] - sgp_exp_I[ i ] );
+                  }
+                  // cout << QString( "%1 at %2,%3,%4\n" ).arg( msd ).arg( x ).arg( y ).arg( z );
+                  if ( best_msd > msd )
+                  {
+                     best_msd = msd;
+                     best_x = x;
+                     best_y = y;
+                     best_z = z;
+                     cout << QString( "new best: %1 at %2,%3,%4\n" ).arg( msd ).arg( x ).arg( y ).arg( z );
+                  }
+               }
+            }
+         }
+         control_parameters.erase( "gridsearch_running" );
       }
    }
     
@@ -1425,7 +1609,9 @@ bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < d
 {
    // cout << "write output\n";
    if ( control_parameters.count( "sgp_running" ) ||
-        control_parameters.count( "a2sb_running" ) )
+        control_parameters.count( "a2sb_running" ) ||
+        control_parameters.count( "gridsearch_running" )
+        )
    {
       sgp_last_q = q;
       sgp_last_I = I;

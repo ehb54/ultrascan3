@@ -3783,7 +3783,10 @@ void US_Hydrodyn::set_default()
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
-   saxs_options.ignore_errors = false;
+   saxs_options.ignore_errors              = false;
+   saxs_options.alt_ff                     = true;
+   saxs_options.crysol_explicit_hydrogens  = false;
+   saxs_options.use_somo_ff                = true;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
@@ -3807,6 +3810,10 @@ void US_Hydrodyn::set_default()
    if ( saxs_options.default_rotamer_filename.isEmpty() )
    {
       saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
+   }
+   if ( saxs_options.default_ff_filename.isEmpty() )
+   {
+      saxs_options.default_ff_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.ff";
    }
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
@@ -6447,4 +6454,148 @@ void US_Hydrodyn::reset_chain_residues( PDB_model *model )
       }
    }
    calc_vbar( model );
+}
+
+void US_Hydrodyn::make_test_set()
+{
+   cout << "make test set\n";
+   QRegExp count_hydrogens("H(\\d)");
+
+   QString test_dir = somo_dir + QDir::separator() + "testset";
+   QDir dir1( test_dir );
+   if ( !dir1.exists() )
+   {
+      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( test_dir ) );
+      dir1.mkdir( test_dir );
+   }
+
+   QStringList ds;
+   ds 
+      << "05"
+      << "10"
+      << "20"
+      << "40"
+      << "80"
+      << "99"
+      ;
+      
+   map < QString, vector < QString > > pair_summary;
+
+   for ( unsigned int d = 0; d < ( unsigned int ) ds.size(); d++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) residue_list.size(); i++ )
+      {
+         QString residue_name = residue_list[ i ].name;
+         if ( residue_short_names.count( residue_name ) &&
+              residue_short_names[ residue_name ] != '~' )
+         {
+            QString residue_short_name = residue_short_names[ residue_name ];
+            for ( unsigned int j = 0; j < ( unsigned int ) residue_list[ i ].r_atom.size(); j++ )
+            {
+               int hydrogens = 0;
+               QString atom_name   = residue_list[ i ].r_atom[ j ].name;
+               if ( !atom_name.contains( "'" ) &&
+                    !atom_name.contains( "*" ) )
+               {
+                  QString atom_name_1 = atom_name.left( 1 );
+                  QString hybrid_name = residue_list[ i ].r_atom[ j ].hybrid.name;
+                  if ( count_hydrogens.search( hybrid_name ) != -1 )
+                  {
+                     hydrogens = count_hydrogens.cap( 1 ).toInt();
+                  }
+
+                  QDir::setCurrent( test_dir );
+
+                  QString atom_dir = test_dir + QDir::separator() + atom_name_1;
+                  {
+                     QDir dir1( atom_dir );
+                     if ( !dir1.exists() )
+                     {
+                        editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( atom_dir ) );
+                        dir1.mkdir( atom_dir );
+                     }
+                     QDir::setCurrent( atom_dir );
+                  }
+                  
+                  QString hydrogen_dir = atom_dir + QDir::separator() + QString( "%1" ).arg( hydrogens );
+                  {
+                     QDir dir1( hydrogen_dir  );
+                     if ( !dir1.exists() )
+                     {
+                        editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( hydrogen_dir ) );
+                        dir1.mkdir( hydrogen_dir );
+                     }
+               
+                     QDir::setCurrent( hydrogen_dir );
+                  }
+
+                  QString fname = QString( "%1%2%3%4.pdb" )
+                     .arg( hydrogens )
+                     .arg( QString( "%1" ).arg( ds[ d ] ).stripWhiteSpace() )
+                     .arg( residue_short_name )
+                     .arg( atom_name )
+                     ;
+
+                  cout << QString( "%1 %2 %3 %4 %5 %6 %7\n" )
+                     .arg( fname )
+                     .arg( residue_name )
+                     .arg( residue_short_name )
+                     .arg( atom_name )
+                     .arg( atom_name_1 )
+                     .arg( hybrid_name )
+                     .arg( hydrogens );
+
+                  QFile f( fname );
+                  if ( f.open( IO_WriteOnly ) )
+                  {
+                     QTextStream ts( &f );
+                     ts << 
+                        QString( "" )
+                        .sprintf(     
+                                 "ATOM      1  %-3s %3s     1       0.000   0.000   0.000  1.00 14.00           %1s\n"
+                                 , atom_name.ascii()
+                                 , residue_name.ascii()
+                                 , atom_name_1.ascii() );
+
+                     ts << 
+                        QString( "" )
+                        .sprintf(     
+                                 "ATOM      2  %-3s %3s     2      %2s.000   0.000   0.000  1.00 14.00           %1s\n"
+                                 , atom_name.ascii()
+                                 , residue_name.ascii()
+                                 , ds[ d ].ascii()
+                                 , atom_name_1.ascii() );
+                     f.close();
+                  }
+                  if ( !d )
+                  {
+                     pair_summary[ QString( "%1H%2" ).arg( atom_name_1 ).arg( hydrogens ) ]
+                        .push_back( QString( "%1 %2" ).arg( residue_name ).arg( atom_name ) );
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   // save pair summary
+   QDir::setCurrent( test_dir );
+   QFile f( "pair_summary" );
+   if ( f.open( IO_WriteOnly ) )
+   {
+      QTextStream ts( &f );
+      for ( map < QString, vector < QString > >::iterator it = pair_summary.begin();
+            it != pair_summary.end();
+            it++ )
+      {
+         ts << "# " << it->first << endl;
+         ts << "residueatom ";
+         for ( unsigned int i = 0; i < ( unsigned int ) it->second.size(); i++ )
+         {
+            ts << it->second[ i ] << " ";
+         }
+         ts << endl;
+      }
+      f.close();
+   }
 }

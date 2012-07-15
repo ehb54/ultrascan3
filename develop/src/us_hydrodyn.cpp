@@ -254,6 +254,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["SER"] = 'S';
    residue_short_names["THR"] = 'T';
    residue_short_names["CYS"] = 'C';
+   residue_short_names["CYH"] = 'B';
    residue_short_names["TYR"] = 'Y';
    residue_short_names["ASN"] = 'N';
    residue_short_names["GLN"] = 'Q';
@@ -419,6 +420,7 @@ void US_Hydrodyn::setupGUI()
    lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
    lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(saxs()));
+   lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
 
    somo_options = new QPopupMenu;
    somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));

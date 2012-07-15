@@ -318,6 +318,11 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol->addArgument( "/fb" );
    crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_fibonacci_grid_order ) );
 
+   if ( our_saxs_options->crysol_explicit_hydrogens )
+   {
+      crysol->addArgument( "/eh" );
+   }
+
    connect( crysol, SIGNAL(readyReadStdout()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStderr()), this, SLOT(crysol_readFromStderr()) );
    connect( crysol, SIGNAL(processExited()), this, SLOT(crysol_processExited()) );

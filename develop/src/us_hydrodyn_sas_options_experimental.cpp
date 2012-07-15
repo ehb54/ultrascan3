@@ -85,6 +85,14 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_iqq_use_saxs_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_use_saxs_excl_vol, SIGNAL(clicked()), this, SLOT(set_iqq_use_saxs_excl_vol()));
 
+   cb_use_somo_ff = new QCheckBox(this);
+   cb_use_somo_ff->setText(tr(" Use somo.ff" ) );
+   cb_use_somo_ff->setEnabled(true);
+   cb_use_somo_ff->setChecked((*saxs_options).use_somo_ff);
+   cb_use_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_use_somo_ff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_use_somo_ff, SIGNAL(clicked()), this, SLOT(set_use_somo_ff()));
+
    cb_iqq_scale_nnls = new QCheckBox(this);
    cb_iqq_scale_nnls->setText(tr(" Use alternate scaling function"));
    cb_iqq_scale_nnls->setEnabled(true);
@@ -108,6 +116,14 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_iqq_scale_play->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq_scale_play->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iqq_scale_play, SIGNAL(clicked()), this, SLOT(set_iqq_scale_play()));
+
+   cb_alt_ff = new QCheckBox(this);
+   cb_alt_ff->setText(tr(" Alternate ff computation"));
+   cb_alt_ff->setEnabled(true);
+   cb_alt_ff->setChecked((*saxs_options).alt_ff);
+   cb_alt_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_alt_ff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_alt_ff, SIGNAL(clicked()), this, SLOT(set_alt_ff()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -143,6 +159,7 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    QHBoxLayout *hbl_various_2c = new QHBoxLayout;
    hbl_various_2c->addWidget( cb_iqq_use_atomic_ff );
    hbl_various_2c->addWidget( cb_iqq_use_saxs_excl_vol );
+   hbl_various_2c->addWidget( cb_use_somo_ff );
    background->addMultiCellLayout(hbl_various_2c, j, j, 0, 1);
    j++;
 
@@ -151,6 +168,7 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_3->addWidget(cb_iqq_scale_nnls);
    hbl_various_3->addWidget(cb_iqq_log_fitting);
    hbl_various_3->addWidget(cb_iqq_scale_play);
+   hbl_various_3->addWidget(cb_alt_ff);
    background->addMultiCellLayout(hbl_various_3, j, j, 0, 1);
    j++;
 
@@ -215,6 +233,12 @@ void US_Hydrodyn_SasOptionsExperimental::set_iqq_use_saxs_excl_vol()
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsExperimental::set_use_somo_ff()
+{
+   (*saxs_options).use_somo_ff = cb_use_somo_ff->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SasOptionsExperimental::set_iqq_scale_nnls()
 {
    (*saxs_options).iqq_scale_nnls = cb_iqq_scale_nnls->isChecked();
@@ -230,5 +254,11 @@ void US_Hydrodyn_SasOptionsExperimental::set_iqq_log_fitting()
 void US_Hydrodyn_SasOptionsExperimental::set_iqq_scale_play()
 {
    (*saxs_options).iqq_scale_play = cb_iqq_scale_play->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_alt_ff()
+{
+   (*saxs_options).alt_ff = cb_alt_ff->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

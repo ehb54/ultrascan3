@@ -77,6 +77,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
                              );
       ~US_Hydrodyn_Saxs_Buffer();
 
+      void add_plot( QString           name,
+                     vector < double > q,
+                     vector < double > I );
+
+      void add_plot( QString           name,
+                     vector < double > q,
+                     vector < double > I,
+                     vector < double > errors );
+
    private:
       csv           csv1;
 
@@ -149,6 +158,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QPushButton   *pb_start;
       QPushButton   *pb_run_current;
+      QPushButton   *pb_run_divide;
       QPushButton   *pb_run_best;
       QPushButton   *pb_stop;
 
@@ -174,7 +184,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
       QPushButton   *pb_legend;
-
+      QPushButton   *pb_axis_x;
+      QPushButton   *pb_axis_y;
 
       QCheckBox     *cb_guinier;
       QLabel        *lbl_guinier;
@@ -193,6 +204,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool             *saxs_widget;
       bool             activate_saxs_window();
       void             run_one();
+      void             run_one_divide();
 
       void             do_replot_saxs();
 
@@ -282,6 +294,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         clear_files( QStringList files );
       void                         to_created( QString file );
       void                         add_files( QStringList files );
+      bool                         axis_x_log;
+      bool                         axis_y_log;
 
    private slots:
 
@@ -320,6 +334,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       void start();
       void run_current();
+      void run_divide();
       void run_best();
       void stop();
 
@@ -341,6 +356,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void crop_undo();
       void crop_right();
       void legend();
+      void axis_x();
+      void axis_y();
       void legend_set();
       void guinier();
 

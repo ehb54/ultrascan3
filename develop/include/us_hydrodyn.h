@@ -770,6 +770,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
+      void         make_test_set();
+
       void rescale_bead_model();
 
       void browflex_readFromStdout();

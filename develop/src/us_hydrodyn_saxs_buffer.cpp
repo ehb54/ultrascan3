@@ -38,6 +38,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    disable_updates = false;
    setupGUI();
    running = false;
+   axis_y_log = true;
+   axis_x_log = false;
 
    update_enables();
 
@@ -401,6 +403,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_run_current->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_run_current, SIGNAL(clicked()), SLOT(run_current()));
 
+   pb_run_divide = new QPushButton(tr("Current value buffer divide"), this);
+   pb_run_divide->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_run_divide->setMinimumHeight(minHeight1);
+   pb_run_divide->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_run_divide, SIGNAL(clicked()), SLOT(run_divide()));
+
    pb_run_best = new QPushButton(tr("Best buffer subtraction"), this);
    pb_run_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_best->setMinimumHeight(minHeight1);
@@ -581,6 +589,18 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_legend->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
+   pb_axis_x = new QPushButton(tr("X"), this);
+   pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_axis_x->setMinimumHeight(minHeight1);
+   pb_axis_x->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
+
+   pb_axis_y = new QPushButton(tr("Y"), this);
+   pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_axis_y->setMinimumHeight(minHeight1);
+   pb_axis_y->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_axis_y, SIGNAL(clicked()), SLOT(axis_y()));
+
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier"));
    cb_guinier->setChecked(false);
@@ -739,6 +759,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
    hbl_plot_buttons->addWidget( pb_legend );
+   hbl_plot_buttons->addWidget( pb_axis_x );
+   hbl_plot_buttons->addWidget( pb_axis_y );
 
    QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout(0);
    hbl_plot_buttons_2->addWidget( cb_guinier );
@@ -770,6 +792,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_controls->addWidget (pb_start);
    hbl_controls->addSpacing( 1 );
    hbl_controls->addWidget (pb_run_current);
+   hbl_controls->addSpacing( 1 );
+   hbl_controls->addWidget (pb_run_divide);
    hbl_controls->addSpacing( 1 );
    hbl_controls->addWidget (pb_run_best);
    hbl_controls->addSpacing( 1 );
@@ -1107,6 +1131,73 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       }
    } else {
       run_one();
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::run_divide()
+{
+   if ( cb_multi_sub->isChecked() )
+   {
+      bool is_running = running;
+      if ( !is_running )
+      {
+         running = true;
+         update_enables();
+      }
+
+      QString save_signal = lbl_signal->text();
+      map < QString, bool > selected_non_buffer_non_empty;
+      QStringList created_files;
+      
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( lb_files->isSelected( i ) && 
+              lb_files->text( i ) != lbl_buffer->text() &&
+              lb_files->text( i ) != lbl_empty->text() )
+         {
+            selected_non_buffer_non_empty[ lb_files->text( i ) ] = true;
+         }
+      }
+      unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
+      unsigned int pos = 1;
+      for ( map < QString, bool >::iterator it = selected_non_buffer_non_empty.begin();
+            it != selected_non_buffer_non_empty.end();
+            it++ )
+      {
+         if ( !is_running )
+         {
+            progress->setProgress( pos++ , total_points );
+         }
+         lbl_signal->setText( it->first );
+         qApp->processEvents();
+         run_one_divide();
+         if ( !last_created_file.isEmpty() )
+         {
+            created_files << last_created_file;
+         }
+         if ( !running )
+         {
+            lbl_signal->setText( save_signal );
+            return;
+         }
+      }
+      lbl_signal->setText( save_signal );
+      if ( cb_multi_sub_avg->isChecked() )
+      {
+         avg( created_files );
+      }
+      if ( cb_multi_sub_conc_avg->isChecked() )
+      {
+         conc_avg( created_files );
+      }
+      if ( !is_running )
+      {
+         running = false;
+         update_enables();
+         progress->setProgress(1, 1);
+      }
+   } else {
+      run_one_divide();
    }
 }
 
@@ -1564,6 +1655,13 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                      !lbl_buffer->text().isEmpty() &&
                                      !any_current_empty
                                      );
+   pb_run_divide       ->setEnabled( !running && any_selected &&
+                                     ( !lbl_signal->text().isEmpty() ||
+                                       ( cb_multi_sub->isChecked() && 
+                                         non_buffer_non_empty_files_selected_count > 0 ) ) &&
+                                     !lbl_buffer->text().isEmpty() &&
+                                     !any_current_empty
+                                     );
    pb_run_best         ->setEnabled( !running && 
                                      ( !lbl_signal->text().isEmpty() ||
                                        ( cb_multi_sub->isChecked() && 
@@ -1608,6 +1706,8 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
    pb_legend           ->setEnabled( lb_files->numRows() );
+   pb_axis_x           ->setEnabled( lb_files->numRows() );
+   pb_axis_y           ->setEnabled( lb_files->numRows() );
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();
 
@@ -5222,7 +5322,6 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 
 void US_Hydrodyn_Saxs_Buffer::crop_vis()
 {
-   
    // find curves within zoomRect & select only them
 #ifndef QT4
    double minx = plot_dist_zoomer->zoomRect().x1();
@@ -5389,6 +5488,53 @@ void US_Hydrodyn_Saxs_Buffer::legend()
    legend_vis = !legend_vis;
    legend_set();
 #endif
+}
+
+void US_Hydrodyn_Saxs_Buffer::axis_y()
+{
+   axis_y_log = !axis_y_log;
+
+   if ( axis_y_log )
+   {
+      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+#endif
+   }
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::axis_x()
+{
+   axis_x_log = !axis_x_log;
+   if ( axis_x_log )
+   {
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("Log10 q (1/Angstrom)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
+#else
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+#endif
+   }
+   plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Buffer::legend_set()
@@ -5644,3 +5790,362 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
+                                        vector < double > q,
+                                        vector < double > I )
+{
+   vector < double > errors( I.size() );
+   for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
+   {
+      errors[ i ] = 0e0;
+   }
+   add_plot( name, q, I, errors );
+}
+
+void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
+                                        vector < double > q,
+                                        vector < double > I,
+                                        vector < double > errors )
+{
+   name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
+   
+   QString bsub_name = name;
+   unsigned int ext = 0;
+
+   map < QString, bool > current_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      QString this_file = lb_files->text( i );
+      current_files[ this_file ] = true;
+   }
+
+   while ( current_files.count( bsub_name ) )
+   {
+      bsub_name = name + QString( "-%1" ).arg( ++ext );
+   }
+
+   vector < QString > q_string( q.size() );
+   for ( unsigned int i = 0; i < ( unsigned int ) q_string.size(); i++ )
+   {
+      q_string[ i ] = QString( "%1" ).arg( q[ i ] );
+   }
+   
+   lb_created_files->insertItem( bsub_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( bsub_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ bsub_name ] = true;
+   last_created_file = bsub_name;
+   
+   f_pos       [ bsub_name ] = f_qs.size();
+   f_qs_string [ bsub_name ] = q_string;
+   f_qs        [ bsub_name ] = q;
+   f_Is        [ bsub_name ] = I;
+   f_errors    [ bsub_name ] = errors;
+   
+   // we could check if it has changed and then delete
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::run_one_divide()
+{
+   // subtract buffer
+   QString buffer   = lbl_buffer  ->text();
+   QString solution = lbl_signal  ->text();
+   QString empty    = lbl_empty   ->text();
+   last_created_file = "";
+
+   map < QString, bool > current_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      QString this_file = lb_files->text( i );
+      current_files[ this_file ] = true;
+   }
+
+   if ( !current_files.count( buffer ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
+      return;
+   } 
+
+   if ( !current_files.count( solution ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for solution %1" ) ).arg( solution ) );
+      return;
+   } 
+
+   if ( !empty.isEmpty() && !current_files.count( empty ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for blank %1" ) ).arg( empty ) );
+      return;
+   } 
+
+   if ( f_qs[ buffer ].size() != f_qs[ solution ].size() ||
+        ( !empty.isEmpty() && f_qs[ buffer ].size() != f_qs[ empty ].size() ) )
+   {
+      editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+      return;
+   }
+
+   vector < QString > bsub_q_string = f_qs_string [ solution ];
+   vector < double >  bsub_q        = f_qs        [ solution ];
+   vector < double >  bsub_I        = f_Is        [ solution ];
+   vector < double >  bsub_error    = f_errors    [ solution ];
+
+   bool solution_has_errors = f_errors[ solution ].size();
+   bool buffer_has_errors   = f_errors[ buffer   ].size();
+   bool empty_has_errors    = !empty.isEmpty() && f_errors[ empty ].size();
+
+   for ( unsigned int j = 0; j < f_Is[ buffer ].size(); j++ )
+   {
+      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > 5e-6 ||
+           ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
+      {
+         editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+         return;
+      }
+   }
+   
+   // determine parameters
+   bool use_alpha = ((QCheckTableItem *)(t_csv->item( 0, 1 )))->isChecked();
+   bool use_psv   = ((QCheckTableItem *)(t_csv->item( 1, 1 )))->isChecked();
+
+   if ( ( !use_alpha && !use_psv ) || ( use_alpha && use_psv ) )
+   {
+      editor_msg( "red", tr( "Internal error: both alpha & psv methods active" ) );
+      return;
+   }
+
+   if ( ( use_alpha && t_csv->text( 0, 6 ).isEmpty() ) ||
+        ( use_psv && ( t_csv->text( 1, 6 ).isEmpty() ||
+                       t_csv->text( 2, 6 ).isEmpty() ) ) )
+   {
+      editor_msg( "red", tr( "Internal error: method selected does not have current values" ) );
+      return;
+   }
+      
+   double alpha  = t_csv->text( 0, 6 ).toDouble();
+   double psv    = t_csv->text( 1, 6 ).toDouble();
+   double gamma  = t_csv->text( 2, 6 ).toDouble();
+
+   map < QString, double > concs = current_concs();
+   double this_conc = concs.count( solution ) ? concs[ solution ] : 0e0;
+
+   QString msg;
+   QString tag;
+
+   if ( use_psv )
+   {
+      if ( !concs.count( solution ) || concs[ solution ] == 0e0 )
+      {
+         editor_msg( "dark red", tr( "Warning: the solution has zero concentration" ) );
+      }
+         
+      alpha = 1e0 - gamma * this_conc * psv / 1000;
+      msg = QString( tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
+         .arg( alpha )
+         .arg( gamma )
+         .arg( this_conc )
+         .arg( psv );
+   } else {
+      msg = QString( tr( "alpha %1" ) ).arg( alpha );
+   }
+
+   // assuming zero covariance for now
+   if ( buffer_has_errors && !solution_has_errors )
+   {
+      editor_msg( "dark red", tr( "Warning: the buffer has errors defined but not the solution" ) );
+      
+      bsub_error = f_errors[ buffer ];
+   } else {
+      if ( !buffer_has_errors && !solution_has_errors && empty_has_errors )
+      {
+         // this is a strange case
+         editor_msg( "dark red", tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
+         bsub_error = f_errors[ empty ];
+      }
+   }
+
+   for ( unsigned int i = 0; i < bsub_q.size(); i++ )
+   {
+      bsub_I[ i ] /= alpha * f_Is[ buffer ][ i ];
+      if ( solution_has_errors && buffer_has_errors )
+      {
+         bsub_error[ i ] = sqrt( bsub_error[ i ] * bsub_error[ i ] +
+                                 alpha * alpha * f_errors[ buffer ][ i ] * f_errors[ buffer ][ i ] );
+      } else {
+         if ( buffer_has_errors )
+         {
+            bsub_error[ i ] *= alpha;
+         }
+      }
+            
+      if ( !empty.isEmpty() )
+      {
+         bsub_I[ i ] -= ( 1e0 - alpha ) * f_Is[ empty ][ i ];
+         if ( ( buffer_has_errors || solution_has_errors ) && empty_has_errors )
+         {
+            bsub_error[ i ] = sqrt( bsub_error[ i ] * bsub_error[ i ] +
+                                    ( 1e0 - alpha ) * ( 1e0 - alpha )
+                                    * f_errors[ empty ][ i ] * f_errors[ empty ][ i ] );
+         }
+      }
+   }         
+
+   // ok now we have a bsub!
+   bool         any_negative   = false;
+   unsigned int negative_pos   = 0;
+   unsigned int negative_count = 0;
+   double       minimum_positive = bsub_I[ 0 ];
+
+   for ( unsigned int i = 0; i < bsub_I.size(); i++ )
+   {
+      if ( minimum_positive > bsub_I[ i ] )
+      {
+         minimum_positive = bsub_I[ i ];
+      }
+      if ( bsub_I[ i ] <= 0e0 )
+      {
+         negative_count++;
+         if ( !any_negative )
+         {
+            negative_pos = i;
+            any_negative = true;
+         }
+      }
+   }
+
+   if ( any_negative )
+   {
+      int result;
+      if ( rb_np_crop->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
+         result = 0;
+      }
+      if ( rb_np_min->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
+         result = 1;
+      }
+      if ( rb_np_ignore->isChecked() )
+      {
+         editor_msg( "dark red", QString( tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
+         result = 2;
+      }
+      if ( rb_np_ask->isChecked() )
+      {
+         result = QMessageBox::warning(this, 
+                                       tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                       QString( tr( "Please note:\n\n"
+                                                    "The buffer subtraction causes %1 points be non-positive\n"
+                                                    "Starting at a q value of %2\n\n"
+                                                    "What would you like to do?\n" ) )
+                                       .arg( negative_count )
+                                       .arg( bsub_q[ negative_pos ] ),
+                                       tr( "&Crop the data" ), 
+                                       tr( "&Set to the minimum positive value" ), 
+                                       tr( "&Leave them negative or zero" ), 
+                                       0, // Stop == button 0
+                                       0 // Escape == button 0
+                                       );
+      }
+         
+      switch( result )
+      {
+      case 0 : // crop
+         {
+            if ( negative_pos < 2 )
+            {
+               if ( rb_np_ask->isChecked() )
+               {
+                  QMessageBox::warning(this, 
+                                       tr("US-SOMO: SAXS Buffer Subtraction Utility"),
+                                       tr("Insufficient data left after cropping"));
+               } else {
+                  editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
+               }
+               return;
+            }
+               
+            bsub_q_string.resize( negative_pos );
+            bsub_q       .resize( negative_pos );
+            bsub_I       .resize( negative_pos );
+            if ( bsub_error.size() )
+            {
+               bsub_error.resize( negative_pos );
+            }
+         }            
+      case 1 : // use absolute value
+         for ( unsigned int i = 0; i < bsub_I.size(); i++ )
+         {
+            if ( bsub_I[ i ] <= 0e0 )
+            {
+               bsub_I[ i ] = minimum_positive;
+            }
+         }
+         break;
+      case 2 : // ignore
+         break;
+      }
+   }
+
+   QString head = solution + QString( "_bdiv_a%1" ).arg( alpha ).replace( ".", "_" );
+   unsigned int ext = 0;
+
+   QString bsub_name = head;
+
+   while ( current_files.count( bsub_name ) )
+   {
+      bsub_name = head + QString( "-%1" ).arg( ++ext );
+   }
+
+   lb_created_files->insertItem( bsub_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( bsub_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ bsub_name ] = true;
+   last_created_file = bsub_name;
+   
+   f_pos       [ bsub_name ] = f_qs.size();
+   f_qs_string [ bsub_name ] = bsub_q_string;
+   f_qs        [ bsub_name ] = bsub_q;
+   f_Is        [ bsub_name ] = bsub_I;
+   f_errors    [ bsub_name ] = bsub_error;
+   
+   // we could check if it has changed and then delete
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
+
+   update_csv_conc();
+   for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+   {
+      if ( csv_conc.data[ i ].size() > 1 &&
+           csv_conc.data[ i ][ 0 ] == bsub_name )
+      {
+         csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( this_conc );
+      }
+   }
+
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+
+   if ( !running )
+   {
+      update_enables();
+   }
+}

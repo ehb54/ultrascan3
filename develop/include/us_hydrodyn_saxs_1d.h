@@ -158,6 +158,9 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       vector < point >                                excluded_volume;
 
+      bool                                            save_rotations( vector < vector < double > > &rotations );
+      bool                                            load_rotations( int number, 
+                                                                      vector < vector < double > > &rotations );
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

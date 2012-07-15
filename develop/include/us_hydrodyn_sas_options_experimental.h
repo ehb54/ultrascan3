@@ -49,10 +49,13 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       QCheckBox   *cb_subtract_radius;
       QCheckBox   *cb_iqq_use_atomic_ff;
       QCheckBox   *cb_iqq_use_saxs_excl_vol;
+      QCheckBox   *cb_use_somo_ff;
 
       QCheckBox   *cb_iqq_scale_nnls;
       QCheckBox   *cb_iqq_log_fitting;
       QCheckBox   *cb_iqq_scale_play;
+
+      QCheckBox   *cb_alt_ff;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -67,9 +70,12 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       void set_subtract_radius();
       void set_iqq_use_atomic_ff();
       void set_iqq_use_saxs_excl_vol();
+      void set_use_somo_ff();
       void set_iqq_scale_nnls();
       void set_iqq_log_fitting();
       void set_iqq_scale_play();
+
+      void set_alt_ff();
 
       void cancel();
       void help();

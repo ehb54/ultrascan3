@@ -234,8 +234,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_crysol_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_crysol_hydration_shell_contrast, SIGNAL(valueChanged(double)), SLOT(update_crysol_hydration_shell_contrast(double)));
 
+   lbl_crysol = new QLabel(tr(" Crysol options:"), this);
+   lbl_crysol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_crysol->setMinimumHeight(minHeight1);
+   lbl_crysol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
    cb_crysol_default_load_difference_intensity = new QCheckBox(this);
-   cb_crysol_default_load_difference_intensity->setText(tr("Crysol: automatically load difference intensity"));
+   cb_crysol_default_load_difference_intensity->setText(tr(" Automatically load difference intensity"));
    cb_crysol_default_load_difference_intensity->setEnabled(true);
    cb_crysol_default_load_difference_intensity->setChecked((*saxs_options).crysol_default_load_difference_intensity);
    cb_crysol_default_load_difference_intensity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -243,12 +249,20 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_crysol_default_load_difference_intensity, SIGNAL(clicked()), this, SLOT(set_crysol_default_load_difference_intensity()));
 
    cb_crysol_version_26 = new QCheckBox(this);
-   cb_crysol_version_26->setText(tr("Crysol: support version 2.6"));
+   cb_crysol_version_26->setText(tr(" Support version 2.6"));
    cb_crysol_version_26->setEnabled(true);
    cb_crysol_version_26->setChecked((*saxs_options).crysol_version_26);
    cb_crysol_version_26->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_crysol_version_26->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_crysol_version_26, SIGNAL(clicked()), this, SLOT(set_crysol_version_26()));
+
+   cb_crysol_explicit_hydrogens = new QCheckBox(this);
+   cb_crysol_explicit_hydrogens->setText(tr(" Explicit hydrogens"));
+   cb_crysol_explicit_hydrogens->setEnabled(true);
+   cb_crysol_explicit_hydrogens->setChecked((*saxs_options).crysol_explicit_hydrogens);
+   cb_crysol_explicit_hydrogens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_crysol_explicit_hydrogens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_crysol_explicit_hydrogens, SIGNAL(clicked()), this, SLOT(set_crysol_explicit_hydrogens()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -311,8 +325,10 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    j++;
 
    QHBoxLayout *hbl_crysol = new QHBoxLayout;
+   hbl_crysol->addWidget(lbl_crysol);
    hbl_crysol->addWidget(cb_crysol_default_load_difference_intensity);
    hbl_crysol->addWidget(cb_crysol_version_26);
+   hbl_crysol->addWidget(cb_crysol_explicit_hydrogens);
    background->addMultiCellLayout(hbl_crysol, j, j, 0, 1);
    j++;
 
@@ -571,6 +587,12 @@ void US_Hydrodyn_SasOptionsSaxs::set_crysol_default_load_difference_intensity()
 void US_Hydrodyn_SasOptionsSaxs::set_crysol_version_26()
 {
    (*saxs_options).crysol_version_26 = cb_crysol_version_26->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_crysol_explicit_hydrogens()
+{
+   (*saxs_options).crysol_explicit_hydrogens = cb_crysol_explicit_hydrogens->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

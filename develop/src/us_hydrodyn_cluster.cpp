@@ -675,6 +675,25 @@ void US_Hydrodyn_Cluster::create_pkg()
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
 
+   if ( our_saxs_options->use_somo_ff )
+   {
+      base += 
+         QString( "FFFile          %1\n" ).arg( common_prefix + QFileInfo( our_saxs_options->default_ff_filename ).fileName() );
+      base_source_files << our_saxs_options->default_ff_filename;
+   }
+
+   if ( our_saxs_options->alt_ff )
+   {
+      base += 
+         QString( "TestingFF\n" );
+   }
+
+   if ( our_saxs_options->iqq_use_atomic_ff )
+   {
+      base += 
+         QString( "ExplicitH\n" );
+   }
+
    base += 
       QString( "\n%1\n" ).arg( our_saxs_options->saxs_sans ? "Sans" : "Saxs" );
    if ( our_saxs_options->saxs_sans )
@@ -3199,6 +3218,25 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
       base += 
          QString( "HydrationSCD    %1\n" ).arg( our_saxs_options->steric_clash_distance );
       base_source_files << our_saxs_options->default_rotamer_filename;
+   }
+
+   if ( our_saxs_options->use_somo_ff )
+   {
+      base += 
+         QString( "FFFile          %1\n" ).arg( QFileInfo( our_saxs_options->default_ff_filename ).fileName() );
+      base_source_files << our_saxs_options->default_ff_filename;
+   }
+
+   if ( our_saxs_options->alt_ff )
+   {
+      base += 
+         QString( "TestingFF\n" );
+   }
+
+   if ( our_saxs_options->iqq_use_atomic_ff )
+   {
+      base += 
+         QString( "ExplicitH\n" );
    }
 
    base += 

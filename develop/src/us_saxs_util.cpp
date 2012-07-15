@@ -7845,6 +7845,54 @@ bool US_Saxs_Util::apply_natural_spline( vector < double > &xa,
    return true;
 }
 
+
+bool US_Saxs_Util::static_apply_natural_spline( vector < double > &xa, 
+                                                vector < double > &ya,
+                                                vector < double > &y2a,
+                                                double            x,
+                                                double            &y,
+                                                QString           &errormsg )
+{
+   errormsg = "";
+
+   unsigned int klo = 0;
+   unsigned int khi = xa.size() - 1;
+
+   while ( khi - klo > 1) {
+      unsigned int k = ( khi + klo ) >> 1;
+      if ( xa[ k ] > x )
+      {
+         khi = k;
+      } else {
+         klo = k;
+      }
+   }
+
+   if ( khi == klo )
+   {
+      errormsg = "US_Saxs_Util::apply_natural_spline error finding point";
+      return false;
+   }
+
+   double h = xa[ khi ] - xa[ klo ];
+
+   if ( h <= 0e0 )
+   {
+      errormsg = "US_Saxs_Util::apply_natural_spline zero or negative interval";
+      return false;
+   }
+
+   double a = ( xa[ khi ] - x ) / h;
+   double b = ( x - xa[ klo ] ) / h;
+
+   y = 
+      a * ya[ klo ] +
+      b * ya[ khi ] + ( ( a * a * a - a ) * y2a[ klo ] + 
+                        ( b * b * b - b ) * y2a[ khi ] ) * ( h * h ) / 6e0;
+
+   return true;
+}
+
 bool US_Saxs_Util::create_adaptive_grid( 
                                         vector < double >       &x,
                                         vector < double >       &y,

@@ -31,6 +31,7 @@ SOURCES		+= ../src/us_file_util.cpp
 SOURCES		+= ../src/us_hydrodyn_pat.cpp
 SOURCES		+= ../src/us_cmdline_app.cpp
 SOURCES		+= ../src/us_saxs_util_dammin.cpp
+SOURCES		+= ../src/us_saxs_util_crysol.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_math.h

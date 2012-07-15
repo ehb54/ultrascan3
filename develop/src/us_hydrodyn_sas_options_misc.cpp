@@ -82,6 +82,19 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    le_default_saxs_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_default_saxs_filename->setReadOnly(true);
 
+   pb_default_ff_filename = new QPushButton(tr("Set SAXS Formfactor File"), this);
+   pb_default_ff_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_default_ff_filename->setMinimumHeight(minHeight1);
+   pb_default_ff_filename->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_default_ff_filename, SIGNAL(clicked()), SLOT(default_ff_filename()));
+
+   le_default_ff_filename = new QLineEdit(this, "");
+   le_default_ff_filename->setText(QFileInfo((*saxs_options).default_ff_filename).fileName());
+   le_default_ff_filename->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_default_ff_filename->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   le_default_ff_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_default_ff_filename->setReadOnly(true);
+
    // cb_iq_ask = new QCheckBox(this);
    // cb_iq_ask->setText(tr("Manually choose I(q) method"));
    // cb_iq_ask->setEnabled(true);
@@ -254,6 +267,10 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    background->addWidget(pb_default_saxs_filename, j, 0);
    background->addWidget(le_default_saxs_filename, j, 1);
    j++;
+   background->addWidget(pb_default_ff_filename, j, 0);
+   background->addWidget(le_default_ff_filename, j, 1);
+   j++;
+
 
    QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
    // hbl_iq_ask->addWidget(cb_iq_ask);
@@ -408,6 +425,21 @@ void US_Hydrodyn_SasOptionsMisc::default_saxs_filename()
                                                                   saxs_options->default_saxs_filename 
                                                                   );
       }
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::default_ff_filename()
+{
+   QString ff_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.ff *.SAXS_ATOMS", this);
+   if (ff_filename.isEmpty())
+   {
+      return;
+   }
+   else
+   {
+      (*saxs_options).default_ff_filename = ff_filename;
+      le_default_ff_filename->setText( QFileInfo(ff_filename).fileName() );
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

@@ -543,6 +543,13 @@ class US_EXTERN US_Saxs_Util
                                  double            x,
                                  double            &y );
 
+      static bool static_apply_natural_spline( vector < double > &xa, 
+                                               vector < double > &ya,
+                                               vector < double > &y2a,
+                                               double            x,
+                                               double            &y,
+                                               QString           &errormsg );
+
       static void natural_spline( vector < double > &x, 
                                   vector < double > &y,
                                   vector < double > &y2 );
@@ -597,6 +604,7 @@ class US_EXTERN US_Saxs_Util
 
    private:
 
+      bool run_crysol();
       bool run_dammin();
 
       bool run_gnom( 
@@ -1135,6 +1143,42 @@ class US_EXTERN US_Saxs_Util
                                                   );
       QString               timings;
       bool                  write_timings        ( QString file, QString msg );
+
+
+      // compute_ff
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      map < QString, unsigned int >   ff_table;
+      vector < vector < double > >    ff_q;
+      vector < vector < double > >    ff_ff;
+      vector < vector < double > >    ff_y2;
+      vector < double >               ff_ev;
+      map < QString, bool >           ff_sent_msg1;
+      map < QString, vector < point > >                                   hybrid_coords;
+      map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      double compute_ff(
+                        saxs     &sa,     // gaussian decomposition for the main atom
+                        saxs     &sh,     // gaussian decomposition for hydrogen
+                        QString  &nr,     // name of residue
+                        QString  &na,     // name of atom
+                        QString  &naf,    // full name of atom
+                        unsigned int h,   // number of hydrogens
+                        double   q,
+                        double   q_o_4pi2 
+                        );
+
+      bool                 ff_table_loaded;
+      bool                 load_ff_table( QString filename );
+      QString              ff_info();
+      QString              last_ff_filename;
+      double               get_ff_ev( QString res, QString atm );
+
 };
 
 # if defined( USE_MPI )

@@ -319,6 +319,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_current_method_buttons();
       void update_iqq_suffix();
 
+      
+
    private:
 
       void set_plot_pr_range( double &minx, 
@@ -348,9 +350,22 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       // map < QString, float > contrib;
       vector < vector < float > > contrib_array;
       vector < PDB_atom * >  contrib_pdb_atom;
+
+      map < QString, unsigned int >   ff_table;
+      vector < vector < double > >    ff_q;
+      vector < vector < double > >    ff_ff;
+      vector < vector < double > >    ff_y2;
+      vector < double >               ff_ev;
+      map < QString, bool >           ff_sent_msg1;
+
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
+      bool                 ff_table_loaded;
+      bool                 load_ff_table( QString filename );
+      QString              ff_info();
+      QString              last_ff_filename;
+      double               get_ff_ev( QString res, QString atm );
 
       float contrib_delta;
       QString contrib_file;
@@ -530,6 +545,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool started_in_expert_mode;
 
+      QString specname;
+
    private slots:
 
       void foxs_readFromStdout();
@@ -546,6 +563,28 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void cryson_readFromStderr();
       void cryson_launchFinished();
       void cryson_processExited();
+
+      double compute_ff(
+                        saxs     &sa,     // gaussian decomposition for the main atom
+                        saxs     &sh,     // gaussian decomposition for hydrogen
+                        QString  &nr,     // name of residue
+                        QString  &na,     // name of atom
+                        QString  &naf,    // full name of atom
+                        unsigned int h,   // number of hydrogens
+                        double   q,
+                        double   q_o_4pi2 
+                        );
+
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif      
+      map < QString, vector < point > >                                   hybrid_coords;
+      map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
+
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+      
 
    public slots:
       void show_plot_saxs_sans();
