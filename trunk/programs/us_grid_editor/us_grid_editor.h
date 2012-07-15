@@ -23,7 +23,17 @@
 #include "us_settings.h"
 #include "us_widgets.h"
 
-struct gridpoint { double s, D, vbar, mw, f, ff0, f0; };
+struct gridpoint 
+{
+	double s;
+	double D;
+	double vbar;
+   double mw;
+   double f; 
+	double ff0;
+	double f0;
+	int index;
+};
 
 class US_Grid_Editor : public US_Widgets
 {
@@ -34,59 +44,65 @@ class US_Grid_Editor : public US_Widgets
 
    private:
 
-      QLabel*       lbl_info1;
-      QLabel*       lbl_info2;
-      QLabel*       lbl_xaxis;
-      QLabel*       lbl_yaxis;
-      QLabel*       lbl_xRes;
-      QLabel*       lbl_yRes;
-      QLabel*       lbl_xMin;
-      QLabel*       lbl_xMax;
-      QLabel*       lbl_yMin;
-      QLabel*       lbl_yMax;
-      QLabel*       lbl_zVal;
-      QLabel*       lbl_density;
-      QLabel*       lbl_viscosity;
+		int		grid_index;
+		int		subgrid;
 
-      QLineEdit*    le_density;
-      QLineEdit*    le_viscosity;
+      QLabel	*lbl_info1;
+      QLabel	*lbl_info2;
+      QLabel	*lbl_xaxis;
+      QLabel	*lbl_yaxis;
+      QLabel	*lbl_xRes;
+      QLabel	*lbl_yRes;
+      QLabel	*lbl_xMin;
+      QLabel	*lbl_xMax;
+      QLabel	*lbl_yMin;
+      QLabel	*lbl_yMax;
+      QLabel	*lbl_zVal;
+      QLabel	*lbl_density;
+      QLabel	*lbl_viscosity;
+      QLabel	*lbl_subgrid;
+
+      QLineEdit    *le_density;
+      QLineEdit    *le_viscosity;
 
       US_Help       showHelp;
-		QList <gridpoint> grid;
-		QVector <double> xData1;
-		QVector <double> yData1;
-		QVector <double> xData2;
-		QVector <double> yData2;
+		QList <gridpoint> current_grid;
+		QList <gridpoint> final_grid;
 		gridpoint maxgridpoint;
 		gridpoint mingridpoint;
  
-      QwtCounter*   ct_xRes;
-      QwtCounter*   ct_yRes;
-      QwtCounter*   ct_yMin;     
-      QwtCounter*   ct_yMax;     
-      QwtCounter*   ct_xMin;     
-      QwtCounter*   ct_xMax;     
-      QwtCounter*   ct_zVal;     
+      QwtCounter   *ct_xRes;
+      QwtCounter   *ct_yRes;
+      QwtCounter   *ct_yMin;     
+      QwtCounter   *ct_yMax;     
+      QwtCounter   *ct_xMin;     
+      QwtCounter   *ct_xMax;     
+      QwtCounter   *ct_zVal;     
+      QwtCounter   *ct_subgrid;     
 
-      QwtPlot*            data_plot1;
-      QwtLinearColorMap*  colormap;
-      US_PlotPicker*      pick1;
-      US_PlotPicker*      pick2;
+      QwtPlot            *data_plot1;
+      QwtLinearColorMap  *colormap;
+      US_PlotPicker      *pick1;
+      US_PlotPicker      *pick2;
 
-      QPushButton*  pb_help;
-      QPushButton*  pb_close;
-      QPushButton*  pb_save;
-      QPushButton*  pb_reset;
+      QPushButton  *pb_newgrid;
+      QPushButton  *pb_help;
+      QPushButton  *pb_close;
+      QPushButton  *pb_save;
+      QPushButton  *pb_reset;
 
-      QRadioButton* rb_x_s;
-      QRadioButton* rb_x_mw;
-      QRadioButton* rb_y_ff0;
-      QRadioButton* rb_y_vbar;
-      QRadioButton* rb_plot1;
-      QRadioButton* rb_plot2;
-		QButtonGroup* bg_x_axis;
-		QButtonGroup* bg_y_axis;
-		QButtonGroup* toggle_plot;
+		QCheckBox *cb_show_final_grid; 
+
+      QRadioButton *rb_x_s;
+      QRadioButton *rb_x_mw;
+      QRadioButton *rb_y_ff0;
+      QRadioButton *rb_y_vbar;
+      QRadioButton *rb_plot1;
+      QRadioButton *rb_plot2;
+                    
+		QButtonGroup *bg_x_axis;
+		QButtonGroup *bg_y_axis;
+		QButtonGroup *toggle_plot;
 
       double        xMin;
       double        xMax;
@@ -103,7 +119,6 @@ class US_Grid_Editor : public US_Widgets
       int dbg_level;
 		int plot_x; // 0 = s, 1 = MW
 		int plot_y; // 0 = ff0, 1 = vbar
-		int gridsize;			
 		int selected_plot; 
 
    private slots:
@@ -115,17 +130,20 @@ class US_Grid_Editor : public US_Widgets
       void update_yMin( double );
       void update_yMax( double );
       void update_zVal( double );
+      void update_subgrid( double );
       void update_density( const QString & );
       void update_viscosity( const QString & );
       void update_plot( void );
       void select_x_axis( int );
       void select_y_axis( int );
       void select_plot( int );
+      void newgrid( void );
       void save( void );
       void reset( void );
       void help( void ) { showHelp.show_help( "create_grid.html" ); };
 		void calc_gridpoints( void );
 		void set_minmax( const struct gridpoint &);
+		void show_final_grid( bool );
 
 };
 

@@ -22,8 +22,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 {
    // set up the GUI
 	QString str;
-	viscosity = VISC_20W;
-	density = DENS_20W;
 
    setWindowTitle( tr( "UltraScan 2DSA Grid Initialization Editor" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -133,7 +131,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    ct_yMin     = us_counter( 3, 0.5, 50.0, 0.0 );
    ct_yMin->setStep( 1 );
-   left->addWidget( ct_yMin, s_row++, 1 );
+	left->addWidget( ct_yMin, s_row++, 1 );
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_yMin( double ) ) );
    
@@ -175,14 +173,37 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 	connect( le_viscosity, SIGNAL( textChanged( const QString& ) ),
 			   SLOT( update_viscosity( const QString& ) ) );
    
+   pb_newgrid       = us_pushbutton( tr( "Add this Grid" ) );
+   pb_newgrid->setEnabled( true );
+   left->addWidget( pb_newgrid, s_row, 0 );
+   connect( pb_newgrid,    SIGNAL( clicked() ),
+            this,       SLOT( newgrid() ) );
+
+	QGridLayout *showgrid = us_checkbox( tr("Show Final Grid"), cb_show_final_grid, false );
+	left->addLayout( showgrid, s_row++, 1 );
+	connect( cb_show_final_grid, SIGNAL( clicked(bool) ),
+				this, 		SLOT( show_final_grid(bool) ) );
+	cb_show_final_grid->setEnabled( false );
+
+   lbl_subgrid     = us_label( tr( "Highlight Subgrid #:" ) );
+   lbl_subgrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   left->addWidget( lbl_subgrid, s_row, 0 );
+
+   ct_subgrid     = us_counter( 3, 0, 1000, 0.0 );
+   ct_subgrid->setStep( 1 );
+   ct_subgrid->setEnabled( false );
+   left->addWidget( ct_subgrid, s_row++, 1 );
+   connect( ct_subgrid, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_subgrid( double ) ) );
+
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
    left->addWidget( pb_reset, s_row, 0 );
    connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT(   reset() ) );
+            this,       SLOT( reset() ) );
 
    pb_save       = us_pushbutton( tr( "Save" ) );
-   pb_save->setEnabled( true );
+   pb_save->setEnabled( false );
    left->addWidget( pb_save, s_row++, 1 );
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT(   save() ) );
@@ -197,7 +218,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_close->setEnabled( true );
    left->addWidget( pb_close, s_row++, 1 );
    connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT(   close() ) );
+            this,       SLOT( close() ) );
 
    // set up plot component window on right side
 
@@ -238,11 +259,21 @@ void US_Grid_Editor::reset( void )
 	plot_x = 0; // plot s
 	plot_y = 0; // plot f/f0
 	selected_plot = 0;
+	viscosity = VISC_20W;
+	density = DENS_20W;
+	grid_index = 0;
+	subgrid = 0;
+	final_grid.clear();
 
    ct_xRes->setRange( 10.0, 1000.0, 1.0 );
    ct_xRes->setValue( (double) xRes );
    ct_yRes->setRange( 10.0, 1000.0, 1.0 );
    ct_yRes->setValue( (double) yRes );
+	ct_subgrid->setEnabled( false );
+	ct_subgrid->setRange( 0, 0, 0);
+	ct_subgrid->setValue( 0 );
+	cb_show_final_grid->setEnabled( false );
+	cb_show_final_grid->setChecked( false );
 
 	rb_x_s->setChecked(true);
 	rb_y_ff0->setChecked(true);
@@ -316,6 +347,13 @@ void US_Grid_Editor::update_zVal( double dval )
 	update_plot();
 }
 
+// Select a subgrid from all grids combined in the final grid for highlighting:
+void US_Grid_Editor::update_subgrid( double dval )
+{
+	subgrid = (int) dval;
+	update_plot();
+}
+
 // update density
 void US_Grid_Editor::update_density( const QString & str )
 {
@@ -335,95 +373,272 @@ void US_Grid_Editor::update_plot( void )
 {
 	calc_gridpoints();
 	data_plot1->clear();
-	xData1.resize(gridsize);
-	yData1.resize(gridsize);
-	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
-	{
-		if (selected_plot == 0)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].s;
-				yData1 [i] = grid[i].ff0;
-			}
-		}
-		if (selected_plot == 1)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].mw;
-				yData1 [i] = grid[i].ff0;
-			}
-		}
-	}
-	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
-	{
-		if (selected_plot == 0)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].s;
-				yData1 [i] = grid[i].vbar;
-			}
-		}
-		if (selected_plot == 1)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].mw;
-				yData1 [i] = grid[i].vbar;
-			}
-		}
-	}
-	if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
-	{
-		if (selected_plot == 0)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].s;
-				yData1 [i] = grid[i].ff0;
-			}
-		}
-		if (selected_plot == 1)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].mw;
-				yData1 [i] = grid[i].ff0;
-			}
-		}
-	}
-	if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
-	{
-		if (selected_plot == 0)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].s;
-				yData1 [i] = grid[i].vbar;
-			}
-		}
-		if (selected_plot == 1)
-		{
-			for (int i=0; i<gridsize; i++)
-			{
-				xData1 [i] = grid[i].mw;
-				yData1 [i] = grid[i].vbar;
-			}
-		}
-	}
-	QwtPlotCurve *c1;
-	QwtSymbol sym;
-	sym.setStyle( QwtSymbol::Ellipse );
-	sym.setBrush( QColor( Qt::yellow ) );
-	sym.setPen  ( QColor( Qt::yellow ) );
-	sym.setSize( 3 );
+	int gridsize;
+	QVector <double> xData1;
+	QVector <double> yData1;
+	QVector <double> xData2;
+	QVector <double> yData2;
 
-	c1 = us_curve( data_plot1, "Grid points 1" );
-	c1->setData  ( xData1.data(), yData1.data(), gridsize);
-	c1->setSymbol( sym );
-	c1->setStyle ( QwtPlotCurve::NoCurve );
+	if (cb_show_final_grid->isChecked())
+	{
+		gridsize = final_grid.size();
+		if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].ff0);
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].ff0);
+					}
+				}
+			}
+		}
+		if (plot_x == 0 && plot_y == 1) //grid over s and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].vbar);
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].vbar);
+					}
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].ff0);
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].ff0);
+					}
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].vbar);
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(final_grid[i].index == subgrid - 1)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].vbar);
+					}
+				}
+			}
+		}
+		QwtPlotCurve *c1;
+		QwtSymbol sym1;
+		sym1.setStyle( QwtSymbol::Ellipse );
+		sym1.setBrush( QColor( Qt::red ) );
+		sym1.setPen  ( QColor( Qt::red ) );
+		sym1.setSize( 3 );
+
+		c1 = us_curve( data_plot1, "highlighted Grid points" );
+		c1->setData  ( xData1.data(), yData1.data(), xData1.size());
+		c1->setSymbol( sym1 );
+		c1->setStyle ( QwtPlotCurve::NoCurve );
+
+		QwtPlotCurve *c2;
+		QwtSymbol sym2;
+		sym2.setStyle( QwtSymbol::Ellipse );
+		sym2.setBrush( QColor( Qt::yellow ) );
+		sym2.setPen  ( QColor( Qt::yellow ) );
+		sym2.setSize( 3 );
+
+		c2 = us_curve( data_plot1, "Other Grid points" );
+		c2->setData  ( xData2.data(), yData2.data(), xData2.size());
+		c2->setSymbol( sym2 );
+		c2->setStyle ( QwtPlotCurve::NoCurve );
+	}
+	else
+	{
+		gridsize = current_grid.size();
+		xData1.resize(gridsize);
+		yData1.resize(gridsize);
+		if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].s;
+					yData1 [i] = current_grid[i].ff0;
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].mw;
+					yData1 [i] = current_grid[i].ff0;
+				}
+			}
+		}
+		if (plot_x == 0 && plot_y == 1) //grid over s and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].s;
+					yData1 [i] = current_grid[i].vbar;
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].mw;
+					yData1 [i] = current_grid[i].vbar;
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].s;
+					yData1 [i] = current_grid[i].ff0;
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].mw;
+					yData1 [i] = current_grid[i].ff0;
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].s;
+					yData1 [i] = current_grid[i].vbar;
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					xData1 [i] = current_grid[i].mw;
+					yData1 [i] = current_grid[i].vbar;
+				}
+			}
+		}
+		QwtPlotCurve *c1;
+		QwtSymbol sym;
+		sym.setStyle( QwtSymbol::Ellipse );
+		sym.setBrush( QColor( Qt::yellow ) );
+		sym.setPen  ( QColor( Qt::yellow ) );
+		sym.setSize( 3 );
+
+		c1 = us_curve( data_plot1, "Grid points 1" );
+		c1->setData  ( xData1.data(), yData1.data(), current_grid.size());
+		c1->setSymbol( sym );
+		c1->setStyle ( QwtPlotCurve::NoCurve );
+	}
 	data_plot1->setAxisAutoScale( QwtPlot::xBottom );
 	data_plot1->setAxisAutoScale( QwtPlot::yLeft );
 	data_plot1->replot();
@@ -431,7 +646,7 @@ void US_Grid_Editor::update_plot( void )
 
 void US_Grid_Editor::calc_gridpoints( void )
 {
-	grid.clear();
+	current_grid.clear();
 	bool flag = true;
 	maxgridpoint.s    = -9.9e99;
 	maxgridpoint.D    =  0.0;
@@ -447,12 +662,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 	mingridpoint.ff0  =  9.9e99;
 	mingridpoint.f0   =  9.9e99;
 	mingridpoint.f    =  9.9e99;
-	gridsize = 0;
 	struct gridpoint tmp_point;
 	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
 	{
-		double s_inc = (xMax - xMin)/xRes;
-		double ff0_inc = (yMax - yMin)/yRes;
+		double s_inc = (xMax - xMin)/(xRes-1);
+		double ff0_inc = (yMax - yMin)/(yRes-1);
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.s    = xMin + i * s_inc;
@@ -483,10 +697,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.f0   = tmp_point.f/tmp_point.ff0;
 				tmp_point.vbar = vbar;
-				if (tmp_point.s < -0.1 || tmp_point.s > 0.1 && tmp_point.mw > 0)
+				if ((tmp_point.s < -0.1 || tmp_point.s > 0.1) && tmp_point.mw > 0)
 				{
-					grid.push_back(tmp_point);
-					gridsize++;
+					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
 			} 
@@ -494,8 +707,8 @@ void US_Grid_Editor::calc_gridpoints( void )
 	}
 	if (plot_x == 1 && plot_y == 0) //grid over MW and f/f0
 	{
-		double mw_inc = (xMax - xMin)/xRes;
-		double ff0_inc = (yMax - yMin)/yRes;
+		double mw_inc = (xMax - xMin)/(xRes - 1);
+		double ff0_inc = (yMax - yMin)/(yRes - 1);
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.mw   = xMin + i * mw_inc;
@@ -511,8 +724,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.vbar = vbar;
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
-					grid.push_back(tmp_point);
-					gridsize++;
+					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
 			} 
@@ -520,8 +732,8 @@ void US_Grid_Editor::calc_gridpoints( void )
 	}
 	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
 	{
-		double s_inc = (xMax - xMin)/xRes;
-		double vbar_inc = (yMax - yMin)/yRes;
+		double s_inc = (xMax - xMin)/(xRes - 1);
+		double vbar_inc = (yMax - yMin)/(yRes - 1);
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.s    = xMin + i * s_inc;
@@ -553,10 +765,9 @@ void US_Grid_Editor::calc_gridpoints( void )
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
-				if (tmp_point.s < -0.1 || tmp_point.s > 0.1 && tmp_point.mw > 0)
+				if ((tmp_point.s < -0.1 || tmp_point.s > 0.1) && tmp_point.mw > 0)
 				{
-					grid.push_back(tmp_point);
-					gridsize ++;
+					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
 			} 
@@ -564,8 +775,8 @@ void US_Grid_Editor::calc_gridpoints( void )
 	}
 	if (plot_x == 1 && plot_y == 1) //grid over MW and vbar
 	{
-		double mw_inc = (xMax - xMin)/xRes;
-		double vbar_inc = (yMax - yMin)/yRes;
+		double mw_inc = (xMax - xMin)/(xRes - 1);
+		double vbar_inc = (yMax - yMin)/(yRes - 1);
 		for (int i=0; i< (int) xRes; i++)
 		{
 			tmp_point.mw   = xMin + i * mw_inc;
@@ -581,8 +792,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.D    = R * K20/(AVOGADRO * tmp_point.f);
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
-					grid.push_back(tmp_point);
-					gridsize++;
+					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
 			} 
@@ -601,6 +811,20 @@ void US_Grid_Editor::calc_gridpoints( void )
 		0, 0, 1 );
 		if ( status != 0 ) return;
 	}
+}
+
+void US_Grid_Editor::newgrid( void )
+{
+	for (int i=0; i<current_grid.size(); i++)
+	{
+			  //check for overlaps first...
+		current_grid[i].index = grid_index;
+		final_grid.push_back(current_grid[i]);
+	}
+	pb_save->setEnabled( true );
+	cb_show_final_grid->setEnabled( true );
+
+	grid_index++;
 }
 
 void US_Grid_Editor::set_minmax( const struct gridpoint & tmp_point)
@@ -749,3 +973,31 @@ void US_Grid_Editor::select_y_axis( int ival )
 	update_plot();
 }
 
+// activated when the 
+void US_Grid_Editor::show_final_grid( bool flag )
+{
+	if (flag)
+	{
+		ct_xRes->setEnabled( false );
+		ct_yRes->setEnabled( false );
+		ct_xMin->setEnabled( false );
+		ct_yMin->setEnabled( false );
+		ct_xMax->setEnabled( false );
+		ct_yMax->setEnabled( false );
+		ct_zVal->setEnabled( false );
+		ct_subgrid->setRange(1, grid_index, 1);
+		ct_subgrid->setEnabled( true );
+	}
+	else
+	{
+		ct_xRes->setEnabled( true );
+		ct_yRes->setEnabled( true );
+		ct_xMin->setEnabled( true );
+		ct_yMin->setEnabled( true );
+		ct_xMax->setEnabled( true );
+		ct_yMax->setEnabled( true );
+		ct_zVal->setEnabled( true );
+		ct_subgrid->setEnabled( false );
+	}
+	update_plot();
+}
