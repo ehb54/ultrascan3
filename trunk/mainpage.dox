@@ -8,6 +8,7 @@
     - \ref US_Analyte
     - \ref US_AstfemMath
     - \ref US_Astfem_RSA
+    - \ref US_DB2
     - \ref US_Defines
     - \ref US_BufferComponent
     - \ref US_Buffer
@@ -34,7 +35,6 @@
     - \ref US_Project
     - \ref US_Report
     - \ref US_Rotor
-      - \ref RotorCalibration
     - \ref US_Settings
     - \ref US_SimulationParameters
     - \ref US_Sleep
@@ -100,7 +100,6 @@
     - \ref US_RotorGui
     - \ref US_RunDetails2
     - \ref US_Sassoc
-      - \ref US_SassocLegend
     - \ref US_SelectEdits
     - \ref US_SolutionGui
     - \ref US_Table
@@ -109,8 +108,6 @@
       - \ref US_ListWidget
     - \ref US_WidgetsDialog
 
-  - Database Library
-    - \ref US_DB2
 */
   - Programs
      - \ref US_Win
