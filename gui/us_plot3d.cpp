@@ -18,11 +18,14 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
 {
    model     = m;
    dbg_level = US_Settings::us_debug();
+   ncols     = nrows = 0;
 
    // lay out the GUI
    setWindowTitle( tr( "Model Solute 3-Dimensional Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
+#ifndef Q_WS_MAC
    setAttribute( Qt::WA_DeleteOnClose, true );
+#endif
 
    QSize p1size( 960, 720 );
 
@@ -1346,10 +1349,13 @@ DbgLv(2) << "open_file";
 void US_Plot3D::close_all( ) 
 {
 DbgLv(2) << "close_all";
-   for ( int ii = 0; ii < nrows; ii++ )
-      zdata[ ii ].clear();
+   if ( ( ncols = zdata.size() ) != 0 )
+   {
+      for ( int ii = 0; ii < ncols; ii++ )
+         zdata[ ii ].clear();
 
-   zdata.clear();
+      zdata.clear();
+   }
 
    close();
 }
