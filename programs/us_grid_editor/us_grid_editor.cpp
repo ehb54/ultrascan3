@@ -36,6 +36,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->setContentsMargins( 0, 0, 0, 0 );
    right->setSpacing        ( 0 );
    right->setContentsMargins( 0, 1, 0, 1 );
+	viscosity = VISC_20W;
+	density = DENS_20W;
 
    int s_row = 0;
    dbg_level = US_Settings::us_debug();
@@ -109,7 +111,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xMin, s_row, 0 );
 
-   ct_xMin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
+   ct_xMin     = us_counter( 3, -10000.0, 9.9, 0.0 );
    ct_xMin->setStep( 1 );
    left->addWidget( ct_xMin, s_row++, 1 );
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
@@ -119,7 +121,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_xMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xMax, s_row, 0 );
 
-   ct_xMax     = us_counter( 3, 0.0, 10000.0, 0.0 );
+   ct_xMax     = us_counter( 3, 1.1, 10000.0, 0.0 );
    ct_xMax->setStep( 1 );
    left->addWidget( ct_xMax, s_row++, 1 );
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
@@ -129,7 +131,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_yMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yMin, s_row, 0 );
 
-   ct_yMin     = us_counter( 3, 0.5, 50.0, 0.0 );
+   ct_yMin     = us_counter( 3, 1.0, 3.9, 0.1 );
    ct_yMin->setStep( 1 );
 	left->addWidget( ct_yMin, s_row++, 1 );
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
@@ -139,7 +141,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_yMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yMax, s_row, 0 );
    
-   ct_yMax     = us_counter( 3, 1.0, 50.0, 1.0 );
+   ct_yMax     = us_counter( 3, 1.1, 50.0, 0.1 );
    ct_yMax->setStep( 1 );
    left->addWidget( ct_yMax, s_row++, 1 );
    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
@@ -173,11 +175,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 	connect( le_viscosity, SIGNAL( textChanged( const QString& ) ),
 			   SLOT( update_viscosity( const QString& ) ) );
    
-   pb_newgrid       = us_pushbutton( tr( "Add this Grid" ) );
-   pb_newgrid->setEnabled( true );
-   left->addWidget( pb_newgrid, s_row, 0 );
-   connect( pb_newgrid,    SIGNAL( clicked() ),
-            this,       SLOT( newgrid() ) );
+   pb_add_subgrid       = us_pushbutton( tr( "Add this Grid" ) );
+   pb_add_subgrid->setEnabled( true );
+   left->addWidget( pb_add_subgrid, s_row, 0 );
+   connect( pb_add_subgrid,    SIGNAL( clicked() ),
+            this,       SLOT( add_subgrid() ) );
 
 	QGridLayout *showgrid = us_checkbox( tr("Show Final Grid"), cb_show_final_grid, false );
 	left->addLayout( showgrid, s_row++, 1 );
@@ -195,6 +197,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( ct_subgrid, s_row++, 1 );
    connect( ct_subgrid, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_subgrid( double ) ) );
+
+   pb_delete_subgrid       = us_pushbutton( tr( "Delete this Grid" ) );
+   pb_delete_subgrid->setEnabled( false );
+   left->addWidget( pb_delete_subgrid, s_row++, 0 );
+   connect( pb_delete_subgrid,    SIGNAL( clicked() ),
+            this,       SLOT( delete_subgrid() ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
@@ -275,8 +283,20 @@ void US_Grid_Editor::reset( void )
 	cb_show_final_grid->setEnabled( false );
 	cb_show_final_grid->setChecked( false );
 
-	rb_x_s->setChecked(true);
-	rb_y_ff0->setChecked(true);
+	ct_xRes->setEnabled( true );
+	ct_yRes->setEnabled( true );
+	ct_xMin->setEnabled( true );
+	ct_yMin->setEnabled( true );
+	ct_xMax->setEnabled( true );
+	ct_yMax->setEnabled( true );
+	ct_zVal->setEnabled( true );
+	rb_x_s->setEnabled( true );
+	rb_x_s->setChecked( true );
+	rb_x_mw->setEnabled( true );
+   rb_y_ff0->setEnabled( true );
+   rb_y_ff0->setChecked( true );
+   rb_y_vbar->setEnabled( true );
+	ct_subgrid->setEnabled( false );
 	rb_plot1->setChecked(true);
 	select_x_axis(plot_x);
 	select_y_axis(plot_y);
@@ -308,6 +328,14 @@ void US_Grid_Editor::update_yRes( double dval )
 void US_Grid_Editor::update_xMin( double dval )
 {
    xMin    = dval;
+   if (plot_x == 0) // x axis is for sed. coeff.
+   {
+      ct_xMax->setRange(xMin, 10000.0, 1);
+   }
+   else if (plot_x == 1) // x axis is for mw.
+   {
+      ct_xMax->setRange(xMin, 1e10, 100);
+   }
 	update_plot();
 }
 
@@ -315,6 +343,14 @@ void US_Grid_Editor::update_xMin( double dval )
 void US_Grid_Editor::update_xMax( double dval )
 {
    xMax    = dval;
+   if (plot_x == 0) // x axis is for sed. coeff.
+   {
+      ct_xMin->setRange(-100000, xMax, 1);
+   }
+   else if (plot_x == 1) // x axis s for mw.
+   {
+      ct_xMin->setRange(0.0, xMax, 1);
+   }
 	update_plot();
 }
 
@@ -322,6 +358,14 @@ void US_Grid_Editor::update_xMax( double dval )
 void US_Grid_Editor::update_yMin( double dval )
 {
    yMin    = dval;
+   if (plot_y == 0) // y axis is for f/f0.
+   {
+      ct_yMax->setRange(yMin, 50.0, 0.1);
+   }
+   else if (plot_y == 1) // x axis is for vbar.
+   {
+      ct_yMax->setRange(yMin, 10.0, 100);
+   }
 	update_plot();
 }
 
@@ -329,6 +373,14 @@ void US_Grid_Editor::update_yMin( double dval )
 void US_Grid_Editor::update_yMax( double dval )
 {
    yMax    = dval;
+   if (plot_y == 0) // y axis is for f/f0.
+   {
+      ct_yMin->setRange(1.0, yMax, 0.1);
+   }
+   else if (plot_y == 1) // x axis is for vbar.
+   {
+      ct_yMin->setRange(0.01, yMax, 0.01);
+   }
 	update_plot();
 }
 
@@ -388,7 +440,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].ff0);
@@ -404,7 +456,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].ff0);
@@ -423,7 +475,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].vbar);
@@ -439,7 +491,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].vbar);
@@ -458,7 +510,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].ff0);
@@ -474,7 +526,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].ff0);
@@ -493,7 +545,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].vbar);
@@ -509,7 +561,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid - 1)
+					if(final_grid[i].index == subgrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].vbar);
@@ -644,6 +696,7 @@ void US_Grid_Editor::update_plot( void )
 	data_plot1->replot();
 }
 
+// calculate all grid points for the selected setting
 void US_Grid_Editor::calc_gridpoints( void )
 {
 	current_grid.clear();
@@ -813,8 +866,10 @@ void US_Grid_Editor::calc_gridpoints( void )
 	}
 }
 
-void US_Grid_Editor::newgrid( void )
+// add current grid to the list of grids
+void US_Grid_Editor::add_subgrid( void )
 {
+	grid_index++;
 	for (int i=0; i<current_grid.size(); i++)
 	{
 			  //check for overlaps first...
@@ -823,10 +878,42 @@ void US_Grid_Editor::newgrid( void )
 	}
 	pb_save->setEnabled( true );
 	cb_show_final_grid->setEnabled( true );
-
-	grid_index++;
+   pb_delete_subgrid->setEnabled( true );
+   ct_subgrid->setEnabled( true );
 }
 
+// delete current grid
+void US_Grid_Editor::delete_subgrid( void )
+{
+	for (int i=final_grid.size() - 1; i>=0; i--)
+	{
+		if (final_grid[i].index == subgrid)
+      {
+         final_grid.removeAt(i);
+      }
+	}
+	// renumber index positions
+   for (int i=0; i<final_grid.size(); i++)
+	{
+      if (final_grid[i].index > subgrid)
+      {
+         final_grid[i].index--;
+      }
+   }
+	grid_index--;
+   ct_subgrid->setRange( 1, grid_index, 1 );
+   if (grid_index == 0)
+   {
+      cb_show_final_grid->setChecked (false);
+      cb_show_final_grid->setEnabled (false);
+      ct_subgrid->setRange (0, 0, 1);
+      ct_subgrid->setEnabled( false );
+      show_final_grid( false );
+   }
+   update_plot();
+}
+
+// find the minimum and maximum in a grid
 void US_Grid_Editor::set_minmax( const struct gridpoint & tmp_point)
 {
 	mingridpoint.s    = min(mingridpoint.s, tmp_point.s);
@@ -985,8 +1072,14 @@ void US_Grid_Editor::show_final_grid( bool flag )
 		ct_xMax->setEnabled( false );
 		ct_yMax->setEnabled( false );
 		ct_zVal->setEnabled( false );
+		rb_x_s->setEnabled( false );
+		rb_x_mw->setEnabled( false );
+      rb_y_ff0->setEnabled( false );
+      rb_y_vbar->setEnabled( false );
 		ct_subgrid->setRange(1, grid_index, 1);
 		ct_subgrid->setEnabled( true );
+      pb_delete_subgrid->setEnabled( true );
+      pb_add_subgrid->setEnabled( false );
 	}
 	else
 	{
@@ -997,7 +1090,13 @@ void US_Grid_Editor::show_final_grid( bool flag )
 		ct_xMax->setEnabled( true );
 		ct_yMax->setEnabled( true );
 		ct_zVal->setEnabled( true );
+		rb_x_s->setEnabled( true );
+		rb_x_mw->setEnabled( true );
+      rb_y_ff0->setEnabled( true );
+      rb_y_vbar->setEnabled( true );
 		ct_subgrid->setEnabled( false );
+      pb_delete_subgrid->setEnabled( false );
+      pb_add_subgrid->setEnabled( true );
 	}
 	update_plot();
 }

@@ -44,8 +44,9 @@ class US_Grid_Editor : public US_Widgets
 
    private:
 
-		int		grid_index;
-		int		subgrid;
+		int		grid_index;   // number of total subgrids, used as the index to identify subgrids,
+                             // starts at 1 and aligns with subgrid
+		int		subgrid;      // currently active subgrid
 
       QLabel	*lbl_info1;
       QLabel	*lbl_info2;
@@ -85,7 +86,8 @@ class US_Grid_Editor : public US_Widgets
       US_PlotPicker      *pick1;
       US_PlotPicker      *pick2;
 
-      QPushButton  *pb_newgrid;
+      QPushButton  *pb_add_subgrid;
+      QPushButton  *pb_delete_subgrid;
       QPushButton  *pb_help;
       QPushButton  *pb_close;
       QPushButton  *pb_save;
@@ -137,7 +139,8 @@ class US_Grid_Editor : public US_Widgets
       void select_x_axis( int );
       void select_y_axis( int );
       void select_plot( int );
-      void newgrid( void );
+      void delete_subgrid( void );
+      void add_subgrid( void );
       void save( void );
       void reset( void );
       void help( void ) { showHelp.show_help( "create_grid.html" ); };
