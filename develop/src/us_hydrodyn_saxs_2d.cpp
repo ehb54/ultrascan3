@@ -827,7 +827,7 @@ void US_Hydrodyn_Saxs_2d::start()
          {
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
-            // keep everything in meters
+            // keep everything in angstrom
             new_atom.pos[ 0 ] = this_atom->coordinate.axis[ 0 ] * atomic_scaler;
             new_atom.pos[ 1 ] = this_atom->coordinate.axis[ 1 ] * atomic_scaler;
             new_atom.pos[ 2 ] = this_atom->coordinate.axis[ 2 ] * atomic_scaler;
@@ -837,7 +837,11 @@ void US_Hydrodyn_Saxs_2d::start()
                continue;
             }
 
-            QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2").arg(use_resname).arg(this_atom->name);
+
             if ( this_atom->name == "OXT" )
             {
                mapkey = "OXT|OXT";
@@ -848,13 +852,13 @@ void US_Hydrodyn_Saxs_2d::start()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
 #if defined( UHS2_ATOMS_DEBUG )
-               cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
 #endif
                editor_msg( "red" ,
                            QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq ) );
                qApp->processEvents();
                if ( !running ) 
@@ -874,7 +878,7 @@ void US_Hydrodyn_Saxs_2d::start()
                            QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            );
@@ -902,7 +906,7 @@ void US_Hydrodyn_Saxs_2d::start()
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
                            .arg(this_atom->name)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            );
@@ -925,6 +929,22 @@ void US_Hydrodyn_Saxs_2d::start()
 #endif
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options->use_somo_ff )
+            {
+               double this_ev = saxs_window->get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+//                      .arg( new_atom.atom_name )
+//                      .arg( this_ev );
+               }
+            }
+
             total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
@@ -979,7 +999,7 @@ void US_Hydrodyn_Saxs_2d::start()
                            QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
-                           .arg(this_atom->resName)
+                           .arg(use_resname)
                            .arg(this_atom->resSeq)
                            .arg(hybrid_name)
                            .arg(hybrid_map[hybrid_name].saxs_name)
@@ -1313,16 +1333,25 @@ void US_Hydrodyn_Saxs_2d::start()
                double q_2_over_4pi = q * q * one_over_4pi_2;
                
                double F_at =
-                  saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-                  saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-                  saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-                  saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-                  atoms[ a ].hydrogens * 
-                  ( saxsH.c + 
-                    saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                    saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                    saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                    saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+                  saxs_window->compute_ff( saxs,
+                                           saxsH,
+                                           atoms[ a ].residue_name,
+                                           atoms[ a ].saxs_name,
+                                           atoms[ a ].atom_name,
+                                           atoms[ a ].hydrogens,
+                                           q,
+                                           q_2_over_4pi );
+//                double F_at =
+//                   saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+//                   saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+//                   saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+//                   saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+//                   atoms[ a ].hydrogens * 
+//                   ( saxsH.c + 
+//                     saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+//                     saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+//                     saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+//                     saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
                data[ i ][ j ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
             }

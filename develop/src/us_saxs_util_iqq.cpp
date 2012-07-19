@@ -144,6 +144,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "hydrate|"
                       "saxsfile|"
                       "fffile|"
+                      "testingff|"
                       "hydrationscd|"
                       "saxs|"
                       "iqmethod|"
