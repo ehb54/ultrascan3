@@ -234,7 +234,9 @@ void US_Plot::print( void )
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
 
    QPrinter printer( QPrinter::HighResolution );
+#ifdef Q_WS_X11
    printer.setOutputFileName( reportDir + "/ultrascan-plot.pdf" );
+#endif
 
    QString docName = plot->title().text();
    
@@ -249,7 +251,7 @@ void US_Plot::print( void )
 
    QPrintDialog dialog( &printer );
 
-   if ( dialog.exec() )
+   if ( dialog.exec() == QDialog::Accepted )
    {
        QwtPlotPrintFilter filter;
        if ( printer.colorMode() == QPrinter::GrayScale )
