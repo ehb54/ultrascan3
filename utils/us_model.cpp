@@ -513,6 +513,7 @@ int US_Model::load( const QString& filename )
 int US_Model::load_stream( QXmlStreamReader& xml )
 {
    QString coSedStr;
+   QString subGridsStr;
    QString comprStr;
 
    components  .clear();
