@@ -80,6 +80,7 @@ US_Model::US_Model()
    wavelength      = 0.0;
    variance        = 0.0;
    meniscus        = 0.0;
+	subGrids			 = 13;
    description     = "New Model";
    optics          = ABSORBANCE;
    analysis        = MANUAL;
@@ -107,6 +108,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( analysis        != m.analysis        ) return false;
    if ( global          != m.global          ) return false;
    if ( coSedSolute     != m.coSedSolute     ) return false;
+   if ( subGrids        != m.subGrids        ) return false;
    if ( associations.size() != m.associations.size() ) return false;
 
    for ( int i = 0; i < associations.size(); i++ )
@@ -360,14 +362,15 @@ QString US_Model::typeText( void )
 
    const typemap tmap[] =
    {
-      { MANUAL,    QObject::tr( "Manual"  ) },
-      { TWODSA,    QObject::tr( "2DSA"    ) },
-      { TWODSA_MW, QObject::tr( "2DSA-MW" ) },
-      { GA,        QObject::tr( "GA"      ) },
-      { GA_MW,     QObject::tr( "GA-MW"   ) },
-      { COFS,      QObject::tr( "COFS"    ) },
-      { FE,        QObject::tr( "FE"      ) },
-      { ONEDSA,    QObject::tr( "1DSA"    ) }
+      { MANUAL,      QObject::tr( "Manual"      ) },
+      { TWODSA,      QObject::tr( "2DSA"        ) },
+      { TWODSA_MW,   QObject::tr( "2DSA-MW"     ) },
+      { GA,          QObject::tr( "GA"          ) },
+      { GA_MW,       QObject::tr( "GA-MW"       ) },
+      { COFS,        QObject::tr( "COFS"        ) },
+      { FE,          QObject::tr( "FE"          ) },
+      { INITIALGRID, QObject::tr( "INITIALGRID" ) },
+      { ONEDSA,      QObject::tr( "1DSA"        ) }
    };
 
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
@@ -545,6 +548,8 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             requestGUID     = a.value( "requestGUID"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
+            subGridsStr     = a.value( "subGrids"       ).toString();
+            subGrids        = ( subGridsStr.isEmpty() ) ? 13 : subGridsStr.toInt();
             QString anal1   = a.value( "type"           ).toString();
             QString anal2   = a.value( "analysisType"   ).toString();
             analysis        = anal1.isEmpty() ? analysis
@@ -781,6 +786,7 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    if ( meniscus != 0.0 )
       xml.writeAttribute( "meniscus",    QString::number( meniscus     ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
+   xml.writeAttribute   ( "subGrids",    QString::number( subGrids     ) );
    xml.writeAttribute   ( "opticsType",  QString::number( optics       ) );
    xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
    xml.writeAttribute   ( "globalType",  QString::number( global       ) );
@@ -909,6 +915,7 @@ void US_Model::debug( void )
    qDebug() << "waveln" << wavelength;
    qDebug() << "monte carlo" << monteCarlo;
    qDebug() << "coSed" << coSedSolute;
+   qDebug() << "subGrids" << subGrids;
    qDebug() << "AnalysisType" << (int)analysis;
    qDebug() << "GlobalType" << (int)global;
    qDebug() << "OpticsType" << (int)optics;
