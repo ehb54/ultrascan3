@@ -799,8 +799,12 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
       ts << "*****************************************"
          "**********************************\n\n";
-      ts << "Monte Carlo Analysis Statistical Results "
-         "(from Genetic Algorithm Analysis):\n\n";
+      if ( mc_iters > 1 )
+         ts << "Monte Carlo Analysis Statistical Results "
+            "(from Genetic Algorithm Analysis):\n\n";
+      else
+         ts << "Global Analysis Statistical Results "
+            "(from Genetic Algorithm Analysis):\n\n";
       ts << "*****************************************"
          "**********************************\n\n";
       ts << "Summary:\n";
@@ -905,6 +909,8 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
          concsum   += distro->at( jj ).c;
 
       ts << tr( "\nMonte Carlo iterations:   " ) << mc_iters;
+      if ( mc_iters < 2 )
+         ts << tr( "  (Global or High-Solutes-per-Bucket)" );
       ts << tr( "\n\nRelative Concentrations:\n\n" );
       ts << tr( "Total concentration:      " ) << concsum << " OD\n";
 
@@ -1244,5 +1250,28 @@ int US_SoluteData::countOverlaps()
    }
 
    return novlps;
+}
+
+// Return solute count of fullest bucket
+int US_SoluteData::countFullestBucket()
+{
+   int    mxsol = 0;
+   int    nbuks = MC_solute.size();
+
+   if ( nbuks == 0 )
+   {
+      buildDataMC( true );
+      nbuks     = MC_solute.size();
+   }
+DbgLv(1) << "countFB-absize" << nbuks;
+
+   for ( int ii = 0; ii < nbuks; ii++ )
+   {
+DbgLv(1) << "countFB  ii" << ii;
+      mxsol       = qMax( mxsol, MC_solute.at( ii ).size() );
+DbgLv(1) << "countFB    mxsol" << mxsol;
+   }
+
+   return mxsol;
 }
 

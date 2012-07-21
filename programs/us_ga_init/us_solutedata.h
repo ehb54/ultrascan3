@@ -115,6 +115,7 @@ class US_SoluteData : public QObject
                           bool, QString ); 
     void     limitBucket( bucket& );
     int      countOverlaps();
+    int      countFullestBucket();
 
   private:
     QList< bucket >  allbucks;

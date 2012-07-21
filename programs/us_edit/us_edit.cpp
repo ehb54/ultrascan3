@@ -1063,6 +1063,12 @@ void US_Edit::plot_current( int index )
       pb_airGap->setHidden( false );
       le_airGap->setHidden( false );
    }
+   else if ( parts[ 1 ] == "FI" )
+   {
+      title = "Flourescence Intensity Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Flourescence Intensity " ) );
+   }
    else 
       title = "File type not recognized";
 
