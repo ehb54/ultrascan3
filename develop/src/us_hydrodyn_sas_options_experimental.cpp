@@ -125,6 +125,12 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_alt_ff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_alt_ff, SIGNAL(clicked()), this, SLOT(set_alt_ff()));
 
+   pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
+   pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_create_somo_ff->setMinimumHeight(minHeight1);
+   pb_create_somo_ff->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_create_somo_ff, SIGNAL(clicked()), SLOT(create_somo_ff()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -170,6 +176,9 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_3->addWidget(cb_iqq_scale_play);
    hbl_various_3->addWidget(cb_alt_ff);
    background->addMultiCellLayout(hbl_various_3, j, j, 0, 1);
+   j++;
+
+   background->addMultiCellWidget(pb_create_somo_ff, j, j, 0, 1);
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -262,3 +271,28 @@ void US_Hydrodyn_SasOptionsExperimental::set_alt_ff()
    (*saxs_options).alt_ff = cb_alt_ff->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+
+void US_Hydrodyn_SasOptionsExperimental::create_somo_ff()
+{
+   QString errormsg = "";
+   if ( !((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      errormsg = "The SAXS window must be open";
+   } else {
+      if ( !((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->create_somo_ff() )
+      {
+         errormsg = ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->errormsg;
+      }
+   }
+   if ( !errormsg.isEmpty() )
+   {
+      QMessageBox::warning( this,
+                            "US-SOMO: Create somo.ff",
+                            errormsg );
+   } else {
+      QMessageBox::information( this,
+                                "US-SOMO: Create somo.ff",
+                                "somo.ff.new created" );
+   }
+}
+

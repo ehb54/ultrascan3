@@ -57,6 +57,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       QCheckBox   *cb_alt_ff;
 
+      QPushButton *pb_create_somo_ff;
+
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -77,6 +79,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       void set_alt_ff();
 
+      void create_somo_ff();
       void cancel();
       void help();
    

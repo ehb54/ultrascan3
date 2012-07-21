@@ -3079,10 +3079,10 @@ double US_Hydrodyn_Saxs::compute_ff(
    {
       return 
          sa.c +
-         sa.a[ 0 ] + exp( -sa.b[ 0 ] * q_o_4pi2 ) +
-         sa.a[ 1 ] + exp( -sa.b[ 1 ] * q_o_4pi2 ) +
-         sa.a[ 2 ] + exp( -sa.b[ 2 ] * q_o_4pi2 ) +
-         sa.a[ 3 ] + exp( -sa.b[ 3 ] * q_o_4pi2 );
+         sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+         sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+         sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+         sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
    }
 
    if ( !our_saxs_options->alt_ff )
@@ -3393,3 +3393,88 @@ double US_Hydrodyn_Saxs::get_ff_ev( QString res, QString atm )
 
    return ff_ev[ ff_table[ ffkey ] ];
 }
+
+bool US_Hydrodyn_Saxs::create_somo_ff()
+{
+   errormsg = "";
+   QFile f ( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "somo.ff.new" );
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      errormsg = QString( tr( "Error: can not create %1" ) ).arg( f.name() );
+      return false;
+   }
+   
+   bool save_somo_ff = our_saxs_options->use_somo_ff;
+   our_saxs_options->use_somo_ff = false;
+
+   QTextStream ts( &f );
+
+   unsigned int q_points = 
+      (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+   
+   vector < double > q           ( q_points );
+   vector < double > q_over_4pi_2( q_points ); 
+
+   double one_over_4pi = 1.0 / (4.0 * M_PI);
+   double one_over_4pi_2 = one_over_4pi * one_over_4pi;
+
+   for ( unsigned int j = 0; j < q_points; j++ )
+   {
+      q           [ j ] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+      q_over_4pi_2[ j ] = q[ j ] * q[ j ] * one_over_4pi_2;
+   }
+
+   saxs saxsH = saxs_map[ "H" ];
+   
+   // add hybrids also
+
+   QString res = "";
+   for ( map < QString, saxs >::iterator it = saxs_map.begin();
+         it != saxs_map.end();
+         it++ )
+   {
+      QString ta = it->first;
+      unsigned int max_h = 0;
+      if ( hybrid_coords.count( ta ) )
+      {
+         max_h = ( unsigned int ) hybrid_coords[ ta ].size() - 1;
+      }
+
+      for ( unsigned int h = 0; h <= max_h; h++ )
+      {
+         saxs saxsA = it->second;
+         cout << QString( "create_somo_ff: %1%2\n" ).arg( it->first ).arg( h ? QString( "H%1" ).arg( h ) : "" );
+         ts << QString( "# %1%2\n" ).arg( ta ).arg( h ? QString( "H%1" ).arg( h ) : "" );
+         ts << "# ";
+         for ( int i = 0; i < 4; i++ )
+         {
+            ts << QString( "a[%1]=%2, b[%3]=%4, " )
+               .arg( i )
+               .arg( saxsA.a[ i ] )
+               .arg( i )
+               .arg( saxsA.b[ i ] );
+         }
+         ts << QString( "c=%1\n" ).arg( saxsA.c );
+         ts << "startdata\n";
+         for ( unsigned int j = 0; j < q_points; j++ )
+         {
+            double I = compute_ff(
+                                  saxsA,
+                                  saxsH,
+                                  res,
+                                  ta,
+                                  ta,
+                                  h,
+                                  q[ j ],
+                                  q_over_4pi_2[ j ] 
+                                  );
+            ts << QString( "%1 %2\n" ).arg( q[ j ], 0, 'g', 17 ).arg( I, 0, 'g', 17 );
+         }
+         ts << "enddata\n";
+      }
+   }
+   f.close();
+   our_saxs_options->use_somo_ff = save_somo_ff;
+   return true;
+}
+

@@ -547,6 +547,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QString specname;
 
+      bool create_somo_ff();
+      QString errormsg;
+
    private slots:
 
       void foxs_readFromStdout();

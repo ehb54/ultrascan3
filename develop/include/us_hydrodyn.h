@@ -108,6 +108,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Zeno;
       friend class US_Hydrodyn_Xsr;
       friend class US_Hydrodyn_Cluster_Additional;
+      friend class US_Hydrodyn_SasOptionsExperimental;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 

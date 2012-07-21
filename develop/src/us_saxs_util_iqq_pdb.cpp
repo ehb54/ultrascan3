@@ -1981,10 +1981,10 @@ double US_Saxs_Util::compute_ff(
    {
       return 
          sa.c +
-         sa.a[ 0 ] + exp( -sa.b[ 0 ] * q_o_4pi2 ) +
-         sa.a[ 1 ] + exp( -sa.b[ 1 ] * q_o_4pi2 ) +
-         sa.a[ 2 ] + exp( -sa.b[ 2 ] * q_o_4pi2 ) +
-         sa.a[ 3 ] + exp( -sa.b[ 3 ] * q_o_4pi2 );
+         sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+         sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+         sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+         sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
    }
 
    if ( !our_saxs_options.alt_ff )
