@@ -22,7 +22,7 @@ class US_UTIL_EXTERN US_Model
 
       //! The type of analysis used with the model
       enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, ONEDSA,
-                          COFS, FE };
+                          COFS, FE, INITIALGRID };
 
       //! The type of global analysis used with the model
       enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL };
@@ -39,6 +39,10 @@ class US_UTIL_EXTERN US_Model
       OpticsType   optics;      //!< The optics used for the data acquisition
       AnalysisType analysis;    //!< The analysis used with this model
       GlobalType   global;      //!< Global params used for model generation
+
+		//! An integer to define the number of subgrids for an INITIALGRID needed
+		//! for the 2DSA initialization
+		int		  subGrids;
 
       //! An index into components (-1 means none).  Generally buffer data 
       //! in the form of a component that affects the data readings.

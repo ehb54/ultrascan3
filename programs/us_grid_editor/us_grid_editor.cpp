@@ -11,7 +11,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_Grid_Editor w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
@@ -136,11 +136,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 	left->addWidget( ct_yMin, s_row++, 1 );
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_yMin( double ) ) );
-   
+
    lbl_yMax     = us_label( tr( "f/f0 Maximum:" ) );
    lbl_yMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yMax, s_row, 0 );
-   
+
    ct_yMax     = us_counter( 3, 1.1, 50.0, 0.1 );
    ct_yMax->setStep( 1 );
    left->addWidget( ct_yMax, s_row++, 1 );
@@ -150,7 +150,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_zVal     = us_label( tr( "Partial Spec. Volume:" ) );
    lbl_zVal->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_zVal, s_row, 0 );
-   
+
    ct_zVal     = us_counter( 3, 0.05, 2, 0.001 );
    ct_zVal->setStep( 1 );
    left->addWidget( ct_zVal, s_row++, 1 );
@@ -174,12 +174,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( le_viscosity, s_row++, 1 );
 	connect( le_viscosity, SIGNAL( textChanged( const QString& ) ),
 			   SLOT( update_viscosity( const QString& ) ) );
-   
-   pb_add_subgrid       = us_pushbutton( tr( "Add this Grid" ) );
-   pb_add_subgrid->setEnabled( true );
-   left->addWidget( pb_add_subgrid, s_row, 0 );
-   connect( pb_add_subgrid,    SIGNAL( clicked() ),
-            this,       SLOT( add_subgrid() ) );
+
+   pb_add_partialGrid       = us_pushbutton( tr( "Add this Grid" ) );
+   pb_add_partialGrid->setEnabled( true );
+   left->addWidget( pb_add_partialGrid, s_row, 0 );
+   connect( pb_add_partialGrid,    SIGNAL( clicked() ),
+            this,       SLOT( add_partialGrid() ) );
 
 	QGridLayout *showgrid = us_checkbox( tr("Show Final Grid"), cb_show_final_grid, false );
 	left->addLayout( showgrid, s_row++, 1 );
@@ -187,22 +187,39 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 				this, 		SLOT( show_final_grid(bool) ) );
 	cb_show_final_grid->setEnabled( false );
 
-   lbl_subgrid     = us_label( tr( "Highlight Subgrid #:" ) );
-   lbl_subgrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   left->addWidget( lbl_subgrid, s_row, 0 );
+   pb_delete_partialGrid       = us_pushbutton( tr( "Delete Partial Grid" ) );
+   pb_delete_partialGrid->setEnabled( false );
+   left->addWidget( pb_delete_partialGrid, s_row, 0 );
+   connect( pb_delete_partialGrid,    SIGNAL( clicked() ),
+            this,       SLOT( delete_partialGrid() ) );
 
-   ct_subgrid     = us_counter( 3, 0, 1000, 0.0 );
-   ct_subgrid->setStep( 1 );
-   ct_subgrid->setEnabled( false );
-   left->addWidget( ct_subgrid, s_row++, 1 );
-   connect( ct_subgrid, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_subgrid( double ) ) );
+	QGridLayout *showsubgrid = us_checkbox( tr("Show Subgrids"), cb_show_sub_grid, false );
+	left->addLayout( showsubgrid, s_row++, 1 );
+	connect( cb_show_sub_grid, SIGNAL( clicked(bool) ),
+				this, 		SLOT( show_sub_grid(bool) ) );
+	cb_show_sub_grid->setEnabled( false );
 
-   pb_delete_subgrid       = us_pushbutton( tr( "Delete this Grid" ) );
-   pb_delete_subgrid->setEnabled( false );
-   left->addWidget( pb_delete_subgrid, s_row++, 0 );
-   connect( pb_delete_subgrid,    SIGNAL( clicked() ),
-            this,       SLOT( delete_subgrid() ) );
+   lbl_partialGrid     = us_label( tr( "Highlight Partial Grid #:" ) );
+   lbl_partialGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   left->addWidget( lbl_partialGrid, s_row, 0 );
+
+   ct_partialGrid     = us_counter( 3, 0, 1000, 0.0 );
+   ct_partialGrid->setStep( 1 );
+   ct_partialGrid->setEnabled( false );
+   left->addWidget( ct_partialGrid, s_row++, 1 );
+   connect( ct_partialGrid, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_partialGrid( double ) ) );
+
+   lbl_subGrid     = us_label( tr( "Number of Subgrids:" ) );
+   lbl_subGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   left->addWidget( lbl_subGrid, s_row, 0 );
+
+   ct_subGrids     = us_counter( 3, 1, 100, 6.0 );
+   ct_subGrids->setStep( 1 );
+   ct_subGrids->setEnabled( false );
+   left->addWidget( ct_subGrids, s_row++, 1 );
+   connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_subGrids( double ) ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
@@ -230,7 +247,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    // set up plot component window on right side
 
-   QBoxLayout* plot1 = new US_Plot( data_plot1, 
+   QBoxLayout* plot1 = new US_Plot( data_plot1,
       tr( "Grid Layout" ),
       tr( "Sedimentation Coefficient (s20,W)"),
       tr( "Frictional Ratio f/f0" ) );
@@ -270,16 +287,17 @@ void US_Grid_Editor::reset( void )
 	viscosity = VISC_20W;
 	density = DENS_20W;
 	grid_index = 0;
-	subgrid = 0;
+	partialGrid = 0;
+	subGrids=6;
 	final_grid.clear();
 
    ct_xRes->setRange( 10.0, 1000.0, 1.0 );
    ct_xRes->setValue( (double) xRes );
    ct_yRes->setRange( 10.0, 1000.0, 1.0 );
    ct_yRes->setValue( (double) yRes );
-	ct_subgrid->setEnabled( false );
-	ct_subgrid->setRange( 0, 0, 0);
-	ct_subgrid->setValue( 0 );
+	ct_partialGrid->setEnabled( false );
+	ct_partialGrid->setRange( 0, 0, 0);
+	ct_partialGrid->setValue( 0 );
 	cb_show_final_grid->setEnabled( false );
 	cb_show_final_grid->setChecked( false );
 
@@ -296,8 +314,9 @@ void US_Grid_Editor::reset( void )
    rb_y_ff0->setEnabled( true );
    rb_y_ff0->setChecked( true );
    rb_y_vbar->setEnabled( true );
-	ct_subgrid->setEnabled( false );
+	ct_partialGrid->setEnabled( false );
 	rb_plot1->setChecked(true);
+	pb_add_partialGrid->setEnabled( true );
 	select_x_axis(plot_x);
 	select_y_axis(plot_y);
 	select_y_axis(plot_y);
@@ -307,7 +326,7 @@ void US_Grid_Editor::reset( void )
 
 // save the grid data
 void US_Grid_Editor::save( void )
-{ 
+{
 }
 
 // update raster x resolution
@@ -399,10 +418,18 @@ void US_Grid_Editor::update_zVal( double dval )
 	update_plot();
 }
 
-// Select a subgrid from all grids combined in the final grid for highlighting:
-void US_Grid_Editor::update_subgrid( double dval )
+// Select a partialGrid from all grids combined in the final grid for highlighting:
+void US_Grid_Editor::update_partialGrid( double dval )
 {
-	subgrid = (int) dval;
+	partialGrid = (int) dval;
+	update_plot();
+}
+
+// Select a subgrid from the final grid for highlighting:
+void US_Grid_Editor::update_subGrids( double dval )
+{
+	subGrids = (int) dval;
+	ct_partialGrid->setRange( 1, subGrids, 1);
 	update_plot();
 }
 
@@ -431,7 +458,11 @@ void US_Grid_Editor::update_plot( void )
 	QVector <double> xData2;
 	QVector <double> yData2;
 
-	if (cb_show_final_grid->isChecked())
+	xData1.clear();
+	yData1.clear();
+	xData2.clear();
+	yData2.clear();
+	if (cb_show_final_grid->isChecked() && !cb_show_sub_grid->isChecked())
 	{
 		gridsize = final_grid.size();
 		if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
@@ -440,7 +471,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].ff0);
@@ -456,7 +487,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].ff0);
@@ -475,7 +506,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].vbar);
@@ -491,7 +522,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].vbar);
@@ -510,7 +541,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].ff0);
@@ -526,7 +557,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].ff0);
@@ -545,7 +576,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].s);
 						yData1.push_back(final_grid[i].vbar);
@@ -561,7 +592,7 @@ void US_Grid_Editor::update_plot( void )
 			{
 				for (int i=0; i<gridsize; i++)
 				{
-					if(final_grid[i].index == subgrid)
+					if(final_grid[i].index == partialGrid)
 					{
 						xData1.push_back(final_grid[i].mw);
 						yData1.push_back(final_grid[i].vbar);
@@ -570,6 +601,214 @@ void US_Grid_Editor::update_plot( void )
 					{
 						xData2.push_back(final_grid[i].mw);
 						yData2.push_back(final_grid[i].vbar);
+					}
+				}
+			}
+		}
+		QwtPlotCurve *c1;
+		QwtSymbol sym1;
+		sym1.setStyle( QwtSymbol::Ellipse );
+		sym1.setBrush( QColor( Qt::red ) );
+		sym1.setPen  ( QColor( Qt::red ) );
+		sym1.setSize( 3 );
+
+		c1 = us_curve( data_plot1, "highlighted Grid points" );
+		c1->setData  ( xData1.data(), yData1.data(), xData1.size());
+		c1->setSymbol( sym1 );
+		c1->setStyle ( QwtPlotCurve::NoCurve );
+
+		QwtPlotCurve *c2;
+		QwtSymbol sym2;
+		sym2.setStyle( QwtSymbol::Ellipse );
+		sym2.setBrush( QColor( Qt::yellow ) );
+		sym2.setPen  ( QColor( Qt::yellow ) );
+		sym2.setSize( 3 );
+
+		c2 = us_curve( data_plot1, "Other Grid points" );
+		c2->setData  ( xData2.data(), yData2.data(), xData2.size());
+		c2->setSymbol( sym2 );
+		c2->setStyle ( QwtPlotCurve::NoCurve );
+	}
+	else if (cb_show_final_grid->isChecked() && cb_show_sub_grid->isChecked())
+	{
+		gridsize = final_grid.size();
+		int counter=1;
+		if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].ff0);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].ff0);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+		}
+		if (plot_x == 0 && plot_y == 1) //grid over s and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].vbar);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].vbar);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 0) //grid over mw and f/f0
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].ff0);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].ff0);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].ff0);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+		}
+		if (plot_x == 1 && plot_y == 1) //grid over mw and vbar
+		{
+			if (selected_plot == 0)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].s);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].s);
+						yData2.push_back(final_grid[i].vbar);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
+					}
+				}
+			}
+			if (selected_plot == 1)
+			{
+				for (int i=0; i<gridsize; i++)
+				{
+					if(counter == partialGrid)
+					{
+						xData1.push_back(final_grid[i].mw);
+						yData1.push_back(final_grid[i].vbar);
+					}
+					else
+					{
+						xData2.push_back(final_grid[i].mw);
+						yData2.push_back(final_grid[i].vbar);
+					}
+					counter++;
+					if (counter == subGrids + 1)
+					{
+						counter = 1;
 					}
 				}
 			}
@@ -708,7 +947,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 	maxgridpoint.ff0  =  0.0;
 	maxgridpoint.f0   =  0.0;
 	maxgridpoint.f    =  0.0;
-	mingridpoint.s    =  9.9e99; 
+	mingridpoint.s    =  9.9e99;
 	mingridpoint.D    =  9.9e99;
 	mingridpoint.vbar =  9.9e99;
 	mingridpoint.mw   =  9.9e99;
@@ -726,11 +965,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
-				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
+				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI *
 				                 pow((viscosity * 0.01 * tmp_point.ff0), (3.0/2.0)) *
-			  	                 pow((tmp_point.s * 1.0e-13 * vbar 
+			  	                 pow((tmp_point.s * 1.0e-13 * vbar
 									/ (2.0 * (1.0 - vbar * density))), 0.5));
-// 
+//
 // check to make sure there aren't any nonsensical settings selected by
 // the user. If so, mark the molecular weight negative (-1) and exclude
 // the point from the grid point list:
@@ -741,10 +980,10 @@ void US_Grid_Editor::calc_gridpoints( void )
 				{
 					tmp_point.mw = -1.0;
 					flag = false;
-				} 
+				}
 				else
 				{
-					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20 
+					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							         / (tmp_point.D * (1 - vbar * density ));
 				}
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
@@ -755,7 +994,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
-			} 
+			}
 		}
 	}
 	if (plot_x == 1 && plot_y == 0) //grid over MW and f/f0
@@ -768,7 +1007,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.ff0  = yMin + j * ff0_inc;
-				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - vbar * density )
@@ -780,7 +1019,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
-			} 
+			}
 		}
 	}
 	if (plot_x == 0 && plot_y == 1) //grid over s and vbar
@@ -793,11 +1032,11 @@ void US_Grid_Editor::calc_gridpoints( void )
 			for (int j=0; j< (int) yRes; j++)
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
-				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI * 
+				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI *
 				                 pow((viscosity * 0.01 * ff0), (3.0/2.0)) *
-			  	                 pow((tmp_point.s * 1.0e-13 * tmp_point.vbar 
+			  	                 pow((tmp_point.s * 1.0e-13 * tmp_point.vbar
 									/ (2 * (1.0 - vbar * density))), 0.5));
-// 
+//
 // check to make sure there aren't any nonsensical settings selected by
 // the user. If so, mark the molecular weight negative (-1) and exclude
 // the point from the grid point list:
@@ -808,13 +1047,13 @@ void US_Grid_Editor::calc_gridpoints( void )
 				{
 					tmp_point.mw = -1.0;
 					flag = false;
-				} 
+				}
 				else
 				{
 					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
 				}
-				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
 								   * vbar/AVOGADRO), (1.0/3.0));
 				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
 				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
@@ -823,7 +1062,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
-			} 
+			}
 		}
 	}
 	if (plot_x == 1 && plot_y == 1) //grid over MW and vbar
@@ -837,7 +1076,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 			{
 				tmp_point.vbar = yMin + j * vbar_inc;
 				tmp_point.ff0  = ff0;
-				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI 
+				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
 								   * tmp_point.vbar / AVOGADRO), (1.0/3.0));
 				tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				tmp_point.s    = 1.0e13 * tmp_point.mw * (1.0 - tmp_point.vbar * density )
@@ -848,7 +1087,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 					current_grid.push_back(tmp_point);
 				}
 				set_minmax(tmp_point);
-			} 
+			}
 		}
 	}
 	if (flag == false)
@@ -867,7 +1106,7 @@ void US_Grid_Editor::calc_gridpoints( void )
 }
 
 // add current grid to the list of grids
-void US_Grid_Editor::add_subgrid( void )
+void US_Grid_Editor::add_partialGrid( void )
 {
 	grid_index++;
 	for (int i=0; i<current_grid.size(); i++)
@@ -878,16 +1117,16 @@ void US_Grid_Editor::add_subgrid( void )
 	}
 	pb_save->setEnabled( true );
 	cb_show_final_grid->setEnabled( true );
-   pb_delete_subgrid->setEnabled( true );
-   ct_subgrid->setEnabled( true );
+   pb_delete_partialGrid->setEnabled( true );
+   ct_partialGrid->setEnabled( true );
 }
 
 // delete current grid
-void US_Grid_Editor::delete_subgrid( void )
+void US_Grid_Editor::delete_partialGrid( void )
 {
 	for (int i=final_grid.size() - 1; i>=0; i--)
 	{
-		if (final_grid[i].index == subgrid)
+		if (final_grid[i].index == partialGrid)
       {
          final_grid.removeAt(i);
       }
@@ -895,19 +1134,19 @@ void US_Grid_Editor::delete_subgrid( void )
 	// renumber index positions
    for (int i=0; i<final_grid.size(); i++)
 	{
-      if (final_grid[i].index > subgrid)
+      if (final_grid[i].index > partialGrid)
       {
          final_grid[i].index--;
       }
    }
 	grid_index--;
-   ct_subgrid->setRange( 1, grid_index, 1 );
+   ct_partialGrid->setRange( 1, grid_index, 1 );
    if (grid_index == 0)
    {
       cb_show_final_grid->setChecked (false);
       cb_show_final_grid->setEnabled (false);
-      ct_subgrid->setRange (0, 0, 1);
-      ct_subgrid->setEnabled( false );
+      ct_partialGrid->setRange (0, 0, 1);
+      ct_partialGrid->setEnabled( false );
       show_final_grid( false );
    }
    update_plot();
@@ -973,7 +1212,7 @@ void US_Grid_Editor::select_x_axis( int ival )
 			break;
 		}
 		case 1:
-		{	
+		{
 			lbl_xRes->setText(tr("Mol. Weight Resolution:"));
 			lbl_xMin->setText(tr("Mol. Weight Minimum:"));
 			lbl_xMax->setText(tr("Mol. Weight Maximum:"));
@@ -1060,7 +1299,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 	update_plot();
 }
 
-// activated when the 
+// activated when the "Show Final Grid" Checkbox is set
 void US_Grid_Editor::show_final_grid( bool flag )
 {
 	if (flag)
@@ -1076,10 +1315,12 @@ void US_Grid_Editor::show_final_grid( bool flag )
 		rb_x_mw->setEnabled( false );
       rb_y_ff0->setEnabled( false );
       rb_y_vbar->setEnabled( false );
-		ct_subgrid->setRange(1, grid_index, 1);
-		ct_subgrid->setEnabled( true );
-      pb_delete_subgrid->setEnabled( true );
-      pb_add_subgrid->setEnabled( false );
+		ct_partialGrid->setRange(1, grid_index, 1);
+		ct_partialGrid->setEnabled( true );
+      pb_delete_partialGrid->setEnabled( true );
+      pb_add_partialGrid->setEnabled( false );
+      cb_show_sub_grid->setEnabled( true );
+		ct_subGrids->setEnabled( false );
 	}
 	else
 	{
@@ -1094,9 +1335,34 @@ void US_Grid_Editor::show_final_grid( bool flag )
 		rb_x_mw->setEnabled( true );
       rb_y_ff0->setEnabled( true );
       rb_y_vbar->setEnabled( true );
-		ct_subgrid->setEnabled( false );
-      pb_delete_subgrid->setEnabled( false );
-      pb_add_subgrid->setEnabled( true );
+		ct_partialGrid->setEnabled( false );
+      pb_delete_partialGrid->setEnabled( false );
+      pb_add_partialGrid->setEnabled( true );
+      cb_show_sub_grid->setEnabled( false );
+		ct_subGrids->setEnabled( false );
+	}
+	update_plot();
+}
+
+// activated when the "Show Subgrids" Checkbox is set
+void US_Grid_Editor::show_sub_grid( bool flag )
+{
+	if (flag)
+	{
+		int maxsubgrids = (int) final_grid.size()/50;
+		lbl_partialGrid->setText("Highlight Subgrid #:");
+		ct_subGrids->setEnabled( true );
+		ct_subGrids->setRange(1, maxsubgrids, 1);
+		ct_partialGrid->setRange( 1, subGrids, 1);
+		pb_delete_partialGrid->setEnabled( false );
+	}
+	else
+	{
+		lbl_partialGrid->setText("Highlight Partial Grid #:");
+		ct_subGrids->setEnabled( false );
+		ct_partialGrid->setRange( 1, final_grid.size(), 1);
+		ct_partialGrid->setValue( 1 );
+		pb_delete_partialGrid->setEnabled( true );
 	}
 	update_plot();
 }

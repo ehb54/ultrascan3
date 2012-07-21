@@ -23,13 +23,13 @@
 #include "us_settings.h"
 #include "us_widgets.h"
 
-struct gridpoint 
+struct gridpoint
 {
 	double s;
 	double D;
 	double vbar;
    double mw;
-   double f; 
+   double f;
 	double ff0;
 	double f0;
 	int index;
@@ -44,10 +44,10 @@ class US_Grid_Editor : public US_Widgets
 
    private:
 
-		int		grid_index;   // number of total subgrids, used as the index to identify subgrids,
-                             // starts at 1 and aligns with subgrid
-		int		subgrid;      // currently active subgrid
-
+		int		grid_index;   	// number of total partialGrids, used as the index to identify partialGrids,
+										// starts at 1 and aligns with partialGrid
+		int		partialGrid;  	// currently active partialGrid
+		int		subGrids;		// number of subgrids
       QLabel	*lbl_info1;
       QLabel	*lbl_info2;
       QLabel	*lbl_xaxis;
@@ -61,7 +61,8 @@ class US_Grid_Editor : public US_Widgets
       QLabel	*lbl_zVal;
       QLabel	*lbl_density;
       QLabel	*lbl_viscosity;
-      QLabel	*lbl_subgrid;
+      QLabel	*lbl_partialGrid;
+      QLabel	*lbl_subGrid;
 
       QLineEdit    *le_density;
       QLineEdit    *le_viscosity;
@@ -71,29 +72,31 @@ class US_Grid_Editor : public US_Widgets
 		QList <gridpoint> final_grid;
 		gridpoint maxgridpoint;
 		gridpoint mingridpoint;
- 
+
       QwtCounter   *ct_xRes;
       QwtCounter   *ct_yRes;
-      QwtCounter   *ct_yMin;     
-      QwtCounter   *ct_yMax;     
-      QwtCounter   *ct_xMin;     
-      QwtCounter   *ct_xMax;     
-      QwtCounter   *ct_zVal;     
-      QwtCounter   *ct_subgrid;     
+      QwtCounter   *ct_yMin;
+      QwtCounter   *ct_yMax;
+      QwtCounter   *ct_xMin;
+      QwtCounter   *ct_xMax;
+      QwtCounter   *ct_zVal;
+      QwtCounter   *ct_partialGrid;
+      QwtCounter   *ct_subGrids;
 
       QwtPlot            *data_plot1;
       QwtLinearColorMap  *colormap;
       US_PlotPicker      *pick1;
       US_PlotPicker      *pick2;
 
-      QPushButton  *pb_add_subgrid;
-      QPushButton  *pb_delete_subgrid;
+      QPushButton  *pb_add_partialGrid;
+      QPushButton  *pb_delete_partialGrid;
       QPushButton  *pb_help;
       QPushButton  *pb_close;
       QPushButton  *pb_save;
       QPushButton  *pb_reset;
 
-		QCheckBox *cb_show_final_grid; 
+		QCheckBox *cb_show_final_grid;
+		QCheckBox *cb_show_sub_grid;
 
       QRadioButton *rb_x_s;
       QRadioButton *rb_x_mw;
@@ -101,7 +104,7 @@ class US_Grid_Editor : public US_Widgets
       QRadioButton *rb_y_vbar;
       QRadioButton *rb_plot1;
       QRadioButton *rb_plot2;
-                    
+
 		QButtonGroup *bg_x_axis;
 		QButtonGroup *bg_y_axis;
 		QButtonGroup *toggle_plot;
@@ -121,7 +124,7 @@ class US_Grid_Editor : public US_Widgets
       int dbg_level;
 		int plot_x; // 0 = s, 1 = MW
 		int plot_y; // 0 = ff0, 1 = vbar
-		int selected_plot; 
+		int selected_plot;
 
    private slots:
 
@@ -132,21 +135,23 @@ class US_Grid_Editor : public US_Widgets
       void update_yMin( double );
       void update_yMax( double );
       void update_zVal( double );
-      void update_subgrid( double );
+      void update_partialGrid( double );
+      void update_subGrids( double );
       void update_density( const QString & );
       void update_viscosity( const QString & );
       void update_plot( void );
       void select_x_axis( int );
       void select_y_axis( int );
       void select_plot( int );
-      void delete_subgrid( void );
-      void add_subgrid( void );
+      void delete_partialGrid( void );
+      void add_partialGrid( void );
       void save( void );
       void reset( void );
       void help( void ) { showHelp.show_help( "create_grid.html" ); };
 		void calc_gridpoints( void );
 		void set_minmax( const struct gridpoint &);
 		void show_final_grid( bool );
+		void show_sub_grid( bool );
 
 };
 
