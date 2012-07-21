@@ -469,6 +469,7 @@ void US_GA_Initialize::reset( void )
 void US_GA_Initialize::save( void )
 { 
    int novlps = soludata->countOverlaps();
+DbgLv(1) << "SAVE novlps" << novlps;
 
    if ( novlps > 0 )
    {
@@ -482,12 +483,15 @@ void US_GA_Initialize::save( void )
       return;
    }
 
-   if ( ! plot_s  &&  ! monte_carlo )
-   {  // MW & not Monte Carlo:  there can be no output file
+   int maxsol = soludata->countFullestBucket();
+DbgLv(1) << "SAVE maxsol" << maxsol;
+
+   if ( ! plot_s  &&  maxsol < 5 )
+   {  // MW & not Monte Carlo/Global:  there can be no output file
       QMessageBox::information( this,
          tr( "No Files Output" ),
          tr( "No files will be saved, since buckets are not s vs. f/f0\n"
-             "and input models were not Monte Carlo.\n\n"
+             "and input models were not Monte Carlo/Global.\n\n"
              "To output a gadistro file, pick buckets in s vs. f/f0." ) );
       return;
    }
@@ -507,16 +511,19 @@ void US_GA_Initialize::save( void )
    if ( ! dirp.exists( fdir ) )
       dirp.mkpath( fdir );
 
+DbgLv(1) << "SAVE plot_s" << plot_s;
    if ( plot_s )
       soludata->saveGAdata( fname );
 
-   if ( monte_carlo )
-   {  // if Monte Carlo, build up and analyze data, then report
+   if ( maxsol > 4 )
+   {  // if Monte Carlo/Global, build up and analyze data, then report
 
+DbgLv(1) << "SAVE call buildMC";
       soludata->buildDataMC( plot_s );             // build it
 
       fname         = fdir + "/" + fnsta;
 
+DbgLv(1) << "SAVE call reportMC";
       soludata->reportDataMC( fname, mc_iters );   // report it
 
       // Copy the statistics file to the report directory
@@ -530,7 +537,7 @@ void US_GA_Initialize::save( void )
    if ( plot_s )
       msg     += "    " + fndat + "\n";
 
-   if ( monte_carlo )
+   if ( maxsol > 4 )
    {
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
@@ -559,6 +566,7 @@ void US_GA_Initialize::save( void )
 
    else
    {
+DbgLv(1) << "SAVE fnst2" << fnst2;
       msg     += tr( "in directory:\n    " ) + fdir;
    }
 
@@ -1779,6 +1787,8 @@ void US_GA_Initialize::newrow_sbdata( int /*row*/ )
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
+   int maxsol  = soludata->countFullestBucket();
+   bool global = monte_carlo || ( maxsol > 4 );
 
    highlight_solute( sx );
    data_plot->replot();
@@ -1807,7 +1817,7 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
                this,         SLOT(   newrow_sbdata(     int )            ) );
    }
 
-   else if ( monte_carlo  &&  sx != sxset )
+   else if ( global  &&  sx != sxset )
    {
       QRectF rect  = soludata->bucketRect( sx );
       ct_wsbuck->setValue( rect.width() );
@@ -1820,10 +1830,12 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
+   int maxsol  = soludata->countFullestBucket();
+   bool global = monte_carlo || ( maxsol > 4 );
    QwtPlotCurve* bc1;
    QPointF pt0;
 
-   if ( !monte_carlo )
+   if ( !global )
    {
       pt0         = soludata->bucketPoint( sx, false );
    }
