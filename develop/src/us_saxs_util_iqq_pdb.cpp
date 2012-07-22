@@ -1655,6 +1655,167 @@ QString US_Saxs_Util::iqq_suffix()
 void US_Saxs_Util::setup_saxs_options()
 {
    cout << "setup saxs options\n";
+
+   hybrid_coords.clear();
+   point p;
+
+   // #define UHS_ALEXANDROS_POINTS
+
+#if defined( UHS_ALEXANDROS_POINTS )
+
+   p.axis[ 0 ] = 0.0;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.005;
+   p.axis[ 1 ] = 1.012;
+   p.axis[ 2 ] = 0.341;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 1.032;
+   p.axis[ 1 ] = -0.268;
+   p.axis[ 2 ] = -0.099;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.469;
+   p.axis[ 1 ] = -0.652;
+   p.axis[ 2 ] = 0.706;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.067;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.438;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = 0.825;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.495;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = -0.792;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.934;
+   p.axis[ 1 ] = -0.312;
+   p.axis[ 2 ] = -0.033;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.960;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 1.340;
+   hybrid_coords[ "S" ].push_back( p );
+#else
+   p.axis[ 0 ] = 0.0;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 1.070;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.366;
+   p.axis[ 1 ] = 1.039;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = -0.222;
+   p.axis[ 1 ] = -0.722;
+   p.axis[ 2 ] = -0.724;
+   hybrid_coords[ "C" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 1.000;
+   p.axis[ 1 ] = 0.0;
+   p.axis[ 2 ] = 0.0;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.531;
+   p.axis[ 1 ] = 0.868;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = -0.314;
+   p.axis[ 1 ] = 1.039;
+   p.axis[ 2 ] = -0.414;
+   hybrid_coords[ "N" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.960;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.00;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = -0.240;
+   p.axis[ 1 ] = 0.929;
+   p.axis[ 2 ] = 0.00;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = 0.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+
+   p.axis[ 0 ] = 1.000;
+   p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.000;
+   hybrid_coords[ "S" ].push_back( p );
+#endif
+   // compute pairwise distances
+
+   hybrid_r.clear();
+
+   for ( map < QString, vector < point > >::iterator it = hybrid_coords.begin();
+         it != hybrid_coords.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) it->second.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < ( unsigned int ) it->second.size(); j++ )
+         {
+            hybrid_r[ it->first ][ i ][ j ] =
+               sqrt( 
+                    ( it->second[ i ].axis[ 0 ] - it->second[ j ].axis[ 0 ] ) *
+                    ( it->second[ i ].axis[ 0 ] - it->second[ j ].axis[ 0 ] ) 
+                    +
+                    ( it->second[ i ].axis[ 1 ] - it->second[ j ].axis[ 1 ] ) *
+                    ( it->second[ i ].axis[ 1 ] - it->second[ j ].axis[ 1 ] ) 
+                    +
+                    ( it->second[ i ].axis[ 2 ] - it->second[ j ].axis[ 2 ] ) *
+                    ( it->second[ i ].axis[ 2 ] - it->second[ j ].axis[ 2 ] ) 
+                    );
+         }
+      }                    
+   }
+
+
    our_saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
 
    our_saxs_options.h_scat_len = -0.3742f;        // H scattering length (*10^-12 cm)
