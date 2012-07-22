@@ -3074,6 +3074,7 @@ double US_Hydrodyn_Saxs::compute_ff(
                         .arg( ffkey ) 
                         .arg( q ) 
                         .arg( errormsg ) );
+            qApp->processEvents();
          } else {
             return ff;
          }
@@ -3082,33 +3083,47 @@ double US_Hydrodyn_Saxs::compute_ff(
          {
             editor_msg( "dark red", QString( tr( "Warning: key %1 not found in ff_table" ) ).arg( ffkey ) );
             ff_sent_msg1[ ffkey ] = true;
+            qApp->processEvents();
          }
       }
    }
 
    if ( !h )
    {
-      return 
-         sa.c +
-         sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
-         sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
-         sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
-         sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
+      if ( our_saxs_options->five_term_gaussians )
+      {
+         return 
+            sa.c5 +
+            sa.a5[ 0 ] * exp( -sa.b5[ 0 ] * q_o_4pi2 ) +
+            sa.a5[ 1 ] * exp( -sa.b5[ 1 ] * q_o_4pi2 ) +
+            sa.a5[ 2 ] * exp( -sa.b5[ 2 ] * q_o_4pi2 ) +
+            sa.a5[ 3 ] * exp( -sa.b5[ 3 ] * q_o_4pi2 ) +
+            sa.a5[ 4 ] * exp( -sa.b5[ 4 ] * q_o_4pi2 );
+      } else {
+         return 
+            sa.c +
+            sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+            sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+            sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+            sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
+      }
    }
 
    if ( !our_saxs_options->alt_ff )
    {
-      return sa.c + 
-         sa.a[0] * exp(-sa.b[0] * q_o_4pi2) +
-         sa.a[1] * exp(-sa.b[1] * q_o_4pi2) +
-         sa.a[2] * exp(-sa.b[2] * q_o_4pi2) +
-         sa.a[3] * exp(-sa.b[3] * q_o_4pi2) +
-         h *
-         ( sh.c + 
-           sh.a[0] * exp(-sh.b[0] * q_o_4pi2) +
-           sh.a[1] * exp(-sh.b[1] * q_o_4pi2) +
-           sh.a[2] * exp(-sh.b[2] * q_o_4pi2) +
-           sh.a[3] * exp(-sh.b[3] * q_o_4pi2) );
+      cout << "Warning: old !alt_ff no longer supported\n";
+      return 0.0;
+//       return sa.c + 
+//          sa.a[0] * exp(-sa.b[0] * q_o_4pi2) +
+//          sa.a[1] * exp(-sa.b[1] * q_o_4pi2) +
+//          sa.a[2] * exp(-sa.b[2] * q_o_4pi2) +
+//          sa.a[3] * exp(-sa.b[3] * q_o_4pi2) +
+//          h *
+//          ( sh.c + 
+//            sh.a[0] * exp(-sh.b[0] * q_o_4pi2) +
+//            sh.a[1] * exp(-sh.b[1] * q_o_4pi2) +
+//            sh.a[2] * exp(-sh.b[2] * q_o_4pi2) +
+//            sh.a[3] * exp(-sh.b[3] * q_o_4pi2) );
    }
 
 //    q_o_4pi2 = 

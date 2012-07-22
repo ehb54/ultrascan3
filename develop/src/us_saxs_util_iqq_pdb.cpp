@@ -1764,6 +1764,12 @@ void US_Saxs_Util::setup_saxs_options()
       our_saxs_options.alt_ff = true;
    }
 
+   our_saxs_options.five_term_gaussians = false;
+   if ( control_parameters.count( "fivetermgaussian" ) )
+   {
+      our_saxs_options.five_term_gaussians = true;
+   }
+
    our_saxs_options.iqq_use_atomic_ff = false;
    if ( control_parameters.count( "explicith" ) )
    {
@@ -1998,27 +2004,40 @@ double US_Saxs_Util::compute_ff(
 
    if ( !h )
    {
-      return 
-         sa.c +
-         sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
-         sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
-         sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
-         sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
+      if ( our_saxs_options.five_term_gaussians )
+      {
+         return 
+            sa.c5 +
+            sa.a5[ 0 ] * exp( -sa.b5[ 0 ] * q_o_4pi2 ) +
+            sa.a5[ 1 ] * exp( -sa.b5[ 1 ] * q_o_4pi2 ) +
+            sa.a5[ 2 ] * exp( -sa.b5[ 2 ] * q_o_4pi2 ) +
+            sa.a5[ 3 ] * exp( -sa.b5[ 3 ] * q_o_4pi2 ) +
+            sa.a5[ 4 ] * exp( -sa.b5[ 4 ] * q_o_4pi2 );
+      } else {
+         return 
+            sa.c +
+            sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
+            sa.a[ 1 ] * exp( -sa.b[ 1 ] * q_o_4pi2 ) +
+            sa.a[ 2 ] * exp( -sa.b[ 2 ] * q_o_4pi2 ) +
+            sa.a[ 3 ] * exp( -sa.b[ 3 ] * q_o_4pi2 );
+      }
    }
 
    if ( !our_saxs_options.alt_ff )
    {
-      return sa.c + 
-         sa.a[0] * exp(-sa.b[0] * q_o_4pi2) +
-         sa.a[1] * exp(-sa.b[1] * q_o_4pi2) +
-         sa.a[2] * exp(-sa.b[2] * q_o_4pi2) +
-         sa.a[3] * exp(-sa.b[3] * q_o_4pi2) +
-         h *
-         ( sh.c + 
-           sh.a[0] * exp(-sh.b[0] * q_o_4pi2) +
-           sh.a[1] * exp(-sh.b[1] * q_o_4pi2) +
-           sh.a[2] * exp(-sh.b[2] * q_o_4pi2) +
-           sh.a[3] * exp(-sh.b[3] * q_o_4pi2) );
+      cout << "Warning: old !alt_ff no longer supported\n";
+      return 0.0;
+//       return sa.c + 
+//          sa.a[0] * exp(-sa.b[0] * q_o_4pi2) +
+//          sa.a[1] * exp(-sa.b[1] * q_o_4pi2) +
+//          sa.a[2] * exp(-sa.b[2] * q_o_4pi2) +
+//          sa.a[3] * exp(-sa.b[3] * q_o_4pi2) +
+//          h *
+//          ( sh.c + 
+//            sh.a[0] * exp(-sh.b[0] * q_o_4pi2) +
+//            sh.a[1] * exp(-sh.b[1] * q_o_4pi2) +
+//            sh.a[2] * exp(-sh.b[2] * q_o_4pi2) +
+//            sh.a[3] * exp(-sh.b[3] * q_o_4pi2) );
    }
 
 //    q_o_4pi2 = 

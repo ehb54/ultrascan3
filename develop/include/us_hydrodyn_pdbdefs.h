@@ -37,6 +37,9 @@ struct saxs
    float   a[4];                 // a coefficients
    float   b[4];                 // b coefficients
    float   c;                    // c coefficient
+   float   a5[5];                // a coefficients 5 term gaussian
+   float   b5[5];                // b coefficients 5 term gaussian
+   float   c5;                   // c coefficient  5 term gaussian
    float   volume;               // atomic volume
 };
 
@@ -309,6 +312,7 @@ struct saxs_options
    bool         crysol_explicit_hydrogens;
    bool         use_somo_ff;
    QString      default_ff_filename;
+   bool         five_term_gaussians;
 };
 
 struct saxs_atom

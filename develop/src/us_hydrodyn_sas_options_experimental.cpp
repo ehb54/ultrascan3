@@ -125,6 +125,14 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_alt_ff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_alt_ff, SIGNAL(clicked()), this, SLOT(set_alt_ff()));
 
+   cb_five_term_gaussians = new QCheckBox(this);
+   cb_five_term_gaussians->setText(tr(" 5 term Gaussians"));
+   cb_five_term_gaussians->setEnabled(true);
+   cb_five_term_gaussians->setChecked((*saxs_options).five_term_gaussians);
+   cb_five_term_gaussians->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_five_term_gaussians->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_five_term_gaussians, SIGNAL(clicked()), this, SLOT(set_five_term_gaussians()));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -175,6 +183,7 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_3->addWidget(cb_iqq_log_fitting);
    hbl_various_3->addWidget(cb_iqq_scale_play);
    hbl_various_3->addWidget(cb_alt_ff);
+   hbl_various_3->addWidget(cb_five_term_gaussians);
    background->addMultiCellLayout(hbl_various_3, j, j, 0, 1);
    j++;
 
@@ -269,6 +278,12 @@ void US_Hydrodyn_SasOptionsExperimental::set_iqq_scale_play()
 void US_Hydrodyn_SasOptionsExperimental::set_alt_ff()
 {
    (*saxs_options).alt_ff = cb_alt_ff->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_five_term_gaussians()
+{
+   (*saxs_options).five_term_gaussians = cb_five_term_gaussians->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -2627,9 +2627,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
    if ( our_saxs_options->use_somo_ff )
    {
-      editor_msg( "blue", "Use somo ff on\n" );
+      editor_msg( "blue", "Use somo ff (precomputed ff) on\n" );
       ff_sent_msg1.clear();
       load_ff_table( our_saxs_options->default_ff_filename );
+   } else {
+      if ( our_saxs_options->five_term_gaussians )
+      {
+         editor_msg( "blue", "Using 5 term Gaussians\n" );
+      }
    }
 
    if ( our_saxs_options->saxs_iq_native_fast ) 
@@ -3971,38 +3976,65 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
    if (f.open(IO_ReadOnly|IO_Translate))
    {
       QTextStream ts(&f);
+      int line = 0;
       while (!ts.atEnd())
       {
-         ts >> current_saxs.saxs_name;
-         ts >> current_saxs.a[0];
-         ts >> current_saxs.b[0];
-         ts >> current_saxs.a[1];
-         ts >> current_saxs.b[1];
-         ts >> current_saxs.a[2];
-         ts >> current_saxs.b[2];
-         ts >> current_saxs.a[3];
-         ts >> current_saxs.b[3];
-         ts >> current_saxs.c;
-         ts >> current_saxs.volume;
-         str1 = ts.readLine(); // read rest of line
-         if (!current_saxs.saxs_name.isEmpty())
+         QString    qs  = ts.readLine();
+         line++;
+         if ( qs.contains( QRegExp( "^\\s+#" ) ) )
          {
-#if defined(SAXS_DEBUG)
-            cout << "read saxs file: ["
-                 << current_saxs.saxs_name
-                 << "] a[0] = "
-                 << current_saxs.a[0]
-                 << endl;
-#endif
-#if defined(RESCALE_B)
-            for ( unsigned int i = 0; i < 4; i++ )
-            {
-               current_saxs.b[i] /= 16.0f * M_PI * M_PI;
-            }
-#endif
-            saxs_list.push_back(current_saxs);
-            saxs_map[current_saxs.saxs_name] = current_saxs;
+            continue;
          }
+         qs.stripWhiteSpace();
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         int pos = 0;
+         if ( qsl.size() == 11 )
+         {
+            current_saxs.saxs_name = qsl[ pos++ ];
+            if ( saxs_map.count( current_saxs.saxs_name ) )
+            {
+               current_saxs = saxs_map[ current_saxs.saxs_name ];
+            }
+            for ( int j = 0; j < 4; j++ )
+            {
+               current_saxs.a[ j ] = qsl[ pos++ ].toFloat();
+               current_saxs.b[ j ] = qsl[ pos++ ].toFloat();
+            }
+            current_saxs.c      = qsl[ pos++ ].toFloat();
+            current_saxs.volume = qsl[ pos++ ].toFloat();
+            saxs_map[ current_saxs.saxs_name ] = current_saxs;
+            continue;
+         } 
+
+         if ( qsl.size() == 13 )
+         {
+            current_saxs.saxs_name = qsl[ pos++ ];
+            if ( saxs_map.count( current_saxs.saxs_name ) )
+            {
+               current_saxs = saxs_map[ current_saxs.saxs_name ];
+            }
+            for ( int j = 0; j < 5; j++ )
+            {
+               current_saxs.a5[ j ] = qsl[ pos++ ].toFloat();
+               current_saxs.b5[ j ] = qsl[ pos++ ].toFloat();
+            }
+            current_saxs.c5     = qsl[ pos++ ].toFloat();
+            current_saxs.volume = qsl[ pos++ ].toFloat();
+            saxs_map[ current_saxs.saxs_name ] = current_saxs;
+            continue;
+         } 
+
+         editor_msg( "red", 
+                     QString( tr( "Warning: %1 on line %2, invalid number of tokens, ignoring" ) )
+                     .arg( filename )
+                     .arg( line ) );
+      }
+      
+      for ( map < QString, saxs >::iterator it = saxs_map.begin();
+            it != saxs_map.end();
+            it++ )
+      {
+         saxs_list.push_back( it->second );
       }
       f.close();
    }
@@ -4124,6 +4156,11 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
 
    p.axis[ 0 ] = 0.960;
    p.axis[ 1 ] = 0.000;
+   p.axis[ 2 ] = 0.00;
+   hybrid_coords[ "O" ].push_back( p );
+
+   p.axis[ 0 ] = -0.240;
+   p.axis[ 1 ] = 0.929;
    p.axis[ 2 ] = 0.00;
    hybrid_coords[ "O" ].push_back( p );
 

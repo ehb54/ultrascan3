@@ -3787,6 +3787,7 @@ void US_Hydrodyn::set_default()
    saxs_options.alt_ff                     = true;
    saxs_options.crysol_explicit_hydrogens  = false;
    saxs_options.use_somo_ff                = true;
+   saxs_options.five_term_gaussians        = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
