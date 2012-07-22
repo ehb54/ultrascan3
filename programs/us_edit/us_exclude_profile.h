@@ -8,6 +8,10 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 class US_ExcludeProfile : public US_WidgetsDialog
 {
    Q_OBJECT
@@ -28,6 +32,7 @@ class US_ExcludeProfile : public US_WidgetsDialog
       QLineEdit*   le_remaining;
       QLineEdit*   le_excluded;
 
+      int          dbg_level;
       bool         finished;
       QList< int > original;
       QList< int > excludes;

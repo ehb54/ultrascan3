@@ -48,6 +48,7 @@ class US_Edit : public US_Widgets
       int                triple_index;
       int                total_speeds;
       int                total_edits;
+      int                dbg_level;
 
       double             meniscus;
       double             meniscus_left;
