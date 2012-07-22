@@ -688,6 +688,12 @@ void US_Hydrodyn_Cluster::create_pkg()
 //          QString( "TestingFF\n" );
 //    }
 
+   if ( our_saxs_options->five_term_gaussians )
+   {
+      base += 
+         QString( "FiveTermGaussian\n" );
+   }
+
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
       base += 
@@ -3232,6 +3238,12 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
 //       base += 
 //          QString( "TestingFF\n" );
 //    }
+
+   if ( our_saxs_options->five_term_gaussians )
+   {
+      base += 
+         QString( "FiveTermGaussian\n" );
+   }
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
