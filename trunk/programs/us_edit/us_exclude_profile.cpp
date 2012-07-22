@@ -11,6 +11,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    original = includes;
    finished = false;
    current.clear();
+   dbg_level = US_Settings::us_debug();
 
    setWindowTitle( tr( "Scan Exclusion Profile Editor" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -21,8 +22,6 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
 
    int row       = 0;
    int scanCount = original.size();
-   int firstScan = original[ 0             ] + 1;
-   int lastScan  = original[ scanCount - 1 ] + 1;
 
    // Row
    QLabel* lb_banner = us_banner( tr( "Create a Scan Exclusion Profile" ) );
@@ -32,7 +31,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_start = us_label( tr( "Start Exclusion at Scan:" ) );
    main->addWidget( lb_start, row, 0 );
 
-   ct_start = us_counter( 3, firstScan, lastScan, 1.0 );
+   ct_start = us_counter( 3, 1.0, scanCount, 1.0 );
    ct_start->setStep( 1.0 );
    QFontMetrics fm( ct_start->font() );
    ct_start->setMinimumWidth( fm.maxWidth() * 10 );
@@ -45,7 +44,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_stop = us_label( tr( "Stop Exclusion at Scan:" ) );
    main->addWidget( lb_stop, row, 0 );
 
-   ct_stop = us_counter( 3, firstScan, lastScan, lastScan );
+   ct_stop = us_counter( 3, 1.0, scanCount, scanCount );
    ct_stop->setStep( 1.0 );
    connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( update_stop  ( double ) ) );
@@ -55,7 +54,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_nth = us_label( tr( "Include every nth Scan:" ) );
    main->addWidget( lb_nth, row, 0 );
 
-   ct_nth = us_counter( 2, 1.0, lastScan, 1.0 );
+   ct_nth = us_counter( 2, 1.0, scanCount, 1.0 );
    ct_nth->setStep( 1.0 );
    connect( ct_nth, SIGNAL( valueChanged ( double ) ),
                     SLOT  ( update       ( double ) ) );
@@ -110,7 +109,9 @@ void US_ExcludeProfile::update_start( double v )
       connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( update_stop  ( double ) ) );
    }
-   update();
+
+   if ( (int)ct_nth->value() > 1 )
+      update();
 }
 
 void US_ExcludeProfile::update_stop( double v )
@@ -122,32 +123,66 @@ void US_ExcludeProfile::update_stop( double v )
       connect( ct_start, SIGNAL( valueChanged ( double ) ),
                          SLOT  ( update_start ( double ) ) );
    }
-   update();
+
+   if ( (int)ct_nth->value() > 1 )
+      update();
 }
 
 void US_ExcludeProfile::apply( void )
 {
-   double start = (double)( original[ 0 ] + 1 );
-   double stop  = (double)( original[ original.size() - 1 ] + 1 );
+DbgLv(1) << "APL: origsize exclsize" << original.size() << excludes.size();
    current = excludes;
-   ct_start->setValue( start );
-   ct_stop ->setValue( stop  );
    ct_nth  ->setValue( 1.0 );
+   ct_start->setValue( 1.0 );
+   ct_stop ->setValue( original.size() - excludes.size() );
 }
 
 void US_ExcludeProfile::update( double /* unused */ )
 {
    int start = (int)ct_start->value() - 1;  // Excludes are 0 based
-   int stop  = (int)ct_stop ->value() - 1;
+   int stop  = (int)ct_stop ->value();
    int nth   = (int)ct_nth  ->value();
 
-   excludes = current;
+   excludes  = current;
+   QList< int > scnincl;
+   int scanCount = original.size();
+   int exclCount = current.size();
+DbgLv(1) << "UPD: scanCount exclsize" << scanCount << exclCount;
+if ( exclCount > 2 ) {
+DbgLv(1) << "UPD:   exclude 0" << excludes[ 0 ];
+DbgLv(1) << "UPD:   exclude 1" << excludes[ 1 ];
+DbgLv(1) << "UPD:   exclude m" << excludes[ exclCount-2 ];
+DbgLv(1) << "UPD:   exclude n" << excludes[ exclCount-1 ]; }
+
+   if ( exclCount > 0 )
+   {
+      for ( int ii = 0; ii <= original[ scanCount - 1 ]; ii++ )
+         if ( ! excludes.contains( ii ) )   scnincl << ii;
+   }
+
+   else
+   {
+      for ( int ii = 0; ii < original[ scanCount - 1 ]; ii++ )
+         if ( original.contains( ii ) )     scnincl << ii;
+   }
+
+   stop       = qMin( stop,  scnincl.size() );
+DbgLv(1) << "UPD:  scninclsz" << scnincl.size() << "startstop" << start << stop;
 
    // Handle nth
-   for ( int i = start + 1; i <= stop; i++ )
-      if ( ( i - start ) % nth != 0  &&
-            ! excludes.contains( i ) &&
-            original.contains( i ) )   excludes << i;
+   for ( int ii = start; ii < stop; ii++ )
+   {
+      int scnnbr = scnincl[ ii ];
+if(ii<(start+6)||ii>(stop-7)||ii==stop/2)
+DbgLv(1) << "UPD:     ii" << ii << "scnnbr" << scnnbr;
+
+      if ( ( ii - start ) % nth != 0  &&  ! excludes.contains( scnnbr ) )
+      {
+         excludes << scnnbr;
+if(ii<(start+6)||ii>(stop-7)||ii==stop/2)
+DbgLv(1) << "UPD:       excl UPD-scnnbr" << scnnbr;
+      }
+   }
 
    int remaining = original.size() - excludes.size();
    int excluded  = excludes.size();
@@ -179,13 +214,11 @@ void US_ExcludeProfile::update( double /* unused */ )
 void US_ExcludeProfile::reset( void )
 {
    int scanCount = original.size();
-   int firstScan = original[ 0 ] + 1;
-   int lastScan  = original[ scanCount - 1 ] + 1;
    excludes.clear();
    current.clear();
 
-   ct_start->setValue( firstScan );
-   ct_stop ->setValue( lastScan  );
+   ct_start->setValue( 1.0 );
+   ct_stop ->setValue( scanCount );
    ct_nth  ->setValue( 1.0 );
    QList< int > excludes;
    emit update_exclude_profile( excludes );

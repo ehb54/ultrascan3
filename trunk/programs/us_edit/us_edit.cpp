@@ -22,6 +22,10 @@
 #include "us_load_db.h"
 #include "us_constants.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 //! \brief Main program for US_Edit. Loads translators and starts
 //         the class US_FitMeniscus.
 
@@ -48,6 +52,7 @@ US_Edit::US_Edit() : US_Widgets()
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
+   dbg_level    = US_Settings::us_debug();
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -1778,7 +1783,8 @@ void US_Edit::plot_all( void )
       }
 
       QString title = tr( "Raw Data at " )
-         + QString::number( s->seconds ) + tr( " seconds" );
+         + QString::number( s->seconds ) + tr( " seconds" )
+         + " #" + QString::number( i );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
@@ -2112,7 +2118,9 @@ void US_Edit::set_colors( const QList< int >& focus )
    // Mark these scans in red
    for ( int i = 0; i < curves.size(); i++ )
    {
-      if ( focus.contains( i ) )
+      int scnnbr = curves[ i ]->title().text().section( "#", 1, 1 ).toInt();
+
+      if ( focus.contains( scnnbr ) )
       {
          p.setColor( foc );
          b.setColor( foc );
@@ -2194,6 +2202,7 @@ void US_Edit::exclusion( void )
 // Update based on exclusion profile
 void US_Edit::update_excludes( QList< int > scanProfile )
 {
+DbgLv(1) << "UPD_EXCL: size excl" << scanProfile.size();
    set_colors( scanProfile );
 }
 
@@ -2210,6 +2219,7 @@ void US_Edit::finish_excludes( QList< int > excludes )
    for ( int i = 0; i < excludes.size(); i++ )
       includes.removeAll( excludes[ i ] );
 
+DbgLv(1) << "FIN_EXCL: sizes excl incl" << excludes.size() << includes.size();
    replot();
    reset_excludes();
 }
