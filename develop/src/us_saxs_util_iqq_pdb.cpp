@@ -745,6 +745,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             // ;
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
             if ( our_saxs_options.use_somo_ff )
             {
                double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
@@ -875,6 +879,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
                                       atoms[ i ].hydrogens,
                                       q[ j ],
                                       q_over_4pi_2[ j ] );
+            if ( !noticemsg.isEmpty() )
+            {
+               cout << QString( "Notice: %1\n" ).arg( noticemsg );
+            }
 
 //             f[j][i] = saxs.c + 
 //                saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
@@ -1946,6 +1954,17 @@ double US_Saxs_Util::compute_ff(
 {
    errormsg  = "";
    noticemsg = "";
+
+#if defined( USUIP_COMPUTE_FF_DEBUG )
+   cout << QString( "compute_ff: q: %1 nr:%2 na:%3 naf:%4 h:%5 use_somo_ff %6 alt_ff %7\n" )
+      .arg( q )
+      .arg( nr )
+      .arg( na )
+      .arg( naf )
+      .arg( h )
+      .arg( our_saxs_options.use_somo_ff ? "yes" : "no" )
+      .arg( our_saxs_options.alt_ff ? "yes" : "no" );
+#endif
 
    if ( our_saxs_options.use_somo_ff )
    {

@@ -3044,6 +3044,17 @@ double US_Hydrodyn_Saxs::compute_ff(
                                     )
 {
 
+#if defined( UHSI_COMPUTE_FF_DEBUG )
+   cout << QString( "compute_ff: q: %1 nr:%2 na:%3 naf:%4 h:%5 use_somo_ff %6 alt_ff %7\n" )
+      .arg( q )
+      .arg( nr )
+      .arg( na )
+      .arg( naf )
+      .arg( h )
+      .arg( our_saxs_options->use_somo_ff ? "yes" : "no" )
+      .arg( our_saxs_options->alt_ff ? "yes" : "no" );
+#endif
+
    if ( our_saxs_options->use_somo_ff )
    {
       QString ffkey = nr + "|" + naf;

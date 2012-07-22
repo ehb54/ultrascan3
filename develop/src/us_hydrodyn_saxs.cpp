@@ -4012,7 +4012,8 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
 
    hybrid_coords.clear();
    point p;
-#define UHS_ALEXANDROS_POINTS
+
+   // #define UHS_ALEXANDROS_POINTS
 
 #if defined( UHS_ALEXANDROS_POINTS )
 
