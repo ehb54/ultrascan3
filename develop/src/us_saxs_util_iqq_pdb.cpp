@@ -1919,11 +1919,7 @@ void US_Saxs_Util::setup_saxs_options()
       our_saxs_options.use_somo_ff = true;
    }
 
-   our_saxs_options.alt_ff = false;
-   if ( control_parameters.count( "testingff" ) )
-   {
-      our_saxs_options.alt_ff = true;
-   }
+   our_saxs_options.alt_ff = true;
 
    our_saxs_options.five_term_gaussians = false;
    if ( control_parameters.count( "fivetermgaussian" ) )

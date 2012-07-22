@@ -682,11 +682,11 @@ void US_Hydrodyn_Cluster::create_pkg()
       base_source_files << our_saxs_options->default_ff_filename;
    }
 
-   if ( our_saxs_options->alt_ff )
-   {
-      base += 
-         QString( "TestingFF\n" );
-   }
+//    if ( our_saxs_options->alt_ff )
+//    {
+//       base += 
+//          QString( "TestingFF\n" );
+//    }
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -3227,11 +3227,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
       base_source_files << our_saxs_options->default_ff_filename;
    }
 
-   if ( our_saxs_options->alt_ff )
-   {
-      base += 
-         QString( "TestingFF\n" );
-   }
+//    if ( our_saxs_options->alt_ff )
+//    {
+//       base += 
+//          QString( "TestingFF\n" );
+//    }
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
