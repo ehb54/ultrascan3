@@ -46,6 +46,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_info1      = us_banner( tr( "Grid Editor Controls" ) );
    left->addWidget( lbl_info1, s_row++, 0, 1, 2 );
 
+   dkdb_cntrls   = new US_Disk_DB_Controls(
+         US_Settings::default_data_location() );
+   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
+            this,   SLOT( update_disk_db( bool ) ) );
+   left->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
+
    lbl_xaxis      = us_label( tr( "Adjust X-Axis as:" ) );
    lbl_xaxis->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xaxis, s_row, 0 );
@@ -214,7 +220,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_subGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_subGrid, s_row, 0 );
 
-   ct_subGrids     = us_counter( 3, 1, 100, 6.0 );
+   ct_subGrids     = us_counter( 3, 1, 100, 13.0 );
    ct_subGrids->setStep( 1 );
    ct_subGrids->setEnabled( false );
    left->addWidget( ct_subGrids, s_row++, 1 );
@@ -288,7 +294,7 @@ void US_Grid_Editor::reset( void )
 	density = DENS_20W;
 	grid_index = 0;
 	partialGrid = 0;
-	subGrids=6;
+	subGrids=13;
 	final_grid.clear();
 
    ct_xRes->setRange( 10.0, 1000.0, 1.0 );
@@ -296,11 +302,13 @@ void US_Grid_Editor::reset( void )
    ct_yRes->setRange( 10.0, 1000.0, 1.0 );
    ct_yRes->setValue( (double) yRes );
 	ct_partialGrid->setEnabled( false );
+	ct_subGrids->setEnabled( false );
 	ct_partialGrid->setRange( 0, 0, 0);
 	ct_partialGrid->setValue( 0 );
 	cb_show_final_grid->setEnabled( false );
 	cb_show_final_grid->setChecked( false );
-
+	cb_show_sub_grid->setEnabled( false );
+   cb_show_sub_grid->setChecked( false );
 	ct_xRes->setEnabled( true );
 	ct_yRes->setEnabled( true );
 	ct_xMin->setEnabled( true );
@@ -314,19 +322,134 @@ void US_Grid_Editor::reset( void )
    rb_y_ff0->setEnabled( true );
    rb_y_ff0->setChecked( true );
    rb_y_vbar->setEnabled( true );
-	ct_partialGrid->setEnabled( false );
 	rb_plot1->setChecked(true);
 	pb_add_partialGrid->setEnabled( true );
 	select_x_axis(plot_x);
 	select_y_axis(plot_y);
 	select_y_axis(plot_y);
 	select_plot(selected_plot);
+   pb_save->setEnabled( false );
+   pb_delete_partialGrid->setEnabled( false );
 	update_plot();
 }
 
 // save the grid data
 void US_Grid_Editor::save( void )
 {
+/*   
+   US_Model model;
+      for ( int jj = 0; jj < kcomps; jj++ )
+      {  // Add model components to the combo model
+         bool dupc = false;
+         US_Model::SimulationComponent sc = imodel->components[ jj ];
+
+         for ( int kk = 0; kk < ncomps; kk++ )
+         {  // See if this component already exists
+            if ( sc.s    == cmodel.components[ kk ].s  &&
+                 sc.f_f0 == cmodel.components[ kk ].f_f0 )
+            {  // This component is a duplicate, so break
+               dupc = true;
+               break;
+            }
+         }
+
+         if ( dupc )  continue;     // Skip adding a duplicate component
+
+         ncomps++;
+         sc.name = QString().sprintf( "SC%04d", ncomps );
+         cmodel.components << sc;   // Add a component and bump count
+      }
+   }
+qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size();
+qDebug() << "SAVE:    nrunIDs" << runIDs.size();
+
+   // Default output name derives from the name of the first input
+   cmodel_name = "global-" + mdescs[ 0 ];
+qDebug() << "SAVE:     cmodel_name" << cmodel_name;
+   QString mdlguid    = US_Util::new_guid();
+   cmodel.modelGUID   = mdlguid;
+   cmodel.global      = US_Model::GLOBAL;
+
+   // Open a dialog that reports and allows modification of description
+   runID           = cmodel_name.section( ".",  0, -4 );
+   QString odesc   = cmodel_name.section( ".", -3, -1 );
+   QMessageBox mbox;
+
+   QString msg1    = tr( "An output combined model has been created. "
+                         "It's description is:<br/><b>" )
+      + cmodel_name + "</b>.<br/><br/>"
+      + tr( "It combines %1 models with a total of %2 components. "
+            "Click:<br/><br/>" )
+      .arg( nmodels ).arg( ncomps )
+      + tr( "  <b>OK</b>     to output the model as is;<br/>"
+            "  <b>Edit</b>   to modify the model description (runID);<br/>"
+            "  <b>Cancel</b> to abort model creation.<br/>" );
+
+   mbox.setWindowTitle( tr( "Save Global Model" ) );
+   mbox.setText       ( msg1 );
+   QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
+         QMessageBox::YesRole );
+   QPushButton *pb_edit = mbox.addButton( tr( "Edit" ) ,
+         QMessageBox::AcceptRole );
+   QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
+         QMessageBox::RejectRole );
+   mbox.setEscapeButton ( pb_canc );
+   mbox.setDefaultButton( pb_ok   );
+
+   mbox.exec();
+
+   if ( mbox.clickedButton() == pb_canc )  return;
+
+   if ( mbox.clickedButton() == pb_edit )
+   {  // Open another dialog to get a modified runID
+      bool    ok;
+      QString msg2    = tr( "The default run ID for the output combined<br/>"
+                            "model is <b>" ) + runID + "</b>.<br/><br/>"
+         + tr( "You may modify this part of the model description.<br/>"
+               "Use alphanumeric characters, underscores, or hyphens<br/>"
+               "(no spaces). Enter 3 to 40 characters." );
+      runID           = QInputDialog::getText( this,
+            tr( "Modify Model Description RunID" ),
+            msg2,
+            QLineEdit::Normal,
+            runID,
+            &ok );
+
+      if ( !ok )  return;
+
+      runID.remove( QRegExp( "[^\\w\\d_-]" ) );
+      int slen = runID.length();
+
+      if ( slen < 3 )
+         runID += QString( "GLO" ).left( 3 - slen ); 
+
+      else if ( slen > 40 )
+         runID  = runID.left( 40 );
+
+      cmodel_name = runID + "." + odesc;
+qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
+   }
+
+   cmodel.description = cmodel_name;
+
+   // Output the combined model
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      cmodel.write( &db );
+qDebug() << "SAVE:      DB";
+   }
+
+   else
+   {
+      QString mdlpath;
+      US_Model::model_path( mdlpath );
+      QString fnamo = US_Model::get_filename( mdlpath, mdlguid );
+      cmodel.write( fnamo );
+qDebug() << "SAVE:      fnamo" << fnamo;
+   }
+*/
 }
 
 // update raster x resolution
@@ -1360,9 +1483,16 @@ void US_Grid_Editor::show_sub_grid( bool flag )
 	{
 		lbl_partialGrid->setText("Highlight Partial Grid #:");
 		ct_subGrids->setEnabled( false );
-		ct_partialGrid->setRange( 1, final_grid.size(), 1);
+		ct_partialGrid->setRange( 1, grid_index, 1);
 		ct_partialGrid->setValue( 1 );
 		pb_delete_partialGrid->setEnabled( true );
 	}
 	update_plot();
 }
+
+// Reset Disk_DB control whenever data source is changed in any dialog
+void US_Grid_Editor::update_disk_db( bool isDB )
+{
+   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+}
+

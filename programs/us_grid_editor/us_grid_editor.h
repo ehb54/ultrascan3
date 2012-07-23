@@ -87,6 +87,8 @@ class US_Grid_Editor : public US_Widgets
       QwtLinearColorMap  *colormap;
       US_PlotPicker      *pick1;
       US_PlotPicker      *pick2;
+      US_Disk_DB_Controls* dkdb_cntrls;
+
 
       QPushButton  *pb_add_partialGrid;
       QPushButton  *pb_delete_partialGrid;
@@ -152,6 +154,8 @@ class US_Grid_Editor : public US_Widgets
 		void set_minmax( const struct gridpoint &);
 		void show_final_grid( bool );
 		void show_sub_grid( bool );
+      void update_disk_db(  bool );
+
 
 };
 
