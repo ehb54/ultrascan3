@@ -21,7 +21,10 @@
 #include "us_plot.h"
 #include "us_select_edits.h"
 #include "us_settings.h"
+#include "us_util.h"
 #include "us_widgets.h"
+#include "us_investigator.h"
+
 
 struct gridpoint
 {
@@ -66,6 +69,7 @@ class US_Grid_Editor : public US_Widgets
 
       QLineEdit    *le_density;
       QLineEdit    *le_viscosity;
+      QLineEdit    *le_investigator;
 
       US_Help       showHelp;
 		QList <gridpoint> current_grid;
@@ -96,6 +100,7 @@ class US_Grid_Editor : public US_Widgets
       QPushButton  *pb_close;
       QPushButton  *pb_save;
       QPushButton  *pb_reset;
+      QPushButton  *pb_investigator;
 
 		QCheckBox *cb_show_final_grid;
 		QCheckBox *cb_show_sub_grid;
@@ -149,12 +154,13 @@ class US_Grid_Editor : public US_Widgets
       void add_partialGrid( void );
       void save( void );
       void reset( void );
-      void help( void ) { showHelp.show_help( "create_grid.html" ); };
+      void help( void ) { showHelp.show_help( "grid_editor.html" ); };
 		void calc_gridpoints( void );
 		void set_minmax( const struct gridpoint &);
 		void show_final_grid( bool );
 		void show_sub_grid( bool );
       void update_disk_db(  bool );
+		void sel_investigator( void );
 
 
 };

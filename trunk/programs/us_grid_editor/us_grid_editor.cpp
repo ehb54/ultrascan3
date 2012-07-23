@@ -46,6 +46,20 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_info1      = us_banner( tr( "Grid Editor Controls" ) );
    left->addWidget( lbl_info1, s_row++, 0, 1, 2 );
 
+	QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   left->addWidget( pb_investigator, s_row, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+
+   int id = US_Settings::us_inv_ID();
+   QString number  = ( id > 0 ) ?
+      QString::number( US_Settings::us_inv_ID() ) + ": "
+      : "";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
+   left->addWidget( le_investigator, s_row++, 1 );
+
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
@@ -336,56 +350,52 @@ void US_Grid_Editor::reset( void )
 // save the grid data
 void US_Grid_Editor::save( void )
 {
-/*   
-   US_Model model;
-      for ( int jj = 0; jj < kcomps; jj++ )
-      {  // Add model components to the combo model
-         bool dupc = false;
-         US_Model::SimulationComponent sc = imodel->components[ jj ];
-
-         for ( int kk = 0; kk < ncomps; kk++ )
-         {  // See if this component already exists
-            if ( sc.s    == cmodel.components[ kk ].s  &&
-                 sc.f_f0 == cmodel.components[ kk ].f_f0 )
-            {  // This component is a duplicate, so break
-               dupc = true;
-               break;
-            }
-         }
-
-         if ( dupc )  continue;     // Skip adding a duplicate component
-
-         ncomps++;
-         sc.name = QString().sprintf( "SC%04d", ncomps );
-         cmodel.components << sc;   // Add a component and bump count
-      }
-   }
-qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size();
-qDebug() << "SAVE:    nrunIDs" << runIDs.size();
-
-   // Default output name derives from the name of the first input
-   cmodel_name = "global-" + mdescs[ 0 ];
-qDebug() << "SAVE:     cmodel_name" << cmodel_name;
-   QString mdlguid    = US_Util::new_guid();
-   cmodel.modelGUID   = mdlguid;
-   cmodel.global      = US_Model::GLOBAL;
+	US_Model model;
+	US_Model::SimulationComponent sc;
+   QString modelPath, modelGuid;
+   US_Model::model_path( modelPath );
+	QDateTime now_time = QDateTime::currentDateTime ();
+	bool flag;
+	modelGuid         = US_Util::new_guid();
+	model.analysis    = US_Model::INITIALGRID;
+	model.description = "InitialGrid-" + now_time.toString( "MMddyyyy-hhmm") + ".model";
+	model.subGrids    = subGrids;
+   model.modelGUID   = modelGuid;
+   model.global      = US_Model::NONE;
+	sc.signal_concentration = 1.0;
+	for (int i=0; i<final_grid.size(); i++)
+	{
+		flag      = true;
+		sc.s      = final_grid[i].s * 1.0e-13;
+		sc.D      = final_grid[i].D;
+		sc.f      = final_grid[i].f;
+		sc.f_f0   = final_grid[i].ff0;
+		sc.vbar20 = final_grid[i].vbar;
+		sc.mw     = final_grid[i].mw;
+		for (int j=0; j<model.components.size(); j++)
+		{
+			if (sc.s      == model.components[j].s    &&
+		 	 	 sc.f_f0   == model.components[j].f_f0 &&
+		 		 sc.vbar20 == model.components[j].vbar20 )
+			{
+				flag = false;
+				break; // don't add a component that is already in the model
+			}
+		}
+		if (flag) model.components.push_back(sc);
+	}
 
    // Open a dialog that reports and allows modification of description
-   runID           = cmodel_name.section( ".",  0, -4 );
-   QString odesc   = cmodel_name.section( ".", -3, -1 );
    QMessageBox mbox;
-
-   QString msg1    = tr( "An output combined model has been created. "
+   QString msg1    = tr( "A grid model has been created. "
                          "It's description is:<br/><b>" )
-      + cmodel_name + "</b>.<br/><br/>"
-      + tr( "It combines %1 models with a total of %2 components. "
-            "Click:<br/><br/>" )
-      .arg( nmodels ).arg( ncomps )
+      + model.description + "</b>.<br/><br/>"
+      + tr( "Click:<br/><br/>" )
       + tr( "  <b>OK</b>     to output the model as is;<br/>"
-            "  <b>Edit</b>   to modify the model description (runID);<br/>"
+            "  <b>Edit</b>   to modify the model description;<br/>"
             "  <b>Cancel</b> to abort model creation.<br/>" );
 
-   mbox.setWindowTitle( tr( "Save Global Model" ) );
+   mbox.setWindowTitle( tr( "Save Grid Model" ) );
    mbox.setText       ( msg1 );
    QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
          QMessageBox::YesRole );
@@ -403,53 +413,51 @@ qDebug() << "SAVE:     cmodel_name" << cmodel_name;
    if ( mbox.clickedButton() == pb_edit )
    {  // Open another dialog to get a modified runID
       bool    ok;
-      QString msg2    = tr( "The default run ID for the output combined<br/>"
-                            "model is <b>" ) + runID + "</b>.<br/><br/>"
+      QString msg2    = tr( "The default run ID for the grid model<br/>"
+                            "is <b>" ) + model.description + "</b>.<br/><br/>"
          + tr( "You may modify this part of the model description.<br/>"
                "Use alphanumeric characters, underscores, or hyphens<br/>"
                "(no spaces). Enter 3 to 40 characters." );
-      runID           = QInputDialog::getText( this,
-            tr( "Modify Model Description RunID" ),
+        model.description = QInputDialog::getText( this,
+            tr( "Modify Model Name" ),
             msg2,
             QLineEdit::Normal,
-            runID,
+            model.description,
             &ok );
 
       if ( !ok )  return;
 
-      runID.remove( QRegExp( "[^\\w\\d_-]" ) );
-      int slen = runID.length();
+      model.description.remove( QRegExp( "[^\\w\\d_-]" ) );
+      int slen = model.description.length();
+      if ( slen > 40 ) model.description = model.description.left( 40 );
 
-      if ( slen < 3 )
-         runID += QString( "GLO" ).left( 3 - slen ); 
-
-      else if ( slen > 40 )
-         runID  = runID.left( 40 );
-
-      cmodel_name = runID + "." + odesc;
-qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
    }
-
-   cmodel.description = cmodel_name;
-
-   // Output the combined model
+   // Output the combined grid model
+	int code;
    if ( dkdb_cntrls->db() )
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
-      cmodel.write( &db );
-qDebug() << "SAVE:      DB";
+      code = model.write( &db );
    }
-
    else
    {
-      QString mdlpath;
-      US_Model::model_path( mdlpath );
-      QString fnamo = US_Model::get_filename( mdlpath, mdlguid );
-      cmodel.write( fnamo );
-qDebug() << "SAVE:      fnamo" << fnamo;
+      QString fnamo = US_Model::get_filename( modelPath, modelGuid );
+      code = model.write( fnamo );
    }
-*/
+   mbox.setWindowTitle( tr( "Grid Model Saving..." ) );
+	mbox.removeButton(pb_edit);
+	mbox.removeButton(pb_canc);
+	QString str;
+	if (code == US_DB2::OK)
+	{
+		mbox.setText ( tr("The file ") +  model.description + tr(" was successfully saved.") );
+	}
+	else
+	{
+		mbox.setText ( tr("Writing the model file  ") +  model.description + tr(" resulted in error code ") + str.arg(code) );
+	}
+	mbox.exec();
 }
 
 // update raster x resolution
@@ -1496,3 +1504,18 @@ void US_Grid_Editor::update_disk_db( bool isDB )
    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
 
+// Select DB investigator
+void US_Grid_Editor::sel_investigator( void )
+{
+   int investigator = US_Settings::us_inv_ID();
+
+   US_Investigator* dialog = new US_Investigator( true, investigator );
+   dialog->exec();
+
+   investigator = US_Settings::us_inv_ID();
+
+   QString inv_text = QString::number( investigator ) + ": "
+                      +  US_Settings::us_inv_name();
+
+   le_investigator->setText( inv_text );
+}

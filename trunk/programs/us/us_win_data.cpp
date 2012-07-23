@@ -13,7 +13,7 @@ namespace US_WinData
     
     P_SECOND,       P_DCDT,                // Velocity Menu
     P_VHWE,         P_2DSA,         P_GAINIT,
-    P_FEMA,         P_PSEUDO3D,
+    P_FEMA,         P_PSEUDO3D,		P_GRIDEDIT,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
@@ -115,6 +115,11 @@ namespace US_WinData
     { P_PSEUDO3D, 0, 0, "us_pseudo3d_combine",
       QObject::tr( "Loading Pseudo 3D Combine" ),
       QObject::tr( "Pseudo 3D Combine Program" )
+    },
+    
+    { P_GRIDEDIT, 0, 0, "us_grid_editor",
+      QObject::tr( "Loading 2DSA Custom Grid Editor" ),
+      QObject::tr( "Custom Grid Editor for 2DSA" )
     },
     
     { P_EQGLOBFIT, 0, 0, "us_globalequil",

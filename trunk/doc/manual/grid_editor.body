@@ -1,0 +1,14 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III 2-D Custom Grid Editor'
+%]
+
+    <h2> <i>UltraScan</i> 2-Dimensional Custom Grid Editor: </h2>
+
+    <p> This module enables you to edit custom initialization grids for the 
+	 2-dimensional spectrum analysis.</p>
+
+    <h3> Main Window (as it is upon open):</h3>
+
+    <img src="images/grid_editor.png" alt="2DSA Main Window on open"/>
+
+[% INCLUDE footer.us3 %]
