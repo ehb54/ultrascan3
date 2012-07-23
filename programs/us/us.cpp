@@ -140,13 +140,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
-  addMenu(  P_VHWE    , tr( "&Enhanced van Holde - Weischet" ),   velocity );
-  addMenu(  P_2DSA    , tr( "&2-D Spectrum Analysis" ),           velocity );
-  addMenu(  P_GAINIT  , tr( "&Initialize Genetic Algorithm" ),    velocity );
-  addMenu(  P_SECOND  , tr( "&Second Moment" ),                   velocity );
-  addMenu(  P_DCDT    , tr( "&Time Derivative" ),                 velocity );
-  addMenu(  P_FEMA    , tr( "&FE Model Viewer" ),                 velocity );
-  addMenu(  P_PSEUDO3D, tr( "&Combine Pseudo-3D Distributions" ), velocity );
+  addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
+  addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),           velocity );
+  addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
+  addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
+  addMenu(  P_SECOND   , tr( "&Second Moment" ),                   velocity );
+  addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
+  addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
+  addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
   
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );

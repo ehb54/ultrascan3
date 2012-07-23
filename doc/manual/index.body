@@ -84,6 +84,7 @@
     <p> Other Analysis Methods: </p>
 
     <ul>
+      <li> <a href="grid_editor.html">Custom Grid Editor for 2DSA</a> </li>
       <li> <a href="2dsa.html">2-Dimensional Spectrum Analysis</a> </li>
       <li> <a href="ga_initialize.html">Genetic Algorithm Analysis</a> </li>
       <li> <a href="cofs.html">C(s) Analysis</a> </li>
