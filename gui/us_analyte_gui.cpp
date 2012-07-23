@@ -102,8 +102,8 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    connect( lw_analytes, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                          SLOT  ( select_analyte   ( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_analytes, row, 0, 5, 1 );
-   row += 5;
+   main->addWidget( lw_analytes, row, 0, 6, 1 );
+   row += 6;
 
    // Labels
    QGridLayout* description = new QGridLayout;
@@ -177,6 +177,8 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    cmb_optics->addItem( tr( "Interference" ) );
    cmb_optics->addItem( tr( "Fluorescence" ) );
    main->addWidget( cmb_optics, row++, 2 );
+   QSpacerItem* spacer0 = new QSpacerItem( 20, 9 );
+   main->addItem  ( spacer0,    row++, 2 );
 
    row +=2; 
 
@@ -564,7 +566,8 @@ void US_AnalyteGui::populate( void )
       double temperature = le_protein_temp->text().toDouble();
       US_Math2::calc_vbar( p, analyte.sequence, temperature );
 
-      le_protein_mw      ->setText( QString::number( (int) p.mw ) );
+      analyte.mw         = ( analyte.mw == 0 ) ? p.mw : analyte.mw;
+      le_protein_mw      ->setText( QString::number( (int) analyte.mw ) );
       le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
       le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
       le_protein_residues->setText( QString::number( p.residues ) );
@@ -1880,11 +1883,15 @@ void US_AnalyteGui::verify_vbar()
          msgBox.addButton       ( QMessageBox::Yes );
          msgBox.setDefaultButton( QMessageBox::Yes );
 
-         if ( msgBox.exec() == QMessageBox::Yes )
-            p.mw         = mwval;
+         if ( msgBox.exec() == QMessageBox::No )
+            mwval        = p.mw;
       }
 
-      le_protein_mw->setText( QString::number( (int) p.mw ) );
+      else if ( mwval == 0.0 )
+         mwval        = p.mw;
+
+      le_protein_mw->setText( QString::number( (int) mwval ) );
+      analyte.mw      = mwval;
       double pvbar    = p.vbar20;
       double vbar20   = le_protein_vbar20->text().toDouble();
 

@@ -279,8 +279,9 @@ int US_Analyte::read_analyte( const QString& filename )
             else if ( type_string == "CARBOHYDRATE" )
             {
                type   = CARBOHYDRATE;
-               mw     = a.value( "mw" ).toString().toDouble();
             }
+
+            mw     = a.value( "mw" ).toString().toDouble();
          }
 
          else if ( xml.name() == "sequence" )
@@ -292,7 +293,6 @@ int US_Analyte::read_analyte( const QString& filename )
             {
                US_Math2::Peptide p;
                US_Math2::calc_vbar( p, sequence, NORMAL_TEMP );
-               mw = p.mw;
 
                // The sequence tag comes before the extinction extinction tag
                // so a value set there will override this setting, if it
@@ -300,6 +300,7 @@ int US_Analyte::read_analyte( const QString& filename )
                // will be ok in this case.
 
                extinction[ 280.0 ] = p.e280; 
+               mw = ( mw == 0.0 ) ? p.mw : mw;
             }
             else if ( type == DNA  ||  type == RNA )
             {
@@ -316,6 +317,7 @@ int US_Analyte::read_analyte( const QString& filename )
 
                nucleotide();
             }
+
          }
          else if ( xml.name() == "extinction" )
          {
@@ -547,9 +549,11 @@ int US_Analyte::write_disk( const QString& filename )
       case US_Analyte::CARBOHYDRATE:
          xml.writeAttribute( "type", "CARBOHYDRATE" );
          xml.writeAttribute( "vbar20", QString::number( vbar20 ) );
-         xml.writeAttribute( "mw",     QString::number( mw ) );
          break;
    }
+
+   if ( mw > 0.0 )
+      xml.writeAttribute( "mw",     QString::number( mw ) );
 
    xml.writeAttribute( "description", description );
    xml.writeAttribute( "analyteGUID", analyteGUID );
