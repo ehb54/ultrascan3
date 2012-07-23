@@ -141,6 +141,7 @@ class US_GA_Initialize : public US_Widgets
       bool          runsel;
       bool          latest;
       bool          cnstvbar;
+      bool          manbuks;
 
       QString       run_name;
       QString       analys_name;

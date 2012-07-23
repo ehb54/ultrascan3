@@ -483,15 +483,12 @@ DbgLv(1) << "SAVE novlps" << novlps;
       return;
    }
 
-   int maxsol = soludata->countFullestBucket();
-DbgLv(1) << "SAVE maxsol" << maxsol;
-
-   if ( ! plot_s  &&  maxsol < 5 )
-   {  // MW & not Monte Carlo/Global:  there can be no output file
+   if ( ! plot_s  &&  ! manbuks )
+   {  // MW & auto-assigned buckets:  there can be no output file
       QMessageBox::information( this,
          tr( "No Files Output" ),
          tr( "No files will be saved, since buckets are not s vs. f/f0\n"
-             "and input models were not Monte Carlo/Global.\n\n"
+             "and buckets were not manually drawn.\n\n"
              "To output a gadistro file, pick buckets in s vs. f/f0." ) );
       return;
    }
@@ -500,10 +497,10 @@ DbgLv(1) << "SAVE maxsol" << maxsol;
    QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
    QString fndat = "gainit." + trpid + ".gadistro.dat";
-   QString fnsta = "gainit." + trpid + ".ga.stats";
+   QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fndat;
    QString fdir2 = US_Settings::reportDir() + "/" + runid;
-   QString fnst2 = "gainit." + trpid + ".ga_stats.rpt";
+   QString fnst2 = "gainit." + trpid + ".statistics.rpt";
    QString fnam2 = fdir2 + "/" + fnst2;
 
    QDir dirp( US_Settings::resultDir() );
@@ -515,8 +512,8 @@ DbgLv(1) << "SAVE plot_s" << plot_s;
    if ( plot_s )
       soludata->saveGAdata( fname );
 
-   if ( maxsol > 4 )
-   {  // if Monte Carlo/Global, build up and analyze data, then report
+   if ( manbuks )
+   {  // if manual buckets, build up and analyze data, then report
 
 DbgLv(1) << "SAVE call buildMC";
       soludata->buildDataMC( plot_s );             // build it
@@ -537,7 +534,7 @@ DbgLv(1) << "SAVE call reportMC";
    if ( plot_s )
       msg     += "    " + fndat + "\n";
 
-   if ( maxsol > 4 )
+   if ( manbuks )
    {
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
@@ -613,6 +610,8 @@ void US_GA_Initialize::manDrawSb( void )
    ct_hfbuck->setValue( hfbuck );
    connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_wsbuck( double ) ) );
+
+   manbuks      = true;
 }
 
 // Check for bin overlaps
@@ -665,6 +664,8 @@ void US_GA_Initialize::autoAssignSb( void )
    pb_resetsb->setEnabled( true );
    pb_save   ->setEnabled( true );
    pb_ckovrlp->setEnabled( true );
+
+   manbuks      = false;
 }
 
 // Reset solute bins
@@ -804,6 +805,7 @@ void US_GA_Initialize::plot_1dim( void )
 
    pb_reset->setEnabled( true );
    pb_autassb->setEnabled( false );
+   manbuks      = true;
 }
 
 // plot data 2-D
@@ -1098,6 +1100,7 @@ void US_GA_Initialize::select_plot1d()
 
    pb_mandrsb->setEnabled( false );
    pb_autassb->setEnabled( false );
+   manbuks      = true;
 }
 
 // select 2-dimensional plot
@@ -1787,8 +1790,7 @@ void US_GA_Initialize::newrow_sbdata( int /*row*/ )
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
-   int maxsol  = soludata->countFullestBucket();
-   bool global = monte_carlo || ( maxsol > 4 );
+   bool global = monte_carlo || manbuks;
 
    highlight_solute( sx );
    data_plot->replot();
@@ -1830,8 +1832,7 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
-   int maxsol  = soludata->countFullestBucket();
-   bool global = monte_carlo || ( maxsol > 4 );
+   bool global = monte_carlo || manbuks;
    QwtPlotCurve* bc1;
    QPointF pt0;
 
@@ -2067,7 +2068,7 @@ qDebug() << "VIEW";
    QString runid = run_name.section( ".",  0, -2 );
    QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
-   QString fnsta = "gainit." + trpid + ".ga.stats";
+   QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fnsta;
 qDebug() << "VIEW fname" << fname;
 

@@ -62,6 +62,7 @@
     <report name="fitmen" label="Fit Meniscus Results" />
     <report name="eqfit" label="Equilibrium Fit Analysis" />
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
+    <report name="statistics" label="Solute Integration Statistics" />
     <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
     <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
     <report name="combo-list-include" label="Combo List of Included Sets" />
