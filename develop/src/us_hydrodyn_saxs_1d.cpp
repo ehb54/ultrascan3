@@ -234,7 +234,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    cb_save_pdbs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    cb_memory_conserve = new QCheckBox( this );
-   cb_memory_conserve->setText(tr(" Conserve memory (slower, but allows small d3R values)"));
+   cb_memory_conserve->setText(tr(" Disable plot display (faster)"));
    cb_memory_conserve->setEnabled(true);
    cb_memory_conserve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_memory_conserve->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -555,11 +555,11 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    // now plot this data
 
-//    for ( int i = 0; i < (int)modulii.size(); i++ )
-//    {
-//       printf( "%g,", modulii[ i ]);
-//    }
-//    puts("");
+   //    for ( int i = 0; i < (int)modulii.size(); i++ )
+   //    {
+   //       printf( "%g,", modulii[ i ]);
+   //    }
+   //    puts("");
 
    QString name = "saxs data";
 
@@ -577,36 +577,40 @@ bool US_Hydrodyn_Saxs_1d::update_image()
       q[ i ] = q_of_pixel( i );
    }
 
-#ifndef QT4
-   plot_saxs->setCurveData(Iq, 
-                           ( double *)& q      [0],
-                           ( double *)& modulii[0],
-                           detector_pixels_width );
-   plot_saxs->setCurvePen(Iq, QPen(plot_colors[plot_count % plot_colors.size()], 2, SolidLine));
-#else
-   curve->setData(
-                  ( double *)& q      [0],
-                  ( doulbe *)& modulii[0],
-                  detector_pixels_width
-                  );
-   curve->setPen( QPen( plot_colors[ plot_count % plot_colors.size() ], 2, Qt::SolidLine ) );
-   curve->attach( plot_saxs );
-#endif
-
-   if ( plot_saxs_zoomer )
+   if ( !cb_memory_conserve->isChecked() )
    {
-      delete plot_saxs_zoomer;
-   }
-   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
 #ifndef QT4
-   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+      plot_saxs->setCurveData(Iq, 
+                              ( double *)& q      [0],
+                              ( double *)& modulii[0],
+                              detector_pixels_width );
+      plot_saxs->setCurvePen(Iq, QPen(plot_colors[plot_count % plot_colors.size()], 2, SolidLine));
 #else
-   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
-   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+      curve->setData(
+                     ( double *)& q      [0],
+                     ( doulbe *)& modulii[0],
+                     detector_pixels_width
+                     );
+      curve->setPen( QPen( plot_colors[ plot_count % plot_colors.size() ], 2, Qt::SolidLine ) );
+      curve->attach( plot_saxs );
 #endif
 
-   plot_saxs->replot();
+      if ( plot_saxs_zoomer )
+      {
+         delete plot_saxs_zoomer;
+      }
+      plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+#ifndef QT4
+      plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#else
+      plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+      plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+#endif
+
+      plot_saxs->replot();
+   }
+
    plot_count++;
 
    for ( int i = 0; i < ( int ) modulii.size(); i++ )
@@ -1053,8 +1057,12 @@ void US_Hydrodyn_Saxs_1d::start()
          excluded_volume[ i ].axis[ 2 ] -= zerooffset.axis[ 2 ];
       }
 
-      editor_msg( "gray", tr( "Initializing data" ) );
-      qApp->processEvents();
+
+      if ( !cb_memory_conserve->isChecked() )
+      {
+         editor_msg( "gray", tr( "Initializing data" ) );
+         qApp->processEvents();
+      }
       data.resize( detector_pixels_width );
       for ( int i = 0; i < ( int ) data.size(); i++ )
       {
@@ -1136,8 +1144,11 @@ void US_Hydrodyn_Saxs_1d::start()
          }
          
          // and rotate excluded volume (this may have to be done piecemeal to save memory
-         editor_msg( "gray", tr( "Rotating excluded volume" ) );
-         qApp->processEvents();
+         if ( !cb_memory_conserve->isChecked() )
+         {
+            editor_msg( "gray", tr( "Rotating excluded volume" ) );
+            qApp->processEvents();
+         }
 
          if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
                                                              transform_from, 
@@ -1153,8 +1164,11 @@ void US_Hydrodyn_Saxs_1d::start()
             return;
          }
 
-         editor_msg( "gray", tr( "Done rotating excluded volume" ) );
-         qApp->processEvents();
+         if ( !cb_memory_conserve->isChecked() )
+         {
+            editor_msg( "gray", tr( "Done rotating excluded volume" ) );
+            qApp->processEvents();
+         } 
          excluded_volume = result;
          result.clear();
 
@@ -1254,8 +1268,11 @@ void US_Hydrodyn_Saxs_1d::start()
          }
       }
 
-      editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
-      cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
+      if ( !cb_memory_conserve->isChecked() )
+      {
+         editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+         cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
+      } 
 
       // for each atom, compute scattering factor for each element on the detector
 
@@ -1816,8 +1833,11 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       return true;
    }
 
-   editor_msg( "gray", "loading excluded volume map\n" );
-   qApp->processEvents();
+   if ( !cb_memory_conserve->isChecked() )
+   {
+      editor_msg( "gray", "loading excluded volume map\n" );
+      qApp->processEvents();
+   }
 
    FILE *fp = fopen( mapname.ascii(), "rb");
    if (  (FILE *)NULL == fp )
@@ -2141,8 +2161,11 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
    cbf_free_handle( cbf );
     
    /*  fclose(f);*/ /* let cbflib handle the closing of a file */
-   editor_msg( "gray", QString( "done loading excluded volume map of %1 points\n" ).arg( excluded_volume.size() ) );
-   qApp->processEvents();
+   if ( !cb_memory_conserve->isChecked() )
+   {
+      editor_msg( "gray", QString( "done loading excluded volume map of %1 points\n" ).arg( excluded_volume.size() ) );
+      qApp->processEvents();
+   }
    return true;
 #endif
 }
