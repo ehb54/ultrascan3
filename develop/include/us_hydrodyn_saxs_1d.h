@@ -90,6 +90,9 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
 
+      QLabel        *lbl_planar_rotations;
+      QLineEdit     *le_planar_rotations;
+
       QCheckBox     *cb_save_pdbs;
       QCheckBox     *cb_memory_conserve;
 

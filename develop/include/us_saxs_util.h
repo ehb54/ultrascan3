@@ -15,6 +15,7 @@
 #include <qregexp.h>
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
+#include <complex>
 
 #if defined(WIN32)
 #   include <dos.h>
@@ -1178,6 +1179,58 @@ class US_EXTERN US_Saxs_Util
       QString              ff_info();
       QString              last_ff_filename;
       double               get_ff_ev( QString res, QString atm );
+
+      // 1d computations
+      // required variables:
+      // 1dlambda
+      // 1ddetectordistance
+      // 1ddetectorwidth
+      // 1ddetectorpixelswidth
+      // 1drho0 (use already defined electron density? )
+      // 1ddeltar 
+      // 1dproberadius
+      // 1dthreshold
+      // 1dsamplerotations
+      // 1d
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < complex < double > >                   s1d_data;
+      vector < double >                               total_modulii;
+      vector < point >                                excluded_volume;
+      bool                                            load_rotations( unsigned int number,
+                                                                      vector < vector < double > > &rotations );
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      bool                                            compute_1d();
+      bool                                            update_image();
+
+      double                                          q_of_pixel( int pixels_width );
+      double                                          q_of_pixel( double width );
+
+      double                                          lambda;
+
+      int                                             detector_pixels_width;
+      double                                          detector_width;
+      double                                          detector_width_per_pixel;
+
+      double                                          rho0;
+      double                                          deltaR;
+
+      double                                          detector_distance;
+
+      unsigned int                                    plot_count;
+      unsigned int                                    sample_rotations;
+
+      QString                                         filepathname;
+      QString                                         mapname;
+      bool                                            setup_excluded_volume_map();
+      bool                                            get_excluded_volume_map();
+
+      double                                          probe_radius;
+      double                                          threshold;
+
 
 };
 

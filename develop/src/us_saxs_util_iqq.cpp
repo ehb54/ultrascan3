@@ -285,6 +285,19 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "a2sbequalize|"
                       "a2sbcubesize|"
 
+                      "1dlambda|"
+                      "1ddetectordistance|"
+                      "1ddetectorwidth|"
+                      "1ddetectorpixelswidth|"
+                      "1drho0|"
+                      "1ddeltar|"
+                      "1dproberadius|"
+                      "1dthreshold|"
+                      "1dsamplerotations|"
+                      "1drotationfile|"
+                      "1drun|"
+                      "1dintermediatesaves|"
+
                       "remark)$"
                       );
 
@@ -301,6 +314,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "experimentgrid|"
                       "additionalexperimentgrid|"
                       "dmdsupportfile|"
+                      "1drotationfile|"
                       "inputfile)$"
                       );
 
@@ -385,6 +399,18 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "a2sbcubeside|"
 
                       "crysolpdb|"
+
+                      "1dlambda|"
+                      "1ddetectordistance|"
+                      "1ddetectorwidth|"
+                      "1ddetectorpixelswidth|"
+                      "1drho0|"
+                      "1ddeltar|"
+                      "1dproberadius|"
+                      "1dthreshold|"
+                      "1dsamplerotations|"
+                      "1drotationfile|"
+                      "1dintermediatesaves|"
 
                       "outputfile)$"
                       );
@@ -890,6 +916,19 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          cout << "back from a2sbrun\n" << flush;
+      }
+
+      if ( option == "1drun" )
+      {
+         setup_saxs_options();
+         if ( !read_pdb( control_parameters[ "inputfile" ] ) )
+         {
+            return false;
+         }
+         if ( !compute_1d() )
+         {
+            return false;
+         }
       }
 
       if ( option == "sgptest" )

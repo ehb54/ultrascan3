@@ -227,6 +227,18 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_sample_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_sample_rotations(const QString &)));
 
+   lbl_planar_rotations = new QLabel(tr(" Planar rotations:"), this );
+   lbl_planar_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_planar_rotations->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_planar_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_planar_rotations = new QLineEdit( this, "Planar_Rotations Line Edit");
+   le_planar_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
+   le_planar_rotations->setAlignment(Qt::AlignVCenter);
+   le_planar_rotations->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_planar_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_planar_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_planar_rotations(const QString &)));
+
    cb_save_pdbs = new QCheckBox( this );
    cb_save_pdbs->setText(tr(" Save rotated PDBs"));
    cb_save_pdbs->setEnabled(true);
@@ -394,6 +406,9 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
       gl_options->addWidget         ( le_sample_rotations             , j, 1 );
+      j++;
+      gl_options->addWidget         ( lbl_planar_rotations            , j, 0 );
+      gl_options->addWidget         ( le_planar_rotations             , j, 1 );
       j++;
       gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 1 );
       j++;
@@ -615,7 +630,7 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    for ( int i = 0; i < ( int ) modulii.size(); i++ )
    {
-      total_modulii[ i ] += modulii[ i ];
+      total_modulii [ i ] += modulii[ i ];
    }
 
    return true;
@@ -1063,11 +1078,11 @@ void US_Hydrodyn_Saxs_1d::start()
          editor_msg( "gray", tr( "Initializing data" ) );
          qApp->processEvents();
       }
-      data.resize( detector_pixels_width );
-      for ( int i = 0; i < ( int ) data.size(); i++ )
-      {
-         data[ i ] = complex < double > ( 0.0, 0.0 );
-      }
+      //       data.resize( detector_pixels_width );
+      //       for ( int i = 0; i < ( int ) data.size(); i++ )
+      //       {
+      //          data[ i ] = complex < double > ( 0.0, 0.0 );
+      //       }
 
       if ( rotations.size() > 1 )
       {
@@ -1274,89 +1289,164 @@ void US_Hydrodyn_Saxs_1d::start()
          cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
       } 
 
-      // for each atom, compute scattering factor for each element on the detector
+      // planar rotations
 
-      for ( unsigned int a = 0; a < atoms.size(); a++ )
+      for ( unsigned int p = 0; p < le_planar_rotations->text().toUInt(); p++ )
       {
-         progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-         qApp->processEvents();
-         // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+         double planar_angle     = ( 2.0 * M_PI / ( le_planar_rotations->text().toUInt() + 1 ) ) * p;
+         double cos_planar_angle = cos( planar_angle );
+         double sin_planar_angle = sin( planar_angle );
 
-         for ( unsigned int i = 0; i < data.size(); i++ )
+         if ( !cb_memory_conserve->isChecked() )
          {
-            double pixpos = ( double ) i * detector_width_per_pixel;
+            editor_msg( "gray", QString( tr( "Planar angle %1 radians %2 of %3" ) )
+                        .arg( planar_angle )
+                        .arg( p + 1 )
+                        .arg( le_planar_rotations->text().toUInt() ) );
+            qApp->processEvents();
+         }
 
-            double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+         data.resize( detector_pixels_width );
+         for ( int i = 0; i < ( int ) data.size(); i++ )
+         {
+            data[ i ] = complex < double > ( 0.0, 0.0 );
+         }
+         // for each atom, compute scattering factor for each element on the detector
 
-            vector < double > Q( 3 );
-            Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-            Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-            Q[ 2 ] = 0e0;
+         for ( unsigned int a = 0; a < atoms.size(); a++ )
+         {
+            if ( !p ) 
+            {
+               progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+               qApp->processEvents();
+            }
+            // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+
+            for ( unsigned int i = 0; i < data.size(); i++ )
+            {
+               double pixpos = ( double ) i * detector_width_per_pixel;
+
+               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+               vector < double > Q( 3 );
+               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+               Q[ 2 ] = 0e0;
                
-            vector < double > Rv( 3 );
-            Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ];
-            Rv[ 1 ] = ( double ) atoms[ a ].pos[ 1 ];
-            Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+               vector < double > Rv( 3 );
+               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ] * cos_planar_angle - ( double ) atoms[ a ].pos[ 1 ] * sin_planar_angle ;
+               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 0 ] * sin_planar_angle + ( double ) atoms[ a ].pos[ 1 ] * cos_planar_angle ;
+               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
                
-            double QdotR = 
-               Q[ 0 ] * Rv[ 0 ] +
-               Q[ 1 ] * Rv[ 1 ] +
-               Q[ 2 ] * Rv[ 2 ];
+               double QdotR = 
+                  Q[ 0 ] * Rv[ 0 ] +
+                  Q[ 1 ] * Rv[ 1 ] +
+                  Q[ 2 ] * Rv[ 2 ];
                
-            complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
             
-            complex < double > expiQdotR = exp( iQdotR );
+               complex < double > expiQdotR = exp( iQdotR );
                
-            // F_atomic
+               // F_atomic
                
-            saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
-            double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
+               double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
 
 #if defined( UHS2_SCAT_DEBUG )
-            cout << QString( 
-                            "atom                %1\n"
-                            "pixel               %2 %3\n"
-                            "relative to beam    %4 %5\n"
-                            "distance            %6\n"
-                            "q of pixel          %7\n"
-                            "expIQdotr           "
-                            )
-               .arg( atoms[ a ].hybrid_name )
-               .arg( i ).arg( j )
-               .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-               .arg( pix_dist_from_beam_center )
-               .arg( q )
-               .ascii();
+               cout << QString( 
+                               "atom                %1\n"
+                               "pixel               %2 %3\n"
+                               "relative to beam    %4 %5\n"
+                               "distance            %6\n"
+                               "q of pixel          %7\n"
+                               "expIQdotr           "
+                               )
+                  .arg( atoms[ a ].hybrid_name )
+                  .arg( i ).arg( j )
+                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+                  .arg( pix_dist_from_beam_center )
+                  .arg( q )
+                  .ascii();
                
-            cout << expiQdotR << endl;
+               cout << expiQdotR << endl;
 #endif
-            double q_2_over_4pi = q * q * one_over_4pi_2;
+               double q_2_over_4pi = q * q * one_over_4pi_2;
 
-            double F_at =
-               saxs_window->compute_ff( saxs,
-                                        saxsH,
-                                        atoms[ a ].residue_name,
-                                        atoms[ a ].saxs_name,
-                                        atoms[ a ].atom_name,
-                                        atoms[ a ].hydrogens,
-                                        q,
-                                        q_2_over_4pi );
+               double F_at =
+                  saxs_window->compute_ff( saxs,
+                                           saxsH,
+                                           atoms[ a ].residue_name,
+                                           atoms[ a ].saxs_name,
+                                           atoms[ a ].atom_name,
+                                           atoms[ a ].hydrogens,
+                                           q,
+                                           q_2_over_4pi );
 
-//              double F_at =
-//                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-//                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-//                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-//                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-//                 atoms[ a ].hydrogens * 
-//                 ( saxsH.c + 
-//                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-//                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-//                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-//                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+               //              double F_at =
+               //                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+               //                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+               //                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+               //                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+               //                 atoms[ a ].hydrogens * 
+               //                 ( saxsH.c + 
+               //                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+               //                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+               //                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+               //                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
-            data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
+               data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
 
+               if ( !running ) 
+               {
+                  update_image();
+                  update_enables();
+                  return;
+               }
+            }
+         }
+
+         // now subtract excluded volume
+
+         if ( rho0 )
+         {
+            for ( unsigned int i = 0; i < data.size(); i++ )
+            {
+               if ( !p )
+               {
+                  progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                  qApp->processEvents();
+               }
+
+               double pixpos = ( double ) i * detector_width_per_pixel;
+
+               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+               vector < double > Q( 3 );
+               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+               Q[ 2 ] = 0e0;
+               
+               for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
+               {
+                  double QdotR = 
+                     Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle +
+                     Q[ 1 ] * (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle +
+                     Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
+
+                  complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+
+                  complex < double > expiQdotR = exp( iQdotR );
+
+                  complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+
+                  data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+               }
+            }
+
+#if defined( UHS1D_EXCL_VOL_DEBUG )
+            pts_subd++;
+#endif
             if ( !running ) 
             {
                update_image();
@@ -1364,69 +1454,23 @@ void US_Hydrodyn_Saxs_1d::start()
                return;
             }
          }
-      }
-
-      // now subtract excluded volume
-
-      if ( rho0 )
-      {
-         for ( unsigned int i = 0; i < data.size(); i++ )
-         {
-            progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-            qApp->processEvents();
-
-            double pixpos = ( double ) i * detector_width_per_pixel;
-
-            double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-            vector < double > Q( 3 );
-            Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-            Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-            Q[ 2 ] = 0e0;
-               
-            for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
-            {
-               double QdotR = 
-                  Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
-                  Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
-                  Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
-
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
-
-               complex < double > expiQdotR = exp( iQdotR );
-
-               complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
-
-               data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
-            }
-         }
 
 #if defined( UHS1D_EXCL_VOL_DEBUG )
-         pts_subd++;
+         cout << QString( "pts_subd %1\n" ).arg( pts_subd );
+         cout << QString( "pts_dup  %1\n" ).arg( pts_dup  );
+         cout << QString( "pts_excl %1\n" ).arg( pts_excl );
+         cout << QString( "pts_overlaps_used_fnd %1\n" ).arg( pts_overlaps_used_fnd );
 #endif
+         if ( !update_image() )
+         {
+            running = false;
+         }
          if ( !running ) 
          {
-            update_image();
             update_enables();
             return;
          }
-      }
-
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-      cout << QString( "pts_subd %1\n" ).arg( pts_subd );
-      cout << QString( "pts_dup  %1\n" ).arg( pts_dup  );
-      cout << QString( "pts_excl %1\n" ).arg( pts_excl );
-      cout << QString( "pts_overlaps_used_fnd %1\n" ).arg( pts_overlaps_used_fnd );
-#endif
-      if ( !update_image() )
-      {
-         running = false;
-      }
-      if ( !running ) 
-      {
-         update_enables();
-         return;
-      }
+      } // planar rotations
    } // rotations
 
 #if defined( UHS2_IMAGE_DEBUG )
@@ -1699,9 +1743,10 @@ void US_Hydrodyn_Saxs_1d::save_data()
 
    QTextStream ts( &f );
 
-   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %3 rho0 %4 probe radius %5 threshold %6\n" )
+   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %4 rho0 %5 probe radius %6 threshold %7\n" )
       .arg( le_atom_file->text() )
-      .arg( plot_count )
+      .arg( plot_count / le_planar_rotations->text().toUInt() ) 
+      .arg( le_planar_rotations->text().toUInt() ) 
       .arg( deltaR )
       .arg( rho0 )
       .arg( probe_radius ) 
@@ -1731,9 +1776,10 @@ void US_Hydrodyn_Saxs_1d::to_somo()
 
    saxs_window->plot_one_iqq( q, 
                               I, 
-                              QString( "%1 rotational average of %2 directions, d3R %3, rho0 %4, probe radius %5, threshold %6" )
+                              QString( "%1 rotational average of %2 directions %3 planar rots, d3R %4, rho0 %5, probe radius %6, threshold %7" )
                               .arg( le_atom_file->text() )
-                              .arg( plot_count ) 
+                              .arg( plot_count / le_planar_rotations->text().toUInt() ) 
+                              .arg( le_planar_rotations->text().toUInt() ) 
                               .arg( deltaR ) 
                               .arg( rho0 ) 
                               .arg( probe_radius ) 
@@ -1760,10 +1806,13 @@ bool US_Hydrodyn_Saxs_1d::activate_saxs_window()
 
 bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
 {
+   errormsg = "";
+
    if ( !rho0 )
    {
       return true;
    }
+
 #if !defined( HAS_CBF )
    errormsg = "No CBF linked in this version\n";
    return false;
@@ -1821,10 +1870,6 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
 
 bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 {
-#if !defined( HAS_CBF )
-   errormsg = "No CBF linked in this version\n";
-   return false;
-#else 
    errormsg = "";
    excluded_volume.clear();
 
@@ -1832,6 +1877,11 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
    {
       return true;
    }
+
+#if !defined( HAS_CBF )
+   errormsg = "No CBF linked in this version\n";
+   return false;
+#else 
 
    if ( !cb_memory_conserve->isChecked() )
    {
