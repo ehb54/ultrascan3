@@ -834,9 +834,10 @@ DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
          dsets[ 0 ]->model = modpar;
          int     nsol   = model->components.size();
          QString amsg   = ( grtype == (-1 )
-            ? tr( "Grid from loaded model" )
-            : tr( "Grid and signal ratios from loaded model\n" ) )
-            + "  ( " + QString::number( nsol ) + tr( " solutes )" );
+            ? tr( "Grid from loaded model\n  ( " )
+            : tr( "Grid and signal ratios from loaded model\n\n  ( " ) )
+            + QString::number( nsol ) + tr( " solutes, " )
+            + QString::number( model->subGrids ) + tr( " subgrids )" );
          te_status  ->setText( amsg );
 
          if ( nsol > 0 )
@@ -849,14 +850,13 @@ DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
             ct_lolimitk->setEnabled( false );
             ct_uplimitk->setEnabled( false );
             ct_nstepsk ->setEnabled( false );
-            ct_thrdcnt ->setEnabled( false );
-            ck_tinoise ->setEnabled( false );
-            ck_rinoise ->setEnabled( false );
-            ct_thrdcnt ->setValue  (  1    );
+            ct_thrdcnt ->setEnabled( true  );
+            ck_varvbar ->setEnabled( false );
+            ck_varvbar ->setChecked( ! model->constant_vbar() );
          }
 
          else
-             grtype = US_2dsaProcess::UGRID;
+            grtype = US_2dsaProcess::UGRID;
       }
    }
 else
