@@ -484,7 +484,8 @@ void US_AdvAnalysis::load_model()
    if ( parentw != NULL )
    {
       US_2dsa* mainw = (US_2dsa*)parentw->parent();
-      mfilter        = mainw->mw_editdata()->runID;
+      //mfilter        = mainw->mw_editdata()->runID;
+      mfilter        = QString( "InitialGrid" );
       loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
    }
 

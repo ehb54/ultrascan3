@@ -355,6 +355,10 @@ void US_Grid_Editor::save( void )
    QString modelPath, modelGuid;
    US_Model::model_path( modelPath );
 	QDateTime now_time = QDateTime::currentDateTime ();
+   QList< double > xvals;
+   QList< double > yvals;
+   double          gridinc = 1.0 / (double)subGrids;
+   int             indexsg = 1;
 	bool flag;
 	modelGuid         = US_Util::new_guid();
 	model.analysis    = US_Model::INITIALGRID;
@@ -372,6 +376,17 @@ void US_Grid_Editor::save( void )
 		sc.f_f0   = final_grid[i].ff0;
 		sc.vbar20 = final_grid[i].vbar;
 		sc.mw     = final_grid[i].mw;
+
+      double xval = ( plot_x == 0 ) ? sc.s : sc.mw;
+      double yval = ( plot_y == 0 ) ? sc.f_f0 : sc.vbar20;
+      int indexx = xvals.indexOf( xval );
+      if ( indexx < 0 )  { indexx = xvals.size(); xvals << xval; }
+      int indexy = yvals.indexOf( yval );
+      if ( indexy < 0 )  { indexy = yvals.size(); yvals << yval; }
+      sc.name   = QString().sprintf( "X%3.3dY%3.3d", indexx + 1, indexy + 1 );
+      sc.signal_concentration = gridinc * (double)indexsg;
+      if ( (++indexsg) > subGrids )  indexsg = 1;
+
 		for (int j=0; j<model.components.size(); j++)
 		{
 			if (sc.s      == model.components[j].s    &&
@@ -382,6 +397,7 @@ void US_Grid_Editor::save( void )
 				break; // don't add a component that is already in the model
 			}
 		}
+
 		if (flag) model.components.push_back(sc);
 	}
 
@@ -413,12 +429,14 @@ void US_Grid_Editor::save( void )
    if ( mbox.clickedButton() == pb_edit )
    {  // Open another dialog to get a modified runID
       bool    ok;
+      int     jj      = model.description.indexOf( ".model" );
+      if ( jj > 0 ) model.description = model.description.left( jj );
       QString msg2    = tr( "The default run ID for the grid model<br/>"
                             "is <b>" ) + model.description + "</b>.<br/><br/>"
          + tr( "You may modify this part of the model description.<br/>"
                "Use alphanumeric characters, underscores, or hyphens<br/>"
-               "(no spaces). Enter 3 to 40 characters." );
-        model.description = QInputDialog::getText( this,
+               "(no spaces). Enter 3 to 32 characters." );
+      model.description = QInputDialog::getText( this,
             tr( "Modify Model Name" ),
             msg2,
             QLineEdit::Normal,
@@ -429,8 +447,8 @@ void US_Grid_Editor::save( void )
 
       model.description.remove( QRegExp( "[^\\w\\d_-]" ) );
       int slen = model.description.length();
-      if ( slen > 40 ) model.description = model.description.left( 40 );
-
+      if ( slen > 32 ) model.description = model.description.left( 32 );
+      model.description = model.description + ".model";
    }
    // Output the combined grid model
 	int code;

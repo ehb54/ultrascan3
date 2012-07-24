@@ -75,7 +75,6 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    if ( jgrefine < 0 )
    {  // Special model-grid or model-ratio grid refinement
       ngrefine    = 1;
-      nthreads    = 1;
       model       = dsets[ 0 ]->model;
       slolim      = model.components[ 0 ].s * 1.0e+13;
       klolim      = model.components[ 0 ].f_f0;
@@ -135,13 +134,21 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
    // grid deltas     (overall increment between grid points)
    gdelta_s    = sdelta_s / (double)ngrefine;
    gdelta_k    = sdelta_k / (double)ngrefine;
-   nsubgrid    = sq( ngrefine );
+   if ( jgrefine > 0 )
+   {
+      nsubgrid    = sq( ngrefine );
+      maxtsols    = nsubp_s * nsubp_k;
+   }
+   else
+   {
+      nsubgrid    = model.subGrids;
+      maxtsols    = model.components.size() / nsubgrid;
+   }
    int kgref   = ngrefine - 1;
    int kgrefsq = sq( kgref );
    int kksubg  = nksteps * nssteps
                  - ( kgref + kgrefsq ) * ( nsubp_s + nsubp_k ) + kgrefsq;
 DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
-   maxtsols    = nsubp_s * nsubp_k;
    maxtsols    = max( maxtsols, mintsols );
 
    int ktcsol  = maxtsols - 5;
@@ -167,6 +174,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    QList< QVector< US_Solute > > solute_list;
    double ssllim = slolim * 1.0e-13;
    double ssulim = suplim * 1.0e-13;
+   int    ncomps = model.components.size();
 
    // Generate the original sub-grid solutes list
    if ( jgrefine > 0 )
@@ -179,28 +187,49 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    {  // model-grid
       QVector< US_Solute > solvec;
 
-      for ( int ii = 0; ii < model.components.size(); ii++ )
+      if ( model.analysis == US_Model::INITIALGRID  &&  nsubgrid > 0 )
       {
-         US_Solute soli( model.components[ ii ].s,
-                         model.components[ ii ].f_f0,
-                         0.0 );
-DbgLv(0) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
-         solvec << soli;
+         for ( int ii = 0; ii < nsubgrid; ii++ )
+         {
+            solvec.clear();
+
+            for ( int jj = ii; jj < ncomps; jj += nsubgrid )
+            {
+               US_Solute soli( model.components[ jj ].s,
+                               model.components[ jj ].f_f0,
+                               0.0 );
+               solvec << soli;
+            }
+
+            orig_sols << solvec;
+         }
       }
 
-      orig_sols << solvec;
+      else
+      {
+         for ( int ii = 0; ii < ncomps; ii++ )
+         {
+            US_Solute soli( model.components[ ii ].s,
+                            model.components[ ii ].f_f0,
+                            0.0 );
+DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+            solvec << soli;
+         }
+
+         orig_sols << solvec;
+      }
    }
 
    else if ( jgrefine == (-2) )
    {  // model-ratio
       QVector< US_Solute > solvec;
 
-      for ( int ii = 0; ii < model.components.size(); ii++ )
+      for ( int ii = 0; ii < ncomps; ii++ )
       {
          US_Solute soli( model.components[ ii ].s,
                          model.components[ ii ].f_f0,
                          model.components[ ii ].signal_concentration );
-DbgLv(0) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
          solvec << soli;
       }
 
@@ -208,7 +237,7 @@ DbgLv(0) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
    }
 
    // Queue all the depth-0 tasks
-   for ( int ii = 0; ii < sq( ngrefine ); ii++ )
+   for ( int ii = 0; ii < nsubgrid; ii++ )
    {
       WorkPacket wtask;
       double llss = orig_sols[ ii ][ 0 ].s;
@@ -782,9 +811,11 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
          emit message_update( pmessage_head() +
             tr( "Computing depth 1 solutions and beyond ..." ), false );
 
+         int maxdepsv   = maxdepth;
          maxdepth       = 1;
 
-         if ( nextc <= maxtsols  &&  jobs_at_depth( 1 ) == 0 )
+         //if ( nextc <= maxtsols  &&  jobs_at_depth( 1 ) == 0 )
+         if ( nextc <= maxtsols  &&  maxdepsv < 1 )
             maxdepth       = 0;  // handle no depth 1 jobs yet submitted
       }
    }
@@ -957,9 +988,10 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
    ktask        = 0;                 // task index
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
-   double llss  = slolim;            // lower limit s to identify each subgrid
 
    // Build and queue the subgrid tasks
+#if 0
+   double llss  = slolim;            // lower limit s to identify each subgrid
 
    for ( int ii = 0; ii < ngrefine; ii++ )
    {
@@ -992,6 +1024,30 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       }
 
       llss     += gdelta_s;
+   }
+#endif
+
+   for ( ktask = 0; ktask < nsubgrid; ktask++ )
+   {
+      double llss = orig_sols[ ktask ][ 0 ].s;
+      double llsk = orig_sols[ ktask ][ 0 ].k;
+      // get the solutes originally created for this subgrid
+      QVector< US_Solute > isolutes = orig_sols[ ktask ];
+      // add any calculated solutes not already in subgrid
+      for ( int cc = 0; cc < ncsol; cc++ )
+         if ( ! isolutes.contains( csolutes[ cc ] ) )
+            isolutes << csolutes[ cc ];
+//*DEBUG
+int kosz=orig_sols[ktask].size();
+int kasz=isolutes.size();
+int kadd=kasz-kosz;
+if ( kadd < ncsol )
+DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
+ << kosz << kasz << ncsol << kadd;
+//*DEBUG
+      // queue a subgrid task and update maximum task solute count
+      WorkPacket wtask;
+      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
    }
 
    // Make sure calculated solutes are cleared out for new iteration
@@ -1184,6 +1240,7 @@ void US_2dsaProcess::requeue_tasks()
    int    ktask = 0;
    int    jdpth = 0;
    int    jnois = 0;
+#if 0
    double llss  = slolim;
 
    for ( int ii = 0; ii < ngrefine; ii++ )
@@ -1198,6 +1255,16 @@ void US_2dsaProcess::requeue_tasks()
          llsk          += gdelta_k;
       }
       llss     += gdelta_s;
+   }
+#endif
+   for ( ktask = 0; ktask < nsubgrid; ktask++ )
+   {
+      double llss = orig_sols[ ktask ][ 0 ].s;
+      double llsk = orig_sols[ ktask ][ 0 ].k;
+      // get the solutes originally created for this subgrid
+      QVector< US_Solute > isolutes = orig_sols[ ktask ];
+      WorkPacket wtask;
+      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
    }
 
    // Make sure calculated solutes are cleared out for new iteration
