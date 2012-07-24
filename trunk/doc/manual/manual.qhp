@@ -215,6 +215,15 @@
 
 				<file>grid_editor.html</file>
 				<file>images/grid_editor.png</file>
+				<file>images/grid_editor_mw_view.png</file>
+				<file>images/grid_editor_multi_grids.png</file>
+				<file>images/grid_editor_multi_grids_sed.png</file>
+				<file>images/grid_editor_subgrid1-good.png</file>
+				<file>images/grid_editor_subgrid1-bad.png</file>
+				<file>images/grid_editor_subgrid2-good.png</file>
+				<file>images/grid_editor_subgrid2-bad.png</file>
+				<file>images/grid_editor_subgrid3-good.png</file>
+				<file>images/grid_editor_subgrid3-bad.png</file>
 
             <file>2dsa.html</file>
             <file>2dsa_analys.html</file>
