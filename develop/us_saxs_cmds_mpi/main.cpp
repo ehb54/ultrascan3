@@ -26,6 +26,8 @@ int main (int argc, char **argv)
                 "              \tcompute a saxs curve (can be a .tar)\n"
                 "nsa           \tcontrolfile\n"
                 "              \tperform nsa analysis\n"
+                "1d            \tcontrolfile\n"
+                "              \tperform 1d analysis\n"
                 , argv[0]
                 );
       }
@@ -101,6 +103,43 @@ int main (int argc, char **argv)
       US_Saxs_Util usu;
       // cout << QString("%1: starting processing\n" ).arg( myrank ) << flush;
       if ( !usu.run_nsa_mpi( controlfile ) )
+      {
+         if ( !myrank )
+         {
+            cout << usu.errormsg << endl;
+         }
+         MPI_Finalize();
+         exit( errorbase - 1 );
+      }
+      MPI_Finalize();
+      exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "1d" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         if ( !myrank )
+         {
+            printf(
+                   "usage: %s %s controlfile\n"
+                   , argv[0]
+                   , argv[1]
+                   );
+         }
+         MPI_Finalize();
+         exit( errorbase );
+
+      }
+      errorbase--;
+
+      int p = 1;
+      QString controlfile     = cmds[ p++ ];
+
+      US_Saxs_Util usu;
+      // cout << QString("%1: starting processing\n" ).arg( myrank ) << flush;
+      if ( !usu.run_1d_mpi( controlfile ) )
       {
          if ( !myrank )
          {

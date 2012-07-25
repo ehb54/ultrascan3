@@ -590,6 +590,7 @@ class US_EXTERN US_Saxs_Util
 #if defined( USE_MPI )
       bool run_iq_mpi  ( QString controlfile );
       bool run_nsa_mpi ( QString controlfile );
+      bool run_1d_mpi  ( QString controlfile );
 #endif
       QStringList      job_output_files;
 
@@ -889,7 +890,7 @@ class US_EXTERN US_Saxs_Util
       QStringList  last_pdb_header;
       residue      current_residue;
 
-      bool set_control_parameters_from_experiment_file( QString filename );
+      bool set_control_parameters_from_experiment_file( QString filename, bool load_without_interp = false );
       bool validate_control_parameters( bool for_sgp = false );
       void validate_control_parameters_set_one( QStringList &checks, 
                                                 QStringList &vals );
@@ -1098,7 +1099,6 @@ class US_EXTERN US_Saxs_Util
       map < int, bool >                          waiting_workers;
       map < int, bool >                          busy_workers;
       map < int, bool >                          registered_workers;
-
 #endif
       bool                  nsa_use_scaling_fit;
 
@@ -1204,6 +1204,13 @@ class US_EXTERN US_Saxs_Util
   #pragma warning ( default: 4251 )
 #endif
       bool                                            compute_1d();
+
+#if defined( USE_MPI )
+      bool                                            compute_1d_mpi();
+      bool                                            load_rotations_mpi( unsigned int number,
+                                                                          vector < vector < double > > &rotations );
+#endif
+
       bool                                            update_image();
 
       double                                          q_of_pixel( int pixels_width );

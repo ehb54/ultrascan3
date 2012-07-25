@@ -927,10 +927,17 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             return false;
          }
+#if defined( USE_MPI )
+         if ( !compute_1d_mpi() )
+         {
+            return false;
+         }
+#else 
          if ( !compute_1d() )
          {
             return false;
          }
+#endif
       }
 
       if ( option == "sgptest" )
@@ -1181,7 +1188,7 @@ bool US_Saxs_Util::process_one_iqq()
    return true;
 }
    
-bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename )
+bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename, bool load_without_interp )
 {
    errormsg = "";
 
@@ -1332,6 +1339,11 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    {
       errormsg = QString("Error: the file %1 q grid apparent deltaq is zero or negative %2").arg( filename ).arg( control_parameters[ "deltaq" ] );
       return false;
+   }
+
+   if ( load_without_interp )
+   {
+      return true;
    }
 
    // spacing computation
@@ -1610,6 +1622,8 @@ bool US_Saxs_Util::create_tgz_output( QString filename )
    QString tgz_filename = filename;
    filename.replace( QRegExp( "\\.(tgz|TGZ))$" ), ".tar" );
    QString tar_dot_gz_filename = filename + ".gz";
+
+   cout << QString( "tgz output <%1><%2><%3>\n" ).arg( filename ).arg( tgz_filename ).arg( tar_dot_gz_filename ) << flush;
 
    result = ust.create( filename, output_files, &list );
 

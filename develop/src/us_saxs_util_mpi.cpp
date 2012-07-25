@@ -742,4 +742,3 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    exit( 0 );
    return true;
 }
-
