@@ -363,7 +363,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    return true;
 }
 
-bool US_Saxs_Util::compute_1d_mpi( )
+bool US_Saxs_Util::compute_1d_mpi()
 {
    errormsg = "";
    noticemsg = "";
@@ -433,7 +433,7 @@ bool US_Saxs_Util::compute_1d_mpi( )
       QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
-         unsigned int pos = qsl[ i ].toUInt();
+         unsigned int pos = npes * ( int ) ( qsl[ i ].toUInt() / npes );
          if ( !pos || pos >= sample_rotations )
          {
             errormsg =
