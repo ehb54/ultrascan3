@@ -870,7 +870,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
 
    QString get_file = file;
    get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
-   get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^bfnb_" ) ) ? "tgz" : "tar" );
+   get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^(bfnb|oned)_" ) ) ? "tgz" : "tar" );
 
    cout << "get file: " << get_file << endl;
 

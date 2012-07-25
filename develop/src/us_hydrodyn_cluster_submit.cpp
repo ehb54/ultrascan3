@@ -562,7 +562,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       QRegExp rx( "^(bfnb|oned)_p(\\d+)_" );
       if ( rx.search( file ) != -1 )
       {
-         job_count = rx.cap( 1 ).toUInt();
+         job_count = rx.cap( 2 ).toUInt();
          cout << QString( "host count, %1\n" ).arg( job_count );
          if ( job_count < 2 )
          {
