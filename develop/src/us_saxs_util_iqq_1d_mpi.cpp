@@ -1075,7 +1075,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
          f.close();
          return false;
       }
-      if ( ( line - 1 ) % npes == myrank )
+      if ( ( int ) ( ( line - 1 ) % npes ) == myrank )
       {
          //3cout << QString( "%1: load_rotations took line %2\n" ).arg( myrank ).arg( line );
          p[ 0 ] = qsl[ 0 ].toDouble();
