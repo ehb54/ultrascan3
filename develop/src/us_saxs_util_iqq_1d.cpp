@@ -610,7 +610,7 @@ bool US_Saxs_Util::compute_1d()
          {
             return false;
          }
-         if ( intermediate_saves.count( r ) )
+         if ( intermediate_saves.count( r + 1 ) && t == axis_rotations - 1 )
          {
             vector < double > q( detector_pixels_width );
             vector < double > I = total_modulii;
