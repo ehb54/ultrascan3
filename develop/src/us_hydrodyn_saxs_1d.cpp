@@ -2,6 +2,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
+#include <sys/time.h>
 
 #if defined( HAS_CBF )
 #  include <cbf.h>
@@ -54,6 +55,10 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    plot_colors.push_back(Qt::white);
 
    plot_saxs_zoomer = (ScrollZoomer *)0;
+
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   srand48( tv.tv_usec );
 
    our_saxs_options            = saxs_window->our_saxs_options;
    atom_list                   = saxs_window->atom_list;
@@ -148,7 +153,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_detector_geometry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_detector_width = new QLineEdit( this, "Detector_Width Line Edit");
-   le_detector_width->setText( QString( "" ).sprintf("%g", 165.0 ));
+   le_detector_width->setText( QString( "" ).sprintf("%g", 341.0 ));
    le_detector_width->setAlignment(Qt::AlignVCenter);
    le_detector_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_detector_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -161,7 +166,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 
    le_detector_pixels_width = new QLineEdit( this, "Detector_Pixels_Width Line Edit");
    // le_detector_pixels_width->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_width));
-   le_detector_pixels_width->setText( QString( "" ).sprintf( "%d", 512 ) );
+   le_detector_pixels_width->setText( QString( "" ).sprintf( "%d", 50 ) );
    le_detector_pixels_width->setAlignment(Qt::AlignVCenter);
    le_detector_pixels_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_detector_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -215,7 +220,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_threshold, SIGNAL(textChanged(const QString &)), SLOT(update_threshold(const QString &)));
 
-   lbl_sample_rotations = new QLabel(tr(" Sample rotations (best equalized over sphere):"), this );
+   lbl_sample_rotations = new QLabel( tr(" Sample rotations (best equalized over sphere):"), this );
    lbl_sample_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sample_rotations->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -227,17 +232,33 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_sample_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_sample_rotations(const QString &)));
 
-   lbl_planar_rotations = new QLabel(tr(" Planar rotations:"), this );
-   lbl_planar_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_planar_rotations->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_planar_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_axis_rotations = new QLabel( tr(" Axis rotations:"), this );
+   lbl_axis_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_axis_rotations->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_planar_rotations = new QLineEdit( this, "Planar_Rotations Line Edit");
-   le_planar_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
-   le_planar_rotations->setAlignment(Qt::AlignVCenter);
-   le_planar_rotations->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_planar_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_planar_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_planar_rotations(const QString &)));
+   le_axis_rotations = new QLineEdit( this, "Axis_Rotations Line Edit");
+   le_axis_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
+   le_axis_rotations->setAlignment(Qt::AlignVCenter);
+   le_axis_rotations->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_axis_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_axis_rotations(const QString &)));
+
+   cb_planar_method = new QCheckBox( this );
+   cb_planar_method->setText(tr(" Planar method"));
+   cb_planar_method->setEnabled( true );
+   cb_planar_method->setChecked( false );
+   cb_planar_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_planar_method->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_planar_method, SIGNAL( clicked() ), SLOT( set_planar_method() ) );
+
+   cb_random_rotations = new QCheckBox( this );
+   cb_random_rotations->setText(tr(" Random rotations"));
+   cb_random_rotations->setEnabled( true );
+   cb_random_rotations->setChecked( false );
+   cb_random_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_random_rotations->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_random_rotations, SIGNAL( clicked() ), SLOT( set_random_rotations() ) );
 
    cb_save_pdbs = new QCheckBox( this );
    cb_save_pdbs->setText(tr(" Save rotated PDBs"));
@@ -407,8 +428,12 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
       gl_options->addWidget         ( le_sample_rotations             , j, 1 );
       j++;
-      gl_options->addWidget         ( lbl_planar_rotations            , j, 0 );
-      gl_options->addWidget         ( le_planar_rotations             , j, 1 );
+      gl_options->addWidget         ( lbl_axis_rotations              , j, 0 );
+      gl_options->addWidget         ( le_axis_rotations               , j, 1 );
+      j++;
+      gl_options->addMultiCellWidget( cb_planar_method                , j, j, 0, 1 );
+      j++;
+      gl_options->addMultiCellWidget( cb_random_rotations             , j, j, 0, 1 );
       j++;
       gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 1 );
       j++;
@@ -640,6 +665,12 @@ void US_Hydrodyn_Saxs_1d::start()
 {
    // compute complex curves, display modulus on 1d array
    // compute for each point on detector
+   if ( cb_random_rotations->isChecked() && rho0 > 0e0 )
+   {
+      editor_msg( "red", "positive rho0 currently not supported with random rotations" );
+      return;
+   }
+
    plot_saxs->clear();
    plot_count = 0;
 
@@ -663,11 +694,32 @@ void US_Hydrodyn_Saxs_1d::start()
    progress->setProgress( 0, 1 );
    qApp->processEvents();
 
-   if ( !load_rotations( le_sample_rotations->text().toInt(), rotations ) )
+   double deltaphi = 0e0;
+
+   if ( cb_random_rotations->isChecked() )
    {
-      using namespace bulatov;
-      rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
-      save_rotations( rotations );
+      rotations.resize( le_sample_rotations->text().toInt() );
+   } else {
+      if ( cb_planar_method->isChecked() )
+      {
+         deltaphi = M_PI / ( double ) le_sample_rotations->text().toInt();
+         editor_msg( "blue", QString( tr( "Using planar method.  deltaPhi = %1" ) ).arg( deltaphi ) );
+         vector < double > x( 3 );
+         x[ 1 ] = 0e0;
+         for ( double phi = - M_PI / 2.0; phi <= M_PI / 2.0; phi += deltaphi )
+         {
+            x[ 0 ] = cos( phi );
+            x[ 2 ] = sin( phi );
+            rotations.push_back( x );
+         }
+      } else {
+         if ( !load_rotations( le_sample_rotations->text().toInt(), rotations ) )
+         {
+            using namespace bulatov;
+            rotations = bulatov_main( le_sample_rotations->text().toInt(), 0 );
+            save_rotations( rotations );
+         }
+      }
    }
 
    editor_msg( "gray", "done computing rotations\n" );
@@ -1055,6 +1107,20 @@ void US_Hydrodyn_Saxs_1d::start()
    unsigned int pts_fnd_overlap = 0;
 #endif
 
+   unsigned int no_ref = 0;
+   unsigned int xy_ref = 0;
+   unsigned int xz_ref = 0;
+   unsigned int yz_ref = 0;
+
+   unsigned int ord1 = 0;
+   unsigned int ord2 = 0;
+   unsigned int ord3 = 0;
+   unsigned int ord4 = 0;
+   unsigned int ord5 = 0;
+   unsigned int ord6 = 0;
+
+   double deltapsi = 2.0 * M_PI / ( double ) le_axis_rotations->text().toInt();
+
    for ( unsigned int r = 0; r < rotations.size(); r++ )
    {
       if ( !get_excluded_volume_map() )
@@ -1086,199 +1152,344 @@ void US_Hydrodyn_Saxs_1d::start()
 
       if ( rotations.size() > 1 )
       {
-         transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
-         transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
-         transform_to[ 1 ].axis[ 2 ] = rotations[ r ][ 2 ];
+         if ( !cb_random_rotations->isChecked() )
+         {
+            transform_to[ 1 ].axis[ 0 ] = rotations[ r ][ 0 ];
+            transform_to[ 1 ].axis[ 1 ] = rotations[ r ][ 1 ];
+            transform_to[ 1 ].axis[ 2 ] = rotations[ r ][ 2 ];
          
-         transform_to[ 2 ].axis[ 0 ] = -rotations[ r ][ 1 ];
-         transform_to[ 2 ].axis[ 1 ] = rotations[ r ][ 0 ];
-         // check this!
-         transform_to[ 2 ].axis[ 2 ] = 0.0f; // rotations[ r ][ 2 ];
+            transform_to[ 2 ].axis[ 0 ] = -rotations[ r ][ 1 ];
+            transform_to[ 2 ].axis[ 1 ] = rotations[ r ][ 0 ];
+            // check this!
+            transform_to[ 2 ].axis[ 2 ] = 0.0f; // rotations[ r ][ 2 ];
 
-         transform_to[ 3 ] = 
-            ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->cross( transform_to[ 1 ], transform_to[ 2 ] ) );
+            transform_to[ 3 ] = 
+               ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->cross( transform_to[ 1 ], transform_to[ 2 ] ) );
 
-         transform_to[ 4 ].axis[ 0 ] = -transform_to[ 1 ].axis[ 0 ];
-         transform_to[ 4 ].axis[ 1 ] = -transform_to[ 1 ].axis[ 1 ];
-         transform_to[ 4 ].axis[ 2 ] = -transform_to[ 1 ].axis[ 2 ];
+            transform_to[ 4 ].axis[ 0 ] = -transform_to[ 1 ].axis[ 0 ];
+            transform_to[ 4 ].axis[ 1 ] = -transform_to[ 1 ].axis[ 1 ];
+            transform_to[ 4 ].axis[ 2 ] = -transform_to[ 1 ].axis[ 2 ];
 
-         transform_to[ 5 ].axis[ 0 ] = -transform_to[ 2 ].axis[ 0 ];
-         transform_to[ 5 ].axis[ 1 ] = -transform_to[ 2 ].axis[ 1 ];
-         transform_to[ 5 ].axis[ 2 ] = -transform_to[ 2 ].axis[ 2 ];
+            transform_to[ 5 ].axis[ 0 ] = -transform_to[ 2 ].axis[ 0 ];
+            transform_to[ 5 ].axis[ 1 ] = -transform_to[ 2 ].axis[ 1 ];
+            transform_to[ 5 ].axis[ 2 ] = -transform_to[ 2 ].axis[ 2 ];
 
-         transform_to[ 6 ].axis[ 0 ] = -transform_to[ 3 ].axis[ 0 ];
-         transform_to[ 6 ].axis[ 1 ] = -transform_to[ 3 ].axis[ 1 ];
-         transform_to[ 6 ].axis[ 2 ] = -transform_to[ 3 ].axis[ 2 ];
+            transform_to[ 6 ].axis[ 0 ] = -transform_to[ 3 ].axis[ 0 ];
+            transform_to[ 6 ].axis[ 1 ] = -transform_to[ 3 ].axis[ 1 ];
+            transform_to[ 6 ].axis[ 2 ] = -transform_to[ 3 ].axis[ 2 ];
 
-         vector < point > result;
-         QString error_msg;
+            vector < point > result;
+            QString error_msg;
 
 #if defined( UHS2D_ROTATIONS_DEBUG )
-         for ( unsigned int i = 0; i < transform_from.size(); i++ )
-         {
-            cout << "From: " << transform_from[ i ] 
-                 << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_from[ i ], transform_from[ i ] )
-                 << " to: " << transform_to[ i ] 
-                 << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_to[ i ], transform_to[ i ] )
-                 << endl;
-         }
-
-         for ( unsigned int a = 0; a < atom_positions.size(); a++ )
-         {
-            cout << "Atom: " << a << " " << atom_positions[ a ] << endl;
-         }
-#endif
-
-         if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
-                                                             transform_from, 
-                                                             transform_to, 
-                                                             atom_positions,
-                                                             result,
-                                                             error_msg,
-                                                             true ) )
-         {
-            editor_msg( "red", error_msg );
-            running = false;
-            update_enables();
-            return;
-         }
-
-
-#if defined( UHS2D_ROTATIONS_DEBUG )
-         for ( unsigned int a = 0; a < atom_positions.size(); a++ )
-         {
-            cout << "Result Atom: " << a << " " << result[ a ] << endl;
-         }
-#endif
-
-         for ( unsigned int a = 0; a < atoms.size(); a++ )
-         {
-            atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ] * atomic_scaler;
-            atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ] * atomic_scaler;
-            atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ] * atomic_scaler;
-         }
-         
-         // and rotate excluded volume (this may have to be done piecemeal to save memory
-         if ( !cb_memory_conserve->isChecked() )
-         {
-            editor_msg( "gray", tr( "Rotating excluded volume" ) );
-            qApp->processEvents();
-         }
-
-         if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
-                                                             transform_from, 
-                                                             transform_to, 
-                                                             excluded_volume,
-                                                             result,
-                                                             error_msg,
-                                                             true ) )
-         {
-            editor_msg( "red", error_msg );
-            running = false;
-            update_enables();
-            return;
-         }
-
-         if ( !cb_memory_conserve->isChecked() )
-         {
-            editor_msg( "gray", tr( "Done rotating excluded volume" ) );
-            qApp->processEvents();
-         } 
-         excluded_volume = result;
-         result.clear();
-
-         if ( cb_save_pdbs->isChecked() )
-         {
-            QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
-            QFile f( fname );
-            bool ok_to_write = true;
-            if ( !r )
+            for ( unsigned int i = 0; i < transform_from.size(); i++ )
             {
-               if ( !f.open( IO_WriteOnly ) )
-               {
-                  editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
-                  ok_to_write = false;
-               }                  
-            } else {
-               if ( !f.open( IO_WriteOnly | IO_Append ) )
-               {
-                  editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
-                  ok_to_write = false;
-               }
+               cout << "From: " << transform_from[ i ] 
+                    << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_from[ i ], transform_from[ i ] )
+                    << " to: " << transform_to[ i ] 
+                    << " dot: " << ((US_Hydrodyn *)us_hydrodyn)->dot( transform_to[ i ], transform_to[ i ] )
+                    << endl;
             }
-            
-            if ( ok_to_write )
+
+            for ( unsigned int a = 0; a < atom_positions.size(); a++ )
             {
-               QTextStream ts( &f );
+               cout << "Atom: " << a << " " << atom_positions[ a ] << endl;
+            }
+#endif
+
+            if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
+                                                                transform_from, 
+                                                                transform_to, 
+                                                                atom_positions,
+                                                                result,
+                                                                error_msg,
+                                                                true ) )
+            {
+               editor_msg( "red", error_msg );
+               running = false;
+               update_enables();
+               return;
+            }
+
+
+#if defined( UHS2D_ROTATIONS_DEBUG )
+            for ( unsigned int a = 0; a < atom_positions.size(); a++ )
+            {
+               cout << "Result Atom: " << a << " " << result[ a ] << endl;
+            }
+#endif
+
+            for ( unsigned int a = 0; a < atoms.size(); a++ )
+            {
+               atoms[ a ].pos[ 0 ] = result[ a ].axis[ 0 ] * atomic_scaler;
+               atoms[ a ].pos[ 1 ] = result[ a ].axis[ 1 ] * atomic_scaler;
+               atoms[ a ].pos[ 2 ] = result[ a ].axis[ 2 ] * atomic_scaler;
+            }
+         
+            // and rotate excluded volume (this may have to be done piecemeal to save memory
+            if ( !cb_memory_conserve->isChecked() )
+            {
+               editor_msg( "gray", tr( "Rotating excluded volume" ) );
+               qApp->processEvents();
+            }
+
+            if ( !( ( US_Hydrodyn * )us_hydrodyn )->atom_align (
+                                                                transform_from, 
+                                                                transform_to, 
+                                                                excluded_volume,
+                                                                result,
+                                                                error_msg,
+                                                                true ) )
+            {
+               editor_msg( "red", error_msg );
+               running = false;
+               update_enables();
+               return;
+            }
+
+            if ( !cb_memory_conserve->isChecked() )
+            {
+               editor_msg( "gray", tr( "Done rotating excluded volume" ) );
+               qApp->processEvents();
+            } 
+            excluded_volume = result;
+            result.clear();
+
+            if ( cb_save_pdbs->isChecked() )
+            {
+               QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
+               QFile f( fname );
+               bool ok_to_write = true;
                if ( !r )
                {
-                  ts << QString( "MODEL     0\n" );
-                  ts << QString( "REMARK    Rotations summary\n" );
+                  if ( !f.open( IO_WriteOnly ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     ok_to_write = false;
+                  }                  
+               } else {
+                  if ( !f.open( IO_WriteOnly | IO_Append ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                     ok_to_write = false;
+                  }
+               }
+            
+               if ( ok_to_write )
+               {
+                  QTextStream ts( &f );
+                  if ( !r )
+                  {
+                     ts << QString( "MODEL     0\n" );
+                     ts << QString( "REMARK    Rotations summary\n" );
                      
-                  ts << QString("")
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              1,
-                              "CA",
-                              " LYS",
-                              "",
-                              1,
-                              0.0f,
-                              0.0f,
-                              0.0f,
-                              0.0f,
-                              0.0f,
-                              "C"
-                              );
+                     ts << QString("")
+                        .sprintf(     
+                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                 1,
+                                 "CA",
+                                 " LYS",
+                                 "",
+                                 1,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 "C"
+                                 );
 
-                  for ( unsigned int r = 0; r < rotations.size(); r++ )
+                     for ( unsigned int r = 0; r < rotations.size(); r++ )
+                     {
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    r + 2,
+                                    "CA",
+                                    " LYS",
+                                    "",
+                                    r + 2,
+                                    rotations[ r ][ 0 ],
+                                    rotations[ r ][ 1 ],
+                                    rotations[ r ][ 2 ],
+                                    0.0f,
+                                    0.0f,
+                                    "C"
+                                    );
+                     }
+                     ts << "ENDMDL\n";
+                  }                     
+
+                  ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+                  ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                     .arg( rotations[ r ][ 0 ] )
+                     .arg( rotations[ r ][ 1 ] )
+                     .arg( rotations[ r ][ 2 ] );
+               
+                  for ( unsigned int a = 0; a < atoms.size(); a++ )
                   {
                      ts << QString("")
                         .sprintf(     
                                  "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                 r + 2,
+                                 a + 1,
                                  "CA",
                                  " LYS",
                                  "",
-                                 r + 2,
-                                 rotations[ r ][ 0 ],
-                                 rotations[ r ][ 1 ],
-                                 rotations[ r ][ 2 ],
+                                 a + 1,
+                                 atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                 atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                 atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
                                  0.0f,
                                  0.0f,
                                  "C"
                                  );
                   }
                   ts << "ENDMDL\n";
-               }                     
-
-               ts << QString( "MODEL     %1\n" ).arg( r + 1 );
-               ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
-                  .arg( rotations[ r ][ 0 ] )
-                  .arg( rotations[ r ][ 1 ] )
-                  .arg( rotations[ r ][ 2 ] );
-               
-               for ( unsigned int a = 0; a < atoms.size(); a++ )
-               {
-                  ts << QString("")
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              a + 1,
-                              "CA",
-                              " LYS",
-                              "",
-                              a + 1,
-                              atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
-                              atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
-                              atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
-                              0.0f,
-                              0.0f,
-                              "C"
-                              );
+                  f.close();
+                  editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
                }
-               ts << "ENDMDL\n";
-               f.close();
-               editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+            }
+         } else {
+            // do random rotations stuff
+            // should read in better random numbers
+            double alpha = 2.0 * M_PI * drand48(); // xy
+            double beta  = 2.0 * M_PI * drand48(); // xz
+            double gamma = 2.0 * M_PI * drand48(); // yz
+
+            bool reflect_xy = false;
+            bool reflect_xz = false;
+            bool reflect_yz = false;
+            
+            double random_reflection = 4 * drand48();
+            if ( random_reflection > 3 )
+            {
+               reflect_yz = true;
+               yz_ref++;
+            } else {
+               if ( random_reflection > 2 )
+               {
+                  reflect_xz = true;
+                  xz_ref++;
+               } else {
+                  if ( random_reflection > 1 )
+                  {
+                     reflect_xy = true;
+                     xy_ref++;
+                  } else {
+                     no_ref++;
+                  }
+               }
+            }
+
+            // 6 possible orders:
+            // xy, xz, yz
+            // xy, yz, xz
+
+            // yz, xy, xz
+            // yz, xz, xy
+
+            // yz, xy, xz
+            // yz, xz, xy
+
+            vector < int > orders;
+
+            double rot_order = 6 * drand48();
+            if ( rot_order > 5 )
+            {
+               ord6++;
+               orders.push_back( 0 );
+               orders.push_back( 1 );
+               orders.push_back( 2 );
+            } else {
+               if ( rot_order > 4 )
+               {
+                  ord5++;
+                  orders.push_back( 0 );
+                  orders.push_back( 2 );
+                  orders.push_back( 1 );
+               } else {
+                  if ( rot_order > 3 )
+                  {
+                     ord4++;
+                     orders.push_back( 1 );
+                     orders.push_back( 0 );
+                     orders.push_back( 2 );
+                  } else {
+                     if ( rot_order > 2 )
+                     {
+                        ord3++;
+                        orders.push_back( 1 );
+                        orders.push_back( 2 );
+                        orders.push_back( 0 );
+                     } else {
+                        if ( rot_order > 1 )
+                        {
+                           ord2++;
+                           orders.push_back( 2 );
+                           orders.push_back( 0 );
+                           orders.push_back( 1 );
+                        } else {
+                           ord1++;
+                           orders.push_back( 2 );
+                           orders.push_back( 1 );
+                           orders.push_back( 0 );
+                        }
+                     }
+                  }
+               }
+            }
+
+            for ( unsigned int a = 0; a < atoms.size(); a++ )
+            {
+               atoms[ a ].pos[ 0 ] = atom_positions[ a ].axis[ 0 ];
+               atoms[ a ].pos[ 1 ] = atom_positions[ a ].axis[ 1 ];
+               atoms[ a ].pos[ 2 ] = atom_positions[ a ].axis[ 2 ];
+               if ( reflect_xy )
+               {
+                  atoms[ a ].pos[ 2 ] = -atom_positions[ a ].axis[ 2 ];
+               }
+               if ( reflect_xz )
+               {
+                  atoms[ a ].pos[ 1 ] = -atom_positions[ a ].axis[ 1 ];
+               }
+               if ( reflect_yz )
+               {
+                  atoms[ a ].pos[ 0 ] = -atom_positions[ a ].axis[ 0 ];
+               }
+
+               for ( int i = 0; i < ( int ) orders.size(); i++ )
+               {
+                  switch ( orders[ i ] )
+                  {
+                  case 0 :
+                     atoms[ a ].pos[ 0 ] = 
+                        atoms[ a ].pos[ 0 ] * cos( alpha ) -
+                        atoms[ a ].pos[ 1 ] * sin( alpha );
+                     atoms[ a ].pos[ 1 ] = 
+                        atoms[ a ].pos[ 0 ] * sin( alpha ) +
+                        atoms[ a ].pos[ 1 ] * cos( alpha );
+                     atoms[ a ].pos[ 2 ] = atoms[ a ].pos[ 2 ];
+                     break;
+
+                  case 1 :
+                     atoms[ a ].pos[ 0 ] = 
+                        atoms[ a ].pos[ 0 ] * cos( beta ) -
+                        atoms[ a ].pos[ 2 ] * sin( beta );
+                     atoms[ a ].pos[ 2 ] = 
+                        atoms[ a ].pos[ 0 ] * sin( beta ) +
+                        atoms[ a ].pos[ 2 ] * cos( beta );
+                     break;
+
+                  case 2 :
+                     atoms[ a ].pos[ 1 ] = 
+                        atoms[ a ].pos[ 1 ] * cos( gamma ) -
+                        atoms[ a ].pos[ 2 ] * sin( gamma );
+                     atoms[ a ].pos[ 2 ] = 
+                        atoms[ a ].pos[ 1 ] * sin( gamma ) +
+                        atoms[ a ].pos[ 2 ] * cos( gamma );
+                     break;
+                  }
+               }
             }
          }
       }
@@ -1290,113 +1501,210 @@ void US_Hydrodyn_Saxs_1d::start()
       } 
 
       // planar rotations
+      double max_planar_angle = 0e0;
+      double deltatheta       = 2e0 * M_PI;
 
-      for ( unsigned int p = 0; p < le_planar_rotations->text().toUInt(); p++ )
+      if ( cb_planar_method->isChecked() )
       {
-         double planar_angle     = ( 2.0 * M_PI / ( le_planar_rotations->text().toUInt() + 1 ) ) * p;
+         double length_of_slice = 2e0 * M_PI * rotations[ r ][ 0 ];
+         double steps_in_slice  = length_of_slice / deltaphi;
+         deltatheta = 2.0 * M_PI / steps_in_slice;
+         editor_msg( "blue", QString( tr( "Planar rotations: steps in slice %1, deltatheta %2\n" ) )
+                     .arg( steps_in_slice ) 
+                     .arg( deltatheta ) 
+                     );
+         max_planar_angle = 2e0 * M_PI;
+         qApp->processEvents();
+      }
+
+      for ( double planar_angle = 0e0; planar_angle <= max_planar_angle; planar_angle += deltatheta )
+      {
          double cos_planar_angle = cos( planar_angle );
          double sin_planar_angle = sin( planar_angle );
 
          if ( !cb_memory_conserve->isChecked() )
          {
-            editor_msg( "gray", QString( tr( "Planar angle %1 radians %2 of %3" ) )
-                        .arg( planar_angle )
-                        .arg( p + 1 )
-                        .arg( le_planar_rotations->text().toUInt() ) );
+            editor_msg( "gray", QString( tr( "Planar angle %1 radians" ) )
+                        .arg( planar_angle ) );
             qApp->processEvents();
          }
 
-         data.resize( detector_pixels_width );
-         for ( int i = 0; i < ( int ) data.size(); i++ )
+         for ( int t = 0; t < le_axis_rotations->text().toInt(); t++ )
          {
-            data[ i ] = complex < double > ( 0.0, 0.0 );
-         }
-         // for each atom, compute scattering factor for each element on the detector
 
-         for ( unsigned int a = 0; a < atoms.size(); a++ )
-         {
-            if ( !p ) 
+            double psi = ( double ) t * deltapsi;
+            double cospsi = cos( psi );
+            double sinpsi = sin( psi );
+
+            if ( !cb_memory_conserve->isChecked() )
             {
-               progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+               editor_msg( "gray", QString( tr( "Axis rotation %1 of %2 deltapsi %3 psi %4" ) )
+                           .arg( t + 1 ) 
+                           .arg( le_axis_rotations->text().toInt() ) 
+                           .arg( deltapsi )
+                           .arg( psi )
+                           );
                qApp->processEvents();
             }
-            // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
 
-            for ( unsigned int i = 0; i < data.size(); i++ )
+            data.resize( detector_pixels_width );
+            for ( int i = 0; i < ( int ) data.size(); i++ )
             {
-               double pixpos = ( double ) i * detector_width_per_pixel;
+               data[ i ] = complex < double > ( 0.0, 0.0 );
+            }
+            // for each atom, compute scattering factor for each element on the detector
 
-               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+            for ( unsigned int a = 0; a < atoms.size(); a++ )
+            {
+               if ( !planar_angle ) 
+               {
+                  progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                  qApp->processEvents();
+               }
+               // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
 
-               vector < double > Q( 3 );
-               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-               Q[ 2 ] = 0e0;
+               for ( unsigned int i = 0; i < data.size(); i++ )
+               {
+                  double pixpos = ( double ) i * detector_width_per_pixel;
+
+                  double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+                  vector < double > Q( 3 );
+                  Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+                  Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+                  Q[ 2 ] = 0e0;
                
-               vector < double > Rv( 3 );
-               Rv[ 0 ] = ( double ) atoms[ a ].pos[ 0 ] * cos_planar_angle - ( double ) atoms[ a ].pos[ 1 ] * sin_planar_angle ;
-               Rv[ 1 ] = ( double ) atoms[ a ].pos[ 0 ] * sin_planar_angle + ( double ) atoms[ a ].pos[ 1 ] * cos_planar_angle ;
-               Rv[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+                  vector < double > Rvorg( 3 );
+                  Rvorg[ 0 ] = ( double ) atoms[ a ].pos[ 0 ] * cos_planar_angle - ( double ) atoms[ a ].pos[ 1 ] * sin_planar_angle ;
+                  Rvorg[ 1 ] = ( double ) atoms[ a ].pos[ 0 ] * sin_planar_angle + ( double ) atoms[ a ].pos[ 1 ] * cos_planar_angle ;
+                  Rvorg[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
                
-               double QdotR = 
-                  Q[ 0 ] * Rv[ 0 ] +
-                  Q[ 1 ] * Rv[ 1 ] +
-                  Q[ 2 ] * Rv[ 2 ];
+                  vector < double > Rv( 3 );
+                  Rv[ 0 ] = 0.0;
+                  Rv[ 1 ] = 0.0;
+                  Rv[ 2 ] = 0.0;
+
+                  Rv[ 0 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 0 ]) * Rvorg[ 0 ];
+                  Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] - rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 1 ];
+                  Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] + rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 2 ];
+
+                  Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] + rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 0 ];
+                  Rv[ 1 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 1 ]) * Rvorg[ 1 ];
+                  Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] - rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 2 ];
+
+                  Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] - rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 0 ];
+                  Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] + rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 1 ];
+                  Rv[ 2 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 2 ] * rotations[ r ][ 2 ]) * Rvorg[ 2 ];
+
+                  double QdotR = 
+                     Q[ 0 ] * Rv[ 0 ] +
+                     Q[ 1 ] * Rv[ 1 ] +
+                     Q[ 2 ] * Rv[ 2 ];
                
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+                  complex < double > iQdotR = complex < double > ( 0e0, QdotR );
             
-               complex < double > expiQdotR = exp( iQdotR );
+                  complex < double > expiQdotR = exp( iQdotR );
                
-               // F_atomic
+                  // F_atomic
                
-               saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+                  saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
-               double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
+                  double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
 
 #if defined( UHS2_SCAT_DEBUG )
-               cout << QString( 
-                               "atom                %1\n"
-                               "pixel               %2 %3\n"
-                               "relative to beam    %4 %5\n"
-                               "distance            %6\n"
-                               "q of pixel          %7\n"
-                               "expIQdotr           "
-                               )
-                  .arg( atoms[ a ].hybrid_name )
-                  .arg( i ).arg( j )
-                  .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-                  .arg( pix_dist_from_beam_center )
-                  .arg( q )
-                  .ascii();
+                  cout << QString( 
+                                  "atom                %1\n"
+                                  "pixel               %2 %3\n"
+                                  "relative to beam    %4 %5\n"
+                                  "distance            %6\n"
+                                  "q of pixel          %7\n"
+                                  "expIQdotr           "
+                                  )
+                     .arg( atoms[ a ].hybrid_name )
+                     .arg( i ).arg( j )
+                     .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+                     .arg( pix_dist_from_beam_center )
+                     .arg( q )
+                     .ascii();
                
-               cout << expiQdotR << endl;
+                  cout << expiQdotR << endl;
 #endif
-               double q_2_over_4pi = q * q * one_over_4pi_2;
+                  double q_2_over_4pi = q * q * one_over_4pi_2;
 
-               double F_at =
-                  saxs_window->compute_ff( saxs,
-                                           saxsH,
-                                           atoms[ a ].residue_name,
-                                           atoms[ a ].saxs_name,
-                                           atoms[ a ].atom_name,
-                                           atoms[ a ].hydrogens,
-                                           q,
-                                           q_2_over_4pi );
+                  double F_at =
+                     saxs_window->compute_ff( saxs,
+                                              saxsH,
+                                              atoms[ a ].residue_name,
+                                              atoms[ a ].saxs_name,
+                                              atoms[ a ].atom_name,
+                                              atoms[ a ].hydrogens,
+                                              q,
+                                              q_2_over_4pi );
 
-               //              double F_at =
-               //                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-               //                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-               //                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-               //                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-               //                 atoms[ a ].hydrogens * 
-               //                 ( saxsH.c + 
-               //                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-               //                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-               //                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-               //                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+                  //              double F_at =
+                  //                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+                  //                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+                  //                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+                  //                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+                  //                 atoms[ a ].hydrogens * 
+                  //                 ( saxsH.c + 
+                  //                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+                  //                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+                  //                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+                  //                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
-               data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
+                  data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
 
+                  if ( !running ) 
+                  {
+                     update_image();
+                     update_enables();
+                     return;
+                  }
+               }
+            }
+
+            // now subtract excluded volume
+
+            if ( rho0 )
+            {
+               for ( unsigned int i = 0; i < data.size(); i++ )
+               {
+                  if ( !planar_angle )
+                  {
+                     progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                     qApp->processEvents();
+                  }
+
+                  double pixpos = ( double ) i * detector_width_per_pixel;
+
+                  double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+
+                  vector < double > Q( 3 );
+                  Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+                  Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+                  Q[ 2 ] = 0e0;
+               
+                  for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
+                  {
+                     double QdotR = 
+                        Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle +
+                        Q[ 1 ] * (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle +
+                        Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
+
+                     complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+
+                     complex < double > expiQdotR = exp( iQdotR );
+
+                     complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
+
+                     data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+                  }
+               }
+
+#if defined( UHS1D_EXCL_VOL_DEBUG )
+               pts_subd++;
+#endif
                if ( !running ) 
                {
                   update_image();
@@ -1404,72 +1712,23 @@ void US_Hydrodyn_Saxs_1d::start()
                   return;
                }
             }
-         }
-
-         // now subtract excluded volume
-
-         if ( rho0 )
-         {
-            for ( unsigned int i = 0; i < data.size(); i++ )
-            {
-               if ( !p )
-               {
-                  progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-                  qApp->processEvents();
-               }
-
-               double pixpos = ( double ) i * detector_width_per_pixel;
-
-               double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
-
-               vector < double > Q( 3 );
-               Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-               Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-               Q[ 2 ] = 0e0;
-               
-               for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
-               {
-                  double QdotR = 
-                     Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle +
-                     Q[ 1 ] * (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle +
-                     Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
-
-                  complex < double > iQdotR = complex < double > ( 0e0, QdotR );
-
-                  complex < double > expiQdotR = exp( iQdotR );
-
-                  complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
-
-                  data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
-               }
-            }
 
 #if defined( UHS1D_EXCL_VOL_DEBUG )
-            pts_subd++;
+            cout << QString( "pts_subd %1\n" ).arg( pts_subd );
+            cout << QString( "pts_dup  %1\n" ).arg( pts_dup  );
+            cout << QString( "pts_excl %1\n" ).arg( pts_excl );
+            cout << QString( "pts_overlaps_used_fnd %1\n" ).arg( pts_overlaps_used_fnd );
 #endif
+            if ( !update_image() )
+            {
+               running = false;
+            }
             if ( !running ) 
             {
-               update_image();
                update_enables();
                return;
             }
-         }
-
-#if defined( UHS1D_EXCL_VOL_DEBUG )
-         cout << QString( "pts_subd %1\n" ).arg( pts_subd );
-         cout << QString( "pts_dup  %1\n" ).arg( pts_dup  );
-         cout << QString( "pts_excl %1\n" ).arg( pts_excl );
-         cout << QString( "pts_overlaps_used_fnd %1\n" ).arg( pts_overlaps_used_fnd );
-#endif
-         if ( !update_image() )
-         {
-            running = false;
-         }
-         if ( !running ) 
-         {
-            update_enables();
-            return;
-         }
+         } // theta rotations
       } // planar rotations
    } // rotations
 
@@ -1487,6 +1746,22 @@ void US_Hydrodyn_Saxs_1d::start()
 #endif
 
    editor_msg( "black", tr( "Completed" ) );
+   if ( cb_random_rotations->isChecked() )
+   {
+      editor_msg( "gray", QString( "reflections %1 %2 %3 %4\n" )
+                  .arg( no_ref )
+                  .arg( xy_ref )
+                  .arg( xz_ref )
+                  .arg( yz_ref ) );
+      editor_msg( "gray", QString( "rot order %1 %2 %3 %4 %5 %6\n" )
+                  .arg( ord1 )
+                  .arg( ord2 )
+                  .arg( ord3 )
+                  .arg( ord4 )
+                  .arg( ord5 )
+                  .arg( ord6 )
+                  );
+   }
    progress->setProgress(1, 1);
    running = false;
    update_enables();
@@ -1613,6 +1888,29 @@ void US_Hydrodyn_Saxs_1d::reset_1d()
 
 void US_Hydrodyn_Saxs_1d::update_sample_rotations( const QString & /* str */ )
 {
+}
+
+void US_Hydrodyn_Saxs_1d::update_axis_rotations( const QString & /* str */ )
+{
+}
+
+void US_Hydrodyn_Saxs_1d::set_planar_method()
+{
+   lbl_sample_rotations->setText( cb_planar_method->isChecked() ?
+                                  tr( " Sphere horizontal slices: " ) :
+                                  tr( " Sample rotations (best equalized over sphere):" ) );
+   if ( cb_planar_method->isChecked() )
+   {
+      cb_random_rotations->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_1d::set_random_rotations()
+{
+   if ( cb_random_rotations->isChecked() )
+   {
+      cb_planar_method->setChecked( false );
+   }
 }
 
 void US_Hydrodyn_Saxs::saxs_1d()
@@ -1743,10 +2041,11 @@ void US_Hydrodyn_Saxs_1d::save_data()
 
    QTextStream ts( &f );
 
-   ts << QString( "# Computed saxs data of %1 with %2 rotations deltaR %4 rho0 %5 probe radius %6 threshold %7\n" )
+   ts << QString( "# Computed saxs data of %1 using %2 %3 %4 rotations deltaR %5 rho0 %6 probe radius %7 threshold %8\n" )
       .arg( le_atom_file->text() )
-      .arg( plot_count / le_planar_rotations->text().toUInt() ) 
-      .arg( le_planar_rotations->text().toUInt() ) 
+      .arg( plot_count )
+      .arg( le_sample_rotations->text() )
+      .arg( le_axis_rotations->text() )
       .arg( deltaR )
       .arg( rho0 )
       .arg( probe_radius ) 
@@ -1776,10 +2075,11 @@ void US_Hydrodyn_Saxs_1d::to_somo()
 
    saxs_window->plot_one_iqq( q, 
                               I, 
-                              QString( "%1 rotational average of %2 directions %3 planar rots, d3R %4, rho0 %5, probe radius %6, threshold %7" )
+                              QString( "%1 using %2 %3 %4 rotations, d3R %5, rho0 %6, probe radius %7, threshold %8" )
                               .arg( le_atom_file->text() )
-                              .arg( plot_count / le_planar_rotations->text().toUInt() ) 
-                              .arg( le_planar_rotations->text().toUInt() ) 
+                              .arg( plot_count )
+                              .arg( le_sample_rotations->text() )
+                              .arg( le_axis_rotations->text() )
                               .arg( deltaR ) 
                               .arg( rho0 ) 
                               .arg( probe_radius ) 
@@ -2105,7 +2405,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
                                      (void *)(& map_data[0] ), 
                                      elsize,
                                      elements, 
-                                    &elements_read ) ) )
+                                     &elements_read ) ) )
       {
          errormsg = QString( "" ).sprintf( "Error: cbf get realarray error %d\n", res );
          return false;
@@ -2155,7 +2455,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
                      double x = 1e7 * ( map_displacement[ 0 ] + i * map_displacement_increment[ 0 ] );
                      double y = 1e7 * ( map_displacement[ 1 ] + j * map_displacement_increment[ 1 ] );
                      double z = 1e7 * ( map_displacement[ 2 ] + k * map_displacement_increment[ 2 ] );
-//                      printf( "%g %g %g %g\n", x, y, z, val );
+                     //                      printf( "%g %g %g %g\n", x, y, z, val );
                      point tmp_point;
                      tmp_point.axis[ 0 ] = ( float )x;
                      tmp_point.axis[ 1 ] = ( float )y;
@@ -2327,3 +2627,41 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
                .arg( f.name() ) );
    return true;
 }
+
+
+#if defined( ROTATION_STUFF )
+typedef struct {
+   double x,y,z;
+} XYZ;
+
+/*
+  Rotate a point p by angle theta around an arbitrary axis r
+  Return the rotated point.
+  Positive angles are anticlockwise looking down the axis
+  towards the origin.
+  Assume right hand coordinate system.
+*/
+XYZ ArbitraryRotate(XYZ p,double theta,XYZ r)
+{
+   XYZ q = {0.0,0.0,0.0};
+   double costheta,sintheta;
+
+   Normalise(&r);
+   costheta = cos(theta);
+   sintheta = sin(theta);
+
+   q.x += (costheta + (1 - costheta) * r.x * r.x) * p.x;
+   q.x += ((1 - costheta) * r.x * r.y - r.z * sintheta) * p.y;
+   q.x += ((1 - costheta) * r.x * r.z + r.y * sintheta) * p.z;
+
+   q.y += ((1 - costheta) * r.x * r.y + r.z * sintheta) * p.x;
+   q.y += (costheta + (1 - costheta) * r.y * r.y) * p.y;
+   q.y += ((1 - costheta) * r.y * r.z - r.x * sintheta) * p.z;
+
+   q.z += ((1 - costheta) * r.x * r.z - r.y * sintheta) * p.x;
+   q.z += ((1 - costheta) * r.y * r.z + r.x * sintheta) * p.y;
+   q.z += (costheta + (1 - costheta) * r.z * r.z) * p.z;
+
+   return(q);
+}
+#endif

@@ -90,11 +90,13 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
 
-      QLabel        *lbl_planar_rotations;
-      QLineEdit     *le_planar_rotations;
+      QLabel        *lbl_axis_rotations;
+      QLineEdit     *le_axis_rotations;
 
       QCheckBox     *cb_save_pdbs;
       QCheckBox     *cb_memory_conserve;
+      QCheckBox     *cb_planar_method;
+      QCheckBox     *cb_random_rotations;
 
       QProgressBar  *progress;
 
@@ -204,10 +206,14 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       void update_detector_width              ( const QString & );
       void update_detector_pixels_width       ( const QString & );
       void update_sample_rotations            ( const QString & );
+      void update_axis_rotations              ( const QString & );
       void update_rho0                        ( const QString & );
       void update_deltaR                      ( const QString & );
       void update_probe_radius                ( const QString & );
       void update_threshold                   ( const QString & );
+
+      void set_random_rotations();
+      void set_planar_method();
 
       void info();
 
