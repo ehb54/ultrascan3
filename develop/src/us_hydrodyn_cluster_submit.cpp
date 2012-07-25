@@ -559,7 +559,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
-      QRegExp rx( "^bfnb_p(\\d+)_" );
+      QRegExp rx( "^(bfnb|oned)_p(\\d+)_" );
       if ( rx.search( file ) != -1 )
       {
          job_count = rx.cap( 1 ).toUInt();
@@ -588,6 +588,16 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
                   "<Header>" );
    xml += QString( "<userdn>%1</userdn>" ).arg( cluster_id );
 
+
+   QString job_type = "iq";
+   if ( file.contains( QRegExp( "^bfnb_" ) ) )
+   {
+      job_type = "nsa";
+   }
+   if ( file.contains( QRegExp( "^oned_" ) ) )
+   {
+      job_type = "1d";
+   }
 
    xml += QString( 
                   "<experimentid>%1</experimentid>"
@@ -621,7 +631,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       .arg( selected_system[ "runtime" ].toUInt() )
       .arg( cluster_id )
       .arg( selected_system[ "executable" ].isEmpty() ? "" : QString( "<executable>%1</executable>" ).arg( selected_system[ "executable" ] ) )
-      .arg( file.contains( QRegExp( "^bfnb_" ) ) ? "nsa" : "iq" )
+      .arg( job_type )
       .arg( QString( "%1/%2" )
             .arg( target_dir )
             .arg( file ) );

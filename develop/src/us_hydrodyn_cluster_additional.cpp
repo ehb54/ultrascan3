@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_additional.h"
 #include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
+#include "../include/us_hydrodyn_cluster_oned.h"
 #include "../include/us_hydrodyn_cluster_dammin.h"
 #include "../include/us_hydrodyn.h"
 
@@ -77,6 +78,20 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    pb_bfnb_nsa->setMinimumHeight(minHeight1);
    pb_bfnb_nsa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_bfnb_nsa, SIGNAL( clicked() ), SLOT( bfnb_nsa() ) );
+
+   cb_oned = new QCheckBox(this);
+   cb_oned->setText(tr(" Active "));
+   cb_oned->setChecked( options_active.count( "oned" ) && options_active[ "oned" ] );
+   cb_oned->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_oned->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_oned->setMinimumHeight( minHeight1 );
+   connect( cb_oned, SIGNAL( clicked() ), this, SLOT( set_oned() ) );
+
+   pb_oned = new QPushButton( "1d", this );
+   pb_oned->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_oned->setMinimumHeight(minHeight1);
+   pb_oned->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_oned, SIGNAL( clicked() ), SLOT( oned() ) );
 
    cb_csa = new QCheckBox(this);
    cb_csa->setText(tr(" Active "));
@@ -166,6 +181,10 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    gl_options->addWidget( pb_bfnb_nsa  , j, 1 );
    j++;
 
+   gl_options->addWidget( cb_oned      , j, 0 );
+   gl_options->addWidget( pb_oned      , j, 1 );
+   j++;
+
    gl_options->addWidget( cb_csa       , j, 0 );
    gl_options->addWidget( pb_csa       , j, 1 );
    j++;
@@ -232,6 +251,7 @@ void US_Hydrodyn_Cluster_Additional::update_enables()
 {
    pb_bfnb      ->setEnabled( cb_bfnb      ->isChecked() );
    pb_bfnb_nsa  ->setEnabled( cb_bfnb_nsa  ->isChecked() );
+   pb_oned      ->setEnabled( cb_oned  ->isChecked() );
    pb_csa       ->setEnabled( cb_csa       ->isChecked() );
    pb_dammin    ->setEnabled( cb_dammin    ->isChecked() );
    pb_dammif    ->setEnabled( cb_dammif    ->isChecked() );
@@ -279,6 +299,31 @@ void US_Hydrodyn_Cluster_Additional::bfnb_nsa()
    hc->exec();
    delete hc;
    options_selected[ "bfnb_nsa" ] = parameters;
+}
+
+void US_Hydrodyn_Cluster_Additional::set_oned()
+{
+   options_active[ "oned" ] = cb_oned->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Additional::oned()
+{
+   map < QString, QString > parameters;
+   if ( options_selected.count( "oned" ) )
+   {
+      parameters = options_selected[ "oned" ];
+   }
+   US_Hydrodyn_Cluster_Oned *hc = 
+      new US_Hydrodyn_Cluster_Oned(
+                                       us_hydrodyn,
+                                       &parameters,
+                                       this 
+                                       );
+   US_Hydrodyn::fixWinButtons( hc );
+   hc->exec();
+   delete hc;
+   options_selected[ "oned" ] = parameters;
 }
 
 void US_Hydrodyn_Cluster_Additional::set_csa()

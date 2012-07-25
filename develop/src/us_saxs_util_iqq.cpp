@@ -297,6 +297,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1daxisrotations|"
                       "1drotationfile|"
                       "1drun|"
+                      "onedrun|"
                       "1dintermediatesaves|"
 
                       "remark)$"
@@ -920,7 +921,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
          cout << "back from a2sbrun\n" << flush;
       }
 
-      if ( option == "1drun" )
+      if ( option == "1drun" ||
+           option == "onedrun" )
       {
          setup_saxs_options();
          if ( !read_pdb( control_parameters[ "inputfile" ] ) )

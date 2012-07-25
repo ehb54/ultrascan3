@@ -50,6 +50,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Additional : public QDialog
       QPushButton   *pb_bfnb;
       QCheckBox     *cb_bfnb_nsa;
       QPushButton   *pb_bfnb_nsa;
+      QCheckBox     *cb_oned;
+      QPushButton   *pb_oned;
       QCheckBox     *cb_csa;
       QPushButton   *pb_csa;
       QCheckBox     *cb_dammin;
@@ -82,6 +84,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Additional : public QDialog
       void bfnb();
       void set_bfnb_nsa();
       void bfnb_nsa();
+      void set_oned();
+      void oned();
       void set_csa();
       void csa();
       void set_dammin();

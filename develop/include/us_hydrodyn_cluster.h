@@ -136,7 +136,11 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool >                       cluster_additional_methods_require_experimental_data;
       map < QString, bool >                       cluster_additional_methods_require_sleep;
       map < QString, bool >                       cluster_additional_methods_parallel_mpi;
+      map < QString, bool >                       cluster_additional_methods_one_pdb_exactly;
+      map < QString, bool >                       cluster_additional_methods_no_tgz_output;
+      map < QString, bool >                       cluster_additional_methods_must_run_alone;
       map < QString, QString >                    cluster_additional_methods_prepend;
+      map < QString, QString >                    cluster_additional_methods_add_selected_files;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

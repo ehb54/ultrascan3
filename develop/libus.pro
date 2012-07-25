@@ -195,6 +195,7 @@ SOURCES += \
   src/us_hydrodyn_cluster_config_server.cpp \
   src/us_hydrodyn_cluster_dmd.cpp \
   src/us_hydrodyn_cluster_dammin.cpp \
+  src/us_hydrodyn_cluster_oned.cpp \
   src/us_hydrodyn_cluster_results.cpp \
   src/us_hydrodyn_cluster_submit.cpp \
   src/us_hydrodyn_cluster_status.cpp \
@@ -485,6 +486,7 @@ HEADERS += \
   include/us_hydrodyn_cluster_config_server.h \
   include/us_hydrodyn_cluster_dammin.h \
   include/us_hydrodyn_cluster_dmd.h \
+  include/us_hydrodyn_cluster_oned.h \
   include/us_hydrodyn_cluster_results.h \
   include/us_hydrodyn_cluster_submit.h \
   include/us_hydrodyn_cluster_status.h \

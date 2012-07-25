@@ -28,7 +28,13 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_require_sleep            [ "dammif"   ] = true;
    cluster_additional_methods_require_sleep            [ "gasbor"   ] = true;
    cluster_additional_methods_parallel_mpi             [ "bfnb_nsa" ] = true;
+   cluster_additional_methods_parallel_mpi             [ "oned"     ] = true;
    cluster_additional_methods_prepend                  [ "bfnb_nsa" ] = "bfnb_";
+   cluster_additional_methods_prepend                  [ "oned"     ] = "oned_";
+   cluster_additional_methods_one_pdb_exactly          [ "oned"     ] = true;
+   cluster_additional_methods_no_tgz_output            [ "oned"     ] = true;
+   cluster_additional_methods_must_run_alone           [ "oned"     ] = true;
+   cluster_additional_methods_add_selected_files       [ "oned"     ] = true;
 
    cluster_config[ "userid" ] = "";
    cluster_config[ "server" ] = "";
@@ -1432,6 +1438,12 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( QRegExp( "^bfnb_" ), "" );
       le_output_name->setText( qs );
    }
+   if ( cqs.contains( QRegExp( "^oned_" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "^oned_" ), "" );
+      le_output_name->setText( qs );
+   }
    if ( cqs.contains( "_out", false ) )
    {
       QString qs = cqs;
@@ -2696,6 +2708,7 @@ bool US_Hydrodyn_Cluster::active_additional_prepend_issue()
 {
    // we can not mix real parallel jobs with trivially parallel jobs
    QString first_prepend;
+   bool    first_one_pdb_exactly = false;
    QStringList methods = active_additional_methods();
    for ( int i = 0; i < ( int ) methods.size(); i++ )
    {
@@ -2704,11 +2717,18 @@ bool US_Hydrodyn_Cluster::active_additional_prepend_issue()
          first_prepend = 
             cluster_additional_methods_prepend.count( methods[ i ] ) ? 
             cluster_additional_methods_prepend[ methods[ i ] ] : "";
+         first_one_pdb_exactly = 
+            cluster_additional_methods_one_pdb_exactly.count( methods[ i ] ) ? 
+            true : false;
       } else {
          QString this_prepend =
             cluster_additional_methods_prepend.count( methods[ i ] ) ? 
             cluster_additional_methods_prepend[ methods[ i ] ] : "";
-         if ( this_prepend != first_prepend )
+         bool this_one_pdb_exactly = 
+            cluster_additional_methods_one_pdb_exactly.count( methods[ i ] ) ? 
+            true : false;
+         if ( this_prepend != first_prepend ||
+              this_one_pdb_exactly != first_one_pdb_exactly )
          {
             return true;
          }
@@ -2770,7 +2790,38 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                       ) );
       return;
    }
-      
+
+   if ( selected_files.size() != 1 ) 
+   {
+      for ( int i = 0; i < ( int ) methods.size(); i++ )
+      {
+         if ( cluster_additional_methods_one_pdb_exactly.count( methods[ i ] ) )
+         {
+            editor_msg( "red"     , 
+                        tr( 
+                           "The active additonal method requires exactly one pdb to be selected"
+                           ) );
+            return;
+         }
+      }
+   }
+
+   if ( methods.size() > 1 )
+   {
+      for ( int i = 0; i < ( int ) methods.size(); i++ )
+      {
+         if ( cluster_additional_methods_must_run_alone.count( methods[ i ] ) )
+         {
+            editor_msg( "red"     , 
+                        tr( 
+                           "An active additional method is required to be run without other active active additional methods"
+                           ) );
+            return;
+         }
+      }
+   }
+            
+
    if ( cluster_additional_methods_parallel_mpi.count( methods[ 0 ] ) )
    {
       return create_additional_methods_parallel_pkg ( base_dir,
@@ -2874,6 +2925,19 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
             out += QString( "sleep\t%1\n" ).arg( i );
          }
 
+         if ( cluster_additional_methods_add_selected_files.count( methods[ m ] ) )
+         {
+            for ( unsigned int i = 0; i < selected_files.size(); i++ )
+            {
+               out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+               if ( !already_added.count( selected_files[ i ] ) )
+               {
+                  source_files << selected_files[ i ];
+                  already_added[ selected_files[ i ] ]++;
+               }
+            }            
+         }
+
          if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
          {
             for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();
@@ -2922,8 +2986,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          {
             QTextStream ts( &f );
             ts << out;
-            ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
-                                                                 ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
+            if ( !cluster_additional_methods_no_tgz_output.count( methods[ 0 ] ) )
+            {
+               ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( le_output_name->text() + 
+                                                                    ( use_extension ? QString("_p%1").arg( ext ) : "" ) );
+            }
             f.close();
             editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
             qApp->processEvents();
@@ -3383,6 +3450,19 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
 
       for ( int m = 0; m < ( int )methods.size(); m++ )
       {
+         if ( cluster_additional_methods_add_selected_files.count( methods[ m ] ) )
+         {
+            for ( unsigned int i = 0; i < selected_files.size(); i++ )
+            {
+               out += QString( "InputFile       %1\n" ).arg( QFileInfo( selected_files[ i ] ).fileName() );
+               if ( !already_added.count( selected_files[ i ] ) )
+               {
+                  source_files << selected_files[ i ];
+                  already_added[ selected_files[ i ] ]++;
+               }
+            }            
+         }
+
          if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
          {
             for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();
@@ -3421,7 +3501,10 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
       {
          QTextStream ts( &f );
          ts << out;
-         ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( QFileInfo( use_file ).baseName() );
+         if ( !cluster_additional_methods_no_tgz_output.count( methods[ 0 ] ) )
+         {
+            ts << QString( "TgzOutput       %1_out.tgz\n" ).arg( QFileInfo( use_file ).baseName() );
+         }
          f.close();
          editor_msg( "dark gray", QString("Created: %1").arg( use_file ) );
          qApp->processEvents();
