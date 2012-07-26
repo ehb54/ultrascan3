@@ -195,6 +195,7 @@ private:
       int  queued_at_depth(  int );
       int  jobs_at_depth(    int );
       QString pmessage_head( void );
+      WorkPacket next_job  ( void );
 };
 #endif
 

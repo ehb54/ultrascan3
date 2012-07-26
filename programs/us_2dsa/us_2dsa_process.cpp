@@ -168,7 +168,6 @@ DbgLv(1) << "2P:   nsubgrid nctotal nthreads maxtsols"
    max_rss();
 DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
 
-   int    ktask = 0;
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
    QList< QVector< US_Solute > > solute_list;
@@ -237,13 +236,13 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
    }
 
    // Queue all the depth-0 tasks
-   for ( int ii = 0; ii < nsubgrid; ii++ )
+   for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
       WorkPacket wtask;
-      double llss = orig_sols[ ii ][ 0 ].s;
-      double llsk = orig_sols[ ii ][ 0 ].k;
+      double llss = orig_sols[ ktask ][ 0 ].s;
+      double llsk = orig_sols[ ktask ][ 0 ].k;
 
-      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, orig_sols[ ii ] );
+      queue_task( wtask, llss, llsk, ktask, jdpth, jnois, orig_sols[ ktask ] );
 
       maxtsols       = max( maxtsols, wtask.isolutes.size() );
    }
@@ -863,7 +862,7 @@ DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
    // Submit jobs while queue is not empty and a worker thread is ready
    while ( ! job_queue.isEmpty() && ( thrx = wkstates.indexOf( READY ) ) >= 0 )
    {
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacket wtask = next_job();
 
       submit_job( wtask, thrx );
       kstask++;                       // bump count of started worker threads
@@ -897,7 +896,7 @@ DbgLv(1) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << depth
 
             c_solutes[ depth ].clear();
 
-            wtask        = job_queue.takeFirst();
+            wtask        = next_job();
             thrx         = wkstates.indexOf( READY );
 
             submit_job( wtask, thrx );
@@ -956,6 +955,7 @@ void US_2dsaProcess::iterate()
    tkdepths .clear();
    job_queue.clear();
    QVector< US_Solute > csolutes = c_solutes[ maxdepth ];
+   QVector< US_Solute > isolutes;
 
    int    ncsol = csolutes.size();   // number of solutes calculated last iter
 
@@ -1027,13 +1027,18 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
    }
 #endif
 
+//*DEBUG
+for(int jj=0; jj<ncsol; jj++ )
+ DbgLv(1) << "ITER:     csol" << jj << "  s k c"
+  << csolutes[jj].s << csolutes[jj].k << csolutes[jj].c;
+int ktadd=0;
+//*DEBUG
    for ( ktask = 0; ktask < nsubgrid; ktask++ )
    {
-      double llss = orig_sols[ ktask ][ 0 ].s;
-      double llsk = orig_sols[ ktask ][ 0 ].k;
-      // get the solutes originally created for this subgrid
-      QVector< US_Solute > isolutes = orig_sols[ ktask ];
-      // add any calculated solutes not already in subgrid
+      // Get the solutes originally created for this subgrid
+      isolutes = orig_sols[ ktask ];
+
+      // Add in any calculated solutes not already in this subgrid
       for ( int cc = 0; cc < ncsol; cc++ )
          if ( ! isolutes.contains( csolutes[ cc ] ) )
             isolutes << csolutes[ cc ];
@@ -1041,14 +1046,27 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
 int kosz=orig_sols[ktask].size();
 int kasz=isolutes.size();
 int kadd=kasz-kosz;
+ktadd += (ncsol-kadd);
 if ( kadd < ncsol )
 DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
- << kosz << kasz << ncsol << kadd;
+ << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << ncsol << nsubgrid;
 //*DEBUG
-      // queue a subgrid task and update maximum task solute count
+      // Queue a subgrid task and update the maximum task solute count
+      double llss = isolutes[ 0 ].s;
+      double llsk = isolutes[ 0 ].k;
+      qSort( isolutes );
       WorkPacket wtask;
-      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
+      queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
+      maxtsols       = max( maxtsols, isolutes.size() );
    }
+//*DEBUG
+if(ktadd<ncsol) {
+ for(int kt=0;kt<nsubgrid;kt++)
+  for(int cc=0;cc<orig_sols[kt].size();cc++)
+   DbgLv(1) << "ITER          kt cc" << kt << cc << " s k c"
+    << orig_sols[kt][cc].s << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
+}
+//*DEBUG
 
    // Make sure calculated solutes are cleared out for new iteration
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
@@ -1317,5 +1335,29 @@ QString US_2dsaProcess::pmessage_head()
 {
    return tr( "Model %1,  Iteration %2:\n" )
           .arg( mm_iter + 1 ).arg( r_iter + 1 );
+}
+
+// Get next job from queue, insuring we get the lowest depth
+WorkPacket US_2dsaProcess::next_job()
+{
+   int taskx        = 0;
+   WorkPacket wtask = job_queue[ taskx ];
+   int depth1       = wtask.depth;
+
+   for ( int ii = 0; ii < job_queue.size(); ii++ )
+   {
+      if ( job_queue[ ii ].depth < depth1 )
+      {
+         wtask         = job_queue[ ii ];
+         depth1        = wtask.depth;
+         taskx         = ii;
+      }
+   }
+
+if(taskx>0)
+DbgLv(1) << "NEXTJ: taskx depth1 depth0"
+ << taskx << depth1 << job_queue[0].depth;
+   job_queue.removeAt( taskx );
+   return wtask;
 }
 
