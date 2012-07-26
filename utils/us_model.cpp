@@ -369,8 +369,8 @@ QString US_Model::typeText( void )
       { GA_MW,       QObject::tr( "GA-MW"       ) },
       { COFS,        QObject::tr( "COFS"        ) },
       { FE,          QObject::tr( "FE"          ) },
-      { INITIALGRID, QObject::tr( "INITIALGRID" ) },
-      { ONEDSA,      QObject::tr( "1DSA"        ) }
+      { ONEDSA,      QObject::tr( "1DSA"        ) },
+      { INITIALGRID, QObject::tr( "INITIALGRID" ) }
    };
 
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
@@ -810,7 +810,8 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       SimulationComponent* sc = &components[ i ];
       xml.writeStartElement( "analyte" );
 
-      xml.writeAttribute( "analyteGUID", ""                         );
+      if ( !sc->analyteGUID.isEmpty() )
+         xml.writeAttribute( "analyteGUID", sc->analyteGUID            );
       xml.writeAttribute( "name",       sc->name                    );
       xml.writeAttribute( "mw",         QString::number( sc->mw   ) );
       xml.writeAttribute( "s",          QString::number( sc->s    ) );
