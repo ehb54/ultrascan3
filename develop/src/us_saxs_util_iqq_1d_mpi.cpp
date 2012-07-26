@@ -231,6 +231,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    {
       QStringList org_output_files = output_files;
       output_files.clear();
+      QString errors;
 
       for ( int i = 0; i < ( int ) org_output_files.size(); i++ )
       {
@@ -244,6 +245,8 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          vector < double > I;
 
          // open up & average:
+
+         int number_of_files_read = 0;
 
          for ( int r = 0; r < npes; r++ )
          {
@@ -260,13 +263,10 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
             }
             if ( !set_control_parameters_from_experiment_file( f.name(), true ) )
             {
-               cout << QString( "%1: %2\n" )
-                  .arg( myrank )
-                  .arg( errormsg )
-                       << flush;
-               MPI_Abort( MPI_COMM_WORLD, -5002 );
-               exit( -5002 );
+               errors +=  QString( "%1: Error trying to get grid, ignorming this processor%2\n" ).arg( myrank ).arg( errormsg );
+               continue;
             }
+            number_of_files_read++;
             if ( !r )
             {
                q = sgp_exp_q;
@@ -290,7 +290,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          }
          for ( unsigned int i = 0; i < ( unsigned int )sgp_exp_I.size(); i++ )
          {
-            I[ i ] /= (double) npes;
+            I[ i ] /= (double) number_of_files_read;
          }
          if ( !write_output( name, q, I ) )
          {
@@ -309,6 +309,23 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          .arg( output_files.join( ":" ) ) 
          .arg( controlfile )
            << flush;
+
+      if ( !errors.isEmpty() )
+      {
+         QFile f( "errors" );
+         if ( !f.open( IO_WriteOnly ) )
+         {
+            cout << "Error: errors exist but can not open errors file\n" << flush;
+            MPI_Abort( MPI_COMM_WORLD, -5002 );
+            exit( -5002 );
+         }
+
+         QTextStream ts( &f );
+         ts << errors;
+         f.close();
+         output_files << "errors";
+      }
+
       // package output
       if ( !create_tgz_output( controlfile + "_out.tgz" ) )
       {
