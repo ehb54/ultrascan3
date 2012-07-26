@@ -911,6 +911,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid )
    QDir f( path );
    QStringList filter( "M???????.xml" );
    QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+   QString fnamo;
 
    for ( int i = 0; i < f_names.size(); i++ )
    {
@@ -931,7 +932,10 @@ QString US_Model::get_filename( const QString& path, const QString& guid )
                QXmlStreamAttributes a = xml.attributes();
 
                if ( a.value( "modelGUID" ).toString() == guid )
-                  return path + "/" + f_names[ i ];
+               {  // Break when we have found a file with a matching GUID
+                  fnamo = path + "/" + f_names[ i ];
+                  break;
+               }
             }
          }
       }
@@ -939,9 +943,27 @@ QString US_Model::get_filename( const QString& path, const QString& guid )
       m_file.close();
    }
 
-   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
+   if ( fnamo.isEmpty() )
+   {  // No matching-GUID file, so look for a break in the number sequence
+      int number = ( f_names.size() > 0 ) ?       // Last used file number
+         f_names.last().mid( 1, 7 ).toInt() : 0;  // and default last sequence
 
-   return path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+      for ( int ii = 0; ii < number; ii++ )
+      {
+         QString fnamck = "M" + QString().sprintf( "%07i", ii + 1 ) + ".xml";
+
+         if ( ! f_names.contains( fnamck ) )
+         {  // There is a hole in the sequence, so re-use this number
+            number = ii;
+            break;
+         }
+      }
+
+      // File name uses a break in the sequence or one past last used.
+      fnamo = path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   }
+
+   return fnamo;
 }
 
 void US_Model::debug( void )
