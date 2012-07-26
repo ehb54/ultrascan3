@@ -408,16 +408,14 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
 
       QString subType   = descript.section( ".", -2, -2 ).section( "_", 2, 2 );
 
-      if ( subType.isEmpty()  ||  recsize.toInt() > 65000  ||
-           descript.contains( "InitialGrid" ) )
-      {
+      if ( recsize.toInt() > 65000  ||  descript.contains( "InitialGrid" ) )
          subType           = "INITIALGRID";
-      }
+
+      else if ( subType.isEmpty() )
+         subType           = "MANUAL";
 
       contents          = cksum + " " + recsize;
-
 //DbgLv(2) << "BrDb:         det: cont" << contents;
-
       cdesc.recordID    = irecID;
       cdesc.recType     = 3;
       cdesc.subType     = subType;

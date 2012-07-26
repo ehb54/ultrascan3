@@ -450,6 +450,7 @@ void US_Grid_Editor::save( void )
       if ( slen > 32 ) model.description = model.description.left( 32 );
       model.description = model.description + ".model";
    }
+
    // Output the combined grid model
 	int code;
    if ( dkdb_cntrls->db() )
@@ -463,19 +464,25 @@ void US_Grid_Editor::save( void )
       QString fnamo = US_Model::get_filename( modelPath, modelGuid );
       code = model.write( fnamo );
    }
-   mbox.setWindowTitle( tr( "Grid Model Saving..." ) );
-	mbox.removeButton(pb_edit);
-	mbox.removeButton(pb_canc);
-	QString str;
-	if (code == US_DB2::OK)
+
+	QString mtitle = tr( "Grid Model Saving..." );
+
+	if ( code == US_DB2::OK )
 	{
-		mbox.setText ( tr("The file ") +  model.description + tr(" was successfully saved.") );
+      QString destination = dkdb_cntrls->db() ?
+                            tr ( "local disk and database." ) :
+                            tr ( "local disk." );
+      QMessageBox::information( this, mtitle,
+		   tr( "The file \"" ) +  model.description 
+         + tr( "\"\n  was successfully saved to " ) + destination );
 	}
 	else
 	{
-		mbox.setText ( tr("Writing the model file  ") +  model.description + tr(" resulted in error code ") + str.arg(code) );
+      QMessageBox::warning( this, mtitle,
+		   tr( "Writing the model file  \"") +  model.description
+         + tr( "\"\n  resulted in error code " )
+         + QString::number( code ) + " ." );
 	}
-	mbox.exec();
 }
 
 // update raster x resolution
