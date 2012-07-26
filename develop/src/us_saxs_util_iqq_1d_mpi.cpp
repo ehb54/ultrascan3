@@ -200,10 +200,6 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    // everyone reads for now
    controlfile = qslt[ 0 ];
 
-   struct timeval tv;
-   gettimeofday(&tv, NULL);
-   srand48( tv.tv_usec + myrank );
-   
    if ( !read_control( controlfile ) )
    {
       cout <<  cout << QString( "%1: Error: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
@@ -1055,26 +1051,106 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
                                                        unsigned int number, 
                                                        vector < vector < double > > &rotations )
 {
-   rotations.clear();
-   vector < double > p(3);
-   unsigned int my_rots =  number / ( unsigned int ) npes + 1;
-   while ( ( unsigned int ) rotations.size() <  my_rots )
+   cout << QString("%1: initial hypercube rejection random rotations\n" ).arg( myrank ) << flush;
+   if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
-      p[ 0 ] = drand48() * 2.0 - 1.0;
-      p[ 1 ] = drand48() * 2.0 - 1.0;
-      p[ 2 ] = drand48() * 2.0 - 1.0;
-      
-      double mag = sqrt( p[ 0 ] * p[ 0 ] +
-                         p[ 1 ] * p[ 1 ] +
-                         p[ 2 ] * p[ 2 ] );
-      if ( mag && mag < 1.0 )
+      MPI_Abort( MPI_COMM_WORLD, -9999 );
+      exit( -9999 );
+   }         
+
+   int proc_rots  = ( int ) number / npes + 1;
+   int proc_rots3 = 3 * proc_rots;
+
+   vector < double > send_recv_rotations;
+
+   if ( !myrank )
+   {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      srand48( tv.tv_usec + myrank );
+   
+      // generate rotations for the other processes
+      for ( int i = 1; i < npes; i++ )
       {
-         p[ 0 ] /= mag;
-         p[ 1 ] /= mag;
-         p[ 2 ] /= mag;
+         send_recv_rotations.clear();
+         double x;
+         double y;
+         double z;
+         
+         while ( ( unsigned int ) send_recv_rotations.size() < proc_rots3 )
+         {
+            x = drand48() * 2.0 - 1.0;
+            y = drand48() * 2.0 - 1.0;
+            z = drand48() * 2.0 - 1.0;
+         
+            double mag = sqrt( x * x + y * y + z * z );
+            if ( mag && mag < 1.0 )
+            {
+               x /= mag;
+               y /= mag;
+               z /= mag;
+               send_recv_rotations.push_back( x );
+               send_recv_rotations.push_back( y );
+               send_recv_rotations.push_back( z );
+            }
+         }
+         // send them
+         if ( MPI_SUCCESS != MPI_Send( ( void * ) &send_recv_rotations[ 0 ],
+                                       proc_rots3,
+                                       MPI_DOUBLE,
+                                       i,
+                                       i,
+                                       MPI_COMM_WORLD ) )
+         {
+            MPI_Abort( MPI_COMM_WORLD, -10000 - myrank );
+            exit( -10000 );
+         }         
+      }
+      // and make up ours:
+      rotations.clear();
+      vector < double > p( 3 );
+      while ( ( unsigned int ) rotations.size() < proc_rots )
+      {
+         p[ 0 ] = drand48() * 2.0 - 1.0;
+         p[ 1 ] = drand48() * 2.0 - 1.0;
+         p[ 2 ] = drand48() * 2.0 - 1.0;
+         
+         double mag = sqrt( p[ 0 ] * p[ 0 ] + p[ 1 ] * p[ 1 ] + p[ 2 ] * p[ 2 ] );
+         if ( mag && mag < 1.0 )
+         {
+            p[ 0 ] /= mag;
+            p[ 1 ] /= mag;
+            p[ 2 ] /= mag;
+            rotations.push_back( p );
+         }
+      }
+   } else {
+      // recv them
+      MPI_Status mpi_status;
+      send_recv_rotations.resize( proc_rots3 );
+      if ( MPI_SUCCESS != MPI_Recv( ( void * ) &send_recv_rotations[ 0 ],
+                                    proc_rots3,
+                                    MPI_DOUBLE,
+                                    0, 
+                                    myrank,
+                                    MPI_COMM_WORLD,
+                                    &mpi_status ) )
+      {
+         MPI_Abort( MPI_COMM_WORLD, -10000 - myrank );
+         exit( -10000 - myrank );
+      } 
+      rotations.clear();
+      vector < double > p( 3 );
+      for ( int i = 0; i < proc_rots3; i+=3 )
+      {
+         p[ 0 ] = send_recv_rotations[ i     ];
+         p[ 1 ] = send_recv_rotations[ i + 1 ];
+         p[ 2 ] = send_recv_rotations[ i + 2 ];
          rotations.push_back( p );
       }
    }
+   cout << QString( "%1: my rotations size %2\n" ).arg( myrank ).arg( rotations.size() ) << flush;
+   return;
 }
 
 bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < double > > &rotations )
