@@ -190,7 +190,7 @@ CREATE PROCEDURE new_noise ( p_personGUID    CHAR(36),
                              p_modelGUID     CHAR(36),
                              p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
                              p_description   TEXT,
-                             p_xml           TEXT )         -- an xml file
+                             p_xml           LONGTEXT )     -- an xml file
   MODIFIES SQL DATA
 
 BEGIN
@@ -308,7 +308,7 @@ CREATE PROCEDURE update_noise ( p_personGUID    CHAR(36),
                                 p_modelGUID     CHAR(36),
                                 p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
                                 p_description   TEXT,
-                                p_xml           TEXT )         -- an xml file
+                                p_xml           LONGTEXT )     -- an xml file
   MODIFIES SQL DATA
 
 BEGIN
