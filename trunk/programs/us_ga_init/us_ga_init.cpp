@@ -500,7 +500,7 @@ DbgLv(1) << "SAVE novlps" << novlps;
    QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fndat;
    QString fdir2 = US_Settings::reportDir() + "/" + runid;
-   QString fnst2 = "gainit." + trpid + ".statistics.rpt";
+   QString fnst2 = method + "." + trpid + ".statistics.rpt";
    QString fnam2 = fdir2 + "/" + fnst2;
 
    QDir dirp( US_Settings::resultDir() );
@@ -555,9 +555,13 @@ DbgLv(1) << "SAVE call reportMC";
          US_Report   freport;
          freport.runID      = runid;
 
-         freport.saveDocumentFromFile( fdir2, fnst2, dbP, idEdit );
+         int status =
+            freport.saveDocumentFromFile( fdir2, fnst2, dbP, idEdit );
 
-         msg     += tr( "\n\nThe report file was also saved to the database" );
+         if ( status == US_Report::REPORT_OK )
+            msg  += tr( "\n\nThe report file was also saved to the database" );
+         else
+            msg  += tr( "\n\n*ERROR* attempting save of report to database." );
       }
    }
 
@@ -2083,7 +2087,7 @@ qDebug() << "VIEW OPENED";
       US_Editor* eddiag = new US_Editor( US_Editor::DEFAULT, true );
       eddiag->setWindowTitle( tr( "Statistics File Contents" ) );
       eddiag->move( this->pos() + QPoint( 30, 30 ) );
-      eddiag->resize( 600, 700 );
+      eddiag->resize( 760, 700 );
       eddiag->e->setFont( US_Widgets::fixedFont() );
       eddiag->e->setPlainText( rtext );
 qDebug() << "VIEW eddiag SHOW";

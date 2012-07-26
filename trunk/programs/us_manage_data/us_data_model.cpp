@@ -407,6 +407,13 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
          label = label.left( 13 ) + "..." + label.right( 24 );
 
       QString subType   = descript.section( ".", -2, -2 ).section( "_", 2, 2 );
+
+      if ( subType.isEmpty()  ||  recsize.toInt() > 65000  ||
+           descript.contains( "InitialGrid" ) )
+      {
+         subType           = "INITIALGRID";
+      }
+
       contents          = cksum + " " + recsize;
 
 //DbgLv(2) << "BrDb:         det: cont" << contents;
@@ -1733,6 +1740,9 @@ QString US_DataModel::model_type( int imtype, int nassoc, int gtype, bool isMC )
          break;
       case (int)US_Model::ONEDSA:
          mtype = "1DSA";
+         break;
+      case (int)US_Model::INITIALGRID:
+         mtype = "INITIALGRID";
          break;
    }
 
