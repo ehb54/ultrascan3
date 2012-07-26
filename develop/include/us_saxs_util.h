@@ -1209,6 +1209,9 @@ class US_EXTERN US_Saxs_Util
       bool                                            compute_1d_mpi();
       bool                                            load_rotations_mpi( unsigned int number,
                                                                           vector < vector < double > > &rotations );
+      void                                            hypercube_rejection_drand_rotations(
+                                                                                          unsigned int number, 
+                                                                                          vector < vector < double > > &rotations );
 #endif
 
       bool                                            update_image();

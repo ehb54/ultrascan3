@@ -294,6 +294,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1dproberadius|"
                       "1dthreshold|"
                       "1dsamplerotations|"
+                      "1drotationsuserand|"
                       "1daxisrotations|"
                       "1drotationfile|"
                       "1drun|"

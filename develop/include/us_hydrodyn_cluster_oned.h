@@ -44,6 +44,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Oned : public QDialog
       QLabel *                                lbl_credits_1;
       QLabel *                                lbl_1drotationfile;
       QLineEdit *                             le_1drotationfile;
+      QLabel *                                lbl_1drotationsuserand;
+      QLineEdit *                             le_1drotationsuserand;
       QLabel *                                lbl_1dlambda;
       QLineEdit *                             le_1dlambda;
       QLabel *                                lbl_1ddetectordistance;
@@ -81,6 +83,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Oned : public QDialog
    private slots:
 
       void                                    update_1drotationfile( const QString & );
+      void                                    update_1drotationsuserand( const QString & );
       void                                    update_1dlambda( const QString & );
       void                                    update_1ddetectordistance( const QString & );
       void                                    update_1ddetectorwidth( const QString & );

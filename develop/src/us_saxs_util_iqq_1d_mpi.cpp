@@ -1,6 +1,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
 #include <mpi.h>
+#include <sys/time.h>
 extern int npes;
 extern int myrank;
 extern QString outputData;
@@ -193,6 +194,10 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    // everyone reads for now
    controlfile = qslt[ 0 ];
 
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   srand48( tv.tv_usec + myrank );
+   
    if ( !read_control( controlfile ) )
    {
       cout <<  cout << QString( "%1: Error: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
@@ -495,9 +500,14 @@ bool US_Saxs_Util::compute_1d_mpi()
 
    vector < vector < double > > rotations;
 
-   if ( !load_rotations_mpi( sample_rotations, rotations ) )
+   if ( control_parameters.count( "1drotationsuserand" ) )
    {
-      return false;
+      hypercube_rejection_drand_rotations( sample_rotations, rotations );
+   } else {
+      if ( !load_rotations_mpi( sample_rotations, rotations ) )
+      {
+         return false;
+      }
    }
 
    // setup atoms
@@ -1033,6 +1043,32 @@ bool US_Saxs_Util::compute_1d_mpi()
       return false;
    }
    return true;
+}
+
+void US_Saxs_Util::hypercube_rejection_drand_rotations( 
+                                                       unsigned int number, 
+                                                       vector < vector < double > > &rotations )
+{
+   rotations.clear();
+   vector < double > p(3);
+   unsigned int my_rots =  number / ( unsigned int ) npes + 1;
+   while ( ( unsigned int ) rotations.size() <  my_rots )
+   {
+      p[ 0 ] = drand48() * 2.0 - 1.0;
+      p[ 1 ] = drand48() * 2.0 - 1.0;
+      p[ 2 ] = drand48() * 2.0 - 1.0;
+      
+      double mag = sqrt( p[ 0 ] * p[ 0 ] +
+                         p[ 1 ] * p[ 1 ] +
+                         p[ 2 ] * p[ 2 ] );
+      if ( mag && mag < 1.0 )
+      {
+         p[ 0 ] /= mag;
+         p[ 1 ] /= mag;
+         p[ 2 ] /= mag;
+         rotations.push_back( p );
+      }
+   }
 }
 
 bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < double > > &rotations )

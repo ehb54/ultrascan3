@@ -69,6 +69,22 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1drotationfile ->setMinimumWidth   ( 150 );
    connect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationfile( const QString & ) ) );
 
+   lbl_1drotationsuserand = new QLabel      ( tr( "Use drand48() for rotations" ), this );
+   lbl_1drotationsuserand ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_1drotationsuserand ->setMinimumHeight( minHeight1 );
+   lbl_1drotationsuserand ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_1drotationsuserand ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_1drotationsuserand ->setMinimumWidth ( QFontMetrics( lbl_1drotationsuserand->font() ).maxWidth() * 21 );
+
+   le_1drotationsuserand = new QLineEdit     ( this, "1drotationsuserand Line Edit" );
+   le_1drotationsuserand ->setText           ( parameters->count( "1drotationsuserand" ) ? ( *parameters )[ "1drotationsuserand" ] : "" );
+   le_1drotationsuserand ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_1drotationsuserand ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_1drotationsuserand ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_1drotationsuserand ->setMinimumHeight  ( minHeight1 );
+   le_1drotationsuserand ->setMinimumWidth   ( 150 );
+   connect( le_1drotationsuserand, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationsuserand( const QString & ) ) );
+
    lbl_1dlambda = new QLabel      ( tr( "Lambda" ), this );
    lbl_1dlambda ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dlambda ->setMinimumHeight( minHeight1 );
@@ -323,6 +339,12 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_1drotationsuserand );
+   hbl->addWidget( le_1drotationsuserand );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dlambda );
    hbl->addWidget( le_1dlambda );
    hbl->addSpacing( 4 );
@@ -422,6 +444,11 @@ void US_Hydrodyn_Cluster_Oned::help()
 
 void US_Hydrodyn_Cluster_Oned::closeEvent( QCloseEvent *e )
 {
+   if ( parameters->count( "1drotationsuserand" ) &&
+        (*parameters)[ "1drotationsuserand" ].isEmpty() )
+   {
+      parameters->erase( "1drotationsuserand" );
+   }
    if ( parameters->count( "1dintermediatesaves" ) &&
         (*parameters)[ "1dintermediatesaves" ].isEmpty() )
    {
@@ -447,6 +474,11 @@ void US_Hydrodyn_Cluster_Oned::update_1drotationfile( const QString & )
    le_1drotationfile->setText( filename );
    connect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationfile( const QString & ) ) );
    ( *parameters )[ "1drotationfile" ] = le_1drotationfile->text();
+}
+
+void US_Hydrodyn_Cluster_Oned::update_1drotationsuserand( const QString & )
+{
+   ( *parameters )[ "1drotationsuserand" ] = le_1drotationsuserand->text();
 }
 
 void US_Hydrodyn_Cluster_Oned::update_1dlambda( const QString & )
@@ -575,6 +607,7 @@ void US_Hydrodyn_Cluster_Oned::update_fields()
    disconnect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_1drotationfile                               ->setText( parameters->count( "1drotationfile" ) ? ( *parameters )[ "1drotationfile" ] : "" );
    connect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationfile( const QString & ) ) );
+   le_1drotationsuserand                           ->setText( parameters->count( "1drotationsuserand" ) ? ( *parameters )[ "1drotationsuserand" ] : "" );
    le_1dlambda                                     ->setText( parameters->count( "1dlambda" ) ? ( *parameters )[ "1dlambda" ] : "" );
    le_1ddetectordistance                           ->setText( parameters->count( "1ddetectordistance" ) ? ( *parameters )[ "1ddetectordistance" ] : "" );
    le_1ddetectorwidth                              ->setText( parameters->count( "1ddetectorwidth" ) ? ( *parameters )[ "1ddetectorwidth" ] : "" );
