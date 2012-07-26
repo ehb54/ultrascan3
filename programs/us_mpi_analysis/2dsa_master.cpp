@@ -154,31 +154,63 @@ void US_MPI_Analysis::init_solutes( void )
    simulation_values.dbg_timing  = dbg_timing;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
-   double s_min   = parameters[ "s_min"           ].toDouble() * 1.0e-13;
-   double s_max   = parameters[ "s_max"           ].toDouble() * 1.0e-13;
-   double ff0_min = parameters[ "ff0_min"         ].toDouble();
-   double ff0_max = parameters[ "ff0_max"         ].toDouble();
+   // Test to see if there is a custom initial grid model
+   QString model_filename = data_sets[ 0 ]->model_file;
 
-   int grid_repetitions = parameters[ "uniform_grid" ].toInt();
-   if ( grid_repetitions < 1 ) grid_repetitions = 1;
+   if ( model_filename.isEmpty() )
+   {  // If no model file given, calculate initial solutes in a fixed grid
 
-   double s_pts    = 60.0;
-   double ff0_pts  = 60.0;
-   if ( parameters.contains( "s_grid_points"   ) )
-      s_pts    = parameters[ "s_grid_points"   ].toDouble();
-   else if ( parameters.contains( "s_resolution"    ) )
-      s_pts    = parameters[ "s_resolution"    ].toDouble() * grid_repetitions;
-   if ( parameters.contains( "ff0_grid_points" ) )
-      ff0_pts  = parameters[ "ff0_grid_points" ].toDouble();
-   else if ( parameters.contains( "ff0_resolution"  ) )
-      ff0_pts  = parameters[ "ff0_resolution"  ].toDouble() * grid_repetitions;
+      double s_min   = parameters[ "s_min"           ].toDouble() * 1.0e-13;
+      double s_max   = parameters[ "s_max"           ].toDouble() * 1.0e-13;
+      double ff0_min = parameters[ "ff0_min"         ].toDouble();
+      double ff0_max = parameters[ "ff0_max"         ].toDouble();
 
-   int    nsstep   = (int)( s_pts );
-   int    nkstep   = (int)( ff0_pts );
+      int grid_repetitions = parameters[ "uniform_grid" ].toInt();
+      if ( grid_repetitions < 1 ) grid_repetitions = 1;
 
-   US_Solute::init_solutes( s_min,   s_max,   nsstep,
-                            ff0_min, ff0_max, nkstep,
-                            grid_repetitions, orig_solutes );
+      double s_pts    = 60.0;
+      double ff0_pts  = 60.0;
+      if ( parameters.contains( "s_grid_points"   ) )
+         s_pts   = parameters[ "s_grid_points"   ].toDouble();
+      else if ( parameters.contains( "s_resolution"    ) )
+         s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_repetitions;
+      if ( parameters.contains( "ff0_grid_points" ) )
+         ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
+      else if ( parameters.contains( "ff0_resolution"  ) )
+         ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_repetitions;
+
+      int    nsstep   = (int)( s_pts );
+      int    nkstep   = (int)( ff0_pts );
+
+      US_Solute::init_solutes( s_min,   s_max,   nsstep,
+                               ff0_min, ff0_max, nkstep,
+                               grid_repetitions, orig_solutes );
+   }
+
+   else
+   {  // If a model file was given, use it to set the initial solutes
+      US_Model model;
+      model.load( model_filename );
+      int nsubgrid = model.subGrids;
+      if ( nsubgrid < 1 )   return;
+      int ncomps   = model.components.size();
+      QVector< US_Solute > solvec;
+
+      for ( int ii = 0; ii < nsubgrid; ii++ )
+      {
+         solvec.clear();
+
+         for ( int jj = ii, jj < ncomps; jj += nsubgrid )
+         {
+            US_Solute soli( model.component[ jj ].s,
+                            model.component[ jj ].f_f0,
+                            0.0 );
+            solvec << soli;
+         }
+
+         orig_solutes << solvec;
+      }
+   }
 }
 
 //////////////////
@@ -198,7 +230,8 @@ void US_MPI_Analysis::fill_queue( void )
 
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
-      max_experiment_size = max( max_experiment_size, orig_solutes[ i ].size() );
+      max_experiment_size = max( max_experiment_size,
+                                 orig_solutes[ i ].size() );
       _2dsa_Job job;
       job.solutes         = orig_solutes[ i ];
       job_queue << job;

@@ -11,6 +11,8 @@
     label="2-D Spectrum Analysis with Molec. Weight constraints" />
     <application name="2DSA-MW-MC"
     label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
+    <application name="2DSA-GL"
+    label="2-D Spectrum Analysis - Global" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="GA" label="Genetic Algorithm Analysis" />
@@ -20,6 +22,8 @@
     label="Genetic Algorithm with Molecular Weight constraints" />
     <application name="GA-MW-MC"
     label="Genetic Algorithm with MW constraints - Monte Carlo" />
+    <application name="GA-GL"
+    label="Genetic Algorithm - Global" />
     <application name="gain" label="Genetic Algorithm Initialize" />
     <application name="gainit" label="Genetic Algorithm Initialize" />
     <application name="secmo" label="Second Moment Analysis" />

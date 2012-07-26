@@ -712,6 +712,7 @@ int US_Model::write( US_DB2* db )
       QXmlStreamWriter xml( &temporary );
       write_stream( xml );
       db->mysqlEscapeString( contents, temporary, temporary.size() );
+qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
 
       QStringList q;
 
@@ -743,12 +744,14 @@ int US_Model::write( US_DB2* db )
          message = QObject::tr( "updated" );
       }
 
+      int wstat = db->statusQuery( q );
+qDebug() << "model writedb message" << message << "wstat" << wstat;
       QString path;
       model_path( path );
       QString filename = get_filename( path, modelGUID );
       write( filename );
 
-      return db->statusQuery( q );
+      return wstat;
 }
 
 int US_Model::write( const QString& filename )
@@ -799,29 +802,65 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute   ( "monteCarlo",  "1"                             );
 
    // Write components
-   for ( int i = 0; i < components.size(); i++ )
+   int  ncomps  = components.size();
+   bool notmany = ( ncomps < 400 );
+
+   for ( int i = 0; i < ncomps; i++ )
    {
       SimulationComponent* sc = &components[ i ];
       xml.writeStartElement( "analyte" );
 
-      xml.writeAttribute( "analyteGUID", ""                                  );
-      xml.writeAttribute( "name",       sc->name                             );
-      xml.writeAttribute( "vbar20",     QString::number( sc->vbar20        ) );
-      xml.writeAttribute( "mw",         QString::number( sc->mw            ) );
-      xml.writeAttribute( "s",          QString::number( sc->s             ) );
-      xml.writeAttribute( "D",          QString::number( sc->D             ) );
-      xml.writeAttribute( "f",          QString::number( sc->f             ) );
-      xml.writeAttribute( "f_f0",       QString::number( sc->f_f0          ) );
-      xml.writeAttribute( "extinction", QString::number( sc->extinction    ) );
-      xml.writeAttribute( "axial",      QString::number( sc->axial_ratio   ) );
-      xml.writeAttribute( "sigma",      QString::number( sc->sigma         ) );
-      xml.writeAttribute( "delta",      QString::number( sc->delta         ) );
-      xml.writeAttribute( "oligomer",   QString::number( sc->oligomer      ) );
-      xml.writeAttribute( "shape",      QString::number( sc->shape         ) );
-      xml.writeAttribute( "type",       QString::number( sc->analyte_type  ) );
-
-      xml.writeAttribute( "molar",  QString::number( sc->molar_concentration ));
-      xml.writeAttribute( "signal", QString::number( sc->signal_concentration));
+      xml.writeAttribute( "analyteGUID", ""                         );
+      xml.writeAttribute( "name",       sc->name                    );
+      xml.writeAttribute( "mw",         QString::number( sc->mw   ) );
+      xml.writeAttribute( "s",          QString::number( sc->s    ) );
+      xml.writeAttribute( "D",          QString::number( sc->D    ) );
+      xml.writeAttribute( "f",          QString::number( sc->f    ) );
+      xml.writeAttribute( "f_f0",       QString::number( sc->f_f0 ) );
+      QString strVbar   = QString::number( sc->vbar20       );
+      QString strExtinc = QString::number( sc->extinction   );
+      QString strAxial  = QString::number( sc->axial_ratio  );
+      QString strSigma  = QString::number( sc->sigma        );
+      QString strDelta  = QString::number( sc->delta        );
+      QString strOligo  = QString::number( sc->oligomer     );
+      QString strShape  = QString::number( sc->shape        );
+      QString strType   = QString::number( sc->analyte_type );
+      QString strMolar  = QString::number( sc->molar_concentration  );
+      QString strSignal = QString::number( sc->signal_concentration );
+      if ( notmany )
+      {  // In most cases, don't test values to write
+         xml.writeAttribute( "vbar20",     strVbar   );
+         xml.writeAttribute( "extinction", strExtinc );
+         xml.writeAttribute( "axial",      strAxial  );
+         xml.writeAttribute( "sigma",      strSigma  );
+         xml.writeAttribute( "delta",      strDelta  );
+         xml.writeAttribute( "oligomer",   strOligo  );
+         xml.writeAttribute( "shape",      strShape  );
+         xml.writeAttribute( "type",       strType   );
+         xml.writeAttribute( "molar",      strMolar  );
+      }
+      else
+      {  // If many components, only write non-default values
+         if ( sc->vbar20       != TYPICAL_VBAR )
+            xml.writeAttribute( "vbar20",     strVbar   );
+         if ( sc->extinction   != 0.0 )
+            xml.writeAttribute( "extinction", strExtinc );
+         if ( sc->axial_ratio  != 10.0 )
+            xml.writeAttribute( "axial",      strAxial  );
+         if ( sc->sigma        != 0.0 )
+            xml.writeAttribute( "sigma",      strSigma  );
+         if ( sc->delta        != 0.0 )
+            xml.writeAttribute( "delta",      strDelta  );
+         if ( sc->oligomer     != 1 )
+            xml.writeAttribute( "oligomer",   strOligo  );
+         if ( sc->shape        != SPHERE )
+            xml.writeAttribute( "shape",      strShape  );
+         if ( sc->analyte_type != 0 )
+            xml.writeAttribute( "type",       strType   );
+         if ( sc->molar_concentration != 0.0 )
+            xml.writeAttribute( "molar",      strMolar  );
+      }
+      xml.writeAttribute( "signal",     strSignal );
 
       for ( int j = 0; j < sc->c0.radius.size(); j++ )
       {
