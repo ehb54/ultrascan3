@@ -1094,7 +1094,7 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
          double y;
          double z;
          
-         while ( ( unsigned int ) send_recv_rotations.size() < proc_rots3 )
+         while ( ( int ) send_recv_rotations.size() < proc_rots3 )
          {
             x = drand48() * 2.0 - 1.0;
             y = drand48() * 2.0 - 1.0;
@@ -1126,7 +1126,7 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
       // and make up ours:
       rotations.clear();
       vector < double > p( 3 );
-      while ( ( unsigned int ) rotations.size() < proc_rots )
+      while ( ( int ) rotations.size() < proc_rots )
       {
          p[ 0 ] = drand48() * 2.0 - 1.0;
          p[ 1 ] = drand48() * 2.0 - 1.0;
