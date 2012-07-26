@@ -7,6 +7,12 @@ extern int myrank;
 extern QString outputData;
 
 // note: this program uses cout and/or cerr and this should be replaced
+
+#if defined( CUDA )
+#  include "us_cuda.h"
+   extern int env_mpi_node;
+#endif
+
 bool US_Saxs_Util::run_1d_mpi( QString controlfile )
 {
    // for now, everyone reads the control file & sets things up to the point of nsa run
@@ -451,7 +457,7 @@ bool US_Saxs_Util::compute_1d_mpi()
                ;
             return false;
          }
-         intermediate_saves[ pos ]++;
+         intermediate_saves[ pos ] = true;
       }
    }
 
