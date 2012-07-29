@@ -351,6 +351,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       if ( f.open( IO_WriteOnly ) )
       {
          QTextStream ts( &f );
+         ts << QString( "number of processors %1\n" ).arg( npes );
          ts << "timings:\n";
          ts << usui1m_timer.list_times();;
          ts << "end-timings\n";
