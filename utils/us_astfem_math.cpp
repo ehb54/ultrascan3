@@ -195,7 +195,7 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
                              double* r, double* u, int N )
 {
    double bet = b[ 0 ];
-   //double* gam = new double [ N ];
+#ifdef NO_DB
    static QVector< double > gamvec;
    static int Nsave = 0;
 
@@ -206,6 +206,9 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
    }
 
    double* gam = gamvec.data();
+#else
+   double* gam = new double [ N ];
+#endif
    
    if ( bet == 0.0 ) qDebug() << "Error 1 in tridiag";
 
@@ -224,7 +227,9 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
    for ( int j = N - 2; j >= 0; j-- )
       u[ j ] -= gam[ j + 1 ] * u[ j + 1 ];
    
-   //delete [] gam;
+#ifndef NO_DB
+   delete [] gam;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////

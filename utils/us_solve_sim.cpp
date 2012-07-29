@@ -198,10 +198,8 @@ DebugTime("BEG:calcres");
          for ( int ee = offset; ee < dataset_count; ee++ )
          {  // Solve for each data set
             DataSet*                dset  = data_sets[ ee ];
-            US_DataIO2::EditedData* edata = &dset->run_data;
+            US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO2::RawData     simdat;
-            US_DataIO2::RawData*    sdata = &simdat;
-            edata       = banddthr ? &wdata : edata;
             int nscans  = edata->scanData.size();
             int npoints = edata->x.size();
 
@@ -232,13 +230,13 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( sdata, zerothr, linethr, maxod, mfactor ) )
+               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
                   continue;
 
                ksols++;
             }
 
-            simulations << simdat;   // Save simul. (ea. datasets, ea. solute)
+            simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
             for ( int ss = 0; ss < nscans; ss++ )
@@ -267,11 +265,9 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
          for ( int ee = offset; ee < dataset_count; ee++ )
          {  // Solve for each data set
             DataSet*                dset  = data_sets[ ee ];
-            US_DataIO2::EditedData* edata = &dset->run_data;
+            US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO2::RawData     simdat;
-            US_DataIO2::RawData*    sdata = &simdat;
             US_Math2::SolutionData  sd;
-            edata          = banddthr ? &wdata : edata;
             int nscans     = edata->scanData.size();
             int npoints    = edata->x.size();
             double avtemp  = dset->temperature;
@@ -294,30 +290,30 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             model.components[ 0 ].D   /= sd.D20w_correction;
 
             // Initialize simulation data with the experiment's grid
-            US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 if (dbg_level>1 && thrnrank==1 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 
-            astfem_rsa.calculate( *sdata );
+            astfem_rsa.calculate( simdat );
             if ( abort ) return;
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( sdata, zerothr, linethr, maxod, mfactor ) )
+               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
                   continue;
 
                ksols++;
             }
 
-            simulations << *sdata;   // Save simul. (ea. datasets, ea. solute)
+            simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
             for ( int ss = 0; ss < nscans; ss++ )
                for ( int rr = 0; rr < npoints; rr++ )
-                  nnls_a[ kk++ ] = sdata->value( ss, rr );
+                  nnls_a[ kk++ ] = simdat.value( ss, rr );
 
          }  // Each data set
 
@@ -456,6 +452,7 @@ DbgLv(1) << "  noise small NNLS";
 
       US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsolutes,
                       nnls_b.data(), nnls_x.data() );
+
       if ( abort ) return;
 
       if ( signal_wanted )
@@ -512,15 +509,12 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
 
          for ( int ee = offset; ee < offset + dataset_count; ee++ )
          {
-            DataSet*                dset  = data_sets[ ee ];
-            US_DataIO2::EditedData* edata = &dset->run_data;
-            edata       = banddthr ? &wdata : edata;
-            int nscans  = edata->scanData.size();
-            int npoints = edata->x.size();
-            int sim_ix  = cc * dataset_count + ee - offset;
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
+            int sim_ix  = cc * dataset_count + ee - offset;
             US_DataIO2::RawData*    idata = &simulations[ sim_ix ];
             US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
+            int nscans  = sdata->scanData.size();
+            int npoints = sdata->x.size();
 
             for ( int ss = 0; ss < nscans; ss++ )
             {
@@ -561,11 +555,10 @@ if (soluval>100.0) {
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
       DataSet*                dset  = data_sets[ ee ];
-      US_DataIO2::EditedData* edata = &dset->run_data;
+      US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
       US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
       US_DataIO2::RawData*    resid = &sim_vals.residuals;
-      US_AstfemMath::initSimData( *resid, *edata, 0.0 );
-      edata       = banddthr ? &wdata : edata;
+      US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
       int nscans  = edata->scanData.size();
       int npoints = edata->x.size();
       int index   = ee - offset;
