@@ -1,5 +1,6 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
+#include "../include/us_timer.h"
 #include <mpi.h>
 #include <sys/time.h>
 extern int npes;
@@ -13,9 +14,20 @@ extern QString outputData;
    extern int env_mpi_node;
 #endif
 
+static US_Timer usui1m_timer;
+
 bool US_Saxs_Util::run_1d_mpi( QString controlfile )
 {
    // for now, everyone reads the control file & sets things up to the point of nsa run
+   if ( !myrank )
+   {
+      usui1m_timer.init_timer ( "1d" );
+      usui1m_timer.init_timer ( "1d init" );
+      usui1m_timer.init_timer ( "1d closeout" );
+      usui1m_timer.init_timer ( "1d random generation" );
+      usui1m_timer.start_timer ( "1d" );
+      usui1m_timer.start_timer ( "1d init" );
+   }
 
    QString qs_base_dir = QDir::currentDirPath();
 
@@ -200,6 +212,10 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    // everyone reads for now
    controlfile = qslt[ 0 ];
 
+   if ( !myrank )
+   {
+      usui1m_timer.end_timer ( "1d init" );
+   }
    if ( !read_control( controlfile ) )
    {
       cout <<  cout << QString( "%1: Error: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
@@ -229,6 +245,8 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
 
    if ( !myrank )
    {
+      usui1m_timer.start_timer ( "1d closeout" );
+
       QStringList org_output_files = output_files;
       output_files.clear();
       QString errors;
@@ -324,6 +342,34 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          ts << errors;
          f.close();
          output_files << "errors";
+      }
+
+      usui1m_timer.end_timer ( "1d closeout" );
+      usui1m_timer.end_timer ( "1d" );
+
+      QFile f( "runinfo" );
+      if ( f.open( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << "timings:\n";
+         ts << usui1m_timer.list_times();;
+         ts << "end-timings\n";
+         QFile fc( controlfile );
+         if ( fc.open( IO_ReadOnly ) )
+         {
+            QTextStream tsc( &fc );
+            ts << "controlfile:\n";
+            while( !tsc.atEnd() )
+            {
+               ts << tsc.readLine() << endl;
+            }
+            ts << "end-controlfile\n";
+            fc.close();
+         }
+         f.close();
+         output_files << "runinfo";
+      } else {
+         cout << "Warning: could not create timings\n" << flush;
       }
 
       // package output
@@ -519,6 +565,12 @@ bool US_Saxs_Util::compute_1d_mpi()
 
    vector < vector < double > > rotations;
 
+
+   if ( !myrank )
+   {
+      usui1m_timer.start_timer ( "1d random generation" );
+   }
+
    if ( control_parameters.count( "1drotationsuserand" ) )
    {
       hypercube_rejection_drand_rotations( sample_rotations, rotations );
@@ -527,6 +579,10 @@ bool US_Saxs_Util::compute_1d_mpi()
       {
          return false;
       }
+   }
+   if ( !myrank )
+   {
+      usui1m_timer.end_timer ( "1d random generation" );
    }
 
    // setup atoms

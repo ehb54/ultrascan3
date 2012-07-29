@@ -1633,6 +1633,7 @@ bool US_Saxs_Util::create_tgz_output( QString filename )
    if ( result != TAR_OK )
    {
       errormsg = QString("Error: Problem creating tar archive %1. %2").arg( filename ).arg( ust.explain( result ) );
+      errormsg += QString( "Attempted file list:%2:\n" ).arg( output_files.join( ":" ) );
       return false;
    }
 
