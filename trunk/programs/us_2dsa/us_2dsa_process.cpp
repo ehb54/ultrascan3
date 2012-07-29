@@ -655,7 +655,7 @@ DbgLv(1) << "cc comp D" << model.components[ cc ].D;
 DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
-   // done with iterations:   check for meniscus or MC iteration
+   // Done with refinement iterations:   check for meniscus or MC iteration
 
    if ( mmtype > 0  &&  ++mm_iter < mmiters )
    {  // doing meniscus or monte carlo and more to do
@@ -738,7 +738,8 @@ DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
    int nrcso  = wresult.csolutes.size();
    ntcsols   += nrcso;
 if ( taskx < 9 || taskx > (nsubgrid-4) )
-DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols;
+DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols
+   << QDateTime::currentDateTime().toMSecsSinceEpoch();
 //DBG-CONC
 if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
  if ( wresult.csolutes[mm].c > 100.0 ) {
@@ -880,7 +881,7 @@ DbgLv(1) << pmsg;
    if ( kstsksv == kstask )
    {  // No new tasks got started:  what's going on?
 DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
- << "ReadyWorkerNdx" << wkstates.indexOf( READY );
+ << " ReadyWorkerNdx" << wkstates.indexOf( READY );
       if ( depth < maxdepth )
       {  // If done at depth less than max, see need to queue new task
          int dd       = depth + 1;
@@ -933,7 +934,7 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    int nrisols    = isolutes.size();
    ntisols       += nrisols;
 if ( taskx < 9 || taskx > (nsubgrid-4) )
-DbgLv(1) << "QT: taskx isolutes size tot" << taskx << nrisols << ntisols;
+DbgLv(1) << "QT: taskx" << taskx << " isolutes size tot" << nrisols << ntisols;
 
    tkdepths << depth;              // record work task depth
 
@@ -958,10 +959,7 @@ void US_2dsaProcess::iterate()
    QVector< US_Solute > isolutes;
 
    int    ncsol = csolutes.size();   // number of solutes calculated last iter
-
-   for ( int ii = 0; ii < ncsol; ii++ )
-      csolutes[ ii ].c = 0.0;        // clear concentration for compares
-DbgLv(1) << "ITER: start of iteration" << r_iter+1;
+DbgLv(1) << "ITER: start of iteration" << r_iter+1 << " mxdp" << maxdepth;
 
    // Bump total steps estimate based on additional solutes in subgrids
    nctotal      = ( r_iter == 1 ) ? nctotal : ( ( nctotal + kcsteps ) / 2 );
@@ -985,54 +983,16 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
    ntcsols      = 0;
    max_rss();
 
-   ktask        = 0;                 // task index
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
-
-   // Build and queue the subgrid tasks
-#if 0
-   double llss  = slolim;            // lower limit s to identify each subgrid
-
-   for ( int ii = 0; ii < ngrefine; ii++ )
-   {
-      double llsk  = klolim;         // lower limit k to identify each subgrid
-
-      for ( int jj = 0; jj < ngrefine; jj++ )
-      {
-         // get the solutes originally created for this subgrid
-         QVector< US_Solute > isolutes = orig_sols[ ktask ];
-
-         // add any calculated solutes not already in subgrid
-         for ( int cc = 0; cc < ncsol; cc++ )
-            if ( ! isolutes.contains( csolutes[ cc ] ) )
-               isolutes << csolutes[ cc ];
-//*DEBUG
-int kosz=orig_sols[ktask].size();
-int kasz=isolutes.size();
-int kadd=kasz-kosz;
-if ( kadd < ncsol )
-DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
- << kosz << kasz << ncsol << kadd;
-//*DEBUG
-
-         // queue a subgrid task and update maximum task solute count
-         WorkPacket wtask;
-         queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
-
-         maxtsols       = max( maxtsols, isolutes.size() );
-         llsk          += gdelta_k;
-      }
-
-      llss     += gdelta_s;
-   }
-#endif
-
 //*DEBUG
 for(int jj=0; jj<ncsol; jj++ )
  DbgLv(1) << "ITER:     csol" << jj << "  s k c"
-  << csolutes[jj].s << csolutes[jj].k << csolutes[jj].c;
+  << csolutes[jj].s*1.e13 << csolutes[jj].k << csolutes[jj].c;
 int ktadd=0;
 //*DEBUG
+
+   // Build and queue the subgrid tasks
    for ( ktask = 0; ktask < nsubgrid; ktask++ )
    {
       // Get the solutes originally created for this subgrid
@@ -1040,8 +1000,10 @@ int ktadd=0;
 
       // Add in any calculated solutes not already in this subgrid
       for ( int cc = 0; cc < ncsol; cc++ )
+      {
          if ( ! isolutes.contains( csolutes[ cc ] ) )
             isolutes << csolutes[ cc ];
+      }
 //*DEBUG
 int kosz=orig_sols[ktask].size();
 int kasz=isolutes.size();
@@ -1049,7 +1011,7 @@ int kadd=kasz-kosz;
 ktadd += (ncsol-kadd);
 if ( kadd < ncsol )
 DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
- << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << ncsol << nsubgrid;
+ << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << "nsubg" << nsubgrid;
 //*DEBUG
       // Queue a subgrid task and update the maximum task solute count
       double llss = isolutes[ 0 ].s;
@@ -1064,7 +1026,7 @@ if(ktadd<ncsol) {
  for(int kt=0;kt<nsubgrid;kt++)
   for(int cc=0;cc<orig_sols[kt].size();cc++)
    DbgLv(1) << "ITER          kt cc" << kt << cc << " s k c"
-    << orig_sols[kt][cc].s << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
+    << orig_sols[kt][cc].s*1.e13 << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
 }
 //*DEBUG
 
@@ -1252,37 +1214,19 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter << " sigma0 c0 v0 cn vn"
 // Re-queue all the original subgrid tasks
 void US_2dsaProcess::requeue_tasks()
 {
-   kcsteps      = 0;
+   kcsteps   = 0;
    emit stage_complete( kcsteps, nctotal );
+   int jdpth = 0;
+   int jnois = 0;
 
-   int    ktask = 0;
-   int    jdpth = 0;
-   int    jnois = 0;
-#if 0
-   double llss  = slolim;
-
-   for ( int ii = 0; ii < ngrefine; ii++ )
-   {
-      double llsk  = klolim;
-
-      for ( int jj = 0; jj < ngrefine; jj++ )
-      {
-         QVector< US_Solute > isolutes = orig_sols[ ktask ];
-         WorkPacket wtask;
-         queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
-         llsk          += gdelta_k;
-      }
-      llss     += gdelta_s;
-   }
-#endif
-   for ( ktask = 0; ktask < nsubgrid; ktask++ )
+   for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
       double llss = orig_sols[ ktask ][ 0 ].s;
       double llsk = orig_sols[ ktask ][ 0 ].k;
-      // get the solutes originally created for this subgrid
+      // Get the solutes originally created for this subgrid
       QVector< US_Solute > isolutes = orig_sols[ ktask ];
       WorkPacket wtask;
-      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
+      queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
    }
 
    // Make sure calculated solutes are cleared out for new iteration
@@ -1296,12 +1240,12 @@ void US_2dsaProcess::requeue_tasks()
       submit_job( wtask, ii );
    }
 
-   kstask = nthreads;
-   kctask       = 0;
-   maxdepth     = 0;
-   ntisols      = 0;
-   ntcsols      = 0;
-   r_iter       = 0;
+   kstask    = nthreads;
+   kctask    = 0;
+   maxdepth  = 0;
+   ntisols   = 0;
+   ntcsols   = 0;
+   r_iter    = 0;
 
    emit message_update(
       tr( "Starting iteration %1 computations of %2 subgrids\n"
@@ -1340,24 +1284,34 @@ QString US_2dsaProcess::pmessage_head()
 // Get next job from queue, insuring we get the lowest depth
 WorkPacket US_2dsaProcess::next_job()
 {
-   int taskx        = 0;
-   WorkPacket wtask = job_queue[ taskx ];
-   int depth1       = wtask.depth;
+   WorkPacket wtask;
+   if ( job_queue.size() == 0 )  return wtask;
 
-   for ( int ii = 0; ii < job_queue.size(); ii++ )
-   {
-      if ( job_queue[ ii ].depth < depth1 )
+   int jobx    = 0;
+   wtask       = job_queue[ jobx ];
+   int depth   = wtask.depth;
+
+   if ( depth > 0 )
+   {  // If first is beyond depth 0, insure what we get is lowest depth
+
+      for ( int ii = 0; ii < job_queue.size(); ii++ )
       {
-         wtask         = job_queue[ ii ];
-         depth1        = wtask.depth;
-         taskx         = ii;
+         if ( job_queue[ ii ].depth < depth  )
+         {
+            wtask     = job_queue[ ii ];
+            depth     = wtask.depth;
+            jobx      = ii;
+         }
       }
    }
+if(jobx>0) {
+DbgLv(1) << "NEXTJ: jobx depth depth0 taskx taskx0"
+ << jobx << depth << job_queue[0].depth << wtask.taskx << job_queue[0].taskx; }
+else {
+DbgLv(1) << "NEXTJ: jobx depth taskx" << jobx << depth << wtask.taskx; }
+DbgLv(1) << "NEXTJ:   wtask" << &wtask << &job_queue[jobx];
 
-if(taskx>0)
-DbgLv(1) << "NEXTJ: taskx depth1 depth0"
- << taskx << depth1 << job_queue[0].depth;
-   job_queue.removeAt( taskx );
+   job_queue.removeAt( jobx );          // Remove job from queue
    return wtask;
 }
 

@@ -54,11 +54,20 @@ void WorkerThread::define_work( WorkPacket& workin )
    solutes_i   = workin.isolutes;
 
    //dsets << workin.dsets[ 0 ];
-   dset_wk          = *(workin.dsets[ 0 ]);  // local copy of data set
-   dset_wk.run_data = workin.dsets[ 0 ]->run_data;
+   dset_wk              = *(workin.dsets[ 0 ]);  // local copy of data set
+   dset_wk.noise_files  = workin.dsets[ 0 ]->noise_files;
+   dset_wk.run_data     = workin.dsets[ 0 ]->run_data;
+   dset_wk.model        = workin.dsets[ 0 ]->model;
+   dset_wk.simparams    = workin.dsets[ 0 ]->simparams;
+   dset_wk.solution_rec = workin.dsets[ 0 ]->solution_rec;
+   dsets.clear();
    dsets << &dset_wk;                        // save its pointer
 
-   sim_vals    = workin.sim_vals;
+   sim_vals             = workin.sim_vals;
+   sim_vals.variances   = workin.sim_vals.variances;
+   sim_vals.ti_noise    = workin.sim_vals.ti_noise;
+   sim_vals.ri_noise    = workin.sim_vals.ti_noise;
+   sim_vals.solutes     = workin.sim_vals.solutes;
 }
 
 // get results of a completed worker thread
@@ -78,8 +87,12 @@ void WorkerThread::get_result( WorkPacket& workout )
    workout.ri_noise = ri_noise.values;
    workout.sim_vals = sim_vals;
 int nn=workout.csolutes.size();
-DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 soln"
- << workout.csolutes[0].c << workout.csolutes[nn-1].c;
+int kk=nn/2;
+int ni=solutes_i.size();
+DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
+ << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
+ << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << solutes_i[0].c << solutes_i[ni-1].c;
 }
 
 // run the worker thread
@@ -110,13 +123,12 @@ void WorkerThread::calc_residuals()
       return;
    }
 
-   solvesim         = new US_SolveSim( dsets, thrn, true );
+   solvesim            = new US_SolveSim( dsets, thrn, true );
 
    connect( solvesim, SIGNAL(  work_progress( int ) ),
             this,     SLOT( forward_progress( int ) ) );
 
-   sim_vals.solutes.clear();
-   sim_vals.solutes << solutes_i;
+   sim_vals.solutes    = solutes_i;
 
    sim_vals.noisflag   = noisflag;
    sim_vals.dbg_level  = dbg_level;
@@ -124,13 +136,10 @@ void WorkerThread::calc_residuals()
 
    solvesim->calc_residuals( 0, 1, sim_vals );
 
-   solutes_c      .clear();
-   ti_noise.values.clear();
-   ri_noise.values.clear();
+   solutes_c           = sim_vals.solutes;
+   ti_noise.values     = sim_vals.ti_noise;
+   ri_noise.values     = sim_vals.ri_noise;
 
-   solutes_c       << sim_vals.solutes;
-   ti_noise.values << sim_vals.ti_noise;
-   ri_noise.values << sim_vals.ri_noise;
    return;
 }
 
@@ -143,7 +152,8 @@ void WorkerThread::forward_progress( int steps )
 // Do thread work for model-ratio:  solution from single model, find ratio
 void WorkerThread::calc_resids_ratio()
 {
-   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   dset_wk                    = *dsets[ 0 ];
+   US_SolveSim::DataSet* dset = &dset_wk;
 
    solutes_c      .clear();
    ti_noise.values.clear();
