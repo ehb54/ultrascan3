@@ -1900,7 +1900,8 @@ void US_Edit::plot_range( void )
       }
 
       QString title = tr( "Raw Data at " )
-         + QString::number( s->seconds ) + tr( " seconds" );
+         + QString::number( s->seconds ) + tr( " seconds" )
+         + " #" + QString::number( i );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
@@ -1960,7 +1961,8 @@ void US_Edit::plot_last( void )
    }
 
    QString title = tr( "Raw Data at " )
-      + QString::number( s->seconds ) + tr( " seconds" );
+      + QString::number( s->seconds ) + tr( " seconds" )
+      + " #" + QString::number( includes.last() );
 
    QwtPlotCurve* c = us_curve( data_plot, title );
    c->setData( r, v, count );
@@ -2024,7 +2026,8 @@ void US_Edit::plot_scan( void )
       }
 
       QString title = tr( "Raw Data at " )
-         + QString::number( s->seconds ) + tr( " seconds" );
+         + QString::number( s->seconds ) + tr( " seconds" )
+         + " #" + QString::number( ii );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
@@ -2091,8 +2094,12 @@ void US_Edit::focus( int from, int to )
    else
       pb_excludeRange->setEnabled( true );
 
-   QList< int > focus;  // We don't care if -1 is in the list
-   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;  
+   QList< int > focus;
+   int ifrom = qMax( from - 1, 0 );
+   int ito   = qMin( to, includes.size() );
+
+   for ( int ii = ifrom; ii < ito; ii++ )
+      focus << includes.at( ii );
 
    set_colors( focus );
 }
