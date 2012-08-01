@@ -57,6 +57,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       QCheckBox   *cb_alt_ff;
       QCheckBox   *cb_five_term_gaussians;
+      QCheckBox   *cb_iq_exact_q;
 
       QPushButton *pb_create_somo_ff;
 
@@ -80,6 +81,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       void set_alt_ff();
       void set_five_term_gaussians();
+      void set_iq_exact_q();
 
       void create_somo_ff();
       void cancel();

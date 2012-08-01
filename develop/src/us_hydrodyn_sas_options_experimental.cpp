@@ -133,6 +133,14 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_five_term_gaussians->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_five_term_gaussians, SIGNAL(clicked()), this, SLOT(set_five_term_gaussians()));
 
+   cb_iq_exact_q = new QCheckBox(this);
+   cb_iq_exact_q->setText(tr(" Exact q"));
+   cb_iq_exact_q->setEnabled(true);
+   cb_iq_exact_q->setChecked((*saxs_options).iq_exact_q);
+   cb_iq_exact_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_exact_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_exact_q, SIGNAL(clicked()), this, SLOT(set_iq_exact_q()));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -174,6 +182,7 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_2c->addWidget( cb_iqq_use_atomic_ff );
    hbl_various_2c->addWidget( cb_iqq_use_saxs_excl_vol );
    hbl_various_2c->addWidget( cb_use_somo_ff );
+   hbl_various_2c->addWidget( cb_iq_exact_q );
    background->addMultiCellLayout(hbl_various_2c, j, j, 0, 1);
    j++;
 
@@ -284,6 +293,12 @@ void US_Hydrodyn_SasOptionsExperimental::set_alt_ff()
 void US_Hydrodyn_SasOptionsExperimental::set_five_term_gaussians()
 {
    (*saxs_options).five_term_gaussians = cb_five_term_gaussians->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_iq_exact_q()
+{
+   (*saxs_options).iq_exact_q = cb_iq_exact_q->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

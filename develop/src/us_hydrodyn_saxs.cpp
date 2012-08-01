@@ -6310,6 +6310,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       return;
    }
 
+
    int last_result = 1;
 
    float save_start_q      = our_saxs_options->start_q;
@@ -6318,6 +6319,9 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
    float save_start_angle  = our_saxs_options->start_angle;
    float save_end_angle    = our_saxs_options->end_angle;
    float save_delta_angle  = our_saxs_options->delta_angle;
+
+   vector < double > save_exact_q = exact_q;
+   vector < double > new_exact_q  = plotted_q[ pos ];
    
    do {
       float start_q = plotted_q[ pos ][ 0 ];
@@ -6356,6 +6360,13 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
                (asin(our_saxs_options->wavelength * our_saxs_options->delta_q / 
                      (4.0 * M_PI)) * 360.0 / M_PI) * SAXS_Q_ROUNDING + 0.5
                ) / SAXS_Q_ROUNDING;
+
+      new_exact_q.clear();
+      for ( int i = 0; i < ( int ) plotted_q[ pos ].size(); i += last_result )
+      {
+         new_exact_q.push_back( plotted_q[ pos ][ i ] );
+      }
+
       if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_widget )
       {
          ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_start_q    ->setValue(our_saxs_options->start_q);
@@ -6374,12 +6385,14 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
                                          QString( tr( 
                                                      "Original number of grid points %1\n"
                                                      "Target number of grid points using the divisor below is %2\n"
+                                                     "Exact number of grid points using the divisor below is %3\n"
                                                      "If this is acceptable, press OK\n"
                                                      "You can enter a divisor below and press OK\n"
                                                      "Press Cancel to revert to the original grid\n"
                                                      ) )
                                          .arg( q_points )
                                          .arg( grid_points )
+                                         .arg( new_exact_q.size() )
                                          , 
                                          last_result, 
                                          1,
@@ -6397,6 +6410,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
          }
       } else {
          // resort to original grid
+         new_exact_q = save_exact_q;
          our_saxs_options->start_q     = save_start_q;
          our_saxs_options->end_q       = save_end_q;
          our_saxs_options->delta_q     = save_delta_q;
@@ -6420,6 +6434,19 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_end_angle  ->setValue(our_saxs_options->end_angle);
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_curve_window->cnt_delta_angle->setValue(our_saxs_options->delta_angle);
    }
+
+   //    if ( new_exact_q != exact_q )
+   exact_q = new_exact_q;
+   {
+      QString gridmsg = 
+         QString( tr( "Current exact grid is now:"
+                      "q range %1 to %2 with %3 q-points.\n" ) )
+         .arg( exact_q[ 0 ] )
+         .arg( exact_q.back() )
+         .arg( exact_q.size() )
+         ;
+      editor_msg("blue", gridmsg);
+   }      
 
    if ( 
         our_saxs_options->start_q != save_start_q ||

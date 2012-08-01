@@ -688,6 +688,12 @@ void US_Hydrodyn_Cluster::create_pkg()
       base_source_files << our_saxs_options->default_ff_filename;
    }
 
+   if ( our_saxs_options->iq_exact_q )
+   {
+      base += 
+         QString( "ExactQ\n" );
+   }
+
 //    if ( our_saxs_options->alt_ff )
 //    {
 //       base += 
@@ -3298,6 +3304,12 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
       base += 
          QString( "FFFile          %1\n" ).arg( QFileInfo( our_saxs_options->default_ff_filename ).fileName() );
       base_source_files << our_saxs_options->default_ff_filename;
+   }
+
+   if ( our_saxs_options->iq_exact_q )
+   {
+      base += 
+         QString( "ExactQ\n" );
    }
 
 //    if ( our_saxs_options->alt_ff )

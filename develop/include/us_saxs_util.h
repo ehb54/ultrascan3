@@ -1012,6 +1012,7 @@ class US_EXTERN US_Saxs_Util
       map < double, unsigned int >   sgp_exp_q_index;
       vector < double >              sgp_exp_I;
       vector < double >              sgp_exp_e;
+      vector < double >              exact_q;
 
       vector < float * >             nsa_var_ref;
       vector < float   >             nsa_var_min;

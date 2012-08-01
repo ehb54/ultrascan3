@@ -15,7 +15,8 @@
 #  define isnan _isnan
 #endif
 
-#define SAXS_MIN_Q 1e-6
+#define SAXS_MIN_Q 0e0
+// #define SAXS_MIN_Q 1e-6
 // #define SAXS_DEBUG
 // #define SAXS_DEBUG_F
 // #define SAXS_DEBUG_FF
@@ -296,6 +297,22 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
          
+      if ( our_saxs_options->iq_exact_q )
+      {
+         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         if ( !exact_q.size() )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            exact_q.resize( q_points );
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            }
+         } else {
+            q_points = ( unsigned int ) exact_q.size();
+         }
+      }
+         
       editor->append(QString("Number of atoms %1.\n"
                              "q range %2 to %3 with a stepsize of %4 giving %5 q-points.\n")
                      .arg(atoms.size())
@@ -331,15 +348,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       q.resize(q_points);
       q2.resize(q_points);
 
+      if ( our_saxs_options->iq_exact_q )
+      {
+         q = exact_q;
+      }
+
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          f[j].resize(atoms.size());
          fc[j].resize(atoms.size());
          fp[j].resize(atoms.size());
-         q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
-         if ( q[j] < SAXS_MIN_Q ) 
+         if ( !our_saxs_options->iq_exact_q )
          {
-            q[j] = SAXS_MIN_Q;
+            q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            if ( q[j] < SAXS_MIN_Q ) 
+            {
+               q[j] = SAXS_MIN_Q;
+            }
          }
          q2[j] = q[j] * q[j];
       }
@@ -1424,6 +1449,22 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       // ok now we have all the atoms
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
+
+      if ( our_saxs_options->iq_exact_q )
+      {
+         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         if ( !exact_q.size() )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            exact_q.resize( q_points );
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            }
+         } else {
+            q_points = ( unsigned int ) exact_q.size();
+         }
+      }
          
       editor->append(QString("Number of atoms %1.\n"
                              "q range %2 to %3 with a stepsize of %4 giving %5 q-points.\n")
@@ -1465,15 +1506,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       q2.resize(q_points);
       q_over_4pi_2.resize(q_points);
 
+      if ( our_saxs_options->iq_exact_q )
+      {
+         q = exact_q;
+      }
+
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          f[j].resize(atoms.size());
          fc[j].resize(atoms.size());
          fp[j].resize(atoms.size());
-         q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
-         if ( q[j] < SAXS_MIN_Q ) 
+         if ( !our_saxs_options->iq_exact_q )
          {
-            q[j] = SAXS_MIN_Q;
+            q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            if ( q[j] < SAXS_MIN_Q ) 
+            {
+               q[j] = SAXS_MIN_Q;
+            }
          }
          q2[j] = q[j] * q[j];
          q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;
@@ -2312,7 +2361,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       // ok now we have all the atoms
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
-         
+
+      if ( our_saxs_options->iq_exact_q )
+      {
+         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         if ( !exact_q.size() )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            exact_q.resize( q_points );
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               exact_q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            }
+         } else {
+            q_points = ( unsigned int ) exact_q.size();
+         }
+      }
+
       editor->append(QString("Number of atoms %1.\n"
                              "q range %2 to %3 with a stepsize of %4 giving %5 q-points.\n")
                      .arg(atoms.size())
@@ -2353,15 +2418,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       q2.resize(q_points);
       q_over_4pi_2.resize(q_points);
 
+      if ( our_saxs_options->iq_exact_q )
+      {
+         q = exact_q;
+      }
+
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          f[j].resize(atoms.size());
          fc[j].resize(atoms.size());
          fp[j].resize(atoms.size());
-         q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
-         if ( q[j] < SAXS_MIN_Q ) 
+         if ( !our_saxs_options->iq_exact_q )
          {
-            q[j] = SAXS_MIN_Q;
+            q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+            if ( q[j] < SAXS_MIN_Q ) 
+            {
+               q[j] = SAXS_MIN_Q;
+            }
          }
          q2[j] = q[j] * q[j];
          q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;

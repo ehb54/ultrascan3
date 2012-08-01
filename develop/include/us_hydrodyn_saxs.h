@@ -255,6 +255,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #else
       vector < QwtPlotCurve * >                       plotted_Iq_curves;
 #endif
+      vector < double >                               exact_q;
       vector < vector < double > >                    plotted_q;
       vector < vector < double > >                    plotted_q2;  // q^2 for guinier plots
       vector < vector < double > >                    plotted_I;

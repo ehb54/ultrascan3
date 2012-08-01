@@ -313,6 +313,7 @@ struct saxs_options
    bool         use_somo_ff;
    QString      default_ff_filename;
    bool         five_term_gaussians;
+   bool         iq_exact_q;
 };
 
 struct saxs_atom

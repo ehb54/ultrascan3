@@ -166,6 +166,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "deltaq|"
                       "pdballmodels|"
                       "experimentgrid|"
+                      "exactq|"
                       "additionalexperimentgrid|"
                       "inputfile|"
                       "tag|"
@@ -1325,6 +1326,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    }
 
    sgp_exp_q = q;
+   exact_q   = q;
    sgp_exp_I = I;
    sgp_exp_e = e;
    for ( unsigned int i = 0; i < sgp_exp_q.size(); i++ )
