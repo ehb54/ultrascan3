@@ -88,7 +88,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits  = us_counter( 3, -10000, 10000 ,10 );
    ct_nstepss   = us_counter( 3,      1,  1000,  60 );
    ct_lolimitk  = us_counter( 3,      1,     8,   1 );
-   ct_uplimitk  = us_counter( 3,      1,    10,   4 );
+   ct_uplimitk  = us_counter( 3,      1,    20,   4 );
    ct_nstepsk   = us_counter( 3,      1,  1000,  60 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_constff0  = us_counter( 3,      1,    10,   1  );
@@ -397,14 +397,14 @@ void US_AnalysisControl::checkVaryVbar(  bool checked )
       lb_lolimitk->setText( tr( "Lower Limit (f/f0):" ) );
       lb_uplimitk->setText( tr( "Upper Limit (f/f0):" ) );
       lb_nstepsk ->setText( tr( "Number Grid Points (f/f0):" ) );
-      ct_lolimitk->setMinValue( 1.0 );
-      ct_lolimitk->setMaxValue( 8.0 );
+      ct_lolimitk->setMinValue( 1.0  );
+      ct_lolimitk->setMaxValue( 8.0  );
       ct_lolimitk->setStep    ( 0.01 );
-      ct_lolimitk->setValue   ( 1.0 );
-      ct_uplimitk->setMinValue( 1.0 );
-      ct_uplimitk->setMaxValue( 8.0 );
+      ct_lolimitk->setValue   ( 1.0  );
+      ct_uplimitk->setMinValue( 1.0  );
+      ct_uplimitk->setMaxValue( 20.0 );
       ct_uplimitk->setStep    ( 0.01 );
-      ct_uplimitk->setValue   ( 4.0 );
+      ct_uplimitk->setValue   ( 4.0  );
    }
 }
 

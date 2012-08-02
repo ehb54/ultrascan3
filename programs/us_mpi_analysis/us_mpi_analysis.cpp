@@ -162,6 +162,9 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
       d->temperature = d->run_data.average_temperature();
       d->vbartb = US_Math2::calcCommonVbar( d->solution_rec, d->temperature );
+
+      if ( d->centerpiece_bottom == 7.3 )
+         abort( "The bottom is set to the invalid default value of 7.3" );
    }
 
    // After reading all input, set the working directory for file output.

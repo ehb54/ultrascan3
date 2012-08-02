@@ -30,8 +30,10 @@ QTLIBS=" \
  libQtWebKit.so.4
  libQtXml.so.4
  libQtCLucene.so.4
+ libQt3Support.so.4
  libphonon.so.4
  "
+QTBINS="assistant"
 
 # Determine if this is 32-bit or 64-bit
 TEMP=`which gcc`
@@ -145,24 +147,13 @@ if [ ! -z "${SSL}" ]; then
   ${CPYCMD} ${SSL}*  ${PKGDIR}/lib/.
 fi
 
-QTLIBS=" \
- libQtCore.so.4
- libQtDBus.so.4
- libQtGui.so.4
- libQtHelp.so.4
- libQtNetwork.so.4
- libQtOpenGL.so.4
- libQtSql.so.4
- libQtSvg.so.4
- libQtWebKit.so.4
- libQtXml.so.4
- libQtCLucene.so.4
- libphonon.so.4
- "
       echo "QTDIR=${QTDIR}"
 if [ ! -z "${QTDIR}" ]; then
   for x in ${QTLIBS}; do
     ${CPYCMD} ${QTDIR}/lib/${x}* ${PKGDIR}/lib
+  done
+  for x in ${QTBINS}; do
+    ${CPYCMD} ${QTDIR}/bin/${x}* ${PKGDIR}/bin
   done
 fi
       echo "QWTDIR=${QWTDIR}"
