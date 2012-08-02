@@ -80,6 +80,12 @@ bool US_Saxs_Util::compute_1d()
       }
    }
 
+   double spec_multiplier = 1e0;
+   if ( control_parameters.count( "1dspecmult" ) )
+   {
+      spec_multiplier = control_parameters[ "1dspecmult" ].toDouble();
+   }
+
    QString qs_total_plots = QString( "%1" ).arg( sample_rotations * axis_rotations );
 
    // compute complex curves, display modulus on 1d array
@@ -534,7 +540,7 @@ bool US_Saxs_Util::compute_1d()
                   Q[ 1 ] * Rv[ 1 ] +
                   Q[ 2 ] * Rv[ 2 ];
                
-               complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+               complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
             
                complex < double > expiQdotR = exp( iQdotR );
                
@@ -595,7 +601,9 @@ bool US_Saxs_Util::compute_1d()
                      Q[ 1 ] * Rv[ 1 ] +
                      Q[ 2 ] * Rv[ 2 ];
 
-                  complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+                  QdotR *= spec_multiplier;
+
+                  complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
 
                   complex < double > expiQdotR = exp( iQdotR );
 

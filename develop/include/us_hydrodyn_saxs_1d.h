@@ -93,10 +93,14 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLabel        *lbl_axis_rotations;
       QLineEdit     *le_axis_rotations;
 
+      QLabel        *lbl_spec_multiplier;
+      QLineEdit     *le_spec_multiplier;
+
       QCheckBox     *cb_save_pdbs;
       QCheckBox     *cb_memory_conserve;
       QCheckBox     *cb_planar_method;
       QCheckBox     *cb_random_rotations;
+      QCheckBox     *cb_ev_from_file;
 
       QProgressBar  *progress;
 
@@ -186,6 +190,8 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       double                                          detector_distance;
 
+      double                                          spec_multiplier;
+
       unsigned int                                    plot_count;
 
       QString                                         errormsg;
@@ -193,9 +199,12 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QString                                         mapname;
       bool                                            setup_excluded_volume_map();
       bool                                            get_excluded_volume_map();
+      bool                                            save_copy_excluded_volume_map( QString name );
 
       double                                          probe_radius;
       double                                          threshold;
+
+      QString                                         ev_file_name;
 
    private slots:
 
@@ -211,6 +220,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       void update_deltaR                      ( const QString & );
       void update_probe_radius                ( const QString & );
       void update_threshold                   ( const QString & );
+      void update_spec_multiplier             ( const QString & );
 
       void set_random_rotations();
       void set_planar_method();

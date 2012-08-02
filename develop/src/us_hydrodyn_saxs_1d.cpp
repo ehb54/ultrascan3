@@ -2,6 +2,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
+#include "../include/us_file_util.h"
 #include <sys/time.h>
 
 #if defined( HAS_CBF )
@@ -244,6 +245,18 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_axis_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_axis_rotations(const QString &)));
 
+   lbl_spec_multiplier = new QLabel( tr(" Scale ev q dot r:"), this );
+   lbl_spec_multiplier->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_spec_multiplier->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_spec_multiplier = new QLineEdit( this, "Spec_Multiplier Line Edit");
+   le_spec_multiplier->setText( QString( "" ).sprintf( "%g", sqrt( 2e0 ) ) );
+   le_spec_multiplier->setAlignment(Qt::AlignVCenter);
+   le_spec_multiplier->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_spec_multiplier, SIGNAL(textChanged(const QString &)), SLOT(update_spec_multiplier(const QString &)));
+
    cb_planar_method = new QCheckBox( this );
    cb_planar_method->setText(tr(" Planar method"));
    cb_planar_method->setEnabled( true );
@@ -261,7 +274,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect( cb_random_rotations, SIGNAL( clicked() ), SLOT( set_random_rotations() ) );
 
    cb_save_pdbs = new QCheckBox( this );
-   cb_save_pdbs->setText(tr(" Save rotated PDBs"));
+   cb_save_pdbs->setText(tr(" Save rotated PDBs and excluded volume maps"));
    cb_save_pdbs->setEnabled(true);
    cb_save_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_save_pdbs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -271,6 +284,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    cb_memory_conserve->setEnabled(true);
    cb_memory_conserve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_memory_conserve->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_ev_from_file = new QCheckBox( this );
+   cb_ev_from_file->setText(tr(" Excluded volume map from file"));
+   cb_ev_from_file->setEnabled( true );
+   cb_ev_from_file->setChecked( false );
+   cb_ev_from_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_ev_from_file->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_info = new QPushButton(tr("Compute q range"), this);
    pb_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -431,9 +451,14 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       gl_options->addWidget         ( lbl_axis_rotations              , j, 0 );
       gl_options->addWidget         ( le_axis_rotations               , j, 1 );
       j++;
+      gl_options->addWidget         ( lbl_spec_multiplier             , j, 0 );
+      gl_options->addWidget         ( le_spec_multiplier              , j, 1 );
+      j++;
       gl_options->addMultiCellWidget( cb_planar_method                , j, j, 0, 1 );
       j++;
       gl_options->addMultiCellWidget( cb_random_rotations             , j, j, 0, 1 );
+      j++;
+      gl_options->addMultiCellWidget( cb_ev_from_file                 , j, j, 0, 1 );
       j++;
       gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 1 );
       j++;
@@ -937,9 +962,9 @@ void US_Hydrodyn_Saxs_1d::start()
                if ( this_ev )
                {
                   new_atom.excl_vol = this_ev;
-//                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
-//                      .arg( new_atom.atom_name )
-//                      .arg( this_ev );
+                  //                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+                  //                      .arg( new_atom.atom_name )
+                  //                      .arg( this_ev );
                }
             }
 
@@ -1131,6 +1156,13 @@ void US_Hydrodyn_Saxs_1d::start()
          return;
       }
 
+      if ( !r )
+      {
+         editor_msg( "gray", QString( tr( "Total excluded volume %1 Angstrom^3" ) )
+                     .arg( excluded_volume.size() *
+                           deltaR * deltaR * deltaR ) );
+      }
+
       for ( unsigned int i = 0; i < ( unsigned int )excluded_volume.size(); i++ )
       {
          excluded_volume[ i ].axis[ 0 ] -= zerooffset.axis[ 0 ];
@@ -1258,7 +1290,8 @@ void US_Hydrodyn_Saxs_1d::start()
             if ( cb_save_pdbs->isChecked() )
             {
                QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
-               QFile f( fname );
+               QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+                        QDir::separator() + "tmp" + QDir::separator() + fname );
                bool ok_to_write = true;
                if ( !r )
                {
@@ -1347,6 +1380,103 @@ void US_Hydrodyn_Saxs_1d::start()
                   ts << "ENDMDL\n";
                   f.close();
                   editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+               }
+
+               // save ev
+               if ( rho0 > 0e0 )
+               {
+                  QString fname = QString( "%1-rots-ev.pdb" ).arg( le_atom_file->text() );
+                  QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+                           QDir::separator() + "tmp" + QDir::separator() +fname );
+                  bool ok_to_write = true;
+                  if ( !r )
+                  {
+                     if ( !f.open( IO_WriteOnly ) )
+                     {
+                        editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                        ok_to_write = false;
+                     }                  
+                  } else {
+                     if ( !f.open( IO_WriteOnly | IO_Append ) )
+                     {
+                        editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                        ok_to_write = false;
+                     }
+                  }
+            
+                  if ( ok_to_write )
+                  {
+                     QTextStream ts( &f );
+                     if ( !r )
+                     {
+                        ts << QString( "MODEL     0\n" );
+                        ts << QString( "REMARK    Rotations summary\n" );
+                     
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    1,
+                                    "CA",
+                                    " LYS",
+                                    "",
+                                    1,
+                                    0.0f,
+                                    0.0f,
+                                    0.0f,
+                                    0.0f,
+                                    0.0f,
+                                    "C"
+                                    );
+
+                        for ( unsigned int r = 0; r < rotations.size(); r++ )
+                        {
+                           ts << QString("")
+                              .sprintf(     
+                                       "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                       r + 2,
+                                       "CA",
+                                       " LYS",
+                                       "",
+                                       r + 2,
+                                       rotations[ r ][ 0 ],
+                                       rotations[ r ][ 1 ],
+                                       rotations[ r ][ 2 ],
+                                       0.0f,
+                                       0.0f,
+                                       "C"
+                                       );
+                        }
+                        ts << "ENDMDL\n";
+                     }                     
+
+                     ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+                     ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                        .arg( rotations[ r ][ 0 ] )
+                        .arg( rotations[ r ][ 1 ] )
+                        .arg( rotations[ r ][ 2 ] );
+               
+                     for ( unsigned int a = 0; a < excluded_volume.size(); a++ )
+                     {
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    a + 1,
+                                    "CA",
+                                    " LYS",
+                                    "",
+                                    a + 1,
+                                    excluded_volume[ a ].axis[ 0 ],
+                                    excluded_volume[ a ].axis[ 1 ],
+                                    excluded_volume[ a ].axis[ 2 ],
+                                    0.0f,
+                                    0.0f,
+                                    "C"
+                                    );
+                     }
+                     ts << "ENDMDL\n";
+                     f.close();
+                     editor_msg( "blue", QString( tr( "Added rotated excluded volume %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+                  }
                }
             }
          } else {
@@ -1491,6 +1621,102 @@ void US_Hydrodyn_Saxs_1d::start()
                   }
                }
             }
+
+            if ( cb_save_pdbs->isChecked() )
+            {
+               QString fname = QString( "%1-rots.pdb" ).arg( le_atom_file->text() );
+               QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+                        QDir::separator() + "tmp" + QDir::separator() + fname );
+               bool ok_to_write = true;
+               if ( !r )
+               {
+                  if ( !f.open( IO_WriteOnly ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     ok_to_write = false;
+                  }                  
+               } else {
+                  if ( !f.open( IO_WriteOnly | IO_Append ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                     ok_to_write = false;
+                  }
+               }
+            
+               if ( ok_to_write )
+               {
+                  QTextStream ts( &f );
+                  if ( !r )
+                  {
+                     ts << QString( "MODEL     0\n" );
+                     ts << QString( "REMARK    Rotations summary\n" );
+                     
+                     ts << QString("")
+                        .sprintf(     
+                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                 1,
+                                 "CA",
+                                 " LYS",
+                                 "",
+                                 1,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 0.0f,
+                                 "C"
+                                 );
+
+                     for ( unsigned int r = 0; r < rotations.size(); r++ )
+                     {
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    r + 2,
+                                    "CA",
+                                    " LYS",
+                                    "",
+                                    r + 2,
+                                    rotations[ r ][ 0 ],
+                                    rotations[ r ][ 1 ],
+                                    rotations[ r ][ 2 ],
+                                    0.0f,
+                                    0.0f,
+                                    "C"
+                                    );
+                     }
+                     ts << "ENDMDL\n";
+                  }                     
+
+                  ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+                  ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                     .arg( rotations[ r ][ 0 ] )
+                     .arg( rotations[ r ][ 1 ] )
+                     .arg( rotations[ r ][ 2 ] );
+               
+                  for ( unsigned int a = 0; a < atoms.size(); a++ )
+                  {
+                     ts << QString("")
+                        .sprintf(     
+                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                 a + 1,
+                                 "CA",
+                                 " LYS",
+                                 "",
+                                 a + 1,
+                                 atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                 atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                 atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
+                                 0.0f,
+                                 0.0f,
+                                 "C"
+                                 );
+                  }
+                  ts << "ENDMDL\n";
+                  f.close();
+                  editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+               }
+            }
          }
       }
 
@@ -1556,7 +1782,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
             for ( unsigned int a = 0; a < atoms.size(); a++ )
             {
-               if ( !planar_angle ) 
+               if ( !t ) 
                {
                   progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
                   qApp->processEvents();
@@ -1601,7 +1827,7 @@ void US_Hydrodyn_Saxs_1d::start()
                      Q[ 1 ] * Rv[ 1 ] +
                      Q[ 2 ] * Rv[ 2 ];
                
-                  complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+                  complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
             
                   complex < double > expiQdotR = exp( iQdotR );
                
@@ -1670,7 +1896,7 @@ void US_Hydrodyn_Saxs_1d::start()
             {
                for ( unsigned int i = 0; i < data.size(); i++ )
                {
-                  if ( !planar_angle )
+                  if ( !t )
                   {
                      progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
                      qApp->processEvents();
@@ -1687,12 +1913,45 @@ void US_Hydrodyn_Saxs_1d::start()
                
                   for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
                   {
-                     double QdotR = 
-                        Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle +
-                        Q[ 1 ] * (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle +
-                        Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ];
 
-                     complex < double > iQdotR = complex < double > ( 0e0, QdotR );
+                     /* 
+                     vector < double > Rvorg( 3 );
+                     Rvorg[ 0 ] = (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle;
+                     Rvorg[ 1 ] = (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle;
+                     Rvorg[ 2 ] = (double) excluded_volume[ j ].axis[ 2 ];
+               
+                     vector < double > Rv( 3 );
+
+                     Rv[ 0 ] = (cospsi + (1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 0 ]) * Rvorg[ 0 ];
+                     Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] - rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 1 ];
+                     Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] + rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 2 ];
+
+                     Rv[ 1 ] = ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] + rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 0 ];
+                     Rv[ 1 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 1 ]) * Rvorg[ 1 ];
+                     Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] - rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 2 ];
+
+                     Rv[ 2 ] = ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] - rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 0 ];
+                     Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] + rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 1 ];
+                     Rv[ 2 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 2 ] * rotations[ r ][ 2 ]) * Rvorg[ 2 ];
+
+                     double QdotR = 
+                        Q[ 0 ] * Rv[ 0 ] +
+                        Q[ 1 ] * Rv[ 1 ] +
+                        Q[ 2 ] * Rv[ 2 ];
+
+                     QdotR *= spec_multiplier;
+
+                     */
+
+                     double QdotR = 
+                        Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
+                        Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
+                        Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ]
+                        ;
+
+                     QdotR *= spec_multiplier;
+
+                     complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
 
                      complex < double > expiQdotR = exp( iQdotR );
 
@@ -1881,6 +2140,10 @@ void US_Hydrodyn_Saxs_1d::update_threshold( const QString & /* str */ )
 {
 }
 
+void US_Hydrodyn_Saxs_1d::update_spec_multiplier( const QString & /* str */ )
+{
+}
+
 void US_Hydrodyn_Saxs_1d::reset_1d()
 {
    compute_variables();
@@ -1951,6 +2214,8 @@ void US_Hydrodyn_Saxs_1d::compute_variables()
 
    probe_radius                  = le_probe_radius              ->text().toDouble();
    threshold                     = le_threshold                 ->text().toDouble();
+
+   spec_multiplier               = le_spec_multiplier           ->text().toDouble();
 
    detector_width_per_pixel      = detector_width  / detector_pixels_width;
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0, q_of_pixel( detector_pixels_width - 1 ) );
@@ -2113,6 +2378,35 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       return true;
    }
 
+   if ( cb_ev_from_file->isChecked() )
+   {
+      QString search_in = 
+         ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+         QDir::separator() + "tmp" + QDir::separator();
+
+      QString fname = QFileDialog::getOpenFileName(
+                                                   search_in,
+                                                   "Excluded volume files (*.evm)",
+                                                   this,
+                                                   "open file dialog",
+                                                   "Choose a file to open" );
+
+   
+      if ( fname.isEmpty() )
+      {
+         editor_msg( "red", QString( "Error: Excluded volume map load cancelled" ) );
+         return false;
+      }
+
+      if ( !QFile::exists( fname ) )
+      {
+         editor_msg( "red", QString( "Error: Excluded volume map file not found: %1" ).arg( fname ) );
+         return false;
+      }
+      ev_file_name = fname;
+      return true;
+   }
+
 #if !defined( HAS_CBF )
    errormsg = "No CBF linked in this version\n";
    return false;
@@ -2175,6 +2469,67 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
    if ( !rho0 )
    {
+      return true;
+   }
+
+   if ( cb_ev_from_file->isChecked() )
+   {
+      QString fname = ev_file_name;
+   
+      QFile f( fname );
+
+      if ( !f.exists() )
+      {
+         editor_msg( "red", QString( "Error: Excluded volume map file not found: %1" ).arg( fname ) );
+         return false;
+      }
+      
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg( "red", QString( "Error: Excluded volume map file can not open: %1" ).arg( fname ) );
+         return false;
+      }
+      
+      // later can be binary 
+      QTextStream ts( &f );
+      
+      int line = 0;
+      point tmp_point;
+      excluded_volume.clear();
+      QString qs = ts.readLine();
+      line++;
+      float tmp_float = qs.toFloat();
+      if ( tmp_float <= 0 )
+      {
+         f.close();
+         editor_msg( "red", QString( "Error: ev map file %1 line %2 dR %3 not valid" )
+                     .arg( fname )
+                     .arg( line )
+                     .arg( tmp_float )
+                     );
+         return false;
+      }
+      deltaR = tmp_float;
+      le_deltaR->setText( QString( "%1" ).arg( deltaR ) );
+
+      while( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         line++;
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         if ( qsl.size() != 3 )
+         {
+            f.close();
+            editor_msg( "red", QString( "Error: ev map file  line %1: incorrect number of tokens" ).arg( line ) );
+            return false;
+         }
+         tmp_point.axis[ 0 ] = qsl[ 0 ].toFloat();
+         tmp_point.axis[ 1 ] = qsl[ 1 ].toFloat();
+         tmp_point.axis[ 2 ] = qsl[ 2 ].toFloat();
+         excluded_volume.push_back( tmp_point );
+      }
+      f.close();
+      editor_msg( "gray", QString( "Excluded volume map file loaded %1 points" ).arg( excluded_volume.size() ) );
       return true;
    }
 
@@ -2665,3 +3020,363 @@ XYZ ArbitraryRotate(XYZ p,double theta,XYZ r)
    return(q);
 }
 #endif
+
+bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString name )
+{
+   // make a copy of mapname, open read/write, write datablock
+   errormsg = "";
+
+   if ( !rho0 )
+   {
+      return true;
+   }
+
+#if !defined( HAS_CBF )
+   errormsg = "No CBF linked in this version\n";
+   return false;
+#else 
+   editor_msg( "gray", QString( "saving excluded volume map %1\n" ).arg( name ) );
+   qApp->processEvents();
+
+   errormsg = "not yet implemented";
+   return false;
+
+   US_File_Util usu;
+
+   if ( !usu.copy( mapname, name, true ) )
+   {
+      errormsg = usu.errormsg;
+      return false;
+   }
+
+   FILE *fp = fopen( name.ascii(), "rb+");
+   if (  (FILE *)NULL == fp )
+   {
+      errormsg = QString( "Error: could not open file %1\n" ).arg( name );
+   }
+
+   cbf_handle cbf;
+
+   char * map_structure_id;
+
+   int res;
+
+   if ( ( res = cbf_make_handle (&cbf) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf make handle error %d\n", res );
+      return false;
+   }
+
+   if ( ( res = cbf_read_widefile(cbf, fp, MSG_DIGEST) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf read widefile %d\n", res );
+      return false;
+   }
+
+   // get map structure id
+
+   if ( ( res = cbf_find_category( cbf, "map_segment" ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find category 'map_segment' %d\n", res );
+      return false;
+   }
+
+   if ( ( res = cbf_find_column( cbf, "array_id" ) )  )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+      return false;
+   }
+      
+   if ( ( res = cbf_get_value( cbf, (const char **)&map_structure_id ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
+      return false;
+   }
+
+   // get displacements, increments
+   double     map_displacement          [ 3 ];
+   double     map_displacement_increment[ 3 ];
+
+   if ( ( res = cbf_find_category( cbf, "array_structure_list_axis" ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
+      return false;
+   }
+      
+   unsigned int rows;
+   if ( ( res = cbf_count_rows( cbf, &rows ) ) )
+   {
+      errormsg = QString( "" ).sprintf( "Error: cbf count rows %d\n", res );
+      return false;
+   }
+
+   if ( rows != 3 )
+   {
+      errormsg = QString( "" ).sprintf( "Error: rows != 3\n" );
+      return false;
+   }
+      
+   for ( unsigned int row = 0; row < rows; row++ )
+   {
+      if ( ( res = cbf_find_column( cbf, "axis_id" ) )  )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'axis_id' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_select_row( cbf, row ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf select row %d %d\n", row, res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "displacement" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement' %d\n", res );
+         return false;
+      }
+      
+      if ( ( res = cbf_get_doublevalue( cbf, &map_displacement[ row ] ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "displacement_increment" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
+         return false;
+      }
+      
+      if ( ( res = cbf_get_doublevalue( cbf, &map_displacement_increment[ row ] ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
+         return false;
+      }
+   }
+   
+   for ( int i = 0; i < 3; i++ )
+   {
+      printf( "axis: %d displacement %g increment %g\n",
+              i,
+              map_displacement[ i ],
+              map_displacement_increment[ i ] );
+   }
+      
+   // get binary data
+
+   {
+      int          binary_id;
+      int          elsigned;
+      int          elunsigned;
+      size_t       elements;
+      size_t       elements_read;
+      size_t       elsize;
+      int          minelement;
+      int          maxelement;
+      unsigned int cifcompression;
+      int          realarray;
+      const char * byteorder;
+      size_t       dim1;
+      size_t       dim2;
+      size_t       dim3;
+      size_t       padding;
+      
+      if ( ( res = cbf_find_category( cbf, "array_data" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find category 'array_data' %d\n", res );
+         return false;
+      }
+         
+      if ( ( res = cbf_find_column( cbf, "array_id" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+         return false;
+      }
+         
+      if ( ( res = cbf_rewind_row( cbf ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf rewind row %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_nextrow( cbf, map_structure_id ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
+         return false;
+      }
+
+      if ( ( res = cbf_find_column( cbf, "binary_id" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         return false;
+      }
+
+      if ( ( res = cbf_get_integervalue( cbf, &binary_id ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         return false;
+      }
+
+      printf( "binary_id is %d\n", binary_id );
+
+      if ( ( res = cbf_find_column( cbf, "data" ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf find column 'data' %d\n", res );
+         return false;
+      }
+
+      printf( "found data column\n" );
+            
+      if ( ( res = cbf_get_arrayparameters_wdims(
+                                                 cbf, 
+                                                 &cifcompression,
+                                                 &binary_id, 
+                                                 &elsize, 
+                                                 &elsigned, 
+                                                 &elunsigned,
+                                                 &elements, 
+                                                 &minelement, 
+                                                 &maxelement, 
+                                                 &realarray,
+                                                 &byteorder, 
+                                                 &dim1, 
+                                                 &dim2, 
+                                                 &dim3, 
+                                                 &padding) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get arrayparameters wdims %d\n", res );
+         return false;
+      }
+
+      puts( "cbf_get_realarray" );
+      printf( "dim1 %d, dim2 %d dim3 %d\n", dim1, dim2, dim3 );
+      if ( elsize != sizeof( double ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
+         return false;
+      }
+
+      vector < double > map_data( elements );
+
+      if ( ( res = cbf_get_realarray(
+                                     cbf, 
+                                     &binary_id, 
+                                     (void *)(& map_data[0] ), 
+                                     elsize,
+                                     elements, 
+                                     &elements_read ) ) )
+      {
+         errormsg = QString( "" ).sprintf( "Error: cbf get realarray error %d\n", res );
+         return false;
+      }
+            
+      if ( elements != elements_read )
+      {
+         errormsg = QString( "" ).sprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
+         return false;
+      }
+
+      puts( "doubles" );
+      printf( "elements %d, read %d\n", elements, elements_read );
+      {
+         unsigned int i;
+         unsigned int j;
+         unsigned int k;
+         unsigned int e = 0;
+         double mins[ 3 ];
+         double maxs[ 3 ];
+         bool   done = false;
+         // simply for gcc's warning about uninitialized variables
+         mins[ 0 ] = 0e0;
+         maxs[ 0 ] = 0e0;
+         mins[ 1 ] = 0e0;
+         maxs[ 1 ] = 0e0;
+         mins[ 2 ] = 0e0;
+         maxs[ 2 ] = 0e0;
+
+         for ( i = 0; i < 3; i++ )
+         {
+            printf( "axis: %d displacement %g increment %g\n",
+                    i,
+                    map_displacement[ i ],
+                    map_displacement_increment[ i ] );
+         }
+                      
+         for ( k = 0; k < dim3; k++ )
+         {
+            for ( j = 0; j < dim2; j++ )
+            {
+               for ( i = 0; i < dim1; i++ )
+               {
+                  double val = map_data[ e ];
+                  if ( val >= threshold )
+                  {
+                     double x = 1e7 * ( map_displacement[ 0 ] + i * map_displacement_increment[ 0 ] );
+                     double y = 1e7 * ( map_displacement[ 1 ] + j * map_displacement_increment[ 1 ] );
+                     double z = 1e7 * ( map_displacement[ 2 ] + k * map_displacement_increment[ 2 ] );
+                     //                      printf( "%g %g %g %g\n", x, y, z, val );
+                     point tmp_point;
+                     tmp_point.axis[ 0 ] = ( float )x;
+                     tmp_point.axis[ 1 ] = ( float )y;
+                     tmp_point.axis[ 2 ] = ( float )z;
+                     excluded_volume.push_back( tmp_point );
+                     if ( !done )
+                     {
+                        mins[ 0 ] = x;
+                        maxs[ 0 ] = x;
+                        mins[ 1 ] = y;
+                        maxs[ 1 ] = y;
+                        mins[ 2 ] = z;
+                        maxs[ 2 ] = z;
+                        done = true;
+                     } else {
+                        if ( mins[ 0 ] > x )
+                        {
+                           mins[ 0 ] = x;
+                        }
+                        if ( maxs[ 0 ] < x )
+                        {
+                           maxs[ 0 ] = x;
+                        }
+                        if ( mins[ 1 ] > y )
+                        {
+                           mins[ 1 ] = y;
+                        }
+                        if ( maxs[ 1 ] < y )
+                        {
+                           maxs[ 1 ] = y;
+                        }
+                        if ( mins[ 2 ] > z )
+                        {
+                           mins[ 2 ] = z;
+                        }
+                        if ( maxs[ 2 ] < z )
+                        {
+                           maxs[ 2 ] = z;
+                        }
+                     }
+                  }
+                  e++;
+               }
+            }
+         }
+         printf( "x [%g:%g] y [%g:%g] z [%g:%g]\n",
+                 mins[ 0 ], maxs[ 0 ],
+                 mins[ 1 ], maxs[ 1 ],
+                 mins[ 2 ], maxs[ 2 ] );
+      }
+   }
+    
+   cbf_free_handle( cbf );
+    
+   /*  fclose(f);*/ /* let cbflib handle the closing of a file */
+   if ( !cb_memory_conserve->isChecked() )
+   {
+      editor_msg( "gray", QString( "done loading excluded volume map of %1 points\n" ).arg( excluded_volume.size() ) );
+      qApp->processEvents();
+   }
+   return true;
+#endif
+}
+

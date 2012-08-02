@@ -301,6 +301,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1drun|"
                       "onedrun|"
                       "1dintermediatesaves|"
+                      "1dspecmult|"
 
                       "remark)$"
                       );
