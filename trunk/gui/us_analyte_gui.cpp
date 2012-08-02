@@ -464,10 +464,40 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
       if ( result == US_DB2::OK )
          populate();
-      le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
+
+      QString strVBar = QString::number( analyte.vbar20, 'f', 4 );
+      le_protein_vbar20->setText( strVBar );
+      le_nucle_vbar    ->setText( strVBar );
+      le_carbs_vbar    ->setText( strVBar );
+      le_carbs_mw      ->setText( QString::number( (int) analyte.mw ) );
    }
 
    list();
+
+   switch ( analyte.type )
+   {
+      case US_Analyte::PROTEIN:
+         dna_widget    ->setVisible( false );
+         carbs_widget  ->setVisible( false );
+         protein_widget->setVisible( true );
+         resize( 0, 0 ); // Resize to minimum dimensions
+         break;
+
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
+         update_nucleotide();
+         protein_widget->setVisible( false ); 
+         carbs_widget  ->setVisible( false );
+         dna_widget    ->setVisible( true );
+         break;
+
+      case US_Analyte::CARBOHYDRATE:
+         protein_widget->setVisible( false ); 
+         dna_widget    ->setVisible( false );
+         carbs_widget  ->setVisible( true );
+         resize( 0, 0 ); // Resize to minimum dimensions
+         break;
+   }
 }
 
 void US_AnalyteGui::source_changed( bool db )
