@@ -200,10 +200,10 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       {
          solvec.clear();
 
-         for ( int jj = ii, jj < ncomps; jj += nsubgrid )
+         for ( int jj = ii; jj < ncomps; jj += nsubgrid )
          {
-            US_Solute soli( model.component[ jj ].s,
-                            model.component[ jj ].f_f0,
+            US_Solute soli( model.components[ jj ].s,
+                            model.components[ jj ].f_f0,
                             0.0 );
             solvec << soli;
          }
