@@ -5,6 +5,13 @@ SRCDIR=/cygdrive/c/Users/Admin/Documents/ultrascan3
 US2DIR=/cygdrive/c/Users/Admin/Documents/ultrascan2
 QTBIN=/cygdrive/c/Qt/4.7.3/bin
 DESTDIR=/cygdrive/c/dist
+SYSTYPE=`uname -o`
+if [ "${SYSTYPE}" != "Cygwin" ]; then
+  echo "$0 requires a SYSTYPE (uname -o) of \"Cygwin\""
+  echo "  SYSTYPE=${SYSTYPE}"
+  exit 1
+fi
+
 SOMOBINS="us3_somo.exe us3_config.exe rasmol.exe \
  rasmol.hlp us_admin.exe us_somo10.dll"
 QTDLLS="Qt3Support4.dll QtCLucene4.dll QtCore4.dll \
