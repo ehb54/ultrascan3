@@ -5,7 +5,7 @@ SRCDIR=$HOME/ultrascan3
 DSTDIR=$HOME/us3pkg
 ME=`whoami`
 SYSTYPE=`uname -s`
-if [ "${SYSTYPE}" != "Linxx" ]; then
+if [ "${SYSTYPE}" != "Linux" ]; then
   echo "$0 requires a SYSTYPE (uname -s) of \"Linux\""
   echo "  SYSTYPE=${SYSTYPE}"
   exit 1
