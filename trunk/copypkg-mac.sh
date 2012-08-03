@@ -6,6 +6,13 @@ RSYNC="rsync -av --exclude=.svn"
 SRCDIR=~/us3/ultrascan3
 PKGDIR=~/us3/pkg
 PDIRS=""
+SYSTYPE=`uname -s`
+
+if [ "${SYSTYPE}" != "Darwin" ]; then
+  echo "$0 requires a SYSTYPE (uname -s) of \"Darwin\""
+  echo "  SYSTYPE=${SYSTYPE}"
+  exit 1
+fi
 
 for D in ultrascan3 somo Frameworks; do
   DDIR=${PKGDIR}/${D}
