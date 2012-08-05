@@ -3096,8 +3096,9 @@ void US_Edit::apply_prior( void )
       QString filter = files[ cb_triple->currentIndex() ];
       index1 = filter.indexOf( '.' ) + 1;
 
-      filter.insert( index1, "*." );
+      filter = "*" + filter.mid( index1 );
       filter.replace( QRegExp( "auc$" ), "xml" );
+      filter = tr( "Edits(" ) + filter + tr( ");;All XML (*.xml)" );
       
       // Ask for edit file
       filename = QFileDialog::getOpenFileName( this, 
