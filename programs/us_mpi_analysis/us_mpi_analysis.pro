@@ -14,6 +14,10 @@ DESTDIR      = .
 
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
+revision.target       = us_revision.h
+revision.commands     = sh revision.sh
+revision.depends      = FORCE
+QMAKE_EXTRA_TARGETS  += revision
 
 SOURCES      += us_mpi_analysis.cpp  \
                 2dsa_master.cpp      \

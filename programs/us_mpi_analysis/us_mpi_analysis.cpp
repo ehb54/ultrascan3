@@ -3,6 +3,7 @@
 #include "us_tar.h"
 #include "us_memory.h"
 #include "us_sleep.h"
+#include "us_revision.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -37,6 +38,8 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
 
    if ( my_rank == 0 )
    {
+      DbgLv(0) << "Us_Mpi_Analysis  " << REVISION;
+
       // Unpack the input tarfile
       US_Tar tar;
 
@@ -113,7 +116,8 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
 
    group_rank = my_rank;    // Temporary setting for send_udp
 
-   send_udp( "Starting" );  // Can't send udp message until xmlfile is parsed
+   QString msg_start = QString( "Starting  " ) + QString( REVISION );
+   send_udp( msg_start );   // Can't send udp message until xmlfile is parsed
 
    // Read data 
    for ( int i = 0; i < data_sets.size(); i++ )
