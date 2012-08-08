@@ -38,6 +38,10 @@ class US_FeMatch : public US_Widgets
       US_Noise*                   fem_ri_noise();
       QPointer< US_ResidsBitmap > fem_resbmap();
 
+   public slots:
+      void    thread_progress( int, int );
+      void    thread_complete( int );
+
    private:
 
       QLabel*       lb_tolerance;
@@ -89,6 +93,8 @@ class US_FeMatch : public US_Widgets
 
       int           scanCount;
       int           dbg_level;
+      int           nthread;
+      int           thrdone;
 
       bool          dataLoaded;
       bool          haveSim;
@@ -129,7 +135,15 @@ class US_FeMatch : public US_Widgets
       QPoint                      epd_pos;
       QPoint                      rpd_pos;
 
+      QDateTime                   start_time;
+
       QMap< QString, QString >    adv_vals;
+
+      QVector< int >                kcomps;
+
+      QList< US_DataIO2::RawData >  tsimdats;
+      QList< US_Model >             tmodels;
+      US_SimulationParameters       simparams;
 
    private slots:
 
@@ -193,6 +207,7 @@ class US_FeMatch : public US_Widgets
       void    updateSolution( US_Solution );
       void    update_progress( int );
       void    reportFilesToDB( QStringList& );
+      void    show_results   ( void );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

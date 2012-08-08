@@ -4,7 +4,7 @@
 #include <QtSvg>
 
 #include "us_fematch.h"
-#include "us_advanced.h"
+#include "us_thread_worker.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -21,6 +21,9 @@
 #include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
 #include "us_report.h"
+#include "us_sleep.h"
+
+#define MIN_NTC   25
 
 // main program
 int main( int argc, char* argv[] )
@@ -356,7 +359,7 @@ US_Noise*                   US_FeMatch::fem_ri_noise() { return &ri_noise; }
 // public function to get pointer to resid bitmap diag
 QPointer< US_ResidsBitmap > US_FeMatch::fem_resbmap()  { return rbmapd;    }
 
-// load data
+// Load data
 void US_FeMatch::load( void )
 {
    QString     file;
@@ -445,7 +448,7 @@ void US_FeMatch::load( void )
 
 }
 
-// details
+// Details
 void US_FeMatch::details( void )
 {
    US_RunDetails2* dialog
@@ -458,7 +461,7 @@ void US_FeMatch::details( void )
    delete dialog;
 }
 
-// update based on selected triples row
+// Update based on selected triples row
 void US_FeMatch::update( int drow )
 {
    edata          = &dataList[ drow ];
@@ -582,7 +585,7 @@ void US_FeMatch::update( int drow )
 }
 
 
-// data plot
+// Data plot
 void US_FeMatch::data_plot( void )
 {
    data_plot2->detachItems();
@@ -732,7 +735,7 @@ void US_FeMatch::data_plot( void )
       }
    }
 
-   // plot simulation
+   // Plot simulation
    if ( haveSim )
    {
       double rl = edata->radius( 0 );
@@ -812,7 +815,7 @@ DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
    return;
 }
 
-// save the report and image data
+// Save the report and image data
 void US_FeMatch::save_data( void )
 {
    if ( eplotcd == 0  ||  eplotcd->data_3dplot() == 0 )
@@ -1059,6 +1062,7 @@ DbgLv(1) << "SAVE-FILES: DB    ms" << etim2 << "=" << et2pc << "%";
    QMessageBox::information( this, tr( "Successfully Written" ), umsg );
 }
 
+// View the report text
 void US_FeMatch::view_report( )
 {
    QString mtext;
@@ -1078,6 +1082,7 @@ void US_FeMatch::view_report( )
    editd->show();
 }
 
+// Slot to handle a change in Exclude-From
 void US_FeMatch::exclude_from( double from )
 {
    double to = ct_to->value();
@@ -1094,6 +1099,7 @@ void US_FeMatch::exclude_from( double from )
    data_plot();
 }
 
+// Slot to handle a change in Exclude-To
 void US_FeMatch::exclude_to( double to )
 {
    double from = ct_from->value();
@@ -1110,6 +1116,7 @@ void US_FeMatch::exclude_to( double to )
    data_plot();
 }
 
+// Exclude scans
 void US_FeMatch::exclude( void )
 {
    double from          = ct_from->value();
@@ -1142,7 +1149,7 @@ void US_FeMatch::exclude( void )
    pb_reset_exclude->setEnabled( true );
 }
 
-// respond to click of current type of distribution plot
+// Respond to click of current type of distribution plot
 void US_FeMatch::distrib_type( )
 {
    const char* dptyp[] = 
@@ -1193,7 +1200,7 @@ void US_FeMatch::distrib_type( )
    }
 }
 
-// do stick type distribution plot
+// Do stick type distribution plot
 void US_FeMatch::distrib_plot_stick( int type )
 {
    QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
@@ -1282,7 +1289,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_plot1->replot();
 }
 
-// do 2d type distribution plot
+// Do 2d type distribution plot
 void US_FeMatch::distrib_plot_2d( int type )
 {
    QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
@@ -1411,7 +1418,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    data_plot1->replot();
 }
 
-// do residuals type distribution plot
+// Do residuals type distribution plot
 void US_FeMatch::distrib_plot_resids( )
 {
    QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
@@ -1508,7 +1515,7 @@ void US_FeMatch::distrib_plot_resids( )
    data_plot1->replot();
 }
 
-// open dialog with advanced analysis parameters
+// Open a dialog with advanced analysis parameters
 void US_FeMatch::advanced( )
 {
    advdiag = new US_Advanced( &model_loaded, adv_vals, (QWidget*)this );
@@ -1529,7 +1536,7 @@ void US_FeMatch::plot3d( )
    eplotcd->show();
 }
 
-// open residual plot dialog
+// Open a residual plot dialog
 void US_FeMatch::plotres( )
 {
    if ( resplotd != 0 )
@@ -1543,7 +1550,7 @@ void US_FeMatch::plotres( )
    resplotd->show();
 }
 
-// load model data and detect if RA
+// Load the model data and detect if it is RA
 void US_FeMatch::load_model( )
 {
    int      drow    = lw_triples->currentRow();
@@ -1678,7 +1685,7 @@ double s2_b = sc->vbar20;
                     > ( maxv - minv ) / qAbs( maxv ) );
 }
 
-// compress and average monte carlo model components
+// Compress and average monte carlo model components
 void US_FeMatch::adjust_mc_model()
 {
    model_loaded       = model;
@@ -1858,7 +1865,6 @@ void US_FeMatch::simulate_model( )
    }
 
    int    drow    = lw_triples->currentRow();
-   US_SimulationParameters simparams;
    US_DataIO2::RawData*    rdata   = &rawList[  drow ];
    US_DataIO2::EditedData* edata   = &dataList[ drow ];
    US_DataIO2::Reading     reading;
@@ -1867,7 +1873,6 @@ void US_FeMatch::simulate_model( )
    int    nconc   = edata->x.size();
    double radlo   = edata->radius( 0 );
    double radhi   = edata->radius( nconc - 1 );
-   double rmsd    = 0.0;
 DbgLv(1) << " kscan nscan nconc" << kscan << nscan << nconc;
 DbgLv(1) << " radlo radhi" << radlo << radhi;
 DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
@@ -1925,8 +1930,6 @@ DbgLv(1) << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
    // Make a simulation copy of the experimental data without actual readings
 
-   //US_AstfemMath::initSimData( *sdata, *edata,
-   //      model.components[ 0 ].signal_concentration );
    US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
 
    sdata->cell        = rdata->cell;
@@ -1947,41 +1950,118 @@ DbgLv(1) << " afrsa init";
 if ( dbg_level > 1 )
  simparams.save_simparms( US_Settings::appBaseDir() + "/etc/sp_fematch.xml" );
 
-   compress  = le_compress->text().toDouble();
-   progress->setMaximum( model.components.size() );
+   start_time = QDateTime::currentDateTime();
+   int ncomp  = model.components.size();
+   compress   = le_compress->text().toDouble();
+   progress->setMaximum( ncomp );
    progress->reset();
 
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0  &&
-        model.coSedSolute           <  0.0  &&
-        compress                    == 0.0 )
-   {
-      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+   nthread    = US_Settings::threads();
+   int ntc    = ( ncomp + nthread - 1 ) / nthread;
+   nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
+DbgLv(1) << " nthread ntc ncomp" << nthread << ntc << ncomp;
+
+   // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
+   if ( nthread < 2 )
+   {  // Do a single-thread calculation
+      if ( model.components[ 0 ].sigma == 0.0  &&
+           model.components[ 0 ].delta == 0.0  &&
+           model.coSedSolute           <  0.0  &&
+           compress                    == 0.0 )
+      {  // ASTFEM
+         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
-      connect( astfem_rsa, SIGNAL( current_component( int ) ),
-               this,       SLOT(   update_progress(   int ) ) );
+         connect( astfem_rsa, SIGNAL( current_component( int ) ),
+                  this,       SLOT(   update_progress(   int ) ) );
 DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeCorrection( true );
 
-      astfem_rsa->calculate( *sdata );
+         astfem_rsa->calculate( *sdata );
+      }
+
+      else
+      {  // ASTFVM
+         US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
+
+         connect( astfvm,     SIGNAL( comp_progress(     int ) ),
+                  this,       SLOT(   update_progress(   int ) ) );
+
+         solution_rec.buffer.compressibility = compress;
+         astfvm->set_buffer( solution_rec.buffer );
+         astfvm->calculate(     *sdata );
+      }
+
+      show_results();
    }
 
    else
-   {
-      US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-
-      connect( astfvm,     SIGNAL( comp_progress(     int ) ),
-               this,       SLOT(   update_progress(   int ) ) );
-
+   {  // Do multi-thread calcuations
+DbgLv(1) << " USING THREADING";
       solution_rec.buffer.compressibility = compress;
-      astfvm->set_buffer( solution_rec.buffer );
-      astfvm->calculate(     *sdata );
+      tsimdats.clear();
+      tmodels .clear();
+      kcomps  .clear();
+      QList< ThreadWorker* >         tworkers;
+      QList< QThreadEx* >            wthreads;
+
+      // Build models for each thread
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         if ( ii < nthread )
+         {  // First time through per thread:  get initial model and sim data
+            tmodels << model;
+            tmodels[ ii ].components.clear();
+            US_DataIO2::RawData sdat = *sdata;
+            tsimdats << sdat;
+            kcomps   << 0;
+         }
+
+         // Partition thread models from round-robin fetch of components
+         int jj = ii % nthread;
+         tmodels[ jj ].components << model.components[ ii ];
+      }
+
+      thrdone   = 0;
+
+      // Build worker threads and begin running
+      for ( int ii = 0; ii < nthread; ii++ )
+      {
+DbgLv(1) << "Thr-Bld ii" << ii << "model comps"
+ << tmodels[ii].components.size();
+         ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
+               tsimdats[ ii ], solution_rec.buffer, ii );
+         QThreadEx*    wthread = new QThreadEx();
+
+         tworker->moveToThread( wthread );
+         tworkers << tworker;
+         wthreads << wthread;
+
+         connect( wthread, SIGNAL( started()         ),
+                  tworker, SLOT  ( calc_simulation() ) );
+
+         connect( tworker, SIGNAL( work_progress  ( int, int ) ),
+                  this,    SLOT(   thread_progress( int, int ) ) );
+         connect( tworker, SIGNAL( work_complete  ( int )      ),
+                  this,    SLOT(   thread_complete( int )      ) );
+
+         wthread->start();
+      }
+DbgLv(1) << "    +++End Of Thr-St loop";
+
    }
+}
+
+// Show simulation and residual when the simulation is complete
+void US_FeMatch::show_results( )
+{
+   long dur_calc = start_time.msecsTo( QDateTime::currentDateTime() );
+   DbgLv(0) << dur_calc << "Msecs. for calculations using"
+      << nthread << "thread(s)";
 
    progress->setValue( progress->maximum() );
 
-nscan = sdata->scanData.size();
-nconc = sdata->x.size();
+   int nscan = sdata->scanData.size();
+   int nconc = sdata->x.size();
 DbgLv(1) << " afrsa done M N" << nscan << nconc;
 DbgLv(1) << "   sdata->x0" << sdata->radius(0);
 DbgLv(1) << "   sdata->xN" << sdata->radius(nconc-1);
@@ -1990,6 +2070,7 @@ DbgLv(1) << "   sdata->c0N" << sdata->value(0,nconc-1);
 DbgLv(1) << "   sdata->cM0" << sdata->value(nscan-1,0);
 DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
+   double rmsd = 0.0;
    rmsd        = US_AstfemMath::variance( *sdata, *edata, excludedScans );
    le_variance->setText( QString::number( rmsd ) );
    rmsd        = sqrt( rmsd );
@@ -2024,7 +2105,7 @@ DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
    QApplication::restoreOverrideCursor();
 }
 
-// pare down files list by including only the last-edit versions
+// Pare down files list by including only the last-edit versions
 QStringList US_FeMatch::last_edit_files( QStringList files )
 {
    QStringList ofiles;
@@ -2070,7 +2151,7 @@ QStringList US_FeMatch::last_edit_files( QStringList files )
    return ofiles;
 }
 
-// set values for component at index
+// Set values for component at index
 void US_FeMatch::component_values( int /*index*/ )
 {
 #if 0
@@ -2084,13 +2165,13 @@ void US_FeMatch::component_values( int /*index*/ )
 #endif
 }
 
-// component number changed
+// Component number changed
 void US_FeMatch::comp_number( double cnbr )
 {
    component_values( (int)cnbr - 1 );
 }
 
-// interpolate an sdata y (readings) value for a given x (radius)
+// Interpolate an sdata y (readings) value for a given x (radius)
 double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 {
    for ( int jj = 1; jj < ssize; jj++ )
@@ -2117,7 +2198,7 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
    return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
 }
 
-// write the report HTML text stream
+// Write the report HTML text stream
 void US_FeMatch::write_report( QTextStream& ts )
 {
    ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
@@ -2128,7 +2209,7 @@ void US_FeMatch::write_report( QTextStream& ts )
    ts << "  </body>\n</html>\n";
 }
 
-// calculate average baseline absorbance
+// Calculate average baseline absorbance
 double US_FeMatch::calc_baseline( int drow ) const
 {
    const US_DataIO2::EditedData* dd = &dataList[ drow ];
@@ -2142,7 +2223,7 @@ double US_FeMatch::calc_baseline( int drow ) const
    return ( bl / 11.0 );
 }
 
-// model type text string
+// Model type text string
 QString US_FeMatch::text_model( US_Model model, int width )
 {
    QString title;
@@ -2242,7 +2323,7 @@ QString US_FeMatch::text_model( US_Model model, int width )
 }
 
 
-// calculate residual absorbance values (data - sim - noise)
+// Calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
    int     dsize  = edata->scanData[ 0 ].readings.size();
@@ -2311,7 +2392,7 @@ void US_FeMatch::calc_residuals()
    le_rmsd    ->setText( QString::number( rmsd ) );
 }
 
-// slot to make sure all windows and dialogs get closed
+// Slot to make sure all windows and dialogs get closed
 void US_FeMatch::close_all()
 {
    if ( rbmapd )
@@ -2363,6 +2444,7 @@ QString US_FeMatch::table_row( const QString& s1, const QString& s2,
             + s6 + "</td><td>" + s7 + "</td></tr>\n" );
 }
 
+// Compose a report HTML header
 QString US_FeMatch::html_header( QString title, QString head1,
       US_DataIO2::EditedData* edata )
 {
@@ -2392,6 +2474,7 @@ QString US_FeMatch::html_header( QString title, QString head1,
    return s;
 }
 
+// Compose data details text
 QString US_FeMatch::data_details( void ) const
 {
    int    drow     = lw_triples->currentRow();
@@ -2480,6 +2563,7 @@ QString US_FeMatch::data_details( void ) const
    return s;
 }
 
+// Compose hydrodynamics portion of report text
 QString US_FeMatch::hydrodynamics( void ) const
 {
    // set up hydrodynamics values
@@ -2520,6 +2604,7 @@ QString US_FeMatch::hydrodynamics( void ) const
    return s;
 }
 
+// Compose scan information portion of report text
 QString US_FeMatch::scan_info( void ) const
 {
    int                           drow   = lw_triples->currentRow();
@@ -2673,6 +2758,7 @@ QString US_FeMatch::distrib_info() const
    return mstr;
 }
 
+// Write out a plot
 void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 {
    if ( filename.endsWith( ".svg" ) )
@@ -2740,6 +2826,7 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
    }
 }
 
+// Create a subdirectory if need be
 bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
 {
    QDir folder( baseDir );
@@ -2755,6 +2842,7 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
+// Slot to handle selection of a new triple
 void US_FeMatch::new_triple( int trow )
 {
    haveSim    = false;
@@ -2764,11 +2852,13 @@ void US_FeMatch::new_triple( int trow )
    data_plot();
 }
 
+// Set progress text
 void US_FeMatch::set_progress( const QString message )
 {
    te_desc->setText( "<b>" + message + " ...</b>" );
 }
 
+// Update the disk/DB choice element
 void US_FeMatch::update_disk_db( bool isDB )
 {
    isDB ?  dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
@@ -3009,6 +3099,43 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
          QString fnpng = QString( fname ).replace( ".svg", ".png" );
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
       }
+   }
+}
+
+// Update progress when thread reports
+void US_FeMatch::thread_progress( int thr, int icomp )
+{
+   int kcomp     = 0;
+   kcomps[ thr ] = icomp;
+   for ( int ii = 0; ii < nthread; ii++ )
+      kcomp += kcomps[ ii ];
+   progress->setValue( kcomp );
+DbgLv(1) << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
+}
+
+// Update count of threads completed and colate simulations when all are done
+void US_FeMatch::thread_complete( int thr )
+{
+   thrdone++;
+DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
+
+   if ( thrdone >= nthread )
+   {  // All threads are done, so sum thread simulation data
+      for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
+      {
+         for ( int jj = 0; jj < sdata->x.size(); jj++ )
+         {
+            double conc = 0.0;
+
+            for ( int kk = 0; kk < nthread; kk++ )
+               conc += tsimdats[ kk ].value( ii, jj );
+
+            sdata->scanData[ ii ].readings[ jj ] = US_DataIO2::Reading( conc );
+         }
+      }
+
+      // Then show the results
+      show_results();
    }
 }
 
