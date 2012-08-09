@@ -2567,3 +2567,80 @@ double US_Saxs_Util::get_ff_ev( QString res, QString atm )
 
    return ff_ev[ ff_table[ ffkey ] ];
 }
+
+map < QString, unsigned int > US_Saxs_Util::get_atom_summary_counts( PDB_model *model,
+                                                                     map < QString, QString > &residue_atom_hybrid_map,
+                                                                     saxs_options *use_saxs_options
+                                                                     )
+{
+   map < QString, unsigned int > asc;
+   
+   QRegExp count_hydrogens("H(\\d)");
+
+   for ( unsigned int j = 0; j < model->molecule.size(); j++ )
+   {
+      for ( unsigned int k = 0; k < model->molecule[j].atom.size(); k++ )
+      {
+         PDB_atom *this_atom = &( model->molecule[ j ].atom[ k ] );
+         if ( this_atom->name == "XH" && !use_saxs_options->iqq_use_atomic_ff )
+         {
+            continue;
+         }
+
+         QString use_resname = this_atom->resName;
+         use_resname.replace( QRegExp( "_.*$" ), "" );
+            
+         QString mapkey = QString("%1|%2")
+            .arg( use_resname )
+            .arg( this_atom->name );
+
+         if ( this_atom->name == "OXT" )
+         {
+            mapkey = "OXT|OXT";
+         }
+            
+         QString hybrid_name = residue_atom_hybrid_map[mapkey];
+            
+         if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+         {
+            cout << QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+               .arg(j+1)
+               .arg(use_resname)
+               .arg(this_atom->resSeq);
+            continue;
+         }
+            
+         int hydrogens = 0;
+         if ( count_hydrogens.search( hybrid_name ) != -1 )
+         {
+            hydrogens = count_hydrogens.cap( 1 ).toInt();
+         }
+         QString atom_name = this_atom->name;
+         if ( atom_name.contains( "^H" ) )
+         {
+            asc[ "H" ]++;
+         } else {
+            asc[ atom_name.left(1) ]++;
+            asc[ "H" ] += hydrogens;
+         }
+      }
+   }
+   return asc;
+}
+
+QString US_Saxs_Util::list_atom_summary_counts( PDB_model *model,
+                                                map < QString, QString > &residue_atom_hybrid_map,
+                                                saxs_options *use_saxs_options
+                                                )
+{
+   map < QString, unsigned int > asc = get_atom_summary_counts( model, residue_atom_hybrid_map, use_saxs_options );
+   QString qs;
+   for ( map < QString, unsigned int >::iterator it = asc.begin();
+         it != asc.end();
+         it++ )
+   {
+      qs += QString( "%1 %2\n" ).arg( it->first ).arg( it->second );
+   }
+   return qs;
+}

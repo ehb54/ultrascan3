@@ -1896,6 +1896,8 @@ void US_Hydrodyn_Saxs_1d::start()
             {
                for ( unsigned int i = 0; i < data.size(); i++ )
                {
+                  complex < double > testsum = complex < double > ( 0, 0 );
+                  complex < double > testsum2 = complex < double > ( 0, 0 );
                   if ( !t )
                   {
                      progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
@@ -1911,10 +1913,18 @@ void US_Hydrodyn_Saxs_1d::start()
                   Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
                   Q[ 2 ] = 0e0;
                
+                  cout << QString( "q %1 %2 %2\n" ).arg( Q[ 0 ] ).arg( Q[ 1 ] ).arg( Q[ 2 ] );
+
                   for ( unsigned int j = 0; j < ( unsigned int )excluded_volume.size(); j++ )
                   {
 
-                     /* 
+#if defined( UHS1_QUICK_EV_NO_ROTATIONS )
+                     double QdotR = 
+                        Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
+                        Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
+                        Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ]
+                        ;
+#else
                      vector < double > Rvorg( 3 );
                      Rvorg[ 0 ] = (double) excluded_volume[ j ].axis[ 0 ] * cos_planar_angle - (double) excluded_volume[ j ].axis[ 1 ] * sin_planar_angle;
                      Rvorg[ 1 ] = (double) excluded_volume[ j ].axis[ 0 ] * sin_planar_angle + (double) excluded_volume[ j ].axis[ 1 ] * cos_planar_angle;
@@ -1939,26 +1949,31 @@ void US_Hydrodyn_Saxs_1d::start()
                         Q[ 1 ] * Rv[ 1 ] +
                         Q[ 2 ] * Rv[ 2 ];
 
-                     QdotR *= spec_multiplier;
-
-                     */
-
-                     double QdotR = 
-                        Q[ 0 ] * (double) excluded_volume[ j ].axis[ 0 ] +
-                        Q[ 1 ] * (double) excluded_volume[ j ].axis[ 1 ] +
-                        Q[ 2 ] * (double) excluded_volume[ j ].axis[ 2 ]
-                        ;
+#endif
 
                      QdotR *= spec_multiplier;
 
                      complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
 
-                     complex < double > expiQdotR = exp( iQdotR );
+                     complex < double > expiQdotR =  exp( iQdotR );
 
                      complex < double > rho0expiQdotR = complex < double > ( rho0, 0e0 ) * expiQdotR;
 
                      data[ i ] -= rho0expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+                     testsum += expiQdotR * complex < double > ( deltaR * deltaR * deltaR, 0 );
+
+                     double QdotR2 = 
+                        Q[ 0 ] * Rv[ 0 ] +
+                        Q[ 1 ] * Rv[ 1 ] +
+                        Q[ 2 ] * Rv[ 2 ];
+
+                     complex < double > iQdotR2 = complex < double > ( 0e0, -QdotR2 );
+
+                     complex < double > expiQdotR2 =  exp( iQdotR2 );
+
+                     testsum2 += expiQdotR2 * complex < double > ( deltaR * deltaR * deltaR, 0 );
                   }
+                  cout << QString( "test sum at pos %1 q = %2" ).arg( i ).arg( sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] ) ) << sqrt( testsum2 * conj(testsum2) ) << endl;
                }
 
 #if defined( UHS1D_EXCL_VOL_DEBUG )

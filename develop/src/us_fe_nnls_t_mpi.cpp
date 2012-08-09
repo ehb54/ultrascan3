@@ -70,6 +70,12 @@ static bool multi_experiment_flag;
 static vector < double > avg_gasc_rmsd;
 static int fit_meniscus_pos;
 
+static bool         tikh_reg         = false;
+static int          tikh_reg_order   = 0;
+static bool         maxe_reg         = false;
+static double       reg_alpha        = 0;
+static unsigned int reg_solutes      = 0;
+
 static void setup_model_system_1comp() {
    unsigned int i;
    vector<QString> model_sys_1comp_full_text;
@@ -316,7 +322,6 @@ Simulation_values US_fe_nnls_t::regularize(Simulation_values org_sv, double use_
 #endif
    return sv;
 }
-
 
 static vector <struct mfem_data> get_gaussian_means(vector <struct mfem_data> res)
 {
@@ -1156,6 +1161,78 @@ US_fe_nnls_t::init_run(const QString & data_file,
    this->gridopt = "no";
    maxrss = 0l;
 
+   // check for regularization
+   {
+      QFile f( "regularization" );
+      if ( f.exists() )
+      {
+         if ( !myrank )
+         {
+            cout << "found regularization file\n";
+         }
+         if ( !f.open( IO_ReadOnly ) )
+         {
+            cout << "could not open regularization file, skipping\n";
+         } else {
+            QTextStream ts( &f );
+            int line = 0;
+            QRegExp rx_comment( "(^\\s+#|^\\s+$)" );
+            while ( !ts.atEnd() )
+            {
+               QString qs = ts.readLine();
+               line++;
+               if ( rx_comment.search( qs ) != -1 )
+               {
+                  continue;
+               }
+               QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+               if ( qsl.size() != 3 )
+               {
+                  if ( !myrank )
+                  {
+                     cout << QString( "error in regularization file line %1, skipping regularization\n" ).arg( line );
+                  }
+                  break;
+               }
+               if ( qsl[ 0 ].lower() == "maxentropy" )
+               {
+                  if ( !myrank )
+                  {
+                     cout << QString( "regularization file line %1: maxentropy not currently supported\n" ).arg( line );
+                  }
+                  break;
+               }
+               if ( qsl[ 0 ].lower() == "tikhonov" )
+               {
+                  tikh_reg_order = qsl[ 1 ].toInt();
+                  reg_alpha      = qsl[ 2 ].toDouble();
+                  if ( tikh_reg_order > 0 )
+                  {
+                     if ( !myrank )
+                     {
+                        cout << QString( "regularization file line %1: tikhonov only order 0 currently supported\n" ).arg( line );
+                     }
+                     break;
+                  }
+                  if ( reg_alpha <= 0e0 )
+                  {
+                     if ( !myrank )
+                     {
+                        cout << QString( "regularization file line %1: tikhonov alhpa must be > 0\n" ).arg( line );
+                     }
+                     break;
+                  }
+                  tikh_reg = true;
+                  if ( !myrank )
+                  {
+                     cout << QString( "Tikhonov regularization order %1 alpha %2 active\n" ).arg( tikh_reg_order ).arg( reg_alpha );
+                  }
+               }
+            }
+         }
+      }
+   }
+
    startDateTime = QDateTime::currentDateTime();
    solutions.clear();
    experiment.clear();
@@ -1246,6 +1323,27 @@ US_fe_nnls_t::init_run(const QString & data_file,
       //   cout << "sizeof(count1): " << sizeof(count1) << "\n";
       //   cout << "sizeof(unsigned int): " << sizeof(unsigned int) << "\n";
       fflush(stdout);
+      if ( ( tikh_reg || maxe_reg ) &&
+           !analysis_type.contains( QRegExp( "^2DSA" ) ) )
+      {
+         tikh_reg = false;
+         maxe_reg = false;
+         if ( !myrank )
+         {
+            cout << "Warning: Regularization turned off, only 2DSA methods supported";
+         }
+      }
+
+      if ( ( tikh_reg || maxe_reg ) &&
+           ( fit_tinoise || fit_rinoise ) )
+      {
+         tikh_reg = false;
+         maxe_reg = false;
+         if ( !myrank )
+         {
+            cout << "Warning: Regularization turned off, noise can not currently be simultaneously fit";
+         }
+      }
       if (analysis_type == "2DSA" ||
           analysis_type == "2DSA_RA")
       {
@@ -6033,11 +6131,13 @@ static void save_solutes(vector < Solute > solutes) {
 }
 #endif
 
-Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experiment,
-                                               vector < Solute > solutes,
-                                               double meniscus_offset,
-                                               int return_all_solutes, 
-                                               unsigned int exp_pos)
+Simulation_values US_fe_nnls_t::calc_residuals(
+                                               vector < mfem_data > experiment,
+                                               vector < Solute >    solutes,
+                                               double               meniscus_offset,
+                                               int                  return_all_solutes, 
+                                               unsigned int         exp_pos
+                                               )
 {
    //   printf("%d: calc_residuals\n", myrank); fflush(stdout);
 #if defined(USE_US_TIMER)
@@ -6116,6 +6216,11 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
             i += experiment[j].radius.size() * (experiment[j].scan.size() - 1);
          }
       }
+      if ( tikh_reg || maxe_reg )
+      {
+         i += solutes.size();
+      }
+
       unsigned int total_points_size = i;
 
       j = solutes.size();
@@ -6173,6 +6278,15 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                count++;
             }
          }
+         if ( tikh_reg || maxe_reg )
+         {
+            while( count < total_points_size )
+            {
+               nnls_b[ count ] = 0e0;
+               count++;
+            }
+         }
+
          if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
          {
             for (i = 1; i < experiment[e].scan.size(); i++)
@@ -6328,6 +6442,14 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                   // populate the A matrix for the NNLS routine with the
                   // model function:
                   nnls_a[count] = experiment[e].scan[j].conc[k];
+                  count++;
+               }
+            }
+            if ( tikh_reg || maxe_reg )
+            {
+               for ( int ii = 0; ii < solutes.size(); ii++ )
+               {
+                  nnls_a[ count ] = i == ii ? reg_alpha : 0e0;
                   count++;
                }
             }

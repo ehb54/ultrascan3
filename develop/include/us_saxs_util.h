@@ -600,8 +600,16 @@ class US_EXTERN US_Saxs_Util
 
       map < QString, QString > control_parameters;
 
+      static map < QString, unsigned int >            get_atom_summary_counts( PDB_model *model,
+                                                                               map < QString, QString > &residue_atom_hybrid_map,
+                                                                               saxs_options *use_saxs_options
+                                                                               );
+      static QString                                  list_atom_summary_counts( PDB_model *model,
+                                                                                map < QString, QString > &residue_atom_hybrid_map,
+                                                                                saxs_options *use_saxs_options
+                                                                                );
 #ifdef WIN32
-  #pragma warning ( default: 4251 )
+  #pragma default ( disable: 4251 )
 #endif
 
    private:

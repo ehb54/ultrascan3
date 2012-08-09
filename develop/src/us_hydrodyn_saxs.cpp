@@ -146,6 +146,14 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    {
       bead_model_ok_for_saxs = false;
    }
+   for ( int i = 0; i < (int) model_vector.size(); i++ )
+   {
+      cout << QString( "summary info for model %1\n" ).arg( i + 1 );
+      cout << US_Saxs_Util::list_atom_summary_counts( &model_vector[ i ],
+                                                      residue_atom_hybrid_map,
+                                                      our_saxs_options
+                                                      );
+   }
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    te_filename2->setText(filename);
    model_filename = filename;
