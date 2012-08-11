@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE US_AbstractCenterpiece>
-<abstractCenterpieces version="1.0">
+<abstractCenterpieces version="1.1">
    <abstractCenterpiece
      id="1"
      guid="08cbd35f-151c-4814-8457-6ef8dd523a23"
@@ -88,7 +88,7 @@
      guid="4a6410c5-099f-44d8-baa2-0e2d4c099ced"
      name="Epon 2-channel band forming"
      materialName="Epon"
-     channels="2"
+     channels="1"
      shape="band forming"
      maxRPM="42000"
      angle="2.5"
@@ -101,7 +101,7 @@
      guid="30a5f2f8-b31a-42b8-a8a8-df077bf1b432"
      name="Epon-Helmut 2-channel band forming"
      materialName="Epon-Helmut"
-     channels="2"
+     channels="1"
      shape="band forming"
      maxRPM="60000"
      angle="2.5"
@@ -114,7 +114,7 @@
      guid="2e4414c9-babf-4505-8556-4bd492b9fb27"
      name="SVEL60 2-channel standard"
      materialName="SVEL60"
-     channels="2"
+     channels="1"
      shape="standard"
      maxRPM="60000"
      angle="2.0"
@@ -127,7 +127,7 @@
      guid="d8e93427-eb88-42d1-b459-ab6787e571c6"
      name="SVEL60 2-channel meniscus matching"
      materialName="SVEL60"
-     channels="2"
+     channels="1"
      shape="meniscus matching"
      maxRPM="60000"
      angle="2.0"
