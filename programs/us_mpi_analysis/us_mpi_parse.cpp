@@ -215,7 +215,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
                 << "circular"
                 << "synthetic";
          dataset->simparams.cp_sector
-                                = qMax( 0, shapes.indexOf( shape );
+                                = qMax( 0, shapes.indexOf( shape ) );
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "centerpiece_angle" )
