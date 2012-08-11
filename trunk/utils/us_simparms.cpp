@@ -62,6 +62,9 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    double rpmnext      = rpm;
    int    jj           = 0;
    int    cp_id        = 1;
+   int    ch           = QString( "ABCDEFGH" ).indexOf( editdata.channel );
+qDebug() << "SP:iFD: ch" << ch << editdata.channel;
+          ch           = ( ch < 0 ) ? 0 : ( ch / 2 );
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
@@ -69,7 +72,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    QFile file( fn );
 
    if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   {  // if experiment/run file exists, get rotor calibration ID from it
+   {  // If experiment/run file exists, get calibration,centerpiece IDs from it
       QXmlStreamReader xml( &file );
 
       while ( ! xml.atEnd() )
@@ -77,7 +80,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          xml.readNext();
 
          if ( xml.isStartElement()  &&  xml.name() == "calibration" )
-         {  // pick up rotor calibration ID from  <calibration ... id=...
+         {  // Pick up rotor calibration ID from  <calibration ... id=...
             QXmlStreamAttributes a = xml.attributes();
             rotorCalID       = a.value( "id"     ).toString();
             rotorcoeffs[ 0 ] = a.value( "coeff1" ).toString().toDouble();
@@ -85,7 +88,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          }
 
          if ( xml.isStartElement()  &&  xml.name() == "centerpiece" )
-         {  // pick up centerpiece ID from  <centerpiece ... id=...
+         {  // Pick up centerpiece ID from  <centerpiece ... id=...
             QXmlStreamAttributes a = xml.attributes();
             cp_id            = a.value( "id"     ).toString().toInt();
          }
@@ -93,6 +96,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 
       file.close();
    }
+qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
 
    bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
@@ -100,11 +104,11 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    speed_step.clear();
 
    for ( int ii = 1; ii < scanCount; ii++ )
-   {  // loop to build speed steps where RPM changes
+   {  // Loop to build speed steps where RPM changes
       rpmnext          = editdata.scanData[ ii ].rpm;
 
       if ( rpm != rpmnext )
-      {  // rpm has changed, so need to create speed step for previous scans
+      {  // RPM has changed, so need to create speed step for previous scans
          time2               = editdata.scanData[ ii - 1 ].seconds;
          sp.duration_hours   = (int)( time2 / 3600.0 );
          sp.duration_minutes = (int)( time2 / 60.0 )
@@ -122,7 +126,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       }
    }
 
-   // set final (only?) speed step
+   // Set final (only?) speed step
    time2               = editdata.scanData[ scanCount - 1 ].seconds;
    sp.duration_hours   = (int)( time2 / 3600.0 );
    sp.duration_minutes = (int)( time2 / 60.0 ) - ( sp.duration_hours * 60 );
@@ -133,36 +137,38 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    speed_step.append( sp );
 
 #ifndef NO_DB
-   if ( db != NULL  &&  ( rotorCalID.isEmpty() || rotorCalID == "0" ) )
-   {  // If reading from db and no calibration ID yet, get it from DB
+   if ( db != NULL )
+   {  // If reading from the database, get rotor,centerpiece info from DB
       int         stat_db = 0;
       bool        ok_db;
       QString     expID;
       QStringList query;
-//qDebug() << "Sim parms:runID" << editdata.runID;
-//qDebug() << "Sim parms:invID" << QString::number( US_Settings::us_inv_ID() );
+      QString     rcalIDsv = rotorCalID;  // Save IDs gotten from local file
+      int         cpIDsv   = cp_id;
+qDebug() << "Sim parms:runID" << editdata.runID;
+qDebug() << "Sim parms:invID" << US_Settings::us_inv_ID();
       query << "get_experiment_info_by_runID"
             << editdata.runID
             << QString::number( US_Settings::us_inv_ID() );
       db->query( query );
       stat_db = db->lastErrno();
-//qDebug() << "Sim parms:query() stat" << stat_db;
+qDebug() << "Sim parms:query() stat" << stat_db;
       if ( stat_db != US_DB2::NOROWS )
-      {
+      {  // Info by runID:  experiment and calibration IDs
          ok_db      = db->next();
-//qDebug() << "Sim parms: next() ok_db" << ok_db;
+qDebug() << "Sim parms: next() ok_db" << ok_db;
          if ( ok_db )
          {
             expID      = db->value( 1 ).toString();
             rotorCalID = db->value( 7 ).toString();
-//qDebug() << "Sim parms: expID" << expID;
-//qDebug() << "Sim parms: rotorCalID" << rotorCalID;
+qDebug() << "Sim parms: expID" << expID;
+qDebug() << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
          }
          else
             rotorCalID = "";
 
          if ( rotorCalID.isEmpty()  &&  ! expID.isEmpty() )
-         {
+         {  // If still no calibration ID, try it another way
             query.clear();
             query << "get_experiment_info" << expID;
             db->query( query );
@@ -170,16 +176,43 @@ void US_SimulationParameters::initFromData( US_DB2* db,
             if ( stat_db != US_DB2::NOROWS  &&  db->next() )
             {
                rotorCalID = db->value( 7 ).toString();
-//qDebug() << "Sim parms:        rotorCalID" << rotorCalID;
+qDebug() << "Sim parms(2):     rotorCalID" << rotorCalID;
             }
          }
+
+         // If unable to get calibration ID from DB, fall back to local info
+         if ( rotorCalID.isEmpty() || rotorCalID == "0" )
+            rotorCalID = rcalIDsv;
+qDebug() << "Sim parms(3):     rotorCalID" << rotorCalID;
+
+         if ( ! expID.isEmpty() )
+         {  // Get centerpiece ID from cell records for this experiment
+            query.clear();
+            query << "all_cell_experiments" << expID;
+            db->query( query );
+            while ( db->next() )
+            {
+               int cellCpId = db->value( 4 ).toInt();
+               if ( cellCpId > 0 )
+               {
+                  cp_id        = cellCpId;
+                  break;
+               }
+            }
+         }
+
+qDebug() << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
+         // If no centerpiece ID from DB, fall back to local info
+         if ( cp_id < 1 )
+            cp_id     = cpIDsv;
+qDebug() << "Sim parms(2):     cp_id" << cp_id;
       }
    }
 
-   // set rotor coefficients, channel bottom position from hardware files
-   setHardware( db, rotorCalID, -cp_id, 0 );
+   // Set rotor coefficients, channel bottom position from hardware files
+   setHardware( db, rotorCalID, -cp_id, ch );
 
-   // calculate bottom using RPM, start bottom, and rotor coefficients
+   // Calculate bottom using RPM, start bottom, and rotor coefficients
    bottom = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
 #else
    // For NO_DB (back end) the bottom needs to be set after this function
@@ -194,44 +227,46 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
 {
    rotorCalID       = rCalID;
    bottom_position  = 7.2;
+qDebug() << "sH: cp ch rCalID" << cp << ch << rCalID;
 
    QList< US_AbstractCenterpiece > cp_list;
    QMap < QString, QString       > rotor_map;
    rotor_map.clear();
 
-   if ( US_AbstractCenterpiece::read_centerpieces( cp_list ) )
+   if ( US_AbstractCenterpiece::read_centerpieces( db, cp_list ) )
    {
       if ( cp < 0 )
-      {
+      {  // If cp given is negative, this means look for a serial number
          int cp_id = -cp;
              cp    = 0;
 
          for ( int jj = 0; jj < cp_list.size(); jj++ )
          {
             if ( cp_id == cp_list[ jj ].serial_number )
-            {
+            {  // Replace cp value (serial) with an index in the list
                cp   = jj;
                break;
             }
          }
+qDebug() << "sH: cp ch cp_id" << cp << ch << cp_id;
       }
 
+      // Pick up centerpiece info by Centerpiece and Channel indecies
+      QStringList shapes;
+      shapes << "sector" << "standard" << "rectangular" << "band forming"
+             << "meniscus matching" << "circular" << "synthetic";
       QString shape   = cp_list[ cp ].shape;
       bottom_position = cp_list[ cp ].bottom_position[ ch ];
-      band_forming    = shape == "band forming";
       cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
       cp_angle        = cp_list[ cp ].angle;
       cp_width        = cp_list[ cp ].width;
-      cp_sector       = 0;
-      cp_sector       = ( shape == "rectangular"       ) ? 1 : cp_sector;
-      cp_sector       = ( shape == "circular"          ) ? 2 : cp_sector;
-      cp_sector       = ( shape == "meniscus matching" ) ? 3 : cp_sector;
-      cp_sector       = ( shape == "band forming"      ) ? 4 : cp_sector;
+      cp_sector       = qMax( 0, shapes.indexOf( shape ) );
+      band_forming    = ( shape == "band forming" );
 
    }
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
-   {
+   {  // Get rotor coefficients by matching calibration ID
       US_Hardware::rotorValues( rotorCalID, rotor_map, rotorcoeffs );
    }
 

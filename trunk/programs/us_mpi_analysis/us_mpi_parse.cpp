@@ -178,19 +178,13 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
          a                    = xml.attributes();
          dataset->density     = a.value( "value" ).toString().toDouble();
       }
-      
+
       if ( xml.isStartElement()  &&  xml.name() == "viscosity" )
       {
          a                    = xml.attributes();
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
       }
-      
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_bottom" )
-      {
-         a                      = xml.attributes();
-         dataset->centerpiece_bottom = a.value( "value" ).toString().toDouble();
-      }
-      
+
       if ( xml.isStartElement()  &&  xml.name() == "rotor_stretch" )
       {
          a                    = xml.attributes();
@@ -199,6 +193,50 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
 
          dataset->rotor_stretch[ 0 ] = stretch[ 0 ].toDouble();
          dataset->rotor_stretch[ 1 ] = stretch[ 1 ].toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_bottom" )
+      {
+         a                      = xml.attributes();
+         dataset->centerpiece_bottom
+                                = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_shape" )
+      {
+         a                      = xml.attributes();
+         QString shape          = a.value( "value" ).toString();
+         QStringList shapes;
+         shapes << "sector"
+                << "standard"
+                << "rectangular"
+                << "band-forming"
+                << "meniscus-matching"
+                << "circular"
+                << "synthetic";
+         dataset->simparams.cp_sector
+                                = qMax( 0, shapes.indexOf( shape );
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_angle" )
+      {
+         a                      = xml.attributes();
+         dataset->simparams.cp_angle
+                                = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_pathlength" )
+      {
+         a                      = xml.attributes();
+         dataset->simparams.cp_pathlen
+                                = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_width" )
+      {
+         a                      = xml.attributes();
+         dataset->simparams.cp_width
+                                = a.value( "value" ).toString().toDouble();
       }
    }
 }

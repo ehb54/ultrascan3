@@ -12,52 +12,20 @@ class US_UTIL_EXTERN US_Hardware
 {
    public:
 
-   //! General centerpiece characteristics
-   class CenterpieceInfo
-   {
-      public:
-      //! The centerpiece's serial number (series starts zero)
-      int     serial_number;     
-      QString material;             //!< epon, aluminum, titanium
-      int     channels;             //!< number of channels divided by 2
-      
-      //! Bottom position of each channel (max 4) 
-      //! If sector==3: position for synth. boundary
-      double  bottom_position[ 4 ]; 
-      
-      //! 0 sector shaped, 1 for rectangular, 2 for circular, 
-      //! 3 for synthetic boundary cells, 4 for band-forming centerpiece
-      int     sector; 
-      
-      //! Pathlength of centerpiece in cm, default: 1.2 cm
-      double  pathlength;   
-      
-      //! Angle of sector, if sector shaped, default: 2.5 degrees
-      double  angle;    
-      
-      //! Width of channel, if rectangular, or radius if sector==2, 0 otherwise.
-      double  width;
-   };
-
-   //! \brief Read centerpiece information into a structure
-   //! \param cp_list Reference of structure to place data 
-   static bool readCenterpieceInfo( QVector< CenterpieceInfo >& );
-
    //! \brief Read rotor information from a local XML file to a QMap
    //! \param rotor_map Reference of QMap into which to place data
    static bool readRotorMap( QMap< QString, QString >& );
-   
+
    //! \brief Read rotor information from the database to a QMap
    //! \param db        Pointer to opened database connection
    //! \param rotor_map Reference of QMap into which to place data
    static bool readRotorMap( US_DB2*, QMap< QString, QString >& );
-   
+
    //! \brief Get coefficient values for a specified rotor
    //! \param rCalID    Rotor calibration ID for which to get values
    //! \param rotor_map QMap of serial,value mappings
    //! \param rotcoeffs Array of 2 doubles to fill with rotor coefficients
    static bool rotorValues ( QString, QMap< QString, QString >, double* );
-   
 };
 
 //! \brief Centerpiece data
@@ -69,20 +37,29 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
 
       int     serial_number;        //!< internal identifier
       QString guid;                 //!< global identifier
-      QString description;          //!< textual description
+      QString name;                 //!< textual description
       QString material;             //!< epon, aluminum, titanium
-      int     columns;              //!< number of columns of channels
+      int     channels;             //!< number of columns of channels
       QString shape;                //!< shape of the channel
-      
+
       //! Angle of sector, if sector shaped, default: 2.5 degrees
-      double  angle;    
-      
+      double  angle;
+
       //! Width of channel if rectangular, 0 otherwise.
       double  width;
+
+      //! Maximum speed in RPM
+      double  maxRPM;
 
       //! Bottom position of each row 
       QList< double > path_length;  //!< path lengths of channels in a column
       QList< double > bottom_position; //!< bottom of each row of channels
+
+      //!  Read centerpieces from database (or local disk if db==NULL)
+      //!  \param db           Pointer to database connection (NULL for local)
+      //!  \param centerpieces A list of centerpiece data
+      //!  \return A boolean indicating success 
+      static bool read_centerpieces( US_DB2*, QList< US_AbstractCenterpiece >& );
 
       //!  Read centerpieces from local disk
       //!  \param centerpieces A list of centerpiece data
@@ -90,3 +67,4 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       static bool read_centerpieces( QList< US_AbstractCenterpiece >& );
 };
 #endif
+
