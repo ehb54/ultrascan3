@@ -116,7 +116,7 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
 
    group_rank = my_rank;    // Temporary setting for send_udp
 
-   QString msg_start = QString( "Starting  " ) + QString( REVISION );
+   QString msg_start = QString( "Starting --  " ) + QString( REVISION );
    send_udp( msg_start );   // Can't send udp message until xmlfile is parsed
 
    // Read data 

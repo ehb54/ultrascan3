@@ -163,7 +163,7 @@ QString US_Util::compressed_triple( const QString& ccw )
 // Convert a triple string from expanded to compressed form
 QString US_Util::expanded_triple( const QString& ccw, bool spaces )
 {
-   QString cells( "ABCDEFGH" );
+   QString cells( "ABCDEFGHZ" );
 
    // Get, for example, {"4","A","280"} from "4A280"
    int     jj   = 1;
