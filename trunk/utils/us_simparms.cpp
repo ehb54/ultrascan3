@@ -63,7 +63,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    int    jj           = 0;
    int    cp_id        = 1;
    int    ch           = QString( "ABCDEFGH" ).indexOf( editdata.channel );
-qDebug() << "SP:iFD: ch" << ch << editdata.channel;
+//qDebug() << "SP:iFD: ch" << ch << editdata.channel;
           ch           = ( ch < 0 ) ? 0 : ( ch / 2 );
 
    rotorCalID          = "0";
@@ -96,7 +96,7 @@ qDebug() << "SP:iFD: ch" << ch << editdata.channel;
 
       file.close();
    }
-qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
+//qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
 
    bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
@@ -145,24 +145,24 @@ qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
       QStringList query;
       QString     rcalIDsv = rotorCalID;  // Save IDs gotten from local file
       int         cpIDsv   = cp_id;
-qDebug() << "Sim parms:runID" << editdata.runID;
-qDebug() << "Sim parms:invID" << US_Settings::us_inv_ID();
+//qDebug() << "Sim parms:runID" << editdata.runID;
+//qDebug() << "Sim parms:invID" << US_Settings::us_inv_ID();
       query << "get_experiment_info_by_runID"
             << editdata.runID
             << QString::number( US_Settings::us_inv_ID() );
       db->query( query );
       stat_db = db->lastErrno();
-qDebug() << "Sim parms:query() stat" << stat_db;
+//qDebug() << "Sim parms:query() stat" << stat_db;
       if ( stat_db != US_DB2::NOROWS )
       {  // Info by runID:  experiment and calibration IDs
          ok_db      = db->next();
-qDebug() << "Sim parms: next() ok_db" << ok_db;
+//qDebug() << "Sim parms: next() ok_db" << ok_db;
          if ( ok_db )
          {
             expID      = db->value( 1 ).toString();
             rotorCalID = db->value( 7 ).toString();
-qDebug() << "Sim parms: expID" << expID;
-qDebug() << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
+//qDebug() << "Sim parms: expID" << expID;
+//qDebug() << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
          }
          else
             rotorCalID = "";
@@ -176,14 +176,14 @@ qDebug() << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
             if ( stat_db != US_DB2::NOROWS  &&  db->next() )
             {
                rotorCalID = db->value( 7 ).toString();
-qDebug() << "Sim parms(2):     rotorCalID" << rotorCalID;
+//qDebug() << "Sim parms(2):     rotorCalID" << rotorCalID;
             }
          }
 
          // If unable to get calibration ID from DB, fall back to local info
          if ( rotorCalID.isEmpty() || rotorCalID == "0" )
             rotorCalID = rcalIDsv;
-qDebug() << "Sim parms(3):     rotorCalID" << rotorCalID;
+//qDebug() << "Sim parms(3):     rotorCalID" << rotorCalID;
 
          if ( ! expID.isEmpty() )
          {  // Get centerpiece ID from cell records for this experiment
@@ -201,11 +201,11 @@ qDebug() << "Sim parms(3):     rotorCalID" << rotorCalID;
             }
          }
 
-qDebug() << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
+//qDebug() << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
          // If no centerpiece ID from DB, fall back to local info
          if ( cp_id < 1 )
             cp_id     = cpIDsv;
-qDebug() << "Sim parms(2):     cp_id" << cp_id;
+//qDebug() << "Sim parms(2):     cp_id" << cp_id;
       }
    }
 
@@ -227,7 +227,7 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
 {
    rotorCalID       = rCalID;
    bottom_position  = 7.2;
-qDebug() << "sH: cp ch rCalID" << cp << ch << rCalID;
+//qDebug() << "sH: cp ch rCalID" << cp << ch << rCalID;
 
    QList< US_AbstractCenterpiece > cp_list;
    QMap < QString, QString       > rotor_map;
@@ -248,7 +248,7 @@ qDebug() << "sH: cp ch rCalID" << cp << ch << rCalID;
                break;
             }
          }
-qDebug() << "sH: cp ch cp_id" << cp << ch << cp_id;
+//qDebug() << "sH: cp ch cp_id" << cp << ch << cp_id;
       }
 
       // Pick up centerpiece info by Centerpiece and Channel indecies
