@@ -314,6 +314,8 @@ struct saxs_options
    QString      default_ff_filename;
    bool         five_term_gaussians;
    bool         iq_exact_q;
+   bool         use_iq_target_ev;
+   double       iq_target_ev;
 };
 
 struct saxs_atom

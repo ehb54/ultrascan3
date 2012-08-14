@@ -3789,6 +3789,8 @@ void US_Hydrodyn::set_default()
    saxs_options.use_somo_ff                = false;
    saxs_options.five_term_gaussians        = false;
    saxs_options.iq_exact_q                 = false;
+   saxs_options.use_iq_target_ev           = false;
+   saxs_options.iq_target_ev               = 0e0;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

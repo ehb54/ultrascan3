@@ -208,11 +208,31 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cnt_scale_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_scale_excl_vol, SIGNAL(valueChanged(double)), SLOT(update_scale_excl_vol(double)));
 
+
+   cb_use_iq_target_ev = new QCheckBox(this);
+   cb_use_iq_target_ev->setText(tr("Adjust I(q) computation to target total excluded volume (A^3):"));
+   cb_use_iq_target_ev->setEnabled(true);
+   cb_use_iq_target_ev->setChecked((*saxs_options).use_iq_target_ev);
+   cb_use_iq_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_use_iq_target_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_use_iq_target_ev, SIGNAL(clicked()), this, SLOT(set_use_iq_target_ev()));
+
+   le_iq_target_ev = new QLineEdit(this, "iq_target_ev Line Edit");
+   (*saxs_options).use_iq_target_ev ? 
+      le_iq_target_ev->setText(QString("%1").arg((*saxs_options).iq_target_ev)) :
+      le_iq_target_ev->setText("");
+   // le_iq_target_ev->setMinimumHeight(minHeight1);
+   le_iq_target_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_iq_target_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iq_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_iq_target_ev, SIGNAL(textChanged(const QString &)), SLOT(update_iq_target_ev(const QString &)));
+
    lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve q range for scaling, NNLS and best fit (Angstrom) "), this);
    lbl_iqq_scale_min_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_iqq_scale_min_maxq->setMinimumHeight(minHeight1);
    lbl_iqq_scale_min_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_iqq_scale_min_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
 
    le_iqq_scale_minq = new QLineEdit(this, "iqq_scale_minq Line Edit");
    (*saxs_options).iqq_scale_minq ? 
@@ -305,6 +325,12 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    hbl_various_2b->addWidget(lbl_scale_excl_vol);
    hbl_various_2b->addWidget(cnt_scale_excl_vol);
    background->addMultiCellLayout(hbl_various_2b, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_2b2 = new QHBoxLayout;
+   hbl_various_2b2->addWidget( cb_use_iq_target_ev );
+   hbl_various_2b2->addWidget( le_iq_target_ev );
+   background->addMultiCellLayout(hbl_various_2b2, j, j, 0, 1);
    j++;
 
    QHBoxLayout *hbl_various_2c = new QHBoxLayout;
@@ -529,6 +555,19 @@ void US_Hydrodyn_SasOptionsMisc::update_swh_excl_vol( const QString &str )
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
    }
 }
+
+void US_Hydrodyn_SasOptionsMisc::set_use_iq_target_ev()
+{
+   (*saxs_options).use_iq_target_ev = cb_use_iq_target_ev->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::update_iq_target_ev( const QString &str )
+{
+   (*saxs_options).iq_target_ev = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 
 void US_Hydrodyn_SasOptionsMisc::update_iqq_scale_minq( const QString &str )
 {

@@ -24,6 +24,180 @@
 
 static bool save_calc_to_csv = true;
 
+bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
+{
+   if ( !our_saxs_options->use_iq_target_ev )
+   {
+      return true;
+   }
+
+   double tot_excl_vol      = 0e0;
+   double tot_excl_vol_noh  = 0e0;
+   
+   for ( unsigned int i = 0; i < selected_models.size(); i++ )
+   {
+
+      saxs_atom new_atom;
+
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+      {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+         {
+
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
+            if ( this_atom->name == "OXT" )
+            {
+               mapkey = "OXT|OXT";
+            }
+
+            QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+            if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+            {
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                              .arg(j+1)
+                              .arg(use_resname)
+                              .arg(this_atom->resSeq));
+               editor->setColor(save_color);
+               qApp->processEvents();
+               if ( stopFlag ) 
+               {
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return false;
+               }
+               continue;
+            }
+
+            if ( !hybrid_map.count(hybrid_name) )
+            {
+               cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                              .arg(j+1)
+                              .arg(use_resname)
+                              .arg(this_atom->resSeq)
+                              .arg(hybrid_name)
+                              );
+               editor->setColor(save_color);
+               qApp->processEvents();
+               if ( stopFlag ) 
+               {
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return false;
+               }
+               continue;
+            }
+
+            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            {
+               cout << "error: atom_map missing for hybrid_name "
+                    << hybrid_name 
+                    << " atom name "
+                    << this_atom->name
+                    << endl;
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                              .arg(j+1)
+                              .arg(this_atom->name)
+                              .arg(use_resname)
+                              .arg(this_atom->resSeq)
+                              .arg(hybrid_name)
+                              );
+               editor->setColor(save_color);
+               qApp->processEvents();
+               if ( stopFlag ) 
+               {
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return false;
+               }
+               continue;
+            }
+
+            new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
+            new_atom.hybrid_name = hybrid_name;
+            
+            // this is probably correct but FoXS uses the saxs table excluded volume
+            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options->use_somo_ff )
+            {
+               double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+               }
+            }
+
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
+            if ( our_saxs_options->hybrid_radius_excl_vol )
+            {
+               new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+            }
+            if ( this_atom->name != "OW" || our_saxs_options->swh_excl_vol == 0e0 )
+            {
+               tot_excl_vol_noh  += new_atom.excl_vol;
+            }
+            new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
+         }
+      }
+   }
+
+
+   // ok, we need to target our_saxs_options->iq_target_ev
+   // noh_:  only includes unscalable 
+   // target = scaler * tot_excl_vol_noh  + ( tot_excl_vol - tot_excl_vol_noh )
+
+   if ( tot_excl_vol_noh > 0e0 )
+   {
+      our_saxs_options->scale_excl_vol =
+         ( our_saxs_options->iq_target_ev - tot_excl_vol + tot_excl_vol_noh ) / tot_excl_vol_noh;
+   } else {
+      our_saxs_options->scale_excl_vol = 1e0;
+   }
+
+   editor_msg( "blue", QString( tr( "Scaling excluded volume to match target (%1), default scattering center sum without SWH %2, total %3, new scaler = %4" ) )
+               .arg( our_saxs_options->iq_target_ev )
+               .arg( tot_excl_vol_noh )
+               .arg( tot_excl_vol )
+               .arg( our_saxs_options->scale_excl_vol ) );
+   return true;
+}
+
 void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 {
    // don't forget to later merge deleted waters into model_vector
@@ -37,6 +211,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
    QRegExp count_hydrogens("H(\\d)");
+
+   if ( !compute_scale_excl_vol() )
+   {
+      return;
+   }
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -1175,6 +1354,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       editor_msg( "dark red", "using excluded volume from saxs atoms" );
    }
 
+   if ( !compute_scale_excl_vol() )
+   {
+      return;
+   }
+
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
       double tot_excl_vol      = 0e0;
@@ -2108,6 +2292,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
    QRegExp count_hydrogens("H(\\d)");
+
+   if ( !compute_scale_excl_vol() )
+   {
+      return;
+   }
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
