@@ -1894,6 +1894,8 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    }
 DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
+simparams.simpoints = adv_vals[ "simpoints" ].toInt();
+DbgLv(1) << " simulation points" << simparams.simpoints;
 
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;

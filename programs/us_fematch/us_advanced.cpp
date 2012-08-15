@@ -48,7 +48,7 @@ US_Advanced::US_Advanced( US_Model* amodel, QMap< QString, QString >& adv_vals,
    QPushButton* pb_component = us_pushbutton( tr( "Next Component" ) );
    QPushButton* pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
 
-   ct_simpoints = us_counter( 3, 0, 500,     1 );
+   ct_simpoints = us_counter( 3, 0, 10000,     1 );
    ct_bldvolume = us_counter( 3, 0,   1, 0.001 );
    ct_parameter = us_counter( 2, 1,  50,     1 );
    ct_modelnbr  = us_counter( 2, 1,  50,     1 );
