@@ -93,6 +93,8 @@ class US_vHW_Combine : public US_Widgets
       void write_data     ( QString&, QString&, int& );
       QString expandedTriple ( QString );
       QString collapsedTriple( QString );
+      int  reportDocsFromFiles( QString&, QString&, QStringList&,
+                                US_DB2*, int&, QString& );
 
       void help(      void )
       { showHelp.show_help( "vhw_combine.html" ); };

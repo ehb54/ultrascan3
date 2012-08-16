@@ -90,6 +90,7 @@ US_Report::Status US_Report::ReportDocument::saveDB(
    // First let's be sure we have a valid GUID
    if ( ! rx.exactMatch( this->documentGUID ) )
       this->documentGUID = US_Util::new_guid();
+qDebug() << "Doc::saveDB - GUID" << this->documentGUID;
 
    // Find out if this document has been saved already or not
    QStringList q( "get_reportDocumentID" );
@@ -100,9 +101,13 @@ US_Report::Status US_Report::ReportDocument::saveDB(
 
    if ( status == US_DB2::OK )
    {
+qDebug() << "Doc::saveDB - UPD ID(old)" << this->documentID;
+      QString docID    = db->value( 0 ).toString();
+      this->documentID = docID.toInt();
+qDebug() << "Doc::saveDB - UPD ID" << this->documentID;
       // Update the existing report document record in the DB
       QStringList q( "update_reportDocument" );
-      q << QString::number( this->documentID )
+      q << docID
         << QString::number( this->editedDataID )
         << this->label
         << this->filename
@@ -123,6 +128,8 @@ US_Report::Status US_Report::ReportDocument::saveDB(
 
    else if ( status == US_DB2::NOROWS )
    {
+qDebug() << "Doc::saveDB - NEW ID" << this->documentID << "tripID" << tripleID;
+qDebug() << "Doc::saveDB -  NEW editID" << this->editedDataID;
       // Create a new report document record in the DB
       QStringList q( "new_reportDocument" );
       q << QString::number( tripleID )
@@ -387,15 +394,22 @@ US_Report::Status US_Report::ReportTriple::addDocument(
    US_DB2* db )
 {
    int ndx = this->findDocument( d.analysis, d.subAnalysis, d.documentType );
+qDebug() << "Trip::addDoc - ndx" << ndx << "ana,subA,Type"
+ << d.analysis << d.subAnalysis << d.documentType;
+
 
    // Easier to delete/add the document if it exists
    if ( ndx != -1 )
+   {
+qDebug() << "Trip::addDoc - remove Doc";
       this->removeDocument( ndx, db );
+   }
 
    this->docs << d;
 
    // Refresh ndx
    ndx = this->findDocument( d.analysis, d.subAnalysis, d.documentType );
+qDebug() << "Trip::addDoc - ndx aft list add" << ndx;
 
    return this->docs[ndx].saveDB( this->tripleID, dir, db );
 }
