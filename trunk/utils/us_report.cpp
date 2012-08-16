@@ -102,6 +102,7 @@ DbgLv(1) << "Doc::saveDB - GUID" << this->documentGUID;
    if ( status == US_DB2::OK )
    {
 DbgLv(1) << "Doc::saveDB - UPD ID(old)" << this->documentID;
+      db->next();
       QString docID    = db->value( 0 ).toString();
       this->documentID = docID.toInt();
 DbgLv(1) << "Doc::saveDB - UPD ID" << this->documentID;
@@ -792,6 +793,8 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    else
    {
       t.docs[ docNdx ].editedDataID = idEdit;
+      t.docs[ docNdx ].label        = newLabel;
+      t.docs[ docNdx ].filename     = filename;
 
       status = t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
       if ( status != US_Report::REPORT_OK )
