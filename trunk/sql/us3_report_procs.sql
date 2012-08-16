@@ -1022,7 +1022,7 @@ CREATE PROCEDURE new_reportDocument ( p_personGUID          CHAR(36),
                                       p_reportTripleID      INT,
                                       p_reportDocumentGUID  CHAR(36),
                                       p_editedDataID        INT,
-                                      p_label               VARCHAR(80),
+                                      p_label               VARCHAR(160),
                                       p_filename            VARCHAR(255),
                                       p_analysis            VARCHAR(20),
                                       p_subAnalysis         VARCHAR(20),
@@ -1108,7 +1108,7 @@ CREATE PROCEDURE update_reportDocument ( p_personGUID          CHAR(36),
                                          p_password            VARCHAR(80),
                                          p_reportDocumentID    INT,
                                          p_editedDataID        INT,
-                                         p_label               VARCHAR(80),
+                                         p_label               VARCHAR(160),
                                          p_filename            VARCHAR(255),
                                          p_analysis            VARCHAR(20),
                                          p_subAnalysis         VARCHAR(20),
@@ -1118,6 +1118,7 @@ CREATE PROCEDURE update_reportDocument ( p_personGUID          CHAR(36),
 
 BEGIN
   DECLARE l_reportID    INT;
+  DECLARE l_countLinks  INT;
 
   DECLARE constraint_failed TINYINT DEFAULT 0;
 
@@ -1130,13 +1131,26 @@ BEGIN
 
   SET @LAST_INSERT_ID = 0;
  
+  SELECT COUNT(*)
+  INTO   l_countLinks
+  FROM   documentLink
+  WHERE  reportDocumentID = p_reportDocumentID;
+    
   SELECT reportID
   INTO   l_reportID
   FROM   documentLink, reportTriple
   WHERE  documentLink.reportDocumentID = p_reportDocumentID
   AND    documentLink.reportTripleID = reportTriple.reportTripleID;
 
-  IF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
+  IF ( l_countLinks < 1 ) THEN
+    SET @US3_LAST_ERRNO = @NO_DOCUMENT_LINK;
+    SET @US3_LAST_ERROR = CONCAT('MySQL: The link between the triple and the document is missing; ',
+                                 'Report document ID = ', p_reportDocumentID, '; ',
+                                 'Link count = ', l_countLinks );
+    
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( verify_report_permission( p_personGUID, p_password, l_reportID ) != @OK ) THEN
     -- Can't do that
     SET @US3_LAST_ERRNO = @NOTPERMITTED;
     SET @US3_LAST_ERROR = 'MySQL: you do not have permission to edit this report';

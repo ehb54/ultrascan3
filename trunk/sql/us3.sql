@@ -1560,7 +1560,7 @@ CREATE  TABLE IF NOT EXISTS reportDocument (
   reportDocumentID int(11) NOT NULL AUTO_INCREMENT,
   reportDocumentGUID char(36) NOT NULL UNIQUE,
   editedDataID int(11) NOT NULL DEFAULT '1',
-  label varchar(80) NOT NULL DEFAULT '',
+  label varchar(160) NOT NULL DEFAULT '',
   filename varchar(255) NOT NULL DEFAULT '',
   analysis varchar(20) DEFAULT '2DSA',
   subAnalysis varchar(20) DEFAULT 'report',
