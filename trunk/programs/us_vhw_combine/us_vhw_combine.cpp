@@ -530,6 +530,7 @@ void US_vHW_Combine::save( void )
                                           + fnamsvg + "\n    "
                                           + fnamdat + "\n    "
                                           + fnamlst + "\n";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Look for multiple run IDs
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
@@ -662,6 +663,8 @@ DbgLv(1) << "SV:runID" << runID << "idEdit" << idEdit
       dataFile      = fdir + "/" + fnamdat;
       listFile      = fdir + "/" + fnamlst;
    }  // END:  runs loop
+
+   QApplication::restoreOverrideCursor();
 
    // Report saved files
    QMessageBox::information( this, tr( "Combo Distro Plot File Save" ), svmsg );
