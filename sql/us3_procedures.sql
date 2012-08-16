@@ -63,6 +63,7 @@ BEGIN
   SET @NO_REPORT      = 520;
   SET @NO_REPORT_TRIPLE = 521;
   SET @NO_REPORT_DOCUMENT = 522;
+  SET @NO_DOCUMENT_LINK = 523;
 
   -- Some user levels
   SET @US3_USER       = 0;
