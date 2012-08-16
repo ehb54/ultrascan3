@@ -315,6 +315,7 @@ struct saxs_options
    bool         five_term_gaussians;
    bool         iq_exact_q;
    bool         use_iq_target_ev;
+   bool         set_iq_target_ev_from_vbar;
    double       iq_target_ev;
 };
 

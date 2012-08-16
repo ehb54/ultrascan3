@@ -31,11 +31,34 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
       return true;
    }
 
+   if ( our_saxs_options->set_iq_target_ev_from_vbar )
+   {
+      for ( unsigned int i = 0; i < selected_models.size(); i++ )
+      {
+         current_model = selected_models[i];
+         our_saxs_options->iq_target_ev = 0e0;
+         
+         for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+         {
+            our_saxs_options->iq_target_ev += US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[i].vbar );
+            editor_msg( "blue", 
+                        QString( tr( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" ) )
+                        .arg( model_vector[current_model].molecule[j].mw )
+                        .arg( model_vector[current_model].vbar )
+                        .arg( US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[current_model].vbar ) ) );
+         }
+      }
+   }
+
+   editor_msg( "blue", 
+               QString( tr( "Total computed excluded volume: %1\n" ) ).arg( our_saxs_options->iq_target_ev ) );
+
    double tot_excl_vol      = 0e0;
    double tot_excl_vol_noh  = 0e0;
    
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      current_model = selected_models[i];
 
       saxs_atom new_atom;
 

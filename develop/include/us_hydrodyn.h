@@ -629,8 +629,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool selected_models_contain( QString residue );
 
-      float mw_to_volume( float mw, float vbar );
-
+      static float mw_to_volume( float mw, float vbar );
+      
       QString list_chainIDs( vector < PDB_model > &mv );
 
       // state copies

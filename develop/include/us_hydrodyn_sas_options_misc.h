@@ -73,6 +73,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
 
       QCheckBox   *cb_use_iq_target_ev;
       QLineEdit   *le_iq_target_ev;
+      QCheckBox   *cb_set_iq_target_ev_from_vbar;
 
       QLabel      *lbl_iqq_scale_min_maxq;
       QLineEdit   *le_iqq_scale_maxq;
@@ -107,6 +108,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public QFrame
       void update_swh_excl_vol(const QString &);
       void update_scale_excl_vol(double);
       void set_use_iq_target_ev();
+      void set_set_iq_target_ev_from_vbar();
       void update_iq_target_ev(const QString &);
       void update_iqq_scale_minq(const QString &);
       void update_iqq_scale_maxq(const QString &);

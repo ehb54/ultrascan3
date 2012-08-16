@@ -227,6 +227,14 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    le_iq_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_iq_target_ev, SIGNAL(textChanged(const QString &)), SLOT(update_iq_target_ev(const QString &)));
 
+   cb_set_iq_target_ev_from_vbar = new QCheckBox(this);
+   cb_set_iq_target_ev_from_vbar->setText(tr("Set target excluded volume from vbar"));
+   cb_set_iq_target_ev_from_vbar->setEnabled(true);
+   cb_set_iq_target_ev_from_vbar->setChecked((*saxs_options).set_iq_target_ev_from_vbar);
+   cb_set_iq_target_ev_from_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_set_iq_target_ev_from_vbar->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_set_iq_target_ev_from_vbar, SIGNAL(clicked()), this, SLOT(set_set_iq_target_ev_from_vbar()));
+
    lbl_iqq_scale_min_maxq = new QLabel(tr(" I(q) curve q range for scaling, NNLS and best fit (Angstrom) "), this);
    lbl_iqq_scale_min_maxq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_iqq_scale_min_maxq->setMinimumHeight(minHeight1);
@@ -331,6 +339,11 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    hbl_various_2b2->addWidget( cb_use_iq_target_ev );
    hbl_various_2b2->addWidget( le_iq_target_ev );
    background->addMultiCellLayout(hbl_various_2b2, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_2b3 = new QHBoxLayout;
+   hbl_various_2b3->addWidget( cb_set_iq_target_ev_from_vbar );
+   background->addMultiCellLayout(hbl_various_2b3, j, j, 0, 1);
    j++;
 
    QHBoxLayout *hbl_various_2c = new QHBoxLayout;
@@ -559,6 +572,12 @@ void US_Hydrodyn_SasOptionsMisc::update_swh_excl_vol( const QString &str )
 void US_Hydrodyn_SasOptionsMisc::set_use_iq_target_ev()
 {
    (*saxs_options).use_iq_target_ev = cb_use_iq_target_ev->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_set_iq_target_ev_from_vbar()
+{
+   (*saxs_options).set_iq_target_ev_from_vbar = cb_set_iq_target_ev_from_vbar->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
