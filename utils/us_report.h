@@ -5,6 +5,10 @@
 #include "us_extern.h"
 #include "us_db2.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
+
 /*! \class US_Report
    This class provides a low-level interface to the report tables, allowing
    the user to read and write them to db.
@@ -90,6 +94,8 @@ class US_UTIL_EXTERN US_Report
          //! \brief Displays the contents of the class variables in qDebug() statements
          void    show  ( void );
    
+         private:
+         int     dbg_level;     //!< Debug level value
       };
 
       /*! \brief      The ReportTriple class describes an individual report. This report
@@ -185,6 +191,8 @@ class US_UTIL_EXTERN US_Report
          //! \brief    Displays the contents of the class variables in qDebug() statements
          void          show  ( void );
    
+         private:
+         int     dbg_level;     //!< Debug level value
       };
 
       int     ID;            //!< The ID of this global report structure
@@ -290,6 +298,8 @@ class US_UTIL_EXTERN US_Report
       //! \brief    Displays the contents of the class variables in qDebug() statements
       void          show ( void );
 
+      private:
+      int           dbg_level;     //!< Debug level value
 };
 
 #endif
