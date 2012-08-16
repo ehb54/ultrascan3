@@ -14,6 +14,7 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_dataIO2.h"
+#include "us_util.h"
 #include "qwt_legend.h"
 
 // main program
@@ -573,53 +574,83 @@ void US_vHW_Combine::save( void )
          US_DB2       db( pw.getPasswd() );
          int          idEdit = 0;
 
-         QString      resdir = US_Settings::resultDir() + "/" + runID + "/";
-         QString      trpart = expandedTriple( trname ).replace( " / ", "." );
-         QStringList ffilt( runID + ".*.*" + trpart + ".xml" );
-         QStringList files = QDir( resdir )
-               .entryList( ffilt, QDir::Files, QDir::Name );
-         QString      efname;
-
-         for ( int ii = 0; ii < files.count(); ii++ )
-         {  // Look for files that match the edit file template
-            QString fname = resdir + files[ ii ];
-DbgLv(1) << "SV:  fname" << fname;
-            if ( QFile( fname ).exists() )
-            {  // File named matches, so save its name
-               efname     = fname;
-DbgLv(1) << "SV:   efname" << efname;
-            }
-         }
-
-         if ( ! efname.isEmpty() )
-         {  // Use last matching edit file: get the editGUID, then idEdit
-            US_DataIO2::EditValues edvals;
-            US_DataIO2::readEdits( efname, edvals );
-
-            QStringList  query;
-            query << "get_editID" << edvals.editGUID;
-            db.query( query );
-            db.next();
-            QString editID      = db.value( 0 ).toString();
-            idEdit              = editID.toInt();
-DbgLv(1) << "SV:    editGUID idEdit" << edvals.editGUID << idEdit;
-         }
-
          QString trfirst  = pdistrs[ 0 ].triple;
          QString trlast   = pdistrs[ pdistrs.size() - 1 ].triple;
          QString trdesc   = "Combined Analyses (" + trfirst
             + "..." + trlast + ")";
-         US_Report    freport;
-         freport.runID          = runID;
-         freport.saveDocumentFromFile( fdir, fnamsvg, &db, idEdit, trdesc );
-         freport.saveDocumentFromFile( fdir, fnampng, &db, idEdit, trdesc );
-         freport.saveDocumentFromFile( fdir, fnamdat, &db, idEdit, trdesc );
-         freport.saveDocumentFromFile( fdir, fnamlst, &db, idEdit, trdesc );
-DbgLv(1) << "SV:runID,idEdit,fnamsvg,trdesc" << runID << idEdit << fnamsvg
-   << trdesc;
+
+         QString editID;         // Edit ID for matching experiment,triple
+         QString eeditID;        // First edit ID from experiment match
+         // Get test triple to match file part and investigator
+         QString trip1 = US_Util::expanded_triple( trfirst, false )
+                                  .replace( '/', '.' );
+         QString invID = QString::number( US_Settings::us_inv_ID() );
+         // Query for the experiment ID matching the run ID
+         QStringList  query;
+         query << "get_experiment_info_by_runID" << runID << invID;
+         db.query( query );
+         db.next();
+         QString expID = db.value( 1 ).toString();
+DbgLv(1) << "SV:  runID expID" << runID << expID;
+         // Query for the raw ID in experiment matching a triple
+         QString rawID;
+         query.clear();
+         query << "get_rawDataIDs" << expID;
+         db.query( query );
+         while ( db.next() )
+         {
+                    rawID  = db.value( 0 ).toString();
+            QString efname = db.value( 2 ).toString();
+DbgLv(1) << "SV:   rawID" << rawID << "efname" << efname << "trip1" << trip1;
+            // Save rawID when we have found a triple match
+            if ( efname.contains( trip1 ) )
+               break;
+         }
+         // Query edit IDs for raw ID and look for triple match
+         query.clear();
+         query << "get_editedDataIDs" << rawID;
+         db.query( query );
+         while ( db.next() )
+         {
+            QString aeditID = db.value( 0 ).toString();
+            QString efname  = db.value( 2 ).toString();
+            if ( eeditID.isEmpty() )
+               eeditID      = aeditID;  // Save 1st valid from experiment
+DbgLv(1) << "SV:     editID" << eeditID << "raw exp trip1 fname"
+ << rawID << expID << trip1 << efname;
+            if ( efname.contains( trip1 ) )
+            {  // Keep saving editID from last triple match
+               editID       = aeditID;
+DbgLv(1) << "SV:        Name-Trip MATCH:  editID" << editID;
+            }
+         }
+
+         if ( ! editID.isEmpty() )
+         {  // Use edit ID from last matching triple
+            idEdit              = editID.toInt();
+         }
+         else
+         {  // Or fall back to one from first valid edit in experiment
+            idEdit              = eeditID.toInt();
+         }
+DbgLv(1) << "SV: editID idEdit" << editID << idEdit << "  eeditID" << eeditID;
+
+         // Add or update report documents in the database
+         QStringList rfiles;
+         rfiles << fnamsvg << fnampng << fnamdat << fnamlst;
+         int st = reportDocsFromFiles( runID, fdir, rfiles, &db,
+                                       idEdit, trdesc );
+
+DbgLv(1) << "SV:runID" << runID << "idEdit" << idEdit
+ << "fnamlst" << fnamlst << "trdesc" << trdesc;
          if ( iruns == ( nruns - 1 ) )
-            svmsg += tr( "\nThe plot was also saved to the database" );
-      }
+         {  // Append message line after last run save
+            if ( st == 0 )
+               svmsg += tr( "\nThe files were also saved to the database" );
+            else
+               svmsg += tr( "\n*ERROR* in saving files to the database" );
+         }
+      }  // END:  database
 
       if ( ++iruns >= nruns )  break;
 
@@ -630,7 +661,7 @@ DbgLv(1) << "SV:runID,idEdit,fnamsvg,trdesc" << runID << idEdit << fnamsvg
       plotFile      = fdir + "/" + fnamsvg;
       dataFile      = fdir + "/" + fnamdat;
       listFile      = fdir + "/" + fnamlst;
-   }
+   }  // END:  runs loop
 
    // Report saved files
    QMessageBox::information( this, tr( "Combo Distro Plot File Save" ), svmsg );
@@ -1094,5 +1125,71 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    lfile.close();
 
    return;
+}
+
+// Save report documents from files
+int US_vHW_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
+   QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
+{
+   int ostat = 0;
+   US_Report    freport;
+   freport.runID          = runID;
+
+   for ( int ii = 0; ii < files.size(); ii++ )
+   {
+      QString fname = files[ ii ];
+      int st = freport.saveDocumentFromFile( fdir, fname, db, idEdit, trdesc );
+
+      ostat = ( st == US_Report::REPORT_OK ) ? ostat : st;
+   }
+
+//*DEBUG*
+   if ( dbg_level > 0 )
+   {
+      int status = freport.readDB( runID, db );
+      DbgLv(1) << "DFF:report readDB status" << status << "ID" << freport.ID;
+      DbgLv(1) << "DFF:  report triples size" << freport.triples.size();
+      for ( int ii = 0; ii < freport.triples.size(); ii++ )
+      {
+         int ndoc = freport.triples[ii].docs.size();
+         DbgLv(1) << "DFF:  triple" << ii << "docssize" << ndoc
+            << "ID" << freport.triples[ii].tripleID
+            << "triple" << freport.triples[ii].triple;
+         int jj   = ndoc - 1;
+         if ( ndoc > 0 )
+         {
+            DbgLv(1) << "DFF:    doc" << 0
+               << "ID" << freport.triples[ii].docs[0].documentID
+               << "label" << freport.triples[ii].docs[0].label;
+            DbgLv(1) << "DFF:    doc" << jj
+               << "ID" << freport.triples[ii].docs[jj].documentID
+               << "label" << freport.triples[ii].docs[jj].label;
+         }
+      }
+      QString fname = files[0];
+      QString tripl( "0/Z/9999" );
+      int ndx = freport.findTriple( tripl );
+      DbgLv(1) << "DFF:triple" << tripl << "ndx" << ndx;
+      if ( ndx >= 0 )
+      {
+         int ndoc = freport.triples[ndx].docs.size();
+         DbgLv(1) << "DFF:  triple" << ndx << "docs size" << ndoc
+            << "ID" << freport.triples[ndx].tripleID
+            << "triple" << freport.triples[ndx].triple;
+         if ( ndoc > 0 )
+         {
+            DbgLv(1) << "DFF:    doc" << 0
+               << "ID" << freport.triples[ndx].docs[0].documentID
+               << "label" << freport.triples[ndx].docs[0].label;
+            int jj   = ndoc - 1;
+            DbgLv(1) << "DFF:    doc" << jj
+               << "ID" << freport.triples[ndx].docs[jj].documentID
+               << "label" << freport.triples[ndx].docs[jj].label;
+         }
+      }
+   }
+//*DEBUG*
+
+   return ostat;
 }
 
