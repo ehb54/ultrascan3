@@ -13,7 +13,7 @@
 #include "us_constants.h"
 #include "us_report.h"
 
-// Main constructor with flags for edit, latest-edit and local-data
+// Main constructor with flags for select-runID dialog
 
 US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs,
    QStringList& mdescrs ) : US_WidgetsDialog( 0, 0 ),
@@ -111,6 +111,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    list_data();
 }
 
+// Hide list items that do not contain search string
 void US_SelectRunid::search( const QString& search_string )
 {
    lw_data->setCurrentItem( NULL );
@@ -142,13 +143,13 @@ void US_SelectRunid::list_data()
    lw_data->clear();
 
    if ( rlabels.size() == 0 )
-   {
+   {  // Report and return now if no items found
       QString clabel = tr( "No data found." );
       lw_data->addItem( new QListWidgetItem( clabel ) );
       return;
    }
-
 DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
+
    for ( int ii = 0; ii < rlabels.size(); ii++ )
    {  // Propagate list widget with labels
       QString  clabel  = rlabels.at( ii );
@@ -156,6 +157,7 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
       lw_data->addItem( new QListWidgetItem( clabel ) );
    }
 
+   // Report list state in status box
    count_list = lw_data->count();
    count_seld = lw_data->selectedItems().size();
    te_status->setText(
@@ -166,14 +168,14 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
       .arg( count_seld > 1 ? tr( "runs are" ) : tr( "run is" ) ) );
 }
 
-// Cancel button:  no editIDs returned
+// Cancel button:  no runIDs returned
 void US_SelectRunid::cancelled()
 {
    reject();
    close();
 }
 
-// Accept button:  set up to return editID pre-filter information
+// Accept button:  set up to return runs and associated model information
 void US_SelectRunid::accepted()
 {
 DbgLv(1) << "SE:accepted()";
@@ -202,7 +204,7 @@ DbgLv(1) << "SE: runID" << runIDs[0];
    close();
 }
 
-// Scan database for edit sets
+// Scan database for run sets
 void US_SelectRunid::scan_dbase_runs()
 {
    US_Passwd   pw;
@@ -265,7 +267,7 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
    }
 
    for ( int ii = 0; ii < edtIDs.count(); ii++ )
-   {  // Get models for each run
+   {  // Get models for each edit
       edtid            = edtIDs[ ii ];
       expid            = eexIDs[ ii ];
       int     jj       = expIDs.indexOf( expid );
@@ -284,29 +286,29 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
          int     kk     = mdesc.lastIndexOf( ".model" );
          mdesc          = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          QString odesc  = runid + "\t" + mGUID + "\t" + mdesc;
-         mRunIDs << runid;
-         mDescrs << odesc;
+         mRunIDs << runid;    // Save run ID
+         mDescrs << odesc;    // Save model description string
          nmodel++;
 if((dbg_level>0) && (!mdesc.contains("-MC_0")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScDB: odesc" << odesc;
       }
 
       if ( nmodel > 0 )
-      {
+      {  // If run had associated models, mark it with the model count
          rmknts.replace( jj, nmodel );
       }
    }
 
 DbgLv(1) << "ScDB: count_allr" << count_allr << runIDs.size();
    for ( int ii = 0; ii < count_allr; ii++ )
-   {
+   {  // Loop to save to a new list only runs that had associated models
       runid      = runIDs[ ii ];
       if ( rmknts[ ii ] > 0 )
       {
-         count_list++;
+         count_list++;         // Bump count of runs to be listed
 DbgLv(1) << "ScDB:   ii count_list" << ii << count_list
    << "models" << rmknts[ii] << "run" << runid;
-         rlabels << runid;
+         rlabels << runid;     // Save run ID to list of selectable runs
       }
    }
 DbgLv(1) << "ScDB:count_list" << count_list;
@@ -322,7 +324,7 @@ void US_SelectRunid::scan_local_runs( void )
                          .entryList( mfilt, QDir::Files, QDir::Name );
 
    for ( int ii = 0; ii < f_names.size(); ii++ )
-   {
+   {  // Examine each model file
       QString fname( mdir + "/" + f_names[ ii ] );
       QFile m_file( fname );
 
@@ -338,15 +340,17 @@ void US_SelectRunid::scan_local_runs( void )
          if ( xml.isStartElement() )
          {
             if ( xml.name() == "model" )
-            {
+            {  // Get the description and GUID of model and test it
                QXmlStreamAttributes attr = xml.attributes();
                QString mdesc = attr.value( "description" ).toString();
                QString mGUID = attr.value( "modelGUID"   ).toString();
                int     kk    = mdesc.lastIndexOf( ".model" );
                        mdesc = ( kk < 1 ) ? mdesc : mdesc.left( kk );
                QString runid = mdesc.section( ".", 0, -3 );
+               // Skip the model if it has no valid runID part
                if ( runid.isEmpty() || runid.length() < 2 )  continue;
 
+               // Save run ID and model string of RunID+GUID+Description
                QString odesc  = runid + "\t" + mGUID + "\t" + mdesc;
                mRunIDs << runid;
                mDescrs << odesc;
@@ -372,7 +376,7 @@ DbgLv(1) << "ScLo:rdir" << rdir << "aucdir count" << aucdirs.count();
    count_seld = 0;
    
    for ( int ii = 0; ii < aucdirs.count(); ii++ )
-   {
+   {  // Examine all the AUC files that exist locally
       QString     subdir   = rdir + "/" + aucdirs.at( ii );
       QStringList aucfiles = QDir( subdir ).entryList( 
             aucfilt, QDir::Files, QDir::Name );
@@ -383,12 +387,12 @@ DbgLv(1) << "ScLo:  subdir" << subdir << "aucfiles count" << aucfiles.count();
 
       QString aucfbase  = aucfiles.at( 0 );
       QString runID     = aucfbase.section( ".",  0, -6 );
-      count_allr++;
+      count_allr++;             // Bump the count of all runIDs examined
 
       if ( mRunIDs.contains( runID ) )
-      {
-         count_list++;
-         rlabels << runID;
+      {  // If this runID is represented for models, it is selectable
+         count_list++;          // Bump the count of runIDs to list
+         rlabels << runID;      // Save selectable runID
       }
 DbgLv(1) << "ScLo:    count_allr" << count_allr << "count_list" << count_list
  << "   runID" << runID;

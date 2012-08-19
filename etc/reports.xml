@@ -57,6 +57,7 @@
     <report name="x-to-S" label="g*(s)-to-s" />
     <report name="average-S" label="average-g*(s)-to-s" />
     <report name="extrap" label="vHW Extrapolation" />
+    <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
     <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
     <report name="s-c-envelope" label="Sedimentation Coeff. Envelope" />
     <report name="2ndmoment" label="Second Moment" />
