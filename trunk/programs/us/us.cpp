@@ -166,6 +166,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_ROTORCAL , tr( "R&otor Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
   addMenu(  P_VHWCOMB ,  tr( "Combine &Distribution Plots (vHW)" ), utilities );
+  addMenu(  P_DDCOMB   , tr( "Combine D&iscrete Distributions"   ), utilities );
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );

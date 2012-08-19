@@ -21,7 +21,8 @@ namespace US_WinData
 
     P_CONVERT,      P_FITMEN,              // Utilities menu
     P_COLORGRAD,    P_RPTGEN,       P_ROTORCAL,
-    P_LICENSE,      P_VHWCOMB,      P_GLOMODL,
+    P_LICENSE,      P_VHWCOMB,      P_DDCOMB,
+    P_GLOMODL,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
@@ -165,6 +166,11 @@ namespace US_WinData
     { P_VHWCOMB,   0, 0, "us_vhw_combine",
       QObject::tr( "Loading van Holde - Weischet Combine" ),
       QObject::tr( "van Holde - Weischet Combine Program" )
+    },
+    
+    { P_DDCOMB,    0, 0, "us_ddist_combine",
+      QObject::tr( "Loading Discrete Distribution Combine" ),
+      QObject::tr( "Discrete Distribution Combine Program" )
     },
     
     { P_GLOMODL,   0, 0, "us_combine_models",

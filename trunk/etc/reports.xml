@@ -57,7 +57,6 @@
     <report name="x-to-S" label="g*(s)-to-s" />
     <report name="average-S" label="average-g*(s)-to-s" />
     <report name="extrap" label="vHW Extrapolation" />
-    <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
     <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
     <report name="s-c-envelope" label="Sedimentation Coeff. Envelope" />
     <report name="2ndmoment" label="Second Moment" />
@@ -77,4 +76,19 @@
     <report name="raw" label="Raw Scan Data" />
     <report name="intensity" label="Intensity Profile Data" />
     <report name="rundetail" label="Run Detail Information" />
+    <report name="combo-distrib-s" label="Combo Sedimentation Coefficient Bar Plot" />
+    <report name="combo-distrib-mw" label="Combo Molecular Weight Bar Plot" />
+    <report name="combo-distrib-d" label="Combo Diffusion Coefficient Bar Plot" />
+    <report name="combo-distrib-ff0" label="Combo Frictional Ratio Bar Plot" />
+    <report name="combo-distrib-vbar" label="Combo Vbar Bar Plot" />
+    <report name="combo-vcdat-s" label="Combo Sed. Coeff. XValue-Concen. Data" />
+    <report name="combo-vcdat-mw" label="Combo Molec. Wt. XValue-Concen. Data" />
+    <report name="combo-vcdat-d" label="Combo Diff. Coeff. XValue-Concen. Data" />
+    <report name="combo-vcdat-ff0" label="Combo f/f0 XValue-Concen. Data" />
+    <report name="combo-vcdat-vbar" label="Combo Vbar XValue-Concen. Data" />
+    <report name="combo-listincl-s" label="Combo Sed. Coeff. List of Included Sets" />
+    <report name="combo-listincl-mw" label="Combo Molec. Wt. List of Included Sets" />
+    <report name="combo-listincl-d" label="Combo Diff. Coeff. List of Included Sets" />
+    <report name="combo-listincl-ff0" label="Combo f/f0 List of Included Sets" />
+    <report name="combo-listincl-vbar" label="Combo Vbar List of Included Sets" />
 </US_Reports>
