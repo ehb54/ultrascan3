@@ -32,7 +32,7 @@ class US_DDistr_Combine : public US_Widgets
             QVector< double >  yvals;    // Distrib. Y values (concentrations)
             QColor             color;    // Curve color
             int                iters;    // Iterations flag (>0 means MC)
-            int                xtype;    // X type  (0-4 for x,MW,D,ff0,vbar)
+            int                xtype;    // X type  (0-5 for x,MW,D,ff0,vb,MWl)
             US_Model           model;    // The model
 
             bool operator== ( const DistrDesc& ddiscr )
@@ -79,10 +79,12 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_2dsamw;
       QCheckBox*     ck_2dsamcmw;
       QCheckBox*     ck_2dsafm;
+      QCheckBox*     ck_2dsagl;
       QCheckBox*     ck_ga;
       QCheckBox*     ck_gamc;
       QCheckBox*     ck_gamw;
       QCheckBox*     ck_gamcmw;
+      QCheckBox*     ck_gagl;
       QCheckBox*     ck_dtall;
 
       QRadioButton*  rb_pltsw;
@@ -90,6 +92,7 @@ class US_DDistr_Combine : public US_Widgets
       QRadioButton*  rb_pltMW;
       QRadioButton*  rb_pltff0;
       QRadioButton*  rb_pltvb;
+      QRadioButton*  rb_pltMWl;
 
       QTextEdit*     te_status;
 
@@ -125,8 +128,7 @@ class US_DDistr_Combine : public US_Widgets
       void update_disk_db ( bool );
       void fill_in_desc   ( DistrDesc&, int );
       void write_data     ( QString&, QString&, int& );
-      QString expandedTriple ( QString );
-      QString collapsedTriple( QString );
+      QString distribID   ( QString );
       int  reportDocsFromFiles( QString&, QString&, QStringList&,
                                 US_DB2*, int&, QString& );
       void allMethodChanged  ( int );
