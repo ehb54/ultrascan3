@@ -36,6 +36,7 @@
             <keyword id="c2" name="configuration" ref="config.html"/>
             <keyword id="c3" name="convert-data"  ref="convert.html"/>
             <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
+            <keyword id="d2" name="ddist-combine" ref="ddist_combine.html"/>
             <keyword id="e1" name="edit"          ref="us_edit.html"/>
             <keyword id="e2" name="equiltime"     ref="us_equiltime.html"/>
             <keyword id="e3" name="experiment"    ref="convert-experiment.html"/>
@@ -276,6 +277,10 @@
             <file>images/vhw_combine-envel.png</file>
             <file>images/vhw_combine-combo.png</file>
             <file>images/vhw_combine-selrun.png</file>
+
+            <file>ddist_combine.html</file>
+            <file>images/ddist_combine.png</file>
+            <file>images/ddist_combine-selrun.png</file>
 
             <file>combine_models.html</file>
             <file>images/combine_models.png</file>
