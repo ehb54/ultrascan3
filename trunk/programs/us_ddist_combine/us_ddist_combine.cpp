@@ -80,6 +80,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_gamw     = us_checkbox( tr( "GA-MW" ),      ck_gamw,     false );
    QLayout* lo_gamcmw   = us_checkbox( tr( "GA-MC-MW" ),   ck_gamcmw,   false );
    QLayout* lo_2dsafm   = us_checkbox( tr( "2DSA-FM" ),    ck_2dsafm,   false );
+   QLayout* lo_2dsagl   = us_checkbox( tr( "2DSA-GL" ),    ck_2dsagl,   false );
+   QLayout* lo_gagl     = us_checkbox( tr( "GA-GL" ),      ck_gagl,     false );
    QLayout* lo_dtall    = us_checkbox( tr( "All" ),        ck_dtall,    false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
@@ -88,11 +90,13 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QGridLayout* lo_pltDw  = us_radiobutton( tr( "D20,W" ), rb_pltDw,    false );
    QGridLayout* lo_pltff0 = us_radiobutton( tr( "f/f0"  ), rb_pltff0,   false );
    QGridLayout* lo_pltvb  = us_radiobutton( tr( "vbar"  ), rb_pltvb,    false );
+   QGridLayout* lo_pltMWl = us_radiobutton( tr( "MWlog" ), rb_pltMWl,   false );
    sel_plt->addButton( rb_pltsw,  0 );
    sel_plt->addButton( rb_pltMW,  1 );
    sel_plt->addButton( rb_pltDw,  2 );
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
+   sel_plt->addButton( rb_pltMWl, 5 );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -120,13 +124,16 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_gamw,      row,   4, 1, 2 );
    leftLayout->addLayout( lo_gamcmw,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_2dsafm,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_dtall,     row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_2dsagl,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_gagl,      row,   4, 1, 2 );
+   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 6 );
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
    leftLayout->addLayout( lo_pltMW,     row,   2, 1, 2 );
    leftLayout->addLayout( lo_pltDw,     row,   4, 1, 2 );
    leftLayout->addLayout( lo_pltff0,    row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pltvb,     row++, 0, 1, 8 );
+   leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
+   leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
@@ -189,6 +196,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   changedPlotX( bool ) ) );
    connect( rb_pltvb,    SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
+   connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
+            this,        SLOT(   changedPlotX( bool ) ) );
 
    connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
             this,        SLOT(   runid_select(      int ) ) );
@@ -200,11 +209,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Relative Concentration" ) );
 
-   data_plot1->setMinimumSize( 540, 400 );
-   data_plot1->enableAxis  ( QwtPlot::yRight, true );
+   data_plot1->setMinimumSize( 560, 400 );
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
-   data_plot1->setAxisScale( QwtPlot::yRight,  0.0,   6.0 );
    QwtPlotGrid* grid = us_grid( data_plot1 );
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -241,7 +248,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    te_status  ->setMaximumHeight( ( hh * 3 ) / 2 );
 
    adjustSize();
-   resize( 1160, 580 );
+   resize( 1180, 580 );
    reset_data();
 }
 
@@ -295,29 +302,20 @@ if(dbg_level>0)
    }
 
    for ( int ii = 0; ii < nrunids; ii++ )
-   {
+   {  // Add run IDs to list and to project combo box
       lw_runids->addItem( runids[ ii ] );
       cmb_svproj->addItem( runids[ ii ] );
    }
 
    cmb_svproj->addItem( "All" );
-
-   int nlitems = lw_runids->count();
    le_runid->setText( runids[ 0 ] );
-
-   if ( nrunids == nlitems )
-   {
-      adjustSize();
-   }
-
    pb_resetd->setEnabled( true );
-
    QStringList methods;
+
    for ( int ii = 0; ii < distros.count(); ii++ )
-   {
+   {  // Build a list of unique methods of distros
       QString method = distros[ ii ].mdescr.section( ".", -1, -1 )
                                            .section( "_", -3, -3 );
-
       if ( ! methods.contains( method ) )
          methods << method;
    }
@@ -331,6 +329,8 @@ if(dbg_level>0)
    bool hv_gamw     = methods.contains( "GA-MW"      );
    bool hv_gamcmw   = methods.contains( "GA-MC-MW"   );
    bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
+   bool hv_2dsagl   = methods.contains( "2DSA-GL"    );
+   bool hv_gagl     = methods.contains( "GA-GL"      );
    bool hv_dtall    = methods.size() > 0;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
@@ -342,6 +342,8 @@ if(dbg_level>0)
    ck_gamw    ->setEnabled( hv_gamw     );
    ck_gamcmw  ->setEnabled( hv_gamcmw   );
    ck_2dsafm  ->setEnabled( hv_2dsafm   );
+   ck_2dsagl  ->setEnabled( hv_2dsagl   );
+   ck_gagl    ->setEnabled( hv_gagl     );
    ck_dtall   ->setEnabled( hv_dtall    );
 
    ck_2dsa    ->setChecked( hv_2dsa     );
@@ -353,6 +355,8 @@ if(dbg_level>0)
    ck_gamw    ->setChecked( hv_gamw     );
    ck_gamcmw  ->setChecked( hv_gamcmw   );
    ck_2dsafm  ->setChecked( hv_2dsafm   );
+   ck_2dsagl  ->setChecked( hv_2dsagl   );
+   ck_gagl    ->setChecked( hv_gagl     );
    ck_dtall   ->setChecked( hv_dtall    );
 }
 
@@ -431,6 +435,11 @@ DbgLv(1) << "pDa:  titleY" << titleY;
    {
       titleP = tr( "Discrete Vbar Distributions" );
       titleX = tr( "Vbar (Specific Density)" );
+   }
+   else if ( rb_pltMWl->isChecked() )
+   {
+      titleP = tr( "Discrete Log of Molecular Weight Distributions" );
+      titleX = tr( "Molecular Weight (Log, Dalton)" );
    }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
@@ -512,6 +521,12 @@ void US_DDistr_Combine::save( void )
       sanode1       = "combo-distrib-vbar";
       sanode2       = "combo-vcdat-vbar";
       sanode3       = "combo-listincl-vbar";
+   }
+   else if ( xtype == 5 )
+   {
+      sanode1       = "combo-distrib-mwl";
+      sanode2       = "combo-vcdat-mwl";
+      sanode3       = "combo-listincl-mwl";
    }
    QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svg"; 
    QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
@@ -686,10 +701,12 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_2dsamw  ->isChecked() )  methods << "2DSA-MW";
       if ( ck_2dsamcmw->isChecked() )  methods << "2DSA-MC-MW";
       if ( ck_ga      ->isChecked() )  methods << "GA";
-      if ( ck_gamc    ->isChecked() )  methods << "GA_MC";
+      if ( ck_gamc    ->isChecked() )  methods << "GA-MC";
       if ( ck_gamw    ->isChecked() )  methods << "GA-MW";
-      if ( ck_gamcmw  ->isChecked() )  methods << "GA-MC_MW";
+      if ( ck_gamcmw  ->isChecked() )  methods << "GA-MC-MW";
       if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
+      if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL";
+      if ( ck_gagl    ->isChecked() )  methods << "GA-GL";
    }
 
    lw_models ->clear();
@@ -707,7 +724,7 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
             if ( ! methods.contains( meth ) )  continue;
          }
 
-         lw_models ->addItem( mdesc );
+         lw_models ->addItem( distribID( mdesc ) );
       }
    }
 
@@ -717,7 +734,7 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
    }
 }
 
-// Triple selected
+// Model distribution selected
 void US_DDistr_Combine::model_select( int row )
 {
 DbgLv(1) << "ModelSel:row" << row;
@@ -793,32 +810,22 @@ void US_DDistr_Combine::possibleColors()
    return;
 }
 
-// Return an expanded version ("1 / A / 260") of a triple string ("1A260")
-QString US_DDistr_Combine::expandedTriple( QString ctriple )
+// Return a distribution ID string that is a shortened model description
+QString US_DDistr_Combine::distribID( QString mdescr )
 {
-   QString etriple = ctriple;
+   QString runID   = mdescr.section( ".",  0, -3 );
+           runID   = runID.length() < 13 ? runID : runID.left( 12 ) + "(++)";
+   QString triple  = mdescr.section( ".", -2, -2 );
+   QString iterID  = mdescr.section( ".", -1, -1 );
+   QString andate  = iterID.section( "_",  1,  1 );
+   QString method  = iterID.section( "_",  2,  2 );
+           iterID  = ( method != "2DSA-FM" )
+                   ? iterID.section( "_", -2, -2 )
+                   : iterID.section( "_", -1, -1 );
+   QString distrID = runID + "." + triple + "." + andate
+                           + "_" + method + "_" + iterID;
 
-   if ( ! etriple.contains( " / " ) )
-      etriple = etriple.left( 1 ) + " / " +
-                etriple.mid( 1, 1 ) + " / " +
-                etriple.mid( 2 );
-
-   return etriple;
-}
-
-// Return a collapsed version ("1A260") of a triple string ("1 / A / 260")
-QString US_DDistr_Combine::collapsedTriple( QString etriple )
-{
-   QString ctriple = etriple;
-
-   if ( ctriple.contains( " / " ) )
-      ctriple = ctriple.replace( " / ", "" ).simplified();
-   else if ( ctriple.contains( "/" ) )
-      ctriple = ctriple.replace( "/",   "" ).simplified();
-   else if ( ctriple.contains( "." ) )
-      ctriple = ctriple.replace( ".",   "" ).simplified();
-
-   return ctriple;
+   return distrID;
 }
 
 // Reset Disk_DB control whenever data source is changed in any dialog
@@ -830,6 +837,7 @@ DbgLv(1) << "Upd_Dk_Db isDB" << isDB;
    reset_data();
 }
 
+// Fill in a distribution description object with model and values
 void US_DDistr_Combine::fill_in_desc( DistrDesc& ddesc, int distx )
 {
    if ( ddesc.xvals.size() > 0  &&
@@ -900,6 +908,7 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
       else if ( xtype == 2 )  xval = ddesc.model.components[ jj ].D;
       else if ( xtype == 3 )  xval = ddesc.model.components[ jj ].f_f0;
       else if ( xtype == 4 )  xval = ddesc.model.components[ jj ].vbar20;
+      else if ( xtype == 5 )  xval = log( ddesc.model.components[ jj ].mw );
 
       mxvals << xval;
    }
@@ -984,11 +993,9 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
    {  // Accumulate long descriptions and build header line
       maxnvl     = qMax( maxnvl, pdistrs[ ii ].xvals.size() );
       QString pd = pdisIDs[ ii ];
-      pdlong << pd;
-      
-      QString rd = pd.section( ".",  0, -2 );
-      QString ad = pd.section( ".", -1, -1 ).section( "_", -4, -3 );
-      pd         = rd + "." + ad;
+
+      pdlong << pdistrs[ ii ].mdescr;
+
 DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
       line      += pd + ".X " + pd + ".Y"; // X,Y header entries for contributor
       if ( ii < ( nplots - 1 ) )
@@ -1002,8 +1009,8 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
    char  valfm1[] = "%12.5f %10.5f";
    char  valfm2[] = "%13.4e %9.5f";
    char* valfmt   = valfm1;
-   if ( xtype == 1  ||  xtype == 2 )
-         valfmt   = valfm2;                // Formatting for "MW" or "D"
+   if ( xtype == 1  ||  xtype == 2  || xtype == 5 )
+         valfmt   = valfm2;                // Formatting for "MW"/"D"/"MWlog"
 
    for ( int jj = 0; jj < maxnvl; jj++ )
    {  // Build and write xvalue+concentration data line
@@ -1121,7 +1128,7 @@ int US_DDistr_Combine::distro_by_descr( QString& mdesc )
 
    for ( int ii = 0; ii < distros.count(); ii++ )
    {
-      if ( mdesc == distros[ ii ].mdescr )
+      if ( mdesc == distribID( distros[ ii ].mdescr ) )
       {
          index  = ii;
          break;
@@ -1238,6 +1245,7 @@ DbgLv(1) << "changedPlotX" << on_state;
    bool x_is_Dw    = rb_pltDw ->isChecked();
    bool x_is_ff0   = rb_pltff0->isChecked();
    bool x_is_vb    = rb_pltvb ->isChecked();
+   bool x_is_MWl   = rb_pltMWl->isChecked();
         xtype      = 0;
 
    if ( x_is_sw )
@@ -1270,6 +1278,12 @@ DbgLv(1) << "  PX=Vbar";
       xtype           = 4;
    }
 
+   else if ( x_is_MWl )
+   {
+DbgLv(1) << "  PX=Molec.Wt.log";
+      xtype           = 5;
+   }
+
    int npdis    = pdistrs.size();
    if ( npdis > 0 )
    {  // Re-do plot distros to account for X-type change
@@ -1299,7 +1313,7 @@ DbgLv(1) << "  PX=Vbar";
          fill_in_desc( *pddist, ii );
 
          pdistrs << *pddist;
-         pdisIDs << pddist->mdescr;
+         pdisIDs << distribID( pddist->mdescr );
       }
 
       plot_data();

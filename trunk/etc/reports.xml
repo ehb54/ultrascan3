@@ -82,14 +82,17 @@
     <report name="combo-distrib-d" label="Combo Diffusion Coefficient Bar Plot" />
     <report name="combo-distrib-ff0" label="Combo Frictional Ratio Bar Plot" />
     <report name="combo-distrib-vbar" label="Combo Vbar Bar Plot" />
+    <report name="combo-distrib-mwl" label="Combo Molecular Weight Log Bar Plot" />
     <report name="combo-vcdat-s" label="Combo Sed. Coeff. XValue-Concen. Data" />
     <report name="combo-vcdat-mw" label="Combo Molec. Wt. XValue-Concen. Data" />
     <report name="combo-vcdat-d" label="Combo Diff. Coeff. XValue-Concen. Data" />
     <report name="combo-vcdat-ff0" label="Combo f/f0 XValue-Concen. Data" />
     <report name="combo-vcdat-vbar" label="Combo Vbar XValue-Concen. Data" />
+    <report name="combo-vcdat-mwl" label="Combo Molec. Wt. LogXValue-Concen. Data" />
     <report name="combo-listincl-s" label="Combo Sed. Coeff. List of Included Sets" />
     <report name="combo-listincl-mw" label="Combo Molec. Wt. List of Included Sets" />
     <report name="combo-listincl-d" label="Combo Diff. Coeff. List of Included Sets" />
     <report name="combo-listincl-ff0" label="Combo f/f0 List of Included Sets" />
     <report name="combo-listincl-vbar" label="Combo Vbar List of Included Sets" />
+    <report name="combo-listincl-mwl" label="Combo Molec. Wt. Log List of Included Sets" />
 </US_Reports>
