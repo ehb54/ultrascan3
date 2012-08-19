@@ -17,7 +17,7 @@
 #include "us_model.h"
 #include "qwt_legend.h"
 
-// main program
+// Main program
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -34,8 +34,7 @@ int main( int argc, char* argv[] )
 // US_DDistr_Combine class constructor
 US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 {
-   // set up the GUI (mostly handled in US_AnalysisBase)
-
+   // set up the GUI
    setWindowTitle( tr( "Combined Discrete Distributions:" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level     = US_Settings::us_debug();
@@ -99,6 +98,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    cmb_svproj    = us_comboBox();
    lw_runids     = us_listwidget();
    lw_models     = us_listwidget();
+   te_status     = us_textedit();
+   us_setReadOnly( te_status, true );
+   te_status->setTextColor( Qt::blue );
 
    int row = 0;
    leftLayout->addLayout( dkdb_cntrls,  row++, 0, 1, 8 );
@@ -138,6 +140,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( lw_models,    row,   0, 5, 8 );
    row    += 5;
    leftLayout->setRowStretch( row, 1 );
+   leftLayout->addWidget( te_status,    row++, 0, 1, 8 );
 
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,    SLOT( update_disk_db( bool ) ) );
@@ -235,6 +238,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
       leftLayout ->setColumnMinimumWidth( ii, ww );
    leftLayout ->setColumnStretch     ( 0, 1  );
    leftLayout ->setColumnStretch     ( 1, 1  );
+   te_status  ->setMaximumHeight( ( hh * 3 ) / 2 );
 
    adjustSize();
    resize( 1160, 580 );
@@ -246,6 +250,8 @@ void US_DDistr_Combine::load( void )
 {
    QStringList runids;
    QString     runid;
+   te_status->setText( tr( "Building list of selectable run IDs..." ) );
+   qApp->processEvents();
 
    // Open a dialog and get the runID(s)
    US_SelectRunid srdiag( dkdb_cntrls->db(), runids, aDescrs );
@@ -276,6 +282,8 @@ if(dbg_level>0)
  }
 }
 //*DEBUG*
+   te_status->setText( tr( "Added: %1 run(s), %2 implied models." )
+         .arg( nrunids ).arg( aDescrs.count() ) );
 
    if ( nsprojs == 1 )
    {
@@ -386,8 +394,7 @@ void US_DDistr_Combine::plot_data( void )
 {
 DbgLv(1) << "pDa:  xtype" << xtype;
    data_plot1->detachItems();
-   //if ( pdistrs.size() < 2 )
-      data_grid = us_grid ( data_plot1 );
+   data_grid = us_grid ( data_plot1 );
    data_grid->enableXMin( true );
    data_grid->enableYMin( true );
    data_grid->setMajPen(
@@ -472,21 +479,44 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 // Save the plot data
 void US_DDistr_Combine::save( void )
 {
-//*TEMP
-if ( xtype >= 0 )
-{
- QMessageBox::warning( this, "Incomplete Coding",
-  "Plot Save has not yet been implemented." );
- return;
-}
-//*TEMP
    QString oproj    = cmb_svproj->currentText();
    QString runID    = ( oproj == "All" ) ? pdistrs[ 0 ].runID : oproj;
    QString fdir     = US_Settings::reportDir() + "/" + runID;
-   QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
-   QString fnampng  = "vHW.0Z9999.combo-distrib.png";
-   QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.dat";
-   QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";
+   QString mdescr   = pdistrs[ 0 ].mdescr;
+   QString annode   = mdescr.section( ".", -1, -1 ).section( "_", -3, -3 );
+   QString trnode   = "0Z9999";
+   QString sanode1  = "combo-distrib-s";
+   QString sanode2  = "combo-vcdat-s";
+   QString sanode3  = "combo-listincl-s";
+
+   if ( xtype == 1 )
+   {
+      sanode1       = "combo-distrib-mw";
+      sanode2       = "combo-vcdat-mw";
+      sanode3       = "combo-listincl-mw";
+   }
+   else if ( xtype == 2 )
+   {
+      sanode1       = "combo-distrib-d";
+      sanode2       = "combo-vcdat-d";
+      sanode3       = "combo-listincl-d";
+   }
+   else if ( xtype == 3 )
+   {
+      sanode1       = "combo-distrib-ff0";
+      sanode2       = "combo-vcdat-ff0";
+      sanode3       = "combo-listincl-ff0";
+   }
+   else if ( xtype == 4 )
+   {
+      sanode1       = "combo-distrib-vbar";
+      sanode2       = "combo-vcdat-vbar";
+      sanode3       = "combo-listincl-vbar";
+   }
+   QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svg"; 
+   QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
+   QString fnamdat  = annode + "." + trnode + "." + sanode2 + ".dat"; 
+   QString fnamlst  = annode + "." + trnode + "." + sanode3 + ".rpt"; 
    QString plotFile = fdir + "/" + fnamsvg;
    QString dataFile = fdir + "/" + fnamdat;
    QString listFile = fdir + "/" + fnamlst;
@@ -539,11 +569,12 @@ if ( xtype >= 0 )
          US_Passwd    pw;
          US_DB2       db( pw.getPasswd() );
          int          idEdit = 0;
+         int          kl     = pdistrs.size() - 1;
 
-         //QString trfirst  = pdistrs[ 0 ].triple;
-         //QString trlast   = pdistrs[ pdistrs.size() - 1 ].triple;
-         //QString trdesc   = "Combined Analyses (" + trfirst
-         //   + "..." + trlast + ")";
+         QString trfirst  = pdistrs[ 0  ].mdescr.section( ".", -2, -2 );
+         QString trlast   = pdistrs[ kl ].mdescr.section( ".", -2, -2 );
+         QString trdesc   = "Combined Analyses (" + trfirst
+            + "..." + trlast + ")";
 
          QString editID;         // Edit ID for matching experiment,triple
          QString eeditID;        // First edit ID from experiment match
@@ -602,7 +633,6 @@ DbgLv(1) << "SV: editID idEdit" << editID << idEdit << "  eeditID" << eeditID;
 
          // Add or update report documents in the database
          QStringList rfiles;
-         QString trdesc;
          rfiles << fnamsvg << fnampng << fnamdat << fnamlst;
          int st = reportDocsFromFiles( runID, fdir, rfiles, &db,
                                        idEdit, trdesc );
@@ -699,23 +729,22 @@ DbgLv(1) << "ModelSel: model" << distrID << "mdx" << mdx;
    DistrDesc*       ddesc   = &distros[ mdx ];
 
    if ( ! pdisIDs.contains( distrID ) )
-   {
+   {  // If this distro not yet filled out, do so now
+
       fill_in_desc( distros[ mdx ], pdistrs.size() );
 
-      pdistrs << *ddesc;
-      pdisIDs << distrID;
-
-      plot_data();
-      //plot_distr( *ddesc, distrID );
+      pdistrs << *ddesc;     // Add to list of plotted distros
+      pdisIDs << distrID;    // Add to list of IDs of plotted distros
    }
 
-   else
-      plot_data();
-      //plot_distr( *ddesc, distrID );
+   plot_data();
 
    pb_saveda->setEnabled( true );
    pb_resetd->setEnabled( true );
    pb_resetp->setEnabled( true );
+
+   te_status->setText( tr( "Count of plotted distributions: %1." )
+         .arg( pdistrs.count() ) );
 }
 
 // Assign color for a distribution
@@ -828,6 +857,10 @@ DbgLv(1) << "FID:  ncomps" << ncomps;
 
       if ( ddesc.iters > 0 )
       {  // An MC model, so concatenate the remaining MC iteration models
+         QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+         te_status->setText(
+               tr( "Building a composite of Monte Carlo distributions..." ) );
+         qApp->processEvents();
          US_Model model2;
          int     kk     = mdescr.lastIndexOf( "_mc0001" );
          QString pdescr = mdescr.left( kk );  // Description prefix
@@ -845,6 +878,7 @@ DbgLv(1) << "FID:  ncomps" << ncomps;
                niters++;
             }
          }
+         QApplication::restoreOverrideCursor();
       }
 
       ncomps = ddesc.model.components.size();     // Composite components
@@ -878,7 +912,7 @@ DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
    double xmax     = xmin;
 
    for ( int jj = 1; jj < ncomps; jj++ )
-   {
+   {  // Scan for X limits
       xmin = qMin( xmin, mxvals[ jj ] );
       xmax = qMax( xmax, mxvals[ jj ] );
    }
@@ -893,14 +927,14 @@ DbgLv(1) << "FID:    xmin xmax xinc" << xmin << xmax << xinc;
    ddesc.yvals.fill( 0.0, 50 );
 
    for ( int jj = 0; jj < 50; jj++ )
-   {
+   {  // Fill in the X values at each 2% point
 DbgLv(1) << "FID:      X-fill jj xval" << jj << xval;
       ddesc.xvals[ jj ]  = xval;
       xval              += xinc;
    }
 
    for ( int jj = 0; jj < ncomps; jj++ )
-   {
+   {  // Sum in Y values around each X point
       xval               = mxvals[ jj ];
       int kk             = qRound( ( xval - xmin ) / xinc );
 DbgLv(1) << "FID:      jj xval kk" << jj << xval << kk;
@@ -951,7 +985,11 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
       maxnvl     = qMax( maxnvl, pdistrs[ ii ].xvals.size() );
       QString pd = pdisIDs[ ii ];
       pdlong << pd;
-      pd         = pd.section( ":", 0, 0 ).simplified();
+      
+      QString rd = pd.section( ".",  0, -2 );
+      QString ad = pd.section( ".", -1, -1 ).section( "_", -4, -3 );
+      pd         = rd + "." + ad;
+DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
       line      += pd + ".X " + pd + ".Y"; // X,Y header entries for contributor
       if ( ii < ( nplots - 1 ) )
          line     += "  ";
@@ -960,23 +998,30 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
    }
    tsd << line;                             // Write header line
 
-   line       = "";
+DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
+   char  valfm1[] = "%12.5f %10.5f";
+   char  valfm2[] = "%13.4e %9.5f";
+   char* valfmt   = valfm1;
+   if ( xtype == 1  ||  xtype == 2 )
+         valfmt   = valfm2;                // Formatting for "MW" or "D"
 
    for ( int jj = 0; jj < maxnvl; jj++ )
-   {  // Build and write svalue+boundary data line
+   {  // Build and write xvalue+concentration data line
+      line       = "";
       for ( int ii = 0; ii < nplots; ii++ )
       {  // Add each X,Y data pair
          int nvals   = pdistrs[ ii ].xvals.size();
          double* xx  = pdistrs[ ii ].xvals.data();
          double* yy  = pdistrs[ ii ].yvals.data();
          int kk      = qMin( jj, ( nvals - 1 ) );
-         double sval = xx[ kk ];
-         double boun = yy[ kk ];
+         double xval = xx[ kk ];
+         double yval = yy[ kk ];
 
-         line       += QString().sprintf( "%12.5f %10.5f", sval, boun );
+         line       += QString().sprintf( valfmt, xval, yval );
       }
       line       += "\n";
       tsd << line;                           // Write data line
+//DbgLv(1) << "WrDa:   jj" << jj << " line written";
    }
 
    dfile.close();
@@ -1005,9 +1050,11 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
 int US_DDistr_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
    QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
 {
-   int ostat = 0;
+ DbgLv(1) << "rDFF: runID fdir files0" << runID << fdir << files[0];
+ DbgLv(1) << "rDFF:  idEdit trdesc" << idEdit << trdesc;
+   int ostat      = 0;
    US_Report    freport;
-   freport.runID          = runID;
+   freport.runID  = runID;
 
    for ( int ii = 0; ii < files.size(); ii++ )
    {
@@ -1223,6 +1270,40 @@ DbgLv(1) << "  PX=Vbar";
       xtype           = 4;
    }
 
+   int npdis    = pdistrs.size();
+   if ( npdis > 0 )
+   {  // Re-do plot distros to account for X-type change
+      QList< DistrDesc >  wdistros;
+      DistrDesc           ddist;
+      DistrDesc*          pddist;
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {  // Build rudimentary plot distros without value arrays
+         pddist       = &pdistrs[ ii ];
+         ddist.runID  = pddist->runID;
+         ddist.mGUID  = pddist->mGUID;
+         ddist.mdescr = pddist->mdescr;
+         ddist.iters  = pddist->iters;
+         ddist.xtype  = xtype;
+         ddist.model  = pddist->model;
+
+         wdistros << ddist;
+      }
+
+      pdistrs.clear();
+      pdisIDs.clear();
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {
+         pddist       = &wdistros[ ii ];
+         fill_in_desc( *pddist, ii );
+
+         pdistrs << *pddist;
+         pdisIDs << pddist->mdescr;
+      }
+
+      plot_data();
+   }
 }
 
 // Scale Monte Carlo concentrations

@@ -1089,10 +1089,9 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    }
    tsd << line;                             // Write header line
 
-   line       = "";
-
    for ( int jj = 0; jj < maxnvl; jj++ )
    {  // Build and write svalue+boundary data line
+      line       = "";
       for ( int ii = 0; ii < nplots; ii++ )
       {  // Add each X,Y data pair
          int nvals   = pdistrs[ ii ].dsedcs.size();

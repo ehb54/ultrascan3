@@ -21,7 +21,7 @@ class US_SelectRunid : public US_WidgetsDialog
 
    public:
 
-      //! \brief Main constructor for dialog to select edits(s)
+      //! \brief Main constructor for dialog to select run ID(s)
       //! \param dbase    Flag: Data source is database
       //! \param runids   A reference to the selected runIDs list
       //! \param mdescrs  A reference to the model descriptions for runs
@@ -35,31 +35,31 @@ class US_SelectRunid : public US_WidgetsDialog
       void changed( bool isDB );
 
    private:
-      QStringList&   runIDs;      // Selected run IDs
-      QStringList&   mDescrs;     // Selected runs' model descriptions
-      bool           sel_db;      // Select-database flag
+      QStringList&         runIDs;      // Selected run IDs
+      QStringList&         mDescrs;     // Selected runs' model descriptions
+      bool                 sel_db;      // Select-database flag
 
-      QStringList    mRunIDs;     // Model run IDs
+      QStringList          mRunIDs;     // Model run IDs
 
-      QPushButton*   pb_invest;   // Investigator button
+      QPushButton*         pb_invest;   // Investigator button
 
-      QLineEdit*     le_invest;   // Investigator id:name text entry
-      QLineEdit*     le_dfilter;  // Data search filter text entry
+      QLineEdit*           le_invest;   // Investigator id:name text entry
+      QLineEdit*           le_dfilter;  // Data search filter text entry
 
-      QTextEdit*     te_status;   // Text box for current list status
+      QTextEdit*           te_status;   // Text box for current list status
 
-      QListWidget*   lw_data;     // Data list widget
+      QListWidget*         lw_data;     // Data list widget
 
-      US_Disk_DB_Controls* dkdb_cntrls;  // Radio buttons for disk/db choice
+      US_Disk_DB_Controls* dkdb_cntrls; // Radio buttons for disk/db choice
 
-      QString        dsearch;     // Current data search string
+      QString              dsearch;     // Current data search string
 
-      QStringList    rlabels;     // Run ID labels
+      QStringList          rlabels;     // Run ID labels
 
-      int            count_allr;  // Count of all user runs
-      int            count_list;  // Count of discrete distribution runs
-      int            count_seld;  // Count of runs currently selected;
-      int            dbg_level;   // Debug level
+      int                  count_allr;  // Count of all user runs
+      int                  count_list;  // Count of discrete distribution runs
+      int                  count_seld;  // Count of runs currently selected;
+      int                  dbg_level;   // Debug level
 
    private slots:
 
