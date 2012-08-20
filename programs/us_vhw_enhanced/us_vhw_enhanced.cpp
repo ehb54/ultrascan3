@@ -43,7 +43,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    us_checkbox( tr( "Plateaus from 2DSA" ), ck_modelpl, true );
    pb_replot     = us_pushbutton( tr( "Refresh Plot" ) );
    pb_replot->setEnabled( false );
-   us_checkbox( tr( "Manual-only Replot" ), ck_manrepl, true );
+   us_checkbox( tr( "Manual-only Replot" ), ck_manrepl, false );
    le_model      = us_lineedit( tr( "No model for triple" ), -1, true );
 
    connect( pb_dstrpl,  SIGNAL( clicked()       ),
@@ -244,11 +244,12 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    data_plot2->detachItems();
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
+   scanCount  = d->scanData.size();
+   valueCount = d->x.size();
+   boundPct   = ct_boundaryPercent->value() / 100.0;
+   positPct   = ct_boundaryPos    ->value() / 100.0;
+   baseline   = calc_baseline();
 
-   // let AnalysisBase do the lower plot
-   US_AnalysisBase2::data_plot();
-
-   // handle upper (vHW Extrapolation) plot, here
    QList< double >  scpds;
    double  cconc;
    double  pconc;
@@ -259,11 +260,6 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    double  oterm;
    int     nskip = 0;
    cpds.clear();
-   scanCount  = d->scanData.size();
-   divsCount  = qRound( ct_division->value() );
-   totalCount = scanCount * divsCount;
-   valueCount = d->x.size();
-   scanCount  = d->scanData.size();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    QVector< double > pxvec( scanCount  );
@@ -271,9 +267,6 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    double* ptx   = pxvec.data();   // t,log(p) points
    double* pty   = pyvec.data();
    divfac     = 1.0 / (double)divsCount;
-   boundPct   = ct_boundaryPercent->value() / 100.0;
-   positPct   = ct_boundaryPos    ->value() / 100.0;
-   baseline   = calc_baseline();
    correc     = solution.s20w_correction * 1.0e13;
 	C0         = 0.0;
 	Swavg      = 0.0;
@@ -303,8 +296,10 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
       fitted_plateaus();
    }
 
-   valueCount = d->x.size();
+   // Let AnalysisBase do the lower plot
+   US_AnalysisBase2::data_plot();
 
+   // Then set up to handle the upper (vHW Extrapolation) plot.
    // Calculate the division-1 sedimentation coefficient intercept and,
    //  from that, the back diffusion coefficient
 
@@ -1742,9 +1737,20 @@ void US_vHW_Enhanced::update( int row )
    haveZone   = false;
    d          = &dataList[ row ];
 
-   forcePlot  = true;
+   // Do some calculations handled in AnalysisBase, but needed here
+   //  so that model plateau calculations work
+   time_correction    = US_Math2::time_correction( dataList );
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
+   double avgTemp     = d->average_temperature();
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+   US_Math2::data_correction( avgTemp, solution );
+
+   // Do normal analysis triple updating, but suppress plotting for now
+   dataLoaded = false;
    US_AnalysisBase2::update( row );
-   forcePlot  = false;
+   dataLoaded = true;
 DbgLv(1) << " update: vbar" << vbar;
 
    if ( vbar <= 0.0 )
@@ -1756,11 +1762,17 @@ DbgLv(1) << " update: vbar" << vbar;
       return;
    }
 
+   // After triple update has completed, we can proceed with plotting
+   forcePlot  = true;
+   data_plot();
+   forcePlot  = false;
+
+   // Report on whether a model is available
    ti_noise      = tinoises[ row ];
    ri_noise      = rinoises[ row ];
-   QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
    int n_ti_noi  = ti_noise.values.size();
    int n_ri_noi  = ri_noise.values.size();
+   QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
    QString modelGUID;
 
    if ( n_ti_noi > 0 )

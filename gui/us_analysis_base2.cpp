@@ -575,7 +575,7 @@ void US_AnalysisBase2::boundary_pct( double percent )
    ct_boundaryPos->disconnect();
    ct_boundaryPos->setMaxValue( 100.0 - percent );
 
-   ct_boundaryPos->setValue( ( 100.0 - percent ) / 2.0 );
+   //ct_boundaryPos->setValue( ( 100.0 - percent ) / 2.0 );
 
    connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
                             SLOT  ( boundary_pos( double ) ) );

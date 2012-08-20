@@ -109,6 +109,33 @@
         </li>
 
         <li>
+            <b>Manual-only Replot</b> Check this box to suppress automatic
+            re-plotting with each parameter change. This may be desirable
+            when you plan to change several settings, in order to avoid a
+            replot with each change. With this box checked, you may force
+            a plot with the Refresh Plot button.
+        </li>
+
+        <li>
+            <b>Refresh Plot</b> Click on this button at any time to refresh
+            the right-side plots, based on current parameter settings.
+        </li>
+
+        <li>
+            <b>Plateaus from 2DSA</b> Check this box to have plateau values
+            calculated from a model associated with any loaded noise values.
+            With this box unchecked, each scan's plateau value is determined
+            by a series of fits to initially designated plateaus.
+        </li>
+
+        <li>
+            <b>(model existence text)</b> The text to the right of the
+            Plateaus from 2DSA check box indicates whether a model was
+            determined from loaded noise for the current triple and, therefore,
+            whether scan plateaus can be calculated using that model.
+        </li>
+
+        <li>
             <b>Back Diffusion Tolerance:</b> Select a tolerance value to
             fine tune exclusion of points affected by back diffusion.
         </li>
