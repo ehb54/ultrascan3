@@ -9,6 +9,8 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
+#include "us_model.h"
+#include "us_passwd.h"
 #include "us_constants.h"
 
 // main program
@@ -35,17 +37,31 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    dbg_level     = US_Settings::us_debug();
    pb_dstrpl     = us_pushbutton( tr( "Distribution Plot" ) );
    pb_dstrpl->setEnabled( false );
-   connect( pb_dstrpl, SIGNAL( clicked() ),
-            this,       SLOT(  distr_plot() ) );
-
    pb_selegr     = us_pushbutton( tr( "Select Groups" ) );
    groupSel      = false;
    pb_selegr->setEnabled( false );
-   connect( pb_selegr, SIGNAL( clicked() ),
-            this,       SLOT(  sel_groups() ) );
+   us_checkbox( tr( "Plateaus from 2DSA" ), ck_modelpl, true );
+   pb_replot     = us_pushbutton( tr( "Refresh Plot" ) );
+   pb_replot->setEnabled( false );
+   us_checkbox( tr( "Manual-only Replot" ), ck_manrepl, true );
+   le_model      = us_lineedit( tr( "No model for triple" ), -1, true );
 
-   parameterLayout->addWidget( pb_dstrpl, 2, 0, 1, 2 );
-   parameterLayout->addWidget( pb_selegr, 2, 2, 1, 2 );
+   connect( pb_dstrpl,  SIGNAL( clicked()       ),
+            this,       SLOT(   distr_plot()    ) );
+   connect( pb_selegr,  SIGNAL( clicked()       ),
+            this,       SLOT(   sel_groups()    ) );
+   connect( pb_replot,  SIGNAL( clicked()       ),
+            this,       SLOT(   plot_refresh()  ) );
+   connect( ck_modelpl, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   data_plot()     ) );
+
+   int jr = 2;
+   parameterLayout->addWidget( pb_dstrpl,  jr,   0, 1, 2 );
+   parameterLayout->addWidget( pb_selegr,  jr++, 2, 1, 2 );
+   parameterLayout->addWidget( ck_manrepl, jr,   0, 1, 2 );
+   parameterLayout->addWidget( pb_replot,  jr++, 2, 1, 2 );
+   parameterLayout->addWidget( ck_modelpl, jr,   0, 1, 2 );
+   parameterLayout->addWidget( le_model,   jr++, 2, 1, 2 );
 
    QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"      ) );
    QLabel* lb_scan         = us_banner( tr( "Scan Control"           ) );
@@ -59,8 +75,8 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    lb_tolerance  = us_label( tr( "Back Diffusion Tolerance:" ) );
    lb_tolerance->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_tolerance = us_counter( 3, 0.001, 1.0, 0.001 );
-   bdtoler      = 0.001;
+   ct_tolerance  = us_counter( 3, 0.001, 1.0, 0.001 );
+   bdtoler       = 0.001;
    ct_tolerance->setStep( 0.001 );
    ct_tolerance->setEnabled( true );
    connect( ct_tolerance, SIGNAL( valueChanged(   double ) ),
@@ -69,36 +85,38 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    lb_division   = us_label( tr( "Divisions:" ) );
    lb_division->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_division  = us_counter( 3, 0.0, 1000.0, 50.0 );
+   ct_division   = us_counter( 3, 0.0, 1000.0, 50.0 );
    ct_division->setStep( 1 );
    ct_division->setEnabled( true );
    connect( ct_division, SIGNAL( valueChanged(  double ) ),
             this,         SLOT(  update_divis(  double ) ) );
 
-   controlsLayout->addWidget( lb_analysis       , 0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_tolerance      , 1, 0, 1, 2 );
-   controlsLayout->addWidget( ct_tolerance      , 1, 2, 1, 2 );
-   controlsLayout->addWidget( lb_division       , 2, 0, 1, 2 );
-   controlsLayout->addWidget( ct_division       , 2, 2, 1, 2 );
-   controlsLayout->addWidget( lb_smoothing      , 3, 0, 1, 2 );
-   controlsLayout->addWidget( ct_smoothing      , 3, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPercent   , 4, 0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPercent, 4, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPos       , 5, 0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPos    , 5, 2, 1, 2 );
-   controlsLayout->addWidget( lb_scan           , 6, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , 7, 0, 1, 2 );
-   controlsLayout->addWidget( ct_from           , 7, 2, 1, 2 );
-   controlsLayout->addWidget( lb_to             , 8, 0, 1, 2 );
-   controlsLayout->addWidget( ct_to             , 8, 2, 1, 2 );
-   controlsLayout->addWidget( pb_exclude        , 9, 0, 1, 2 );
-   controlsLayout->addWidget( pb_reset_exclude  , 9, 2, 1, 2 );
+   jr     = 0;
+   controlsLayout->addWidget( lb_analysis       , jr++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_tolerance      , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_tolerance      , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_division       , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_division       , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_smoothing      , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_smoothing      , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_boundPercent   , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_boundaryPercent, jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_boundPos       , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_boundaryPos    , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_scan           , jr++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_from           , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_from           , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_to             , jr,   0, 1, 2 );
+   controlsLayout->addWidget( ct_to             , jr++, 2, 1, 2 );
+   controlsLayout->addWidget( pb_exclude        , jr,   0, 1, 2 );
+   controlsLayout->addWidget( pb_reset_exclude  , jr++, 2, 1, 2 );
 
    connect( pb_help, SIGNAL( clicked() ),
             this,    SLOT(   help() ) );
 
    dataLoaded = false;
    haveZone   = false;
+   forcePlot  = false;
 
    rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
@@ -169,6 +187,7 @@ DbgLv(1) << "mxht p1ht p2ht" << mxht << p1ht << p2ht;
 
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
+   pb_replot->setEnabled( true );
    haveZone    = false;
 
    saved.clear();
@@ -208,11 +227,13 @@ void US_vHW_Enhanced::data_plot( void )
    double  xmax        = 0.0;
    double  ymax        = 0.0;
    int     count       = 0;
-   int     nskip       = 0;
    int     totalCount;
 
-DbgLv(1) << " data_plot: vbar" << vbar;
+DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
    if ( !dataLoaded  ||  vbar <= 0.0 )
+      return;
+
+   if ( !forcePlot  &&  ck_manrepl->isChecked() )
       return;
 
 DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -228,11 +249,27 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    US_AnalysisBase2::data_plot();
 
    // handle upper (vHW Extrapolation) plot, here
-
+   QList< double >  scpds;
+   double  cconc;
+   double  pconc;
+   double  mconc;
+   double  cinc;
+   double  cinch;
+   double  eterm;
+   double  oterm;
+   int     nskip = 0;
+   cpds.clear();
+   scanCount  = d->scanData.size();
+   divsCount  = qRound( ct_division->value() );
+   totalCount = scanCount * divsCount;
    valueCount = d->x.size();
    scanCount  = d->scanData.size();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
+   QVector< double > pxvec( scanCount  );
+   QVector< double > pyvec( totalCount );
+   double* ptx   = pxvec.data();   // t,log(p) points
+   double* pty   = pyvec.data();
    divfac     = 1.0 / (double)divsCount;
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
@@ -258,159 +295,12 @@ DbgLv(1) << " valueCount  totalCount" << valueCount << totalCount;
 DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    le_skipped->setText( QString::number( nskip ) );
 
-   // Do first experimental plateau calcs based on horizontal zones
+   // Calculate plateaus from a model (if possible)
+   bool got_plats =  model_plateaus();
 
-   int     nrelp = 0;
-   QVector< double > pxvec( scanCount  );
-   QVector< double > pyvec( totalCount );
-   QVector< double > sxvec( scanCount  );
-   QVector< double > syvec( scanCount  );
-   QVector< double > fyvec( scanCount  );
-   double* ptx   = pxvec.data();   // t,log(p) points
-   double* pty   = pyvec.data();
-   double* csx   = sxvec.data();   // count,slope points
-   double* csy   = syvec.data();
-   double* fsy   = fyvec.data();   // fitted slope
-
-   QList< double > plats;
-   QList< int >    isrel;
-   QList< int >    isunr;
-
-   // accumulate reliable,unreliable scans and plateaus
-
-   scplats.fill( 0.0, scanCount );
-   nrelp    = 0;
-
-DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
-   // Initially reliable plateaus are all average non-excluded
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      if ( excludedScans.contains( ii ) ) continue;
-
-      s             = &d->scanData[ ii ];
-      plateau       = avg_plateau();
-      scplats[ ii ] = plateau;
-      ptx[ nrelp ]  = s->seconds - time_correction;
-      pty[ nrelp ]  = log( plateau );
-
-      isrel.append( ii );
-DbgLv(1) << ptx[nrelp] << pty[nrelp];
-      nrelp++;
-   }
-//DbgLv(3) << "DP:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-   QList< double >  scpds;
-   double  cconc;
-   double  pconc;
-   double  mconc;
-   double  cinc;
-   double  cinch;
-   double  eterm;
-   double  oterm;
-   double  slope;
-   double  intcp;
-   double  sigma;
-   double  corre;
-   cpds.clear();
-   int    krelp  = nrelp;
-   int    jrelp  = nrelp;
-   int    kf     = 0;
-
-   // Accumulate count,slope points for line fits to the t,log(p) points
-
-   for ( int jj = 6; jj < nrelp; jj++ )
-   {
-      US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, jj );
-
-      csx[ kf ]   = (double)jj;
-      csy[ kf++ ] = slope;
-DbgLv(1) << "k,slope point: " << kf << jj << slope;
-   }
-
-   // Create a 3rd-order polynomial fit to the count,slope curve
-
-   double coefs[ 4 ];
-
-   US_Matrix::lsfit( coefs, csx, csy, kf, 4 );
-DbgLv(1) << "3rd-ord poly fit coefs:" << coefs[0] << coefs[1] << coefs[2]
- << coefs[3];
-
-   for ( int jj = 0; jj < kf; jj++ )
-   {
-      double xx = csx[ jj ];
-      double yy = coefs[ 0 ] + coefs[ 1 ] * xx + coefs[ 2 ] * xx * xx
-                + coefs[ 3 ] * xx * xx * xx;
-      fsy[ jj ] = yy;
-DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
-   }
-
-   // Now find the spot where the derivative of the fit crosses zero
-   double prevy = fsy[ 1 ];
-   double maxd  = -1e+30;
-   double dfac  = 1.0 / qAbs( fsy[ kf - 1 ] - prevy );  // norm. deriv. factor
-   double prevd = ( prevy - fsy[ 0 ] ) * dfac;  // normalized derivative
-   jrelp        = -1;
-
-//DbgLv(3) << "DP:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-DbgLv(1) << "Fitted slopes derivative points:";
-   for ( int jj = 2; jj < kf; jj++ )
-   {
-      double currx = csx[ jj ];
-      double curry = fsy[ jj ];
-      double currd = ( curry - prevy ) * dfac;  // normalized derivative
-//DbgLv(1) << "  k cx cy cd pd" << jj << currx << curry << currd << prevd;
-DbgLv(1) << "  k" << jj << " x fslo" << currx << curry << " deriv" << currd;
-
-      if (   currd == 0.0  ||
-           ( currd > 0.0  &&  prevd < 0.0 )  ||
-           ( currd < 0.0  &&  prevd > 0.0 ) )
-      {  // Zero point or zero crossing
-         jrelp    = jj - 1;
-DbgLv(1) << "    Z-CROSS";
-if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
- prevy = curry; prevd = currd;
- currx = csx[mm]; curry = fsy[mm];
- currd = ( curry - prevy ) * dfac;
- DbgLv(1) << "  k cx cy cd pd" << mm << currx << curry << currd << prevd;
-}}
-         break;
-      }
-
-      if ( currd > maxd )
-      {  // Maximum derivative value
-         maxd     = currd;
-         jrelp    = jj;
-DbgLv(1) << "    MAXD" << maxd;
-      }
-      prevy      = curry;
-      prevd      = currd;
-   }
-
-   // Do final fit to the determined number of leading points
-   krelp         = (int)csx[ jrelp ];
-
-   US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
-DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
- << slope << intcp << sigma;
-//DbgLv(3) << "DP:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-   Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
-	C0         = exp( intcp );                      // C0 func of intercept
-DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
-
-   // Determine Cp for all the scans based on fitted line:
-   //   y = ax + b, using "a" and "b" determined above.
-   // Since y = log( Cp ), we get Cp by exponentiating
-   //   the left-hand term.
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {  // each extrapolated plateau is exp of Y for X of corrected time
-      s             = &d->scanData[ ii ];
-      double  tc    = s->seconds - time_correction;
-
-      s->plateau    = exp( tc * slope + intcp );
-      scplats[ ii ] = s->plateau;
-DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
+   if ( ! got_plats )
+   {  // Calculate plateaus from fitting to specified values
+      fitted_plateaus();
    }
 
    valueCount = d->x.size();
@@ -638,7 +528,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
          else
          {  // Mark a point to be excluded by back-diffusion
             sedc        = -1.0;
-DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
+//DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          }
 
          // Y value of point is sedcoeff; accumulate y max
@@ -1852,7 +1742,9 @@ void US_vHW_Enhanced::update( int row )
    haveZone   = false;
    d          = &dataList[ row ];
 
+   forcePlot  = true;
    US_AnalysisBase2::update( row );
+   forcePlot  = false;
 DbgLv(1) << " update: vbar" << vbar;
 
    if ( vbar <= 0.0 )
@@ -1863,6 +1755,23 @@ DbgLv(1) << " update: vbar" << vbar;
              "van Holde - Weischet analysis can proceed." ).arg( vbar ) );
       return;
    }
+
+   ti_noise      = tinoises[ row ];
+   ri_noise      = rinoises[ row ];
+   QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
+   int n_ti_noi  = ti_noise.values.size();
+   int n_ri_noi  = ri_noise.values.size();
+   QString modelGUID;
+
+   if ( n_ti_noi > 0 )
+      modelGUID = ti_noise.modelGUID;
+   else if ( n_ri_noi > 0 )
+      modelGUID = ri_noise.modelGUID;
+
+   if ( modelGUID.isEmpty()  ||  modelGUID.length() != 36 )
+      le_model->setText( tr( "NO model is implied for %1" ).arg( tripl ) );
+   else
+      le_model->setText( tr( "A model IS implied for %1" ).arg( tripl ) );
 }
 
 // Calculate the sedimentation coefficient intercept for division 1
@@ -1984,5 +1893,245 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
       if ( tfp4.copy( plot4File ) )
          DbgLv(1) << "CDF: copied:" << tplot4File;
    }
+}
+
+// Calculate scan plateau concentrations by fitting initial values 
+bool US_vHW_Enhanced::fitted_plateaus()
+{
+   int     totalCount;
+DbgLv(1) << "FITTED_PLATEAUS";
+   if ( !dataLoaded  ||  vbar <= 0.0 )
+      return false;
+
+   valueCount = d->x.size();
+   scanCount  = d->scanData.size();
+   divsCount  = qRound( ct_division->value() );
+   totalCount = scanCount * divsCount;
+   divfac     = 1.0 / (double)divsCount;
+   boundPct   = ct_boundaryPercent->value() / 100.0;
+   positPct   = ct_boundaryPos    ->value() / 100.0;
+   baseline   = calc_baseline();
+   correc     = solution.s20w_correction * 1.0e13;
+	C0         = 0.0;
+	Swavg      = 0.0;
+   omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;
+   plateau    = d->scanData[ 0 ].plateau;
+
+   // Do first experimental plateau calcs based on horizontal zones
+
+   int     nrelp = 0;
+   QVector< double > pxvec( scanCount  );
+   QVector< double > pyvec( totalCount );
+   QVector< double > sxvec( scanCount  );
+   QVector< double > syvec( scanCount  );
+   QVector< double > fyvec( scanCount  );
+   double* ptx   = pxvec.data();   // t,log(p) points
+   double* pty   = pyvec.data();
+   double* csx   = sxvec.data();   // count,slope points
+   double* csy   = syvec.data();
+   double* fsy   = fyvec.data();   // fitted slope
+
+   QList< double > plats;
+   QList< int >    isrel;
+   QList< int >    isunr;
+
+   // accumulate reliable,unreliable scans and plateaus
+
+   scplats.fill( 0.0, scanCount );
+   nrelp    = 0;
+
+DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
+   // Initially reliable plateaus are all average non-excluded
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      if ( excludedScans.contains( ii ) ) continue;
+
+      s             = &d->scanData[ ii ];
+      plateau       = avg_plateau();
+      scplats[ ii ] = plateau;
+      ptx[ nrelp ]  = s->seconds - time_correction;
+      pty[ nrelp ]  = log( plateau );
+
+      isrel.append( ii );
+DbgLv(1) << ptx[nrelp] << pty[nrelp];
+      nrelp++;
+   }
+//DbgLv(3) << "DP:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+   QList< double >  scpds;
+   double  slope;
+   double  intcp;
+   double  sigma;
+   double  corre;
+   cpds.clear();
+   int    krelp  = nrelp;
+   int    jrelp  = nrelp;
+   int    kf     = 0;
+
+   // Accumulate count,slope points for line fits to the t,log(p) points
+
+   for ( int jj = 6; jj < nrelp; jj++ )
+   {
+      US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, jj );
+
+      csx[ kf ]   = (double)jj;
+      csy[ kf++ ] = slope;
+DbgLv(1) << "k,slope point: " << kf << jj << slope;
+   }
+
+   // Create a 3rd-order polynomial fit to the count,slope curve
+
+   double coefs[ 4 ];
+
+   US_Matrix::lsfit( coefs, csx, csy, kf, 4 );
+DbgLv(1) << "3rd-ord poly fit coefs:" << coefs[0] << coefs[1] << coefs[2]
+ << coefs[3];
+
+   for ( int jj = 0; jj < kf; jj++ )
+   {
+      double xx = csx[ jj ];
+      double yy = coefs[ 0 ] + coefs[ 1 ] * xx + coefs[ 2 ] * xx * xx
+                + coefs[ 3 ] * xx * xx * xx;
+      fsy[ jj ] = yy;
+DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
+   }
+
+   // Now find the spot where the derivative of the fit crosses zero
+   double prevy = fsy[ 1 ];
+   double maxd  = -1e+30;
+   double dfac  = 1.0 / qAbs( fsy[ kf - 1 ] - prevy );  // norm. deriv. factor
+   double prevd = ( prevy - fsy[ 0 ] ) * dfac;  // normalized derivative
+   jrelp        = -1;
+
+//DbgLv(3) << "DP:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+DbgLv(1) << "Fitted slopes derivative points:";
+   for ( int jj = 2; jj < kf; jj++ )
+   {
+      double currx = csx[ jj ];
+      double curry = fsy[ jj ];
+      double currd = ( curry - prevy ) * dfac;  // normalized derivative
+//DbgLv(1) << "  k cx cy cd pd" << jj << currx << curry << currd << prevd;
+DbgLv(1) << "  k" << jj << " x fslo" << currx << curry << " deriv" << currd;
+
+      if (   currd == 0.0  ||
+           ( currd > 0.0  &&  prevd < 0.0 )  ||
+           ( currd < 0.0  &&  prevd > 0.0 ) )
+      {  // Zero point or zero crossing
+         jrelp    = jj - 1;
+DbgLv(1) << "    Z-CROSS";
+if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
+ prevy = curry; prevd = currd;
+ currx = csx[mm]; curry = fsy[mm];
+ currd = ( curry - prevy ) * dfac;
+ DbgLv(1) << "  k cx cy cd pd" << mm << currx << curry << currd << prevd;
+}}
+         break;
+      }
+
+      if ( currd > maxd )
+      {  // Maximum derivative value
+         maxd     = currd;
+         jrelp    = jj;
+DbgLv(1) << "    MAXD" << maxd;
+      }
+      prevy      = curry;
+      prevd      = currd;
+   }
+
+   // Do final fit to the determined number of leading points
+   krelp         = (int)csx[ jrelp ];
+
+   US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
+DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
+ << slope << intcp << sigma;
+//DbgLv(3) << "DP:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+   Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
+	C0         = exp( intcp );                      // C0 func of intercept
+DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
+
+   // Determine Cp for all the scans based on fitted line:
+   //   y = ax + b, using "a" and "b" determined above.
+   // Since y = log( Cp ), we get Cp by exponentiating
+   //   the left-hand term.
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // each extrapolated plateau is exp of Y for X of corrected time
+      s             = &d->scanData[ ii ];
+      double  tc    = s->seconds - time_correction;
+
+      s->plateau    = exp( tc * slope + intcp );
+      scplats[ ii ] = s->plateau;
+      //scplats[ ii ] = exp( tc * slope + intcp );
+DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
+   }
+   return true;
+}
+
+// Calculate scan plateau concentrations from a 2DSA model
+bool US_vHW_Enhanced::model_plateaus()
+{
+   int n_ti_noi = ti_noise.values.size();
+   int n_ri_noi = ri_noise.values.size();
+   QString modelGUID;
+   US_Model model;
+
+   if ( ! ck_modelpl->isChecked() )
+      return false;
+
+   if ( n_ti_noi > 0 )
+      modelGUID = ti_noise.modelGUID;
+   else if ( n_ri_noi > 0 )
+      modelGUID = ri_noise.modelGUID;
+   else
+      return false;
+
+DbgLv(1) << "Cpl: MODEL_PLATEAUS: modelGUID" << modelGUID;
+   if ( ! modelGUID.isEmpty()  &&  modelGUID.length() == 36 )
+   {
+      bool    isDB = disk_controls->db();
+      US_Passwd pw;
+      US_DB2* db   = isDB ? new US_DB2( pw.getPasswd() ) : 0;
+
+      model.load( isDB, modelGUID, db );
+   }
+   int ncomp    = model.components.size();
+   double scorr = 1.0 / solution.s20w_correction;
+   //double scorr = 1.0;
+DbgLv(1) << "CPl:    scorr" << scorr << solution.s20w_correction;
+   d            = &dataList[ row ];
+   valueCount   = d->x.size();
+   scanCount    = d->scanData.size();
+   scplats.fill( 0.0, scanCount );
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      US_DataIO2::Scan* scan = &d->scanData[ ii ];
+      double   omega    = scan->rpm * M_PI / 30.0;
+      double   oterm    = ( scan->seconds - time_correction ) * omega * omega;
+      double   cplat    = 0.0;
+
+      for ( int jj = 0; jj < ncomp; jj++ )
+      {
+         US_Model::SimulationComponent* sc = &model.components[ jj ];
+         double conc    = sc->signal_concentration;
+         double sval    = sc->s * scorr;
+         cplat         += ( conc / exp( oterm * sval ) );
+      }
+DbgLv(1) << "CPl:  scan" << ii << "cplat" << cplat;
+
+      scplats[ ii ]  = cplat;
+      scan->plateau  = cplat;
+   }
+
+   return true;
+}
+
+// Do a manually forced re-plot of the data
+void US_vHW_Enhanced::plot_refresh()
+{
+   forcePlot    = true;
+   data_plot();
+   forcePlot    = false;
 }
 

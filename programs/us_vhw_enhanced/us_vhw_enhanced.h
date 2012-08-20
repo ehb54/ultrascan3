@@ -43,6 +43,10 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QLabel*       lb_division;
 
       QLineEdit*    le_temper;
+      QLineEdit*    le_model;
+
+      QCheckBox*    ck_modelpl;
+      QCheckBox*    ck_manrepl;
 
       US_Help       showHelp;
  
@@ -56,6 +60,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QPushButton*  pb_dstrpl;
       QPushButton*  pb_rsetda;
       QPushButton*  pb_selegr;
+      QPushButton*  pb_replot;
 
       double        boundPct;
       double        positPct;
@@ -89,6 +94,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
 
       bool          haveZone;
       bool          groupSel;
+      bool          forcePlot;
 
       QString       run_name;
       QString       cell;
@@ -148,6 +154,9 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void new_triple  ( int );
       void update      ( int );
       void copy_data_files( QString, QString, QString );
+      bool fitted_plateaus( void );
+      bool model_plateaus ( void );
+      void plot_refresh   ( void );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };
