@@ -40,12 +40,66 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
          
          for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
          {
-            our_saxs_options->iq_target_ev += US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[i].vbar );
-            editor_msg( "blue", 
-                        QString( tr( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" ) )
-                        .arg( model_vector[current_model].molecule[j].mw )
-                        .arg( model_vector[current_model].vbar )
-                        .arg( US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[current_model].vbar ) ) );
+            bool swh_chain = true;
+            unsigned int swh_count = 0;
+            if ( model_vector[current_model].molecule[j].atom.size() )
+            {
+               for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+               {
+                  PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                  if ( this_atom->name != "OW" )
+                  {
+                     swh_chain = false;
+                     break;
+                  }
+                  swh_count++;
+               }
+
+
+               if ( swh_chain )
+               {
+                  if ( our_saxs_options->swh_excl_vol > 0e0 )
+                  {
+                     our_saxs_options->iq_target_ev += our_saxs_options->swh_excl_vol * swh_count;
+                     editor_msg( "blue", 
+                                 QString( tr( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
+                                 .arg( our_saxs_options->swh_excl_vol )
+                                 .arg( swh_count )
+                                 .arg( our_saxs_options->swh_excl_vol * swh_count ) );
+                  } else {
+                     QString mapkey = "SWH|OW";
+                     QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                     if ( hybrid_name.isEmpty() || !hybrid_name.length() || !hybrid_map.count( hybrid_name ) 
+                          || !atom_map.count( "OW~" + hybrid_name) )
+                     {
+                        cout << "error: hybrid or map or atom name missing for SWH|OW" << endl; 
+                        editor_msg( "red",  QString("Molecule %1 Residue SWH OW Hybrid/map/atom name missing. Atom skipped.\n")
+                                    .arg( j + 1 ) );
+                        continue;
+                     }
+                     double swh_excl_vol = atom_map["OW~" + hybrid_name].saxs_excl_vol;
+                     our_saxs_options->iq_target_ev += swh_excl_vol * swh_count;
+                     editor_msg( "blue", 
+                                 QString( tr( "Adding water to excluded volume using defined excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
+                                 .arg( swh_excl_vol )
+                                 .arg( swh_count )
+                                 .arg( swh_excl_vol * swh_count ) );
+                  }
+               } else {
+                  if ( swh_count )
+                  {
+                     editor_msg( "red", tr( "Error: a chain with SWH/OW and other residues is currently unsupported\n" ) );
+                     return false;
+                  }
+                  
+                  our_saxs_options->iq_target_ev += US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[i].vbar );
+                  editor_msg( "blue", 
+                              QString( tr( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" ) )
+                              .arg( model_vector[current_model].molecule[j].mw )
+                              .arg( model_vector[current_model].vbar )
+                              .arg( US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[current_model].vbar ) ) );
+               }
+            }
          }
       }
    }
@@ -190,7 +244,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             {
                new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
-            if ( this_atom->name != "OW" || our_saxs_options->swh_excl_vol == 0e0 )
+            if ( this_atom->name != "OW" )
             {
                tot_excl_vol_noh  += new_atom.excl_vol;
             }

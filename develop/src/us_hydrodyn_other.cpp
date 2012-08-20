@@ -398,6 +398,18 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    temp_atom.orgName = str2;
    temp_atom.name = str2.stripWhiteSpace();
 
+   if ( temp_atom.name == "OT1" )
+   {
+      temp_atom.name = "O";
+      temp_atom.orgName.replace( "OT1", "O  " );
+   } else {
+      if ( temp_atom.name == "OT2" )
+      {
+         temp_atom.name = "OXT";
+         temp_atom.orgName.replace( "OT2", "OXT" );
+      }
+   }
+
    temp_atom.altLoc = str1.mid(16, 1);
 
    str2 = str1.mid(17, 3);
