@@ -143,7 +143,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    // Also save the envelope data with present parameters
    QString dat2File = US_Settings::resultDir() + "/" + runID + "/"
       + plot1File.section( "/", -1, -1 ).section( ".", 0, 1 )
-      + ".s-c-envelope.dat";
+      + ".s-c-envelope.csv";
 
    save_data_file( dat2File );
 }
@@ -606,7 +606,7 @@ void US_DistribPlot::save_and_close()
    QString basename   = US_Settings::tmpDir() + "/vHW.temp.";
    QString tplot1File = basename + "s-c-distrib.svg";
    QString tplot2File = basename + "s-c-histo.svg";
-   QString tdata2File = basename + "s-c-envelope.dat";
+   QString tdata2File = basename + "s-c-envelope.csv";
 
    save_plots(     tplot1File, tplot2File );
    save_data_file( tdata2File );
@@ -631,22 +631,43 @@ DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
    if ( ! datf.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
       return;
 
-   QTextStream ts( &datf );
-
-   ts << tr( "S-value(Envelope):    "
-             "Frequency:    "
-             "S-value(Histogram):   "
-             "Frequency:\n" );
+   int ifnz   = -1;
+   int ilnz   = -1;
 
    for ( int ii = 0; ii < nepts; ii++ )
    {
-      if ( ii < nhpts )
-         ts << QString().sprintf( "%.6f    %.6f    %.6f  %9.2f\n",
-               eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ] );
+      if ( efrqs[ ii ] > 1.e-6 )
+      {
+         ifnz    = ( ifnz < 0 ) ? ii : ifnz;
+         ilnz    = ii;
+      }
+else
+DbgLv(1) << "SaveDat:    ii efrq" << ii << efrqs[ii];
+   }
 
+DbgLv(1) << "SaveDat:   ifnz ilnz" << ifnz << ilnz;
+   ifnz    = qMax( 0, ifnz - 2 );
+   ilnz    = qMin( nepts, ilnz + 3 );
+   int jj  = -1;
+DbgLv(1) << "SaveDat:     ifnz ilnz" << ifnz << ilnz;
+
+   QTextStream ts( &datf );
+
+   ts << tr( "S-value(Envelope),Frequency(E),"
+             "S-value(Histogram),Frequency(H)\n" );
+
+   for ( int ii = ifnz; ii < ilnz; ii++ )
+   {
+      QString line;
+      if ( (++jj) < nhpts )
+         line = QString().sprintf( "%.6f,%.6f,%.6f,%9.2f\n",
+                   eseds[ ii ], efrqs[ ii ], hseds[ jj ], hfrqs[ jj ] );
       else
-         ts << QString().sprintf( "%.6f    %.6f\n",
-               eseds[ ii ], efrqs[ ii ] );
+         line = QString().sprintf( "%.6f,%.6f,\"\",\"\"\n",
+                   eseds[ ii ], efrqs[ ii ] );
+
+      line.replace( " ", "" );
+      ts << line;
    }
 DbgLv(1) << "SaveDat:   file written";
 
