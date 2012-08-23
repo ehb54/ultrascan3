@@ -305,246 +305,14 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    bdiff_coef = back_diff_coeff( bdiff_sedc );
 
    if ( mdl_plats )
-   {
+   {  // Calculate all plot points from model plateaus
       calc_points_by_model( ptx, pty );
    }
 
    else
-   {
+   {  // Calculate all plot points from fitted plateaus
       calc_points_by_fit( ptx, pty );
    }
-#if 0
-   // Initialize plateau values for components of scans
-
-//DbgLv(3) << "DP:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      s          = &d->scanData[ ii ];
-
-      range      = scplats[ ii ] - baseline;
-      basecut    = baseline + range * positPct;
-      platcut    = basecut  + range * boundPct;
-      span       = platcut - basecut;
-      cconc      = basecut;
-      pconc      = basecut;
-      mconc      = basecut;
-      cinc       = span * divfac;
-      cinch      = cinc / 2.0;
-      omega      = s->rpm * M_PI / 30.0;
-      oterm      = ( s->seconds - time_correction ) * omega * omega;
-      eterm      = -2.0 * oterm / correc;
-      c0term     = ( C0 - baseline ) * boundPct * divfac;
-      sumcpij    = 0.0;
-
-      scpds.clear();                       // clear this scan's Cp list
-
-      if ( excludedScans.contains( ii ) )
-      {
-         for ( int jj = 0; jj < divsCount; jj++ )
-            scpds.append( cinc );
-
-         cpds << scpds;
-         continue;
-      }
-
-//DbgLv(3) << "DP:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      for ( int jj = 0; jj < divsCount; jj++ )
-      {  // Calculate partial plateaus
-         pconc      = cconc;              // prev (baseline) div concentration
-         cconc     += cinc;               // curr (plateau) div concentration
-         mconc      = pconc + cinch;      // mid div concentration
-
-         // Get sedimentation coefficient for concentration
-         sedc       = sed_coeff( mconc, oterm );
-
-         // Calculate the partial concentration (cpij) for this division
-         cpij       = ( sedc > 0.0 ) ?
-                      ( c0term * exp( sedc * eterm ) ) :
-                      cinc;
-//DbgLv(1) << " scn div cinc cpij " << ii+1 << jj+1 << cinc << cpij;
-//DbgLv(1) << "  sedc eterm eso " << sedc << eterm << (eterm*sedc);
-
-         // Update cpij sum and add to divisions list for scan
-         sumcpij   += cpij;     // Add to sum of partial concentrations
-         scpds.append( cpij );  // Update scan list of partial concentrations
-DbgLv(1) << " scn div" << ii+1 << jj+1 << " cinc cpij" << cinc << cpij
- << " sumcpij sedc" << sumcpij << sedc;
-      }
-//DbgLv(3) << "DP:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-      // Get span-minus-sum_cpij and divide by number of divisions
-      sdiff    = ( span - sumcpij ) * divfac;
-DbgLv(1) << "   sumcpij span " << sumcpij << span
- << " sumcpij/span " << (sumcpij/span);
-
-      for ( int jj = 0; jj < divsCount; jj++ )
-      {  // Spread the difference to each partial plateau concentration
-         cpij     = scpds.at( jj ) + sdiff;
-         scpds.replace( jj, cpij );
-      }
-
-      cpds << scpds;  // Add cpij list to scan's list-of-lists
-   }
-
-   // Fit a line to division 1 and use its intercept to calculate the
-   //  back diffusion coefficient
-
-   // Iterate to adjust plateaus until none needed or max iters reached
-
-   int     iter      = 1;
-   int     mxiter    = 3;          // maximum iterations
-   double  avdthr    = 2.0e-5;     // threshold cp-absavg-diff
-   if ( mdl_plats )
-   {
-      mxiter = 0;
-      avdthr = 2.0e+5;
-   }
-
-//DbgLv(3) << "DP:TM:07: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   while( iter <= mxiter )
-   {
-      double avgdif  = 0.0;
-      count          = 0;
-DbgLv(1) << "iter mxiter " << iter << mxiter;
-
-      // Get division sedimentation coefficient values (intercepts)
-
-//DbgLv(3) << "DP:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      div_seds();
-//DbgLv(3) << "DP:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-      // Reset division plateaus
-
-      for ( int ii = 0; ii < scanCount; ii++ )
-      {
-         if ( excludedScans.contains( ii ) )   continue;
-
-         s        = &d->scanData[ ii ];
-         range    = scplats[ ii ] - baseline;
-         basecut  = baseline + range * positPct;
-         platcut  = basecut  + range * boundPct;
-         span     = platcut - basecut;
-         sumcpij  = 0.0;
-         omega    = s->rpm * M_PI / 30.0;
-         oterm    = ( s->seconds - time_correction ) * omega * omega;
-         eterm    = -2.0 * oterm / correc;
-         c0term   = ( C0 - baseline ) * boundPct * divfac;
-         scpds    = cpds.at( ii );  // Scan's list of partial concentrations
-         cinc     = scpds.at( 0 );  // Average concentration increment (diff)
-         scpds.clear();
-
-         // Split the difference between divisions
-
-         for ( int jj = 0; jj < divsCount; jj++ )
-         {  // Recalculate partial concentrations based on sedcoeff intercepts
-            sedc     = dseds[ jj ];
-            cpij     = ( sedc > 0.0 ) ?
-                       ( c0term * exp( sedc * eterm ) ) :
-                       cinc;
-            scpds.append( cpij );
-            sumcpij += cpij;
-//DbgLv(1) << "    div " << jj+1 << "  tcdps cpij " << tcpds.at(jj) << cpij;
-         }
-
-         // Set to split span-sum difference over each division
-         sdiff    = ( span - sumcpij ) * divfac;
-
-         for ( int jj = 0; jj < divsCount; jj++ )
-         {  // Spread the difference to each partial plateau concentration
-            cpij     = scpds.at( jj ) + sdiff;
-            scpds.replace( jj, cpij );
-         }
-
-         cpds.replace( ii, scpds ); // Replace scan's list of divison Cp vals
-
-         avgdif  += qAbs( sdiff );  // Sum of difference magnitudes
-         count++;
-DbgLv(1) << "   iter scn " << iter << ii+1 << " sumcpij span "
-   << sumcpij << span << "  sdiff sumabsdif" << sdiff << avgdif;
-      }
-//DbgLv(3) << "DP:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-      avgdif  /= (double)count;     // Average of difference magnitudes
-DbgLv(1) << " iter" << iter << " avg(abs(sdiff))" << avgdif;
-
-      if ( avgdif < avdthr )        // If differences are small, we're done
-      {
-DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
-         break;
-      }
-
-      iter++;
-   }
-
-   for ( int ii = 0; ii < totalCount; ii++ )
-      pty[ ii ]   = -1.0;
-
-   int     kk     = 0;                    // Index to sed. coeff. values
-   int     kl     = 0;                    // Index/count of live scans
-   valueCount     = d->x.size();
-
-   // Calculate the corrected sedimentation coefficients
-
-//DbgLv(3) << "DP:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      if ( excludedScans.contains( ii ) )
-      {
-         kk         += divsCount;
-         continue;
-      }
-
-      s              = &d->scanData[ ii ];
-
-      double  timev  = s->seconds - time_correction;
-      double  timex  = 1.0 / sqrt( timev );
-      double  bdrad  = bdrads.at( kl );   // Back-diffus cutoff radius for scan
-      double  bdcon  = bdcons.at( kl++ ); // Back-diffus cutoff concentration
-      double  divrad = 0.0;               // Division radius value
-DbgLv(1) << "scn liv" << ii+1 << kl
-   << " radius concen time" << bdrad << bdcon << timev;
-
-      ptx[ ii ]  = timex;                 // Save corrected time and accum max
-
-      range      = scplats[ ii ] - baseline;
-      cconc      = baseline + range * positPct; // Initial conc for span
-      basecut    = cconc;
-      omega      = s->rpm * M_PI / 30.0;
-      oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
-      scpds      = cpds.at( ii );         // List of conc val of divs this scan
-
-      for ( int jj = 0; jj < divsCount; jj++ )
-      {  // walk through division points; get sed. coeff. by place in readings
-         pconc       = cconc;               // Div base
-         cpij        = scpds.at( jj );      // Div partial concentration
-         cconc       = pconc + cpij;        // Absolute concentration
-         mconc       = pconc + cpij * 0.5;  // Mid div concentration
-
-         int rx      = first_gteq( mconc, s->readings, valueCount, 0 );
-
-         divrad      = d->x[ rx ].radius;   // Radius this division pt.
-
-         if ( divrad < bdrad )
-         {  // Corresponding sedimentation coefficient
-            sedc        = sed_coeff( mconc, oterm );
-if(sedc<0)
-DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
-   << s->readings[0].value;
-         }
-
-         else
-         {  // Mark a point to be excluded by back-diffusion
-            sedc        = -1.0;
-//DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
-         }
-
-         // Y value of point is sedcoeff; accumulate y max
-         pty[ kk++ ] = sedc;
-         ymax        = ( ymax > sedc ) ? ymax : sedc;
-      }
-   }
-//DbgLv(3) << "DP:TM:12: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-#endif
 
    // Draw the vHW extrapolation plot
    data_plot1->clear();
@@ -610,6 +378,9 @@ DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
    }
 //DbgLv(3) << "DP:TM:14: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
+   double slope   = 0.0;
+   double intcept = 0.0;
+
    // Fit lines for each division to all scan points
 
    for ( int jj = 0; jj < divsCount; jj++ )
@@ -627,25 +398,16 @@ DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
             x[ count ] = ptx[ ii ];
             y[ count ] = pty[ kk ];
             count++;
-            if ( Swavg == 0.0 )
-               omega      = d->scanData[ ii ].rpm * M_PI / 30.0;
+            omega      = d->scanData[ ii ].rpm * M_PI / 30.0;
          }
       }
 
       if ( count > 1 )
       {  // Fit a line to the scan points in a division
-         double slope;
-         double intcept;
          double sigma = 0.0;
          double correl;
 
          US_Math2::linefit( &x, &y, &slope, &intcept, &sigma, &correl, count );
-
-         if ( Swavg == 0.0 )
-         {
-            Swavg      = slope / ( -2.0 * omega * omega );
-         	C0         = exp( intcept );
-         }
 
          x[ 0 ] = 0.0;                      // X from 0.0 to max
          x[ 1 ] = xmax + 0.001;
@@ -664,6 +426,13 @@ DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
       }
    }
 //DbgLv(3) << "DP:TM:15: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+   if ( Swavg == 0.0 )
+   {  // If need be, calculate values for report
+      Swavg      = slope / ( -2.0 * omega * omega );
+     	C0         = exp( intcept );
+DbgLv(1) << "Swavg(M): " << Swavg << " C0: " << C0 ;
+   }
 
    // Set scales, then plot the points and lines
    xmax  *= 1.05;
@@ -688,11 +457,8 @@ DbgLv(2) << "   bd x y k " << x[count] << y[count] << count+1;
 
    // Save all sedcoeff values for report files and plots
    aseds.clear();
-
    for ( int ii = 0; ii < totalCount; ii++ )
-   {
       aseds.append( pty[ ii ] );
-   }
 
    // Plot the red back-diffusion cutoff line
    dcurve  = us_curve( data_plot2, tr( "Fitted Line BD" ) );
@@ -803,9 +569,9 @@ QDateTime time0=QDateTime::currentDateTime();
    // Write results files
    write_vhw();
    write_dis();
-   QString data0File = basernam + "extrap.dat";
-   QString data1File = basernam + "s-c-distrib.dat";
-   QString data2File = basernam + "s-c-envelope.dat";
+   QString data0File = basernam + "extrap.csv";
+   QString data1File = basernam + "s-c-distrib.csv";
+   QString data2File = basernam + "s-c-envelope.csv";
    files << data0File;
    files << data1File;
    files << data2File;
@@ -1213,11 +979,7 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
 //DbgLv(3) << "  DS:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
          pp[ kk ]   = cconc;        // Division mark of concentration for scan
-         yy[ kk ]   = sed_coeff( mconc, oterm );  // Sedimentation coeff.
-
-         int mm     = first_gteq( mconc, s->readings, valueCount, 0 );
-//DbgLv(3) << "  DS:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-         radD       = d->x[ mm ].radius;          // Radius this division pt.
+         yy[ kk ]   = sed_coeff( mconc, oterm, &radD, NULL );  // Sed.coeff.
 
          if ( radD > xr[ kk ] )
          {  // Gone beyond back-diffusion cutoff: exit loop with truncated list
@@ -1497,13 +1259,17 @@ void US_vHW_Enhanced::write_vhw()
       dirp.mkpath( dirrept );
 
    QString filename = dirname + "/vHW."
-      + QString( triples.at( row ) ).replace( " / ", "" ) + ".extrap.dat";
+      + QString( triples.at( row ) ).replace( " / ", "" ) + ".extrap.csv";
 
    QFile   res_f( filename );
    double  sedc;
    int     lastDiv   = divsCount - 1;
    int     kk        = 0;
-   QString control   = "\t";
+   const QString fsep( "," );
+   const QString eoln( "\n" );
+   const QString blnk( "\"\"" );
+   //QString control   = "\t";
+   QString control   = fsep;
 
    if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
@@ -1513,26 +1279,35 @@ DbgLv(1) << "WV: filename " << filename;
 
    QTextStream ts( &res_f );
 
+   // Output header line
+   ts << "1/sqrt(t)" << fsep;
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {
+      QString line = QString().sprintf( "D%03dSedCoef", jj + 1 );
+      ts << line << ( jj < lastDiv ? fsep : eoln );
+   }
+
+   // Output data
    for ( int ii = 0; ii < scanCount; ii++ )
    {
-      // each output line begins with reciprocal square root of scan time
-      control      = "\t";
-      ts << 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction )
-         << control;
+      // Each output line begins with reciprocal square root of scan time
+      control      = fsep;
+      QString dat  = QString().sprintf( "%11.8f",
+         ( 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction ) ) );
+      ts << dat.simplified() << control;
 
-      // balance of line is a list of sedimentation coefficient values for
+      // Balance of line is a list of sedimentation coefficient values for
       //  the divisions in the scan 
       for ( int jj = 0; jj < divsCount; jj++ )
       {
          sedc         = aseds.at( kk++ );
-
-         if ( jj == lastDiv )
-            control      = "\n";
-
-         if ( sedc > 0.0 )
-            ts << sedc << control;
+         if ( sedc > 0 )
+            dat          = QString().sprintf( "%8.5f", sedc ).simplified();
          else
-            ts << "      " << control;
+            dat          = blnk;
+
+         ts << dat << ( jj < lastDiv ? control : eoln );
       }
    }
 
@@ -1544,7 +1319,7 @@ void US_vHW_Enhanced::write_dis()
 {
    QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
       + QString( triples.at( row ) ).replace( " / ", "" )
-      + ".s-c-distrib.dat";
+      + ".s-c-distrib.csv";
    QFile   res_f( filename );
    double  pterm    = 100.0 * positPct;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
@@ -1560,16 +1335,16 @@ DbgLv(1) << "WD: filename " << filename;
    // write the line-fit variables for each division
    QTextStream ts( &res_f );
    ts << d->description << "\n";
-   ts << tr( "%Boundary: Points:       Slope:   Intercept:"
-         "       Sigma: Correlation:\n" );
+   ts << tr( "%Boundary,Points,Slope,Intercept,Sigma,Correlation\n" );
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
       bfrac     = pterm + bterm * (double)( jj + 1 );
 
-      dline.sprintf( "%9.2f %7d %12.6f %12.6f %12.6f %12.6f\n", bfrac,
+      dline.sprintf( "%9.2f,%7d,%12.6f,%12.6f,%12.6f,%12.6f\n", bfrac,
          dpnts.at( jj ), dslos.at( jj ), dseds.at( jj ),
          dsigs.at( jj ), dcors.at( jj ) );
+      dline.replace( " ", "" );
       ts << dline;
    }
 
