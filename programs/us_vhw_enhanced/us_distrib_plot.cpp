@@ -8,9 +8,9 @@
 
 #include <qwt_legend.h>
 
-US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
-      const QList< double >& divsedcs )
-   : US_WidgetsDialog( 0, 0 )
+US_DistribPlot::US_DistribPlot( QList< double >& divfracs,
+   QList< double >& divsedcs )
+   : US_WidgetsDialog( 0, 0 ), bfracs( divfracs ), dsedcs( divsedcs )
 {
 
    setWindowTitle( tr( "van Holde - Weischet Distribution Plot" ) );
@@ -20,8 +20,8 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   bfracs    = divfracs;
-   dsedcs    = divsedcs;
+   //bfracs    = divfracs;
+   //dsedcs    = divsedcs;
 
    plotType  = DISTR;
    plotTypeH = COMBO;
@@ -29,6 +29,11 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
    nSensit   = 50;
    nSmooth   = 30;
    dbg_level = US_Settings::us_debug();
+DbgLv(1) << "DisPl: divsCount" << divsCount;
+DbgLv(1) << "DisPl: isedsSize " << dsedcs.size() << divsedcs.size();
+DbgLv(1) << "DisPl: fra0 fran" << bfracs[0] << bfracs[divsCount-1];
+DbgLv(1) << "DisPl: sed0 sedn" << dsedcs[0] << dsedcs[divsCount-1];
+DbgLv(1) << "DisPl: ised0 isedn" << divsedcs[0] << divsedcs[divsCount-1];
 
    int row   = 0;
 
