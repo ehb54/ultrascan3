@@ -137,7 +137,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void update_divis(     double );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int, int );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int );
-      double sed_coeff( double, double );
+      double sed_coeff( double, double, double* = NULL, int* = NULL );
       double avg_plateau(  void );
       double find_root( double );
       double sedcoeff_intercept( void );
@@ -157,6 +157,13 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       bool fitted_plateaus( void );
       bool model_plateaus ( void );
       void plot_refresh   ( void );
+      void calc_points_by_model( double*, double* );
+      void calc_points_by_fit  ( double*, double* );
+      void calc_backdiff_line  ( void );
+      bool have_model          ( void );
+      void vert_exclude_lines  ( void );
+      void exclude_from        ( double );
+      void exclude_to          ( double );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };
