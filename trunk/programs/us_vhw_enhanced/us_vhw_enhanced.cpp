@@ -207,7 +207,8 @@ void US_vHW_Enhanced::distr_plot(  void )
 
    bfracs.clear();
 
-   for ( int jj = 0; jj < divsCount; jj++ )
+   //for ( int jj = 0; jj < divsCount; jj++ )
+   for ( int jj = 0; jj < dseds.size(); jj++ )
    {
       bfrac     = pterm + bterm * (double)( jj + 1 );
       bfracs.append( bfrac );
@@ -261,8 +262,6 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    double* pty   = pyvec.data();
    divfac     = 1.0 / (double)divsCount;
    correc     = solution.s20w_correction * 1.0e13;
-	C0         = 0.0;
-	Swavg      = 0.0;
    omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;
    plateau    = d->scanData[ 0 ].plateau;
 
@@ -312,6 +311,28 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    else
    {  // Calculate all plot points from fitted plateaus
       calc_points_by_fit( ptx, pty );
+   }
+
+   // Remove points that are singles in a division
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {  // Examine each division
+      int count = 0;
+      for ( int ii = 0; ii < scanCount; ii++ )
+      {  // Count unexcluded scan points in a division
+         if ( excludedScans.contains( ii ) ) continue;
+
+         int    kk = divsCount * ii + jj;
+         double xv = ptx[ ii ];
+         double yv = pty[ kk ];
+         if ( xv > 0.0  &&  yv > 0.0 )  count++;
+      }
+
+      if ( count == 1 )
+      {  // Mark a division with a single point as having none
+         int    kk = jj;
+         for ( int ii = 0; ii < scanCount; ii++, kk += divsCount )
+            pty[ kk ] = -1.0;
+      }
    }
 
    // Draw the vHW extrapolation plot
@@ -404,6 +425,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
 
       if ( count > 1 )
       {  // Fit a line to the scan points in a division
+if(jj>40)
+DbgLv(1) << "plot2 jj count  y0 yn" << jj << count << y[0] << y[count-1];
          double sigma = 0.0;
          double correl;
 
@@ -419,6 +442,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
             y[ 1 ] = 0.0;
             x[ 1 ] = ( slope != 0.0 ? ( -y[ 0 ] / slope ) : xmax );
          }
+if(count==6||intcept<0.0)
+DbgLv(1) << "plot2 jj x0 y0 x1 y1" << jj << x[0] << y[0] << x[1] << y[1];
 
          curve  = us_curve( data_plot1, tr( "Fitted Line %1" ).arg( jj ) );
          curve->setPen( QPen( Qt::yellow ) );
@@ -426,13 +451,6 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
       }
    }
 //DbgLv(3) << "DP:TM:15: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-   if ( Swavg == 0.0 )
-   {  // If need be, calculate values for report
-      Swavg      = slope / ( -2.0 * omega * omega );
-     	C0         = exp( intcept );
-DbgLv(1) << "Swavg(M): " << Swavg << " C0: " << C0 ;
-   }
 
    // Set scales, then plot the points and lines
    xmax  *= 1.05;
@@ -513,7 +531,7 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    ts << indent( 4 ) + "<br/><table>\n";
    ts << table_row( tr( "Average S:" ),
                     QString::number( Swavg * 1.0e13 ) );
-   ts << table_row( tr( "Initial concentration from plateau fit:" ),
+   ts << table_row( tr( "Initial Concentration from plateau fit:" ),
                      QString::number( C0 ) +  tr( " OD/fringes" ) );
    ts << indent( 4 ) + "</table>\n";
 
@@ -611,7 +629,8 @@ QDateTime time0=QDateTime::currentDateTime();
    double  bterm    = 100.0 * boundPct / (double)divsCount;
    bfracs.clear();
 
-   for ( int jj = 0; jj < divsCount; jj++ )
+   //for ( int jj = 0; jj < divsCount; jj++ )
+   for ( int jj = 0; jj < dseds.size(); jj++ )
    {
       bfrac    += bterm;
       bfracs.append( bfrac );
@@ -851,7 +870,6 @@ DbgLv(2) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc << " oterm" << oterm;
 void US_vHW_Enhanced::div_seds( )
 {
    QVector< double > rrv( valueCount );
-   QVector< double > ccv( valueCount );
    QVector< double > xxv( scanCount );
    QVector< double > yyv( scanCount );
    QVector< double > ppv( scanCount );
@@ -1039,6 +1057,7 @@ DbgLv(1) << " KS" << kscnu << kscsv << "jj xx0 xxn yy0 yyn" << jj << xt[0]
 ii=(nscnu<1)?1:nscnu;
 DbgLv(1) << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
    << pp[ii-1] << yy[ii-1];
+         continue;
       }
 
       dseds.append( dsed );    // Save fitted line intercept (Sed.Coeff.)
@@ -1053,8 +1072,11 @@ DbgLv(1) << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
 
    }
 //DbgLv(3) << "  DS:TM:77: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   int kdivs = dseds.size();
 DbgLv(1) << " dsed[0] " << dseds.at(0);
-DbgLv(1) << " dsed[L] " << dseds.at(divsCount-1);
+DbgLv(1) << " dsed[L-2] " << dseds.at(kdivs-3) << "kdivs" << kdivs;
+DbgLv(1) << " dsed[L-1] " << dseds.at(kdivs-2);
+DbgLv(1) << " dsed[L] " << dseds.at(kdivs-1);
 DbgLv(1) << " D_S: xr0 yr0 " << xr[0] << yr[0];
 DbgLv(1) << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
 
@@ -1216,9 +1238,11 @@ void US_vHW_Enhanced::add_group_info( )
    grdat.ndivs     = 0;
    grdat.idivs.clear();
 
-   divsCount       = qRound( ct_division->value() );
+   //divsCount       = qRound( ct_division->value() );
+   int divsUsed    = dseds.size();
 
-   for ( int jj = 0; jj < divsCount; jj++ )
+   //for ( int jj = 0; jj < divsCount; jj++ )
+   for ( int jj = 0; jj < divsUsed; jj++ )
    {  // walk thru all division lines to see if within clicked range
       double sed      = dseds.at( jj );         // intercept sed coeff
       double slope    = dslos.at( jj );         // div line slope
@@ -1280,11 +1304,11 @@ DbgLv(1) << "WV: filename " << filename;
    QTextStream ts( &res_f );
 
    // Output header line
-   ts << "1/sqrt(t)" << fsep;
+   ts << "\"1/sqrt(t)\"" << fsep;
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
-      QString line = QString().sprintf( "D%03dSedCoef", jj + 1 );
+      QString line = QString().sprintf( "\"D%03dSedCoef\"", jj + 1 );
       ts << line << ( jj < lastDiv ? fsep : eoln );
    }
 
@@ -1293,9 +1317,10 @@ DbgLv(1) << "WV: filename " << filename;
    {
       // Each output line begins with reciprocal square root of scan time
       control      = fsep;
-      QString dat  = QString().sprintf( "%11.8f",
+      QString dat  = QString().sprintf( "\"%11.8f\"",
          ( 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction ) ) );
-      ts << dat.simplified() << control;
+      dat.replace( " ", "" );
+      ts << dat << control;
 
       // Balance of line is a list of sedimentation coefficient values for
       //  the divisions in the scan 
@@ -1303,7 +1328,10 @@ DbgLv(1) << "WV: filename " << filename;
       {
          sedc         = aseds.at( kk++ );
          if ( sedc > 0 )
-            dat          = QString().sprintf( "%8.5f", sedc ).simplified();
+         {
+            dat          = QString().sprintf( "\"%8.5f\"", sedc );
+            dat.replace( " ", "" );
+         }
          else
             dat          = blnk;
 
@@ -1335,14 +1363,17 @@ DbgLv(1) << "WD: filename " << filename;
    // write the line-fit variables for each division
    QTextStream ts( &res_f );
    ts << d->description << "\n";
-   ts << tr( "%Boundary,Points,Slope,Intercept,Sigma,Correlation\n" );
+   ts << tr( "\"%Boundary\",\"Points\",\"Slope\",\"Intercept\","
+             "\"Sigma\",\"Correlation\"\n" );
 
-   for ( int jj = 0; jj < divsCount; jj++ )
+   //for ( int jj = 0; jj < divsCount; jj++ )
+   for ( int jj = 0; jj < dseds.size(); jj++ )
    {
       bfrac     = pterm + bterm * (double)( jj + 1 );
 
-      dline.sprintf( "%9.2f,%7d,%12.6f,%12.6f,%12.6f,%12.6f\n", bfrac,
-         dpnts.at( jj ), dslos.at( jj ), dseds.at( jj ),
+      dline.sprintf(
+         "\"%9.2f\",\"%7d\",\"%12.6f\",\"%12.6f\",\"%12.6f\",\"%12.6f\"\n",
+         bfrac, dpnts.at( jj ), dslos.at( jj ), dseds.at( jj ),
          dsigs.at( jj ), dcors.at( jj ) );
       dline.replace( " ", "" );
       ts << dline;
@@ -1630,7 +1661,7 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
    QString tempbase   = US_Settings::tmpDir() + "/vHW.temp.";
    QString tplot1File = tempbase + "s-c-distrib.svg";
    QString tplot2File = tempbase + "s-c-histo.svg";
-   QString tdata2File = tempbase + "s-c-envelope.dat";
+   QString tdata2File = tempbase + "s-c-envelope.csv";
    QString tplot3File = tempbase + "s-c-distrib.png";
    QString tplot4File = tempbase + "s-c-histo.png";
    QString plot3File  = QString( plot1File ).replace( ".svg", ".png" );
@@ -1941,6 +1972,8 @@ void US_vHW_Enhanced::calc_points_by_model( double* ptx, double* pty )
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
    cpds.clear();
+	C0         = 0.0;
+	Swavg      = 0.0;
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {  // Populate partial concentration lists
@@ -1968,6 +2001,12 @@ void US_vHW_Enhanced::calc_points_by_model( double* ptx, double* pty )
    {
       if ( excludedScans.contains( ii ) )
       {
+         range      = scplats[ ii ] - baseline;
+         cinc       = range * boundPct * divfac;
+         for ( int jj = 0; jj < divsCount; jj++ )
+            scpds.append( cinc );
+
+         cpds << scpds;
          kk         += divsCount;
          continue;
       }
@@ -2132,6 +2171,7 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 //DbgLv(3) << "DP:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       div_seds();
 //DbgLv(3) << "DP:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+      int divsUsed   = dseds.size();
 
       // Reset division plateaus
 
@@ -2155,7 +2195,8 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 
          // Split the difference between divisions
 
-         for ( int jj = 0; jj < divsCount; jj++ )
+         //for ( int jj = 0; jj < divsCount; jj++ )
+         for ( int jj = 0; jj < divsUsed; jj++ )
          {  // Recalculate partial concentrations based on sedcoeff intercepts
             sedc     = dseds[ jj ];
             cpij     = ( sedc > 0.0 ) ?
@@ -2169,7 +2210,8 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
          // Set to split span-sum difference over each division
          sdiff    = ( span - sumcpij ) * divfac;
 
-         for ( int jj = 0; jj < divsCount; jj++ )
+         //for ( int jj = 0; jj < divsCount; jj++ )
+         for ( int jj = 0; jj < divsUsed; jj++ )
          {  // Spread the difference to each partial plateau concentration
             cpij     = scpds.at( jj ) + sdiff;
             scpds.replace( jj, cpij );
