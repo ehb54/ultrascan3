@@ -303,8 +303,8 @@ void US_DistribPlot::plot_distrib( void )
    }
 
    rngx     = maxx - minx;
-   minx     = minx - rngx * 0.2;
-   maxx     = maxx + rngx * 0.2;
+   minx     = minx - rngx * 0.1;
+   maxx     = maxx + rngx * 0.1;
    xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
    xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
    data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, xinc );
@@ -335,6 +335,7 @@ void US_DistribPlot::plot_histogram( void )
    QVector< double > yvec;
    double  minx = dsedcs[ 0 ];
    double  maxx = minx;;
+   double  xinc = 1.0;
    //double  maxy;
    double  xval;
    double  rngx;
@@ -361,9 +362,11 @@ void US_DistribPlot::plot_histogram( void )
    }
 
    rngx     = maxx - minx;
-   minx     = minx - rngx * 0.2;
-   maxx     = maxx + rngx * 0.2;
-   data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, 1.0 );
+   minx     = minx - rngx * 0.10;
+   maxx     = maxx + rngx * 0.10;
+   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
+   data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
 
 DbgLv(2) << "HISTO_DAT:" << npoints;
@@ -391,6 +394,7 @@ void US_DistribPlot::plot_envelope( void )
    double* yy;
    double  minx = dsedcs[ 0 ];
    double  maxx = minx;
+   double  xinc = 1.0;
    double  xval;
    double  rngx;
    int     npoints;
@@ -403,8 +407,8 @@ void US_DistribPlot::plot_envelope( void )
    }
 
    rngx     = maxx - minx;
-   minx     = minx - rngx * 0.2;
-   maxx     = maxx + rngx * 0.2;
+   minx     = minx - rngx * 0.10;
+   maxx     = maxx + rngx * 0.10;
 
    if ( plotType == ENVEL )
    { // if envelope only, must set titles and axes (otherwise handled by histo)
@@ -419,7 +423,9 @@ void US_DistribPlot::plot_envelope( void )
       npoints  = histo_data( xvec, yvec );
       xx       = xvec.data();
       yy       = yvec.data();
-      data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, 1.0 );
+      xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+      xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
+      data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
       data_plot->setAxisAutoScale( QwtPlot::yLeft );
    }
 

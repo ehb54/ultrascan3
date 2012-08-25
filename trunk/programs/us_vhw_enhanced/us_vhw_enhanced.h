@@ -46,6 +46,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QLineEdit*    le_model;
 
       QCheckBox*    ck_modelpl;
+      QCheckBox*    ck_vhw_enh;
       QCheckBox*    ck_manrepl;
 
       US_Help       showHelp;
@@ -157,8 +158,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       bool fitted_plateaus( void );
       bool model_plateaus ( void );
       void plot_refresh   ( void );
-      void calc_points_by_model( double*, double* );
-      void calc_points_by_fit  ( double*, double* );
+      void vhw_calcs_enhanced( double*, double* );
+      void vhw_calcs_standard( double*, double* );
       void calc_backdiff_line  ( void );
       bool have_model          ( void );
       void vert_exclude_lines  ( void );
