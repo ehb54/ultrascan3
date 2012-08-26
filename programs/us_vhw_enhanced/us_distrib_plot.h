@@ -21,17 +21,17 @@ class US_DistribPlot : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param divfracs A reference to a list of division bdoundary fractions
-      //! \param divsedcs A reference to a list of division intercept sedcoeffs
-      US_DistribPlot( QList< double >&, QList< double >& );
+      //! \param divfracs Reference to a vector of division bdoundary fractions
+      //! \param divsedcs Reference to a vector of division intercept sedcoeffs
+      US_DistribPlot( QVector< double >&, QVector< double >& );
 
       //! \param plot1File The name of the distribution plot file
       //! \param plot2File The name of the histogram plot file
       void save_plots( QString&, QString& );
 
    private:
-      QList< double >& bfracs;    // boundary fractions for divisions
-      QList< double >& dsedcs;    // sed.coeff. intercepts for divisions
+      QVector< double >& bfracs;    // boundary fractions for divisions
+      QVector< double >& dsedcs;    // sed.coeff. intercepts for divisions
       
       enum pType { DISTR, HISTO, ENVEL, COMBO, NONE };
 
