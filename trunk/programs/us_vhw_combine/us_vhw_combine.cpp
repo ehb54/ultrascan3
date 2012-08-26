@@ -25,7 +25,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_vHW_Combine w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
@@ -153,7 +153,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
+   data_plot1->insertLegend( legend, QwtPlot::BottomLegend  );
 
    rightLayout->addLayout( plot );
 
@@ -213,7 +213,7 @@ DbgLv(1) << " ii,runid,ntrip,dists" << ii << runid << ntripl << distx;
          for ( int jj = 0; jj < ntripl; jj++ )
          {
             US_Report::ReportTriple* tripl = &freport.triples[ jj ];
-            QString trname = collapsedTriple( tripl->triple ); 
+            QString trname = collapsedTriple( tripl->triple );
             int ndocs      = tripl->docs.count();
 DbgLv(1) << "   jj,ndocs" << jj << ndocs;
             bool havedis   = false;
@@ -229,7 +229,7 @@ DbgLv(1) << "   jj,ndocs" << jj << ndocs;
                QString fname  = doc->filename;
 DbgLv(1) << "     kk,fname" << kk << fname;
 
-               if ( fname.contains( "s-c-distrib.dat" ) )
+               if ( fname.contains( "s-c-distrib.csv" ) )
                {
                   ddoc     = doc;
                   dpath    = tmpdir + "/" + runid + "." + fname;
@@ -248,7 +248,7 @@ DbgLv(1) << "       dpath" << dpath;
                      havedis  = true;
                }
 
-               else if ( fname.contains( "s-c-envelope.dat" ) )
+               else if ( fname.contains( "s-c-envelope.csv" ) )
                {
                   edoc     = doc;
                   epath    = tmpdir + "/" + runid + "." + fname;
@@ -315,7 +315,7 @@ DbgLv(1) << "  epath" << epath;
          runid          = runids[ ii ];
          QString rundir = resdir + runid + "/";
 
-         QStringList datfilt( "vHW.*s-c-distrib.dat" );
+         QStringList datfilt( "vHW.*s-c-distrib.csv" );
          QStringList dfiles = QDir( rundir )
             .entryList( datfilt, QDir::Files, QDir::Name );
 
@@ -334,8 +334,8 @@ DbgLv(1) << "  epath" << epath;
          {
             QString fname = dfiles[ ii ];
             QString fpath = rundir + "/" + fname;
-            QString epath = QString( fpath ).replace( "distrib.dat",
-                                                      "envelope.dat" );
+            QString epath = QString( fpath ).replace( "distrib.csv",
+                                                      "envelope.csv" );
             QString tripl = fname.section( ".", 1, 1 );
             DistrDesc ddesc;
             ddesc.runID   = runid;
@@ -451,7 +451,7 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    double* xs  = ddesc.esedcs.data();
    double* yf  = ddesc.efreqs.data();
 
-   QString dcID = distrID + tr( " (integ.)" ); 
+   QString dcID = distrID + tr( " (integ.)" );
    QString lcID = distrID + tr( " (integ.line)" );
    QString ecID = distrID + tr( " (diff.)" );
    QwtPlotCurve* dcurve;
@@ -977,12 +977,17 @@ DbgLv(1) << "FID: fline0" << fline;
       ddesc.tdescr  = fline;
       fline = tsd.readLine();
    }
-
+	QString str;
    while ( !tsd.atEnd() )
    {
       fline = tsd.readLine().simplified();
-      double bound = fline.section( " ", 0, 0 ).toDouble();
-      double sedc  = fline.section( " ", 3, 3 ).toDouble();
+		//double bound = str.section( ",", 0, 0).toDouble();
+		str = fline.section( ",", 0, 0);
+		double bound = str.remove("\"").toDouble();
+		str = fline.section( ",", 3, 3);
+		double sedc  = str.remove("\"").toDouble();
+
+		DbgLv(1) << "bound:" << bound << " sedc:" << sedc;
 
       ddesc.dsedcs << sedc;
       ddesc.bfracs << bound;
@@ -999,11 +1004,14 @@ DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
       int     fnz   = -1;
       int     lnz   = 0;
 
+		QString str;
       while ( !tse.atEnd() )
       {
          fline = tse.readLine().simplified();
-         double sedc  = fline.section( " ", 0, 0 ).toDouble();
-         double freq  = fline.section( " ", 1, 1 ).toDouble();
+			str = fline.section( ",", 0, 0);
+			double sedc = str.remove("\"").toDouble();
+			str = fline.section( ",", 1, 1);
+			double freq  = str.remove("\"").toDouble();
 
          if ( freq != 0.0 )
          {
@@ -1074,7 +1082,7 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    int nplots = pdistrs.size();
    int maxnvl = 0;
    line       = "";
-      
+
    for ( int ii = 0; ii < nplots; ii++ )
    {  // Accumulate long descriptions and build header line
       maxnvl     = qMax( maxnvl, pdistrs[ ii ].dsedcs.size() );
