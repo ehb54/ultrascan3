@@ -66,7 +66,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       double        boundPct;
       double        positPct;
       double        baseline;
-      double        plateau;
       double        correc;
       double        C0;
       double        c0term;
@@ -92,10 +91,12 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       int           scanCount;
       int           valueCount;
       int           dbg_level;
+      int           lscnCount;
 
       bool          haveZone;
       bool          groupSel;
       bool          forcePlot;
+      bool          skipPlot;
 
       QString       run_name;
       QString       cell;
@@ -104,23 +105,25 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QString       runID;
       QString       editID;
 
-      QList< QList< double > > cpds;       // Cpij lists, divs in scans
-      QList< double >          aseds;      // all division sedcoeff values
-      QList< double >          dseds;      // division sedcoeff intercepts
-      QList< double >          dslos;      // division slope values
-      QList< double >          dsigs;      // division sigma values
-      QList< double >          dcors;      // division correlation values
-      QList< int >             dpnts;      // division fitted line points
-      QList< double >          bdrads;     // back-diffusion radii
-      QList< double >          bdcons;     // back-diffusion concentrations
-      QList< double >          groupxy;    // group select pick coordinates
-      QList< GrpInfo >         groupdat;   // selected group info structures
-      QList< bool >            saved;      // List by triple of saved flags
+      QVector< double >            aseds;      // all division sedcoeff values
+      QVector< double >            dseds;      // division sedcoeff intercepts
+      QVector< double >            dslos;      // division slope values
+      QVector< double >            dsigs;      // division sigma values
+      QVector< double >            dcors;      // division correlation values
+      QVector< int >               dpnts;      // division fitted line points
 
-      QVector< double >        scplats;    // scan plateaus for current triple
+      QVector< double >            scPlats;    // Scan plateaus current triple
+      QVector< int >               liveScans;  // Vector of live-scan indexes
+      QVector< bool >              saved;      // List by triple of saved flags
+      QVector< QVector< double > > CPijs;      // CPij vecs, divs in scans
+      QVector< double >            bdrads;     // back-diffusion radii
+      QVector< double >            bdcons;     // back-diffusion concentrations
 
-      US_DataIO2::EditedData*  d;
-      US_DataIO2::Scan*        s;
+      QList< double >              groupxy;    // group select pick coordinates
+      QList< GrpInfo >             groupdat;   // selected group info structures
+
+      US_DataIO2::EditedData*      edata;      // Current triple edited data
+      US_DataIO2::Scan*            dscan;      // Current data scsan
 
    private slots:
 
@@ -165,6 +168,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void vert_exclude_lines  ( void );
       void exclude_from        ( double );
       void exclude_to          ( double );
+      void live_scans          ( void );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };

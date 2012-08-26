@@ -8,8 +8,8 @@
 
 #include <qwt_legend.h>
 
-US_DistribPlot::US_DistribPlot( QList< double >& divfracs,
-   QList< double >& divsedcs )
+US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
+   QVector< double >& divsedcs )
    : US_WidgetsDialog( 0, 0 ), bfracs( divfracs ), dsedcs( divsedcs )
 {
 
@@ -19,9 +19,6 @@ US_DistribPlot::US_DistribPlot( QList< double >& divfracs,
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
-
-   //bfracs    = divfracs;
-   //dsedcs    = divsedcs;
 
    plotType  = DISTR;
    plotTypeH = COMBO;
@@ -53,6 +50,8 @@ DbgLv(1) << "DisPl: ised0 isedn" << divsedcs[0] << divsedcs[divsCount-1];
    grid->enableYMin( true );
    grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
    grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   US_PlotPicker* pick = new US_PlotPicker( data_plot );
+   pick->setTrackerPen( QColor( Qt::white ) );
 
    main->addLayout( plot, row, 0, 15, 4 );
    row += 15;
@@ -285,10 +284,8 @@ void US_DistribPlot::plot_distrib( void )
  
    // create the x,y arrays of sedcoeffs,boundfracs
 
-   QVector< double > xv( divsCount );
-   QVector< double > yv( divsCount );
-   double* xx = xv.data();
-   double* yy = yv.data();
+   double* xx = dsedcs.data();
+   double* yy = bfracs.data();
    double maxx = 0.0;
    double minx = 100.0;
    double xinc = 1.0;
@@ -296,8 +293,6 @@ void US_DistribPlot::plot_distrib( void )
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
-      xx[ jj ] = dsedcs.at( jj );
-      yy[ jj ] = bfracs.at( jj );
       maxx     = max( maxx, xx[ jj ] );
       minx     = min( minx, xx[ jj ] );
    }
@@ -336,7 +331,6 @@ void US_DistribPlot::plot_histogram( void )
    double  minx = dsedcs[ 0 ];
    double  maxx = minx;;
    double  xinc = 1.0;
-   //double  maxy;
    double  xval;
    double  rngx;
    int     npoints;

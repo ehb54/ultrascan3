@@ -121,6 +121,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    dataLoaded = false;
    haveZone   = false;
    forcePlot  = false;
+   skipPlot   = false;
 
    rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
@@ -131,7 +132,9 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 // load data
 void US_vHW_Enhanced::load( void )
 {
+   skipPlot   = true;
    US_AnalysisBase2::load();
+   skipPlot   = false;
 
    if ( ! dataLoaded )
       return;
@@ -204,25 +207,24 @@ DbgLv(1) << "mxht p1ht p2ht" << mxht << p1ht << p2ht;
 // distribution plot
 void US_vHW_Enhanced::distr_plot(  void )
 {
-   QList< double > bfracs;
-   double  pterm    = 100.0 * positPct;
+   QVector< double > bfracs;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
-   double  bfrac;
+   double  pterm    = 100.0 * positPct + bterm;
+   int     npoints  = dseds.size();
 
-   bfracs.clear();
+   bfracs.resize( npoints );
 
-   for ( int jj = 0; jj < dseds.size(); jj++ )
+   for ( int jj = 0; jj < npoints; jj++ )
    {
-      bfrac     = pterm + bterm * (double)( jj + 1 );
-      bfracs.append( bfrac );
+      bfracs[ jj ] = pterm + bterm * (double)( jj );
    }
 
    US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    delete dialog;
-   row        = lw_triples->currentRow();
-   saved.replace( row, true );
+   row          = lw_triples->currentRow();
+   saved[ row ] = true;
 }
 
 // data plot
@@ -234,7 +236,7 @@ void US_vHW_Enhanced::data_plot( void )
    int     totalCount;
 
 DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
-   if ( !dataLoaded  ||  vbar <= 0.0 )
+   if ( !dataLoaded  ||  vbar <= 0.0  ||  skipPlot )
       return;
 
    if ( !forcePlot  &&  ck_manrepl->isChecked() )
@@ -243,18 +245,17 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
 DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    row        = lw_triples->currentRow();
-   d          = &dataList[ row ];
+   edata      = &dataList[ row ];
 
    data_plot2->detachItems();
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
-   scanCount  = d->scanData.size();
-   valueCount = d->x.size();
+   scanCount  = edata->scanData.size();
+   valueCount = edata->x.size();
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
 
-   int     nskip = 0;
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    QVector< double > pxvec( scanCount  );
@@ -263,23 +264,13 @@ DbgLv(2) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    double* pty   = pyvec.data();
    divfac     = 1.0 / (double)divsCount;
    correc     = solution.s20w_correction * 1.0e13;
-   omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;
-   plateau    = d->scanData[ 0 ].plateau;
+   omega      = edata->scanData[ 0 ].rpm * M_PI / 30.0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {  // count the scans excluded due to position percent
-      if ( excludedScans.contains( ii ) ) continue;
-      
-      s          = &d->scanData[ ii ];
-      plateau    = avg_plateau( );
-      range      = plateau - baseline;
-      basecut    = baseline + range * positPct;
-      
-      if ( d->scanData[ ii ].readings[ 0 ].value > basecut ) nskip++;
-   }
-DbgLv(1) << " valueCount  totalCount" << valueCount << totalCount;
-DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
-   le_skipped->setText( QString::number( nskip ) );
+   // Get live scans and original plateaus
+   live_scans();
+DbgLv(1) << " valueCount totalCount" << valueCount << totalCount;
+DbgLv(1) << "  scanCount divsCount" << scanCount << divsCount;
+DbgLv(1) << "  lscnCount" << lscnCount;
 
    bool mo_plats  = ck_modelpl->isChecked() && have_model();
    bool vhw_enh   = ck_vhw_enh->isChecked();
@@ -319,10 +310,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // Examine each division
       int count = 0;
-      for ( int ii = 0; ii < scanCount; ii++ )
+      for ( int ii = 0; ii < lscnCount; ii++ )
       {  // Count unexcluded scan points in a division
-         if ( excludedScans.contains( ii ) ) continue;
-
          int    kk = divsCount * ii + jj;
          double xv = ptx[ ii ];
          double yv = pty[ kk ];
@@ -332,7 +321,7 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
       if ( count == 1 )
       {  // Mark a division with a single point as having none
          int    kk = jj;
-         for ( int ii = 0; ii < scanCount; ii++, kk += divsCount )
+         for ( int ii = 0; ii < lscnCount; ii++, kk += divsCount )
             pty[ kk ] = SEDC_NOVAL;
       }
    }
@@ -341,14 +330,15 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    data_plot1->clear();
    us_grid( data_plot1 );
 
-   data_plot1->setTitle( tr( "Run " ) + runID + tr( ": Cell " ) + d->cell
-             + " (" + d->wavelength + tr( " nm) - vHW Extrapolation Plot" ) );
+   data_plot1->setTitle( tr( "Run " ) + runID + tr( ": Cell " )
+         + edata->cell + " (" + edata->wavelength
+         + tr( " nm) - vHW Extrapolation Plot" ) );
 
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "(Time)^-0.5" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft  , 
          tr( "Corrected Sed. Coeff. (1e-13 s)" ) );
 
-   int nxy    = ( scanCount > divsCount ) ? scanCount : divsCount;
+   int nxy    = ( lscnCount > divsCount ) ? lscnCount : divsCount;
    QVector< double > xvec( nxy );
    QVector< double > yvec( nxy );
    double* x  = xvec.data();
@@ -366,14 +356,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    // Set points for each division of each scan
 
 //DbgLv(3) << "DP:TM:13: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      if ( excludedScans.contains( ii ) )
-      {
-         kk        += divsCount;      // Excluded:  bump to next scan
-         continue;
-      }
-      
       count      = 0;
       double xv  = ptx[ ii ];         // Reciprocal square root of time value
 
@@ -410,10 +394,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    {  // Walk thru divisions, fitting line to points from all scans
       count          = 0;
 
-      for ( int ii = 0; ii < scanCount; ii++ )
+      for ( int ii = 0; ii < lscnCount; ii++ )
       {
-         if ( excludedScans.contains( ii ) ) continue;
-
          kk         = ii * divsCount + jj;  // Sed. coeff. index
 
          if ( ptx[ ii ] > 0.0  &&  pty[ kk ] > 0.0 )
@@ -421,7 +403,8 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
             x[ count ] = ptx[ ii ];
             y[ count ] = pty[ kk ];
             count++;
-            omega      = d->scanData[ ii ].rpm * M_PI / 30.0;
+            int js     = liveScans[ ii ];
+            omega      = edata->scanData[ js ].rpm * M_PI / 30.0;
          }
       }
 
@@ -463,22 +446,18 @@ DbgLv(1) << "plot2 jj x0 y0 x1 y1" << jj << x[0] << y[0] << x[1] << y[1];
 
    count  = 0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {  // Accumulate the points of the back-diffusion cutoff line
-
-      if ( !excludedScans.contains( ii ) )
-      {
-         x[ count ] = bdrads.at( count );
-         y[ count ] = bdcons.at( count );
+      x[ count ] = bdrads.at( count );
+      y[ count ] = bdcons.at( count );
 DbgLv(2) << "   bd x y k " << x[count] << y[count] << count+1;
-         count++;
-      }
+      count++;
    }
 
    // Save all sedcoeff values for report files and plots
    aseds.clear();
    for ( int ii = 0; ii < totalCount; ii++ )
-      aseds.append( pty[ ii ] );
+      aseds << pty[ ii ];
 
    // Plot the red back-diffusion cutoff line
    dcurve  = us_curve( data_plot2, tr( "Fitted Line BD" ) );
@@ -500,9 +479,9 @@ DbgLv(2) << "DP:TM:99: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 // Write the main report HTML to a stream
 void US_vHW_Enhanced::write_report( QTextStream& ts )
 {
-   d          = &dataList[ lw_triples->currentRow() ];
+   edata      = &dataList[ lw_triples->currentRow() ];
    ts << html_header( "US_vHW_Enhanced",
-         tr( "van Holde - Weischet Analysis" ), d );
+         tr( "van Holde - Weischet Analysis" ), edata );
    ts << run_details();
    ts << hydrodynamics();
    ts << analysis( "" );
@@ -519,13 +498,19 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
       ts << table_row( tr( "Group:" ), tr( "Average S:" ),
                        tr( "Relative Amount:" ) );
 
+      double tsed = 0.0;
+
       for ( int jj = 0; jj < ngrp; jj++ )
       {
          ts << table_row(
                QString().sprintf( "%3d:", jj + 1 ),
                QString().sprintf( "%6.2f", groupdat.at( jj ).sed ),
                QString().sprintf( "(%5.2f %%)", groupdat.at( jj ).percent ) );
+         tsed += groupdat.at( jj ).sed * groupdat.at( jj ).percent;
       }
+
+      tsed  = tsed / ( (double)ngrp * 100.0 );
+      Swavg = ( Swavg > 0.0 ) ? Swavg : ( tsed * 1.0e-13 );
    }
 
    ts << indent( 4 ) + "</table>\n\n";
@@ -541,8 +526,8 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    double  ci;
    double  sig;
    double  cor;
-   QVector< double > xvec( scanCount );
-   QVector< double > yvec( scanCount );
+   QVector< double > xvec( lscnCount );
+   QVector< double > yvec( lscnCount );
    double* x  = xvec.data();
    double* y  = yvec.data();
    QString tscn;
@@ -550,14 +535,16 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
 
    ts << scan_info();
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {  // accumulate time,plateau pairs for line fit
-      s            = &d->scanData[ ii ];
-      x[ ii ]      = s->seconds;
-      y[ ii ]      = scplats[ ii ];
+      int js       = liveScans[ ii ];
+      dscan        = &edata->scanData[ js ];
+      x[ ii ]      = dscan->seconds;
+      y[ ii ]      = scPlats[ ii ];
    }
 
-   US_Math2::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
+   US_Math2::linefit( &x, &y, &sl, &ci, &sig, &cor, lscnCount );
+   C0 = ( C0 == 0.0 ) ? ci : C0;
 
    ts << "\n" + indent( 4 ) + "<br/><table>\n";
    ts << table_row( tr( "Initial Concentration:   " ),
@@ -579,9 +566,9 @@ void US_vHW_Enhanced::save_data( void )
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 QDateTime time0=QDateTime::currentDateTime();
    row           = lw_triples->currentRow();
-   d             = &dataList[ row ];
+   edata         = &dataList[ row ];
    QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
-   QString basernam  = US_Settings::resultDir() + "/" + d->runID
+   QString basernam  = US_Settings::resultDir() + "/" + edata->runID
       + "/vHW." + tripl + ".";
    QStringList files;
    QStringList repfiles;
@@ -603,7 +590,7 @@ QDateTime time0=QDateTime::currentDateTime();
    }
 
    // Set up to write reports files
-   QString basename  = US_Settings::reportDir() + "/" + d->runID
+   QString basename  = US_Settings::reportDir() + "/" + edata->runID
       + "/vHW." + tripl + ".";
    QString htmlFile  = basename + "report.html";
    QString plot1File = basename + "velocity.svg";
@@ -626,15 +613,16 @@ QDateTime time0=QDateTime::currentDateTime();
    write_plot( plot2File, data_plot1 );
 
    // Save distribution and histogram plots
-   QList< double > bfracs;
-   double  bfrac    = 100.0 * positPct;
+   QVector< double > bfracs;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
-   bfracs.clear();
+   double  bfrac    = 100.0 * positPct;
+   int     npoints  = dseds.size();
+   bfracs.resize( npoints );
 
-   for ( int jj = 0; jj < dseds.size(); jj++ )
+   for ( int jj = 0; jj < npoints; jj++ )
    {
-      bfrac    += bterm;
-      bfracs.append( bfrac );
+      bfrac       += bterm;
+      bfracs[ jj ] = bfrac;
    }
 
    if ( saved[ row ] == false )
@@ -811,12 +799,12 @@ int US_vHW_Enhanced::first_gteq( double concenv,
 double US_vHW_Enhanced::avg_plateau( )
 {
    double plato  = 0.0;
-   int j2  = US_DataIO2::index( d->x, d->plateau ); // Index edit plateau radius
+   int j2  = US_DataIO2::index( edata->x, edata->plateau ); // Index plat radius
    int j1  = max( 0, ( j2 - PA_POINTS ) );          // Point to 20 points before
        j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) ); // and 20 points after
 
-   for ( int jj = j1; jj < j2; jj++ )    // Sum the 41 points centered at
-      plato += s->readings[ jj ].value;  //  the scan plateau radial position
+   for ( int jj = j1; jj < j2; jj++ )        // Sum 41 points centered at the
+      plato += dscan->readings[ jj ].value;  //  scan plateau radial position
 
    plato /= (double)( j2 - j1 );         // Find and return the average
 
@@ -827,7 +815,7 @@ double US_vHW_Enhanced::avg_plateau( )
 double US_vHW_Enhanced::sed_coeff( double cconc, double oterm,
       double* radP, int* ndxP )
 {
-   int    j2   = first_gteq( cconc, s->readings, valueCount );
+   int    j2   = first_gteq( cconc, dscan->readings, valueCount );
    double rv0  = -1.0;          // Mark radius excluded
    double sedc = SEDC_NOVAL;
 //DbgLv(2) << "sed_coeff: cconc rdv0 rdcn" << cconc << s->readings[0].value
@@ -839,10 +827,10 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm,
 
       if ( j2 > 0 )
       {  // Interpolate radius value
-         double av1  = s->readings[ j1 ].value;
-         double av2  = s->readings[ j2 ].value;
-         double rv1  = d->x[ j1 ].radius;
-         double rv2  = d->x[ j2 ].radius;
+         double av1  = dscan->readings[ j1 ].value;
+         double av2  = dscan->readings[ j2 ].value;
+         double rv1  = edata->x[ j1 ].radius;
+         double rv2  = edata->x[ j2 ].radius;
          double rra  = av2 - av1;
          rra         = ( rra == 0.0 ) ? 0.0 : ( ( rv2 - rv1 ) / rra );
          rv0         = rv1 + ( cconc - av1 ) * rra;
@@ -858,7 +846,7 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm,
 
    if ( rv0 > 0.0 )
    {  // Use radius and other terms to get corrected sedimentation coeff. value
-      sedc        = correc * log( rv0 / d->meniscus ) / oterm;
+      sedc        = correc * log( rv0 / edata->meniscus ) / oterm;
 DbgLv(2) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc << " oterm" << oterm;
    }
 
@@ -870,20 +858,14 @@ DbgLv(2) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc << " oterm" << oterm;
 // Calculate division sedimentation coefficient values (fitted line intercepts)
 void US_vHW_Enhanced::div_seds( )
 {
-   QVector< double > rrv( valueCount );
-   QVector< double > xxv( scanCount );
-   QVector< double > yyv( scanCount );
-   QVector< double > ppv( scanCount );
-   QVector< double > xrv( scanCount );
-   QVector< double > yrv( scanCount );
-   QVector< int    > llv( scanCount );
-   double* rr       = rrv.data();
+   QVector< double > xxv( lscnCount );
+   QVector< double > yyv( lscnCount );
+   QVector< double > xrv( lscnCount );
+   QVector< double > yrv( lscnCount );
    double* xx       = xxv.data();
    double* yy       = yyv.data();
-   double* pp       = ppv.data();
    double* xr       = xrv.data();
    double* yr       = yrv.data();
-   int*    ll       = llv.data();
    int     nscnu    = 0;  // Number used (non-excluded) scans
    int     kscnu    = 0;  // Count of scans of div not affected by diffusion
    double  bdifcsqr = sqrt( bdiff_coef );  // Sqrt( diff_coeff ) used below
@@ -891,17 +873,14 @@ void US_vHW_Enhanced::div_seds( )
    double  cconc;
    double  mconc;
    bdtoler          = ct_tolerance->value();
-   valueCount       = d->x.size();
-   double  bottom   = d->x[ valueCount - 1 ].radius;
+   valueCount       = edata->x.size();
+   double  bottom   = edata->x[ valueCount - 1 ].radius;
    bool    vhw_enh  = ck_vhw_enh->isChecked();
-
-   for ( int jj = 0; jj < valueCount; jj++ )
-      rr[ jj ] = d->x[ jj ].radius;            // Copy radius values
 
    // Do division-1 determination of base
 
 //DbgLv(3) << "  DS:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
       double  timecor;   // Time (corrected)
       double  timesqr;   // Square root of corrected time
@@ -910,21 +889,17 @@ void US_vHW_Enhanced::div_seds( )
       double  radD;      // Radius of back-diffusion point
       double  omegasq;   // Omega squared
 
-      if ( !excludedScans.contains( ii ) )
-      {
-         s           = &d->scanData[ ii ];
+      int js      = liveScans[ ii ];
+      dscan       = &edata->scanData[ js ];
+      omega       = dscan->rpm * M_PI / 30.0;
+      omegasq     = omega * omega;
+      timecor     = dscan->seconds - time_correction;
+      timesqr     = sqrt( timecor );
+      pconc       = baseline + ( scPlats[ ii ] - baseline ) * positPct;
 
-         omega       = s->rpm * M_PI / 30.0;
-         omegasq     = omega * omega;
-         timecor     = s->seconds - time_correction;
-         timesqr     = sqrt( timecor );
-         pconc       = baseline + ( scplats[ ii ] - baseline ) * positPct;
+      xx[ ii ]    = 1.0 / timesqr;    // Save X (reciprocal sqrt(time))
 
-         xx[ nscnu ] = 1.0 / timesqr;
-         ll[ nscnu ] = ii;
-         pp[ nscnu ] = pconc;               // Analysis baseline
-
-         // Accumulate limits based on back diffusion
+      // Accumulate limits based on back diffusion
 
 //left=tolerance*pow(diff,0.5)/(2*intercept[0]*omega_s*
 //  (bottom+run_inf.meniscus[selected_cell])/2
@@ -932,34 +907,33 @@ void US_vHW_Enhanced::div_seds( )
 //radD=bottom-(2*find_root(left)
 //  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
 
-         // left = tolerance * sqrt( diff )
-         //        / ( 2 * intercept[0] * omega^2
-         //            * ( bottom + meniscus ) / 2 * sqrt( time ) )
+      // left = tolerance * sqrt( diff )
+      //        / ( 2 * intercept[0] * omega^2
+      //            * ( bottom + meniscus ) / 2 * sqrt( time ) )
 
-         bdleft      = bdtoler * bdifcsqr
-            / ( bdiff_sedc * omegasq * ( bottom + d->meniscus ) * timesqr );
-         xbdleft     = find_root( bdleft );
+      bdleft      = bdtoler * bdifcsqr
+         / ( bdiff_sedc * omegasq * ( bottom + edata->meniscus ) * timesqr );
+      xbdleft     = find_root( bdleft );
 
-         // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
+      // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
 
-         radD        = bottom - ( 2.0 * xbdleft * bdifcsqr * timesqr );
-         radD        = max( d->x[ 0 ].radius, min( bottom, radD ) );
+      radD        = bottom - ( 2.0 * xbdleft * bdifcsqr * timesqr );
+      radD        = max( edata->x[ 0 ].radius, min( bottom, radD ) );
 
-         int mm      = US_DataIO2::index( d->x, radD );  // Radius's index
+      int mm      = US_DataIO2::index( edata->x, radD );  // Radius's index
 
-         // Accumulate for this scan of this division
-         //  the back diffusion limit radius and corresponding concentration
-         xr[ nscnu ] = radD;                    // BD Radius
-         yr[ nscnu ] = s->readings[ mm ].value; // BD Concentration
-DbgLv(1) << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
+      // Accumulate for this scan of this division
+      //  the back diffusion limit radius and corresponding concentration
+      xr[ nscnu ] = radD;                         // BD Radius
+      yr[ nscnu ] = dscan->readings[ mm ].value;  // BD Concentration
+DbgLv(1) << "  bottom meniscus bdleft" << bottom << edata->meniscus << bdleft;
 DbgLv(1) << "  bdifsedc find_root toler" << bdiff_sedc << xbdleft << bdtoler;
 DbgLv(2) << "  bdiff_coef bdifcsqr" << bdiff_coef << bdifcsqr;
 DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
 DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
  << bdiff_sedc << radD << yr[nscnu];
 
-         nscnu++;                               // Bump scans-used count
-      }
+      nscnu++;                               // Bump scans-used count
    }
 //DbgLv(3) << "  DS:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
@@ -992,29 +966,24 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
 //DbgLv(3) << "  DS:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       for ( int kk = 0; kk < nscnu; kk++ )
       { // Accumulate concentration, sed.coeff. for all scans, this div
-         ii         = ll[ kk ];                   // Scan index
-//DbgLv(1) << "jj" << jj << "kk" << kk << "ii" << ii;
-         s          = &d->scanData[ ii ];         // Scan pointer
+         ii         = liveScans[ kk ];            // Scan index
+         dscan      = &edata->scanData[ ii ];     // Scan pointer
 //DbgLv(3) << "  DS:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-         //pconc      = pp[ kk ];                   // Prev concen (baseline)
-//DbgLv(1) << "jj" << jj << "srpm" << s->rpm;
-         range      = scplats[ ii ] - baseline;
+         range      = scPlats[ kk ] - baseline;
          pconc      = baseline + range * conjFact;
-//DbgLv(1) << "jj" << jj << "range" << range << "pconc" << pconc;
-//DbgLv(1) << "jj" << jj << "cpds size" << cpds.size();
-//DbgLv(1) << "jj" << jj << "cpds[0] size" << cpds.at(0).size();
+
          if ( vhw_enh )
-            cpij       = cpds.at( ii ).at( jj );  // Partial concen (increment)
+            cpij       = CPijs[ kk ][ jj ];  // Partial concen (increment)
          else
             cpij       = range * rngjFact;
+
 DbgLv(1) << " jj" << jj << "kscnu" << kscnu << "pconc cpij" << pconc << cpij;
          cconc      = pconc + cpij;               // Curr concen (plateau)
          mconc      = ( cconc + pconc ) * 0.5;    // Mid div concentration
-         omega      = s->rpm * M_PI / 30.0;       // Omega
-         oterm      = ( s->seconds - time_correction ) * omega * omega;
+         omega      = dscan->rpm * M_PI / 30.0;   // Omega
+         oterm      = ( dscan->seconds - time_correction ) * omega * omega;
 //DbgLv(3) << "  DS:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
-         pp[ kk ]   = cconc;        // Division mark of concentration for scan
          yy[ kk ]   = sed_coeff( mconc, oterm, &radC, NULL );  // Sed.coeff.
          radD       = xr[ kk ];
 
@@ -1032,14 +1001,13 @@ DbgLv(1) << " div kscnu" << jj+1 << kscnu
 //DbgLv(2) << "div scn " << jj+1 << ii+1 << " pconc cconc " << pconc << cconc;
 
       }
-//DbgLv(2) << " nscnu pp0 yy0 ppn yyn " << nscnu << yy[0] << pp[0]
-//   << yy[nscnu-1] << pp[nscnu-1];
+//DbgLv(2) << " nscnu yy0 yyn " << nscnu << yy[0] << yy[kscnu-1];
 
       int kscsv = kscnu;
       QVector< double > xtvec;
       QVector< double > ytvec;
-#if 1
       ii         = 0;
+
       for ( int kk = 0; kk < kscnu; kk++ )
       {  // Remove any leading points below meniscus
          if ( yy[ kk ] != SEDC_NOVAL )
@@ -1058,10 +1026,6 @@ DbgLv(1) << "KS    ii kk" << ii << kk << "xx yy" << xx[kk] << yy[kk];
       }
 //DbgLv(3) << "  DS:TM:07: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       kscnu      = ii;
-#endif
-#if 0
-      for ( int kk = 0; kk < kscnu; kk++ )  xtvec << xx[kk];
-#endif
       double* xt = xtvec.data();
       double* yt = ytvec.data();
 DbgLv(1) << " KS" << kscnu << kscsv << "size xtv ytv" << xtvec.size()
@@ -1078,29 +1042,22 @@ DbgLv(1) << " KS" << kscnu << kscsv << "jj" << jj << "xx0 xxn yy0 yyn" << xt[0]
 
       else
       {
-         ii         = nscnu / 2;
-         //dsed       = yy[ ii ];
-         ii         = 0;
-         dsed       = yyv[ ii ];
+         dsed       = yyv[ 0 ];
          slope      = 0.0;
          sigma      = 0.0;
          corre      = 0.0;
          slope      = 0.0;
-ii=(nscnu<1)?1:nscnu;
-DbgLv(1) << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
-   << pp[ii-1] << yy[ii-1];
+ii=(kscnu<1)?1:kscnu;
+DbgLv(1) << "    kscnu" << kscnu << "yy0 yyn " << yy[0] << yy[ii-1];
          continue;
       }
 
-      dseds.append( dsed );    // Save fitted line intercept (Sed.Coeff.)
+      dseds << dsed;    // Save fitted line intercept (Sed.Coeff.)
+      dslos << slope;   // Save slope and other fitting values
+      dsigs << sigma;
+      dcors << corre;
+      dpnts << kscnu;
 DbgLv(1) << "JJ" << jj << "DSED" << dsed << "dseds size" << dseds.size();
-
-      dslos.append( slope );   // Save slope and other fitting values
-      dsigs.append( sigma );
-      dcors.append( corre );
-      dpnts.append( kscnu );
-//if((jj&7)==0||jj==(divsCount-1))
-// DbgLv(1) << "     div dsed slope " << jj+1 << dsed << slope;
 //DbgLv(3) << "  DS:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    }
@@ -1109,10 +1066,10 @@ DbgLv(1) << "JJ" << jj << "DSED" << dsed << "dseds size" << dseds.size();
 int k3=qMax(0,kdivs-3);
 int k2=qMax(0,kdivs-2);
 int k1=qMax(0,kdivs-1);
-DbgLv(1) << " dsed[0]  " << dseds.at(0) << "kdivs" << kdivs;
-DbgLv(1) << " dsed[k3] " << dseds.at(k3);
-DbgLv(1) << " dsed[k2] " << dseds.at(k2);
-DbgLv(1) << " dsed[L]  " << dseds.at(k1);
+DbgLv(1) << " dsed[0]  " << dseds[0] << "kdivs" << kdivs;
+DbgLv(1) << " dsed[k3] " << dseds[k3];
+DbgLv(1) << " dsed[k2] " << dseds[k2];
+DbgLv(1) << " dsed[L]  " << dseds[k1];
 DbgLv(1) << " D_S: xr0 yr0 " << xr[0] << yr[0];
 DbgLv(1) << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
 
@@ -1121,8 +1078,8 @@ DbgLv(1) << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
 
    for ( int kk = 0; kk < nscnu; kk++ )
    {  // Save the Radius,Concentration points for back-diffusion cutoff curve
-      bdrads.append( xr[ kk ] );
-      bdcons.append( yr[ kk ] );
+      bdrads << xr[ kk ];
+      bdcons << yr[ kk ];
    }
 //DbgLv(3) << "  DS:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
@@ -1273,15 +1230,12 @@ void US_vHW_Enhanced::add_group_info( )
    grdat.percent   = 0.0;
    grdat.ndivs     = 0;
    grdat.idivs.clear();
-
-   //divsCount       = qRound( ct_division->value() );
    int divsUsed    = dseds.size();
 
-   //for ( int jj = 0; jj < divsCount; jj++ )
    for ( int jj = 0; jj < divsUsed; jj++ )
    {  // walk thru all division lines to see if within clicked range
-      double sed      = dseds.at( jj );         // intercept sed coeff
-      double slope    = dslos.at( jj );         // div line slope
+      double sed      = dseds[ jj ];            // intercept sed coeff
+      double slope    = dslos[ jj ];            // div line slope
       double yh       = sed + slope * grdat.x1; // line intercept w high x
       double yl       = sed + slope * grdat.x2; // line intercept w low x
 
@@ -1306,8 +1260,8 @@ void US_vHW_Enhanced::write_vhw()
 {
    QString dirres   = US_Settings::resultDir();
    QString dirrep   = US_Settings::reportDir();
-   QString dirname  = dirres + "/" + d->runID;
-   QString dirrept  = dirrep + "/" + d->runID;
+   QString dirname  = dirres + "/" + edata->runID;
+   QString dirrept  = dirrep + "/" + edata->runID;
 
    QDir dirr( dirres );
    QDir dirp( dirrep );
@@ -1349,12 +1303,13 @@ DbgLv(1) << "WV: filename " << filename;
    }
 
    // Output data
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
       // Each output line begins with reciprocal square root of scan time
+      int js       = liveScans[ ii ];
       control      = fsep;
       QString dat  = QString().sprintf( "\"%11.8f\"",
-         ( 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction ) ) );
+         ( 1.0 / sqrt( edata->scanData[ js ].seconds - time_correction ) ) );
       dat.replace( " ", "" );
       ts << dat << control;
 
@@ -1362,7 +1317,7 @@ DbgLv(1) << "WV: filename " << filename;
       //  the divisions in the scan 
       for ( int jj = 0; jj < divsCount; jj++ )
       {
-         sedc         = aseds.at( kk++ );
+         sedc         = aseds[ kk++ ];
          if ( sedc > 0 )
          {
             dat          = QString().sprintf( "\"%8.5f\"", sedc );
@@ -1381,12 +1336,12 @@ DbgLv(1) << "WV: filename " << filename;
 // write a file of vHW division distribution values
 void US_vHW_Enhanced::write_dis()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
-      + QString( triples.at( row ) ).replace( " / ", "" )
+   QString filename = US_Settings::resultDir() + "/" + edata->runID
+      + "/vHW." + QString( triples.at( row ) ).replace( " / ", "" )
       + ".s-c-distrib.csv";
    QFile   res_f( filename );
-   double  pterm    = 100.0 * positPct;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
+   double  pterm    = 100.0 * positPct + bterm;
    double  bfrac;
    QString dline;
 
@@ -1398,19 +1353,18 @@ DbgLv(1) << "WD: filename " << filename;
 
    // write the line-fit variables for each division
    QTextStream ts( &res_f );
-   ts << d->description << "\n";
+   ts << edata->description << "\n";
    ts << tr( "\"%Boundary\",\"Points\",\"Slope\",\"Intercept\","
              "\"Sigma\",\"Correlation\"\n" );
 
-   //for ( int jj = 0; jj < divsCount; jj++ )
    for ( int jj = 0; jj < dseds.size(); jj++ )
    {
-      bfrac     = pterm + bterm * (double)( jj + 1 );
+      bfrac     = pterm + bterm * (double)( jj );
 
       dline.sprintf(
          "\"%9.2f\",\"%7d\",\"%12.6f\",\"%12.6f\",\"%12.6f\",\"%12.6f\"\n",
-         bfrac, dpnts.at( jj ), dslos.at( jj ), dseds.at( jj ),
-         dsigs.at( jj ), dcors.at( jj ) );
+         bfrac, dpnts[ jj ], dslos[ jj ], dseds[ jj ],
+         dsigs[ jj ], dcors[ jj ] );
       dline.replace( " ", "" );
       ts << dline;
    }
@@ -1421,8 +1375,8 @@ DbgLv(1) << "WD: filename " << filename;
 // write a file of vHW detailed division group model data
 void US_vHW_Enhanced::write_model()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
-      + QString( triples.at( row ) ).replace( " / ", "" )
+   QString filename = US_Settings::resultDir() + "/" + edata->runID
+      + "/vHW." + QString( triples.at( row ) ).replace( " / ", "" )
       + ".fef_model.rpt";
    QFile   res_f( filename );
    int     groups   = groupdat.size();
@@ -1440,7 +1394,7 @@ DbgLv(1) << "WM: filename " << filename;
    ts <<     "*************************************\n\n\n";
    ts << "3            " << tr( "\t# Fixed Molecular Weight Distribution\n" );
    ts << groups << "           " << tr( "\t# Number of Components\n" );
-   ts << d->meniscus << "       " << tr( "\t# Meniscus in cm\n" );
+   ts << edata->meniscus << "       " << tr( "\t# Meniscus in cm\n" );
    ts << "0.01         " << tr( "\t# Meniscus range in cm\n" );
    ts << "0            " << tr( "\t# Meniscus fitting control\n" );
    ts << baseline << "     " << tr( "\t# Baseline in OD\n" );
@@ -1587,7 +1541,7 @@ void US_vHW_Enhanced::new_triple( int row )
 void US_vHW_Enhanced::update( int row )
 {
    haveZone   = false;
-   d          = &dataList[ row ];
+   edata      = &dataList[ row ];
 
    // Do some calculations handled in AnalysisBase, but needed here
    //  so that model plateau calculations work
@@ -1595,14 +1549,14 @@ void US_vHW_Enhanced::update( int row )
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar20    = le_vbar     ->text().toDouble();
-   double avgTemp     = d->average_temperature();
+   double avgTemp     = edata->average_temperature();
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
    // Do normal analysis triple updating, but suppress plotting for now
-   dataLoaded = false;
+   skipPlot   = true;
    US_AnalysisBase2::update( row );
-   dataLoaded = true;
+   skipPlot   = false;
 DbgLv(1) << " update: vbar" << vbar;
 
    if ( vbar <= 0.0 )
@@ -1634,26 +1588,25 @@ DbgLv(1) << " update: vbar" << vbar;
 // Calculate the sedimentation coefficient intercept for division 1
 double US_vHW_Enhanced::sedcoeff_intercept()
 {
-   QVector< double > xrvec( scanCount );
-   QVector< double > yrvec( scanCount );
+   QVector< double > xrvec( lscnCount );
+   QVector< double > yrvec( lscnCount );
    double* xr      = xrvec.data();
    double* yr      = yrvec.data();
    double  sedc    = 0.0;
    int     nscnu   = 0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {  // Accumulate x,y values:  1/sqrt(time), sed_coeff
-      s               = &d->scanData[ ii ];
+      int js          = liveScans[ ii ];
+      dscan           = &edata->scanData[ js ];
 
-      if ( excludedScans.contains( ii ) ) continue;
-
-      double range    = scplats[ ii ] - baseline;
+      double range    = scPlats[ ii ] - baseline;
       double basecut  = baseline + range * positPct;
       double platcut  = basecut  + range * boundPct;
       double cinc     = ( platcut - basecut ) * divfac;
       double mconc    = basecut + cinc * 0.5;
-      double omega    = s->rpm * M_PI / 30.0;
-      double timecor  = s->seconds - time_correction;
+      double omega    = dscan->rpm * M_PI / 30.0;
+      double timecor  = dscan->seconds - time_correction;
       double oterm    = timecor * omega * omega;
 
       // Get sedimentation coefficient for concentration
@@ -1761,8 +1714,8 @@ DbgLv(1) << "FITTED_PLATEAUS";
    if ( !dataLoaded  ||  vbar <= 0.0 )
       return false;
 
-   valueCount = d->x.size();
-   scanCount  = d->scanData.size();
+   valueCount = edata->x.size();
+   scanCount  = edata->scanData.size();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
@@ -1772,22 +1725,22 @@ DbgLv(1) << "FITTED_PLATEAUS";
    correc     = solution.s20w_correction * 1.0e13;
 	C0         = 0.0;
 	Swavg      = 0.0;
-   omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;
-   plateau    = d->scanData[ 0 ].plateau;
+   omega      = edata->scanData[ 0 ].rpm * M_PI / 30.0;
 
    // Do first experimental plateau calcs based on horizontal zones
 
    int     nrelp = 0;
-   QVector< double > pxvec( scanCount  );
+   QVector< double > pxvec( lscnCount  );
    QVector< double > pyvec( totalCount );
-   QVector< double > sxvec( scanCount  );
-   QVector< double > syvec( scanCount  );
-   QVector< double > fyvec( scanCount  );
+   QVector< double > sxvec( lscnCount  );
+   QVector< double > syvec( lscnCount  );
+   QVector< double > fyvec( lscnCount  );
    double* ptx   = pxvec.data();   // t,log(p) points
    double* pty   = pyvec.data();
    double* csx   = sxvec.data();   // count,slope points
    double* csy   = syvec.data();
    double* fsy   = fyvec.data();   // fitted slope
+   double plateau;
 
    QList< double > plats;
    QList< int >    isrel;
@@ -1795,19 +1748,18 @@ DbgLv(1) << "FITTED_PLATEAUS";
 
    // accumulate reliable,unreliable scans and plateaus
 
-   scplats.fill( 0.0, scanCount );
+   scPlats.fill( 0.0, lscnCount );
    nrelp    = 0;
 
 DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
    // Initially reliable plateaus are all average non-excluded
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      if ( excludedScans.contains( ii ) ) continue;
-
-      s             = &d->scanData[ ii ];
+      int js        = liveScans[ ii ];
+      dscan         = &edata->scanData[ js ];
       plateau       = avg_plateau();
-      scplats[ ii ] = plateau;
-      ptx[ nrelp ]  = s->seconds - time_correction;
+      scPlats[ ii ] = plateau;
+      ptx[ nrelp ]  = dscan->seconds - time_correction;
       pty[ nrelp ]  = log( plateau );
 
       isrel.append( ii );
@@ -1911,15 +1863,14 @@ DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
    // Since y = log( Cp ), we get Cp by exponentiating
    //   the left-hand term.
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {  // each extrapolated plateau is exp of Y for X of corrected time
-      s             = &d->scanData[ ii ];
-      double  tc    = s->seconds - time_correction;
-
-      s->plateau    = exp( tc * slope + intcp );
-      scplats[ ii ] = s->plateau;
-      //scplats[ ii ] = exp( tc * slope + intcp );
-DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
+      int js         = liveScans[ ii ];
+      dscan          = &edata->scanData[ js ];
+      double tc      = dscan->seconds - time_correction;
+      dscan->plateau = exp( tc * slope + intcp );
+      scPlats[ ii ]  = dscan->plateau;
+DbgLv(1) << " jj scan plateau " << ii << ii+1 << scPlats[ii];
    }
    return true;
 }
@@ -1956,16 +1907,19 @@ else DbgLv(1) << "Cpl:    MODEL empty   GUIDlen" << modelGUID.length();
 DbgLv(1) << "CPl:    ncomp" << ncomp;
    double scorr = -2.0 / solution.s20w_correction;
 DbgLv(1) << "Cpl:    scorr" << scorr << solution.s20w_correction;
-   d            = &dataList[ row ];
-   valueCount   = d->x.size();
-   scanCount    = d->scanData.size();
-   scplats.fill( 0.0, scanCount );
+   edata        = &dataList[ row ];
+   valueCount   = edata->x.size();
+   scanCount    = edata->scanData.size();
+   scPlats.fill( 0.0, lscnCount );
+	C0           = 0.0;
+	Swavg        = 0.0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      US_DataIO2::Scan* scan = &d->scanData[ ii ];
-      double   omega    = scan->rpm * M_PI / 30.0;
-      double   oterm    = ( scan->seconds - time_correction ) * omega * omega;
+      int js            = liveScans[ ii ];
+      dscan             = &edata->scanData[ js ];
+      double   omega    = dscan->rpm * M_PI / 30.0;
+      double   oterm    = ( dscan->seconds - time_correction ) * omega * omega;
                oterm   *= scorr;
       double   cplat    = 0.0;
 
@@ -1978,10 +1932,12 @@ DbgLv(1) << "Cpl:    scorr" << scorr << solution.s20w_correction;
       }
 DbgLv(1) << "Cpl:  scan" << ii << "cplat" << cplat;
 
-      scplats[ ii ]  = cplat;
-      scan->plateau  = cplat;
+      scPlats[ ii ]  = cplat;
+      dscan->plateau = cplat;
+      C0            += cplat;
    }
 
+	C0           = ( lscnCount < 1 ) ? 0.0 : ( C0 / (double)lscnCount );
    return true;
 }
 
@@ -1998,7 +1954,7 @@ void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
 {
    int     totalCount;
 
-   QList< double >  div_pconcs;
+   QVector< double >  div_pconcs;
    double  cconc;
    double  pconc;
    double  mconc;
@@ -2008,18 +1964,18 @@ void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
-   cpds.clear();
+   CPijs.clear();
 	C0         = 0.0;
 	Swavg      = 0.0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {  // Populate partial concentration lists
-      range      = scplats[ ii ] - baseline;
+      range      = scPlats[ ii ] - baseline;
       cinc       = range * boundPct * divfac;
       div_pconcs.clear();
       for ( int jj = 0; jj < divsCount; jj++ )
          div_pconcs << cinc;
-      cpds << div_pconcs;
+      CPijs << div_pconcs;
    }
    //calc_backdiff_line();
    div_seds();
@@ -2029,28 +1985,19 @@ void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
 
    int     kk     = 0;                    // Index to sed. coeff. values
    int     kl     = 0;                    // Index/count of live scans
-   valueCount     = d->x.size();
+   valueCount     = edata->x.size();
 
    // Calculate the corrected sedimentation coefficients
 
 //DbgLv(3) << "DP:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      if ( excludedScans.contains( ii ) )
-      {
-         range      = scplats[ ii ] - baseline;
-         cinc       = range * boundPct * divfac;
-         div_pconcs.clear();
-         for ( int jj = 0; jj < divsCount; jj++ )
-            div_pconcs << cinc;
-
-         cpds << div_pconcs;
-         kk         += divsCount;
-         continue;
-      }
-
-      s              = &d->scanData[ ii ];
-      double  timev  = s->seconds - time_correction;
+      range          = scPlats[ ii ] - baseline;
+      cinc           = range * boundPct * divfac;
+      div_pconcs.clear();
+      int js         = liveScans[ ii ];
+      dscan          = &edata->scanData[ js ];
+      double  timev  = dscan->seconds - time_correction;
       double  timex  = 1.0 / sqrt( timev );
       double  bdrad  = bdrads.at( kl );   // Back-diffus cutoff radius for scan
       double  bdcon  = bdcons.at( kl++ ); // Back-diffus cutoff concentration
@@ -2060,11 +2007,11 @@ DbgLv(1) << "scn liv" << ii+1 << kl
 
       ptx[ ii ]  = timex;                 // Save corrected time and accum max
 
-      range      = scplats[ ii ] - baseline;
+      range      = scPlats[ ii ] - baseline;
       cconc      = baseline + range * positPct; // Initial conc for span
       cinc       = range * boundPct * divfac;
       cinch      = cinc * 0.5;
-      omega      = s->rpm * M_PI / 30.0;
+      omega      = dscan->rpm * M_PI / 30.0;
       oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
 
       for ( int jj = 0; jj < divsCount; jj++ )
@@ -2096,13 +2043,13 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
    int     count       = 0;
    int     totalCount;
 
-   scanCount  = d->scanData.size();
-   valueCount = d->x.size();
+   scanCount  = edata->scanData.size();
+   valueCount = edata->x.size();
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
 
-   QList< double >  div_pconcs;
+   QVector< double >  div_pconcs;
    double  cconc;
    double  pconc;
    double  mconc;
@@ -2110,22 +2057,23 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
    double  cinch;
    double  eterm;
    double  oterm;
-   cpds.clear();
+   CPijs.clear();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
    correc     = solution.s20w_correction * 1.0e13;
-   omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;
-   plateau    = d->scanData[ 0 ].plateau;
+   omega      = edata->scanData[ 0 ].rpm * M_PI / 30.0;
+   CPijs.resize( lscnCount );
 
    // Initialize plateau values for components of scans
 
 //DbgLv(3) << "DP:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      s          = &d->scanData[ ii ];
+      int js     = liveScans[ ii ];
+      dscan      = &edata->scanData[ js ];
 
-      range      = scplats[ ii ] - baseline;
+      range      = scPlats[ ii ] - baseline;
       span       = range * boundPct;
       basecut    = baseline + range * positPct;
       platcut    = basecut  + span;
@@ -2134,22 +2082,13 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
       mconc      = basecut;
       cinc       = span * divfac;
       cinch      = cinc / 2.0;
-      omega      = s->rpm * M_PI / 30.0;
-      oterm      = ( s->seconds - time_correction ) * omega * omega;
+      omega      = dscan->rpm * M_PI / 30.0;
+      oterm      = ( dscan->seconds - time_correction ) * omega * omega;
       eterm      = -2.0 * oterm / correc;
       c0term     = ( C0 - baseline ) * boundPct * divfac;
       sumcpij    = 0.0;
 
-      div_pconcs.clear();             // clear this scan's Cp list
-
-      if ( excludedScans.contains( ii ) )
-      {
-         for ( int jj = 0; jj < divsCount; jj++ )
-            div_pconcs << cinc;
-
-         cpds << div_pconcs;
-         continue;
-      }
+      CPijs[ ii ].resize( divsCount );
 
 //DbgLv(3) << "DP:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       for ( int jj = 0; jj < divsCount; jj++ )
@@ -2169,8 +2108,8 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
 //DbgLv(1) << "  sedc eterm eso " << sedc << eterm << (eterm*sedc);
 
          // Update cpij sum and add to divisions list for scan
-         sumcpij   += cpij;     // Add to sum of partial concentrations
-         div_pconcs << cpij;    // Update scan list of partial concentrations
+         sumcpij          += cpij;  // Add to sum of partial concentrations
+         CPijs[ ii ][ jj ] = cpij;  // Update list of partial concentrations
 DbgLv(1) << "CPf: scn div" << ii+1 << jj+1 << " cinc cpij" << cinc << cpij
  << " sumcpij sedc" << sumcpij << sedc;
       }
@@ -2183,11 +2122,9 @@ DbgLv(1) << "   sumcpij span " << sumcpij << span
 
       for ( int jj = 0; jj < divsCount; jj++ )
       {  // Spread the difference to each partial plateau concentration
-         cpij     = div_pconcs.at( jj ) + sdiff;
-         div_pconcs.replace( jj, cpij );
+         CPijs[ ii ][ jj ] += sdiff;
       }
 
-      cpds << div_pconcs;  // Add cpij list to scan's list-of-lists
    }
 
    // Fit a line to division 1 and use its intercept to calculate the
@@ -2212,25 +2149,25 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
       div_seds();
 //DbgLv(3) << "DP:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       int divsUsed   = dseds.size();
+      CPijs.clear();
 
       // Reset division plateaus
 
-      for ( int ii = 0; ii < scanCount; ii++ )
+      for ( int ii = 0; ii < lscnCount; ii++ )
       {
-         if ( excludedScans.contains( ii ) )   continue;
-
-         s        = &d->scanData[ ii ];
-         range    = scplats[ ii ] - baseline;
+         int js   = liveScans[ ii ];
+         dscan    = &edata->scanData[ js ];
+         range    = scPlats[ ii ] - baseline;
          span     = range * boundPct;
          basecut  = baseline + range * positPct;
          platcut  = basecut  + span;
          sumcpij  = 0.0;
-         omega    = s->rpm * M_PI / 30.0;
-         oterm    = ( s->seconds - time_correction ) * omega * omega;
+         omega    = dscan->rpm * M_PI / 30.0;
+         oterm    = ( dscan->seconds - time_correction ) * omega * omega;
          eterm    = -2.0 * oterm / correc;
          c0term   = ( C0 - baseline ) * boundPct * divfac;
          cinc     = span * divfac;      // Avg. concentration increment
-         QList< double > wk_pconcs;
+         QVector< double > wk_pconcs( divsCount );
 
          // Split the difference between divisions
 
@@ -2240,7 +2177,7 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
             cpij     = ( sedc != SEDC_NOVAL ) ?
                        ( c0term * exp( sedc * eterm ) ) :
                        cinc;
-            wk_pconcs << cpij;
+            wk_pconcs[ jj ] = cpij;
             sumcpij += cpij;
 //DbgLv(1) << "    div " << jj+1 << "  tcdps cpij " << tcpds.at(jj) << cpij;
          }
@@ -2251,11 +2188,11 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 
          for ( int jj = 0; jj < divsCount; jj++ )
          {  // Spread the difference to each partial plateau concentration
-            cpij     = wk_pconcs.at( jj ) + sdiff;
+            cpij     = wk_pconcs[ jj ] + sdiff;
             div_pconcs << cpij;
          }
 
-         cpds.replace( ii, div_pconcs ); // Replace scan's list of div. Cp vals
+         CPijs << div_pconcs;       // Replace scan's list of div. Cp vals
 
          avgdif  += qAbs( sdiff );  // Sum of difference magnitudes
          count++;
@@ -2281,22 +2218,17 @@ DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
 
    int     kk     = 0;                    // Index to sed. coeff. values
    int     kl     = 0;                    // Index/count of live scans
-   valueCount     = d->x.size();
+   valueCount     = edata->x.size();
 
    // Calculate the corrected sedimentation coefficients
 
 //DbgLv(3) << "DP:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      if ( excludedScans.contains( ii ) )
-      {
-         kk         += divsCount;
-         continue;
-      }
+      int js         = liveScans[ ii ];
+      dscan          = &edata->scanData[ js ];
 
-      s              = &d->scanData[ ii ];
-
-      double  timev  = s->seconds - time_correction;
+      double  timev  = dscan->seconds - time_correction;
       double  timex  = 1.0 / sqrt( timev );
       double  bdrad  = bdrads.at( kl );   // Back-diffus cutoff radius for scan
       double  bdcon  = bdcons.at( kl++ ); // Back-diffus cutoff concentration
@@ -2306,18 +2238,18 @@ DbgLv(1) << "scn liv" << ii+1 << kl
 
       ptx[ ii ]  = timex;                 // Save corrected time and accum max
 
-      range      = scplats[ ii ] - baseline;
+      range      = scPlats[ ii ] - baseline;
       cconc      = baseline + range * positPct; // Initial conc for span
       basecut    = cconc;
-      omega      = s->rpm * M_PI / 30.0;
+      omega      = dscan->rpm * M_PI / 30.0;
       oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
 
       for ( int jj = 0; jj < divsCount; jj++ )
       {  // walk through division points; get sed. coeff. by place in readings
-         pconc       = cconc;                   // Div base
-         cpij        = cpds.at( ii ).at( jj );  // Div partial concentration
-         cconc       = pconc + cpij;            // Absolute concentration
-         mconc       = pconc + cpij * 0.5;      // Mid div concentration
+         pconc       = cconc;               // Div base
+         cpij        = CPijs[ ii ][ jj ];   // Div partial concentration
+         cconc       = pconc + cpij;        // Absolute concentration
+         mconc       = pconc + cpij * 0.5;  // Mid div concentration
 
          sedc        = sed_coeff( mconc, oterm, &divrad, NULL );
 
@@ -2338,18 +2270,16 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
 // Calculate Back-diffusion line
 void US_vHW_Enhanced::calc_backdiff_line()
 {
-   double  toprad   = d->x[ 0              ].radius;
-   double  bottom   = d->x[ valueCount - 1 ].radius;
-   double  meniscus = d->meniscus;
+   double  toprad   = edata->x[ 0              ].radius;
+   double  bottom   = edata->x[ valueCount - 1 ].radius;
+   double  meniscus = edata->meniscus;
    double  radsum   = bottom + meniscus;
    double  bdifcsqr = sqrt( bdiff_coef );  // Sqrt( diff_coeff ) used below
    bdrads.clear();
    bdcons.clear();
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    {
-      if ( excludedScans.contains( ii ) )  continue;
-
       double  timecor;   // Time (corrected)
       double  timesqr;   // Square root of corrected time
       double  bdleft;    // Back-diffusion left value
@@ -2357,11 +2287,12 @@ void US_vHW_Enhanced::calc_backdiff_line()
       double  radD;      // Radius of back-diffusion point
       double  omegasq;   // Omega squared
 
-      s           = &d->scanData[ ii ];
+      int js      = liveScans[ ii ];
+      dscan       = &edata->scanData[ js ];
 
-      omega       = s->rpm * M_PI / 30.0;
+      omega       = dscan->rpm * M_PI / 30.0;
       omegasq     = omega * omega;
-      timecor     = s->seconds - time_correction;
+      timecor     = dscan->seconds - time_correction;
       timesqr     = sqrt( timecor );
 
       // Accumulate limits based on back diffusion
@@ -2379,14 +2310,14 @@ void US_vHW_Enhanced::calc_backdiff_line()
       radD        = bottom - ( 2.0 * xbdleft * bdifcsqr * timesqr );
       radD        = max( toprad, min( bottom, radD ) );
 
-      int mm      = US_DataIO2::index( d->x, radD );  // Radius's index
+      int mm      = US_DataIO2::index( edata->x, radD );  // Radius's index
 
       // Accumulate for this scan of this division
       //  the back diffusion limit radius and corresponding concentration
 
-      bdrads << radD;                    // BD Radius
-      bdcons << s->readings[ mm ].value; // BD Concentration
-DbgLv(1) << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
+      bdrads << radD;                        // BD Radius
+      bdcons << dscan->readings[ mm ].value; // BD Concentration
+DbgLv(1) << "  bottom meniscus bdleft" << bottom << edata->meniscus << bdleft;
 DbgLv(1) << "  bdifsedc find_root toler" << bdiff_sedc << xbdleft << bdtoler;
 DbgLv(2) << "  bdiff_coef bdifcsqr" << bdiff_coef << bdifcsqr;
 DbgLv(1) << "  ii" << ii << " bdrad bdcon" << radD << bdcons[bdcons.size()-1];
@@ -2433,25 +2364,23 @@ void US_vHW_Enhanced::vert_exclude_lines()
       }
    }
 
-   ymax       = 0.0;
+   ymax     = 0.0;
    for ( int ii = 0; ii < aseds.size(); ii++ )
-      ymax         = qMax( ymax, aseds.at( ii ) );  // Max sed.coeff. value
-   frsc       = ( frsc < 1 ) ? 1 : frsc;
-   yy[ 0 ]    = 0.5;
-   yy[ 1 ]    = ymax - 0.1;
-   int ixsc   = 0;
+      ymax     = qMax( ymax, aseds[ ii ] );  // Max sed.coeff. value
+   frsc     = ( frsc < 1 ) ? 1 : frsc;
+   yy[ 0 ]  = 0.5;
+   yy[ 1 ]  = ymax - 0.1;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < lscnCount; ii++ )
    { 
-      if ( excludedScans.contains( ii ) )  continue;
-
-      ixsc++;
+      int ixsc = ii + 1;
       if ( ixsc < frsc )  continue;
       if ( ixsc > tosc )  break;
 
-      xx[ 0 ]    = 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction );
-      xx[ 1 ]    = xx[ 0 ];
-      curve      = us_curve( data_plot1,
+      int js   = liveScans[ ii ];
+      xx[ 0 ]  = 1.0 / sqrt( edata->scanData[ js ].seconds - time_correction );
+      xx[ 1 ]  = xx[ 0 ];
+      curve    = us_curve( data_plot1,
          tr( "Scan %1 Exclude Marker" ).arg( ixsc ) );
       curve->setPen( QPen( QBrush( Qt::red ), 1.0 ) );
       curve->setData( xx, yy, 2 );
@@ -2473,36 +2402,71 @@ void US_vHW_Enhanced::exclude_from( double from )
    }
 
    // Mark upper plot excluded scans, then lower plot ones
+   skipPlot = true;
    vert_exclude_lines();
    data_plot1->replot();
 
    US_AnalysisBase2::data_plot();
+   skipPlot = false;
 }
 
 // Slot to handle exclude-to change
 void US_vHW_Enhanced::exclude_to( double to )
 {
+DbgLv(1) << "(1)TO=" << to;
    double from = ct_from->value();
 
-   if ( from > to )
+   if ( from > to  ||  from == 0 )
    {  // Adjust exclude-from if need be
+DbgLv(1) << "(2)TO=" << to;
       ct_from->disconnect();
-      ct_from->setValue( to );
+      if ( from > to )
+         ct_from->setValue( to );
+      else if ( to > 0.0 )
+         ct_from->setValue( 1.0 );
 
       connect( ct_from, SIGNAL( valueChanged( double ) ),
                         SLOT  ( exclude_from( double ) ) );
+DbgLv(1) << "(3)TO=" << to;
    }
 
    // Mark upper plot excluded scans, then lower plot ones
    if ( to > 0.0 )
    {
+DbgLv(1) << "(4)TO=" << to;
+      skipPlot = true;
       vert_exclude_lines();
       data_plot1->replot();
 
       US_AnalysisBase2::data_plot();
+      skipPlot = false;
+DbgLv(1) << "(5)TO=" << to;
    }
 
    else                     // Special case of to=0 after exclude clicked
+   {
+DbgLv(1) << "(8)TO=" << to;
       data_plot();
+DbgLv(1) << "(9)TO=" << to;
+   }
+}
+
+// Build vectors of live scan information
+void US_vHW_Enhanced::live_scans()
+{
+   row        = lw_triples->currentRow();
+   edata      = &dataList[ row ];
+   scanCount  = edata->scanData.size();
+   lscnCount  = 0;
+   liveScans.clear();
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // For non-excluded scans, save scan index and plateau concentration
+      if ( ! excludedScans.contains( ii ) )
+      {
+         liveScans << ii;      // Save original scan index
+         lscnCount++;          // Bump count of live scans
+      }
+   }
 }
 
