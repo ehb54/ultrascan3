@@ -1896,11 +1896,6 @@ void US_PlotGridConfig::selectMinorColor( void )
 
 void US_PlotGridConfig::apply( void )
 {
-   grid->enableX   ( cb_enableX     ->isChecked() );   
-   grid->enableY   ( cb_enableY     ->isChecked() );   
-   grid->enableXMin( cb_enableXminor->isChecked() );   
-   grid->enableYMin( cb_enableYminor->isChecked() );
-
    // Set the major pen
    QPen pen = grid->majPen();
 
@@ -1923,6 +1918,12 @@ void US_PlotGridConfig::apply( void )
    pen.setStyle( static_cast< Qt::PenStyle >( style ) );
 
    grid->setMinPen( pen );
+
+   // Enable/disable grid lines and re-plot
+   grid->enableX   ( cb_enableX     ->isChecked() );   
+   grid->enableY   ( cb_enableY     ->isChecked() );   
+   grid->enableXMin( cb_enableXminor->isChecked() );   
+   grid->enableYMin( cb_enableYminor->isChecked() );
 
    plot->replot();
 }
