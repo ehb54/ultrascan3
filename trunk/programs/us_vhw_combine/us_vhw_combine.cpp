@@ -519,7 +519,7 @@ void US_vHW_Combine::save( void )
    QString fdir     = US_Settings::reportDir() + "/" + runID;
    QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
-   QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.dat";
+   QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.csv";
    QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";
    QString plotFile = fdir + "/" + fnamsvg;
    QString dataFile = fdir + "/" + fnamdat;
@@ -1080,6 +1080,7 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    QTextStream tsd( &dfile );
 
    int nplots = pdistrs.size();
+   int lastp  = nplots - 1;
    int maxnvl = 0;
    line       = "";
 
@@ -1089,9 +1090,10 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
       QString pd = pdisIDs[ ii ];
       pdlong << pd;
       pd         = pd.section( ":", 0, 0 ).simplified();
-      line      += pd + ".X " + pd + ".Y"; // X,Y header entries for contributor
-      if ( ii < ( nplots - 1 ) )
-         line     += "  ";
+      line      += "\"" + pd + ".X\",\"" + pd + ".Y\""; // X,Y header entries for contributor
+
+      if ( ii < lastp )
+         line     += ",";
       else
          line     += "\n";
    }
@@ -1109,9 +1111,15 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
          double sval = xx[ kk ];
          double boun = yy[ kk ];
 
-         line       += QString().sprintf( "%12.5f %10.5f", sval, boun );
+         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\"", sval, boun );
+         dat.replace( " ", "" );
+         line       += dat;
+
+         if ( ii < lastp )
+            line     += ",";
+         else
+            line     += "\n";
       }
-      line       += "\n";
       tsd << line;                           // Write data line
    }
 

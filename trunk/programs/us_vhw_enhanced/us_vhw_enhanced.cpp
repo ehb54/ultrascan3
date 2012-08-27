@@ -272,8 +272,8 @@ DbgLv(1) << " valueCount totalCount" << valueCount << totalCount;
 DbgLv(1) << "  scanCount divsCount" << scanCount << divsCount;
 DbgLv(1) << "  lscnCount" << lscnCount;
 
-   bool mo_plats  = ck_modelpl->isChecked() && have_model();
-   bool vhw_enh   = ck_vhw_enh->isChecked();
+   mo_plats    = ck_modelpl->isChecked() && have_model();
+   vhw_enh     = ck_vhw_enh->isChecked();
 
    if (  mo_plats )
    {  // Calculate plateaus from a model
@@ -295,6 +295,8 @@ DbgLv(1) << "  lscnCount" << lscnCount;
    bdiff_sedc = sedcoeff_intercept();
 
    bdiff_coef = back_diff_coeff( bdiff_sedc );
+
+   init_partials();
 
    if ( vhw_enh )
    {  // Calculate all plot points using enhanced method
@@ -410,8 +412,8 @@ DbgLv(1) << "  lscnCount" << lscnCount;
 
       if ( count > 1 )
       {  // Fit a line to the scan points in a division
-if(jj>40)
-DbgLv(1) << "plot2 jj count  y0 yn" << jj << count << y[0] << y[count-1];
+if(jj<3||jj>(divsCount-9))
+DbgLv(1) << "plot2 jj count" << jj << count << "  y0 yn" << y[0] << y[count-1];
          double sigma = 0.0;
          double correl;
 
@@ -427,8 +429,8 @@ DbgLv(1) << "plot2 jj count  y0 yn" << jj << count << y[0] << y[count-1];
             y[ 1 ] = 0.0;
             x[ 1 ] = ( slope != 0.0 ? ( -y[ 0 ] / slope ) : xmax );
          }
-if(count==6||intcept<0.0)
-DbgLv(1) << "plot2 jj x0 y0 x1 y1" << jj << x[0] << y[0] << x[1] << y[1];
+if(jj<3||jj>(divsCount-9))
+DbgLv(1) << "plot2 jj" << jj << "x0 y0 x1 y1" << x[0] << y[0] << x[1] << y[1];
 
          curve  = us_curve( data_plot1, tr( "Fitted Line %1" ).arg( jj ) );
          curve->setPen( QPen( Qt::yellow ) );
@@ -870,12 +872,10 @@ void US_vHW_Enhanced::div_seds( )
    int     kscnu    = 0;  // Count of scans of div not affected by diffusion
    double  bdifcsqr = sqrt( bdiff_coef );  // Sqrt( diff_coeff ) used below
    double  pconc;
-   double  cconc;
    double  mconc;
    bdtoler          = ct_tolerance->value();
    valueCount       = edata->x.size();
    double  bottom   = edata->x[ valueCount - 1 ].radius;
-   bool    vhw_enh  = ck_vhw_enh->isChecked();
 
    // Do division-1 determination of base
 
@@ -890,6 +890,7 @@ void US_vHW_Enhanced::div_seds( )
       double  omegasq;   // Omega squared
 
       int js      = liveScans[ ii ];
+DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
       dscan       = &edata->scanData[ js ];
       omega       = dscan->rpm * M_PI / 30.0;
       omegasq     = omega * omega;
@@ -960,6 +961,7 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
 //DbgLv(1) << "div_sed div " << jj+1;
 
       kscnu      = nscnu;
+DbgLv(1) << "FIT jj" << jj << "nscnu" << nscnu;
 
       // Accumulate y values for this division, across used scans
 
@@ -968,18 +970,27 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
       { // Accumulate concentration, sed.coeff. for all scans, this div
          ii         = liveScans[ kk ];            // Scan index
          dscan      = &edata->scanData[ ii ];     // Scan pointer
+DbgLv(1) << "FIT  kk ii" << kk << ii;
 //DbgLv(3) << "  DS:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-         range      = scPlats[ kk ] - baseline;
-         pconc      = baseline + range * conjFact;
 
          if ( vhw_enh )
-            cpij       = CPijs[ kk ][ jj ];  // Partial concen (increment)
+         {
+DbgLv(1) << "FIT   CPijs sz" << CPijs.size();
+DbgLv(1) << "FIT   CPijs[0] sz" << CPijs[0].size();
+DbgLv(1) << "FIT   mconcs sz" << mconcs.size();
+DbgLv(1) << "FIT   mconcs[0] sz" << mconcs[0].size();
+            cpij       = CPijs [ kk ][ jj ];    // Partial concen (increment)
+            mconc      = mconcs[ kk ][ jj ];    // Mid-div concentration
+         }
          else
-            cpij       = range * rngjFact;
+         {
+            range      = scPlats[ kk ] - baseline;    // Scan's range
+            pconc      = baseline + range * conjFact; // Base conc. of Div
+            cpij       = range * rngFact;       // Partial concentration
+            mconc      = pconc + cpij * 0.5;    // Mid-div concentration
+         }
 
-DbgLv(1) << " jj" << jj << "kscnu" << kscnu << "pconc cpij" << pconc << cpij;
-         cconc      = pconc + cpij;               // Curr concen (plateau)
-         mconc      = ( cconc + pconc ) * 0.5;    // Mid div concentration
+DbgLv(1) << "FIT    kk jj" << kk << jj << "mconc cpij" << mconc << cpij;
          omega      = dscan->rpm * M_PI / 30.0;   // Omega
          oterm      = ( dscan->seconds - time_correction ) * omega * omega;
 //DbgLv(3) << "  DS:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -993,12 +1004,12 @@ DbgLv(1) << " jj" << jj << "kscnu" << kscnu << "pconc cpij" << pconc << cpij;
             yy[ kk ]   = SEDC_NOVAL;
 DbgLv(1) << " div kscnu" << jj+1 << kscnu
    << " radC radD" << radC << radD << " mconc sedcc" << mconc << yy[kk];
-//if(kscnu==0) DbgLv(2) << "   pc cc cpij mm" << pconc << cconc << cpij << mm;
+//if(kscnu==0) DbgLv(2) << "   pc mc cpij mm" << pconc << mconc << cpij << mm;
             break;
          }
 //DbgLv(3) << "  DS:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 //if ( kk < 2 || kk > (nscnu-3) )
-//DbgLv(2) << "div scn " << jj+1 << ii+1 << " pconc cconc " << pconc << cconc;
+//DbgLv(2) << "div scn " << jj+1 << ii+1 << " pconc mconc " << pconc << mconc;
 
       }
 //DbgLv(2) << " nscnu yy0 yyn " << nscnu << yy[0] << yy[kscnu-1];
@@ -1953,8 +1964,6 @@ void US_vHW_Enhanced::plot_refresh()
 void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
 {
    int     totalCount;
-
-   QVector< double >  div_pconcs;
    double  cconc;
    double  pconc;
    double  mconc;
@@ -1964,20 +1973,9 @@ void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
-   CPijs.clear();
 	C0         = 0.0;
 	Swavg      = 0.0;
 
-   for ( int ii = 0; ii < lscnCount; ii++ )
-   {  // Populate partial concentration lists
-      range      = scPlats[ ii ] - baseline;
-      cinc       = range * boundPct * divfac;
-      div_pconcs.clear();
-      for ( int jj = 0; jj < divsCount; jj++ )
-         div_pconcs << cinc;
-      CPijs << div_pconcs;
-   }
-   //calc_backdiff_line();
    div_seds();
 
    for ( int ii = 0; ii < totalCount; ii++ )
@@ -1994,7 +1992,6 @@ void US_vHW_Enhanced::vhw_calcs_standard( double* ptx, double* pty )
    {
       range          = scPlats[ ii ] - baseline;
       cinc           = range * boundPct * divfac;
-      div_pconcs.clear();
       int js         = liveScans[ ii ];
       dscan          = &edata->scanData[ js ];
       double  timev  = dscan->seconds - time_correction;
@@ -2042,6 +2039,9 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
 {
    int     count       = 0;
    int     totalCount;
+   double  mconc;
+   double  eterm;
+   double  oterm;
 
    scanCount  = edata->scanData.size();
    valueCount = edata->x.size();
@@ -2049,86 +2049,13 @@ void US_vHW_Enhanced::vhw_calcs_enhanced( double* ptx, double* pty )
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
 
-   QVector< double >  div_pconcs;
-   double  cconc;
-   double  pconc;
-   double  mconc;
-   double  cinc;
-   double  cinch;
-   double  eterm;
-   double  oterm;
-   CPijs.clear();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
    correc     = solution.s20w_correction * 1.0e13;
    omega      = edata->scanData[ 0 ].rpm * M_PI / 30.0;
-   CPijs.resize( lscnCount );
-
-   // Initialize plateau values for components of scans
 
 //DbgLv(3) << "DP:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   for ( int ii = 0; ii < lscnCount; ii++ )
-   {
-      int js     = liveScans[ ii ];
-      dscan      = &edata->scanData[ js ];
-
-      range      = scPlats[ ii ] - baseline;
-      span       = range * boundPct;
-      basecut    = baseline + range * positPct;
-      platcut    = basecut  + span;
-      cconc      = basecut;
-      pconc      = basecut;
-      mconc      = basecut;
-      cinc       = span * divfac;
-      cinch      = cinc / 2.0;
-      omega      = dscan->rpm * M_PI / 30.0;
-      oterm      = ( dscan->seconds - time_correction ) * omega * omega;
-      eterm      = -2.0 * oterm / correc;
-      c0term     = ( C0 - baseline ) * boundPct * divfac;
-      sumcpij    = 0.0;
-
-      CPijs[ ii ].resize( divsCount );
-
-//DbgLv(3) << "DP:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      for ( int jj = 0; jj < divsCount; jj++ )
-      {  // Calculate partial plateaus
-         pconc      = cconc;              // prev (baseline) div concentration
-         cconc     += cinc;               // curr (plateau) div concentration
-         mconc      = pconc + cinch;      // mid div concentration
-
-         // Get sedimentation coefficient for concentration
-         sedc       = sed_coeff( mconc, oterm );
-
-         // Calculate the partial concentration (cpij) for this division
-         cpij       = ( sedc > 0.0 ) ?
-                      ( c0term * exp( sedc * eterm ) ) :
-                      cinc;
-//DbgLv(1) << " scn div cinc cpij " << ii+1 << jj+1 << cinc << cpij;
-//DbgLv(1) << "  sedc eterm eso " << sedc << eterm << (eterm*sedc);
-
-         // Update cpij sum and add to divisions list for scan
-         sumcpij          += cpij;  // Add to sum of partial concentrations
-         CPijs[ ii ][ jj ] = cpij;  // Update list of partial concentrations
-DbgLv(1) << "CPf: scn div" << ii+1 << jj+1 << " cinc cpij" << cinc << cpij
- << " sumcpij sedc" << sumcpij << sedc;
-      }
-//DbgLv(3) << "DP:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-
-      // Get span-minus-sum_cpij and divide by number of divisions
-      sdiff    = ( span - sumcpij ) * divfac;
-DbgLv(1) << "   sumcpij span " << sumcpij << span
- << " sumcpij/span " << (sumcpij/span);
-
-      for ( int jj = 0; jj < divsCount; jj++ )
-      {  // Spread the difference to each partial plateau concentration
-         CPijs[ ii ][ jj ] += sdiff;
-      }
-
-   }
-
-   // Fit a line to division 1 and use its intercept to calculate the
-   //  back diffusion coefficient
 
    // Iterate to adjust plateaus until none needed or max iters reached
 
@@ -2147,9 +2074,9 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 
 //DbgLv(3) << "DP:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       div_seds();
+
 //DbgLv(3) << "DP:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       int divsUsed   = dseds.size();
-      CPijs.clear();
 
       // Reset division plateaus
 
@@ -2157,17 +2084,12 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
       {
          int js   = liveScans[ ii ];
          dscan    = &edata->scanData[ js ];
-         range    = scPlats[ ii ] - baseline;
-         span     = range * boundPct;
-         basecut  = baseline + range * positPct;
-         platcut  = basecut  + span;
-         sumcpij  = 0.0;
          omega    = dscan->rpm * M_PI / 30.0;
          oterm    = ( dscan->seconds - time_correction ) * omega * omega;
          eterm    = -2.0 * oterm / correc;
          c0term   = ( C0 - baseline ) * boundPct * divfac;
-         cinc     = span * divfac;      // Avg. concentration increment
-         QVector< double > wk_pconcs( divsCount );
+         span     = ( scPlats[ ii ] - baseline ) * boundPct;
+         sumcpij  = 0.0;
 
          // Split the difference between divisions
 
@@ -2176,23 +2098,19 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
             sedc     = ( jj < divsUsed ) ? dseds[ jj ] : SEDC_NOVAL;
             cpij     = ( sedc != SEDC_NOVAL ) ?
                        ( c0term * exp( sedc * eterm ) ) :
-                       cinc;
-            wk_pconcs[ jj ] = cpij;
+                       CPijs[ ii ][ jj ];
+            CPijs[ ii ][ jj ] = cpij;
             sumcpij += cpij;
 //DbgLv(1) << "    div " << jj+1 << "  tcdps cpij " << tcpds.at(jj) << cpij;
          }
 
          // Set to split span-sum difference over each division
-         div_pconcs.clear();
          sdiff    = ( span - sumcpij ) * divfac;
 
          for ( int jj = 0; jj < divsCount; jj++ )
          {  // Spread the difference to each partial plateau concentration
-            cpij     = wk_pconcs[ jj ] + sdiff;
-            div_pconcs << cpij;
+            CPijs[ ii ][ jj ] += sdiff;
          }
-
-         CPijs << div_pconcs;       // Replace scan's list of div. Cp vals
 
          avgdif  += qAbs( sdiff );  // Sum of difference magnitudes
          count++;
@@ -2200,6 +2118,9 @@ DbgLv(1) << "   iter scn " << iter << ii+1 << " sumcpij span "
    << sumcpij << span << "  sdiff sumabsdif" << sdiff << avgdif;
       }
 //DbgLv(3) << "DP:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+      // Insure we have mid-division concentrations for newest partials
+      update_mid_concs();
 
       avgdif  /= (double)count;     // Average of difference magnitudes
 DbgLv(1) << " iter" << iter << " avg(abs(sdiff))" << avgdif;
@@ -2238,20 +2159,14 @@ DbgLv(1) << "scn liv" << ii+1 << kl
 
       ptx[ ii ]  = timex;                 // Save corrected time and accum max
 
-      range      = scPlats[ ii ] - baseline;
-      cconc      = baseline + range * positPct; // Initial conc for span
-      basecut    = cconc;
       omega      = dscan->rpm * M_PI / 30.0;
       oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
 
       for ( int jj = 0; jj < divsCount; jj++ )
       {  // walk through division points; get sed. coeff. by place in readings
-         pconc       = cconc;               // Div base
-         cpij        = CPijs[ ii ][ jj ];   // Div partial concentration
-         cconc       = pconc + cpij;        // Absolute concentration
-         mconc       = pconc + cpij * 0.5;  // Mid div concentration
+         mconc        = mconcs[ ii ][ jj ];  // Mid div concentration
 
-         sedc        = sed_coeff( mconc, oterm, &divrad, NULL );
+         sedc         = sed_coeff( mconc, oterm, &divrad, NULL );
 
          if ( divrad > bdrad )
          {  // Mark a point to be excluded by back-diffusion
@@ -2259,7 +2174,7 @@ DbgLv(1) << "scn liv" << ii+1 << kl
 DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          }
 
-         // Y value of point is sedcoeff; accumulate y max
+         // Y value of point is sedcoeff
          pty[ kk++ ] = sedc;
       }
    }
@@ -2467,6 +2382,66 @@ void US_vHW_Enhanced::live_scans()
          liveScans << ii;      // Save original scan index
          lscnCount++;          // Bump count of live scans
       }
+   }
+}
+
+// Build initial versions of partial-conc and mid-div conc vectors
+void US_vHW_Enhanced::init_partials()
+{
+   double  mconc;              // Mid-division concentration
+   double  cinc;               // Constant division concentration increment
+   divsCount  = qRound( ct_division->value() );
+   divfac     = 1.0 / (double)divsCount;
+   CPijs .clear();
+   mconcs.clear();
+
+   for ( int ii = 0; ii < lscnCount; ii++ )
+   {  // Populate partial concentration lists
+      QVector< double >  div_pconcs;
+      QVector< double >  div_mconcs;
+      range      = scPlats[ ii ] - baseline;    // Range for this scan
+      cinc       = range * boundPct * divfac;   // Conc. incr. this scan
+      mconc      = baseline + range * positPct + cinc * 0.5; // 1st Mid-div conc
+      div_pconcs.clear();
+      div_mconcs.clear();
+
+      for ( int jj = 0; jj < divsCount; jj++ )
+      {
+         div_pconcs << cinc;   // Save partial concentration
+         div_mconcs << mconc;  // Save mid-div concentration
+         mconc += cinc;        // Bump to next division
+      }
+
+      CPijs  << div_pconcs;    // Save a vector for each scan
+      mconcs << div_mconcs;
+   }
+}
+
+// Update mid-division concentrations
+void US_vHW_Enhanced::update_mid_concs()
+{
+   double  bconc;    // Base concentration of a division
+   double  mconc;    // Mid concentration of a division
+   double  cpij;     // Partial concentration of a division
+   mconcs.clear();   // Clear out old mid-division concentrations
+
+   for ( int ii = 0; ii < lscnCount; ii++ )
+   {  // Populate mid-division concentration vector of each scan
+      QVector< double >  div_mconcs;
+      range      = scPlats[ ii ] - baseline;
+      bconc      = baseline + range * positPct;  // Division 1 base conc.
+      div_mconcs.clear();
+
+      for ( int jj = 0; jj < divsCount; jj++ )
+      {  // Determine new concentrations in divisions of the scan
+         cpij       = CPijs[ ii ][ jj ];   // Partial concentration of div.
+         mconc      = bconc + cpij * 0.5;  // Mid-division concentration
+         bconc     += cpij;                // Next division base
+         div_mconcs << mconc;              // Save new mid-div concentration
+DbgLv(1) << "UPD: mconc cpij" << mconc << cpij << "ii jj" << ii << jj;
+      }
+
+      mconcs << div_mconcs;    // Save a vector for each scan
    }
 }
 

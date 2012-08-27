@@ -262,7 +262,7 @@ DbgLv(1) << "ScDB:  ntrip" << ntrip;
             QString fname = doc->filename;
 
 DbgLv(1) << "ScDB:    kk fname" << kk << fname;
-            if ( fname.contains( "distrib.dat" ) )
+            if ( fname.contains( "distrib.csv" ) )
                ndats++;
          }
       }
@@ -310,8 +310,8 @@ DbgLv(1) << "ScLo:  subdir" << subdir << "aucfiles count" << aucfiles.count();
       count_allr++;
 
       datfilt.clear();
-      datfilt <<  "vHW." + tripl + ".*distrib.dat"
-              <<  "vHW." + tripl + ".*envelope.dat";
+      datfilt <<  "vHW." + tripl + ".*distrib.csv"
+              <<  "vHW." + tripl + ".*envelope.csv";
       QStringList datfiles = QDir( subdir ).entryList( 
             datfilt, QDir::Files, QDir::Name );
 DbgLv(1) << "ScLo:    datfilt0" << datfilt[0];

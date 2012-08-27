@@ -292,7 +292,7 @@ void US_SecondMoment::save( void )
    
    QString plot1File = filebase + "2ndmoment.svg";
    QString plot2File = filebase + "velocity.svg";
-   QString textFile  = filebase + "2ndmoment.dat";
+   QString textFile  = filebase + "2ndmoment.csv";
    QString htmlFile  = filebase + "report.html";
 
    // Write main report
@@ -328,6 +328,9 @@ void US_SecondMoment::save( void )
       return;
    }
 
+   const QString sep( "\",\"" );
+   const QString quo( "\"" );
+   const QString eln( "\"\n" );
    QTextStream ts_data( &sm_data );
 
    int scanCount = d->scanData.size();
@@ -337,13 +340,16 @@ void US_SecondMoment::save( void )
       ts_data << "No valid scans\n";
    else
    {
-      int count = 0;
+      ts_data << quo << "Count" << sep << "Points" << sep << "Seconds" << eln;
+      int count = 1;
       for ( int i = excludes; i < scanCount; i++ )
       {
          if ( excludedScans.contains( i ) ) continue;
 
-         ts_data << count + 1 << "\t" << smPoints[ i ] 
-                 << "\t" << smSeconds[ i ] << "\n";
+         QString strK = QString::number( count                  ).simplified();
+         QString strP = QString::number( smPoints [ i ], 'f', 5 ).simplified();
+         QString strS = QString::number( smSeconds[ i ], 'f', 5 ).simplified();
+         ts_data << quo << strK << sep << strP << sep << strS << eln;
          count++;
       }
    }
