@@ -6,6 +6,7 @@
 #include "us_distrib_plot.h"
 #include "us_editor.h"
 #include "us_math2.h"
+#include "us_model.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
@@ -128,6 +129,10 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       US_DataIO2::EditedData*      edata;      // Current triple edited data
       US_DataIO2::Scan*            dscan;      // Current data scsan
 
+      US_Model                     model;      // Current loaded model
+
+      int kcalls[20]; // Timing counts
+      int kmsecs[20];
    private slots:
 
       void load(        void );
@@ -166,7 +171,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void plot_refresh   ( void );
       void vhw_calcs_enhanced( double*, double* );
       void vhw_calcs_standard( double*, double* );
-      void calc_backdiff_line  ( void );
       bool have_model          ( void );
       void vert_exclude_lines  ( void );
       void exclude_from        ( double );
