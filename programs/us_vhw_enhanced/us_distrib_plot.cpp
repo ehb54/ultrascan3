@@ -30,7 +30,9 @@ DbgLv(1) << "DisPl: divsCount" << divsCount;
 DbgLv(1) << "DisPl: isedsSize " << dsedcs.size() << divsedcs.size();
 DbgLv(1) << "DisPl: fra0 fran" << bfracs[0] << bfracs[divsCount-1];
 DbgLv(1) << "DisPl: sed0 sedn" << dsedcs[0] << dsedcs[divsCount-1];
-DbgLv(1) << "DisPl: ised0 isedn" << divsedcs[0] << divsedcs[divsCount-1];
+DbgLv(1) << "DisPl: sed1 sed-" << dsedcs[1] << dsedcs[divsCount-2];
+DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
+//DbgLv(1) << "DisPl: ised0 isedn" << divsedcs[0] << divsedcs[divsCount-1];
 
    int row   = 0;
 

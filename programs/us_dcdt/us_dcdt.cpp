@@ -431,7 +431,7 @@ void US_Dcdt::save( void )
    QString plot2File = filebase + "x-to-radius.svg";
    QString plot3File = filebase + "x-to-S.svg";
    QString plot4File = filebase + "average-S.svg";
-   QString textFile  = filebase + "average-S.dat";
+   QString textFile  = filebase + "average-S.csv";
 
    // Write main report file
    // Write report
@@ -490,9 +490,17 @@ void US_Dcdt::save( void )
    }
 
    QTextStream ts_data( &dcdt_data );
+   const QString sep( "\",\"" );
+   const QString quo( "\"" );
+   const QString eln( "\"\n" );
+   ts_data << "\"average.S\",\"average.Dcdt\"\n";
 
    for ( int i = 0; i < arrayLength; i++ )
-      ts_data << avgS   [ i ] << "\t" << avgDcdt[ i ] << endl;
+   {
+      QString strS = QString::number( avgS   [ i ], 'f', 6 ).simplified();
+      QString strD = QString::number( avgDcdt[ i ], 'e', 5 ).simplified();
+      ts_data << quo << strS << sep << strD << eln;
+   }
 
    dcdt_data.close();
 

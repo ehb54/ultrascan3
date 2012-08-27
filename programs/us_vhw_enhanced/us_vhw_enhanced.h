@@ -97,6 +97,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       bool          groupSel;
       bool          forcePlot;
       bool          skipPlot;
+      bool          mo_plats;
+      bool          vhw_enh;
 
       QString       run_name;
       QString       cell;
@@ -105,22 +107,23 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QString       runID;
       QString       editID;
 
-      QVector< double >            aseds;      // all division sedcoeff values
-      QVector< double >            dseds;      // division sedcoeff intercepts
-      QVector< double >            dslos;      // division slope values
-      QVector< double >            dsigs;      // division sigma values
-      QVector< double >            dcors;      // division correlation values
-      QVector< int >               dpnts;      // division fitted line points
+      QVector< double >            aseds;      // All division sedcoeff values
+      QVector< double >            dseds;      // Division sedcoeff intercepts
+      QVector< double >            dslos;      // Division slope values
+      QVector< double >            dsigs;      // Division sigma values
+      QVector< double >            dcors;      // Division correlation values
+      QVector< int >               dpnts;      // Division fitted line points
 
       QVector< double >            scPlats;    // Scan plateaus current triple
       QVector< int >               liveScans;  // Vector of live-scan indexes
       QVector< bool >              saved;      // List by triple of saved flags
       QVector< QVector< double > > CPijs;      // CPij vecs, divs in scans
-      QVector< double >            bdrads;     // back-diffusion radii
-      QVector< double >            bdcons;     // back-diffusion concentrations
+      QVector< QVector< double > > mconcs;     // Mid-div concs, divs in scans
+      QVector< double >            bdrads;     // Back-diffusion radii
+      QVector< double >            bdcons;     // Back-diffusion concentrations
 
-      QList< double >              groupxy;    // group select pick coordinates
-      QList< GrpInfo >             groupdat;   // selected group info structures
+      QList< double >              groupxy;    // Group select pick coordinates
+      QList< GrpInfo >             groupdat;   // Selected group info structures
 
       US_DataIO2::EditedData*      edata;      // Current triple edited data
       US_DataIO2::Scan*            dscan;      // Current data scsan
@@ -169,6 +172,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void exclude_from        ( double );
       void exclude_to          ( double );
       void live_scans          ( void );
+      void init_partials       ( void );
+      void update_mid_concs    ( void );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };
