@@ -42,8 +42,7 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
 
    // set up the GUI
    setPalette( US_GuiSettings::frameColor() );
-   setWindowTitle(
-      tr( "Compare Experimental Data to Sums of Finite Element Solutions" ) );
+   setWindowTitle( tr( "Export Data in Legacy (Beckman) Format" ) );
 
    mainLayout      = new QHBoxLayout( this );
    mainLayout->setSpacing        ( 2 );
@@ -70,13 +69,13 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
 
    connect( dkdb_cntrls,  SIGNAL( changed(      bool ) ),
             this,         SLOT( update_disk_db( bool ) ) );
-   connect( pb_load,      SIGNAL( clicked() ),
-            this,         SLOT(   load() ) );
-   connect( pb_details,   SIGNAL( clicked() ),
-            this,         SLOT(   details() ) );
-   connect( pb_save,      SIGNAL( clicked() ),
-            this,         SLOT(   save_data() ) );
-   connect( pb_view,      SIGNAL( clicked() ),
+   connect( pb_load,      SIGNAL( clicked()     ),
+            this,         SLOT(   load()        ) );
+   connect( pb_details,   SIGNAL( clicked()     ),
+            this,         SLOT(   details()     ) );
+   connect( pb_save,      SIGNAL( clicked()     ),
+            this,         SLOT(   export_data() ) );
+   connect( pb_view,      SIGNAL( clicked()     ),
             this,         SLOT(   view_report() ) );
 
    pb_load     ->setEnabled( true );
@@ -85,9 +84,9 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    pb_view     ->setEnabled( false );
 
    int row  = 0;
+   analysisLayout->addLayout( dkdb_cntrls, row++, 0, 1, 2 );
    analysisLayout->addWidget( pb_load,     row,   0, 1, 1 );
    analysisLayout->addWidget( pb_details,  row++, 1, 1, 1 );
-   analysisLayout->addLayout( dkdb_cntrls, row++, 0, 1, 2 );
    analysisLayout->addWidget( pb_save,     row,   0, 1, 1 );
    analysisLayout->addWidget( pb_view,     row++, 1, 1, 1 );
 
@@ -96,6 +95,7 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    QLabel* lb_triples = us_banner( tr( "Cell / Channel / Wavelength" ) );
    QLabel* lb_id      = us_label ( tr( "Run ID:" ) );
    QLabel* lb_temp    = us_label ( tr( "Avg. Temp.:" ) );
+   QLabel* lb_stat    = us_banner( tr( "Export Status" ) );
 
    le_id      = us_lineedit( "", -1, true );
    le_temp    = us_lineedit( "", -1, true );
@@ -105,8 +105,13 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    int fontHeight = fm.lineSpacing();
 
    te_desc    = us_textedit();
-   te_desc->setMaximumHeight( fontHeight * 1 + 12 );  // Add for border
+   te_desc->setMaximumHeight( fontHeight * 3 + 12 );  // Add for border
    us_setReadOnly( te_desc, true );
+
+   te_stat    = us_textedit();
+   te_stat->setMaximumHeight( fontHeight * 3 + 12 );  // Add for border
+   te_stat->setTextColor( Qt::blue );
+   us_setReadOnly( te_stat, true );
 
    lw_triples = us_listwidget();
    lw_triples->setMaximumHeight( fontHeight * 8 + 12 );
@@ -117,9 +122,11 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    runInfoLayout->addWidget( le_id     , row++, 1, 1, 3 );
    runInfoLayout->addWidget( lb_temp   , row,   0, 1, 1 );
    runInfoLayout->addWidget( le_temp   , row++, 1, 1, 3 );
-   runInfoLayout->addWidget( te_desc   , row,   0, 2, 4 ); row += 2;
+   runInfoLayout->addWidget( te_desc   , row,   0, 3, 4 ); row += 3;
    runInfoLayout->addWidget( lb_triples, row++, 0, 1, 4 );
    runInfoLayout->addWidget( lw_triples, row++, 0, 8, 4 ); row += 8;
+   runInfoLayout->addWidget( lb_stat   , row++, 0, 1, 4 );
+   runInfoLayout->addWidget( te_stat   , row,   0, 1, 4 ); row += 3;
 
    // Plots
    plotLayout2 = new US_Plot( data_plot2,
@@ -213,6 +220,10 @@ void US_ExportLegacy::load( void )
    le_id  ->setText( edata->runID );
    te_desc->setText( edata->description );
    le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
+   if ( ntriples > 1 )
+      te_stat->setText( tr( "%1 input triples" ).arg( ntriples ) );
+   else
+      te_stat->setText( tr( "1 input triple" ) );
 
    lw_triples->setCurrentRow( 0 );
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
@@ -316,39 +327,365 @@ void US_ExportLegacy::data_plot( void )
    }
 
    data_plot2->replot();
-
-   adjustSize();
 }
 
 // Save the report and image data
-void US_ExportLegacy::save_data( void )
+void US_ExportLegacy::export_data( void )
 {
    QStringList files;
-   int drow = lw_triples->currentRow();
-   QString legadir( US_Settings::dataDir() + "/legacy" );
+   QString     dtype    = QString( QChar( rdata->type[ 0 ] ) )
+                        + QString( QChar( rdata->type[ 1 ] ) );
+   QString     legadir( US_Settings::dataDir() + "/legacy" );
+
+   // Insure that */data/legacy/runid exists
    mkdir( legadir, edata->runID );
-   QString tripnode = QString( triples.at( drow ) ).replace( " / ", "" );
-   QString basename = legadir + "/" + edata->runID + "/" + "00001.RA1";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   files << "00001.RA1" << "00020.RA1";
-   //QTextStream ts( &rep_f );
+   if ( QString( dtype ).mid( 1 ) == "I" )
+   {  // Export intensity
+      exp_intensity( files );
+   }
+   else if ( dtype == "IP" )
+   {  // Export interference
+      exp_interference( files );
+   }
+   else
+   {  // Export most types of data
+      exp_mosttypes( files );
+   }
 
-   //rep_f.close();
+   QApplication::restoreOverrideCursor();
 
    // report the files created
    int nfiles    = files.count();
 
-   QString umsg  = tr( "In directory " ) + legadir + "/ ,\n"
-                 + tr( "in subdirectory " ) + edata->runID + "/ ,\n"
-                 + tr( "wrote %1 files:\n" ).arg( nfiles );
+   QString umsg  = tr( "In directory \"" ) + legadir + "\",\n"
+                 + tr( "   in subdirectory \"" ) + edata->runID + "\",\n"
+                 + tr( "   %1 files were written:\n" ).arg( nfiles );
    umsg += files[ 0 ] + "\n...\n" + files[ nfiles - 1 ] + "\n";
 
 //*TEMP
-umsg += "NO - THE FILE WRITER IS CURRENTLY INCOMPLETE";
+//umsg += "\nNO - THE FILE WRITER IS CURRENTLY INCOMPLETE";
 //*TEMP
 
-   //QMessageBox::information( this, tr( "Successfully Written" ), umsg );
-   QMessageBox::information( this, tr( "NOT Successfully Written" ), umsg );
+   QMessageBox::information( this, tr( "Successfully Written" ), umsg );
+   //QMessageBox::information( this, tr( "NOT Successfully Written" ), umsg );
+
+   int ntriples   = triples.size();
+   umsg.clear();
+   if ( ntriples > 1 )
+      umsg = tr( "From %1 input triples, legacy output\n" ).arg( ntriples );
+   else
+      umsg = tr( "From 1 input triple, legacy output\n" );
+
+   umsg += tr( "was written to %1 files." ).arg( nfiles );
+
+   te_stat->setText( umsg );
+}
+
+// Export most types of data (1 channel per file set, 3 columns per point)
+void US_ExportLegacy::exp_mosttypes( QStringList& files )
+{
+   edata       = &dataList[ 0 ];
+   rdata       = &rawList [ 0 ];
+   QString legadir( US_Settings::dataDir() + "/legacy" );
+   mkdir( legadir, edata->runID );
+   QString odirname = legadir + "/" + edata->runID + "/";
+   QString ofname   = "00001.RA1";
+   QString ofpath   = odirname + ofname;
+   int     ntriples = triples.size();
+
+   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   QString ddesc    = rdata->description + "\n";
+   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
+                    + QString( QChar( rdata->type[ 1 ] ) );
+   QString htype    = QString( "U" );
+           htype    = ( dtype == "RA" ) ? "R" : htype;
+           htype    = ( dtype == "RI" ) ? "I" : htype;
+           htype    = ( dtype == "IP" ) ? "P" : htype;
+           htype    = ( dtype == "FI" ) ? "F" : htype;
+           htype    = ( dtype == "WA" ) ? "W" : htype;
+           htype    = ( dtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "dtype" << dtype << "htype" << htype;
+   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+   int     hcell    = rdata->cell;
+   double  htemp    = dscan->temperature;
+   int     hrpm     = qRound( dscan->rpm );
+   int     hsecs    = qRound( dscan->seconds );
+   double  homeg    = dscan->omega2t;
+   double  hradi    = dscan->wavelength;
+   int     hwavl    = qRound( dscan->wavelength );
+   int     hcoun    = 3;
+   QString oline;
+   int     nscan    = rdata->scanData.size();
+   int     nvalu    = rdata->x.size();
+   QString fext     = "." + dtype + QString::number( hcell );
+
+   for ( int drow = 0; drow < ntriples; drow++ )
+   {  // Output a set of files for each input triple
+      edata  = &dataList[ drow ];
+      rdata  = &rawList [ drow ];
+      hcell  = rdata->cell;
+      fext   = "." + dtype + QString::number( hcell );
+      for ( int ii = 0; ii < nscan; ii++ )
+      {  // Output a file for each scan
+         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofpath = odirname + ofname;
+         dscan  = &rdata->scanData[ ii ];
+         htemp  = dscan->temperature;
+         hrpm   = dscan->rpm;
+         hsecs  = qRound( dscan->seconds );
+         homeg  = dscan->omega2t;
+         hwavl  = qRound( dscan->wavelength );
+         hradi  = dscan->wavelength;
+         oline  = htype
+                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
+                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+         oline  = oline + ( wldata
+                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+DbgLv(1) << "OFNAME" << ofname;
+
+         QFile legfile( ofpath );
+
+         if ( ! legfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         {
+            qDebug() << "*ERROR* Opening file" << ofpath;
+            continue;
+         }
+
+         QTextStream ts( &legfile );
+         ts << ddesc;
+         ts << oline;
+DbgLv(1) << "  LINE:" << QString(ddesc).replace("\n","");
+DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+         for ( int jj = 0; jj < nvalu; jj++ )
+         {  // Output a line for each data point
+            double  radi  = rdata->radius( jj );
+            double  valu  = rdata->value ( ii, jj );
+            double  stdd  = dscan->readings[ jj ].stdDev;
+            QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
+               radi, valu, stdd )
+               .replace( "E+", "E+00" ).replace( "E-", "E-00" );
+if (jj < 3  || jj > (nvalu-4))
+ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+            ts << oline;
+         }  // END: values loop
+
+         files << ofname;
+         legfile.close();
+      }  // END: scan loop
+   }
+}
+
+// Special export of intensity data (2 channels at a time)
+void US_ExportLegacy::exp_intensity( QStringList& files )
+{
+   edata       = &dataList[ 0 ];
+   rdata       = &rawList [ 0 ];
+   QString legadir( US_Settings::dataDir() + "/legacy" );
+   mkdir( legadir, edata->runID );
+   QString odirname = legadir + "/" + edata->runID + "/";
+   QString ofname   = "00001.RA1";
+   QString ofpath   = odirname + ofname;
+   int     ntriples = triples.size();
+
+   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   QString ddesc    = rdata->description + "\n";
+   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
+                    + QString( QChar( rdata->type[ 1 ] ) );
+   QString htype    = QString( "U" );
+           htype    = ( dtype == "RA" ) ? "R" : htype;
+           htype    = ( dtype == "RI" ) ? "I" : htype;
+           htype    = ( dtype == "IP" ) ? "P" : htype;
+           htype    = ( dtype == "FI" ) ? "F" : htype;
+           htype    = ( dtype == "WA" ) ? "W" : htype;
+           htype    = ( dtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "dtype" << dtype << "htype" << htype;
+   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+   int     hcell    = rdata->cell;
+   double  htemp    = dscan->temperature;
+   int     hrpm     = qRound( dscan->rpm );
+   int     hsecs    = qRound( dscan->seconds );
+   double  homeg    = dscan->omega2t;
+   double  hradi    = dscan->wavelength;
+   int     hwavl    = qRound( dscan->wavelength );
+   int     hcoun    = 3;
+   int     nscan    = rdata->scanData.size();
+   int     nvalu    = rdata->x.size();
+   QString fext     = "." + dtype + QString::number( hcell );
+   QString oline;
+   bool    twofer;
+   US_DataIO2::RawData* rdat2 = rdata;
+
+   for ( int drow = 0; drow < ntriples; drow++ )
+   {  // Output a set of files for each input triple
+      edata  = &dataList[ drow ];
+      rdata  = &rawList [ drow ];
+      hcell  = rdata->cell;
+      fext   = "." + dtype + QString::number( hcell );
+      twofer = triples[ drow ].contains( "A" );
+      if ( twofer )
+      {
+         int erow = drow + 1;
+         if ( erow < ntriples  && 
+              triples[ erow ].contains( "B" ) )
+         {
+            rdat2  = &rawList[ erow ];
+            drow   = erow;
+         }
+
+         else
+            twofer = false;
+      }
+
+      for ( int ii = 0; ii < nscan; ii++ )
+      {  // Output a file for each scan
+         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofpath = odirname + ofname;
+         dscan  = &rdata->scanData[ ii ];
+         htemp  = dscan->temperature;
+         hrpm   = dscan->rpm;
+         hsecs  = qRound( dscan->seconds );
+         homeg  = dscan->omega2t;
+         hwavl  = qRound( dscan->wavelength );
+         hradi  = dscan->wavelength;
+         oline  = htype
+                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
+                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+         oline  = oline + ( wldata
+                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+DbgLv(1) << "OFNAME" << ofname;
+
+         QFile legfile( ofpath );
+
+         if ( ! legfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         {
+            qDebug() << "*ERROR* Opening file" << ofpath;
+            continue;
+         }
+
+         QTextStream ts( &legfile );
+         ts << ddesc;
+         ts << oline;
+DbgLv(1) << "  LINE:" << QString(ddesc).replace("\n","");
+DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+         for ( int jj = 0; jj < nvalu; jj++ )
+         {  // Output a line for each data point
+            double  radi  = rdata->radius( jj );
+            double  valu  = rdata->value ( ii, jj );
+            double  stdd  = twofer ? rdat2->value( ii, jj ) : 0.0;
+            QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
+               radi, valu, stdd )
+               .replace( "E+", "E+00" ).replace( "E-", "E-00" );
+if (jj < 3  || jj > (nvalu-4))
+ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+            ts << oline;
+         }  // END: values loop
+
+         files << ofname;
+         legfile.close();
+      }  // END: scan loop
+   }
+}
+
+// Special export of interference data (2 columns per point)
+void US_ExportLegacy::exp_interference( QStringList& files )
+{
+   edata       = &dataList[ 0 ];
+   rdata       = &rawList [ 0 ];
+   QString legadir( US_Settings::dataDir() + "/legacy" );
+   mkdir( legadir, edata->runID );
+   QString odirname = legadir + "/" + edata->runID + "/";
+   QString ofname   = "00001.RA1";
+   QString ofpath   = odirname + ofname;
+   int     ntriples = triples.size();
+
+   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   QString ddesc    = rdata->description + "\n";
+   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
+                    + QString( QChar( rdata->type[ 1 ] ) );
+   QString htype    = QString( "U" );
+           htype    = ( dtype == "RA" ) ? "R" : htype;
+           htype    = ( dtype == "RI" ) ? "I" : htype;
+           htype    = ( dtype == "IP" ) ? "P" : htype;
+           htype    = ( dtype == "FI" ) ? "F" : htype;
+           htype    = ( dtype == "WA" ) ? "W" : htype;
+           htype    = ( dtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "dtype" << dtype << "htype" << htype;
+   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+   int     hcell    = rdata->cell;
+   double  htemp    = dscan->temperature;
+   int     hrpm     = qRound( dscan->rpm );
+   int     hsecs    = qRound( dscan->seconds );
+   double  homeg    = dscan->omega2t;
+   double  hradi    = dscan->wavelength;
+   int     hwavl    = qRound( dscan->wavelength );
+   int     hcoun    = 3;
+   QString oline;
+   int     nscan    = rdata->scanData.size();
+   int     nvalu    = rdata->x.size();
+   QString fext     = "." + dtype + QString::number( hcell );
+
+   for ( int drow = 0; drow < ntriples; drow++ )
+   {  // Output a set of files for each input triple
+      edata  = &dataList[ drow ];
+      rdata  = &rawList [ drow ];
+      hcell  = rdata->cell;
+      fext   = "." + dtype + QString::number( hcell );
+      for ( int ii = 0; ii < nscan; ii++ )
+      {  // Output a file for each scan
+         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofpath = odirname + ofname;
+         dscan  = &rdata->scanData[ ii ];
+         htemp  = dscan->temperature;
+         hrpm   = dscan->rpm;
+         hsecs  = qRound( dscan->seconds );
+         homeg  = dscan->omega2t;
+         hwavl  = qRound( dscan->wavelength );
+         hradi  = dscan->wavelength;
+         oline  = htype
+                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
+                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+         oline  = oline + ( wldata
+                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+DbgLv(1) << "OFNAME" << ofname;
+
+         QFile legfile( ofpath );
+
+         if ( ! legfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         {
+            qDebug() << "*ERROR* Opening file" << ofpath;
+            continue;
+         }
+
+         QTextStream ts( &legfile );
+         ts << ddesc;
+         ts << oline;
+DbgLv(1) << "  LINE:" << QString(ddesc).replace("\n","");
+DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+         for ( int jj = 0; jj < nvalu; jj++ )
+         {  // Output a line for each data point
+            double  radi  = rdata->radius( jj );
+            double  valu  = rdata->value ( ii, jj );
+            QString oline = QString().sprintf( "%9.4f %12.5E\n", radi, valu );
+if (jj < 3  || jj > (nvalu-4))
+ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+
+            ts << oline;
+         }  // END: values loop
+
+         files << ofname;
+         legfile.close();
+      }  // END: scan loop
+   }
 }
 
 // View the report text
@@ -520,6 +857,7 @@ void US_ExportLegacy::reset( void )
    le_id       ->setText( "" );
    le_temp     ->setText( "" );
    te_desc     ->setText( "" );
+   te_stat     ->setText( "" );
 }
 
 // Table row HTML with 2 columns

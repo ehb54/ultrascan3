@@ -40,6 +40,7 @@
             <keyword id="e1" name="edit"          ref="us_edit.html"/>
             <keyword id="e2" name="equiltime"     ref="us_equiltime.html"/>
             <keyword id="e3" name="experiment"    ref="convert-experiment.html"/>
+            <keyword id="e4" name="export-legacy" ref="export_legacy.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"  ref="combine_models.html"/>
@@ -289,6 +290,9 @@
 
             <file>select_edits.html</file>
             <file>images/select_edits.png</file>
+
+            <file>export_legacy.html</file>
+            <file>images/export_legacy.png</file>
 
         </files>
     </filterSection>

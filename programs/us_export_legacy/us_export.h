@@ -31,6 +31,7 @@ class US_ExportLegacy : public US_Widgets
       QLineEdit*    le_temp;
 
       QTextEdit*    te_desc;
+      QTextEdit*    te_stat;
 
       QPushButton*  pb_load;
       QPushButton*  pb_details;
@@ -45,6 +46,7 @@ class US_ExportLegacy : public US_Widgets
       int           scanCount;
       int           valueCount;
       int           dbg_level;
+      int           nexport;
 
       bool          dataLoaded;
 
@@ -62,29 +64,33 @@ class US_ExportLegacy : public US_Widgets
 
    private slots:
 
-      void load(      void );
-      void data_plot( void );
-      void save_data( void );
-      void details(   void );
-      void reset(     void );
-      void update(    int  );
+      void load       ( void );
+      void data_plot  ( void );
+      void export_data( void );
+      void details    ( void );
+      void reset      ( void );
+      void update     ( int  );
 
-      void    write_report  ( QTextStream& );
-      void    update_disk_db( bool );
-      bool    mkdir         ( const QString&, const QString& );
-      void    new_triple    ( int );
-      QString indent        ( int ) const;
-      void    view_report   ( void );
-      QString table_row     ( const QString&, const QString& ) const;
-      QString html_header   ( QString, QString, US_DataIO2::EditedData* );
-      QString data_details  ( void )                      const;
-      void help             ( void )
+      void    exp_mosttypes   ( QStringList& );
+      void    exp_intensity   ( QStringList& );
+      void    exp_interference( QStringList& );
+      void    write_report    ( QTextStream& );
+      void    update_disk_db  ( bool );
+      bool    mkdir           ( const QString&, const QString& );
+      void    new_triple      ( int );
+      QString indent          ( int ) const;
+      void    view_report     ( void );
+      QString table_row       ( const QString&, const QString& ) const;
+      QString html_header     ( QString, QString, US_DataIO2::EditedData* );
+      QString data_details    ( void )                      const;
+      void help               ( void )
       { showHelp.show_help( "export_legacy.html" ); };
 
    protected:
       QStringList                       triples;
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData    > rawList;
+      QVector< int >                    extrips;
 
       US_Help      showHelp;
 
@@ -97,11 +103,9 @@ class US_ExportLegacy : public US_Widgets
       QGridLayout* analysisLayout;
       QGridLayout* runInfoLayout;
 
-      US_Plot*     plotLayout1;  // Derived from QVBoxLayout
-      US_Plot*     plotLayout2;
+      US_Plot*     plotLayout2;  // Derived from QVBoxLayout
 
       // Widgets
-      QwtPlot*     data_plot1;
       QwtPlot*     data_plot2;
 };
 #endif

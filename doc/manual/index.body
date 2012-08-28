@@ -142,7 +142,7 @@
       <li> <a href="archive.html">Data Archive Database</a> </li>
       <li> <a href="reorder.html">Re-order Scan File Sequences</a> </li>
       <li> <a href="rename.html">Renaming cell content identifications in edited data</a> </li>
-      <li> <a href="export.html">Exporting raw experimental data</a> </li>
+      <li> <a href="export_legacy.html">Exporting raw experimental data</a> </li>
       <li> <a href="print.html">Printing raw experimental data</a> </li>
       <li> <a href="combine.html">Combine van Holde - Weischet G(s) Distributions</a> </li>
       <li> <a href="combine_mw.html">Combine molecular weight distributions
