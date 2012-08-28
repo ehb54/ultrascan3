@@ -19,10 +19,10 @@ namespace US_WinData
 
     P_GLOBFITEQ,                           // Global Fit Menu
 
-    P_CONVERT,      P_FITMEN,              // Utilities menu
-    P_COLORGRAD,    P_RPTGEN,       P_ROTORCAL,
-    P_LICENSE,      P_VHWCOMB,      P_DDCOMB,
-    P_GLOMODL,
+    P_CONVERT,      P_EXPORT,              // Utilities menu
+    P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
+    P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
+    P_DDCOMB,       P_GLOMODL,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
@@ -136,6 +136,11 @@ namespace US_WinData
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Legacy Data Conversion" ),
       QObject::tr( "Legacy Data Conversion Program" )
+    },
+    
+    { P_EXPORT,   1, 0, "us_export",
+      QObject::tr( "Loading Legacy Data Export" ),
+      QObject::tr( "Legacy Data Export Program" )
     },
     
     { P_FITMEN,   0, 0, "us_fit_meniscus",
