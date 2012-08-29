@@ -474,7 +474,7 @@ void US_AdvAnalysis::select()
    accept();
 }
 
-// load-model button clicked
+// Load-model button clicked
 void US_AdvAnalysis::load_model()
 {
    QString  mdesc  ( "" );
@@ -482,19 +482,17 @@ void US_AdvAnalysis::load_model()
    bool     loadDB = false;
 
    if ( parentw != NULL )
-   {
+   {  // If possible, get DB/Local flag and set to filter for "CustomGrid"
       US_2dsa* mainw = (US_2dsa*)parentw->parent();
-      //mfilter        = mainw->mw_editdata()->runID;
-      mfilter        = QString( "InitialGrid" );
+      mfilter        = QString( "CustomGrid" );
       loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
    }
 
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, "" );
 
    if ( dialog.exec() == QDialog::Accepted )
-   {
-      int nsol  = model.components.size();
-      pb_accept  ->setEnabled( nsol > 0 );
+   {  // Enable Accept button if a model was loaded
+      pb_accept  ->setEnabled( model.components.size() > 0 );
    }
 
    return;
