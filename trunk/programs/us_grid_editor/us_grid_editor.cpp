@@ -362,7 +362,8 @@ void US_Grid_Editor::save( void )
 	bool flag;
 	modelGuid         = US_Util::new_guid();
 	model.analysis    = US_Model::INITIALGRID;
-	model.description = now_time.toString( "MMddyyyy-hhmm") + "-CustomGrid" + ".model";
+	model.description = now_time.toString( "yyyyMMdd-hhmm")
+      + "-CustomGrid" + ".model";
 	model.subGrids    = subGrids;
    model.modelGUID   = modelGuid;
    model.global      = US_Model::NONE;
@@ -408,7 +409,7 @@ void US_Grid_Editor::save( void )
       + model.description + "</b>.<br/><br/>"
       + tr( "Click:<br/><br/>" )
       + tr( "  <b>OK</b>     to output the model as is;<br/>"
-            "  <b>Edit</b>   to prepend custom text to the name;<br/>"
+            "  <b>Edit</b>   to append custom text to the name;<br/>"
             "  <b>Cancel</b> to abort model creation.<br/>" );
 
    mbox.setWindowTitle( tr( "Save Grid Model" ) );
@@ -429,14 +430,14 @@ void US_Grid_Editor::save( void )
    if ( mbox.clickedButton() == pb_edit )
    {  // Open another dialog to get a modified runID
       bool    ok;
-		QString newtext="";
+		QString newtext = "";
       int     jj      = model.description.indexOf( ".model" );
       if ( jj > 0 ) model.description = model.description.left( jj );
       QString msg2    = tr( "The default run ID for the grid model<br/>"
                             "is <b>" ) + model.description + "</b>.<br/><br/>"
-         + tr( "You may prepend additional text to the model description.<br/>"
+         + tr( "You may append additional text to the model description.<br/>"
                "Use alphanumeric characters, underscores, or hyphens<br/>"
-               "(no spaces). Enter 3 to 120 characters." ); // standard model name has length of 31 chars. Maximum is 160
+               "(no spaces). Enter 1 to 40 characters." );
       newtext = QInputDialog::getText( this,
             tr( "Modify Model Name" ),
             msg2,
@@ -448,10 +449,10 @@ void US_Grid_Editor::save( void )
 
       newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
 
-      int slen = newtext.length();
-      if ( slen > 100 ) newtext = newtext.left( 32 );
+      int     slen    = newtext.length();
+      if ( slen > 40 ) newtext = newtext.left( 40 );
 		// add string containing
-      model.description = newtext + "-" + model.description + ".model";
+      model.description = model.description + "-" + newtext + ".model";
    }
 
    // Output the combined grid model
