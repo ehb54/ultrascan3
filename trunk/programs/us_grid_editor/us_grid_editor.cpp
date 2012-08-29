@@ -362,7 +362,7 @@ void US_Grid_Editor::save( void )
 	bool flag;
 	modelGuid         = US_Util::new_guid();
 	model.analysis    = US_Model::INITIALGRID;
-	model.description = "InitialGrid-" + now_time.toString( "MMddyyyy-hhmm") + ".model";
+	model.description = now_time.toString( "MMddyyyy-hhmm") + "-CustomGrid" + ".model";
 	model.subGrids    = subGrids;
    model.modelGUID   = modelGuid;
    model.global      = US_Model::NONE;
@@ -408,7 +408,7 @@ void US_Grid_Editor::save( void )
       + model.description + "</b>.<br/><br/>"
       + tr( "Click:<br/><br/>" )
       + tr( "  <b>OK</b>     to output the model as is;<br/>"
-            "  <b>Edit</b>   to modify the model description;<br/>"
+            "  <b>Edit</b>   to prepend custom text to the name;<br/>"
             "  <b>Cancel</b> to abort model creation.<br/>" );
 
    mbox.setWindowTitle( tr( "Save Grid Model" ) );
@@ -429,26 +429,29 @@ void US_Grid_Editor::save( void )
    if ( mbox.clickedButton() == pb_edit )
    {  // Open another dialog to get a modified runID
       bool    ok;
+		QString newtext="";
       int     jj      = model.description.indexOf( ".model" );
       if ( jj > 0 ) model.description = model.description.left( jj );
       QString msg2    = tr( "The default run ID for the grid model<br/>"
                             "is <b>" ) + model.description + "</b>.<br/><br/>"
-         + tr( "You may modify this part of the model description.<br/>"
+         + tr( "You may prepend additional text to the model description.<br/>"
                "Use alphanumeric characters, underscores, or hyphens<br/>"
-               "(no spaces). Enter 3 to 32 characters." );
-      model.description = QInputDialog::getText( this,
+               "(no spaces). Enter 3 to 120 characters." ); // standard model name has length of 31 chars. Maximum is 160
+      newtext = QInputDialog::getText( this,
             tr( "Modify Model Name" ),
             msg2,
             QLineEdit::Normal,
-            model.description,
+            newtext,
             &ok );
 
       if ( !ok )  return;
 
-      model.description.remove( QRegExp( "[^\\w\\d_-]" ) );
-      int slen = model.description.length();
-      if ( slen > 32 ) model.description = model.description.left( 32 );
-      model.description = model.description + ".model";
+      newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
+
+      int slen = newtext.length();
+      if ( slen > 100 ) newtext = newtext.left( 32 );
+		// add string containing
+      model.description = newtext + "-" + model.description + ".model";
    }
 
    // Output the combined grid model
@@ -473,7 +476,7 @@ void US_Grid_Editor::save( void )
                             tr ( "local disk and database." ) :
                             tr ( "local disk." );
       QMessageBox::information( this, mtitle,
-		   tr( "The file \"" ) +  model.description 
+		   tr( "The file \"" ) +  model.description
          + tr( "\"\n  was successfully saved to " ) + destination );
 	}
 	else
