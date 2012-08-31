@@ -39,12 +39,27 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
          {
             US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
             parse_dataset( xml, d );
+            if ( parameters.contains( "CG_model" ) )
+            {
+               d->model_file  = parameters[ "CG_model" ];
+               d->solute_type = 2;
+            }
+            else if ( parameters.contains( "ff0_min" ) )
+            {
+               d->solute_type = 0;
+            }
+            else
+            {
+               d->solute_type = 1;
+            }
             data_sets << d;
          }
       }
    }
 
    file.close();
+   if ( analysis_type == "2DSA_CG" )
+      analysis_type = "2DSA";
 }
 
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
@@ -105,6 +120,10 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
                   b.ff0_max     = a.value( "ff0_max" ).toString().toDouble();
 
                   buckets << b;
+               }
+               else if ( name == "CG_model" )
+               {
+                  parameters[ name ]        = a.value( "filename" ).toString();
                }
                else
                {
@@ -258,7 +277,6 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml,
 
          if ( type == "auc"   ) dataset->auc_file   = filename;
          if ( type == "edit"  ) dataset->edit_file  = filename;
-         if ( type == "model" ) dataset->model_file = filename;
          if ( type == "noise" ) dataset->noise_files << filename;
       }
    }

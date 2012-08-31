@@ -154,8 +154,9 @@ void US_MPI_Analysis::init_solutes( void )
    simulation_values.dbg_timing  = dbg_timing;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
-   // Test to see if there is a custom initial grid model
+   // Test to see if there is a custom grid model
    QString model_filename = data_sets[ 0 ]->model_file;
+   double  cnstff0        = 0.0;
 
    if ( model_filename.isEmpty() )
    {  // If no model file given, calculate initial solutes in a fixed grid
@@ -184,7 +185,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
-                               grid_repetitions, orig_solutes );
+                               grid_repetitions, cnstff0, orig_solutes );
    }
 
    else
@@ -204,7 +205,9 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
          {
             US_Solute soli( model.components[ jj ].s,
                             model.components[ jj ].f_f0,
-                            0.0 );
+                            0.0,
+                            model.components[ jj ].vbar20,
+                            model.components[ jj ].D ):
             solvec << soli;
          }
 

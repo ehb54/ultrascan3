@@ -184,6 +184,7 @@ DebugTime("BEG:calcres");
           kk      = 0;                             // nnls_a output index
    int    ksols   = 0;
    int    stype   = data_sets[ offset ]->solute_type;
+DbgLv(1) << "   CR:BF STYPE" << stype;
 
    qSort( sim_vals.solutes );
 
@@ -598,9 +599,9 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
 int ss=nscans/2;
 int rr=npoints/2;
 DbgLv(1) << "CR:   scan_ix ss rr" << scan_ix << ss << rr;
-DbgLv(1) << "CR:     s k sval" << sim_vals.solutes[cc].s*1.0e+13
- << sim_vals.solutes[cc].k << soluval << "idat sdat"
- << idata->value(ss,rr) << sdata->value(ss,rr);
+DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
+ << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
+ << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
 if (soluval>100.0) {
  double drval=0.0; double dmax=0.0; double dsum=0.0;
  for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {

@@ -38,6 +38,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QLabel* lb_diffcoeff   = us_label(  tr( "Diffusion Coefficient:" ) );
    QLabel* lb_friccoeff   = us_label(  tr( "Frictional Coefficient:" ) );
    QLabel* lb_fricratio   = us_label(  tr( "Frictional Ratio:" ) );
+   QLabel* lb_vbar        = us_label(  tr( "Vbar at 20" ) + DEGC + ":" );
    QLabel* lb_zscalefac   = us_label(  tr( "Z-Scaling Factor:" ) );
    QLabel* lb_gridreso    = us_label(  tr( "Grid Resolution:" ) );
    QLabel* lb_peaksmoo    = us_label(  tr( "Peak Smoothing:" ) );
@@ -60,6 +61,8 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QCheckBox*   ck_yfco;
    QCheckBox*   ck_xfra;
    QCheckBox*   ck_yfra;
+   QCheckBox*   ck_xvba;
+   QCheckBox*   ck_yvba;
 
    QLayout*     lo_xmwt   = us_checkbox( tr( "x=mw"   ), ck_xmwt, true  );
    QLayout*     lo_ymwt   = us_checkbox( tr( "y=mw"   ), ck_ymwt, false );
@@ -71,38 +74,44 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QLayout*     lo_yfco   = us_checkbox( tr( "y=f"    ), ck_yfco, false );
    QLayout*     lo_xfra   = us_checkbox( tr( "x=f/f0" ), ck_xfra, false );
    QLayout*     lo_yfra   = us_checkbox( tr( "y=f/f0" ), ck_yfra, true  );
+   QLayout*     lo_xvba   = us_checkbox( tr( "x=vb"   ), ck_xvba, false );
+   QLayout*     lo_yvba   = us_checkbox( tr( "y=vb"   ), ck_yvba, false );
 
    QwtCounter* ct_zscalefac = us_counter( 3,  0.1,   10, 0.01 );
    QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
 
-   controlsLayout->addWidget( lb_dimens,     1, 0, 1, 2 );
-   controlsLayout->addWidget( lb_dimen1,     1, 2, 1, 1 );
-   controlsLayout->addWidget( lb_dimen2,     1, 3, 1, 1 );
-   controlsLayout->addWidget( lb_molwt,      2, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xmwt,       2, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ymwt,       2, 3, 1, 1 );
-   controlsLayout->addWidget( lb_sedcoeff,   3, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xsed,       3, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ysed,       3, 3, 1, 1 );
-   controlsLayout->addWidget( lb_diffcoeff,  4, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xdif,       4, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ydif,       4, 3, 1, 1 );
-   controlsLayout->addWidget( lb_friccoeff,  5, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xfco,       5, 2, 1, 1 );
-   controlsLayout->addLayout( lo_yfco,       5, 3, 1, 1 );
-   controlsLayout->addWidget( lb_fricratio,  6, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xfra,       6, 2, 1, 1 );
-   controlsLayout->addLayout( lo_yfra,       6, 3, 1, 1 );
-   controlsLayout->addWidget( lb_zscalefac,  7, 0, 1, 2 );
-   controlsLayout->addWidget( ct_zscalefac,  7, 2, 1, 2 );
-   controlsLayout->addWidget( lb_gridreso,   8, 0, 1, 2 );
-   controlsLayout->addWidget( ct_gridreso,   8, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peaksmoo,   9, 0, 1, 2 );
-   controlsLayout->addWidget( ct_peaksmoo,   9, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peakwidth, 10, 0, 1, 2 );
-   controlsLayout->addWidget( ct_peakwidth, 10, 2, 1, 2 );
+   int row = 1;
+   controlsLayout->addWidget( lb_dimens,     row,   0, 1, 2 );
+   controlsLayout->addWidget( lb_dimen1,     row,   2, 1, 1 );
+   controlsLayout->addWidget( lb_dimen2,     row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_molwt,      row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xmwt,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ymwt,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_sedcoeff,   row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xsed,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ysed,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_diffcoeff,  row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xdif,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ydif,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_friccoeff,  row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfco,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfco,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_fricratio,  row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfra,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfra,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_vbar,       row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xvba,       row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yvba,       row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_zscalefac,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_zscalefac,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_gridreso,   row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_gridreso,   row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peaksmoo,   row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peaksmoo,   row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peakwidth,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peakwidth,  row++, 2, 1, 2 );
 
    buttonsLayout->addWidget( pb_plot3d );
    buttonsLayout->addWidget( pb_help   );
@@ -112,18 +121,20 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    ck_xfra->setEnabled( false );
 
    // set up so check boxes are like 2-d radio buttons
-   xCheck.resize( 5 );
+   xCheck.resize( 6 );
    xCheck[ 0 ] = ck_xmwt;
    xCheck[ 1 ] = ck_xsed;
    xCheck[ 2 ] = ck_xdif;
    xCheck[ 3 ] = ck_xfco;
    xCheck[ 4 ] = ck_xfra;
-   yCheck.resize( 5 );
+   xCheck[ 5 ] = ck_xvba;
+   yCheck.resize( 6 );
    yCheck[ 0 ] = ck_ymwt;
    yCheck[ 1 ] = ck_ysed;
    yCheck[ 2 ] = ck_ydif;
    yCheck[ 3 ] = ck_yfco;
    yCheck[ 4 ] = ck_yfra;
+   yCheck[ 5 ] = ck_yvba;
 
    zscale   = 2.0;
    gridres  = 150.0;
@@ -158,6 +169,10 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
             this,    SLOT( xfraCheck( bool ) ) );
    connect( ck_yfra, SIGNAL( toggled( bool ) ),
             this,    SLOT( yfraCheck( bool ) ) );
+   connect( ck_xvba, SIGNAL( toggled( bool ) ),
+            this,    SLOT( xvbaCheck( bool ) ) );
+   connect( ck_yvba, SIGNAL( toggled( bool ) ),
+            this,    SLOT( yvbaCheck( bool ) ) );
 
    connect( ct_zscalefac, SIGNAL( valueChanged( double ) ),
             this,         SLOT(    zscal_value( double ) ) );
@@ -181,12 +196,32 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    ct_zscalefac->setMinimumWidth( lb_sedcoeff->width() );
    adjustSize();
 
-   if ( ! model->constant_vbar() )
-   {  // Vbar varies, so change "f/f0" to "Vbar"
-      ck_xfra->setText( "x=vb" );
-      ck_yfra->setText( "y=vb" );
-      lb_fricratio->setText( tr( "Vbar at 20" ) + DEGC + ":" );
+   bool cnstff0 = model->constant_ff0();
+
+   if ( cnstff0 )
+   {  // f/f0 constant, so disable f/f0 X,Y check boxes
+      ck_xfra->setEnabled( false );
+      ck_yfra->setEnabled( false );
+      ck_xfra->setChecked( false );
+      ck_yfra->setChecked( false );
+      ck_yvba->setChecked( true  );
    }
+   if ( model->constant_vbar() )
+   {  // Vbar constant, so disable vbar X,Y check boxes
+      ck_xvba->setEnabled( false );
+      ck_yvba->setEnabled( false );
+      ck_xvba->setChecked( false );
+      ck_yvba->setChecked( false );
+      if ( cnstff0 )
+         ck_yfco->setChecked( true  );
+      else
+         ck_yfra->setChecked( true  );
+   }
+
+qDebug() << "PlCtl: cnst_vbar" << model->constant_vbar();
+qDebug() << "PlCtl: cnst_ff0 " << model->constant_ff0 ();
+qDebug() << "PlCtl: ck_yfra  " << ck_yfra->text();
+qDebug() << "PlCtl: ncomps   " << model->components.size();
 }
 
 // mw x box checked
@@ -239,6 +274,16 @@ void US_PlotControl::yfraCheck( bool chkd )
 {
    checkSet( chkd, false, 4 );
 }
+// Vbar x box checked
+void US_PlotControl::xvbaCheck( bool chkd )
+{
+   checkSet( chkd, true,  5 );
+}
+// Vbar y box checked
+void US_PlotControl::yvbaCheck( bool chkd )
+{
+   checkSet( chkd, false, 5 );
+}
 
 // handle any x or y box checked
 void US_PlotControl::checkSet( bool chkd, bool isX, int row )
@@ -248,7 +293,7 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
 
    if ( isX )
    {  // this is a X box
-      for ( int ii = 0; ii < 5; ii++ )
+      for ( int ii = 0; ii < 6; ii++ )
       {  // review all check boxes
          if ( ii != row )
          {  // in other rows, uncheck X, enable Y
@@ -265,7 +310,7 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
 
    else
    {  // this is a Y box
-      for ( int ii = 0; ii < 5; ii++ )
+      for ( int ii = 0; ii < 6; ii++ )
       {  // review all check boxes
          if ( ii != row )
          {  // in other rows, uncheck Y, enable X
@@ -278,6 +323,20 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
             xCheck[ ii ]->setEnabled( false );
          }
       }
+   }
+   if ( model->constant_ff0() )
+   {  // f/f0 constant, so disable f/f0 X,Y check boxes
+      xCheck[ 4 ]->setEnabled( false );
+      yCheck[ 4 ]->setEnabled( false );
+      xCheck[ 4 ]->setChecked( false );
+      yCheck[ 4 ]->setChecked( false );
+   }
+   if ( model->constant_vbar() )
+   {  // Vbar constant, so disable vbar X,Y check boxes
+      xCheck[ 5 ]->setEnabled( false );
+      yCheck[ 5 ]->setEnabled( false );
+      xCheck[ 5 ]->setChecked( false );
+      yCheck[ 5 ]->setChecked( false );
    }
 }
 
@@ -339,10 +398,6 @@ int US_PlotControl::dimensionType( QVector< QCheckBox* >& xycheck )
       if ( xycheck[ ii ]->isChecked() )
       {
          dimType = ii + 1;
-
-         if ( xycheck[ ii ]->text().contains( "=vb" ) )
-            dimType++;
-
          break;
       }
    }
