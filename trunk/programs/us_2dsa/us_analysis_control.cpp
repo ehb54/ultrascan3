@@ -514,7 +514,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    double cff0   = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
 
    // Begin the fit
-   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng, cff0 );
+   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng, cff0, ngrr );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );

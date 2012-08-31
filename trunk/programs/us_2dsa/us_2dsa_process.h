@@ -64,7 +64,8 @@ class US_2dsaProcess : public QObject
       //! \param vtoler  Variance difference tolerance
       //! \param menrng  Meniscus range
       //! \param cff0    Constant f/f0 (or 0.0)
-      void set_iters( int, int, int, double, double, double = 0.0 );
+      //! \param jgref   Flag of refine/solute type
+      void set_iters( int, int, int, double, double, double, int );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data

@@ -55,6 +55,8 @@ class US_PlotControl : public US_WidgetsDialog
       void yfcoCheck( bool );
       void xfraCheck( bool );
       void yfraCheck( bool );
+      void xvbaCheck( bool );
+      void yvbaCheck( bool );
       void checkSet(  bool, bool, int );
       void zscal_value( double );
       void gridr_value( double );

@@ -71,6 +71,7 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    ntcsols     = 0;
    r_iter      = 0;
    mm_iter     = 0;
+   int stype   = dsets[ 0 ]->solute_type;
 
    if ( jgrefine < 0 )
    {  // Special model-grid or model-ratio grid refinement
@@ -179,7 +180,23 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    if ( jgrefine > 0 )
    {
       US_Solute::init_solutes( ssllim, ssulim, nssteps,
-                               klolim, kuplim, nksteps, ngrefine, orig_sols );
+                               klolim, kuplim, nksteps,
+                               ngrefine, cnstff0, orig_sols );
+
+      if ( stype == 1 )
+      {  // For constant f/f0, varying vbar; set k,v values
+         QVector< US_Solute > solvec;
+         for ( int ii = 0; ii < orig_sols.size(); ii++ )
+         {
+            solvec = orig_sols[ ii ];
+            for ( int jj = 0; jj << solvec.size(); jj++ )
+            {
+               solvec[ jj ].v = solvec[ jj ].k;
+               solvec[ jj ].k = cnstff0;
+            }
+            orig_sols.replace( ii, solvec );
+         }
+      }
    }
 
    else if ( jgrefine == (-1) )
@@ -276,7 +293,8 @@ DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
 // Set iteration parameters
 void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
-                                double vtoler, double menrng, double cff0 )
+                                double vtoler, double menrng, double cff0,
+                                int    jgref )
 {
    maxiters   = mxiter;
    mmtype     = ( mniter > 1 ) ? 1 : 0;
@@ -285,6 +303,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    varitol    = vtoler;
    menrange   = menrng;
    cnstff0    = cff0;
+   jgrefine   = jgref;
 
    int stype  = 0;            // Constant vbar, varying f/f0
    if ( jgrefine > 0 )
@@ -296,6 +315,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
       stype   = 2;            // Custom grid
 
    dsets[ 0 ]->solute_type = stype;   // Store solute type
+DbgLv(1) << "2PSI: cnstff0 jgrefine stype" << cnstff0 << jgrefine << stype;
 }
 
 // Abort a fit run
