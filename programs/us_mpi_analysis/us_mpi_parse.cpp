@@ -110,9 +110,10 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
             if ( xml.isStartElement() )
             {
+               a       = xml.attributes();
+
                if ( name == "bucket" )
                {
-                  QXmlStreamAttributes a    = xml.attributes();
                   Bucket               b;
                   b.s_min       = a.value( "s_min"   ).toString().toDouble();
                   b.s_max       = a.value( "s_max"   ).toString().toDouble();
@@ -127,7 +128,6 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
                }
                else
                {
-                  QXmlStreamAttributes a    = xml.attributes();
                   parameters[ name ]        = a.value( "value" ).toString();
                }
             }
