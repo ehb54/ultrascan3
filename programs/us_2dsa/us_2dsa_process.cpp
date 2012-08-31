@@ -71,7 +71,6 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    ntcsols     = 0;
    r_iter      = 0;
    mm_iter     = 0;
-   int stype   = dsets[ 0 ]->solute_type;
 
    if ( jgrefine < 0 )
    {  // Special model-grid or model-ratio grid refinement
@@ -182,21 +181,6 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
       US_Solute::init_solutes( ssllim, ssulim, nssteps,
                                klolim, kuplim, nksteps,
                                ngrefine, cnstff0, orig_sols );
-
-      if ( stype == 1 )
-      {  // For constant f/f0, varying vbar; set k,v values
-         QVector< US_Solute > solvec;
-         for ( int ii = 0; ii < orig_sols.size(); ii++ )
-         {
-            solvec = orig_sols[ ii ];
-            for ( int jj = 0; jj << solvec.size(); jj++ )
-            {
-               solvec[ jj ].v = solvec[ jj ].k;
-               solvec[ jj ].k = cnstff0;
-            }
-            orig_sols.replace( ii, solvec );
-         }
-      }
    }
 
    else if ( jgrefine == (-1) )
