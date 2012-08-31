@@ -16,24 +16,31 @@ class US_UTIL_EXTERN US_Solute
       //! \param s0 The initial sedimentation
       //! \param k0 The initial frictional ratio
       //! \param c0 The initial concentration
-      US_Solute( double = 0.0, double = 0.0, double = 0.0 );
+      //! \param v0 The initial vbar
+      //! \param d0 The initial diffusion coefficient
+      US_Solute( double = 0.0, double = 0.0, double = 0.0,
+                 double = 0.0, double = 0.0 );
 
       double s;  //!< Sedimentation value
       double k;  //!< Frictional ratio
       double c;  //!< Concentration
+      double v;  //!< Vbar
+      double d;  //!< Diffusion coefficient
 
       //! A test for solute equality
       //! \param solute A value for comparison 
       bool operator== ( const US_Solute& solute )
       {
-         return s == solute.s && k == solute.k;
+         return ( s == solute.s  &&  k == solute.k  &&
+                  v == solute.v  &&  d == solute.d );
       }
 
-      //! A test for inequality.  Just uses ! equal
+      //! A test for inequality.
       //! \param solute A value for comparison 
       bool operator!= ( const US_Solute& solute )
       {
-         return s != solute.s || k != solute.k;
+         return ( s != solute.s  ||  k != solute.k  ||
+                  v != solute.v  ||  d != solute.d );
       }
 
       //! A test for ordering solutes.  Tests sedimentation before frictional
@@ -44,7 +51,15 @@ class US_UTIL_EXTERN US_Solute
          if ( s < solute.s )
             return true;
 
-         else if (  s == solute.s && k < solute.k )
+         else if (  s == solute.s  &&  k < solute.k )
+            return true;
+
+         else if (  s == solute.s  &&  k == solute.k  &&
+                     d < solute.d )
+            return true;
+
+         else if (  s == solute.s  &&  k == solute.k   &&
+                    d == solute.d  &&  v < solute.v )
             return true;
 
          else

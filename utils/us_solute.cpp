@@ -3,11 +3,14 @@
 #include "us_solute.h"
 #include "us_math2.h"
 
-US_Solute::US_Solute( double s0, double k0, double c0 )
+US_Solute::US_Solute( double s0, double k0, double c0,
+                      double v0, double d0 )
 {
    s = s0;
    k = k0;
    c = c0;
+   v = v0;
+   d = d0;
 }
 
 void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,

@@ -196,7 +196,9 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
             {
                US_Solute soli( model.components[ jj ].s,
                                model.components[ jj ].f_f0,
-                               0.0 );
+                               0.0,
+                               model.components[ jj ].vbar20,
+                               model.components[ jj ].D );
                solvec << soli;
             }
 
@@ -210,7 +212,9 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
          {
             US_Solute soli( model.components[ ii ].s,
                             model.components[ ii ].f_f0,
-                            0.0 );
+                            0.0,
+                            model.components[ ii ].vbar20,
+                            model.components[ ii ].D );
 DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
             solvec << soli;
          }
@@ -227,7 +231,9 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
       {
          US_Solute soli( model.components[ ii ].s,
                          model.components[ ii ].f_f0,
-                         model.components[ ii ].signal_concentration );
+                         model.components[ ii ].signal_concentration,
+                         model.components[ ii ].vbar20,
+                         model.components[ ii ].D );
 DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
          solvec << soli;
       }
@@ -280,10 +286,16 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    menrange   = menrng;
    cnstff0    = cff0;
 
-   if ( cnstff0 > 0.0 )
+   int stype  = 0;            // Constant vbar, varying f/f0
+   if ( jgrefine > 0 )
    {
-      dsets[ 0 ]->vbartb = -cnstff0;
+      if ( cnstff0 > 0.0 )
+         stype   = 1;         // Constant f/f0, varying vbar
    }
+   else
+      stype   = 2;            // Custom grid
+
+   dsets[ 0 ]->solute_type = stype;   // Store solute type
 }
 
 // Abort a fit run
@@ -451,7 +463,7 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
 
    // build the final model
 
-   if ( cnstff0 == 0.0 )
+   if ( dset->solute_type == 0 )
    {  // Normal case of varying f/f0
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
@@ -481,7 +493,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
       }
    }  // Constant vbar
 
-   else
+   else if ( dset->solute_type == 1 )
    {  // Special case of varying vbar
       US_Math2::SolutionData sd;
       sd.viscosity  = dset->viscosity;
@@ -492,7 +504,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
       {
          // Get standard-space solute values (20,W)
          US_Model::SimulationComponent mcomp;
-         mcomp.vbar20 = c_solutes[ maxdepth ][ cc ].k;
+         mcomp.vbar20 = c_solutes[ maxdepth ][ cc ].v;
          mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
          mcomp.D      = 0.0;
          mcomp.mw     = 0.0;
@@ -517,6 +529,43 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
          model.components[ cc ]  = mcomp;
       }
    }  // Constant f/f0
+
+   else
+   {  // Input was a custom grid
+      US_Math2::SolutionData sd;
+      sd.viscosity  = dset->viscosity;
+      sd.density    = dset->density;
+      double avtemp = dset->temperature;
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         // Get standard-space solute values (20,W)
+         US_Model::SimulationComponent mcomp;
+         mcomp.s      = c_solutes[ maxdepth ][ cc ].s;
+         mcomp.D      = c_solutes[ maxdepth ][ cc ].d;
+         mcomp.mw     = 0.0;
+         mcomp.f      = 0.0;
+         mcomp.f_f0   = 0.0;
+         mcomp.vbar20 = c_solutes[ maxdepth ][ cc ].v;
+         mcomp.signal_concentration
+                      = c_solutes[ maxdepth ][ cc ].c;
+
+         // Complete other coefficients in standard-space
+         model.calc_coefficients( mcomp );
+DbgLv(1) << " Bcc comp D" << mcomp.D;
+
+         // Convert to experiment-space for simulation below
+         sd.vbar20    = mcomp.vbar20;
+         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+         US_Math2::data_correction( avtemp, sd );
+
+         mcomp.s     /= sd.s20w_correction;
+         mcomp.D     /= sd.D20w_correction;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+
+         model.components[ cc ]  = mcomp;
+      }
+   }  // Custom grid
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
  << c_solutes[maxdepth][qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
