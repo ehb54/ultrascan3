@@ -191,10 +191,16 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    else
    {  // If a model file was given, use it to set the initial solutes
       US_Model model;
-      model.load( model_filename );
+      QString fn = "../" + model_filename;
+      model.load( fn );
       int nsubgrid = model.subGrids;
-      if ( nsubgrid < 1 )   return;
       int ncomps   = model.components.size();
+DbgLv(1) << "InSol: fn" << fn;
+DbgLv(1) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
+
+      if ( nsubgrid < 1 )
+         abort( "Custom grid model file has no subgrids", -1 );
+
       QVector< US_Solute > solvec;
 
       for ( int ii = 0; ii < nsubgrid; ii++ )
@@ -207,7 +213,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
                             model.components[ jj ].f_f0,
                             0.0,
                             model.components[ jj ].vbar20,
-                            model.components[ jj ].D ):
+                            model.components[ jj ].D );
             solvec << soli;
          }
 
