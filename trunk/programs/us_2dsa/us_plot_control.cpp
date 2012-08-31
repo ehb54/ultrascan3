@@ -181,9 +181,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    ct_zscalefac->setMinimumWidth( lb_sedcoeff->width() );
    adjustSize();
 
-   int kk = model->components.size() - 1;
-
-   if ( model->components[ 0 ].vbar20 != model->components[ kk ].vbar20 )
+   if ( ! model->constant_vbar() )
    {  // Vbar varies, so change "f/f0" to "Vbar"
       ck_xfra->setText( "x=vb" );
       ck_yfra->setText( "y=vb" );

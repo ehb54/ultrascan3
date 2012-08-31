@@ -48,6 +48,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             double            D20w_correction;    //!< D data correction
             double            rotor_stretch[ 2 ]; //!< Stretch coefficients
             double            centerpiece_bottom; //!< Base bottom
+
+            int               solute_type;        //!< Solute type (0,1,2)
     };
 
     //! Class for communicating simulation

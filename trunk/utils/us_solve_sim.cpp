@@ -183,13 +183,11 @@ DebugTime("BEG:calcres");
    int    kstep   = 0;                             // Progress step count
           kk      = 0;                             // nnls_a output index
    int    ksols   = 0;
-   double vbartb  = data_sets[ offset ]->vbartb;
-   double cff0    = vbartb < 0.0 ? -vbartb : 0.0;
-   bool   varyff0 = ( cff0 == 0.0 );
+   int    stype   = data_sets[ offset ]->solute_type;
 
    qSort( sim_vals.solutes );
 
-   if ( varyff0 )
+   if ( stype == 0 )
    {  // Normal case of varying f/f0 with constant vbar
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -202,9 +200,9 @@ DebugTime("BEG:calcres");
             US_DataIO2::RawData     simdat;
             int nscans  = edata->scanData.size();
             int npoints = edata->x.size();
+            zcomponent.vbar20          = dset->vbar20;
 
             // Set model with standard space s and k
-            zcomponent.vbar20          = dset->vbar20;
             model.components[ 0 ]      = zcomponent;
             model.components[ 0 ].s    = sim_vals.solutes[ cc ].s;
             model.components[ 0 ].f_f0 = sim_vals.solutes[ cc ].k;
@@ -253,10 +251,9 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
       }   // Each solute
    }   // Constant vbar
 
-   else
+   else if ( stype == 1 )
    {  // Special case of varying vbar with constant f/f0
-      zcomponent.vbar20 = 0.0;
-      zcomponent.f_f0   = cff0;
+      zcomponent.f_f0   = sim_vals.solutes[ 0 ].k;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -273,7 +270,7 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             double avtemp  = dset->temperature;
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
-            sd.vbar20      = sim_vals.solutes[ cc ].k;
+            sd.vbar20      = sim_vals.solutes[ cc ].v;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
             US_Math2::data_correction( avtemp, sd );
 
@@ -324,6 +321,76 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
          }
       }   // Each solute
    }  // Constant f/f0
+
+   else
+   {  // Special case of custom grid
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {  // Solve for each solute
+         if ( abort ) return;
+
+         for ( int ee = offset; ee < dataset_count; ee++ )
+         {  // Solve for each data set
+            DataSet*                dset   = data_sets[ ee ];
+            US_DataIO2::EditedData* edata  = banddthr ? &wdata : &dset->run_data;
+            US_DataIO2::RawData     simdat;
+            US_Math2::SolutionData  sd;
+            int nscans     = edata->scanData.size();
+            int npoints    = edata->x.size();
+            double avtemp  = dset->temperature;
+            model.components[ 0 ]        = zcomponent;
+            model.components[ 0 ].s      = sim_vals.solutes[ cc ].s;
+            model.components[ 0 ].D      = sim_vals.solutes[ cc ].d;
+            model.components[ 0 ].vbar20 = sim_vals.solutes[ cc ].v;
+
+            // Fill in the missing component values
+            model.update_coefficients();
+
+            sd.viscosity   = dset->viscosity;
+            sd.density     = dset->density;
+            sd.vbar20      = model.components[ 0 ].vbar20;
+            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+            US_Math2::data_correction( avtemp, sd );
+
+            // Convert to experimental space
+            model.components[ 0 ].s   /= sd.s20w_correction;
+            model.components[ 0 ].D   /= sd.D20w_correction;
+
+            // Initialize simulation data with the experiment's grid
+            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+if (dbg_level>1 && thrnrank==1 && cc==0) {
+ model.debug(); dset->simparams.debug(); }
+
+            // Calculate Astfem_RSA solution (Lamm equations)
+            US_Astfem_RSA astfem_rsa( model, dset->simparams );
+
+            astfem_rsa.calculate( simdat );
+            if ( abort ) return;
+
+            if ( banddthr )
+            {  // If band forming, hold data within thresholds; skip if all-zero
+               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+                  continue;
+
+               ksols++;
+            }
+
+            simulations << simdat;   // Save simulation (each datset,solute)
+
+            // Populate the A matrix for the NNLS routine with simulation
+            for ( int ss = 0; ss < nscans; ss++ )
+               for ( int rr = 0; rr < npoints; rr++ )
+                  nnls_a[ kk++ ] = simdat.value( ss, rr );
+
+         }  // Each data set
+
+         if ( signal_wanted  &&  ++kstep == increp )
+         {  // If asked for and step at increment, signal progress
+            emit work_progress( increp );
+            kstep = 0;                     // Reset step count
+         }
+      }   // Each solute
+   }
 
 DbgLv(1) << "   CR:BF nsol ksol" << nsolutes << ksols;
    nsolutes   = banddthr ? ksols : nsolutes;
