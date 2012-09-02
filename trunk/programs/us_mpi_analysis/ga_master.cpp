@@ -273,6 +273,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
 
             // Add the genes to the emmigres list
             int solute = 0;
+            int solinc = solute_doubles - 2;
 
             for ( int i = 0; i < gene_count; i++ )
             {
@@ -283,7 +284,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
                   double s = emmigrants[ solute++ ];
                   double k = emmigrants[ solute++ ];
                   gene << US_Solute( s, k );
-                  solute++; // Concentration         
+                  solute  += solinc; // Concentration, Vbar, DiffCoeff
                }
 
                emigres << gene;
