@@ -44,7 +44,8 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
                d->model_file  = parameters[ "CG_model" ];
                d->solute_type = 2;
             }
-            else if ( parameters.contains( "ff0_min" ) )
+            else if ( parameters.contains( "ff0_min" )  ||
+                      analysis_type.startsWith( "GA" ) )
             {
                d->solute_type = 0;
             }
