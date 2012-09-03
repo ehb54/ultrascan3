@@ -76,7 +76,7 @@ bool US_Saxs_Util::compute_1d()
                ;
             return false;
          }
-         intermediate_saves[ pos ]++;
+         intermediate_saves[ pos ] = true;
       }
    }
 

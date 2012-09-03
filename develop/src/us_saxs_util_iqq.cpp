@@ -1414,8 +1414,11 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 
    {
       unsigned int cropped_pts = 0;
-      while ( rq.size() && rq.back() > sgp_exp_q.back() )
+      while ( rq.size() && rq.back() > sgp_exp_q.back() + 1e-8 )
       {
+         cout << QString( "cropping point with value %1 which is larger than %2 by %3\n" )
+            .arg( rq.back() ).arg( sgp_exp_q.back() ).arg( rq.back() - sgp_exp_q.back() ) << flush;
+
          cropped_pts++;
          rq.pop_back();
       }
