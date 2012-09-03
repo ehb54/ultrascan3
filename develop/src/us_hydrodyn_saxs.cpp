@@ -6004,20 +6004,20 @@ void US_Hydrodyn_Saxs::set_sans_iq(int val)
    
 void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
 {
-   for ( unsigned int i = 0; i < selected_models.size(); i++ )
-   {
-      for ( unsigned int j = 0; j < bead_models[selected_models[i]].size(); j++ )
-      {
-         // cout << "saxs name [" << j << "] = " << bead_models[i][j].saxs_data.saxs_name << endl;
-         if ( bead_models[i][j].active &&
-              bead_models[i][j].saxs_data.saxs_name.isEmpty() )
-         {
-            cout << "bead model " << i << " is NOT ok for saxs\n";
-            bead_model_ok_for_saxs = false;
-            return;
-         }
-      }
-   }
+//    for ( unsigned int i = 0; i < selected_models.size(); i++ )
+//    {
+//       for ( unsigned int j = 0; j < bead_models[selected_models[i]].size(); j++ )
+//       {
+//          // cout << "saxs name [" << j << "] = " << bead_models[i][j].saxs_data.saxs_name << endl;
+//          if ( bead_models[i][j].active &&
+//               bead_models[i][j].saxs_data.saxs_name.isEmpty() )
+//          {
+//             cout << "bead model " << i << " is NOT ok for saxs\n";
+//             bead_model_ok_for_saxs = false;
+//             return;
+//          }
+//       }
+//    }
    cout << "bead models are ok for saxs\n";
    bead_model_ok_for_saxs = true;
 }
