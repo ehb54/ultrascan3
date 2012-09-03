@@ -4,7 +4,7 @@
 #define US_DEFINES_H
 
 //! The version of UltraScan
-#define US_Version QString("1.0")
+#define US_Version QString("2.0")
 
 
 //! The directory/key for US_Settings storage
