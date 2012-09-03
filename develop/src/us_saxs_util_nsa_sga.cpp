@@ -514,10 +514,12 @@ bool US_Saxs_Util::nsa_sga_run()
                  " population       %1\n"
                  " generations      %2\n"
                  " increment        %3\n"
+                 " scaling          %4\n"
                  )
          .arg( control_parameters[ "nsapopulation" ] )
          .arg( control_parameters[ "nsagenerations" ] )
          .arg( control_parameters[ "nsasgaincrement" ] )
+         .arg( nsa_use_scaling_fit ? "Yes" : "No" )
          ;
       
       ts <<

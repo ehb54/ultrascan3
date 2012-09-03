@@ -142,10 +142,12 @@ bool US_Saxs_Util::nsa_run()
                        " gsm method       %1\n"
                        " max iterations   %2\n"
                        " epsilon          %3\n"
+                       " scaling          %4\n"
                        )
                .arg( control_parameters[ "nsagsm" ] )
                .arg( control_parameters[ "nsaiterations" ] )
                .arg( control_parameters[ "nsaepsilon" ] )
+               .arg( nsa_use_scaling_fit ? "Yes" : "No" )
                ;
             
             ts <<

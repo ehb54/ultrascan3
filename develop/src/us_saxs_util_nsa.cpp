@@ -119,7 +119,8 @@ bool US_Saxs_Util::nsa_validate()
 #endif
    }
 
-   if ( control_parameters.count( "nsascale" ) )
+   if ( control_parameters.count( "nsascale" ) &&
+        control_parameters[ "nsascale" ].lower().left( 1 ) == "y" )
    {
       nsa_use_scaling_fit = true;
 #if defined( USE_MPI )
@@ -620,6 +621,8 @@ QString US_Saxs_Util::nsa_qs_bead_model()
          .arg( bead_models[ 0 ][ i ].bead_coordinate.axis[ 2 ] )
          .arg( bead_models[ 0 ][ i ].bead_computed_radius );
    }
+   qs += "\nModel scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
+
    return qs;
 }
 
