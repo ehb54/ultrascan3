@@ -1153,7 +1153,7 @@ int _nnls_h12(
 } /* _nnls_h12 */
 
 
-double erfc(double x)
+double us_erfc(double x)
 {
    // error function erfc(x) with fractional error everywhere less
    // than 1.2 × 10 7.

@@ -1506,7 +1506,7 @@ double US_vhwEnhanced::find_root(double goal)
 //
    xsqr = x * x;
 // the inverse complementary error function, test(x)=ierfc(x)=1/pi^0.5*e(-x^2) - x * erfc(x)
-   test = exp(-xsqr) * pow(M_PI, -0.5) - (x * erfc(x));
+   test = exp(-xsqr) * pow(M_PI, -0.5) - (x * us_erfc(x));
 //cout << "test: " << test << ", goal: " << goal << endl;
 //
 // iterate until the difference between subsequent x value evaluations is too small to be relevant
@@ -1541,7 +1541,7 @@ double US_vhwEnhanced::find_root(double goal)
 // then we update the test y-value:
 //
       xsqr = x * x;
-      test = (1 + 2 * xsqr) * erfc(x) - (2 * x * exp(-xsqr))/pow(M_PI, 0.5);
+      test = (1 + 2 * xsqr) * us_erfc(x) - (2 * x * exp(-xsqr))/pow(M_PI, 0.5);
 //    cout << "2 goal: " << goal << ", test: " << test << ", x: " << x << endl;
    }
    return (x);

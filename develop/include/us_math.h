@@ -147,7 +147,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    float random_range(float, float);
    float standard_distribution(float);
    float normal_distribution(float, float, float);
-   double erfc(double);
+   double us_erfc(double);
 
    void get_1d_limits(double **, double *, double *, int, int start_count=0);
    void get_1d_limits(float **, float *, float *, int, int start_count=0);
