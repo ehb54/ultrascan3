@@ -1001,6 +1001,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
             while (!ts.atEnd())
             {
                QString str = ts.readLine();
+               if ( str.left( 6 ).lower().contains( "__json" ) )
+               {
+                  continue;
+               }
                editor->append(str);
                if ( rx.search(str) != -1 )
                {
