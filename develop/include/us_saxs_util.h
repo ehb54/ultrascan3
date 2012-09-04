@@ -16,6 +16,7 @@
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"
+#include "us_timer.h"
 
 #include <complex>
 

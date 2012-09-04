@@ -52,6 +52,10 @@ bool US_Saxs_Util::nsa_run()
 
    for ( unsigned int i = startloop; i <= endloop; i++ )
    {
+      US_Timer ust;
+      ust.init_timer ( "nsa ga time" );
+      ust.start_timer( "nsa ga time" );
+
       if ( !nsa_fitness_setup( i ) )
       {
          return false;
@@ -196,6 +200,10 @@ bool US_Saxs_Util::nsa_run()
                   out_params[ "result computed delta rho from scaling"  ] = QString( "%1" ).arg( delta_rho_prime );
                   out_params[ "result computed target rho from scaling" ] = QString( "%1" ).arg( delta_rho_prime - delta_rho );
                }
+               ust.end_timer( "nsa ga time" );
+               out_params[ "stats nsa ga time" ] = ust.list_time( "nsa ga time" ).replace( "\n", "" );
+               out_params[ "stats np" ] = QString( "%1" ).arg( npes );
+               out_params[ "stats host" ] = QString( "%1" ).arg( getenv( "HOSTNAME" ) );
                ts << endl << "__json:" << US_Json::compose( out_params ) << endl;
             }
 
