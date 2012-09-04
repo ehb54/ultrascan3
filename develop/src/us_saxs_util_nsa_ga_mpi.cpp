@@ -175,7 +175,6 @@ bool US_Saxs_Util::nsa_run()
             
             // create json info
             {
-               ts << "___json_start___\n";
                // should also add all the nsa_physical_params 
                map < QString, QString > out_params = control_parameters;
                out_params[ "result nrmsd" ] = QString( "%1" ).arg( nrmsd );
@@ -193,12 +192,11 @@ bool US_Saxs_Util::nsa_run()
                   {
                      delta_rho = 0e0;
                   }
-                  double delta_rho_prime = sqrt( nsa_last_scaling ) * delta_rho;
+                  double delta_rho_prime = sqrt( nsa_last_scaling * delta_rho * delta_rho );
                   out_params[ "result computed delta rho from scaling"  ] = QString( "%1" ).arg( delta_rho_prime );
                   out_params[ "result computed target rho from scaling" ] = QString( "%1" ).arg( delta_rho_prime - delta_rho );
                }
-               ts << US_Json::compose( out_params ) << endl;
-               ts << "___json_end___\n";
+               ts << "__json:" << US_Json::compose( out_params ) << endl;
             }
 
             f.close();
