@@ -15,6 +15,8 @@
 #include <qregexp.h>
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
+#include "us_json.h"
+
 #include <complex>
 
 #if defined(WIN32)
@@ -1110,6 +1112,7 @@ class US_EXTERN US_Saxs_Util
       map < int, bool >                          registered_workers;
 #endif
       bool                  nsa_use_scaling_fit;
+      double                nsa_last_scaling;
 
       bool                  nsa_ga_fitness       ( nsa_ga_individual & individual );
       unsigned int          nsa_pop_selection    ( unsigned int size );
@@ -1124,6 +1127,13 @@ class US_EXTERN US_Saxs_Util
       nsa_sga_individual    nsa_sga_last_individual;
       bool                  check_overlap        ( vector < PDB_atom > &bm, bool quiet = true );
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, QString >                    nsa_physical_stats_map;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
       // a2sb:
       bool                  a2sb_validate        ();

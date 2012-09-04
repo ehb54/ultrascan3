@@ -34,6 +34,7 @@ SOURCES		+= ../src/us_saxs_util_dammin.cpp
 SOURCES		+= ../src/us_saxs_util_crysol.cpp
 SOURCES		+= ../src/us_saxs_util_iqq_1d.cpp
 SOURCES		+= ../src/us_saxs_util_iqq_1d_mpi.cpp
+SOURCES		+= ../src/us_json.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_math.h
@@ -47,6 +48,7 @@ HEADERS         += ../include/us_tnt_jama.h
 HEADERS         += ../include/us_file_util.h
 HEADERS         += ../include/us_timer.h
 HEADERS         += ../include/us_cmdline_app.h
+HEADERS         += ../include/us_json.h
 
 TARGET = us_saxs_cmds_mpi
 

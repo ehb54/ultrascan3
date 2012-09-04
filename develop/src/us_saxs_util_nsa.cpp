@@ -299,15 +299,15 @@ double US_Saxs_Util::nsa_fitness()
    }
 
    // values stored in last_q, last_I, experiment in sgp_exp_q,I,e
-   double k;
+   nsa_last_scaling = 1e0;
    double chi2;
    if ( nsa_use_scaling_fit )
    {
       if ( sgp_use_e )
       {
-         scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, k, chi2 );
+         scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, nsa_last_scaling, chi2 );
       } else {
-         scaling_fit( sgp_last_I, sgp_exp_I, k, chi2 );
+         scaling_fit( sgp_last_I, sgp_exp_I, nsa_last_scaling, chi2 );
       }
    } else {
       if ( sgp_use_e )
@@ -762,6 +762,33 @@ QString US_Saxs_Util::nsa_physical_stats()
          }
       }
    }
+
+   nsa_physical_stats_map.clear();
+
+   nsa_physical_stats_map[ "result total volume"                ] = QString( "%1" ).arg( volume );
+   nsa_physical_stats_map[ "result intersection volume"         ] = QString( "%1" ).arg( volume_intersection );
+   nsa_physical_stats_map[ "result excluded volume"             ] = QString( "%1" ).arg( volume - volume_intersection );
+   nsa_physical_stats_map[ "result centers bounding box size x" ] = QString( "%1" ).arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] );
+   nsa_physical_stats_map[ "result centers bounding box size y" ] = QString( "%1" ).arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] );
+   nsa_physical_stats_map[ "result centers bounding box size z" ] = QString( "%1" ).arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
+
+   nsa_physical_stats_map[ "result centers axial ratios x:z" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+   nsa_physical_stats_map[ "result centers axial ratios x:y" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) );
+   nsa_physical_stats_map[ "result centers axial ratios y:z" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+
+   nsa_physical_stats_map[ "result radial extent bounding box size x" ] = QString( "%1" ).arg( prmax.axis[ 0 ] - prmin.axis[ 0 ] );
+   nsa_physical_stats_map[ "result radial extent bounding box size y" ] = QString( "%1" ).arg( prmax.axis[ 1 ] - prmin.axis[ 1 ] );
+   nsa_physical_stats_map[ "result radial extent bounding box size z" ] = QString( "%1" ).arg( prmax.axis[ 2 ] - prmin.axis[ 2 ] );
+
+   nsa_physical_stats_map[ "result radial extent axial ratios x:z" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
+   nsa_physical_stats_map[ "result radial extent axial ratios x:y" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) );
+   nsa_physical_stats_map[ "result radial extent axial ratios y:z" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
 
    QString qs;
 

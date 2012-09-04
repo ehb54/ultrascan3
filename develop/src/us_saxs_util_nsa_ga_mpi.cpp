@@ -173,6 +173,34 @@ bool US_Saxs_Util::nsa_run()
                .arg( nrmsd )
                ;
             
+            // create json info
+            {
+               ts << "___json_start___\n";
+               // should also add all the nsa_physical_params 
+               map < QString, QString > out_params = control_parameters;
+               out_params[ "result nrmsd" ] = QString( "%1" ).arg( nrmsd );
+               for ( map < QString, QString >::iterator it = nsa_physical_stats_map.begin();
+                     it !=  nsa_physical_stats_map.end();
+                     it++ )
+               {
+                  out_params[ it->first ] = it->second;
+               }
+               if ( nsa_use_scaling_fit )
+               {
+                  out_params[ "result last scaling" ] = QString( "%1" ).arg( nsa_last_scaling );
+                  double delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
+                  if ( fabs(delta_rho) < 1e-5 )
+                  {
+                     delta_rho = 0e0;
+                  }
+                  double delta_rho_prime = sqrt( nsa_last_scaling ) * delta_rho;
+                  out_params[ "result computed delta rho from scaling"  ] = QString( "%1" ).arg( delta_rho_prime );
+                  out_params[ "result computed target rho from scaling" ] = QString( "%1" ).arg( delta_rho_prime - delta_rho );
+               }
+               ts << US_Json::compose( out_params ) << endl;
+               ts << "___json_end___\n";
+            }
+
             f.close();
             cout << QString( "written: %1\n" ).arg( f.name() );
             output_files << f.name();
