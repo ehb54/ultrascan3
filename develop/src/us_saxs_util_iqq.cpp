@@ -1428,6 +1428,11 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       }
    }
 
+   if ( rq.back() > sgp_exp_q.back() )
+   {
+      rq.back() = sgp_exp_q.back();
+   }
+
    cout << QString( "exp q [%1:%2] rq [%3:%4]\n" )
       .arg( sgp_exp_q[ 0 ] )
       .arg( sgp_exp_q[ sgp_exp_q.size() - 1 ] )
