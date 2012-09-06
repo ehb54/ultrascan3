@@ -540,11 +540,12 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    else
       iterID = "i01";
 
-   QString id = model.typeText();
+   QString id        = model.typeText();
+   QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
+   int     stype     = data_sets[ 0 ]->solute_type;
+   double  vbar20    = data_sets[ 0 ]->vbar20;
 
-   QString analysisID = dates + "_" + id + "_" + requestID + "_" + iterID;
-
-   model.description = data->runID + "." + tripleID + "." + analysisID + ".model";
+   model.description = data->runID + "." + tripleID + "." + analyID + ".model";
 
    // Save as class variable for later reference
    modelGUID = model.modelGUID;
@@ -558,7 +559,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
       component.f_f0                 = solute->k;
       component.signal_concentration = solute->c;
       component.name                 = QString().sprintf( "SC%04d", i + 1 );
-      component.vbar20               = data_sets[ 0 ]->vbar20;
+      component.vbar20               = ( stype == 0 ) ? vbar20 : solute->v;
 
       US_Model::calc_coefficients( component );
       model.components << component;
