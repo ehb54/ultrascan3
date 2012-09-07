@@ -96,7 +96,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
    connect( sb_order, SIGNAL( valueChanged( int ) ), SLOT( plot_data( int ) ) );
 
-   QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
+   QLabel* lb_fit = us_label( tr( "Meniscus selected:" ) );
 
    le_fit = us_lineedit( "", -1, false );
    le_fit->setToolTip(
@@ -392,7 +392,7 @@ void US_FitMeniscus::plot_data( void )
    radius_min[ 1 ] = minimum;
 
    rmsd_min  [ 0 ] = miny - 1.0 * dy;
-   rmsd_min  [ 0 ] = miny + 2.0 * dy;
+   rmsd_min  [ 1 ] = miny + 2.0 * dy;
 
    minimum_curve->setData( radius_min, rmsd_min, 2 );
 
@@ -470,7 +470,7 @@ void US_FitMeniscus::edit_update( void )
 
    msg += tr( "\n\nDo you want to remove all fit-meniscus models\n"
               "(and associated noises) except for the one\n"
-              "that has the minimum RMSD value?" );
+              "associated with the nearest meniscus value?" );
 
    int response = QMessageBox::question( this, tr( "Edit File Updated" ),
          msg, QMessageBox::Yes, QMessageBox::Cancel );
@@ -877,8 +877,8 @@ void US_FitMeniscus::remove_models()
    QString srchEdit = fname_load.section( ".", -3, -3 );
    QString srchTrip = srchEdit.section( "-", -1, -1 );
            srchEdit = srchEdit.section( "-",  0, -2 );
-//DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
-// << srchRun << srchEdit << srchTrip;
+DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
+ << srchRun << srchEdit << srchTrip;
 
    // Scan models files; get list of fit-meniscus type matching run/edit/triple
    QStringList modfilt;
@@ -887,6 +887,7 @@ void US_FitMeniscus::remove_models()
    QStringList modfiles = QDir( moddir ).entryList(
          modfilt, QDir::Files, QDir::Name );
    moddir               = moddir + "/";
+   double cmeniscus     = le_fit->text().toDouble();
 
    QList< ModelDesc >  lMDescrs;
    QList< ModelDesc >  dMDescrs;
@@ -926,8 +927,8 @@ void US_FitMeniscus::remove_models()
       QString tripID     = descript.section( '.', -3, -3 );
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0, -5 );
-DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
- << ii << runID << editLabl << tripID;
+//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
+// << ii << runID << editLabl << tripID;
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
@@ -975,21 +976,23 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
    nlmods         = lMDescrs.size();
    qSort( lMDescrs );
 DbgLv(1) << "RmvMod: nlmods" << nlmods;
-   double minVari = 99e+10;
+   double minMdif = 99e+10;
 
    for ( int ii = 0; ii < nlmods; ii++ )
    {  // Scan to identify model in set with lowest variance
       ModelDesc lmodd = lMDescrs[ ii ];
-DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << lmodd.variance
+      double diffMen  = qAbs( lmodd.meniscus - cmeniscus );
+DbgLv(1) << "low Mdif scan: ii vari meni desc" << ii << lmodd.variance
  << lmodd.meniscus << lmodd.description.right( 22 );
-      if ( lmodd.variance  < minVari )
+
+      if ( diffMen < minMdif )
       {
-         minVari        = lmodd.variance;
+         minMdif        = diffMen;
          lkModx         = ii;
-//DbgLv(1) << "low Vari scan:   minVari lkModx" << minVari << lkModx;
+//DbgLv(1) << "low Mdif scan:   minMdif lkModx" << minMdif << lkModx;
       }
    }
-DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
+DbgLv(1) << "RmvMod:  minMdif lkModx" << minMdif << lkModx;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Make a list of f-m models that match for DB, if possible
@@ -1099,18 +1102,20 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
          ndmods         = 0;
 
 DbgLv(1) << "RmvMod: ndmods" << ndmods;
-      double minVari = 99e+10;
+      double minMdif = 99e+10;
 
       for ( int ii = 0; ii < ndmods; ii++ )
       {  // Scan to identify model in set with lowest variance
          ModelDesc dmodd = dMDescrs[ ii ];
-DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << dmodd.variance 
+         double diffMen  = qAbs( dmodd.meniscus - cmeniscus );
+DbgLv(1) << "low Mdif scan: ii vari meni desc" << ii << dmodd.variance
  << dmodd.meniscus << dmodd.description.right( 22 );
-         if ( dmodd.variance < minVari )
+
+         if ( diffMen < minMdif )
          {
-            minVari        = dmodd.variance;
+            minMdif        = diffMen;
             dkModx         = ii;
-DbgLv(1) << "low Vari scan:   minVari dkModx" << minVari << dkModx;
+DbgLv(1) << "low Mdif scan:   minMdif dkModx" << minMdif << dkModx;
          }
       }
 
