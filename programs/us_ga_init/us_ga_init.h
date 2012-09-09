@@ -94,15 +94,19 @@ class US_GA_Initialize : public US_Widgets
       QCheckBox*    cb_1dplot;
       QCheckBox*    cb_2dplot;
       QCheckBox*    cb_3dplot;
-      QCheckBox*    cb_plot_s;
-      QCheckBox*    cb_plot_mw;
+      QCheckBox*    cb_plot_sk;
+      QCheckBox*    cb_plot_wk;
+      QCheckBox*    cb_plot_sv;
+      QCheckBox*    cb_plot_wv;
 
       QPen*         pickpen;
       QPen          cbukpen;
       QPen          pbukpen;
 
-      QList< Solute >  s_distro;
-      QList< Solute >  w_distro;
+      QList< Solute >  sk_distro;
+      QList< Solute >  wk_distro;
+      QList< Solute >  sv_distro;
+      QList< Solute >  wv_distro;
       QList< Solute >* sdistro;
 
       QwtDoublePoint  p1;
@@ -131,12 +135,14 @@ class US_GA_Initialize : public US_Widgets
       int           sxset;
       int           psdsiz;
       int           dbg_level;
+      int           plot_xy;
 
       bool          minmax;
       bool          zoom;
       bool          auto_lim;
       bool          monte_carlo;
       bool          plot_s;
+      bool          plot_k;
       bool          rbtn_click;
       bool          runsel;
       bool          latest;
@@ -147,7 +153,9 @@ class US_GA_Initialize : public US_Widgets
       QString       analys_name;
       QString       method;
       QString       xa_title_s;
-      QString       xa_title_mw;
+      QString       xa_title_w;
+      QString       ya_title_k;
+      QString       ya_title_v;
       QString       xa_title;
       QString       ya_title;
       QString       cmapname;
@@ -182,8 +190,10 @@ class US_GA_Initialize : public US_Widgets
       void select_plot1d(  void );
       void select_plot2d(  void );
       void select_plot3d(  void );
-      void select_plot_s(  void );
-      void select_plot_mw( void );
+      void select_plot_sk( void );
+      void select_plot_wk( void );
+      void select_plot_sv( void );
+      void select_plot_wv( void );
       void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );

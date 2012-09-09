@@ -171,13 +171,21 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
             this,         SLOT(   newrow_sbdata(     int )            ) );
 
-   us_checkbox( tr( "Plot f/f0 VS s" ), cb_plot_s, true );
-   connect( cb_plot_s,  SIGNAL( clicked() ),
-            this,       SLOT( select_plot_s() ) );
+   us_checkbox( tr( "Plot f/f0 VS s" ),  cb_plot_sk, true );
+   connect( cb_plot_sk, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_sk() ) );
 
-   us_checkbox( tr( "Plot f/f0 VS mw" ), cb_plot_mw, false );
-   connect( cb_plot_mw, SIGNAL( clicked() ),
-            this,       SLOT( select_plot_mw() ) );
+   us_checkbox( tr( "Plot f/f0 VS mw" ), cb_plot_wk, false );
+   connect( cb_plot_wk, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_wk() ) );
+
+   us_checkbox( tr( "Plot vbar VS s" ),  cb_plot_sv, true );
+   connect( cb_plot_sv, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_sv() ) );
+
+   us_checkbox( tr( "Plot vbar VS mw" ), cb_plot_wv, false );
+   connect( cb_plot_wv, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_wv() ) );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
@@ -304,8 +312,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( lb_plsmax,    s_row,   0, 1, 2 );
    spec->addWidget( ct_plsmax,    s_row++, 2, 1, 2 );
    spec->addWidget( lw_sbin_data, s_row++, 0, 1, 4 );
-   spec->addWidget( cb_plot_s,    s_row,   0, 1, 2 );
-   spec->addWidget( cb_plot_mw,   s_row++, 2, 1, 2 );
+   spec->addWidget( cb_plot_sk,   s_row,   0, 1, 2 );
+   spec->addWidget( cb_plot_wk,   s_row++, 2, 1, 2 );
+   spec->addWidget( cb_plot_sv,   s_row,   0, 1, 2 );
+   spec->addWidget( cb_plot_wv,   s_row++, 2, 1, 2 );
    spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 4 );
    spec->addWidget( pb_prefilt,   s_row,   0, 1, 2 );
    spec->addWidget( le_prefilt,   s_row++, 2, 1, 2 );
@@ -329,8 +339,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
       + DEGC;
-   xa_title_mw = tr( "Molecular Weight (Dalton)" );
+   xa_title_w  = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
+   ya_title_k  = tr( "Frictional Ratio f/f0" );
+   ya_title_v  = tr( "Vbar at 20" ) + DEGC;
+   ya_title    = ya_title_k;
 
    QBoxLayout* plot = new US_Plot( data_plot, 
       tr( "Distribution Data" ), xa_title, ya_title ); 
@@ -375,9 +388,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
-   sdistro    = &s_distro;
+   sdistro    = &sk_distro;
    plot_dim   = 3;          // default plot dimension
    plot_s     = true;       // default s/MW X type
+   plot_k     = true;       // default k/vb Y type
+   plot_xy    = 0;          // default X,Y type:  X=s, y=f/f0
    rbtn_click = false;      // default right-button clicked
    mfilter    = "";         // default model list filter
    runsel     = true;       // default prefilter type
@@ -403,8 +418,10 @@ void US_GA_Initialize::reset( void )
    cb_1dplot->setChecked(  plot_dim == 1 );  
    cb_2dplot->setChecked(  plot_dim == 2 );
    cb_3dplot->setChecked(  plot_dim == 3 );
-   cb_plot_s->setChecked(  plot_s );
-   cb_plot_mw->setChecked( !plot_s );
+   cb_plot_sk->setChecked( true  );
+   cb_plot_wk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   cb_plot_wv->setChecked( false );
 
    nisols     = 0;
    nibuks     = 0;
@@ -460,9 +477,11 @@ void US_GA_Initialize::reset( void )
    cmapname   = tr( "Default Color Map: w-cyan-magenta-red-black" );
 
    monte_carlo = false;
-   pb_reset->setEnabled(   false );
-   cb_plot_s->setEnabled(  true );
-   cb_plot_mw->setEnabled( true );
+   pb_reset  ->setEnabled( false );
+   cb_plot_sk->setEnabled( true );
+   cb_plot_wk->setEnabled( true );
+   cb_plot_sv->setEnabled( true );
+   cb_plot_wv->setEnabled( true );
 }
 
 // save the GA data
@@ -697,9 +716,17 @@ void US_GA_Initialize::replot_data()
       return;
 
    resetSb();
-   ya_title = cnstvbar ?
-              tr( "Frictional Ratio f/f0" ) :
-              tr( "Vbar at 20" ) + DEGC;
+
+   plot_s    = cb_plot_sk->isChecked() || cb_plot_sv->isChecked();
+   plot_k    = cb_plot_sk->isChecked() || cb_plot_wk->isChecked();
+   plot_xy   = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   xa_title  = plot_s ? xa_title_s : xa_title_w;
+   ya_title  = plot_k ? ya_title_k : ya_title_v;
+
+                             sdistro   = &sk_distro;
+   if      ( plot_xy == 1 )  sdistro   = &wk_distro;
+   else if ( plot_xy == 2 )  sdistro   = &sv_distro;
+   else if ( plot_xy == 3 )  sdistro   = &wv_distro;
 
    if ( plot_dim == 1 )
    {
@@ -724,8 +751,6 @@ void US_GA_Initialize::plot_1dim( void )
 
    data_plot->setCanvasBackground( Qt::black );
    pick->setTrackerPen( QColor( Qt::white ) );
-
-   sdistro       = plot_s ? &s_distro : &w_distro;
 
    int     dsize = sdistro->size();
    QVector< double > xvec( dsize );
@@ -807,7 +832,7 @@ void US_GA_Initialize::plot_1dim( void )
 
    data_plot->replot();
 
-   pb_reset->setEnabled( true );
+   pb_reset  ->setEnabled( true );
    pb_autassb->setEnabled( false );
    manbuks      = true;
 }
@@ -819,8 +844,6 @@ void US_GA_Initialize::plot_2dim( void )
 
    data_plot->setCanvasBackground( Qt::black );
    pick->setTrackerPen( QColor( Qt::white ) );
-
-   sdistro       = plot_s ? &s_distro : &w_distro;
 
    int     dsize = sdistro->size();
    double* x     = new double[ dsize ];
@@ -901,7 +924,7 @@ void US_GA_Initialize::plot_2dim( void )
    data_plot->replot();
 
    pb_reset->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo );
+   pb_autassb->setEnabled( !monte_carlo && plot_k );
 }
 
 // plot data 3-D
@@ -934,7 +957,6 @@ void US_GA_Initialize::plot_3dim( void )
       drect = QwtDoubleRect( plsmin, plfmin,
             ( plsmax - plsmin ), ( plfmax - plfmin ) );
 
-   sdistro       = plot_s ? &s_distro : &w_distro;
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setRaster( sdistro );
 
@@ -968,8 +990,8 @@ void US_GA_Initialize::plot_3dim( void )
 
    data_plot->replot();
 
-   pb_reset->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo );
+   pb_reset  ->setEnabled( true );
+   pb_autassb->setEnabled( !monte_carlo && plot_k );
 }
 
 // update pseudo-3d resolution factor
@@ -1128,7 +1150,7 @@ void US_GA_Initialize::select_plot2d()
    replot_data();
 
    pb_mandrsb->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo );
+   pb_autassb->setEnabled( !monte_carlo && plot_k );
 }
 
 // select 3-dimensional plot
@@ -1155,16 +1177,19 @@ void US_GA_Initialize::select_plot3d()
    replot_data();
 
    pb_mandrsb->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo );
+   pb_autassb->setEnabled( !monte_carlo && plot_k );
 }
 
 // select S (sed. coeff.) for horizontal axis
-void US_GA_Initialize::select_plot_s()
+void US_GA_Initialize::select_plot_sk()
 {
-   plot_s    = cb_plot_s->isChecked();
-   cb_plot_mw->setChecked( !plot_s );
-   xa_title  = plot_s ? xa_title_s : xa_title_mw;
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   if ( !cb_plot_sk->isChecked() )  return;
+
+   cb_plot_wk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   plot_s    = true;
+   plot_k    = true;
 
    set_limits();
 
@@ -1173,6 +1198,9 @@ void US_GA_Initialize::select_plot_s()
    lb_wsbuck->setText( tr( "Width of s Bucket:" ) );
    lb_plsmin->setText( tr( "Plot Limit s Min:" ) );
    lb_plsmax->setText( tr( "Plot Limit s Max:" ) );
+   lb_hfbuck->setText( tr( "Height of f/f0 Bucket:" ) );
+   lb_plfmin->setText( tr( "Plot Limit f/f0 Min:" ) );
+   lb_plfmax->setText( tr( "Plot Limit f/f0 Max:" ) );
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
@@ -1187,12 +1215,15 @@ void US_GA_Initialize::select_plot_s()
 }
 
 // select MW (mol.wt.) for horizontal axis
-void US_GA_Initialize::select_plot_mw()
+void US_GA_Initialize::select_plot_wk()
 {
-   plot_s    = !cb_plot_mw->isChecked();
-   cb_plot_s->setChecked( plot_s );
-   xa_title  = plot_s ? xa_title_s : xa_title_mw;
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   if ( !cb_plot_wk->isChecked() )  return;
+
+   cb_plot_sk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   plot_s    = false;
+   plot_k    = true;
 
    set_limits();
 
@@ -1201,6 +1232,75 @@ void US_GA_Initialize::select_plot_mw()
    lb_wsbuck->setText( tr( "Width of mw Bucket:" ) );
    lb_plsmin->setText( tr( "Plot Limit mw Min:" ) );
    lb_plsmax->setText( tr( "Plot Limit mw Max:" ) );
+   lb_hfbuck->setText( tr( "Height of f/f0 Bucket:" ) );
+   lb_plfmin->setText( tr( "Plot Limit f/f0 Min:" ) );
+   lb_plfmax->setText( tr( "Plot Limit f/f0 Max:" ) );
+
+   wsbuck       = ( plsmax - plsmin ) / 20.0;
+   hfbuck       = ( plfmax - plfmin ) / 20.0;
+   double rmax  = wsbuck * 10.0;
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect();
+   ct_wsbuck->setRange( 0.0, rmax, rinc );
+   ct_wsbuck->setValue( wsbuck );
+   ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
+}
+
+void US_GA_Initialize::select_plot_sv()
+{
+   if ( !cb_plot_sv->isChecked() )  return;
+
+   cb_plot_sk->setChecked( false );
+   cb_plot_wk->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   plot_s    = true;
+   plot_k    = false;
+
+   set_limits();
+
+   replot_data();
+
+   lb_wsbuck->setText( tr( "Width of s Bucket:" ) );
+   lb_plsmin->setText( tr( "Plot Limit s Min:" ) );
+   lb_plsmax->setText( tr( "Plot Limit s Max:" ) );
+   lb_hfbuck->setText( tr( "Height of vbar Bucket:" ) );
+   lb_plfmin->setText( tr( "Plot Limit vbar Min:" ) );
+   lb_plfmax->setText( tr( "Plot Limit vbar Max:" ) );
+
+   wsbuck       = ( plsmax - plsmin ) / 20.0;
+   hfbuck       = ( plfmax - plfmin ) / 20.0;
+   double rmax  = wsbuck * 10.0;
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect();
+   ct_wsbuck->setRange( 0.0, rmax, rinc );
+   ct_wsbuck->setValue( wsbuck );
+   ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
+}
+
+void US_GA_Initialize::select_plot_wv()
+{
+   if ( !cb_plot_wv->isChecked() )  return;
+
+   cb_plot_sk->setChecked( false );
+   cb_plot_wk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   plot_s    = false;
+   plot_k    = false;
+
+   set_limits();
+
+   replot_data();
+
+   lb_wsbuck->setText( tr( "Width of mw Bucket:" ) );
+   lb_plsmin->setText( tr( "Plot Limit mw Min:" ) );
+   lb_plsmax->setText( tr( "Plot Limit mw Max:" ) );
+   lb_hfbuck->setText( tr( "Height of vbar Bucket:" ) );
+   lb_plfmin->setText( tr( "Plot Limit vbar Min:" ) );
+   lb_plfmax->setText( tr( "Plot Limit vbar Max:" ) );
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
@@ -1217,8 +1317,10 @@ void US_GA_Initialize::select_plot_mw()
 // load the solute distribution from a file or from DB
 void US_GA_Initialize::load_distro()
 {
-   Solute          sol_s;
-   Solute          sol_w;
+   Solute          sol_sk;
+   Solute          sol_wk;
+   Solute          sol_sv;
+   Solute          sol_wv;
    US_Model        model;
    QString         mdesc;
    bool            loadDB = dkdb_cntrls->db();
@@ -1279,8 +1381,8 @@ DbgLv(0) << "  NO Model components";
    editGUID     = model.editGUID;
 DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
-   s_distro.clear();
-   w_distro.clear();
+   sk_distro.clear();
+   wk_distro.clear();
 
    QString tstr = run_name+ "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
@@ -1293,39 +1395,57 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
       {
          US_Model::calc_coefficients( model.components[ jj ] );
 
-         sol_s.s  = model.components[ jj ].s * 1.0e13;
-         sol_s.c  = model.components[ jj ].signal_concentration;
-         sol_s.k  = cnstvbar ?
-                    model.components[ jj ].f_f0 :
-                    model.components[ jj ].vbar20;
-         sol_s.d  = model.components[ jj ].D;
-         sol_s.w  = model.components[ jj ].mw;
-         sol_w.s  = sol_s.w;
-         sol_w.c  = sol_s.c;
-         sol_w.k  = sol_s.k;
-         sol_w.d  = sol_s.d;
-         sol_w.w  = sol_s.s;
+         sol_sk.s  = model.components[ jj ].s * 1.0e13;
+         sol_sk.k  = model.components[ jj ].f_f0;
+         sol_sk.c  = model.components[ jj ].signal_concentration;
+         sol_sk.d  = model.components[ jj ].D;
+         sol_sk.w  = model.components[ jj ].mw;
+
+         sol_wk.s  = model.components[ jj ].mw;
+         sol_wk.k  = sol_sk.k;
+         sol_wk.c  = sol_sk.c;
+         sol_wk.d  = sol_sk.d;
+         sol_wk.w  = sol_sk.s;
+
+         sol_sv.s  = sol_sk.s;
+         sol_sv.k  = model.components[ jj ].vbar20;
+         sol_sv.c  = sol_sk.c;
+         sol_sv.d  = sol_sk.d;
+         sol_sv.w  = sol_sk.w;
+
+         sol_wv.s  = sol_wk.s;
+         sol_wv.k  = sol_sv.k;
+         sol_wv.c  = sol_sk.c;
+         sol_wv.d  = sol_sk.d;
+         sol_wv.w  = sol_sk.s;
 //DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
 //   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
 
-         s_distro.append( sol_s );
-         w_distro.append( sol_w );
+         sk_distro << sol_sk;
+         wk_distro << sol_wk;
+         sv_distro << sol_sv;
+         wv_distro << sol_wv;
       }
 
       // sort and reduce distributions
-      psdsiz    = s_distro.size();
-      sort_distro( s_distro, true );
-      sort_distro( w_distro, true );
-DbgLv(1) << "Solute psdsiz sdsiz wdsiz" << psdsiz << s_distro.size()
- << w_distro.size();
-for ( int jj=0;jj<qMin(s_distro.size(),w_distro.size());jj++ ) {
- DbgLv(2) << " jj" << jj << " s k d w" << s_distro[jj].s << s_distro[jj].k
-    << s_distro[jj].d << s_distro[jj].w << " w k d s" << w_distro[jj].s
-    << w_distro[jj].k << w_distro[jj].d << w_distro[jj].w; }
+      psdsiz    = sk_distro.size();
+      sort_distro( sk_distro, true );
+      sort_distro( wk_distro, true );
+      sort_distro( sv_distro, true );
+      sort_distro( wv_distro, true );
+DbgLv(1) << "Solute psdsiz sdsiz wdsiz" << psdsiz << sk_distro.size()
+ << wk_distro.size();
+for ( int jj=0;jj<qMin(sk_distro.size(),wk_distro.size());jj++ ) {
+ DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
+    << " w k" << wk_distro[jj].s << wk_distro[jj].k; }
    }
 
+   plot_s    = cb_plot_sk->isChecked() || cb_plot_sv->isChecked();
+   plot_k    = cb_plot_sk->isChecked() || cb_plot_wk->isChecked();
+   plot_xy   = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   psdsiz    = sk_distro.size();
 DbgLv(1) << "Constant-Vbar" << cnstvbar;
-   if ( cnstvbar )
+   if ( plot_k )
    {
       lb_plfmin->setText( tr( "Plot Limit f/f0 Min:" ) );
       lb_plfmax->setText( tr( "Plot Limit f/f0 Max:" ) );
@@ -1377,7 +1497,7 @@ DbgLv(1) << "Constant-Vbar" << cnstvbar;
 
    pb_resetsb->setEnabled( true );
 
-   nisols       = s_distro.size();
+   nisols       = sk_distro.size();
    dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
    stnpline     = tr( "The number of distribution points is %1" ).arg( nisols );
@@ -1447,21 +1567,20 @@ void US_GA_Initialize::set_limits()
    double fmax = -1.0e30;
    double smin = 1.0e30;
    double smax = -1.0e30;
+   plot_s      = cb_plot_sk->isChecked() || cb_plot_sv->isChecked();
+   plot_k      = cb_plot_sk->isChecked() || cb_plot_wk->isChecked();
+   plot_xy     = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
    double rdif;
 
    resetSb();
+                              sdistro     = &sk_distro;
+   if ( plot_xy == 0 )        sdistro     = &sk_distro;
+   else if ( plot_xy == 1 )   sdistro     = &wk_distro;
+   else if ( plot_xy == 2 )   sdistro     = &sv_distro;
+   else if ( plot_xy == 3 )   sdistro     = &wv_distro;
 
-   if ( plot_s )
-   {
-      sdistro     = &s_distro;
-      xa_title    = xa_title_s;
-   }
-
-   else
-   {
-      sdistro     = &w_distro;
-      xa_title    = xa_title_mw;
-   }
+   xa_title    = plot_s ? xa_title_s : xa_title_w;
+   ya_title    = plot_k ? ya_title_k : ya_title_v;
 
    soludata->setDistro( sdistro );
 
@@ -1497,10 +1616,10 @@ void US_GA_Initialize::set_limits()
 
    if ( rdif == 0.0 )
    {
-      QMessageBox::warning( this,
-         tr( "Constant f/f0 ; Varying Vbar" ),
-         tr( "NOTE: This model has constant f/f0 values.\n"
-             "It cannot currently be used for GA." ) );
+      //QMessageBox::warning( this,
+      //   tr( "Constant f/f0 ; Varying Vbar" ),
+      //   tr( "NOTE: This model has constant f/f0 values.\n"
+      //       "It cannot currently be used for GA." ) );
 
       rdif      = 0.5;
       update_plfmin( fmin - rdif );
@@ -1508,11 +1627,11 @@ void US_GA_Initialize::set_limits()
       update_plsmin( smin );
       update_plsmax( smax );
 
-      auto_lim  = false;
-      cb_autlim->setChecked( auto_lim );
-      select_autolim();
+      //auto_lim  = false;
+      //cb_autlim->setChecked( auto_lim );
+      //select_autolim();
 
-      return;
+      //return;
    }
 
    fmin     -= rdif;
@@ -1525,6 +1644,22 @@ void US_GA_Initialize::set_limits()
 
       ct_plsmax->setRange( 0.0, rmax, rinc );
       ct_plsmin->setRange( -( smax / 50.0 ), rmax, rinc );
+   }
+
+   if ( plot_k )
+   {
+      lb_plfmin->setText( tr( "Plot Limit f/f0 Min:" ) );
+      lb_plfmax->setText( tr( "Plot Limit f/f0 Max:" ) );
+      ct_plfmin->setRange( 0.5, 50, 0.01 );
+      ct_plfmax->setRange( 1.0, 50, 0.01 );
+   }
+
+   else
+   {
+      lb_plfmin->setText( tr( "Plot Limit Vbar Min:" ) );
+      lb_plfmax->setText( tr( "Plot Limit Vbar Max:" ) );
+      ct_plfmin->setRange( 0.1, 1.5, 0.001 );
+      ct_plfmax->setRange( 0.2, 1.5, 0.001 );
    }
 
    if ( auto_lim )
@@ -1574,6 +1709,9 @@ void US_GA_Initialize::set_limits()
       " respective counters, then double-click on the listbox item."
       " You may remove a bin by right-mouse-button clicking on the listbox"
       " item and responding/defaulting Yes in the resulting dialog." ) );
+
+DbgLv(1) << "SL: autoassn plot_k" << plot_k;
+   pb_autassb->setEnabled( !monte_carlo && plot_k );
 }
 
 // Sort distribution solute list by s,k values and optionally reduce

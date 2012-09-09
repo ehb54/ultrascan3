@@ -97,6 +97,16 @@
             </li>
 
             <li>
+              <b>Plot vbar vs s</b> Select to plot vbar versus sedimentation
+              coefficient corrected for water at 20<span>&deg;</span>Celsius.
+            </li>
+
+            <li>
+              <b>Plot vbar vs MW</b> Select to plot vbar versus molecular
+              weight (Dalton).
+            </li>
+
+            <li>
               <b>Plot All Distros</b> Loop to successively plot all loaded
               model distributions.
             </li>
