@@ -42,6 +42,7 @@
             <keyword id="e3" name="experiment"    ref="convert-experiment.html"/>
             <keyword id="e4" name="export-legacy" ref="export_legacy.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
+            <keyword id="f2" name="fit-meniscus"  ref="fit_meniscus.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"  ref="combine_models.html"/>
             <keyword id="g3" name="gradient"      ref="colorgradient.html"/>
@@ -293,6 +294,11 @@
 
             <file>export_legacy.html</file>
             <file>images/export_legacy.png</file>
+
+            <file>fit_meniscus.html</file>
+            <file>images/fit_meniscus.png</file>
+            <file>images/fit_men-load.png</file>
+            <file>images/fit_men-editupd.png</file>
 
         </files>
     </filterSection>

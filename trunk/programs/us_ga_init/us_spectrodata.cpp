@@ -148,6 +148,12 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
       xrng    = xmax - xmin;          // initial ranges and pixel/data ratios
       xinc    = ( xreso - 1.0 ) / xrng;
       yrng    = ymax - ymin;
+      if ( yrng == 0.0 )
+      {
+         yrng    = 0.02;
+         ymin    = (double)( qFloor( ymin * 100.0 ) ) * 0.01;
+         ymax    = ymin + yrng;
+      }
       yinc    = ( yreso - 1.0 ) / yrng;
 
       xmin   -= ( 4.0 / xinc );       // adjust for padding, then recalc ranges

@@ -66,11 +66,13 @@
        </li>
 
        <li>
-          <b>Plot Limit f/f0 min:</b> Choose the lower plot limit for f/f0.
+          <b>Plot Limit f/f0 min:</b> Choose the lower plot limit for f/f0
+          (or vbar).
        </li>
 
        <li>
-          <b>Plot Limit f/f0 max:</b> Choose upper lower plot limit for f/f0.
+          <b>Plot Limit f/f0 max:</b> Choose upper lower plot limit for f/f0
+          (or vbar).
        </li>
 
        <li>
@@ -101,6 +103,16 @@
 
        <li>
           <b>Plot f/f0 vs MW</b> Select to plot f/f0 versus molecular weight
+          (Dalton).
+       </li>
+
+       <li>
+          <b>Plot vbar vs s</b> Select to plot vbar versus sedimentation
+          coefficient corrected for water at 20<span>&deg;</span>Celsius.
+       </li>
+
+       <li>
+          <b>Plot vbar vs MW</b> Select to plot vbar versus molecular weight
           (Dalton).
        </li>
 

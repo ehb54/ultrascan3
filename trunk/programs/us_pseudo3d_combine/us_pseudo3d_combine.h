@@ -23,10 +23,14 @@
 
 typedef struct distro_sys
 {
-   QList< Solute > s_distro;
-   QList< Solute > mw_distro;
-   QList< Solute > s_distro_zp;
-   QList< Solute > mw_distro_zp;
+   QList< Solute > sk_distro;
+   QList< Solute > wk_distro;
+   QList< Solute > sv_distro;
+   QList< Solute > wv_distro;
+   QList< Solute > sk_distro_zp;
+   QList< Solute > wk_distro_zp;
+   QList< Solute > sv_distro_zp;
+   QList< Solute > wv_distro_zp;
    QwtLinearColorMap* colormap;
    QString         run_name;
    QString         analys_name;
@@ -92,8 +96,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       QCheckBox*    cb_autosxy;
       QCheckBox*    cb_autoscz;
       QCheckBox*    cb_conloop;
-      QCheckBox*    cb_plot_s;
-      QCheckBox*    cb_plot_mw;
+      QCheckBox*    cb_plot_sk;
+      QCheckBox*    cb_plot_wk;
+      QCheckBox*    cb_plot_sv;
+      QCheckBox*    cb_plot_wv;
       QCheckBox*    cb_zpcent;
 
       QList< DisSys > system;
@@ -121,12 +127,14 @@ class US_Pseudo3D_Combine : public US_Widgets
       int           patm_id;
       int           patm_dlay;
       int           dbg_level;
+      int           plot_xy;
 
       bool          cnst_vbar;
       bool          auto_sxy;
       bool          auto_scz;
       bool          cont_loop;
       bool          plot_s;
+      bool          plot_k;
       bool          looping;
       bool          need_save;
       bool          runsel;
@@ -134,10 +142,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          zpcent;
 
       QString       xa_title_s;
-      QString       xa_title_mw;
+      QString       xa_title_w;
       QString       xa_title;
-      QString       ya_title_ff;
-      QString       ya_title_vb;
+      QString       ya_title_k;
+      QString       ya_title_v;
       QString       ya_title;
       QString       cmapname;
       QString       mfilter;
@@ -160,8 +168,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_autosxy( void );
       void select_autoscz( void );
       void select_conloop( void );
-      void select_plot_s(  void );
-      void select_plot_mw( void );
+      void select_plot_sk( void );
+      void select_plot_wk( void );
+      void select_plot_sv( void );
+      void select_plot_wv( void );
       void update_disk_db( bool );
       void select_prefilt( void );
       void load_distro(    void );

@@ -171,13 +171,21 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
          tr( "Default Color Map: w-cyan-magenta-red-black" ), -1, true );
    te_distr_info->setMaximumHeight( le_cmap_name->height() * 2 );
 
-   us_checkbox( tr( "Plot f/f0 vs s" ), cb_plot_s, true );
-   connect( cb_plot_s,  SIGNAL( clicked() ),
-            this,       SLOT( select_plot_s() ) );
+   us_checkbox( tr( "Plot f/f0 vs s" ),  cb_plot_sk, true );
+   connect( cb_plot_sk, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_sk() ) );
 
-   us_checkbox( tr( "Plot f/f0 vs MW" ), cb_plot_mw, false );
-   connect( cb_plot_mw, SIGNAL( clicked() ),
-            this,       SLOT( select_plot_mw() ) );
+   us_checkbox( tr( "Plot f/f0 vs MW" ), cb_plot_wk, false );
+   connect( cb_plot_wk, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_wk() ) );
+
+   us_checkbox( tr( "Plot vbar vs s" ),  cb_plot_sv, false );
+   connect( cb_plot_sv, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_sv() ) );
+
+   us_checkbox( tr( "Plot vbar vs MW" ), cb_plot_wv, false );
+   connect( cb_plot_wv, SIGNAL( clicked() ),
+            this,       SLOT( select_plot_wv() ) );
 
    pb_pltall     = us_pushbutton( tr( "Plot All Distros" ) );
    pb_pltall->setEnabled( false );
@@ -267,8 +275,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( ct_curr_distr, s_row++, 1 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 2 ); s_row += 2;
    spec->addWidget( le_cmap_name,  s_row++, 0, 1, 2 );
-   spec->addWidget( cb_plot_s,     s_row,   0 );
-   spec->addWidget( cb_plot_mw,    s_row++, 1 );
+   spec->addWidget( cb_plot_sk,    s_row,   0 );
+   spec->addWidget( cb_plot_wk,    s_row++, 1 );
+   spec->addWidget( cb_plot_sv,    s_row,   0 );
+   spec->addWidget( cb_plot_wv,    s_row++, 1 );
    spec->addWidget( pb_pltall,     s_row,   0 );
    spec->addWidget( pb_stopplt,    s_row++, 1 );
    spec->addWidget( pb_refresh,    s_row,   0 );
@@ -285,12 +295,12 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    // Set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient (1e-13)"
                      " for water at 20" ) + DEGC;
-   xa_title_mw = tr( "Molecular Weight (Dalton)" );
+   xa_title_w  = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 
-   ya_title_ff = tr( "Frictional Ratio f/f0" );
-   ya_title_vb = tr( "Vbar at 20" ) + DEGC;
-   ya_title    = ya_title_ff;
+   ya_title_k  = tr( "Frictional Ratio f/f0" );
+   ya_title_v  = tr( "Vbar at 20" ) + DEGC;
+   ya_title    = ya_title_k;
    QBoxLayout* plot = new US_Plot( data_plot, 
       tr( "Pseudo-3D Distribution Data" ), xa_title, ya_title );
 
@@ -338,9 +348,13 @@ void US_Pseudo3D_Combine::reset( void )
  
    cnst_vbar  = true;
    plot_s     = true;
+   plot_k     = true;
    need_save  = true;
-   cb_plot_s->setChecked( plot_s );  
-   cb_plot_mw->setChecked( !plot_s );
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   cb_plot_sk->setChecked( plot_xy == 0 );  
+   cb_plot_wk->setChecked( plot_xy == 1 );
+   cb_plot_sv->setChecked( plot_xy == 2 );
+   cb_plot_wv->setChecked( plot_xy == 3 );
 
    resolu     = 90.0;
    ct_resolu->setRange( 1, 100, 1 );
@@ -418,21 +432,28 @@ void US_Pseudo3D_Combine::plot_data( void )
    zpcent   = cb_zpcent->isChecked();
 
    // get current distro
+   plot_xy        = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QList< Solute >* sol_d;
+   QList< Solute >* sol_d = &tsys->sk_distro;
 
    if ( zpcent )
    {
       data_plot->setAxisTitle( QwtPlot::yRight,
          tr( "Percent of Total Concentration" ) );
-      sol_d = plot_s ? &tsys->s_distro_zp : &tsys->mw_distro_zp;
+      if      ( plot_xy == 0 )  sol_d = &tsys->sk_distro_zp;
+      else if ( plot_xy == 1 )  sol_d = &tsys->wk_distro_zp;
+      else if ( plot_xy == 2 )  sol_d = &tsys->sv_distro_zp;
+      else if ( plot_xy == 3 )  sol_d = &tsys->wv_distro_zp;
    }
 
    else
    {
       data_plot->setAxisTitle( QwtPlot::yRight,
          tr( "Partial Concentration" ) );
-      sol_d = plot_s ? &tsys->s_distro : &tsys->mw_distro;
+      if      ( plot_xy == 0 )  sol_d = &tsys->sk_distro;
+      else if ( plot_xy == 1 )  sol_d = &tsys->wk_distro;
+      else if ( plot_xy == 2 )  sol_d = &tsys->sv_distro;
+      else if ( plot_xy == 3 )  sol_d = &tsys->wv_distro;
    }
 
    colormap = tsys->colormap;
@@ -480,8 +501,8 @@ void US_Pseudo3D_Combine::plot_data( void )
       for ( int ii = 0; ii < system.size(); ii++ )
       {
          DisSys* tsys = (DisSys*)&system.at( ii );
-         QList< Solute >* sol_z  = zpcent ? &tsys->s_distro_zp
-                                          : &tsys->s_distro;
+         QList< Solute >* sol_z  = zpcent ? &tsys->sk_distro_zp
+                                          : &tsys->sk_distro;
 
          for ( int jj = 0; jj < sol_z->size(); jj++ )
          {
@@ -503,27 +524,24 @@ void US_Pseudo3D_Combine::plot_data( void )
    // set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
-   ya_title   = cnst_vbar ? ya_title_ff : ya_title_vb;
+   ya_title   = plot_k ? ya_title_k : ya_title_v;
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
 
-   if ( cnst_vbar )
+   if ( plot_k )
    {
       lb_plt_fmin->setText( tr( "Plot Limit f/f0 Minimum:" ) );
       lb_plt_fmax->setText( tr( "Plot Limit f/f0 Maximum:" ) );
-      cb_plot_s  ->setText( tr( "Plot f/f0 vs s"  ) );
-      cb_plot_mw ->setText( tr( "Plot f/f0 vs MW" ) );
    }
    else
    {
       lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
       lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
-      cb_plot_s  ->setText( tr( "Plot vbar vs s"  ) );
-      cb_plot_mw ->setText( tr( "Plot vbar vs MW" ) );
    }
 
    if ( auto_sxy )
    { // Auto scale x and y
-      data_plot->setAxisScale( QwtPlot::yLeft,
+      data_plot->setAxisScale( QwtPlot::yLeft,  
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
       data_plot->setAxisScale( QwtPlot::xBottom,
          spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
@@ -721,23 +739,81 @@ void US_Pseudo3D_Combine::select_conloop()
    te_distr_info->setText( dtext );
 }
 
-void US_Pseudo3D_Combine::select_plot_s()
+void US_Pseudo3D_Combine::select_plot_sk()
 {
-   plot_s     = cb_plot_s->isChecked();
-   cb_plot_mw->setChecked( !plot_s );
-   xa_title   = plot_s    ? xa_title_s  : xa_title_mw;
+   if ( ! cb_plot_sk->isChecked()  )  return;
+
+   plot_s     = true;
+   plot_k     = true;
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   cb_plot_wk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   xa_title   = plot_s    ? xa_title_s  : xa_title_w;
+   ya_title   = plot_k    ? ya_title_k  : ya_title_v;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
    set_limits();
 
    plot_data();
 }
 
-void US_Pseudo3D_Combine::select_plot_mw()
+void US_Pseudo3D_Combine::select_plot_wk()
 {
-   plot_s     = !cb_plot_mw->isChecked();
-   cb_plot_s->setChecked( plot_s );
-   xa_title   = plot_s    ? xa_title_s  : xa_title_mw;
+   if ( ! cb_plot_wk->isChecked()  )  return;
+
+   plot_s     = false;
+   plot_k     = true;
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   cb_plot_sk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   xa_title   = plot_s    ? xa_title_s  : xa_title_w;
+   ya_title   = plot_k    ? ya_title_k  : ya_title_v;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
+   set_limits();
+
+   plot_data();
+}
+
+void US_Pseudo3D_Combine::select_plot_sv()
+{
+   if ( ! cb_plot_sv->isChecked()  )  return;
+
+   plot_s     = true;
+   plot_k     = false;
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   cb_plot_sk->setChecked( false );
+   cb_plot_wk->setChecked( false );
+   cb_plot_wv->setChecked( false );
+   xa_title   = plot_s    ? xa_title_s  : xa_title_w;
+   ya_title   = plot_k    ? ya_title_k  : ya_title_v;
+   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
+   set_limits();
+
+   plot_data();
+}
+
+void US_Pseudo3D_Combine::select_plot_wv()
+{
+   if ( ! cb_plot_wv->isChecked()  )  return;
+
+   plot_s     = false;
+   plot_k     = false;
+   plot_xy    = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
+   cb_plot_sk->setChecked( false );
+   cb_plot_wk->setChecked( false );
+   cb_plot_sv->setChecked( false );
+   xa_title   = plot_s    ? xa_title_s  : xa_title_w;
+   ya_title   = plot_k    ? ya_title_k  : ya_title_v;
+   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
    set_limits();
 
    plot_data();
@@ -774,8 +850,10 @@ void US_Pseudo3D_Combine::load_distro()
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 {
    DisSys      tsys;
-   Solute      sol_s;
-   Solute      sol_w;
+   Solute      sol_sk;
+   Solute      sol_wk;
+   Solute      sol_sv;
+   Solute      sol_wv;
 
    model.update_coefficients();          // fill in any missing coefficients
 
@@ -821,43 +899,91 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
-         double ffval = model.components[ jj ].f_f0;
-         double vbval = model.components[ jj ].vbar20;
-         sol_s.s   = model.components[ jj ].s * 1.0e13;
-         sol_s.c   = model.components[ jj ].signal_concentration;
-         sol_s.k   = cnst_vbar ? ffval : vbval;
-         sol_w.s   = model.components[ jj ].mw;
-         sol_w.c   = sol_s.c;
-         sol_w.k   = sol_s.k;
-         tot_conc += sol_s.c;
+         sol_sk.s  = model.components[ jj ].s * 1.0e13;
+         sol_sk.k  = model.components[ jj ].f_f0;
+         sol_sk.c  = model.components[ jj ].signal_concentration;
 
-         tsys.s_distro.append(  sol_s );
-         tsys.mw_distro.append( sol_w );
+         sol_wk.s  = model.components[ jj ].mw;
+         sol_wk.k  = sol_sk.k;
+         sol_wk.c  = sol_sk.c;
 
-         plt_zmin_co = qMin( plt_zmin_co, sol_s.c );
-         plt_zmax_co = qMax( plt_zmax_co, sol_s.c );
+         sol_sv.s  = sol_sk.s;
+         sol_sv.k  = model.components[ jj ].vbar20;
+         sol_sv.c  = sol_sk.c;
+
+         sol_wv.s  = sol_wk.s;
+         sol_wv.k  = sol_sv.k;
+         sol_wv.c  = sol_sk.c;
+
+         tsys.sk_distro << sol_sk;
+         tsys.wk_distro << sol_wk;
+         tsys.sv_distro << sol_sv;
+         tsys.wv_distro << sol_wv;
+
+         plt_zmin_co = qMin( plt_zmin_co, sol_sk.c );
+         plt_zmax_co = qMax( plt_zmax_co, sol_sk.c );
+         tot_conc   += sol_sk.c;
       }
 
       // sort and reduce distributions
-      sort_distro( tsys.s_distro, true );
-      sort_distro( tsys.mw_distro, true );
+      sort_distro( tsys.sk_distro, true );
+      sort_distro( tsys.wk_distro, true );
+      sort_distro( tsys.sv_distro, true );
+      sort_distro( tsys.wv_distro, true );
+      int nsolsk = tsys.sk_distro.size();
+      int nsolwk = tsys.wk_distro.size();
+      int nsolsv = tsys.sv_distro.size();
+      int nsolwv = tsys.wv_distro.size();
+      tsys.sk_distro_zp.clear();
+      tsys.wk_distro_zp.clear();
+      tsys.sv_distro_zp.clear();
+      tsys.wv_distro_zp.clear();
 
       // Create Z-as-percentage version of distributions
 
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
-         sol_s        = tsys.s_distro [ jj ];
-         sol_w        = tsys.mw_distro[ jj ];
-         double coval = sol_s.c;
-         double cozpc = coval * 100.0 / tot_conc;
-         sol_s.c      = cozpc;
-         sol_w.c      = cozpc;
+         double cozpc;
 
-         tsys.mw_distro_zp << sol_w;
-         tsys.s_distro_zp  << sol_s;
+         if ( jj < nsolsk )
+         {
+            sol_sk      = tsys.sk_distro[ jj ];
+            cozpc       = sol_sk.c * 100.0 / tot_conc;
+            sol_sk.c    = cozpc;
+            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
+            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
+            tsys.sk_distro_zp << sol_sk;
+         }
 
-         plt_zmin_zp  = qMin( plt_zmin_zp, cozpc );
-         plt_zmax_zp  = qMax( plt_zmax_zp, cozpc );
+         if ( jj < nsolwk )
+         {
+            sol_wk      = tsys.wk_distro[ jj ];
+            cozpc       = sol_wk.c * 100.0 / tot_conc;
+            sol_wk.c    = cozpc;
+            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
+            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
+            tsys.wk_distro_zp << sol_wk;
+         }
+
+         if ( jj < nsolsv )
+         {
+            sol_sv      = tsys.sv_distro[ jj ];
+            cozpc       = sol_sv.c * 100.0 / tot_conc;
+            sol_sv.c    = cozpc;
+            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
+            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
+            tsys.sv_distro_zp << sol_sv;
+         }
+
+         if ( jj < nsolwv )
+         {
+            sol_wv      = tsys.wv_distro[ jj ];
+            cozpc       = sol_wv.c * 100.0 / tot_conc;
+            sol_wv.c    = cozpc;
+            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
+            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
+            tsys.wv_distro_zp << sol_wv;
+         }
       }
    }
 
@@ -868,91 +994,6 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    ct_curr_distr->setRange( 1, jd, 1 );
    ct_curr_distr->setValue( jd );
    ct_curr_distr->setEnabled( true );
-
-   // determine whether Y is f/f0 or vbar
-   if ( curr_distr == 0 )
-   {  // First distribution:  set constant-vbar flag; possibly re-do
-      cnst_vbar  = model.constant_vbar();
-DbgLv(1) << "cd=0  cnst_vbar" << cnst_vbar;
-
-      if ( ! cnst_vbar )
-      {  // Oops!  We need to re-do the distribution using vbar instead of f/f0
-         system        .clear();
-         tsys.s_distro .clear();
-         tsys.mw_distro.clear();
-         double ffmin = model.components[ 0 ].f_f0;
-         double ffmax = ffmin;
-
-         for ( int jj = 0; jj < model.components.size(); jj++ )
-         {
-            double vbval = model.components[ jj ].vbar20;
-            double ffval = model.components[ jj ].f_f0;
-            sol_s.s  = model.components[ jj ].s * 1.0e13;
-            sol_s.c  = model.components[ jj ].signal_concentration;
-            sol_s.k  = cnst_vbar ? ffval : vbval;
-            sol_w.s  = model.components[ jj ].mw;
-            sol_w.c  = sol_s.c;
-            sol_w.k  = sol_s.k;
-            ffmin    = qMin( ffmin, ffval );
-            ffmax    = qMax( ffmax, ffval );
-
-            tsys.s_distro.append(  sol_s );
-            tsys.mw_distro.append( sol_w );
-         }
-
-         // sort and reduce distributions
-         sort_distro( tsys.s_distro,  true );
-         sort_distro( tsys.mw_distro, true );
-
-         ct_plt_fmin->setMinValue( 0.01   );
-         ct_plt_fmin->setMaxValue( 1.5   );
-         ct_plt_fmin->setValue   ( ffmin );
-         ct_plt_fmax->setMinValue( 0.01   );
-         ct_plt_fmax->setMaxValue( 1.5   );
-         ct_plt_fmax->setValue   ( ffmax );
-         lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
-         lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
-         system.append( tsys );
-      }
-   }
-
-   else
-   {  // Beyond first:  verify that models are all of the same type
-      bool    c_vb_dis  = model.constant_vbar();
-      bool    not_same  = false;
-      QString msg;
-
-      if ( c_vb_dis && ! cnst_vbar )
-      {
-         msg = tr( "Model %1 has a constant vbar;\n"
-                   "    while vbars in the initial model vary (constant f/f0)\n"
-                   "Plots will likely be scaled and annotated inconsistently." )
-               .arg( jd );
-         not_same   = true;
-      }
-
-      else if ( ! c_vb_dis && cnst_vbar )
-      {
-         msg = tr( "The initial model has a constant vbar;\n"
-                   "    while vbars in model %1 vary (constant f/f0).\n"
-                   "Plots will likely be scaled and annotated inconsistently." )
-               .arg( jd );
-         not_same   = true;
-      }
-
-      if ( not_same )
-      {
-         qDebug() << "INCONSISTENT DISTRIBUTIONS LOADED!!!";
-         QMessageBox::warning( this, tr( "Inconsistent Distributions" ), msg );
-         curr_distr = 0;
-         ct_curr_distr->setValue( 1 );
-         cb_autosxy->setChecked( true  );
-         cb_autoscz->setChecked( true  );
-         plot_data();
-         cb_autosxy->setChecked( false );
-         cb_autoscz->setChecked( false );
-      }
-   }
 
    if ( auto_sxy )
    {
@@ -973,10 +1014,10 @@ DbgLv(1) << "cd=0  cnst_vbar" << cnst_vbar;
    data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
 
-   pb_pltall->setEnabled(   true );
-   pb_refresh->setEnabled(  true );
-   pb_reset->setEnabled(    true );
-   cb_plot_s->setEnabled(   true );
+   pb_pltall ->setEnabled( true );
+   pb_refresh->setEnabled( true );
+   pb_reset  ->setEnabled( true );
+   cb_plot_sk->setEnabled( true );
 
    if ( cont_loop )
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
@@ -1055,22 +1096,26 @@ void US_Pseudo3D_Combine::set_limits()
    double fmax = -1.0e30;
    double smin = 1.0e30;
    double smax = -1.0e30;
+   plot_s      = cb_plot_sk->isChecked() || cb_plot_sv->isChecked();
+   plot_k      = cb_plot_sk->isChecked() || cb_plot_wk->isChecked();
+   plot_xy     = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
    double rdif;
    int    ii;
    int    jj;
 
-   if ( plot_s )
+   if ( plot_xy == 0 )
    {
       data_plot->setAxisTitle( QwtPlot::xBottom, xa_title_s );
+      data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title_k );
 
-      // find min,max for S distributions
+      // find min,max for S,f/f0 distributions
       for ( ii = 0; ii < system.size(); ii++ )
       {
          DisSys* tsys = (DisSys*)&system.at( ii );
-         for ( jj = 0; jj < tsys->s_distro.size(); jj++ )
+         for ( jj = 0; jj < tsys->sk_distro.size(); jj++ )
          {
-            double sval = tsys->s_distro.at( jj ).s;
-            double fval = tsys->s_distro.at( jj ).k;
+            double sval = tsys->sk_distro.at( jj ).s;
+            double fval = tsys->sk_distro.at( jj ).k;
             smin        = ( smin < sval ) ? smin : sval;
             smax        = ( smax > sval ) ? smax : sval;
             fmin        = ( fmin < fval ) ? fmin : fval;
@@ -1079,19 +1124,22 @@ void US_Pseudo3D_Combine::set_limits()
       }
       lb_plt_smin->setText( tr( "Plot Limit s Minimum:" ) );
       lb_plt_smax->setText( tr( "Plot Limit s Maximum:" ) );
+      lb_plt_fmin->setText( tr( "Plot Limit f/f0 Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit f/f0 Maximum:" ) );
    }
-   else
+   else if ( plot_xy == 1 )
    {
-      data_plot->setAxisTitle( QwtPlot::xBottom, xa_title_mw );
+      data_plot->setAxisTitle( QwtPlot::xBottom, xa_title_w );
+      data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title_k );
 
-      // find min,max for MW distributions
+      // find min,max for MW,f/f0 distributions
       for ( ii = 0; ii < system.size(); ii++ )
       {
          DisSys* tsys = (DisSys*)&system.at( ii );
-         for ( jj = 0; jj < tsys->mw_distro.size(); jj++ )
+         for ( jj = 0; jj < tsys->wk_distro.size(); jj++ )
          {
-            double sval = tsys->mw_distro.at( jj ).s;
-            double fval = tsys->mw_distro.at( jj ).k;
+            double sval = tsys->wk_distro.at( jj ).s;
+            double fval = tsys->wk_distro.at( jj ).k;
             smin        = ( smin < sval ) ? smin : sval;
             smax        = ( smax > sval ) ? smax : sval;
             fmin        = ( fmin < fval ) ? fmin : fval;
@@ -1100,6 +1148,56 @@ void US_Pseudo3D_Combine::set_limits()
       }
       lb_plt_smin->setText( tr( "Plot Limit mw Minimum:" ) );
       lb_plt_smax->setText( tr( "Plot Limit mw Maximum:" ) );
+      lb_plt_fmin->setText( tr( "Plot Limit f/f0 Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit f/f0 Maximum:" ) );
+   }
+   else if ( plot_xy == 2 )
+   {
+      data_plot->setAxisTitle( QwtPlot::xBottom, xa_title_s );
+      data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title_v );
+
+      // find min,max for s,vbar distributions
+      for ( ii = 0; ii < system.size(); ii++ )
+      {
+         DisSys* tsys = (DisSys*)&system.at( ii );
+         for ( jj = 0; jj < tsys->sv_distro.size(); jj++ )
+         {
+            double sval = tsys->sv_distro.at( jj ).s;
+            double fval = tsys->sv_distro.at( jj ).k;
+            smin        = ( smin < sval ) ? smin : sval;
+            smax        = ( smax > sval ) ? smax : sval;
+            fmin        = ( fmin < fval ) ? fmin : fval;
+            fmax        = ( fmax > fval ) ? fmax : fval;
+         }
+      }
+      lb_plt_smin->setText( tr( "Plot Limit mw Minimum:" ) );
+      lb_plt_smax->setText( tr( "Plot Limit mw Maximum:" ) );
+      lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
+   }
+   else if ( plot_xy == 3 )
+   {
+      data_plot->setAxisTitle( QwtPlot::xBottom, xa_title_w );
+      data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title_v );
+
+      // find min,max for MW,vbar distributions
+      for ( ii = 0; ii < system.size(); ii++ )
+      {
+         DisSys* tsys = (DisSys*)&system.at( ii );
+         for ( jj = 0; jj < tsys->wv_distro.size(); jj++ )
+         {
+            double sval = tsys->wv_distro.at( jj ).s;
+            double fval = tsys->wv_distro.at( jj ).k;
+            smin        = ( smin < sval ) ? smin : sval;
+            smax        = ( smax > sval ) ? smax : sval;
+            fmin        = ( fmin < fval ) ? fmin : fval;
+            fmax        = ( fmax > fval ) ? fmax : fval;
+         }
+      }
+      lb_plt_smin->setText( tr( "Plot Limit mw Minimum:" ) );
+      lb_plt_smax->setText( tr( "Plot Limit mw Maximum:" ) );
+      lb_plt_fmin->setText( tr( "Plot Limit vbar Minimum:" ) );
+      lb_plt_fmax->setText( tr( "Plot Limit vbar Maximum:" ) );
    }
 
    // adjust minima, maxima
@@ -1107,8 +1205,11 @@ void US_Pseudo3D_Combine::set_limits()
    smin     -= rdif;
    smax     += rdif;
    rdif      = ( fmax - fmin ) / 10.0;
+   rdif      = ( rdif == 0.0 ) ? 0.1 : rdif;
+DbgLv(1) << "SL: real fmin fmax" << fmin << fmax;
    fmin     -= rdif;
    fmax     += rdif;
+DbgLv(1) << "SL: adjusted fmin fmax" << fmin << fmax;
    double rmin = smax * 10.0;
    double rinc = pow( 10.0, double( int( log10( smax ) ) - 2 ) );
 
@@ -1139,7 +1240,7 @@ void US_Pseudo3D_Combine::set_limits()
          smax       += ( smax / 30.0 );
       }
 
-      if ( cnst_vbar )
+      if ( plot_k )
       {
          fmax       += ( ( fmax - fmin ) / 20.0 );
          fmin       -= ( ( fmax - fmin ) / 20.0 );
@@ -1154,8 +1255,9 @@ void US_Pseudo3D_Combine::set_limits()
 
       else
       {
-         fmax       += 0.005;
-         fmin       = 0.01;
+         fmax       += 0.01;
+         fmin       -= 0.01;
+DbgLv(1) << "SL: auto-adjusted fmin fmax" << fmin << fmax;
       }
 
       if ( plot_s )
@@ -1170,6 +1272,7 @@ void US_Pseudo3D_Combine::set_limits()
          smin        = (double)( (int)( smin / 10.0 ) ) * 10.0;
          smax        = (double)( (int)( smax / 10.0 + 1.5 ) ) * 10.0;
       }
+DbgLv(1) << "SL: setVal fmin fmax" << fmin << fmax;
       ct_plt_smin->setValue( smin );
       ct_plt_smax->setValue( smax );
       ct_plt_fmin->setValue( fmin );
@@ -1192,6 +1295,11 @@ void US_Pseudo3D_Combine::set_limits()
          ct_plt_smin->setRange( -rmin, rmin, rinc );
       else
          ct_plt_smin->setRange( 0.0, rmin, rinc );
+
+      if ( plot_k )
+         ct_plt_fmax->setRange( 1, 50, 0.01 );
+      else
+         ct_plt_fmax->setRange( 0.1, 2.0, 0.01 );
    }
 }
 
