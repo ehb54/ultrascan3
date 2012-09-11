@@ -131,7 +131,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xMin, s_row, 0 );
 
-   ct_xMin     = us_counter( 3, -10000.0, 9.9, 0.0 );
+   ct_xMin     = us_counter( 3, -10000.0, 10000.0, 0.1 );
    ct_xMin->setStep( 1 );
    left->addWidget( ct_xMin, s_row++, 1 );
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
@@ -141,7 +141,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_xMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xMax, s_row, 0 );
 
-   ct_xMax     = us_counter( 3, 1.1, 10000.0, 0.0 );
+   ct_xMax     = us_counter( 3, -10000.0, 10000.0, 0.1 );
    ct_xMax->setStep( 1 );
    left->addWidget( ct_xMax, s_row++, 1 );
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
@@ -151,7 +151,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_yMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yMin, s_row, 0 );
 
-   ct_yMin     = us_counter( 3, 1.0, 3.9, 0.1 );
+   ct_yMin     = us_counter( 3, 1.0, 50.0, 0.1 );
    ct_yMin->setStep( 1 );
 	left->addWidget( ct_yMin, s_row++, 1 );
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
@@ -161,7 +161,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_yMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_yMax, s_row, 0 );
 
-   ct_yMax     = us_counter( 3, 1.1, 50.0, 0.1 );
+   ct_yMax     = us_counter( 3, 1.0, 50.0, 0.1 );
    ct_yMax->setStep( 1 );
    left->addWidget( ct_yMax, s_row++, 1 );
    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
@@ -171,7 +171,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_zVal->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_zVal, s_row, 0 );
 
-   ct_zVal     = us_counter( 3, 0.05, 2, 0.001 );
+   ct_zVal     = us_counter( 3, 0.01, 3.0, 0.001 );
    ct_zVal->setStep( 1 );
    left->addWidget( ct_zVal, s_row++, 1 );
    connect( ct_zVal, SIGNAL( valueChanged( double ) ),
@@ -507,14 +507,17 @@ void US_Grid_Editor::update_yRes( double dval )
 void US_Grid_Editor::update_xMin( double dval )
 {
    xMin    = dval;
+	ct_xMax->disconnect();
    if (plot_x == 0) // x axis is for sed. coeff.
    {
-      ct_xMax->setRange(xMin, 10000.0, 1);
+      ct_xMax->setRange(xMin, 10000.0, 0.1);
    }
    else if (plot_x == 1) // x axis is for mw.
    {
-      ct_xMax->setRange(xMin, 1e10, 100);
+      ct_xMax->setRange(xMin, 1e10, 1000.0);
    }
+   connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_xMax( double ) ) );
 	update_plot();
 }
 
@@ -522,14 +525,17 @@ void US_Grid_Editor::update_xMin( double dval )
 void US_Grid_Editor::update_xMax( double dval )
 {
    xMax    = dval;
+	ct_xMin->disconnect();
    if (plot_x == 0) // x axis is for sed. coeff.
    {
-      ct_xMin->setRange(-100000, xMax, 1);
+      ct_xMin->setRange(-10000.0, xMax, 0.1);
    }
    else if (plot_x == 1) // x axis s for mw.
    {
-      ct_xMin->setRange(0.0, xMax, 1);
+      ct_xMin->setRange(0.0, xMax, 1000.0);
    }
+   connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_xMin( double ) ) );
 	update_plot();
 }
 
@@ -537,14 +543,17 @@ void US_Grid_Editor::update_xMax( double dval )
 void US_Grid_Editor::update_yMin( double dval )
 {
    yMin    = dval;
+	ct_yMax->disconnect();
    if (plot_y == 0) // y axis is for f/f0.
    {
       ct_yMax->setRange(yMin, 50.0, 0.1);
    }
    else if (plot_y == 1) // x axis is for vbar.
    {
-      ct_yMax->setRange(yMin, 10.0, 100);
+      ct_yMax->setRange(yMin, 3.0, 0.01);
    }
+   connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_yMax( double ) ) );
 	update_plot();
 }
 
@@ -552,14 +561,17 @@ void US_Grid_Editor::update_yMin( double dval )
 void US_Grid_Editor::update_yMax( double dval )
 {
    yMax    = dval;
+	ct_yMin->disconnect();
    if (plot_y == 0) // y axis is for f/f0.
    {
       ct_yMin->setRange(1.0, yMax, 0.1);
    }
-   else if (plot_y == 1) // x axis is for vbar.
+   else if (plot_y == 1) // y axis is for vbar.
    {
       ct_yMin->setRange(0.01, yMax, 0.01);
    }
+   connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_yMin( double ) ) );
 	update_plot();
 }
 
@@ -611,6 +623,7 @@ void US_Grid_Editor::update_viscosity( const QString & str )
 void US_Grid_Editor::update_plot( void )
 {
 	calc_gridpoints();
+	//print_minmax();
 	data_plot1->clear();
 	int gridsize;
 	QVector <double> xData1;
@@ -1139,21 +1152,21 @@ void US_Grid_Editor::calc_gridpoints( void )
 			  		(tmp_point.s > 0 && (1 - vbar * density) < 0 ))
 				{
 					tmp_point.mw = -1.0;
-					flag = false;
+					//flag = false;
 				}
 				else
 				{
 					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							         / (tmp_point.D * (1 - vbar * density ));
+					tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
+					tmp_point.f0   = tmp_point.f/tmp_point.ff0;
+					tmp_point.vbar = vbar;
 				}
-				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
-				tmp_point.f0   = tmp_point.f/tmp_point.ff0;
-				tmp_point.vbar = vbar;
 				if ((tmp_point.s < -0.1 || tmp_point.s > 0.1) && tmp_point.mw > 0)
 				{
 					current_grid.push_back(tmp_point);
+					set_minmax(tmp_point);
 				}
-				set_minmax(tmp_point);
 			}
 		}
 	}
@@ -1177,8 +1190,8 @@ void US_Grid_Editor::calc_gridpoints( void )
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
 					current_grid.push_back(tmp_point);
+					set_minmax(tmp_point);
 				}
-				set_minmax(tmp_point);
 			}
 		}
 	}
@@ -1195,12 +1208,15 @@ void US_Grid_Editor::calc_gridpoints( void )
 				tmp_point.D    = R * K20 /( AVOGADRO * 18 * M_PI *
 				                 pow((viscosity * 0.01 * ff0), (3.0/2.0)) *
 			  	                 pow((tmp_point.s * 1.0e-13 * tmp_point.vbar
-									/ (2 * (1.0 - vbar * density))), 0.5));
+									/ (2 * (1.0 - tmp_point.vbar * density))), 0.5));
 //
 // check to make sure there aren't any nonsensical settings selected by
 // the user. If so, mark the molecular weight negative (-1) and exclude
 // the point from the grid point list:
 //
+
+DbgLv(1) << "vbar:" << tmp_point.vbar << "s:" << tmp_point.s << "buoyancy:" << (1.0 - vbar * density);
+
 				if ((1.0 - tmp_point.vbar * density) == 0 ||
 			  		(tmp_point.s < 0 && (1.0 - tmp_point.vbar * density) > 0 ) ||
 			  		(tmp_point.s > 0 && (1.0 - tmp_point.vbar * density) < 0 ))
@@ -1212,16 +1228,16 @@ void US_Grid_Editor::calc_gridpoints( void )
 				{
 					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
-				}
-				tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
+					tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
 								   * vbar/AVOGADRO), (1.0/3.0));
-				tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
-				tmp_point.ff0  = tmp_point.f / tmp_point.f0;
+					tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
+					tmp_point.ff0  = tmp_point.f / tmp_point.f0;
+				}
 				if ((tmp_point.s < -0.1 || tmp_point.s > 0.1) && tmp_point.mw > 0)
 				{
 					current_grid.push_back(tmp_point);
+					set_minmax(tmp_point);
 				}
-				set_minmax(tmp_point);
 			}
 		}
 	}
@@ -1245,12 +1261,12 @@ void US_Grid_Editor::calc_gridpoints( void )
 				if (tmp_point.s < -0.1 || tmp_point.s > 0.1)
 				{
 					current_grid.push_back(tmp_point);
+					set_minmax(tmp_point);
 				}
-				set_minmax(tmp_point);
 			}
 		}
 	}
-	if (flag == false)
+	if (current_grid.size() == 0)
 	{
 		int status = QMessageBox::information( this,
 		tr( "Warning" ),
@@ -1331,6 +1347,25 @@ void US_Grid_Editor::set_minmax( const struct gridpoint & tmp_point)
 	maxgridpoint.f    = max(maxgridpoint.f, tmp_point.f);
 }
 
+// find the minimum and maximum in a grid
+void US_Grid_Editor::print_minmax( void )
+{
+	DbgLv(1) << "min s:" 	   << mingridpoint.s
+				<< "\nmin D:"   	<< mingridpoint.D
+				<< "\nmin vbar:"  << mingridpoint.vbar
+				<< "\nmin MW:"    << mingridpoint.mw
+				<< "\nmin f/f0:"  << mingridpoint.ff0
+				<< "\nmin f0:"    << mingridpoint.f0
+				<< "\nmin f:"     << mingridpoint.f
+				<< "\nmax s:"     << maxgridpoint.s
+				<< "\nmax D:"     << maxgridpoint.D
+				<< "\nmax vbar:"  << maxgridpoint.vbar
+				<< "\nmax mw:"    << maxgridpoint.mw
+				<< "\nmax f/f0:"  << maxgridpoint.ff0
+				<< "\nmax f0:"    << maxgridpoint.f0
+				<< "\nmax f:"     << maxgridpoint.f << "\n";
+}
+
 // select coordinate for horizontal axis
 void US_Grid_Editor::select_plot( int ival )
 {
@@ -1352,7 +1387,7 @@ void US_Grid_Editor::select_x_axis( int ival )
 	plot_x = ival;
 	switch (plot_x)
 	{
-		case 0:
+		case 0: // X-axis = Sedimentation coefficient
 		{
 			lbl_xRes->setText(tr("s-value Resolution:"));
 			lbl_xMin->setText(tr("s-value Minimum:"));
@@ -1371,17 +1406,17 @@ void US_Grid_Editor::select_x_axis( int ival )
             this,        SLOT( update_xMax( double ) ) );
 			break;
 		}
-		case 1:
+		case 1: // X-axis = Molecular Weight
 		{
 			lbl_xRes->setText(tr("Mol. Weight Resolution:"));
 			lbl_xMin->setText(tr("Mol. Weight Minimum:"));
 			lbl_xMax->setText(tr("Mol. Weight Maximum:"));
 			ct_xMin->disconnect();
 			ct_xMax->disconnect();
-      	ct_xMin->setRange( 0.0, 1e10, 10 );
+      	ct_xMin->setRange( 0.0, 1e10, 1000 );
 			xMin = 1.0e4;
       	ct_xMin->setValue( xMin );
-      	ct_xMax->setRange( 0.0, 1e10, 10 );
+      	ct_xMax->setRange( 0.0, 1e10, 1000 );
 			xMax = 1.0e5;
   	  	   ct_xMax->setValue( xMax );
       	connect( ct_xMin, SIGNAL( valueChanged( double ) ),
@@ -1400,7 +1435,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 	plot_y = ival;
 	switch (plot_y)
 	{
-		case 0:
+		case 0: // Y axis = frictional ratio, z-value is vbar
 		{
 			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Frictional Ratio f/f0"));
 			lbl_yRes->setText(tr("f/f0 Resolution:"));
@@ -1427,7 +1462,7 @@ void US_Grid_Editor::select_y_axis( int ival )
                this,        SLOT( update_zVal( double ) ) );
 			break;
 		}
-		case 1:
+		case 1: // Y axis = vbar, z-value is frictional ratio
 		{
 			vbar = 0.72;
 			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Partial Specific Volume (ml/mg)"));

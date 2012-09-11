@@ -25,6 +25,9 @@
 #include "us_widgets.h"
 #include "us_investigator.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
 
 struct gridpoint
 {
@@ -161,8 +164,7 @@ class US_Grid_Editor : public US_Widgets
 		void show_sub_grid( bool );
       void update_disk_db(  bool );
 		void sel_investigator( void );
-
-
+		void print_minmax( void );
 };
 
 #endif
