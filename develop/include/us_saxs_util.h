@@ -1111,7 +1111,6 @@ class US_EXTERN US_Saxs_Util
       map < int, bool >                          waiting_workers;
       map < int, bool >                          busy_workers;
       map < int, bool >                          registered_workers;
-      map < unsigned int, vector < nsa_ga_individual > > nsa_ga_inits;
 #endif
       bool                  nsa_use_scaling_fit;
       double                nsa_last_scaling;
@@ -1133,6 +1132,7 @@ class US_EXTERN US_Saxs_Util
   #pragma warning ( disable: 4251 )
 #endif
       map < QString, QString >                    nsa_physical_stats_map;
+      map < unsigned int, vector < nsa_ga_individual > > nsa_ga_inits;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
