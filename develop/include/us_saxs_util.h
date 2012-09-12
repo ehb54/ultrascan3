@@ -1111,6 +1111,7 @@ class US_EXTERN US_Saxs_Util
       map < int, bool >                          waiting_workers;
       map < int, bool >                          busy_workers;
       map < int, bool >                          registered_workers;
+      map < unsigned int, vector < nsa_ga_individual > > nsa_ga_inits;
 #endif
       bool                  nsa_use_scaling_fit;
       double                nsa_last_scaling;

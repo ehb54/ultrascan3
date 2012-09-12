@@ -569,11 +569,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, vector < rotamer > >            pointmap_rotamers;
       map < QString, vector < point > >              waters_to_add;
       map < QString, unsigned int >                  steric_clash_summary;
+      vector < map < QString, vector < point > > >   alt_waters_to_add;
+      vector < map < QString, unsigned int > >       alt_steric_clash_summary;
 
       map < QString, bool >                          hydrate_clash_map_structure;
       map < QString, bool >                          hydrate_clash_map_rtmr_water;
       map < QString, bool >                          hydrate_clash_map_pm_water;
       map < QString, vector < QString > >            waters_source;
+      vector < map < QString, vector < QString > > > alt_waters_source;
+      vector < map < QString, bool > >               alt_hydrate_clash_map_structure;
+      vector < map < QString, bool > >               alt_hydrate_clash_map_rtmr_water;
+      vector < map < QString, bool > >               alt_hydrate_clash_map_pm_water;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -604,11 +610,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_waters_to_add_alt( QString &error_msg );
       QString list_waters_to_add();
 
-      bool    has_steric_clash( point p );
+      bool    has_steric_clash( point p, bool summary = true );
+      float   min_dist_to_waters( point p );
       QString list_steric_clash();
       QString list_steric_clash_recheck();
 
       bool write_pdb_with_waters( QString &error_msg );
+      bool alt_write_pdb_with_waters( QString &error_msg );
       QString last_hydrated_pdb_name;
       QString last_hydrated_pdb_text;
       QString last_hydrated_pdb_header;

@@ -74,6 +74,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Additional : public QDialog
   #pragma warning ( default: 4251 )
 #endif
 
+      QString       load_save_path;
+
       void update_enables();
 
    private slots:

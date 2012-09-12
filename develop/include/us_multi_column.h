@@ -882,6 +882,21 @@ class US_Multi_Column
             }
          }
 
+         if ( !x2.size() )
+         {
+            errormsg =
+               QString( "In linear: part1 %1 part2 %2 dep1 %3 indep2 %4 dep2 %5 range min %6 max %7:  data in range" )
+               .arg( part1.filename )
+               .arg( part2.filename )
+               .arg( dep1 )
+               .arg( indep2 )
+               .arg( dep2 )
+               .arg( part2_min_dep )
+               .arg( part2_max_dep )
+               ;
+            return false;
+         }
+
          if ( !usu.linear_interpolate( x1, y1, x2, y2 ) )
          {
             errormsg = usu.errormsg;
