@@ -1070,9 +1070,9 @@ void US_Edit::plot_current( int index )
    }
    else if ( parts[ 1 ] == "FI" )
    {
-      title = "Flourescence Intensity Data\nRun ID: "
+      title = "Fluorescence Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
-      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Flourescence Intensity " ) );
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fluorescence Intensity " ) );
    }
    else 
       title = "File type not recognized";
