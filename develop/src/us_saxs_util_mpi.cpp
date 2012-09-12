@@ -12,9 +12,19 @@ extern int myrank;
    extern int env_mpi_node;
 #endif
 
+#define SHUTDOWN_MINUTES 60
+
 QString outputData;
 
 #define SLASH QDir::separator()
+
+#include <qdatetime.h>
+
+bool       use_warning_time;
+QDateTime  start_time;
+// make warning time 15 minutes (?) before end time
+QDateTime  warning_time;
+bool       timed_out;
 
 #if defined( USE_MPI )
    extern void debug_mpi( QString );
@@ -494,6 +504,31 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
 
    QString qs_base_dir = QDir::currentDirPath();
 
+   int minutes = QString( "%1" ).arg( getenv( "GFAC_JOBWALLTIME" ) ).toInt();
+   if ( minutes - SHUTDOWN_MINUTES > 0 )
+   {
+      use_warning_time = true;
+      timed_out = false;
+      start_time = QDateTime::currentDateTime();
+      warning_time = start_time;
+      warning_time = warning_time.addSecs( ( minutes - SHUTDOWN_MINUTES ) * 60 );
+      if ( !myrank )
+      {
+         cout << QString( "%1: Start time: %2\nWarning time: %3\n" )
+            .arg( myrank )
+            .arg( start_time.toString() )
+            .arg( warning_time.toString() )
+            ;
+      }
+   } else {
+      use_warning_time = false;
+      timed_out        = false;
+      if ( !myrank )
+      {
+         cout << QString( "no GFAC_JOBWALLTIME or < %1 minutes run avail\n" ).arg( SHUTDOWN_MINUTES );
+      }
+   }
+
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
    {
@@ -696,6 +731,10 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    
    if ( !myrank )
    {
+      if ( timed_out )
+      {
+         cout << "closeup knows we timed out\n";
+      }
       QString results_file = original_controlfile;
       results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
       results_file += "_out.tgz";

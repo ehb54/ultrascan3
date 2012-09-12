@@ -220,6 +220,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "nsaepsilon|"
                       "nsagsm|"
                       "nsascale|"
+                      "nsagainit|"
 
                       "nsaga|"
                       "nsagenerations|"
@@ -803,6 +804,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }
 
+      if ( option == "nsagainit" )
+      {
+         // each of these will be a list of numbers, which we will use for initialization if the size matches
+         if ( !qsl.size() )
+         {
+            errormsg = "nsagainit requires arguments";
+            return false;
+         }
+
+         nsa_ga_individual individual;
+         for ( int i = 0; i < ( int )qsl.size(); i++ )
+         {
+            individual.v.push_back( qsl[ i ].toDouble() );
+         }
+         nsa_ga_inits[ (unsigned int) qsl.size() ].push_back( individual );
+      }
+
       if ( option == "taroutput" )
       {
 #if defined( USE_MPI )
@@ -897,6 +915,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             return false;
          }
+#if defined( USE_MPI )
+         if ( !myrank ) 
+         {
+            extern bool       timed_out;
+            if ( timed_out )
+            {
+               QFile f( QString( "timeout-%1" ).arg( myrank ) );
+               if( f.open( IO_WriteOnly | IO_Append ) )
+               {
+                  QTextStream ts( &f );
+                  ts << QString( "%1: Timed out\n" ).arg( myrank ) << flush;
+                  f.close();
+                  output_files << f.name();
+               }
+            }
+         }
+#endif    
       }
 
       if ( option == "nsasga" )

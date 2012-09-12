@@ -129,6 +129,7 @@ void US_Hydrodyn_Saxs::foxs_processExited()
    {
       editor_msg("red", QString(tr("Error: FoXS did not create file %1")).arg( created_dat ));
       pb_plot_saxs_sans->setEnabled(true);
+      external_running = false;
       return;
    }
 
@@ -378,6 +379,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    {
       editor_msg("red", QString(tr("Error: Crysol did not create file %1")).arg( created_dat ));
       pb_plot_saxs_sans->setEnabled(true);
+      external_running = false;
       return;
    }
 

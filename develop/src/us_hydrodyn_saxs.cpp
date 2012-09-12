@@ -13,6 +13,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
+#include <qwaitcondition.h>
 #include "qwt_symbol.h"
 #ifdef QT4
 # include <qwt_scale_engine.h>
@@ -2619,12 +2620,25 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    {
       // cout << model_filepathname << endl;
       run_saxs_iq_foxs( model_filepathname );
+      while ( external_running )
+      {
+         QWaitCondition sleep;
+         sleep.wait( 1000 );  
+         cout << "an event\n" << flush;
+         qApp->processEvents();
+      }
       return;
    }
    if ( !source && our_saxs_options->saxs_iq_crysol ) 
    {
-      // cout << model_filepathname << endl;
       run_saxs_iq_crysol( model_filepathname );
+      while ( external_running )
+      {
+         QWaitCondition sleep;
+         sleep.wait( 1000 );  
+         cout << "an event\n" << flush;
+         qApp->processEvents();
+      }
       return;
    }
 

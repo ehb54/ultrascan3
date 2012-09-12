@@ -8,6 +8,13 @@ extern int myrank;
 
 // #define USUNGM_DEBUG
 
+#include <qdatetime.h>
+
+extern bool       use_warning_time;
+extern QDateTime  start_time;
+extern QDateTime  warning_time;
+extern bool       timed_out;
+
 bool US_Saxs_Util::nsa_run()
 {
 #if defined( USUNGM_DEBUG )
@@ -39,7 +46,9 @@ bool US_Saxs_Util::nsa_run()
    unsigned int endloop   = control_parameters[ "nsaspheres" ].toUInt();
    {
       QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
-      if ( rx.search( control_parameters[ "nsaspheres" ] ) != -1 )
+      QString qs = control_parameters[ "nsaspheres" ];
+      qs.replace( QRegExp( "(:|,|-)" ), " " );
+      if ( rx.search( qs ) != -1 )
       {
          startloop = rx.cap( 1 ).toUInt();
          endloop   = rx.cap( 2 ).toUInt();
@@ -76,6 +85,29 @@ bool US_Saxs_Util::nsa_run()
                return false;
             }
          } else {
+            if ( use_warning_time )
+            {
+               if ( !myrank )
+               {
+                  if ( QDateTime::currentDateTime() >= warning_time )
+                  {
+                     // make timeout message
+                     cout << "timeout main loop\n";
+                     timed_out = true;
+                  }
+               }
+               if ( MPI_SUCCESS != MPI_Bcast( (void *)&timed_out, 1, MPI_INT, 0, MPI_COMM_WORLD ) )
+               {
+                  MPI_Abort( MPI_COMM_WORLD, -177 );
+                  exit( -177 );
+               }         
+               if ( timed_out )
+               {
+                  cout << QString( "%1: message timed out is true\n" ).arg( myrank );
+                  return true;
+               }
+            }
+            
             if ( myrank )
             {
                if ( !nsa_ga_worker() )
@@ -107,7 +139,6 @@ bool US_Saxs_Util::nsa_run()
 
       if ( !nsa_mpi || !myrank )
       {
-
          QString outname = 
             ( control_parameters.count( "experimentgrid" ) ?
               ( QFileInfo( control_parameters[ "experimentgrid" ] ).baseName() + "_" ) : "" )
@@ -188,6 +219,15 @@ bool US_Saxs_Util::nsa_run()
                {
                   out_params[ it->first ] = it->second;
                }
+
+               out_params[ "results vector" ] = "";
+               for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
+               {
+                  out_params[ "results vector" ] += QString( "%1%2" )
+                     .arg( i ? " " : "" )
+                     .arg( *( nsa_var_ref[ i ] ) );
+               }
+               
                if ( nsa_use_scaling_fit )
                {
                   out_params[ "result last scaling" ] = QString( "%1" ).arg( nsa_last_scaling );
@@ -741,9 +781,33 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
    // init population
    for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
    {
-      for ( unsigned int j = 0; j < nsa_var_ref.size(); j++ )
+      if ( nsa_ga_inits.count( (unsigned int)nsa_var_ref.size() ) &&
+           nsa_ga_inits[ (unsigned int)nsa_var_ref.size() ].size() > i )
       {
-         individual.v[ j ] = nsa_var_min[ j ] + ( nsa_var_max[ j ] - nsa_var_min[ j ] ) * drand48();
+         individual = nsa_ga_inits[ (unsigned int)nsa_var_ref.size() ][ i ];
+         bool cropped = false;
+         for ( unsigned int j = 0; j < nsa_var_ref.size(); j++ )
+         {
+            if ( individual.v[ j ]  < nsa_var_min[ j ] )
+            {
+               cropped = true;
+               individual.v[ j ] = nsa_var_min[ j ];
+            }
+            if ( individual.v[ j ]  < nsa_var_max[ j ] )
+            {
+               cropped = true;
+               individual.v[ j ] = nsa_var_max[ j ];
+            }
+         }
+         if ( cropped )
+         {
+            cout << QString( "Warning: nsa ga init size %1 entry %2 cropped\n" ).arg( nsa_var_ref.size() ).arg( i + 1 );
+         }
+      } else {
+         for ( unsigned int j = 0; j < nsa_var_ref.size(); j++ )
+         {
+            individual.v[ j ] = nsa_var_min[ j ] + ( nsa_var_max[ j ] - nsa_var_min[ j ] ) * drand48();
+         }
       }
       queued_requests.push_back( individual );
    }
@@ -754,11 +818,21 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
 
    for ( unsigned int g = 0; g < control_parameters[ "nsagenerations" ].toUInt(); g++ )
    {
+      if ( use_warning_time &&
+           QDateTime::currentDateTime() >= warning_time )
+      {
+         // make timeout message
+         cout << "timeout\n";
+         timed_out = true;
+         break;
+      }
+
       cout << QString( "%1: queued %2 requests\n" ).arg( myrank ).arg( queued_requests.size() ) << flush;
       if ( !nsa_ga_process_queue() )
       {
          return false;
       }
+
       cout << QString( "%1: after processing %2 requests results size %3\n" )
          .arg( myrank )
          .arg( queued_requests.size() ) 

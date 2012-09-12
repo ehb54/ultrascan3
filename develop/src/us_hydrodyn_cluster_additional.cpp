@@ -24,8 +24,15 @@ US_Hydrodyn_Cluster_Additional::US_Hydrodyn_Cluster_Additional(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: Cluster: Other Methods" ) );
 
-   QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
-   QDir::setCurrent( pkg_dir );
+   load_save_path = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster" + SLASH + "parameters";
+
+   QDir dir1( load_save_path );
+   if ( !dir1.exists() )
+   {
+      dir1.mkdir( load_save_path );
+   }
+
+   QDir::setCurrent( load_save_path );
 
    setupGUI();
 
@@ -289,6 +296,7 @@ void US_Hydrodyn_Cluster_Additional::bfnb_nsa()
    {
       parameters = options_selected[ "bfnb_nsa" ];
    }
+   QDir::setCurrent( load_save_path );
    US_Hydrodyn_Cluster_Bfnb_Nsa *hc = 
       new US_Hydrodyn_Cluster_Bfnb_Nsa(
                                        us_hydrodyn,
@@ -309,6 +317,7 @@ void US_Hydrodyn_Cluster_Additional::set_oned()
 
 void US_Hydrodyn_Cluster_Additional::oned()
 {
+   QDir::setCurrent( load_save_path );
    map < QString, QString > parameters;
    if ( options_selected.count( "oned" ) )
    {
@@ -334,6 +343,7 @@ void US_Hydrodyn_Cluster_Additional::set_csa()
 
 void US_Hydrodyn_Cluster_Additional::csa()
 {
+   QDir::setCurrent( load_save_path );
 }
 
 void US_Hydrodyn_Cluster_Additional::set_dammin()
@@ -344,6 +354,7 @@ void US_Hydrodyn_Cluster_Additional::set_dammin()
 
 void US_Hydrodyn_Cluster_Additional::dammin()
 {
+   QDir::setCurrent( load_save_path );
    map < QString, QString > parameters;
    if ( options_selected.count( "dammin" ) )
    {
@@ -369,6 +380,7 @@ void US_Hydrodyn_Cluster_Additional::set_dammif()
 
 void US_Hydrodyn_Cluster_Additional::dammif()
 {
+   QDir::setCurrent( load_save_path );
 }
 
 void US_Hydrodyn_Cluster_Additional::set_gasbor()
@@ -379,5 +391,6 @@ void US_Hydrodyn_Cluster_Additional::set_gasbor()
 
 void US_Hydrodyn_Cluster_Additional::gasbor()
 {
+   QDir::setCurrent( load_save_path );
 }
 

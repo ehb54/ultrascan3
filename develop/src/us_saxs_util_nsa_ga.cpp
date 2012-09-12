@@ -383,6 +383,15 @@ bool US_Saxs_Util::nsa_run()
             {
                out_params[ it->first ] = it->second;
             }
+
+            out_params[ "results vector" ] = "";
+            for ( unsigned int i = 0; i < nsa_var_ref.size(); i++ )
+            {
+               out_params[ "results vector" ] += QString( "%1%2" )
+                  .arg( i ? " " : "" )
+                  .arg( *( nsa_var_ref[ i ] ) );
+            }
+
             if ( nsa_use_scaling_fit )
             {
                out_params[ "result last scaling" ] = QString( "%1" ).arg( nsa_last_scaling );
