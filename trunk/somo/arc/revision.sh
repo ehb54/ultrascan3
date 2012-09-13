@@ -1,4 +1,4 @@
-REV1=`cd ..; svn info|grep Revision`
+REV1=`(cd $us2/develop;svn info|grep Revision)`
 REV2=`cut -f2 -d\" include/us_revision.h`
 if [ "$REV1" != "$REV2" ]
 then
