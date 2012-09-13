@@ -7149,7 +7149,6 @@ void US_Hydrodyn::calc_mw()
       do_excl_vol = false;
    }
 
-
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
@@ -7163,6 +7162,12 @@ void US_Hydrodyn::calc_mw()
       double tot_scaled_excl_vol = 0.0;
       unsigned int total_e       = 0;
       // unsigned int total_e_noh   = 0;
+      point cm;
+      cm.axis[ 0 ] = 0.0;
+      cm.axis[ 1 ] = 0.0;
+      cm.axis[ 2 ] = 0.0;
+      double total_cm_mw = 0e0;
+
       create_beads(&error_string, true);
       if( !error_string.length() ) 
       {
@@ -7184,6 +7189,11 @@ void US_Hydrodyn::calc_mw()
                   {
                      model_vector[i].mw += this_atom->mw;
                   }
+                  cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
+                  cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
+                  cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
+                  total_cm_mw += this_atom->mw;
+
                   model_vector[i].molecule[j].mw += this_atom->mw;
                   if ( do_excl_vol )
                   {
@@ -7241,6 +7251,40 @@ void US_Hydrodyn::calc_mw()
                               );
             }
          }
+         
+         cm.axis[ 0 ] /= total_cm_mw;
+         cm.axis[ 1 ] /= total_cm_mw;
+         cm.axis[ 2 ] /= total_cm_mw;
+
+         // now compute Rg
+         double Rg2 = 0e0;
+         
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+         {
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+            {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if( this_atom->active ) 
+               {
+                  Rg2 += this_atom->mw * 
+                     ( 
+                      ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                      ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                      ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                      ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                      ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                      ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                      );
+               }
+            }
+         }
+
+         double Rg = sqrt( Rg2 / total_cm_mw );
+         editor->append( 
+                        QString( "\nModel %1 Rg: %2 nm" )
+                        .arg( model_vector[ i ].model_id )
+                        .arg( Rg / 10.0 ) 
+                        );
       }
 
       editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4"))
