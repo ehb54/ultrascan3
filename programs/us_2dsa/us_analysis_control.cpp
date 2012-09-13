@@ -620,6 +620,18 @@ DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
  << mbase << mgrid << msubg << mmatr << mdata << " megs" << megs;
 
    le_estmemory->setText( QString::number( megs ) + " MB" );
+
+   // Output a message documenting the grid and subgrid dimensions
+   int nss       = nsteps / ngrrep;
+   int nsk       = nstepk / ngrrep;
+   int nspts     = nss * nsk;
+   int nsubg     = sq( ngrrep );
+   QString gmsg = tr( "Total grid is approximately %1 points (%2 x %3).\n" )
+      .arg( ngstep ).arg( nsteps ).arg( nstepk );
+   gmsg += tr( "Subgrid refinement is %1 subgrids (%2 ^ 2)\n"
+               "  with a maximum of %3 points each (%4 x %5)." )
+      .arg( nsubg ).arg( ngrrep ).arg( nspts ).arg( nss ).arg( nsk );
+   te_status  ->setText( gmsg );
 }
 
 // Reset s-limit step sizes when s-limit value changes

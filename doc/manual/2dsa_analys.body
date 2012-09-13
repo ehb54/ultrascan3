@@ -185,7 +185,7 @@
        </li>
 
        <li>
-          <b>Grid Refinements:</b> The number of refinements (subgrid points)
+          <b>Grid Refinements:</b> The number of refinements (subgrid divisions)
           in each dimension (s and f/f0). The square of this number is the
           number of subgrids. The Number Grid Points given for each
           dimension, divided by Grid Refinements, is the approximate number
