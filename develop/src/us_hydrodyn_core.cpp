@@ -7188,11 +7188,11 @@ void US_Hydrodyn::calc_mw()
                   if ( this_atom->resName != "SWH" )
                   {
                      model_vector[i].mw += this_atom->mw;
+                     cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
+                     cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
+                     cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
+                     total_cm_mw += this_atom->mw;
                   }
-                  cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
-                  cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
-                  cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
-                  total_cm_mw += this_atom->mw;
 
                   model_vector[i].molecule[j].mw += this_atom->mw;
                   if ( do_excl_vol )
@@ -7266,15 +7266,19 @@ void US_Hydrodyn::calc_mw()
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if( this_atom->active ) 
                {
-                  Rg2 += this_atom->mw * 
-                     ( 
-                      ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
-                      ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                      ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
-                      ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                      ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
-                      ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
-                      );
+                  //       i, j, k, this_atom->mw);
+                  if ( this_atom->resName != "SWH" )
+                  {
+                     Rg2 += this_atom->mw * 
+                        ( 
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                         );
+                  }
                }
             }
          }
@@ -7283,7 +7287,7 @@ void US_Hydrodyn::calc_mw()
          editor->append( 
                         QString( "\nModel %1 Rg: %2 nm" )
                         .arg( model_vector[ i ].model_id )
-                        .arg( Rg / 10.0 ) 
+                        .arg( Rg / 10.0, 0, 'f', 2 ) 
                         );
       }
 
