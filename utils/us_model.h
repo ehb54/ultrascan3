@@ -22,7 +22,7 @@ class US_UTIL_EXTERN US_Model
 
       //! The type of analysis used with the model
       enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, ONEDSA,
-                          COFS, FE, INITIALGRID };
+                          COFS, FE, CUSTOMGRID };
 
       //! The type of global analysis used with the model
       enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL };
@@ -40,7 +40,7 @@ class US_UTIL_EXTERN US_Model
       AnalysisType analysis;    //!< The analysis used with this model
       GlobalType   global;      //!< Global params used for model generation
 
-		//! An integer to define the number of subgrids for an INITIALGRID needed
+		//! An integer to define the number of subgrids for a CUSTOMGRID needed
 		//! for the 2DSA initialization
 		int		  subGrids;
 

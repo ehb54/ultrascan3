@@ -370,7 +370,7 @@ QString US_Model::typeText( void )
       { COFS,        QObject::tr( "COFS"        ) },
       { FE,          QObject::tr( "FE"          ) },
       { ONEDSA,      QObject::tr( "1DSA"        ) },
-      { INITIALGRID, QObject::tr( "INITIALGRID" ) }
+      { CUSTOMGRID,  QObject::tr( "CUSTOMGRID"  ) }
    };
 
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
