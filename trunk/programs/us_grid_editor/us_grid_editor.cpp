@@ -361,7 +361,7 @@ void US_Grid_Editor::save( void )
    int             indexsg = 1;
 	bool flag;
 	modelGuid         = US_Util::new_guid();
-	model.analysis    = US_Model::INITIALGRID;
+	model.analysis    = US_Model::CUSTOMGRID;
 	model.description = now_time.toString( "yyyyMMdd-hhmm")
       + "-CustomGrid" + ".model";
 	model.subGrids    = subGrids;

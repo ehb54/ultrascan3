@@ -408,8 +408,8 @@ DbgLv(0) << "BrDb: MOD id" << recID << " desc" << descript;
 
       QString subType   = descript.section( ".", -2, -2 ).section( "_", 2, 2 );
 
-      if ( recsize.toInt() > 65000  ||  descript.contains( "InitialGrid" ) )
-         subType           = "INITIALGRID";
+      if ( recsize.toInt() > 65000  ||  descript.contains( "CustomGrid" ) )
+         subType           = "CUSTOMGRID";
 
       else if ( subType.isEmpty() )
          subType           = "MANUAL";
@@ -1739,8 +1739,8 @@ QString US_DataModel::model_type( int imtype, int nassoc, int gtype, bool isMC )
       case (int)US_Model::ONEDSA:
          mtype = "1DSA";
          break;
-      case (int)US_Model::INITIALGRID:
-         mtype = "INITIALGRID";
+      case (int)US_Model::CUSTOMGRID:
+         mtype = "CUSTOMGRID";
          break;
    }
 

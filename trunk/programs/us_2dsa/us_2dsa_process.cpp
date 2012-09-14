@@ -187,7 +187,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    {  // model-grid
       QVector< US_Solute > solvec;
 
-      if ( model.analysis == US_Model::INITIALGRID  &&  nsubgrid > 0 )
+      if ( model.analysis == US_Model::CUSTOMGRID  &&  nsubgrid > 0 )
       {
          for ( int ii = 0; ii < nsubgrid; ii++ )
          {
