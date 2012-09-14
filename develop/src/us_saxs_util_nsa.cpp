@@ -301,22 +301,31 @@ double US_Saxs_Util::nsa_fitness()
    // values stored in last_q, last_I, experiment in sgp_exp_q,I,e
    nsa_last_scaling = 1e0;
    double chi2;
+   bool fit_ok;
    if ( nsa_use_scaling_fit )
    {
       if ( sgp_use_e )
       {
-         scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, nsa_last_scaling, chi2 );
+         fit_ok = scaling_fit( sgp_last_I, sgp_exp_I, sgp_exp_e, nsa_last_scaling, chi2 );
       } else {
-         scaling_fit( sgp_last_I, sgp_exp_I, nsa_last_scaling, chi2 );
+         fit_ok = scaling_fit( sgp_last_I, sgp_exp_I, nsa_last_scaling, chi2 );
       }
    } else {
       if ( sgp_use_e )
       {
-         calc_mychi2( sgp_last_I, sgp_exp_I, sgp_exp_e, chi2 );
+         fit_ok = calc_mychi2( sgp_last_I, sgp_exp_I, sgp_exp_e, chi2 );
       } else {
-         calc_myrmsd( sgp_last_I, sgp_exp_I, chi2 );
+         fit_ok = calc_myrmsd( sgp_last_I, sgp_exp_I, chi2 );
       }
    }
+
+#if defined( USE_MPI )
+   if ( !fit_ok )
+   {
+      MPI_Abort( MPI_COMM_WORLD, -55545 );
+      exit( -55545 );
+   }
+#endif
 
    if ( isnan( chi2 ) )
    {

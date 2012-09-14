@@ -6145,7 +6145,7 @@ bool US_Saxs_Util::calc_chisq_prob( double a, double x, double &prob )
    // return false; // never gets here
 }
 
-void US_Saxs_Util::scaling_fit( 
+bool US_Saxs_Util::scaling_fit( 
                               vector < double > x, 
                               vector < double > y, 
                               double &k,
@@ -6160,6 +6160,7 @@ void US_Saxs_Util::scaling_fit(
          .arg( y.size() );
       k = 1e0;
       rmsd = 9e99;
+      return false;
    }
 
    k = 0e0;
@@ -6186,9 +6187,10 @@ void US_Saxs_Util::scaling_fit(
       rmsd += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] );
    }
    rmsd = sqrt(rmsd);
+   return true;
 }
 
-void US_Saxs_Util::scaling_fit( 
+bool US_Saxs_Util::scaling_fit( 
                               vector < double > x, 
                               vector < double > y, 
                               vector < double > sd, 
@@ -6206,6 +6208,7 @@ void US_Saxs_Util::scaling_fit(
          .arg( sd.size() );
       k = 1e0;
       chi2 = 9e99;
+      return false;
    }
 
    k = 0e0;
@@ -6234,6 +6237,7 @@ void US_Saxs_Util::scaling_fit(
    {
       chi2 += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] ) * oneoversd2[ i ];
    }
+   return true;
 }
 
 bool US_Saxs_Util::nnls_fit( 
@@ -6400,6 +6404,8 @@ bool US_Saxs_Util::iqq_sphere(
       min_q += delta_q;
    }
    
+   max_q += delta_q / 2e0;
+
    for ( double q = min_q; q <= max_q; q += delta_q )
    {
       double qradius = q * radius;

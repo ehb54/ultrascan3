@@ -312,14 +312,14 @@ class US_EXTERN US_Saxs_Util
                       );
 
       // linear fit code, solves  y = kx, returing chi2
-      void scaling_fit( 
+      bool scaling_fit( 
                        vector < double > x, 
                        vector < double > y, 
                        double &a,
                        double &chi2
                        );
 
-      void scaling_fit( 
+      bool scaling_fit( 
                        vector < double > x, 
                        vector < double > y, 
                        vector < double > sd, 
