@@ -14,3 +14,11 @@ sudo cpan -i Template::Tools
 
 See http://template-toolkit.org/docs/index.html
 
+On some installations AppConfig may also be required:
+
+sudo cpan -i AppConfig
+
+For doxygen documentation generation, a program called "GraphViz" is needed,
+it is available from: http://www.graphviz.org/Download_source.php
+
+
