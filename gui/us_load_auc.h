@@ -11,7 +11,7 @@
 #include "us_db2.h"
 
 //! \brief A dialog class to select and load raw data
-class US_LoadAUC : public US_WidgetsDialog
+class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
 {
    Q_OBJECT
 
