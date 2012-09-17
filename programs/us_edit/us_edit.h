@@ -193,6 +193,7 @@ class US_Edit : public US_Widgets
       void review_edits      ( void );
       void next_triple       ( void );
       bool all_edits_done    ( void );
+      void update_disk_db    ( bool );
                              
       void reset             ( void );
       void reset_triple      ( void );

@@ -8,13 +8,15 @@
 #include "us_gui_util.h"
 #include "us_constants.h"
 #include "us_passwd.h"
-#include "us_data_loader.h"
+//#include "us_data_loader.h"
+#include "us_load_auc.h"
 #include "us_util.h"
 #include "us_investigator.h"
 #include "us_report.h"
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_sleep.h"
+#include "us_matrix.h"
 
 #define MIN_NTC   25
 
@@ -175,34 +177,21 @@ void US_ExportLegacy::load( void )
    QStringList parts;
    lw_triples->  disconnect();
    lw_triples->  clear();
-   dataList.     clear();
    rawList.      clear();
    triples.      clear();
 
-   dataLoaded = false;
-   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
-                                  : US_Disk_DB_Controls::Disk;
+   dataLoaded    = false;
+   bool isLocal  = !dkdb_cntrls->db();
 
-   US_DataLoader* dialog =
-      new US_DataLoader( true, local, rawList, dataList,
-            triples, workingDir, QString( "velocity" ) );
+   US_LoadAUC* dialog = 
+      new US_LoadAUC( isLocal, rawList, triples, workingDir ); 
 
-   connect( dialog, SIGNAL( changed(      bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dialog, SIGNAL( changed       ( bool ) ),
+            this,   SLOT(   update_disk_db( bool ) ) );
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
-   if ( ! dkdb_cntrls->db() )
-   {
-      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
-      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
-   }
-
-   else
-      workingDir = tr( "(database)" );
-
    qApp->processEvents();
-
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
@@ -212,20 +201,22 @@ void US_ExportLegacy::load( void )
    for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
-   edata     = &dataList[ 0 ];
-   scanCount = edata->scanData.size();
-   double avgTemp = edata->average_temperature();
+   rdata            = &rawList [ 0 ];
+   scanCount        = rdata->scanData.size();
+   double  avgTemp  = rdata->average_temperature();
+   runID            = workingDir.section( "/", -1, -1 );
+
+   rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
 
    // set ID, description, and avg temperature text
-   le_id  ->setText( edata->runID );
-   te_desc->setText( edata->description );
+   le_id  ->setText( runID );
+   te_desc->setText( rdata->description );
    le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
    if ( ntriples > 1 )
       te_stat->setText( tr( "%1 input %2 triples" )
-            .arg( ntriples ).arg( edata->dataType ) );
+            .arg( ntriples ).arg( rawDtype ) );
    else
-      te_stat->setText( tr( "1 input %1 triple" )
-            .arg( edata->dataType ) );
+      te_stat->setText( tr( "1 input %1 triple" ).arg( rawDtype ) );
 
    lw_triples->setCurrentRow( 0 );
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
@@ -237,13 +228,16 @@ void US_ExportLegacy::load( void )
 
    pb_details->setEnabled( true );
    pb_view   ->setEnabled( true );
+   delete dialog;
 }
 
 // Details
 void US_ExportLegacy::details( void )
 {
-   US_RunDetails2* dialog
-      = new US_RunDetails2( rawList, runID, workingDir, triples );
+   QString         workDir = dkdb_cntrls->db() ? tr( "(database)" )
+                                               : workingDir;
+   US_RunDetails2* dialog  = new US_RunDetails2( rawList, runID,
+                                                 workDir, triples );
 
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
@@ -255,16 +249,13 @@ void US_ExportLegacy::details( void )
 // Update based on selected triples row
 void US_ExportLegacy::update( int drow )
 {
-   edata          = &dataList[ drow ];
    rdata          = &rawList [ drow ];
-   scanCount      = edata->scanData.size();
-   runID          = edata->runID;
-   le_id->  setText( runID );
+   scanCount      = rdata->scanData.size();
+   double avgTemp = rdata->average_temperature();
 
-   double avgTemp = edata->average_temperature();
-   le_temp->setText( QString::number( avgTemp, 'f', 1 )
-         + " " + DEGC );
-   te_desc->setText( edata->description );
+   le_id  ->setText( runID );
+   le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
+   te_desc->setText( rdata->description );
 
    data_plot();
 
@@ -282,17 +273,17 @@ void US_ExportLegacy::data_plot( void )
       return;
 
    int drow    = lw_triples->currentRow();
-   edata       = &dataList[ drow ];
    rdata       = &rawList [ drow ];
-   QString                            dataType = tr( "Absorbance" );
-   if ( edata->dataType == "RI" )     dataType = tr( "Intensity" );
-   if ( edata->dataType == "WI" )     dataType = tr( "Intensity" );
-   if ( edata->dataType == "IP" )     dataType = tr( "Interference" );
-   if ( edata->dataType == "FI" )     dataType = tr( "Fluourescence" );
+   rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
+   QString                     dataType = tr( "Absorbance" );
+   if ( rawDtype == "RI" )     dataType = tr( "Intensity" );
+   if ( rawDtype == "WI" )     dataType = tr( "Intensity" );
+   if ( rawDtype == "IP" )     dataType = tr( "Interference" );
+   if ( rawDtype == "FI" )     dataType = tr( "Fluourescence" );
    data_plot2->setTitle(
-      tr( "Velocity Data for " ) + edata->runID );
+      tr( "Velocity Data for " ) + runID );
    data_plot2->setAxisTitle( QwtPlot::yLeft,
-      dataType + tr( " at " ) + edata->wavelength + tr( " nm" ) );
+      dataType + tr( " at " ) + rawWaveln + tr( " nm" ) );
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
@@ -334,20 +325,19 @@ void US_ExportLegacy::data_plot( void )
 // Save the report and image data
 void US_ExportLegacy::export_data( void )
 {
+   rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
    QStringList files;
-   QString     dtype    = QString( QChar( rdata->type[ 0 ] ) )
-                        + QString( QChar( rdata->type[ 1 ] ) );
    QString     legadir( US_Settings::dataDir() + "/legacy" );
 
    // Insure that */data/legacy/runid exists
-   mkdir( legadir, edata->runID );
+   mkdir( legadir, runID );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   if ( QString( dtype ).mid( 1 ) == "I" )
+   if ( QString( rawDtype ).mid( 1 ) == "I" )
    {  // Export intensity
       exp_intensity( files );
    }
-   else if ( dtype == "IP" )
+   else if ( rawDtype == "IP" )
    {  // Export interference
       exp_interference( files );
    }
@@ -362,7 +352,7 @@ void US_ExportLegacy::export_data( void )
    int nfiles    = files.count();
 
    QString umsg  = tr( "In directory \"" ) + legadir + "\",\n"
-                 + tr( "   in subdirectory \"" ) + edata->runID + "\",\n"
+                 + tr( "   in subdirectory \"" ) + runID + "\",\n"
                  + tr( "   %1 files were written:\n" ).arg( nfiles );
    umsg += files[ 0 ] + "\n...\n" + files[ nfiles - 1 ] + "\n";
 
@@ -373,10 +363,9 @@ void US_ExportLegacy::export_data( void )
    umsg.clear();
    if ( ntriples > 1 )
       umsg = tr( "From %1 input %2 triples, legacy output\n" )
-         .arg( ntriples ).arg( edata->dataType );
+         .arg( ntriples ).arg( rawDtype );
    else
-      umsg = tr( "From 1 input %1 triple, legacy output\n" )
-         .arg( edata->dataType );
+      umsg = tr( "From 1 input %1 triple, legacy output\n" ).arg( rawDtype );
 
    umsg += tr( "was written to %1 files." ).arg( nfiles );
 
@@ -387,11 +376,10 @@ void US_ExportLegacy::export_data( void )
 void US_ExportLegacy::exp_mosttypes( QStringList& files )
 {
    // Get data pointers and output directory
-   edata       = &dataList[ 0 ];
    rdata       = &rawList [ 0 ];
    QString legadir( US_Settings::dataDir() + "/legacy" );
-   mkdir( legadir, edata->runID );
-   QString odirname = legadir + "/" + edata->runID + "/";
+   mkdir( legadir, runID );
+   QString odirname = legadir + "/" + runID + "/";
    QString ofname;
    QString ofpath;
    int     ntriples = triples.size();
@@ -399,18 +387,16 @@ void US_ExportLegacy::exp_mosttypes( QStringList& files )
    // Determine data type
    US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
-   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
-                    + QString( QChar( rdata->type[ 1 ] ) );
    QString htype    = QString( "U" );
-           htype    = ( dtype == "RA" ) ? "R" : htype;
-           htype    = ( dtype == "RI" ) ? "I" : htype;
-           htype    = ( dtype == "IP" ) ? "P" : htype;
-           htype    = ( dtype == "FI" ) ? "F" : htype;
-           htype    = ( dtype == "WA" ) ? "W" : htype;
-           htype    = ( dtype == "WI" ) ? "V" : htype;
-DbgLv(1) << "dtype" << dtype << "htype" << htype;
+           htype    = ( rawDtype == "RA" ) ? "R" : htype;
+           htype    = ( rawDtype == "RI" ) ? "I" : htype;
+           htype    = ( rawDtype == "IP" ) ? "P" : htype;
+           htype    = ( rawDtype == "FI" ) ? "F" : htype;
+           htype    = ( rawDtype == "WA" ) ? "W" : htype;
+           htype    = ( rawDtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    // Get first scan header information
-   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+   bool    wldata   = ( QString( rawDtype ).left( 1 ) == "W" );
    int     hcell    = rdata->cell;
    double  htemp    = dscan->temperature;
    int     hrpm     = qRound( dscan->rpm );
@@ -422,14 +408,13 @@ DbgLv(1) << "dtype" << dtype << "htype" << htype;
    QString oline;
    int     nscan    = rdata->scanData.size();
    int     nvalu    = rdata->x.size();
-   QString fext     = "." + dtype + QString::number( hcell );
+   QString fext     = "." + rawDtype + QString::number( hcell );
 
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
-      edata  = &dataList[ drow ];               // Current data and cell
-      rdata  = &rawList [ drow ];
+      rdata  = &rawList [ drow ];               // Current data
       hcell  = rdata->cell;
-      fext   = "." + dtype + QString::number( hcell );
+      fext   = "." + rawDtype + QString::number( hcell );
 
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
@@ -491,11 +476,10 @@ if (jj < 3  || jj > (nvalu-4))
 void US_ExportLegacy::exp_intensity( QStringList& files )
 {
    // Get 1st triple data pointer and output directory
-   edata       = &dataList[ 0 ];
    rdata       = &rawList [ 0 ];
    QString legadir( US_Settings::dataDir() + "/legacy" );
-   mkdir( legadir, edata->runID );
-   QString odirname = legadir + "/" + edata->runID + "/";
+   mkdir( legadir, runID );
+   QString odirname = legadir + "/" + runID + "/";
    QString ofname;
    QString ofpath;
    int     ntriples = triples.size();
@@ -503,17 +487,15 @@ void US_ExportLegacy::exp_intensity( QStringList& files )
    // Get data type
    US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
-   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
-                    + QString( QChar( rdata->type[ 1 ] ) );
    QString htype    = QString( "U" );
-           htype    = ( dtype == "RA" ) ? "R" : htype;
-           htype    = ( dtype == "RI" ) ? "I" : htype;
-           htype    = ( dtype == "IP" ) ? "P" : htype;
-           htype    = ( dtype == "FI" ) ? "F" : htype;
-           htype    = ( dtype == "WA" ) ? "W" : htype;
-           htype    = ( dtype == "WI" ) ? "V" : htype;
-DbgLv(1) << "dtype" << dtype << "htype" << htype;
-   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+           htype    = ( rawDtype == "RA" ) ? "R" : htype;
+           htype    = ( rawDtype == "RI" ) ? "I" : htype;
+           htype    = ( rawDtype == "IP" ) ? "P" : htype;
+           htype    = ( rawDtype == "FI" ) ? "F" : htype;
+           htype    = ( rawDtype == "WA" ) ? "W" : htype;
+           htype    = ( rawDtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
+   bool    wldata   = ( QString( rawDtype ).left( 1 ) == "W" );
    int     hcell    = rdata->cell;
    double  htemp    = dscan->temperature;
    int     hrpm     = qRound( dscan->rpm );
@@ -524,7 +506,7 @@ DbgLv(1) << "dtype" << dtype << "htype" << htype;
    int     hcoun    = 3;
    int     nscan    = rdata->scanData.size();
    int     nvalu    = rdata->x.size();
-   QString fext     = "." + dtype + QString::number( hcell );
+   QString fext     = "." + rawDtype + QString::number( hcell );
    QString tripa;
    QString oline;
    bool    twofer;
@@ -533,10 +515,9 @@ DbgLv(1) << "dtype" << dtype << "htype" << htype;
 
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
-      edata  = &dataList[ drow ];
       rdata  = &rawList [ drow ];
       hcell  = rdata->cell;
-      fext   = "." + dtype + QString::number( hcell );
+      fext   = "." + rawDtype + QString::number( hcell );
       tripa  = triples[ drow ];
       twofer = tripa.contains( "A" );
       bfirst = false;
@@ -620,11 +601,10 @@ if (jj < 3  || jj > (nvalu-4))
 void US_ExportLegacy::exp_interference( QStringList& files )
 {
    // Get 1st triple data pointers and output directory
-   edata       = &dataList[ 0 ];
    rdata       = &rawList [ 0 ];
    QString legadir( US_Settings::dataDir() + "/legacy" );
-   mkdir( legadir, edata->runID );
-   QString odirname = legadir + "/" + edata->runID + "/";
+   mkdir( legadir, runID );
+   QString odirname = legadir + "/" + runID + "/";
    QString ofname;
    QString ofpath;
    int     ntriples = triples.size();
@@ -632,17 +612,15 @@ void US_ExportLegacy::exp_interference( QStringList& files )
    // Get data type
    US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
-   QString dtype    = QString( QChar( rdata->type[ 0 ] ) )
-                    + QString( QChar( rdata->type[ 1 ] ) );
    QString htype    = QString( "U" );
-           htype    = ( dtype == "RA" ) ? "R" : htype;
-           htype    = ( dtype == "RI" ) ? "I" : htype;
-           htype    = ( dtype == "IP" ) ? "P" : htype;
-           htype    = ( dtype == "FI" ) ? "F" : htype;
-           htype    = ( dtype == "WA" ) ? "W" : htype;
-           htype    = ( dtype == "WI" ) ? "V" : htype;
-DbgLv(1) << "dtype" << dtype << "htype" << htype;
-   bool    wldata   = ( QString( dtype ).left( 1 ) == "W" );
+           htype    = ( rawDtype == "RA" ) ? "R" : htype;
+           htype    = ( rawDtype == "RI" ) ? "I" : htype;
+           htype    = ( rawDtype == "IP" ) ? "P" : htype;
+           htype    = ( rawDtype == "FI" ) ? "F" : htype;
+           htype    = ( rawDtype == "WA" ) ? "W" : htype;
+           htype    = ( rawDtype == "WI" ) ? "V" : htype;
+DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
+   bool    wldata   = ( QString( rawDtype ).left( 1 ) == "W" );
    int     hcell    = rdata->cell;
    double  htemp    = dscan->temperature;
    int     hrpm     = qRound( dscan->rpm );
@@ -654,14 +632,13 @@ DbgLv(1) << "dtype" << dtype << "htype" << htype;
    QString oline;
    int     nscan    = rdata->scanData.size();
    int     nvalu    = rdata->x.size();
-   QString fext     = "." + dtype + QString::number( hcell );
+   QString fext     = "." + rawDtype + QString::number( hcell );
 
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
-      edata  = &dataList[ drow ];
       rdata  = &rawList [ drow ];
       hcell  = rdata->cell;
-      fext   = "." + dtype + QString::number( hcell );
+      fext   = "." + rawDtype + QString::number( hcell );
 
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
@@ -739,7 +716,7 @@ void US_ExportLegacy::view_report( )
 // Write the report HTML text stream
 void US_ExportLegacy::write_report( QTextStream& ts )
 {
-   ts << html_header( "US_ExportLegacy", "Legacy Export", edata );
+   ts << html_header( "US_ExportLegacy", "Legacy Export", rdata );
    ts << data_details();
    ts << "  </body>\n</html>\n";
 }
@@ -753,40 +730,38 @@ QString US_ExportLegacy::indent( const int spaces ) const
 // Compose data details text
 QString US_ExportLegacy::data_details( void ) const
 {
-   int    drow     = lw_triples->currentRow();
-   const US_DataIO2::EditedData* d = &dataList[ drow ];
-   QString                       dataType = tr( "Unknown" );
-   if ( d->dataType == "RA" )    dataType = tr( "Radial Absorbance" );
-   if ( d->dataType == "RI" )    dataType = tr( "Radial Intensity" );
-   if ( d->dataType == "WA" )    dataType = tr( "Wavelength Absorbance" );
-   if ( d->dataType == "WI" )    dataType = tr( "Wavelength Intensity" );
-   if ( d->dataType == "IP" )    dataType = tr( "Interference" );
-   if ( d->dataType == "FI" )    dataType = tr( "Fluourescence Intensity" );
-   dataType        = dataType + "  (" + d->dataType + ")";
+   QString                    dataType = tr( "Unknown" );
+   if ( rawDtype == "RA" )    dataType = tr( "Radial Absorbance" );
+   if ( rawDtype == "RI" )    dataType = tr( "Radial Intensity" );
+   if ( rawDtype == "WA" )    dataType = tr( "Wavelength Absorbance" );
+   if ( rawDtype == "WI" )    dataType = tr( "Wavelength Intensity" );
+   if ( rawDtype == "IP" )    dataType = tr( "Interference" );
+   if ( rawDtype == "FI" )    dataType = tr( "Fluourescence Intensity" );
+   dataType        = dataType + "  (" + rawDtype + ")";
 
    QString s =
       "\n" + indent( 4 ) + tr( "<h3>Detailed Run Information:</h3>\n" )
       + indent( 4 ) + "<table>\n"
-      + table_row( tr( "Cell Description:" ), d->description )
+      + table_row( tr( "Cell Description:" ), rdata->description )
       + table_row( tr( "Data Directory:"   ), workingDir )
       + table_row( tr( "Data Type:"        ), dataType )
       + table_row( tr( "Rotor Speed:"      ),  
-            QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
+            QString::number( (int)rdata->scanData[ 0 ].rpm ) + " rpm" );
 
    // Temperature data
    double sum     =  0.0;
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
-   for ( int i = 0; i < d->scanData.size(); i++ )
+   for ( int i = 0; i < rdata->scanData.size(); i++ )
    {
-      double t = d->scanData[ i ].temperature;
+      double t = rdata->scanData[ i ].temperature;
       sum += t;
       maxTemp = max( maxTemp, t );
       minTemp = min( minTemp, t );
    }
 
-   QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+   QString average = QString::number( sum / rdata->scanData.size(), 'f', 1 );
 
    s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
@@ -797,9 +772,9 @@ QString US_ExportLegacy::data_details( void ) const
                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
 
    // Time data
-   double  tcorrec  = US_Math2::time_correction( dataList );
-   int minutes = (int)tcorrec / 60;
-   int seconds = (int)tcorrec % 60;
+   double tcorrec  = time_correction();
+   int    minutes  = (int)tcorrec / 60;
+   int    seconds  = (int)tcorrec % 60;
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
@@ -823,7 +798,7 @@ QString US_ExportLegacy::data_details( void ) const
                    QString::number( minutes ) + m + 
                    QString::number( seconds ) + sec );
 
-   s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" );
+   s += table_row( tr( "Wavelength:" ), rawWaveln + " nm" );
 
    return s;
 }
@@ -871,7 +846,6 @@ void US_ExportLegacy::reset( void )
 
    lw_triples->  disconnect();
    lw_triples->  clear();
-   dataList.     clear();
    rawList.      clear();
    triples.      clear();
 
@@ -898,8 +872,10 @@ QString US_ExportLegacy::table_row( const QString& s1, const QString& s2 ) const
 
 // Compose a report HTML header
 QString US_ExportLegacy::html_header( QString title, QString head1,
-      US_DataIO2::EditedData* edata )
+      US_DataIO2::RawData* rdata )
 {
+   rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
+
    QString s = QString( "<?xml version=\"1.0\"?>\n" );
    s  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
    s  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
@@ -916,11 +892,58 @@ QString US_ExportLegacy::html_header( QString title, QString head1,
    s  += "    </style>\n";
    s  += "  </head>\n  <body>\n";
    s  += "    <h1>" + head1 + "</h1>\n";
-   s  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + edata->runID;
-   s  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + edata->cell;
-   s  += tr( ", Channel " ) + edata->channel;
-   s  += tr( ", Wavelength " ) + edata->wavelength + "<br/></h2>\n";
+   s  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + runID;
+   s  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + rawCell;
+   s  += tr( ", Channel " ) + rawChann;
+   s  += tr( ", Wavelength " ) + rawWaveln + "<br/></h2>\n";
 
    return s;
+}
+
+// Compose some strings from RawData that exist for EditedData
+void US_ExportLegacy::rDataStrings( US_DataIO2::RawData* rdata,
+   QString& Dtype, QString& Cell, QString& Chann, QString& Waveln )
+{
+   Dtype    = QString( QChar( rdata->type[ 0 ] ) )
+            + QString( QChar( rdata->type[ 1 ] ) );
+   Cell     = QString::number( rdata->cell );
+   Chann    = QString( QChar( rdata->channel ) );
+   Waveln   = QString::number( rdata->scanData[ 0 ].wavelength );
+}
+
+// Compute time correction
+double US_ExportLegacy::time_correction() const
+{
+   int size  = rawList[ 0 ].scanData.size();
+
+   for ( int ii = 1; ii < rawList.size(); ii++ )
+      size += rawList[ ii ].scanData.size();
+
+   int count = 0;
+
+   QVector< double > vecx( size );
+   QVector< double > vecy( size );
+   double* x = vecx.data();
+   double* y = vecy.data();
+   
+   double c[ 2 ];  // Looking for a linear fit
+
+   for ( int ii = 0; ii < rawList.size(); ii++ )
+   {
+      const US_DataIO2::RawData* d = &rawList[ ii ];
+
+      for ( int jj = 0; jj < d->scanData.size(); jj++ )
+      {
+         if ( d->scanData[ jj ].omega2t > 9.99999e10 ) break;
+
+         x[ count ] = d->scanData[ jj ].omega2t;
+         y[ count ] = d->scanData[ jj ].seconds;
+         count++;
+      }
+   }
+
+   US_Matrix::lsfit( c, x, y, count, 2 );
+
+   return c[ 0 ]; // Return the time value corresponding to zero omega2t
 }
 

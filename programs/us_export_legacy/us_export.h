@@ -53,6 +53,10 @@ class US_ExportLegacy : public US_Widgets
       QString       run_name;
       QString       workingDir;
       QString       runID;
+      QString       rawDtype;
+      QString       rawChann;
+      QString       rawCell;
+      QString       rawWaveln;
 
       QStringList   files;
 
@@ -81,8 +85,11 @@ class US_ExportLegacy : public US_Widgets
       QString indent          ( int ) const;
       void    view_report     ( void );
       QString table_row       ( const QString&, const QString& ) const;
-      QString html_header     ( QString, QString, US_DataIO2::EditedData* );
+      QString html_header     ( QString, QString, US_DataIO2::RawData* );
       QString data_details    ( void )                      const;
+      double  time_correction ( void ) const;
+      void    rDataStrings    ( US_DataIO2::RawData*,
+                                QString&, QString&, QString&, QString& );
       void help               ( void )
       { showHelp.show_help( "export_legacy.html" ); };
 

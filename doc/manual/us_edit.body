@@ -23,15 +23,15 @@ graph.</p>
 <ol> 
 
   <li><strong>Step 1</strong>: Load data from the database or a local data
-  <emphasis>directory</emphasis> that contains the UltraScan 3 data files
-  previosuly converted from the Beckman raw data.  If looking at the file
-  system, these files have an ".auc" filename extension.</li>
+  directory that contains the UltraScan 3 data files previously converted
+  from the Beckman raw data. Load choices are made in a
+  <a href="load_auc.html">Load Data Dialog</a>.</li>
 
   <li><strong>Step 2</strong>: Select the Cell / Channel / Wavelengh
   combination to edit.</li>
 
   <li><strong>Step 3</strong>: Specify the meniscus of the data by holding
-  down the <emphasis>Control</emphasis> key and using the left mouse button.
+  down the <b>Control</b> key and using the left mouse button.
   The meniscus value may be manually adjusted with the keyboard.</li>
 
   <li><strong>Step 4</strong>: If the data being edited is interference data,
@@ -62,55 +62,56 @@ the data set.  </p>
 
 <ul>
 
-   <li>Threshold for Scan Gaps.  This spin button controls the check for
+   <li><b>Threshold for Scan Gaps</b>: This spin button controls the check for
    consecutive interpolated data.  If more than the specified number of
    consecutive points on a scan have been interpolated, a warning is
    displayed when the data is loaded.</li>
 
-   <li>Run Details.  This button brings up a child window that describes
+   <li><b>Run Details</b>: This button brings up a child window that describes
    additional information associated with the data.  The data description
    may be updated in this window.</li>
 
-   <li>Scan Controls.  These controls allow setting the focus for excluding
-   scans or changing individual data points.   
+   <li><b>Scan Controls</b>: These controls allow setting the focus for
+   excluding scans or changing individual data points.   
      <ul>
 
-       <li>The <emphasis>Edit Single Scan</emphais> button displays a window
+       <li>The <b>Edit Single Scan</b> button displays a window
        where individual points may be changed by a Control-Left_Click-Drag
        operation.</li>
    
-       <li>  The <emphasis>Exclusion Profile</emphais> button displays a
+       <li>  The <b>Exclusion Profile</b> button displays a
        window where additional options for scan exclusion are available.</li>
    
-       <li>  The <emphasis>Include All</emphais> button undoes any prior 
+       <li>  The <b>Include All</b> button undoes any prior 
        exclusion operations.</li>
    
      </ul>
    </li>
 
-   <li>Determine RI Noise. This button analyzes all scans to determine any
-   radial invariant noise.  It brings up a window that shows polynomial
+   <li><b>Determine RI Noise</b>: This button analyzes all scans to determine
+   any radial invariant noise. It brings up a window that shows polynomial
    coefficients for a best fit of noise data.</li>
    
-   <li>Subtract Noise.  This button removes the calculated noise from the
+   <li><b>Subtract Noise</b>: This button removes the calculated noise from the
    current data set.</li>
    
-   <li>Invert Sign.  This button inverts the measured data.</li>
+   <li><b>Invert Sign</b>: This button inverts the measured data.</li>
    
-   <li>Remove Spikes.  This button determines if data readings are beyond 
-   acceptable limits and adjusts outlying data points to an interpolated value.</li>
+   <li><b>Remove Spikes</b>: This button determines if data readings are beyond 
+   acceptable limits and adjusts outlying data points to an interpolated
+   value.</li>
    
-   <li>Undo Noise and Spikes.  The button removes any corrections made to the 
-   data by noise or spike calculations.</li>
+   <li><b>Undo Noise and Spikes</b>: The button removes any corrections made
+   to the data by noise or spike calculations.</li>
    
-   <li>Mark Data as Floating.  This button sets a flag to mark the data as 
-   floating.</li>
+   <li><b>Mark Data as Floating</b>: This button sets a flag to mark the data
+   as floating.</li>
    
-   <li>Apply Prior Edits.  This button requests the user to specify a saved
-   set of edit operations and applies them to the current data.</li>
+   <li><b>Apply Prior Edits</b>: This button requests the user to specify a
+   saved set of edit operations and applies them to the current data.</li>
    
-   <li>Reset.  This button removes all data and sets the program to a known
-   starting point.</li>
+   <li><b>Reset</b>: This button removes all data and sets the program to a
+   known starting point.</li>
 
 
 </ul>
