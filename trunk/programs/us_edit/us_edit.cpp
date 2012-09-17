@@ -15,11 +15,10 @@
 #include "us_edit_scan.h"
 #include "us_math2.h"
 #include "us_util.h"
-#include "us_load_db.h"
+#include "us_load_auc.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_get_edit.h"
-#include "us_load_db.h"
 #include "us_constants.h"
 
 #ifndef DbgLv
@@ -657,59 +656,31 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load( void )
 {
-   if ( disk_controls->db() )
-   {
-      US_LoadDB dialog( workingDir );
-      if ( dialog.exec() == QDialog::Rejected ) return;
-   }
-   else
-   {
-      // Ask for data directory
-      workingDir = QFileDialog::getExistingDirectory( this, 
-            tr("Raw Data Directory"),
-            US_Settings::resultDir(),
-            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
-
-      if ( workingDir.isEmpty() ) return; 
-   }
-
+   bool isLocal = ! disk_controls->db();
    reset();
 
-   allData.clear();
+   US_LoadAUC* dialog =
+      new US_LoadAUC( isLocal, allData, triples, workingDir );
+
+   connect( dialog, SIGNAL( changed       ( bool ) ),
+            this,    SLOT(   update_disk_db( bool ) ) );
+
+   if ( dialog->exec() == QDialog::Rejected )  return;
+
+   runID = workingDir.section( "/", -1, -1 );
    sData  .clear();
    sd_offs.clear();
    sd_knts.clear();
    cb_triple->clear();
+   delete dialog;
 
-   workingDir.replace( "\\", "/" );  // WIN32 issue
-
-   QStringList components =  workingDir.split( "/", QString::SkipEmptyParts );  
-   
-   runID = components.last();
-
-   QStringList nameFilters = QStringList( "*.auc" );
-
-   QDir d( workingDir );
-
-   files =  d.entryList( nameFilters, 
-         QDir::Files | QDir::Readable, QDir::Name );
-
-   if ( files.size() == 0 )
+   if ( triples.size() == 0 )
    {
       QMessageBox::warning( this,
             tr( "No Files Found" ),
             tr( "There were no files of the form *.auc\n"  
                 "found in the specified directory." ) );
       return;
-   }
-
-   // Look for cell / channel / wavelength combinations
-   for ( int i = 0; i < files.size(); i++ )
-   {
-      QStringList part = files[ i ].split( "." );
-
-      QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
-      if ( ! triples.contains( t ) ) triples << t;
    }
 
    cb_triple->addItems( triples );
@@ -719,36 +690,7 @@ void US_Edit::load( void )
    
    le_info->setText( runID );
 
-   // Read all data
-   if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
-
-   QString file;
-   foreach ( file, files )
-   {
-      QString filename = workingDir + file;
-      
-      int result = US_DataIO2::readRawData( filename, data );
-      if ( result != US_DataIO2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "UltraScan Error" ),
-            tr( "Could not read data file.\n" ) 
-            + US_DataIO2::errorString( result ) + "\n" + filename );
-         return;
-      }
-
-      allData << data;
-      data.scanData.clear();
-   }
-
-   if ( allData.isEmpty() )
-   {
-      QMessageBox::warning( this,
-         tr( "UltraScan Error" ),
-         tr( "Could not read any data file." ) );
-      return;
-   }
-
+   data     = allData[ 0 ];
    dataType = QString( QChar( data.type[ 0 ] ) ) 
             + QString( QChar( data.type[ 1 ] ) );
 
@@ -773,9 +715,14 @@ void US_Edit::load( void )
       ct_gaps->setNumButtons( 1 );
    }
 
-   file    = files[ 0 ];
-   file    = workingDir + file.section( ".", 0, 0 )
-                  + "." + file.section( ".", 1, 1 ) + ".xml";
+   for ( int ii = 0; ii < triples.size(); ii++ )
+   {  // Generate file names
+      QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
+      QString file   = runID + "." + dataType + "." + triple + ".auc";
+      files << file;
+   }
+
+   QString file = workingDir + "/" + runID + "." + dataType + ".xml";
    expType = "";
    QFile xf( file );
 
@@ -826,7 +773,6 @@ void US_Edit::load( void )
       expType    = expType.left( 1 ).toUpper() +
                    expType.mid(  1 ).toLower();
 
-   data = allData[ 0 ];
 
    // Set booleans for experiment type
    expIsVelo  = ( expType.compare( "Velocity",    Qt::CaseInsensitive ) == 0 );
@@ -1019,7 +965,7 @@ void US_Edit::set_pbColors( QPushButton* pb )
 void US_Edit::plot_current( int index )
 {
    // Read the data
-   QString     triple  = cb_triple->currentText();
+   QString     triple  = triples.at( index );
    QStringList parts   = triple.split( " / " );
 
    QString     cell    = parts[ 0 ];
@@ -1042,22 +988,20 @@ void US_Edit::plot_current( int index )
    le_info->setText( s );
 
    // Plot Title
-   parts = files[ index ].split( "." );
-   
    QString title;
 
-   if ( parts[ 1 ] == "RA" )
+   if ( dataType == "RA" )
    {
       title = "Radial Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
-   else if ( parts[ 1 ] == "RI" )
+   else if ( dataType == "RI" )
    {
       title = "Radial Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
    }
-   else if ( parts[ 1 ] == "IP" )
+   else if ( dataType == "IP" )
    {
 
       title = "Radial Interference Data\nRun ID: " + runID + 
@@ -1068,7 +1012,7 @@ void US_Edit::plot_current( int index )
       pb_airGap->setHidden( false );
       le_airGap->setHidden( false );
    }
-   else if ( parts[ 1 ] == "FI" )
+   else if ( dataType == "FI" )
    {
       title = "Fluorescence Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
@@ -3656,5 +3600,14 @@ bool US_Edit::all_edits_done( void )
    }
 
    return all_ed_done;
+}
+
+// Private slot to update disk/db control with dialog changes it
+void US_Edit::update_disk_db( bool isDB )
+{
+   if ( isDB )
+      disk_controls->set_db();
+   else
+      disk_controls->set_disk();
 }
 

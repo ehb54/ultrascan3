@@ -38,6 +38,7 @@ HEADERS      = \
                us_images.h              \
                us_investigator.h        \
                us_license.h             \
+               us_load_auc.h            \
                us_loadable_noise.h      \
                us_model_gui.h           \
                us_model_loader.h        \
@@ -75,6 +76,7 @@ SOURCES      = \
                us_images.cpp              \
                us_investigator.cpp        \
                us_license.cpp             \
+               us_load_auc.cpp            \
                us_loadable_noise.cpp      \
                us_model_gui.cpp           \
                us_model_loader.cpp        \

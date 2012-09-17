@@ -24,7 +24,7 @@
 
        <li>
           <b>Load Data</b> Click here and, in the resulting
-          <a href="data_loader.html">Load Data Dialog</a>, select a run ID
+          <a href="load_auc.html">Load Data Dialog</a>, select a run ID
           for the data set to load.
        </li>
 
