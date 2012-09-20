@@ -2178,15 +2178,52 @@ int US_ConvertGui::saveUS3Disk( void )
    enableRunIDControl( false );
 
    // Save the main plots
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString dir    = US_Settings::reportDir() + "/" + runID;
    if ( ! QDir( dir ).exists() )      // make sure the directory exists
       QDir().mkdir( dir );
    int save_currentTriple = currentTriple;
    data_plot->setVisible( false );
+
+   // Make sure directory is empty
+   QDir d( dir );
+   QStringList rmvfilt( "*.svg" );
+   QStringList rmvfiles = d.entryList( rmvfilt, QDir::Files, QDir::Name );
+   QStringList rmvfilt2( "*.png" );
+   rmvfiles << d.entryList( rmvfilt2, QDir::Files, QDir::Name );
+   for ( int ii = 0; ii < rmvfiles.size(); ii++ )
+      if ( ! d.remove( rmvfiles[ ii ] ) )
+         qDebug() << "Unable to remove file" << rmvfiles[ ii ];
+
    for ( int i = 0; i < triples.size(); i++ )
    {
       currentTriple = i;
-      QString triple = US_Util::compressed_triple( triples[ i ].tripleDesc );
+
+      QString t              = triples[ i ].tripleDesc;
+      QStringList parts      = t.split(" / ");
+
+      QString     cell       = parts[ 0 ];
+      QString     channel    = parts[ 1 ];
+      QString     wl         = parts[ 2 ];
+
+      QString     triple     = "";
+
+      if ( runType == "WA" )
+      {
+         double r       = wl.toDouble() * 1000.0;
+         QString radius = QString::number( (int) round( r ) );
+         triple         = cell 
+                        + channel 
+                        + radius;
+         }
+               
+      else
+      {
+         triple         = cell 
+                        + channel 
+                        + wl;
+      }
+
       QString filename = dir + "/cnvt." + triple + ".raw.svg";
 
       // Redo current plot and write it to a file
@@ -2200,6 +2237,7 @@ int US_ConvertGui::saveUS3Disk( void )
    currentTriple = save_currentTriple;
    plot_current();
    data_plot->setVisible( true );
+   QApplication::restoreOverrideCursor();
 
    return( US_Convert::OK );
 }
@@ -2412,6 +2450,7 @@ void US_ConvertGui::saveReportsToDB( void )
    }
 
    // Get a list of report files produced by us_convert
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString dir = US_Settings::reportDir() + "/" + runID;
    QDir d( dir, "cnvt*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
@@ -2432,7 +2471,6 @@ void US_ConvertGui::saveReportsToDB( void )
 
    // Save all us_convert report files to the DB
    QString errorMsg = "";
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    foreach( QString file, files )
    {
       // Get description info for the correct triple
