@@ -86,6 +86,8 @@ void US_Table::edited( void )
       QMessageBox::warning( this,
             tr( "Error" ),
             tr( "The wavelength must be in the range of 190-750." ) );
+      le_wl   ->clear();
+      le_value->clear();
       return;
    }
 
@@ -94,6 +96,8 @@ void US_Table::edited( void )
       QMessageBox::warning( this,
             tr( "Error" ),
             tr( "The value entered cannot be negative." ) );
+      le_wl   ->clear();
+      le_value->clear();
       return;
    }
 

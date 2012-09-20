@@ -41,8 +41,8 @@ bool US_Analyte::operator== ( const US_Analyte& a ) const
    if ( analyteGUID  != a.analyteGUID  ) return false;
    if ( sequence     != a.sequence     ) return false;
    if ( type         != a.type         ) return false;
-   if ( extinction   != extinction     ) return false;
-   if ( refraction   != refraction     ) return false;
+   if ( extinction   != a.extinction   ) return false;
+   if ( refraction   != a.refraction   ) return false;
    if ( fluorescence != a.fluorescence ) return false;
 
    if ( type == DNA  || type == RNA )

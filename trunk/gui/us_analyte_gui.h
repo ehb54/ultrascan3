@@ -114,6 +114,7 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QLineEdit*    le_protein_vbar;
       QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_residues;
+      QLineEdit*    le_protein_e280;
       QLineEdit*    le_guid;
 
       QLineEdit*    le_nucle_mw;
