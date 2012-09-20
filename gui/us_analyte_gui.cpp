@@ -239,6 +239,11 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    protein_info->addWidget( le_protein_residues, prow, 1 );
    main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
+   QLabel* lb_protein_e280     = us_label(
+         tr( "E280 <small>(OD/(mol*cm))</small>:" ) );
+   protein_info->addWidget( lb_protein_e280, prow, 2 );
+   le_protein_e280 = us_lineedit( "", 0, true );
+   protein_info->addWidget( le_protein_e280, prow++, 3 );
    QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
    protein_info->addItem( spacer1, prow, 0, 1, 4 );
    protein_info->setRowStretch( prow, 100 );
@@ -601,6 +606,26 @@ void US_AnalyteGui::populate( void )
       le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
       le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
       le_protein_residues->setText( QString::number( p.residues ) );
+      le_protein_e280    ->setText( QString::number( p.e280     ) );
+
+      // If spectrum is empty, set to 280.0/e280
+      QString spectrum_type = cmb_optics->currentText();
+
+      if ( spectrum_type == tr( "Absorbance" ) )
+      {
+         if ( analyte.extinction.count() == 0 )
+            analyte.extinction  [ 280.0 ] = p.e280;
+      }
+      else if ( spectrum_type == tr( "Interference" ) )
+      {
+         if ( analyte.refraction.count() == 0 )
+            analyte.extinction  [ 280.0 ] = p.e280;
+      }
+      else
+      {
+         if ( analyte.fluorescence.count() == 0 )
+            analyte.fluorescence[ 280.0 ] = p.e280;
+      }
    }
 
    else if ( analyte.type == US_Analyte::DNA  ||  
@@ -1359,15 +1384,33 @@ void US_AnalyteGui::assign_investigator( int invID )
 void US_AnalyteGui::spectrum( void )
 {
    QString   spectrum_type = cmb_optics->currentText();
+   QString   strExtinc     = tr( "Extinction:" );
+   bool      changed       = false;
+   bool      is_prot       = rb_protein->isChecked();
+   double    e280val       = le_protein_e280->text().toDouble();
    US_Table* dialog;
-   bool      changed = false;
 
    if ( spectrum_type == tr( "Absorbance" ) )
-     dialog = new US_Table( analyte.extinction, tr( "Extinction:" ), changed );
+   {
+      if ( is_prot  &&  analyte.extinction.count() == 0 )
+         analyte.extinction[ 280.0 ] = e280val;
+
+      dialog = new US_Table( analyte.extinction,   strExtinc, changed );
+   }
    else if ( spectrum_type == tr( "Interference" ) )
-     dialog = new US_Table( analyte.refraction, tr( "Extinction:" ), changed );
-   else 
-     dialog = new US_Table( analyte.fluorescence, tr( "Extinction:" ), changed );;
+   {
+      if ( is_prot  &&  analyte.refraction.count() == 0 )
+         analyte.refraction[ 280.0 ] = e280val;
+
+      dialog = new US_Table( analyte.refraction,   strExtinc, changed );
+   }
+   else
+   {
+      if ( is_prot  &&  analyte.fluorescence.count() == 0 )
+         analyte.fluorescence[ 280.0 ] = e280val;
+
+      dialog = new US_Table( analyte.fluorescence, strExtinc, changed );
+   }
 
    dialog->setWindowTitle( tr( "Manage %1 Values" ).arg( spectrum_type ) );
 
