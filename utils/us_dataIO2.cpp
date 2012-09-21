@@ -43,9 +43,10 @@ bool US_DataIO2::readLegacyFile( const QString&  file,
       s = ts.readLine();
 
       p = s.split( " ", QString::SkipEmptyParts );
+		if ( p.size() == 1 )
+      	p = s.split( "\t", QString::SkipEmptyParts );
 
       RawReading r;
-
       r.d.radius = p[ 0 ].toFloat();
       r.value    = p[ 1 ].toFloat();
       
