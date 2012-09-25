@@ -554,6 +554,42 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       lcd_component->display( system.components.size() ); 
    }
 
+   if ( dbg_level > 0 )
+   {
+      DbgLv(1) << "SIM data simp.temperature" << simparams.temperature;
+      double cmin=99999.9;
+      double cmax=-999999.9;
+      int ilo=0;
+      int ihi=0;
+      int jlo=0;
+      int jhi=0;
+      int nscn=sim_data.scanData.size();
+      int npts=sim_data.scanData[0].readings.size();
+      for ( int ii=0; ii<nscn; ii++ )
+      {
+         double t0=sim_data.scanData[ii].seconds;
+         double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
+         if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+            DbgLv(2) << "  Scan" << ii << "  Time" << t0 << t1 << "temp" << sim_data.scanData[ii].temperature;
+         for ( int jj=0; jj<npts; jj++ )
+         {
+            double cval = sim_data.value(ii,jj);
+            if ( cval < cmin ) { ilo=ii; jlo=jj; cmin=cval; }
+            if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
+            if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+            {
+               if ( jj<10 || (jj+11)>npts || ((jj*2)>(npts-10)&&(jj*2)<(npts+11)) )
+                  DbgLv(2) << "    C index value" << jj << cval;
+            }
+         }
+      }
+      DbgLv(1) << "SIM data min conc ilo jlo" << cmin << ilo << jlo;
+      DbgLv(1) << "SIM data max conc ihi jhi" << cmax << ihi << jhi;
+      DbgLv(1) << "SIM:fem: m b  s D  rpm" << simparams.meniscus << simparams.bottom
+         << system.components[0].s << system.components[0].D
+         << simparams.speed_step[0].rotorspeed;
+   }
+
    finish();
 }
 

@@ -442,6 +442,8 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
    model      = amodel;
    simparms   = asparms;
    sa_data    = *asim_data;
+DbgLv(1) << "SaltD: sa_data avg.temp." << sa_data.average_temperature();
+DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
    Nt         = sa_data.scanData.size();
    Nx         = sa_data.x.size();
@@ -479,6 +481,7 @@ DbgLv(1) << "SaltD: comp0 s d s_conc" << model.components[0].s
 DbgLv(1) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    << model.components[0].s << model.components[0].D
    << simparms.speed_step[0].rotorspeed;
+DbgLv(1) << "SaltD: (0)Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
 
    astfem->set_simout_flag( true );         // set flag to output raw simulation
 
@@ -487,7 +490,7 @@ DbgLv(1) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    Nt         = sa_data.scanData.size();
    Nx         = sa_data.x.size();
 
-DbgLv(1) << "SaltD: Nt Nx" << Nt << Nx;
+DbgLv(1) << "SaltD: Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
 DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
  << sa_data.scanData[0].omega2t;
 
@@ -500,14 +503,9 @@ DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
       QString safile  = US_Settings::resultDir() + "/salt_data";
       QDir dir;
 
-      if ( ! dir.exists( safile ) )
-      {
-         if ( dir.mkpath( safile ) )
-         {
-            safile       = safile + "/salt_data.RA.1.S.260.auc";
-            US_DataIO2::writeRawData( safile, sa_data );
-         }
-      }
+      dir.mkpath( safile );
+      safile       = safile + "/salt_data.RA.1.S.260.auc";
+      US_DataIO2::writeRawData( safile, sa_data );
    }
 
    delete astfem;                           // astfem solver no longer needed
@@ -640,16 +638,16 @@ int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
    // use given data to create form for internal data; zero initial concs.
    load_mfem_data( sim_data, af_data, true );
 
-    // set up to report progress to any listener (e.g., us_astfem_sim)
-    int nsteps = af_data.scan.size() * model.components.size();
+   // set up to report progress to any listener (e.g., us_astfem_sim)
+   int nsteps = af_data.scan.size() * model.components.size();
 
-    if ( model.coSedSolute >= 0 )
-    {  // for co-sedimenting, reduce total steps by one scan
-       nsteps    -= af_data.scan.size();
-    }
+   if ( model.coSedSolute >= 0 )
+   {  // for co-sedimenting, reduce total steps by one scan
+      nsteps    -= af_data.scan.size();
+   }
 
 #ifndef NO_DB
-    emit calc_start( nsteps );
+   emit calc_start( nsteps );
 #endif
 
    // update concentrations for each model component
@@ -735,6 +733,8 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
    {  // co-sedimenting
       if ( comp_x == model.coSedSolute )
       {  // if this component is the salt, skip solving for it
+         if ( comp_x == 0 )
+            saltdata  = new SaltData( model, simparams, auc_data );
          return 0;
       }
 

@@ -611,20 +611,23 @@ void US_AnalyteGui::populate( void )
       // If spectrum is empty, set to 280.0/e280
       QString spectrum_type = cmb_optics->currentText();
 
-      if ( spectrum_type == tr( "Absorbance" ) )
+      if ( p.e280 != 0.0 )
       {
-         if ( analyte.extinction.count() == 0 )
-            analyte.extinction  [ 280.0 ] = p.e280;
-      }
-      else if ( spectrum_type == tr( "Interference" ) )
-      {
-         if ( analyte.refraction.count() == 0 )
-            analyte.extinction  [ 280.0 ] = p.e280;
-      }
-      else
-      {
-         if ( analyte.fluorescence.count() == 0 )
-            analyte.fluorescence[ 280.0 ] = p.e280;
+         if ( spectrum_type == tr( "Absorbance" ) )
+         {
+            if ( analyte.extinction.count() == 0 )
+               analyte.extinction  [ 280.0 ] = p.e280;
+         }
+         else if ( spectrum_type == tr( "Interference" ) )
+         {
+            if ( analyte.refraction.count() == 0 )
+               analyte.refraction  [ 280.0 ] = p.e280;
+         }
+         else
+         {
+            if ( analyte.fluorescence.count() == 0 )
+               analyte.fluorescence[ 280.0 ] = p.e280;
+         }
       }
    }
 
@@ -863,6 +866,7 @@ void US_AnalyteGui::manage_sequence( void )
    connect( edit, SIGNAL( sequenceChanged( QString ) ), 
                   SLOT  ( update_sequence( QString ) ) );
    edit->exec();
+
 }
 
 void US_AnalyteGui::update_sequence( QString seq )
@@ -941,11 +945,31 @@ void US_AnalyteGui::update_sequence( QString seq )
          le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
          le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
          le_protein_residues->setText( QString::number( p.residues ) );
+         le_protein_e280    ->setText( QString::number( p.e280     ) );
 
          analyte.mw     = p.mw;
          analyte.vbar20 = p.vbar20;
-      }
+
+         // If spectrum is empty, set to 280.0/e280
+         QString spectrum_type = cmb_optics->currentText();
+
+         if ( spectrum_type == tr( "Absorbance" ) )
+         {
+            if ( analyte.extinction.count() == 0 )
+               analyte.extinction  [ 280.0 ] = p.e280;
+         }
+         else if ( spectrum_type == tr( "Interference" ) )
+         {
+            if ( analyte.refraction.count() == 0 )
+               analyte.refraction  [ 280.0 ] = p.e280;
+         }
+         else
+         {
+            if ( analyte.fluorescence.count() == 0 )
+               analyte.fluorescence[ 280.0 ] = p.e280;
+         }
          break;
+      }
 
       case US_Analyte::DNA:
       case US_Analyte::RNA:
