@@ -1193,14 +1193,15 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
          }
       }
 
-      simscan.rpm  = (int) rpm_current;
-      simscan.time = af_params.start_time + i * af_params.dt;
+      simscan.rpm   = (int) rpm_current;
+      simscan.time  = af_params.start_time + i * af_params.dt;
       
       w2t_integral += ( simscan.time - last_time ) * 
                       sq( rpm_current * M_PI / 30 );
       
-      last_time         = simscan.time;
-      simscan.omega_s_t = w2t_integral;
+      last_time           = simscan.time;
+      simscan.omega_s_t   = w2t_integral;
+      simscan.temperature = af_data.scan[ 0 ].temperature;
 
       simscan.conc.clear();
       simscan.conc.reserve( N );
@@ -3212,6 +3213,8 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
    {
       fdata.radius[ jj ] = edata.radius( jj );
    }
+DbgLv(2) << "RSA:f sc0 temp" << fdata.scan[0].temperature;
+DbgLv(2) << "RSA:e sc0 temp" << edata.scanData[0].temperature;
 }
 
 void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata, 
@@ -3248,4 +3251,6 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
    {
       edata.x[ jj ] = fdata.radius[ jj ];
    }
+DbgLv(2) << "RSA:o-f sc0 temp" << fdata.scan[0].temperature;
+DbgLv(2) << "RSA:o-e sc0 temp" << edata.scanData[0].temperature;
 }

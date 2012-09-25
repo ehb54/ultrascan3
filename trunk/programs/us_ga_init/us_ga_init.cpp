@@ -1376,6 +1376,14 @@ DbgLv(0) << "  NO Model components";
    analys_name  = asys.section( "_", 0, 1 ) + "_"
                 + asys.section( "_", 3, 4 );
 
+   if ( method == "Manual"  ||  method == "CUSTOMGRID" )
+   {
+      int jj       = mdesc.indexOf( ".model" );
+      mdesc        = ( jj < 1 ) ? mdesc : mdesc.left( jj );
+      run_name     = mdesc + ".0Z280";
+      analys_name  = "e00_a00_" + method + "_local";
+   }
+
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
    editGUID     = model.editGUID;

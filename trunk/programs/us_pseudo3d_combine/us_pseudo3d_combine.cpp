@@ -869,6 +869,17 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
                      + asys.section( "_", -2, -1 );
    tsys.method       = model.typeText();
    tsys.editGUID     = model.editGUID;
+DbgLv(1) << "LD: method" << tsys.method << "mdesc" << mdesc;
+
+   if ( tsys.method == "Manual"  ||  tsys.method == "CUSTOMGRID" )
+   {
+      int jj            = mdesc.indexOf( ".model" );
+      mdesc             = ( jj < 1 ) ? mdesc : mdesc.left( jj );
+      tsys.run_name     = mdesc + ".0Z280";
+      tsys.analys_name  = "e00_a00_" + tsys.method + "_local";
+DbgLv(1) << "LD:  run_name" << tsys.run_name;
+DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
+   }
 
    tsys.distro_type  = (int)model.analysis;
    tsys.monte_carlo  = model.monteCarlo;
