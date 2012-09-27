@@ -15,10 +15,12 @@ bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
 // Holds Solute data for US_GA_Initialize
 US_SoluteData::US_SoluteData( const QString& title ) : QObject()
 {
-   bndx   = -1;
-   btitle = title;
-   allbucks.clear();
+   bndx      = -1;
+   btitle    = title;
    dbg_level = US_Settings::us_debug();
+   isPlotK   = true;
+
+   allbucks.clear();
 }
 
 US_SoluteData::US_SoluteData( ) : QObject()
@@ -684,7 +686,7 @@ int US_SoluteData::saveGAdata( QString& fname )
 
 
 // build the data lists for Monte Carlo analysis
-int US_SoluteData::buildDataMC( bool plot_s )
+int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
 {
    int         rc   = 0;
    int         nsol = distro->size();
@@ -699,6 +701,7 @@ int US_SoluteData::buildDataMC( bool plot_s )
    qreal       bfmax;
    qreal       ssval;        // component s,f_f0 values
    qreal       sfval;
+   isPlotK          = plot_k;
 
    // build component list from solute lists
    component.clear();
@@ -773,7 +776,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
    SimCompList bcomp;        // sim component list
    QList< double > vals;
 
-   bool   cnstvbar = true;
    double fvmax    = 0.0;
    for ( int kk = 0; kk < nbuk; kk++ )
    {
@@ -781,8 +783,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       for ( int jj = 0; jj < bcomp.size(); jj++ )
          fvmax    = qMax( fvmax, bcomp[ jj ].f );
    }
-   cnstvbar        = ( fvmax > 1.1 );
-   QString ffvb    = cnstvbar ?
+   QString ffvb    = isPlotK ?
                      tr( "Frictional ratio:          " ) :
                      tr( "Vbar:                      " ); 
    QString fv_titl = ffvb.simplified().replace( ":", "" );
@@ -1260,7 +1261,7 @@ int US_SoluteData::countFullestBucket()
 
    if ( nbuks == 0 )
    {
-      buildDataMC( true );
+      buildDataMC( true, isPlotK );
       nbuks     = MC_solute.size();
    }
 DbgLv(1) << "countFB-absize" << nbuks;

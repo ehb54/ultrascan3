@@ -109,7 +109,7 @@ class US_SoluteData : public QObject
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
     int      saveGAdata( QString& );
-    int      buildDataMC( bool );
+    int      buildDataMC( bool, bool );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, QList< qreal >&,
                           bool, QString ); 
@@ -127,6 +127,8 @@ class US_SoluteData : public QObject
 
     int      bndx;
     int      dbg_level;
+
+    bool     isPlotK;
 
     QRectF   brecmin;
     QRectF   brecmax;

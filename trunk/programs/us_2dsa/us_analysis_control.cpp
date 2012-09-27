@@ -66,6 +66,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),     false );
    pb_plot                 = us_pushbutton( tr( "Plot Results" ), false );
    pb_save                 = us_pushbutton( tr( "Save Results" ), false );
+   pb_ldmodel              = us_pushbutton( tr( "Load Model"   ), false );
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
    QPushButton* pb_advance = us_pushbutton( tr( "Advanced Analysis Controls" ));
@@ -110,13 +111,15 @@ DbgLv(1) << "idealThrCout" << nthr;
    b_progress   = us_progressBar( 0, 100, 0 );
 
    QLayout*  lo_iters   =
-      us_checkbox( tr( "Use Iterative Method"              ), ck_iters  );
+      us_checkbox( tr( "Use Iterative Method"     ), ck_iters  );
    QLayout*  lo_unifgr  =
-      us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
+      us_checkbox( tr( "Uniform Grid"             ), ck_unifgr, true );
+   QLayout*  lo_locugr  =
+      us_checkbox( tr( "Custom Grid"              ), ck_locugr );
    QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
+      us_checkbox( tr( "Float Meniscus Position"  ), ck_menisc );
    QLayout*  lo_mcarlo  =
-      us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
+      us_checkbox( tr( "Monte Carlo Iterations"   ), ck_mcarlo );
 
 
    ct_iters     = us_counter( 2,    1,   16,    1 );
@@ -176,6 +179,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addLayout( lo_unifgr,     row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_grrefine,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_grrefine,   row++, 1, 1, 1 );
+   //optimizeLayout->addLayout( lo_locugr,     row++, 0, 1, 2 );
+   //optimizeLayout->addWidget( pb_ldmodel,    row++, 0, 1, 1 );
    optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 1 );
@@ -200,6 +205,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_constff0 ->setVisible( false );
 
    ck_unifgr->setChecked( true  );
+   ck_locugr->setChecked( false );
    ck_iters ->setEnabled( true  );
    ct_iters ->setEnabled( false );
 
@@ -840,17 +846,32 @@ DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
 DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
       if ( grtype < 0 )
       {
-         US_2dsa* mainw = (US_2dsa*)parentw;
-         model          = mainw->mw_model();
-         *model         = modpar;
-         dsets[ 0 ]->model = modpar;
-         int     nsol   = model->components.size();
+         int     nsol   = modpar.components.size();
+         int     nsubg  = modpar.subGrids;
+         int     sgsize = nsol / nsubg;
+
+         if ( sgsize > 150 )
+         {  // Implied subgrid size too large:  change subgrid count
+            int ksubg      = nsubg;
+            int kssiz      = sgsize;
+            nsubg          = ( nsol / 100 + 1 ) | 1;
+            sgsize         = nsol / nsubg;
+            DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
+            DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
+            modpar.subGrids = nsubg;
+         }
+
          QString amsg   = ( grtype == (-1 )
             ? tr( "Grid from loaded model\n  ( " )
             : tr( "Grid and signal ratios from loaded model\n\n  ( " ) )
             + QString::number( nsol ) + tr( " solutes, " )
-            + QString::number( model->subGrids ) + tr( " subgrids )" );
+            + QString::number( nsubg ) + tr( " subgrids )" );
          te_status  ->setText( amsg );
+
+         US_2dsa* mainw = (US_2dsa*)parentw;
+         model          = mainw->mw_model();
+         *model         = modpar;
+         dsets[ 0 ]->model = modpar;
 
          if ( nsol > 0 )
          {

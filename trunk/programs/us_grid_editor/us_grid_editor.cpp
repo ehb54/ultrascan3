@@ -234,7 +234,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lbl_subGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_subGrid, s_row, 0 );
 
-   ct_subGrids     = us_counter( 3, 1, 100, 13.0 );
+   ct_subGrids     = us_counter( 3, 1, 500, 13.0 );
    ct_subGrids->setStep( 1 );
    ct_subGrids->setEnabled( false );
    left->addWidget( ct_subGrids, s_row++, 1 );
@@ -1112,7 +1112,7 @@ void US_Grid_Editor::update_plot( void )
 void US_Grid_Editor::calc_gridpoints( void )
 {
 	current_grid.clear();
-	bool flag = true;
+	//bool flag = true;
 	maxgridpoint.s    = -9.9e99;
 	maxgridpoint.D    =  0.0;
 	maxgridpoint.vbar =  0.0;
@@ -1222,7 +1222,7 @@ DbgLv(1) << "vbar:" << tmp_point.vbar << "s:" << tmp_point.s << "buoyancy:" << (
 			  		(tmp_point.s > 0 && (1.0 - tmp_point.vbar * density) < 0 ))
 				{
 					tmp_point.mw = -1.0;
-					flag = false;
+					//flag = false;
 				}
 				else
 				{
@@ -1545,18 +1545,21 @@ void US_Grid_Editor::show_sub_grid( bool flag )
 	if (flag)
 	{
 		int maxsubgrids = (int) final_grid.size()/50;
-		lbl_partialGrid->setText("Highlight Subgrid #:");
-		ct_subGrids->setEnabled( true );
-		ct_subGrids->setRange(1, maxsubgrids, 1);
-		ct_partialGrid->setRange( 1, subGrids, 1);
+		int defsubgrids = ( maxsubgrids / 2 ) | 1;
+DbgLv(1) << "finalsize" << final_grid.size() << "maxsubgs" << maxsubgrids;
+		lbl_partialGrid      ->setText   ( tr( "Highlight Subgrid #:" ) );
+		ct_subGrids          ->setEnabled( true );
+		ct_subGrids          ->setRange  ( 1, maxsubgrids, 1 );
+		ct_subGrids          ->setValue  ( defsubgrids );
+		ct_partialGrid       ->setRange  ( 1, subGrids, 1 );
 		pb_delete_partialGrid->setEnabled( false );
 	}
 	else
 	{
-		lbl_partialGrid->setText("Highlight Partial Grid #:");
-		ct_subGrids->setEnabled( false );
-		ct_partialGrid->setRange( 1, grid_index, 1);
-		ct_partialGrid->setValue( 1 );
+		lbl_partialGrid      ->setText   ( tr( "Highlight Partial Grid #:" ) );
+		ct_subGrids          ->setEnabled( false );
+		ct_partialGrid       ->setRange  ( 1, grid_index, 1 );
+		ct_partialGrid       ->setValue  ( 1 );
 		pb_delete_partialGrid->setEnabled( true );
 	}
 	update_plot();

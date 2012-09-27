@@ -82,8 +82,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       QCheckBox*    ck_rinoise;
       QCheckBox*    ck_autoplt;
       QCheckBox*    ck_unifgr;
-      QCheckBox*    ck_menisc;
       QCheckBox*    ck_locugr;
+      QCheckBox*    ck_menisc;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;
@@ -103,6 +103,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QPushButton*  pb_stopfit;
       QPushButton*  pb_plot;
       QPushButton*  pb_save;
+      QPushButton*  pb_ldmodel;
 
    protected:
       US_Help       showHelp;
