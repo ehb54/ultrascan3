@@ -126,6 +126,7 @@ SOURCES += \
   us_hydrodyn_pdb_parsing.cpp \
   us_hydrodyn_pdb_tool.cpp \
   us_hydrodyn_pdb_tool_merge.cpp \
+  us_hydrodyn_pdb_tool_renum.cpp \
   us_hydrodyn_pdb_visualization.cpp \
   us_hydrodyn_results.cpp \
   us_hydrodyn_sas_options_saxs.cpp \
@@ -260,6 +261,7 @@ HEADERS += \
   us_hydrodyn_pdb_parsing.h \
   us_hydrodyn_pdb_tool.h \
   us_hydrodyn_pdb_tool_merge.h \
+  us_hydrodyn_pdb_tool_renum.h \
   us_hydrodyn_pdb_visualization.h \
   us_hydrodyn_results.h \
   us_hydrodyn_sas_options_saxs.h \
