@@ -535,7 +535,7 @@ DbgLv(1) << "SAVE plot_s" << plot_s;
    {  // if manual buckets, build up and analyze data, then report
 
 DbgLv(1) << "SAVE call buildMC";
-      soludata->buildDataMC( plot_s );             // build it
+      soludata->buildDataMC( plot_s, plot_k );     // build it
 
       fname         = fdir + "/" + fnsta;
 

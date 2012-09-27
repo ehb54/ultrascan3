@@ -201,6 +201,13 @@ DbgLv(1) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
       if ( nsubgrid < 1 )
          abort( "Custom grid model file has no subgrids", -1 );
 
+      if ( ( ncomps / nsubgrid ) > 150 )
+      {  // Subgrids too large:  adjust subgrid count and size
+         nsubgrid       = ( ncomps / 100 + 1 ) | 1;
+         model.subGrids = nsubgrid;
+DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
+      }
+
       QVector< US_Solute > solvec;
 
       for ( int ii = 0; ii < nsubgrid; ii++ )
