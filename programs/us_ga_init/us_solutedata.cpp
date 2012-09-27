@@ -776,13 +776,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
    SimCompList bcomp;        // sim component list
    QList< double > vals;
 
-   double fvmax    = 0.0;
-   for ( int kk = 0; kk < nbuk; kk++ )
-   {
-      bcomp    = MC_solute.at( kk );
-      for ( int jj = 0; jj < bcomp.size(); jj++ )
-         fvmax    = qMax( fvmax, bcomp[ jj ].f );
-   }
    QString ffvb    = isPlotK ?
                      tr( "Frictional ratio:          " ) :
                      tr( "Vbar:                      " ); 

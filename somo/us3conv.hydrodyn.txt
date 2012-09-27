@@ -54,6 +54,7 @@ files
 ./src/us_hydrodyn_saxs_iqq_load_csv.cpp
 ./src/us_hydrodyn_addatom.cpp
 ./src/us_hydrodyn_pdb_tool_merge.cpp
+./src/us_hydrodyn_pdb_tool_renum.cpp
 ./src/us_hydrodyn_dmd_options.cpp
 ./src/us_hydrodyn_saxs_load_csv.cpp
 ./src/us_hydrodyn_cluster_dmd.cpp
