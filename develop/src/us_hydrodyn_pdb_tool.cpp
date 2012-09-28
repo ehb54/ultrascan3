@@ -846,7 +846,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_visualize            ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_dup                  ->setEnabled( csv1.data.size() );
    pb_csv2_save                 ->setEnabled( csv2[ csv2_pos ].data.size() );
-   pb_csv2_undo                 ->setEnabled( csv2_undos[ csv2_pos ].size() );
+   pb_csv2_undo                 ->setEnabled( csv2_undos.size() > csv2_pos && csv2_undos[ csv2_pos ].size() );
    pb_csv2_clear                ->setEnabled( csv2.size() > 1 || (csv2.size() == 1 && csv2[ 0 ].data.size() ) );
    pb_csv2_cut                  ->setEnabled( any_csv2_selected );
    pb_csv2_copy                 ->setEnabled( any_csv2_selected );
@@ -1681,9 +1681,18 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
       }
       if ( csv1.key.count( model_chain_residue_atom ) )
       {
-         model_chain_residue_atoms[ model_chain_residue_atom ]->setVisible ( csv1.visible [ csv1.key[ model_chain_residue_atom ] ] );
-         model_chain_residue_atoms[ model_chain_residue_atom ]->setSelected( csv1.selected[ csv1.key[ model_chain_residue_atom ] ] );
-         model_chain_residue_atoms[ model_chain_residue_atom ]->setOpen    ( csv1.open    [ csv1.key[ model_chain_residue_atom ] ] );
+         model_chain_residue_atoms[ model_chain_residue_atom ]->setVisible ( 
+                                                                            csv1.visible.size() > csv1.key[ model_chain_residue_atom ]  ?
+                                                                            csv1.visible [ csv1.key[ model_chain_residue_atom ] ] : false 
+                                                                             );
+         model_chain_residue_atoms[ model_chain_residue_atom ]->setSelected( 
+                                                                            csv1.selected.size() > csv1.key[ model_chain_residue_atom ] ?
+                                                                            csv1.selected[ csv1.key[ model_chain_residue_atom ] ] : false
+                                                                             );
+         model_chain_residue_atoms[ model_chain_residue_atom ]->setOpen    ( 
+                                                                            csv1.open.size() > csv1.key[ model_chain_residue_atom ] ?
+                                                                            csv1.open    [ csv1.key[ model_chain_residue_atom ] ] : false
+                                                                             );
       } else {
          // editor_msg("red", QString( "Error: model_chain_residue_atom %1 visi/sel/open not key not found" ).arg( model_chain_residue_atom ) );
       }
@@ -1695,7 +1704,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
       lbl_csv->setText( csv1.name );
       selection_since_count_csv1 = true;
    } else {
-      lbl_csv2->setText( csv2[ csv2_pos ].name );
+      lbl_csv2->setText( csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : "unknown" );
       selection_since_count_csv2 = true;
    }
 }
