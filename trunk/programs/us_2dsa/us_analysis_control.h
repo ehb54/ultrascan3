@@ -82,7 +82,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QCheckBox*    ck_rinoise;
       QCheckBox*    ck_autoplt;
       QCheckBox*    ck_unifgr;
-      QCheckBox*    ck_locugr;
+      QCheckBox*    ck_custgr;
       QCheckBox*    ck_menisc;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
@@ -113,6 +113,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void optimize_options( void );
       void uncheck_optimize( int  );
       void checkUniGrid (    bool );
+      void checkCusGrid (    bool );
       void checkMeniscus(    bool );
       void checkIterate (    bool );
       void checkLocalUni(    bool );
@@ -132,6 +133,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void save(             void );
       void close_all(        void );
       void advanced(         void );
+      void load_model(       void );
 
       void help     ( void )
       { showHelp.show_help( "2dsa_analys.html" ); };

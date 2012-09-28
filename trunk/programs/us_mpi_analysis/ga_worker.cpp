@@ -701,7 +701,9 @@ totT3+=clcSt2.msecsTo(clcSt3);
       int              reps     = 0;
       static const int max_reps = 100;
 
-      while ( s2 - s1 > epsilon  &&  s3 - s2 > epsilon && reps < max_reps )
+      while ( ( ( s2 - s1 ) > epsilon )  &&
+              ( ( s3 - s2 ) > epsilon )  &&
+              ( reps++ < max_reps ) )
       {
          double s1_s2 = 1.0 / ( s1 - s2 );
          double s1_s3 = 1.0 / ( s1 - s3 );

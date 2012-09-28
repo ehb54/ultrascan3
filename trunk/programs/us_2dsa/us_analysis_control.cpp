@@ -114,8 +114,8 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Use Iterative Method"     ), ck_iters  );
    QLayout*  lo_unifgr  =
       us_checkbox( tr( "Uniform Grid"             ), ck_unifgr, true );
-   QLayout*  lo_locugr  =
-      us_checkbox( tr( "Custom Grid"              ), ck_locugr );
+   QLayout*  lo_custgr  =
+      us_checkbox( tr( "Custom Grid"              ), ck_custgr );
    QLayout*  lo_menisc  =
       us_checkbox( tr( "Float Meniscus Position"  ), ck_menisc );
    QLayout*  lo_mcarlo  =
@@ -173,14 +173,17 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( le_improve,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
    controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
+   QLabel* lb_optspace1    = us_banner( "" );
+   controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
+   controlsLayout->setRowStretch( row, 2 );
 
    row           = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 2 );
    optimizeLayout->addLayout( lo_unifgr,     row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_grrefine,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_grrefine,   row++, 1, 1, 1 );
-   //optimizeLayout->addLayout( lo_locugr,     row++, 0, 1, 2 );
-   //optimizeLayout->addWidget( pb_ldmodel,    row++, 0, 1, 1 );
+   optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 1 );
+   optimizeLayout->addWidget( pb_ldmodel,    row++, 1, 1, 2 );
    optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 1 );
@@ -195,7 +198,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( ct_iters,      row++, 1, 1, 1 );
    optimizeLayout->addWidget( lb_statinfo,   row++, 0, 1, 2 );
    optimizeLayout->addWidget( te_status,     row,   0, 2, 2 );
-   row    += 2;
+   row    += 6;
 
    QLabel* lb_optspace     = us_banner( "" );
    optimizeLayout->addWidget( lb_optspace,   row,   0, 1, 2 );
@@ -205,7 +208,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_constff0 ->setVisible( false );
 
    ck_unifgr->setChecked( true  );
-   ck_locugr->setChecked( false );
+   ck_custgr->setChecked( false );
    ck_iters ->setEnabled( true  );
    ct_iters ->setEnabled( false );
 
@@ -213,6 +216,8 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    connect( ck_unifgr, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkUniGrid(  bool ) ) );
+   connect( ck_custgr, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkCusGrid(  bool ) ) );
    connect( ck_menisc, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMeniscus( bool ) ) );
    connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
@@ -243,6 +248,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,       SLOT(   start()     ) );
    connect( pb_stopfit, SIGNAL( clicked()   ),
             this,       SLOT(   stop_fit()  ) );
+   connect( pb_ldmodel, SIGNAL( clicked()   ),
+            this,       SLOT(  load_model() ) );
    connect( pb_plot,    SIGNAL( clicked()   ),
             this,       SLOT(   plot()      ) );
    connect( pb_save,    SIGNAL( clicked()   ),
@@ -313,7 +320,28 @@ void US_AnalysisControl::checkUniGrid(  bool checked )
    {
       int nthr     = US_Settings::threads();
       nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
-      ct_thrdcnt ->setValue  ( nthr    );
+      ct_thrdcnt ->setValue  ( nthr );
+      ck_varvbar ->setEnabled( true );
+   }
+
+   ck_custgr ->disconnect();
+   ck_custgr ->setChecked( ! checked );
+   pb_ldmodel->setEnabled( ! checked );
+   connect( ck_custgr, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkCusGrid(  bool ) ) );
+}
+
+// Handle custom grid checked
+void US_AnalysisControl::checkCusGrid(  bool checked )
+{
+   ck_unifgr ->setChecked( ! checked );
+   ck_varvbar->setEnabled( ! checked );
+
+   if ( checked )
+   {
+      ct_thrdcnt->setEnabled( true  );
+      ck_tinoise->setEnabled( true );
+      ck_rinoise->setEnabled( true );
    }
 }
 
@@ -562,6 +590,60 @@ DbgLv(1) << "AC:SF: processor deleted";
    }
 
    qApp->processEvents();
+}
+
+// Load Model button clicked
+void US_AnalysisControl::load_model()
+{
+   QString  mdesc( "" );
+   QString  mfilter( "" );
+   bool     loadDB = false;
+   US_Model cusmodel;
+   US_2dsa* mainw  = NULL;
+
+   if ( parentw )
+   {
+      mainw          = (US_2dsa*)parentw;
+      mfilter        = QString( "CustomGrid" );
+      loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
+      mainw->analysis_done( -1 );
+   }
+
+   US_ModelLoader dialog( loadDB, mfilter, cusmodel, mdesc, "" );
+
+   if ( dialog.exec() == QDialog::Accepted )
+   {
+      int     nsol   = cusmodel.components.size();
+      int     nsubg  = cusmodel.subGrids;
+      int     sgsize = nsol / nsubg;
+
+      if ( sgsize > 150 )
+      {  // Implied subgrid size too large:  change subgrid count
+         int ksubg      = nsubg;
+         int kssiz      = sgsize;
+         nsubg          = ( nsol / 100 + 1 ) | 1;
+         sgsize         = nsol / nsubg;
+         DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
+         DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
+         cusmodel.subGrids = nsubg;
+      }
+
+      QString amsg   =
+         tr( "Grid from loaded model\n  ( " )
+         + QString::number( nsol ) + tr( " solutes, " )
+         + QString::number( nsubg ) + tr( " subgrids )" );
+      te_status  ->setText( amsg );
+
+      if ( parentw )
+      {
+         model          = mainw->mw_model();
+         *model         = cusmodel;
+      }
+
+      dsets[ 0 ]->model = cusmodel;
+      grtype            = -1;
+      ck_varvbar ->setChecked( ! cusmodel.constant_vbar() );
+   }
 }
 
 // plot button clicked
