@@ -723,6 +723,7 @@ void US_Edit::load( void )
    }
 
    QString file = workingDir + "/" + runID + "." + dataType + ".xml";
+   workingDir   = workingDir  + "/";
    expType = "";
    QFile xf( file );
 
