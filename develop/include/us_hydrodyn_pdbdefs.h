@@ -60,8 +60,9 @@ struct rotamer_atom
    // QString tempFactor;
 };
 
-struct rotamer
+class rotamer
 {
+ public:
    QString name;
    QString residue;
    QString extension;
@@ -71,6 +72,8 @@ struct rotamer
    vector < rotamer_atom >           waters;
    vector < vector < QString > >     water_positioning_atoms;
    map    < QString, rotamer_atom >  atom_map;
+
+   friend ostream& operator<<(ostream&, const rotamer&);
 };
 
 struct PDB_atom

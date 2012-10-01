@@ -1403,7 +1403,7 @@ ragir()
       rr = dd->r;
       mm = dd->m;
 
-      rg = ((float) 1.8) * (rr - rprobe) * (rr - rprobe);
+      rg = ((float) 0.6) * (rr - rprobe) * (rr - rprobe);
       ro2 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2) + rg));
       ro3 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2   )));
 

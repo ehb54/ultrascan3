@@ -561,7 +561,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, vector < QString > >            pointmap_atoms_ref_residue;
 
       map < QString, vector < rotamer > >            rotamers;
-      map < QString, vector < rotamer > >            rotated_rotamers;
+      map < QString, vector < vector < rotamer > > > rotated_rotamers;
       map < QString, map < QString, point > >        to_hydrate;
       map < QString, map < QString, point > >        to_hydrate_pointmaps;
       map < QString, vector < float > >              to_hydrate_dihedrals;
@@ -580,6 +580,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector < map < QString, bool > >               alt_hydrate_clash_map_structure;
       vector < map < QString, bool > >               alt_hydrate_clash_map_rtmr_water;
       vector < map < QString, bool > >               alt_hydrate_clash_map_pm_water;
+
+      map < QString, float >                         residue_asa;
+      map < QString, float >                         residue_asa_sc;
+      map < QString, float >                         residue_asa_mc;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -587,6 +592,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString list_rotamers( bool coords = false );
 
       QString list_pointmaps();
+
+      QString list_rotated_rotamers();
 
       bool compute_rotamer_dihedrals( QString &error_msg );
       QString list_rotamer_dihedrals();
@@ -612,6 +619,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool    has_steric_clash( point p, bool summary = true );
       float   min_dist_to_waters( point p );
+      float   min_dist_to_struct_and_waters( point p );
       QString list_steric_clash();
       QString list_steric_clash_recheck();
 

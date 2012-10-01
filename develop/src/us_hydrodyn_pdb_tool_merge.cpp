@@ -3609,8 +3609,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
             {
                current_fit_end = alt_fit_end;
             }
-            current_fit_start          = residue_offset_position( true,  chain, current_fit_end, - ( current_fit_length - 1 ) );
-            unsigned int alt_fit_start = residue_offset_position( false, chain, current_fit_end, - ( current_fit_length - 1 ) );
+            current_fit_start          = residue_offset_position( true,  chain, current_fit_end, - (int) ( current_fit_length - 1 ) );
+            unsigned int alt_fit_start = residue_offset_position( false, chain, current_fit_end, - (int) ( current_fit_length - 1 ) );
             if ( current_fit_start < alt_fit_start )
             {
                current_fit_start = alt_fit_start;
@@ -4114,8 +4114,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
          {
             current_fit_end = alt_fit_end;
          }
-         current_fit_start          = residue_offset_position( true,  chain, current_fit_end, - ( current_fit_length - 1 ) );
-         unsigned int alt_fit_start = residue_offset_position( false, chain, current_fit_end, - ( current_fit_length - 1 ) );
+         current_fit_start          = residue_offset_position( true,  chain, current_fit_end, - (int) ( current_fit_length - 1 ) );
+         unsigned int alt_fit_start = residue_offset_position( false, chain, current_fit_end, - (int) ( current_fit_length - 1 ) );
          if ( current_fit_start < alt_fit_start )
          {
             current_fit_start = alt_fit_start;

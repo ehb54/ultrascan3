@@ -4549,12 +4549,12 @@ ragir()
 
    for (i = 0; i < nat; i++)
    {
-      rg = 1.8 * dt[i].r * dt[i].r;
+      rg = 0.6 * dt[i].r * dt[i].r;
       ro2 += dt[i].m * (pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2) + rg);
 
       if ((raflag == -1.0) || (raflag == -3.0))
       {
-         rgu = 1.8 * dt[i].ru * dt[i].ru;
+         rgu = 0.6 * dt[i].ru * dt[i].ru;
          rou2 += dt[i].m * (pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2) + rgu);
       }
    }
