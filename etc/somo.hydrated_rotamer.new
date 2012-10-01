@@ -9023,4 +9023,304 @@ ATOM     34  H1  WAT B 792      17.879  15.125  13.388  0.00  0.00           H
 ATOM     35  H2  WAT B 792      18.010  15.692  11.991  0.00  0.00           H  
 TER
 end-rotamer
-multiple-rotate: MCW-0-0-0-1 20 CA NX O
+
+# multiple-rotate: MCW-0-0-0-1 3 CA NX O
+# multiple-rotate: LYS-2-2-2-2 3 CE NZ O CE NZ O CE NZ O
+# end-file
+# nothing after end-file is read
+
+multiple-rotate: MCW-0-0-0-1 60 CA NX O
+
+multiple-rotate: ARG-1-1-1-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-1-1-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-1-2-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-1-2-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-1-2-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-2-1-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-1-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-2-1-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-2-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-2-2-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-2-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-3-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-2-3-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-3-1-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-3-2-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-3-2-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-3-2-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-1-3-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-3-3-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-1-3-3-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-1-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-1-1-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-1-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-1-2-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-2-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-1-2-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-3-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-1-3-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-2-1-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-2-1-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-2-1-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-2-2-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-2-2-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-2-2-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-2-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-2-3-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-2-3-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-3-2-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-3-2-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-3-2-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-3-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-2-3-3-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-2-3-3-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-1-1-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-1-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-1-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-2-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-2-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-1-2-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-3-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-1-3-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-2-1-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-2-1-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-2-1-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-2-2-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-2-2-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-2-2-3 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-2-3-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-2-3-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-2-3-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-3-1-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-3-1-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-3-1-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-3-2-1 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-3-2-2 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-3-2-3 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-3-3-1 60 CZ NH2 O CZ NH1 O
+multiple-rotate: ARG-3-3-3-2 60 CZ NH1 O CZ NH2 O
+multiple-rotate: ARG-3-3-3-3 60 CZ NH2 O CZ NH1 O
+
+multiple-rotate: ASN-1-1-0-0 60 CG ND2 O
+multiple-rotate: ASN-1-2-0-0 60 CG ND2 O
+multiple-rotate: ASN-1-3-0-0 60 CG ND2 O
+multiple-rotate: ASN-1-4-0-0 60 CG ND2 O
+multiple-rotate: ASN-1-5-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-1-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-2-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-3-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-4-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-5-0-0 60 CG ND2 O
+multiple-rotate: ASN-2-6-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-1-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-2-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-3-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-4-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-5-0-0 60 CG ND2 O
+multiple-rotate: ASN-3-6-0-0 60 CG ND2 O
+
+multiple-rotate: GLN-1-1-1-0 60 CD NE2 O
+multiple-rotate: GLN-1-1-2-0 60 CD NE2 O
+multiple-rotate: GLN-1-1-3-0 60 CD NE2 O
+multiple-rotate: GLN-1-2-1-0 60 CD NE2 O
+multiple-rotate: GLN-1-2-2-0 60 CD NE2 O
+multiple-rotate: GLN-1-2-3-0 60 CD NE2 O
+multiple-rotate: GLN-1-2-4-0 60 CD NE2 O
+multiple-rotate: GLN-1-3-1-0 60 CD NE2 O
+multiple-rotate: GLN-1-3-2-0 60 CD NE2 O
+multiple-rotate: GLN-1-3-3-0 60 CD NE2 O
+multiple-rotate: GLN-1-3-4-0 60 CD NE2 O
+multiple-rotate: GLN-2-1-1-0 60 CD NE2 O
+multiple-rotate: GLN-2-1-2-0 60 CD NE2 O
+multiple-rotate: GLN-2-1-3-0 60 CD NE2 O
+multiple-rotate: GLN-2-1-4-0 60 CD NE2 O
+multiple-rotate: GLN-2-2-1-0 60 CD NE2 O
+multiple-rotate: GLN-2-2-2-0 60 CD NE2 O
+multiple-rotate: GLN-2-2-3-0 60 CD NE2 O
+multiple-rotate: GLN-2-2-4-0 60 CD NE2 O
+multiple-rotate: GLN-2-3-2-0 60 CD NE2 O
+multiple-rotate: GLN-2-3-4-0 60 CD NE2 O
+multiple-rotate: GLN-3-1-1-0 60 CD NE2 O
+multiple-rotate: GLN-3-1-2-0 60 CD NE2 O
+multiple-rotate: GLN-3-1-3-0 60 CD NE2 O
+multiple-rotate: GLN-3-1-4-0 60 CD NE2 O
+multiple-rotate: GLN-3-2-1-0 60 CD NE2 O
+multiple-rotate: GLN-3-2-2-0 60 CD NE2 O
+multiple-rotate: GLN-3-2-3-0 60 CD NE2 O
+multiple-rotate: GLN-3-2-4-0 60 CD NE2 O
+multiple-rotate: GLN-3-3-1-0 60 CD NE2 O
+multiple-rotate: GLN-3-3-2-0 60 CD NE2 O
+multiple-rotate: GLN-3-3-3-0 60 CD NE2 O
+multiple-rotate: GLN-3-3-4-0 60 CD NE2 O
+
+multiple-rotate: MET-1-1-1-0 60 CG SD O
+multiple-rotate: MET-1-1-2-0 60 CG SD O
+multiple-rotate: MET-1-2-1-0 60 CG SD O
+multiple-rotate: MET-1-2-2-0 60 CG SD O
+multiple-rotate: MET-1-2-3-0 60 CG SD O
+multiple-rotate: MET-1-3-2-0 60 CG SD O
+multiple-rotate: MET-1-3-3-0 60 CG SD O
+multiple-rotate: MET-2-1-1-0 60 CG SD O
+multiple-rotate: MET-2-1-2-0 60 CG SD O
+multiple-rotate: MET-2-1-3-0 60 CG SD O
+multiple-rotate: MET-2-2-1-0 60 CG SD O
+multiple-rotate: MET-2-2-2-0 60 CG SD O
+multiple-rotate: MET-2-2-3-0 60 CG SD O
+multiple-rotate: MET-2-3-2-0 60 CG SD O
+multiple-rotate: MET-2-3-3-0 60 CG SD O
+multiple-rotate: MET-3-1-1-0 60 CG SD O
+multiple-rotate: MET-3-1-2-0 60 CG SD O
+multiple-rotate: MET-3-1-3-0 60 CG SD O
+multiple-rotate: MET-3-2-1-0 60 CG SD O
+multiple-rotate: MET-3-2-2-0 60 CG SD O
+multiple-rotate: MET-3-2-3-0 60 CG SD O
+multiple-rotate: MET-3-3-1-0 60 CG SD O
+multiple-rotate: MET-3-3-2-0 60 CG SD O
+multiple-rotate: MET-3-3-3-0 60 CG SD O
+
+multiple-rotate: SER-1-0-0-0 60 CB OG O
+multiple-rotate: SER-2-0-0-0 60 CB OG O
+multiple-rotate: SER-3-0-0-0 60 CB OG O
+
+multiple-rotate: THR-1-0-0-0 60 CB OG1 O
+multiple-rotate: THR-2-0-0-0 60 CB OG1 O
+multiple-rotate: THR-3-0-0-0 60 CB OG1 O
+
+multiple-rotate: TYR-1-1-0-0 60 CZ OH O
+multiple-rotate: TYR-2-1-0-0 60 CZ OH O
+multiple-rotate: TYR-2-2-0-0 60 CZ OH O
+multiple-rotate: TYR-3-1-0-0 60 CZ OH O
+multiple-rotate: TYR-3-2-0-0 60 CZ OH O
+
+# ask Feng:
+multiple-rotate: TRP-1-1-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-1-3-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-2-1-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-2-3-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-3-1-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-3-2-0-0 60 CE2 NE1 O
+multiple-rotate: TRP-3-3-0-0 60 CE2 NE1 O
+
+# ask Feng:
+multiple-rotate: HIS-1-1-0-0 60 CE1 ND1 O CE1 NE2 O
+multiple-rotate: HIS-1-3-0-0 60 CE1 NE2 O CE1 ND1 O
+multiple-rotate: HIS-2-1-0-0 60 CE1 NE2 O CE1 ND1 O
+multiple-rotate: HIS-2-2-0-0 60 CE1 NE2 O CE1 ND1 O
+multiple-rotate: HIS-2-3-0-0 60 CE1 NE2 O CE1 ND1 O
+multiple-rotate: HIS-3-1-0-0 60 CE1 NE2 O CE1 ND1 O
+multiple-rotate: HIS-3-2-0-0 60 CE1 ND1 O CE1 NE2 O
+multiple-rotate: HIS-3-3-0-0 60 CE1 NE2 O CE1 ND1 O
+
+multiple-rotate: LYS-1-1-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-1-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-1-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-1-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-1-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-1-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-2-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-1-3-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-1-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-2-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-2-3-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-1-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-2-3-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-1-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-1-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-1-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-2-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-2-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-2-3 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-3-1 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-3-2 60 CE NZ O CE NZ O CE NZ O
+multiple-rotate: LYS-3-3-3-3 60 CE NZ O CE NZ O CE NZ O
+
+multiple-rotate: ASP-1-1-0-0 60 CG OD1 O CG OD2 O CG OD1 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-1-2-0-0 60 CG OD2 O CG OD2 O CG OD1 O CG OD1 O CG OD2 O
+multiple-rotate: ASP-1-3-0-0 60 CG OD2 O CG OD2 O CG OD2 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-2-1-0-0 60 CG OD2 O CG OD2 O CG OD1 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-2-2-0-0 60 CG OD2 O CG OD1 O CG OD2 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-2-3-0-0 60 CG OD2 O CG OD1 O CG OD2 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-3-1-0-0 60 CG OD2 O CG OD2 O CG OD2 O CG OD1 O CG OD2 O
+multiple-rotate: ASP-3-2-0-0 60 CG OD2 O CG OD1 O CG OD2 O CG OD2 O CG OD2 O
+multiple-rotate: ASP-3-3-0-0 60 CG OD1 O CG OD1 O CG OD2 O CG OD2 O CG OD2 O
+
+multiple-rotate: GLU-1-1-1-0 60 CD OE1 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-1-1-2-0 60 CD OE2 O CD OE1 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-1-2-1-0 60 CD OE1 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-1-2-2-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-1-2-3-0 60 CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE1 O CD OE2 O
+multiple-rotate: GLU-1-3-1-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-1-3-2-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-1-3-3-0 60 CD OE2 O CD OE1 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-2-1-1-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-2-1-2-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-2-1-3-0 60 CD OE1 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O
+multiple-rotate: GLU-2-2-1-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O
+multiple-rotate: GLU-2-2-2-0 60 CD OE2 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-2-2-3-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-2-3-2-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-2-3-3-0 60 CD OE1 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-3-1-1-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-3-1-2-0 60 CD OE2 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-3-1-3-0 60 CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE1 O CD OE2 O
+multiple-rotate: GLU-3-2-1-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-3-2-2-0 60 CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-3-2-3-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE2 O
+multiple-rotate: GLU-3-3-1-0 60 CD OE2 O CD OE1 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O
+multiple-rotate: GLU-3-3-2-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE1 O
+multiple-rotate: GLU-3-3-3-0 60 CD OE2 O CD OE2 O CD OE2 O CD OE1 O CD OE2 O CD OE2 O
+
+
