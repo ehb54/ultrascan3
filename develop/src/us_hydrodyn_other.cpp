@@ -3808,6 +3808,7 @@ void US_Hydrodyn::set_default()
    saxs_options.use_iq_target_ev           = false;
    saxs_options.set_iq_target_ev_from_vbar = false;
    saxs_options.iq_target_ev               = 0e0;
+   saxs_options.hydration_rev_asa          = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

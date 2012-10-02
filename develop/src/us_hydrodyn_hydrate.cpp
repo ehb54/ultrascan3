@@ -3443,6 +3443,7 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
    double water_radius   = multi_residue_map.count( "SWH" ) ?
       residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
+   cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
 
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -5180,6 +5181,12 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
 
    lsf.sort();
 
+   if ( saxs_options.hydration_rev_asa )
+   {
+      lsf.reverse();
+      editor_msg( "blue", tr( "NOTICE: Hydration ASA sort order reversed" ) );
+   }
+
    for ( list < sortable_float_qs >::iterator it = lsf.begin();
          it != lsf.end();
          it++ )
@@ -5189,8 +5196,12 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
    
    // later, we could separate by bead, mc/sc or map reference set of atoms
 
+   progress->setProgress( residues_in_order.size(), residues_in_order.size() * 2 );
+
    for ( unsigned int i = 0; i < residues_in_order.size(); i++ )
    {
+      
+      progress->setProgress( residues_in_order.size() + i, residues_in_order.size() * 2 );
       QString this_residue = residues_in_order[ i ];
       cout << QString( "asa sorted residues %1 asa %2 bfr %3 pm %4\n" )
          .arg( this_residue )

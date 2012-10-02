@@ -103,6 +103,14 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    cb_alt_hydration->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_alt_hydration, SIGNAL(clicked()), this, SLOT(set_alt_hydration()));
 
+   cb_hydration_rev_asa = new QCheckBox(this);
+   cb_hydration_rev_asa->setText(tr(" Alt hydration reverse ASA sorting"));
+   cb_hydration_rev_asa->setEnabled(true);
+   cb_hydration_rev_asa->setChecked((*saxs_options).hydration_rev_asa);
+   cb_hydration_rev_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_hydration_rev_asa->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_hydration_rev_asa, SIGNAL(clicked()), this, SLOT(set_hydration_rev_asa()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -139,6 +147,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    
    QHBoxLayout *hbl_various_2c = new QHBoxLayout;
    hbl_various_2c->addWidget( cb_alt_hydration );
+   hbl_various_2c->addWidget( cb_hydration_rev_asa );
    background->addMultiCellLayout(hbl_various_2c, j, j, 0, 1);
    j++;
 
@@ -206,5 +215,11 @@ void US_Hydrodyn_SasOptionsHydration::update_steric_clash_recheck_distance(doubl
 void US_Hydrodyn_SasOptionsHydration::set_alt_hydration()
 {
    (*saxs_options).alt_hydration = cb_alt_hydration->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsHydration::set_hydration_rev_asa()
+{
+   (*saxs_options).hydration_rev_asa = cb_hydration_rev_asa->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

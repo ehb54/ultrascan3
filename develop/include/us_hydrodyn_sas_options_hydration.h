@@ -54,6 +54,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
       QwtCounter  *cnt_steric_clash_recheck_distance;
 
       QCheckBox   *cb_alt_hydration;
+      QCheckBox   *cb_hydration_rev_asa;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -70,6 +71,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
       void update_steric_clash_recheck_distance(double);
 
       void set_alt_hydration();
+      void set_hydration_rev_asa();
 
       void cancel();
       void help();

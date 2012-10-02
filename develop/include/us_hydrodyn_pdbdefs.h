@@ -329,6 +329,8 @@ struct saxs_options
    bool         use_iq_target_ev;
    bool         set_iq_target_ev_from_vbar;
    double       iq_target_ev;
+
+   bool         hydration_rev_asa;
 };
 
 struct saxs_atom
