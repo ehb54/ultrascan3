@@ -2007,7 +2007,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    QStringList filenames = QFileDialog::getOpenFileNames(
                                                          "dat files [foxs / other] (*.dat);;"
                                                          "All files (*);;"
-                                                         // "ssaxs files (*.ssaxs);;"
+                                                         "ssaxs files (*.ssaxs);;"
                                                          // "csv files (*.csv);;"
                                                          // "int files [crysol] (*.int);;"
                                                          // "fit files [crysol] (*.fit);;"
@@ -2015,7 +2015,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
                                                          , use_dir
                                                          , this
                                                          , "open file dialog"
-                                                         , "Set files for grid files"
+                                                         , "Add files" // ? "Set files for grid files"
                                                          );
    
    QStringList add_filenames;
