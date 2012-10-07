@@ -526,6 +526,7 @@ QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
    experimentTypes << "Velocity"
                    << "Equilibrium"
                    << "Diffusion"
+                   << "Buoyancy"
                    << "Calibration"
                    << "Other";
 
