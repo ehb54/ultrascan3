@@ -16,6 +16,8 @@ US_Experiment::US_Experiment( void )
    experimentTypes << "Velocity"
                    << "Equilibrium"
                    << "Diffusion"
+                   << "Buoyancy"
+                   << "Calibration"
                    << "other";
 }
 
