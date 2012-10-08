@@ -730,6 +730,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString      last_pdb_filename;
       QStringList  last_pdb_title;
       QStringList  last_pdb_header;
+      QStringList  last_pdb_load_calc_mw_msg;
+      QStringList  last_steric_clash_log;
 
       void show_zeno();
       bool calc_zeno();

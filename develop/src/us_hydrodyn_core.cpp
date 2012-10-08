@@ -7133,6 +7133,8 @@ void US_Hydrodyn::calc_mw()
    unsigned int save_current_model = current_model;
    QString error_string;
 
+   last_pdb_load_calc_mw_msg.clear();
+
    US_Saxs_Util usu;
    bool do_excl_vol = true;
    if ( !usu.setup_saxs_maps( 
@@ -7230,25 +7232,28 @@ void US_Hydrodyn::calc_mw()
             //i, j, model_vector[i].molecule[j].mw);
             if (model_vector[i].molecule[j].mw != 0.0 )
             {
-               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5"))
-                              .arg(model_vector[i].model_id)
-                              .arg(model_vector[i].molecule[j].chainID)
-                              .arg(model_vector[i].molecule[j].mw)
-                              .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
-                              .arg( do_excl_vol ?
-                                    QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
-                                    .arg( chain_excl_vol )
-                                    .arg( chain_excl_vol != chain_scaled_excl_vol ?
-                                          QString(", scaled atomic volume %1 A^2")
-                                          .arg( chain_scaled_excl_vol )
-                                          :
-                                          ""
-                                          )
-                                    .arg( chain_total_e / chain_excl_vol )
-                                    :
-                                    ""
-                                    )
-                              );
+               QString qs = 
+                  QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5")
+                          .arg(model_vector[i].model_id)
+                          .arg(model_vector[i].molecule[j].chainID)
+                          .arg(model_vector[i].molecule[j].mw)
+                          .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
+                          .arg( do_excl_vol ?
+                                QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+                                .arg( chain_excl_vol )
+                                .arg( chain_excl_vol != chain_scaled_excl_vol ?
+                                      QString(", scaled atomic volume %1 A^2")
+                                      .arg( chain_scaled_excl_vol )
+                                      :
+                                      ""
+                                      )
+                                .arg( chain_total_e / chain_excl_vol )
+                                :
+                                ""
+                                )
+                          );
+               editor->append( qs );
+               last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
             }
          }
          
@@ -7284,31 +7289,36 @@ void US_Hydrodyn::calc_mw()
          }
 
          double Rg = sqrt( Rg2 / total_cm_mw );
-         editor->append( 
-                        QString( "\nModel %1 Rg: %2 nm" )
-                        .arg( model_vector[ i ].model_id )
-                        .arg( Rg / 10.0, 0, 'f', 2 ) 
-                        );
+         QString qs =  QString( "\nModel %1 Rg: %2 nm" )
+            .arg( model_vector[ i ].model_id )
+            .arg( Rg / 10.0, 0, 'f', 2 );
+
+         editor->append( qs );
+         last_pdb_load_calc_mw_msg << qs;
       }
 
-      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4"))
-                     .arg(model_vector[i].model_id)
-                     .arg(model_vector[i].mw)
-                     .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
-                     .arg( do_excl_vol ?
-                           QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
-                           .arg( tot_excl_vol )
-                           .arg( tot_excl_vol != tot_scaled_excl_vol ?
-                                 QString(", scaled atomic volume %1 A^2")
-                                 .arg( tot_scaled_excl_vol )
-                                 :
-                                 ""
-                                 )
-                           .arg( total_e / tot_excl_vol )
-                           :
-                           ""
-                           )
-                     );
+      {
+         QString qs = 
+            QString( tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )
+            .arg(model_vector[i].model_id)
+            .arg(model_vector[i].mw )
+            .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+            .arg( do_excl_vol ?
+                  QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+                  .arg( tot_excl_vol )
+                  .arg( tot_excl_vol != tot_scaled_excl_vol ?
+                        QString(", scaled atomic volume %1 A^2")
+                        .arg( tot_scaled_excl_vol )
+                        :
+                        ""
+                        )
+                  .arg( total_e / tot_excl_vol )
+                  :
+                  ""
+                  );
+         editor->append( qs );
+         last_pdb_load_calc_mw_msg << qs;
+      }
 
       if ( do_excl_vol && misc.set_target_on_load_pdb )
       {

@@ -3789,6 +3789,23 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       qs += QString( tr( "Steric recheck clash %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
 
+   last_steric_clash_log.clear();
+   last_steric_clash_log << 
+         QString(
+                 "REMARK Hydration of                  %1\n"
+                 "REMARK Hydration file                %2\n"
+                 "REMARK Steric clash tolerance        %3%\n"
+                 )
+         .arg( pdb_file )
+         .arg( saxs_options.default_rotamer_filename )
+         .arg( saxs_options.steric_clash_distance )
+         ;
+   {
+      QString qs2 = "REMARK " + qs;
+      qs2.replace( "\n", "\nREMARK " );
+      last_steric_clash_log << qs2;
+   }
+
    cout << "Steric clash log detail:\n";
    //   cout << hydrate_clash_log.join( "" ) << endl;
    QString fname = 
@@ -3960,6 +3977,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    QStringList hydrate_clash_waters_rtmr_list;
    QStringList hydrate_clash_waters_pm_list;
 
+   residue_number = 0;
+   atom_number    = 0;
+
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
          it++ )
@@ -3993,6 +4013,11 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
 
    QTextStream ts( &f );
    ts << last_hydrated_pdb_header;
+   ts << last_pdb_load_calc_mw_msg.gres( "\n", "" ).join( "\nREMARK " ) + "\n";
+   for ( int i = 0; i < ( int ) last_steric_clash_log.size(); i++ )
+   {
+      ts << last_steric_clash_log[ i ];
+   }
    ts << last_hydrated_pdb_text;
    ts << "END\n";
    f.close();
