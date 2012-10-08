@@ -2647,7 +2647,7 @@ void US_Edit::write_triple( void )
    filename.insert( index, editID + "." );
    filename.replace( QRegExp( "auc$" ), "xml" );
 
-   QFile f( workingDir + filename );
+   QFile f( workingDir + "/" + filename );
 
    if ( ! f.open( QFile::WriteOnly | QFile::Text ) )
    {
