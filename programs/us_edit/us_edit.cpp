@@ -715,16 +715,18 @@ void US_Edit::load( void )
       ct_gaps->setNumButtons( 1 );
    }
 
+   QString runtype = runID + "." + dataType;
+
    for ( int ii = 0; ii < triples.size(); ii++ )
    {  // Generate file names
       QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-      QString file   = runID + "." + dataType + "." + triple + ".auc";
+      QString file   = runtype + "." + triple + ".auc";
       files << file;
    }
 
-   QString file = workingDir + "/" + runID + "." + dataType + ".xml";
-   workingDir   = workingDir  + "/";
-   expType = "";
+   workingDir   = workingDir + "/";
+   QString file = workingDir + runtype + ".xml";
+   expType      = "";
    QFile xf( file );
 
    if ( xf.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -2643,11 +2645,11 @@ void US_Edit::write_triple( void )
    //            + ".xml"
 
    QString filename = files[ triple_index ];
-   int     index = filename.indexOf( '.' ) + 1;
+   int     index    = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
    filename.replace( QRegExp( "auc$" ), "xml" );
 
-   QFile f( workingDir + "/" + filename );
+   QFile f( workingDir + filename );
 
    if ( ! f.open( QFile::WriteOnly | QFile::Text ) )
    {
