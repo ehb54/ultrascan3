@@ -343,7 +343,7 @@ DbgLv(1) << "EDT_RMV:" << query;
 
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
-DbgLv(1) << "EDT_RMV:   stat" << stat;
+DbgLv(1) << "EDT_RMV:   stat" << stat << db->lastError() << db->lastErrno();
          errMsg = tr( "delete_editedData status=%1" ).arg( stat );
          stat   = 2012;
       }
