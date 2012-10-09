@@ -397,7 +397,8 @@ void US_2dsa::view( void )
 // Save data (model,noise), report, and PNG image files
 void US_2dsa::save( void )
 {
-   QString analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+   QString analysisDate = QDateTime::currentDateTime().toUTC()
+                          .toString( "yyMMddhhmm" );
    QString reqGUID      = US_Util::new_guid();
    QString runID        = edata->runID;
    QString editID       = edata->editID.startsWith( "20" ) ?

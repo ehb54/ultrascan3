@@ -2608,7 +2608,8 @@ void US_Edit::write_triple( void )
    // Ask for editID if not yet defined
    while ( editID.isEmpty() )
    {
-      QString now  =  QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+      QString now  =  QDateTime::currentDateTime()
+                      .toUTC().toString( "yyMMddhhmm" );
 
       bool ok;
       QString msg = tr( "The base Edit ID for this edit session is <b>" )

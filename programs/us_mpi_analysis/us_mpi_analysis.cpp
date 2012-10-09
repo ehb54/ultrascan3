@@ -91,7 +91,7 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    }
 
    startTime      = QDateTime::currentDateTime();
-   analysisDate   = startTime.toString( "yyMMddhhmm" );
+   analysisDate   = startTime.toUTC().toString( "yyMMddhhmm" );
    maxrss         = 0;
    set_count      = 0;
    iterations     = 1;
