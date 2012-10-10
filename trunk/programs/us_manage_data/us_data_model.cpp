@@ -963,8 +963,8 @@ DbgLv(2) << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
    while ( jdr < nddes )
    {
       adescs << ddescs.at( jdr++ );
-//descd=ddescs.at(jdr-1);
-//DbgLv(2) << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
+descd=ddescs.at(jdr-1);
+DbgLv(2) << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
       progress->setValue( ++kar );
       qApp->processEvents();
    }
@@ -972,8 +972,8 @@ DbgLv(2) << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
    while ( jlr < nldes )
    {
       adescs << ldescs.at( jlr++ );
-//descl=ldescs.at(jlr-1);
-//DbgLv(2) << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
+descl=ldescs.at(jlr-1);
+DbgLv(2) << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
       progress->setValue( ++kar );
       qApp->processEvents();
    }
@@ -1089,6 +1089,7 @@ DbgLv(2) << "SrtD:  Orph(nme)" << QDateTime::currentDateTime();
 
    // create dummy records to parent each orphan
 
+DbgLv(2) << "(1) orphan: N size M size" << orphn.size() << orphm.size();
    for ( int ii = 0; ii < orphn.size(); ii++ )
    {  // for each orphan noise, create a dummy model
       dsorts = orphn.at( ii );
@@ -1099,7 +1100,7 @@ DbgLv(2) << "SrtD:  Orph(nme)" << QDateTime::currentDateTime();
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
-      if ( dpGUID.length() < 2 )
+      if ( dpGUID.length() < 2  ||  dpGUID == dmyGUID )
       { // handle case where there is no valid parentGUID
          if ( ndmy == 0 )      // first time:  create one
             dpGUID = dmyGUID;
@@ -1153,13 +1154,14 @@ DbgLv(2) << "SrtD:  Orph(nme)" << QDateTime::currentDateTime();
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
 
-      sortm << dsorts;
-      orphm << dsorts;
-      guidsm << dpGUID;
-      tdess.append( cdesc );
-//DbgLv(2) << "N orphan:" << orphn.at( ii );
-//DbgLv(2) << "  M dummy:" << dsorts;
+      sortm  << dsorts;
+      orphm  << dsorts;
+      guidsm << ddGUID;
+      tdess  << cdesc;
+DbgLv(2) << "N orphan:" << orphn.at( ii ) << ii;
+DbgLv(2) << "  M dummy:" << dsorts;
    }
+DbgLv(2) << "(2) orphan: N size M size" << orphn.size() << orphm.size();
 DbgLv(2) << "SrtD:  Orph(N)" << QDateTime::currentDateTime();
 
    ndmy   = 0;
@@ -1174,7 +1176,7 @@ DbgLv(2) << "SrtD:  Orph(N)" << QDateTime::currentDateTime();
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
-      if ( dpGUID.length() < 16 )
+      if ( dpGUID.length() < 16  ||  dpGUID == dmyGUID )
       { // handle case where there is no valid parentGUID
          if ( ndmy == 0 )      // first time:  create one
             dpGUID = dmyGUID;
@@ -1228,16 +1230,18 @@ DbgLv(2) << "SrtD:  Orph(N)" << QDateTime::currentDateTime();
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
 
-      sorte << dsorts;
-      orphe << dsorts;
-      guidse << dpGUID;
-      tdess.append( cdesc );
-//DbgLv(2) << "M orphan:" << orphm.at( ii );
-//DbgLv(2) << "  E dummy:" << dsorts;
+      sorte  << dsorts;
+      orphe  << dsorts;
+      guidse << ddGUID;
+      tdess  << cdesc;
+DbgLv(2) << "M orphan:" << orphm.at( ii ) << ii;
+DbgLv(2) << "  E dummy:" << dsorts;
    }
-DbgLv(2) << "SrtD:  Orph(M)" << QDateTime::currentDateTime();
 
+DbgLv(2) << "(3) orphan: N size M size" << orphn.size() << orphm.size();
+DbgLv(2) << "SrtD:  Orph(M)" << QDateTime::currentDateTime();
    ndmy   = 0;
+DbgLv(2) << "(4) orphan: M size E size" << orphm.size() << orphe.size();
 
    for ( int ii = 0; ii < orphe.size(); ii++ )
    {  // for each orphan edit, create a dummy raw
@@ -1267,7 +1271,7 @@ DbgLv(2) << "SrtD:  Orph(M)" << QDateTime::currentDateTime();
          }
 
          if ( ndmy > 0 )       // after 1st time, skip creating new parent
-            continue;
+           continue;
 
          ndmy++;               // flag that we have a parent for invalid ones
          ppGUID = dpGUID;      // save the GUID for new dummy parent
@@ -1303,12 +1307,13 @@ DbgLv(2) << "SrtD:  Orph(M)" << QDateTime::currentDateTime();
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
 
-      sortr << dsorts;
-      guidsr << dpGUID;
-      tdess.append( cdesc );
+      sortr  << dsorts;
+      guidsr << ddGUID;
+      tdess  << cdesc;
 DbgLv(2) << "E orphan:" << orphe.at( ii );
 DbgLv(2) << "  R dummy:" << dsorts;
    }
+DbgLv(2) << "(5) orphan: M size E size" << orphm.size() << orphe.size();
 DbgLv(2) << "SrtD:  Orph(E)" << QDateTime::currentDateTime();
 
 //for ( int ii = 0; ii < sortr.size(); ii++ )
@@ -1318,10 +1323,10 @@ DbgLv(2) << "SrtD:  Orph(E)" << QDateTime::currentDateTime();
    int countM = sortm.size();
    int countN = sortn.size();
 
-   sortr.sort();                 // re-sort for dummy additions
-   sorte.sort();
-   sortm.sort();
-   sortn.sort();
+   //sortr.sort();                 // re-sort for dummy additions
+   //sorte.sort();
+   //sortm.sort();
+   //sortn.sort();
 DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
 //for(int ii=0;ii<countM;ii++) DbgLv(2) << "sm" << ii << "++ " << sortm[ii];
 
