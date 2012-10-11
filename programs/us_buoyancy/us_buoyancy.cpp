@@ -124,6 +124,10 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
+   pb_write = us_pushbutton( tr( "Save Datapoint" ), false );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
@@ -343,20 +347,13 @@ void US_Buoyancy::load( void )
    else
    {  // non-Equilibrium
 		     QMessageBox::warning( this, tr( "Wrong Type of Data" ),
-			tr( "This analysis program requires data of the type:\n"
-				 "Buoyancy\n") );
+			tr( "This analysis program requires data of type \"Buoyancy\".\n"
+			    "Please load a different dataset with the correct type.") );
 			return;
    }
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
 
-	/*
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-	*/
    // Temperature check
    double              dt = 0.0;
    US_DataIO2::RawData triple;
@@ -410,7 +407,36 @@ void US_Buoyancy::sel_investigator( void )
 // Reset parameters to their defaults
 void US_Buoyancy::reset( void )
 {
+   le_info     ->setText( "" );
 
+   ct_selectScan->disconnect();
+   ct_selectScan->setMinValue( 0 );
+   ct_selectScan->setMaxValue( 0 );
+   ct_selectScan->setValue   ( 0 );
+
+   cb_triple->disconnect();
+
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
+   v_line = NULL;
+   pick     ->disconnect();
+
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   grid = us_grid( data_plot );
+   data_plot->replot();
+
+   // Disable pushbuttons
+   pb_details     ->setEnabled( false );
+   pb_write       ->setEnabled( false );
+
+   // Remove icons
+
+   data.scanData .clear();
+   trip_rpms     .clear();
+   triples       .clear();
+   cb_rpms      ->disconnect();
+   cb_rpms      ->clear();
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -486,4 +512,72 @@ void US_Buoyancy::plot_scan( void )
 
    data_plot->replot();
 	*/
+}
+
+
+// Handle a mouse click according to the current pick step
+void US_Buoyancy::mouse( const QwtDoublePoint& p )
+{
+   double maximum = -1.0e99;
+	double xpoint;
+
+   xpoint = p.x();
+            // Un-zoom
+            if ( plot->btnZoom->isChecked() )
+               plot->btnZoom->setChecked( false );
+
+            draw_vline( meniscus );
+
+            data_plot->replot();
+
+            // Remove the left line
+            if ( v_line != NULL )
+            {
+               v_line->detach();
+               delete v_line;
+               v_line = NULL;
+            }
+            marker = new QwtPlotMarker;
+            QBrush brush( Qt::white );
+            QPen   pen  ( brush, 2.0 );
+            
+            marker->setValue( meniscus, maximum );
+            marker->setSymbol( QwtSymbol( 
+                        QwtSymbol::Cross, 
+                        brush,
+                        pen,
+                        QSize ( 8, 8 ) ) );
+
+            marker->attach( data_plot );
+         data_plot->replot();
+
+}
+
+// Draw a vertical pick line
+void US_Buoyancy::draw_vline( double radius )
+{
+   double r[ 2 ];
+
+   r[ 0 ] = radius;
+   r[ 1 ] = radius;
+
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+
+   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+   double v[ 2 ];
+   v [ 0 ] = y_axis->upperBound() - padding;
+   v [ 1 ] = y_axis->lowerBound() + padding;
+
+   v_line = us_curve( data_plot, "V-Line" );
+   v_line->setData( r, v, 2 );
+
+   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
+   v_line->setPen( pen );
+
+   data_plot->replot();
+}
+
+void US_Buoyancy::write( void )
+{
 }

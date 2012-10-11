@@ -64,19 +64,23 @@ class US_Buoyancy : public US_Widgets
 
       QComboBox*         cb_triple;
       QComboBox*         cb_rpms;
+
+      QPushButton*       pb_write;
                         
       QwtCounter*        ct_selectScan;
 	  
 private slots:
-	
-		void sel_investigator  ( void );
-		void update_disk_db    ( bool );
-		void load              ( void );
-		void details           ( void );
-		void new_triple        ( int  );
-		void plot_scan         ( void );
-      void reset             ( void );
-      void help              ( void )
+	void draw_vline        ( double );	
+	void mouse             ( const QwtDoublePoint& );
+	void sel_investigator  ( void );
+	void update_disk_db    ( bool );
+	void load              ( void );
+	void details           ( void );
+	void new_triple        ( int  );
+	void plot_scan         ( void );
+	void write             ( void );
+	void reset             ( void );
+	void help              ( void )
       { showHelp.show_help( "manual/us_buoyancy.html" ); };
 };
 #endif
