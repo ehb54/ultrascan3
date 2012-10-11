@@ -56,11 +56,9 @@ class US_Buoyancy : public US_Widgets
       US_Plot*           plot;
       
       QLabel*            lbl_rpms;
-		QLabel*            lbl_edtrsp;
 
       QLineEdit*         le_info;
       QLineEdit*         le_investigator;
-		QLineEdit*         le_edtrsp;
                         
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
