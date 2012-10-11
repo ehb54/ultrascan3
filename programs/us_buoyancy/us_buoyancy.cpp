@@ -121,14 +121,6 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    ct_selectScan->setStep( 1 );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
 
-	// Edit Triple:Speed display
-	lbl_edtrsp   = us_label( tr( "Edit Triple:Speed :" ), -1, true );
-	specs->addWidget( lbl_edtrsp, s_row,   0, 1, 2 );
-	le_edtrsp   = us_lineedit( "" );
-	specs->addWidget( le_edtrsp, s_row++, 2, 1, 2 );
-	lbl_edtrsp->setVisible( true );
-	le_edtrsp->setVisible( true );
-
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
