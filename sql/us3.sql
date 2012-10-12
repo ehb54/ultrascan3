@@ -193,7 +193,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   rotorID int(11) NULL ,
   rotorCalibrationID int(11) NULL ,
   experimentGUID CHAR(36) NULL UNIQUE,
-  type ENUM('velocity', 'equilibrium', 'diffusion', 'calibration', 'other') NULL 
+  type ENUM('velocity', 'equilibrium', 'diffusion', 'buoyancy', 'calibration', 'other') NULL 
     DEFAULT 'velocity',
   runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
   dateBegin DATE NOT NULL ,
