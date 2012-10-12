@@ -22,7 +22,6 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
 void US_HttpPost::postFinished( void )
 {
   int error = reply->error();
-  QString err = QString( "7-%1" ).arg( error );
 
   if ( error == QNetworkReply::NoError )
     emit US_Http_post_response( reply->readAll() );
@@ -35,7 +34,7 @@ void US_HttpPost::postError( QNetworkReply::NetworkError error )
   if ( count == 0 )
   {
     count++;
-    QString err = QString( "7-%1" ).arg( error );
+    QString err = QString( "9-Network Error (%1): " ).arg( error ) + reply->errorString();
     emit US_Http_post_response( err );
   }
 }
