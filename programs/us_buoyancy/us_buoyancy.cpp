@@ -263,14 +263,11 @@ void US_Buoyancy::load( void )
       expType    = db.value( 8 ).toString();
    }
    else                      // insure Ulll... form, e.g., "Equilibrium"
-	{
+   {
       expType    = expType.left( 1 ).toUpper() +
                    expType.mid(  1 ).toLower();
-	}
-	qDebug() << "Experiment type:" << expType ;
+   }
    expIsBuoyancy = ( expType.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
-
-
 	if (expIsBuoyancy)
 	{
 		sData.clear();
@@ -451,7 +448,6 @@ void US_Buoyancy::update_disk_db( bool isDB )
 // Plot a single scan curve
 void US_Buoyancy::plot_scan( void )
 {
-		  /*
    int    rsize = data.scanData[ 0 ].readings.size();
    int    ssize = data.scanData.size();
    int    count = 0;
@@ -485,7 +481,7 @@ void US_Buoyancy::plot_scan( void )
       for ( int jj = 0; jj < rsize; jj++ )
       {
          r[ count ] = data.x[ jj ].radius;
-         v[ count ] = s->readings[ jj ].value * invert;
+         v[ count ] = s->readings[ jj ].value;
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -511,7 +507,6 @@ void US_Buoyancy::plot_scan( void )
    }
 
    data_plot->replot();
-	*/
 }
 
 
