@@ -585,9 +585,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, float >                         residue_asa_sc;
       map < QString, float >                         residue_asa_mc;
 
+      map < QString, unsigned int >                  hydrate_count;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      unsigned int hydrate_max_waters_no_asa;
+      unsigned int count_waters;
+      unsigned int count_waters_added;
+      unsigned int count_waters_not_added;
+
       bool load_rotamer( QString &error_msg );
       QString list_rotamers( bool coords = false );
 

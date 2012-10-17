@@ -317,13 +317,16 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
    float mw;
    for (unsigned int i=0; i<(*model).residue.size(); i++)
    {
-      mw = 0.0;
-      for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)
+      if ( model->residue[ i ].name != "SWH" )
       {
-         mw += (*model).residue[i].r_atom[j].hybrid.mw;
+         mw = 0.0;
+         for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)
+         {
+            mw += (*model).residue[i].r_atom[j].hybrid.mw;
+         }
+         mw_sum += mw;
+         mw_vbar_sum += mw * (*model).residue[i].vbar;
       }
-      mw_sum += mw;
-      mw_vbar_sum += mw * (*model).residue[i].vbar;
    }
    (*model).vbar = (mw_vbar_sum/mw_sum); //  - 0.002125;
    cout << "calc VBAR: " << (*model).vbar << endl;

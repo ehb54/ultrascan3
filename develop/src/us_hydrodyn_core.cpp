@@ -7297,6 +7297,10 @@ void US_Hydrodyn::calc_mw()
          last_pdb_load_calc_mw_msg << qs;
       }
 
+      if ( model_vector_as_loaded.size() > i )
+      {
+         model_vector_as_loaded[ i ].mw = model_vector[i].mw;
+      }
       {
          QString qs = 
             QString( tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )

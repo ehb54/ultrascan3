@@ -77,6 +77,15 @@ void US_Hydrodyn::dmd_static_pairs()
    }
 
    {
+      QString dmd_dir = somo_dir + SLASH + "dmd";
+      QDir dir1( dmd_dir );
+      if ( !dir1.exists() )
+      {
+         dir1.mkdir( dmd_dir );
+      }
+   }
+
+   {
       QString filename = 
          project + ".dmd_constr";
       QString basename = 

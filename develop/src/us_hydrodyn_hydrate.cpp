@@ -1525,6 +1525,35 @@ void US_Hydrodyn::build_to_hydrate()
          }
       }
    }  
+
+   // pass 4 compute possible hydration
+   hydrate_max_waters_no_asa = 0;
+
+   map < QString, bool > accumulated_residue;
+
+   for ( unsigned int j = 0; j < model_vector[i].molecule.size (); j++ )
+   {
+      for ( unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++ )
+      {
+         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+         QString mapkey =
+            QString( "%1~%2~%3" )
+            .arg( this_atom->resName )
+            .arg( this_atom->resSeq )
+            .arg( this_atom->chainID );
+
+         if ( !accumulated_residue.count( mapkey ) )
+         {
+            accumulated_residue[ mapkey ] = true;
+            if ( hydrate_count.count( this_atom->resName ) )
+            {
+               hydrate_max_waters_no_asa += hydrate_count[ this_atom->resName ];
+            }
+         }
+      }
+   }
+   cout << QString( "max waters %1\n" ).arg( hydrate_max_waters_no_asa );
 }
 
 bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
@@ -2570,6 +2599,44 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       return false;
    }
    // cout << list_water_positioning_atoms();
+
+
+   // compute totals
+   hydrate_count.clear();
+   for ( map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
+         it != pointmap_atoms.end();
+         it++ )
+   {
+      if ( hydrate_count.count( it->first ) )
+      {
+         hydrate_count[ it->first ] += ( unsigned int ) it->second.size();
+      } else {
+         hydrate_count[ it->first ] =  ( unsigned int ) it->second.size();
+      }
+   }
+
+   for ( map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+         it != rotamers.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < it->second.size() && i < 1; i++ )
+      {
+         if ( hydrate_count.count( it->first ) )
+         {
+            hydrate_count[ it->first ] += ( unsigned int ) it->second[ i ].waters.size();
+         } else {
+            hydrate_count[ it->first ] =  ( unsigned int ) it->second[ i ].waters.size();
+         }
+      }
+   }
+
+   for ( map < QString, unsigned int >::iterator it = hydrate_count.begin();
+         it != hydrate_count.end();
+         it++ )
+   {
+      cout << QString( "res %1 hydrate count %2\n" ).arg( it->first ).arg( it->second );
+   }
+
    return true;
 }
 
@@ -2687,9 +2754,9 @@ QString US_Hydrodyn::list_pointmaps()
 
    out = "pointmaps:\n";
 
-   for (  map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
-          it != pointmap_atoms.end();
-          it++ )
+   for ( map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
+         it != pointmap_atoms.end();
+         it++ )
    {
       out += 
          QString( "Pointmaps for residue: %1  number of maps %2\n" )
@@ -3119,9 +3186,9 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
 
    steric_clash_summary.clear();
 
-   unsigned int count_waters           = 0;
-   unsigned int count_waters_added     = 0;
-   unsigned int count_waters_not_added = 0;
+   count_waters           = 0;
+   count_waters_added     = 0;
+   count_waters_not_added = 0;
 
    vector < point > p1;
    vector < point > p2;
@@ -3790,6 +3857,24 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    }
 
    last_steric_clash_log.clear();
+   last_steric_clash_log <<
+      QString( "REMARK MW %1 Daltons\n" ).arg( model_vector[ current_model ].mw );
+
+   last_steric_clash_log <<
+      QString( "REMARK Maximum possible water to place         %1   degree of hydration %2\n" )
+      .arg( hydrate_max_waters_no_asa )
+      .arg( ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw );
+
+   last_steric_clash_log <<
+      QString( "REMARK Maximum exposed possible water to place %1   degree of hydration %2\n" )
+      .arg( count_waters_added + count_waters_not_added )
+      .arg( ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw );
+
+   last_steric_clash_log <<
+      QString( "REMARK Waters placed                           %1   degree of hydration %2\n" )
+      .arg( count_waters_added )
+      .arg( ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw );
+
    last_steric_clash_log << 
          QString(
                  "REMARK Hydration of                  %1\n"
@@ -4197,9 +4282,9 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
 
    steric_clash_summary.clear();
 
-   unsigned int count_waters           = 0;
-   unsigned int count_waters_added     = 0;
-   unsigned int count_waters_not_added = 0;
+   count_waters           = 0;
+   count_waters_added     = 0;
+   count_waters_not_added = 0;
 
    vector < point > p1;
    vector < point > p2;
@@ -5177,9 +5262,9 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
 
    steric_clash_summary.clear();
 
-   unsigned int count_waters           = 0;
-   unsigned int count_waters_added     = 0;
-   unsigned int count_waters_not_added = 0;
+   count_waters           = 0;
+   count_waters_added     = 0;
+   count_waters_not_added = 0;
 
    vector < point > p1;
    vector < point > p2;

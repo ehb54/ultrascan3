@@ -8,6 +8,7 @@
 // note: this program uses cout and/or cerr and this should be replaced
 
 #define SLASH QDir::separator()
+#define Q_VAL_TOL 5e-6
 
 US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
                                                csv csv1,
@@ -1253,7 +1254,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
 
    for ( unsigned int j = 0; j < f_Is[ buffer ].size(); j++ )
    {
-      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > 5e-6 ||
+      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > Q_VAL_TOL ||
            ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
       {
          editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
@@ -2428,6 +2429,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       errormsg = QString("Error: %1 does not exist").arg( filename );
       return false;
    }
+   cout << QString( "opening %1\n" ).arg( filename ) << flush;
    
    QString ext = QFileInfo( filename ).extension( false ).lower();
 
@@ -2503,6 +2505,10 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          if ( (int)tokens.size() > 2 + offset)
          {
             this_e = tokens[ 2 + offset ].toDouble();
+            if ( this_e < 0e0 )
+            {
+               this_e = 0e0;
+            }
          }
          if ( q.size() && this_q <= q[ q.size() - 1 ] )
          {
@@ -2514,24 +2520,32 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
             q_string.push_back( this_q_string );
             q       .push_back( this_q );
             I       .push_back( this_I );
-            if ( (int)tokens.size() > 2 + offset )
+            if ( (int)tokens.size() > 2 + offset && this_e )
             {
-               e.push_back( this_e + offset );
+               e.push_back( this_e );
             }
          }
       }
    }
 
+   cout << QString( "opened %1\n" ).arg( filename ) << flush;
    QString basename = QFileInfo( filename ).baseName( true );
    f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
    f_qs_string [ basename ] = q_string;
    f_qs        [ basename ] = q;
    f_Is        [ basename ] = I;
-   if ( e.size() )
+   if ( e.size() == q.size() )
    {
       f_errors        [ basename ] = e;
    } else {
+      if ( e.size() )
+      {
+         editor->append( 
+                        QString( tr( "Notice: File %1 appeared to have standard deviations, but some were zero or less, so all were dropped\n" ) 
+                                 ).arg( filename ) 
+                        );
+      }
       f_errors    .erase( basename );
    }
    return true;
@@ -2762,9 +2776,10 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
          }
          for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
-            if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > 5e-6 )
+            if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > Q_VAL_TOL )
             {
                editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+               cout << QString( "val1 %1 val2 %2 fabs diff %3\n" ).arg( avg_qs[ j ] ).arg(  t_qs[ this_file ][ j ]  ).arg(fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) );
                return;
             }
             avg_Is [ j ]     += t_Is[ this_file ][ j ];
@@ -3611,8 +3626,9 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
          nIs       = t_Is     [ this_file ];
          for ( int j = 0; j < (int)nIs.size(); j++ )
          {
-            if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > 5e-6 )
+            if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > Q_VAL_TOL )
             {
+               cout << QString( "val1 %1 val2 %2 fabs diff %3\n" ).arg( avg_qs[ j ] ).arg(  t_qs[ this_file ][ j ]  ).arg(fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) );
                editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
                return;
             }
@@ -5906,7 +5922,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
 
    for ( unsigned int j = 0; j < f_Is[ buffer ].size(); j++ )
    {
-      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > 5e-6 ||
+      if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > Q_VAL_TOL ||
            ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
       {
          editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
