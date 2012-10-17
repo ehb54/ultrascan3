@@ -3856,6 +3856,20 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       qs += QString( tr( "Steric recheck clash %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
 
+   editor_msg( "blue",
+               QString( "Maximum possible water to place %1, degree of hydration %2\n" )
+               .arg( hydrate_max_waters_no_asa )
+               .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) )
+               +
+               QString( "Maximum exposed possible water to place %1, degree of hydration %2\n" )
+               .arg( count_waters_added + count_waters_not_added )
+               .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) )
+               + 
+               QString( "Waters placed %1, degree of hydration %2\n" )
+               .arg( count_waters_added )
+               .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
+               );
+
    last_steric_clash_log.clear();
    last_steric_clash_log <<
       QString( "REMARK MW %1 Daltons\n" ).arg( model_vector[ current_model ].mw );
@@ -3863,17 +3877,17 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    last_steric_clash_log <<
       QString( "REMARK Maximum possible water to place         %1   degree of hydration %2\n" )
       .arg( hydrate_max_waters_no_asa )
-      .arg( ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw );
+      .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Maximum exposed possible water to place %1   degree of hydration %2\n" )
       .arg( count_waters_added + count_waters_not_added )
-      .arg( ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw );
+      .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Waters placed                           %1   degree of hydration %2\n" )
       .arg( count_waters_added )
-      .arg( ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw );
+      .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log << 
          QString(
