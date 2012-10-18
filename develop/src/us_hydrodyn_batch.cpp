@@ -1615,16 +1615,16 @@ void US_Hydrodyn_Batch::start()
                         ii++ ) 
                   {
                      progress2->setProgress( ii, lb_model_rows );
-                     editor_msg( "dark gray",  QString( tr( "Processing: %1 from %2" ) )
-                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
-                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
-                     qApp->processEvents();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
                         ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      }
 #endif
+                     editor_msg( "dark gray",  QString( tr( "Processing I(q): %1 from %2" ) )
+                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
+                     qApp->processEvents();
                      // select only one
                      ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
                      for ( unsigned int j = 0;
@@ -1917,17 +1917,17 @@ void US_Hydrodyn_Batch::start()
                         ii++ ) 
                   {
                      progress2->setProgress( ii, lb_model_rows );
-                     editor_msg( "dark gray",  QString( tr( "Processing: %1 from %2" ) )
-                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
-                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
-                     ;
-                     qApp->processEvents();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
                         ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      }
 #endif
+                     editor_msg( "dark gray",  QString( tr( "Processing P(r): %1 from %2" ) )
+                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
+                     ;
+                     qApp->processEvents();
                      // select only one
                      ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
                      for ( unsigned int j = 0;
