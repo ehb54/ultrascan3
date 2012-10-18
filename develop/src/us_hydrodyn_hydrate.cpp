@@ -210,7 +210,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
             if ( saxs_options.alt_hydration )
             {
                editor_msg( "blue", tr( "NOTICE: using alternate hydration (experimental) method" ) );
-               if ( !compute_waters_to_add_alt( error_msg ) )
+               if ( !compute_waters_to_add_alt( error_msg, quiet ) )
                {
                   QMessageBox::warning( this,
                                         tr( "Error trying to add waters" ),
@@ -218,7 +218,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                   any_errors = true;
                }
             } else {
-               if ( !compute_waters_to_add( error_msg ) )
+               if ( !compute_waters_to_add( error_msg, quiet ) )
                {
                   QMessageBox::warning( this,
                                         tr( "Error trying to add waters" ),
@@ -229,7 +229,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
             // cout << list_waters_to_add();
             progress->setProgress(1, 1);
             qApp->processEvents();
-            if ( !write_pdb_with_waters( error_msg ) )
+            if ( !write_pdb_with_waters( error_msg, quiet ) )
             {
                QMessageBox::warning( this,
                                      tr( "Error trying to write pdb with waters" ),
@@ -246,7 +246,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
             }
             if ( !any_errors )
             {
-               pdb_saxs();
+               pdb_saxs( true, !quiet );
             }
          }
          else
@@ -3178,7 +3178,7 @@ QString US_Hydrodyn::list_water_positioning_atoms()
    return out;
 }
 
-bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
+bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 {
    editor->append( tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
@@ -3414,7 +3414,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
                    .arg( count_waters_not_added ) 
                    );
    editor->append( list_steric_clash        () );
-   editor->append( list_steric_clash_recheck() );
+   editor->append( list_steric_clash_recheck( quiet ) );
    qApp->processEvents();
    puts("Done transforming waters to add to pdb coordinates");
    return true;
@@ -3583,7 +3583,7 @@ float US_Hydrodyn::min_dist_to_waters( point p )
 }
 
 
-QString US_Hydrodyn::list_steric_clash_recheck()
+QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
 {
    unsigned int i = current_model;
    double dist_threshold = 1e0 - ( saxs_options.steric_clash_recheck_distance / 100e0 );
@@ -3935,7 +3935,10 @@ QString US_Hydrodyn::list_steric_clash_recheck()
       f.close();
       //      if ( !saxs_options.alt_hydration )
       //      {
-      view_file( fname );
+      if ( !quiet )
+      {
+         view_file( fname );
+      }
       //      }
    } else {
       editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
@@ -3961,12 +3964,12 @@ QString US_Hydrodyn::list_steric_clash_recheck()
    return qs;
 }
 
-bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
+bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
 {
 #if defined( OLD_WAY )
    if ( saxs_options.alt_hydration )
    {
-      return alt_write_pdb_with_waters( error_msg );
+      return alt_write_pdb_with_waters( error_msg, quiet );
    }
 #endif
 
@@ -4125,6 +4128,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
 
    // now rasmol it!
+   if ( !quiet ) 
    {
       QString out;
       out = QString( "load %1\ncpk\nselect all\ncolor white\nselect swh\ncolor red\n" ).arg( fname );
@@ -4286,7 +4290,7 @@ QString US_Hydrodyn::validate_pointmap()
 }
 
 #if defined( OLD_WAY )
-bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
+bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 {
    editor->append( tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
@@ -5001,7 +5005,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
       steric_clash_summary = alt_steric_clash_summary[ i ];
       waters_to_add        = alt_waters_to_add[ i ];
       editor->append( list_steric_clash        () );
-      editor->append( list_steric_clash_recheck() );
+      editor->append( list_steric_clash_recheck( quiet ) );
       alt_hydrate_clash_map_structure .push_back( hydrate_clash_map_structure );
       alt_hydrate_clash_map_rtmr_water.push_back( hydrate_clash_map_rtmr_water );
       alt_hydrate_clash_map_pm_water  .push_back( hydrate_clash_map_pm_water );
@@ -5015,7 +5019,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
 }
 #endif
 
-bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg )
+bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet */ )
 {
    if ( alt_waters_to_add.size() != alt_steric_clash_summary.size() ||
         alt_waters_to_add.size() != alt_waters_source.size() ||
@@ -5192,9 +5196,10 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg )
    last_hydrated_pdb_name = fname;
    editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
 
-   /* no rasmol yet 
+   /* no rasmol yet
 
    // now rasmol it!
+   if ( !quiet )
    {
       QString out;
       out = QString( "load %1\ncpk\nselect all\ncolor white\nselect swh\ncolor red\n" ).arg( fname );
@@ -5266,7 +5271,7 @@ public:
 };
 
 #if !defined( OLD_WAY )
-bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
+bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 {
    editor->append( tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
@@ -5848,7 +5853,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg )
                    .arg( count_waters_not_added ) 
                    );
    editor->append( list_steric_clash        () );
-   editor->append( list_steric_clash_recheck() );
+   editor->append( list_steric_clash_recheck( quiet ) );
    qApp->processEvents();
    puts("Done transforming waters to add to pdb coordinates");
    return true;

@@ -477,6 +477,18 @@ void US_Hydrodyn_Batch::setupGUI()
    progress->setMinimumWidth(70);
    progress->reset();
 
+   ws_progress2 = new QWidgetStack( this, "progress2" );
+
+   lbl_progress2 = new QLabel( "", this);
+
+   progress2 = new QProgressBar(this, "Loading Progress2");
+   progress2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   progress2->reset();
+
+   ws_progress2->addWidget( lbl_progress2, 0 );
+   ws_progress2->addWidget( progress2, 1 );
+   ws_progress2->raiseWidget( 0 );
+
    pb_stop = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -596,6 +608,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout *hbl_process = new QHBoxLayout;
    hbl_process->addWidget(pb_start);
    hbl_process->addWidget(progress);
+   hbl_process->addWidget(ws_progress2);
    hbl_process->addWidget(pb_stop);
    
    // 4th section - help & cancel
@@ -966,9 +979,9 @@ void US_Hydrodyn_Batch::load_saxs()
          if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
-            ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+            ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs( true, false );
          } else {
-            ((US_Hydrodyn *)us_hydrodyn)->bead_saxs();
+            ((US_Hydrodyn *)us_hydrodyn)->bead_saxs( true, false );
          }
          break;
       }
@@ -1231,7 +1244,7 @@ void US_Hydrodyn_Batch::set_saxs_search()
    batch->saxs_search = cb_saxs_search->isChecked();
    if ( batch->saxs_search )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs( true, false );
       raise();
       if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget )
       {
@@ -1585,6 +1598,8 @@ void US_Hydrodyn_Batch::start()
                {
                   // loop through them:
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+                  progress2->reset();
+                  ws_progress2->raiseWidget( 1 );
 #if defined(USE_H)
                   // save everything if hydrate on
                   QString hydrated_pdb_nmr_text;
@@ -1595,10 +1610,15 @@ void US_Hydrodyn_Batch::start()
                   }
 #endif
                   
-                  for ( unsigned int i = 0;
-                        i < lb_model_rows;
-                        i++ ) 
+                  for ( unsigned int ii = 0;
+                        ii < lb_model_rows && !stopFlag;
+                        ii++ ) 
                   {
+                     progress2->setProgress( ii, lb_model_rows );
+                     editor_msg( "dark gray",  QString( tr( "Processing: %1 from %2" ) )
+                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
+                     qApp->processEvents();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -1606,16 +1626,17 @@ void US_Hydrodyn_Batch::start()
                      }
 #endif
                      // select only one
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
                      for ( unsigned int j = 0;
                            j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
                            j++ ) 
                      {
-                        if ( i != j )
+                        if ( ii != j )
                         {
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->ensureCurrentVisible();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -1639,7 +1660,6 @@ void US_Hydrodyn_Batch::start()
                         {
                            ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->clear_plot_saxs( true );
                         }
-
                         if ( batch->saxs_search )
                         {
                            if ( activate_saxs_search_window() )
@@ -1657,7 +1677,8 @@ void US_Hydrodyn_Batch::start()
                            job_timer.init_timer ( QString( "%1 calc iqq" ).arg( get_file_name( i ) ) );
                            job_timer.start_timer( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                            result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
-                                                                           !batch->csv_saxs || batch->create_native_saxs
+                                                                           !batch->csv_saxs || batch->create_native_saxs,
+                                                                           false
                                                                            ) ? false : true;
                            job_timer.end_timer  ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                         }
@@ -1697,11 +1718,11 @@ void US_Hydrodyn_Batch::start()
                               if ( batch->hydrate )
                               {
                                  csv_source_name_iqq.push_back( file + " hydrated " + 
-                                                                ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                                                                ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[ ii ] );
                               } else {
 #endif                              
                                  csv_source_name_iqq.push_back( file + " " + 
-                                                                ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+                                                                ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) );
 #if defined(USE_H)
                               }
 #endif
@@ -1745,6 +1766,7 @@ void US_Hydrodyn_Batch::start()
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
 #endif
+                  ws_progress2->raiseWidget( 0 );
                } else {
 #if defined(USE_H)
                   if ( batch->hydrate )
@@ -1781,7 +1803,8 @@ void US_Hydrodyn_Batch::start()
                         job_timer.init_timer ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                         job_timer.start_timer( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
-                                                                        !batch->csv_saxs || batch->create_native_saxs
+                                                                        !batch->csv_saxs || batch->create_native_saxs,
+                                                                        false
                                                                         ) ? false : true;
                         job_timer.end_timer  ( QString( "%1 calc_iqq" ).arg( get_file_name( i ) ) );
                      }
@@ -1878,6 +1901,8 @@ void US_Hydrodyn_Batch::start()
                {
                   // loop through them:
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+                  progress2->reset();
+                  ws_progress2->raiseWidget( 1 );
 #if defined(USE_H)
                   // save everything if hydrate on
                   QString hydrated_pdb_nmr_text;
@@ -1887,10 +1912,16 @@ void US_Hydrodyn_Batch::start()
                      ((US_Hydrodyn *)us_hydrodyn)->save_state();
                   }
 #endif
-                  for ( unsigned int i = 0;
-                        i <  lb_model_rows;
-                        i++ ) 
+                  for ( unsigned int ii = 0;
+                        ii <  lb_model_rows && !stopFlag;
+                        ii++ ) 
                   {
+                     progress2->setProgress( ii, lb_model_rows );
+                     editor_msg( "dark gray",  QString( tr( "Processing: %1 from %2" ) )
+                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                                 .arg( QFileInfo( get_file_name( i ) ).fileName() ));
+                     ;
+                     qApp->processEvents();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -1898,16 +1929,17 @@ void US_Hydrodyn_Batch::start()
                      }
 #endif
                      // select only one
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
                      for ( unsigned int j = 0;
                            j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
                            j++ ) 
                      {
-                        if ( i != j )
+                        if ( ii != j )
                         {
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->ensureCurrentVisible();
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -1927,7 +1959,8 @@ void US_Hydrodyn_Batch::start()
                         job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
-                                                                        !batch->csv_saxs || batch->create_native_saxs
+                                                                        !batch->csv_saxs || batch->create_native_saxs,
+                                                                        false
                                                                         ) ? false : true;
                         job_timer.end_timer  ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         if ( batch->csv_saxs )
@@ -1936,11 +1969,11 @@ void US_Hydrodyn_Batch::start()
                            if ( batch->hydrate )
                            {
                               csv_source_name_prr.push_back( file + " hydrated " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[i] );
+                                                             ((US_Hydrodyn *)us_hydrodyn)->state_lb_model_rows[ ii ] );
                            } else {
 #endif                              
                               csv_source_name_prr.push_back( file + " " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) );
 #if defined(USE_H)
                            }
 #endif
@@ -1983,6 +2016,7 @@ void US_Hydrodyn_Batch::start()
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
 #endif
+                  ws_progress2->raiseWidget( 0 );
                } else {
 #if defined(USE_H)
                   if ( batch->hydrate )
@@ -2006,7 +2040,8 @@ void US_Hydrodyn_Batch::start()
                      job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
-                                                                     !batch->csv_saxs || batch->create_native_saxs
+                                                                     !batch->csv_saxs || batch->create_native_saxs,
+                                                                     false
                                                                      ) ? false : true;
                      job_timer.end_timer  ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      if ( batch->csv_saxs )
@@ -3124,7 +3159,7 @@ void US_Hydrodyn_Batch::open_saxs_options()
 
 bool US_Hydrodyn_Batch::activate_saxs_search_window()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+   ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs( true, false );
    raise();
    if ( ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget )
    {

@@ -620,18 +620,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool setup_pointmap_rotamers( QString &error_msg );
       QString list_pointmap_rotamers();
 
-      bool compute_waters_to_add( QString &error_msg );
-      bool compute_waters_to_add_alt( QString &error_msg );
+      bool compute_waters_to_add( QString &error_msg, bool quiet = false );
+      bool compute_waters_to_add_alt( QString &error_msg, bool quiet = false );
       QString list_waters_to_add();
 
       bool    has_steric_clash( point p, bool summary = true );
       float   min_dist_to_waters( point p );
       float   min_dist_to_struct_and_waters( point p );
       QString list_steric_clash();
-      QString list_steric_clash_recheck();
+      QString list_steric_clash_recheck( bool quiet = false );
 
-      bool write_pdb_with_waters( QString &error_msg );
-      bool alt_write_pdb_with_waters( QString &error_msg );
+      bool write_pdb_with_waters( QString &error_msg, bool quiet = false );
+      bool alt_write_pdb_with_waters( QString &error_msg, bool quiet = false );
       QString last_hydrated_pdb_name;
       QString last_hydrated_pdb_text;
       QString last_hydrated_pdb_header;
@@ -762,8 +762,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid();     // compute grid model from bead model
       int calc_hydro();
 
-      int calc_iqq(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute iqq curve
-      int calc_prr(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute prr curve
+      int calc_iqq( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute iqq curve
+      int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve
       void select_save_params();
       void show_saxs_options();
       void show_bd_options();
@@ -791,8 +791,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void dmd_static_pairs();
 
-      void pdb_saxs( bool create_native_saxs = true );
-      void bead_saxs( bool create_native_saxs = true );
+      void pdb_saxs( bool create_native_saxs = true, bool do_raise = true );
+      void bead_saxs( bool create_native_saxs = true, bool do_raise = true );
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:

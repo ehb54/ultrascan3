@@ -795,6 +795,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 
 void US_Hydrodyn_Cluster_Bfnb_Nsa::load()
 {
+   cout << QDir::current().path();
    QString fn = QFileDialog::getOpenFileName( 
                                               QString::null, 
                                               "*.cluster_bfnb_nsa",

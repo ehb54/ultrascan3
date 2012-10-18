@@ -1883,6 +1883,7 @@ void US_Hydrodyn::load_pdb()
 
 bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
 {
+   cout << QString( "screen pdb display is %1\n" ).arg( display_pdb ? "true" : "false" );
    pdb_file = filename;
 
    if ( QFileInfo(filename).fileName().contains(" ") )
@@ -3777,21 +3778,21 @@ void US_Hydrodyn::clear_display()
    display_default_differences();
 }
 
-int US_Hydrodyn::calc_iqq( bool bead_model, bool create_native_saxs )
+int US_Hydrodyn::calc_iqq( bool bead_model, bool create_native_saxs, bool do_raise )
 {
-   bead_model ? bead_saxs( create_native_saxs ) : pdb_saxs( create_native_saxs );
+   bead_model ? bead_saxs( create_native_saxs, do_raise ) : pdb_saxs( create_native_saxs, do_raise );
    saxs_plot_window->show_plot_saxs_sans();
    return 0;
 }
 
-int US_Hydrodyn::calc_prr( bool bead_model, bool create_native_saxs )
+int US_Hydrodyn::calc_prr( bool bead_model, bool create_native_saxs, bool do_raise )
 {
-   bead_model ? bead_saxs( create_native_saxs ) : pdb_saxs( create_native_saxs );
+   bead_model ? bead_saxs( create_native_saxs, do_raise ) : pdb_saxs( create_native_saxs, do_raise );
    saxs_plot_window->show_plot_pr();
    return 0;
 }
 
-void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
+void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
 {
    //   cout << QString("ext %1 sans_sans %2 curve %3\n")
    //      .arg(saxs_sans_ext())
@@ -3877,7 +3878,10 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
                                    0,
                                    create_native_saxs
                                    );
-         saxs_plot_window->raise();
+         if ( do_raise )
+         {
+            saxs_plot_window->raise();
+         }
       }
       else
       {
@@ -3898,12 +3902,13 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
                                                  0
                                                  );
          fixWinButtons( saxs_plot_window );
+         // always show
          saxs_plot_window->show();
       }
    }
 }
 
-void US_Hydrodyn::bead_saxs( bool create_native_saxs )
+void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
 {
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -4002,7 +4007,10 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
                                    1,
                                    create_native_saxs
                                    );
-         saxs_plot_window->raise();
+         if ( do_raise )
+         {
+            saxs_plot_window->raise();
+         }
       }
       else
       {
@@ -4023,6 +4031,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
                                                  0
                                                  );
          fixWinButtons( saxs_plot_window );
+         // always show
          saxs_plot_window->show();
       }
    }

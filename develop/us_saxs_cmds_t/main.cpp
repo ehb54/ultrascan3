@@ -1895,6 +1895,24 @@ int main (int argc, char **argv)
       US_Multi_Column result_linear_join;
 
       if ( 
+          !mc1_asc.write( "", true ) ||
+          !mc1_des.write( "", true ) ||
+          !mc2_asc.write( "", true ) ||
+          !mc2_des.write( "", true ) ||
+          !mc1_asc_mono.write( "", true ) ||
+          !mc1_des_mono.write( "", true ) ||
+          !mc2_asc_mono.write( "", true ) ||
+          !mc2_des_mono.write( "", true ) ||
+          !mc1_mono_joined.write( "", true ) ||
+          !mc2_mono_joined.write( "", true ) )
+      {
+         cout << mc1.errormsg << endl;
+         cout << mc2.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      if ( 
           !result_linear_asc.linear( mc1_asc,
                                      mc2_asc_mono,
                                      dep1,
@@ -1920,16 +1938,6 @@ int main (int argc, char **argv)
       errorbase--;
 
       if ( 
-          !mc1_asc.write( "", true ) ||
-          !mc1_des.write( "", true ) ||
-          !mc2_asc.write( "", true ) ||
-          !mc2_des.write( "", true ) ||
-          !mc1_asc_mono.write( "", true ) ||
-          !mc1_des_mono.write( "", true ) ||
-          !mc2_asc_mono.write( "", true ) ||
-          !mc2_des_mono.write( "", true ) ||
-          !mc1_mono_joined.write( "", true ) ||
-          !mc2_mono_joined.write( "", true ) ||
           // !result_spline_asc.write( "", true ) ||
           // !result_spline_des.write( "", true ) ||
           // !result_spline_join.write( "", true ) ||

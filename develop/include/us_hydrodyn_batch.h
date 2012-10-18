@@ -18,6 +18,7 @@
 #include <qprinter.h>
 #include <qlistbox.h>
 #include <qdragobject.h>
+#include <qwidgetstack.h>
 
 #include "us_util.h"
 #include "us_hydrodyn_comparative.h"
@@ -148,6 +149,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_select_save_params;
       QPushButton   *pb_start;
       QProgressBar  *progress;
+      QWidgetStack  *ws_progress2;
+      QLabel        *lbl_progress2;
+      QProgressBar  *progress2;
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;

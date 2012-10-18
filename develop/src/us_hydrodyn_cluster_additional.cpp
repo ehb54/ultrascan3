@@ -291,6 +291,7 @@ void US_Hydrodyn_Cluster_Additional::set_bfnb_nsa()
 
 void US_Hydrodyn_Cluster_Additional::bfnb_nsa()
 {
+   cout << QString( "current load save path %1\n" ).arg( load_save_path );
    map < QString, QString > parameters;
    if ( options_selected.count( "bfnb_nsa" ) )
    {
