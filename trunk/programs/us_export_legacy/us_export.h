@@ -90,6 +90,11 @@ class US_ExportLegacy : public US_Widgets
       double  time_correction ( void ) const;
       void    rDataStrings    ( US_DataIO2::RawData*,
                                 QString&, QString&, QString&, QString& );
+
+      int     getRIProfile       ( QVector< double >& );
+      void    convertToIntensity ( QVector< double >& );
+      void    parseRIProfile     ( QString&, QVector< double >& );
+
       void help               ( void )
       { showHelp.show_help( "export_legacy.html" ); };
 

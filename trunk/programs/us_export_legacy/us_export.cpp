@@ -222,6 +222,66 @@ void US_ExportLegacy::load( void )
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT(   new_triple(        int ) ) );
 
+   if ( rawDtype == "RI" )
+   {  // Possibly convert Pseudo Absorbance to Intensity
+      QVector< double > RIProfile;
+      QMessageBox msgBox( this );
+      msgBox.setTextFormat   ( Qt::RichText );
+
+      // Get any RI Profile
+      int nrip = getRIProfile( RIProfile );
+
+      if ( nrip == 0 )
+      { // No RI Profile:  export RA
+         msgBox.setWindowTitle  ( tr( "RA Export Type" ) );
+         QString mtxt = tr( "The input is <b>RI</b> data,<br>&nbsp;&nbsp;"
+                            "but <b>no RI Profile</b> exists!<br><br>"
+                            "So, <b>Pseudo Absorbance (RA)</b><br>&nbsp;&nbsp;"
+                            "data will be exported." );
+         msgBox.setText         ( mtxt );
+         msgBox.addButton       ( QMessageBox::Ok );
+         msgBox.exec();
+         rawDtype = "RA";
+      }
+
+      else
+      { // RI Profile exists:  ask user RA/RI preference
+         QString ybtn = tr( "Absorbance" );
+         QString nbtn = tr( "Intensity" );
+         QString mtxt = tr( "For <b>RI</b> data, you may export values as<br>"
+                            "<b>Intensity</b> or "
+                            "<b>Pseudo Absorbance</b>.<br><br>"
+                            "Which export type do you want?" );
+         msgBox.setWindowTitle  ( tr( "RI Export Type" ) );
+         msgBox.setText         ( mtxt );
+         QPushButton* pb_abs = msgBox.addButton( ybtn, QMessageBox::YesRole );
+         msgBox.addButton       ( nbtn, QMessageBox::NoRole  );
+         msgBox.setDefaultButton( pb_abs );
+         msgBox.exec();
+
+         if ( msgBox.clickedButton() == pb_abs )
+         { // RA chosen:  no conversion necessary
+DbgLv(1) << "RI Export: YES : Absorbance";
+            rawDtype = "RA";
+         }
+
+         else
+         { // RI chosen:  convert data to Intensity
+DbgLv(1) << "RI Export: NO  : Intensity";
+            convertToIntensity( RIProfile );
+         }
+      }
+
+      if ( rawDtype == "RA" )
+      { // Export type changed to RA:  modify data headers
+         for ( int kk = 0; kk < rawList.size(); kk++ )
+         {
+            rawList[ kk ].type[ 1 ] = 'A';
+         }
+      }
+   }
+DbgLv(1) << "Chosen/Forced export rawDtype" << rawDtype;
+
    dataLoaded = true;
 
    update( 0 );
@@ -325,7 +385,8 @@ void US_ExportLegacy::data_plot( void )
 // Save the report and image data
 void US_ExportLegacy::export_data( void )
 {
-   rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
+   QString rawDtyp2;
+   rDataStrings( rdata, rawDtyp2, rawCell, rawChann, rawWaveln );
    QStringList files;
    QString     legadir( US_Settings::dataDir() + "/legacy" );
 
@@ -409,12 +470,35 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    int     nscan    = rdata->scanData.size();
    int     nvalu    = rdata->x.size();
    QString fext     = "." + rawDtype + QString::number( hcell );
+   bool    channdir = false;
+
+   if ( htype == "R" )
+   { // For RA, determine if pseudo absorbance needing channel subdirectories
+      for ( int drow = 0; drow < ntriples; drow++ )
+      {
+         QString chann  = triples[ drow ].section( "/", 1, 1 ).simplified();
+DbgLv(1) << " drow chann" << drow << chann;
+         if ( chann != "A" )
+         {
+            channdir   = true;
+            break;
+         }
+      }
+   }
 
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];               // Current data
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
+
+      if ( channdir )
+      { // For pseudo absorbance, output to channel subdirectory
+         QString chann    = triples[ drow ].section( "/", 1, 1 ).simplified();
+         QString odirchan = runID + "_channel" + chann;
+         odirname         = legadir + "/" + odirchan + "/";
+         mkdir( legadir, odirchan );
+      }
 
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
@@ -945,5 +1029,106 @@ double US_ExportLegacy::time_correction() const
    US_Matrix::lsfit( c, x, y, count, 2 );
 
    return c[ 0 ]; // Return the time value corresponding to zero omega2t
+}
+
+// Get RI Profile if it exists
+int US_ExportLegacy::getRIProfile( QVector< double >& RIProfile )
+{
+   QString ripxml;
+   bool    isDB  = dkdb_cntrls->db();
+   runID         = workingDir.section( "/", -1, -1 );
+
+   if ( isDB )
+   {  // Data from DB:  get any RIProfile from experiment record
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      QStringList query;
+      query << "get_experiment_info_by_runID"
+            << runID
+            << QString::number( US_Settings::us_inv_ID() );
+      db.query( query );
+      if ( db.lastErrno() == US_DB2::NOROWS )
+         return 0;
+      db.next();
+      ripxml   = db.value( 16 ).toString();
+   }
+
+   else
+   {  // Data local:  read in any RIProfile from an XML file
+      QString filename = workingDir + "/" + runID + ".RIProfile.xml";
+
+      QFile fi( filename );
+
+      if ( !fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         return 0;
+
+      ripxml  = fi.readAll();
+      fi.close();
+   }
+
+   if ( ripxml.isEmpty() )
+      return 0;
+
+   parseRIProfile( ripxml, RIProfile );
+
+   return RIProfile.size();
+}
+
+// Convert pseudo absorbance to intensity if RIProfile exists
+void US_ExportLegacy::convertToIntensity( QVector< double >& RIProfile )
+{
+   int ntriples = rawList.size();
+   int lrip     = RIProfile.size() - 1;
+   if ( lrip < 0 )
+      return;
+DbgLv(1) << "CnvPA: ntrip lrip" << ntriples << lrip;
+
+   for ( int kk = 0; kk < ntriples; kk++ )
+   { // Loop to convert each data set to Intensity
+      rdata            = &rawList[ kk ];
+      scanCount        = rdata->scanData.size();
+      valueCount       = rdata->x.size();
+DbgLv(1) << "CnvPA:  kk scns vals" << kk << scanCount << valueCount;
+
+      for ( int ii = 0; ii < scanCount; ii++ )
+      { // Convert each scan using a RIProfile term
+         US_DataIO2::Scan* rscan = &rdata->scanData[ ii ];
+         double rip    = RIProfile[ qMin( ii, lrip ) ];
+DbgLv(1) << "CnvPA:   ii rip" << ii << rip;
+DbgLv(1) << "CnvPA:    aval0" << rscan->readings[0].value
+ << "pow" << pow(10.0,rscan->readings[0].value);
+
+         for ( int jj = 0; jj < valueCount; jj++ )
+         {
+            double aval                 = rscan->readings[ jj ].value;
+            rscan->readings[ jj ].value = rip / pow( 10.0, aval );
+         }
+DbgLv(1) << "CnvPA:    ival0" << rscan->readings[0].value;
+      }
+   }
+}
+
+// Parse RI Profile values from XML
+void US_ExportLegacy::parseRIProfile( QString& ripxml,
+                                      QVector< double >& RIProfile )
+{
+   RIProfile.clear();
+   QXmlStreamReader xml( ripxml );
+   QXmlStreamAttributes atts;
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement()  &&  xml.name() == "RI" )
+      {
+         atts   = xml.attributes();
+         RIProfile << atts.value( "value" ).toString().toDouble();
+      }
+   }
+int nprof=RIProfile.size();
+DbgLv(1) << "ParsRIProf: nprof" << RIProfile.size();
+if(nprof>0) DbgLv(1) << "ParsRIProf: RIP0" << RIProfile[0];
+if(nprof>1) DbgLv(1) << "ParsRIProf: RIPn" << RIProfile[nprof-1];
 }
 
