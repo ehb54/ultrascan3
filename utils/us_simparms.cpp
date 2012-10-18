@@ -55,16 +55,21 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 {
    SpeedProfile sp;
 
-   int    scanCount    = editdata.scanData.size();
-   double time1        = editdata.scanData[ 0 ].seconds;
-   double time2        = editdata.scanData[ 0 ].seconds;
-   double rpm          = editdata.scanData[ 0 ].rpm;
-   double rpmnext      = rpm;
-   int    jj           = 0;
-   int    cp_id        = 1;
-   int    ch           = QString( "ABCDEFGH" ).indexOf( editdata.channel );
-//qDebug() << "SP:iFD: ch" << ch << editdata.channel;
-          ch           = ( ch < 0 ) ? 0 : ( ch / 2 );
+   int     scanCount   = editdata.scanData.size();
+   double  time1       = editdata.scanData[ 0 ].seconds;
+   double  time2       = editdata.scanData[ 0 ].seconds;
+   double  rpm         = editdata.scanData[ 0 ].rpm;
+   double  rpmnext     = rpm;
+   int     jj          = 0;
+   int     cp_id       = 0;
+   QString channel     = editdata.channel;
+   int     ch          = QString( "ABCDEFGH" ).indexOf( channel );
+           ch          = qMax( 0, ch );
+   int     iechan      = ch + 1;
+           ch         /= 2;
+//qDebug() << "SP:iFD: ch" << ch << editdata.channel << iechan;
+   QString ecell       = editdata.cell;
+   int     iecell      = ecell.toInt();
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
@@ -74,6 +79,9 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {  // If experiment/run file exists, get calibration,centerpiece IDs from it
       QXmlStreamReader xml( &file );
+      int dcp_id       = 0;
+      int dcell        = 0;
+      QString dchan    = "";
 
       while ( ! xml.atEnd() )
       {
@@ -82,19 +90,33 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          if ( xml.isStartElement()  &&  xml.name() == "calibration" )
          {  // Pick up rotor calibration ID from  <calibration ... id=...
             QXmlStreamAttributes a = xml.attributes();
-            rotorCalID       = a.value( "id"     ).toString();
-            rotorcoeffs[ 0 ] = a.value( "coeff1" ).toString().toDouble();
-            rotorcoeffs[ 1 ] = a.value( "coeff2" ).toString().toDouble();
+            rotorCalID       = a.value( "id"      ).toString();
+            rotorcoeffs[ 0 ] = a.value( "coeff1"  ).toString().toDouble();
+            rotorcoeffs[ 1 ] = a.value( "coeff2"  ).toString().toDouble();
+         }
+
+         if ( xml.isStartElement()  &&  xml.name() == "dataset" )
+         {  // Pick up cell and channel for comparison
+            QXmlStreamAttributes a = xml.attributes();
+            dcell            = a.value( "cell"    ).toString().toInt();
+            dchan            = a.value( "channel" ).toString();
          }
 
          if ( xml.isStartElement()  &&  xml.name() == "centerpiece" )
          {  // Pick up centerpiece ID from  <centerpiece ... id=...
             QXmlStreamAttributes a = xml.attributes();
-            cp_id            = a.value( "id"     ).toString().toInt();
+            dcp_id           = a.value( "id"      ).toString().toInt();
+            if ( dcell == iecell  &&  dchan == channel )
+            { // If cell,channel match edit, pick up CpID
+               cp_id            = dcp_id;
+            }
          }
       }
 
       file.close();
+
+      if ( cp_id == 0 )    // If no cell,chan match; use last CP ID
+         cp_id            = dcp_id;
    }
 //qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
 
@@ -192,9 +214,12 @@ void US_SimulationParameters::initFromData( US_DB2* db,
             db->query( query );
             while ( db->next() )
             {
+               int cell     = db->value( 2 ).toInt();
+               int ichan    = db->value( 3 ).toInt();
                int cellCpId = db->value( 4 ).toInt();
-               if ( cellCpId > 0 )
-               {
+
+               if ( cellCpId > 0  &&  cell == iecell  &&  ichan == iechan )
+               { // Valid CpID with cell,channel matching edit
                   cp_id        = cellCpId;
                   break;
                }
