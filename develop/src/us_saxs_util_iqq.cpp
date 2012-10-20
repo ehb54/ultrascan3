@@ -142,10 +142,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "asacalculation|"
                       "asastep|"
                       "hydrate|"
+                      "hydratealt|"
+                      "hydraterevasa|"
                       "saxsfile|"
                       "fffile|"
                       "testingff|"
                       "hydrationscd|"
+                      "hydrationrscd|"
                       "saxs|"
                       "iqmethod|"
                       "iqcuda|"
@@ -340,6 +343,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "saxsfile|"
                       "fffile|"
                       "hydrationscd|"
+                      "hydrationrscd|"
                       "iqmethod|"
                       "fdbinsize|"
                       "fdmodulation|"
@@ -630,7 +634,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          {
             cout << noticemsg;
          }
-      }         
+      }
 
       if ( option == "hydrate" )
       {
@@ -771,6 +775,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "inputfile" )
       {
+         cout << "inputfile\n" << flush;
          // restating inputfile clears the previous dmd run files
          output_dmd_pdbs.clear();
          // read pdb, needs residue file
@@ -787,10 +792,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
          misc_pb_rule_on = control_parameters.count( "pbruleon" ) != 0;
 
+         cout << "inputfile 0\n" << flush;
+         setup_saxs_options();
+         cout << "inputfile 1\n" << flush;
+
          if ( !read_pdb( qsl[ 0 ] ) )
          {
             return false;
          }
+         cout << "inputfile 2\n" << flush;
          if ( !noticemsg.isEmpty() )
          {
             cout << noticemsg << endl;

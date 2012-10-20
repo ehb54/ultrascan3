@@ -678,6 +678,8 @@ void US_Hydrodyn_Cluster::create_pkg()
          QString( "HydrationFile   %1\n" ).arg( common_prefix + QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
       base += 
          QString( "HydrationSCD    %1\n" ).arg( our_saxs_options->steric_clash_distance );
+      base += 
+         QString( "HydrationRSCD   %1\n" ).arg( our_saxs_options->steric_clash_recheck_distance );
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
 
@@ -986,6 +988,14 @@ void US_Hydrodyn_Cluster::create_pkg()
       if ( !batch_window->cb_dmd->isChecked()
            && batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
+         if ( our_saxs_options->alt_hydration )
+         {
+            out += "HydrateAlt\n";
+         }
+         if ( our_saxs_options->hydration_rev_asa )
+         {
+            out += "HydrateRevASA\n";
+         }
          out += "Hydrate\n";
          use_output_name += "-h";
       }
@@ -2045,6 +2055,14 @@ QString US_Hydrodyn_Cluster::dmd_file_addition( QString inputfile,
       }
       if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
       {
+         if ( our_saxs_options->alt_hydration )
+         {
+            out += "HydrateAlt\n";
+         }
+         if ( our_saxs_options->hydration_rev_asa )
+         {
+            out += "HydrateRevASA\n";
+         }
          out += "Hydrate\n";
       }
       if ( batch_window->cb_iqq->isChecked() )
@@ -3296,6 +3314,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
          QString( "HydrationFile   %1\n" ).arg( QFileInfo( our_saxs_options->default_rotamer_filename ).fileName() );
       base += 
          QString( "HydrationSCD    %1\n" ).arg( our_saxs_options->steric_clash_distance );
+      base += 
+         QString( "HydrationRSCD   %1\n" ).arg( our_saxs_options->steric_clash_recheck_distance );
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
 

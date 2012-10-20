@@ -576,6 +576,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
                { // if true, we have new residue and need to add it to the residue vector
                   temp_model.residue.push_back(current_residue); // add the next residue of this model
                }
+               temp_chain.atom.back().model_residue_pos = temp_model.residue.size() - 1;
             }
          }
       }
@@ -616,6 +617,10 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
    model_vector_as_loaded = model_vector;
    // cout << list_chainIDs(model_vector);
    // cout << list_chainIDs(model_vector_as_loaded);
+   if ( !calc_mw() )
+   {
+      return false;
+   }
    return true;
 }
 
@@ -623,6 +628,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
 {
    errormsg = "";
    noticemsg = "";
+   cout << QString( "read pdb <%1>\n" ).arg( filename );
 
    if ( misc_pb_rule_on )
    {
@@ -784,6 +790,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
                   { // if true, we have new residue and need to add it to the residue vector
                      temp_model.residue.push_back(current_residue); // add the next residue of this model
                   }
+                  temp_chain.atom.back().model_residue_pos = temp_model.residue.size() - 1;
                }
             }
          }
@@ -831,6 +838,10 @@ bool US_Saxs_Util::read_pdb( QString filename )
    model_vector_as_loaded = model_vector;
    // cout << list_chainIDs(model_vector);
    // cout << list_chainIDs(model_vector_as_loaded);
+   if ( !calc_mw() )
+   {
+      return false;
+   }
    return true;
 }
 
@@ -1030,4 +1041,227 @@ void US_Saxs_Util::clear_temp_chain( PDB_chain *temp_chain ) // clear all the me
    (*temp_chain).atom.clear();
    (*temp_chain).chainID = "";
    (*temp_chain).segID = "";
+}
+
+float US_Saxs_Util::mw_to_volume( float mw , float vbar )
+{
+   return 
+      mw * vbar * 1e24 / AVOGADRO;
+      ;
+}
+
+bool US_Saxs_Util::calc_mw() 
+{
+   // cout << list_chainIDs(model_vector);
+
+   unsigned int save_current_model = current_model;
+   // QString error_string;
+
+   last_pdb_load_calc_mw_msg.clear();
+
+   US_Saxs_Util usu;
+   bool do_excl_vol = true;
+   if ( !control_parameters.count( "saxsfile" ) ||
+        !control_parameters.count( "hybridfile" ) ||
+        !control_parameters.count( "atomfile" ) )
+   {
+      errormsg = "calc_mw(): requires saxfile, hybridfile & atomfile defined";
+      do_excl_vol = false;
+      return false;
+   }
+
+   for (unsigned int i = 0; i < model_vector.size(); i++)
+   {
+      //       editor->append( QString( "\nModel: %1 vbar %2 cm^3/g\n" )
+      //                       .arg( model_vector[i].model_id )
+      //                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+                     
+      current_model = i;
+
+      model_vector[i].mw         = 0.0;
+      double tot_excl_vol        = 0.0;
+      double tot_scaled_excl_vol = 0.0;
+      unsigned int total_e       = 0;
+      // unsigned int total_e_noh   = 0;
+      point cm;
+      cm.axis[ 0 ] = 0.0;
+      cm.axis[ 1 ] = 0.0;
+      cm.axis[ 2 ] = 0.0;
+      double total_cm_mw = 0e0;
+
+      
+      if ( !create_beads() )
+      {
+         return false;
+      }
+
+      // if( !error_string.length() ) 
+      {
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+         {
+            double chain_excl_vol          = 0.0;
+            double chain_scaled_excl_vol   = 0.0;
+            model_vector[i].molecule[j].mw = 0.0;
+            unsigned int chain_total_e     = 0;
+            unsigned int chain_total_e_noh = 0;
+
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+            {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if(this_atom->active) {
+                  // printf("model %u chain %u atom %u mw %g\n",
+                  //       i, j, k, this_atom->mw);
+                  if ( this_atom->resName != "SWH" )
+                  {
+                     model_vector[i].mw += this_atom->mw;
+                     cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
+                     cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
+                     cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
+                     total_cm_mw += this_atom->mw;
+                  }
+
+                  model_vector[i].molecule[j].mw += this_atom->mw;
+                  if ( do_excl_vol )
+                  {
+                     double excl_vol;
+                     double scaled_excl_vol;
+                     unsigned int this_e;
+                     unsigned int this_e_noh;
+                     if ( !set_excluded_volume( *this_atom, 
+                                               excl_vol, 
+                                               scaled_excl_vol, 
+                                               our_saxs_options, 
+                                               residue_atom_hybrid_map,
+                                               this_e,
+                                               this_e_noh ) )
+                     {
+                        return false;
+                     } else {
+                        chain_excl_vol        += excl_vol;
+                        chain_scaled_excl_vol += scaled_excl_vol;
+                        chain_total_e         += this_e;
+                        chain_total_e_noh     += this_e_noh;
+
+                        if ( this_atom->resName != "SWH" )
+                        {
+                           tot_excl_vol          += excl_vol;
+                           tot_scaled_excl_vol   += scaled_excl_vol;
+                           total_e               += this_e;
+                        }
+                     }
+                  }
+               }
+            }
+            // printf("model %u chain %u mw %g\n",
+            //i, j, model_vector[i].molecule[j].mw);
+            if (model_vector[i].molecule[j].mw != 0.0 )
+            {
+               QString qs = 
+                  QString( "\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5" )
+                          .arg(model_vector[i].model_id)
+                          .arg(model_vector[i].molecule[j].chainID)
+                          .arg(model_vector[i].molecule[j].mw)
+                          .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
+                          .arg( do_excl_vol ?
+                                QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+                                .arg( chain_excl_vol )
+                                .arg( chain_excl_vol != chain_scaled_excl_vol ?
+                                      QString(", scaled atomic volume %1 A^2")
+                                      .arg( chain_scaled_excl_vol )
+                                      :
+                                      ""
+                                      )
+                                .arg( chain_total_e / chain_excl_vol )
+                                :
+                                ""
+                                )
+                  ;
+               cout << qs << endl << flush;
+               last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
+            }
+         }
+         
+         cm.axis[ 0 ] /= total_cm_mw;
+         cm.axis[ 1 ] /= total_cm_mw;
+         cm.axis[ 2 ] /= total_cm_mw;
+
+         // now compute Rg
+         double Rg2 = 0e0;
+         
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+         {
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+            {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if( this_atom->active ) 
+               {
+                  //       i, j, k, this_atom->mw);
+                  if ( this_atom->resName != "SWH" )
+                  {
+                     Rg2 += this_atom->mw * 
+                        ( 
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                         );
+                  }
+               }
+            }
+         }
+
+         double Rg = sqrt( Rg2 / total_cm_mw );
+         QString qs =  QString( "\nModel %1 Rg: %2 nm" )
+            .arg( model_vector[ i ].model_id )
+            .arg( Rg / 10.0, 0, 'f', 2 );
+
+         // editor->append( qs );
+         cout << qs << endl << flush;
+         last_pdb_load_calc_mw_msg << qs;
+      }
+
+      if ( model_vector_as_loaded.size() > i )
+      {
+         model_vector_as_loaded[ i ].mw = model_vector[i].mw;
+      }
+      {
+         QString qs = 
+            QString( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" )
+            .arg(model_vector[i].model_id)
+            .arg(model_vector[i].mw )
+            .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+            .arg( do_excl_vol ?
+                  QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+                  .arg( tot_excl_vol )
+                  .arg( tot_excl_vol != tot_scaled_excl_vol ?
+                        QString(", scaled atomic volume %1 A^2")
+                        .arg( tot_scaled_excl_vol )
+                        :
+                        ""
+                        )
+                  .arg( total_e / tot_excl_vol )
+                  :
+                  ""
+                  );
+         // editor->append( qs );
+         cout << qs << endl << flush;
+         last_pdb_load_calc_mw_msg << qs;
+      }
+
+      // put this back!
+      //       if ( do_excl_vol && misc.set_target_on_load_pdb )
+      //       {
+      //          misc.target_e_density = total_e / tot_excl_vol;
+      //          misc.target_volume = tot_excl_vol;
+      //          cout << "Target excluded volume and electron density set\n";
+      //       }
+
+      // printf("model %u  mw %g\n",
+      //       i, model_vector[i].mw);
+   }
+
+   current_model = save_current_model;
+   return true;
 }

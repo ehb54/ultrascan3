@@ -1572,7 +1572,7 @@ bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
    {
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -2911,7 +2911,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
    {
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -2986,14 +2986,14 @@ bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
    {
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
       // for each entry in pointmap_atoms_ref_residue
       if ( !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "internal error: could not find rotamer for pointmap key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find rotamer for pointmap key %1" ) ).arg( it->first );
          return false;
       }
 
@@ -3291,7 +3291,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
       // add a waters for each pointmap for this residue
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -3299,7 +3299,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -3307,7 +3307,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -3320,7 +3320,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 
          if ( it->second[ i ].residue != pointmap_atoms_ref_residue[ resName ][ i ] )
          {
-            error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+            error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                .arg( it->first )
                .arg( i )
                .arg( it->second[ i ].residue )
@@ -3335,7 +3335,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          
          if ( p1.size() != p2.size() )
          {
-            error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+            error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                .arg( it->first )
                .arg( i )
                .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -3401,7 +3401,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             {
                count_waters_added++;
                waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
-               waters_source [ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
+               waters_source[ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
             } else {
                count_waters_not_added++;
             }
@@ -4436,7 +4436,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       // add waters for each pointmap for this residue
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -4444,7 +4444,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4452,7 +4452,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4479,7 +4479,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             // no multiple rotated rotamers
             if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
             {
-               error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                   .arg( it->first )
                   .arg( i )
                   .arg( ref_rotamer.residue )
@@ -4494,7 +4494,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
             if ( p1.size() != p2.size() )
             {
-               error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                   .arg( it->first )
                   .arg( i )
                   .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -4565,7 +4565,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                {
                   count_waters_added++;
                   waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
-                  waters_source [ it->first ].push_back( QString( "PM:%1" ).arg( ref_rotamer.name ) );
+                  waters_source[ it->first ].push_back( QString( "PM:%1" ).arg( ref_rotamer.name ) );
                } else {
                   count_waters_not_added++;
                }
@@ -4608,7 +4608,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       // add waters for each pointmap for this residue
       if ( rx_expand_mapkey.search( it->first ) == -1 )
       {
-         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -4616,7 +4616,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4624,7 +4624,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4658,7 +4658,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                {
-                  error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( it->first )
                      .arg( i )
                      .arg( ref_rotamer.residue )
@@ -4673,7 +4673,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
                if ( p1.size() != p2.size() )
                {
-                  error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( it->first )
                      .arg( i )
                      .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -5017,7 +5017,6 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    puts("Done transforming waters to add to pdb coordinates");
    return true;
 }
-#endif
 
 bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet */ )
 {
@@ -5258,6 +5257,8 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
 
    return true;
 }
+#endif
+
 
 // new way
 class sortable_float_qs {
@@ -5407,7 +5408,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   if ( best_fit.water_positioning_atoms[ ii ].size() !=
                        this_ref_rotamer.water_positioning_atoms[ 0 ].size() )
                   {
-                     error_msg = QString( tr( "internal error: best fit waters count %1 does not match reference %2" ) )
+                     error_msg = QString( tr( "Internal error: best fit waters count %1 does not match reference %2" ) )
                         .arg( best_fit.water_positioning_atoms[ ii ].size() )
                         .arg( this_ref_rotamer.water_positioning_atoms[ 0 ].size() )
                         ;
@@ -5560,7 +5561,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          // add waters for each pointmap for this residue
          if ( rx_expand_mapkey.search( this_residue ) == -1 )
          {
-            error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( this_residue );
+            error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
             return false;
          }
          QString resName = rx_expand_mapkey.cap( 1 );
@@ -5568,7 +5569,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
               !pointmap_atoms_dest.count( resName ) ||
               !pointmap_atoms_ref_residue.count( resName ) )
          {
-            error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( this_residue );
+            error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( this_residue );
             return false;
          }
          
@@ -5576,7 +5577,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
               pointmap_rotamers[ this_residue ].size() != pointmap_atoms_dest[ resName ].size() ||
               pointmap_rotamers[ this_residue ].size() != pointmap_atoms_ref_residue[ resName ].size() )
          {
-            error_msg = QString( tr( "internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( this_residue );
+            error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( this_residue );
             return false;
          }
          
@@ -5601,7 +5602,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( rx_expand_mapkey.search( this_residue ) == -1 )
                {
-                  error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( this_residue );
+                  error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
                   return false;
                }
 
@@ -5611,7 +5612,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                     !pointmap_atoms_dest.count( resName ) ||
                     !pointmap_atoms_ref_residue.count( resName ) )
                {
-                  error_msg = QString( tr( "internal error: could not find pointmap entries for residue of key %1" ) ).arg( resName );
+                  error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( resName );
                   return false;
                }
          
@@ -5628,7 +5629,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                   if ( this_ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                   {
-                     error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                     error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                         .arg( this_residue )
                         .arg( i )
                         .arg( this_ref_rotamer.residue )
@@ -5643,7 +5644,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   
                   if ( p1.size() != p2.size() )
                   {
-                     error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                     error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                         .arg( this_residue )
                         .arg( i )
                         .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -5746,7 +5747,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                {
-                  error_msg = QString( tr( "internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( this_residue )
                      .arg( i )
                      .arg( ref_rotamer.residue )
@@ -5761,7 +5762,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
                if ( p1.size() != p2.size() )
                {
-                  error_msg = QString( tr( "internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( this_residue )
                      .arg( i )
                      .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -5835,7 +5836,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                         .arg( ref_rotamer.name );
                      count_waters_added++;
                      waters_to_add[ this_residue ].push_back( new_waters[ 0 ] );
-                     waters_source [ this_residue ].push_back( QString( "PM:%1" ).arg( ref_rotamer.name ) );
+                     waters_source[ this_residue ].push_back( QString( "PM:%1" ).arg( ref_rotamer.name ) );
                   } else {
                      cout << QString( "Notice: pointmap for %1 has no rotated rotamers and has a clash\n" )
                         .arg( ref_rotamer.name );

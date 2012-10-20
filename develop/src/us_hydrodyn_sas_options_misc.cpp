@@ -572,6 +572,17 @@ void US_Hydrodyn_SasOptionsMisc::update_swh_excl_vol( const QString &str )
 void US_Hydrodyn_SasOptionsMisc::set_use_iq_target_ev()
 {
    (*saxs_options).use_iq_target_ev = cb_use_iq_target_ev->isChecked();
+   if ( !cb_use_iq_target_ev->isChecked() && 
+        (*saxs_options).scale_excl_vol != 1.0f )
+   {
+      QMessageBox::information( this,
+                                tr("US-SOMO SAS Miscellaneous Options - Reset target scaling"), 
+                                QString( tr( "The Excluded Volume Scaling which was %1 has been reset to 1.0" ) )
+                                .arg( (*saxs_options).scale_excl_vol )
+                                );
+      cnt_scale_excl_vol->setValue( 1e0 );
+      update_scale_excl_vol( 1e0 );
+   }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

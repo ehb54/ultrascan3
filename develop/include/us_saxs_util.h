@@ -899,7 +899,10 @@ class US_EXTERN US_Saxs_Util
       QString      last_pdb_filename;
       QStringList  last_pdb_title;
       QStringList  last_pdb_header;
+      QStringList  last_pdb_load_calc_mw_msg;
+      QStringList  last_steric_clash_log;
       residue      current_residue;
+      bool         calc_mw();
 
       bool set_control_parameters_from_experiment_file( QString filename, bool load_without_interp = false );
       bool validate_control_parameters( bool for_sgp = false );
@@ -931,13 +934,25 @@ class US_EXTERN US_Saxs_Util
       map < QString, vector < QString > >            pointmap_atoms_ref_residue;
 
       map < QString, vector < rotamer > >            rotamers;
+      map < QString, vector < vector < rotamer > > > rotated_rotamers;
       map < QString, map < QString, point > >        to_hydrate;
       map < QString, map < QString, point > >        to_hydrate_pointmaps;
       map < QString, vector < float > >              to_hydrate_dihedrals;
       map < QString, rotamer >                       best_fit_rotamer;
       map < QString, vector < rotamer > >            pointmap_rotamers;
       map < QString, vector < point > >              waters_to_add;
+      map < QString, unsigned int >                  steric_clash_summary;
+      map < QString, bool >                          hydrate_clash_map_structure;
+      map < QString, bool >                          hydrate_clash_map_rtmr_water;
+      map < QString, bool >                          hydrate_clash_map_pm_water;
+      map < QString, vector < QString > >            waters_source;
       map < QString, unsigned int >                  file_write_count;
+
+      map < QString, float >                         residue_asa;
+      map < QString, float >                         residue_asa_sc;
+      map < QString, float >                         residue_asa_mc;
+
+      map < QString, unsigned int >                  hydrate_count;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -993,6 +1008,15 @@ class US_EXTERN US_Saxs_Util
       asa_options  asa;
       unsigned int current_model;
       bool         pdb_hydrate();
+      float        min_dist_to_struct_and_waters( point p );
+      float        min_dist_to_waters( point p );
+      bool         list_steric_clash_recheck();
+      bool         compute_waters_to_add_alt();
+      unsigned int hydrate_max_waters_no_asa;
+      unsigned int count_waters;
+      unsigned int count_waters_added;
+      unsigned int count_waters_not_added;
+      QStringList  hydrate_clash_log;
 
       bool         dmd_strip_pdb();
       bool         dmd_findSS();
@@ -1009,6 +1033,8 @@ class US_EXTERN US_Saxs_Util
       bool         calc_saxs_iq_native_debye_bead_model ();
       bool         calc_saxs_iq_native_hybrid_bead_model();
       bool         run_iqq_bead_model();
+
+      static float mw_to_volume( float mw, float vbar );
 
       // gp stuff
 
