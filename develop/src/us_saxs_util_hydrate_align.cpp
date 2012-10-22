@@ -3,6 +3,7 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+#define DEBUG_ALIGN2
 // #define DEBUG_ALIGN
 
 bool US_Saxs_Util::atom_align( vector < point > transform_from, 
@@ -55,9 +56,19 @@ bool US_Saxs_Util::atom_align( vector < point > transform_from,
       }
    }
 
-#if defined( DEBUG_ALIGN )
-   cout << "center point from " << center_from << endl;
-   cout << "center point to   " << center_to << endl;
+#if defined( DEBUG_ALIGN2 )
+//    puts( "hi there buddy" );
+//    puts( "this really sux" );
+//    printf( "ug me %f %%f %f\n"
+//            , center_from.axis[ 0 ]
+//            , center_from.axis[ 1 ]
+//            , center_from.axis[ 2 ] );
+
+   cout << center_to << endl;
+   
+   // cout << center_from << endl;
+   // cout << "center point from " << center_from << endl;
+   //   cout << "center point to   " << center_to << endl;
 #endif
 
    TNT::Array2D < float > H( 3, 3 );
@@ -81,17 +92,37 @@ bool US_Saxs_Util::atom_align( vector < point > transform_from,
       }
    }
 
+#if defined( DEBUG_ALIGN )
+   puts( "svd\n" );
+   printf( "det H %g\n", det( H ) );
+#endif
    JAMA::SVD < float >    svd( H );
    TNT::Array2D < float > U(3, 3);
    TNT::Array2D < float > V(3, 3);
+#if defined( DEBUG_ALIGN )
+   printf( "iter for svd %s\n", svd.over_iter_limit ? "true" : "no, it's ok" );
+   puts( "getU\n" );
+#endif
    svd.getU( U );
+#if defined( DEBUG_ALIGN )
+   puts( "getV\n" );
+#endif
    svd.getV( V );
 
+#if defined( DEBUG_ALIGN )
+   puts( "transpose\n" );
+#endif
    // the rotation matrix is R = VU^T
    TNT::Array2D < float > UT = transpose( U );
    TNT::Array2D < float > rot(3, 3);
+#if defined( DEBUG_ALIGN )
+   puts( "mat mult\n" );
+#endif
    rot = matmult( V, UT );
 
+#if defined( DEBUG_ALIGN )
+   puts( "check for reflection\n" );
+#endif
    // check for reflection
    if ( det( rot ) < 0) {
       TNT::Array2D < float > VT = transpose( V );

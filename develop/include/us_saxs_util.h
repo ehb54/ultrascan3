@@ -923,6 +923,8 @@ class US_EXTERN US_Saxs_Util
       bool         run_sans_iq_cryson();
       bool         load_saxs( QString );
 
+      bool         compute_scale_excl_vol();
+      QString      scale_excl_vol_msgs;
       // hydration routines
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

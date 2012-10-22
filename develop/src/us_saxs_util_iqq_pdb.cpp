@@ -22,6 +22,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
    // right now we are going with first residue map entry
    QRegExp count_hydrogens("H(\\d)");
    
+   if ( !compute_scale_excl_vol() )
+   {
+      return false;
+   }
+
    for ( unsigned int i = 0; i < model_vector.size(); i++ )
    {
 #if defined(IQQ_TIMER)
@@ -675,6 +680,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
    // right now we are going with first residue map entry
    QRegExp count_hydrogens("H(\\d)");
 
+   if ( !compute_scale_excl_vol() )
+   {
+      return false;
+   }
+
 #if defined(IQQ_TIMER)
    cout << "timer enabled\n";
 #endif
@@ -1145,6 +1155,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
    // right now we are going with first residue map entry
    QRegExp count_hydrogens("H(\\d)");
 
+   if ( !compute_scale_excl_vol() )
+   {
+      return false;
+   }
+
 #if defined(IQQ_TIMER)
    cout << "timer enabled\n";
 #endif
@@ -1303,7 +1318,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
          // editor_msg( "blue", QString( tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            // editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            // editor_msg( "dark red", QString( "Notice: exact q is empty, computing based upon current q range " ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -2134,6 +2149,25 @@ void US_Saxs_Util::setup_saxs_options()
    {
       our_saxs_options.steric_clash_distance = control_parameters[ "hydrationscd" ].toFloat();
    }
+
+   our_saxs_options.iq_target_ev = 0e0;
+   if ( control_parameters.count( "iqtargetev" ) )
+   {
+      our_saxs_options.iq_target_ev = control_parameters[ "iqtargetev" ].toDouble();
+   }
+
+   our_saxs_options.hybrid_radius_excl_vol     = control_parameters.count( "hybridradiusexclvol" ) ? true : false;
+   our_saxs_options.use_iq_target_ev           = control_parameters.count( "useiqtargetev" ) ? true : false;
+   our_saxs_options.set_iq_target_ev_from_vbar = control_parameters.count( "setiqtargetevfromvbar" ) ? true : false;
+
+   if ( control_parameters.count( "prbinsize" ) )
+   {
+      our_saxs_options.bin_size = control_parameters[ "prbinsize" ].toFloat();
+   }
+   if ( control_parameters.count( "prcurve" ) )
+   {
+      our_saxs_options.curve = control_parameters[ "prcurve" ].toInt();
+   }
 }
 
 bool US_Saxs_Util::run_iqq()
@@ -2643,4 +2677,225 @@ QString US_Saxs_Util::list_atom_summary_counts( PDB_model *model,
       qs += QString( "%1 %2\n" ).arg( it->first ).arg( it->second );
    }
    return qs;
+}
+
+bool US_Saxs_Util::compute_scale_excl_vol()
+{
+   errormsg = "";
+   noticemsg = "";
+
+   if ( !our_saxs_options.use_iq_target_ev )
+   {
+      return true;
+   }
+
+   if ( our_saxs_options.set_iq_target_ev_from_vbar )
+   {
+      // really only needs 1st one, as NMR style should all have the same atoms
+      for ( unsigned int i = 0; i < model_vector.size() && i < 1; i++ )
+      {
+         current_model = i;
+         our_saxs_options.iq_target_ev = 0e0;
+         
+         for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+         {
+            bool swh_chain = true;
+            unsigned int swh_count = 0;
+            if ( model_vector[current_model].molecule[j].atom.size() )
+            {
+               for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+               {
+                  PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+                  if ( this_atom->name != "OW" )
+                  {
+                     swh_chain = false;
+                     break;
+                  }
+                  swh_count++;
+               }
+
+               if ( swh_chain )
+               {
+                  if ( our_saxs_options.swh_excl_vol > 0e0 )
+                  {
+                     our_saxs_options.iq_target_ev += our_saxs_options.swh_excl_vol * swh_count;
+                     scale_excl_vol_msgs += 
+                        QString( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" )
+                        .arg( our_saxs_options.swh_excl_vol )
+                        .arg( swh_count )
+                        .arg( our_saxs_options.swh_excl_vol * swh_count );
+                  } else {
+                     QString mapkey = "SWH|OW";
+                     QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                     if ( hybrid_name.isEmpty() || !hybrid_name.length() || !hybrid_map.count( hybrid_name ) 
+                          || !atom_map.count( "OW~" + hybrid_name) )
+                     {
+                        noticemsg += QString("Molecule %1 Residue SWH OW Hybrid/map/atom name missing. Atom skipped.\n")
+                           .arg( j + 1 );
+                        continue;
+                     }
+                     double swh_excl_vol = atom_map["OW~" + hybrid_name].saxs_excl_vol;
+                     our_saxs_options.iq_target_ev += swh_excl_vol * swh_count;
+                     scale_excl_vol_msgs += 
+                        QString( "Adding water to excluded volume using defined excl vol %1 number of waters %2 -> excluded volume %3\n" )
+                        .arg( swh_excl_vol )
+                        .arg( swh_count )
+                        .arg( swh_excl_vol * swh_count );
+                  }
+               } else {
+                  if ( swh_count )
+                  {
+                     errormsg = "a chain with SWH/OW and other residues is currently unsupported\n";
+                     return false;
+                  }
+                  
+                  our_saxs_options.iq_target_ev += mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[i].vbar );
+                  scale_excl_vol_msgs += 
+                              QString( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" )
+                              .arg( model_vector[current_model].molecule[j].mw )
+                              .arg( model_vector[current_model].vbar )
+                              .arg( mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[current_model].vbar ) );
+               }
+            }
+         }
+      }
+   }
+   
+   
+   QString( "Total computed excluded volume: %1\n" ).arg( our_saxs_options.iq_target_ev );
+
+   double tot_excl_vol      = 0e0;
+   double tot_excl_vol_noh  = 0e0;
+   
+   // really only needs 1st one, as NMR style should all have the same atoms
+   for ( unsigned int i = 0; i < model_vector.size() && i < 1; i++ )
+   {
+      current_model = i;
+
+      saxs_atom new_atom;
+
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+      {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+         {
+
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
+            if ( this_atom->name == "OXT" )
+            {
+               mapkey = "OXT|OXT";
+            }
+
+            QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+            if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+            {
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
+               scale_excl_vol_msgs += 
+                  QString( "%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n" )
+                  .arg( this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " " ) )
+                  .arg( j + 1 )
+                  .arg( use_resname )
+                  .arg( this_atom->resSeq )
+                  ;
+               continue;
+            }
+
+            if ( !hybrid_map.count(hybrid_name) )
+            {
+               cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
+               scale_excl_vol_msgs += 
+                  QString( "%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n" )
+                  .arg( this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " " ) )
+                  .arg( j + 1 )
+                  .arg( use_resname )
+                  .arg( this_atom->resSeq )
+                  .arg( hybrid_name )
+                  ;
+               continue;
+            }
+
+            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            {
+               cout << "error: atom_map missing for hybrid_name "
+                    << hybrid_name 
+                    << " atom name "
+                    << this_atom->name
+                    << endl;
+               scale_excl_vol_msgs += 
+                  QString( "%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n" )
+                  .arg( this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " " ) )
+                  .arg( j + 1 )
+                  .arg( this_atom->name )
+                  .arg( use_resname )
+                  .arg( this_atom->resSeq )
+                  .arg( hybrid_name )
+                  ;
+               continue;
+            }
+
+            new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
+            new_atom.hybrid_name = hybrid_name;
+            
+            // this is probably correct but FoXS uses the saxs table excluded volume
+            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options.use_somo_ff )
+            {
+               double this_ev = get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+               }
+            }
+
+            if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options.swh_excl_vol;
+            }
+            if ( our_saxs_options.hybrid_radius_excl_vol )
+            {
+               new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+            }
+            if ( this_atom->name != "OW" )
+            {
+               tot_excl_vol_noh  += new_atom.excl_vol;
+            }
+            new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
+         }
+      }
+   }
+
+
+   // ok, we need to target our_saxs_options.iq_target_ev
+   // noh_:  only includes unscalable 
+   // target = scaler * tot_excl_vol_noh  + ( tot_excl_vol - tot_excl_vol_noh )
+
+   if ( tot_excl_vol_noh > 0e0 )
+   {
+      our_saxs_options.scale_excl_vol =
+         ( our_saxs_options.iq_target_ev - tot_excl_vol + tot_excl_vol_noh ) / tot_excl_vol_noh;
+   } else {
+      our_saxs_options.scale_excl_vol = 1e0;
+   }
+
+   scale_excl_vol_msgs += 
+      QString( "Scaling excluded volume to match target (%1), default scattering center sum without SWH %2, total %3, new scaler = %4" )
+      .arg( our_saxs_options.iq_target_ev )
+      .arg( tot_excl_vol_noh )
+      .arg( tot_excl_vol )
+      .arg( our_saxs_options.scale_excl_vol )
+      ;
+   return true;
 }

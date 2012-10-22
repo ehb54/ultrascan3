@@ -123,15 +123,6 @@ bool US_Saxs_Util::pdb_hydrate()
       our_saxs_options.steric_clash_recheck_distance = control_parameters[ "hydrationrscd" ].toFloat();
    }
 
-   cout << QString(
-                   "asa.hydrate_probe_radius %1\n"
-                   "asa.asab1_step           %2\n"
-                   "asa.threshold_percent    %3\n"
-                   )
-      .arg( control_parameters[ "asahydrateproberadius" ].toFloat() )
-      .arg( control_parameters[ "asastep"               ].toFloat() )
-      .arg( control_parameters[ "asathreshpct"          ].toFloat() );
-
    if ( !missing_required.isEmpty() )
    {
       errormsg = QString( "Error: Hydrate requires prior definition of:%1" )
@@ -174,7 +165,7 @@ bool US_Saxs_Util::pdb_hydrate()
       {
          return false;
       }
-      // cout << list_exposed();
+      cout << list_exposed();
       // view_exposed();
       build_to_hydrate();
       // cout << list_to_hydrate();
@@ -214,6 +205,27 @@ bool US_Saxs_Util::pdb_hydrate()
       }
 
       // cout << list_waters_to_add();
+      {
+         QString out;
+
+         out = "Waters to add:\n";
+         for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+               it != waters_to_add.end();
+               it++ )
+         {
+            out += QString( "%1: " ).arg( it->first );
+            for ( unsigned int i = 0; i < it->second.size(); i++ )
+            {
+               out += QString( " [%1,%2,%3]" )
+                  .arg( it->second[ i ].axis[ 0 ] )
+                  .arg( it->second[ i ].axis[ 1 ] )
+                  .arg( it->second[ i ].axis[ 2 ] )
+                  ;
+            }
+            out += "\n";
+         }
+         cout << out;
+      }
       if ( !buffer_pdb_with_waters() )
       {
          errormsg = "Error trying to write pdb with waters: " + errormsg;
@@ -361,6 +373,19 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
 
       float save_radius = asa.probe_radius;
       asa.probe_radius  = asa.hydrate_probe_radius; 
+      cout << QString(
+                      "asa.hydrate_probe_radius %1\n"
+                      "asa.probe_radius         %2\n"
+                      "asa.asab1_step           %3\n"
+                      "asa.threshold_percent    %4\n"
+                      "misc.pb_rule_on          %5\n"
+                      )
+         .arg( asa.hydrate_probe_radius )
+         .arg( asa.probe_radius )
+         .arg( asa.asab1_step )
+         .arg( asa.threshold_percent )
+         .arg( misc_pb_rule_on ? "yes" : "no" )
+         ;
       int retval = us_saxs_util_asab1_main( active_atoms,
                                             &asa,
                                             &results,
@@ -438,6 +463,13 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
             // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
             // this_atom->bead_positioner = false;
             if (this_atom->active) {
+               cout << QString( "active atom asa %1 %2 %3 %4\n" )
+                  .arg( this_atom->name )
+                  .arg( this_atom->resName )
+                  .arg( this_atom->serial )
+                  .arg( this_atom->asa )
+                  ;
+
                molecular_mw += this_atom->mw;
                for (unsigned int m = 0; m < 3; m++) {
                   molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
@@ -869,6 +901,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                }
                this_atom->visibility = 
                   ( this_atom->bead_asa >= control_parameters[ "asahydratethresh" ].toDouble() );
+
+               cout << QString( "bead_asa %1 %2 %3 %4 %5\n" ).arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ).arg( this_atom->bead_asa ).arg( control_parameters[ "asahydratethresh" ].toDouble() ) ;
 
                if (!create_beads_normally ||
                    this_atom->visibility ||
@@ -2500,7 +2534,6 @@ bool US_Saxs_Util::compute_waters_to_add()
          // get coordinates of 
          p1.resize( it->second.water_positioning_atoms[ i ].size() );
          p2.resize( it->second.water_positioning_atoms[ i ].size() );
-
             
          for ( unsigned int j = 0; j < it->second.water_positioning_atoms[ i ].size(); j++ )
          {
@@ -2549,6 +2582,7 @@ bool US_Saxs_Util::compute_waters_to_add()
             cout << QString( "p0 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second.name );
          } else {
             count_waters_not_added++;
+            cout << QString( "p0 skiping due to clash %1 %2\n" ).arg( it->first ).arg( it->second.name );
          }
       }
    }
@@ -2640,21 +2674,21 @@ bool US_Saxs_Util::compute_waters_to_add()
                   .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                return false;
             }
-            //             cout << QString("mapping: %1 %2 source %3\n")
-            //                .arg(it->first)
-            //                .arg(i)
-            //                .arg(pointmap_atoms[ resName ][ i ][ j ] );
+            cout << QString("z1 mapping: %1 %2 source %3\n")
+               .arg(it->first)
+               .arg(i)
+               .arg(pointmap_atoms[ resName ][ i ][ j ] );
 
             p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
 
-            // cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
-            // .arg( it->second.water_positioning_atoms[ i ][ j ] )
-            // .arg( p1[ j ].axis[ 0 ] )
-            // .arg( p1[ j ].axis[ 1 ] )
-            // .arg( p1[ j ].axis[ 2 ] )
-            // .arg( p2[ j ].axis[ 0 ] )
-            // .arg( p2[ j ].axis[ 1 ] )
-            // .arg( p2[ j ].axis[ 2 ] );
+//             cout << QString( "z1  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+//                .arg( it->second.water_positioning_atoms[ i ][ j ] )
+//                .arg( p1[ j ].axis[ 0 ] )
+//                .arg( p1[ j ].axis[ 1 ] )
+//                .arg( p1[ j ].axis[ 2 ] )
+//                .arg( p2[ j ].axis[ 0 ] )
+//                .arg( p2[ j ].axis[ 1 ] )
+//                .arg( p2[ j ].axis[ 2 ] );
          }
 
          // now we have p1 & p2, apply to all of the waters
@@ -2668,10 +2702,29 @@ bool US_Saxs_Util::compute_waters_to_add()
             vector < point > rotamer_waters;
             rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
             vector < point > new_waters;
+            cout << QString( "aligning: " );
+            for ( unsigned int k = 0; k < p1.size(); k++ )
+            {
+               cout << p1[k] << p2[k] << " ";
+            }
+            cout << endl;
+            cout << QString( "aligning waters: " );
+            for ( unsigned int k = 0; k < rotamer_waters.size(); k++ )
+            {
+               cout << rotamer_waters[k];
+            }
+            cout << endl;
             if ( !atom_align( p1, p2, rotamer_waters, new_waters ) )
             {
                return false;
             }
+            cout << QString( "aligning after xfrom waters: " );
+            for ( unsigned int k = 0; k < new_waters.size(); k++ )
+            {
+               cout << new_waters[k];
+            }
+            cout << endl << flush;
+
             count_waters++;
             if ( !has_steric_clash( new_waters[ 0 ] ) )
             {
@@ -2681,6 +2734,44 @@ bool US_Saxs_Util::compute_waters_to_add()
                cout << QString( "p1 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name );
             } else {
                count_waters_not_added++;
+               cout << QString( "p1 skipping due to clash %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name ) << flush;
+               {
+                  point p = new_waters[ 0 ];
+                  unsigned int i = current_model;
+                  double dist_threshold = 1e0 - ( our_saxs_options.steric_clash_distance / 100e0 );
+                  double water_radius   = multi_residue_map.count( "SWH" ) ?
+                     residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+
+                  // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
+
+                  // check structure:
+                  for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+                     for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+                        PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+         
+                        if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
+                        {
+                           cout << QString( "clash with structure %1 %2 %3 %4" ).arg( dist( this_atom->coordinate, p ) - ( this_atom->radius + water_radius ) * dist_threshold )
+                              .arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ) << this_atom->coordinate << p << endl << flush;
+                        }
+                     }
+                  }
+
+                  // check already added waters:
+                  for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+                        it != waters_to_add.end();
+                        it++ )
+                  {
+                     for ( unsigned int i = 0; i < it->second.size(); i++ )
+                     {
+                        if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
+                        {
+                           cout << QString( "clash with water %1\n" ).arg( dist( it->second[ i ], p ) -  2e0 * water_radius * dist_threshold ) << flush;
+                           cout << it->second[ i ] << p << endl << flush;
+                        }
+                     }
+                  }
+               }
             }
          }
       }
@@ -2731,7 +2822,7 @@ float US_Saxs_Util::min_dist_to_waters( point p )
 
 bool US_Saxs_Util::flush_pdb()
 {
-
+   cout << "flush_pdb\n";
    QString fname = control_parameters[ "inputfile" ];
 
    fname = fname.replace( QRegExp( "^../common/" ), "" );
@@ -2748,6 +2839,7 @@ bool US_Saxs_Util::flush_pdb()
       return false;
    }
 
+   cout << "flush_pdb name:" << fname << "\n";
    output_files << fname;
 
    last_hydrated_pdb_header =
@@ -5987,7 +6079,10 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    // cout << "Steric clash log detail:\n";
    //  cout << hydrate_clash_log.join( "" ) << endl;
    QString fname = 
-      QFileInfo( pdb_file ).baseName() + "_clash.txt";
+      QString( "%1_%2_clash.txt" )
+      .arg( QFileInfo( pdb_file ).baseName() )
+      .arg( model_vector[ current_model ].model_id )
+      ;
    fname.replace( "//", "/" );
    QFile f(fname);
    if ( f.open( IO_WriteOnly ) )
@@ -6027,7 +6122,11 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    
    {
       QString fname = 
-         QFileInfo( pdb_file ).baseName() + "_clash.csv";
+         QString( "%1_%2_clash.csv" )
+         .arg( QFileInfo( pdb_file ).baseName() )
+         .arg( model_vector[ current_model ].model_id )
+         ;
+
       fname.replace( "//", "/" );
       QFile f(fname);
       if ( f.open( IO_WriteOnly ) )

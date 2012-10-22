@@ -307,6 +307,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1dintermediatesaves|"
                       "1dspecmult|"
 
+                      "useiqtargetev|"
+                      "setiqtargetevfromvbar|"
+                      "hybridradiusexclvol|"
+                      "iqtargetev|"
+
+                      "prbinsize|"
+                      "prcurve|"
+
                       "remark)$"
                       );
 
@@ -422,6 +430,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1daxisrotations|"
                       "1drotationfile|"
                       "1dintermediatesaves|"
+
+                      "iqtargetev|"
+
+                      "prbinsize|"
+                      "prcurve|"
 
                       "outputfile)$"
                       );
@@ -2096,4 +2109,3 @@ bool US_Saxs_Util::write_timings( QString file, QString msg )
    errormsg = QString( "Error: could not open timing output file %1" ).arg( out_file );
    return false;
 }
-
