@@ -2214,18 +2214,18 @@ void US_GA_Initialize::select_prefilt( void )
 // View the statistics file produced in a file editor
 void US_GA_Initialize::view( )
 {
-qDebug() << "VIEW";
+DbgLv(1) << "VIEW";
    QString runid = run_name.section( ".",  0, -2 );
    QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
    QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fnsta;
-qDebug() << "VIEW fname" << fname;
+DbgLv(1) << "VIEW fname" << fname;
 
    QFile filei( fname );
    if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-qDebug() << "VIEW OPENED";
+DbgLv(1) << "VIEW OPENED";
       QTextStream ts( &filei );
       QString rtext = ts.readAll();
       filei.close();
@@ -2236,13 +2236,13 @@ qDebug() << "VIEW OPENED";
       eddiag->resize( 760, 700 );
       eddiag->e->setFont( US_Widgets::fixedFont() );
       eddiag->e->setPlainText( rtext );
-qDebug() << "VIEW eddiag SHOW";
+DbgLv(1) << "VIEW eddiag SHOW";
       eddiag->show();
    }
 
    else
    {
-qDebug() << "VIEW OPEN ERROR" << fname;
+DbgLv(1) << "VIEW OPEN ERROR" << fname;
       QMessageBox::critical( this, tr( "File Read Error" ),
          tr( "Unable to open file\n\"%1\"\nfor read" ).arg( fname ) );
    }
