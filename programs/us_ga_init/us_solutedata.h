@@ -36,13 +36,15 @@ class bucket
       bool operator==(const bucket& objIn) 
       {
          return (s == objIn.s && s_min == objIn.s_min && s_max == objIn.s_max 
-            && ff0 == objIn.ff0 && ff0_min == objIn.ff0_min && ff0_max == objIn.ff0_max 
+            && ff0 == objIn.ff0 && ff0_min == objIn.ff0_min
+            && ff0_max == objIn.ff0_max 
             && conc == objIn.conc && status == objIn.status);
       }
       bool operator!=(const bucket& objIn)
       {
          return (s != objIn.s || s_min != objIn.s_min || s_max != objIn.s_max 
-            || ff0 != objIn.ff0 || ff0_min != objIn.ff0_min || ff0_max != objIn.ff0_max 
+            || ff0 != objIn.ff0 || ff0_min != objIn.ff0_min
+            || ff0_max != objIn.ff0_max 
             || conc != objIn.conc || status != objIn.status);
       }
       bool operator < (const bucket& objIn) const
@@ -76,10 +78,8 @@ class US_SoluteData : public QObject
   Q_OBJECT
 
   public:
-    /*! \brief Create data object and set a title for it.
-        \param title A title to associate with the data object.
+    /*! \brief Create data object
     */
-    US_SoluteData( const QString& );
     US_SoluteData( void );
 
   public slots:
@@ -116,14 +116,15 @@ class US_SoluteData : public QObject
     void     limitBucket( bucket& );
     int      countOverlaps();
     int      countFullestBucket();
+    void     bucketSeparate( int, int, QList< QRectF >& );
 
   private:
     QList< bucket >  allbucks;
-    SimCompList      component;
-    SimCompLL        MC_solute;
+//    SimCompList      component;
+//    SimCompLL        MC_solute;
+    QList< SimComp >           component;
+    QList< QList< SimComp > >  MC_solute;
     SoluteList*      distro;
-
-    QString  btitle;
 
     int      bndx;
     int      dbg_level;

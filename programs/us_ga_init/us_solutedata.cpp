@@ -13,19 +13,13 @@ bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
 }
 
 // Holds Solute data for US_GA_Initialize
-US_SoluteData::US_SoluteData( const QString& title ) : QObject()
+US_SoluteData::US_SoluteData( void ) : QObject()
 {
    bndx      = -1;
-   btitle    = title;
    dbg_level = US_Settings::us_debug();
    isPlotK   = true;
 
    allbucks.clear();
-}
-
-US_SoluteData::US_SoluteData( ) : QObject()
-{
-   US_SoluteData( QString( "SoluteData#1" ) );
 }
 
 int US_SoluteData::clearBuckets()
@@ -1225,6 +1219,8 @@ int US_SoluteData::countOverlaps()
    int nbuks  = allbucks.size();
    int novlps = 0;
    QList< QRectF > bucket_rects;
+DbgLv(1) << "countOv nbuks" << nbuks;
+DbgLv(1) << "CountO dbg_level>=1";
 
    // Create the list of bucket rectangles
    for ( int ii = 0; ii < nbuks; ii++ )
@@ -1239,11 +1235,62 @@ int US_SoluteData::countOverlaps()
       for ( int jj = ii + 1; jj < nbuks; jj++ )
       {
          if ( bukrect.intersects( bucket_rects[ jj ] ) )
-            novlps++;   // It intersects, so bump overlaps count
+         {  // Buckets overlap:  test if overlap is virtually a line
+            QRectF buki  = bukrect.intersected( bucket_rects[ jj ] );
+            double bwid  = qAbs( buki.left()   - buki.right() );
+            double bhgt  = qAbs( buki.bottom() - buki.top() );
+DbgLv(1) << "OVERLAP?  ii jj" << ii << jj;
+DbgLv(1) << "   buck i" << bukrect.left() << bukrect.right()
+   << bukrect.top() << bukrect.bottom();
+QRectF brj=bucket_rects[jj];
+DbgLv(1) << "   buck j" << brj.left() << brj.right()
+   << brj.top() << brj.bottom();
+DbgLv(1) << "   buki" << buki.left() << buki.right()
+   << buki.top() << buki.bottom();
+DbgLv(1) << "   buki left-right" << bwid << "  bottom-top" << bhgt;
+            if ( bwid < 1e-10  ||  bhgt < 1e-10 )
+            {  // Buckets only share a line:  move a bit
+               bucketSeparate( ii, jj, bucket_rects );
+            }
+
+            else
+            { // Overlap is significant:  mark it;
+               novlps++;
+            }
+         }
       }
    }
 
+DbgLv(1) << "  final NOVLPS" << novlps;
    return novlps;
+}
+
+// Modify buckets overlapping by virtually a line
+void US_SoluteData::bucketSeparate( int ii, int jj,
+      QList< QRectF >& bucket_rects )
+{
+   QRectF bukreci = bucket_rects[ ii ];
+   QRectF bukrecj = bucket_rects[ jj ];
+   double xdiff   = qAbs( bukreci.right()  - bukrecj.left() );
+   double ydiff   = qAbs( bukreci.bottom() - bukrecj.top() );
+
+   if ( xdiff < 1e-10 )
+   { // Overlap by just vertical line
+      double xleft  = bukrecj.left() + 1e-6;
+      bukrecj.setLeft( xleft );
+   }
+
+   if ( ydiff < 1e-10 )
+   { // Overlap by just horizontal line
+      double ybottom = bukrecj.bottom() - 1e-6;
+      bukrecj.setBottom( ybottom );
+   }
+
+   bucket bukj  = bucketAt( jj );
+   bukj.s_min   = bukrecj.left();
+   bukj.ff0_max = bukrecj.bottom();
+   allbucks    .replace( jj, bukj );
+   bucket_rects.replace( jj, bukrecj );
 }
 
 // Return solute count of fullest bucket
