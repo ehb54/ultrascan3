@@ -1,7 +1,9 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_tnt_jama.h"
 
+// #define DEBUG_FUNKY_BUG
 // #define DEBUG_ALIGN
+#define KILL_INTERNAL_REPRESENTATION
 
 bool US_Hydrodyn::atom_align( vector < point > transform_from, 
                               vector < point > transform_to, 
@@ -35,10 +37,23 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
    {
       for ( unsigned int j = 0; j < 3; j++ )
       {
+#if defined( KILL_INTERNAL_REPRESENTATION )
+         transform_from[ i ].axis[ j ] = QString( "" ).sprintf( "%.8f", transform_from[ i ].axis[ j ] ).toFloat();
+         transform_to  [ i ].axis[ j ] = QString( "" ).sprintf( "%.8f", transform_to  [ i ].axis[ j ] ).toFloat();
+#endif
          center_from.axis[ j ] += transform_from[ i ].axis[ j ];
          center_to.axis  [ j ] += transform_to  [ i ].axis[ j ];
       }
    }
+
+#if defined( KILL_INTERNAL_REPRESENTATION )
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      center_from.axis[ j ] = QString( "" ).sprintf( "%.8f", center_from.axis[ j ] ).toFloat();
+      center_to  .axis[ j ] = QString( "" ).sprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
+   }
+#endif
+
    for ( unsigned int j = 0; j < 3; j++ )
    {
       center_from.axis[ j ] /= transform_from.size();
@@ -49,6 +64,14 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
          center_to  .axis[ j ] = 0.0f;
       }
    }
+
+#if defined( KILL_INTERNAL_REPRESENTATION )
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      center_from.axis[ j ] = QString( "" ).sprintf( "%.8f", center_from.axis[ j ] ).toFloat();
+      center_to  .axis[ j ] = QString( "" ).sprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
+   }
+#endif
 
    for ( unsigned int i = 0; i < transform_from.size(); i++ )
    {
@@ -194,6 +217,10 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
          }
       }
    }      
+
+#if defined( DEBUG_FUNKY_BUG )
+   cout << center_from << endl;
+#endif
 
    return true;
 }

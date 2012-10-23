@@ -6,7 +6,11 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    errormsg = "";
    if ( !QFile( from ).exists() )
    {
-      errormsg = QString( "Copy from file %1 does not exist" ).arg( from );
+      errormsg = QString( "Copy from file %1 does not exist (current dir %2, copying to %3)" )
+         .arg( from )
+         .arg( QDir::current().path() )
+         .arg( to )
+         ;
       return false;
    }
 

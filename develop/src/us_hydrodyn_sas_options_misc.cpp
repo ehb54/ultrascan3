@@ -208,7 +208,6 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cnt_scale_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_scale_excl_vol, SIGNAL(valueChanged(double)), SLOT(update_scale_excl_vol(double)));
 
-
    cb_use_iq_target_ev = new QCheckBox(this);
    cb_use_iq_target_ev->setText(tr("Adjust I(q) computation to target total excluded volume (A^3):"));
    cb_use_iq_target_ev->setEnabled(true);
@@ -240,7 +239,6 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    lbl_iqq_scale_min_maxq->setMinimumHeight(minHeight1);
    lbl_iqq_scale_min_maxq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_iqq_scale_min_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
 
    le_iqq_scale_minq = new QLineEdit(this, "iqq_scale_minq Line Edit");
    (*saxs_options).iqq_scale_minq ? 
@@ -298,7 +296,6 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    background->addWidget(pb_default_ff_filename, j, 0);
    background->addWidget(le_default_ff_filename, j, 1);
    j++;
-
 
    QHBoxLayout *hbl_iq_ask = new QHBoxLayout;
    // hbl_iq_ask->addWidget(cb_iq_ask);

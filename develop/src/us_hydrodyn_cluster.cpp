@@ -672,6 +672,41 @@ void US_Hydrodyn_Cluster::create_pkg()
    base += 
       QString( "SaxsFile        %1\n" ).arg( common_prefix + QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
    base_source_files << our_saxs_options->default_saxs_filename;
+
+   if ( our_saxs_options->swh_excl_vol != 0e0 )
+   {
+      base += 
+         QString( "SwhExclVol      %1\n" ).arg( our_saxs_options->swh_excl_vol );
+   }
+   if ( our_saxs_options->iq_target_ev != 0e0 )
+   {
+      base += 
+         QString( "IqTargetEv      %1\n" ).arg( our_saxs_options->iq_target_ev );
+   }
+   if ( our_saxs_options->hybrid_radius_excl_vol )
+   {
+      base += 
+         QString( "HybridRadiusExclVol\n" );
+   }
+   if ( our_saxs_options->set_iq_target_ev_from_vbar )
+   {
+      base += 
+         QString( "SetIqTargetEvFromVbar\n" );
+   }
+   if ( our_saxs_options->use_iq_target_ev )
+   {
+      base += 
+         QString( "UseIqTargetEv\n" );
+   }
+
+   if ( batch_window->cb_prr->isChecked() )
+   {
+      base += 
+         QString( "prbinsize       %1\n" ).arg( our_saxs_options->bin_size );
+      base += 
+         QString( "prcurve         %1\n" ).arg( our_saxs_options->curve );
+   }
+
    if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
    {
       base += 
@@ -682,6 +717,8 @@ void US_Hydrodyn_Cluster::create_pkg()
          QString( "HydrationRSCD   %1\n" ).arg( our_saxs_options->steric_clash_recheck_distance );
       base_source_files << our_saxs_options->default_rotamer_filename;
    }
+
+
 
    if ( our_saxs_options->use_somo_ff )
    {
@@ -813,6 +850,12 @@ void US_Hydrodyn_Cluster::create_pkg()
       QString( "AsaStep               %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.asab1_step );
    base += 
       QString( "AsaCalculation        %1\n" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.calculation ? 1 : 0 );
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on )
+   {
+      base += 
+         QString( "PbRuleOn\n" );
+   }
 
    if ( lb_target_files->numRows() )
    {
@@ -3308,6 +3351,41 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
    base += 
       QString( "SaxsFile        %1\n" ).arg( QFileInfo( our_saxs_options->default_saxs_filename ).fileName() );
    base_source_files << our_saxs_options->default_saxs_filename;
+
+   if ( our_saxs_options->swh_excl_vol != 0e0 )
+   {
+      base += 
+         QString( "SwhExclVol      %1\n" ).arg( our_saxs_options->swh_excl_vol );
+   }
+   if ( our_saxs_options->iq_target_ev != 0e0 )
+   {
+      base += 
+         QString( "IqTargetEv      %1\n" ).arg( our_saxs_options->iq_target_ev );
+   }
+   if ( our_saxs_options->hybrid_radius_excl_vol )
+   {
+      base += 
+         QString( "HybridRadiusExclVol\n" );
+   }
+   if ( our_saxs_options->set_iq_target_ev_from_vbar )
+   {
+      base += 
+         QString( "SetIqTargetEvFromVbar\n" );
+   }
+   if ( our_saxs_options->use_iq_target_ev )
+   {
+      base += 
+         QString( "UseIqTargetEv\n" );
+   }
+
+   if ( batch_window->cb_prr->isChecked() )
+   {
+      base += 
+         QString( "prbinsize       %1\n" ).arg( our_saxs_options->bin_size );
+      base += 
+         QString( "prcurve         %1\n" ).arg( our_saxs_options->curve );
+   }
+
    if ( batch_window->cb_hydrate && batch_window->cb_hydrate->isChecked() )
    {
       base += 

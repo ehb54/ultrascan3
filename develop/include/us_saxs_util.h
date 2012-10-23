@@ -615,6 +615,8 @@ class US_EXTERN US_Saxs_Util
   #pragma default ( disable: 4251 )
 #endif
 
+      bool         align_test();
+
    private:
 
       bool run_crysol();
@@ -963,7 +965,6 @@ class US_EXTERN US_Saxs_Util
                                vector < point > transform_to, 
                                vector < point > apply_from, 
                                vector < point > &result );
-
       bool         load_rotamer( QString filename );
       bool         compute_rotamer_dihedrals();
       QString      list_rotamer_dihedrals();

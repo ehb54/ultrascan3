@@ -203,7 +203,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                                      error_msg );
                any_errors = true;
             }
-            cout << list_pointmap_rotamers();
+            // cout << list_pointmap_rotamers();
 
             progress->setProgress(12);
             qApp->processEvents();
@@ -448,6 +448,19 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       }
       float save_radius = asa.probe_radius;
       asa.probe_radius  = asa.hydrate_probe_radius; 
+      cout << QString(
+                      "asa.hydrate_probe_radius %1\n"
+                      "asa.probe_radius         %2\n"
+                      "asa.asab1_step           %3\n"
+                      "asa.threshold_percent    %4\n"
+                      "asa.pb_rule_on           %5\n"
+                      )
+         .arg( asa.hydrate_probe_radius )
+         .arg( asa.probe_radius )
+         .arg( asa.asab1_step )
+         .arg( asa.threshold_percent )
+         .arg( misc.pb_rule_on ? "yes" : "no" )
+         ;
       int retval = us_hydrodyn_asab1_main(active_atoms,
                                           &asa,
                                           &results,
@@ -562,9 +575,18 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
          count_actives = 0;
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
             // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
             // this_atom->bead_positioner = false;
             if (this_atom->active) {
+#if defined( UHHH_DEBUG_ASA )
+               cout << QString( "active atom asa %1 %2 %3 %4\n" )
+                  .arg( this_atom->name )
+                  .arg( this_atom->resName )
+                  .arg( this_atom->serial )
+                  .arg( this_atom->asa )
+                  ;
+#endif
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2 active %s %s %d pm %d %d\n",
@@ -1289,6 +1311,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                       this_atom->resSeq.ascii()); fflush(stdout);
 #endif
                this_atom->visibility = (this_atom->bead_asa >= asa.hydrate_threshold);
+
+#if defined( UHHH_DEBUG_ASA )
+               cout << QString( "bead_asa %1 %2 %3 %4 %5\n" ).arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ).arg( this_atom->bead_asa ).arg( asa.hydrate_threshold );
+#endif
+
 #if defined(OLD_ASAB1_SC_COMPUTE)
                if (this_atom->chain == 1) {
                   printf("visibility was %d is ", this_atom->visibility);
@@ -3271,8 +3298,14 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             count_waters_added++;
             waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
             waters_source[ it->first ].push_back( QString( "Rtmr:%1" ).arg( it->second.name ) );
+#if defined( UHH_DEBUG_ALIGN )
+            cout << QString( "p0 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second.name );
+#endif
          } else {
             count_waters_not_added++;
+#if defined( UHH_DEBUG_ALIGN )
+            cout << QString( "p0 skiping due to clash %1 %2\n" ).arg( it->first ).arg( it->second.name );
+#endif
          }
       }
    }
@@ -3364,21 +3397,23 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
                   .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                return false;
             }
-            // cout << QString("mapping: %1 %2 source %3\n")
-            // .arg(it->first)
-            // .arg(i)
-            // .arg(pointmap_atoms[ resName ][ i ][ j ] );
+#if defined( UHHH_DEBUG_ALIGH )
+            cout << QString("z1 mapping: %1 %2 source %3\n")
+               .arg(it->first)
+               .arg(i)
+               .arg(pointmap_atoms[ resName ][ i ][ j ] );
+#endif
 
             p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
 
-            // cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
-            // .arg( it->second.water_positioning_atoms[ i ][ j ] )
-            // .arg( p1[ j ].axis[ 0 ] )
-            // .arg( p1[ j ].axis[ 1 ] )
-            // .arg( p1[ j ].axis[ 2 ] )
-            // .arg( p2[ j ].axis[ 0 ] )
-            // .arg( p2[ j ].axis[ 1 ] )
-            // .arg( p2[ j ].axis[ 2 ] );
+//             cout << QString( "z1  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+//                .arg( it->second.water_positioning_atoms[ i ][ j ] )
+//                .arg( p1[ j ].axis[ 0 ] )
+//                .arg( p1[ j ].axis[ 1 ] )
+//                .arg( p1[ j ].axis[ 2 ] )
+//                .arg( p2[ j ].axis[ 0 ] )
+//                .arg( p2[ j ].axis[ 1 ] )
+//                .arg( p2[ j ].axis[ 2 ] );
          }
 
          // now we have p1 & p2, apply to all of the waters
@@ -3392,18 +3427,83 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             vector < point > rotamer_waters;
             rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
             vector < point > new_waters;
+#if defined( UHH_DEBUG_ALIGN )
+            cout << QString( "aligning: " );
+            for ( unsigned int k = 0; k < p1.size(); k++ )
+            {
+               cout << p1[k] << p2[k] << " ";
+            }
+            cout << endl;
+            cout << QString( "aligning waters: " );
+            for ( unsigned int k = 0; k < rotamer_waters.size(); k++ )
+            {
+               cout << rotamer_waters[k];
+            }
+            cout << endl;
+#endif
             if ( !atom_align( p1, p2, rotamer_waters, new_waters, error_msg ) )
             {
                return false;
             }
+#if defined( UHH_DEBUG_ALIGN )
+            cout << QString( "aligning after xfrom waters: " );
+            for ( unsigned int k = 0; k < new_waters.size(); k++ )
+            {
+               cout << new_waters[k];
+            }
+            cout << endl << flush;
+#endif
             count_waters++;
             if ( !has_steric_clash( new_waters[ 0 ] ) )
             {
                count_waters_added++;
                waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
                waters_source[ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
+#if defined( UHH_DEBUG_ALIGN )
+               cout << QString( "p1 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name );
+#endif
             } else {
                count_waters_not_added++;
+#if defined( UHH_DEBUG_ALIGN )
+               cout << QString( "p1 skipping due to clash %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name );
+               {
+                  point p = new_waters[ 0 ];
+                  unsigned int i = current_model;
+                  double dist_threshold = 1e0 - ( saxs_options.steric_clash_distance / 100e0 );
+                  double water_radius   = multi_residue_map.count( "SWH" ) ?
+                     residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+
+                  // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
+
+                  // check structure:
+                  for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+                     for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+                        PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+         
+                        if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
+                        {
+                           cout << QString( "clash with structure %1 %2 %3 %4" ).arg( dist( this_atom->coordinate, p ) - ( this_atom->radius + water_radius ) * dist_threshold )
+                              .arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ) << this_atom->coordinate << p << endl;
+                        }
+                     }
+                  }
+
+                  // check already added waters:
+                  for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+                        it != waters_to_add.end();
+                        it++ )
+                  {
+                     for ( unsigned int i = 0; i < it->second.size(); i++ )
+                     {
+                        if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
+                        {
+                           cout << QString( "clash with water %1\n" ).arg( dist( it->second[ i ], p ) -  2e0 * water_radius * dist_threshold );
+                           cout << it->second[ i ] << p << endl;
+                        }
+                     }
+                  }
+               }
+#endif
             }
          }
       }
@@ -3510,7 +3610,7 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
    double water_radius   = multi_residue_map.count( "SWH" ) ?
       residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
-   cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
+   // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
 
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {

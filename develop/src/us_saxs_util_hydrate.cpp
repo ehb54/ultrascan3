@@ -77,6 +77,11 @@ ostream& operator<<(ostream& out, const rotamer& c)
 bool US_Saxs_Util::pdb_hydrate()
 {
 
+   //    if ( !align_test() )
+   //    {
+   //       return false;
+   //    }
+
    // validate required parameters
    QStringList qsl_required;
    QString missing_required;
@@ -146,7 +151,7 @@ bool US_Saxs_Util::pdb_hydrate()
    
    validate_control_parameters_set_one( checks, vals );
 
-   // cout << list_rotamers( false );
+   // cout << rotamers( false );
    // cout << list_pointmaps();
 
    model_vector = model_vector_as_loaded;
@@ -165,7 +170,7 @@ bool US_Saxs_Util::pdb_hydrate()
       {
          return false;
       }
-      cout << list_exposed();
+      // cout << list_exposed();
       // view_exposed();
       build_to_hydrate();
       // cout << list_to_hydrate();
@@ -204,10 +209,10 @@ bool US_Saxs_Util::pdb_hydrate()
          }
       }
 
-      // cout << list_waters_to_add();
+#if defined( USUH_DEBUG_ALIGN )
+      cout << list_waters_to_add();
       {
          QString out;
-
          out = "Waters to add:\n";
          for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
                it != waters_to_add.end();
@@ -226,6 +231,7 @@ bool US_Saxs_Util::pdb_hydrate()
          }
          cout << out;
       }
+#endif
       if ( !buffer_pdb_with_waters() )
       {
          errormsg = "Error trying to write pdb with waters: " + errormsg;
@@ -463,13 +469,14 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
             // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
             // this_atom->bead_positioner = false;
             if (this_atom->active) {
+#if defined( USUH_DEBUG_ASA )
                cout << QString( "active atom asa %1 %2 %3 %4\n" )
                   .arg( this_atom->name )
                   .arg( this_atom->resName )
                   .arg( this_atom->serial )
                   .arg( this_atom->asa )
                   ;
-
+#endif
                molecular_mw += this_atom->mw;
                for (unsigned int m = 0; m < 3; m++) {
                   molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
@@ -902,7 +909,9 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                this_atom->visibility = 
                   ( this_atom->bead_asa >= control_parameters[ "asahydratethresh" ].toDouble() );
 
+#if defined( USUH_DEBUG_ASA )
                cout << QString( "bead_asa %1 %2 %3 %4 %5\n" ).arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ).arg( this_atom->bead_asa ).arg( control_parameters[ "asahydratethresh" ].toDouble() ) ;
+#endif
 
                if (!create_beads_normally ||
                    this_atom->visibility ||
@@ -2579,10 +2588,14 @@ bool US_Saxs_Util::compute_waters_to_add()
             count_waters_added++;
             waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
             waters_source[ it->first ].push_back( QString( "Rtmr:%1" ).arg( it->second.name ) );
+#if defined( USUH_DEBUG_ALIGN )
             cout << QString( "p0 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second.name );
+#endif
          } else {
             count_waters_not_added++;
+#if defined( USUH_DEBUG_ALIGN )
             cout << QString( "p0 skiping due to clash %1 %2\n" ).arg( it->first ).arg( it->second.name );
+#endif
          }
       }
    }
@@ -2674,10 +2687,12 @@ bool US_Saxs_Util::compute_waters_to_add()
                   .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                return false;
             }
+#if defined( USUH_DEBUG_ALIGN )
             cout << QString("z1 mapping: %1 %2 source %3\n")
                .arg(it->first)
                .arg(i)
                .arg(pointmap_atoms[ resName ][ i ][ j ] );
+#endif
 
             p2[ j ] = to_hydrate_pointmaps[ it->first ][ pointmap_atoms[ resName ][ i ][ j ] ];
 
@@ -2702,6 +2717,7 @@ bool US_Saxs_Util::compute_waters_to_add()
             vector < point > rotamer_waters;
             rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
             vector < point > new_waters;
+#if defined( USUH_DEBUG_ALIGN )
             cout << QString( "aligning: " );
             for ( unsigned int k = 0; k < p1.size(); k++ )
             {
@@ -2714,16 +2730,80 @@ bool US_Saxs_Util::compute_waters_to_add()
                cout << rotamer_waters[k];
             }
             cout << endl;
+#endif
             if ( !atom_align( p1, p2, rotamer_waters, new_waters ) )
             {
                return false;
             }
+#if defined( USUH_MAKE_TEST_CODE )
             cout << QString( "aligning after xfrom waters: " );
             for ( unsigned int k = 0; k < new_waters.size(); k++ )
             {
                cout << new_waters[k];
             }
             cout << endl << flush;
+            cout << QString( "th{\n"
+                             "th   vector < point > p1( %1 );\n"
+                             "th   vector < point > p2( %2 );\n"
+                             "th   vector < point > rotamer_waters( %3 );\n"
+                             "th   vector < point > new_waters( %4 );\n"
+                             "th   vector < point > cmp_waters( %5 );\n"
+                             )
+               .arg( p1.size() )
+               .arg( p2.size() )
+               .arg( rotamer_waters.size() )
+               .arg( new_waters.size() )
+               .arg( new_waters.size() )
+               ;
+            for ( unsigned int k = 0; k < p1.size(); k++ )
+            {
+               for ( unsigned int l = 0; l < 3; l++ )
+               {
+                  cout << QString( "" ).sprintf( "th   p1[ %u ].axis[ %u ] = %.10ff;\n",
+                                                 k, l, p1[ k ].axis[ l ] );
+               }
+            }
+            for ( unsigned int k = 0; k < p2.size(); k++ )
+            {
+               for ( unsigned int l = 0; l < 3; l++ )
+               {
+                  cout << QString( "" ).sprintf( "th   p2[ %u ].axis[ %u ] = %.10ff;\n",
+                                                 k, l, p2[ k ].axis[ l ] );
+               }
+            }
+            for ( unsigned int k = 0; k < rotamer_waters.size(); k++ )
+            {
+               for ( unsigned int l = 0; l < 3; l++ )
+               {
+                  cout << QString( "" ).sprintf( "th   rotamer_waters[ %u ].axis[ %u ] = %.10ff;\n",
+                                                 k, l, rotamer_waters[ k ].axis[ l ] );
+               }
+            }
+            for ( unsigned int k = 0; k < new_waters.size(); k++ )
+            {
+               for ( unsigned int l = 0; l < 3; l++ )
+               {
+                  cout << QString( "" ).sprintf( "th   new_waters[ %u ].axis[ %u ] = %.10ff;\n",
+                                                 k, l, new_waters[ k ].axis[ l ] );
+               }
+            }
+            cout << QString( "th   if ( !atom_align( p1, p2, rotamer_waters, cmp_waters ) )\n"
+                             "th   {\n"
+                             "th      return false;\n"
+                             "th   }\n"
+                             "th   for ( unsigned int i = 0; i < cmp_waters.size(); i++ )\n"
+                             "th   {\n"
+                             "th      for ( unsigned int j = 0; j < 3; j++ )\n"
+                             "th      {\n"
+                             "th         if ( fabs( cmp_waters[ i ].axis[ j ] - new_waters[ i ].axis[ j ] ) > 1e-4 )\n"
+                             "th         {\n"
+                             "th            errormsg = QString( \"mismatch water %u axis %u\\n\" ).arg( i ).arg( j );\n"
+                             "th            return false;\n"
+                             "th         }\n"
+                             "th      }\n"
+                             "th    }\n"
+                             "th }\n    // ok\n" );
+#endif
 
             count_waters++;
             if ( !has_steric_clash( new_waters[ 0 ] ) )
@@ -2731,9 +2811,10 @@ bool US_Saxs_Util::compute_waters_to_add()
                count_waters_added++;
                waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
                waters_source[ it->first ].push_back( QString( "PM:%1" ).arg( it->second[ i ].name ) );
-               cout << QString( "p1 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name );
+               // cout << QString( "p1 adding to waters source %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name );
             } else {
                count_waters_not_added++;
+#if defined( USUH_DEBUG_ALIGN )
                cout << QString( "p1 skipping due to clash %1 %2\n" ).arg( it->first ).arg( it->second[ i ].name ) << flush;
                {
                   point p = new_waters[ 0 ];
@@ -2772,6 +2853,7 @@ bool US_Saxs_Util::compute_waters_to_add()
                      }
                   }
                }
+#endif
             }
          }
       }

@@ -65,6 +65,14 @@ int main (int argc, char **argv)
 
       US_Saxs_Util usu;
       // cout << QString("%1: starting processing\n" ).arg( myrank ) << flush;
+      //       if ( !usu.align_test() )
+      //       {
+      //          cout << "align test aborted\n" << flush;
+      //          cout << usu.errormsg << endl << flush;
+      //          MPI_Finalize();
+      //          exit( errorbase - 1 );
+      //       }
+
       if ( !usu.run_iq_mpi( controlfile ) )
       {
          if ( !myrank )
