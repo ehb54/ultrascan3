@@ -1227,10 +1227,13 @@ int US_Hydrodyn::read_bead_model(QString filename)
                            .arg( saxs_options.dummy_saxs_name ) );
             }               
          }
-         if ( saxs_options.dummy_atom_pdbs_in_nm )
-         {
-            editor_msg( "blue", tr("Notice: This PDB is being loaded in NM units" ) );
-         }
+
+         QRegExp rx_psv( "^REMARK\\s+PSV\\s+(\\S+)", false );
+         QRegExp rx_mw ( "^REMARK\\s+MW\\s+(\\S+)", false );
+         QRegExp rx_unit( "^REMARK\\s+Units conversion factor\\s+(\\S+)", false );
+         double loaded_psv = 0e0;
+         double loaded_mw  = 0e0;
+         unsigned int loaded_unit = 0;
 
          QStringList qsl;
          {
@@ -1243,9 +1246,38 @@ int US_Hydrodyn::read_bead_model(QString filename)
                   model_count++;
                   model_names.push_back( rx_model.cap( 1 ) );
                }
+               if ( rx_psv.search( qs ) != -1 )
+               {
+                  loaded_psv = rx_psv.cap( 1 ).toDouble();
+                  editor_msg( "blue", QString( tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
+               }
+               if ( rx_mw.search( qs ) != -1 )
+               {
+                  loaded_mw = rx_mw.cap( 1 ).toDouble();
+                  editor_msg( "blue", QString( tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
+               }
+               if ( rx_unit.search( qs ) != -1 )
+               {
+                  loaded_unit = rx_mw.cap( 1 ).toUInt();
+                  editor_msg( "blue", QString( tr( "Found Units %1 in PDB" ) ).arg( loaded_unit ) );
+                  if ( loaded_unit == 10 )
+                  {
+                     saxs_options.dummy_atom_pdbs_in_nm = true;
+                  }
+                  if ( loaded_unit == 9 )
+                  {
+                     saxs_options.dummy_atom_pdbs_in_nm = false;
+                  }
+               }
             } while (!ts.atEnd());
          }
          f.close();
+
+         if ( saxs_options.dummy_atom_pdbs_in_nm )
+         {
+            editor_msg( "blue", tr("Notice: This PDB is being loaded in NM units" ) );
+         }
+
          model_count = model_count ? model_count : 1;
          cout << QString( "models: %1\n" ).arg( model_count );
 
@@ -1453,8 +1485,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1 Angstrom\n").arg(radius));
          
          // enter MW and PSV
-         float mw = 0.0;
-         float psv = 0.0;
+         float mw = loaded_mw;
+         float psv = loaded_psv;
          bool do_write_bead_model = true;
          bool remember = true;
          bool use_partial = false;

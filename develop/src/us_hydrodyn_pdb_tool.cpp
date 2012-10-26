@@ -5371,7 +5371,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
    bool skip_waters = 
       QMessageBox::question( this, 
                              tr( "US-SOMO: PDB Editor : Split by residue" ),
-                             QString( tr( "Do you want to skip waters?" ) ).arg( f.name() ),
+                             QString( tr( "Do you want to skip waters?" ) ),
                              tr( "&Yes" ), 
                              tr( "No" ),
                              QString::null,
