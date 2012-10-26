@@ -400,6 +400,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_compute_iq_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_compute_iq_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_avg()));
 
+   cb_compute_iq_only_avg = new QCheckBox(this);
+   cb_compute_iq_only_avg->setText(tr(" Only save average"));
+   cb_compute_iq_only_avg->setChecked( false /* batch->compute_iq_only_avg */ );
+   cb_compute_iq_only_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_iq_only_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_iq_only_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_only_avg()));
+
    cb_compute_iq_std_dev = new QCheckBox(this);
    cb_compute_iq_std_dev->setText(tr(" Compute I(q) std deviation curves"));
    cb_compute_iq_std_dev->setChecked(batch->compute_iq_std_dev);
@@ -595,6 +602,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    QHBoxLayout *hbl_iq_avg_std_dev = new QHBoxLayout;
    hbl_iq_avg_std_dev->addWidget(cb_compute_iq_avg);
+   hbl_iq_avg_std_dev->addWidget(cb_compute_iq_only_avg);
    hbl_iq_avg_std_dev->addWidget(cb_compute_iq_std_dev);
 
    QHBoxLayout *hbl_prr_avg_std_dev = new QHBoxLayout;
@@ -1029,6 +1037,7 @@ void US_Hydrodyn_Batch::update_enables()
    cb_hydrate->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
 #endif
    cb_compute_iq_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
+   cb_compute_iq_only_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
    cb_compute_iq_std_dev->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs && batch->compute_iq_avg);
    cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
    cb_compute_prr_std_dev->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs && batch->compute_prr_avg);
@@ -2793,38 +2802,47 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
       fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
               vector_double_to_csv(saxs_q).ascii(),
               saxs_header_iqq.remove("\n").ascii());
-      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      if ( !cb_compute_iq_only_avg->isChecked() )
       {
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 csv_source_name_iqq[i].ascii(),
-                 "I(q)",
-                 vector_double_to_csv(saxs_iqq[i]).ascii());
+         for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+         {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    csv_source_name_iqq[i].ascii(),
+                    "I(q)",
+                    vector_double_to_csv(saxs_iqq[i]).ascii());
+         }
       }
       fprintf(of, "\n");
       bool any_printed = false;
-      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      if ( !cb_compute_iq_only_avg->isChecked() )
       {
-         if ( saxs_iqqa[i].size() )
+         for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
          {
-            any_printed = true;
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    csv_source_name_iqq[i].ascii(),
-                    "Ia(q)",
-                    vector_double_to_csv(saxs_iqqa[i]).ascii());
+            if ( saxs_iqqa[i].size() )
+            {
+               any_printed = true;
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       csv_source_name_iqq[i].ascii(),
+                       "Ia(q)",
+                       vector_double_to_csv(saxs_iqqa[i]).ascii());
+            }
          }
       }
       if ( any_printed )
       {
          fprintf(of, "\n");
       }
-      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      if ( !cb_compute_iq_only_avg->isChecked() )
       {
-         if ( saxs_iqqc[i].size() )
+         for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
          {
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    csv_source_name_iqq[i].ascii(),
-                    "Ic(q)",
-                    vector_double_to_csv(saxs_iqqc[i]).ascii());
+            if ( saxs_iqqc[i].size() )
+            {
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       csv_source_name_iqq[i].ascii(),
+                       "Ic(q)",
+                       vector_double_to_csv(saxs_iqqc[i]).ascii());
+            }
          }
       }
 

@@ -59,6 +59,11 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       QCheckBox   *cb_five_term_gaussians;
       QCheckBox   *cb_iq_exact_q;
 
+      QCheckBox   *cb_compute_exponentials;
+      QwtCounter  *cnt_compute_exponential_terms;
+
+      QCheckBox   *cb_multiply_iq_by_atomic_volume;
+
       QPushButton *pb_create_somo_ff;
 
       QPushButton *pb_help;
@@ -83,6 +88,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       void set_five_term_gaussians();
       void set_iq_exact_q();
 
+      void set_compute_exponentials();
+      void update_compute_exponential_terms( double );
+
+      void set_multiply_iq_by_atomic_volume();
       void create_somo_ff();
       void cancel();
       void help();

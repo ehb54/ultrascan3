@@ -2004,7 +2004,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    return errors_found ? false : true;
 }   
 
-bool US_Hydrodyn::screen_bead_model(QString filename)
+bool US_Hydrodyn::screen_bead_model( QString filename )
 {
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
@@ -2020,9 +2020,9 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
-   le_bead_model_prefix->setText(bead_model_prefix);
+   le_bead_model_prefix->setText( bead_model_prefix );
 
-   if (results_widget)
+   if ( results_widget )
    {
       results_window->close();
       delete results_window;
@@ -3818,7 +3818,8 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
       // probably want to set specially for batch mode?
       if ( filename.length() )
       {
-         if ( dammix_remember_mw.count(QFileInfo(filename).fileName()) )
+         if ( dammix_remember_mw.count(QFileInfo(filename).fileName()) &&
+              !saxs_options.multiply_iq_by_atomic_volume )
          {
             if ( dammix_remember_mw[QFileInfo(filename).fileName()] != 
                  model_vector[selected_models[0]].mw )

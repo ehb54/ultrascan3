@@ -61,6 +61,27 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_bead_model_rayleigh->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_bead_model_rayleigh, SIGNAL(clicked()), this, SLOT(set_bead_model_rayleigh()));
 
+   lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
+   lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
+   lbl_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_dummy_saxs_name = new QLineEdit( this, "" );
+   le_dummy_saxs_name->setText( (*saxs_options).dummy_saxs_name );
+   le_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   le_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect( le_dummy_saxs_name, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_dummy_saxs_name( const QString & ) ) );
+
+   cb_dummy_atom_pdbs_in_nm = new QCheckBox(this);
+   cb_dummy_atom_pdbs_in_nm->setText(tr(" Dummy atom PDB's in NM " ) );
+   cb_dummy_atom_pdbs_in_nm->setEnabled(true);
+   cb_dummy_atom_pdbs_in_nm->setChecked((*saxs_options).dummy_atom_pdbs_in_nm);
+   cb_dummy_atom_pdbs_in_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_dummy_atom_pdbs_in_nm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_dummy_atom_pdbs_in_nm, SIGNAL(clicked()), this, SLOT(set_dummy_atom_pdbs_in_nm()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -84,6 +105,13 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    background->addMultiCellWidget( cb_compute_sans_coeff_for_bead_models, j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
+   j++;
+
+   background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
+   background->addWidget         ( le_dummy_saxs_name                   , j, 1 );
+   j++;
+
+   background->addMultiCellWidget( cb_dummy_atom_pdbs_in_nm             , j, j, 0, 1 );
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -134,5 +162,35 @@ void US_Hydrodyn_SasOptionsBeadModel::set_compute_sans_coeff_for_bead_models()
 void US_Hydrodyn_SasOptionsBeadModel::set_bead_model_rayleigh()
 {
    (*saxs_options).bead_model_rayleigh = cb_bead_model_rayleigh->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::update_dummy_saxs_name( const QString & )
+{
+   bool ok = false;
+   QString qs;
+   if ( (*saxs_options).dummy_saxs_names.size() )
+   {
+      qs = QInputDialog::getItem(
+                                 tr( "US-SOMO SAS Bead Model Options : Select dummy atom name" ) ,
+                                 tr( "Select a defined dummy atom name" ),
+                                 (*saxs_options).dummy_saxs_names, 
+                                 0, 
+                                 FALSE, 
+                                 &ok,
+                                 this );
+   }
+   if ( ok && !qs.isEmpty() )
+   {
+      (*saxs_options).dummy_saxs_name = qs;
+   }
+   disconnect( le_dummy_saxs_name, SIGNAL( textChanged ( const QString & ) ), 0, 0 );
+   le_dummy_saxs_name->setText( (*saxs_options).dummy_saxs_name );
+   connect( le_dummy_saxs_name, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_dummy_saxs_name( const QString & ) ) );
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_dummy_atom_pdbs_in_nm()
+{
+   (*saxs_options).dummy_atom_pdbs_in_nm = cb_dummy_atom_pdbs_in_nm->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

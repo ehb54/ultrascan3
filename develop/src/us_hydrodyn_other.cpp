@@ -892,6 +892,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
    results.asa_rg_pos = -1e0;
    results.asa_rg_neg = -1e0;
    float tmp_mw = 0e0;
+   unsigned int model_count = 1;
+   vector < QString > model_names;
+   model_names.push_back( "1" );
 
    if (ftype == "bead_model")
    {
@@ -1207,28 +1210,45 @@ int US_Hydrodyn::read_bead_model(QString filename)
    
    if (ftype == "pdb") // DAMMIN;DAMMIF;DAMAVER
    {
+      QRegExp rx_model( "^MODEL\\s+(\\S+)" );
+      model_count = 0;
+      model_names.clear();
+
       if (f.open(IO_ReadOnly))
       {
          if ( saxs_options.compute_saxs_coeff_for_bead_models )
          {
-            if ( !saxs_util->saxs_map.count("DAM") )
+            if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
             {
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(tr(
-                                 "Warning: No 'DAM' SAXS atom found. Bead model SAXS disabled.\n"
-                                 ));
-               editor->setColor(save_color);
-            }
+               editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+                           .arg( saxs_options.dummy_saxs_name ) );
+            } else {
+               editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+                           .arg( saxs_options.dummy_saxs_name ) );
+            }               
          }
+         if ( saxs_options.dummy_atom_pdbs_in_nm )
+         {
+            editor_msg( "blue", tr("Notice: This PDB is being loaded in NM units" ) );
+         }
+
          QStringList qsl;
          {
             QTextStream ts(&f);
             do {
-               qsl << ts.readLine();
+               QString qs = ts.readLine();
+               qsl << qs;
+               if ( rx_model.search( qs ) != -1 )
+               {
+                  model_count++;
+                  model_names.push_back( rx_model.cap( 1 ) );
+               }
             } while (!ts.atEnd());
          }
          f.close();
+         model_count = model_count ? model_count : 1;
+         cout << QString( "models: %1\n" ).arg( model_count );
+
          if ( !f.open(IO_ReadOnly) )
          {
             editor->append("File read error\n");
@@ -1285,6 +1305,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          printf("atom line count %d\n", atom_line_count);
 
          bead_count = atom_line_count;
+         bead_count /= model_count;
 
          QTextStream ts(&f);
          QString tmp;
@@ -1424,7 +1445,12 @@ int US_Hydrodyn::read_bead_model(QString filename)
             radius = rx.cap(1).toFloat();
          }
 
-         editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1\n").arg(radius));
+         if ( saxs_options.dummy_atom_pdbs_in_nm )
+         {
+            radius *= 10.0;
+         }
+
+         editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1 Angstrom\n").arg(radius));
          
          // enter MW and PSV
          float mw = 0.0;
@@ -1511,69 +1537,87 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->append("Setting overlap tolerance to .002 for DAMMIN/DAMMIF models\n");
          overlap_tolerance = 0.002;
 
-         editor->append(QString("Beads %1\n").arg(bead_count));
-         int beads_loaded = 0;
-         while (!ts.atEnd() && beads_loaded < bead_count)
+         editor->append( QString( "%1 Models each with %1 beads\n" )
+                         .arg( model_count ) 
+                         .arg( bead_count ) 
+                         );
+         bead_models.resize( model_count );
+         while ( (unsigned int )model_names.size() < model_count )
          {
-            ++linepos;
-            ++beads_loaded;
-            // ATOM     20  CA  ASP A   1      -8.226   5.986 215.196   1.0  20.0 0 2 201    
+            model_names.push_back( QString( "%1" ).arg( model_names.size() + 1 ) );
+         }
+         for ( unsigned int i = 0; i < model_count; i++ )
+         {
+            editor_msg( "gray", QString( tr( "Loading from model %1" ) ).arg( model_names[ i ] ) );
+            int beads_loaded = 0;
+            bead_model.clear();
+            while (!ts.atEnd() && beads_loaded < bead_count)
+            {
+               ++linepos;
+               ++beads_loaded;
+               // ATOM     20  CA  ASP A   1      -8.226   5.986 215.196   1.0  20.0 0 2 201    
 
-            QString str;
-            if (!ts.atEnd()) {
-               str = ts.readLine();
-               if ( str.mid(0,4) != "ATOM" )
-               {
-                  do {
-                     str = ts.readLine();
-                     ++linepos;
-                  } while ( !ts.atEnd() &&
-                            str.mid(0,4) != "ATOM" ) ;
-               }
-               if ( ts.atEnd() &&
-                    str.mid(0,4) != "ATOM" )
-               {
-                  editor->append(QString("\nError in line %1. Expected 'ATOM' before end of file\n")
-                                 .arg(linepos)
-                                 );
+               QString str;
+               if (!ts.atEnd()) {
+                  str = ts.readLine();
+                  if ( str.mid(0,4) != "ATOM" )
+                  {
+                     do {
+                        str = ts.readLine();
+                        ++linepos;
+                     } while ( !ts.atEnd() &&
+                               str.mid(0,4) != "ATOM" ) ;
+                  }
+                  if ( ts.atEnd() &&
+                       str.mid(0,4) != "ATOM" )
+                  {
+                     editor->append(QString("\nError in line %1. Expected 'ATOM' before end of file\n")
+                                    .arg(linepos)
+                                    );
+                     return linepos;
+                  }
+               
+               } else {
+                  editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
                   return linepos;
                }
-               
-            } else {
-               editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
-               return linepos;
-            }
             
-            tmp_atom.serial = str.mid(8,4).toInt();
+               tmp_atom.serial = str.mid(8,4).toInt();
 
-            for (unsigned int i = 0; i < 3; i++)
-            {
-               tmp_atom.bead_coordinate.axis[i] = str.mid(30 + i * 8, 8).toFloat();
+               for (unsigned int i = 0; i < 3; i++)
+               {
+                  tmp_atom.bead_coordinate.axis[i] = str.mid(30 + i * 8, 8).toFloat();
+                  if ( saxs_options.dummy_atom_pdbs_in_nm )
+                  {
+                     tmp_atom.bead_coordinate.axis[i] *= 10.0;
+                  }
+               }
+
+               tmp_atom.bead_computed_radius = radius;
+               tmp_atom.bead_mw = mw;
+               tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
+               tmp_atom.bead_color = 8;
+
+               tmp_atom.exposed_code = 1;
+               tmp_atom.all_beads.clear();
+               tmp_atom.active = true;
+               tmp_atom.name = "ATOM";
+               tmp_atom.resName = "RESIDUE";
+               tmp_atom.iCode = "ICODE";
+               tmp_atom.chainID = "CHAIN";
+               tmp_atom.saxs_data.saxs_name = "";
+               if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+                    saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+               {
+                  tmp_atom.saxs_name = saxs_options.dummy_saxs_name;
+                  tmp_atom.saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
+                  tmp_atom.hydrogens = 0;
+               }
+
+               bead_model.push_back(tmp_atom);
+               // cout << QString("bead loaded serial %1\n").arg(tmp_atom.serial);
             }
-
-            tmp_atom.bead_computed_radius = radius;
-            tmp_atom.bead_mw = mw;
-            tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
-            tmp_atom.bead_color = 8;
-
-            tmp_atom.exposed_code = 1;
-            tmp_atom.all_beads.clear();
-            tmp_atom.active = true;
-            tmp_atom.name = "ATOM";
-            tmp_atom.resName = "RESIDUE";
-            tmp_atom.iCode = "ICODE";
-            tmp_atom.chainID = "CHAIN";
-            tmp_atom.saxs_data.saxs_name = "";
-            if ( saxs_options.compute_saxs_coeff_for_bead_models && 
-                 saxs_util->saxs_map.count("DAM") )
-            {
-               tmp_atom.saxs_name = "DAM";
-               tmp_atom.saxs_data = saxs_util->saxs_map["DAM"];
-               tmp_atom.hydrogens = 0;
-            }
-
-            bead_model.push_back(tmp_atom);
-            // cout << QString("bead loaded serial %1\n").arg(tmp_atom.serial);
+            bead_models[ i ] = bead_model;
          }
          
          // remove TER line
@@ -1592,7 +1636,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->setCurrentFont(save_font);
          editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
          f.close();
-         if (bead_count != (int)bead_model.size())
+         if ( bead_count != (int)bead_model.size() )
          {
             editor->append(QString("Error: bead count %1 does not match # of beads read from file (%2) \n").arg(bead_count).arg(bead_model.size()));
             return -1;
@@ -1603,16 +1647,25 @@ int US_Hydrodyn::read_bead_model(QString filename)
          //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
          lb_model->clear();
-         lb_model->insertItem("Model 1 from bead_model file");
+         model_vector.resize( model_count );
+         somo_processed.resize( model_count );
+         bead_models.resize( model_count );
+         for ( unsigned int i = 0; i < model_count; i++ )
+         {
+            lb_model->insertItem( QString( "Model %1 (from bead model)" ).arg( model_names[ i ] ) );
+            model_vector[ i ].vbar = results.vbar;
+            model_vector[ i ].model_id = model_names[ i ];
+            model_vector[ i ].mw = mw;
+            somo_processed[ i ] = 1;
+         }
          lb_model->setSelected(0, true);
-         lb_model->setEnabled(false);
-         model_vector.resize(1);
-         model_vector[0].vbar = results.vbar;
-         somo_processed.resize(lb_model->numRows());
-         bead_models.resize(lb_model->numRows());
+         lb_model->setEnabled( model_count > 1 );
          current_model = 0;
+         if ( model_count > 1 )
+         {
+            bead_model = bead_models[ 0 ];
+         }
          bead_models[0] = bead_model;
-         somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
          if ( dammin )
          {
@@ -1632,7 +1685,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          }
 
          le_bead_model_suffix->setText(bead_model_suffix);
-         if ( do_write_bead_model ) 
+         if ( do_write_bead_model && model_count == 1 ) 
          {
             if ( !overwrite )
             {
@@ -1643,8 +1696,15 @@ int US_Hydrodyn::read_bead_model(QString filename)
                              , &bead_model);
          }
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-         int overlap_check_results = overlap_check( true, true, true,
-                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         int overlap_check_results = 0;
+         for ( unsigned int i = 0; i < model_count; i++ )
+         {
+            editor_msg( "gray", QString( tr( "checking overlap for Model %1" ) ).arg( model_names[ i ] ) );
+            bead_model = bead_models[ i ];
+            overlap_check_results += overlap_check( true, true, true,
+                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance );
+         }
+         bead_model = bead_models[ 0 ];
          return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
@@ -3802,16 +3862,23 @@ void US_Hydrodyn::set_default()
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
-   saxs_options.ignore_errors              = false;
-   saxs_options.alt_ff                     = true;
-   saxs_options.crysol_explicit_hydrogens  = false;
-   saxs_options.use_somo_ff                = false;
-   saxs_options.five_term_gaussians        = true;
-   saxs_options.iq_exact_q                 = false;
-   saxs_options.use_iq_target_ev           = false;
-   saxs_options.set_iq_target_ev_from_vbar = false;
-   saxs_options.iq_target_ev               = 0e0;
-   saxs_options.hydration_rev_asa          = false;
+   saxs_options.ignore_errors                  = false;
+   saxs_options.alt_ff                         = true;
+   saxs_options.crysol_explicit_hydrogens      = false;
+   saxs_options.use_somo_ff                    = false;
+   saxs_options.five_term_gaussians            = true;
+   saxs_options.iq_exact_q                     = false;
+   saxs_options.use_iq_target_ev               = false;
+   saxs_options.set_iq_target_ev_from_vbar     = false;
+   saxs_options.iq_target_ev                   = 0e0;
+   saxs_options.hydration_rev_asa              = false;
+   saxs_options.compute_exponentials           = false;
+   saxs_options.compute_exponential_terms      = 5;
+   saxs_options.dummy_saxs_name                = "DAM";
+   saxs_options.dummy_saxs_names               .clear();
+   saxs_options.dummy_saxs_names               .push_back( saxs_options.dummy_saxs_name );
+   saxs_options.multiply_iq_by_atomic_volume   = false;
+   saxs_options.dummy_atom_pdbs_in_nm          = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
@@ -5822,13 +5889,15 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       } while ( !ts.atEnd() && 
                 !tmp.contains("Dummy atoms in output phase") &&
                 !tmp.contains("Number of particle atoms") &&
-                !tmp.contains("Number of atoms written")
+                !tmp.contains("Number of atoms written") &&
+                !tmp.contains("Dummy atom radius")
                 );
 
       if ( ts.atEnd() &
            !tmp.contains("Dummy atoms in output phase") &&
            !tmp.contains("Number of particle atoms") &&
-           !tmp.contains("Number of atoms written")
+           !tmp.contains("Number of atoms written") &&
+           !tmp.contains("Dummy atom radius")
            )
       {
          f.close();

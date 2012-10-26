@@ -233,6 +233,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       csv           reseq_csv              ( QListView *lv, csv &ref_csv, bool only_selected = false );
 
+      void          split_pdb_by_residue   ( QFile &f );
    private slots:
       
       void setupGUI();

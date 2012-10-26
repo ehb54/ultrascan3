@@ -138,6 +138,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_create_native_saxs;
       QCheckBox     *cb_hydrate;
       QCheckBox     *cb_compute_iq_avg;
+      QCheckBox     *cb_compute_iq_only_avg;
       QCheckBox     *cb_compute_iq_std_dev;
       QCheckBox     *cb_compute_prr_avg;
       QCheckBox     *cb_compute_prr_std_dev;

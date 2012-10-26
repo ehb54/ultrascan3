@@ -262,6 +262,7 @@ SOURCES += \
   src/us_infopanel.cpp \
   src/us_json.cpp \
   src/us_license.cpp \
+  src/us_lm.cpp \
   src/us_lncr2.cpp \
   src/us_math.cpp \
   src/us_matrix.cpp \
@@ -542,6 +543,7 @@ HEADERS += \
   include/us_infopanel.h \
   include/us_json.h \
   include/us_license.h \
+  include/us_lm.h \
   include/us_lncr2.h \
   include/us_math.h \
   include/us_matrix.h \

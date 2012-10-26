@@ -220,14 +220,25 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
                told_you = true;
             }
          
-            f[0][i] = 
-               // atoms[i].srv * 
-               ( 
-                atoms[i].saxs_data.c +
-                atoms[i].saxs_data.a[0] +
-                atoms[i].saxs_data.a[1] +
-                atoms[i].saxs_data.a[2] +
-                atoms[i].saxs_data.a[3] );
+            if ( our_saxs_options->five_term_gaussians )
+            {
+               f[0][i] = 
+                  atoms[i].saxs_data.c5 +
+                  atoms[i].saxs_data.a5[0] +
+                  atoms[i].saxs_data.a5[1] +
+                  atoms[i].saxs_data.a5[2] +
+                  atoms[i].saxs_data.a5[3] +
+                  atoms[i].saxs_data.a5[4]
+                  ;
+            } else {
+               f[0][i] = 
+                  atoms[i].saxs_data.c +
+                  atoms[i].saxs_data.a[0] +
+                  atoms[i].saxs_data.a[1] +
+                  atoms[i].saxs_data.a[2] +
+                  atoms[i].saxs_data.a[3];
+            }
+
             
             fc[0][i] = vie;
             fp[0][i] = f[0][i] - fc[0][i];
@@ -1031,6 +1042,26 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
+         //          if ( !i )
+         //          {
+         //             QString qs;
+         //             if ( our_saxs_options->five_term_gaussians )
+         //             {
+         //                cout << QString( "atom 0 saxs_name %1 c %2\n" ).arg( saxs.saxs_name ).arg( saxs.c5 );
+         //                for ( unsigned int i = 0; i < 5; i++ )
+         //                {
+         //                   qs += QString( "a%1=%2 b%3=%4 " ).arg( i ).arg( saxs.a5[ i ] ).arg( i ).arg( saxs.b5[ i ] );
+         //                }
+         //             } else {
+         //                cout << QString( "atom 0 saxs_name %1 c %2\n" ).arg( saxs.saxs_name ).arg( saxs.c );
+         //                for ( unsigned int i = 0; i < 4; i++ )
+         //                {
+         //                   qs += QString( "a%1=%2 b%3=%4 " ).arg( i ).arg( saxs.a[ i ] ).arg( i ).arg( saxs.b[ i ] );
+         //                }
+         //             }
+         //             cout << qs << endl << flush;
+         //          }
+               
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
          vi_23_4pi = - pow((double)vi,2.0/3.0) * one_over_4pi;
@@ -1070,15 +1101,23 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
                // the saxs.c + saxs.a[i] * exp() can be precomputed
                // possibly saving time... but this isn't our most computationally intensive step
                // so I'm holding off for now.
-               f[j][i] = 
-                  // atoms[i].srv * 
-                  (
-                   saxs.c + 
-                   saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-                   saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-                   saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-                   saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) );
-
+               if ( our_saxs_options->five_term_gaussians )
+               {
+                  f[j][i] = 
+                      saxs.c5 + 
+                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
+                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
+                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
+                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
+                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
+               } else {
+                  f[j][i] = 
+                      saxs.c + 
+                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
+               }
                fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
                fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
@@ -1720,17 +1759,36 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
                // possibly saving time... but this isn't our most computationally intensive step
                // so I'm holding off for now.
                
-               f[j][i] = saxs.c + 
-                  saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-                  saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-                  saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-                  saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-                  atoms[i].hydrogens * 
-                  ( saxsH.c + 
-                    saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-                    saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-                    saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-                    saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+               if ( our_saxs_options->five_term_gaussians )
+               {
+                  f[j][i] = 
+                      saxs.c5 + 
+                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
+                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
+                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
+                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
+                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
+               } else {
+                  f[j][i] = 
+                      saxs.c + 
+                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
+               }
+
+               // no explicit hydrogens on bead models
+               //                f[j][i] = saxs.c + 
+               //                   saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+               //                   saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+               //                   saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+               //                   saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
+               //                   atoms[i].hydrogens * 
+               //                   ( saxsH.c + 
+               //                     saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
+               //                     saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
+               //                     saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
+               //                     saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
                fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
                fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)

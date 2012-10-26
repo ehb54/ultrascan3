@@ -2659,6 +2659,11 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       }
    }
 
+   if ( our_saxs_options->multiply_iq_by_atomic_volume )
+   {
+      editor_msg("blue", tr( "NOTICE: Multiplying I(q) by atomic volume\n" ) );
+   }
+
    if ( our_saxs_options->saxs_iq_native_fast ) 
    {
       // calc_saxs_iq_native_debye();
@@ -4052,13 +4057,30 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
                      .arg( line ) );
       }
       
+      our_saxs_options->dummy_saxs_names.clear();
       for ( map < QString, saxs >::iterator it = saxs_map.begin();
             it != saxs_map.end();
             it++ )
       {
          saxs_list.push_back( it->second );
+         our_saxs_options->dummy_saxs_names.push_back( it->first );
       }
       f.close();
+      if ( !saxs_map.count( our_saxs_options->dummy_saxs_name ) )
+      {
+         if ( our_saxs_options->dummy_saxs_names.size() )
+         {
+            editor_msg( "red", QString( tr( "WARNING: default dummy atom name %1 was not defined in %2."
+                                            " Set now to %3" ) )
+                        .arg( our_saxs_options->dummy_saxs_name )
+                        .arg( filename )
+                        .arg( our_saxs_options->dummy_saxs_names.last() ) );
+            our_saxs_options->dummy_saxs_name = our_saxs_options->dummy_saxs_names.last();
+         } else {
+            editor_msg( "red", QString( tr( "ERROR: no saxs structure factors found in %1." ) )
+                        .arg( filename ) );
+         }
+      }
    }
 
    // setup for ff calc of hybridizations

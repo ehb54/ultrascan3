@@ -7160,6 +7160,7 @@ void US_Hydrodyn::calc_mw()
       current_model = i;
 
       model_vector[i].mw         = 0.0;
+      model_vector[i].volume     = 0.0;
       double tot_excl_vol        = 0.0;
       double tot_scaled_excl_vol = 0.0;
       unsigned int total_e       = 0;
@@ -7224,6 +7225,7 @@ void US_Hydrodyn::calc_mw()
                            tot_scaled_excl_vol   += scaled_excl_vol;
                            total_e               += this_e;
                         }
+                        model_vector[i].volume += excl_vol;
                      }
                   }
                }
@@ -7299,7 +7301,8 @@ void US_Hydrodyn::calc_mw()
 
       if ( model_vector_as_loaded.size() > i )
       {
-         model_vector_as_loaded[ i ].mw = model_vector[i].mw;
+         model_vector_as_loaded[ i ].mw     = model_vector[i].mw;
+         model_vector_as_loaded[ i ].volume = model_vector[i].volume;
       }
       {
          QString qs = 

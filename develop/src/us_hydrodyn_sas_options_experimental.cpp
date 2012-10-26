@@ -141,6 +141,33 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_iq_exact_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_exact_q, SIGNAL(clicked()), this, SLOT(set_iq_exact_q()));
 
+   cb_compute_exponentials = new QCheckBox(this);
+   cb_compute_exponentials->setText( tr( " Optionally compute exponentials on load SAXS curve" ) );
+   cb_compute_exponentials->setEnabled(true);
+   cb_compute_exponentials->setChecked((*saxs_options).compute_exponentials);
+   cb_compute_exponentials->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_exponentials->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_exponentials, SIGNAL(clicked()), this, SLOT(set_compute_exponentials()));
+
+   //    cnt_compute_exponential_terms = new QwtCounter(this);
+   //    US_Hydrodyn::sizeArrows( cnt_compute_exponential_terms );
+   //    cnt_compute_exponential_terms->setRange( 0, 20, 1 );
+   //    cnt_compute_exponential_terms->setValue((*saxs_options).compute_exponential_terms);
+   //    cnt_compute_exponential_terms->setMinimumHeight(minHeight1);
+   //    cnt_compute_exponential_terms->setEnabled(true);
+   //    cnt_compute_exponential_terms->setNumButtons(1);
+   //    cnt_compute_exponential_terms->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   //    cnt_compute_exponential_terms->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    connect(cnt_compute_exponential_terms, SIGNAL(valueChanged(double)), SLOT(update_compute_exponential_terms(double)));
+
+   cb_multiply_iq_by_atomic_volume = new QCheckBox(this);
+   cb_multiply_iq_by_atomic_volume->setText( tr( " Multiply Iq by atomic volume (for structure facture computations)" ) );
+   cb_multiply_iq_by_atomic_volume->setEnabled(true);
+   cb_multiply_iq_by_atomic_volume->setChecked((*saxs_options).multiply_iq_by_atomic_volume);
+   cb_multiply_iq_by_atomic_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_multiply_iq_by_atomic_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_multiply_iq_by_atomic_volume, SIGNAL(clicked()), this, SLOT(set_multiply_iq_by_atomic_volume()));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -194,6 +221,14 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_3->addWidget(cb_alt_ff);
    hbl_various_3->addWidget(cb_five_term_gaussians);
    background->addMultiCellLayout(hbl_various_3, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_4 = new QHBoxLayout;
+   
+   hbl_various_4->addWidget( cb_compute_exponentials );
+   //    hbl_various_4->addWidget( cnt_compute_exponential_terms );
+   hbl_various_4->addWidget( cb_multiply_iq_by_atomic_volume );
+   background->addMultiCellLayout(hbl_various_4, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(pb_create_somo_ff, j, j, 0, 1);
@@ -299,6 +334,24 @@ void US_Hydrodyn_SasOptionsExperimental::set_five_term_gaussians()
 void US_Hydrodyn_SasOptionsExperimental::set_iq_exact_q()
 {
    (*saxs_options).iq_exact_q = cb_iq_exact_q->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_compute_exponentials()
+{
+   (*saxs_options).compute_exponentials = cb_compute_exponentials->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::update_compute_exponential_terms( double val )
+{
+   (*saxs_options).compute_exponential_terms = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_multiply_iq_by_atomic_volume()
+{
+   (*saxs_options).multiply_iq_by_atomic_volume = cb_multiply_iq_by_atomic_volume->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

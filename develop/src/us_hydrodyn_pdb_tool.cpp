@@ -3377,6 +3377,21 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
       return;
    }
 
+   if ( QMessageBox::question(this, 
+                              tr( "US-SOMO: PDB Editor : Split by model" ),
+                              QString( tr( "How do you want to split the file %1?" ) ).arg( QFileInfo( filename ).fileName() ),
+                              tr( "&Normally (by model)" ), 
+                              tr( "Residues into models for saxs structure facture computation" ),
+                              QString::null,
+                              0,
+                              1
+                              ) == 1 )
+   {
+      split_pdb_by_residue( f );
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+
    QRegExp rx_model("^MODEL");
    QRegExp rx_end("^END");
    QRegExp rx_save_header("^("
@@ -5309,4 +5324,284 @@ double US_Hydrodyn_Pdb_Tool::minimum_pair_distance  ( QListView *lv,
    key_2 = key( min_lvp.lvi2 );
    update_enables();
    return min_distance;
+}
+
+void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
+{
+   // split by residue, QFile f open;
+   // build up vector of residues in 1st model
+
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end  ("^END");
+   QRegExp rx_atom ("^("
+                    "ATOM|"
+                    "HETATM"
+                    ")" );
+   QRegExp rx_save_header("^("
+                          "HEADER|"
+                          "TITLE|"
+                          "COMPND|"
+                          "SOURCE|"
+                          "KEYWDS|"
+                          "AUTHOR|"
+                          "REVDAT|"
+                          "JRNL|"
+                          "REMARK|"
+                          "SEQRES|"
+                          "SHEET|"
+                          "HELIX|"
+                          "SSBOND|"
+                          "DBREF|"
+                          "ORIGX|"
+                          "SCALE"
+                          ")\\.*" );
+
+   editor_msg( "dark blue", QString( tr( "Checking file %1" ).arg( f.name() ) ) );
+
+   vector < QString >                       residue_atoms;
+   vector < vector < QString > >            residues;
+   vector < vector < vector < QString > > > chain_residues;
+   
+   QString last_resSeq           = "";
+   QString last_chainId          = "";
+   unsigned int max_chain_length = 0;
+
+   QString                  model_header;
+
+   bool skip_waters = 
+      QMessageBox::question( this, 
+                             tr( "US-SOMO: PDB Editor : Split by residue" ),
+                             QString( tr( "Do you want to skip waters?" ) ).arg( f.name() ),
+                             tr( "&Yes" ), 
+                             tr( "No" ),
+                             QString::null,
+                             1
+                             ) == 0;
+   //    if ( skip_waters )
+   //    {
+   //       cout << "skip_waters\n";
+   //    }
+
+   {
+      QTextStream ts( &f );
+      unsigned int line_count = 0;
+   
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         line_count++;
+         if ( line_count && !(line_count % 100000 ) )
+         {
+            editor_msg( "dark blue", QString( tr( "Lines read %1" ).arg( line_count ) ) );
+            qApp->processEvents();
+         }
+         
+         if ( qs.contains( rx_save_header ) )
+         {
+            model_header += qs + "\n";
+         }
+
+         if ( qs.contains( rx_end ) )
+         {
+            break;
+         }
+
+         if ( qs.contains( rx_atom ) )
+         {
+            QString resName = qs.mid( 17 , 3 ).stripWhiteSpace();
+            if ( !skip_waters || resName != "HOH" )
+            {
+               QString resSeq  = qs.mid( 22 , 4 ).stripWhiteSpace();
+               QString chainId = qs.mid( 21 , 1 );
+               if ( resSeq  != last_resSeq ||
+                    chainId != last_chainId )
+               {
+                  if ( residue_atoms.size() )
+                  {
+                     residues.push_back( residue_atoms );
+                     residue_atoms.clear();
+                  }
+                  last_resSeq = resSeq;
+               
+                  if ( chainId != last_chainId )
+                  {
+                     if ( residues.size() )
+                     {
+                        chain_residues.push_back( residues );
+                        if ( max_chain_length < residues.size() )
+                        {
+                           max_chain_length = residues.size();
+                        }
+                        residues.clear();
+                     }
+                     last_chainId = chainId;
+                  }
+               }               
+               residue_atoms.push_back( qs );
+            }
+         }
+      }
+      if ( residue_atoms.size() )
+      {
+         residues.push_back( residue_atoms );
+         chain_residues.push_back( residues );
+         if ( max_chain_length < residues.size() )
+         {
+            max_chain_length = residues.size();
+         }
+         residues.clear();
+         residue_atoms.clear();
+      }
+   }
+   f.close();
+
+   //    for ( unsigned int i = 0; i < ( unsigned int ) chain_residues.size(); i++ )
+   //    {
+   //       for ( unsigned int j = 0; j < ( unsigned int ) chain_residues[ i ].size(); j++ )
+   //       {
+   //          cout << QString( "split_by_residue(): chain %1 residue %2 atoms %2\n" )
+   //             .arg( i )
+   //             .arg( j )
+   //             .arg( chain_residues[ i ][ j ].size() );
+   //       }
+   //    }
+
+   unsigned int step_size   = 0;
+   unsigned int window_size = 0;
+
+   bool ok = false;
+   do 
+   {
+      window_size = ( unsigned int )QInputDialog::getInteger(
+                                                             tr( "US-SOMO: PDB Editor : Split by residue" ),
+                                                             QString( tr( "The maximum chain length in residues is %1 in the 1st model in the PDB file %2\n"
+                                                                          "Enter the number of resdues per output model:" ) )
+                                                             .arg( max_chain_length )
+                                                             .arg( f.name() ),
+                                                             1,
+                                                             1, 
+                                                             max_chain_length / 2,
+                                                             1,
+                                                             &ok, 
+                                                             this );
+      if ( ok )
+      {
+         step_size = ( unsigned int )QInputDialog::getInteger(
+                                                              tr( "US-SOMO: PDB Editor : Split by residue" ),
+                                                              QString( tr( "The maximum chain length in residues is %1 in the 1st model in the PDB file %2\n"
+                                                                           "The number of resdues per output model is %3\n"
+                                                                           "Enter the step size:" ) )
+                                                              .arg( max_chain_length )
+                                                              .arg( f.name() )
+                                                              .arg( window_size ),
+                                                              1,
+                                                              1, 
+                                                              window_size,
+                                                              1,
+                                                              &ok, 
+                                                              this );
+      }
+      if ( ok )
+      {
+         switch ( QMessageBox::question(
+                                        this,
+                                        tr( "US-SOMO: PDB Editor : Split by residue" ),
+                                        QString( tr( "The maximum chain length in residues is %1 in the 1st model in the PDB file %2\n"
+                                                     "The number of residues per model is %3\n"
+                                                     "The step size is %4\n"
+                                                     ) )
+                                        .arg( max_chain_length )
+                                        .arg( f.name() )
+                                        .arg( window_size )
+                                        .arg( step_size )
+                                        ,
+                                        tr( "&Re-enter values" ), 
+                                        tr( "&Proceed" ),
+                                        tr( "&Cancel" ),
+                                        0, 
+                                        2 ) 
+                  )
+         {
+         case 0: // reenter
+            ok = false;
+            break;
+         case 1:
+            ok = true;
+            break;
+         case 2:
+            return;
+         }
+      }
+   } while( !ok );
+
+   QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" );
+
+   fn = QFileDialog::getSaveFileName( fn, 
+                                      "PDB (*.pdb *.PDB)",
+                                      this,
+                                      "save the models",
+                                      tr( "Choose a name to save the multiple model output file" ) );
+   
+   if ( fn.isEmpty() )
+   {
+      pb_split_pdb->setEnabled( true );
+      return;
+   }
+   
+   if ( QFile::exists( fn ) && 
+        !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+   {
+      fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fn, 0, this );
+   }
+                  
+   QFile fn_out( fn );
+
+   if ( !fn_out.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "US-SOMO: PDB Editor : Split by residue",
+                            QString(tr("Could not open %1 for writing!")).arg( fn ) );
+      return;
+   }
+
+   unsigned int model_count = 0;
+   
+   QTextStream tso( &fn_out );
+
+   tso << QString("HEADER    split by residue from %1: window size %2 step size %3\n")
+      .arg( f.name() )
+      .arg( window_size )
+      .arg( step_size )
+      ;
+
+   tso << model_header;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) chain_residues.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < ( unsigned int ) chain_residues[ i ].size(); j += step_size )
+      {
+         // create a model
+         model_count++;
+         tso << QString( "MODEL     %1\n" ).arg( model_count );
+         for ( unsigned int k = j; k < j + window_size && k < ( unsigned int ) chain_residues[ i ].size(); k++ )
+         {
+            for ( unsigned int l = 0; l < ( unsigned int ) chain_residues[ i ][ k ].size(); l++ )
+            {
+               tso << chain_residues[ i ][ k ][ l ] + "\n";
+            }
+         }
+         tso << "TER\n";
+         tso << "ENDMDL\n";
+      }
+   }
+
+   tso << "END\n";
+
+   fn_out.close();
+   QMessageBox::information( this, 
+                             tr( "US-SOMO: PDB Editor : Split by residue" ),
+                             QString( tr( "Created file %1 with %2 models" ) )
+                             .arg( fn_out.name() )
+                             .arg( model_count ) );
+
+   return;
 }

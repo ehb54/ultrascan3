@@ -77,6 +77,7 @@ class US_EXTERN US_Saxs_Util
    public:
 
       friend class US_Hydrodyn_Pdb_Tool;
+      friend class US_Hydrodyn_Saxs;
 
       US_Saxs_Util();
 
@@ -611,6 +612,16 @@ class US_EXTERN US_Saxs_Util
                                                                                 map < QString, QString > &residue_atom_hybrid_map,
                                                                                 saxs_options *use_saxs_options
                                                                                 );
+      bool                                            compute_exponential( 
+                                                                          vector < double > &q, 
+                                                                          vector < double > &I,
+                                                                          vector < double > &coeff4,
+                                                                          vector < double > &coeff5,
+                                                                          double            &norm4,
+                                                                          double            &norm5
+                                                                          );
+      vector < double >                               compute_exponential_t;
+      vector < double >                               compute_exponential_y;
 #ifdef WIN32
   #pragma default ( disable: 4251 )
 #endif
@@ -618,6 +629,10 @@ class US_EXTERN US_Saxs_Util
       bool         align_test();
 
    private:
+
+      // double       minusoneoverfourpisq;
+      // unsigned int exponential_terms;
+      // double       compute_exponential_f( double t, const double *par );
 
       bool run_crysol();
       bool run_dammin();

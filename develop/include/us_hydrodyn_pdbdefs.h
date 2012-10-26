@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <qstringlist.h>
 using namespace std;
 
 // QT defs:
@@ -162,6 +163,7 @@ struct PDB_model
    vector <struct residue> residue;         // keep track of amino acid sequence in molecule for vbar calculation
    float vbar;
    float mw;                                // mw of model
+   float volume;
    QString  model_id;
 };
 
@@ -331,6 +333,13 @@ struct saxs_options
    double       iq_target_ev;
 
    bool         hydration_rev_asa;
+   bool         compute_exponentials;
+   unsigned int compute_exponential_terms;
+
+   QString      dummy_saxs_name;
+   QStringList  dummy_saxs_names;
+   bool         multiply_iq_by_atomic_volume;
+   bool         dummy_atom_pdbs_in_nm;
 };
 
 struct saxs_atom

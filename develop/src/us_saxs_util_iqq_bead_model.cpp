@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_lm.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -899,3 +900,128 @@ bool US_Saxs_Util::run_iqq_bead_model()
    }
    return true;
 }
+
+namespace LM {
+   unsigned int exponential_terms;
+   double       minusoneoverfourpisq;
+   double compute_exponential_f( double t, const double *par )
+   {
+      double result = par[ 0 ];
+      //       cout << QString( "t %1 minusoneoverfourisq %2 minusoneoverfourpisq * t * t %3\n" )
+      //          .arg( t )
+      //          .arg( minusoneoverfourpisq )
+      //          .arg( minusoneoverfourpisq * t * t );
+         
+      for ( unsigned int i = 0; i < exponential_terms; i++ )
+      {
+         // cout << QString( "term %1 using parameters a=%2 b=%3\n" ).arg( i ).arg( par[ i * 2 ] ).arg( par[ 1 + i * 2 ] );
+         result += 
+            par[ 1 + i * 2 ] * 
+            exp( par[ 2 + i * 2 ] * minusoneoverfourpisq * t * t );
+      }
+      // cout << QString( "term constant c=%1\n" ).arg( par[ exponential_terms * 2 ] );
+      return result * result;
+   }
+}
+
+bool US_Saxs_Util::compute_exponential( 
+                                       vector < double > &q, 
+                                       vector < double > &I,
+                                       vector < double > &coeff4,
+                                       vector < double > &coeff5,
+                                       double            &norm4,
+                                       double            &norm5
+                                       )
+{
+   if ( q.size() != I.size() )
+   {
+      errormsg = QString( "compute_exponential() I.size() %1 does not equal q.size() %2\n" )
+         .arg( I.size() ).arg( q.size() );
+      return false;
+   }
+
+   // this method is general, but we currently compute 4 & 5 terms
+   unsigned int terms = 5;
+
+   using namespace LM;
+   {
+      unsigned int n_par = 1 + 2 * terms;
+      unsigned int m_dat = ( unsigned int ) q.size();
+      cout << QString( "compute exponential terms %1 n_par %2 m_dat %3\n" )
+         .arg( terms ).arg( n_par ).arg( m_dat ).ascii();
+
+      minusoneoverfourpisq  = -1e0 / ( 16e0 * M_PI * M_PI );
+
+      vector < double > par( n_par );
+      // not much of an initial guess
+      for ( unsigned int i = 0; i < n_par; i++ )
+      {
+         par[ i ] = 1e0;
+      }
+      //       if ( n_par == 9 )
+      //       {
+      //          par[ 0 ] = 2.31;
+      //          par[ 1 ] = 20.8439;
+      //          par[ 2 ] = 1.02;
+      //          par[ 3 ] = 10.2075;
+      //          par[ 4 ] = 1.5886;
+      //          par[ 5 ] = 0.5687;
+      //          par[ 6 ] = 0.865;
+      //          par[ 7 ] = 51.6512;
+      //          par[ 8 ] = 0.2156;
+      //          cout << "used presets\n";
+      //       }
+
+      //       if ( n_par == 11 )
+      //       {
+      //          par[ 0 ] = 2.657506;
+      //          par[ 1 ] = 0.713791;
+      //          par[ 2 ] = 1.078079;
+      //          par[ 3 ] = 14.780758;
+      //          par[ 4 ] = 1.490909;
+      //          par[ 5 ] = 0.776775;
+      //          par[ 6 ] = -4.24107;
+      //          par[ 7 ] = 42.086842;
+      //          par[ 8 ] = 0.713791;
+      //          par[ 9 ] = -0.000294;
+      //          par[ 10 ] =  4.297983	;
+      //          cout << "used presets\n";
+      //       }
+      lm_control_struct control = lm_control_double;
+      control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
+      control.stepbound  = 1000;
+      control.maxcall    = 1000;
+
+      lm_status_struct status;
+
+      // incremental approach
+      for ( unsigned int this_terms = 0; this_terms <= terms; this_terms++ )
+      {
+         unsigned int this_n_par = 1 + 2 * this_terms;
+         compute_exponential_t = q;
+         compute_exponential_y = I;
+         exponential_terms     = this_terms;
+         
+         lmcurve_fit( ( int )      this_n_par,
+                      ( double * ) &( par[ 0 ] ),
+                      ( int )      m_dat,
+                      ( double * ) &( compute_exponential_t[ 0 ] ),
+                      ( double * ) &( compute_exponential_y[ 0 ] ),
+                      compute_exponential_f,
+                      (const lm_control_struct *)&control,
+                      &status );
+         if ( this_terms == 4 )
+         {
+            coeff4 = par;
+            norm4  = status.fnorm;
+         }
+         if ( this_terms == 5 )
+         {
+            coeff5 = par;
+            norm5  = status.fnorm;
+         }
+      }
+   }      
+   return true;
+}
+

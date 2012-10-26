@@ -20,9 +20,9 @@ unix {
  DEFINES               += UNIX QT_NO_STL
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
  # make sure CBFDIR is set if HAS_CBF is defined
- # DEFINES               += HAS_CBF
- # INCLUDEPATH           += $(CBFDIR)/include
- # LIBS                  += -L$(CBFDIR)/lib -lcbf
+  DEFINES               += HAS_CBF
+  INCLUDEPATH           += $(CBFDIR)/include
+  LIBS                  += -L$(CBFDIR)/lib -lcbf
 
  contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus

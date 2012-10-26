@@ -1163,6 +1163,21 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #if defined(SAXS_DEBUG)
       cout << "I computed\n";
 #endif
+      if ( our_saxs_options->multiply_iq_by_atomic_volume )
+      {
+         if ( model_vector[ current_model ].volume == 0.0 )
+         {
+            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+         } else {
+            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+                       .arg( model_vector[ current_model ].volume ) );
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[ i ] *= model_vector[ current_model ].volume;
+            }
+         }
+      }        
+
       if ( plotted )
       {
          editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
@@ -2114,6 +2129,21 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #if defined(SAXS_DEBUG)
       cout << "I computed\n";
 #endif
+      if ( our_saxs_options->multiply_iq_by_atomic_volume )
+      {
+         if ( model_vector[ current_model ].volume == 0.0 )
+         {
+            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+         } else {
+            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+                       .arg( model_vector[ current_model ].volume ) );
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[ i ] *= model_vector[ current_model ].volume;
+            }
+         }
+      }        
+
       editor->append("I(q) computed.\n");
 #if defined(BUG_DEBUG)
       qApp->processEvents();
@@ -3101,6 +3131,20 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #if defined(SAXS_DEBUG)
       cout << "I computed\n";
 #endif
+      if ( our_saxs_options->multiply_iq_by_atomic_volume )
+      {
+         if ( model_vector[ current_model ].volume == 0.0 )
+         {
+            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+         } else {
+            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+                       .arg( model_vector[ current_model ].volume ) );
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[ i ] *= model_vector[ current_model ].volume;
+            }
+         }
+      }        
       editor->append("I(q) computed.\n");
 #if defined(BUG_DEBUG)
       qApp->processEvents();
@@ -3383,6 +3427,9 @@ double US_Hydrodyn_Saxs::compute_ff(
                                     )
 {
 
+   //   cout << QString( "compute_ff q %1 q_o_4pi2 %2\n" ).arg( q ).arg( q_o_4pi2 );
+   // cout << "compute_ff: saxs_name:" << sa.saxs_name << endl;
+
 #if defined( UHSI_COMPUTE_FF_DEBUG )
    cout << QString( "compute_ff: q: %1 nr:%2 na:%3 naf:%4 h:%5 use_somo_ff %6 alt_ff %7\n" )
       .arg( q )
@@ -3439,6 +3486,13 @@ double US_Hydrodyn_Saxs::compute_ff(
             sa.a5[ 3 ] * exp( -sa.b5[ 3 ] * q_o_4pi2 ) +
             sa.a5[ 4 ] * exp( -sa.b5[ 4 ] * q_o_4pi2 );
       } else {
+         //          for ( unsigned int i = 0; i < 4; i++ )
+         //          {
+         //             cout << QString( "ff using for term %1 a=%2 b=%3\n" )
+         //                .arg( i ).arg( sa.a[ i ] ).arg( sa.b[ i ] );
+         //          }
+         //          cout << QString( "ff using for constant term %1\n" ).arg( sa.c );
+                   
          return 
             sa.c +
             sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
