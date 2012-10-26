@@ -5583,7 +5583,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       return;
    }
 
-   unsigned int model_count = 0;
+   unsigned int model_count = 1;
    
    QTextStream tso( &fn_out );
 
@@ -5602,8 +5602,9 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       for ( int j = 1 - window_size; j < ( int ) chain_residues[ i ].size(); j += step_size )
       {
          // create a model
-         model_count++;
-         tso << QString( "MODEL     %1\n" ).arg( model_count );
+         QString qs_this_model;
+         qs_this_model += QString( "MODEL     %1\n" ).arg( model_count );
+         unsigned int model_lines = 0;
          for ( int k = j; k < j + ( int ) window_size && k < ( int ) chain_residues[ i ].size(); k++ )
          {
             if ( k >= 0 )
@@ -5627,12 +5628,18 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                      }
                   }
                   
-                  tso << chain_residues[ i ][ k ][ l ] + "\n";
+                  qs_this_model += chain_residues[ i ][ k ][ l ] + "\n";
+                  model_lines++;
                }
             }
          }
-         tso << "TER\n";
-         tso << "ENDMDL\n";
+         if ( model_lines )
+         {
+            tso << qs_this_model;
+            tso << "TER\n";
+            tso << "ENDMDL\n";
+            model_count++;
+         }
       }
    }
 
