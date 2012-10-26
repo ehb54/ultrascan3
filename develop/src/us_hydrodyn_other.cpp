@@ -1258,7 +1258,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                }
                if ( rx_unit.search( qs ) != -1 )
                {
-                  loaded_unit = rx_mw.cap( 1 ).toUInt();
+                  loaded_unit = rx_unit.cap( 1 ).toUInt();
                   editor_msg( "blue", QString( tr( "Found Units %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
