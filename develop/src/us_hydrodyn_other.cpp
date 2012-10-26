@@ -525,8 +525,10 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       }
    }
 
+   QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", false );
    if ( f.open( IO_ReadOnly ) )
    {
+      multiply_iq_by_atomic_volume_last_water_multiplier = 0;      
       last_pdb_header.clear();
       last_pdb_title .clear();
       last_pdb_filename = f.name();
@@ -534,6 +536,13 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       while ( !ts.atEnd() )
       {
          str1 = ts.readLine();
+         if ( saxs_options.multiply_iq_by_atomic_volume &&
+              rx_water_multiplier.search( str1 ) != -1 )
+         {
+            multiply_iq_by_atomic_volume_last_water_multiplier = rx_water_multiplier.cap( 1 ).toUInt();
+            cout << QString( "found water multiplier %1 in pdb\n" ).arg( multiply_iq_by_atomic_volume_last_water_multiplier );
+         }
+
          if ( str1.left(3) == "TER" )
          {
             // push back previous chain if it exists

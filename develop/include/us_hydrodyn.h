@@ -746,6 +746,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void         reset_chain_residues( PDB_model *);
 
+      unsigned int multiply_iq_by_atomic_volume_last_water_multiplier;
+
    public:
 
       QString      model_name( int val );

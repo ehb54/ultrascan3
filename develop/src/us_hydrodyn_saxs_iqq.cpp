@@ -296,6 +296,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      bool is_only_one_swh     = false;
+
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -527,6 +529,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
       }
       
+      is_only_one_swh = ( atoms.size() == 1 && 
+                          ( atoms[ 0 ].atom_name == "OW" ||
+                            atoms[ 0 ].atom_name == "O" ) );
+
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
@@ -1175,6 +1181,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             {
                I[ i ] *= model_vector[ current_model ].volume;
             }
+            if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
+            {
+               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+                          .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
+               for ( unsigned int i = 0; i < I.size(); i++ )
+               {
+                  I[ i ] *= ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier;
+               }
+            }
          }
       }        
 
@@ -1453,6 +1468,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      bool is_only_one_swh     = false;
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -1699,6 +1715,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             atoms.push_back(new_atom);
          }
       }
+ 
+      is_only_one_swh = ( atoms.size() == 1 && 
+                          ( atoms[ 0 ].atom_name == "OW" ||
+                            atoms[ 0 ].atom_name == "O" ) );
       
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
@@ -2141,6 +2161,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             {
                I[ i ] *= model_vector[ current_model ].volume;
             }
+            if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
+            {
+               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+                          .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
+               for ( unsigned int i = 0; i < I.size(); i++ )
+               {
+                  I[ i ] *= ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier;
+               }
+            }
          }
       }        
 
@@ -2407,6 +2436,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
+      bool is_only_one_swh     = false;
       double tot_excl_vol      = 0e0;
       double tot_excl_vol_noh  = 0e0;
       unsigned int total_e     = 0;
@@ -2632,6 +2662,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             atoms.push_back(new_atom);
          }
       }
+
+      is_only_one_swh = ( atoms.size() == 1 && 
+                          ( atoms[ 0 ].atom_name == "OW" ||
+                            atoms[ 0 ].atom_name == "O" ) );
+
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
@@ -3142,6 +3177,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             for ( unsigned int i = 0; i < I.size(); i++ )
             {
                I[ i ] *= model_vector[ current_model ].volume;
+            }
+            if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
+            {
+               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+                          .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
+               for ( unsigned int i = 0; i < I.size(); i++ )
+               {
+                  I[ i ] *= ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier;
+               }
             }
          }
       }        

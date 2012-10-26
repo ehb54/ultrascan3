@@ -5373,14 +5373,23 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                              tr( "US-SOMO: PDB Editor : Split by residue" ),
                              QString( tr( "Do you want to skip waters?" ) ),
                              tr( "&Yes" ), 
-                             tr( "No" ),
+                             tr( "&No" ),
                              QString::null,
                              1
                              ) == 0;
-   //    if ( skip_waters )
-   //    {
-   //       cout << "skip_waters\n";
-   //    }
+
+   bool waters_as_onezies = skip_waters ? false :
+      ( QMessageBox::question( this, 
+                             tr( "US-SOMO: PDB Editor : Split by residue" ),
+                             QString( tr( "Do you want to keep the waters as singletons?" ) ),
+                             tr( "&Yes" ), 
+                             tr( "&No" ),
+                             QString::null,
+                             0
+                             ) == 0 );
+      
+
+   unsigned int water_count = 0;
 
    {
       QTextStream ts( &f );
@@ -5409,12 +5418,23 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
          if ( qs.contains( rx_atom ) )
          {
             QString resName = qs.mid( 17 , 3 ).stripWhiteSpace();
-            if ( !skip_waters || resName != "HOH" )
+            bool is_water = ( resName == "HOH" || resName == "SWH" );
+            if ( !skip_waters || !is_water )
             {
+               if ( is_water && waters_as_onezies )
+               {
+                  water_count++;
+                  if ( water_count > 1 )
+                  {
+                     continue;
+                  }
+               }
+
                QString resSeq  = qs.mid( 22 , 4 ).stripWhiteSpace();
                QString chainId = qs.mid( 21 , 1 );
                if ( resSeq  != last_resSeq ||
-                    chainId != last_chainId )
+                    chainId != last_chainId ||
+                    ( waters_as_onezies && is_water ) )
                {
                   if ( residue_atoms.size() )
                   {
@@ -5534,7 +5554,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       }
    } while( !ok );
 
-   QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" );
+   QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
 
    fn = QFileDialog::getSaveFileName( fn, 
                                       "PDB (*.pdb *.PDB)",
@@ -5575,18 +5595,40 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
 
    tso << model_header;
 
+   bool water_done = false;
+
    for ( unsigned int i = 0; i < ( unsigned int ) chain_residues.size(); i++ )
    {
-      for ( unsigned int j = 0; j < ( unsigned int ) chain_residues[ i ].size(); j += step_size )
+      for ( int j = 1 - window_size; j < ( int ) chain_residues[ i ].size(); j += step_size )
       {
          // create a model
          model_count++;
          tso << QString( "MODEL     %1\n" ).arg( model_count );
-         for ( unsigned int k = j; k < j + window_size && k < ( unsigned int ) chain_residues[ i ].size(); k++ )
+         for ( int k = j; k < j + ( int ) window_size && k < ( int ) chain_residues[ i ].size(); k++ )
          {
-            for ( unsigned int l = 0; l < ( unsigned int ) chain_residues[ i ][ k ].size(); l++ )
+            if ( k >= 0 )
             {
-               tso << chain_residues[ i ][ k ][ l ] + "\n";
+               for ( unsigned int l = 0; l < ( unsigned int ) chain_residues[ i ][ k ].size(); l++ )
+               {
+                  if ( waters_as_onezies )
+                  {
+                     QString resName = chain_residues[ i ][ k ][ l ].mid( 17 , 3 ).stripWhiteSpace();
+                     if ( resName == "HOH" || resName == "SWH" )
+                     {
+                        if ( !water_done )
+                        {
+                           {
+                              tso << QString( "REMARK Multiply water Iq by %1\n" ).arg( water_count * window_size );
+                           }
+                           water_done = true;
+                        } else {
+                           break;
+                        }
+                     }
+                  }
+                  
+                  tso << chain_residues[ i ][ k ][ l ] + "\n";
+               }
             }
          }
          tso << "TER\n";
