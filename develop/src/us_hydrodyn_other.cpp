@@ -905,6 +905,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
    vector < QString > model_names;
    model_names.push_back( "1" );
 
+   if ( saxs_options.compute_saxs_coeff_for_bead_models )
+   {
+      if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+      {
+         editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+                     .arg( saxs_options.dummy_saxs_name ) );
+      } else {
+         editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+                     .arg( saxs_options.dummy_saxs_name ) );
+      }               
+   }
+
    if (ftype == "bead_model")
    {
       if (f.open(IO_ReadOnly))
@@ -1004,6 +1016,14 @@ int US_Hydrodyn::read_bead_model(QString filename)
             tmp_atom.iCode = "ICODE";
             tmp_atom.chainID = "CHAIN";
             tmp_atom.saxs_data.saxs_name = "";
+            if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+                 saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+            {
+               tmp_atom.saxs_name = saxs_options.dummy_saxs_name;
+               tmp_atom.saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
+               tmp_atom.hydrogens = 0;
+            }
+
             bead_model.push_back(tmp_atom);
          }
          QFont save_font = editor->currentFont();
@@ -1178,6 +1198,14 @@ int US_Hydrodyn::read_bead_model(QString filename)
                tmp_atom.iCode = "ICODE";
                tmp_atom.chainID = "CHAIN";
                tmp_atom.saxs_data.saxs_name = "";
+               if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+                    saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+               {
+                  tmp_atom.saxs_name = saxs_options.dummy_saxs_name;
+                  tmp_atom.saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
+                  tmp_atom.hydrogens = 0;
+               }
+
                bead_model.push_back(tmp_atom);
             }
             frmc.close();
@@ -1225,17 +1253,6 @@ int US_Hydrodyn::read_bead_model(QString filename)
 
       if (f.open(IO_ReadOnly))
       {
-         if ( saxs_options.compute_saxs_coeff_for_bead_models )
-         {
-            if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
-            {
-               editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
-                           .arg( saxs_options.dummy_saxs_name ) );
-            } else {
-               editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
-                           .arg( saxs_options.dummy_saxs_name ) );
-            }               
-         }
 
          QRegExp rx_psv( "^REMARK\\s+PSV\\s+(\\S+)", false );
          QRegExp rx_mw ( "^REMARK\\s+MW\\s+(\\S+)", false );
