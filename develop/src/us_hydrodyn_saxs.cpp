@@ -158,9 +158,12 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    te_filename2->setText(filename);
    model_filename = filename;
-   atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
-   hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
-   saxs_filename =  USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
+   //   atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
+   //   hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
+   //   Saxs_filename =  USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
+   atom_filename = our_saxs_options->default_atom_filename;
+   hybrid_filename = our_saxs_options->default_hybrid_filename;
+   saxs_filename = our_saxs_options->default_saxs_filename;
    select_saxs_file(saxs_filename);
    select_hybrid_file(hybrid_filename);
    select_atom_file(atom_filename);

@@ -2774,21 +2774,20 @@ int US_Hydrodyn::calc_grid_pdb()
 
                   if ( saxs_options.compute_saxs_coeff_for_bead_models )
                   {
-                     if ( !saxs_util->saxs_map.count("A2B") )
+                     if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
                      {
-                        QColor save_color = editor->color();
-                        editor->setColor("red");
-                        editor->append(tr(
-                                          "Warning: No 'A2B' SAXS atom found. Bead model SAXS disabled.\n"
-                                          ));
-                        editor->setColor(save_color);
+                        editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found.\n" ) )
+                                    .arg( saxs_options.dummy_saxs_name ) );
                         for(unsigned int i = 0; i < bead_model.size(); i++) {
                            bead_model[i].saxs_data.saxs_name = "";
                         }
                      } else {
-                        for(unsigned int i = 0; i < bead_model.size(); i++) {
-                           bead_model[i].saxs_name = "A2B";
-                           bead_model[i].saxs_data = saxs_util->saxs_map["A2B"];
+                        editor_msg( "blue", QString( tr("Notice: Loading beads with saxs coefficients '%1'" ) )
+                                    .arg( saxs_options.dummy_saxs_name ) );
+                        for( unsigned int i = 0; i < bead_model.size(); i++ ) 
+                        {
+                           bead_model[i].saxs_name = saxs_options.dummy_saxs_name;
+                           bead_model[i].saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
                            bead_model[i].hydrogens = 0;
                         }
                      }
