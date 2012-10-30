@@ -262,7 +262,7 @@ QString US_SoluteData::bucketLine(  int ix )
          .arg( buk.ff0_min ).arg( buk.ff0_max );
 }
 
-void US_SoluteData::setDistro( SoluteList* a_distro )
+void US_SoluteData::setDistro( QList< Solute >* a_distro )
 {
    distro  = a_distro;
 }
@@ -687,8 +687,8 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
    int         nbuk = allbucks.size();
    bucket      buk;          // bucket record
    Solute      d_sol;        // solute record
-   SimComp     simc;         // simulation component record
-   SimCompList bcomp;        // sim component list
+   SimComp          simc;    // simulation component record
+   QList< SimComp > bcomp;   // sim component list
    qreal       bsmin;        // bucket vertices
    qreal       bsmax;
    qreal       bfmin;
@@ -766,9 +766,9 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 {
    int         rc = 0;
    int         nbuk = MC_solute.size();
-   bucket      buk;          // bucket record
-   SimCompList bcomp;        // sim component list
-   QList< double > vals;
+   bucket           buk;     // bucket record
+   QList< SimComp > bcomp;   // sim component list
+   QList< double >  vals;
 
    QString ffvb    = isPlotK ?
                      tr( "Frictional ratio:          " ) :

@@ -72,6 +72,8 @@ DbgLv(2) << "RSA:  af_c0size" << initial_npts;
    update_assocv();
    initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
+DbgLv(2) << "RSA:   sbottom acbottom" << simparams.bottom
+ << af_params.current_bottom;
 
    for ( int k = 0; k < size_cv; k++ )
    {

@@ -65,7 +65,7 @@
      maxRPM="60000"
      angle="2.5"
      width="0" >
-      <row pathlen="1.2" bottom="7.111" />
+      <row pathlen="1.2" bottom="7.15" />
    </abstractCenterpiece> 
 
    <abstractCenterpiece
@@ -78,9 +78,9 @@
      maxRPM="60000"
      angle="0"
      width="0.320" >
-      <row pathlen="0.3" bottom="6.111" />
-      <row pathlen="0.3" bottom="6.613" />
-      <row pathlen="0.3" bottom="7.104" />
+      <row pathlen="0.3" bottom="6.170" />
+      <row pathlen="0.3" bottom="6.690" />
+      <row pathlen="0.3" bottom="7.210" />
    </abstractCenterpiece> 
 
    <abstractCenterpiece

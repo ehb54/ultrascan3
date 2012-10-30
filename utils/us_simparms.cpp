@@ -6,6 +6,9 @@
 #include "us_settings.h"
 #include "us_constants.h"
 
+//!< level-conditioned debug print
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+
 US_SimulationParameters::US_SimulationParameters()
 {
    mesh_radius.clear(); 
@@ -55,6 +58,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 {
    SpeedProfile sp;
 
+   int     dbg_level   = US_Settings::us_debug();
    int     scanCount   = editdata.scanData.size();
    double  time1       = editdata.scanData[ 0 ].seconds;
    double  time2       = editdata.scanData[ 0 ].seconds;
@@ -67,7 +71,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
            ch          = qMax( 0, ch );
    int     iechan      = ch + 1;
            ch         /= 2;
-//qDebug() << "SP:iFD: ch" << ch << editdata.channel << iechan;
+//DbgLv(2) << "SP:iFD: ch" << ch << editdata.channel << iechan;
    QString ecell       = editdata.cell;
    int     iecell      = ecell.toInt();
 
@@ -118,7 +122,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       if ( cp_id == 0 )    // If no cell,chan match; use last CP ID
          cp_id            = dcp_id;
    }
-//qDebug() << "SP:iFD: cp_id ch" << cp_id << ch;
+//DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
 
    bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
@@ -167,24 +171,24 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       QStringList query;
       QString     rcalIDsv = rotorCalID;  // Save IDs gotten from local file
       int         cpIDsv   = cp_id;
-//qDebug() << "Sim parms:runID" << editdata.runID;
-//qDebug() << "Sim parms:invID" << US_Settings::us_inv_ID();
+//DbgLv(2) << "Sim parms:runID" << editdata.runID;
+//DbgLv(2) << "Sim parms:invID" << US_Settings::us_inv_ID();
       query << "get_experiment_info_by_runID"
             << editdata.runID
             << QString::number( US_Settings::us_inv_ID() );
       db->query( query );
       stat_db = db->lastErrno();
-//qDebug() << "Sim parms:query() stat" << stat_db;
+//DbgLv(2) << "Sim parms:query() stat" << stat_db;
       if ( stat_db != US_DB2::NOROWS )
       {  // Info by runID:  experiment and calibration IDs
          ok_db      = db->next();
-//qDebug() << "Sim parms: next() ok_db" << ok_db;
+//DbgLv(2) << "Sim parms: next() ok_db" << ok_db;
          if ( ok_db )
          {
             expID      = db->value( 1 ).toString();
             rotorCalID = db->value( 7 ).toString();
-//qDebug() << "Sim parms: expID" << expID;
-//qDebug() << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
+//DbgLv(2) << "Sim parms: expID" << expID;
+//DbgLv(2) << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
          }
          else
             rotorCalID = "";
@@ -198,14 +202,14 @@ void US_SimulationParameters::initFromData( US_DB2* db,
             if ( stat_db != US_DB2::NOROWS  &&  db->next() )
             {
                rotorCalID = db->value( 7 ).toString();
-//qDebug() << "Sim parms(2):     rotorCalID" << rotorCalID;
+//DbgLv(2) << "Sim parms(2):     rotorCalID" << rotorCalID;
             }
          }
 
          // If unable to get calibration ID from DB, fall back to local info
          if ( rotorCalID.isEmpty() || rotorCalID == "0" )
             rotorCalID = rcalIDsv;
-//qDebug() << "Sim parms(3):     rotorCalID" << rotorCalID;
+//DbgLv(2) << "Sim parms(3):     rotorCalID" << rotorCalID;
 
          if ( ! expID.isEmpty() )
          {  // Get centerpiece ID from cell records for this experiment
@@ -226,11 +230,11 @@ void US_SimulationParameters::initFromData( US_DB2* db,
             }
          }
 
-//qDebug() << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
+DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
          // If no centerpiece ID from DB, fall back to local info
          if ( cp_id < 1 )
             cp_id     = cpIDsv;
-//qDebug() << "Sim parms(2):     cp_id" << cp_id;
+//DbgLv(2) << "Sim parms(2):     cp_id" << cp_id;
       }
    }
 
@@ -244,15 +248,17 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    bottom = bottom_position;
    db     = NULL; // Stop compiler warning
 #endif
+DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
 void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
       int cp, int ch )
 {
+   int dbg_level    = US_Settings::us_debug();
    rotorCalID       = rCalID;
    bottom_position  = 7.2;
-//qDebug() << "sH: cp ch rCalID" << cp << ch << rCalID;
+//DbgLv(2) << "sH: cp ch rCalID" << cp << ch << rCalID;
 
    QList< US_AbstractCenterpiece > cp_list;
    QMap < QString, QString       > rotor_map;
@@ -273,7 +279,7 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
                break;
             }
          }
-//qDebug() << "sH: cp ch cp_id" << cp << ch << cp_id;
+DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       }
 
       // Pick up centerpiece info by Centerpiece and Channel indecies
