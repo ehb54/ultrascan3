@@ -40,9 +40,9 @@ US_LammAstfvm::Mesh::Mesh( double xl, double xr, int Nelem, int Opt )
          x[ i ] = xl + (double)i / (double)Ne * ( xr - xl );
       }
 
-      for ( i = 0; i < Ne; i = i + 2 ) Eid[ i ]    = 1 ;
-      for ( i = 1; i < Ne; i = i + 2 ) Eid[ i ]    = 4 ;
-      for ( i = 0; i < Ne; i++ )       RefLev[ i ] = 0;
+      for ( i = 0; i < Ne; i += 2 )  Eid[ i ]    = 1 ;
+      for ( i = 1; i < Ne; i += 2 )  Eid[ i ]    = 4 ;
+      for ( i = 0; i < Ne; i++ )     RefLev[ i ] = 0;
     }
 }
 
@@ -218,8 +218,8 @@ void US_LammAstfvm::Mesh::Unrefine( double alpha )
             Eid1[ i1 ]     = Eid[ i ] / 2;
             RefLev1[ i1 ]  = RefLev[ i ] - 1;
             MeshDen1[ i1 ] = ( MeshDen[ i ] + MeshDen[ i + 1 ] ) / 2;
-            i1 ++;
-            i ++;
+            i1++;
+            i++;
          }
          
          else
@@ -228,7 +228,7 @@ void US_LammAstfvm::Mesh::Unrefine( double alpha )
             Eid1[ i1 ]     = Eid[ i ];
             RefLev1[ i1 ]  = RefLev[ i ];
             MeshDen1[ i1 ] = MeshDen[ i ];
-            i1 ++;
+            i1++;
           }
       }
        
@@ -359,18 +359,21 @@ void US_LammAstfvm::Mesh::Refine( double beta )
 /////////////////////////
 void US_LammAstfvm::Mesh::RefineMesh( double *u0, double *u1, double ErrTol )
 {
+   const double sqrt3    = sqrt( 3.0 );
+   const double onethird = 1.0 / 3.0;
    // refinement threshhold: h*|D_3u|^(1/3) > beta
    //double beta  = pow( ErrTol * 6 / ( 2 * sqrt( 3 ) / 72 ), 1. / 3. );
-   // Simlify the above:
-   double beta = 6.0 * pow( ErrTol / sqrt( 3.0 ), 1.0 / 3.0 );
+   // Simplify the above:
+   double beta  = 6.0 * pow( ErrTol / sqrt3, onethird );
 
    // coarsening threshhold: h*|D_3u|^(1/3) < alpha
    double alpha = beta / 4;
+//DbgLv(3) << "RefMesh: beta alpha" << beta << alpha;
 
    ComputeMeshDen_D3( u0, u1 );
-   Smoothing( Ne, MeshDen, 0.7, 4 );
-   Unrefine( alpha );
-   Refine(   beta  );
+   Smoothing        ( Ne, MeshDen, 0.7, 4 );
+   Unrefine         ( alpha );
+   Refine           ( beta  );
 }
    
 /////////////////////////
@@ -603,9 +606,17 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
 {
    comp_x   = 0;           // initial model component index
 
+   dbg_level       = US_Settings::us_debug();
+   double  speed   = simparams.speed_step[ 0 ].rotorspeed;
+   double* coefs   = simparams.rotorcoeffs;
+   double  stretch = coefs[ 0 ] * speed + coefs[ 1 ] * sq( speed );
    param_m  = simparams.meniscus;
    param_b  = simparams.bottom;
-   param_w2 = sq( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0 );
+   param_w2 = sq( speed * M_PI / 30.0 );
+DbgLv(1) << "LFvm: m b w2 strtch" << param_m  << param_b << param_w2 << stretch;
+   param_m -= stretch;
+   param_b += stretch;
+DbgLv(1) << "LFvm:  m b" << param_m  << param_b;
 
    MeshSpeedFactor = 1;    // default mesh moving option
    MeshRefineOpt   = 1;    // default mesh refinement option
@@ -617,9 +628,8 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
    density         = DENS_20W;
    compressib      = 0.0;
 
-   err_tol         = 1.0e-4;
-
-   dbg_level       = US_Settings::us_debug();
+   //err_tol         = 1.0e-4;
+   err_tol         = 1.0e-5;
 }
 
 // destroy
@@ -1402,7 +1412,7 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
 {
    int     j;
    double* Csalt;
-   double  Cm;
+   double  Cm     = 0.0;
    double  rho;
    double  visc;
    double  Tempt  = 293.15;    // temperature in K
@@ -1442,35 +1452,66 @@ timer.start();
          saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
 kst1+=timer.restart();
          {
-            double rK = 0.998234 + 6e-6;
-            double vK = 1.00194 - 0.00078;
-            double sA = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
-            double dA = param_D * Tempt * 1.00194 / 293.15;
+double rho0=0.0;
+double rhom=0.0;
+double rhoe=0.0;
+double vis0=0.0;
+double vism=0.0;
+double vise=0.0;
+            double rK     = 0.998234 + 6e-6;
+            double vK     = 1.00194 - 0.00078;
+            double sA     = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
+            double dA     = param_D * Tempt * 1.00194 / 293.15;
+            double Cmrt   = 0.0;
+            double Cmsq   = 0.0;
+            double Cmcu   = 0.0;
+            double Cmqu   = 0.0;
            
             for ( j = 0; j < Nv; j++ )
             {
                // salt concentration
                Cm         = Csalt[ j ];
+               Cmrt       = sqrt( Cm );
+               Cmsq       = Cm * Cm;
+               Cmcu       = Cm * Cmsq;
+               Cmqu       = Cm * Cmcu;
+               // The calculations below are a more efficient version of the
+               //  following original computations:
+               //
+               //rho  = 0.998234 + Cm*( 12.68641e-2 + Cm*( 1.27445e-3 + 
+               //        Cm*( -11.954e-4 + Cm*258.866e-6 ) ) ) + 6.e-6;
+               //visc = 1.00194 - 19.4104e-3*sqrt(Cm) + Cm*( -4.07863e-2 + 
+               //        Cm*( 11.5489e-3  + Cm*(-21.774e-4) ) ) - 0.00078;
+               //s_adj[j] =(1-vbar*rho)*1.00194/((1-vbar_w*rho_w)*visc)*param_s;
+               //D_adj[j] =(Tempt*1.00194)/(293.15*visc) * param_D;
       
-               rho        = rK + Cm * ( 12.68641e-2
-                               + Cm * ( 1.27445e-3
-                               + Cm * ( -11.954e-4
-                               + Cm * 258.866e-6 ) ) );
-               visc       = vK - 19.4104e-3 * sqrt( Cm )
-                               + Cm * ( -4.07863e-2
-                               + Cm * ( 11.5489e-3
-                               + Cm * ( -21.774e-4 ) ) );
-      
+               rho        = rK + Cm   * 12.68641e-2
+                               + Cmsq * 1.274450e-3
+                               - Cmcu * 11.95400e-4
+                               + Cmqu * 258.8660e-6;
+               visc       = vK - Cmrt * 19.4104e-3
+                               - Cm   * 4.07863e-2
+                               + Cmsq * 11.5489e-3
+                               - Cmcu * 21.7740e-4;
+
                s_adj[ j ] = sA * ( 1.0 - vbar * rho ) / visc;
 
                D_adj[ j ] = dA / visc;
+
+if(j==0){rho0=rho;vis0=visc;}
+if(j==Nv/2){rhom=rho;vism=visc;}
+if(j==Nv-1){rhoe=rho;vise=visc;}
             }
+DbgLv(2) << "AdjSD:   Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
+DbgLv(2) << "AdjSD:    sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
+DbgLv(2) << "AdjSD:    Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
+DbgLv(2) << "AdjSD:     rho 0,m,e" << rho0 << rhom << rhoe;
+DbgLv(2) << "AdjSD:     visc 0,m,e" << vis0 << vism << vise;
+DbgLv(2) << "AdjSD:      rK vK vbar_w rho_w" << rK << vK << vbar_w << rho_w;
+DbgLv(2) << "AdjSD:       cmrt cm^2 cm^3 cm^4" << Cmrt << Cmsq << Cmcu << Cmqu;
+DbgLv(2) << "AdjSD:        rK rho" << rK << rhoe;
+DbgLv(2) << "AdjSD:        vK vis" << vK << vise;
          }
-//DbgLv(3) << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
-//DbgLv(3) << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
-//DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
-//DbgLv(3) << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
-//DbgLv(3) << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
 
 kst2+=timer.restart();
 DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;

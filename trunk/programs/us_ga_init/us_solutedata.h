@@ -12,9 +12,6 @@ typedef struct short_sim_comp_s
    double c;    // concentration
    double d;    // diffusion coefficient
 } SimComp;
-typedef QList< SimComp >           SimCompList;
-typedef QList< SimCompList >       SimCompLL;
-typedef QList< Solute >            SoluteList;
 
 //! \brief Store and retrieve solution data
 
@@ -104,7 +101,7 @@ class US_SoluteData : public QObject
     QPointF  bucketPoint( int );
     QSizeF   bucketSize(  int );
     QString  bucketLine(  int );
-    void     setDistro( SoluteList* );
+    void     setDistro( QList< Solute >* );
     int      findNearestPoint( QPointF& );
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
@@ -119,12 +116,10 @@ class US_SoluteData : public QObject
     void     bucketSeparate( int, int, QList< QRectF >& );
 
   private:
-    QList< bucket >  allbucks;
-//    SimCompList      component;
-//    SimCompLL        MC_solute;
+    QList< bucket >            allbucks;
     QList< SimComp >           component;
     QList< QList< SimComp > >  MC_solute;
-    SoluteList*      distro;
+    QList< Solute >*           distro;
 
     int      bndx;
     int      dbg_level;
