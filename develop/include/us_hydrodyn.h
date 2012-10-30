@@ -834,7 +834,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void edit_atom();
       void hybrid();
       void residue();
-      void saxs();
+      void do_saxs();
       void select_model(int);
       int create_beads(QString *error_string, bool quiet = false); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);

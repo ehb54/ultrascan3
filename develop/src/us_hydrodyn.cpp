@@ -419,7 +419,7 @@ void US_Hydrodyn::setupGUI()
    lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
    lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
-   lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(saxs()));
+   lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
    lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
 
    somo_options = new QPopupMenu;
@@ -1097,7 +1097,7 @@ void US_Hydrodyn::residue()
    }
 }
 
-void US_Hydrodyn::saxs()
+void US_Hydrodyn::do_saxs()
 {
    if (saxs_widget)
    {
