@@ -61,6 +61,7 @@ struct batch_info
    int height;
    int width;
    bool compute_iq_avg;
+   bool compute_iq_only_avg;
    bool compute_iq_std_dev;
    bool compute_prr_avg;
    bool compute_prr_std_dev;
@@ -250,7 +251,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void atom(int);
       void screen();
 
-      void start();
+      void start( bool quiet = false );
       void set_mm_first();
       void set_mm_all();
       void set_dmd();
@@ -268,6 +269,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_create_native_saxs();
       void set_hydrate();
       void set_compute_iq_avg();
+      void set_compute_iq_only_avg();
       void set_compute_iq_std_dev();
       void set_compute_prr_avg();
       void set_compute_prr_std_dev();

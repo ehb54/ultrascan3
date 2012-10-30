@@ -190,6 +190,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, float > dammix_remember_mw;
       map < QString, float > dammix_match_remember_mw;
       map < QString, QString > dammix_remember_mw_source;
+
+      map < QString, saxs > extra_saxs_coefficients;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -755,7 +757,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool rotamer_changed;  // toggles need for reloading rotamer file
 
-      bool compute_structure_factors( QString filename, saxs &structure_factors, QString &error_msg );
+      bool compute_structure_factors( QString filename, QString &error_msg );
+
+      void editor_msg( QString color, QString msg );
+
+      struct saxs sf_factors;
 
    public slots:
       void show_zeno_options();
@@ -818,7 +824,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void load_pdb();
       void show_batch();
       int read_pdb(const QString &);
-      int read_bead_model(QString);
+      int read_bead_model( QString filename, bool &only_overlap );
       void load_bead_model();
       void setupGUI();
       void select_residue_file();
@@ -872,7 +878,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);
       void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false);
-      void write_bead_model(QString, vector <PDB_atom> *);
+      void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
       void write_corr(QString, vector <PDB_atom> *);
       bool read_corr(QString, vector <PDB_atom> *);
       void printError(const QString &);
@@ -897,9 +903,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_overwrite();
       void set_saveParams();
       void select_comparative();
-
-      // message utility
-      void editor_msg( QString color, QString msg );
 
       // dmd functions:
       void dmd_run();

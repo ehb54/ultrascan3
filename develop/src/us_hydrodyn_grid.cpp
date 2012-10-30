@@ -124,6 +124,14 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_create_nmr_bead_pdb->setEnabled(true);
    connect(cb_create_nmr_bead_pdb, SIGNAL(clicked()), this, SLOT(set_create_nmr_bead_pdb()));
 
+   cb_equalize_radii_constant_volume = new QCheckBox(this);
+   cb_equalize_radii_constant_volume->setText(tr(" Equalize radii, constant volume"));
+   cb_equalize_radii_constant_volume->setChecked((*grid).equalize_radii_constant_volume);
+   cb_equalize_radii_constant_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_equalize_radii_constant_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_equalize_radii_constant_volume->setEnabled(true);
+   connect(cb_equalize_radii_constant_volume, SIGNAL(clicked()), this, SLOT(set_equalize_radii_constant_volume()));
+
    pb_overlaps = new QPushButton(tr(" Adjust Overlap Options "), this);
    Q_CHECK_PTR(pb_overlaps);
    pb_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -164,6 +172,8 @@ void US_Hydrodyn_Grid::setupGUI()
    background->addWidget(cb_enable_asa, j, 1);
    j++;
    background->addWidget(cb_create_nmr_bead_pdb, j, 1);
+   j++;
+   background->addWidget(cb_equalize_radii_constant_volume, j, 1);
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -208,6 +218,12 @@ void US_Hydrodyn_Grid::set_enable_asa()
 void US_Hydrodyn_Grid::set_create_nmr_bead_pdb()
 {
    (*grid).create_nmr_bead_pdb = cb_create_nmr_bead_pdb->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Grid::set_equalize_radii_constant_volume()
+{
+   (*grid).equalize_radii_constant_volume = cb_equalize_radii_constant_volume->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

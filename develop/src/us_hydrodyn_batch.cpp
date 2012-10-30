@@ -402,7 +402,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    cb_compute_iq_only_avg = new QCheckBox(this);
    cb_compute_iq_only_avg->setText(tr(" Only save average"));
-   cb_compute_iq_only_avg->setChecked( false /* batch->compute_iq_only_avg */ );
+   cb_compute_iq_only_avg->setChecked( batch->compute_iq_only_avg );
    cb_compute_iq_only_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_iq_only_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_compute_iq_only_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_only_avg()));
@@ -1304,6 +1304,12 @@ void US_Hydrodyn_Batch::set_compute_iq_avg()
    update_enables();
 }
 
+void US_Hydrodyn_Batch::set_compute_iq_only_avg()
+{
+   batch->compute_iq_avg = cb_compute_iq_only_avg->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::set_compute_iq_std_dev()
 {
    batch->compute_iq_std_dev = cb_compute_iq_std_dev->isChecked();
@@ -1409,7 +1415,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    qApp->processEvents();
 }
 
-void US_Hydrodyn_Batch::start()
+void US_Hydrodyn_Batch::start( bool quiet )
 {
    if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
    {
@@ -1439,7 +1445,7 @@ void US_Hydrodyn_Batch::start()
 
    US_Timer job_timer;
    bool overwriteForcedOn = false;
-   if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+   if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
    {
       switch ( QMessageBox::warning(this, 
                                     tr("UltraScan Warning"),

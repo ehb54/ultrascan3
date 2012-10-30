@@ -4069,6 +4069,24 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          our_saxs_options->dummy_saxs_names.push_back( it->first );
       }
       f.close();
+      for ( map < QString, saxs >::iterator it = ((US_Hydrodyn *)us_hydrodyn)->extra_saxs_coefficients.begin();
+            it != ((US_Hydrodyn *)us_hydrodyn)->extra_saxs_coefficients.end();
+            it++ )
+      {
+         if ( saxs_map.count( it->first ) )
+         {
+            editor_msg( "dark red", 
+                        QString( tr( "NOTICE: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                        .arg( it->first ) );
+         } else {
+            saxs_list.push_back( it->second );
+            editor_msg( "dark blue", 
+                        QString( tr( "NOTICE: added coefficients for %1 from newly loaded values\n" ) )
+                        .arg( it->first ) );
+         }
+         saxs_map[ it->first ] = it->second;
+      } 
+
       if ( !saxs_map.count( our_saxs_options->dummy_saxs_name ) )
       {
          if ( our_saxs_options->dummy_saxs_names.size() )

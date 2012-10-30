@@ -794,7 +794,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    if (!(nprop = (PHYSPROP *) malloc((int) (npoints_x * npoints_y * npoints_z)* sizeof(PHYSPROP)) ))
    {
       QColor save_color = us_hydrodyn->editor->color();
-      editor->setColor("red");
+      us_hydrodyn->editor->setColor("red");
       us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
       us_hydrodyn->editor->setColor(save_color);
       us_hydrodyn->errorFlag = true;
@@ -849,11 +849,11 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                   ("-" + us_hydrodyn->bead_model_suffix) : "") +
          "_grid_atoms.pdb";
       
-      fn = QFileDialog::getSaveFileName( fn, 
-                                         "PDB (*.pdb *.PDB)",
-                                         us_hydrodyn,
-                                         "save the models",
-                                         "US_SOMO: A2B: Choose a name to save the multiple model output file" );
+      //       fn = QFileDialog::getSaveFileName( fn, 
+      //                                          "PDB (*.pdb *.PDB)",
+      //                                          us_hydrodyn,
+      //                                          "save the models",
+      //                                          "US_SOMO: A2B: Choose a name to save the multiple model output file" );
       
       if ( QFile::exists( fn ) && 
            !((US_Hydrodyn *)us_hydrodyn)->overwrite )
@@ -881,11 +881,16 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                           nmr_created
                           );
 
+   us_hydrodyn->sf_factors.saxs_name = "undefined";
    if ( nmr_created )
    {
-      saxs structure_factors;
       QString error_msg;
-      us_hydrodyn->compute_structure_factors( fn, structure_factors, error_msg );
+      if ( !us_hydrodyn->compute_structure_factors( fn, error_msg ) )
+      {
+         us_hydrodyn->editor_msg( "red", error_msg );
+         us_hydrodyn->editor->scrollToBottom();
+         us_hydrodyn->raise();
+      }
    }
 
    us_hydrodyn->lbl_core_progress->setText("");
@@ -893,7 +898,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    {
       free(nprop);
       QColor save_color = us_hydrodyn->editor->color();
-      editor->setColor("red");
+      us_hydrodyn->editor->setColor("red");
       us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
       us_hydrodyn->editor->setColor(save_color);
       us_hydrodyn->errorFlag = true;
@@ -975,11 +980,29 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    {
       printf("grid pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, pre_mw_c, post_mw, post_mw_c, pre_mw - post_mw);
    }
+
+   if ( use_grid_options->equalize_radii_constant_volume )
+   {
+      double tot_vol = 0e0;
+      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+      {
+         tot_vol += ( 4e0 / 3e0 ) * M_PI * result_bead_model[ i ].radius * result_bead_model[ i ].radius * result_bead_model[ i ].radius;
+      }
+      us_hydrodyn->editor_msg( "dark blue", QString( "Equalizing bead model, total volume %1\n" ).arg( tot_vol ) );
+      double pi43           = M_PI * 4e0 / 3e0;
+      float radius = (float)pow( tot_vol / ( ( double ) result_bead_model.size() * pi43 ), 1e0 / 3e0 );
+      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+      {
+         result_bead_model[ i ].radius               = radius;
+         result_bead_model[ i ].bead_computed_radius = radius;
+         result_bead_model[ i ].bead_actual_radius   = radius;
+      }
+   }
+
    return result_bead_model;
 }
 
 bool US_Hydrodyn::compute_structure_factors( QString filename, 
-                                             struct saxs &structure_factors,
                                              QString &error_msg )
 {
    error_msg = "";
@@ -995,6 +1018,13 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    }
 
    // setup & do batch run
+   QString csv_addendum =
+      QString( "_s%1h%2c%3%4" )
+      .arg( grid.cube_side )
+      .arg( grid.hydrate ? "y" : "n" )
+      .arg( grid.center ? "m" : "c" )
+      .arg( grid.equalize_radii_constant_volume ? "er" : "" )
+      ;
 
    bool created_batch = false;
    batch_info save_batch_info = batch;
@@ -1016,6 +1046,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    batch.somo = false;
    batch.grid = false;
    batch.iqq = true;
+   batch.compute_iq_avg = true;
    batch.csv_saxs = true;
    batch.create_native_saxs = false;
    batch.prr = false;
@@ -1030,22 +1061,239 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    batch_window->cb_create_native_saxs->setChecked( false );
    batch_window->cb_prr     ->setChecked( false );
    batch_window->cb_hydro   ->setChecked( false );
-   batch_window->le_csv_saxs_name->setText( QFileInfo( filename ).baseName() );
+   batch_window->le_csv_saxs_name->setText( QFileInfo( filename ).baseName() + csv_addendum );
+   batch_window->cb_compute_iq_avg->setChecked( true );
    batch_window->cb_compute_iq_only_avg->setChecked( true );
+   batch.hydrate = false;
+   if ( batch_window->cb_hydrate )
+   {
+      batch_window->cb_hydrate->setChecked( false );
+   }
 
+   // ok, bc no hydrate allowed in batch
+   save_state();
    batch_window->show();
-   batch_window->start();
+   batch_window->start( true );
+   restore_state();
 
    if ( batch_window->stopFlag )
    {
-      cout << "batch stopped\n";
-   } else {
-      cout << "batch finished\n";
-      // convert csv average to .dat and "compute structure factors"
+      error_msg = "Error: compute_structure_factors(): batch computation terminated";
+      return false;
    }
 
-   error_msg = "not implemented";
+   cout << "batch finished\n";
+   // convert csv average to .dat and "compute structure factors"
+   QString csvfile = 
+      us_hydrodyn->somo_dir + QDir::separator() +
+      "saxs" + QDir::separator() + 
+      QFileInfo( filename ).baseName( TRUE ) + 
+      csv_addendum +
+      "_iqq" +
+      batch_window->iqq_suffix() +
+      ".csv";
+   if ( !QFileInfo( csvfile ).exists() )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1 does not exist" ).arg( csvfile );
+      return false;
+   }
+   if ( !QFileInfo( csvfile ).isReadable() )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1 is not readable" ).arg( csvfile );
+      return false;
+   }
+   QFile f( csvfile );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: can not open" ).arg( csvfile );
+      return false;
+   }
+   // read csv file (should only contain average
+         
+   QTextStream ts( &f );
 
-   
-   return false;
+   QString qsq;
+   QString qsI;
+
+   qsq = ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   qsI = ts.readLine();
+
+   f.close();
+
+   QStringList qslq = QStringList::split( ",",  qsq );
+   QStringList qslI = QStringList::split( ",",  qsI );
+
+   if ( qslq.size() < 3 ||
+        qslI.size() < 3 ||
+        qslq[ 0 ] != "\"Name\"" ||
+        qslq[ 1 ] != "\"Type; q:\"" ||
+        qslI[ 0 ] != "\"Average\"" ||
+        qslI[ 1 ] != "\"I(q)\""
+        )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error" ).arg( csvfile );
+      return false;
+   }
+
+   qslq.pop_front();
+   qslq.pop_front();
+   qslq.pop_back();
+   qslq.pop_back();
+   qslI.pop_front();
+   qslI.pop_front();
+   qslI.pop_back();
+
+   if ( qslq.size() != qslI.size() )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error (I & q lines incompatible)" ).arg( csvfile );
+      return false;
+   }
+
+   vector < double > q( qslq.size() );
+   vector < double > I( qslI.size() );
+
+   for ( unsigned int i = 0; i < qslq.size(); i++ )
+   {
+      q[ i ] = qslq[ i ].toDouble();
+      I[ i ] = qslI[ i ].toDouble();
+   }
+
+   editor_msg( "blue", tr( "Computing 4 & 5 term exponentials\nThis can take awhile & the program may seem unresponsive" ) );
+   editor->scrollToBottom();
+   raise();
+   qApp->processEvents();
+
+   {
+      vector < double > coeff4;
+      vector < double > coeff5;
+      double            norm4;
+      double            norm5;
+      double            nnorm4;
+      double            nnorm5;
+      US_Saxs_Util usu;
+
+      if ( !usu.compute_exponential( q,
+                                     I, 
+                                     coeff4,
+                                     coeff5,
+                                     norm4,
+                                     norm5
+                                     ) )
+      {
+         error_msg = QString( "Error: compute_structure_factors(): %1" ).arg( usu.errormsg );
+         return false;
+      } 
+
+      nnorm4 = norm4 / q.size();
+      nnorm5 = norm5 / q.size();
+
+      QString norm4tag = "unacceptable";
+      if ( nnorm4 < 1000e0 )
+      {
+         norm4tag = "bad";
+      }
+      if ( nnorm4 < 500e0 )
+      {
+         norm4tag = "not so good";
+      }
+      if ( nnorm4 < 250e0 )
+      {
+         norm4tag = "ok";
+      }
+      if ( nnorm4 < 10e0 )
+      {
+         norm4tag = "good";
+      }
+      if ( nnorm4 < 1e0 )
+      {
+         norm4tag = "very good";
+      }
+      if ( nnorm4 < 1e-2 )
+      {
+         norm4tag = "excellent";
+      }
+      if ( nnorm4 < 1e-4 )
+      {
+         norm4tag = "amazingly excellent";
+      }
+
+      QString norm5tag = "unacceptable";
+      if ( nnorm5 < 1000e0 )
+      {
+         norm5tag = "bad";
+      }
+      if ( nnorm5 < 500e0 )
+      {
+         norm5tag = "not so good";
+      }
+      if ( nnorm5 < 250e0 )
+      {
+         norm5tag = "ok";
+      }
+      if ( nnorm5 < 10e0 )
+      {
+         norm5tag = "good";
+      }
+      if ( nnorm5 < 1e0 )
+      {
+         norm5tag = "very good";
+      }
+      if ( nnorm5 < 1e-2 )
+      {
+         norm5tag = "excellent";
+      }
+      if ( nnorm5 < 1e-4 )
+      {
+         norm5tag = "amazingly excellent";
+      }
+
+      sf_factors.saxs_name = QFileInfo( csvfile ).baseName();
+      
+      editor_msg( "dark blue", QString( "structure factors name: %1\n" ).arg( sf_factors.saxs_name ) );
+
+      QString qs4 = sf_factors.saxs_name;
+      for ( unsigned int i = 1; i < ( unsigned int ) coeff4.size(); i++ )
+      {
+         qs4 += QString( " %1" ).arg( coeff4[ i ] );
+      }
+      qs4 += QString( " %1" ).arg( coeff4[ 0 ] );
+      cout << "Terms4: " << qs4 << endl;
+      editor_msg( "dark blue", QString( "Exponentials 4 terms norm %1 nnorm %2 (%3): %4" )
+                  .arg( norm4 )
+                  .arg( nnorm4 )
+                  .arg( norm4tag )
+                  .arg( qs4 ) );
+
+      QString qs5 = sf_factors.saxs_name;
+      for ( unsigned int i = 1; i < ( unsigned int ) coeff5.size(); i++ )
+      {
+         qs5 += QString( " %1" ).arg( coeff5[ i ] );
+      }
+      qs5 += QString( " %1" ).arg( coeff5[ 0 ] );
+      cout << "Terms5: " << qs5 << endl;
+      editor_msg( "dark blue", QString( "Exponentials 5 terms norm %1 nnorm %2 (%3): %4" )
+                  .arg( norm5 )
+                  .arg( nnorm5 )
+                  .arg( norm5tag )
+                  .arg( qs5 ) );
+
+      editor->setColor( QColor( "black" ) );
+      for ( unsigned int i = 0; i < 4; i++ )
+      {
+         sf_factors.a[ i ] = coeff4[ 1 + i * 2 ];
+         sf_factors.b[ i ] = coeff4[ 2 + i * 2 ];
+      }
+      sf_factors.c = coeff4[ 0 ];
+
+      for ( unsigned int i = 0; i < 5; i++ )
+      {
+         sf_factors.a5[ i ] = coeff5[ 1 + i * 2 ];
+         sf_factors.b5[ i ] = coeff5[ 2 + i * 2 ];
+      }
+      sf_factors.c5 = coeff5[ 0 ];
+   }
+
+   return true;
 }

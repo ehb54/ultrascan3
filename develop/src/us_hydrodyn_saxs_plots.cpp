@@ -310,7 +310,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                            ) )
             {
                editor_msg( "red", usu.errormsg );
-               cout << errormsg << endl;
+               cout << usu.errormsg << endl;
             } else {
                nnorm4 = norm4 / q.size();
                nnorm5 = norm5 / q.size();

@@ -30,6 +30,7 @@ struct grid_options
    double       cube_side; 
    bool         enable_asa;           // true:-> run asa buried/exposed code
    bool         create_nmr_bead_pdb;
+   bool         equalize_radii_constant_volume;
 };
 
 class US_EXTERN US_Hydrodyn_Grid : public QFrame
@@ -70,6 +71,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       QCheckBox *cb_tangency;
       QCheckBox *cb_enable_asa;
       QCheckBox *cb_create_nmr_bead_pdb;
+      QCheckBox *cb_equalize_radii_constant_volume;
       void *us_hydrodyn;
       
       US_Config *USglobal;
@@ -90,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       void set_tangency();
       void set_enable_asa();
       void set_cubic();
+      void set_equalize_radii_constant_volume();
       void set_create_nmr_bead_pdb();
       void overlaps();
       void cancel();

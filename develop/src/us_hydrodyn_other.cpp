@@ -882,7 +882,7 @@ void US_Hydrodyn::dna_rna_resolve()
    }
 }
 
-int US_Hydrodyn::read_bead_model(QString filename)
+int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 {
    last_read_bead_model = filename;
    lb_model->clear();
@@ -905,21 +905,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
    vector < QString > model_names;
    model_names.push_back( "1" );
 
-   if ( saxs_options.compute_saxs_coeff_for_bead_models )
+   if ( ftype == "bead_model" )
    {
-      if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
-      {
-         editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
-                     .arg( saxs_options.dummy_saxs_name ) );
-      } else {
-         editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
-                     .arg( saxs_options.dummy_saxs_name ) );
-      }               
-   }
-
-   if (ftype == "bead_model")
-   {
-      if (f.open(IO_ReadOnly))
+      if ( f.open( IO_ReadOnly ) )
       {
          QTextStream ts(&f);
          if (!ts.atEnd()) {
@@ -1033,13 +1021,20 @@ int US_Hydrodyn::read_bead_model(QString filename)
          {
             bool units_loaded = false;
             QRegExp rx(", where x is : (\\d+)");
-            while (!ts.atEnd())
+            QStringList ssaxs;
+            while ( !ts.atEnd() )
             {
                QString str = ts.readLine();
                if ( str.left( 6 ).lower().contains( "__json" ) )
                {
                   continue;
                }
+               if ( str.left( 6 ).lower() == "saxs::" )
+               {
+                  ssaxs << str;
+                  continue;
+               }
+
                editor->append(str);
                if ( rx.search(str) != -1 )
                {
@@ -1048,6 +1043,121 @@ int US_Hydrodyn::read_bead_model(QString filename)
                   display_default_differences();
                }
             }
+
+            editor->setCurrentFont( save_font );
+
+            if ( ssaxs.size() )
+            {
+               editor_msg( "dark blue", 
+                           QString( tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
+                           .arg( ssaxs.size() ) );
+               if ( ssaxs.size() > 2 )
+               {
+                  editor_msg( "red", 
+                              QString( tr( "Error: saxs coefficients found in file, but incorrect # of lines %1 vs 2 expected" ) )
+                              .arg( ssaxs.size() ) );
+               } else {
+                  saxs tmp_saxs;
+                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), ssaxs[ 0 ] );
+                  if ( qsl.size() != 12 )
+                  {
+                     editor_msg( "red", 
+                                 QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
+                                 .arg( qsl.size() ) );
+                  } else {
+                     editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
+                     tmp_saxs.saxs_name = qsl[ 1 ];
+                     for ( unsigned int i = 0; i < 4; i++ )
+                     {
+                        tmp_saxs.a[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                        tmp_saxs.b[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                        tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                        tmp_saxs.b5[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                     }
+                     tmp_saxs.a5[ 4 ] =
+                        tmp_saxs.b5[ 4 ] = 0.0f;
+                     tmp_saxs.c = qsl[ 10 ].toFloat();
+                     tmp_saxs.c5 = qsl[ 10 ].toFloat();
+                     tmp_saxs.volume = qsl[ 11 ].toFloat();
+                     if ( ssaxs.size() == 2 )
+                     {
+                        qsl = QStringList::split( QRegExp( "\\s+" ), ssaxs[ 1 ] );
+
+                        if ( qsl.size() != 14 )
+                        {
+                           editor_msg( "red", 
+                                       QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
+                                       .arg( qsl.size() ) );
+                        } else {
+                           editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
+                           for ( unsigned int i = 0; i < 5; i++ )
+                           {
+                              tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                              tmp_saxs.b5[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                           }
+                           tmp_saxs.c5 = qsl[ 12 ].toFloat();
+                        }
+                     }
+                     saxs_options.dummy_saxs_name = tmp_saxs.saxs_name;
+                     if ( extra_saxs_coefficients.count( tmp_saxs.saxs_name ) )
+                     {
+                        editor_msg( "dark red", QString( "NOTICE: extra saxs coefficients %1 replaced\n" ).arg( tmp_saxs.saxs_name ) );
+                     } else {
+                        saxs_options.dummy_saxs_names.push_back( tmp_saxs.saxs_name );
+                     }
+
+                     extra_saxs_coefficients[ tmp_saxs.saxs_name ] = tmp_saxs;
+
+                     if ( saxs_util->saxs_map.count( tmp_saxs.saxs_name ) )
+                     {
+                        editor_msg( "dark red", 
+                                    QString( tr( "NOTICE: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                    .arg( tmp_saxs.saxs_name ) );
+                     } else {
+                        saxs_util->saxs_list.push_back( tmp_saxs );
+                        editor_msg( "dark blue", 
+                                    QString( tr( "NOTICE: added coefficients for %1 from newly loaded values\n" ) )
+                                    .arg( tmp_saxs.saxs_name ) );
+                     }
+                     saxs_util->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
+
+                     if ( saxs_plot_widget )
+                     {
+                        if ( saxs_plot_window->saxs_map.count( tmp_saxs.saxs_name ) )
+                        {
+                           editor_msg( "dark red", 
+                                       QString( tr( "NOTICE: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                       .arg( tmp_saxs.saxs_name ) );
+                        } else {
+                           saxs_plot_window->saxs_list.push_back( tmp_saxs );
+                           editor_msg( "dark blue", 
+                                       QString( tr( "NOTICE: saxs window: added coefficients for %1 from newly loaded values\n" ) )
+                                       .arg( tmp_saxs.saxs_name ) );
+                        }
+                        saxs_plot_window->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
+                     }
+
+                     if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+                          saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+                     {
+                        if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+                        {
+                           editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+                                       .arg( saxs_options.dummy_saxs_name ) );
+                        } else {
+                           editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+                                       .arg( saxs_options.dummy_saxs_name ) );
+                        }               
+                        for ( unsigned int i = 0; i < ( unsigned int ) bead_model.size(); i++ )
+                        {
+                           bead_model[ i ].saxs_name = saxs_options.dummy_saxs_name;
+                           bead_model[ i ].saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
+                        }
+                     }
+                  }
+               }
+            }
+
             if ( !units_loaded )
             {
                editor_msg("red", 
@@ -1086,6 +1196,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          int overlap_check_results = overlap_check( true, true, true,
                                                      hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         only_overlap = true;
          return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
@@ -1240,6 +1351,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          int overlap_check_results = overlap_check( true, true, true,
                                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+         only_overlap = true;
          return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
@@ -1247,6 +1359,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
    
    if (ftype == "pdb") // DAMMIN;DAMMIF;DAMAVER
    {
+      if ( saxs_options.compute_saxs_coeff_for_bead_models )
+      {
+         if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+         {
+            editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+                        .arg( saxs_options.dummy_saxs_name ) );
+         } else {
+            editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+                        .arg( saxs_options.dummy_saxs_name ) );
+         }               
+      }
+
       QRegExp rx_model( "^MODEL\\s+(\\S+)" );
       model_count = 0;
       model_names.clear();
@@ -1763,6 +1887,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance );
          }
          bead_model = bead_models[ 0 ];
+         only_overlap = true;
          return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
    }
@@ -3940,6 +4065,8 @@ void US_Hydrodyn::set_default()
 
    grid.create_nmr_bead_pdb                    = false;
 
+   batch.compute_iq_only_avg                   = false;
+
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
    if ( pdb_vis.filename.isEmpty() )
@@ -4514,7 +4641,10 @@ bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
    return result;
 }
 
-void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
+void US_Hydrodyn::write_bead_model( QString fname, 
+                                    vector < PDB_atom > *model,
+                                    QString extra_text )
+{
    // write corresopdence file also
    int decpts = -(int)log10(overlap_tolerance/9.9999) + 1;
    if (decpts < 4) {
@@ -4743,6 +4873,12 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
               );
       fprintf(fsomo, ( options_log.isNull() ? "" : options_log.ascii() ) );
       fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.ascii() ) );
+
+      if ( !extra_text.isEmpty() )
+      {
+         fprintf(fsomo, extra_text.ascii() );
+      }
+
       fclose(fsomo);
    }
    if (fbeams) {

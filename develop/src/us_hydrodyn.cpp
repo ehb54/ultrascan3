@@ -59,6 +59,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    USglobal = new US_Config();
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
+   extra_saxs_coefficients.clear();
 
    last_pdb_filename = "";
    last_pdb_title.clear();
@@ -2031,7 +2032,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
 
    bead_model_file = filename;
    le_bead_model_file->setText( QDir::convertSeparators( filename ) );
-   if (!read_bead_model(filename))
+   bool only_overlap = false;
+   if ( !read_bead_model(filename, only_overlap ))
    {
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
@@ -2045,11 +2047,24 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    }
    else
    {
-      pb_visualize->setEnabled(true);
-      pb_bead_saxs->setEnabled(false);
-      pb_rescale_bead_model->setEnabled(false);
-      pb_pdb_saxs->setEnabled(true);
-      return false;
+      if ( only_overlap )
+      {
+         state = BEAD_MODEL_LOADED;
+         pb_visualize->setEnabled(true);
+         pb_calc_hydro->setEnabled( false );
+         pb_grid->setEnabled(true);
+         pb_bead_saxs->setEnabled(true);
+         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+         pb_pdb_saxs->setEnabled(false);
+         bd_anaflex_enables(false);
+         return true;
+      } else {
+         pb_visualize->setEnabled(true);
+         pb_bead_saxs->setEnabled(false);
+         pb_rescale_bead_model->setEnabled(false);
+         pb_pdb_saxs->setEnabled(true);
+         return false;
+      }
    }
 }
    
@@ -2229,7 +2244,8 @@ void US_Hydrodyn::load_bead_model()
 #endif
       }
 
-      if (!read_bead_model(filename))
+      bool only_overlap = false;
+      if (!read_bead_model(filename, only_overlap ))
       {
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
@@ -2242,10 +2258,22 @@ void US_Hydrodyn::load_bead_model()
       }
       else
       {
-         pb_visualize->setEnabled(true);
-         pb_bead_saxs->setEnabled(false);
-         pb_rescale_bead_model->setEnabled(false);
-         pb_pdb_saxs->setEnabled(true);
+         if ( only_overlap )
+         {
+            state = BEAD_MODEL_LOADED;
+            pb_visualize->setEnabled(true);
+            pb_calc_hydro->setEnabled( false );
+            pb_grid->setEnabled(true);
+            pb_bead_saxs->setEnabled(true);
+            pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+            pb_pdb_saxs->setEnabled(false);
+            bd_anaflex_enables(false);
+         } else {            
+            pb_visualize->setEnabled(true);
+            pb_bead_saxs->setEnabled(false);
+            pb_rescale_bead_model->setEnabled(false);
+            pb_pdb_saxs->setEnabled(true);
+         }
       }
       // bead_model_prefix = "";
    }
@@ -2608,14 +2636,17 @@ int US_Hydrodyn::calc_grid_pdb()
                      bead_models.resize(current_model + 1);
                   }
 
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setProgress( progress->progress() + 1 );
+                  int save_progress = progress->progress();
+                  int save_total_steps = progress->totalSteps();
                   bead_models[current_model] =
                      us_hydrodyn_grid_atob(&bead_model,
                                            &grid,
                                            progress,
                                            editor,
                                            this);
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setTotalSteps( save_total_steps );
+                  progress->setProgress( save_progress + 1 );
                   if (stopFlag)
                   {
                      editor->append("Stopped by user\n\n");
@@ -2772,6 +2803,67 @@ int US_Hydrodyn::calc_grid_pdb()
                      }
                   }
 
+                  QString extra_text = "";
+                  if ( grid.create_nmr_bead_pdb &&
+                       sf_factors.saxs_name != "undefined" &&
+                       !sf_factors.saxs_name.isEmpty() )
+                  {
+                     extra_text = "\nSAXS:: " + sf_factors.saxs_name;
+                     for ( unsigned int i = 0; i < 4; i++ )
+                     {
+                        extra_text += QString( " %1" ).arg( sf_factors.a[ i ] );
+                        extra_text += QString( " %1" ).arg( sf_factors.b[ i ] );
+                     }
+                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c ).arg( 0.0 );
+                       
+                     extra_text += "SAXS:: " + sf_factors.saxs_name;
+                     for ( unsigned int i = 0; i < 5; i++ )
+                     {
+                        extra_text += QString( " %1" ).arg( sf_factors.a5[ i ] );
+                        extra_text += QString( " %1" ).arg( sf_factors.b5[ i ] );
+                     }
+                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c5 ).arg( 0.0 );
+
+                     if ( extra_saxs_coefficients.count( sf_factors.saxs_name ) )
+                     {
+                        editor_msg( "dark red", QString( "Notice: extra saxs coefficients %1 replaced\n" ).arg( sf_factors.saxs_name ) );
+                     } else {
+                        saxs_options.dummy_saxs_names.push_back( sf_factors.saxs_name );
+                     }
+                     extra_saxs_coefficients[ sf_factors.saxs_name ] = sf_factors;
+                     saxs_options.dummy_saxs_name = sf_factors.saxs_name;
+                     editor_msg( "blue", QString( "Saxs name for dummy atom models set to %1" ).arg( saxs_options.dummy_saxs_name ) );
+
+                     if ( saxs_util->saxs_map.count( sf_factors.saxs_name ) )
+                     {
+                        editor_msg( "dark red", 
+                                    QString( tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                    .arg( sf_factors.saxs_name ) );
+                     } else {
+                        saxs_util->saxs_list.push_back( sf_factors );
+                        editor_msg( "dark blue", 
+                                    QString( tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
+                                    .arg( sf_factors.saxs_name ) );
+                     }
+                     saxs_util->saxs_map[ sf_factors.saxs_name ] = sf_factors;
+
+                     if ( saxs_plot_widget )
+                     {
+                        if ( saxs_plot_window->saxs_map.count( sf_factors.saxs_name ) )
+                        {
+                           editor_msg( "dark red", 
+                                       QString( tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                       .arg( sf_factors.saxs_name ) );
+                        } else {
+                           saxs_plot_window->saxs_list.push_back( sf_factors );
+                           editor_msg( "dark blue", 
+                                       QString( tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
+                                       .arg( sf_factors.saxs_name ) );
+                        }
+                        saxs_plot_window->saxs_map[ sf_factors.saxs_name ] = sf_factors;
+                     }
+                  }
+
                   if ( saxs_options.compute_saxs_coeff_for_bead_models )
                   {
                      if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
@@ -2801,9 +2893,15 @@ int US_Hydrodyn::calc_grid_pdb()
                   //       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                   //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                   //       DOTSOMO, &bead_model, bead_model_from_file);
-                  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                                   QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                                   DOTSOMO, &bead_model);
+                  write_bead_model( 
+                                   somo_dir + SLASH +
+                                   project + 
+                                   QString( "_%1" ).arg( current_model + 1 ) +
+                                   QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
+                                   DOTSOMO, 
+                                   &bead_model,
+                                   extra_text
+                                   );
 
                }
             }
@@ -3393,7 +3491,7 @@ int US_Hydrodyn::do_calc_hydro()
    editor->append(QString("%1")
                   //       .arg(hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance)
                   .arg((fabs((hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) - overlap_tolerance) > 1e-5)
-                       ? QString("\nNOTICE: Overlap reduction bead overlap tolerance %1 does not equal the manually selected hydrodynamic calculations bead overlap cut-off %2\n")
+                       ? QString("\nNotice: Overlap reduction bead overlap tolerance %1 does not equal the manually selected hydrodynamic calculations bead overlap cut-off %2\n")
                        .arg(overlap_tolerance).arg(hydro.overlap) : ""));
 
    qApp->processEvents();
