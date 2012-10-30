@@ -1254,9 +1254,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
       if (f.open(IO_ReadOnly))
       {
 
-         QRegExp rx_psv( "^REMARK\\s+PSV\\s+(\\S+)", false );
-         QRegExp rx_mw ( "^REMARK\\s+MW\\s+(\\S+)", false );
-         QRegExp rx_unit( "^REMARK\\s+Units conversion factor\\s+(\\S+)", false );
+         QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", false );
+         QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", false );
+         QRegExp rx_unit( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", false );
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
@@ -1274,17 +1274,17 @@ int US_Hydrodyn::read_bead_model(QString filename)
                }
                if ( rx_psv.search( qs ) != -1 )
                {
-                  loaded_psv = rx_psv.cap( 1 ).toDouble();
+                  loaded_psv = rx_psv.cap( 2 ).toDouble();
                   editor_msg( "blue", QString( tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
                }
                if ( rx_mw.search( qs ) != -1 )
                {
-                  loaded_mw = rx_mw.cap( 1 ).toDouble();
+                  loaded_mw = rx_mw.cap( 2 ).toDouble();
                   editor_msg( "blue", QString( tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
                }
                if ( rx_unit.search( qs ) != -1 )
                {
-                  loaded_unit = rx_unit.cap( 1 ).toUInt();
+                  loaded_unit = rx_unit.cap( 2 ).toUInt();
                   editor_msg( "blue", QString( tr( "Found Units %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
@@ -3937,6 +3937,8 @@ void US_Hydrodyn::set_default()
    saxs_options.dummy_saxs_names               .push_back( saxs_options.dummy_saxs_name );
    saxs_options.multiply_iq_by_atomic_volume   = false;
    saxs_options.dummy_atom_pdbs_in_nm          = false;
+
+   grid.create_nmr_bead_pdb                    = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

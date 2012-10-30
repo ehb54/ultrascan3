@@ -202,7 +202,10 @@ AtoB(PDB * pdb,
      int set_bead_radius, 
      const char atnam[], 
      const char resnam[],
-     US_Hydrodyn *us_hydrodyn)
+     US_Hydrodyn *us_hydrodyn,
+     bool create_nmr,
+     QString &fn,
+     bool &nmr_created )
 {
 #if defined(DEBUG)
    //   printf("npoints %ld\n", npoints);
@@ -390,6 +393,7 @@ AtoB(PDB * pdb,
          return npdb;
       }
       for (j = 0; j < npoints_y; j++)
+      {
          for (k = 0; k < npoints_z; k++)
          {
             if (ro[i][j][k] > 0.000001)
@@ -448,6 +452,7 @@ AtoB(PDB * pdb,
                nthis = ntemp;
             }
          }
+      }
    }
    prev->next = NULL;
    nprev->next = NULL;
@@ -486,6 +491,7 @@ AtoB(PDB * pdb,
       us_hydrodyn->lbl_core_progress->setText(QString("Gridding %1 of %2").arg(i+1).arg(npoints_x));
       qApp->processEvents();
       for (j = 0; j < npoints_y; j++)
+      {
          for (k = 0; k < npoints_z; k++)
          {
             if (mass[i][j][k] > 0)   //gets only if there is a bead
@@ -502,9 +508,85 @@ AtoB(PDB * pdb,
                n++;
             }
          }
+      }
    }
 
    fclose(fptr);
+
+   nmr_created = false;
+   if ( create_nmr )
+   {
+      QFile fn_out( fn );
+                  
+      if ( !fn_out.open( IO_WriteOnly ) )
+      {
+         QMessageBox::warning( us_hydrodyn, "US-SOMO: A2B: Create mulitple model output file",
+                               QString( "Could not open %1 for writing!" ).arg( fn ) );
+      } else {
+                  
+         QTextStream tso( &fn_out );
+
+         tso << QString( "REMARK bead model correspondence file\n" );
+
+         unsigned int model  = 0;
+
+         for (n = 1, i = 0; i < npoints_x; i++) 
+         {
+            us_hydrodyn->lbl_core_progress->setText( QString( "Creating NMR style output file %1 of %2" ).arg( i ).arg( npoints_x ) );
+            qApp->processEvents();
+            for (j = 0; j < npoints_y; j++)
+            {
+               for (k = 0; k < npoints_z; k++)
+               {
+                  if (mass[i][j][k] > 0)   //gets only if there is a bead
+                  {
+                     // fprintf(fptr, "\n\nBead %d: ", n);
+                  
+                     unsigned int atomno = 0;
+                     tso << QString( "MODEL     %1\n" ).arg( ++model );
+
+                     for (p = pdb, nn = 0; p; p = p->next, nn++)
+                     {
+                        // goes over all atoms
+                        if (((int) ((p->x) / dx) + (int) (npoints_x / 2)) == i)
+                        {
+                           if (((int) ((p->y) / dx) + (int) (npoints_y / 2)) == j) 
+                           {
+                              if (((int) ((p->z) / dx) + (int) (npoints_z / 2)) == k)
+                              {
+                                 tso << 
+                                    QString("")
+                                    .sprintf(     
+                                             "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                             ++atomno,
+                                             p->atnam,
+                                             p->resnam,
+                                             p->chain,
+                                             p->resnum,
+                                             p->x,
+                                             p->y,
+                                             p->z,
+                                             p->occ,
+                                             p->bval,
+                                             "  "
+                                             );
+                              }
+                           }
+                        }
+                     }
+                     n++;
+                     tso << "TER\nENDMDL\n";
+                  }
+               }
+            }
+                                                     
+         }
+         tso << "END\n";
+         fn_out.close();
+         nmr_created = true;
+      }
+   }
+
    us_hydrodyn->lbl_core_progress->setText("");
 
    /*Freeing electron density memory! */
@@ -571,7 +653,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          tmp_pdb.next = (PDB *) 0;
 
          tmp_pdb.atnum = (*bead_model)[i].serial;
-         tmp_pdb.resnum = 1; // (*bead_model)[i].resSeq;
+         tmp_pdb.resnum = (*bead_model)[i].resSeq.toInt();
 
          strcpy(tmp_pdb.junk, "ATOM");
 #if defined(DEBUG)
@@ -753,6 +835,33 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       return empty_result;
    }
 
+   QString fn = "";
+
+   bool nmr_created = false;
+
+   if ( use_grid_options->create_nmr_bead_pdb )
+   {
+      fn =
+         us_hydrodyn->somo_dir + QDir::separator() + "structures" + QDir::separator() +
+         us_hydrodyn->project + 
+         QString("_%1").arg( us_hydrodyn->current_model + 1) +
+         QString( us_hydrodyn->bead_model_suffix.length() ? 
+                  ("-" + us_hydrodyn->bead_model_suffix) : "") +
+         "_grid_atoms.pdb";
+      
+      fn = QFileDialog::getSaveFileName( fn, 
+                                         "PDB (*.pdb *.PDB)",
+                                         us_hydrodyn,
+                                         "save the models",
+                                         "US_SOMO: A2B: Choose a name to save the multiple model output file" );
+      
+      if ( QFile::exists( fn ) && 
+           !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+      {
+         fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fn, 0, us_hydrodyn );
+      }
+   }
+
    PDB *result_pdb = AtoB((PDB *) & pdb[0],
                           npoints_x,
                           npoints_y,
@@ -766,8 +875,19 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                           use_grid_options->tangency ? 1 : 0,
                           "PB",
                           "RES",
-                          us_hydrodyn
+                          us_hydrodyn,
+                          use_grid_options->create_nmr_bead_pdb,
+                          fn,
+                          nmr_created
                           );
+
+   if ( nmr_created )
+   {
+      saxs structure_factors;
+      QString error_msg;
+      us_hydrodyn->compute_structure_factors( fn, structure_factors, error_msg );
+   }
+
    us_hydrodyn->lbl_core_progress->setText("");
    if ( !result_pdb ) 
    {
@@ -828,19 +948,19 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.normalized_ot_is_valid = false;
       result_bead_model.push_back(tmp_atom);
 #if defined(DEBUG_ATOB)
-         printf(
-                "after a2b: %d %s %s %s %s %g %g %g %g %g\n"
-                ,this_pdb->atnum
-                ,this_pdb->atnam
-                ,this_pdb->resnam
-                ,this_pdb->insert
-                ,this_pdb->chain
-                ,this_pdb->x
-                ,this_pdb->y
-                ,this_pdb->z
-                ,this_prop->rVW
-                ,this_prop->mass
-                );
+      printf(
+             "after a2b: %d %s %s %s %s %g %g %g %g %g\n"
+             ,this_pdb->atnum
+             ,this_pdb->atnam
+             ,this_pdb->resnam
+             ,this_pdb->insert
+             ,this_pdb->chain
+             ,this_pdb->x
+             ,this_pdb->y
+             ,this_pdb->z
+             ,this_prop->rVW
+             ,this_prop->mass
+             );
 #endif
 
    }
@@ -856,4 +976,76 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       printf("grid pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, pre_mw_c, post_mw, post_mw_c, pre_mw - post_mw);
    }
    return result_bead_model;
+}
+
+bool US_Hydrodyn::compute_structure_factors( QString filename, 
+                                             struct saxs &structure_factors,
+                                             QString &error_msg )
+{
+   error_msg = "";
+   if ( !QFileInfo( filename ).exists() )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): file %1 does not exist" ).arg( filename );
+      return false;
+   }
+   if ( !QFileInfo( filename ).isReadable() )
+   {
+      error_msg = QString( "Error: compute_structure_factors(): file %1 is not readable" ).arg( filename );
+      return false;
+   }
+
+   // setup & do batch run
+
+   bool created_batch = false;
+   batch_info save_batch_info = batch;
+   batch.file.clear();
+   batch.file.push_back( filename );
+   if ( !batch_widget )
+   {
+      created_batch = true;
+      batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      fixWinButtons( batch_window );
+      batch_window->lb_files->setSelected( 0, true );
+   } else {
+      batch_window->lb_files->clear();
+      batch_window->lb_files->insertItem(batch.file[0]);
+      batch_window->lb_files->setSelected( 0, true );
+   }
+   batch.mm_all = true;
+   batch.dmd = false;
+   batch.somo = false;
+   batch.grid = false;
+   batch.iqq = true;
+   batch.csv_saxs = true;
+   batch.create_native_saxs = false;
+   batch.prr = false;
+   batch.hydro = false;
+   batch_window->cb_mm_first->setChecked( false );
+   batch_window->cb_mm_all  ->setChecked( true );
+   batch_window->cb_dmd     ->setChecked( false );
+   batch_window->cb_somo    ->setChecked( false );
+   batch_window->cb_grid    ->setChecked( false );
+   batch_window->cb_iqq     ->setChecked( true );
+   batch_window->cb_csv_saxs->setChecked( true );
+   batch_window->cb_create_native_saxs->setChecked( false );
+   batch_window->cb_prr     ->setChecked( false );
+   batch_window->cb_hydro   ->setChecked( false );
+   batch_window->le_csv_saxs_name->setText( QFileInfo( filename ).baseName() );
+   batch_window->cb_compute_iq_only_avg->setChecked( true );
+
+   batch_window->show();
+   batch_window->start();
+
+   if ( batch_window->stopFlag )
+   {
+      cout << "batch stopped\n";
+   } else {
+      cout << "batch finished\n";
+      // convert csv average to .dat and "compute structure factors"
+   }
+
+   error_msg = "not implemented";
+
+   
+   return false;
 }

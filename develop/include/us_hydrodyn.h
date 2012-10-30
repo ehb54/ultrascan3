@@ -254,7 +254,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool create_beads_normally; // true = normal, false = atoms are beads
       bool alt_method; // true = new bead method, false = original bead method
-      unsigned int current_model;
       QString bead_model_file;
       struct residue current_residue;
       struct asa_options asa;
@@ -289,9 +288,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct overlap_reduction default_grid_exposed_overlap;
       struct overlap_reduction default_grid_buried_overlap;
       struct overlap_reduction default_grid_overlap;
-      QString project;   // name of the current project - derived from the prefix of the pdb filename
-      QString bead_model_prefix;
-      QString bead_model_suffix;
       QString somo_tmp_dir;
 
       QString bead_model_selected_filter;
@@ -750,9 +746,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    public:
 
+      unsigned int current_model;
+      QString project;   // name of the current project - derived from the prefix of the pdb filename
+      QString bead_model_prefix;
+      QString bead_model_suffix;
+
       QString      model_name( int val );
 
       bool rotamer_changed;  // toggles need for reloading rotamer file
+
+      bool compute_structure_factors( QString filename, saxs &structure_factors, QString &error_msg );
 
    public slots:
       void show_zeno_options();

@@ -22,13 +22,14 @@ using namespace std;
 
 struct grid_options
 {
-   bool cubic;    // apply cubic grid
-   bool hydrate;    // true: hydrate model
-   bool center;    // true: center of mass
-                  // false: center of cubelet
-   bool tangency;   // true: Expand beads to tangency
-   double cube_side; 
-   bool enable_asa;   // true:-> run asa buried/exposed code
+   bool         cubic;                // apply cubic grid
+   bool         hydrate;              // true: hydrate model
+   bool         center;               // true: center of mass
+                                      // false: center of cubelet
+   bool         tangency;             // true: Expand beads to tangency
+   double       cube_side; 
+   bool         enable_asa;           // true:-> run asa buried/exposed code
+   bool         create_nmr_bead_pdb;
 };
 
 class US_EXTERN US_Hydrodyn_Grid : public QFrame
@@ -68,6 +69,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       QCheckBox *cb_center_cubelet;
       QCheckBox *cb_tangency;
       QCheckBox *cb_enable_asa;
+      QCheckBox *cb_create_nmr_bead_pdb;
       void *us_hydrodyn;
       
       US_Config *USglobal;
@@ -88,6 +90,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       void set_tangency();
       void set_enable_asa();
       void set_cubic();
+      void set_create_nmr_bead_pdb();
       void overlaps();
       void cancel();
       void help();

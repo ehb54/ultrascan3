@@ -1497,6 +1497,12 @@ void US_Hydrodyn_Batch::start()
       saxs_prr_mw.clear();
    }
 
+   bool proceed_anyway = 
+      ( batch->iqq || batch->prr ) &&
+      !batch->somo &&
+      !batch->grid &&
+      !batch->hydro;
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       progress->setProgress( i * 2 );
@@ -1537,10 +1543,19 @@ void US_Hydrodyn_Batch::start()
             result = screen_bead_model(file);
          }
          job_timer.end_timer  ( QString( "%1 screen" ).arg( get_file_name( i ) ) );
-         if ( result ) 
+         if ( result || proceed_anyway )
          {
-            editor->setColor("dark blue");
-            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            if ( result )
+            {
+               editor->setColor("dark blue");
+               editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            } else {
+               editor->setColor("dark red");
+               editor->append(QString(tr("Screening: %1 not ok, but proceeding anyway.").arg(file)));
+               editor->setColor("dark blue");
+               result = 1;
+            }
+               
             if ( stopFlag )
             {
                editor->setColor("dark red");

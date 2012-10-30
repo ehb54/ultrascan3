@@ -116,6 +116,14 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_enable_asa->setEnabled(true);
    connect(cb_enable_asa, SIGNAL(clicked()), this, SLOT(set_enable_asa()));
 
+   cb_create_nmr_bead_pdb = new QCheckBox(this);
+   cb_create_nmr_bead_pdb->setText(tr(" Compute average structure factors"));
+   cb_create_nmr_bead_pdb->setChecked((*grid).create_nmr_bead_pdb);
+   cb_create_nmr_bead_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_create_nmr_bead_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_create_nmr_bead_pdb->setEnabled(true);
+   connect(cb_create_nmr_bead_pdb, SIGNAL(clicked()), this, SLOT(set_create_nmr_bead_pdb()));
+
    pb_overlaps = new QPushButton(tr(" Adjust Overlap Options "), this);
    Q_CHECK_PTR(pb_overlaps);
    pb_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -155,6 +163,8 @@ void US_Hydrodyn_Grid::setupGUI()
    j++;
    background->addWidget(cb_enable_asa, j, 1);
    j++;
+   background->addWidget(cb_create_nmr_bead_pdb, j, 1);
+   j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 }
@@ -192,6 +202,12 @@ void US_Hydrodyn_Grid::set_tangency()
 void US_Hydrodyn_Grid::set_enable_asa()
 {
    (*grid).enable_asa = cb_enable_asa->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Grid::set_create_nmr_bead_pdb()
+{
+   (*grid).create_nmr_bead_pdb = cb_create_nmr_bead_pdb->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
