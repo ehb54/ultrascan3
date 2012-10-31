@@ -2813,7 +2813,15 @@ int US_Hydrodyn::calc_grid_pdb()
                        sf_factors.saxs_name != "undefined" &&
                        !sf_factors.saxs_name.isEmpty() )
                   {
-                     extra_text = "\nSAXS:: " + sf_factors.saxs_name;
+                     extra_text = 
+                        QString( "\nSAXS exponential fitting information\n"
+                                 "    4 term fit: %1\n"
+                                 "    5 term fit: %2\n" )
+                        .arg( sf_4term_notes )
+                        .arg( sf_5term_notes )
+                        ;
+
+                     extra_text += "\nSAXS:: " + sf_factors.saxs_name.upper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
                         extra_text += QString( " %1" ).arg( sf_factors.a[ i ] );

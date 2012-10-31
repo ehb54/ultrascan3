@@ -747,6 +747,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       unsigned int multiply_iq_by_atomic_volume_last_water_multiplier;
 
+      QString     sf_4term_notes;
+      QString     sf_5term_notes;
+
    public:
 
       unsigned int current_model;

@@ -376,7 +376,7 @@ AtoB(PDB * pdb,
 #if defined(DEBUG)
    puts("in atob 4 c");
    fflush(stdout);
-   printf("npoints %d\n", (int)npoints); fflush(stdout);
+   printf("npoints %d %d %d\n", (int)npoints_x, (int)npoints_y, (int)npoints_z ); fflush(stdout);
 #endif
 
    for (i = 0; i < npoints_x; i++)   /* clears up r0 */
@@ -778,6 +778,9 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    long npoints_x = (long) (LMAX_x / use_grid_options->cube_side);
    long npoints_y = (long) (LMAX_y / use_grid_options->cube_side);
    long npoints_z = (long) (LMAX_z / use_grid_options->cube_side);
+   npoints_x++;
+   npoints_y++;
+   npoints_z++;
    printf("npoints_x %ld\n", npoints_x);
    printf("npoints_y %ld\n", npoints_y);
    printf("npoints_z %ld\n", npoints_z);
@@ -1251,8 +1254,10 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
          norm5tag = "amazingly excellent";
       }
 
-      sf_factors.saxs_name = QFileInfo( csvfile ).baseName();
-      
+      sf_factors.saxs_name = QFileInfo( csvfile ).baseName().upper();
+      sf_4term_notes = norm4tag;
+      sf_5term_notes = norm5tag;
+
       editor_msg( "dark blue", QString( "structure factors name: %1\n" ).arg( sf_factors.saxs_name ) );
 
       QString qs4 = sf_factors.saxs_name;

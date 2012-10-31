@@ -256,6 +256,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                          &ok, 
                                          this );
             text.replace( QRegExp( "\\s" ), "_" );
+            text = text.upper();
             if ( ok && !text.isEmpty() )
             {
                // user entered something and pressed OK

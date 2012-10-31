@@ -1066,7 +1066,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                                  .arg( qsl.size() ) );
                   } else {
                      editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
-                     tmp_saxs.saxs_name = qsl[ 1 ];
+                     tmp_saxs.saxs_name = qsl[ 1 ].upper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
                         tmp_saxs.a[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -6892,6 +6892,7 @@ void US_Hydrodyn::make_test_set()
 
 void US_Hydrodyn::calc_vol_for_saxs()
 {
+   // cout << QString( "calc_vol_for_saxs() model_vector.size() %1\n" ).arg( model_vector.size() );
    for ( unsigned int i = 0; i < model_vector.size(); i++  )
    {
       model_vector[i].volume = 0;
