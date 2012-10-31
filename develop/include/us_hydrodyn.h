@@ -540,6 +540,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #endif
 
       void calc_mw();             // after pdb (bead_model?) loaded, go through and compute PDB_model.mw (& later PDB_chain.mw?)
+      void calc_vol_for_saxs();   // run when there are errors
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 
       int pdb_asa_for_saxs_hydrate();

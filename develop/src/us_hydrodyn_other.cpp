@@ -6889,3 +6889,38 @@ void US_Hydrodyn::make_test_set()
       f.close();
    }
 }
+
+void US_Hydrodyn::calc_vol_for_saxs()
+{
+   for ( unsigned int i = 0; i < model_vector.size(); i++  )
+   {
+      model_vector[i].volume = 0;
+      for ( unsigned int j = 0; j < model_vector[i].molecule.size (); j++ )
+      {
+         for ( unsigned int k = 0; k < model_vector[i].molecule[j].atom.size(); k++ )
+         {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            double excl_vol;
+            double scaled_excl_vol;
+            unsigned int this_e;
+            unsigned int this_e_noh;
+            if ( !saxs_util->set_excluded_volume( *this_atom, 
+                                                  excl_vol, 
+                                                  scaled_excl_vol, 
+                                                  saxs_options, 
+                                                  residue_atom_hybrid_map,
+                                                  this_e,
+                                                  this_e_noh ) )
+            {
+               editor_msg( "dark red", saxs_util->errormsg );
+            } else {
+               model_vector[ i ].volume += excl_vol;
+            } 
+         }
+      }
+      editor_msg( "dark blue", QString( "Model %1 total volume %2" )
+                  .arg( model_vector[ i ].model_id )
+                  .arg( model_vector[ i ].volume ) );
+   }
+}
+

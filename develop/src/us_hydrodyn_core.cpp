@@ -7137,19 +7137,19 @@ void US_Hydrodyn::calc_mw()
 
    US_Saxs_Util usu;
    bool do_excl_vol = true;
-   if ( !usu.setup_saxs_maps( 
-                             saxs_options.default_atom_filename ,
-                             saxs_options.default_hybrid_filename ,
-                             saxs_options.default_saxs_filename 
-                             ) )
-   {
-      editor_msg( "red", 
-                  QString( tr("error: could not open %1, %2 or %3, no atomic excluded volume calc") )
-                  .arg( saxs_options.default_atom_filename )
-                  .arg( saxs_options.default_hybrid_filename )
-                  .arg( saxs_options.default_saxs_filename ) );
-      do_excl_vol = false;
-   }
+   //    if ( !usu.setup_saxs_maps( 
+   //                              saxs_options.default_atom_filename ,
+   //                              saxs_options.default_hybrid_filename ,
+   //                              saxs_options.default_saxs_filename 
+   //                              ) )
+   //    {
+   //       editor_msg( "red", 
+   //                   QString( tr("error: could not open %1, %2 or %3, no atomic excluded volume calc") )
+   //                   .arg( saxs_options.default_atom_filename )
+   //                   .arg( saxs_options.default_hybrid_filename )
+   //                   .arg( saxs_options.default_saxs_filename ) );
+   //       do_excl_vol = false;
+   //    }
 
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
@@ -7185,7 +7185,7 @@ void US_Hydrodyn::calc_mw()
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               if(this_atom->active) {
+               if( this_atom->active) {
                   // printf("model %u chain %u atom %u mw %g\n",
                   //       i, j, k, this_atom->mw);
                   if ( this_atom->resName != "SWH" )
@@ -7204,7 +7204,7 @@ void US_Hydrodyn::calc_mw()
                      double scaled_excl_vol;
                      unsigned int this_e;
                      unsigned int this_e_noh;
-                     if ( !usu.set_excluded_volume( *this_atom, 
+                     if ( !saxs_util->set_excluded_volume( *this_atom, 
                                                     excl_vol, 
                                                     scaled_excl_vol, 
                                                     saxs_options, 
@@ -7212,7 +7212,7 @@ void US_Hydrodyn::calc_mw()
                                                     this_e,
                                                     this_e_noh ) )
                      {
-                        editor_msg( "dark red", usu.errormsg );
+                        editor_msg( "dark red", saxs_util->errormsg );
                      } else {
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;

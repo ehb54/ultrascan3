@@ -1612,8 +1612,10 @@ void US_Hydrodyn::reload_pdb()
    }
    model_vector_as_loaded = model_vector;
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
-   if ( !errors_found )
+   if ( errors_found )
    {
+      calc_vol_for_saxs();
+   } else {
       calc_mw();
    }
    bead_models.clear();
@@ -1841,8 +1843,10 @@ void US_Hydrodyn::load_pdb()
    {
       return; // user canceled loading PDB file
    }
-   if ( !errors_found )
+   if ( errors_found )
    {
+      calc_vol_for_saxs();
+   } else {
       calc_mw();
    }
    update_vbar();
@@ -1961,11 +1965,12 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
       }
       reset_chain_residues( &model_vector[ i ] );
    }
-   if ( !errors_found )
+   if ( errors_found )
    {
+      calc_vol_for_saxs();
+   } else {
       calc_mw();
    }
-
    model_vector_as_loaded = model_vector;
    if ( !model_vector.size() ||
         !model_vector[0].molecule.size() )
