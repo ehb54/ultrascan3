@@ -376,6 +376,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                }
 
                QString qs4 = text;
+               coeff4.resize( 9 );
                for ( unsigned int i = 1; i < ( unsigned int ) coeff4.size(); i++ )
                {
                   qs4 += QString( " %1" ).arg( coeff4[ i ] );

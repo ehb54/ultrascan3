@@ -4225,6 +4225,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
       result += QString(result.length() ? "-" : "") + QString(somo ? "so" : "a2b");
    }
    //   editor->append(result);
+   result.replace( ".", "_" );
    return result;
 }
 

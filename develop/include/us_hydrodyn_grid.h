@@ -24,8 +24,8 @@ struct grid_options
 {
    bool         cubic;                // apply cubic grid
    bool         hydrate;              // true: hydrate model
-   bool         center;               // true: center of mass
-                                      // false: center of cubelet
+   bool         center;               // true: center of cubelet
+                                      // false: center of mass
    bool         tangency;             // true: Expand beads to tangency
    double       cube_side; 
    bool         enable_asa;           // true:-> run asa buried/exposed code
@@ -92,8 +92,8 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       void set_tangency();
       void set_enable_asa();
       void set_cubic();
-      void set_equalize_radii_constant_volume();
       void set_create_nmr_bead_pdb();
+      void set_equalize_radii_constant_volume();
       void overlaps();
       void cancel();
       void help();

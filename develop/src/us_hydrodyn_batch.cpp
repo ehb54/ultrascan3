@@ -2867,7 +2867,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
          }
       }
 
-      if ( batch->compute_iq_avg && sum_count > 1 )
+      if ( batch->compute_iq_avg && sum_count )
       {
          fprintf(of, "\n\"%s\",\"%s\",%s\n", 
                  "Average",

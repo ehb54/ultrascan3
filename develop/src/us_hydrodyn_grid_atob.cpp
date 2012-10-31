@@ -1022,7 +1022,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       QString( "_s%1h%2c%3%4" )
       .arg( grid.cube_side )
       .arg( grid.hydrate ? "y" : "n" )
-      .arg( grid.center ? "m" : "c" )
+      .arg( grid.center ? "c" : "m" )
       .arg( grid.equalize_radii_constant_volume ? "er" : "" )
       ;
 
