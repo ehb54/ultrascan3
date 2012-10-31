@@ -765,7 +765,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void editor_msg( QString color, QString msg );
 
-      struct saxs sf_factors;
+      saxs sf_factors;
+      vector < saxs > sf_bead_factors;
 
    public slots:
       void show_zeno_options();

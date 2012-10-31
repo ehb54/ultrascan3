@@ -51,6 +51,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       QLineEdit   *le_dummy_saxs_name;
 
       QCheckBox   *cb_dummy_atom_pdbs_in_nm;
+      QCheckBox   *cb_iq_global_avg_for_bead_models;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -68,6 +69,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       void update_dummy_saxs_name( const QString & );
 
       void set_dummy_atom_pdbs_in_nm();
+      void set_iq_global_avg_for_bead_models();
 
       void cancel();
       void help();

@@ -885,6 +885,8 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                           );
 
    us_hydrodyn->sf_factors.saxs_name = "undefined";
+   us_hydrodyn->sf_bead_factors.clear();
+
    if ( nmr_created )
    {
       QString error_msg;
@@ -1068,7 +1070,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    batch_window->cb_hydro   ->setChecked( false );
    batch_window->le_csv_saxs_name->setText( QFileInfo( filename ).baseName() + csv_addendum );
    batch_window->cb_compute_iq_avg->setChecked( true );
-   batch_window->cb_compute_iq_only_avg->setChecked( true );
+   batch_window->cb_compute_iq_only_avg->setChecked( false );
    batch.hydrate = false;
    if ( batch_window->cb_hydrate )
    {
@@ -1077,9 +1079,14 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    // ok, bc no hydrate allowed in batch
    save_state();
+   float save_e_density = saxs_options.water_e_density;
+   saxs_options.water_e_density = 0.0f;
+   editor_msg( "dark blue", "Temporarily setting water electron denisty to zero for Iq computation" );
    batch_window->show();
    batch_window->start( true );
    restore_state();
+   saxs_options.water_e_density = save_e_density;
+   editor_msg( "dark blue", QString( "Restored water electron denisty to %1" ).arg( save_e_density ) );
 
    if ( batch_window->stopFlag )
    {
@@ -1118,51 +1125,79 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    QTextStream ts( &f );
 
    QString qsq;
-   QString qsI;
+   QStringList qslIs;
 
    qsq = ts.readLine();
-   ts.readLine();
-   ts.readLine();
-   qsI = ts.readLine();
+
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      if ( qs.contains( ",\"I(q)\"," ) )
+      {
+         qslIs << qs;
+      }
+   }
 
    f.close();
 
    QStringList qslq = QStringList::split( ",",  qsq );
-   QStringList qslI = QStringList::split( ",",  qsI );
-
    if ( qslq.size() < 3 ||
-        qslI.size() < 3 ||
         qslq[ 0 ] != "\"Name\"" ||
-        qslq[ 1 ] != "\"Type; q:\"" ||
-        qslI[ 0 ] != "\"Average\"" ||
-        qslI[ 1 ] != "\"I(q)\""
+        qslq[ 1 ] != "\"Type; q:\"" 
         )
    {
-      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error" ).arg( csvfile );
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error in q line" ).arg( csvfile );
       return false;
    }
 
-   qslq.pop_front();
-   qslq.pop_front();
-   qslq.pop_back();
-   qslq.pop_back();
-   qslI.pop_front();
-   qslI.pop_front();
-   qslI.pop_back();
-
-   if ( qslq.size() != qslI.size() )
+   if ( qslIs.size() < 2 )
    {
-      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error (I & q lines incompatible)" ).arg( csvfile );
+      error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: insufficinet Iq lines (only found %2)" ).arg( csvfile ).arg( qslIs.size() );
       return false;
    }
+
+   qslq.pop_front();
+   qslq.pop_front();
+   qslq.pop_back();
+   qslq.pop_back();
 
    vector < double > q( qslq.size() );
-   vector < double > I( qslI.size() );
 
    for ( unsigned int i = 0; i < qslq.size(); i++ )
    {
       q[ i ] = qslq[ i ].toDouble();
-      I[ i ] = qslI[ i ].toDouble();
+   }
+
+   vector < vector < double > > Is( qslIs.size() );
+
+   // first beads, last average
+   for ( unsigned int i = 0; i < ( unsigned int ) qslIs.size(); i++ )
+   {
+      QStringList qslI = QStringList::split( ",",  qslIs[ i ] );
+
+      if ( qslI.size() < 3 || qslI[ 1 ] != "\"I(q)\"" )
+      {
+         error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error in Iq line %2" ).arg( csvfile ).arg( i + 1 );
+         return false;
+      }
+
+      qslI.pop_front();
+      qslI.pop_front();
+      qslI.pop_back();
+
+      if ( qslq.size() != qslI.size() )
+      {
+         error_msg = QString( "Error: compute_structure_factors(): batch computed csv output file %1: format error (I & q lines incompatible) Iq line %2" ).arg( csvfile ).arg( i + 1 );
+         return false;
+      }
+
+      vector < double > I( qslI.size() );
+
+      for ( unsigned int ii = 0; ii < qslI.size(); ii++ )
+      {
+         I[ ii ] = qslI[ ii ].toDouble();
+      }
+      Is[ i ] = I;
    }
 
    editor_msg( "blue", tr( "Computing 4 & 5 term exponentials\nThis can take awhile & the program may seem unresponsive" ) );
@@ -1170,7 +1205,15 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    raise();
    qApp->processEvents();
 
+   unsigned last_bead = ( unsigned int ) Is.size() - 1;
+   cout << QString( "last bead is %1\n" ).arg( last_bead );
+
+   for ( unsigned int j = 0; j < ( unsigned int ) Is.size(); j++ )
    {
+      editor_msg( "blue", QString( tr( "Computing 4 & 5 term exponentials for bead %1" ) ).arg( j == last_bead ? "Global average" : QString( "%1" ).arg( j + 1 ) ) );
+      editor->scrollToBottom();
+      qApp->processEvents();
+      
       vector < double > coeff4;
       vector < double > coeff5;
       double            norm4;
@@ -1180,7 +1223,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       US_Saxs_Util usu;
 
       if ( !usu.compute_exponential( q,
-                                     I, 
+                                     Is[ j ], 
                                      coeff4,
                                      coeff5,
                                      norm4,
@@ -1300,6 +1343,13 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
          sf_factors.b5[ i ] = coeff5[ 2 + i * 2 ];
       }
       sf_factors.c5 = coeff5[ 0 ];
+
+      if ( j != last_bead )
+      {
+         sf_factors.saxs_name = QString( "%1" ).arg( j + 1 );
+         sf_bead_factors.push_back( sf_factors );
+         sf_factors.saxs_name = "undefined";
+      }
    }
 
    return true;

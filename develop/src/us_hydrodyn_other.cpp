@@ -1022,6 +1022,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             bool units_loaded = false;
             QRegExp rx(", where x is : (\\d+)");
             QStringList ssaxs;
+            QStringList bsaxs;
             while ( !ts.atEnd() )
             {
                QString str = ts.readLine();
@@ -1032,6 +1033,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                if ( str.left( 6 ).lower() == "saxs::" )
                {
                   ssaxs << str;
+                  continue;
+               }
+
+               if ( str.left( 7 ).lower() == "bsaxs::" )
+               {
+                  bsaxs << str;
                   continue;
                }
 
@@ -1046,7 +1053,17 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
             editor->setCurrentFont( save_font );
 
-            if ( ssaxs.size() )
+            if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() / 2 != bead_model.size() )
+            {
+               editor_msg( "red", 
+                           QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
+                           .arg( bsaxs.size() )
+                           .arg( bead_model.size() )
+                           );
+            }
+               
+
+            if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || bsaxs.size() / 2 != bead_model.size() ) )
             {
                editor_msg( "dark blue", 
                            QString( tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
@@ -1065,7 +1082,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                                  QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
                                  .arg( qsl.size() ) );
                   } else {
-                     editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
+                     // editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
                      tmp_saxs.saxs_name = qsl[ 1 ].upper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
@@ -1089,7 +1106,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                                        QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
                                        .arg( qsl.size() ) );
                         } else {
-                           editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
+                           // editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
                            for ( unsigned int i = 0; i < 5; i++ )
                            {
                               tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -1101,7 +1118,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      saxs_options.dummy_saxs_name = tmp_saxs.saxs_name;
                      if ( extra_saxs_coefficients.count( tmp_saxs.saxs_name ) )
                      {
-                        editor_msg( "dark red", QString( "NOTICE: extra saxs coefficients %1 replaced\n" ).arg( tmp_saxs.saxs_name ) );
+                        editor_msg( "dark red", QString( "Notice: extra saxs coefficients %1 replaced\n" ).arg( tmp_saxs.saxs_name ) );
                      } else {
                         saxs_options.dummy_saxs_names.push_back( tmp_saxs.saxs_name );
                      }
@@ -1111,12 +1128,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      if ( saxs_util->saxs_map.count( tmp_saxs.saxs_name ) )
                      {
                         editor_msg( "dark red", 
-                                    QString( tr( "NOTICE: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                    QString( tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                     .arg( tmp_saxs.saxs_name ) );
                      } else {
                         saxs_util->saxs_list.push_back( tmp_saxs );
                         editor_msg( "dark blue", 
-                                    QString( tr( "NOTICE: added coefficients for %1 from newly loaded values\n" ) )
+                                    QString( tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
                                     .arg( tmp_saxs.saxs_name ) );
                      }
                      saxs_util->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
@@ -1126,12 +1143,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                         if ( saxs_plot_window->saxs_map.count( tmp_saxs.saxs_name ) )
                         {
                            editor_msg( "dark red", 
-                                       QString( tr( "NOTICE: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                       QString( tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                        .arg( tmp_saxs.saxs_name ) );
                         } else {
                            saxs_plot_window->saxs_list.push_back( tmp_saxs );
                            editor_msg( "dark blue", 
-                                       QString( tr( "NOTICE: saxs window: added coefficients for %1 from newly loaded values\n" ) )
+                                       QString( tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
                                        .arg( tmp_saxs.saxs_name ) );
                         }
                         saxs_plot_window->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
@@ -1154,6 +1171,61 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                            bead_model[ i ].saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
                         }
                      }
+                  }
+               }
+            }
+            if ( bsaxs.size() && !saxs_options.iq_global_avg_for_bead_models )
+            {
+               editor_msg( "blue", tr( "Notice: using individual bead structure factors\n" ) );
+               for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
+               {
+                  saxs tmp_saxs;
+                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), bsaxs[ j ] );
+                  if ( qsl.size() != 12 )
+                  {
+                     editor_msg( "red", 
+                                 QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
+                                 .arg( qsl.size() ) );
+                  } else {
+                     // editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
+                     tmp_saxs.saxs_name = qsl[ 1 ].upper();
+                     for ( unsigned int i = 0; i < 4; i++ )
+                     {
+                        tmp_saxs.a[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                        tmp_saxs.b[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                        tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                        tmp_saxs.b5[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                     }
+                     tmp_saxs.a5[ 4 ] =
+                        tmp_saxs.b5[ 4 ] = 0.0f;
+                     tmp_saxs.c = qsl[ 10 ].toFloat();
+                     tmp_saxs.c5 = qsl[ 10 ].toFloat();
+                     tmp_saxs.volume = qsl[ 11 ].toFloat();
+                     if ( bsaxs.size() > j + 1 )
+                     {
+                        qsl = QStringList::split( QRegExp( "\\s+" ), bsaxs[ j + 1 ] );
+                        if ( tmp_saxs.saxs_name != qsl[ 1 ].upper() )
+                        {
+                           editor_msg( "red", tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
+                        } else {
+                           if ( qsl.size() != 14 )
+                           {
+                              editor_msg( "red", 
+                                          QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
+                                          .arg( qsl.size() ) );
+                           } else {
+                              // editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
+                              for ( unsigned int i = 0; i < 5; i++ )
+                              {
+                                 tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
+                                 tmp_saxs.b5[ i ] = qsl[ 3 + i * 2 ].toFloat();
+                              }
+                              tmp_saxs.c5 = qsl[ 12 ].toFloat();
+                           }
+                        } 
+                     }
+                     bead_model[ j / 2 ].saxs_name = tmp_saxs.saxs_name;
+                     bead_model[ j / 2 ].saxs_data = tmp_saxs;
                   }
                }
             }
@@ -4062,6 +4134,7 @@ void US_Hydrodyn::set_default()
    saxs_options.dummy_saxs_names               .push_back( saxs_options.dummy_saxs_name );
    saxs_options.multiply_iq_by_atomic_volume   = false;
    saxs_options.dummy_atom_pdbs_in_nm          = false;
+   saxs_options.iq_global_avg_for_bead_models  = false;
 
    grid.create_nmr_bead_pdb                    = false;
 

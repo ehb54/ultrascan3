@@ -185,7 +185,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
-         saxs saxs = saxs_map[atoms[i].saxs_name];
+         saxs saxs = bead_models[ current_model ][ i ].saxs_data; // = saxs_map[atoms[i].saxs_name];
 
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
@@ -1041,7 +1041,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
-         saxs saxs = saxs_map[atoms[i].saxs_name];
+         saxs saxs = bead_models[ current_model ][ i ].saxs_data; // = saxs_map[atoms[i].saxs_name];
          //          if ( !i )
          //          {
          //             QString qs;
@@ -1706,7 +1706,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
-         saxs saxs = saxs_map[atoms[i].saxs_name];
+         saxs saxs = bead_models[ current_model ][ i ].saxs_data; // = saxs_map[atoms[i].saxs_name];
+
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
          // m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)

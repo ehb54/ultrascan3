@@ -61,6 +61,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_bead_model_rayleigh->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_bead_model_rayleigh, SIGNAL(clicked()), this, SLOT(set_bead_model_rayleigh()));
 
+   cb_iq_global_avg_for_bead_models = new QCheckBox(this);
+   cb_iq_global_avg_for_bead_models->setText(tr(" Use global average scattering factors for loading bead models"));
+   cb_iq_global_avg_for_bead_models->setEnabled(true);
+   cb_iq_global_avg_for_bead_models->setChecked((*saxs_options).iq_global_avg_for_bead_models);
+   cb_iq_global_avg_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
+
    lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
    lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
@@ -105,6 +113,8 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    background->addMultiCellWidget( cb_compute_sans_coeff_for_bead_models, j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
+   j++;
+   background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
    j++;
 
    background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
@@ -162,6 +172,12 @@ void US_Hydrodyn_SasOptionsBeadModel::set_compute_sans_coeff_for_bead_models()
 void US_Hydrodyn_SasOptionsBeadModel::set_bead_model_rayleigh()
 {
    (*saxs_options).bead_model_rayleigh = cb_bead_model_rayleigh->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_iq_global_avg_for_bead_models()
+{
+   (*saxs_options).iq_global_avg_for_bead_models = cb_iq_global_avg_for_bead_models->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

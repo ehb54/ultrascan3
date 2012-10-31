@@ -340,6 +340,7 @@ struct saxs_options
    QStringList  dummy_saxs_names;
    bool         multiply_iq_by_atomic_volume;
    bool         dummy_atom_pdbs_in_nm;
+   bool         iq_global_avg_for_bead_models;
 };
 
 struct saxs_atom

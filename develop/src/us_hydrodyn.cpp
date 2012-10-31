@@ -2815,11 +2815,30 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      extra_text = 
                         QString( "\nSAXS exponential fitting information\n"
-                                 "    4 term fit: %1\n"
-                                 "    5 term fit: %2\n" )
+                                 "    Global average 4 term fit: %1\n"
+                                 "    Global average 5 term fit: %2\n\n" )
                         .arg( sf_4term_notes )
                         .arg( sf_5term_notes )
                         ;
+
+                     for ( unsigned int k = 0; k < sf_bead_factors.size(); k++ )
+                     {
+                        extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name.upper();
+                        for ( unsigned int i = 0; i < 4; i++ )
+                        {
+                           extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].a[ i ] );
+                           extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].b[ i ] );
+                        }
+                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c ).arg( 0.0 );
+                       
+                        extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name;
+                        for ( unsigned int i = 0; i < 5; i++ )
+                        {
+                           extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].a5[ i ] );
+                           extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].b5[ i ] );
+                        }
+                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c5 ).arg( 0.0 );
+                     }
 
                      extra_text += "\nSAXS:: " + sf_factors.saxs_name.upper();
                      for ( unsigned int i = 0; i < 4; i++ )
@@ -2879,21 +2898,43 @@ int US_Hydrodyn::calc_grid_pdb()
 
                   if ( saxs_options.compute_saxs_coeff_for_bead_models )
                   {
-                     if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+                     if ( !saxs_options.iq_global_avg_for_bead_models && sf_bead_factors.size() != bead_model.size() )
                      {
-                        editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found.\n" ) )
-                                    .arg( saxs_options.dummy_saxs_name ) );
-                        for(unsigned int i = 0; i < bead_model.size(); i++) {
-                           bead_model[i].saxs_data.saxs_name = "";
+                        editor_msg( "red", 
+                                    QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
+                                    .arg( sf_bead_factors.size() )
+                                    .arg( bead_model.size() )
+                                    );
+                     }
+                     if ( saxs_options.iq_global_avg_for_bead_models || sf_bead_factors.size() != bead_model.size() )
+                     {
+                        if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
+                        {
+                           editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found.\n" ) )
+                                       .arg( saxs_options.dummy_saxs_name ) );
+                           for(unsigned int i = 0; i < bead_model.size(); i++) {
+                              bead_model[i].saxs_data.saxs_name = "";
+                           }
+                        } else {
+                           editor_msg( "blue", QString( tr("Notice: Loading beads with saxs coefficients '%1'" ) )
+                                       .arg( saxs_options.dummy_saxs_name ) );
+                           for( unsigned int i = 0; i < bead_model.size(); i++ ) 
+                           {
+                              bead_model[i].saxs_name = saxs_options.dummy_saxs_name;
+                              bead_model[i].saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
+                              bead_model[i].hydrogens = 0;
+                           }
                         }
                      } else {
-                        editor_msg( "blue", QString( tr("Notice: Loading beads with saxs coefficients '%1'" ) )
-                                    .arg( saxs_options.dummy_saxs_name ) );
-                        for( unsigned int i = 0; i < bead_model.size(); i++ ) 
+                        if ( !saxs_options.iq_global_avg_for_bead_models && sf_bead_factors.size() == bead_model.size() )
                         {
-                           bead_model[i].saxs_name = saxs_options.dummy_saxs_name;
-                           bead_model[i].saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
-                           bead_model[i].hydrogens = 0;
+                           editor_msg( "blue", tr("Notice: Loading beads with bead computed structure factors" ) );
+                           for( unsigned int i = 0; i < bead_model.size(); i++ ) 
+                           {
+                              bead_model[i].saxs_name = sf_bead_factors[ i ].saxs_name;
+                              bead_model[i].saxs_data = sf_bead_factors[ i ];
+                              bead_model[i].hydrogens = 0;
+                           }
                         }
                      }
                      bead_models[current_model] = bead_model;
