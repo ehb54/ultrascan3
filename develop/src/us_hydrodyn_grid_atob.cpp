@@ -1026,6 +1026,8 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       .arg( grid.equalize_radii_constant_volume ? "er" : "" )
       ;
 
+   csv_addendum.replace( ".", "_" );
+
    bool created_batch = false;
    batch_info save_batch_info = batch;
    batch.file.clear();
