@@ -69,6 +69,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
 
+   cb_apply_loaded_sf_repeatedly_to_pdb = new QCheckBox(this);
+   cb_apply_loaded_sf_repeatedly_to_pdb->setText(tr(" Apply preloaded individual bead structure factors to bead model PDB"));
+   cb_apply_loaded_sf_repeatedly_to_pdb->setEnabled(true);
+   cb_apply_loaded_sf_repeatedly_to_pdb->setChecked((*saxs_options).apply_loaded_sf_repeatedly_to_pdb);
+   cb_apply_loaded_sf_repeatedly_to_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_apply_loaded_sf_repeatedly_to_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_apply_loaded_sf_repeatedly_to_pdb, SIGNAL(clicked()), this, SLOT(set_apply_loaded_sf_repeatedly_to_pdb()));
+
    lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
    lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
@@ -115,6 +123,8 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
+   j++;
+   background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
    j++;
 
    background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
@@ -178,6 +188,12 @@ void US_Hydrodyn_SasOptionsBeadModel::set_bead_model_rayleigh()
 void US_Hydrodyn_SasOptionsBeadModel::set_iq_global_avg_for_bead_models()
 {
    (*saxs_options).iq_global_avg_for_bead_models = cb_iq_global_avg_for_bead_models->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_apply_loaded_sf_repeatedly_to_pdb()
+{
+   (*saxs_options).apply_loaded_sf_repeatedly_to_pdb = cb_apply_loaded_sf_repeatedly_to_pdb->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

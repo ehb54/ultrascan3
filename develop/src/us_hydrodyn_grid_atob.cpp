@@ -243,9 +243,11 @@ AtoB(PDB * pdb,
    float ***y = (float ***) 0;
    float ***z = (float ***) 0;
    float ***mass = (float ***) 0;
+   float ***saxs_excl_vol = (float ***) 0;
 
    if ( !( ro = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
         !( mass = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
+        !( saxs_excl_vol = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
         !( x = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
         !( y = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
         !( z = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) )
@@ -260,6 +262,8 @@ AtoB(PDB * pdb,
          free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       if ( mass )
          free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+      if ( saxs_excl_vol )
+         free_f3tensor(saxs_excl_vol, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       return (PDB *)0;
    }
 #if defined(DEBUG)
@@ -281,6 +285,7 @@ AtoB(PDB * pdb,
          {
             ro[i][j][k] = 0.0;
             mass[i][j][k] = 0.0;
+            saxs_excl_vol[i][j][k] = 0.0;
             x[i][j][k] = 0.0;
             y[i][j][k] = 0.0;
             z[i][j][k] = 0.0;
@@ -328,6 +333,7 @@ AtoB(PDB * pdb,
       fflush(stdout);
 #endif
       mass[x_c][y_c][z_c] += (float) pp->mass;
+      saxs_excl_vol[x_c][y_c][z_c] += (float) pp->saxs_excl_vol;
       if (centre_or_cog == 1)   //calculates centre of mass
       {
 #if defined(DEBUG)
@@ -390,6 +396,7 @@ AtoB(PDB * pdb,
          free_f3tensor(y, 0, npoints_x, 0, npoints_y, 0, npoints_z);
          free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
          free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+         free_f3tensor(saxs_excl_vol, 0, npoints_x, 0, npoints_y, 0, npoints_z);
          return npdb;
       }
       for (j = 0; j < npoints_y; j++)
@@ -441,6 +448,7 @@ AtoB(PDB * pdb,
                }
 
                nthis->mass = (float) mass[i][j][k];   /* atomic mass */
+               nthis->saxs_excl_vol = (float) saxs_excl_vol[i][j][k];   /* atomic mass */
                nthis->f = (float) 6;   /* assigns electron density. */
                temp = (PDB *) malloc(sizeof(PDB));
                ntemp = (PHYSPROP *) malloc(sizeof(PHYSPROP));
@@ -595,6 +603,7 @@ AtoB(PDB * pdb,
    free_f3tensor(y, 0, npoints_x, 0, npoints_y, 0, npoints_z);
    free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
    free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+   free_f3tensor(saxs_excl_vol, 0, npoints_x, 0, npoints_y, 0, npoints_z);
    printf("\n");
 #if defined(DEBUG)
    puts("in atob _end");
@@ -678,6 +687,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
          tmp_prop.mass = (*bead_model)[i].bead_mw;
          tmp_prop.mass = ((int)(tmp_prop.mass * 100.0 + .5)) / 100.0;
+         tmp_prop.saxs_excl_vol = (*bead_model)[i].saxs_excl_vol;
          if ( us_hydrodyn->advanced_config.debug_1 )
          {
             pre_mw += ((int)((double)tmp_prop.mass * 100e0 + 5e-1)) / 1e2;
@@ -944,6 +954,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          post_mw_c++;
       }
       tmp_atom.bead_ref_mw = this_prop->mass;
+      tmp_atom.saxs_excl_vol = this_prop->saxs_excl_vol;
       tmp_atom.bead_ref_volume = 0;
       tmp_atom.bead_color = 1;
       tmp_atom.serial = this_pdb->atnum;

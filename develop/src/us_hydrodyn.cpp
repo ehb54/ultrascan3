@@ -2821,6 +2821,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         .arg( sf_5term_notes )
                         ;
 
+                     float tot_excl_vol = 0.0f;
                      for ( unsigned int k = 0; k < sf_bead_factors.size(); k++ )
                      {
                         extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name.upper();
@@ -2829,7 +2830,7 @@ int US_Hydrodyn::calc_grid_pdb()
                            extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].a[ i ] );
                            extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].b[ i ] );
                         }
-                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c ).arg( 0.0 );
+                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c ).arg( bead_model[ k ].saxs_excl_vol );
                        
                         extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name;
                         for ( unsigned int i = 0; i < 5; i++ )
@@ -2837,7 +2838,8 @@ int US_Hydrodyn::calc_grid_pdb()
                            extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].a5[ i ] );
                            extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].b5[ i ] );
                         }
-                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c5 ).arg( 0.0 );
+                        extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c5 ).arg( bead_model[ k ].saxs_excl_vol );
+                        tot_excl_vol += bead_model[ k ].saxs_excl_vol;
                      }
 
                      extra_text += "\nSAXS:: " + sf_factors.saxs_name.upper();
@@ -2846,7 +2848,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         extra_text += QString( " %1" ).arg( sf_factors.a[ i ] );
                         extra_text += QString( " %1" ).arg( sf_factors.b[ i ] );
                      }
-                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c ).arg( 0.0 );
+                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c ).arg( tot_excl_vol );
                        
                      extra_text += "SAXS:: " + sf_factors.saxs_name;
                      for ( unsigned int i = 0; i < 5; i++ )
@@ -2854,7 +2856,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         extra_text += QString( " %1" ).arg( sf_factors.a5[ i ] );
                         extra_text += QString( " %1" ).arg( sf_factors.b5[ i ] );
                      }
-                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c5 ).arg( 0.0 );
+                     extra_text += QString( " %1 %2\n" ).arg( sf_factors.c5 ).arg( tot_excl_vol );
 
                      if ( extra_saxs_coefficients.count( sf_factors.saxs_name ) )
                      {

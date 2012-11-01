@@ -37,7 +37,7 @@ typedef struct physical_properties
    REAL f, rVW;      /*electron density */
    REAL mass;
    struct physical_properties *next;
-
+   float saxs_excl_vol;
 } PHYSPROP;
 
 vector <PDB_atom> us_hydrodyn_grid_atob(vector <PDB_atom> *bead_model, 

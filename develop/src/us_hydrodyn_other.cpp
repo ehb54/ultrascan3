@@ -1177,6 +1177,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             if ( bsaxs.size() && !saxs_options.iq_global_avg_for_bead_models )
             {
                editor_msg( "blue", tr( "Notice: using individual bead structure factors\n" ) );
+               sf_bead_factors.resize( bsaxs.size() );
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
@@ -1224,10 +1225,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                            }
                         } 
                      }
-                     bead_model[ j / 2 ].saxs_name = tmp_saxs.saxs_name;
-                     bead_model[ j / 2 ].saxs_data = tmp_saxs;
+                     bead_model     [ j / 2 ].saxs_name     = tmp_saxs.saxs_name;
+                     bead_model     [ j / 2 ].saxs_data     = tmp_saxs;
+                     bead_model     [ j / 2 ].saxs_excl_vol = tmp_saxs.volume;
+                     sf_bead_factors[ j / 2 ]               = tmp_saxs;
                   }
                }
+               editor_msg( "dark blue", tr( "Bead model structure factors saved for reapplication" ) );
             }
 
             if ( !units_loaded )
@@ -1796,6 +1800,28 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                          .arg( bead_count ) 
                          );
          bead_models.resize( model_count );
+         bool do_bead_saxs_assign = 
+            saxs_options.apply_loaded_sf_repeatedly_to_pdb &&
+            saxs_options.compute_saxs_coeff_for_bead_models;
+         if ( do_bead_saxs_assign && !sf_bead_factors.size() )
+         {
+            editor_msg( "red", tr( "Warning: application of preloaded structure factors requested but no factors are loaded" ) );
+            do_bead_saxs_assign = false;
+         }
+         if ( do_bead_saxs_assign && bead_count % sf_bead_factors.size() )
+         {
+            editor_msg( "red", 
+                        QString( tr( "Warning: application of preloaded structure factors requested but the number of factors loaded %1 does not divide the number of beads %2" ) )
+                        .arg( sf_bead_factors.size() )
+                        .arg( bead_count )
+                        );
+            do_bead_saxs_assign = false;
+         }
+         if ( do_bead_saxs_assign )
+         {
+            editor_msg( "blue", tr( "applying preloaded structure factors" ) );
+         }
+
          while ( (unsigned int )model_names.size() < model_count )
          {
             model_names.push_back( QString( "%1" ).arg( model_names.size() + 1 ) );
@@ -1860,13 +1886,21 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                tmp_atom.iCode = "ICODE";
                tmp_atom.chainID = "CHAIN";
                tmp_atom.saxs_data.saxs_name = "";
-               if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+               if ( !do_bead_saxs_assign &&
+                    saxs_options.compute_saxs_coeff_for_bead_models && 
                     saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
                {
                   tmp_atom.saxs_name = saxs_options.dummy_saxs_name;
                   tmp_atom.saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
                   tmp_atom.hydrogens = 0;
                }
+               if ( do_bead_saxs_assign )
+               {
+                  tmp_atom.saxs_data     = sf_bead_factors[ bead_model.size() % sf_bead_factors.size() ];
+                  tmp_atom.saxs_name     = tmp_atom.saxs_data.saxs_name;
+                  tmp_atom.saxs_excl_vol = tmp_atom.saxs_data.volume;
+                  tmp_atom.hydrogens = 0;
+               }                  
 
                bead_model.push_back(tmp_atom);
                // cout << QString("bead loaded serial %1\n").arg(tmp_atom.serial);
@@ -4117,28 +4151,29 @@ void US_Hydrodyn::set_default()
 
    // defaults that SHOULD BE MOVED INTO somo.config
 
-   saxs_options.ignore_errors                  = false;
-   saxs_options.alt_ff                         = true;
-   saxs_options.crysol_explicit_hydrogens      = false;
-   saxs_options.use_somo_ff                    = false;
-   saxs_options.five_term_gaussians            = true;
-   saxs_options.iq_exact_q                     = false;
-   saxs_options.use_iq_target_ev               = false;
-   saxs_options.set_iq_target_ev_from_vbar     = false;
-   saxs_options.iq_target_ev                   = 0e0;
-   saxs_options.hydration_rev_asa              = false;
-   saxs_options.compute_exponentials           = false;
-   saxs_options.compute_exponential_terms      = 5;
-   saxs_options.dummy_saxs_name                = "DAM";
-   saxs_options.dummy_saxs_names               .clear();
-   saxs_options.dummy_saxs_names               .push_back( saxs_options.dummy_saxs_name );
-   saxs_options.multiply_iq_by_atomic_volume   = false;
-   saxs_options.dummy_atom_pdbs_in_nm          = false;
-   saxs_options.iq_global_avg_for_bead_models  = false;
+   saxs_options.ignore_errors                      = false;
+   saxs_options.alt_ff                             = true;
+   saxs_options.crysol_explicit_hydrogens          = false;
+   saxs_options.use_somo_ff                        = false;
+   saxs_options.five_term_gaussians                = true;
+   saxs_options.iq_exact_q                         = false;
+   saxs_options.use_iq_target_ev                   = false;
+   saxs_options.set_iq_target_ev_from_vbar         = false;
+   saxs_options.iq_target_ev                       = 0e0;
+   saxs_options.hydration_rev_asa                  = false;
+   saxs_options.compute_exponentials               = false;
+   saxs_options.compute_exponential_terms          = 5;
+   saxs_options.dummy_saxs_name                    = "DAM";
+   saxs_options.dummy_saxs_names                   .clear();
+   saxs_options.dummy_saxs_names                   .push_back( saxs_options.dummy_saxs_name );
+   saxs_options.multiply_iq_by_atomic_volume       = false;
+   saxs_options.dummy_atom_pdbs_in_nm              = false;
+   saxs_options.iq_global_avg_for_bead_models      = false;
+   saxs_options.apply_loaded_sf_repeatedly_to_pdb  = false;
 
-   grid.create_nmr_bead_pdb                    = false;
+   grid.create_nmr_bead_pdb                        = false;
 
-   batch.compute_iq_only_avg                   = false;
+   batch.compute_iq_only_avg                       = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 
@@ -6988,6 +7023,7 @@ void US_Hydrodyn::calc_vol_for_saxs()
             {
                editor_msg( "dark red", saxs_util->errormsg );
             } else {
+               this_atom->saxs_excl_vol = excl_vol;
                model_vector[ i ].volume += excl_vol;
             } 
          }

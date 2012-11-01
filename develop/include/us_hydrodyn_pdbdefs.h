@@ -341,6 +341,7 @@ struct saxs_options
    bool         multiply_iq_by_atomic_volume;
    bool         dummy_atom_pdbs_in_nm;
    bool         iq_global_avg_for_bead_models;
+   bool         apply_loaded_sf_repeatedly_to_pdb;
 };
 
 struct saxs_atom
