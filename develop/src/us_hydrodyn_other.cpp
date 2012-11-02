@@ -1023,6 +1023,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             QRegExp rx(", where x is : (\\d+)");
             QStringList ssaxs;
             QStringList bsaxs;
+            QStringList bsaxsv;
             while ( !ts.atEnd() )
             {
                QString str = ts.readLine();
@@ -1042,6 +1043,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                   continue;
                }
 
+               if ( str.left( 8 ).lower() == "bsaxsv::" )
+               {
+                  bsaxsv << str;
+                  continue;
+               }
+
                editor->append(str);
                if ( rx.search(str) != -1 )
                {
@@ -1053,7 +1060,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
             editor->setCurrentFont( save_font );
 
-            if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() / 2 != bead_model.size() )
+            if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() && ( bead_model.size() % bsaxs.size() / 2 ) )
             {
                editor_msg( "red", 
                            QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
@@ -1063,7 +1070,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
                
 
-            if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || bsaxs.size() / 2 != bead_model.size() ) )
+            if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || ( bsaxs.size() && ( bead_model.size() % bsaxs.size() / 2 ) ) ) )
             {
                editor_msg( "dark blue", 
                            QString( tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
@@ -1178,6 +1185,18 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             {
                editor_msg( "blue", tr( "Notice: using individual bead structure factors\n" ) );
                sf_bead_factors.resize( bsaxs.size() );
+               bool do_bsaxsv = false;
+               if ( bsaxsv.size() )
+               {
+                  if ( bsaxsv.size() * 2 == bsaxs.size() )
+                  {
+                     editor_msg( "blue", tr( "Notice: found correct # of variable length structure factors\n" ) );
+                     do_bsaxsv = true;
+                  } else {
+                     editor_msg( "red", tr( "Notice: found incorrect # of variable length structure factors, variable length not loaded\n" ) );
+                  }
+               }
+                     
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
@@ -1228,9 +1247,29 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      bead_model     [ j / 2 ].saxs_name     = tmp_saxs.saxs_name;
                      bead_model     [ j / 2 ].saxs_data     = tmp_saxs;
                      bead_model     [ j / 2 ].saxs_excl_vol = tmp_saxs.volume;
+                     tmp_saxs.vcoeff.clear();
+                     if ( do_bsaxsv )
+                     {
+                        qsl = QStringList::split( QRegExp( "\\s+" ), bsaxsv[ j / 2 ] );
+                        for ( unsigned int i = 2; i < qsl.size() - 1; i++ )
+                        {
+                           tmp_saxs.vcoeff.push_back( qsl[ i ].toDouble() );
+                        }
+                     }
+                        
                      sf_bead_factors[ j / 2 ]               = tmp_saxs;
                   }
                }
+               if ( bead_model.size() > sf_bead_factors.size() )
+               {
+                  for ( unsigned int i = sf_bead_factors.size(); i < bead_model.size(); i++ )
+                  {
+                     bead_model[ i ].saxs_data     = sf_bead_factors[ i % sf_bead_factors.size() ];
+                     bead_model[ i ].saxs_name     = bead_model[ i ].saxs_data.saxs_name;
+                     bead_model[ i ].saxs_excl_vol = bead_model[ i ].saxs_data.volume;
+                  }
+               }
+                     
                editor_msg( "dark blue", tr( "Bead model structure factors saved for reapplication" ) );
             }
 
@@ -4170,6 +4209,8 @@ void US_Hydrodyn::set_default()
    saxs_options.dummy_atom_pdbs_in_nm              = false;
    saxs_options.iq_global_avg_for_bead_models      = false;
    saxs_options.apply_loaded_sf_repeatedly_to_pdb  = false;
+   saxs_options.bead_models_use_var_len_sf         = false;
+   saxs_options.bead_models_var_len_sf_max         = 10;
 
    grid.create_nmr_bead_pdb                        = false;
 

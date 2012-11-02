@@ -620,6 +620,20 @@ class US_EXTERN US_Saxs_Util
                                                                           double            &norm4,
                                                                           double            &norm5
                                                                           );
+
+
+      bool                                            compute_exponential( 
+                                                                          vector < double > &q, 
+                                                                          vector < double > &I,
+                                                                          vector < double > &coeff4,
+                                                                          vector < double > &coeff5,
+                                                                          vector < double > &coeffv,
+                                                                          double            &norm4,
+                                                                          double            &norm5,
+                                                                          double            &normv,
+                                                                          // compute increased coeff size (when maxv > 5)
+                                                                          unsigned int      maxv
+                                                                          );
       vector < double >                               compute_exponential_t;
       vector < double >                               compute_exponential_y;
 #ifdef WIN32

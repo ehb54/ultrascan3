@@ -77,6 +77,29 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_apply_loaded_sf_repeatedly_to_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_apply_loaded_sf_repeatedly_to_pdb, SIGNAL(clicked()), this, SLOT(set_apply_loaded_sf_repeatedly_to_pdb()));
 
+   cb_bead_models_use_var_len_sf = new QCheckBox(this);
+   cb_bead_models_use_var_len_sf->setText(tr(" Compute and use variable length scattering factors"));
+   cb_bead_models_use_var_len_sf->setEnabled(true);
+   cb_bead_models_use_var_len_sf->setChecked((*saxs_options).bead_models_use_var_len_sf);
+   cb_bead_models_use_var_len_sf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_models_use_var_len_sf->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_bead_models_use_var_len_sf, SIGNAL(clicked()), this, SLOT(set_bead_models_use_var_len_sf()));
+
+   lbl_bead_models_var_len_sf_max = new QLabel(tr(" Variable length scattering factors max length: "), this);
+   lbl_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_bead_models_var_len_sf_max->setMinimumHeight(minHeight1);
+   lbl_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_bead_models_var_len_sf_max = new QLineEdit( this, "" );
+   le_bead_models_var_len_sf_max->setText( QString( "%1" ).arg( (*saxs_options).bead_models_var_len_sf_max ) );
+   le_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   le_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bead_models_var_len_sf_max_qv = new QIntValidator( 5, 25, this );
+   le_bead_models_var_len_sf_max->setValidator( le_bead_models_var_len_sf_max_qv );
+   connect( le_bead_models_var_len_sf_max, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_bead_models_var_len_sf_max( const QString & ) ) );
+
    lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
    lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
@@ -125,6 +148,12 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
+   j++;
+   background->addMultiCellWidget( cb_bead_models_use_var_len_sf        , j, j, 0, 1 );
+   j++;
+
+   background->addWidget         ( lbl_bead_models_var_len_sf_max       , j, 0 );
+   background->addWidget         ( le_bead_models_var_len_sf_max        , j, 1 );
    j++;
 
    background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
@@ -195,6 +224,17 @@ void US_Hydrodyn_SasOptionsBeadModel::set_apply_loaded_sf_repeatedly_to_pdb()
 {
    (*saxs_options).apply_loaded_sf_repeatedly_to_pdb = cb_apply_loaded_sf_repeatedly_to_pdb->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_use_var_len_sf()
+{
+   (*saxs_options).bead_models_use_var_len_sf = cb_bead_models_use_var_len_sf->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::update_bead_models_var_len_sf_max( const QString & qs )
+{
+   (*saxs_options).bead_models_var_len_sf_max = qs.toUInt();
 }
 
 void US_Hydrodyn_SasOptionsBeadModel::update_dummy_saxs_name( const QString & )

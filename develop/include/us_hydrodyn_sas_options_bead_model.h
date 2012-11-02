@@ -53,6 +53,11 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       QCheckBox   *cb_dummy_atom_pdbs_in_nm;
       QCheckBox   *cb_iq_global_avg_for_bead_models;
       QCheckBox   *cb_apply_loaded_sf_repeatedly_to_pdb;
+      QCheckBox   *cb_bead_models_use_var_len_sf;
+      QLabel      *lbl_bead_models_var_len_sf_max;
+      QValidator  *le_bead_models_var_len_sf_max_qv;
+      QLineEdit   *le_bead_models_var_len_sf_max;
+
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -71,6 +76,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       void set_dummy_atom_pdbs_in_nm();
       void set_iq_global_avg_for_bead_models();
       void set_apply_loaded_sf_repeatedly_to_pdb();
+      void set_bead_models_use_var_len_sf();
+
+      void update_bead_models_var_len_sf_max( const QString & );
+
       void cancel();
       void help();
    

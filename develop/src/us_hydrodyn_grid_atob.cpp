@@ -1227,8 +1227,10 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       
       vector < double > coeff4;
       vector < double > coeff5;
+      vector < double > coeffv;
       double            norm4;
       double            norm5;
+      double            normv;
       double            nnorm4;
       double            nnorm5;
       US_Saxs_Util usu;
@@ -1237,8 +1239,12 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
                                      Is[ j ], 
                                      coeff4,
                                      coeff5,
+                                     coeffv,
                                      norm4,
-                                     norm5
+                                     norm5,
+                                     normv,
+                                     saxs_options.bead_models_use_var_len_sf ?
+                                     saxs_options.bead_models_var_len_sf_max : 5
                                      ) )
       {
          error_msg = QString( "Error: compute_structure_factors(): %1" ).arg( usu.errormsg );
@@ -1354,6 +1360,8 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
          sf_factors.b5[ i ] = coeff5[ 2 + i * 2 ];
       }
       sf_factors.c5 = coeff5[ 0 ];
+
+      sf_factors.vcoeff = coeffv;
 
       if ( j != last_bead )
       {

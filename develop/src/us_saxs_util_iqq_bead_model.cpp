@@ -933,6 +933,24 @@ bool US_Saxs_Util::compute_exponential(
                                        double            &norm5
                                        )
 {
+   vector < double > coeffv;
+   double            normv;
+   return compute_exponential( q, I, coeff4, coeff5, coeffv, norm4, norm5, normv, 0 );
+}
+
+bool US_Saxs_Util::compute_exponential( 
+                                       vector < double > &q, 
+                                       vector < double > &I,
+                                       vector < double > &coeff4,
+                                       vector < double > &coeff5,
+                                       vector < double > &coeffv,
+                                       double            &norm4,
+                                       double            &norm5,
+                                       double            &normv,
+                                       // compute increased coeff size (when maxv > 5)
+                                       unsigned int      maxv 
+                                       )
+{
    if ( q.size() != I.size() )
    {
       errormsg = QString( "compute_exponential() I.size() %1 does not equal q.size() %2\n" )
@@ -940,8 +958,8 @@ bool US_Saxs_Util::compute_exponential(
       return false;
    }
 
-   // this method is general, but we currently compute 4 & 5 terms
-   unsigned int terms = 5;
+   // default 4 & 5 terms or maxv is larger
+   unsigned int terms = maxv > 5 ? maxv : 5;
 
    using namespace LM;
    {
@@ -1002,14 +1020,54 @@ bool US_Saxs_Util::compute_exponential(
          compute_exponential_y = I;
          exponential_terms     = this_terms;
          
-         lmcurve_fit( ( int )      this_n_par,
-                      ( double * ) &( par[ 0 ] ),
-                      ( int )      m_dat,
-                      ( double * ) &( compute_exponential_t[ 0 ] ),
-                      ( double * ) &( compute_exponential_y[ 0 ] ),
-                      compute_exponential_f,
-                      (const lm_control_struct *)&control,
-                      &status );
+         vector < double > save_par = par;
+
+         vector < double > best_par;
+         double            best_norm = 1e99;  // only set to avoid compiler warning
+
+         for ( unsigned int i = 0; i <= this_n_par; i++ )
+         {
+            cout << QString( "computing %1 term exponential fit try %2 of %3" )
+               .arg( this_terms )
+               .arg( i + 1 )
+               .arg( this_n_par + 1 )
+                 << flush ;
+            par = save_par;
+            if ( i )
+            {
+               par[ i - 1 ] = -par[ i - 1 ];
+            }
+            lmcurve_fit( ( int )      this_n_par,
+                         ( double * ) &( par[ 0 ] ),
+                         ( int )      m_dat,
+                         ( double * ) &( compute_exponential_t[ 0 ] ),
+                         ( double * ) &( compute_exponential_y[ 0 ] ),
+                         compute_exponential_f,
+                         (const lm_control_struct *)&control,
+                         &status );
+            if ( !i )
+            {
+               best_par  = par;
+               best_norm = status.fnorm;
+            } else {
+               if ( best_norm > status.fnorm )
+               {
+                  best_par  = par;
+                  best_norm = status.fnorm;
+               }
+            }
+            cout << QString( " norm %1\n" ).arg( status.fnorm );
+         }
+         par          = best_par;
+         status.fnorm = best_norm;
+         cout << QString( " final norm %1\n" ).arg( status.fnorm );
+
+         // save the best one in normv
+         if ( !this_terms || normv > status.fnorm )
+         {
+            coeffv = par;
+            normv  = status.fnorm;
+         } 
          if ( this_terms == 4 )
          {
             coeff4 = par;
@@ -1019,6 +1077,11 @@ bool US_Saxs_Util::compute_exponential(
          {
             coeff5 = par;
             norm5  = status.fnorm;
+         }
+         if ( this_terms >= 5 && status.fnorm < 0.005 )
+         {
+            cout << "early termination\n";
+            break;
          }
       }
    }      

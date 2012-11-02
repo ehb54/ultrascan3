@@ -221,24 +221,27 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
                told_you = true;
             }
          
-            if ( our_saxs_options->five_term_gaussians )
-            {
-               f[0][i] = 
-                  atoms[i].saxs_data.c5 +
-                  atoms[i].saxs_data.a5[0] +
-                  atoms[i].saxs_data.a5[1] +
-                  atoms[i].saxs_data.a5[2] +
-                  atoms[i].saxs_data.a5[3] +
-                  atoms[i].saxs_data.a5[4]
-                  ;
-            } else {
-               f[0][i] = 
-                  atoms[i].saxs_data.c +
-                  atoms[i].saxs_data.a[0] +
-                  atoms[i].saxs_data.a[1] +
-                  atoms[i].saxs_data.a[2] +
-                  atoms[i].saxs_data.a[3];
-            }
+            f[ 0 ][ i ] = compute_ff_bead_model( atoms[ i ].saxs_data, 0 );
+
+
+            //             if ( our_saxs_options->five_term_gaussians )
+            //             {
+            //                f[0][i] = 
+            //                   atoms[i].saxs_data.c5 +
+            //                   atoms[i].saxs_data.a5[0] +
+            //                   atoms[i].saxs_data.a5[1] +
+            //                   atoms[i].saxs_data.a5[2] +
+            //                   atoms[i].saxs_data.a5[3] +
+            //                   atoms[i].saxs_data.a5[4]
+            //                   ;
+            //             } else {
+            //                f[0][i] = 
+            //                   atoms[i].saxs_data.c +
+            //                   atoms[i].saxs_data.a[0] +
+            //                   atoms[i].saxs_data.a[1] +
+            //                   atoms[i].saxs_data.a[2] +
+            //                   atoms[i].saxs_data.a[3];
+            //             }
 
             
             fc[0][i] = vie;
@@ -1103,23 +1106,27 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
                // the saxs.c + saxs.a[i] * exp() can be precomputed
                // possibly saving time... but this isn't our most computationally intensive step
                // so I'm holding off for now.
-               if ( our_saxs_options->five_term_gaussians )
-               {
-                  f[j][i] = 
-                      saxs.c5 + 
-                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
-                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
-                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
-                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
-                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
-               } else {
-                  f[j][i] = 
-                      saxs.c + 
-                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
-               }
+
+
+               f[ j ][ i ] = compute_ff_bead_model( saxs, q_over_4pi_2[ j ] );
+
+               //                if ( our_saxs_options->five_term_gaussians )
+               //                {
+               //                   f[j][i] = 
+               //                      saxs.c5 + 
+               //                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
+               //                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
+               //                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
+               //                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
+               //                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
+               //                } else {
+               //                   f[j][i] = 
+               //                      saxs.c + 
+               //                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+               //                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+               //                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+               //                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
+               //                }
                fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
                fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
@@ -1763,36 +1770,26 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
                // possibly saving time... but this isn't our most computationally intensive step
                // so I'm holding off for now.
                
-               if ( our_saxs_options->five_term_gaussians )
-               {
-                  f[j][i] = 
-                      saxs.c5 + 
-                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
-                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
-                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
-                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
-                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
-               } else {
-                  f[j][i] = 
-                      saxs.c + 
-                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
-               }
+               f[ j ][ i ] = compute_ff_bead_model( saxs, q_over_4pi_2[ j ] );
 
-               // no explicit hydrogens on bead models
-               //                f[j][i] = saxs.c + 
-               //                   saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-               //                   saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-               //                   saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-               //                   saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-               //                   atoms[i].hydrogens * 
-               //                   ( saxsH.c + 
-               //                     saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-               //                     saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-               //                     saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-               //                     saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+               //                if ( our_saxs_options->five_term_gaussians )
+               //                {
+               //                   f[j][i] = 
+               //                      saxs.c5 + 
+               //                      saxs.a5[0] * exp(-saxs.b5[0] * q_over_4pi_2[j]) +
+               //                      saxs.a5[1] * exp(-saxs.b5[1] * q_over_4pi_2[j]) +
+               //                      saxs.a5[2] * exp(-saxs.b5[2] * q_over_4pi_2[j]) +
+               //                      saxs.a5[3] * exp(-saxs.b5[3] * q_over_4pi_2[j]) +
+               //                      saxs.a5[4] * exp(-saxs.b5[4] * q_over_4pi_2[j]);
+               //                } else {
+               //                   f[j][i] = 
+               //                      saxs.c + 
+               //                      saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+               //                      saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+               //                      saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+               //                      saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]);
+               //                }
+
                fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
                fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
@@ -2344,4 +2341,36 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
    }
    pb_plot_saxs_sans->setEnabled(true);
    pb_plot_pr->setEnabled(true);
+}
+
+double US_Hydrodyn_Saxs::compute_ff_bead_model
+(
+ saxs     &s, 
+ double   q_o_4pi2 
+ )
+{
+   if ( our_saxs_options->bead_models_use_var_len_sf && s.vcoeff.size() )
+   {
+      double val = s.vcoeff[ 0 ];
+      for ( unsigned int i = 1; i < ( unsigned int )s.vcoeff.size() - 1; i += 2 )
+      {
+         val += s.vcoeff[ i ] * exp( - s.vcoeff[ i + 1 ] * q_o_4pi2 );
+      }
+      return val;
+   } else {
+      return our_saxs_options->five_term_gaussians ?
+         s.c5 + 
+         s.a5[ 0 ] * exp( - s.b5[ 0 ] * q_o_4pi2 ) +
+         s.a5[ 1 ] * exp( - s.b5[ 1 ] * q_o_4pi2) +
+         s.a5[ 2 ] * exp( - s.b5[ 2 ] * q_o_4pi2) +
+         s.a5[ 3 ] * exp( - s.b5[ 3 ] * q_o_4pi2) +
+         s.a5[ 4 ] * exp( - s.b5[ 4 ] * q_o_4pi2) 
+         :
+         s.c + 
+         s.a[ 0 ] * exp( - s.b[ 0 ] * q_o_4pi2 ) +
+         s.a[ 1 ] * exp( - s.b[ 1 ] * q_o_4pi2 ) +
+         s.a[ 2 ] * exp( - s.b[ 2 ] * q_o_4pi2 ) +
+         s.a[ 3 ] * exp( - s.b[ 3 ] * q_o_4pi2 )
+         ;
+   }
 }

@@ -2840,6 +2840,14 @@ int US_Hydrodyn::calc_grid_pdb()
                         }
                         extra_text += QString( " %1 %2\n" ).arg( sf_bead_factors[ k ].c5 ).arg( bead_model[ k ].saxs_excl_vol );
                         tot_excl_vol += bead_model[ k ].saxs_excl_vol;
+
+                        extra_text += "BSAXSV:: " + sf_bead_factors[ k ].saxs_name;
+                        for ( unsigned int i = 0; i < sf_bead_factors[ k ].vcoeff.size(); i++ )
+                        {
+                           extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].vcoeff[ i ] );
+                        }
+                        extra_text += QString( " %1\n" ).arg( bead_model[ k ].saxs_excl_vol );
+                        tot_excl_vol += bead_model[ k ].saxs_excl_vol;
                      }
 
                      extra_text += "\nSAXS:: " + sf_factors.saxs_name.upper();

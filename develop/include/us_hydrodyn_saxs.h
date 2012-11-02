@@ -581,6 +581,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                         double   q_o_4pi2 
                         );
 
+      double compute_ff_bead_model
+         (
+          saxs     &s,
+          double   q_o_4pi2 
+          );
+
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif      

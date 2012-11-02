@@ -43,14 +43,21 @@ struct matrix
 
 struct saxs
 {
-   QString saxs_name;            // name of atom, for example, CD+2
-   float   a[4];                 // a coefficients
-   float   b[4];                 // b coefficients
-   float   c;                    // c coefficient
-   float   a5[5];                // a coefficients 5 term gaussian
-   float   b5[5];                // b coefficients 5 term gaussian
-   float   c5;                   // c coefficient  5 term gaussian
-   float   volume;               // atomic volume
+   QString             saxs_name;            // name of atom, for example, CD+2
+   float               a[4];                 // a coefficients
+   float               b[4];                 // b coefficients
+   float               c;                    // c coefficient
+   float               a5[5];                // a coefficients 5 term gaussian
+   float               b5[5];                // b coefficients 5 term gaussian
+   float               c5;                   // c coefficient  5 term gaussian
+   float               volume;               // atomic volume
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+   vector < double >   vcoeff;               // variable length coefficients, c,a0b0 etc
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 };
 
 struct rotamer_atom
@@ -342,6 +349,8 @@ struct saxs_options
    bool         dummy_atom_pdbs_in_nm;
    bool         iq_global_avg_for_bead_models;
    bool         apply_loaded_sf_repeatedly_to_pdb;
+   bool         bead_models_use_var_len_sf;
+   unsigned int bead_models_var_len_sf_max;
 };
 
 struct saxs_atom

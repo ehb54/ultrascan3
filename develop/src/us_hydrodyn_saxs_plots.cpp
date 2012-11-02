@@ -290,8 +290,10 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
          {
             vector < double > coeff4;
             vector < double > coeff5;
+            vector < double > coeffv;
             double            norm4;
             double            norm5;
+            double            normv;
             double            nnorm4;
             double            nnorm5;
             US_Saxs_Util usu;
@@ -306,8 +308,12 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                            I, 
                                            coeff4,
                                            coeff5,
+                                           coeffv,
                                            norm4,
-                                           norm5
+                                           norm5,
+                                           normv,
+                                           our_saxs_options->bead_models_use_var_len_sf ?
+                                           our_saxs_options->bead_models_var_len_sf_max : 5
                                            ) )
             {
                editor_msg( "red", usu.errormsg );
