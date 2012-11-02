@@ -632,7 +632,8 @@ class US_EXTERN US_Saxs_Util
                                                                           double            &norm5,
                                                                           double            &normv,
                                                                           // compute increased coeff size (when maxv > 5)
-                                                                          unsigned int      maxv
+                                                                          unsigned int      maxv,
+                                                                          bool              use_gsm_fitting = false
                                                                           );
       vector < double >                               compute_exponential_t;
       vector < double >                               compute_exponential_y;
@@ -772,8 +773,28 @@ class US_EXTERN US_Saxs_Util
       double wgsbs_gsm_f(our_vector *v);
       void wgsbs_gsm_df(our_vector *vd, our_vector *v);
 
+      double compute_gsm_exponentials_f( our_vector *v );
    private:
-      // gsm stuff
+      // exponential gsm:
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < double > compute_gsm_exponentials_mtto4pi2;
+      vector < double > compute_gsm_exponentials_y;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+      double compute_gsm_exponentials_norm;
+      bool compute_gsm_exponentials_is_on;
+      bool compute_gsm_exponentials( vector < double > &par,
+                                     vector < double > &t,
+                                     vector < double > &y,
+                                     QString method );
+
+      void compute_gsm_exponentials_setup( vector < double > &t,
+                                           vector < double > &y );
+      // other gsm stuff
 
       long gsm_fitness_calls;
 

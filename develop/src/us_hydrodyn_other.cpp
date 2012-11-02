@@ -4211,6 +4211,7 @@ void US_Hydrodyn::set_default()
    saxs_options.apply_loaded_sf_repeatedly_to_pdb  = false;
    saxs_options.bead_models_use_var_len_sf         = false;
    saxs_options.bead_models_var_len_sf_max         = 10;
+   saxs_options.bead_models_use_gsm_fitting        = false;
 
    grid.create_nmr_bead_pdb                        = false;
 

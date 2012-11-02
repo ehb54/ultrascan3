@@ -351,6 +351,7 @@ struct saxs_options
    bool         apply_loaded_sf_repeatedly_to_pdb;
    bool         bead_models_use_var_len_sf;
    unsigned int bead_models_var_len_sf_max;
+   bool         bead_models_use_gsm_fitting;
 };
 
 struct saxs_atom

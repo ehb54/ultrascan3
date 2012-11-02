@@ -1244,7 +1244,8 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
                                      norm5,
                                      normv,
                                      saxs_options.bead_models_use_var_len_sf ?
-                                     saxs_options.bead_models_var_len_sf_max : 5
+                                     saxs_options.bead_models_var_len_sf_max : 5,
+                                     saxs_options.bead_models_use_gsm_fitting
                                      ) )
       {
          error_msg = QString( "Error: compute_structure_factors(): %1" ).arg( usu.errormsg );
@@ -1368,6 +1369,12 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
          sf_factors.saxs_name = QString( "%1" ).arg( j + 1 );
          sf_bead_factors.push_back( sf_factors );
          sf_factors.saxs_name = "undefined";
+      }
+
+      // structure factors global are the same if only one bead is used
+      if ( last_bead == 1 )
+      {
+         break;
       }
    }
 

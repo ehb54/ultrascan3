@@ -948,7 +948,8 @@ bool US_Saxs_Util::compute_exponential(
                                        double            &norm5,
                                        double            &normv,
                                        // compute increased coeff size (when maxv > 5)
-                                       unsigned int      maxv 
+                                       unsigned int      maxv,
+                                       bool              use_gsm_fitting
                                        )
 {
    if ( q.size() != I.size() )
@@ -1027,7 +1028,7 @@ bool US_Saxs_Util::compute_exponential(
 
          for ( unsigned int i = 0; i <= this_n_par; i++ )
          {
-            cout << QString( "computing %1 term exponential fit try %2 of %3" )
+            cout << QString( "computing %1 term exponential fit try %2 of %3\n" )
                .arg( this_terms )
                .arg( i + 1 )
                .arg( this_n_par + 1 )
@@ -1037,6 +1038,115 @@ bool US_Saxs_Util::compute_exponential(
             {
                par[ i - 1 ] = -par[ i - 1 ];
             }
+
+            if ( use_gsm_fitting )
+            {
+               compute_gsm_exponentials_setup( q, I );
+               double start_rmsd;
+               double end_rmsd;
+               unsigned int gsm_repeat = 0;
+               lmcurve_fit( ( int )      this_n_par,
+                            ( double * ) &( par[ 0 ] ),
+                            ( int )      m_dat,
+                            ( double * ) &( compute_exponential_t[ 0 ] ),
+                            ( double * ) &( compute_exponential_y[ 0 ] ),
+                            compute_exponential_f,
+                            (const lm_control_struct *)&control,
+                            &status );
+               vector < double > par_before_gsm      = par;
+               double            par_before_gsm_norm = status.fnorm;
+
+               do {
+                  vector < double > gsm_par = par;
+                  gsm_par.resize( this_n_par );
+
+                  {
+                     our_vector *v = new_our_vector( gsm_par.size() );
+                  
+                     for ( int ii = 0; ii < v->len; ii++ )
+                     {
+                        v->d[ ii ] = gsm_par[ ii ];
+                     }
+                     start_rmsd = compute_gsm_exponentials_f( v );
+
+                     free_our_vector( v );
+                  }
+
+                  double r = drand48();
+                  if ( r < .334 )
+                  {
+                     compute_gsm_exponentials( gsm_par, q, I, "ih" );
+                  } else {
+                     if ( r < .667 )
+                     {
+                        compute_gsm_exponentials( gsm_par, q, I, "cg" );
+                     } else {
+                        compute_gsm_exponentials( gsm_par, q, I, "sd" );
+                     }
+                  }
+
+                  lmcurve_fit( ( int )      this_n_par,
+                               ( double * ) &( gsm_par[ 0 ] ),
+                               ( int )      m_dat,
+                               ( double * ) &( compute_exponential_t[ 0 ] ),
+                               ( double * ) &( compute_exponential_y[ 0 ] ),
+                               compute_exponential_f,
+                               (const lm_control_struct *)&control,
+                               &status );
+                  r = drand48();
+                  if ( r < .334 )
+                  {
+                     compute_gsm_exponentials( gsm_par, q, I, "ih" );
+                  } else {
+                     if ( r < .667 )
+                     {
+                        compute_gsm_exponentials( gsm_par, q, I, "cg" );
+                     } else {
+                        compute_gsm_exponentials( gsm_par, q, I, "sd" );
+                     }
+                  }
+
+                  {
+                     our_vector *v = new_our_vector( gsm_par.size() );
+                  
+                     for ( int ii = 0; ii < v->len; ii++ )
+                     {
+                        v->d[ ii ] = gsm_par[ ii ];
+                     }
+                     end_rmsd = compute_gsm_exponentials_f( v );
+
+                     free_our_vector( v );
+                  }
+                  par = gsm_par;
+                  if ( start_rmsd > end_rmsd )
+                  {
+                     cout << QString( "gsm repeat %1 for improvement, %2 %3\n" )
+                        .arg( ++gsm_repeat )
+                        .arg( start_rmsd )
+                        .arg( end_rmsd );
+                  }
+               } while ( start_rmsd > end_rmsd && gsm_repeat < 50 && end_rmsd / 500e0 < par_before_gsm_norm );
+
+               if ( end_rmsd > par_before_gsm_norm )
+               {
+                  cout << "reverting to par before gsm norm\n";
+                  par = par_before_gsm;
+                  end_rmsd = par_before_gsm_norm;
+               }
+               
+               if ( !i )
+               {
+                  best_par  = par;
+                  best_norm = end_rmsd;
+               } else {
+                  if ( best_norm > end_rmsd )
+                  {
+                     best_par  = par;
+                     best_norm = end_rmsd;
+                  }
+               }
+            }
+            
             lmcurve_fit( ( int )      this_n_par,
                          ( double * ) &( par[ 0 ] ),
                          ( int )      m_dat,
@@ -1045,7 +1155,8 @@ bool US_Saxs_Util::compute_exponential(
                          compute_exponential_f,
                          (const lm_control_struct *)&control,
                          &status );
-            if ( !i )
+
+            if ( !i && !use_gsm_fitting )
             {
                best_par  = par;
                best_norm = status.fnorm;
@@ -1058,6 +1169,7 @@ bool US_Saxs_Util::compute_exponential(
             }
             cout << QString( " norm %1\n" ).arg( status.fnorm );
          }
+         
          par          = best_par;
          status.fnorm = best_norm;
          cout << QString( " final norm %1\n" ).arg( status.fnorm );
@@ -1086,5 +1198,139 @@ bool US_Saxs_Util::compute_exponential(
       }
    }      
    return true;
+}
+
+void US_Saxs_Util::compute_gsm_exponentials_setup( vector < double > &t,
+                                                   vector < double > &y )
+{
+   compute_gsm_exponentials_mtto4pi2.resize( t.size() );
+   compute_gsm_exponentials_y = y;
+   double minus1over4pi2  = -1e0 / ( 16e0 * M_PI * M_PI );
+   for ( unsigned int i = 0; i < t.size(); i++ )
+   {
+      compute_gsm_exponentials_mtto4pi2[ i ] = t[ i ] * t[ i ] * minus1over4pi2;
+   }
+}
+
+bool US_Saxs_Util::compute_gsm_exponentials( vector < double > &par,
+                                             vector < double > &t,
+                                             vector < double > &y,
+                                             QString           method )
+{
+   compute_gsm_exponentials_setup( t, y );
+
+   compute_gsm_exponentials_is_on = true;
+
+   double gsmepsilon    = 1e-4;
+   double gsmiterations = 25;
+
+   nsa_gsm_delta    = 1; 
+   nsa_gsm_delta2_r = 1e0 / ( 2e0 * nsa_gsm_delta );
+
+   global_iter = 0;
+
+   our_vector *v = new_our_vector( par.size() );
+   
+   for ( int i = 0; i < v->len; i++ )
+   {
+      v->d[ i ] = par[ i ];
+   }
+
+   int gsm_method = -1;
+
+   if ( method == "cg" )
+   {
+      gsm_method = CONJUGATE_GRADIENT;
+   }
+   if ( method == "sd" )
+   {
+      gsm_method = STEEPEST_DESCENT;
+   }
+   if ( method == "ih" )
+   {
+      gsm_method = INVERSE_HESSIAN;
+   }
+
+   // print_our_vector( v ); 
+   double org_norm = compute_gsm_exponentials_norm = nsa_gsm_f( v );
+   cout << QString( "start gsm method %1 org norm %2\n" ).arg( method ).arg( org_norm );
+
+   switch( gsm_method ) {
+   case CONJUGATE_GRADIENT :
+      nsa_min_fr_pr_cgd   ( v,
+                            gsmepsilon,
+                            gsmiterations );
+      break;
+   case STEEPEST_DESCENT :      
+      nsa_min_gsm_5_1     ( v,
+                            gsmepsilon,
+                            gsmiterations );
+      break;
+   case INVERSE_HESSIAN :  
+      nsa_min_hessian_bfgs( v,
+                            gsmepsilon,
+                            gsmiterations );
+      break;
+   default : 
+      {
+         errormsg = QString( "unknown gsm method %1 " ).arg( gsm_method );
+         free_our_vector(v); 
+         return false; 
+      }
+      break;
+   }
+
+   compute_gsm_exponentials_norm = nsa_gsm_f( v );
+   cout << QString( "after gsm norm %1\n" ).arg( compute_gsm_exponentials_norm );
+
+   if ( compute_gsm_exponentials_norm < org_norm )
+   {
+      for ( int i = 0; i < v->len; i++ )
+      {
+         par[ i ] = v->d[ i ];
+      }
+   } else {
+      cout << "gsm made fitness worse, reverting\n";
+      compute_gsm_exponentials_norm = org_norm;
+   }
+   //    print_our_vector( v ); 
+   free_our_vector( v );
+
+   compute_gsm_exponentials_is_on = false;
+   return true;
+}
+
+double US_Saxs_Util::compute_gsm_exponentials_f( our_vector *v )
+{
+   // compute curves then determine rmsd 
+   // cout << "compute_gsm_exponentials_f:" << flush;
+   //   print_our_vector( v );
+   vector < double > cy( compute_gsm_exponentials_y.size() );
+
+   for ( unsigned int j = 0; j < compute_gsm_exponentials_mtto4pi2.size(); j++ )
+   {
+      cy[ j ] = v->d[ 0 ];
+      for ( unsigned int i = 1; i < ( unsigned int ) v->len - 1; i += 2 )
+      {
+         cy[ j ] += v->d[ i ] * exp( v->d[ i + 1 ] * compute_gsm_exponentials_mtto4pi2[ j ] );
+      }
+   }
+
+   //    double rmsd = 0e0;
+   //    for ( unsigned int j = 0; j < cy.size(); j++ )
+   //    {
+   //       double d = cy[ j ] - compute_gsm_exponentials_y[ j ];
+   //       rmsd += d * d;
+   //    }
+   // cout << QString( "rmsd %1\n" ).arg( sqrt( rmsd ) );
+   // return sqrt( rmsd );
+   
+   vector < double > x( cy.size() );
+   for ( unsigned int j = 0; j < cy.size(); j++ )
+   {   
+      x[ j ] = cy[ j ] - compute_gsm_exponentials_y[ j ];
+   }
+   double lmnorm = LM::lm_enorm( x.size(), &( x[0] ) );
+   return lmnorm;
 }
 

@@ -477,7 +477,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_start, SIGNAL(clicked()), SLOT(start()));
+   connect(pb_start, SIGNAL(clicked()), SLOT(start( bool )));
 
    progress = new QProgressBar(this, "Loading Progress");
    progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -2165,7 +2165,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
    {
       if ( batch->iqq && saxs_q.size() )
       {
-         save_csv_saxs_iqq();
+         save_csv_saxs_iqq( quiet );
       }
       if ( batch->prr && saxs_r.size() )
       {
@@ -2707,12 +2707,12 @@ QString US_Hydrodyn_Batch::vector_double_to_csv( vector < double > vd )
    return result;
 }
 
-void US_Hydrodyn_Batch::save_csv_saxs_iqq()
+void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
 {
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_iqq" + iqq_suffix() + ".csv";
-   if ( QFile::exists(fname) )
+   if ( QFile::exists(fname) && !quiet )
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);

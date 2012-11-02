@@ -212,7 +212,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
-      void save_csv_saxs_iqq();
+      void save_csv_saxs_iqq( bool quiet = false );
       void save_csv_saxs_prr();
       QString vector_double_to_csv( vector < double > vd );
       double compute_pr_area( vector < double > vd, vector < double > r );

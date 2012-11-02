@@ -69,6 +69,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
 
+   cb_bead_models_use_gsm_fitting = new QCheckBox(this);
+   cb_bead_models_use_gsm_fitting->setText(tr(" Use gsm method for computing scattering factors"));
+   cb_bead_models_use_gsm_fitting->setEnabled(true);
+   cb_bead_models_use_gsm_fitting->setChecked((*saxs_options).bead_models_use_gsm_fitting);
+   cb_bead_models_use_gsm_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_models_use_gsm_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_bead_models_use_gsm_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_gsm_fitting()));
+
    cb_apply_loaded_sf_repeatedly_to_pdb = new QCheckBox(this);
    cb_apply_loaded_sf_repeatedly_to_pdb->setText(tr(" Apply preloaded individual bead structure factors to bead model PDB"));
    cb_apply_loaded_sf_repeatedly_to_pdb->setEnabled(true);
@@ -147,6 +155,8 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    j++;
    background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
    j++;
+   background->addMultiCellWidget( cb_bead_models_use_gsm_fitting     , j, j, 0, 1 );
+   j++;
    background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_bead_models_use_var_len_sf        , j, j, 0, 1 );
@@ -217,6 +227,12 @@ void US_Hydrodyn_SasOptionsBeadModel::set_bead_model_rayleigh()
 void US_Hydrodyn_SasOptionsBeadModel::set_iq_global_avg_for_bead_models()
 {
    (*saxs_options).iq_global_avg_for_bead_models = cb_iq_global_avg_for_bead_models->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_use_gsm_fitting()
+{
+   (*saxs_options).bead_models_use_gsm_fitting = cb_bead_models_use_gsm_fitting->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

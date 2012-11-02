@@ -349,6 +349,8 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
       return false;
    }
 
+   compute_gsm_exponentials_is_on = false;
+
    nsa_delta_rho = control_parameters[ "targetedensity" ].toDouble() - our_saxs_options.water_e_density;
    nsa_ess       = control_parameters.count( "nsaess" ) ? true : false;
    nsa_excl      = control_parameters.count( "nsaexcl" ) ? true : false;
@@ -468,6 +470,11 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
 
 double US_Saxs_Util::nsa_gsm_f( our_vector *v )
 {
+   if ( compute_gsm_exponentials_is_on )
+   {
+      return compute_gsm_exponentials_f( v );
+   }
+      
    for ( int i = 0; i < v->len; i++ )
    {
       if ( v->d[ i ] < nsa_var_min[ i ] )

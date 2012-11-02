@@ -45,7 +45,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
    nsa_gsm_df(u, i);
    /*  mult_our_vector_vs(u, 1e0 / l2norm_our_vector(u, zero)); */
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
    printf("initial gradient ||=%.12g : ", l2norm_our_vector(u, zero)); 
    print_our_vector(u); 
 #endif
@@ -58,7 +58,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
    //  printf("norm %g\n", l2norm_our_vector(u, zero));
 
    while(l2norm_our_vector(u, zero) >= epsilon && iter++ < max_iter) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 #if defined(PRINT_GSM_INFO)
@@ -137,7 +137,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
       g_s3 = nsa_gsm_f(v_s3);
 
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("pre\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3); 
 #endif
 
@@ -157,7 +157,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 #endif
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
@@ -198,12 +198,12 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
          prev_g_s2 = g_s2;
          prev_s2 = s2;
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
 #endif
 
          if(x < s1) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
             printf("p1 ");
 #endif
             if(x < (s1 + s1 - s2)) { /* keep it close */
@@ -238,7 +238,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
             g_s1 = nsa_gsm_f(v_s1);
          } else {
             if(x < s2) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                printf("p2 ");
 #endif
                /* ok, take s1, x, s2 */
@@ -255,7 +255,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
                g_s2 = nsa_gsm_f(v_s2);
             } else {
                if(x < s3) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p3 ");
 #endif
                   /* ok, take s2, x, s3 */
@@ -282,7 +282,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
                      }
                   }
                   /* take s2, s3, x */
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p4 ");
 #endif
        
@@ -349,7 +349,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
 #endif
       nsa_gsm_df(u, i);
       /*    mult_our_vector_vs(u, 1e0 / l2norm_our_vector(u, zero)); */
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("end\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
@@ -448,7 +448,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       printf("%d: ", this_rank);
       print_our_vector(i);
 #endif
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       print_our_vector(u);
 #endif
 #if !defined(PRINT_GSM_INFO)
@@ -494,7 +494,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
 #if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
 #endif
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("s values\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
@@ -528,7 +528,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
       g_s3 = nsa_gsm_f(v_s3);
 
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("pre\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3); 
 #endif
 
@@ -549,7 +549,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
     
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
@@ -592,12 +592,12 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
          prev_g_s2 = g_s2;
          prev_s2 = s2;
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
 #endif
 
          if(x < s1) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
             printf("p1 ");
 #endif
             if(x < (s1 + s1 - s2)) { /* keep it close */
@@ -632,7 +632,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
             g_s1 = nsa_gsm_f(v_s1);
          } else {
             if(x < s2) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                printf("p2 ");
 #endif
                /* ok, take s1, x, s2 */
@@ -649,7 +649,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
                g_s2 = nsa_gsm_f(v_s2);
             } else {
                if(x < s3) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p3 ");
 #endif
                   /* ok, take s2, x, s3 */
@@ -676,7 +676,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
                      }
                   }
                   /* take s2, s3, x */
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p4 ");
 #endif
        
@@ -882,7 +882,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 
    while(l2norm_our_vector(u, zero) >= epsilon && iter++ < max_iter) {
       this_iterations++;
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 #if defined(PRINT_GSM_INFO)
@@ -972,7 +972,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
       add_our_vector_vv(v_s3, ip);
       g_s3 = nsa_gsm_f(v_s3);
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("pre\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3); 
 #endif
 
@@ -993,7 +993,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
 
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
@@ -1040,12 +1040,12 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
          prev_g_s2 = g_s2;
          prev_s2 = s2;
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
 #endif
 
          if(x < s1) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
             printf("p1 ");
 #endif
             if(x < (s1 + s1 - s2)) { /* keep it close */
@@ -1080,7 +1080,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
             g_s1 = nsa_gsm_f(v_s1);
          } else {
             if(x < s2) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                printf("p2 ");
 #endif
                /* ok, take s1, x, s2 */
@@ -1097,7 +1097,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
                g_s2 = nsa_gsm_f(v_s2);
             } else {
                if(x < s3) {
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p3 ");
 #endif
                   /* ok, take s2, x, s3 */
@@ -1124,7 +1124,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
                      }
                   }
                   /* take s2, s3, x */
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
                   printf("p4 ");
 #endif
        
@@ -1248,7 +1248,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
         printf("|u|=%.12g\n", l2norm_our_vector(u, zero)); 
       */
 
-#if defined(DEBUG_GSM)
+#if defined( USUNG_DEBUG )
       printf("end\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
