@@ -1013,6 +1013,36 @@ bool US_Saxs_Util::compute_exponential(
 
       lm_status_struct status;
 
+#define OLD_WAY
+#if defined( OLD_WAY )
+      // incremental approach
+      for ( unsigned int this_terms = 0; this_terms <= terms; this_terms++ )
+      {
+         unsigned int this_n_par = 1 + 2 * this_terms;
+         compute_exponential_t = q;
+         compute_exponential_y = I;
+         exponential_terms     = this_terms;
+         
+         lmcurve_fit( ( int )      this_n_par,
+                      ( double * ) &( par[ 0 ] ),
+                      ( int )      m_dat,
+                      ( double * ) &( compute_exponential_t[ 0 ] ),
+                      ( double * ) &( compute_exponential_y[ 0 ] ),
+                      compute_exponential_f,
+                      (const lm_control_struct *)&control,
+                      &status );
+         if ( this_terms == 4 )
+         {
+            coeff4 = par;
+            norm4  = status.fnorm;
+         }
+         if ( this_terms == 5 )
+         {
+            coeff5 = par;
+            norm5  = status.fnorm;
+         }
+      }
+#else
       // incremental approach
       for ( unsigned int this_terms = 0; this_terms <= terms; this_terms++ )
       {
@@ -1196,6 +1226,7 @@ bool US_Saxs_Util::compute_exponential(
             break;
          }
       }
+#endif
    }      
    return true;
 }
