@@ -528,6 +528,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             atoms.push_back(new_atom);
          }
       }
+
+      if ( atoms.size() == 1 )
+      {
+         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 atom available" ) );
+         return calc_saxs_iq_native_debye();
+      }
       
       is_only_one_swh = ( atoms.size() == 1 && 
                           ( atoms[ 0 ].atom_name == "OW" ||
@@ -2661,6 +2667,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #endif
             atoms.push_back(new_atom);
          }
+      }
+
+      if ( atoms.size() == 1 )
+      {
+         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 atom available" ) );
+         return calc_saxs_iq_native_debye();
       }
 
       is_only_one_swh = ( atoms.size() == 1 && 

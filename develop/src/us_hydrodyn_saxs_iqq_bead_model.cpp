@@ -79,6 +79,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          atoms.push_back(new_atom);
       }
       
+      if ( atoms.size() == 1 )
+      {
+         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 bead available" ) );
+         return calc_saxs_iq_native_debye_bead_model();
+      }
+
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
@@ -1576,7 +1582,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
-      
+
+      if ( atoms.size() == 1 )
+      {
+         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 bead available" ) );
+         return calc_saxs_iq_native_debye_bead_model();
+      }
+
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
