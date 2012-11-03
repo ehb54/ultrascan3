@@ -69,6 +69,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
 
+   cb_bead_models_use_quick_fitting = new QCheckBox(this);
+   cb_bead_models_use_quick_fitting->setText(tr(" Use quick method for computing scattering factors"));
+   cb_bead_models_use_quick_fitting->setEnabled(true);
+   cb_bead_models_use_quick_fitting->setChecked((*saxs_options).bead_models_use_quick_fitting);
+   cb_bead_models_use_quick_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_models_use_quick_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_bead_models_use_quick_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_quick_fitting()));
+
    cb_bead_models_use_gsm_fitting = new QCheckBox(this);
    cb_bead_models_use_gsm_fitting->setText(tr(" Use gsm method for computing scattering factors"));
    cb_bead_models_use_gsm_fitting->setEnabled(true);
@@ -155,7 +163,9 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    j++;
    background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
    j++;
-   background->addMultiCellWidget( cb_bead_models_use_gsm_fitting     , j, j, 0, 1 );
+   background->addMultiCellWidget( cb_bead_models_use_quick_fitting     , j, j, 0, 1 );
+   j++;
+   background->addMultiCellWidget( cb_bead_models_use_gsm_fitting       , j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
    j++;
@@ -230,9 +240,26 @@ void US_Hydrodyn_SasOptionsBeadModel::set_iq_global_avg_for_bead_models()
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_use_quick_fitting()
+{
+   (*saxs_options).bead_models_use_quick_fitting = cb_bead_models_use_quick_fitting->isChecked();
+   if ( cb_bead_models_use_quick_fitting->isChecked() )
+   {
+      cb_bead_models_use_gsm_fitting->setChecked( false );
+      (*saxs_options).bead_models_use_gsm_fitting = false;
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_use_gsm_fitting()
 {
    (*saxs_options).bead_models_use_gsm_fitting = cb_bead_models_use_gsm_fitting->isChecked();
+   if ( cb_bead_models_use_gsm_fitting->isChecked() )
+   {
+      cb_bead_models_use_quick_fitting->setChecked( false );
+      (*saxs_options).bead_models_use_quick_fitting = false;
+   }
+
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -633,7 +633,8 @@ class US_EXTERN US_Saxs_Util
                                                                           double            &normv,
                                                                           // compute increased coeff size (when maxv > 5)
                                                                           unsigned int      maxv,
-                                                                          bool              use_gsm_fitting = false
+                                                                          bool              use_gsm_fitting = false,
+                                                                          bool              use_quick_fitting = false
                                                                           );
       vector < double >                               compute_exponential_t;
       vector < double >                               compute_exponential_y;

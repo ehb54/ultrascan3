@@ -165,6 +165,34 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    hybrid_filename = our_saxs_options->default_hybrid_filename;
    saxs_filename = our_saxs_options->default_saxs_filename;
    select_saxs_file(saxs_filename);
+
+   /* 
+   // check saxs map for sign
+   for ( unsigned int i = 0; i < saxs_list.size(); i++ )
+   {
+      double sum4 = saxs_list[ i ].c;
+      for ( unsigned int j = 0; j < 4; j++ )
+      {
+         sum4 += saxs_list[ i ].a[ j ];
+      }
+      cout << QString( "saxs entry %1 4 term q=0 value %2 %3\n" )
+         .arg( saxs_list[ i ].saxs_name )
+         .arg( sum4 )
+         .arg( sum4 < 0e0 ? "NEGATIVE" : "positive" )
+         ;
+      double sum5 = saxs_list[ i ].c5;
+      for ( unsigned int j = 0; j < 5; j++ )
+      {
+         sum5 += saxs_list[ i ].a5[ j ];
+      }
+      cout << QString( "saxs entry %1 5 term q=0 value %2 %3\n" )
+         .arg( saxs_list[ i ].saxs_name )
+         .arg( sum5 )
+         .arg( sum5 < 0e0 ? "NEGATIVE" : "positive" )
+         ;
+   }
+   */
+
    select_hybrid_file(hybrid_filename);
    select_atom_file(atom_filename);
    global_Xpos += 30;

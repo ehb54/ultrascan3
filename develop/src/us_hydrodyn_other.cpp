@@ -1060,7 +1060,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
             editor->setCurrentFont( save_font );
 
-            if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() && ( bead_model.size() % bsaxs.size() / 2 ) )
+            if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() && ( bead_model.size() % ( bsaxs.size() / 2 ) ) )
             {
                editor_msg( "red", 
                            QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
@@ -1070,7 +1070,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
                
 
-            if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || ( bsaxs.size() && ( bead_model.size() % bsaxs.size() / 2 ) ) ) )
+            if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || ( bsaxs.size() && ( bead_model.size() % ( bsaxs.size() / 2 ) ) ) ) )
             {
                editor_msg( "dark blue", 
                            QString( tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
@@ -1251,10 +1251,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      if ( do_bsaxsv )
                      {
                         qsl = QStringList::split( QRegExp( "\\s+" ), bsaxsv[ j / 2 ] );
+                        cout << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( unsigned int i = 2; i < qsl.size() - 1; i++ )
                         {
                            tmp_saxs.vcoeff.push_back( qsl[ i ].toDouble() );
                         }
+                        bead_model     [ j / 2 ].saxs_data     = tmp_saxs;
                      }
                         
                      sf_bead_factors[ j / 2 ]               = tmp_saxs;
@@ -4212,6 +4214,7 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_use_var_len_sf         = false;
    saxs_options.bead_models_var_len_sf_max         = 10;
    saxs_options.bead_models_use_gsm_fitting        = false;
+   saxs_options.bead_models_use_quick_fitting      = true;
 
    grid.create_nmr_bead_pdb                        = false;
 

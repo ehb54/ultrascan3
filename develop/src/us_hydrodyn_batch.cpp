@@ -477,7 +477,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_start, SIGNAL(clicked()), SLOT(start( bool )));
+   connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
    progress = new QProgressBar(this, "Loading Progress");
    progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

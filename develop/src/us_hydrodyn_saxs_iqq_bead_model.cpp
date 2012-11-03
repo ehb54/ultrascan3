@@ -2349,8 +2349,10 @@ double US_Hydrodyn_Saxs::compute_ff_bead_model
  double   q_o_4pi2 
  )
 {
+   // cout << "compute_ff_bead_model\n";
    if ( our_saxs_options->bead_models_use_var_len_sf && s.vcoeff.size() )
    {
+      // cout << "using vcoeff\n";
       double val = s.vcoeff[ 0 ];
       for ( unsigned int i = 1; i < ( unsigned int )s.vcoeff.size() - 1; i += 2 )
       {
@@ -2358,13 +2360,19 @@ double US_Hydrodyn_Saxs::compute_ff_bead_model
       }
       return val;
    } else {
+      //       if ( s.vcoeff.size() == 0 )
+      //       {
+      //          cout << "NOT using vcoeff (vcoeff size 0)\n";
+      //       } else {
+      //          cout << "NOT using vcoeff\n";
+      //       }
       return our_saxs_options->five_term_gaussians ?
          s.c5 + 
          s.a5[ 0 ] * exp( - s.b5[ 0 ] * q_o_4pi2 ) +
-         s.a5[ 1 ] * exp( - s.b5[ 1 ] * q_o_4pi2) +
-         s.a5[ 2 ] * exp( - s.b5[ 2 ] * q_o_4pi2) +
-         s.a5[ 3 ] * exp( - s.b5[ 3 ] * q_o_4pi2) +
-         s.a5[ 4 ] * exp( - s.b5[ 4 ] * q_o_4pi2) 
+         s.a5[ 1 ] * exp( - s.b5[ 1 ] * q_o_4pi2 ) +
+         s.a5[ 2 ] * exp( - s.b5[ 2 ] * q_o_4pi2 ) +
+         s.a5[ 3 ] * exp( - s.b5[ 3 ] * q_o_4pi2 ) +
+         s.a5[ 4 ] * exp( - s.b5[ 4 ] * q_o_4pi2 ) 
          :
          s.c + 
          s.a[ 0 ] * exp( - s.b[ 0 ] * q_o_4pi2 ) +

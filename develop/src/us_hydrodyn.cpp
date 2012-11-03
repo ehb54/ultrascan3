@@ -2906,7 +2906,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      }
                   }
 
-                  if ( saxs_options.compute_saxs_coeff_for_bead_models )
+                  if ( saxs_options.compute_saxs_coeff_for_bead_models && grid.create_nmr_bead_pdb )
                   {
                      if ( !saxs_options.iq_global_avg_for_bead_models && sf_bead_factors.size() != bead_model.size() )
                      {
