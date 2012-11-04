@@ -596,6 +596,19 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
 {
    // find selected one & name it that
 
+
+   bool save_qIq =
+      QMessageBox::question(this, 
+                            tr( "US-SOMO: Save .DAT" ),
+                            tr( "How do you want to save as a q*I(q) file?" ),
+                            tr( "&No, just normally" ),
+                            tr( "&Yes, compute and save I as q*I(q)" ),
+                            QString::null,
+                            0,
+                            1
+                            ) 
+      == 1;
+
    QString sel_name;
 
    for ( QStringList::iterator it = qsl_sel_names->begin();
@@ -669,6 +682,16 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                }
                // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
                array2d_to_save.push_back(array_to_save);
+               if ( save_qIq && qsl_tmp[0] == sel_name )
+               {
+                  unsigned int pos = array2d_to_save.size() - 1;
+                  for ( unsigned int i = 2; i < ( unsigned int )array2d_to_save[ pos ].size() - 1; i++ )
+                  {
+                     array2d_to_save[ pos ][ i ] = 
+                        QString( "%1" ).arg( array2d_to_save[ pos ][ i ].toDouble() *
+                                             array2d_to_save[ 0 ][ i ].toDouble() );
+                  }
+               }
             }
          }
       }
