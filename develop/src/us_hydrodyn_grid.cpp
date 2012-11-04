@@ -67,7 +67,11 @@ void US_Hydrodyn_Grid::setupGUI()
    cnt_cube_side->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_cube_side, SIGNAL(valueChanged(double)), SLOT(update_cube_side(double)));
 
+#if defined( CSI_TEST )
+   bg_center = new QButtonGroup(3, Qt::Horizontal, "Computations Relative to:", this);
+#else
    bg_center = new QButtonGroup(2, Qt::Horizontal, "Computations Relative to:", this);
+#endif
    bg_center->setExclusive(true);
    connect(bg_center, SIGNAL(clicked(int)), this, SLOT(select_center(int)));
 
@@ -82,6 +86,14 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_center_cubelet->setEnabled(true);
    cb_center_cubelet->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_center_cubelet->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+#if defined( CSI_TEST )
+   cb_center_si = new QCheckBox(bg_center);
+   cb_center_si->setText(tr(" Center of scattering intensity"));
+   cb_center_si->setEnabled(true);
+   cb_center_si->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_center_si->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+#endif
 
    bg_center->setButton((*grid).center);
 
@@ -117,7 +129,7 @@ void US_Hydrodyn_Grid::setupGUI()
    connect(cb_enable_asa, SIGNAL(clicked()), this, SLOT(set_enable_asa()));
 
    cb_create_nmr_bead_pdb = new QCheckBox(this);
-   cb_create_nmr_bead_pdb->setText(tr(" Compute average structure factors"));
+   cb_create_nmr_bead_pdb->setText(tr(" Compute structure factors for beads"));
    cb_create_nmr_bead_pdb->setChecked((*grid).create_nmr_bead_pdb);
    cb_create_nmr_bead_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_create_nmr_bead_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

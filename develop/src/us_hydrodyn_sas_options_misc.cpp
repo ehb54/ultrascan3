@@ -199,7 +199,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
 
    cnt_scale_excl_vol = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_scale_excl_vol );
-   cnt_scale_excl_vol->setRange(.5, 1.5, 0.001);
+   cnt_scale_excl_vol->setRange(.1, 2, 0.001);
    cnt_scale_excl_vol->setValue((*saxs_options).scale_excl_vol);
    cnt_scale_excl_vol->setMinimumHeight(minHeight1);
    cnt_scale_excl_vol->setEnabled(true);

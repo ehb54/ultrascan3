@@ -36,6 +36,7 @@ typedef struct physical_properties
 {
    REAL f, rVW;      /*electron density */
    REAL mass;
+   REAL si;
    struct physical_properties *next;
    float saxs_excl_vol;
 } PHYSPROP;

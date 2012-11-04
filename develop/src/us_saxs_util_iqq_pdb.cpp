@@ -2216,16 +2216,17 @@ bool US_Saxs_Util::run_iqq()
    return true;
 }
 
+// #define USUIP_COMPUTE_FF_DEBUG
 double US_Saxs_Util::compute_ff(
-                                    saxs     &sa,        // gaussian decomposition for the main atom
-                                    saxs     &sh,        // gaussian decomposition for hydrogen
-                                    QString  &nr,     // name of residue
-                                    QString  &na,     // name of atom
-                                    QString  &naf,    // full name of atom
-                                    unsigned int h,      // number of hydrogens
-                                    double   q,
-                                    double   q_o_4pi2 
-                                    )
+                                saxs     &sa,        // gaussian decomposition for the main atom
+                                saxs     &sh,        // gaussian decomposition for hydrogen
+                                QString  &nr,     // name of residue
+                                QString  &na,     // name of atom
+                                QString  &naf,    // full name of atom
+                                unsigned int h,      // number of hydrogens
+                                double   q,
+                                double   q_o_4pi2 
+                                )
 {
    errormsg  = "";
    noticemsg = "";
@@ -2275,6 +2276,7 @@ double US_Saxs_Util::compute_ff(
    {
       if ( our_saxs_options.five_term_gaussians )
       {
+         // cout << "five term gaussian\n";
          return 
             sa.c5 +
             sa.a5[ 0 ] * exp( -sa.b5[ 0 ] * q_o_4pi2 ) +
@@ -2283,6 +2285,7 @@ double US_Saxs_Util::compute_ff(
             sa.a5[ 3 ] * exp( -sa.b5[ 3 ] * q_o_4pi2 ) +
             sa.a5[ 4 ] * exp( -sa.b5[ 4 ] * q_o_4pi2 );
       } else {
+         // cout << "four term gaussian\n";
          return 
             sa.c +
             sa.a[ 0 ] * exp( -sa.b[ 0 ] * q_o_4pi2 ) +
@@ -2352,6 +2355,7 @@ double US_Saxs_Util::compute_ff(
 
    // now compute debye for "mini" system at q, return square root of intensity
 
+   // cout << "mini debye\n";
    double ff_a = compute_ff( sa, sh, nr, na, naf, 0, q, q_o_4pi2 );
    QString nh = "H";
    double ff_h = compute_ff( sh, sh, nr, nh, nh,  0, q, q_o_4pi2 );

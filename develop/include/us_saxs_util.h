@@ -78,6 +78,7 @@ class US_EXTERN US_Saxs_Util
 
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Saxs;
+      friend class US_Hydrodyn;
 
       US_Saxs_Util();
 
@@ -389,6 +390,18 @@ class US_EXTERN US_Saxs_Util
                                map < QString, QString > &residue_atom_hybrid_map,
                                unsigned int             &total_electrons,
                                unsigned int             &total_electrons_noh
+                               );
+
+
+      bool set_excluded_volume( 
+                               PDB_atom                 &this_atom, 
+                               double                   &vol, 
+                               double                   &scaled_vol, 
+                               saxs_options             &our_saxs_options, 
+                               map < QString, QString > &residue_atom_hybrid_map,
+                               unsigned int             &total_electrons,
+                               unsigned int             &total_electrons_noh,
+                               double                   &scattering_intensity
                                );
 
 #ifdef WIN32

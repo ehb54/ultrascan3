@@ -938,15 +938,15 @@ bool US_Saxs_Util::compute_exponential(
    return compute_exponential( q, I, coeff4, coeff5, coeffv, norm4, norm5, normv, 0 );
 }
 
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
+// static void printvector( QString qs, vector < double > x )
+// {
+//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    for ( unsigned int i = 0; i < x.size(); i++ )
+//    {
+//       cout << QString( " %1" ).arg( x[ i ] );
+//    }
+//    cout << endl;
+// }
 
 bool US_Saxs_Util::compute_exponential( 
                                        vector < double > &q, 
@@ -1396,9 +1396,98 @@ double US_Saxs_Util::compute_gsm_exponentials_f( our_vector *v )
    vector < double > x( cy.size() );
    for ( unsigned int j = 0; j < cy.size(); j++ )
    {   
-      x[ j ] = cy[ j ] - compute_gsm_exponentials_y[ j ];
+      x[ j ] = fabs( cy[ j ] - compute_gsm_exponentials_y[ j ] );
    }
    double lmnorm = LM::lm_enorm( x.size(), &( x[0] ) );
    return lmnorm;
 }
 
+
+bool US_Saxs_Util::set_excluded_volume( 
+                                       PDB_atom                 &this_atom, 
+                                       double                   &vol, 
+                                       double                   &scaled_vol, 
+                                       saxs_options             &our_saxs_options, 
+                                       map < QString, QString > &residue_atom_hybrid_map,
+                                       unsigned int             &total_electrons,
+                                       unsigned int             &total_electrons_noh,
+                                       double                   &scattering_intensity
+                                       )
+{
+   errormsg = "";
+
+   this->our_saxs_options = our_saxs_options;
+
+   QString mapkey = QString("%1|%2").arg(this_atom.resName).arg(this_atom.name);
+   if ( this_atom.name == "OXT" )
+   {
+      mapkey = "OXT|OXT";
+   }
+   QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+   if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+   {
+      errormsg = QString("Warning: hybrid name missing for %1|%2, not added to excluded volume").arg(this_atom.resName).arg(this_atom.name);
+      return false;
+   }
+
+   if ( !hybrid_map.count(hybrid_name) )
+   {
+      errormsg = QString("Warning: hybrid_map name missing for hybrid_name %1, not added to excluded volume").arg(hybrid_name);
+      return false;
+   }
+
+   if ( !atom_map.count(this_atom.name + "~" + hybrid_name) )
+   {
+      errormsg = QString("Warning: atom_map missing for hybrid_name %1 atom name %2, not added to excluded volume").arg(hybrid_name).arg(this_atom.name);
+      return false;
+   }
+
+   double use_vol  = atom_map[this_atom.name + "~" + hybrid_name].saxs_excl_vol;
+   total_electrons = hybrid_map[ hybrid_name ].num_elect;
+   if ( this_atom.name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
+   {
+      use_vol = our_saxs_options.swh_excl_vol;
+   }
+   vol = use_vol;
+   if ( our_saxs_options.hybrid_radius_excl_vol )
+   {
+      use_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+   }
+   if ( this_atom.name == "OW" )
+   {
+      scaled_vol  = use_vol;
+      total_electrons_noh = hybrid_map[ hybrid_name ].num_elect;
+   } else {
+      scaled_vol = use_vol * our_saxs_options.scale_excl_vol;
+   } 
+
+   scattering_intensity = 0e0;
+   QRegExp count_hydrogens("H(\\d)");
+   unsigned int hydrogens = 0;
+   if ( count_hydrogens.search(hybrid_name) != -1 )
+   {
+      hydrogens = count_hydrogens.cap(1).toInt();
+   }
+   saxs saxsH;
+   if ( hydrogens && !saxs_map.count( "H" ) )
+   {
+      errormsg = "Warning: no SAXS H defined, so no hydrogens included";
+      hydrogens = 0;
+   } else {
+      saxsH = saxs_map[ "H" ];
+   }
+      
+   saxsH = saxs_map[ "H" ];
+   scattering_intensity = compute_ff( this_atom.saxs_data,
+                                      saxsH,
+                                      this_atom.resName,
+                                      this_atom.saxs_name,
+                                      this_atom.name,
+                                      hydrogens,
+                                      0e0,
+                                      0e0 );
+   scattering_intensity *= scattering_intensity;
+   // cout << QString( "compute saxs for atom %1 si %2\n" ).arg( this_atom.name ).arg( scattering_intensity );
+   return true;
+}

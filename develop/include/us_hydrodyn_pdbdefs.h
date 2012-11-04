@@ -58,6 +58,7 @@ struct saxs
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+   float               si;                   // q == 0 scattering intensity
 };
 
 struct rotamer_atom
@@ -154,6 +155,7 @@ struct PDB_atom
    QString hybrid_name;
    int hydrogens;    
    float        saxs_excl_vol;   // SAXS excluded volume value
+   double       si;
 };
 
 struct PDB_chain   // chain in PDB file
@@ -353,6 +355,7 @@ struct saxs_options
    unsigned int bead_models_var_len_sf_max;
    bool         bead_models_use_gsm_fitting;
    bool         bead_models_use_quick_fitting;
+   bool         bead_models_use_bead_radius_ev;
 };
 
 struct saxs_atom

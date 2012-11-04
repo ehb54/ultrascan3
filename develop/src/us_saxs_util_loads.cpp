@@ -404,6 +404,13 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
             it != saxs_map.end();
             it++ )
       {
+         it->second.si = 
+            it->second.c +
+            it->second.a[ 0 ] +
+            it->second.a[ 1 ] +
+            it->second.a[ 2 ] +
+            it->second.a[ 3 ];
+         it->second.si *= it->second.si;
          saxs_list.push_back( it->second );
       }
       f.close();

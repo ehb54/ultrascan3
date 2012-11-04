@@ -73,6 +73,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          // this is probably correct but FoXS uses the saxs table excluded volume
          // new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.excl_vol = this_atom->saxs_excl_vol;
+         if ( our_saxs_options->bead_models_use_bead_radius_ev )
+         {
+            new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
+         }
+         new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
          tot_excl_vol += new_atom.excl_vol;
@@ -939,6 +944,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          // this is probably correct but FoXS uses the saxs table excluded volume
          // new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.excl_vol = this_atom->saxs_excl_vol;
+         if ( our_saxs_options->bead_models_use_bead_radius_ev )
+         {
+            new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
+         }
+         new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
          tot_excl_vol += new_atom.excl_vol;
@@ -1577,6 +1587,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          // this is probably correct but FoXS uses the saxs table excluded volume
          // new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.excl_vol = this_atom->saxs_excl_vol;
+         if ( our_saxs_options->bead_models_use_bead_radius_ev )
+         {
+            new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
+         }
+         new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
          tot_excl_vol += new_atom.excl_vol;

@@ -166,7 +166,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    saxs_filename = our_saxs_options->default_saxs_filename;
    select_saxs_file(saxs_filename);
 
-   /* 
+   /*
    // check saxs map for sign
    for ( unsigned int i = 0; i < saxs_list.size(); i++ )
    {
@@ -4093,6 +4093,13 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
             it != saxs_map.end();
             it++ )
       {
+         it->second.si = 
+            it->second.c +
+            it->second.a[ 0 ] +
+            it->second.a[ 1 ] +
+            it->second.a[ 2 ] +
+            it->second.a[ 3 ];
+         it->second.si *= it->second.si;
          saxs_list.push_back( it->second );
          our_saxs_options->dummy_saxs_names.push_back( it->first );
       }

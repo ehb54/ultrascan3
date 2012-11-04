@@ -382,6 +382,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                         ));
       editor->setColor(save_color);
       saxs_options.compute_saxs_coeff_for_bead_models = false;
+   } else {
+      saxs_util->setup_saxs_options();
+      saxs_util->our_saxs_options = saxs_options;
    }
 
    if ( saxs_options.wavelength == 0 )
@@ -2482,6 +2485,44 @@ int US_Hydrodyn::calc_grid_pdb()
       return -1;
    }
 
+   overlap_reduction org_grid_exposed_overlap = grid_exposed_overlap;
+   overlap_reduction org_grid_overlap         = grid_overlap;
+   overlap_reduction org_grid_buried_overlap  = grid_buried_overlap;
+   grid_options      org_grid                 = grid;
+
+   if ( grid.create_nmr_bead_pdb )
+   {
+      if ( 
+          (
+           grid_exposed_overlap.remove_overlap ||
+           grid_overlap.        remove_overlap ||
+           grid_buried_overlap. remove_overlap
+           ) &&
+          (
+           grid_exposed_overlap.translate_out ||
+           grid_overlap.translate_out         ||
+           grid_buried_overlap.translate_out 
+           )
+          )
+      {
+         grid_exposed_overlap.translate_out = false;
+         grid_overlap.translate_out         = false;
+         grid_buried_overlap.translate_out  = false;
+         QString msg = "Temporarily turning off outward translation";
+         if ( !grid.enable_asa )
+         {
+            grid.enable_asa = true;
+            msg += " and enabling ASA screening";
+         }
+            
+         QMessageBox::information( this,
+                                   "US-SOMO: Build AtoB models with structure factors",
+                                   tr( msg ) );
+
+         display_default_differences();
+      }
+   }
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    options_log = "";
@@ -2527,6 +2568,10 @@ int US_Hydrodyn::calc_grid_pdb()
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
                progress->reset();
+               grid_exposed_overlap = org_grid_exposed_overlap;
+               grid_overlap         = org_grid_overlap;
+               grid_buried_overlap  = org_grid_buried_overlap;
+               grid                 = org_grid;
                return -1;
             }
             // compute maximum position for progress
@@ -2558,6 +2603,10 @@ int US_Hydrodyn::calc_grid_pdb()
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
                progress->reset();
+               grid_exposed_overlap = org_grid_exposed_overlap;
+               grid_overlap         = org_grid_overlap;
+               grid_buried_overlap  = org_grid_buried_overlap;
+               grid                 = org_grid;
                return -1;
             }
             if ( retval )
@@ -2604,6 +2653,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   // ok, we have the basic "bead" info loaded...
                   unsigned int i = current_model;
                   bead_model.clear();
+                  bool any_zero_si = false;
                   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
                      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
                         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -2633,6 +2683,10 @@ int US_Hydrodyn::calc_grid_pdb()
 
                            this_atom->bead_actual_radius = this_atom->bead_computed_radius;
                            this_atom->bead_mw = this_atom->mw;
+                           if ( this_atom->si == 0e0 )
+                           {
+                              any_zero_si = true;
+                           }
                            bead_model.push_back(*this_atom);
                         }
                      }
@@ -2644,6 +2698,19 @@ int US_Hydrodyn::calc_grid_pdb()
                   progress->setProgress( progress->progress() + 1 );
                   int save_progress = progress->progress();
                   int save_total_steps = progress->totalSteps();
+                  if ( grid.center == 2  && any_zero_si ) // ssi
+                  {
+                     editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
+                     pb_grid_pdb->setEnabled(true);
+                     pb_somo->setEnabled(true);
+                     progress->reset();
+                     grid_exposed_overlap = org_grid_exposed_overlap;
+                     grid_overlap         = org_grid_overlap;
+                     grid_buried_overlap  = org_grid_buried_overlap;
+                     grid                 = org_grid;
+                     return -1;
+                  }
+                     
                   bead_models[current_model] =
                      us_hydrodyn_grid_atob(&bead_model,
                                            &grid,
@@ -2658,6 +2725,10 @@ int US_Hydrodyn::calc_grid_pdb()
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
                      progress->reset();
+                     grid_exposed_overlap = org_grid_exposed_overlap;
+                     grid_overlap         = org_grid_overlap;
+                     grid_buried_overlap  = org_grid_buried_overlap;
+                     grid                 = org_grid;
                      return -1;
                   }
                   if (errorFlag)
@@ -2666,6 +2737,10 @@ int US_Hydrodyn::calc_grid_pdb()
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
                      progress->reset();
+                     grid_exposed_overlap = org_grid_exposed_overlap;
+                     grid_overlap         = org_grid_overlap;
+                     grid_buried_overlap  = org_grid_buried_overlap;
+                     grid                 = org_grid;
                      return -1;
                   }
                   printf("back from grid_atob 0\n"); fflush(stdout);
@@ -2727,7 +2802,8 @@ int US_Hydrodyn::calc_grid_pdb()
                      mainchain_overlap = grid_exposed_overlap;
                      buried_overlap = grid_buried_overlap;
                      progress->setProgress(progress->progress() + 1);
-                     radial_reduction();
+
+                     radial_reduction( true );
                      sidechain_overlap = save_sidechain_overlap;
                      mainchain_overlap = save_mainchain_overlap;
                      buried_overlap = save_buried_overlap;
@@ -2757,7 +2833,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      if (grid_overlap.remove_overlap)
                      {
                         progress->setProgress(progress->progress() + 1);
-                        radial_reduction();
+                        radial_reduction( true );
                         progress->setProgress(progress->progress() + 1);
                         bead_models[current_model] = bead_model;
                      }
@@ -2767,6 +2843,10 @@ int US_Hydrodyn::calc_grid_pdb()
                         pb_grid_pdb->setEnabled(true);
                         pb_somo->setEnabled(true);
                         progress->reset();
+                        grid_exposed_overlap = org_grid_exposed_overlap;
+                        grid_overlap         = org_grid_overlap;
+                        grid_buried_overlap  = org_grid_buried_overlap;
+                        grid                 = org_grid;
                         return -1;
                      }
                      if (asa.recheck_beads)
@@ -2804,6 +2884,10 @@ int US_Hydrodyn::calc_grid_pdb()
                         pb_grid_pdb->setEnabled(true);
                         pb_somo->setEnabled(true);
                         progress->reset();
+                        grid_exposed_overlap = org_grid_exposed_overlap;
+                        grid_overlap         = org_grid_overlap;
+                        grid_buried_overlap  = org_grid_buried_overlap;
+                        grid                 = org_grid;
                         return -1;
                      }
                   }
@@ -2974,6 +3058,11 @@ int US_Hydrodyn::calc_grid_pdb()
       }
    }
 
+   grid_exposed_overlap = org_grid_exposed_overlap;
+   grid_overlap         = org_grid_overlap;
+   grid_buried_overlap  = org_grid_buried_overlap;
+   grid                 = org_grid;
+
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
@@ -3072,6 +3161,27 @@ int US_Hydrodyn::calc_grid()
             progress->setProgress(progress->progress() + 1);
             qApp->processEvents();
 
+            if ( grid.center == 2 ) // ssi
+            {
+               bool any_zero_si = false;
+               for ( unsigned int i = 0; i <  bead_models[ current_model ].size(); i++ )
+               {
+                  if ( bead_models[ current_model ][ i ].si == 0e0 )
+                  {
+                     any_zero_si = true;
+                     break;
+                  }
+               }
+               if ( any_zero_si )
+               {
+                  editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
+                  pb_grid_pdb->setEnabled(true);
+                  pb_somo->setEnabled(true);
+                  progress->reset();
+                  return -1;
+               }
+            }
+
             bead_models[current_model] =
                us_hydrodyn_grid_atob(&bead_models[current_model],
                                      &grid,
@@ -3150,7 +3260,7 @@ int US_Hydrodyn::calc_grid()
                mainchain_overlap = grid_exposed_overlap;
                buried_overlap = grid_buried_overlap;
                progress->setProgress(progress->progress() + 1);
-               radial_reduction();
+               radial_reduction( true );
                progress->setProgress(progress->progress() + 1);
                sidechain_overlap = save_sidechain_overlap;
                mainchain_overlap = save_mainchain_overlap;
@@ -3180,7 +3290,7 @@ int US_Hydrodyn::calc_grid()
                if (grid_overlap.remove_overlap)
                {
                   progress->setProgress(progress->progress() + 1);
-                  radial_reduction();
+                  radial_reduction( true );
                   progress->setProgress(progress->progress() + 1);
                   if (stopFlag)
                   {

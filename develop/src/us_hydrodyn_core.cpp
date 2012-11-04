@@ -2983,7 +2983,7 @@ void radial_reduction_thr_t::run()
 
 //--------- radial reduction for beads ---------------------------------------
 
-void US_Hydrodyn::radial_reduction()
+void US_Hydrodyn::radial_reduction( bool from_grid )
 {
    // popping radial reduction
 
@@ -3170,7 +3170,7 @@ void US_Hydrodyn::radial_reduction()
    {
       // only grid method
       if ( !methods[k] ||
-           (grid.enable_asa && k == 1) )
+           ( ( from_grid || grid.enable_asa ) && k == 1 ) )
       {
          printf("skipping stage %d\n", k);
          continue;
@@ -7130,6 +7130,8 @@ void US_Hydrodyn::calc_mw()
    // cout << "calc_mw chains:\n";
    // cout << list_chainIDs(model_vector);
 
+   saxs_util->setup_saxs_options();
+
    unsigned int save_current_model = current_model;
    QString error_string;
 
@@ -7204,13 +7206,15 @@ void US_Hydrodyn::calc_mw()
                      double scaled_excl_vol;
                      unsigned int this_e;
                      unsigned int this_e_noh;
+                     double si = 0e0;
                      if ( !saxs_util->set_excluded_volume( *this_atom, 
-                                                    excl_vol, 
-                                                    scaled_excl_vol, 
-                                                    saxs_options, 
-                                                    residue_atom_hybrid_map,
-                                                    this_e,
-                                                    this_e_noh ) )
+                                                           excl_vol, 
+                                                           scaled_excl_vol, 
+                                                           saxs_options, 
+                                                           residue_atom_hybrid_map,
+                                                           this_e,
+                                                           this_e_noh,
+                                                           si) )
                      {
                         editor_msg( "dark red", saxs_util->errormsg );
                      } else {
@@ -7218,7 +7222,8 @@ void US_Hydrodyn::calc_mw()
                         chain_scaled_excl_vol += scaled_excl_vol;
                         chain_total_e         += this_e;
                         chain_total_e_noh     += this_e_noh;
-
+                        this_atom->si          = si;
+                        model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
                         if ( this_atom->resName != "SWH" )
                         {
                            tot_excl_vol          += excl_vol;

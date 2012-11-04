@@ -876,7 +876,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_default();
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
-      void radial_reduction();
+      void radial_reduction( bool from_grid = false );
       void show_hydro_results();
       void open_hydro_results();
       void write_bead_asa(QString, vector <PDB_atom> *);

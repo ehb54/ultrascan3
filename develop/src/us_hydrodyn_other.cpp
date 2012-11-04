@@ -393,6 +393,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    QString str2;
    bool flag;
    struct PDB_atom temp_atom;
+   temp_atom.si = 0e0;
    temp_atom.model_residue_pos = -1;
    str2 = str1.mid(6, 5);
    temp_atom.serial = str2.toUInt();
@@ -2298,7 +2299,7 @@ int US_Hydrodyn::read_config(QFile& f)
    grid.hydrate = (bool) str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10082;
-   grid.center = (bool) str.toInt();
+   grid.center = str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10083;
    grid.tangency = (bool) str.toInt();
@@ -3866,7 +3867,7 @@ void US_Hydrodyn::set_default()
 
       grid.cubic = true;       // apply cubic grid
       grid.hydrate = true;    // true: hydrate model
-      grid.center = false;    // true: center of cubelet, false: center of mass
+      grid.center = 0;    // 1: center of cubelet, 0: center of mass, 2: center of scattering
       grid.tangency = false;   // true: Expand beads to tangency
       grid.cube_side = 5.0;
       grid.enable_asa = true;   // true: enable asa
@@ -4215,6 +4216,7 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_var_len_sf_max         = 10;
    saxs_options.bead_models_use_gsm_fitting        = false;
    saxs_options.bead_models_use_quick_fitting      = true;
+   saxs_options.bead_models_use_bead_radius_ev     = true;
 
    grid.create_nmr_bead_pdb                        = false;
 
@@ -5237,7 +5239,7 @@ void US_Hydrodyn::append_options_log_atob()
              "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
              "\n"
 
-             ,grid.center ? "Center of Mass" : "Center of Cubelet"
+             ,grid.center ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
              ,grid.cube_side
              ,grid.cubic ? "On" : "Off"
              ,grid.hydrate ? "On" : "Off"
@@ -5677,7 +5679,7 @@ QString US_Hydrodyn::default_differences_grid()
    if ( grid.center != default_grid.center )
    {
       str += QString(base +  "Computations Relative to: Center of %1\n")
-         .arg(grid.center ? "Cublet" : "Mass");
+         .arg(grid.center ? ( grid.center == 2 ? "Scattering intensity" : "Cublet" ) : "Mass");
    }
    if ( grid.cube_side != default_grid.cube_side )
    {
@@ -7046,6 +7048,8 @@ void US_Hydrodyn::make_test_set()
 void US_Hydrodyn::calc_vol_for_saxs()
 {
    // cout << QString( "calc_vol_for_saxs() model_vector.size() %1\n" ).arg( model_vector.size() );
+   saxs_util->setup_saxs_options();
+
    for ( unsigned int i = 0; i < model_vector.size(); i++  )
    {
       model_vector[i].volume = 0;
@@ -7058,17 +7062,21 @@ void US_Hydrodyn::calc_vol_for_saxs()
             double scaled_excl_vol;
             unsigned int this_e;
             unsigned int this_e_noh;
+            double si = 0e0;
             if ( !saxs_util->set_excluded_volume( *this_atom, 
                                                   excl_vol, 
                                                   scaled_excl_vol, 
                                                   saxs_options, 
                                                   residue_atom_hybrid_map,
                                                   this_e,
-                                                  this_e_noh ) )
+                                                  this_e_noh,
+                                                  si ) )
             {
                editor_msg( "dark red", saxs_util->errormsg );
             } else {
                this_atom->saxs_excl_vol = excl_vol;
+               this_atom->si            = si;
+               model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
                model_vector[ i ].volume += excl_vol;
             } 
          }
