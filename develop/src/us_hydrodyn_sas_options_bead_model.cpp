@@ -69,6 +69,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_bead_models_use_bead_radius_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_bead_models_use_bead_radius_ev, SIGNAL(clicked()), this, SLOT(set_bead_models_use_bead_radius_ev()));
 
+   cb_bead_models_rho0_in_scat_factors = new QCheckBox(this);
+   cb_bead_models_rho0_in_scat_factors->setText(tr(" rho0 included in computed scattering factors"));
+   cb_bead_models_rho0_in_scat_factors->setEnabled(true);
+   cb_bead_models_rho0_in_scat_factors->setChecked((*saxs_options).bead_models_rho0_in_scat_factors);
+   cb_bead_models_rho0_in_scat_factors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_models_rho0_in_scat_factors->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_bead_models_rho0_in_scat_factors, SIGNAL(clicked()), this, SLOT(set_bead_models_rho0_in_scat_factors()));
+
    cb_iq_global_avg_for_bead_models = new QCheckBox(this);
    cb_iq_global_avg_for_bead_models->setText(tr(" Use global average scattering factors for loading bead models"));
    cb_iq_global_avg_for_bead_models->setEnabled(true);
@@ -169,7 +177,9 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    j++;
    background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
    j++;
-   background->addMultiCellWidget( cb_bead_models_use_bead_radius_ev     , j, j, 0, 1 );
+   background->addMultiCellWidget( cb_bead_models_use_bead_radius_ev    , j, j, 0, 1 );
+   j++;
+   background->addMultiCellWidget( cb_bead_models_rho0_in_scat_factors  , j, j, 0, 1 );
    j++;
    background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
    j++;
@@ -247,6 +257,12 @@ void US_Hydrodyn_SasOptionsBeadModel::set_bead_model_rayleigh()
 void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_use_bead_radius_ev()
 {
    (*saxs_options).bead_models_use_bead_radius_ev = cb_bead_models_use_bead_radius_ev->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsBeadModel::set_bead_models_rho0_in_scat_factors()
+{
+   (*saxs_options).bead_models_rho0_in_scat_factors = cb_bead_models_rho0_in_scat_factors->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

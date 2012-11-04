@@ -77,6 +77,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          {
             new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
          }
+         if ( our_saxs_options->bead_models_rho0_in_scat_factors )
+         {
+            new_atom.excl_vol = 0e0;
+         }
          new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
@@ -948,6 +952,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye_bead_model()
          {
             new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
          }
+         if ( our_saxs_options->bead_models_rho0_in_scat_factors )
+         {
+            new_atom.excl_vol = 0e0;
+         }
          new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
@@ -1590,6 +1598,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2_bead_model()
          if ( our_saxs_options->bead_models_use_bead_radius_ev )
          {
             new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow( this_atom->bead_computed_radius, 3 );
+         }
+         if ( our_saxs_options->bead_models_rho0_in_scat_factors )
+         {
+            new_atom.excl_vol = 0e0;
          }
          new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );

@@ -47,6 +47,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       QCheckBox   *cb_compute_sans_coeff_for_bead_models;
       QCheckBox   *cb_bead_model_rayleigh;
       QCheckBox   *cb_bead_models_use_bead_radius_ev;
+      QCheckBox   *cb_bead_models_rho0_in_scat_factors;
 
       QLabel      *lbl_dummy_saxs_name;
       QLineEdit   *le_dummy_saxs_name;
@@ -74,6 +75,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       void set_compute_sans_coeff_for_bead_models();
       void set_bead_model_rayleigh();
       void set_bead_models_use_bead_radius_ev();
+      void set_bead_models_rho0_in_scat_factors();
 
       void update_dummy_saxs_name( const QString & );
 

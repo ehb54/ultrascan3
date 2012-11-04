@@ -356,6 +356,7 @@ struct saxs_options
    bool         bead_models_use_gsm_fitting;
    bool         bead_models_use_quick_fitting;
    bool         bead_models_use_bead_radius_ev;
+   bool         bead_models_rho0_in_scat_factors;
 };
 
 struct saxs_atom

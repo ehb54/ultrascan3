@@ -1132,22 +1132,25 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    // ok, bc no hydrate allowed in batch
    save_state();
    float save_e_density = saxs_options.water_e_density;
-   saxs_options.water_e_density = 0.0f;
-   if ( save_e_density )
+   if ( !saxs_options.bead_models_rho0_in_scat_factors )
    {
-      editor_msg( "dark blue", "Temporarily setting water electron denisty to zero for Iq computation" );
-   } else {
-      editor_msg( "dark blue", "Water electron denisty is already zero for Iq computation" );
+      saxs_options.water_e_density = 0.0f;
+      if ( save_e_density )
+      {
+         editor_msg( "dark blue", "Temporarily setting water electron denisty to zero for Iq computation" );
+      } else {
+         editor_msg( "dark blue", "Water electron denisty is already zero for Iq computation" );
+      }
    }
    batch_window->show();
    batch_window->start( true );
    restore_state();
    saxs_options.water_e_density = save_e_density;
-   if ( save_e_density )
+   if ( !saxs_options.bead_models_rho0_in_scat_factors )
    {
       editor_msg( "dark blue", QString( "Restored water electron denisty to %1" ).arg( save_e_density ) );
    }
-
+   
    if ( batch_window->stopFlag )
    {
       error_msg = "Error: compute_structure_factors(): batch computation terminated";

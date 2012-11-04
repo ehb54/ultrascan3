@@ -4217,6 +4217,7 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_use_gsm_fitting        = false;
    saxs_options.bead_models_use_quick_fitting      = true;
    saxs_options.bead_models_use_bead_radius_ev     = true;
+   saxs_options.bead_models_rho0_in_scat_factors   = true;
 
    grid.create_nmr_bead_pdb                        = false;
 
