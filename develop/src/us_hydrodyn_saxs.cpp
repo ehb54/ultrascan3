@@ -5662,11 +5662,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%7,"
                     "%8,"
                     "%9,"
-                    "%10,"
-                    "%11,"
-                    "%12,"
-                    "%13"
-                    "\n"
                     )
             .arg(qsl_plotted_iq_names[i])
             .arg(Rg)
@@ -5677,10 +5672,21 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(smax)
             .arg(sRgmin)
             .arg(sRgmax)
+            ;
+
+         csvlog += 
+            QString( 
+                    "%1,"
+                    "%2,"
+                    "%3,"
+                    "%4"
+                    "\n"
+                    )
             .arg(beststart)
             .arg(bestend)
             .arg(bestend - beststart + 1)
-            .arg(chi2);
+            .arg(chi2)
+            ;
       }
    }
    editor->append(report);
