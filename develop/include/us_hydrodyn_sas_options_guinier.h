@@ -47,11 +47,13 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLineEdit  *le_guinier_csv_filename;
 
       QLabel     *lbl_qRgmax;
+      QLabel     *lbl_qstart;
       QLabel     *lbl_qend;
       QLabel     *lbl_pointsmin;
       QLabel     *lbl_pointsmax;
 
       QwtCounter *cnt_qRgmax;
+      QwtCounter *cnt_qstart;
       QwtCounter *cnt_qend;
       QwtCounter *cnt_pointsmin;
       QwtCounter *cnt_pointsmax;
@@ -66,6 +68,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void set_guinier_csv();
       void update_guinier_csv_filename(const QString &);
       void update_qRgmax(double);
+      void update_qstart(double);
       void update_qend(double);
       void update_pointsmin(double);
       void update_pointsmax(double);

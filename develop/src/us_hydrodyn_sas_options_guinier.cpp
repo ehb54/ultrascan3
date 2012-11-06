@@ -70,6 +70,23 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cnt_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_qRgmax, SIGNAL(valueChanged(double)), SLOT(update_qRgmax(double)));
 
+   lbl_qstart = new QLabel(tr(" Minimum q value for Guinier search : "), this);
+   lbl_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_qstart->setMinimumHeight(minHeight1);
+   lbl_qstart->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_qstart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_qstart = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_qstart );
+   cnt_qstart->setRange(0, 1, 0.001);
+   cnt_qstart->setValue((*saxs_options).qstart);
+   cnt_qstart->setMinimumHeight(minHeight1);
+   cnt_qstart->setEnabled(true);
+   cnt_qstart->setNumButtons(SAXS_Q_BUTTONS);
+   cnt_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_qstart, SIGNAL(valueChanged(double)), SLOT(update_qstart(double)));
+
    lbl_qend = new QLabel(tr(" Maximum q value for Guinier search : "), this);
    lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qend->setMinimumHeight(minHeight1);
@@ -145,6 +162,9 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_qRgmax, j, 0);
    background->addWidget(cnt_qRgmax, j, 1);
    j++;
+   background->addWidget(lbl_qstart, j, 0);
+   background->addWidget(cnt_qstart, j, 1);
+   j++;
    background->addWidget(lbl_qend, j, 0);
    background->addWidget(cnt_qend, j, 1);
    j++;
@@ -197,6 +217,12 @@ void US_Hydrodyn_SasOptionsGuinier::update_guinier_csv_filename(const QString &s
 void US_Hydrodyn_SasOptionsGuinier::update_qRgmax(double val)
 {
    (*saxs_options).qRgmax = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_qstart(double val)
+{
+   (*saxs_options).qstart = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

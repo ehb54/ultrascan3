@@ -5508,9 +5508,18 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    }
 
    US_Saxs_Util usu;
-   usu.wave["data"].q = plotted_q[i];
-   usu.wave["data"].r = plotted_I[i];
-   usu.wave["data"].s = plotted_I[i];
+   usu.wave["data"].q.clear();
+   usu.wave["data"].r.clear();
+   usu.wave["data"].s.clear();
+   for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+   {
+      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+      {
+         usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+         usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
+         usu.wave["data"].s.push_back( plotted_I[ i ][ j ] );
+      }
+   }
    QString log;
 
    int pointsmin = our_saxs_options->pointsmin;
