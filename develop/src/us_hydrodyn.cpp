@@ -674,6 +674,13 @@ void US_Hydrodyn::setupGUI()
    pb_rescale_bead_model->setPalette( PALET_PUSHB );
    connect(pb_rescale_bead_model, SIGNAL(clicked()), SLOT(rescale_bead_model()));
 
+   pb_equi_grid_bead_model = new QPushButton(tr("Simple grid"), this);
+   pb_equi_grid_bead_model->setMinimumHeight(minHeight1);
+   pb_equi_grid_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_equi_grid_bead_model->setEnabled(false);
+   pb_equi_grid_bead_model->setPalette( PALET_PUSHB );
+   connect(pb_equi_grid_bead_model, SIGNAL(clicked()), SLOT(equi_grid_bead_model()));
+
    pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
    Q_CHECK_PTR(pb_grid_pdb);
    pb_grid_pdb->setMinimumHeight(minHeight1);
@@ -998,7 +1005,11 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(le_bead_model_file, j, 1);
    j++;
    background->addWidget(pb_bead_saxs, j, 0);
-   background->addWidget(pb_rescale_bead_model, j, 1);
+   // background->addWidget(pb_rescale_bead_model, j, 1);
+   QBoxLayout *hbl_rescale_equi = new QHBoxLayout( 0 );
+   hbl_rescale_equi->addWidget( pb_rescale_bead_model );
+   hbl_rescale_equi->addWidget( pb_equi_grid_bead_model );
+   background->addLayout(hbl_rescale_equi, j, 1);
    j++;
    background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
    j++;
@@ -1057,6 +1068,7 @@ void US_Hydrodyn::set_disabled()
    pb_bead_saxs->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    pb_rescale_bead_model->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
 }
 
 void US_Hydrodyn::hybrid()
@@ -1633,6 +1645,7 @@ void US_Hydrodyn::reload_pdb()
    pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
 }
@@ -1870,6 +1883,7 @@ void US_Hydrodyn::load_pdb()
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
    if ( lb_model->numRows() == 1 )
@@ -2004,6 +2018,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
    if ( lb_model->numRows() == 1 )
@@ -2024,6 +2039,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    options_log = "";
    pb_somo->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
@@ -2045,6 +2061,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    {
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
@@ -2059,6 +2076,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
       {
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
+         pb_equi_grid_bead_model->setEnabled(true);
          pb_calc_hydro->setEnabled( false );
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
@@ -2068,6 +2086,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
          return true;
       } else {
          pb_visualize->setEnabled(true);
+         pb_equi_grid_bead_model->setEnabled(true);
          pb_bead_saxs->setEnabled(false);
          pb_rescale_bead_model->setEnabled(false);
          pb_pdb_saxs->setEnabled(true);
@@ -2124,6 +2143,7 @@ void US_Hydrodyn::select_model( int val )
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
    bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
                          ( anaflex && anaflex->isRunning() ) ) ? false : true );
@@ -2202,6 +2222,7 @@ void US_Hydrodyn::load_bead_model()
       options_log = "";
       pb_somo->setEnabled(false);
       pb_visualize->setEnabled(false);
+      pb_equi_grid_bead_model->setEnabled(false);
       pb_calc_hydro->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
@@ -2257,6 +2278,7 @@ void US_Hydrodyn::load_bead_model()
       {
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
+         pb_equi_grid_bead_model->setEnabled(true);
          pb_calc_hydro->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
@@ -2270,6 +2292,7 @@ void US_Hydrodyn::load_bead_model()
          {
             state = BEAD_MODEL_LOADED;
             pb_visualize->setEnabled(true);
+            pb_equi_grid_bead_model->setEnabled(true);
             pb_calc_hydro->setEnabled( false );
             pb_grid->setEnabled(true);
             pb_bead_saxs->setEnabled(true);
@@ -2278,6 +2301,7 @@ void US_Hydrodyn::load_bead_model()
             bd_anaflex_enables(false);
          } else {            
             pb_visualize->setEnabled(true);
+            pb_equi_grid_bead_model->setEnabled(true);
             pb_bead_saxs->setEnabled(false);
             pb_rescale_bead_model->setEnabled(false);
             pb_pdb_saxs->setEnabled(true);
@@ -2362,6 +2386,7 @@ int US_Hydrodyn::calc_somo()
       return -1;
    }
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    if (results_widget)
@@ -2435,6 +2460,7 @@ int US_Hydrodyn::calc_somo()
       editor->append("Build bead model completed\n");
       qApp->processEvents();
       pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2536,6 +2562,7 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_grid_pdb->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
 
@@ -3041,6 +3068,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   //       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                   //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                   //       DOTSOMO, &bead_model, bead_model_from_file);
+
                   write_bead_model( 
                                    somo_dir + SLASH +
                                    project + 
@@ -3077,6 +3105,7 @@ int US_Hydrodyn::calc_grid_pdb()
       editor->append("Build bead model completed\n");
       qApp->processEvents();
       pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3117,6 +3146,7 @@ int US_Hydrodyn::calc_grid()
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    if (results_widget)
@@ -3375,6 +3405,7 @@ int US_Hydrodyn::calc_grid()
       editor->append("Build bead model completed\n");
       qApp->processEvents();
       pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3609,7 +3640,7 @@ int US_Hydrodyn::calc_hydro()
    }
    if ( misc.hydro_zeno )
    {
-      return (int)calc_zeno();
+      return (int)(!calc_zeno());
    }
    return -1;
 }
@@ -4793,3 +4824,154 @@ void US_Hydrodyn::fixWinButtons( QWidget*
 #endif
 }
 
+bool US_Hydrodyn::equi_grid_bead_model()
+{
+   stopFlag = false;
+   pb_stop_calc->setEnabled(true);
+   append_options_log_atob();
+   display_default_differences();
+   bool any_errors = false;
+   bool any_models = false;
+   bool grid_pdb_state = pb_grid_pdb->isEnabled();
+   bool somo_state = pb_grid_pdb->isEnabled();
+   pb_grid_pdb->setEnabled(false);
+   pb_grid->setEnabled(false);
+   pb_somo->setEnabled(false);
+   pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
+   pb_show_hydro_results->setEnabled(false);
+   pb_calc_hydro->setEnabled(false);
+   if (results_widget)
+   {
+      results_window->close();
+      delete results_window;
+      results_widget = false;
+   }
+
+   bead_model_suffix = getExtendedSuffix(false, false) + "g";
+   le_bead_model_suffix->setText(bead_model_suffix);
+   if ( !overwrite )
+   {
+      setSomoGridFile(false);
+   }
+
+   // get dR
+
+   bool ok;
+   double dR = QInputDialog::getDouble(
+                                        "dR for equi grid:",
+                                        tr( "Enter a cube side value in Angstroms:" ),
+                                        1.0, 
+                                        1e-5,
+                                        1e4, 
+                                        3, 
+                                        &ok, 
+                                        this );
+   if ( !ok )
+   {
+      editor->append("Stopped by user\n\n");
+      pb_grid_pdb->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
+      pb_somo->setEnabled(true);
+      progress->reset();
+      return false;
+   }
+
+   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
+      if (lb_model->isSelected(current_model)) {
+         printf("in calc_grid: is selected current model %d\n", current_model); fflush(stdout);
+         if (somo_processed.size() > current_model && somo_processed[current_model]) {
+            printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
+            editor->append(QString("Gridding bead model %1\n").arg(current_model + 1));
+            progress->reset();
+            qApp->processEvents();
+
+            if ( !saxs_util->grid ( bead_models[current_model],
+                                    bead_model,
+                                    dR,
+                                    false,
+                                    false ) )
+            {
+               editor_msg( "red", saxs_util->errormsg );
+               pb_grid_pdb->setEnabled(true);
+               pb_equi_grid_bead_model->setEnabled(true);
+               pb_somo->setEnabled(true);
+               progress->reset();
+               return false;
+            }
+
+
+               
+            if (stopFlag)
+            {
+               editor->append("Stopped by user\n\n");
+               pb_grid_pdb->setEnabled(true);
+               pb_equi_grid_bead_model->setEnabled(true);
+               pb_somo->setEnabled(true);
+               progress->reset();
+               return false;
+            }
+
+            for ( unsigned int i = 0; i < ( unsigned int ) bead_model.size(); i++ )
+            {
+               bead_model[i].exposed_code = 1;
+               bead_model[i].bead_color = 8;
+            }
+
+            bead_models[ current_model ] = bead_model;
+
+            any_models = true;
+            if (somo_processed.size() < current_model + 1) {
+               somo_processed.resize(current_model + 1);
+            }
+            somo_processed[current_model] = 1;
+            editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
+
+            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+                             "_eqm" +
+                             DOTSOMO, &bead_model);
+         }
+      }
+   }
+
+   if (stopFlag)
+   {
+      editor->append("Stopped by user\n\n");
+      pb_grid_pdb->setEnabled(true);
+      pb_somo->setEnabled(true);
+      progress->reset();
+      return false;
+   }
+
+   if (any_models && !any_errors)
+   {
+      editor->append("Build bead model completed\n");
+      qApp->processEvents();
+      pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
+      pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+   }
+   else
+   {
+      editor->append("Errors encountered\n");
+   }
+
+   pb_equi_grid_bead_model->setEnabled(true);
+   pb_grid_pdb->setEnabled(grid_pdb_state);
+   pb_grid->setEnabled(true);
+   pb_somo->setEnabled(somo_state);
+   pb_stop_calc->setEnabled(false);
+   if (calcAutoHydro)
+   {
+      calc_hydro();
+   }
+   else
+   {
+      play_sounds(1);
+   }
+
+   return true;
+}

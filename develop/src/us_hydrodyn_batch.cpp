@@ -1331,12 +1331,20 @@ void US_Hydrodyn_Batch::set_compute_prr_std_dev()
 void US_Hydrodyn_Batch::set_hydro()
 {
    batch->hydro = cb_hydro->isChecked();
+   if ( batch->hydro )
+   {
+      cb_zeno->setChecked( false );
+   }
    update_enables();
 }
 
 void US_Hydrodyn_Batch::set_zeno()
 {
    batch->zeno = cb_zeno->isChecked();
+   if ( batch->zeno )
+   {
+      cb_hydro->setChecked( false );
+   }
    update_enables();
 }
 
@@ -2129,7 +2137,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                }
                return;
             }
-            if ( result && batch->hydro &&
+            if ( result && ( batch->hydro || batch->zeno ) &&
                  ( !pdb_mode || batch->somo || batch->grid ) )
             {
                save_us_hydrodyn_settings();

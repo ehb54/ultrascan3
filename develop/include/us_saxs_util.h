@@ -651,6 +651,17 @@ class US_EXTERN US_Saxs_Util
                                                                           );
       vector < double >                               compute_exponential_t;
       vector < double >                               compute_exponential_y;
+
+      // returns a bead model with dR elements
+      bool                                            grid( 
+                                                           vector < PDB_atom > &bm,
+                                                           vector < PDB_atom > &result,
+                                                           double              dR, 
+                                                           bool                accum_overlaps,        // if true, beads will increase in size
+                                                           bool                allow_partials = false // if true attempt "partial" smaller beads for edges
+                                                           );
+
+
 #ifdef WIN32
   #pragma default ( disable: 4251 )
 #endif

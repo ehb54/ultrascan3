@@ -1491,3 +1491,131 @@ bool US_Saxs_Util::set_excluded_volume(
    // cout << QString( "compute saxs for atom %1 si %2\n" ).arg( this_atom.name ).arg( scattering_intensity );
    return true;
 }
+
+// returns a bead model with dR elements
+bool US_Saxs_Util::grid( 
+                        vector < PDB_atom > &bm,
+                        vector < PDB_atom > &result,
+                        double              dR, 
+                        bool                accum_overlaps,  // if true, beads will increase in size
+                        bool                allow_partials   // if true attempt "partial" smaller beads for edges
+                        )
+{
+   vector < PDB_atom > results;
+
+   errormsg = "";
+
+   double vol    = dR * dR * dR;
+   double radius = pow( vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );  // 4/3 pi r^3
+
+   cout << QString( "dR %1 vol %2 radius %3\n" ).arg( dR ).arg( vol ).arg( radius );
+
+   if ( !bm.size() )
+   {
+      errormsg = "error: grid(): empty bead model";
+      return false;
+   }
+
+   if ( allow_partials )
+   {
+      errormsg = "error: grid(): allow partials not yet implemented";
+      return false;
+   }
+      
+   result.clear();
+
+   // determine max extents
+
+   point pmin = bm[ 0 ].bead_coordinate;
+   point pmax = bm[ 0 ].bead_coordinate;
+
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      pmin.axis[ j ] -= bm[ 0 ].bead_computed_radius;
+      pmax.axis[ j ] += bm[ 0 ].bead_computed_radius;
+   }
+   
+   float total_mw = bm[ 0 ].bead_ref_mw;
+
+   for ( unsigned int i = 1; i < ( unsigned int ) bm.size(); i++ )
+   {
+      total_mw += bm[ i ].bead_ref_mw;
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         if ( pmin.axis[ j ] > bm[ i ].bead_coordinate.axis[ j ] - bm[ i ].bead_computed_radius )
+         {
+            pmin.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ] - bm[ i ].bead_computed_radius;
+         }
+         if ( pmax.axis[ j ] < bm[ i ].bead_coordinate.axis[ j ] + bm[ i ].bead_computed_radius )
+         {
+            pmax.axis[ j ] = bm[ i ].bead_coordinate.axis[ j ] + bm[ i ].bead_computed_radius;
+         }
+      }
+   }
+
+   cout << QString( "extents min" ) << pmin << endl;
+   cout << QString( "extents max" ) << pmax << endl;
+   cout << QString( "Total mw %1\n" ).arg( total_mw );
+
+   point pgrid;
+   unsigned int total_close_count = 0;
+   
+   for ( pgrid.axis[ 0 ] = pmin.axis[ 0 ]; pgrid.axis[ 0 ] <= pmax.axis[ 0 ]; pgrid.axis[ 0 ] += dR )
+   {
+      for ( pgrid.axis[ 1 ] = pmin.axis[ 1 ]; pgrid.axis[ 1 ] <= pmax.axis[ 1 ]; pgrid.axis[ 1 ] += dR )
+      {
+         for ( pgrid.axis[ 2 ] = pmin.axis[ 2 ]; pgrid.axis[ 2 ] <= pmax.axis[ 2 ]; pgrid.axis[ 2 ] += dR )
+         {
+            unsigned int close_count = 0;
+            for ( unsigned int i = 0; i < ( unsigned int ) bm.size(); i++ )
+            {
+               if ( dist( pgrid, bm[ i ].bead_coordinate ) <= bm[ i ].bead_computed_radius )
+               {
+                  close_count++;
+                  if ( !accum_overlaps )
+                  {
+                     close_count = 1;
+                     break;
+                  }
+               }
+            }
+            if ( close_count )
+            {
+               PDB_atom tmp_atom;
+               tmp_atom.bead_coordinate      = pgrid;
+               tmp_atom.bead_computed_radius = radius * ( float ) close_count;
+
+               // overloading:
+               tmp_atom.accessibility        = close_count;
+               tmp_atom.exposed_code         = 1;
+               tmp_atom.bead_color           = 8;
+
+               // set to null values just in case
+               tmp_atom.bead_recheck_asa     = 0.0;
+
+               tmp_atom.serial = ( unsigned int )result.size() + 1;
+               
+               result.push_back( tmp_atom );
+               total_close_count += close_count;
+            }
+         }
+      }
+   }
+      
+   // set mw's
+
+   float mw_per_count = total_mw / total_close_count;
+   cout << QString( "mw per count %1 (total %2 count %3) total beads %4\n" )
+      .arg( mw_per_count )
+      .arg( total_mw )
+      .arg( total_close_count )
+      .arg( result.size() )
+      ;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
+   {
+      result[ i ].bead_ref_mw = mw_per_count * result[ i ].accessibility;
+   }
+
+   return true;
+}

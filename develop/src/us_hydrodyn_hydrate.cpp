@@ -4002,6 +4002,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
    {
       QString qs2 = "REMARK " + qs;
       qs2.replace( "\n", "\nREMARK " );
+      qs2 += "\n";
       last_steric_clash_log << qs2;
    }
 

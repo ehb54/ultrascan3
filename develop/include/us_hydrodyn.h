@@ -327,6 +327,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_pdb_saxs;
       QPushButton *pb_bead_saxs;
       QPushButton *pb_rescale_bead_model;
+      QPushButton *pb_equi_grid_bead_model;
       QPushButton *pb_help;
       QPushButton *pb_config;
       QPushButton *pb_cancel;
@@ -815,6 +816,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void         make_test_set();
 
       void rescale_bead_model();
+      bool equi_grid_bead_model();
 
       void browflex_readFromStdout();
       void browflex_readFromStderr();

@@ -13693,6 +13693,267 @@ bool US_Hydrodyn::calc_zeno()
                pb_show_hydro_results->setEnabled(false);
                progress->reset();
                return false;
+            } else {
+               // setup save data
+               // add text output also
+               save_data this_data;
+               // should be put in (static?) save_data.clear()
+               // initialize unset (as of yet) values
+
+               this_data.tot_surf_area                 = 0e0;
+               this_data.tot_volume_of                 = 0e0;
+               this_data.num_of_unused                 = 0e0;
+               this_data.use_beads_vol                 = 0e0;
+               this_data.use_beads_surf                = 0e0;
+               this_data.use_bead_mass                 = 0e0;
+               this_data.con_factor                    = 0e0;
+               this_data.tra_fric_coef                 = 0e0;
+               this_data.rot_fric_coef                 = 0e0;
+               this_data.rot_diff_coef                 = 0e0;
+               this_data.rot_fric_coef_x               = 0e0;
+               this_data.rot_fric_coef_y               = 0e0;
+               this_data.rot_fric_coef_z               = 0e0;
+               this_data.rot_diff_coef_x               = 0e0;
+               this_data.rot_diff_coef_y               = 0e0;
+               this_data.rot_diff_coef_z               = 0e0;
+               this_data.rot_stokes_rad_x              = 0e0;
+               this_data.rot_stokes_rad_y              = 0e0;
+               this_data.rot_stokes_rad_z              = 0e0;
+               this_data.cen_of_res_x                  = 0e0;
+               this_data.cen_of_res_y                  = 0e0;
+               this_data.cen_of_res_z                  = 0e0;
+               this_data.cen_of_mass_x                 = 0e0;
+               this_data.cen_of_mass_y                 = 0e0;
+               this_data.cen_of_mass_z                 = 0e0;
+               this_data.cen_of_diff_x                 = 0e0;
+               this_data.cen_of_diff_y                 = 0e0;
+               this_data.cen_of_diff_z                 = 0e0;
+               this_data.cen_of_visc_x                 = 0e0;
+               this_data.cen_of_visc_y                 = 0e0;
+               this_data.cen_of_visc_z                 = 0e0;
+               this_data.unc_int_visc                  = 0e0;
+               this_data.unc_einst_rad                 = 0e0;
+               this_data.cor_int_visc                  = 0e0;
+               this_data.cor_einst_rad                 = 0e0;
+               this_data.rel_times_tau_1               = 0e0;
+               this_data.rel_times_tau_2               = 0e0;
+               this_data.rel_times_tau_3               = 0e0;
+               this_data.rel_times_tau_4               = 0e0;
+               this_data.rel_times_tau_5               = 0e0;
+               this_data.rel_times_tau_m               = 0e0;
+               this_data.rel_times_tau_h               = 0e0;
+               this_data.max_ext_x                     = 0e0;
+               this_data.max_ext_y                     = 0e0;
+               this_data.max_ext_z                     = 0e0;
+               this_data.axi_ratios_xz                 = 0e0;
+               this_data.axi_ratios_xy                 = 0e0;
+               this_data.axi_ratios_yz                 = 0e0;
+               this_data.results.mass                  = 0e0;
+               this_data.results.s20w                  = 0e0;
+               this_data.results.s20w_sd               = 0e0;
+               this_data.results.D20w                  = 0e0;
+               this_data.results.D20w_sd               = 0e0;
+               this_data.results.viscosity             = 0e0;
+               this_data.results.viscosity_sd          = 0e0;
+               this_data.results.rs                    = 0e0;
+               this_data.results.rs_sd                 = 0e0;
+               this_data.results.rg                    = 0e0;
+               this_data.results.rg_sd                 = 0e0;
+               this_data.results.tau                   = 0e0;
+               this_data.results.tau_sd                = 0e0;
+               this_data.results.vbar                  = 0e0;
+               this_data.results.asa_rg_pos            = 0e0;
+               this_data.results.asa_rg_neg            = 0e0;
+               this_data.results.ff0                   = 0e0;
+               this_data.results.ff0_sd                = 0e0;
+               this_data.results.solvent_name          = "";
+               this_data.results.solvent_acronym       = "";
+               this_data.results.solvent_viscosity     = 0e0;
+               this_data.results.solvent_density       = 0e0;
+
+               this_data.hydro                 = hydro;
+               this_data.model_idx             = model_vector[ current_model ].model_id;
+               this_data.results.num_models    = 1;
+               this_data.results.name          = QFileInfo( last_hydro_res ).baseName( true );
+               this_data.results.used_beads    = bead_models [ current_model ].size();
+               this_data.results.total_beads   = bead_models [ current_model ].size();
+
+
+               QFile f( last_hydro_res );
+               if ( !f.exists() || !f.open( IO_ReadOnly ) )
+               {
+                  
+                  editor_msg( "red", "ZENO computation failed to produce output file" );
+                  pb_calc_hydro->setEnabled(true);
+                  pb_bead_saxs->setEnabled(true);
+                  pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+                  pb_show_hydro_results->setEnabled(false);
+                  progress->reset();
+                  return false;
+               }
+               QTextStream ts( &f );
+
+               QStringList qsl;
+               while( !ts.atEnd() )
+               {
+                  QString qs = ts.readLine();
+                  this_data.hydro_res += qs + "\n";
+                  qsl << qs;
+                  
+               }
+               f.close();
+
+               editor_msg( "dark blue", 
+                           QString( "ZENO computation output file %1 opened %2 lines" )
+                           .arg( last_hydro_res )
+                           .arg( qsl.size() ) );
+
+               vector < QRegExp    > param_rx;
+               vector < QString     > param_name;
+               vector < int         > param_cap_pos;
+               vector < QStringList > param_qsl;
+
+               param_rx     .push_back( QRegExp( "^.eta..M. . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "results.viscosity" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^D  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "results.D20w" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^mass . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "results.mass" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^Rg .interior.  . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "results.rg" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^surface area . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "tot_surf_area" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^volume . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "used_beads_vol" );
+               param_cap_pos.push_back( 1 );
+
+               for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
+               {
+                  param_qsl.push_back( qsl.grep( param_rx[ i ] ) );
+               }               
+
+               for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
+               {
+                  switch( param_qsl[ i ].size() )
+                  {
+                  case 1 :
+                     {
+                        param_rx[ i ].search( param_qsl[ i ][ 0 ] );
+                        QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
+                        
+                        // QRegExp rx( param_rx[ i ] );
+                        // rx.search( param_qsl[ i ][ 0 ] );                        
+                        // QString qs = rx.cap( param_cap_pos[ i ] );
+
+                        qs.replace( QRegExp( "\\(\\d+\\)" ), "" );
+                        double qd = qs.toDouble();
+                        cout << QString( "zeno cap %1 as %2\n" ).arg( param_name[ i ] ).arg( qd );
+
+                        editor_msg( "dark blue", QString( "ZENO produced parameter: %1 value %2\n" ).arg( param_name[ i ] ).arg( qs ) );
+
+                        if ( param_name[ i ] == "results.viscosity" )
+                        {
+                           this_data.results.viscosity = qd;
+                           break;
+                        }
+                        if ( param_name[ i ] == "results.D20w" )
+                        {
+                           this_data.results.D20w      = qd;
+                           break;
+                        }
+                        if ( param_name[ i ] == "results.mass" )
+                        {
+                           this_data.results.mass      = qd;
+                           this_data.use_bead_mass     = qd;
+                           break;
+                        }
+                        if ( param_name[ i ] == "results.rg" )
+                        {
+                           this_data.results.rg        = qd;
+                           break;
+                        }
+                        if ( param_name[ i ] == "tot_surf_area" )
+                        {
+                           this_data.tot_surf_area     = qd;
+                           this_data.use_beads_surf    = qd;
+                           break;
+                        }
+                        if ( param_name[ i ] == "used_beads_vol" )
+                        {
+                           this_data.use_beads_vol     = qd;
+                           break;
+                        }
+                     } 
+                     break;
+                  case 0:
+                     {
+                        editor_msg( "red", QString( "ZENO did not produce expected parameter: %1\n" ).arg( param_name[ i ] ) );
+                     }
+                     break;
+                  default :
+                     {
+                        editor_msg( "red", QString( "ZENO produced multiple values for parameter: %1\n" ).arg( param_name[ i ] ) );
+                     }
+                     break;
+                  }
+               }
+
+               // nsa physical stats
+
+               {
+                  vector < vector < PDB_atom > >  save_bead_models = bead_models;
+                  saxs_util->bead_models.resize( 1 );
+                  saxs_util->bead_models[ 0 ] = bead_model;
+                  if ( "empty model" != saxs_util->nsa_physical_stats() )
+                  {
+                     this_data.tot_volume_of = saxs_util->nsa_physical_stats_map[ "result excluded volume" ].toDouble();
+                  
+                     this_data.max_ext_x = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size x" ].toDouble();
+                     this_data.max_ext_y = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size y" ].toDouble();
+                     this_data.max_ext_z = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size z" ].toDouble();
+
+                     this_data.axi_ratios_xz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:z" ].toDouble();
+                     this_data.axi_ratios_xy = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:y" ].toDouble();
+                     this_data.axi_ratios_yz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios y:z" ].toDouble();
+                  } else {
+                     editor_msg( "red", QString( "Internal error: Bead model is empty?" ) );
+                  }
+               }
+
+               if ( batch_widget &&
+                    batch_window->save_batch_active )
+               {
+                  save_params.data_vector.push_back( this_data );
+                  printf("batch save on, push back info into save_params!\n");
+               }
+
+               bool create_hydro_res = !(batch_widget &&
+                                         batch_window->save_batch_active);
+               if ( saveParams && create_hydro_res )
+               {
+                  QString fname = this_data.results.name + ".csv";
+                  FILE *of = fopen(fname, "wb");
+                  if ( of )
+                  {
+                     fprintf(of, "%s", save_util->header().ascii());
+
+                     fprintf(of, "%s", save_util->dataString(&this_data).ascii());
+                     fclose(of);
+                  }
+               }
+               // print out results:
+               save_util->header();
+               save_util->dataString(&this_data);
             }
          }
       }

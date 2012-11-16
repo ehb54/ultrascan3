@@ -3355,6 +3355,7 @@ mem_ris(int model)
          fclose(of);
       }
    }
+   // print out results:
    us_hydrodyn->save_util->header();
    us_hydrodyn->save_util->dataString(&this_data);
    // printf("end of mem_ris\n");
