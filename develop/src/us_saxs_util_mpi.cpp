@@ -352,7 +352,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          if ( !in_output.count( f.name() ) )
          {
             in_output[ f.name() ] = true;
-            full_output_list << f.name();
+            full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
          }
       }         
       errorno--;

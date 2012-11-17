@@ -539,7 +539,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "damminrun" )
       {
-         unsigned int retries = 1;
+         unsigned int retries = 3;
          if ( control_parameters.count( "damminrun" ) &&
               control_parameters[ "damminrun" ].toUInt() > 1 )
          {
@@ -1472,7 +1472,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 
    {
       unsigned int cropped_pts = 0;
-      while ( rq.size() && rq.back() > sgp_exp_q.back() + 1e-8 )
+      while ( rq.size() && rq.back() > sgp_exp_q.back() + 1e-6 )
       {
          cout << QString( "cropping point with value %1 which is larger than %2 by %3\n" )
             .arg( rq.back() ).arg( sgp_exp_q.back() ).arg( rq.back() - sgp_exp_q.back() ) << flush;
@@ -1511,6 +1511,16 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    }
    cout << QString( "grid size after interpolate original     %1\n" ).arg( org_I.size() );
    cout << QString( "grid size after interpolate experimental %1\n" ).arg( sgp_exp_I.size() );
+
+//    while ( sgp_exp_I.size() < org_I.size() )
+//    {
+//       sgp_exp_I.push_back( sgp_exp_I[ sgp_exp_I.size() - 1 ] );
+
+//       if ( sgp_exp_e.size() )
+//       {
+//          sgp_exp_e.push_back( sgp_exp_e[ sgp_exp_e.size() - 1 ] );
+//       }
+//    }
 
    sgp_exp_q = rq;
    if ( !org_e.size() )
