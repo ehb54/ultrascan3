@@ -73,6 +73,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->compute_prr_avg = false;
    batch->compute_prr_std_dev = false;
    batch->hydrate = false;
+   batch->equi_grid = false;
    // if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq && !batch->dmd )
    // {
    // batch->somo = true;
@@ -341,6 +342,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_grid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
+   cb_equi_grid = new QCheckBox(this);
+   cb_equi_grid->setText(tr(" Grid bead models for P(r)"));
+   cb_equi_grid->setChecked(batch->equi_grid);
+   cb_equi_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_equi_grid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_equi_grid, SIGNAL(clicked()), this, SLOT(set_equi_grid()));
+
    cb_iqq = new QCheckBox(this);
    cb_iqq->setText(tr("Compute SAXS I(q) "));
    cb_iqq->setChecked(batch->iqq);
@@ -586,6 +594,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout *hbl_somo_grid = new QHBoxLayout;
    hbl_somo_grid->addWidget(cb_somo);
    hbl_somo_grid->addWidget(cb_grid);
+   hbl_somo_grid->addWidget(cb_equi_grid);
 
    QHBoxLayout *hbl_iqq_prr = new QHBoxLayout;
    hbl_iqq_prr->addWidget(cb_iqq);
@@ -1027,6 +1036,7 @@ void US_Hydrodyn_Batch::update_enables()
    cb_dmd->setEnabled(any_pdb_in_list);
    cb_somo->setEnabled(any_pdb_in_list);
    cb_grid->setEnabled(any_pdb_in_list);
+   cb_equi_grid->setEnabled(lb_files->numRows());
    cb_prr->setEnabled(lb_files->numRows());
    cb_iqq->setEnabled(lb_files->numRows());
    cb_saxs_search->setEnabled(lb_files->numRows() && batch->iqq);
@@ -1061,6 +1071,7 @@ void US_Hydrodyn_Batch::update_enables()
    bool anything_to_do =
       ( cb_somo->isEnabled()  && cb_somo->isChecked()  ) ||
       ( cb_grid->isEnabled()  && cb_grid->isChecked()  ) ||
+      ( cb_equi_grid->isEnabled()  && cb_equi_grid->isChecked()  ) ||
       ( cb_prr->isEnabled()   && cb_prr->isChecked()   ) ||
       ( cb_iqq->isEnabled()   && cb_iqq->isChecked()   ) ||
       ( cb_hydro->isEnabled() && cb_hydro->isChecked() ) ||
@@ -1236,6 +1247,12 @@ void US_Hydrodyn_Batch::set_grid()
    update_enables();
 }
 
+void US_Hydrodyn_Batch::set_equi_grid()
+{
+   batch->equi_grid = cb_equi_grid->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::set_prr()
 {
    batch->prr = cb_prr->isChecked();
@@ -1384,6 +1401,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_mm_all->setEnabled(false);
    cb_somo->setEnabled(false);
    cb_grid->setEnabled(false);
+   cb_equi_grid->setEnabled(false);
    cb_iqq->setEnabled(false);
    cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
@@ -1412,6 +1430,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_mm_all->setEnabled(true);
    cb_somo->setEnabled(true);
    cb_grid->setEnabled(true);
+   cb_equi_grid->setEnabled(true);
    cb_iqq->setEnabled(true);
    cb_prr->setEnabled(true);
    cb_hydro->setEnabled(true);
@@ -1994,6 +2013,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      {
                         hydrated_pdb_nmr_text += ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_text;
 #endif
+                        if ( !pdb_mode && batch->equi_grid )
+                        {
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
+                           ((US_Hydrodyn *)us_hydrodyn)->equi_grid_bead_model( -1e0 );
+                        }
                         job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                         result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
@@ -2075,6 +2101,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   if ( result )
                   {
 #endif
+                     if ( !pdb_mode && batch->equi_grid )
+                     {
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
+                        ((US_Hydrodyn *)us_hydrodyn)->equi_grid_bead_model( -1e0 );
+                     }
                      job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      job_timer.start_timer( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
                      result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,

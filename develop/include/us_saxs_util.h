@@ -662,6 +662,13 @@ class US_EXTERN US_Saxs_Util
                                                            );
 
 
+      bool                                            smooth(
+                                                             vector < double > &x,
+                                                             vector < double > &result,
+                                                             unsigned int      points,
+                                                             bool              smooth_endpoints = false
+                                                             );
+                                                             
 #ifdef WIN32
   #pragma default ( disable: 4251 )
 #endif

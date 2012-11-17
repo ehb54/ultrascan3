@@ -1926,6 +1926,9 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    int errors_found = 0;
    lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
 
+   bead_model_suffix = "";
+   le_bead_model_suffix->setText( bead_model_suffix );
+
 #if defined(START_RASMOL)
    if ( display_pdb )
    {
@@ -2046,6 +2049,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
    le_bead_model_prefix->setText( bead_model_prefix );
+   bead_model_suffix = "";
+   le_bead_model_suffix->setText( "" );
 
    if ( results_widget )
    {
@@ -3069,10 +3074,14 @@ int US_Hydrodyn::calc_grid_pdb()
                   //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                   //       DOTSOMO, &bead_model, bead_model_from_file);
 
+                  QString filename = 
+                     project + 
+                     QString( "_%1" ).arg( current_model + 1 );
+
+                  le_bead_model_file->setText( filename );
+
                   write_bead_model( 
-                                   somo_dir + SLASH +
-                                   project + 
-                                   QString( "_%1" ).arg( current_model + 1 ) +
+                                   somo_dir + SLASH + filename +
                                    QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                                    DOTSOMO, 
                                    &bead_model,
@@ -3383,9 +3392,18 @@ int US_Hydrodyn::calc_grid()
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
             //        QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
             //           DOTSOMO, &bead_model, bead_model_from_file);
-            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+
+            QString filename = 
+               project + 
+               QString( "_%1" ).arg( current_model + 1 );
+
+            le_bead_model_file->setText( filename );
+
+            write_bead_model(somo_dir + SLASH +
+                             filename +
+                             QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                              DOTSOMO, &bead_model);
+
             progress->setProgress(progress->totalSteps());
          }
       }
@@ -4824,7 +4842,7 @@ void US_Hydrodyn::fixWinButtons( QWidget*
 #endif
 }
 
-bool US_Hydrodyn::equi_grid_bead_model()
+bool US_Hydrodyn::equi_grid_bead_model( double dR )
 {
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
@@ -4848,33 +4866,37 @@ bool US_Hydrodyn::equi_grid_bead_model()
       results_widget = false;
    }
 
-   bead_model_suffix = getExtendedSuffix(false, false) + "g";
+   // get dR
+
+   printf( "equi_grid called with dR %g\n", dR );
+   if ( !dR )
+   {
+      bool ok;
+      dR = QInputDialog::getDouble(
+                                   "dR for equi grid:",
+                                   tr( "Enter a cube side value in Angstroms:" ),
+                                   1.0, 
+                                   1e-5,
+                                   1e4, 
+                                   3, 
+                                   &ok, 
+                                   this );
+      if ( !ok )
+      {
+         editor->append("Stopped by user\n\n");
+         pb_grid_pdb->setEnabled(true);
+         pb_equi_grid_bead_model->setEnabled(true);
+         pb_somo->setEnabled(true);
+         progress->reset();
+         return false;
+      }
+   }
+
+   bead_model_suffix = getExtendedSuffix(false, false).replace( "a2b", QString( "eqm%1" ).arg( dR ).replace( ".","_" ) ) + "g";
    le_bead_model_suffix->setText(bead_model_suffix);
    if ( !overwrite )
    {
       setSomoGridFile(false);
-   }
-
-   // get dR
-
-   bool ok;
-   double dR = QInputDialog::getDouble(
-                                        "dR for equi grid:",
-                                        tr( "Enter a cube side value in Angstroms:" ),
-                                        1.0, 
-                                        1e-5,
-                                        1e4, 
-                                        3, 
-                                        &ok, 
-                                        this );
-   if ( !ok )
-   {
-      editor->append("Stopped by user\n\n");
-      pb_grid_pdb->setEnabled(true);
-      pb_equi_grid_bead_model->setEnabled(true);
-      pb_somo->setEnabled(true);
-      progress->reset();
-      return false;
    }
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
@@ -4899,8 +4921,6 @@ bool US_Hydrodyn::equi_grid_bead_model()
                progress->reset();
                return false;
             }
-
-
                
             if (stopFlag)
             {
@@ -4919,7 +4939,7 @@ bool US_Hydrodyn::equi_grid_bead_model()
             }
 
             bead_models[ current_model ] = bead_model;
-
+            
             any_models = true;
             if (somo_processed.size() < current_model + 1) {
                somo_processed.resize(current_model + 1);
@@ -4927,9 +4947,13 @@ bool US_Hydrodyn::equi_grid_bead_model()
             somo_processed[current_model] = 1;
             editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
 
-            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                             "_eqm" +
+            QString filename =
+               project + QString("_%1").arg(current_model + 1);
+
+            le_bead_model_file->setText( filename );
+
+            write_bead_model(somo_dir + SLASH + filename +
+                             QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" ) +
                              DOTSOMO, &bead_model);
          }
       }

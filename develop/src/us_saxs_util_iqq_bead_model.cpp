@@ -1505,11 +1505,6 @@ bool US_Saxs_Util::grid(
 
    errormsg = "";
 
-   double vol    = dR * dR * dR;
-   double radius = pow( vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );  // 4/3 pi r^3
-
-   cout << QString( "dR %1 vol %2 radius %3\n" ).arg( dR ).arg( vol ).arg( radius );
-
    if ( !bm.size() )
    {
       errormsg = "error: grid(): empty bead model";
@@ -1534,7 +1529,7 @@ bool US_Saxs_Util::grid(
       pmin.axis[ j ] -= bm[ 0 ].bead_computed_radius;
       pmax.axis[ j ] += bm[ 0 ].bead_computed_radius;
    }
-   
+
    float total_mw = bm[ 0 ].bead_ref_mw;
 
    for ( unsigned int i = 1; i < ( unsigned int ) bm.size(); i++ )
@@ -1556,6 +1551,29 @@ bool US_Saxs_Util::grid(
    cout << QString( "extents min" ) << pmin << endl;
    cout << QString( "extents max" ) << pmax << endl;
    cout << QString( "Total mw %1\n" ).arg( total_mw );
+
+   // compute dR
+
+   if ( dR <= 0e0 )
+   {
+      // look at cube root of volume
+      double box_vol = 1e0;
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         box_vol *= pmax.axis[ j ] - pmin.axis[ j ];
+      }
+      // say max 100000 to fill assuming 50% or less (?)
+      double ele_vol = box_vol / 100000e0;
+      dR = pow( ele_vol, 1e0/3e0 );
+      if ( dR < 1e0 )
+      {
+         dR = 1e0;
+      }
+   }
+
+   double vol    = dR * dR * dR;
+   double radius = pow( vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );  // 4/3 pi r^3
+   cout << QString( "dR %1 vol %2 radius %3\n" ).arg( dR ).arg( vol ).arg( radius );
 
    point pgrid;
    unsigned int total_close_count = 0;
@@ -1615,7 +1633,105 @@ bool US_Saxs_Util::grid(
    for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
    {
       result[ i ].bead_ref_mw = mw_per_count * result[ i ].accessibility;
+      result[ i ].bead_mw     = result[ i ].bead_ref_mw;
    }
 
+   return true;
+}
+
+bool US_Saxs_Util::smooth(
+                          vector < double > &x,
+                          vector < double > &result,
+                          unsigned int      points,
+                          bool              smooth_endpoints
+                          )
+{
+   errormsg = "";
+   puts( "ss0" );
+   if ( !x.size() )
+   {
+      errormsg = "smooth(): empty vector";
+      return false;
+   }
+
+   puts( "ss1" );
+
+   if ( !points )
+   {
+      result = x;
+      return true;
+   }
+
+   // get normal distribution
+
+   puts( "ss2" );
+
+   vector < double > dist;
+   points++;
+   puts( "ss2a" );
+   for ( unsigned int i = 0; i < points; i++ ) 
+   {
+      double x0 = ( 2e0 / points ) * ( double ) i;
+      dist.push_back( exp( -( x0 * x0 ) ) / sqrt( 2e0 * 3.14159265358978323e0 ) );
+   }
+   puts( "ss2b" );
+   double tot = dist[ 0 ];
+   for ( unsigned int j = 1; j < dist.size(); j++ ) 
+   {
+      tot += 2 * dist[ j ];
+   }
+   for ( unsigned int j = 1; j < dist.size(); j++ ) 
+   {
+      dist[ j ] /= tot;
+   }
+
+   puts( "ss3" );
+   // do smoothing
+
+   vector < double > y ( x.size() );
+   vector < double > yn( x.size() );
+   result.resize       ( x.size() );
+         
+   for( unsigned int i = 0; i < x.size(); i++ )
+   {
+      y[ i ] = x[ i ];
+   }
+   puts( "ss4" );
+            
+   for( unsigned int i = 0; i < x.size(); i++ )
+   {
+      yn[ i ]      = 0e0;
+      double tdist = 0e0;
+      for( int j = -( int ) points; j <= ( int ) points; j++ ) 
+      {
+         int jp = ( int ) i + j;
+         if ( jp >= 0 && jp < ( int ) y.size() ) 
+         {
+            int uj = j;
+            if ( j < 0 ) 
+            {
+               uj = -j;
+            }
+            yn[ i ] +=  y[ jp ] * dist[ uj ];
+            tdist += dist[ uj ];
+         }
+      }
+      yn[ i ] /= tdist;
+   }
+   puts( "ss5" );
+   {
+      unsigned int low  = 0;
+      unsigned int high = x.size();
+      if ( !smooth_endpoints )
+      {
+         low++;
+         high--;
+      }
+      for( unsigned int i = low; i < high; i++ )
+      {
+         result[ i ] = yn[ i ];
+      }
+   }
+   puts( "ss6" );
    return true;
 }

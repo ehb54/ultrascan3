@@ -4218,6 +4218,7 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_use_quick_fitting      = true;
    saxs_options.bead_models_use_bead_radius_ev     = true;
    saxs_options.bead_models_rho0_in_scat_factors   = true;
+   saxs_options.smooth                             = 0;
 
    grid.create_nmr_bead_pdb                        = false;
 
@@ -4808,7 +4809,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 
    QString fstring_somo =
-      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.2f\t%d\t%s\t%.4f\n").
+      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.6f\t%d\t%s\t%.4f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).

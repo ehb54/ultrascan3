@@ -67,6 +67,7 @@ struct batch_info
    bool compute_prr_std_dev;
    bool hydrate;
    bool saxs_search;
+   bool equi_grid;
 };
 
 class US_EXTERN US_Hydrodyn_Batch : public QFrame
@@ -130,6 +131,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_mm_all;
       QCheckBox     *cb_dmd;
       QCheckBox     *cb_grid;
+      QCheckBox     *cb_equi_grid;
       QCheckBox     *cb_somo;
       QCheckBox     *cb_iqq;
       QCheckBox     *cb_saxs_search;
@@ -257,6 +259,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_dmd();
       void set_somo();
       void set_grid();
+      void set_equi_grid();
       void set_hydro();
       void set_zeno();
       void set_iqq();

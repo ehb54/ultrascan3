@@ -816,7 +816,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void         make_test_set();
 
       void rescale_bead_model();
-      bool equi_grid_bead_model();
+      bool equi_grid_bead_model( double dR = 0e0 );
 
       void browflex_readFromStdout();
       void browflex_readFromStderr();

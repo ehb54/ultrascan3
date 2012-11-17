@@ -126,6 +126,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLabel *lbl_core_progress;
       QLabel *lbl_info_prr;
       QLabel *lbl_bin_size;
+      QLabel *lbl_smooth;
       QLabel *lbl_guinier_cutoff;
 
       QTextEdit *te_filename2;
@@ -185,8 +186,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_cancel;
 
       QwtCounter *cnt_bin_size;
+      QwtCounter *cnt_smooth;
 
       QCheckBox *cb_normalize;
+      QCheckBox *cb_smooth;
 
       QwtCounter *cnt_guinier_cutoff;
 
@@ -618,6 +621,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void show_plot_sans();
       void load_sans( QString filename = "", bool just_plotted_curves = false );
       void update_bin_size(double);
+      void update_smooth(double);
       void update_guinier_cutoff(double);
       void show_pr_contrib();
       void update_pr_contrib_low(const QString &);

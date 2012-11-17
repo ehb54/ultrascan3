@@ -716,7 +716,6 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    cnt_bin_size= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bin_size );
-   Q_CHECK_PTR(cnt_bin_size);
    cnt_bin_size->setRange(0.01, 100, 0.01);
    cnt_bin_size->setValue(our_saxs_options->bin_size);
    cnt_bin_size->setMinimumHeight(minHeight1);
@@ -725,6 +724,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    cnt_bin_size->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_bin_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_bin_size, SIGNAL(valueChanged(double)), SLOT(update_bin_size(double)));
+
+
+   lbl_smooth = new QLabel(tr(" Smoothing: "), this);
+   lbl_smooth->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_smooth->setMinimumHeight(minHeight1);
+   lbl_smooth->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_smooth= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_smooth );
+   cnt_smooth->setRange(0, 99, 1);
+   cnt_smooth->setValue(our_saxs_options->smooth);
+   cnt_smooth->setMinimumHeight(minHeight1);
+   cnt_smooth->setEnabled(true);
+   cnt_smooth->setNumButtons(2);
+   cnt_smooth->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_smooth->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_smooth, SIGNAL(valueChanged(double)), SLOT(update_smooth(double)));
 
    rb_curve_raw = new QRadioButton(tr("Raw"), this);
    rb_curve_raw->setEnabled(true);
@@ -1130,6 +1147,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_bin_size, j, 0);
    background->addWidget(cnt_bin_size, j, 1);
    j++;
+   background->addWidget(lbl_smooth, j, 0);
+   background->addWidget(cnt_smooth, j, 1);
+   j++;
    QBoxLayout *bl = new QHBoxLayout(0);
    bl->addWidget(rb_curve_raw);
    //   bl->addWidget(rb_curve_saxs_dry);
@@ -1443,6 +1463,12 @@ void US_Hydrodyn_Saxs::update_bin_size(double val)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Saxs::update_smooth(double val)
+{
+   our_saxs_options->smooth = ( unsigned int ) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Saxs::update_guinier_cutoff(double val)
 {
    guinier_cutoff = val;
@@ -1683,6 +1709,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                           ( rb_curve_saxs->isChecked() ? "SAXS" : "SANS" ) )
                      .arg(cb_normalize->isChecked() ? ", Normalized" : "")
                      );
+      puts( "pr1" );
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -2028,6 +2055,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          cout << "non-threaded run\n";
 #endif
          // non-threaded
+         puts("pr2");
          float rik; 
          unsigned int pos;
          progress_pr->setTotalSteps((int)(atoms.size()));
@@ -2035,6 +2063,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
               !source &&
               contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
+         puts("pr3");
             // contrib version
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
@@ -2103,6 +2132,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pb_pr_contrib->setEnabled(true);
          } else {
             // non contrib version:
+         puts("pr4");
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
                progress_pr->setProgress(i+1);
@@ -2181,6 +2211,32 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
       cout << "hist.size() after " << hist.size() << endl;
 #endif
+      if ( our_saxs_options->smooth )
+      {
+         puts( "s0" );
+         US_Saxs_Util usu;
+         vector < double > x  ( hist.size() );
+         vector < double > spr;
+
+         for ( unsigned int k = 0; k < hist.size(); k++ )
+         {
+            x[ k ] = hist[ k ];
+         }
+         puts( "s1" );
+
+         if ( usu.smooth( x, spr, our_saxs_options->smooth ) )
+         {
+            puts( "s2" );
+            for ( unsigned int k = 0; k < hist.size(); k++ )
+            {
+               hist[ k ] = spr[ k ];
+            }
+         } else {
+            editor_msg( "red", "smoothing error: " + usu.errormsg );
+         }
+         puts( "s3" );
+      }
+      puts( "s4" );
 
       // save the data to a file
       if ( create_native_saxs )
@@ -2242,6 +2298,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr[i] = (double) hist[i];
                   pr_n[i] = (double) hist[i];
                }
+               puts( "pr5" );
+               cout << QString( "get mw <%1>\n" ).arg( te_filename2->text() );
                normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                QString("")
@@ -2302,6 +2360,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pr[i] = (double) hist[i];
             pr_n[i] = (double) hist[i];
          }
+               puts( "pr6" );
          normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
@@ -2341,6 +2400,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr_mw.push_back((float)get_mw(te_filename2->text()));
    if ( cb_normalize->isChecked() )
    {
+               puts( "pr7" );
       normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
    }
 

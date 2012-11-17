@@ -4393,7 +4393,14 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
+
+   QString filename = 
+      project + 
+      QString( "_%1" ).arg( model_name( current_model ) );
+
+   le_bead_model_file->setText( filename );
+
+   write_bead_model(somo_dir + SLASH + filename +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
@@ -6973,7 +6980,13 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
+   QString filename = 
+      project + 
+      QString( "_%1" ).arg( current_model + 1 );
+
+   le_bead_model_file->setText( filename );
+
+   write_bead_model(somo_dir + SLASH + filename  +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    if ( bd_options.do_rr || !bd_mode  )
@@ -7102,6 +7115,13 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
+
+   QString filename = 
+      project + 
+      QString( "_%1" ).arg( model_name( current_model ) );
+
+   le_bead_model_file->setText( filename );
+
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                     DOTSOMO, &bead_model);
