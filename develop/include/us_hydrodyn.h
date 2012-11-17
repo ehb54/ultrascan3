@@ -751,6 +751,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString     sf_4term_notes;
       QString     sf_5term_notes;
 
+      bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
+      void add_to_directory_history( QString dir );
+
    public:
 
       unsigned int current_model;

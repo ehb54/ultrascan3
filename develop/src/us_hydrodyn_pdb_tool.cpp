@@ -1921,6 +1921,8 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
 
    if ( filename.isEmpty() )
    {
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
       filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
    }
 
@@ -1928,6 +1930,8 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
    {
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
    if ( !QFile::exists( filename ) )
    {
@@ -3341,6 +3345,9 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
    pb_split_pdb->setEnabled( false );
 
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
 
    if ( filename.isEmpty() )
@@ -3348,6 +3355,8 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
       pb_split_pdb->setEnabled( true );
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
    if ( !QFile::exists( filename ) )
    {
@@ -3709,12 +3718,17 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
    // collect up into output pdb(s)
 
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
 
    if ( filename.isEmpty() )
    {
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
    if ( !QFile::exists( filename ) )
    {
@@ -4127,12 +4141,17 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
    // collect up into output pdb(s)
 
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
 
    if ( filename.isEmpty() )
    {
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
    if ( !QFile::exists( filename ) )
    {
@@ -4258,9 +4277,11 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    map < QString, bool > already_listed;
    do 
    {
+      QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
       files = QFileDialog::getOpenFileNames(
                                             "PDB files (*.pdb *.PDB)"
-                                            , ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir
+                                            , use_dir
                                             , this
                                             , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
                                             , tr( "Select PDB files to join, Cancel when done" )
@@ -4271,6 +4292,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
          {
             join_files << files[ i ];
             already_listed[ files[ i ] ] = true;
+            ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( files[ i ] );
          }
       }
    } while ( files.size() );

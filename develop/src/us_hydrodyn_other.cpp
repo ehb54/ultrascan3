@@ -7089,3 +7089,63 @@ void US_Hydrodyn::calc_vol_for_saxs()
    }
 }
 
+bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent )
+{
+   if ( !directory_history.size() ||
+        ( directory_history.size() == 1 && 
+          directory_history.contains( dir ) ) )
+   {
+      return false;
+   }
+
+   QStringList use_history;
+
+   int current = 0;
+   for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   {
+      if ( directory_history[ i ] == dir )
+      {
+         current = i;
+      }
+      use_history << directory_history[ i ];
+   }
+
+   bool ok;
+   QString res = QInputDialog::getItem(
+                                       tr("Previous directories"),
+                                       QString( tr("Select the directory or Cancel for the default directory of\n%1") )
+                                       .arg( dir )
+                                       , 
+                                       use_history,
+                                       current, 
+                                       FALSE, 
+                                       &ok,
+                                       parent ? parent : this );
+   if ( ok ) {
+      dir = res;
+      return true;
+   } 
+   return false;
+}
+   
+void US_Hydrodyn::add_to_directory_history( QString filename )
+{
+
+   QString dir = QFileInfo(filename).dirPath(true);
+   if ( dir.isEmpty() )
+   {
+      return;
+   }
+
+   // push to top
+   QStringList new_dir_history;
+   new_dir_history << dir;
+   for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   {
+      if ( directory_history[ i ] != dir )
+      {
+         new_dir_history << directory_history[ i ];
+      }
+   }
+   directory_history = new_dir_history;
+}

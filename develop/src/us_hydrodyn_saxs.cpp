@@ -4751,7 +4751,7 @@ void US_Hydrodyn_Saxs::load_gnom()
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_gnom;
 
-   select_from_directory_history( use_dir );
+   select_from_directory_history( use_dir, this );
 
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.out", this);
    if (filename.isEmpty())
