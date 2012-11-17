@@ -1686,8 +1686,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    pb_plot_pr->setEnabled(false);
    pb_plot_saxs_sans->setEnabled(false);
    progress_pr->reset();
-   vector < float > hist;
-   float delta = our_saxs_options->bin_size;
+   vector < double > hist;
+   double delta = (double) our_saxs_options->bin_size;
 
 #if defined(BUG_DEBUG)
    qApp->processEvents();
@@ -1709,7 +1709,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                           ( rb_curve_saxs->isChecked() ? "SAXS" : "SANS" ) )
                      .arg(cb_normalize->isChecked() ? ", Normalized" : "")
                      );
-      puts( "pr1" );
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -1725,8 +1724,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
 
-      float b_bar = 0.0;
-      float b_bar_inv2 = 0.0;
+      double b_bar = 0.0;
+      double b_bar_inv2 = 0.0;
       int b_count = 0;
 
       contrib_pdb_atom.clear();
@@ -1747,7 +1746,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       else 
       {
          // compute b[0] based upon current values
-         map < QString, float > b;
+         map < QString, double > b;
          if ( rb_curve_sans->isChecked() )
          {
             // for each entry in hybrid_map, compute b
@@ -1957,6 +1956,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       // restore threading later
       if ( 0 && USglobal->config_list.numThreads > 1 )
       {
+#if defined( USE_THREAD )
          // threaded
          
          unsigned int j;
@@ -1968,7 +1968,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             saxs_pr_thr_threads[j] = new saxs_pr_thr_t(j);
             saxs_pr_thr_threads[j]->start();
          }
-         vector < vector < float > > hists;
+         vector < vector < double > > hists;
          hists.resize(threads);
          for ( j = 0; j < threads; j++ )
          {
@@ -1977,7 +1977,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 # endif            
             saxs_pr_thr_threads[j]->saxs_pr_thr_setup(
                                                       &atoms,
-                                                      &hists[j],
+                                                      &((float)hists)[j],
                                                       delta,
                                                       threads,
                                                       progress_pr,
@@ -2047,6 +2047,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                hist[k] += hists[j][k];
             }
          }
+#endif
 
       } // end threaded
       else
@@ -2055,15 +2056,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          cout << "non-threaded run\n";
 #endif
          // non-threaded
-         puts("pr2");
-         float rik; 
+         double rik; 
          unsigned int pos;
          progress_pr->setTotalSteps((int)(atoms.size()));
          if ( cb_pr_contrib->isChecked() &&
               !source &&
               contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
-         puts("pr3");
             // contrib version
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
@@ -2132,7 +2131,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pb_pr_contrib->setEnabled(true);
          } else {
             // non contrib version:
-         puts("pr4");
+            printf( "atoms.size() %d\n", atoms.size() );
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
                progress_pr->setProgress(i+1);
@@ -2177,7 +2176,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          
 #if defined(BUG_DEBUG)
       cout << "contrib info:\n";
-      for ( map < QString, float >::iterator it = contrib.begin();
+      for ( map < QString, double >::iterator it = contrib.begin();
             it != contrib.end();
             it++ )
       {
@@ -2213,7 +2212,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
       if ( our_saxs_options->smooth )
       {
-         puts( "s0" );
          US_Saxs_Util usu;
          vector < double > x  ( hist.size() );
          vector < double > spr;
@@ -2222,11 +2220,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          {
             x[ k ] = hist[ k ];
          }
-         puts( "s1" );
 
          if ( usu.smooth( x, spr, our_saxs_options->smooth ) )
          {
-            puts( "s2" );
             for ( unsigned int k = 0; k < hist.size(); k++ )
             {
                hist[ k ] = spr[ k ];
@@ -2234,9 +2230,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          } else {
             editor_msg( "red", "smoothing error: " + usu.errormsg );
          }
-         puts( "s3" );
       }
-      puts( "s4" );
 
       // save the data to a file
       if ( create_native_saxs )
@@ -2298,7 +2292,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr[i] = (double) hist[i];
                   pr_n[i] = (double) hist[i];
                }
-               puts( "pr5" );
                cout << QString( "get mw <%1>\n" ).arg( te_filename2->text() );
                normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
@@ -2360,7 +2353,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pr[i] = (double) hist[i];
             pr_n[i] = (double) hist[i];
          }
-               puts( "pr6" );
          normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
@@ -2400,7 +2392,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr_mw.push_back((float)get_mw(te_filename2->text()));
    if ( cb_normalize->isChecked() )
    {
-               puts( "pr7" );
       normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
    }
 

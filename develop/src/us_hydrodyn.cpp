@@ -4872,24 +4872,27 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    if ( !dR )
    {
       bool ok;
-      dR = QInputDialog::getDouble(
-                                   "dR for equi grid:",
-                                   tr( "Enter a cube side value in Angstroms:" ),
-                                   1.0, 
-                                   1e-5,
-                                   1e4, 
-                                   3, 
-                                   &ok, 
-                                   this );
-      if ( !ok )
-      {
-         editor->append("Stopped by user\n\n");
-         pb_grid_pdb->setEnabled(true);
-         pb_equi_grid_bead_model->setEnabled(true);
-         pb_somo->setEnabled(true);
-         progress->reset();
-         return false;
-      }
+
+      do {
+         dR = QInputDialog::getDouble(
+                                      "dR for equi grid:",
+                                      tr( "Enter a cube side value in Angstroms:" ),
+                                      1e0, 
+                                      -1e0,
+                                      1e4, 
+                                      3, 
+                                      &ok, 
+                                      this );
+         if ( !ok )
+         {
+            editor->append("Stopped by user\n\n");
+            pb_grid_pdb->setEnabled(true);
+            pb_equi_grid_bead_model->setEnabled(true);
+            pb_somo->setEnabled(true);
+            progress->reset();
+            return false;
+         }
+      } while ( !dR );
    }
 
    bead_model_suffix = getExtendedSuffix(false, false).replace( "a2b", QString( "eqm%1" ).arg( dR ).replace( ".","_" ) ) + "g";

@@ -84,7 +84,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
          (*match_remember_mw)[partial] = mw;
       }
    }
-   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).ascii(), mw );
+   //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).ascii(), mw );
    return mw;
 }
 

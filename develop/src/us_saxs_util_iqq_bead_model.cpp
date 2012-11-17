@@ -1647,14 +1647,11 @@ bool US_Saxs_Util::smooth(
                           )
 {
    errormsg = "";
-   puts( "ss0" );
    if ( !x.size() )
    {
       errormsg = "smooth(): empty vector";
       return false;
    }
-
-   puts( "ss1" );
 
    if ( !points )
    {
@@ -1664,17 +1661,13 @@ bool US_Saxs_Util::smooth(
 
    // get normal distribution
 
-   puts( "ss2" );
-
    vector < double > dist;
    points++;
-   puts( "ss2a" );
    for ( unsigned int i = 0; i < points; i++ ) 
    {
       double x0 = ( 2e0 / points ) * ( double ) i;
       dist.push_back( exp( -( x0 * x0 ) ) / sqrt( 2e0 * 3.14159265358978323e0 ) );
    }
-   puts( "ss2b" );
    double tot = dist[ 0 ];
    for ( unsigned int j = 1; j < dist.size(); j++ ) 
    {
@@ -1685,7 +1678,6 @@ bool US_Saxs_Util::smooth(
       dist[ j ] /= tot;
    }
 
-   puts( "ss3" );
    // do smoothing
 
    vector < double > y ( x.size() );
@@ -1696,7 +1688,6 @@ bool US_Saxs_Util::smooth(
    {
       y[ i ] = x[ i ];
    }
-   puts( "ss4" );
             
    for( unsigned int i = 0; i < x.size(); i++ )
    {
@@ -1718,7 +1709,7 @@ bool US_Saxs_Util::smooth(
       }
       yn[ i ] /= tdist;
    }
-   puts( "ss5" );
+
    {
       unsigned int low  = 0;
       unsigned int high = x.size();
@@ -1732,6 +1723,5 @@ bool US_Saxs_Util::smooth(
          result[ i ] = yn[ i ];
       }
    }
-   puts( "ss6" );
    return true;
 }
