@@ -545,6 +545,7 @@ totT6+=(clcSt6.msecsTo(clcSt7));
    {
       int soff   = 0;
       int nsstep = simparams.speed_step.size();
+      double correction = 0.0;
 
       // Check each speed step to see if it contains acceleration
       for ( int ss = 0; ss < nsstep; ss++ ) 
@@ -560,24 +561,26 @@ totT6+=(clcSt6.msecsTo(clcSt7));
             double intercept;
             double correlation; 
             double sigma;
-            double correction;
 
-            QVector< double > xtmpVec( nscans );
-            QVector< double > ytmpVec( nscans );
-            double* xtmp = xtmpVec.data();
-            double* ytmp = ytmpVec.data();
-
-            // Only fit the scans that belong to this speed step
-            for ( int i = 0; i < nscans; i++ ) 
+            if ( nscans > 1 )
             {
-               xtmp[ i ] = ed->scan[ i + soff ].time;
-               ytmp[ i ] = ed->scan[ i + soff ].omega_s_t;
+               QVector< double > xtmpVec( nscans );
+               QVector< double > ytmpVec( nscans );
+               double* xtmp = xtmpVec.data();
+               double* ytmp = ytmpVec.data();
+
+               // Only fit the scans that belong to this speed step
+               for ( int i = 0; i < nscans; i++ ) 
+               {
+                  xtmp[ i ] = ed->scan[ i + soff ].time;
+                  ytmp[ i ] = ed->scan[ i + soff ].omega_s_t;
+               }
+
+               US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, 
+                                  &correlation, nscans );
+
+               correction = -intercept / slope;
             }
-
-            US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, 
-                               &correlation, nscans );
-
-            correction = -intercept / slope;
             
             for ( int i = 0; i < nscans; i++ )
                ed->scan[ i + soff ].time -= correction;
@@ -1158,6 +1161,8 @@ ttT2+=(clcSt2.msecsTo(clcSt3));
 ttT3+=(clcSt3.msecsTo(QDateTime::currentDateTime()));
 clcSt3 = QDateTime::currentDateTime();
 #endif
+   double rpm_inc = ( rpm_stop - rpm_start ) /
+      ( af_params.time_steps < 1 ? 1.0 : (double)af_params.time_steps );
 
    // Calculate all time steps 
    for ( int i = 0; i < af_params.time_steps + 1; i++ )
@@ -1166,8 +1171,7 @@ clcSt3 = QDateTime::currentDateTime();
 clcSt4 = QDateTime::currentDateTime();
 ttT3+=(clcSt3.msecsTo(clcSt4));
 #endif
-      double rpm_current = rpm_start + 
-         ( rpm_stop - rpm_start ) * ( i + 0.5 ) / af_params.time_steps;
+      double rpm_current = rpm_start + ( i + 0.5 ) * rpm_inc;
 
 #ifndef NO_DB
       emit current_speed( (int) rpm_current );
@@ -1204,6 +1208,8 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       last_time           = simscan.time;
       simscan.omega_s_t   = w2t_integral;
       simscan.temperature = af_data.scan[ 0 ].temperature;
+DbgLv(2) << "TMS:RSA:ni: time omegast" << simscan.time << simscan.omega_s_t
+   << "rpm_c" << rpm_current << "step-scan" << simdata.scan.size();
 
       simscan.conc.clear();
       simscan.conc.reserve( N );
@@ -2807,9 +2813,12 @@ DbgLv(1) << "RSA: newX3 N" << N;
 
       simscan.time      = af_params.start_time + kkk * dt;
       simscan.rpm       = (int) rpm_current;
-      w2t_integral     += ( simscan.time - last_time ) * sq(rpm_current * M_PI / 30 );
+      w2t_integral     += ( ( simscan.time - last_time )
+                            * sq( rpm_current * M_PI / 30 ) );
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
+DbgLv(2) << "TMS:RSA:ra: time omegast" << simscan.time << simscan.omega_s_t
+   << "step-scan" << simdata.scan.size();
     
       simscan.conc.clear();
       simscan.conc.reserve( N );

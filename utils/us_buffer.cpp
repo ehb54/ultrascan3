@@ -634,6 +634,72 @@ void US_Buffer::readSpectrum( QXmlStreamReader& xml )
    }
 }
 
+void US_Buffer::compositeCoeffs( double* d_coeff, double* v_coeff )
+{
+   int    ncomp = component.size();    // Number of buffer components
+
+   if ( ncomp == 0 )
+      return;                          // If 0, nothing to do
+
+   // Pre-remove water value from components beyond first
+   d_coeff[ 0 ] = (double)( 1 - ncomp ) * DENS_20W;
+   v_coeff[ 0 ] = (double)( 1 - ncomp ) * VISC_20W;
+
+   for ( int ii = 1; ii < 6; ii++ )
+   { // Initialize other coefficients to zero
+      d_coeff[ ii ] = 0.0;
+      v_coeff[ ii ] = 0.0;
+   }
+   
+   double sumc1 = 0.0;
+   double sumcr = 0.0;
+   double sumc2 = 0.0;
+   double sumc3 = 0.0;
+   double sumc4 = 0.0;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   { // Sum concentration and coefficient values
+      double c1     = concentration[ ii ];  // c ^ 1
+      double cr     = sqrt( c1 );           // c ^ 0.5
+      double c2     = c1 * c1;              // c ^ 2
+      double c3     = c2 * c1;              // c ^ 3
+      double c4     = c3 * c1;              // c ^ 4
+      sumc1        += c1;                   // Sum concentration terms
+      sumcr        += cr;
+      sumc2        += c2;
+      sumc3        += c3;
+      sumc4        += c4;
+
+      // Accumulate weighted coefficient terms
+      d_coeff[ 0 ] += component[ ii ].dens_coeff[ 0 ];
+      d_coeff[ 1 ] += component[ ii ].dens_coeff[ 1 ] * cr;
+      d_coeff[ 2 ] += component[ ii ].dens_coeff[ 2 ] * c1;
+      d_coeff[ 3 ] += component[ ii ].dens_coeff[ 3 ] * c2;
+      d_coeff[ 4 ] += component[ ii ].dens_coeff[ 4 ] * c3;
+      d_coeff[ 5 ] += component[ ii ].dens_coeff[ 5 ] * c4;
+
+      v_coeff[ 0 ] += component[ ii ].visc_coeff[ 0 ];
+      v_coeff[ 1 ] += component[ ii ].visc_coeff[ 1 ] * cr;
+      v_coeff[ 2 ] += component[ ii ].visc_coeff[ 2 ] * c1;
+      v_coeff[ 3 ] += component[ ii ].visc_coeff[ 3 ] * c2;
+      v_coeff[ 4 ] += component[ ii ].visc_coeff[ 4 ] * c3;
+      v_coeff[ 5 ] += component[ ii ].visc_coeff[ 5 ] * c4;
+   }
+
+   // Normalize coefficients and multiply by standard powers
+   v_coeff[ 1 ] *= ( 1.0e-3 / sumcr );
+   v_coeff[ 2 ] *= ( 1.0e-2 / sumc1 );
+   v_coeff[ 3 ] *= ( 1.0e-3 / sumc2 );
+   v_coeff[ 4 ] *= ( 1.0e-4 / sumc3 );
+   v_coeff[ 5 ] *= ( 1.0e-6 / sumc4 );
+
+   d_coeff[ 1 ] *= ( 1.0e-3 / sumcr );
+   d_coeff[ 2 ] *= ( 1.0e-2 / sumc1 );
+   d_coeff[ 3 ] *= ( 1.0e-3 / sumc2 );
+   d_coeff[ 4 ] *= ( 1.0e-4 / sumc3 );
+   d_coeff[ 5 ] *= ( 1.0e-6 / sumc4 );
+}
+
 void US_Buffer::dumpBuffer( void ) const
 {
    qDebug() << "person         " << person;

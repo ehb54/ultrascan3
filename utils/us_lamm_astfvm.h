@@ -187,6 +187,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
 
       double  density;         // buffer density
       double  compressib;      // factor for compressibility
+      double  vbar_salt;       // vbar of the salt
 
       SaltData* saltdata;      // data handle for cosedimenting
 
@@ -206,6 +207,9 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       double  param_w2;        // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
 
       double  err_tol;         // error tolerance for mesh refinement
+
+      double  d_coeff[ 6 ];    // SD Adjust buffer density coefficients
+      double  v_coeff[ 6 ];    // SD Adjust buffer viscosity coefficients
 
       // private functions
 

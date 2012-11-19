@@ -429,9 +429,13 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    // Iterate through all experimental data scans and find the first time point
    // in simdata that is higher or equal to each time point in expdata:
 
-   int simscan = 0;
-   double e_omega;
-   double e_time;
+   int    simscan = 0;
+   int    fscan   = -1;
+   int    lscan   = -1;
+   int    escans  = expdata.scan.size();
+   int    sscans  = simdata.scan.size();
+   double e_omega = 0.0;
+   double e_time  = 0.0;
    double s_omega1;
    double s_omega2;
    double s_time1;
@@ -439,8 +443,26 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( use_time )
    {
-      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
-      {
+      double s_time  = simdata.scan[ 0 ].time;
+      double l_time  = simdata.scan[ sscans - 1 ].time;
+
+      for ( int expscan = 0; expscan < escans; expscan++ )
+      { // First determine the scan range of current experiment data
+         e_time     = expdata.scan[ expscan ].time;
+         if ( fscan < 0  &&  e_time >= s_time )
+            fscan      = expscan;
+         if ( e_time > l_time  )
+         {
+            lscan      = expscan;
+            break;
+         }
+      }
+
+      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+
+      for ( int expscan = fscan; expscan < lscan; expscan++ )
+      {  // Interpolate where needed to a range of experiment scans
          MfemScan* sscan1 = &simdata.scan[ simscan ];
          MfemScan* sscan2 = sscan1;
          MfemScan* escan  = &expdata.scan[ expscan ];
@@ -448,7 +470,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          e_omega    = escan->omega_s_t;
          e_time     = escan->time;
 
-         while ( simdata.scan[ simscan ].time < expdata.scan[ expscan ].time )
+         while ( simdata.scan[ simscan ].time < e_time )
          {
             simscan ++;
             // make sure we don't overrun bounds:
@@ -470,7 +492,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             }
          }
 
-         sscan1    = &simdata.scan[ simscan - 1 ];
+         int sscm  = ( simscan > 0 ) ? ( simscan - 1 ) : 1;
+         sscan1    = &simdata.scan[ sscm ];
          sscan2    = &simdata.scan[ simscan ];
          s_omega1  = sscan1->omega_s_t;
          s_time1   = sscan1->time;
@@ -515,14 +538,36 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    }
    else // Use omega^2t integral for interpolation
    {
-      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
-      {
+      double s_omega = simdata.scan[ 0 ].omega_s_t;
+      double l_omega = simdata.scan[ sscans - 1 ].omega_s_t;
+
+      for ( int expscan = 0; expscan < escans; expscan++ )
+      { // First determine the scan range of current experiment data
+         e_omega    = expdata.scan[ expscan ].omega_s_t;
+         if ( fscan < 0  &&  e_omega >= s_omega )
+            fscan      = expscan;
+         if ( e_omega > l_omega )
+         {
+            lscan      = expscan;
+            break;
+         }
+      }
+
+      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+//qDebug() << "MATHi: s_omega l_omega" << s_omega << e_omega
+// << "fscan lscan" << fscan << lscan;
+
+      for ( int expscan = fscan; expscan < lscan; expscan++ )
+      { // Interpolate where needed to a range of experiment scans
          MfemScan* sscan1 = &simdata.scan[ simscan ];
          MfemScan* sscan2 = sscan1;
          MfemScan* escan  = &expdata.scan[ expscan ];
 
          e_omega    = escan->omega_s_t;
          e_time     = escan->time;
+//qDebug() << "MATHi: somg eomg" << simdata.scan[simscan].omega_s_t << e_omega
+// << " escn sscn" << expscan << simscan;
 
          while ( simdata.scan[ simscan ].omega_s_t < e_omega )
          {
@@ -530,10 +575,19 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             // Make sure we don't overrun bounds:
             if ( simscan == (int) simdata.scan.size() )
             {
-               qDebug() << "simulation time scan[" << simscan << "]: " 
+               qDebug() << "simulation omega^2t scan[" << simscan << "]: " 
                         << simdata.scan[ simscan - 1 ].omega_s_t
-                        << ", expdata scan time[" << expscan << "]: "
+                        << ", expdata scan omega^2t[" << expscan << "]: "
                         << expdata.scan[ expscan ].omega_s_t;
+//qDebug() << "e_omega e_time" << e_omega << e_time;
+//int lsc=expdata.scan.size()-1;
+//e_omega=expdata.scan[lsc].omega_s_t;
+//e_time=expdata.scan[lsc].time;
+//qDebug() << "e-lsc e_omega e_time" << lsc << e_omega << e_time;
+//lsc=simdata.scan.size()-1;
+//e_omega=simdata.scan[lsc].omega_s_t;
+//e_time=simdata.scan[lsc].time;
+//qDebug() << "s-lsc e_omega e_time" << lsc << e_omega << e_time;
 #if defined(USE_MPI)
                MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
@@ -544,7 +598,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             }
          }
 
-         sscan1    = &simdata.scan[ simscan - 1 ];
+         int sscm  = ( simscan > 0 ) ? ( simscan - 1 ) : 1;
+         sscan1    = &simdata.scan[ sscm ];
          sscan2    = &simdata.scan[ simscan ];
          s_omega1  = sscan1->omega_s_t;
          s_time1   = sscan1->time;
@@ -623,8 +678,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
                         "exiting...";
-qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
- << tmp_data.radius[jj-1] << expdata.radius[ii];
+//qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
+// << tmp_data.radius[jj-1] << expdata.radius[ii];
 #if defined(USE_MPI)
             MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
@@ -635,21 +690,26 @@ qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
       // check to see if the radius is equal or larger:
       if ( tmp_data.radius[ jj ] == expdata.radius[ ii ] )
       { // they are the same, so simply update the concentration value:
-         for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+         int    ee        = 0;
+         for ( int expscan = fscan; expscan < lscan; expscan++ )
             expdata.scan[ expscan ].conc[ ii ] += 
-                             tmp_data.scan[ expscan ].conc[ jj ];
+                             tmp_data.scan[ ee++ ].conc[ jj ];
       }
       else // interpolation is needed
       {
+         int    ee        = 0;
          int    mm        = jj - 1;
          double radius1   = tmp_data.radius[ mm ];
          double radius2   = tmp_data.radius[ jj ];
          double eradius   = expdata .radius[ ii ];
          double radrange  = radius2 - radius1;
+//qDebug() << "MATHi:  esize jj" << expdata.scan.size() << jj;
+//qDebug() << "MATHi:   r1 r2 er rr" << radius1 << radius2 << eradius << radrange
+// << "fscan lscan" << fscan << lscan;
 
-         for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+         for ( int expscan = fscan; expscan < lscan; expscan++ )
          {
-            MfemScan* tscan = &tmp_data.scan[ expscan ];
+            MfemScan* tscan = &tmp_data.scan[ ee++ ];
 
             double a = ( tscan->conc[ jj ] - tscan->conc[ mm ] ) / radrange;
             

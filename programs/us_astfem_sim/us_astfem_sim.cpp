@@ -534,8 +534,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 1 );
 
-      if ( buffer.compressibility > 0 )
-         astfvm->set_buffer( buffer );
+      astfvm->set_buffer( buffer );
 
       // solve using ASTFVM
       int rc = astfvm->calculate( sim_data );
