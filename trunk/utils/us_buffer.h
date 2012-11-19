@@ -116,6 +116,11 @@ class US_UTIL_EXTERN US_Buffer
       //!             "Refraction", or "Fluorescence"
       void putSpectrum( US_DB2*, const QString& ) const;
 
+      //! \brief Compute composite density,viscosity coefficients
+      //! \param d_coeff Output array of composite density coefficients
+      //! \param v_coeff Output array of composite viscosity coefficients
+      void compositeCoeffs( double*, double* );
+
       //! \brief A debug function to write buffer contents to stderr
       void dumpBuffer( void ) const;
 

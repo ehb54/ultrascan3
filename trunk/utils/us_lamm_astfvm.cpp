@@ -627,6 +627,13 @@ DbgLv(1) << "LFvm:  m b" << param_m  << param_b;
    delta           = 0.;   // default: D=D_0
    density         = DENS_20W;
    compressib      = 0.0;
+   d_coeff[ 0 ]    = DENS_20W;
+   v_coeff[ 0 ]    = VISC_20W;
+   for ( int ii = 1; ii < 6; ii++ )
+   {
+      d_coeff[ ii ]   = 0.0;
+      v_coeff[ ii ]   = 0.0;
+   }
 
    //err_tol         = 1.0e-4;
    err_tol         = 1.0e-5;
@@ -744,7 +751,10 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
       if ( comp_x == model.coSedSolute )
       {  // if this component is the salt, skip solving for it
          if ( comp_x == 0 )
+         {
             saltdata  = new SaltData( model, simparams, auc_data );
+            vbar_salt = model.components[ 0 ].vbar20;
+         }
          return 0;
       }
 
@@ -1045,6 +1055,12 @@ void US_LammAstfvm::set_buffer( US_Buffer buffer )
 {
    density     = buffer.density;             // for compressibility
    compressib  = buffer.compressibility;
+
+   buffer.compositeCoeffs( d_coeff, v_coeff );
+DbgLv(1) << "buff d_coeff" << d_coeff[0] << d_coeff[1] << d_coeff[2]
+   << d_coeff[3] << d_coeff[4] << d_coeff[5];
+DbgLv(1) << "buff v_coeff" << v_coeff[0] << v_coeff[1] << v_coeff[2]
+   << v_coeff[3] << v_coeff[4] << v_coeff[5];
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
@@ -1056,7 +1072,10 @@ void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
 void US_LammAstfvm::SetNonIdealCase_2( )
 {
    if ( comp_x == 0 )
+   {
       saltdata  = new SaltData( model, simparams, auc_data );
+      vbar_salt = model.components[ 0 ].vbar20;
+   }
 
    saltdata->initSalt();
 }
@@ -1416,8 +1435,9 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    double  rho;
    double  visc;
    double  Tempt  = 293.15;    // temperature in K
-   double  vbar   = 0.72;      // 0.251; 
-   double  vbar_w = vbar;
+   //double  vbar   = 0.72;      // 0.251; 
+   double  vbar   = model.components[ 0 ].vbar20;
+   double  vbar_w = 0.72;
    //double  vbar   = 0.251;
    //double  vbar_w = 0.72;
    double  rho_w  = 0.998234;  //  density of water
@@ -1458,23 +1478,16 @@ double rhoe=0.0;
 double vis0=0.0;
 double vism=0.0;
 double vise=0.0;
-            double rK     = 0.998234 + 6e-6;
-            double vK     = 1.00194 - 0.00078;
             double sA     = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
             double dA     = param_D * Tempt * 1.00194 / 293.15;
             double Cmrt   = 0.0;
             double Cmsq   = 0.0;
             double Cmcu   = 0.0;
             double Cmqu   = 0.0;
+                   vbar   = vbar_salt;
            
             for ( j = 0; j < Nv; j++ )
             {
-               // salt concentration
-               Cm         = Csalt[ j ];
-               Cmrt       = sqrt( Cm );
-               Cmsq       = Cm * Cm;
-               Cmcu       = Cm * Cmsq;
-               Cmqu       = Cm * Cmcu;
                // The calculations below are a more efficient version of the
                //  following original computations:
                //
@@ -1485,14 +1498,25 @@ double vise=0.0;
                //s_adj[j] =(1-vbar*rho)*1.00194/((1-vbar_w*rho_w)*visc)*param_s;
                //D_adj[j] =(Tempt*1.00194)/(293.15*visc) * param_D;
       
-               rho        = rK + Cm   * 12.68641e-2
-                               + Cmsq * 1.274450e-3
-                               - Cmcu * 11.95400e-4
-                               + Cmqu * 258.8660e-6;
-               visc       = vK - Cmrt * 19.4104e-3
-                               - Cm   * 4.07863e-2
-                               + Cmsq * 11.5489e-3
-                               - Cmcu * 21.7740e-4;
+               Cm         = Csalt[ j ];             // Salt concentration
+               Cmrt       = sqrt( Cm );             //  and powers of it
+               Cmsq       = Cm * Cm;
+               Cmcu       = Cm * Cmsq;
+               Cmqu       = Cm * Cmcu;
+
+               rho        =          d_coeff[ 0 ]
+                            + Cmrt * d_coeff[ 1 ]
+                            + Cm   * d_coeff[ 2 ]
+                            + Cmsq * d_coeff[ 3 ]
+                            + Cmcu * d_coeff[ 4 ]
+                            + Cmqu * d_coeff[ 5 ];
+
+               visc       =          v_coeff[ 0 ]
+                            + Cmrt * v_coeff[ 1 ]
+                            + Cm   * v_coeff[ 2 ]
+                            + Cmsq * v_coeff[ 3 ]
+                            + Cmcu * v_coeff[ 4 ]
+                            + Cmqu * v_coeff[ 5 ];
 
                s_adj[ j ] = sA * ( 1.0 - vbar * rho ) / visc;
 
@@ -1507,10 +1531,10 @@ DbgLv(2) << "AdjSD:    sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
 DbgLv(2) << "AdjSD:    Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
 DbgLv(2) << "AdjSD:     rho 0,m,e" << rho0 << rhom << rhoe;
 DbgLv(2) << "AdjSD:     visc 0,m,e" << vis0 << vism << vise;
-DbgLv(2) << "AdjSD:      rK vK vbar_w rho_w" << rK << vK << vbar_w << rho_w;
+DbgLv(2) << "AdjSD:      vbar vbar_w rho_w" << vbar << vbar_w << rho_w;
 DbgLv(2) << "AdjSD:       cmrt cm^2 cm^3 cm^4" << Cmrt << Cmsq << Cmcu << Cmqu;
-DbgLv(2) << "AdjSD:        rK rho" << rK << rhoe;
-DbgLv(2) << "AdjSD:        vK vis" << vK << vise;
+DbgLv(2) << "AdjSD:        d_coeff[0] rho" << d_coeff[0] << rhoe;
+DbgLv(2) << "AdjSD:        v_coeff[0] vis" << v_coeff[0] << vise;
          }
 
 kst2+=timer.restart();
