@@ -791,9 +791,15 @@ void US_Hydrodyn_Batch::add_files( vector < QString > filenames )
 
 void US_Hydrodyn_Batch::add_files()
 {
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+
+
    QStringList filenames = QFileDialog::getOpenFileNames(
                                                          "Structures (*.pdb *.PDB *.bead_model *.BEAD_MODEL *.beams *.BEAD_MODEL)",
-                                                         ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir,
+                                                         use_dir,
                                                          this,
                                                          "Open Structure Files",
                                                          "Please select a PDB file or files...");
@@ -806,6 +812,7 @@ void US_Hydrodyn_Batch::add_files()
    QStringList::Iterator it = filenames.begin();
    if ( it != filenames.end() )
    {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( *it );
       editor->append("\n");
    }
    disable_updates = true;

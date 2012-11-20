@@ -639,6 +639,22 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_user_highq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
+
+   le_user_lowI = new QLineEdit(this, "user_lowI Line Edit");
+   le_user_lowI->setText("");
+   // le_user_lowI->setMinimumHeight(minHeight1);
+   le_user_lowI->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_user_lowI->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_user_lowI->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_user_lowI, SIGNAL(textChanged(const QString &)), SLOT(update_user_lowI(const QString &)));
+
+   le_user_highI = new QLineEdit(this, "user_highI Line Edit");
+   le_user_highI->setText("");
+   // le_user_highI->setMinimumHeight(minHeight1);
+   le_user_highI->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_user_highI->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_user_highI->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_user_highI, SIGNAL(textChanged(const QString &)), SLOT(update_user_highI(const QString &)));
    
    if ( started_in_expert_mode )
    {
@@ -1139,6 +1155,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    QHBoxLayout *hbl_user_range = new QHBoxLayout;
    hbl_user_range->addWidget(le_user_lowq);
    hbl_user_range->addWidget(le_user_highq);
+   hbl_user_range->addWidget(le_user_lowI);
+   hbl_user_range->addWidget(le_user_highI);
    background->addLayout(hbl_user_range, j, 1);
    j++;
 
@@ -1491,6 +1509,16 @@ void US_Hydrodyn_Saxs::update_user_lowq(const QString &)
 }
 
 void US_Hydrodyn_Saxs::update_user_highq(const QString &)
+{
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::update_user_lowI(const QString &)
+{
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::update_user_highI(const QString &)
 {
    set_guinier();
 }
@@ -5981,6 +6009,18 @@ void US_Hydrodyn_Saxs::plot_range(
          }
       }
    }
+   if ( cb_user_range->isChecked() )
+   {
+      lowI = 
+         le_user_lowI->text().toDouble() ?
+         le_user_lowI->text().toDouble() :
+         lowI;
+      highI = 
+         le_user_highI->text().toDouble() ?
+         le_user_highI->text().toDouble() :
+         highI;
+   }
+
    if ( any_plots )
    {
       lowI *= .6;

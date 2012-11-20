@@ -3271,12 +3271,13 @@ bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir, QWidget *par
    
 void US_Hydrodyn_Saxs::add_to_directory_history( QString filename )
 {
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
-   QString dir = QFileInfo(filename).dirPath(true);
-   if ( dir.isEmpty() )
-   {
-      return;
-   }
+   //    QString dir = QFileInfo(filename).dirPath(true);
+   //    if ( dir.isEmpty() )
+   //    {
+   //       return;
+   //    }
 
    //    // push to top
    //    QStringList new_dir_history;

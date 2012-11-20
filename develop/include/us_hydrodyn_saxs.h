@@ -201,6 +201,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QCheckBox *cb_kratky;
       QLineEdit *le_user_lowq;
       QLineEdit *le_user_highq;
+      QLineEdit *le_user_lowI;
+      QLineEdit *le_user_highI;
 
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
@@ -661,6 +663,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_guinier_highq2(const QString &);
       void update_user_lowq(const QString &);
       void update_user_highq(const QString &);
+      void update_user_lowI(const QString &);
+      void update_user_highI(const QString &);
       void load_gnom();
       void saxs_search();
       void saxs_screen();

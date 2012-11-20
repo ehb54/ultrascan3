@@ -1733,6 +1733,8 @@ void US_Hydrodyn::load_pdb()
       somo_pdb_dir :
       path_load_pdb;
 
+   select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir,
                                                    "Structures (*.pdb *.PDB)",
                                                    this,
@@ -1754,6 +1756,7 @@ void US_Hydrodyn::load_pdb()
    int errors_found = 0;
    if (!filename.isEmpty())
    {
+      add_to_directory_history( filename );
       if ( is_dammin_dammif(filename) ) 
       {
          screen_bead_model(filename);
@@ -2198,6 +2201,9 @@ void US_Hydrodyn::load_bead_model()
       somo_dir :
       path_load_bead_model;
 
+
+   select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir
 
                                                    ,"Bead models (*.bead_model *.BEAD_MODEL);;"
@@ -2224,6 +2230,8 @@ void US_Hydrodyn::load_bead_model()
 
    if (!filename.isEmpty())
    {
+      add_to_directory_history( filename );
+
       options_log = "";
       pb_somo->setEnabled(false);
       pb_visualize->setEnabled(false);
