@@ -185,6 +185,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rho0, SIGNAL(textChanged(const QString &)), SLOT(update_rho0(const QString &)));
 
+   cb_only_ev = new QCheckBox( this );
+   cb_only_ev->setText(tr(" Only compute excluded volume component"));
+   cb_only_ev->setEnabled( true );
+   cb_only_ev->setChecked( false );
+   cb_only_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_only_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    lbl_deltaR = new QLabel(tr(" Delta x,y,z for integration (A)"), this );
    lbl_deltaR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_deltaR->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -251,7 +258,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_spec_multiplier = new QLineEdit( this, "Spec_Multiplier Line Edit");
-   le_spec_multiplier->setText( QString( "" ).sprintf( "%g", sqrt( 2e0 ) ) );
+   le_spec_multiplier->setText( QString( "" ).sprintf( "%g", 1.0f ) );
    le_spec_multiplier->setAlignment(Qt::AlignVCenter);
    le_spec_multiplier->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -435,6 +442,8 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       j++;
       gl_options->addWidget         ( lbl_rho0                        , j, 0 );
       gl_options->addWidget         ( le_rho0                         , j, 1 );
+      j++;
+      gl_options->addMultiCellWidget( cb_only_ev                      , j, j, 0, 1 );
       j++;
       gl_options->addWidget         ( lbl_deltaR                      , j, 0 );
       gl_options->addWidget         ( le_deltaR                       , j, 1 );
@@ -807,6 +816,7 @@ void US_Hydrodyn_Saxs_1d::start()
    }
 
    vector < saxs_atom > atoms;
+   vector < PDB_atom >  model;
 
    progress->setProgress( 0, 1 );
 
@@ -1035,7 +1045,8 @@ void US_Hydrodyn_Saxs_1d::start()
                continue;
             }
 
-            atoms.push_back(new_atom);
+            atoms.push_back( new_atom   );
+            model.push_back( *this_atom );
          }
       }
       // ok now we have all the atoms
@@ -1478,6 +1489,95 @@ void US_Hydrodyn_Saxs_1d::start()
                      editor_msg( "blue", QString( tr( "Added rotated excluded volume %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
                   }
                }
+
+               // save ev & pdb in individual files
+
+               if ( rho0 > 0e0 )
+               {
+                  QString fname = QString( "%1-%2-rots-base-ev-dR%3-t%4.pdb" )
+                     .arg( le_atom_file->text() )
+                     .arg( r )
+                     .arg( QString( "%1" ).arg( le_deltaR   ->text() ).replace( ".", "_" ) )
+                     .arg( QString( "%1" ).arg( le_threshold->text() ).replace( ".", "_" ) )
+                     ;
+                  QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+                           QDir::separator() + "tmp" + QDir::separator() +fname );
+                  bool ok_to_write = true;
+                  if ( !f.open( IO_WriteOnly ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     ok_to_write = false;
+                  }                  
+
+                  if ( ok_to_write )
+                  {
+                     QTextStream ts( &f );
+
+                     ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+                     ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                        .arg( rotations[ r ][ 0 ] )
+                        .arg( rotations[ r ][ 1 ] )
+                        .arg( rotations[ r ][ 2 ] );
+               
+                     for ( unsigned int a = 0; a < atoms.size(); a++ )
+                     {
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    model[ a ].serial,
+                                    model[ a ].orgName.ascii(),
+                                    model[ a ].resName.ascii(),
+                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.ascii(),
+                                    model[ a ].resSeq.ascii(),
+                                    atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                    atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                    atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
+                                    0.0f,
+                                    0.0f,
+                                    model[ a ].element.ascii()
+                                    );
+                     }
+                     ts << "ENDMDL\n";
+
+
+                     ts << QString( "MODEL     %1\n" ).arg( r + 1 );
+                     ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
+                        .arg( rotations[ r ][ 0 ] )
+                        .arg( rotations[ r ][ 1 ] )
+                        .arg( rotations[ r ][ 2 ] );
+               
+                     QString c = "1";
+                     unsigned int d = 0;
+                     unsigned int au = 0;
+                     for ( unsigned int a = 0; a < excluded_volume.size(); a++ )
+                     {
+                        ++au;
+                        if ( au >= 10000 )
+                        {
+                           au = 1;
+                           d++;
+                        }
+                        ts << QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1d%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    au,
+                                    "CA",
+                                    " LYS",
+                                    d,
+                                    au,
+                                    excluded_volume[ a ].axis[ 0 ],
+                                    excluded_volume[ a ].axis[ 1 ],
+                                    excluded_volume[ a ].axis[ 2 ],
+                                    0.0f,
+                                    0.0f,
+                                    "C"
+                                    );
+                     }
+                     ts << "ENDMDL\n";
+                     f.close();
+                     editor_msg( "blue", QString( tr( "Created atoms & excluded volume in %1" ) ).arg( fname ) );
+                  }
+               }
             }
          } else {
             // do random rotations stuff
@@ -1780,118 +1880,121 @@ void US_Hydrodyn_Saxs_1d::start()
             }
             // for each atom, compute scattering factor for each element on the detector
 
-            for ( unsigned int a = 0; a < atoms.size(); a++ )
+            if ( !cb_only_ev->isChecked() )
             {
-               if ( !t ) 
+               for ( unsigned int a = 0; a < atoms.size(); a++ )
                {
-                  progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
-                  qApp->processEvents();
-               }
-               // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+                  if ( !t ) 
+                  {
+                     progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                     qApp->processEvents();
+                  }
+                  // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
 
-               for ( unsigned int i = 0; i < data.size(); i++ )
-               {
-                  double pixpos = ( double ) i * detector_width_per_pixel;
+                  for ( unsigned int i = 0; i < data.size(); i++ )
+                  {
+                     double pixpos = ( double ) i * detector_width_per_pixel;
 
-                  double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
+                     double S_length = sqrt( detector_distance * detector_distance + pixpos * pixpos );
 
-                  vector < double > Q( 3 );
-                  Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
-                  Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
-                  Q[ 2 ] = 0e0;
+                     vector < double > Q( 3 );
+                     Q[ 0 ] = 2.0 * M_PI * ( ( pixpos / S_length ) / lambda );
+                     Q[ 1 ] = 2.0 * M_PI * ( ( ( detector_distance / S_length ) - 1e0 ) / lambda );
+                     Q[ 2 ] = 0e0;
                
-                  vector < double > Rvorg( 3 );
-                  Rvorg[ 0 ] = ( double ) atoms[ a ].pos[ 0 ] * cos_planar_angle - ( double ) atoms[ a ].pos[ 1 ] * sin_planar_angle ;
-                  Rvorg[ 1 ] = ( double ) atoms[ a ].pos[ 0 ] * sin_planar_angle + ( double ) atoms[ a ].pos[ 1 ] * cos_planar_angle ;
-                  Rvorg[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
+                     vector < double > Rvorg( 3 );
+                     Rvorg[ 0 ] = ( double ) atoms[ a ].pos[ 0 ] * cos_planar_angle - ( double ) atoms[ a ].pos[ 1 ] * sin_planar_angle ;
+                     Rvorg[ 1 ] = ( double ) atoms[ a ].pos[ 0 ] * sin_planar_angle + ( double ) atoms[ a ].pos[ 1 ] * cos_planar_angle ;
+                     Rvorg[ 2 ] = ( double ) atoms[ a ].pos[ 2 ];
                
-                  vector < double > Rv( 3 );
-                  Rv[ 0 ] = 0.0;
-                  Rv[ 1 ] = 0.0;
-                  Rv[ 2 ] = 0.0;
+                     vector < double > Rv( 3 );
+                     Rv[ 0 ] = 0.0;
+                     Rv[ 1 ] = 0.0;
+                     Rv[ 2 ] = 0.0;
 
-                  Rv[ 0 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 0 ]) * Rvorg[ 0 ];
-                  Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] - rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 1 ];
-                  Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] + rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 2 ];
+                     Rv[ 0 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 0 ]) * Rvorg[ 0 ];
+                     Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] - rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 1 ];
+                     Rv[ 0 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] + rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 2 ];
 
-                  Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] + rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 0 ];
-                  Rv[ 1 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 1 ]) * Rvorg[ 1 ];
-                  Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] - rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 2 ];
+                     Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 1 ] + rotations[ r ][ 2 ] * sinpsi) * Rvorg[ 0 ];
+                     Rv[ 1 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 1 ]) * Rvorg[ 1 ];
+                     Rv[ 1 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] - rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 2 ];
 
-                  Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] - rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 0 ];
-                  Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] + rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 1 ];
-                  Rv[ 2 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 2 ] * rotations[ r ][ 2 ]) * Rvorg[ 2 ];
+                     Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 0 ] * rotations[ r ][ 2 ] - rotations[ r ][ 1 ] * sinpsi) * Rvorg[ 0 ];
+                     Rv[ 2 ] += ((1.0 - cospsi) * rotations[ r ][ 1 ] * rotations[ r ][ 2 ] + rotations[ r ][ 0 ] * sinpsi) * Rvorg[ 1 ];
+                     Rv[ 2 ] += (cospsi + (1.0 - cospsi) * rotations[ r ][ 2 ] * rotations[ r ][ 2 ]) * Rvorg[ 2 ];
 
-                  double QdotR = 
-                     Q[ 0 ] * Rv[ 0 ] +
-                     Q[ 1 ] * Rv[ 1 ] +
-                     Q[ 2 ] * Rv[ 2 ];
+                     double QdotR = 
+                        Q[ 0 ] * Rv[ 0 ] +
+                        Q[ 1 ] * Rv[ 1 ] +
+                        Q[ 2 ] * Rv[ 2 ];
                
-                  complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
+                     complex < double > iQdotR = complex < double > ( 0e0, -QdotR );
             
-                  complex < double > expiQdotR = exp( iQdotR );
+                     complex < double > expiQdotR = exp( iQdotR );
                
-                  // F_atomic
+                     // F_atomic
                
-                  saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
+                     saxs saxs = saxs_map[ atoms[ a ].saxs_name ];
                
-                  double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
+                     double q = sqrt( Q[ 0 ] * Q[ 0 ] + Q[ 1 ] * Q[ 1 ] + Q[ 2 ] * Q[ 2 ] );
 
 #if defined( UHS2_SCAT_DEBUG )
-                  cout << QString( 
-                                  "atom                %1\n"
-                                  "pixel               %2 %3\n"
-                                  "relative to beam    %4 %5\n"
-                                  "distance            %6\n"
-                                  "q of pixel          %7\n"
-                                  "expIQdotr           "
-                                  )
-                     .arg( atoms[ a ].hybrid_name )
-                     .arg( i ).arg( j )
-                     .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
-                     .arg( pix_dist_from_beam_center )
-                     .arg( q )
-                     .ascii();
+                     cout << QString( 
+                                     "atom                %1\n"
+                                     "pixel               %2 %3\n"
+                                     "relative to beam    %4 %5\n"
+                                     "distance            %6\n"
+                                     "q of pixel          %7\n"
+                                     "expIQdotr           "
+                                     )
+                        .arg( atoms[ a ].hybrid_name )
+                        .arg( i ).arg( j )
+                        .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
+                        .arg( pix_dist_from_beam_center )
+                        .arg( q )
+                        .ascii();
                
-                  cout << expiQdotR << endl;
+                     cout << expiQdotR << endl;
 #endif
-                  double q_2_over_4pi = q * q * one_over_4pi_2;
+                     double q_2_over_4pi = q * q * one_over_4pi_2;
 
-                  double F_at =
-                     saxs_window->compute_ff( saxs,
-                                              saxsH,
-                                              atoms[ a ].residue_name,
-                                              atoms[ a ].saxs_name,
-                                              atoms[ a ].atom_name,
-                                              atoms[ a ].hydrogens,
-                                              q,
-                                              q_2_over_4pi );
+                     double F_at =
+                        saxs_window->compute_ff( saxs,
+                                                 saxsH,
+                                                 atoms[ a ].residue_name,
+                                                 atoms[ a ].saxs_name,
+                                                 atoms[ a ].atom_name,
+                                                 atoms[ a ].hydrogens,
+                                                 q,
+                                                 q_2_over_4pi );
 
-                  //              double F_at =
-                  //                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
-                  //                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
-                  //                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
-                  //                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
-                  //                 atoms[ a ].hydrogens * 
-                  //                 ( saxsH.c + 
-                  //                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
-                  //                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
-                  //                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
-                  //                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
+                     //              double F_at =
+                     //                 saxs.a[ 0 ] * exp( -saxs.b[ 0 ] * q_2_over_4pi ) +
+                     //                 saxs.a[ 1 ] * exp( -saxs.b[ 1 ] * q_2_over_4pi ) +
+                     //                 saxs.a[ 2 ] * exp( -saxs.b[ 2 ] * q_2_over_4pi ) +
+                     //                 saxs.a[ 3 ] * exp( -saxs.b[ 3 ] * q_2_over_4pi ) +
+                     //                 atoms[ a ].hydrogens * 
+                     //                 ( saxsH.c + 
+                     //                   saxsH.a[ 0 ] * exp( -saxsH.b[ 0 ] * q_2_over_4pi ) +
+                     //                   saxsH.a[ 1 ] * exp( -saxsH.b[ 1 ] * q_2_over_4pi ) +
+                     //                   saxsH.a[ 2 ] * exp( -saxsH.b[ 2 ] * q_2_over_4pi ) +
+                     //                   saxsH.a[ 3 ] * exp( -saxsH.b[ 3 ] * q_2_over_4pi ) );
                
-                  data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
+                     data[ i ] += complex < double > ( F_at, 0e0 ) * expiQdotR;
 
-                  if ( !running ) 
-                  {
-                     update_image();
-                     update_enables();
-                     return;
+                     if ( !running ) 
+                     {
+                        update_image();
+                        update_enables();
+                        return;
+                     }
                   }
                }
-            }
+            } // !cb_only_ev->isChecked();
 
             // now subtract excluded volume
-
+            
             if ( rho0 )
             {
                for ( unsigned int i = 0; i < data.size(); i++ )
@@ -2426,6 +2529,62 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
    errormsg = "No CBF linked in this version\n";
    return false;
 #else 
+   // create tmp_pdb with no waters
+
+   if ( !QFile::exists( filepathname ) )
+   {
+      errormsg = QString( "Error: pdb file not found (%1)" ).arg( filepathname );
+      return false;
+   }
+   
+   QStringList qsl;
+   {
+      QFile f( filepathname );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         errormsg = QString( "Error: can not open pdb (%1)" ).arg( filepathname );
+         return false;
+      }
+      QTextStream ts( &f );
+      QRegExp rx_end("^END");
+      QRegExp rx_atom ("^("
+                       "ATOM|"
+                       "HETATM"
+                       ")" );
+
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         if ( rx_end.search( qs ) != -1 )
+         {
+            qsl << "END\n";
+            break;
+         }
+         if ( rx_atom.search( qs ) != -1 &&
+              qs.mid( 17, 3 ) == "HOH" )
+         {
+            continue;
+         }
+         qsl << qs << "\n";
+      }
+      f.close();
+   }
+
+   QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+               QDir::separator() + "tmp" + QDir::separator() + QFileInfo( filepathname ).baseName() + "_tmp.pdb" );
+   
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      errormsg = QString( "Error: can not open pdb (%1) for writing" ).arg( f.name() );
+      return false;
+   }
+   QTextStream ts( &f );
+   for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
+   {
+      ts << qsl[ i ];
+   }
+   f.close();
+
    // run rasmol & get the map
    // simple linux version for now
    QString rasmol = 
@@ -2442,9 +2601,9 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       errormsg = QString( "Error: rasmol not found (%1)" ).arg( rasmol );
    }
 
-   if ( !QFile::exists( filepathname ) )
+   if ( !QFile::exists( f.name() ) )
    {
-      errormsg = QString( "Error: pdb file not found (%1)" ).arg( filepathname );
+      errormsg = QString( "Error: pdb file not found (%1)" ).arg( f.name() );
    }
 
    mapname = QString( "%1_p%2_t%3_r%4.rasmol_map" )
@@ -2462,7 +2621,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
                           "exit\n"
                           "__EOF\n" )
       .arg( rasmol )
-      .arg( filepathname )
+      .arg( f.name() )
       .arg( QString( "" ).sprintf( "%.5f", probe_radius ) )
       .arg( QString( "" ).sprintf( "%.5f", deltaR ) )
       .arg( mapname );

@@ -101,6 +101,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QCheckBox     *cb_planar_method;
       QCheckBox     *cb_random_rotations;
       QCheckBox     *cb_ev_from_file;
+      QCheckBox     *cb_only_ev;
 
       QProgressBar  *progress;
 
