@@ -77,26 +77,27 @@ DbgLv(1) << "GaMast:    calc_resids return";
       write_model( simulation_values, US_Model::GA );
 
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
-      if ( ++mc_iteration < mc_iterations )
+      mc_iteration++;
+      if ( mc_iterations > 1 )
       {
-         // Set scaled_data the first time
-         if ( mc_iteration == 1 ) 
-         {
-            scaled_data = simulation_values.sim_data;
-         }
-
-         time_mc_iterations();
-
+         qDebug() << "Fit RMSD" << sqrt( simulation_values.variance )
+            << " of MC_Iteration" << mc_iteration;
          if ( mc_iteration < mc_iterations )
          {
+            // Set scaled_data the first time
+            if ( mc_iteration == 1 ) 
+            {
+               scaled_data = simulation_values.sim_data;
+            }
+
+            time_mc_iterations();
+
 DbgLv(1) << "GaMast:    set_gaMC call";
             set_gaMonteCarlo();
 DbgLv(1) << "GaMast:    set_gaMC  return";
          }
-
          else
             break;
-
       }
       else
          break;

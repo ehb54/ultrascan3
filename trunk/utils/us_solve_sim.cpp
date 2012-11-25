@@ -63,8 +63,8 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
 
          banddthr    = true;
       }
-if(thrnrank==1) DbgLv(0) << "CR:zthr lthr mxod mnzc mfac mfex"
- << zerothr << linethr << maxod << minnzsc << mfactor << mfactex;
+if(thrnrank==1) DbgLv(0) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
+ << zerothr << linethr << maxod << minnzsc << mfactor << mfactex << banddthr;
    }
 }
 

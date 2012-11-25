@@ -403,6 +403,7 @@ void US_Astfem_Sim::start_simulation( void )
 
    // Set the time for the scans
    double current_time;
+   double w2t_sum     = 0.0;
    double duration;
    double increment;
    int    scan_number = 0;
@@ -414,16 +415,22 @@ void US_Astfem_Sim::start_simulation( void )
 
       // First time point of this speed step in secs
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ i ];
+      double w2t   = sq( sp->rotorspeed * M_PI / 30.0 );
 
       current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
       duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
       increment    = ( duration - current_time ) / (double)( sp->scans );
+      if ( i == 0 )
+         w2t_sum        = current_time * w2t;
+      double w2t_inc = increment * w2t;
 DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
 
       for ( int j = 0; j < sp->scans; j++ )
       {
          US_DataIO2::Scan* scan = &sim_data.scanData[ scan_number ];
          scan->seconds = current_time + increment * ( j + 1 );
+         scan->omega2t = w2t_sum;
+         w2t_sum      += w2t_inc;
 
          scan_number++;
 DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
@@ -470,6 +477,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       // Interpolate simulation onto desired grid based on time, not based on
       // omega-square-t integral
       astfem_rsa->setTimeInterpolation( true ); 
+      //astfem_rsa->setTimeInterpolation( false ); 
       astfem_rsa->setTimeCorrection( time_correctionFlag );
       astfem_rsa->setStopFlag( stopFlag );
    

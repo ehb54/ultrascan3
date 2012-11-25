@@ -1920,9 +1920,14 @@ DbgLv(1) << "  meshtype" << mtyp;
       simparams.gridType = US_SimulationParameters::FIXED;
 
    simparams.firstScanIsConcentration = false;
+   double concval1                    = 0.0;
 
    if ( simparams.band_forming )
+   {
       simparams.band_volume = bvol.toDouble();
+      //concval1              = 1.0;
+      //simparams.firstScanIsConcentration = true;
+   }
    else
       simparams.band_volume = 0.0;
 DbgLv(1) << "  duration_hours  " << simparams.speed_step[0].duration_hours;
@@ -1932,7 +1937,8 @@ DbgLv(1) << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
    // Make a simulation copy of the experimental data without actual readings
 
-   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+//   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
+   US_AstfemMath::initSimData( *sdata, *edata, concval1 );
 
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
@@ -1976,6 +1982,7 @@ DbgLv(1) << " nthread ntc ncomp" << nthread << ntc << ncomp;
          connect( astfem_rsa, SIGNAL( current_component( int ) ),
                   this,       SLOT(   update_progress(   int ) ) );
 DbgLv(1) << " afrsa calc";
+//astfem_rsa->setTimeInterpolation( true );
 //astfem_rsa->setTimeCorrection( true );
 
          astfem_rsa->calculate( *sdata );
@@ -1997,7 +2004,7 @@ DbgLv(1) << " afrsa calc";
    }
 
    else
-   {  // Do multi-thread calcuations
+   {  // Do multi-thread calculations
 DbgLv(1) << " USING THREADING";
       solution_rec.buffer.compressibility = compress;
       tsimdats.clear();
