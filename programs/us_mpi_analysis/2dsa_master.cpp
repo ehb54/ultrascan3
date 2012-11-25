@@ -15,6 +15,11 @@ void US_MPI_Analysis::_2dsa_master( void )
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
+   int max_iters_all   = max_iterations;
+
+   if ( mc_iterations > 1 )
+      max_iterations   = max_iters_all > 1 ? max_iters_all : 5;
+
    while ( true )
    {
       int worker;
@@ -47,12 +52,16 @@ void US_MPI_Analysis::_2dsa_master( void )
       {
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            "; Meniscus: "   + 
+            "; Dataset: "    + QString::number( current_dataset + 1 );
+         if ( mc_iterations > 1 )
+            progress     +=
+               "; MonteCarlo: " + QString::number( mc_iteration + 1 );
+         else
+            progress     +=
+               "; Meniscus: "   + 
                  QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
-                 QString( " (Run %1 of %2)" ).arg( meniscus_run + 1 )
-                                             .arg( meniscus_values.size() )  +
-            "; MonteCarlo: " + QString::number( mc_iteration + 1 );
+                 QString( " Run %1 of %2" ).arg( meniscus_run + 1 )
+                                           .arg( meniscus_values.size() );
 
          send_udp( progress );
 
@@ -60,7 +69,8 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( max_iterations > 1 )
          {
             qDebug() << "Iteration:" << iterations << " Variance:"
-               << simulation_values.variance;
+               << simulation_values.variance << "RMSD:"
+               << sqrt( simulation_values.variance );
 
             iterate();
          }
@@ -87,12 +97,23 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( ! job_queue.isEmpty() ) continue;
 
          // Monte Carlo
-         if ( ++mc_iteration < mc_iterations )
+         mc_iteration++;
+         if ( mc_iterations > 1 )
          {
-            time_mc_iterations();
+            US_SolveSim::Simulation sim = simulation_values;
+            sim.solutes                 = calculated_solutes[ max_depth ]; 
+            calc_residuals( 0, data_sets.size(), sim );
+            qDebug() << "Fit RMSD" << sqrt( simulation_values.variance )
+                     << "  E-S RMSD" << sqrt( sim.variance )
+                     << "  of MC_Iteration" << mc_iteration;
+            max_iterations    = max_iters_all;
 
             if ( mc_iteration < mc_iterations )
+            {
+               time_mc_iterations();
+
                set_monteCarlo();
+            }
          }
 
          if ( ! job_queue.isEmpty() ) continue;
@@ -444,7 +465,10 @@ datasum += mcdata;
       }
 
       varrmsd = sqrt( varrmsd / (double)( scan_count * radius_points ) );
-      DbgLv(0) << "Variation RMSD" << varrmsd << "  for MC_Iteration" << mc_iteration + 1;
+      double fitrmsd = sqrt( simulation_values.variance );
+      qDebug() << "  Variation RMSD" << QString::number( varrmsd, 'f', 7 )
+               << "Fit RMSD" << QString::number( fitrmsd, 'f', 7 )
+               << "  for MC_Iteration" << mc_iteration + 1;
 
 DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
  << "mcdata sum" << datasum;

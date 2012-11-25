@@ -579,8 +579,10 @@ void US_ResidPlot::plot_rdata()
    QPen          pen_plot( Qt::green );
 
    // plot a zero line in red
-   rr[ 0 ] = !do_pltrin ? 6.0 : 0.0;
-   rr[ 1 ] = !do_pltrin ? 7.2 : double( count );
+   double rmin  = sdata->radius( 0 ) - 0.02;
+   double rmax  = sdata->radius( points - 1 ) + 0.02;
+   rr[ 0 ] = !do_pltrin ? rmin : 0.0;
+   rr[ 1 ] = !do_pltrin ? rmax : double( count );
    vv[ 0 ] = 0.0;
    vv[ 1 ] = 0.0;
    curv    = us_curve( data_plot2, "zero-line" );

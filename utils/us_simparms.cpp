@@ -69,9 +69,8 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    QString channel     = editdata.channel;
    int     ch          = QString( "ABCDEFGH" ).indexOf( channel );
            ch          = qMax( 0, ch );
-   int     iechan      = ch + 1;
            ch         /= 2;
-//DbgLv(2) << "SP:iFD: ch" << ch << editdata.channel << iechan;
+//DbgLv(2) << "SP:iFD: ch" << ch << editdata.channel << (ch+1);
    QString ecell       = editdata.cell;
    int     iecell      = ecell.toInt();
 
@@ -128,10 +127,23 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    meniscus            = editdata.meniscus;
 
    speed_step.clear();
+DbgLv(1) << "SP:iFD: scan" << 1 << "rpm time omega2t"
+ << rpm << time1 << editdata.scanData[0].omega2t;
 
    for ( int ii = 1; ii < scanCount; ii++ )
    {  // Loop to build speed steps where RPM changes
       rpmnext          = editdata.scanData[ ii ].rpm;
+DbgLv(1) << "SP:iFD: scan" << (ii+1) << "rpm time omega2t"
+ << rpmnext << editdata.scanData[ii].seconds << editdata.scanData[ii].omega2t;
+
+      if ( rpm != rpmnext  &&  ( qAbs( rpm - rpmnext ) / rpm ) < 0.005 )
+      {  // Ignore apparent speed-step if the rpm change is small & for 1 scan
+         if ( ii == ( scanCount - 1 )  ||
+              rpm == editdata.scanData[ ii + 1 ].rpm )
+            rpmnext = rpm;
+         if ( ii == 1 )
+            rpm     = rpmnext;
+      }
 
       if ( rpm != rpmnext )
       {  // RPM has changed, so need to create speed step for previous scans
@@ -145,6 +157,9 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          sp.scans            = ii - jj;
          sp.rotorspeed       = (int)rpm;
          speed_step.append( sp );
+DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
+ << "duration hrs mins" << sp.duration_hours << sp.duration_minutes
+ << "delay hrs mins" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 
          jj                  = ii;
          rpm                 = rpmnext;
@@ -161,8 +176,12 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    sp.scans            = scanCount - jj;
    sp.rotorspeed       = (int)rpm;
    speed_step.append( sp );
+DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
+ << "duration hrs mins" << sp.duration_hours << sp.duration_minutes
+ << "delay hrs mins" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 
 #ifndef NO_DB
+   int     iechan      = ch + 1;
    if ( db != NULL )
    {  // If reading from the database, get rotor,centerpiece info from DB
       int         stat_db = 0;
