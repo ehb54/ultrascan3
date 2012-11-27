@@ -359,7 +359,7 @@ struct saxs_options
    bool         bead_models_rho0_in_scat_factors;
 
    unsigned int smooth;
-
+   double       ev_exp_mult;
 };
 
 struct saxs_atom

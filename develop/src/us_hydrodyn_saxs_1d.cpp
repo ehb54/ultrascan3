@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
 #include "../include/us_file_util.h"
+#include "../include/us_vvv.h"
 #include <sys/time.h>
 
 #if defined( HAS_CBF )
@@ -75,6 +76,8 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    residue_atom_hybrid_map     = saxs_window->residue_atom_hybrid_map;
 
    setupGUI();
+   set_target_ev();
+
    running = false;
 
    update_enables();
@@ -192,6 +195,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    cb_only_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_only_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_vvv = new QCheckBox( this );
+   cb_vvv->setText(tr(" Use VVV"));
+   cb_vvv->setEnabled( true );
+   cb_vvv->setChecked( false );
+   cb_vvv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_vvv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    lbl_deltaR = new QLabel(tr(" Delta x,y,z for integration (A)"), this );
    lbl_deltaR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_deltaR->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -216,10 +226,25 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_probe_radius, SIGNAL(textChanged(const QString &)), SLOT(update_probe_radius(const QString &)));
 
-   lbl_threshold = new QLabel(tr(" Surface value threshold"), this );
-   lbl_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   pb_set_target_ev = new QPushButton(tr("Set target excluded volume:"), this);
+   pb_set_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  - 1));
+   // pb_set_target_ev->setMinimumHeight(minHeight1);
+   pb_set_target_ev->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_set_target_ev, SIGNAL(clicked()), SLOT(set_target_ev()));
+
+   le_target_ev = new QLineEdit( this, "target_ev Line Edit");
+   le_target_ev->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_target_ev->setAlignment(Qt::AlignVCenter);
+   le_target_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_target_ev, SIGNAL(textChanged(const QString &)), SLOT(update_target_ev(const QString &)));
+
+   pb_find_target_ev_thresh = new QPushButton(tr("Recompute SV thresh:"), this);
+   pb_find_target_ev_thresh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //   pb_find_target_ev_thresh->setMinimumHeight(minHeight1);
+   pb_find_target_ev_thresh->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_find_target_ev_thresh, SIGNAL(clicked()), SLOT(find_target_ev_thresh()));
 
    le_threshold = new QLineEdit( this, "threshold Line Edit");
    le_threshold->setText( QString( "" ).sprintf( "%g", 1.0 ) );
@@ -445,13 +470,18 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       j++;
       gl_options->addMultiCellWidget( cb_only_ev                      , j, j, 0, 1 );
       j++;
+      gl_options->addMultiCellWidget( cb_vvv                          , j, j, 0, 1 );
+      j++;
       gl_options->addWidget         ( lbl_deltaR                      , j, 0 );
       gl_options->addWidget         ( le_deltaR                       , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_probe_radius                , j, 0 );
       gl_options->addWidget         ( le_probe_radius                 , j, 1 );
       j++;
-      gl_options->addWidget         ( lbl_threshold                   , j, 0 );
+      gl_options->addWidget         ( pb_set_target_ev                , j, 0 );
+      gl_options->addWidget         ( le_target_ev                    , j, 1 );
+      j++;
+      gl_options->addWidget         ( pb_find_target_ev_thresh        , j, 0 );
       gl_options->addWidget         ( le_threshold                    , j, 1 );
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
@@ -2214,8 +2244,15 @@ void US_Hydrodyn_Saxs_1d::stop()
 
 void US_Hydrodyn_Saxs_1d::update_enables()
 {
-   pb_start            ->setEnabled( !lbl_atom_file->text().isEmpty() && !running );
-   pb_stop             ->setEnabled( running );
+   pb_start                ->setEnabled( !lbl_atom_file->text().isEmpty() && !running );
+   pb_find_target_ev_thresh->setEnabled( !lbl_atom_file->text().isEmpty() && !running );
+   pb_set_target_ev        ->setEnabled( !lbl_atom_file->text().isEmpty() && !running );
+   pb_stop                 ->setEnabled( running );
+
+   if ( !running )
+   {
+      vvv::free_vol_surf();
+   }
 }
 
 void US_Hydrodyn_Saxs_1d::editor_msg( QString color, QString msg )
@@ -2255,6 +2292,10 @@ void US_Hydrodyn_Saxs_1d::update_probe_radius( const QString & /* str */ )
 }
 
 void US_Hydrodyn_Saxs_1d::update_threshold( const QString & /* str */ )
+{
+}
+
+void US_Hydrodyn_Saxs_1d::update_target_ev( const QString & /* str */ )
 {
 }
 
@@ -2496,6 +2537,71 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       return true;
    }
 
+   // compute volume using VVV
+   if ( cb_vvv->isChecked() )
+   {
+      // write atoms, radius into 
+      if ( selected_models.size() != 1 )
+      {
+         editor_msg( "red", QString( tr( "Error: selected models count (%1) is not exactly 1" ) ).arg( selected_models.size() ) );
+         return false;
+      }
+
+      unsigned int current_model = selected_models[ 0 ];
+      QFile vvv_file( ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
+                      QDir::separator() + 
+                      "tmp" + 
+                      QDir::separator() + 
+                      le_atom_file->text() + 
+                      QString( "_%1.xyzr" ).arg( model_vector[ current_model  ].model_id ) );
+      if ( !vvv_file.open( IO_WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.name() ) );
+         return false;
+      }
+
+      QTextStream vvv_ts( &vvv_file );
+
+      for ( unsigned int j = 0; j < model_vector[ current_model ].molecule.size (); j++) 
+      {
+         for ( unsigned int k = 0; k < model_vector[ current_model ].molecule[ j ].atom.size (); k++ ) 
+         {
+            PDB_atom *this_atom = &(model_vector[ current_model ].molecule[ j ].atom[ k ]);
+            if ( this_atom->active )
+            {
+               vvv_ts << QString( "%1\t%2\t%3\t%4\n" )
+                  .arg( this_atom->coordinate.axis[ 0 ] )
+                  .arg( this_atom->coordinate.axis[ 1 ] )
+                  .arg( this_atom->coordinate.axis[ 2 ] )
+                  .arg( this_atom->radius );
+            }
+         }
+      }
+      vvv_file.close();
+      double volume;
+      double surf;
+      if ( !vvv::setup_vol_surf( vvv_file.name().ascii(),
+                                 ( float ) probe_radius,
+                                 ( float ) deltaR,
+                                 volume,
+                                 surf ) )
+      {
+         editor_msg( "red",
+                     QString( "VVV: Error (memory?)" )
+                     );
+         return false;
+      }
+
+      editor_msg( "black",
+                  QString( "VVV: probe %1 (A) grid side %2 (A) volume %3 (A^3) surface area %4 (A^2)" )
+                  .arg( ( float ) probe_radius )
+                  .arg( ( float ) deltaR )
+                  .arg( volume )
+                  .arg( surf )
+                  );
+      return true;
+   }
+
    if ( cb_ev_from_file->isChecked() )
    {
       QString search_in = 
@@ -2643,6 +2749,27 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
    if ( !rho0 )
    {
+      return true;
+   }
+
+   // compute volume using VVV
+   if ( cb_vvv->isChecked() )
+   {
+      excluded_volume.clear();
+      point p;
+      for( unsigned int pt = 0; pt < vvv::NUMBINS; pt++ ) 
+      {
+         if ( vvv::save_EXCgrid[ pt ] )
+         {
+            vvv::pt2xyz( pt, p.axis[ 0 ], p.axis[ 1 ], p.axis[ 2 ] );
+            excluded_volume.push_back( p );
+         }
+      }
+      if ( !cb_memory_conserve->isChecked() )
+      {
+         editor_msg( "gray", QString( "done loading excluded volume map of %1 points\n" ).arg( excluded_volume.size() ) );
+         qApp->processEvents();
+      }
       return true;
    }
 
@@ -3554,3 +3681,328 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString name )
 #endif
 }
 
+void US_Hydrodyn_Saxs_1d::set_target_ev()
+{
+   running = true;
+   update_enables();
+
+   // setup atoms
+   QRegExp count_hydrogens("H(\\d)");
+
+   if ( our_saxs_options->iqq_use_atomic_ff )
+   {
+      editor_msg( "dark red", "using explicit hydrogens" );
+   }
+
+   progress->setProgress( 0, 1 );
+   for ( unsigned int i = 0; i < selected_models.size(); i++ )
+   {
+      unsigned int current_model = selected_models[ i ];
+
+      double tot_excl_vol      = 0e0;
+      double tot_excl_vol_noh  = 0e0;
+      unsigned int total_e     = 0;
+      unsigned int total_e_noh = 0;
+
+      editor_msg( "gray", 
+                  QString( tr( "Preparing file %1 model %2." ) )
+                  .arg( le_atom_file->text() )
+                  .arg(current_model + 1) );
+
+      saxs_atom new_atom;
+
+      for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++ )
+      {
+         for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++ )
+         {
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+            if ( this_atom->name == "XH" && !our_saxs_options->iqq_use_atomic_ff )
+            {
+               continue;
+            }
+
+            QString use_resname = this_atom->resName;
+            use_resname.replace( QRegExp( "_.*$" ), "" );
+
+            QString mapkey = QString("%1|%2")
+               .arg( use_resname )
+               .arg( this_atom->name );
+
+            if ( this_atom->name == "OXT" )
+            {
+               mapkey = "OXT|OXT";
+            }
+
+            QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+            if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+            {
+#if defined( UHS2_ATOMS_DEBUG )
+               cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
+#endif
+               editor_msg( "red" ,
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq ) );
+               qApp->processEvents();
+               if ( !running ) 
+               {
+                  update_enables();
+                  return;
+               }
+               continue;
+            }
+
+            if ( !hybrid_map.count(hybrid_name) )
+            {
+#if defined( UHS2_ATOMS_DEBUG )
+               cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
+#endif
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
+               qApp->processEvents();
+
+               if ( !running ) 
+               {
+                  update_enables();
+                  return;
+               }
+               continue;
+            }
+
+            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
+            {
+#if defined( UHS2_ATOMS_DEBUG )
+               cout << "error: atom_map missing for hybrid_name "
+                    << hybrid_name 
+                    << " atom name "
+                    << this_atom->name
+                    << endl;
+#endif
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
+               qApp->processEvents();
+               if ( !running ) 
+               {
+                  update_enables();
+                  return;
+               }
+               continue;
+            }
+
+#if defined( UHS2_ATOMS_DEBUG )
+            cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
+               .arg(this_atom->name)
+               .arg(this_atom->hybrid_name)
+               .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
+               .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
+               ;
+#endif
+            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+
+            new_atom.atom_name = this_atom->name;
+            new_atom.residue_name = use_resname;
+
+            if ( our_saxs_options->use_somo_ff )
+            {
+               double this_ev = saxs_window->get_ff_ev( new_atom.residue_name, new_atom.atom_name );
+               if ( this_ev )
+               {
+                  new_atom.excl_vol = this_ev;
+                  //                   cout << QString( "found ev from ff %1 %2 %3\n" ).arg( new_atom.residue_name )
+                  //                      .arg( new_atom.atom_name )
+                  //                      .arg( this_ev );
+               }
+            }
+
+            total_e += hybrid_map[ hybrid_name ].num_elect;
+            if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
+            {
+               new_atom.excl_vol = our_saxs_options->swh_excl_vol;
+            }
+            if ( this_atom->name == "XH" )
+            {
+               // skip excl vol for now
+               new_atom.excl_vol = 0e0;
+            }
+
+            if ( our_saxs_options->hybrid_radius_excl_vol )
+            {
+               new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+            }
+
+            if ( our_saxs_options->iqq_use_saxs_excl_vol )
+            {
+               new_atom.excl_vol = saxs_map[hybrid_map[hybrid_name].saxs_name].volume;
+            }
+
+            if ( this_atom->name != "OW" )
+            {
+               new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
+               tot_excl_vol_noh  += new_atom.excl_vol;
+               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
+            }
+
+            new_atom.radius = hybrid_map[hybrid_name].radius;
+            tot_excl_vol += new_atom.excl_vol;
+
+            new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
+            new_atom.hybrid_name = hybrid_name;
+            new_atom.hydrogens = 0;
+            if ( !our_saxs_options->iqq_use_atomic_ff &&
+                 count_hydrogens.search(hybrid_name) != -1 )
+            {
+               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+            }
+
+            if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
+            {
+#if defined( UHS2_ATOMS_DEBUG )
+               cout << "error: saxs_map missing for hybrid_name "
+                    << hybrid_name 
+                    << " saxs name "
+                    << hybrid_map[hybrid_name].saxs_name
+                    << endl;
+#endif
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           .arg(hybrid_map[hybrid_name].saxs_name)
+                           );
+               qApp->processEvents();
+               if ( !running ) 
+               {
+                  update_enables();
+                  return;
+               }
+               continue;
+            }
+         }
+      }
+      // ok now we have all the atoms
+      le_target_ev->setText( QString( "%1" ).arg( tot_excl_vol ) );
+   }
+   progress->reset();
+   running = false;
+   update_enables();
+   return;
+}
+
+bool US_Hydrodyn_Saxs_1d::find_target_ev_thresh()
+{
+#if !defined( HAS_CBF )
+   editor_msg( "red", QString( tr( "CBF required for this feature" ) ) );
+   return false;
+#else
+
+   double target_ev = le_target_ev->text().toDouble();
+   if ( target_ev <= 0e0 )
+   {
+      editor_msg( "red", QString( tr( "target ev must be positive" ) ) );
+      return false;
+   }
+
+   compute_variables();
+   if ( rho0 == 0 )
+   {
+      editor_msg( "red", QString( tr( "rho0 must be nonzero" ) ) );
+      return false;
+   }
+
+   if ( !validate() )
+   {
+      return false;
+   }
+
+   running = true;
+   update_enables();
+
+   if ( !setup_excluded_volume_map() )
+   {
+      editor_msg( "red", errormsg );
+      running = false;
+      update_enables();
+      return false;
+   }
+
+   // run & read external ev & fit to target ev
+
+   // compute V with current thresh
+   double min_thresh = 0e0;
+   double max_thresh = 2e0;
+   double ev         = 0e0;
+
+   do { 
+      if ( !get_excluded_volume_map() )
+      {
+         editor_msg( "red", errormsg );
+         running = false;
+         update_enables();
+         return false;
+      }
+      if ( !running )
+      {
+         update_enables();
+         return false;
+      }
+      ev = excluded_volume.size() * deltaR * deltaR * deltaR;
+      if ( ev > target_ev )
+      {
+         if ( min_thresh < threshold )
+         {
+            min_thresh = threshold;
+         }
+         threshold = ( max_thresh + threshold ) / 2e0;
+      }
+      if ( ev < target_ev )
+      {
+         if ( max_thresh > threshold )
+         {
+            max_thresh = threshold;
+         }
+         threshold = ( min_thresh + threshold ) / 2e0;
+      }
+      le_threshold->setText( QString( "" ).sprintf( "%g", threshold ) );
+   } while ( fabs( ev - target_ev ) >= 1e-2  && max_thresh - min_thresh > 1e-5 );
+
+   running = false;
+   update_enables();
+
+   if ( fabs( ev - target_ev ) < 5e-1 )
+   {
+      editor_msg( "blue", QString( tr( "Found threshold %1 to match excl vol %2 within %3" ) )
+                  .arg( threshold )
+                  .arg( target_ev )
+                  .arg(  fabs( ev - target_ev ) )
+                  );
+      return true;
+   } else {
+      editor_msg( "red", QString( tr( "Could NOT find good threshold to match excl vol %1 best found %2 within %3" ) )
+                  .arg( target_ev )
+                  .arg( threshold )
+                  .arg( fabs( ev - target_ev ) )
+                  );
+      return false;
+   }
+
+#endif
+}

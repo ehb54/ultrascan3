@@ -1867,6 +1867,83 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          editor_msg( "red", "No useable atoms found" );
          return;
       }
+
+      // spec calc for now
+      {
+         cout << "atomname pos h n ve\n";
+         vector < double > n;
+         vector < double > v;
+
+         for ( unsigned int i = 0; i < atoms.size(); i++ )
+         {
+            saxs sm = saxs_map[atoms[i].saxs_name];
+            double this_n = 
+               compute_ff(
+                          sm,
+                          saxsH,
+                          atoms[ i ].residue_name,
+                          atoms[ i ].saxs_name,
+                          atoms[ i ].atom_name,
+                          atoms[ i ].hydrogens,
+                          0e0,
+                          0e0 );
+            cout << QString( "%1 %2 %3 %4 %5\n" )
+               .arg( atoms[ i ].saxs_name )
+               .arg( i )
+               .arg( atoms[ i ].hydrogens )
+               .arg( this_n )
+               .arg( atoms[ i ].excl_vol )
+               ;
+            n.push_back( this_n );
+            v.push_back( atoms[ i ].excl_vol );
+         }
+         // compute I0 debye & its components
+         double I0rho0 = 0e0;
+         double I0     = 0e0;
+         double rho0   = our_saxs_options->water_e_density;
+         double evx    = 0e0;
+
+         for ( unsigned int i = 0; i < n.size(); i++ )
+         {
+            for ( unsigned int j = 0; j < n.size(); j++ )
+            {
+               I0rho0 += n[ i ] * n[ j ];
+               I0     += n[ i ] * n[ j ] - rho0 * ( n[ i ] * v[ j ] + n[ j ] * v[ i ] - rho0 * ( v[ i ] * v[ j ] ) );
+               evx    += rho0 * ( v[ i ] * v[ j ] );
+            }
+         }
+
+         cout << QString( "I0 (rho0 == 0) %1 I0 %2 diff %3 sum vivj %4\n" )
+            .arg( I0rho0 )
+            .arg( I0 )
+            .arg( I0rho0 - I0 )
+            .arg( evx )
+            ;
+         
+         // compute exact:
+         
+         double sumn    = 0e0;
+         double V       = 0e0;
+
+         for ( unsigned int i = 0; i < n.size(); i++ )
+         {
+            V    += v[ i ];
+            sumn += n[ i ];
+         }
+
+         double eI0rho0 = sumn * sumn;
+         double eI0     = sumn * sumn - rho0 * ( 2e0 * V * sumn - rho0 * V * V );
+         double eevx    = rho0 * V * V;
+
+         cout << QString( "exact I0 (rho0 == 0) %1 I0 %2 diff %3 rho0 V^2 %4 ev total %5\n" )
+            .arg( eI0rho0 )
+            .arg( eI0 )
+            .arg( eI0rho0 - eI0 )
+            .arg( eevx )
+            .arg( V )
+            ;
+      }
+
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
 
@@ -1912,20 +1989,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                            q[ j ],
                            q_over_4pi_2[ j ] );
                                       
-//             f[j][i] = saxs.c + 
-//                saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
-//                saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
-//                saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
-//                saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
-//                atoms[i].hydrogens * 
-//                ( saxsH.c + 
-//                  saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
-//                  saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
-//                  saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
-//                  saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
 
-
-            fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
+            fc[j][i] = vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
             fp[j][i] = f[j][i] - fc[j][i];
 
 #if defined(SAXS_DEBUG_F)
@@ -2861,7 +2926,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 //                  saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
 //                  saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
 
-            fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
+            fc[j][i] = vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
             fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
             if (1 || (q[j] > .0099 && q[j] < .0101)) {

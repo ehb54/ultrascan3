@@ -64,6 +64,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       QCheckBox   *cb_multiply_iq_by_atomic_volume;
 
+      QLabel      *lbl_ev_exp_mult;
+      QLineEdit   *le_ev_exp_mult;
+
       QPushButton *pb_create_somo_ff;
 
       QPushButton *pb_help;
@@ -90,6 +93,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       void set_compute_exponentials();
       void update_compute_exponential_terms( double );
+      void update_ev_exp_mult (const QString & );
 
       void set_multiply_iq_by_atomic_volume();
       void create_somo_ff();

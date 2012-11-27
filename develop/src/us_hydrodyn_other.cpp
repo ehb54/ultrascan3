@@ -4219,10 +4219,15 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_use_bead_radius_ev     = true;
    saxs_options.bead_models_rho0_in_scat_factors   = true;
    saxs_options.smooth                             = 0;
+   saxs_options.ev_exp_mult                        = 1e0;
 
    grid.create_nmr_bead_pdb                        = false;
 
    batch.compute_iq_only_avg                       = false;
+
+   asa.vvv                                         = false;
+   asa.vvv_probe_radius                            = 1.4f;
+   asa.vvv_grid_dR                                 = 0.5f;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

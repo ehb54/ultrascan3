@@ -84,8 +84,11 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QLabel        *lbl_probe_radius;
       QLineEdit     *le_probe_radius;
 
-      QLabel        *lbl_threshold;
+      QPushButton   *pb_find_target_ev_thresh;
       QLineEdit     *le_threshold;
+
+      QPushButton   *pb_set_target_ev;
+      QLineEdit     *le_target_ev;
 
       QLabel        *lbl_sample_rotations;
       QLineEdit     *le_sample_rotations;
@@ -102,6 +105,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QCheckBox     *cb_random_rotations;
       QCheckBox     *cb_ev_from_file;
       QCheckBox     *cb_only_ev;
+      QCheckBox     *cb_vvv;
 
       QProgressBar  *progress;
 
@@ -221,10 +225,18 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       void update_deltaR                      ( const QString & );
       void update_probe_radius                ( const QString & );
       void update_threshold                   ( const QString & );
+      void update_target_ev                   ( const QString & );
       void update_spec_multiplier             ( const QString & );
+
+      // cb's
 
       void set_random_rotations();
       void set_planar_method();
+
+      // pb's
+
+      bool find_target_ev_thresh();
+      void set_target_ev();
 
       void info();
 

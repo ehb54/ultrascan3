@@ -38,6 +38,11 @@ struct asa_options
    float asab1_step;
    float hydrate_probe_radius;
    float hydrate_threshold;
+
+   bool  vvv;
+   float vvv_probe_radius;
+   float vvv_grid_dR;
+
 };
 
 class US_EXTERN US_Hydrodyn_ASA : public QFrame
@@ -64,6 +69,9 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QLabel *lbl_hydrate_probe_radius;
       QLabel *lbl_hydrate_threshold;
       QLabel *lbl_asab1_step;
+
+      QLabel *lbl_vvv_probe_radius;
+      QLabel *lbl_vvv_grid_dR;
       
       QwtCounter *cnt_probe_radius;
       QwtCounter *cnt_probe_recheck_radius;
@@ -74,11 +82,14 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QwtCounter *cnt_hydrate_probe_radius;
       QwtCounter *cnt_hydrate_threshold;
       QwtCounter *cnt_asab1_step;
+      QwtCounter *cnt_vvv_probe_radius;
+      QwtCounter *cnt_vvv_grid_dR;
 
       QCheckBox *cb_asa_calculation;
       QCheckBox *cb_bead_check;
       QCheckBox *cb_surfracer;
       QCheckBox *cb_asab1;
+      QCheckBox *cb_vvv;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -97,9 +108,12 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       void update_asab1_step(double);
       void update_hydrate_probe_radius(double);
       void update_hydrate_threshold(double);
+      void update_vvv_probe_radius(double);
+      void update_vvv_grid_dR(double);
       void select_asa_method(int);
       void set_asa_calculation();
       void set_bead_check();
+      void set_vvv();
       void cancel();
       void help();
    

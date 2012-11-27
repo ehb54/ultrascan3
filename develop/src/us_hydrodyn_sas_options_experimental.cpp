@@ -168,6 +168,19 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_multiply_iq_by_atomic_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_multiply_iq_by_atomic_volume, SIGNAL(clicked()), this, SLOT(set_multiply_iq_by_atomic_volume()));
 
+   lbl_ev_exp_mult = new QLabel(tr(" Excluded volume exponential multiplier "), this);
+   lbl_ev_exp_mult->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_ev_exp_mult->setMinimumHeight(minHeight1);
+   lbl_ev_exp_mult->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_ev_exp_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_ev_exp_mult = new QLineEdit(this, "ev_exp_mult Line Edit");
+   le_ev_exp_mult->setText( QString( "%1" ).arg( ( *saxs_options ).ev_exp_mult ) );
+   le_ev_exp_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_ev_exp_mult->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ev_exp_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_ev_exp_mult, SIGNAL(textChanged(const QString &)), SLOT(update_ev_exp_mult(const QString &)));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -229,6 +242,12 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    //    hbl_various_4->addWidget( cnt_compute_exponential_terms );
    hbl_various_4->addWidget( cb_multiply_iq_by_atomic_volume );
    background->addMultiCellLayout(hbl_various_4, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_5 = new QHBoxLayout;
+   hbl_various_5->addWidget( lbl_ev_exp_mult );
+   hbl_various_5->addWidget( le_ev_exp_mult );
+   background->addMultiCellLayout(hbl_various_5, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(pb_create_somo_ff, j, j, 0, 1);
@@ -379,3 +398,7 @@ void US_Hydrodyn_SasOptionsExperimental::create_somo_ff()
    }
 }
 
+void US_Hydrodyn_SasOptionsExperimental::update_ev_exp_mult( const QString &str )
+{
+   (*saxs_options).ev_exp_mult = str.toDouble();
+}

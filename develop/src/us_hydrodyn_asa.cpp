@@ -217,6 +217,49 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asab1_step->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_asab1_step, SIGNAL(valueChanged(double)), SLOT(update_asab1_step(double)));
 
+   cb_vvv = new QCheckBox(this);
+   cb_vvv->setText(tr(" Compute VVV volume, surface area on load PDB"));
+   cb_vvv->setChecked((*asa).vvv);
+   cb_vvv->setEnabled(true);
+   cb_vvv->setMinimumHeight(minHeight1);
+   cb_vvv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_vvv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_vvv, SIGNAL(clicked()), SLOT(set_vvv()));
+
+   lbl_vvv_probe_radius = new QLabel(tr(" VVV probe radius (A): "), this);
+   lbl_vvv_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vvv_probe_radius->setMinimumHeight(minHeight1);
+   lbl_vvv_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_vvv_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_vvv_probe_radius= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_vvv_probe_radius );
+   cnt_vvv_probe_radius->setRange(0.0, 20.0, 0.1);
+   cnt_vvv_probe_radius->setValue((*asa).vvv_probe_radius);
+   cnt_vvv_probe_radius->setMinimumHeight(minHeight1);
+   cnt_vvv_probe_radius->setEnabled(true);
+   cnt_vvv_probe_radius->setNumButtons(3);
+   cnt_vvv_probe_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_vvv_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_vvv_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_vvv_probe_radius(double)));
+
+   lbl_vvv_grid_dR = new QLabel(tr(" VVV grid edge size (A): "), this);
+   lbl_vvv_grid_dR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vvv_grid_dR->setMinimumHeight(minHeight1);
+   lbl_vvv_grid_dR->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_vvv_grid_dR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_vvv_grid_dR= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_vvv_grid_dR );
+   cnt_vvv_grid_dR->setRange(0.1, 20.0, 0.01);
+   cnt_vvv_grid_dR->setValue((*asa).vvv_grid_dR);
+   cnt_vvv_grid_dR->setMinimumHeight(minHeight1);
+   cnt_vvv_grid_dR->setEnabled(true);
+   cnt_vvv_grid_dR->setNumButtons(3);
+   cnt_vvv_grid_dR->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_vvv_grid_dR->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_vvv_grid_dR, SIGNAL(valueChanged(double)), SLOT(update_vvv_grid_dR(double)));
+
    cb_asa_calculation = new QCheckBox(this);
    cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
    cb_asa_calculation->setChecked((*asa).calculation);
@@ -285,6 +328,14 @@ void US_Hydrodyn_ASA::setupGUI()
    j++;
    background->addWidget(lbl_asab1_step, j, 0);
    background->addWidget(cnt_asab1_step, j, 1);
+   j++;
+   background->addMultiCellWidget( cb_vvv, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_vvv_probe_radius, j, 0);
+   background->addWidget(cnt_vvv_probe_radius, j, 1);
+   j++;
+   background->addWidget(lbl_vvv_grid_dR, j, 0);
+   background->addWidget(cnt_vvv_grid_dR, j, 1);
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -382,4 +433,20 @@ void US_Hydrodyn_ASA::select_asa_method(int val)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_ASA::set_vvv()
+{
+   (*asa).vvv = cb_vvv->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
 
+void US_Hydrodyn_ASA::update_vvv_probe_radius(double val)
+{
+   (*asa).vvv_probe_radius = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_vvv_grid_dR(double val)
+{
+   (*asa).vvv_grid_dR = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}

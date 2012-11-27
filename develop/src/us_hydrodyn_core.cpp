@@ -13,6 +13,7 @@
 #include "../include/us_hydrodyn_pat.h"
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
+#include "../include/us_vvv.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
@@ -7173,6 +7174,10 @@ void US_Hydrodyn::calc_mw()
    //       do_excl_vol = false;
    //    }
 
+   bool do_vvv = asa.vvv;
+   QFile       vvv_file;
+   QTextStream vvv_ts;
+
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
@@ -7194,8 +7199,22 @@ void US_Hydrodyn::calc_mw()
       double total_cm_mw = 0e0;
 
       create_beads(&error_string, true);
+
       if( !error_string.length() ) 
       {
+
+         if ( do_vvv )
+         {
+            vvv_file.setName( somo_dir + SLASH + "tmp" + SLASH + project + QString( "_%1.xyzr" ).arg( model_vector[i].model_id ) );
+            if ( !vvv_file.open( IO_WriteOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.name() ) );
+               do_vvv = false;
+            } else {
+               vvv_ts.setDevice( &vvv_file );
+            }
+         }
+
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
          {
             double chain_excl_vol          = 0.0;
@@ -7208,6 +7227,16 @@ void US_Hydrodyn::calc_mw()
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if( this_atom->active) {
+                  
+                  if ( do_vvv )
+                  {
+                     vvv_ts << QString( "%1\t%2\t%3\t%4\n" )
+                        .arg( this_atom->coordinate.axis[ 0 ] )
+                        .arg( this_atom->coordinate.axis[ 1 ] )
+                        .arg( this_atom->coordinate.axis[ 2 ] )
+                        .arg( this_atom->radius );
+                  }
+
                   // printf("model %u chain %u atom %u mw %g\n",
                   //       i, j, k, this_atom->mw);
                   if ( this_atom->resName != "SWH" )
@@ -7322,6 +7351,25 @@ void US_Hydrodyn::calc_mw()
 
          editor->append( qs );
          last_pdb_load_calc_mw_msg << qs;
+         if ( do_vvv )
+         {
+            vvv_file.close();
+            double volume;
+            double surf;
+            
+            vvv::compute_vol_surf( vvv_file.name().ascii(),
+                                   asa.vvv_probe_radius,
+                                   asa.vvv_grid_dR,
+                                   volume,
+                                   surf );
+            editor_msg( "black",
+                        QString( "VVV: probe %1 (A) grid side %2 (A) volume %3 (A^3) surface area %4 (A^2)" )
+                        .arg( asa.vvv_probe_radius )
+                        .arg( asa.vvv_grid_dR )
+                        .arg( volume )
+                        .arg( surf )
+                        );
+         }
       }
 
       if ( model_vector_as_loaded.size() > i )
