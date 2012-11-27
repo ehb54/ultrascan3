@@ -24,7 +24,7 @@ class US_Buoyancy : public US_Widgets
       QVector< US_DataIO2::RawData > allData;
 		QList< US_DataIO2::SpeedData > sData;
 
-      int                triple_index;
+      int                current_triple;
       int                total_speeds;
       int                dbg_level;
 
@@ -46,7 +46,7 @@ class US_Buoyancy : public US_Widgets
       QStringList        trip_rpms;
 
 	  	QPushButton*       pb_details;
-                      
+
       QwtPlot*           data_plot;
       QwtPlotCurve*      v_line;
       QwtPlotCurve*      minimum_curve;
@@ -54,23 +54,23 @@ class US_Buoyancy : public US_Widgets
       QwtPlotMarker*     marker;
       US_PlotPicker*     pick;
       US_Plot*           plot;
-      
+
       QLabel*            lbl_rpms;
 
       QLineEdit*         le_info;
       QLineEdit*         le_investigator;
-                        
+
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QComboBox*         cb_triple;
       QComboBox*         cb_rpms;
 
       QPushButton*       pb_write;
-                        
+
       QwtCounter*        ct_selectScan;
-	  
+
 private slots:
-	void draw_vline        ( double );	
+	void draw_vline        ( double );
 	void mouse             ( const QwtDoublePoint& );
 	void sel_investigator  ( void );
 	void update_disk_db    ( bool );
@@ -80,6 +80,9 @@ private slots:
 	void plot_scan         ( void );
 	void write             ( void );
 	void reset             ( void );
+	void new_rpmval        ( int  );
+	void set_meniscus      ( void );
+	void update_speedData  ( void );
 	void help              ( void )
       { showHelp.show_help( "manual/us_buoyancy.html" ); };
 };
