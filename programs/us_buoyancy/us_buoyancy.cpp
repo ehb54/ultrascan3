@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_Buoyancy w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
@@ -79,8 +79,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
       pb_investigator->setEnabled( false );
 
    int id = US_Settings::us_inv_ID();
-   QString number  = ( id > 0 ) ? 
-      QString::number( US_Settings::us_inv_ID() ) + ": " 
+   QString number  = ( id > 0 ) ?
+      QString::number( US_Settings::us_inv_ID() ) + ": "
       : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
    specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
@@ -103,7 +103,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
@@ -141,10 +141,10 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    buttons->addWidget( pb_accept );
 
    // Plot layout on right side of window
-   plot = new US_Plot( data_plot, 
+   plot = new US_Plot( data_plot,
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
-   
+
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -171,6 +171,55 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 // Select a new triple
 void US_Buoyancy::new_triple( int index )
 {
+   current_triple = index;
+   //reset_triple();
+
+   // Need to reconnect after reset
+   //connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
+   //                    SLOT  ( new_triple         ( int ) ) );
+
+   data = allData[ index ];
+
+   // Enable pushbuttons
+   pb_details  ->setEnabled( true );
+//   pb_meniscus ->setEnabled( true );
+//   pb_write    ->setEnabled( all_edits );
+/*
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+   if ( expIsEquil )
+   {  // Equilibrium
+      cb_rpms->clear();
+      trip_rpms.clear();
+
+      for ( int ii = 0; ii < data.scanData.size(); ii++ )
+      {  // build unique-rpm list for triple
+         QString arpm = QString::number( data.scanData[ ii ].rpm );
+
+         if ( ! trip_rpms.contains( arpm ) )
+         {
+            trip_rpms << arpm;
+         }
+      }
+      cb_rpms->addItems( trip_rpms );
+
+      le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
+
+      init_includes();
+   }
+
+   else
+   {  // non-Equilibrium
+      set_pbColors( pb_meniscus );
+      plot_current( index );
+   }
+*/
+//   plot_current( index );
+
+   set_meniscus();
 }
 
 
@@ -184,7 +233,7 @@ void US_Buoyancy::load( void )
       new US_LoadAUC( isLocal, allData, triples, workingDir );
 
    connect( dialog, SIGNAL( changed       ( bool ) ),
-            this,    SLOT(   update_disk_db( bool ) ) );
+            this,     SLOT( update_disk_db( bool ) ) );
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
@@ -195,20 +244,20 @@ void US_Buoyancy::load( void )
    {
       QMessageBox::warning( this,
             tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"  
+            tr( "There were no files of the form *.auc\n"
                 "found in the specified directory." ) );
       return;
    }
 
    cb_triple->addItems( triples );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( new_triple         ( int ) ) );
-   triple_index = 0;
-   
+   current_triple = 0;
+
    le_info->setText( runID );
 
    data     = allData[ 0 ];
-   dataType = QString( QChar( data.type[ 0 ] ) ) 
+   dataType = QString( QChar( data.type[ 0 ] ) )
             + QString( QChar( data.type[ 1 ] ) );
 
 
@@ -255,7 +304,7 @@ void US_Buoyancy::load( void )
       }
 
       QStringList query;
-      query << "get_experiment_info_by_runID" << runID 
+      query << "get_experiment_info_by_runID" << runID
             << QString::number( US_Settings::us_inv_ID() );
 
       db.query( query );
@@ -270,75 +319,14 @@ void US_Buoyancy::load( void )
    expIsBuoyancy = ( expType.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
 	if (expIsBuoyancy)
 	{
-		sData.clear();
-		US_DataIO2::SpeedData ssDat;
-		int ksd    = 0;
-      for ( int jd = 0; jd < allData.size(); jd++ )
-      {
-         data  = allData[ jd ];
-         sd_offs << ksd;
-
-         if ( jd > 0 )
-            sd_knts << ( ksd - sd_offs[ jd - 1 ] );
-
-         trip_rpms.clear();
-
-         for ( int ii = 0; ii < data.scanData.size(); ii++ )
-         {
-            double  drpm = data.scanData[ ii ].rpm;
-            QString arpm = QString::number( drpm );
-            if ( ! trip_rpms.contains( arpm ) )
-            {
-               trip_rpms << arpm;
-               ssDat.first_scan = ii + 1;
-               ssDat.scan_count = 1;
-               ssDat.speed      = drpm;
-               ssDat.meniscus   = 0.0;
-               ssDat.dataLeft   = 0.0;
-               ssDat.dataRight  = 0.0;
-               sData << ssDat;
-               ksd++;
-            }
-
-            else
-            {
-               int jj = trip_rpms.indexOf( arpm );
-               ssDat  = sData[ jj ];
-               ssDat.scan_count++;
-               sData[ jj ].scan_count++;
-            }
-         }
-
-         if ( jd == 0 )
-            cb_rpms->addItems( trip_rpms );
-
-         total_speeds += trip_rpms.size();
-      }
-
-      sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
-
-      if ( allData.size() > 1 )
-      {
-         data   = allData[ 0 ];
-         ksd    = sd_knts[ 0 ];
-         trip_rpms.clear();
-         cb_rpms ->clear();
-         for ( int ii = 0; ii < ksd; ii++ )
-         {
-            QString arpm = QString::number( sData[ ii ].speed );
-            trip_rpms << arpm;
-         }
-
-         cb_rpms->addItems( trip_rpms );
-      }
-
+		update_speedData();
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 
       plot_scan();
 
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
                           SLOT  ( new_rpmval         ( int ) ) );
    }
    else
@@ -377,8 +365,8 @@ void US_Buoyancy::load( void )
 
 // Display run details
 void US_Buoyancy::details( void )
-{  
-   US_RunDetails2* dialog 
+{
+   US_RunDetails2* dialog
       = new US_RunDetails2( allData, runID, workingDir, triples );
    dialog->exec();
    qApp->processEvents();
@@ -397,7 +385,7 @@ void US_Buoyancy::sel_investigator( void )
 
    QString inv_text = QString::number( investigator ) + ": "
                       +  US_Settings::us_inv_name();
-   
+
    le_investigator->setText( inv_text );
 }
 
@@ -535,10 +523,10 @@ void US_Buoyancy::mouse( const QwtDoublePoint& p )
             marker = new QwtPlotMarker;
             QBrush brush( Qt::white );
             QPen   pen  ( brush, 2.0 );
-            
+
             marker->setValue( meniscus, maximum );
-            marker->setSymbol( QwtSymbol( 
-                        QwtSymbol::Cross, 
+            marker->setSymbol( QwtSymbol(
+                        QwtSymbol::Cross,
                         brush,
                         pen,
                         QSize ( 8, 8 ) ) );
@@ -575,4 +563,81 @@ void US_Buoyancy::draw_vline( double radius )
 
 void US_Buoyancy::write( void )
 {
+}
+
+// Select a new speed within a triple
+void US_Buoyancy::new_rpmval( int index )
+{
+   QString srpm = cb_rpms->itemText( index );
+	update_speedData();
+   set_meniscus();
+   plot_scan();
+}
+
+void US_Buoyancy::set_meniscus( void )
+{
+}
+
+void US_Buoyancy::update_speedData( void )
+{
+	sData.clear();
+	US_DataIO2::SpeedData ssDat;
+	int ksd    = 0;
+	for ( int jd = 0; jd < allData.size(); jd++ )
+	{
+		data  = allData[ jd ];
+		sd_offs << ksd;
+
+		if ( jd > 0 )
+			sd_knts << ( ksd - sd_offs[ jd - 1 ] );
+
+		trip_rpms.clear();
+
+		for ( int ii = 0; ii < data.scanData.size(); ii++ )
+		{
+			double  drpm = data.scanData[ ii ].rpm;
+			QString arpm = QString::number( drpm );
+			if ( ! trip_rpms.contains( arpm ) )
+			{
+				trip_rpms << arpm;
+				ssDat.first_scan = ii + 1;
+				ssDat.scan_count = 1;
+				ssDat.speed      = drpm;
+				ssDat.meniscus   = 0.0;
+				ssDat.dataLeft   = 0.0;
+				ssDat.dataRight  = 0.0;
+				sData << ssDat;
+				ksd++;
+			}
+
+			else
+			{
+				int jj = trip_rpms.indexOf( arpm );
+				ssDat  = sData[ jj ];
+				ssDat.scan_count++;
+				sData[ jj ].scan_count++;
+			}
+		}
+
+		if ( jd == 0 )
+			cb_rpms->addItems( trip_rpms );
+
+		total_speeds += trip_rpms.size();
+	}
+
+	sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
+
+	if ( allData.size() > 1 )
+	{
+		data   = allData[ current_triple ];
+		ksd    = sd_knts[ current_triple ];
+		trip_rpms.clear();
+		cb_rpms ->clear();
+		for ( int ii = 0; ii < ksd; ii++ )
+		{
+			QString arpm = QString::number( sData[ ii ].speed );
+			trip_rpms << arpm;
+		}
+		cb_rpms->addItems( trip_rpms );
+	}
 }

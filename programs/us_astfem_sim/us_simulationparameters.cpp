@@ -217,8 +217,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_meniscus = us_label( tr( "Meniscus Position (cm):" ) );
    main->addWidget( lb_meniscus, row, 4, 1, 3 );
 
-   cnt_meniscus = us_counter( 3, 5.8, 7.2, simparams.meniscus );
+   cnt_meniscus = us_counter( 3, 1.0, 10.0, simparams.meniscus );
    cnt_meniscus->setStep    ( 0.001 );
+   cnt_meniscus->setValue   ( 5.8 );
    cnt_meniscus->setIncSteps( QwtCounter::Button1,   1 );
    cnt_meniscus->setIncSteps( QwtCounter::Button2,  10 );
    cnt_meniscus->setIncSteps( QwtCounter::Button3, 100 );
