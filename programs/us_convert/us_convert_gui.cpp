@@ -168,8 +168,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    textBoxes->addWidget( lb_description, row, 0 );
 
    le_description = us_lineedit( "", 1 );
-   connect( le_description, SIGNAL( editingFinished   () ),
-                            SLOT  ( changeDescription () ) );
+   connect( le_description, SIGNAL( textEdited( QString ) ),
+                            SLOT  ( changeDescription ()  ) );
    textBoxes->addWidget( le_description, row++, 1, 1, 3 );
 
    settings->addLayout( textBoxes, row++, 0, 1, 4 );
@@ -734,8 +734,8 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
    {
       le_runID2->setPalette ( US_GuiSettings::normalColor() );
       le_runID2->setReadOnly( false );
-      connect( le_runID2, SIGNAL( editingFinished() ),
-                          SLOT  ( runIDChanged   () ) );
+      connect( le_runID2, SIGNAL( textEdited( QString ) ),
+                          SLOT  ( runIDChanged(  )      ) );
    }
 
    else
