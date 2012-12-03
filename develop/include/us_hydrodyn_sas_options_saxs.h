@@ -11,6 +11,7 @@
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 #include <qbuttongroup.h>
+#include <qradiobutton.h>
 
 #include "us_util.h"
 
@@ -47,6 +48,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QwtCounter *cnt_water_e_density;
       QLabel     *lbl_saxs_iq;
       QCheckBox  *cb_saxs_iq_native_debye;
+      QCheckBox  *cb_saxs_iq_native_sh;
       QCheckBox  *cb_saxs_iq_native_hybrid;
       QCheckBox  *cb_saxs_iq_native_hybrid2;
       QCheckBox  *cb_saxs_iq_native_hybrid3;
@@ -55,6 +57,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QCheckBox  *cb_saxs_iq_native_fast_compute_pr;
       QCheckBox  *cb_saxs_iq_crysol;
       QCheckBox  *cb_saxs_iq_foxs;
+      QCheckBox  *cb_saxs_iq_sastbx;
 
       QLabel     *lbl_fast_bin_size;
       QwtCounter *cnt_fast_bin_size;
@@ -79,6 +82,12 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QCheckBox  *cb_crysol_version_26;
       QCheckBox  *cb_crysol_explicit_hydrogens;
 
+      QLabel       *lbl_sastbx_method;
+      QButtonGroup *bg_sastbx_method;
+      QRadioButton *rb_sastbx_method_she;
+      QRadioButton *rb_sastbx_method_debye;
+      QRadioButton *rb_sastbx_method_zernike;
+
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -90,6 +99,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
 
       void update_water_e_density(double);
       void set_saxs_iq_native_debye();
+      void set_saxs_iq_native_sh();
       void set_saxs_iq_native_hybrid();
       void set_saxs_iq_native_hybrid2();
       void set_saxs_iq_native_hybrid3();
@@ -98,6 +108,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       void set_saxs_iq_native_fast_compute_pr();
       void set_saxs_iq_crysol();
       void set_saxs_iq_foxs();
+      void set_saxs_iq_sastbx();
 
       void update_fast_bin_size(double);
       void update_fast_modulation(double);
@@ -110,6 +121,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       void set_crysol_default_load_difference_intensity();
       void set_crysol_version_26();
       void set_crysol_explicit_hydrogens();
+
+      void set_sastbx_method( int );
 
       void cancel();
       void help();

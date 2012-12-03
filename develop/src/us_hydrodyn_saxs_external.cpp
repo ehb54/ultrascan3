@@ -470,3 +470,171 @@ void US_Hydrodyn_Saxs::cryson_launchFinished()
    disconnect( cryson, SIGNAL(launchFinished()), 0, 0);
 }
 
+
+// -------------------- Sastbx ------------------------------
+
+int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
+{
+   QString prog = 
+      USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "bin"
+#endif
+      + SLASH
+      + "sastbx.she" 
+#if defined(WIN32)
+      + ".exe"
+#endif      
+      ;
+
+   {
+      QFileInfo qfi(prog);
+      if ( !qfi.exists() )
+      {
+         editor_msg("red", QString("Sastbx program '%1' does not exist\n").arg(prog));
+         return -1;
+      }
+      if ( !qfi.isExecutable() )
+      {
+         editor_msg("red", QString("Sastbx program '%1' is not executable\n").arg(prog));
+         return -1;
+      }
+   }
+
+   QFileInfo fi( pdb );
+   if ( !fi.exists() )
+   {
+      editor_msg("red", QString("Sastbx called but PDB file '%1' does not exist\n").arg(pdb));
+      return -1;
+   }
+
+   pb_plot_saxs_sans->setEnabled(false);
+
+   sastbx_last_pdb = pdb;
+
+   sastbx = new QProcess( this );
+   //   sastbx->setWorkingDirectory( dir );
+   sastbx->addArgument( prog );
+
+   sastbx->addArgument( QString( "structure=%1" ).arg( pdb ) );
+   
+   QString method;
+   switch ( our_saxs_options->sastbx_method )
+   {
+   case 1:
+      method = "debye";
+      break;
+   case 2:
+      method = "zernike";
+      break;
+   case 0:
+   default:
+      method = "she";
+      break;
+   }
+
+   sastbx->addArgument( QString( "method=%1"    ).arg( method ) );
+   sastbx->addArgument( QString( "q_start=%1"   ).arg( our_saxs_options->start_q ) );
+   sastbx->addArgument( QString( "q_stop=%1"    ).arg( our_saxs_options->end_q ) );
+   sastbx->addArgument( QString( "n_step=%1"    ).arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
+   sastbx->addArgument( QString( "rho=%1"       ).arg( our_saxs_options->water_e_density ) );
+   sastbx->addArgument( QString( "drho=%1"      ).arg( our_saxs_options->crysol_hydration_shell_contrast ) );
+   sastbx->addArgument( QString( "max_i =%1"    ).arg( our_saxs_options->crysol_fibonacci_grid_order ) );
+   sastbx->addArgument( QString( "max_L =%1"    ).arg( our_saxs_options->crysol_max_harmonics ) );
+   sastbx->addArgument( QString( "output=%1"    ).arg( sastbx_last_pdb + ".int" ) );
+
+   connect( sastbx, SIGNAL(readyReadStdout()), this, SLOT(sastbx_readFromStdout()) );
+   connect( sastbx, SIGNAL(readyReadStderr()), this, SLOT(sastbx_readFromStderr()) );
+   connect( sastbx, SIGNAL(processExited()), this, SLOT(sastbx_processExited()) );
+   connect( sastbx, SIGNAL(launchFinished()), this, SLOT(sastbx_launchFinished()) );
+
+   editor->append("\n\nStarting Sastbx\n");
+   sastbx->start();
+   external_running = true;
+
+   return 0;
+}
+
+void US_Hydrodyn_Saxs::sastbx_readFromStdout()
+{
+   while ( sastbx->canReadLineStdout() )
+   {
+      editor_msg("brown", sastbx->readLineStdout() + "\n");
+   }
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn_Saxs::sastbx_readFromStderr()
+{
+   while ( sastbx->canReadLineStderr() )
+   {
+      editor_msg("red", sastbx->readLineStderr() + "\n");
+   }
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn_Saxs::sastbx_processExited()
+{
+   //   for ( int i = 0; i < 10000; i++ )
+   //   {
+   sastbx_readFromStderr();
+   sastbx_readFromStdout();
+      //   }
+   disconnect( sastbx, SIGNAL(readyReadStdout()), 0, 0);
+   disconnect( sastbx, SIGNAL(readyReadStderr()), 0, 0);
+   disconnect( sastbx, SIGNAL(processExited()), 0, 0);
+   editor->append("Sastbx finished.\n");
+
+   // sastbx creates 2 files:
+   // pdb_pdb.dat
+   // pdb.dat
+
+   QString created_dat = sastbx_last_pdb + ".int";
+
+   if ( !QFile::exists( created_dat ) )
+   {
+      editor_msg("red", QString(tr("Error: Sastbx did not create file %1")).arg( created_dat ));
+      pb_plot_saxs_sans->setEnabled(true);
+      external_running = false;
+      return;
+   }
+
+   // now move the file to the saxs directory
+   QString new_created_dat = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + QFileInfo(sastbx_last_pdb).fileName() + iqq_suffix() + ".int";
+
+   if ( QFile::exists(new_created_dat) )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->overwrite )
+      {
+         editor_msg("red", QString(tr("Notice: overwriting %1")).arg( new_created_dat ));
+      } else {
+         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat, 0, this );
+      }
+      QFile::remove( new_created_dat );
+   }
+
+   QDir qd;
+   if ( !qd.rename( created_dat, new_created_dat ) )
+   {
+      editor_msg("red", 
+                 QString(tr("Notice: could not rename %1 to %2"))
+                 .arg( created_dat )
+                 .arg( new_created_dat )
+                 );
+      new_created_dat = created_dat;
+   }
+
+   // now load & plot this curve
+   load_saxs( new_created_dat );
+   pb_plot_saxs_sans->setEnabled(true);
+   external_running = false;
+}
+   
+void US_Hydrodyn_Saxs::sastbx_launchFinished()
+{
+   editor_msg("brown", "Sastbx launch exited\n");
+   disconnect( sastbx, SIGNAL(launchFinished()), 0, 0);
+}

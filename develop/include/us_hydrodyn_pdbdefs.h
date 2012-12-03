@@ -241,6 +241,7 @@ struct saxs_options
    // options for saxs/sans iq curve computation
 
    bool    saxs_iq_native_debye;
+   bool    saxs_iq_native_sh;
    bool    saxs_iq_native_hybrid;
    bool    saxs_iq_native_hybrid2;
    bool    saxs_iq_native_hybrid3;
@@ -248,8 +249,10 @@ struct saxs_options
    bool    saxs_iq_native_fast_compute_pr;
    bool    saxs_iq_foxs;
    bool    saxs_iq_crysol;
+   bool    saxs_iq_sastbx;
 
    bool    sans_iq_native_debye;
+   bool    sans_iq_native_sh;
    bool    sans_iq_native_hybrid;
    bool    sans_iq_native_hybrid2;
    bool    sans_iq_native_hybrid3;
@@ -360,6 +363,8 @@ struct saxs_options
 
    unsigned int smooth;
    double       ev_exp_mult;
+
+   unsigned int sastbx_method;
 };
 
 struct saxs_atom

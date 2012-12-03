@@ -1729,7 +1729,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
-         SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
+         SLASH + "somo" + SLASH + "saxs" + SLASH + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg( model_vector[ current_model ].model_id ) + 
          ".atoms";
 

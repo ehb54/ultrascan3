@@ -20,7 +20,7 @@ unix {
  DEFINES               += UNIX QT_NO_STL
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
  # make sure CBFDIR is set if HAS_CBF is defined
- #  DEFINES               += HAS_CBF
+ # DEFINES               += HAS_CBF
  # INCLUDEPATH           += $(CBFDIR)/include
  # LIBS                  += -L$(CBFDIR)/lib -lcbf
 

@@ -139,15 +139,18 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QButtonGroup *bg_saxs_iq;
       QRadioButton *rb_saxs_iq_native_debye;
+      QRadioButton *rb_saxs_iq_native_sh;
       QRadioButton *rb_saxs_iq_native_hybrid;
       QRadioButton *rb_saxs_iq_native_hybrid2;
       QRadioButton *rb_saxs_iq_native_hybrid3;
       QRadioButton *rb_saxs_iq_native_fast;
       QRadioButton *rb_saxs_iq_foxs;
+      QRadioButton *rb_saxs_iq_sastbx;
       QRadioButton *rb_saxs_iq_crysol;
 
       QButtonGroup *bg_sans_iq;
       QRadioButton *rb_sans_iq_native_debye;
+      QRadioButton *rb_sans_iq_native_sh;
       QRadioButton *rb_sans_iq_native_hybrid;
       QRadioButton *rb_sans_iq_native_hybrid2;
       QRadioButton *rb_sans_iq_native_hybrid3;
@@ -491,22 +494,27 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       int run_saxs_iq_foxs( QString pdb );
       int run_saxs_iq_crysol( QString pdb );
       int run_sans_iq_cryson( QString pdb );
+      int run_saxs_iq_sastbx( QString pdb );
 
       QProcess *foxs;
       QProcess *crysol;
       QProcess *cryson;
+      QProcess *sastbx;
 
       QString foxs_last_pdb;
+      QString sastbx_last_pdb;
       QString crysol_last_pdb;
       QString crysol_last_pdb_base;
       QString cryson_last_pdb;
       QString cryson_last_pdb_base;
 
       void calc_saxs_iq_native_debye();
+      void calc_saxs_iq_native_sh();
       void calc_saxs_iq_native_hybrid2();
       void calc_saxs_iq_native_fast();
 
       void calc_saxs_iq_native_debye_bead_model();
+      void calc_saxs_iq_native_sh_bead_model();
       void calc_saxs_iq_native_hybrid2_bead_model();
       void calc_saxs_iq_native_fast_bead_model();
 
@@ -574,6 +582,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void cryson_readFromStderr();
       void cryson_launchFinished();
       void cryson_processExited();
+
+      void sastbx_readFromStdout();
+      void sastbx_readFromStderr();
+      void sastbx_launchFinished();
+      void sastbx_processExited();
 
       double compute_ff(
                         saxs     &sa,     // gaussian decomposition for the main atom

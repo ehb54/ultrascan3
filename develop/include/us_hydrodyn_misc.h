@@ -48,6 +48,7 @@ struct misc_options
    bool   equalize_radii;
    bool   hydro_supc;
    bool   hydro_zeno;
+   bool   export_msroll;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -105,6 +106,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QLabel    *lbl_hydro_method;
       QCheckBox *cb_hydro_supc;
       QCheckBox *cb_hydro_zeno;
+      QLabel    *lbl_other;
+      QCheckBox *cb_export_msroll;
 
    private slots:
 
@@ -129,6 +132,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       void set_hydro_supc();
       void set_hydro_zeno();
+
+      void set_export_msroll();
 
       void cancel();
       void help();

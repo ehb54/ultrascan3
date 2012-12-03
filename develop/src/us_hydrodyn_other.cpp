@@ -65,6 +65,9 @@ void US_Hydrodyn::read_residue_file()
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
    unknown_residues.clear(); // keep track of unknown residues
 
+   vector < QString > msroll_radii;
+   vector < QString > msroll_names;
+
    i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
    {
@@ -95,6 +98,52 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_atom.hybrid.mw;
             ts >> new_atom.hybrid.radius;
             ts >> new_atom.bead_assignment;
+            if ( misc.export_msroll &&
+                 new_residue.name.length() < 4 )
+            {
+               QString use_residue_name = new_residue.name;
+               if ( new_atom.name == "OXT" )
+               {
+                  use_residue_name = "*";
+               }
+               
+               unsigned int pos = ( unsigned int ) msroll_radii.size() + 1;
+               double covalent_radius = new_atom.hybrid.radius / 2e0;
+               if ( new_atom.name.contains( QRegExp( "^C" ) ) )
+               {
+                  covalent_radius = 0.77e0;
+               }
+               if ( new_atom.name.contains( QRegExp( "^N" ) ) )
+               {
+                  covalent_radius = 0.70e0;
+               }
+               if ( new_atom.name.contains( QRegExp( "^P" ) ) )
+               {
+                  covalent_radius = 0.95e0;
+               }
+               if ( new_atom.name.contains( QRegExp( "^S" ) ) )
+               {
+                  covalent_radius = 1.04e0;
+               }
+               if ( new_atom.name.contains( QRegExp( "^O" ) ) )
+               {
+                  covalent_radius = new_atom.hybrid.radius / 2.68e0;
+               }
+
+               msroll_radii.push_back( QString( "%1 %2 %3 %4\n" )
+                                       .arg( pos )
+                                       .arg( new_atom.hybrid.radius )
+                                       .arg( covalent_radius )
+                                       .arg( QString( "%1%2" ).arg( new_residue.name ).arg( new_atom.name ).left( 5 ) )
+                                       );
+               msroll_names.push_back( QString( "%1 %2 %3 %4\n" )
+                                       .arg( use_residue_name )
+                                       .arg( new_atom.name )
+                                       .arg( pos )
+                                       .arg( QString( "%1%2" ).arg( new_residue.name ).arg( new_atom.name ).left( 5 ) )
+                                       );
+            }
+
             if (new_atom.bead_assignment >= numbeads)
             {
                error_count++;
@@ -308,6 +357,39 @@ void US_Hydrodyn::read_residue_file()
    save_residue_list = residue_list;
    save_residue_list_no_pbr = residue_list_no_pbr;
    save_multi_residue_map = multi_residue_map;
+
+   if ( misc.export_msroll )
+   {
+      QString dir = somo_dir + QDir::separator() + "tmp" + QDir::separator();
+         
+      QFile f_radii( dir + "msroll_radii.txt" );
+      if ( !f_radii.open( IO_WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+      } else {
+         QTextStream ts( &f_radii );
+         for ( unsigned int i = 0; i < msroll_radii.size(); i++ )
+         {
+            ts << msroll_radii[ i ];
+         }
+         f_radii.close();
+         editor_msg( "blue", QString( tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+      }
+
+      QFile f_names( dir + "msroll_names.txt" );
+      if ( !f_names.open( IO_WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
+      } else {
+         QTextStream ts( &f_names );
+         for ( unsigned int i = 0; i < msroll_names.size(); i++ )
+         {
+            ts << msroll_names[ i ];
+         }
+         f_names.close();
+         editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
+      }
+   }
 }
 
 void US_Hydrodyn::calc_vbar(struct PDB_model *model)
@@ -4220,6 +4302,10 @@ void US_Hydrodyn::set_default()
    saxs_options.bead_models_rho0_in_scat_factors   = true;
    saxs_options.smooth                             = 0;
    saxs_options.ev_exp_mult                        = 1e0;
+   saxs_options.sastbx_method                      = 0;
+   saxs_options.saxs_iq_sastbx                     = false;
+   saxs_options.saxs_iq_native_sh                  = false;
+   saxs_options.sans_iq_native_sh                  = false;
 
    grid.create_nmr_bead_pdb                        = false;
 
@@ -4228,6 +4314,8 @@ void US_Hydrodyn::set_default()
    asa.vvv                                         = false;
    asa.vvv_probe_radius                            = 1.4f;
    asa.vvv_grid_dR                                 = 0.5f;
+
+   misc.export_msroll                              = false;
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

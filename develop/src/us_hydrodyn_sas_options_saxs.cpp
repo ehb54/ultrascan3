@@ -68,6 +68,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_debye()));
 
+   cb_saxs_iq_native_sh = new QCheckBox(this);
+   cb_saxs_iq_native_sh->setText(tr("SH "));
+   cb_saxs_iq_native_sh->setEnabled(true);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
+   cb_saxs_iq_native_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_native_sh->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_native_sh, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_sh()));
+
    cb_saxs_iq_native_hybrid = new QCheckBox(this);
    cb_saxs_iq_native_hybrid->setText(tr("Hybrid "));
    cb_saxs_iq_native_hybrid->setEnabled(true);
@@ -132,6 +140,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_crysol, SIGNAL(clicked()), this, SLOT(set_saxs_iq_crysol()));
 
+   cb_saxs_iq_sastbx = new QCheckBox(this);
+   cb_saxs_iq_sastbx->setText(tr("Sastbx"));
+   cb_saxs_iq_sastbx->setEnabled(true);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
+   cb_saxs_iq_sastbx->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_sastbx->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_sastbx, SIGNAL(clicked()), this, SLOT(set_saxs_iq_sastbx()));
+
    lbl_fast_bin_size = new QLabel(tr(" Fast Debye: Bin size"), this);
    lbl_fast_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fast_bin_size->setMinimumHeight(minHeight1);
@@ -183,7 +199,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_hybrid2_q_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_hybrid2_q_points, SIGNAL(valueChanged(double)), SLOT(update_hybrid2_q_points(double)));
 
-   lbl_crysol_max_harmonics = new QLabel(tr(" Crysol: Maximum order of harmonics"), this);
+   lbl_crysol_max_harmonics = new QLabel(tr(" SH/Crysol/Sastbx: Maximum order of harmonics"), this);
    lbl_crysol_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_crysol_max_harmonics->setMinimumHeight(minHeight1);
    lbl_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -200,7 +216,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_crysol_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_crysol_max_harmonics(double)));
 
-   lbl_crysol_fibonacci_grid_order = new QLabel(tr(" Crysol: Order of Fibonacci grid"), this);
+   lbl_crysol_fibonacci_grid_order = new QLabel(tr(" SH/Crysol/Sastbx: Order of Fibonacci grid"), this);
    lbl_crysol_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_crysol_fibonacci_grid_order->setMinimumHeight(minHeight1);
    lbl_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -217,7 +233,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_crysol_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_crysol_fibonacci_grid_order(double)));
 
-   lbl_crysol_hydration_shell_contrast = new QLabel(tr(" Crysol: Contrast of hydration shell (e / A^3):"), this);
+   lbl_crysol_hydration_shell_contrast = new QLabel(tr(" Crysol/Sastbx: Contrast of hydration shell (e / A^3):"), this);
    lbl_crysol_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
    lbl_crysol_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -264,6 +280,38 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cb_crysol_explicit_hydrogens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_crysol_explicit_hydrogens, SIGNAL(clicked()), this, SLOT(set_crysol_explicit_hydrogens()));
 
+   lbl_sastbx_method = new QLabel(tr(" Sastbx: Method"), this);
+   lbl_sastbx_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_sastbx_method->setMinimumHeight(minHeight1);
+   lbl_sastbx_method->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sastbx_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   rb_sastbx_method_she = new QRadioButton(tr("Spherical harmonics"), this);
+   rb_sastbx_method_she->setEnabled(true);
+   rb_sastbx_method_she->setChecked( saxs_options->sastbx_method == 0 );
+   rb_sastbx_method_she->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sastbx_method_she->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sastbx_method_debye = new QRadioButton(tr("Debye"), this);
+   rb_sastbx_method_debye->setEnabled(true);
+   rb_sastbx_method_debye->setChecked( saxs_options->sastbx_method == 1 );
+   rb_sastbx_method_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sastbx_method_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sastbx_method_zernike = new QRadioButton(tr("Zernike"), this);
+   rb_sastbx_method_zernike->setEnabled(true);
+   rb_sastbx_method_zernike->setChecked( saxs_options->sastbx_method == 2 );
+   rb_sastbx_method_zernike->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sastbx_method_zernike->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_sastbx_method = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_sastbx_method->setRadioButtonExclusive(true);
+   bg_sastbx_method->insert(rb_sastbx_method_she);
+   bg_sastbx_method->insert(rb_sastbx_method_debye);
+   bg_sastbx_method->insert(rb_sastbx_method_zernike);
+
+   connect(bg_sastbx_method, SIGNAL(clicked(int)), SLOT(set_sastbx_method(int)));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -289,6 +337,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    QHBoxLayout *hbl_saxs_iq = new QHBoxLayout;
    hbl_saxs_iq->addWidget(lbl_saxs_iq);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_debye);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_native_sh);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_hybrid);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_hybrid2);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_hybrid3);
@@ -297,6 +346,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_fast_compute_pr);
    hbl_saxs_iq->addWidget(cb_saxs_iq_foxs);
    hbl_saxs_iq->addWidget(cb_saxs_iq_crysol);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_sastbx);
    background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
    j++;
 
@@ -330,6 +380,15 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    hbl_crysol->addWidget(cb_crysol_version_26);
    hbl_crysol->addWidget(cb_crysol_explicit_hydrogens);
    background->addMultiCellLayout(hbl_crysol, j, j, 0, 1);
+   j++;
+
+   background->addWidget(lbl_sastbx_method, j, 0);
+   QHBoxLayout *hbl_sastbx_method = new QHBoxLayout;
+   // hbl_sastbx_method->addWidget( bg_sastbx_method );
+   hbl_sastbx_method->addWidget( rb_sastbx_method_she );
+   hbl_sastbx_method->addWidget( rb_sastbx_method_debye );
+   hbl_sastbx_method->addWidget( rb_sastbx_method_zernike );
+   background->addLayout( hbl_sastbx_method, j, 1 );
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -366,19 +425,50 @@ void US_Hydrodyn_SasOptionsSaxs::update_water_e_density(double val)
 void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_debye()
 {
    (*saxs_options).saxs_iq_native_debye = cb_saxs_iq_native_debye->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_fast = !cb_saxs_iq_native_debye->isChecked();
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
+
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
+   }
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_sh()
+{
+   (*saxs_options).saxs_iq_native_sh = cb_saxs_iq_native_sh->isChecked();
+   (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_sh->isChecked();
+   (*saxs_options).saxs_iq_native_hybrid = false;
+   (*saxs_options).saxs_iq_native_hybrid2 = false;
+   (*saxs_options).saxs_iq_native_hybrid3 = false;
+   (*saxs_options).saxs_iq_foxs = false;
+   (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
+
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
+   cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
+   cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -390,19 +480,23 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_debye()
 void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_hybrid()
 {
    (*saxs_options).saxs_iq_native_hybrid = cb_saxs_iq_native_hybrid->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_hybrid->isChecked();
    (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -414,19 +508,23 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_hybrid()
 void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_hybrid2()
 {
    (*saxs_options).saxs_iq_native_hybrid2 = cb_saxs_iq_native_hybrid2->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_hybrid2->isChecked();
    (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -438,19 +536,23 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_hybrid2()
 void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_hybrid3()
 {
    (*saxs_options).saxs_iq_native_hybrid3 = cb_saxs_iq_native_hybrid3->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_hybrid3->isChecked();
    (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -473,19 +575,23 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_hybrid_adaptive()
 void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_fast()
 {
    (*saxs_options).saxs_iq_native_fast = cb_saxs_iq_native_fast->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_fast->isChecked();
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -504,18 +610,22 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_crysol()
 {
    (*saxs_options).saxs_iq_crysol = cb_saxs_iq_crysol->isChecked();
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_crysol->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_foxs = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -528,18 +638,50 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_foxs()
 {
    (*saxs_options).saxs_iq_foxs = cb_saxs_iq_foxs->isChecked();
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_foxs->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
    (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_sastbx = false;
 
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
    cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
    cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
+
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
+   }
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_sastbx()
+{
+   (*saxs_options).saxs_iq_sastbx = cb_saxs_iq_sastbx->isChecked();
+   (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_foxs->isChecked();
+   (*saxs_options).saxs_iq_native_sh = false;
+   (*saxs_options).saxs_iq_native_hybrid = false;
+   (*saxs_options).saxs_iq_native_hybrid2 = false;
+   (*saxs_options).saxs_iq_native_hybrid3 = false;
+   (*saxs_options).saxs_iq_native_fast = false;
+   (*saxs_options).saxs_iq_crysol = false;
+   (*saxs_options).saxs_iq_foxs   = false;
+
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
+   cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
+   cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
+   cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_sastbx);
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
@@ -611,5 +753,15 @@ void US_Hydrodyn_SasOptionsSaxs::update_hybrid2_q_points(double val)
 void US_Hydrodyn_SasOptionsSaxs::update_fast_bin_size(double val)
 {
    (*saxs_options).fast_bin_size = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_sastbx_method( int val )
+{
+   saxs_options->sastbx_method = ( unsigned int ) val;
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
+   }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

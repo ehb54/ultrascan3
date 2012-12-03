@@ -299,6 +299,21 @@ void US_Hydrodyn_Misc::setupGUI()
    cb_hydro_zeno->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
 
+   lbl_other = new QLabel(tr("Other options:"), this);
+   lbl_other->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_other->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_other->setMinimumHeight(minHeight1);
+   lbl_other->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_other->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   cb_export_msroll = new QCheckBox(this);
+   cb_export_msroll->setText(tr(" Create MSROLL atomic radii and name files on load residue file"));
+   cb_export_msroll->setChecked((*misc).export_msroll);
+   cb_export_msroll->setMinimumHeight(minHeight1);
+   cb_export_msroll->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_export_msroll->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_export_msroll, SIGNAL(clicked()), SLOT(set_export_msroll()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -365,6 +380,11 @@ void US_Hydrodyn_Misc::setupGUI()
    j++;
    background->addWidget(cb_hydro_supc, j, 0);
    background->addWidget(cb_hydro_zeno, j, 1);
+   j++;
+
+   background->addMultiCellWidget( lbl_other, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget( cb_export_msroll, j, j, 0, 1 );
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -479,6 +499,12 @@ void US_Hydrodyn_Misc::set_hydro_zeno()
    cb_hydro_supc->setChecked( (*misc).hydro_supc );
       
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_export_msroll()
+{
+   (*misc).export_msroll = cb_export_msroll->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::cancel()
