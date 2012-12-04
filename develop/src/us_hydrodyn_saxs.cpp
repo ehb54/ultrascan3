@@ -6440,8 +6440,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       {
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
-            .arg( our_saxs_options->crysol_max_harmonics )
-            .arg( our_saxs_options->crysol_fibonacci_grid_order )
+            .arg( our_saxs_options->sh_max_harmonics )
+            .arg( our_saxs_options->sh_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
       } else {
          if ( our_saxs_options->saxs_iq_foxs )
@@ -6488,8 +6488,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
                qs += "st";
                qs += QString( "_%1__h%2_g%3_hs%4" )
                   .arg( method )
-                  .arg( our_saxs_options->crysol_max_harmonics )
-                  .arg( our_saxs_options->crysol_fibonacci_grid_order )
+                  .arg( our_saxs_options->sh_max_harmonics )
+                  .arg( our_saxs_options->sh_fibonacci_grid_order )
                   .arg( QString( "%1" ).arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) )
                   ;
             }
@@ -6497,8 +6497,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             {
                qs += "sh";
                qs += QString( "_h%1_g%2" )
-                  .arg( our_saxs_options->crysol_max_harmonics )
-                  .arg( our_saxs_options->crysol_fibonacci_grid_order )
+                  .arg( our_saxs_options->sh_max_harmonics )
+                  .arg( our_saxs_options->sh_fibonacci_grid_order )
                   ;
             }
             if ( ( our_saxs_options->saxs_iq_native_hybrid ||

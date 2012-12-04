@@ -217,18 +217,19 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
       q.resize(q_points);
-      q2.resize(q_points);
 
       if ( our_saxs_options.iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -873,9 +874,6 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
 
       double one_over_4pi = 1.0 / (4.0 * M_PI);
       double one_over_4pi_2 = one_over_4pi * one_over_4pi;
@@ -883,13 +881,18 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       vector < double > q2; // store q^2
       vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
-      q2.resize(q_points);
-      q_over_4pi_2.resize(q_points);
 
       if ( our_saxs_options.iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      q_over_4pi_2.resize( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
+
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -1339,23 +1342,24 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
-
       double one_over_4pi = 1.0 / (4.0 * M_PI);
       double one_over_4pi_2 = one_over_4pi * one_over_4pi;
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
       vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
-      q2.resize(q_points);
-      q_over_4pi_2.resize(q_points);
 
       if ( our_saxs_options.iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      q_over_4pi_2.resize( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
+
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -1684,8 +1688,8 @@ QString US_Saxs_Util::iqq_suffix()
       {
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
-            .arg( our_saxs_options.crysol_max_harmonics )
-            .arg( our_saxs_options.crysol_fibonacci_grid_order )
+            .arg( our_saxs_options.sh_max_harmonics )
+            .arg( our_saxs_options.sh_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options.crysol_hydration_shell_contrast ).replace(".", "_" ) );
       } else {
          if ( our_saxs_options.saxs_iq_foxs )
@@ -1959,8 +1963,8 @@ void US_Saxs_Util::setup_saxs_options()
    our_saxs_options.iq_scale_angstrom = true;
    our_saxs_options.iq_scale_nm = false;
 
-   our_saxs_options.crysol_max_harmonics = 15;
-   our_saxs_options.crysol_fibonacci_grid_order = 17;
+   our_saxs_options.sh_max_harmonics = 15;
+   our_saxs_options.sh_fibonacci_grid_order = 17;
    our_saxs_options.crysol_hydration_shell_contrast = 0.03f;
    our_saxs_options.crysol_default_load_difference_intensity = true;
    our_saxs_options.crysol_version_26 = true;
@@ -2134,11 +2138,11 @@ void US_Saxs_Util::setup_saxs_options()
    }
    if ( control_parameters.count( "crysolharm" ) )
    {
-      our_saxs_options.crysol_max_harmonics = control_parameters[ "crysolharm" ].toUInt();
+      our_saxs_options.sh_max_harmonics = control_parameters[ "crysolharm" ].toUInt();
    }
    if ( control_parameters.count( "crysolgrid" ) )
    {
-      our_saxs_options.crysol_fibonacci_grid_order = control_parameters[ "crysolgrid" ].toUInt();
+      our_saxs_options.sh_fibonacci_grid_order = control_parameters[ "crysolgrid" ].toUInt();
    }
    if ( control_parameters.count( "crysolchs" ) )
    {

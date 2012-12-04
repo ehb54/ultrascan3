@@ -181,6 +181,30 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    le_ev_exp_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_ev_exp_mult, SIGNAL(textChanged(const QString &)), SLOT(update_ev_exp_mult(const QString &)));
 
+   cb_multiply_iq_by_atomic_volume = new QCheckBox(this);
+   cb_multiply_iq_by_atomic_volume->setText( tr( " Multiply Iq by atomic volume (for structure facture computations)" ) );
+   cb_multiply_iq_by_atomic_volume->setEnabled(true);
+   cb_multiply_iq_by_atomic_volume->setChecked((*saxs_options).multiply_iq_by_atomic_volume);
+   cb_multiply_iq_by_atomic_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_multiply_iq_by_atomic_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_multiply_iq_by_atomic_volume, SIGNAL(clicked()), this, SLOT(set_multiply_iq_by_atomic_volume()));
+
+   cb_alt_sh1 = new QCheckBox(this);
+   cb_alt_sh1->setText(tr(" SH Alt 1"));
+   cb_alt_sh1->setEnabled(true);
+   cb_alt_sh1->setChecked((*saxs_options).alt_sh1);
+   cb_alt_sh1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_alt_sh1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_alt_sh1, SIGNAL(clicked()), this, SLOT(set_alt_sh1()));
+
+   cb_alt_sh2 = new QCheckBox(this);
+   cb_alt_sh2->setText(tr(" SH Alt 2"));
+   cb_alt_sh2->setEnabled(true);
+   cb_alt_sh2->setChecked((*saxs_options).alt_sh2);
+   cb_alt_sh2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_alt_sh2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_alt_sh2, SIGNAL(clicked()), this, SLOT(set_alt_sh2()));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -248,6 +272,12 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_5->addWidget( lbl_ev_exp_mult );
    hbl_various_5->addWidget( le_ev_exp_mult );
    background->addMultiCellLayout(hbl_various_5, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_various_6 = new QHBoxLayout;
+   hbl_various_6->addWidget(cb_alt_sh1);
+   hbl_various_6->addWidget(cb_alt_sh2);
+   background->addMultiCellLayout(hbl_various_6, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(pb_create_somo_ff, j, j, 0, 1);
@@ -371,6 +401,19 @@ void US_Hydrodyn_SasOptionsExperimental::update_compute_exponential_terms( doubl
 void US_Hydrodyn_SasOptionsExperimental::set_multiply_iq_by_atomic_volume()
 {
    (*saxs_options).multiply_iq_by_atomic_volume = cb_multiply_iq_by_atomic_volume->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_alt_sh1()
+{
+   (*saxs_options).alt_sh1 = cb_alt_sh1->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_alt_sh2()
+{
+   (*saxs_options).alt_sh2 = cb_alt_sh2->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

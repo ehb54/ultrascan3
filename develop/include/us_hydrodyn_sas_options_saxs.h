@@ -68,11 +68,11 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QLabel     *lbl_hybrid2_q_points;
       QwtCounter *cnt_hybrid2_q_points;
 
-      QLabel     *lbl_crysol_max_harmonics;
-      QwtCounter *cnt_crysol_max_harmonics;
+      QLabel     *lbl_sh_max_harmonics;
+      QwtCounter *cnt_sh_max_harmonics;
 
-      QLabel     *lbl_crysol_fibonacci_grid_order;
-      QwtCounter *cnt_crysol_fibonacci_grid_order;
+      QLabel     *lbl_sh_fibonacci_grid_order;
+      QwtCounter *cnt_sh_fibonacci_grid_order;
 
       QLabel     *lbl_crysol_hydration_shell_contrast;
       QwtCounter *cnt_crysol_hydration_shell_contrast;
@@ -115,8 +115,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
 
       void update_hybrid2_q_points(double);
 
-      void update_crysol_max_harmonics(double);
-      void update_crysol_fibonacci_grid_order(double);
+      void update_sh_max_harmonics(double);
+      void update_sh_fibonacci_grid_order(double);
       void update_crysol_hydration_shell_contrast(double);
       void set_crysol_default_load_difference_intensity();
       void set_crysol_version_26();

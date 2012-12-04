@@ -269,8 +269,8 @@ struct saxs_options
    bool    iq_scale_nm;
 
    // crysol specific options
-   unsigned int crysol_max_harmonics;
-   unsigned int crysol_fibonacci_grid_order;
+   unsigned int sh_max_harmonics;
+   unsigned int sh_fibonacci_grid_order;
    float        crysol_hydration_shell_contrast;
 
    float   fast_bin_size;
@@ -365,6 +365,9 @@ struct saxs_options
    double       ev_exp_mult;
 
    unsigned int sastbx_method;
+
+   bool         alt_sh1;
+   bool         alt_sh2;
 };
 
 struct saxs_atom
@@ -375,6 +378,7 @@ struct saxs_atom
    QString atom_name;
    int hydrogens;    
    float pos[3];
+   double rtp[3];
    float excl_vol;
    float b;           // scattering factor b for p(r) calcs
 

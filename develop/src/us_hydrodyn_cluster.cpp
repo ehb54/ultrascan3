@@ -833,9 +833,9 @@ void US_Hydrodyn_Cluster::create_pkg()
    base += 
       QString( "HyPoints        %1\n" ).arg( our_saxs_options->hybrid2_q_points );
    base += 
-      QString( "CrysolHarm      %1\n" ).arg( our_saxs_options->crysol_max_harmonics );
+      QString( "CrysolHarm      %1\n" ).arg( our_saxs_options->sh_max_harmonics );
    base += 
-      QString( "CrysolGrid      %1\n" ).arg( our_saxs_options->crysol_fibonacci_grid_order );
+      QString( "CrysolGrid      %1\n" ).arg( our_saxs_options->sh_fibonacci_grid_order );
    base += 
       QString( "CrysolChs       %1\n" ).arg( our_saxs_options->crysol_hydration_shell_contrast );
    base += 

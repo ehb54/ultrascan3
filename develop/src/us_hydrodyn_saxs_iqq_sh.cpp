@@ -2,12 +2,13 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_saxs_util.h"
+#include "../include/us_sh.h"
 
 #include <qregexp.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
-static bool save_calc_to_csv = false;
+// static bool save_calc_to_csv = false;
 
 #define SLASH QDir::separator()
 
@@ -313,7 +314,75 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          fclose(fsaxs_atoms);
       }
          
-      // ok now we have all the atoms
+
+      // recenter
+
+      point cx;
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         cx.axis[ j ] = 0.0;
+      }
+
+      for ( unsigned int i = 0; i < atoms.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            cx.axis[ j ] += atoms[ i ].pos[ j ];
+         }
+      }
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         cx.axis[ j ] /= ( float ) atoms.size();
+      }
+      for ( unsigned int i = 1; i < atoms.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            atoms[ i ].pos[ j ] -= cx.axis[ j ];
+         }
+      }
+      for ( unsigned int i = 0; i < atoms.size(); i++ )
+      {
+         atoms[ i ].rtp[ 0 ] = sqrt ( atoms[ i ].pos[ 0 ] * atoms[ i ].pos[ 0 ] +
+                                      atoms[ i ].pos[ 1 ] * atoms[ i ].pos[ 1 ] +
+                                      atoms[ i ].pos[ 2 ] * atoms[ i ].pos[ 2 ] );
+         if ( atoms[ i ].rtp[ 0 ] == 0e0 )
+         {
+            atoms[ i ].rtp[ 1 ] = 0e0;
+            atoms[ i ].rtp[ 2 ] = 0e0;
+         } else {
+            atoms[ i ].rtp[ 1 ] = acos ( atoms[ i ].pos[ 2 ] / atoms[ i ].rtp[ 0 ] );
+
+            if ( atoms[ i ].pos[ 0 ] < 0.0 )
+            {
+               atoms[ i ].rtp[ 2 ] = M_PI - asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                              atoms[ i ].pos[ 0 ] +
+                                                                              atoms[ i ].pos[ 1 ] * 
+                                                                              atoms[ i ].pos[ 1 ] ) );
+            } else {
+               if ( atoms[ i ].pos[ 1 ] < 0.0 )
+               {
+                  atoms[ i ].rtp[ 2 ] = M_2PI + asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                                  atoms[ i ].pos[ 0 ] +
+                                                                                  atoms[ i ].pos[ 1 ] * 
+                                                                                  atoms[ i ].pos[ 1 ] ) );
+               } else {
+                  atoms[ i ].rtp[ 2 ] = asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                          atoms[ i ].pos[ 0 ] +
+                                                                          atoms[ i ].pos[ 1 ] * 
+                                                                          atoms[ i ].pos[ 1 ] ) );
+               }               
+            }
+         }               
+      }
+
+      vector < vector < double > > fib_grid;
+      sh::build_grid( fib_grid, our_saxs_options->sh_fibonacci_grid_order );
+      printf( "fib of order %u is %u fib_grid.size() %u\n", our_saxs_options->sh_fibonacci_grid_order, 
+              sh::fibonacci( our_saxs_options->sh_fibonacci_grid_order ),
+              fib_grid.size() );
+
+
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
 
@@ -350,33 +419,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          pb_plot_pr->setEnabled(true);
          return;
       }
-#if defined(SAXS_DEBUG)
-      cout << "start q:" << our_saxs_options->start_q
-           << " end q:" << our_saxs_options->end_q
-           << " delta q:" << our_saxs_options->delta_q
-           << " q points:" << q_points
-           << endl;
-#endif
+      
+      // just compute one direction for now
+
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
-
-      double one_over_4pi = 1.0 / (4.0 * M_PI);
-      double one_over_4pi_2 = one_over_4pi * one_over_4pi;
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
       vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
-      q2.resize(q_points);
-      q_over_4pi_2.resize(q_points);
+
+      double one_over_4pi = 1.0 / (4.0 * M_PI);
+      double one_over_4pi_2 = one_over_4pi * one_over_4pi;
 
       if ( our_saxs_options->iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      q_over_4pi_2.resize( q_points );
+      f.resize           ( q_points );
+      fc.resize          ( q_points );
+      fp.resize          ( q_points );
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -395,147 +461,30 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;
       }
 
-      // double m_pi_vi23; // - pi * pow(v,2/3)
-      double vi_23_4pi;
-      float vi; // excluded water vol
-      float vie; // excluded water * e density
-
-#if defined(BUG_DEBUG)
-      qApp->processEvents();
-      cout << " sleep 1 c" << endl;
-      sleep(1);
-      cout << " sleep 1 c done" << endl;
-#endif
-#if defined(SAXS_DEBUG_F)
-      cout << "atom #\tsaxs name\tq:";
-      for ( unsigned int j = 0; j < q_points; j++ )
-      {
-         if (1 || (q[j] > .0099 && q[j] < .0101)) {
-            cout << q[j] << "\t";
-         }
-      }
-      cout << endl;
-      cout << "\t\tq^2:";
-      for ( unsigned int j = 0; j < q_points; j++ )
-      {
-         if (1 || (q[j] > .0099 && q[j] < .0101)) {
-            cout << q2[j] << "\t";
-         }
-      }
-      cout << endl;
-#endif
       saxs saxsH = saxs_map["H"];
-      cout << "hi\n";
       cout << QString( "atoms.size() %1\n" ).arg( atoms.size() );
       if ( !atoms.size() )
       {
          editor_msg( "red", "No useable atoms found" );
+         progress_saxs->reset();
+         lbl_core_progress->setText("");
+         pb_plot_saxs_sans->setEnabled(true);
+         pb_plot_pr->setEnabled(true);
          return;
       }
 
-      // spec calc for now
-      {
-         cout << "atomname pos h n ve\n";
-         vector < double > n;
-         vector < double > v;
-
-         for ( unsigned int i = 0; i < atoms.size(); i++ )
-         {
-            saxs sm = saxs_map[atoms[i].saxs_name];
-            double this_n = 
-               compute_ff(
-                          sm,
-                          saxsH,
-                          atoms[ i ].residue_name,
-                          atoms[ i ].saxs_name,
-                          atoms[ i ].atom_name,
-                          atoms[ i ].hydrogens,
-                          0e0,
-                          0e0 );
-            cout << QString( "%1 %2 %3 %4 %5\n" )
-               .arg( atoms[ i ].saxs_name )
-               .arg( i )
-               .arg( atoms[ i ].hydrogens )
-               .arg( this_n )
-               .arg( atoms[ i ].excl_vol )
-               ;
-            n.push_back( this_n );
-            v.push_back( atoms[ i ].excl_vol );
-         }
-         // compute I0 debye & its components
-         double I0rho0 = 0e0;
-         double I0     = 0e0;
-         double rho0   = our_saxs_options->water_e_density;
-         double evx    = 0e0;
-
-         for ( unsigned int i = 0; i < n.size(); i++ )
-         {
-            for ( unsigned int j = 0; j < n.size(); j++ )
-            {
-               I0rho0 += n[ i ] * n[ j ];
-               I0     += n[ i ] * n[ j ] - rho0 * ( n[ i ] * v[ j ] + n[ j ] * v[ i ] - rho0 * ( v[ i ] * v[ j ] ) );
-               evx    += rho0 * ( v[ i ] * v[ j ] );
-            }
-         }
-
-         cout << QString( "I0 (rho0 == 0) %1 I0 %2 diff %3 sum vivj %4\n" )
-            .arg( I0rho0 )
-            .arg( I0 )
-            .arg( I0rho0 - I0 )
-            .arg( evx )
-            ;
-         
-         // compute exact:
-         
-         double sumn    = 0e0;
-         double V       = 0e0;
-
-         for ( unsigned int i = 0; i < n.size(); i++ )
-         {
-            V    += v[ i ];
-            sumn += n[ i ];
-         }
-
-         double eI0rho0 = sumn * sumn;
-         double eI0     = sumn * sumn - rho0 * ( 2e0 * V * sumn - rho0 * V * V );
-         double eevx    = rho0 * V * V;
-
-         cout << QString( "exact I0 (rho0 == 0) %1 I0 %2 diff %3 rho0 V^2 %4 ev total %5\n" )
-            .arg( eI0rho0 )
-            .arg( eI0 )
-            .arg( eI0rho0 - eI0 )
-            .arg( eevx )
-            .arg( V )
-            ;
-      }
+      double vi_23_4pi;
+      double vi; // excluded water vol
+      double vie; // excluded water * e density
 
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
-
          saxs saxs = saxs_map[atoms[i].saxs_name];
 
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
          // m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
          vi_23_4pi = - pow((double)vi,2.0/3.0) * one_over_4pi;
-
-#if defined(SAXS_DEBUG_FX)
-         cout << QString( "%1 atom %2 hydrogens %3 vie %4 vi_23_4pi %5\n" )
-            .arg( i )
-            .arg( atoms[ i ].saxs_name )
-            .arg( atoms[ i ].hydrogens )
-            .arg( vie )
-            .arg( vi_23_4pi )
-            ;
-         cout << i << "\t"
-              << atoms[i].saxs_name << "\t";
-         cout << QString("").sprintf("a1 %f b1 %f a2 %f b2 %f a3 %f b3 %f a4 %f b4 %f c %f\n"
-                                     , saxs.a[0] , saxs.b[0]
-                                     , saxs.a[1] , saxs.b[1]
-                                     , saxs.a[2] , saxs.b[2]
-                                     , saxs.a[3] , saxs.b[3]
-                                     , saxs.c);
-#endif
          
          for ( unsigned int j = 0; j < q_points; j++ )
          {
@@ -557,103 +506,299 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 
             fc[j][i] = vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
             fp[j][i] = f[j][i] - fc[j][i];
-
-#if defined(SAXS_DEBUG_F)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << f[j][i]
-                    << "\n";
-            }
-#endif
-
-#if defined(SAXS_DEBUG_FV)
-            if (1 || (q[j] > .0099 && q[j] < .0101)) {
-               cout << q[j] 
-                    << "\t" 
-                    << q2[j] 
-                    << "\t" 
-                    << vi
-                    << "\t" 
-                    << vie
-                    << "\t" 
-                    << vi_23_4pi
-                    << "\t" 
-                    << m_pi_vi23 * q2[j]
-                    << "\t" 
-                    << vie * exp(m_pi_vi23 * q2[j])
-                    << "\t" 
-                    << fp[j][i]
-                    << "\n";
-            }
-#endif
-#if defined(ONLY_PHYSICAL_F)
-            if ( fp[j][i] < 0.0f ) 
-            {
-               fp[j][i] = 0.0f;
-            }
-#endif
          }
-#if defined(SAXS_DEBUG_F)
-         cout << endl;
-#endif
       }
-#if defined(SAXS_DEBUG)
-      cout << "f' computed, now compute I\n";
-#endif
-      if ( save_calc_to_csv )
+      // f, f' computed
+
+      cout << "compute spherical bessel functions\n";
+      // setup spherical bessel functions
+      vector < vector < vector < double > > >  J; // J[atom][n][q_point]
+      J.resize( atoms.size() );
+      for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
-         QString out = ",,,,\"q:\",";
-         for ( unsigned int i = 0; i < q.size(); i++ )
+         J[ i ].resize( our_saxs_options->sh_max_harmonics + 1 );
+         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
          {
-            out += QString("%1,").arg(q[i]);
-         }
-         out += "\n\n\n\"f':\"\n";
-         out += 
-            "\"number\","
-            "\"name\","
-            "\"hybrid name\","
-            "\"excluded volume\","
-            "\"number of hydrogens\","
-            "\"structure factors\","
-            "\n";
-
-         // cout << QString( "atoms.size() %1\n" ).arg( atoms.size() );
-         for ( unsigned int i = 0; i < atoms.size(); i++ )
-         {
-            out += 
-               QString(
-                       "%1,"
-                       "\"%2\","
-                       "\"%3\","
-                       "%4,"
-                       "%5,"
-                       )
-               .arg(i + 1)
-               .arg(atoms[i].saxs_name)
-               .arg(atoms[i].hybrid_name)
-               .arg(atoms[i].excl_vol)
-               .arg(atoms[i].hydrogens)
-               ;
-            for ( unsigned int j = 0; j < q.size(); j++ )
+            J[ i ][ l ].resize( q_points );
+            for ( unsigned int j = 0; j < q_points; j++ )
             {
-               out += QString("%1,").arg(fp[j][i]);
+               if ( !nr::sphbes( l, q[ j ] * atoms[ i ].rtp[ 0 ], J[ i ][ l ][ j ] ) )
+               {
+                  editor_msg( "red", "nr::shbes failed" );
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return;
+               }
             }
-            out += "\n";
          }
+      }      
 
-         QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "last_iqq.csv" );
-         if ( f.open( IO_WriteOnly ) )
+      cout << "compute associated legendre functions\n";
+      // setup associated legendre functions
+
+      vector < map < unsigned int, map < int , complex < double > > > > Y; // Y[atom][l][m]
+      Y.resize( atoms.size() );
+
+      for ( unsigned int i = 0; i < atoms.size(); i++ )
+      {
+         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
          {
-            QTextStream t( &f );
-            t << out;
-            f.close();
-            editor->append(QString("created %1\n").arg(f.name()));
+            for ( int m = - (int) l ; m <= (int) l; m++ )
+            {
+               Y[ i ][ l ][ m ] = complex < double > ( 0e0, 0e0 );
+            }
          }
-      }            
+      }
 
+      complex < double > one_over_fib_grid_size( 1e0 / ( double ) fib_grid.size(), 0e0 );
+
+      vector < double > I( q_points );
+
+#if !defined( WRONG_WAY )
+
+      for ( unsigned int i = 0; i < atoms.size(); i++ )
+      {
+         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+         {
+            for ( int m = - (int) l ; m <= (int) l; m++ )
+            {
+               complex < double > result;
+               if ( !sh::conj_spherical_harmonic( l, 
+                                                  m, 
+                                                  atoms[ i ].rtp[ 1 ],
+                                                  atoms[ i ].rtp[ 2 ],
+                                                  result ) )
+               {
+                  editor_msg( "red", "sh::spherical_harmonic failed" );
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return;
+               }
+               Y[ i ][ l ][ m ] = result;
+            }
+         }            
+      }
+
+      cout << "compute amplitudes\n";
+      // compute A
+      complex < double > i_( 0e0, 1e0 );
+      map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
+
+      for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+      {
+         complex < double > i_pow_l = pow( i_, l );
+         for ( int m = - (int) l ; m <= (int) l; m++ )
+         {
+            A[ l ][ m ].resize( q_points );
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
+               for ( unsigned int i = 0; i < atoms.size(); i++ )
+               {
+                  A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * fp[ j ][ i ];
+               }
+               A[ l ][ m ][ j ] *= i_pow_l;
+            }
+         }
+      }
+
+      // compute I
+
+      cout << "compute I\n";
+
+      for ( unsigned int j = 0; j < q_points; j++ )
+      {
+         I[ j ] = 0e0;
+         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+         {
+            for ( int m = - (int) l ; m <= (int) l; m++ )
+            {
+               I[ j ] += norm( A[ l ][ m ][ j ] );
+            }
+         }
+         I[ j ] *= 4e0 * M_PI;
+      }
+
+#else
+      if ( !our_saxs_options->alt_sh1 )
+      {
+         // average Y's
+         for ( unsigned int g = 0; g < fib_grid.size(); g++ )
+         {
+            cout << "g = " << g << " deltatheta " << fib_grid[ g ][ 0 ] << " deltaphi " << fib_grid[ g ][ 1 ] << endl;
+            for ( unsigned int i = 0; i < atoms.size(); i++ )
+            {
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  {
+                     complex < double > result;
+                     if ( !sh::conj_spherical_harmonic( l, 
+                                                        m, 
+                                                        atoms[ i ].rtp[ 1 ] + fib_grid[ g ][ 0 ],
+                                                        atoms[ i ].rtp[ 2 ] + fib_grid[ g ][ 1 ],
+                                                        result ) )
+                     {
+                        editor_msg( "red", "sh::spherical_harmonic failed" );
+                        progress_saxs->reset();
+                        lbl_core_progress->setText("");
+                        pb_plot_saxs_sans->setEnabled(true);
+                        pb_plot_pr->setEnabled(true);
+                        return;
+                     }
+                     Y[ i ][ l ][ m ] += result * one_over_fib_grid_size;
+                  }
+               }            
+            }
+         }
+
+         cout << "compute amplitudes\n";
+         // compute A
+         complex < double > i_( 0e0, 1e0 );
+         map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
+
+         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+         {
+            complex < double > i_pow_l = pow( i_, l );
+            for ( int m = - (int) l ; m <= (int) l; m++ )
+            {
+               A[ l ][ m ].resize( q_points );
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
+                  for ( unsigned int i = 0; i < atoms.size(); i++ )
+                  {
+                     A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * f[ j ][ i ];
+                  }
+                  A[ l ][ m ][ j ] *= i_pow_l;
+               }
+            }
+         }
+
+         // compute I
+
+         cout << "compute I\n";
+
+         for ( unsigned int j = 0; j < q_points; j++ )
+         {
+            I[ j ] = 0e0;
+            for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+            {
+               for ( int m = - (int) l ; m <= (int) l; m++ )
+               {
+                  I[ j ] += norm( A[ l ][ m ][ j ] );
+               }
+            }
+            I[ j ] *= 4e0 * M_PI;
+         }
+      } else {
+         // average I's
+         for ( unsigned int j = 0; j < q_points; j++ )
+         {
+            I[ j ] = 0e0;
+         }
+
+         for ( unsigned int g = 0; g < fib_grid.size(); g++ )
+         {
+            cout << "g = " << g << " deltatheta " << fib_grid[ g ][ 0 ] << " deltaphi " << fib_grid[ g ][ 1 ] << endl;
+            for ( unsigned int i = 0; i < atoms.size(); i++ )
+            {
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  {
+                     complex < double > result;
+                     if ( !sh::conj_spherical_harmonic( l, 
+                                                        m, 
+                                                        atoms[ i ].rtp[ 1 ] + fib_grid[ g ][ 0 ],
+                                                        atoms[ i ].rtp[ 2 ] + fib_grid[ g ][ 1 ],
+                                                        result ) )
+                     {
+                        editor_msg( "red", "sh::spherical_harmonic failed" );
+                        progress_saxs->reset();
+                        lbl_core_progress->setText("");
+                        pb_plot_saxs_sans->setEnabled(true);
+                        pb_plot_pr->setEnabled(true);
+                        return;
+                     }
+                     Y[ i ][ l ][ m ] = result;
+                  }
+               }            
+            }
+
+            cout << "compute amplitudes\n";
+            // compute A
+            complex < double > i_( 0e0, 1e0 );
+            map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
+
+            for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+            {
+               complex < double > i_pow_l = pow( i_, l );
+               for ( int m = - (int) l ; m <= (int) l; m++ )
+               {
+                  A[ l ][ m ].resize( q_points );
+                  for ( unsigned int j = 0; j < q_points; j++ )
+                  {
+                     A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
+                     for ( unsigned int i = 0; i < atoms.size(); i++ )
+                     {
+                        A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * f[ j ][ i ];
+                     }
+                     A[ l ][ m ][ j ] *= i_pow_l;
+                  }
+               }
+            }
+
+            // compute I
+
+            cout << "compute I\n";
+
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  {
+                     I[ j ] += norm( A[ l ][ m ][ j ] );
+                  }
+               }
+            }
+
+         } // fib grid
+         for ( unsigned int j = 0; j < q_points; j++ )
+         {
+            I[ j ] *= 4e0 * M_PI / ( double )fib_grid.size();
+         }
+      } // else (alt_sh1)
+
+#endif
+
+      unsigned int pts = 0;
+      for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+      {
+         for ( int m = - (int) l ; m <= (int) l; m++ )
+         {
+            pts++;
+         }
+      }
+      printf( "pts %u\n", pts );
+      
+
+      plot_one_iqq( q, I, "hi" );
+   }
+
+
+   progress_saxs->reset();
+   lbl_core_progress->setText("");
+   pb_plot_saxs_sans->setEnabled(true);
+   pb_plot_pr->setEnabled(true);
+}
+
+#if defined( OLD_WAY )
       editor->append("f' computed, starting computation of I(q)\n");
       qApp->processEvents();
       if ( stopFlag ) 
@@ -1052,6 +1197,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
    pb_plot_saxs_sans->setEnabled(true);
    pb_plot_pr->setEnabled(true);
 }
+
+#endif // OLD_WAY
 
 void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
 {

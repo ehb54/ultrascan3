@@ -274,11 +274,11 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
 
    cmd += 
       QString( " /lm %1" )
-      .arg( our_saxs_options.crysol_max_harmonics );
+      .arg( our_saxs_options.sh_max_harmonics );
 
    cmd += 
       QString( " /fb %1" )
-      .arg( our_saxs_options.crysol_fibonacci_grid_order );
+      .arg( our_saxs_options.sh_fibonacci_grid_order );
 
 #if defined(IQQ_TIMER)
    cout << "timer enabled\n";

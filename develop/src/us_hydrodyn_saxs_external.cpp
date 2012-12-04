@@ -314,10 +314,10 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
 
    crysol->addArgument( "/lm" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_max_harmonics ) );
+   crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
 
    crysol->addArgument( "/fb" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_fibonacci_grid_order ) );
+   crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
 
    if ( our_saxs_options->crysol_explicit_hydrogens )
    {
@@ -541,8 +541,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
    sastbx->addArgument( QString( "n_step=%1"    ).arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
    sastbx->addArgument( QString( "rho=%1"       ).arg( our_saxs_options->water_e_density ) );
    sastbx->addArgument( QString( "drho=%1"      ).arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-   sastbx->addArgument( QString( "max_i =%1"    ).arg( our_saxs_options->crysol_fibonacci_grid_order ) );
-   sastbx->addArgument( QString( "max_L =%1"    ).arg( our_saxs_options->crysol_max_harmonics ) );
+   sastbx->addArgument( QString( "max_i =%1"    ).arg( our_saxs_options->sh_fibonacci_grid_order ) );
+   sastbx->addArgument( QString( "max_L =%1"    ).arg( our_saxs_options->sh_max_harmonics ) );
    sastbx->addArgument( QString( "output=%1"    ).arg( sastbx_last_pdb + ".int" ) );
 
    connect( sastbx, SIGNAL(readyReadStdout()), this, SLOT(sastbx_readFromStdout()) );

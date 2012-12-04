@@ -608,18 +608,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
       q.resize(q_points);
-      q2.resize(q_points);
 
       if ( our_saxs_options->iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -1795,9 +1796,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
 
       double one_over_4pi = 1.0 / (4.0 * M_PI);
       double one_over_4pi_2 = one_over_4pi * one_over_4pi;
@@ -1805,13 +1803,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       vector < double > q2; // store q^2
       vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
-      q2.resize(q_points);
-      q_over_4pi_2.resize(q_points);
 
       if ( our_saxs_options->iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      q_over_4pi_2.resize( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -2813,9 +2815,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
-      f.resize(q_points);
-      fc.resize(q_points);
-      fp.resize(q_points);
 
       double one_over_4pi = 1.0 / (4.0 * M_PI);
       double one_over_4pi_2 = one_over_4pi * one_over_4pi;
@@ -2823,13 +2822,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       vector < double > q2; // store q^2
       vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
-      q2.resize(q_points);
-      q_over_4pi_2.resize(q_points);
 
       if ( our_saxs_options->iq_exact_q )
       {
          q = exact_q;
+         q_points = q.size();
       }
+      q2.resize          ( q_points );
+      q_over_4pi_2.resize( q_points );
+      f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {

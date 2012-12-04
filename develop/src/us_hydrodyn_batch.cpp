@@ -3184,8 +3184,8 @@ QString US_Hydrodyn_Batch::iqq_suffix()
       {
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
-            .arg( our_saxs_options->crysol_max_harmonics )
-            .arg( our_saxs_options->crysol_fibonacci_grid_order )
+            .arg( our_saxs_options->sh_max_harmonics )
+            .arg( our_saxs_options->sh_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
       } else {
          if ( our_saxs_options->saxs_iq_foxs )

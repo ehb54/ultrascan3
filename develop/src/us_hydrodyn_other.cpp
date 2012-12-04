@@ -3206,10 +3206,10 @@ int US_Hydrodyn::read_config(QFile& f)
    saxs_options.iq_scale_nm = (bool)str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -11641;
-   saxs_options.crysol_max_harmonics = str.toUInt();
+   saxs_options.sh_max_harmonics = str.toUInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -11642;
-   saxs_options.crysol_fibonacci_grid_order = str.toUInt();
+   saxs_options.sh_fibonacci_grid_order = str.toUInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -11643;
    saxs_options.crysol_hydration_shell_contrast = str.toFloat();
@@ -3752,8 +3752,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.iq_scale_angstrom << "\t\t#saxs_options.iq_scale_angstrom\n";
       ts << saxs_options.iq_scale_nm << "\t\t#saxs_options.iq_scale_nm\n";
 
-      ts << saxs_options.crysol_max_harmonics << "\t\t#saxs_options.crysol_max_harmonics\n";
-      ts << saxs_options.crysol_fibonacci_grid_order << "\t\t#saxs_options.crysol_fibonacci_grid_order\n";
+      ts << saxs_options.sh_max_harmonics << "\t\t#saxs_options.sh_max_harmonics\n";
+      ts << saxs_options.sh_fibonacci_grid_order << "\t\t#saxs_options.sh_fibonacci_grid_order\n";
       ts << saxs_options.crysol_hydration_shell_contrast << "\t\t#saxs_options.crysol_hydration_shell_contrast\n";
       ts << saxs_options.crysol_default_load_difference_intensity << "\t\t#saxs_options.crysol_default_load_difference_intensity\n";
       ts << saxs_options.crysol_version_26 << "\t\t#saxs_options.crysol_version_26\n";
@@ -4200,8 +4200,8 @@ void US_Hydrodyn::set_default()
       saxs_options.iq_scale_angstrom = true;
       saxs_options.iq_scale_nm = false;
 
-      saxs_options.crysol_max_harmonics = 15;
-      saxs_options.crysol_fibonacci_grid_order = 17;
+      saxs_options.sh_max_harmonics = 15;
+      saxs_options.sh_fibonacci_grid_order = 17;
       saxs_options.crysol_hydration_shell_contrast = 0.03f;
       saxs_options.crysol_default_load_difference_intensity = true;
       saxs_options.crysol_version_26 = true;
@@ -4306,6 +4306,9 @@ void US_Hydrodyn::set_default()
    saxs_options.saxs_iq_sastbx                     = false;
    saxs_options.saxs_iq_native_sh                  = false;
    saxs_options.sans_iq_native_sh                  = false;
+
+   saxs_options.alt_sh1                            = false;
+   saxs_options.alt_sh2                            = false;
 
    grid.create_nmr_bead_pdb                        = false;
 

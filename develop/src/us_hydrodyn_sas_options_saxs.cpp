@@ -199,39 +199,39 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_hybrid2_q_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_hybrid2_q_points, SIGNAL(valueChanged(double)), SLOT(update_hybrid2_q_points(double)));
 
-   lbl_crysol_max_harmonics = new QLabel(tr(" SH/Crysol/Sastbx: Maximum order of harmonics"), this);
-   lbl_crysol_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_crysol_max_harmonics->setMinimumHeight(minHeight1);
-   lbl_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_crysol_max_harmonics->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_sh_max_harmonics = new QLabel(tr(" SH/Crysol/Sastbx: Maximum order of harmonics"), this);
+   lbl_sh_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_sh_max_harmonics->setMinimumHeight(minHeight1);
+   lbl_sh_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sh_max_harmonics->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_crysol_max_harmonics = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_crysol_max_harmonics );
-   cnt_crysol_max_harmonics->setRange(10, 75, 1);
-   cnt_crysol_max_harmonics->setValue((*saxs_options).crysol_max_harmonics);
-   cnt_crysol_max_harmonics->setMinimumHeight(minHeight1);
-   cnt_crysol_max_harmonics->setEnabled(true);
-   cnt_crysol_max_harmonics->setNumButtons(2);
-   cnt_crysol_max_harmonics->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_crysol_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_crysol_max_harmonics(double)));
+   cnt_sh_max_harmonics = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_sh_max_harmonics );
+   cnt_sh_max_harmonics->setRange(1, 75, 1);
+   cnt_sh_max_harmonics->setValue((*saxs_options).sh_max_harmonics);
+   cnt_sh_max_harmonics->setMinimumHeight(minHeight1);
+   cnt_sh_max_harmonics->setEnabled(true);
+   cnt_sh_max_harmonics->setNumButtons(2);
+   cnt_sh_max_harmonics->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_sh_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_sh_max_harmonics(double)));
 
-   lbl_crysol_fibonacci_grid_order = new QLabel(tr(" SH/Crysol/Sastbx: Order of Fibonacci grid"), this);
-   lbl_crysol_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_crysol_fibonacci_grid_order->setMinimumHeight(minHeight1);
-   lbl_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_crysol_fibonacci_grid_order->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_sh_fibonacci_grid_order = new QLabel(tr(" SH/Crysol/Sastbx: Order of Fibonacci grid"), this);
+   lbl_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   lbl_sh_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sh_fibonacci_grid_order->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_crysol_fibonacci_grid_order = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_crysol_fibonacci_grid_order );
-   cnt_crysol_fibonacci_grid_order->setRange(10, 75, 1);
-   cnt_crysol_fibonacci_grid_order->setValue((*saxs_options).crysol_fibonacci_grid_order);
-   cnt_crysol_fibonacci_grid_order->setMinimumHeight(minHeight1);
-   cnt_crysol_fibonacci_grid_order->setEnabled(true);
-   cnt_crysol_fibonacci_grid_order->setNumButtons(2);
-   cnt_crysol_fibonacci_grid_order->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_crysol_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_crysol_fibonacci_grid_order(double)));
+   cnt_sh_fibonacci_grid_order = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_sh_fibonacci_grid_order );
+   cnt_sh_fibonacci_grid_order->setRange(2, 75, 1);
+   cnt_sh_fibonacci_grid_order->setValue((*saxs_options).sh_fibonacci_grid_order);
+   cnt_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   cnt_sh_fibonacci_grid_order->setEnabled(true);
+   cnt_sh_fibonacci_grid_order->setNumButtons(2);
+   cnt_sh_fibonacci_grid_order->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_sh_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_sh_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_sh_fibonacci_grid_order(double)));
 
    lbl_crysol_hydration_shell_contrast = new QLabel(tr(" Crysol/Sastbx: Contrast of hydration shell (e / A^3):"), this);
    lbl_crysol_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -362,12 +362,12 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    background->addWidget(cnt_hybrid2_q_points, j, 1);
    j++;
 
-   background->addWidget(lbl_crysol_max_harmonics, j, 0);
-   background->addWidget(cnt_crysol_max_harmonics, j, 1);
+   background->addWidget(lbl_sh_max_harmonics, j, 0);
+   background->addWidget(cnt_sh_max_harmonics, j, 1);
    j++;
 
-   background->addWidget(lbl_crysol_fibonacci_grid_order, j, 0);
-   background->addWidget(cnt_crysol_fibonacci_grid_order, j, 1);
+   background->addWidget(lbl_sh_fibonacci_grid_order, j, 0);
+   background->addWidget(cnt_sh_fibonacci_grid_order, j, 1);
    j++;
 
    background->addWidget(lbl_crysol_hydration_shell_contrast, j, 0);
@@ -690,9 +690,9 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_sastbx()
    }
 }
 
-void US_Hydrodyn_SasOptionsSaxs::update_crysol_max_harmonics(double val)
+void US_Hydrodyn_SasOptionsSaxs::update_sh_max_harmonics(double val)
 {
-   (*saxs_options).crysol_max_harmonics = (unsigned int) val;
+   (*saxs_options).sh_max_harmonics = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
@@ -700,9 +700,9 @@ void US_Hydrodyn_SasOptionsSaxs::update_crysol_max_harmonics(double val)
    }
 }
 
-void US_Hydrodyn_SasOptionsSaxs::update_crysol_fibonacci_grid_order(double val)
+void US_Hydrodyn_SasOptionsSaxs::update_sh_fibonacci_grid_order(double val)
 {
-   (*saxs_options).crysol_fibonacci_grid_order = (unsigned int) val;
+   (*saxs_options).sh_fibonacci_grid_order = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {

@@ -322,6 +322,7 @@ SOURCES += \
   src/us_selectmodel13.cpp \
   src/us_selectmodel3.cpp \
   src/us_selectplot.cpp \
+  src/us_sh.cpp \
   src/us_showdetails.cpp \
   src/us_simulationparameters.cpp \
   src/us_smdat.cpp \
@@ -586,6 +587,7 @@ HEADERS += \
   include/us_selectmodel13.h \
   include/us_selectmodel3.h \
   include/us_selectplot.h \
+  include/us_sh.h \
   include/us_showdetails.h \
   include/us_simulationparameters.h \
   include/us_smdat.h \
