@@ -3,6 +3,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_sh.h"
+#include "../include/us_timer.h"
 
 #include <qregexp.h>
 
@@ -14,7 +15,8 @@
 
 void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 {
-   cout << "csind\n";
+   US_Timer us_timers;
+
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
    stopFlag = false;
@@ -62,9 +64,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          pb_plot_pr->setEnabled(true);
          return;
       }
-         
+
+      us_timers.init_timer( "atoms" );
+      us_timers.init_timer( "rtp" );
+      us_timers.init_timer( "ff" );
+
+      progress_saxs->setProgress( 0, our_saxs_options->sh_max_harmonics + 3 );
+      qApp->processEvents();
+
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
+      us_timers.start_timer( "atoms" );
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
       {
          for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
@@ -174,12 +184,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                continue;
             }
 
-            cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
-               .arg(this_atom->name)
-               .arg(this_atom->hybrid_name)
-               .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
-               .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
-               ;
+//             cout << QString("atom %1 hybrid %2 excl vol %3 by hybrid radius %4\n")
+//                .arg(this_atom->name)
+//                .arg(this_atom->hybrid_name)
+//                .arg(atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol)
+//                .arg(M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius)
+//                ;
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
 
@@ -292,6 +302,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                           ( atoms[ 0 ].atom_name == "OW" ||
                             atoms[ 0 ].atom_name == "O" ) );
       
+      us_timers.end_timer( "atoms" );
       // save the atoms to a temporary file
       QString fsaxs_atoms_name = 
          USglobal->config_list.root_dir + 
@@ -315,7 +326,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       }
          
 
+      progress_saxs->setProgress( 1, our_saxs_options->sh_max_harmonics + 3 );
+      qApp->processEvents();
+
       // recenter
+      us_timers.start_timer( "rtp" );
 
       point cx;
       for ( unsigned int j = 0; j < 3; j++ )
@@ -375,6 +390,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
             }
          }               
       }
+      us_timers.end_timer( "rtp" );
+      progress_saxs->setProgress( 2, our_saxs_options->sh_max_harmonics + 3 );
+      qApp->processEvents();
 
       vector < vector < double > > fib_grid;
       sh::build_grid( fib_grid, our_saxs_options->sh_fibonacci_grid_order );
@@ -420,8 +438,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          return;
       }
       
-      // just compute one direction for now
 
+      us_timers.start_timer( "ff" );
       vector < vector < double > > f;  // f(q,i) / atomic
       vector < vector < double > > fc;  // excluded volume
       vector < vector < double > > fp;  // f - fc
@@ -509,139 +527,54 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          }
       }
       // f, f' computed
+      us_timers.end_timer( "ff" );
 
-      cout << "compute spherical bessel functions\n";
-      // setup spherical bessel functions
-      vector < vector < vector < double > > >  J; // J[atom][n][q_point]
-      J.resize( atoms.size() );
-      for ( unsigned int i = 0; i < atoms.size(); i++ )
-      {
-         J[ i ].resize( our_saxs_options->sh_max_harmonics + 1 );
-         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-         {
-            J[ i ][ l ].resize( q_points );
-            for ( unsigned int j = 0; j < q_points; j++ )
-            {
-               if ( !nr::sphbes( l, q[ j ] * atoms[ i ].rtp[ 0 ], J[ i ][ l ][ j ] ) )
-               {
-                  editor_msg( "red", "nr::shbes failed" );
-                  progress_saxs->reset();
-                  lbl_core_progress->setText("");
-                  pb_plot_saxs_sans->setEnabled(true);
-                  pb_plot_pr->setEnabled(true);
-                  return;
-               }
-            }
-         }
-      }      
-
-      cout << "compute associated legendre functions\n";
-      // setup associated legendre functions
-
-      vector < map < unsigned int, map < int , complex < double > > > > Y; // Y[atom][l][m]
-      Y.resize( atoms.size() );
-
-      for ( unsigned int i = 0; i < atoms.size(); i++ )
-      {
-         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-         {
-            for ( int m = - (int) l ; m <= (int) l; m++ )
-            {
-               Y[ i ][ l ][ m ] = complex < double > ( 0e0, 0e0 );
-            }
-         }
-      }
-
-      complex < double > one_over_fib_grid_size( 1e0 / ( double ) fib_grid.size(), 0e0 );
+      progress_saxs->setProgress( 3, our_saxs_options->sh_max_harmonics + 3 );
+      qApp->processEvents();
 
       vector < double > I( q_points );
 
-#if !defined( WRONG_WAY )
-
-      for ( unsigned int i = 0; i < atoms.size(); i++ )
+      if ( !our_saxs_options->alt_sh2 )
       {
-         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-         {
-            for ( int m = - (int) l ; m <= (int) l; m++ )
-            {
-               complex < double > result;
-               if ( !sh::conj_spherical_harmonic( l, 
-                                                  m, 
-                                                  atoms[ i ].rtp[ 1 ],
-                                                  atoms[ i ].rtp[ 2 ],
-                                                  result ) )
-               {
-                  editor_msg( "red", "sh::spherical_harmonic failed" );
-                  progress_saxs->reset();
-                  lbl_core_progress->setText("");
-                  pb_plot_saxs_sans->setEnabled(true);
-                  pb_plot_pr->setEnabled(true);
-                  return;
-               }
-               Y[ i ][ l ][ m ] = result;
-            }
-         }            
-      }
+         us_timers.init_timer( "legendre" );
+         us_timers.init_timer( "combined" );
 
-      cout << "compute amplitudes\n";
-      // compute A
-      complex < double > i_( 0e0, 1e0 );
-      map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
-
-      for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-      {
-         complex < double > i_pow_l = pow( i_, l );
-         for ( int m = - (int) l ; m <= (int) l; m++ )
+         if ( our_saxs_options->alt_sh1 )
          {
-            A[ l ][ m ].resize( q_points );
+            us_timers.start_timer( "combined" );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
-               A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
-               for ( unsigned int i = 0; i < atoms.size(); i++ )
-               {
-                  A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * fp[ j ][ i ];
-               }
-               A[ l ][ m ][ j ] *= i_pow_l;
+               I[ j ] = 0e0;
             }
-         }
-      }
 
-      // compute I
+            complex < double > Z0( 0e0, 0e0 );
+            double  J;
+            vector < vector < complex < double > > >  A( our_saxs_options->sh_max_harmonics + 1 ); // A[ l ][ m ]
+            complex < double > i_( 0e0, 1e0 );
+         
+            us_timers.start_timer( "legendre" );
+            // setup associated legendre functions
 
-      cout << "compute I\n";
+            vector < vector < vector < complex < double > > > > Y; // Y[atom][l][m]
+            Y.resize( atoms.size() );
 
-      for ( unsigned int j = 0; j < q_points; j++ )
-      {
-         I[ j ] = 0e0;
-         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-         {
-            for ( int m = - (int) l ; m <= (int) l; m++ )
-            {
-               I[ j ] += norm( A[ l ][ m ][ j ] );
-            }
-         }
-         I[ j ] *= 4e0 * M_PI;
-      }
-
-#else
-      if ( !our_saxs_options->alt_sh1 )
-      {
-         // average Y's
-         for ( unsigned int g = 0; g < fib_grid.size(); g++ )
-         {
-            cout << "g = " << g << " deltatheta " << fib_grid[ g ][ 0 ] << " deltaphi " << fib_grid[ g ][ 1 ] << endl;
             for ( unsigned int i = 0; i < atoms.size(); i++ )
             {
+               Y[ i ].resize( our_saxs_options->sh_max_harmonics + 1 );
+
                for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
                {
+                  unsigned int m_size = 1 + l * 2;
+                  Y[ i ][ l ].resize( m_size );
+
                   for ( int m = - (int) l ; m <= (int) l; m++ )
                   {
                      complex < double > result;
                      if ( !sh::conj_spherical_harmonic( l, 
                                                         m, 
-                                                        atoms[ i ].rtp[ 1 ] + fib_grid[ g ][ 0 ],
-                                                        atoms[ i ].rtp[ 2 ] + fib_grid[ g ][ 1 ],
-                                                        result ) )
+                                                        atoms[ i ].rtp[ 1 ],
+                                                        atoms[ i ].rtp[ 2 ],
+                                                        Y[ i ][ l ][ m + l ] ) )
                      {
                         editor_msg( "red", "sh::spherical_harmonic failed" );
                         progress_saxs->reset();
@@ -650,89 +583,228 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                         pb_plot_pr->setEnabled(true);
                         return;
                      }
-                     Y[ i ][ l ][ m ] += result * one_over_fib_grid_size;
                   }
                }            
             }
-         }
 
-         cout << "compute amplitudes\n";
-         // compute A
-         complex < double > i_( 0e0, 1e0 );
-         map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
+            us_timers.end_timer( "legendre" );
 
-         for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-         {
-            complex < double > i_pow_l = pow( i_, l );
-            for ( int m = - (int) l ; m <= (int) l; m++ )
+            for ( unsigned int j = 0; j < q_points; j++ )
             {
-               A[ l ][ m ].resize( q_points );
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  unsigned int m_size = 1 + l * 2;
+                  A[ l ].resize( m_size );
+                  for ( unsigned int m = 0; m < m_size; m++ )
+                  {
+                     A[ l ][ m ] = Z0;
+                  }
+               }
+
+               for ( unsigned int i = 0; i < atoms.size(); i++ )
+               {
+                  for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+                  {
+                     complex < double > i_pow_l = pow( i_, l );
+                     if ( !nr::sphbes( l, q[ j ] * atoms[ i ].rtp[ 0 ], J ) )
+                     {
+                        editor_msg( "red", "nr::shbes failed" );
+                        progress_saxs->reset();
+                        lbl_core_progress->setText("");
+                        pb_plot_saxs_sans->setEnabled(true);
+                        pb_plot_pr->setEnabled(true);
+                        return;
+                     }
+                     for ( int m = - (int) l ; m <= (int) l; m++ )
+                     {
+                        A[ l ][ m + l ] += J * Y[ i ][ l ][ m + l ] * fp[ j ][ i ] * i_pow_l;
+                     }
+                  }
+               }
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  unsigned int m_size = 1 + l * 2;
+                  for ( unsigned int m = 0 ; m <= m_size; m++ )
+                  {
+                     I[ j ] += norm( A[ l ][ m ] );
+                  }
+               }
+               I[ j ] *= 4e0 * M_PI;
+            }
+            us_timers.end_timer( "combined" );
+         } else {
+            us_timers.start_timer( "combined" );
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               I[ j ] = 0e0;
+            }
+
+            complex < float > Z0( 0e0, 0e0 );
+            double  J;
+            vector < vector < complex < float > > >  A( our_saxs_options->sh_max_harmonics + 1 ); // A[ l ][ m ]
+            complex < float > i_( 0e0, 1e0 );
+         
+            us_timers.start_timer( "legendre" );
+            // setup associated legendre functions
+
+            vector < vector < vector < complex < float > > > > Y; // Y[atom][l][m]
+            Y.resize( atoms.size() );
+
+            for ( unsigned int i = 0; i < atoms.size(); i++ )
+            {
+               Y[ i ].resize( our_saxs_options->sh_max_harmonics + 1 );
+
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  unsigned int m_size = 1 + l * 2;
+                  Y[ i ][ l ].resize( m_size );
+
+                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  {
+                     complex < double > result;
+                     if ( !sh::conj_spherical_harmonic( l, 
+                                                        m, 
+                                                        atoms[ i ].rtp[ 1 ],
+                                                        atoms[ i ].rtp[ 2 ],
+                                                        result) )
+                     {
+                        editor_msg( "red", "sh::spherical_harmonic failed" );
+                        progress_saxs->reset();
+                        lbl_core_progress->setText("");
+                        pb_plot_saxs_sans->setEnabled(true);
+                        pb_plot_pr->setEnabled(true);
+                        return;
+                     }
+                     Y[ i ][ l ][ m + l ] = result;
+                  }
+               }            
+            }
+
+            us_timers.end_timer( "legendre" );
+
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               progress_saxs->setProgress( j, q_points );
+               qApp->processEvents();
+
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  unsigned int m_size = 1 + l * 2;
+                  A[ l ].resize( m_size );
+                  for ( unsigned int m = 0; m < m_size; m++ )
+                  {
+                     A[ l ][ m ] = Z0;
+                  }
+               }
+
+               for ( unsigned int i = 0; i < atoms.size(); i++ )
+               {
+                  for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+                  {
+                     complex < float > i_pow_l = pow( i_, l );
+                     if ( !nr::sphbes( l, q[ j ] * atoms[ i ].rtp[ 0 ], J ) )
+                     {
+                        editor_msg( "red", "nr::shbes failed" );
+                        progress_saxs->reset();
+                        lbl_core_progress->setText("");
+                        pb_plot_saxs_sans->setEnabled(true);
+                        pb_plot_pr->setEnabled(true);
+                        return;
+                     }
+                     for ( int m = - (int) l ; m <= (int) l; m++ )
+                     {
+                        A[ l ][ m + l ] += (float) J * Y[ i ][ l ][ m + l ] * (float) fp[ j ][ i ] * i_pow_l;
+                     }
+                  }
+               }
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  unsigned int m_size = 1 + l * 2;
+                  for ( unsigned int m = 0 ; m <= m_size; m++ )
+                  {
+                     I[ j ] += norm( A[ l ][ m ] );
+                  }
+               }
+               I[ j ] *= 4e0 * M_PI;
+            }
+            us_timers.end_timer( "combined" );
+         }
+      } else {
+         us_timers.init_timer( "bessel" );
+         us_timers.init_timer( "legendre" );
+         us_timers.init_timer( "amplitudes" );
+         us_timers.init_timer( "I" );
+         us_timers.init_timer( "combined" );
+
+         us_timers.start_timer( "bessel" );
+         us_timers.start_timer( "combined" );
+         cout << "compute spherical bessel functions\n";
+         // setup spherical bessel functions
+         vector < vector < vector < double > > >  J; // J[atom][n][q_point]
+         J.resize( atoms.size() );
+         for ( unsigned int i = 0; i < atoms.size(); i++ )
+         {
+            J[ i ].resize( our_saxs_options->sh_max_harmonics + 1 );
+            for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+            {
+               J[ i ][ l ].resize( q_points );
                for ( unsigned int j = 0; j < q_points; j++ )
                {
-                  A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
-                  for ( unsigned int i = 0; i < atoms.size(); i++ )
+                  if ( !nr::sphbes( l, q[ j ] * atoms[ i ].rtp[ 0 ], J[ i ][ l ][ j ] ) )
                   {
-                     A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * f[ j ][ i ];
+                     editor_msg( "red", "nr::shbes failed" );
+                     progress_saxs->reset();
+                     lbl_core_progress->setText("");
+                     pb_plot_saxs_sans->setEnabled(true);
+                     pb_plot_pr->setEnabled(true);
+                     return;
                   }
-                  A[ l ][ m ][ j ] *= i_pow_l;
                }
             }
-         }
+         }      
+         us_timers.end_timer( "bessel" );
 
-         // compute I
+         cout << "compute associated legendre functions\n";
+         us_timers.start_timer( "legendre" );
+         // setup associated legendre functions
 
-         cout << "compute I\n";
+         vector < map < unsigned int, map < int , complex < double > > > > Y; // Y[atom][l][m]
+         Y.resize( atoms.size() );
 
-         for ( unsigned int j = 0; j < q_points; j++ )
+         for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
-            I[ j ] = 0e0;
             for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
             {
                for ( int m = - (int) l ; m <= (int) l; m++ )
                {
-                  I[ j ] += norm( A[ l ][ m ][ j ] );
-               }
-            }
-            I[ j ] *= 4e0 * M_PI;
-         }
-      } else {
-         // average I's
-         for ( unsigned int j = 0; j < q_points; j++ )
-         {
-            I[ j ] = 0e0;
-         }
-
-         for ( unsigned int g = 0; g < fib_grid.size(); g++ )
-         {
-            cout << "g = " << g << " deltatheta " << fib_grid[ g ][ 0 ] << " deltaphi " << fib_grid[ g ][ 1 ] << endl;
-            for ( unsigned int i = 0; i < atoms.size(); i++ )
-            {
-               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
-               {
-                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  complex < double > result;
+                  if ( !sh::conj_spherical_harmonic( l, 
+                                                     m, 
+                                                     atoms[ i ].rtp[ 1 ],
+                                                     atoms[ i ].rtp[ 2 ],
+                                                     result ) )
                   {
-                     complex < double > result;
-                     if ( !sh::conj_spherical_harmonic( l, 
-                                                        m, 
-                                                        atoms[ i ].rtp[ 1 ] + fib_grid[ g ][ 0 ],
-                                                        atoms[ i ].rtp[ 2 ] + fib_grid[ g ][ 1 ],
-                                                        result ) )
-                     {
-                        editor_msg( "red", "sh::spherical_harmonic failed" );
-                        progress_saxs->reset();
-                        lbl_core_progress->setText("");
-                        pb_plot_saxs_sans->setEnabled(true);
-                        pb_plot_pr->setEnabled(true);
-                        return;
-                     }
-                     Y[ i ][ l ][ m ] = result;
+                     editor_msg( "red", "sh::spherical_harmonic failed" );
+                     progress_saxs->reset();
+                     lbl_core_progress->setText("");
+                     pb_plot_saxs_sans->setEnabled(true);
+                     pb_plot_pr->setEnabled(true);
+                     return;
                   }
-               }            
-            }
+                  Y[ i ][ l ][ m ] = result;
+               }
+            }            
+         }
+         us_timers.end_timer( "legendre" );
 
-            cout << "compute amplitudes\n";
-            // compute A
+         cout << "compute amplitudes\n";
+         // compute A
+
+         if ( !our_saxs_options->alt_sh1 )
+         {
+            us_timers.start_timer( "amplitudes" );
             complex < double > i_( 0e0, 1e0 );
+
             map < unsigned int, map < int , vector < complex < double > > > > A; // A[l][m][q_point]
 
             for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
@@ -746,19 +818,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                      A[ l ][ m ][ j ] = complex < double > ( 0e0, 0e0 );
                      for ( unsigned int i = 0; i < atoms.size(); i++ )
                      {
-                        A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * f[ j ][ i ];
+                        A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * fp[ j ][ i ];
                      }
                      A[ l ][ m ][ j ] *= i_pow_l;
                   }
                }
             }
-
-            // compute I
-
+            us_timers.end_timer( "amplitudes" );
             cout << "compute I\n";
+            us_timers.start_timer( "I" );
 
             for ( unsigned int j = 0; j < q_points; j++ )
             {
+               I[ j ] = 0e0;
                for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
                {
                   for ( int m = - (int) l ; m <= (int) l; m++ )
@@ -766,16 +838,57 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                      I[ j ] += norm( A[ l ][ m ][ j ] );
                   }
                }
+               I[ j ] *= 4e0 * M_PI;
+            }
+            us_timers.end_timer( "I" );
+            us_timers.end_timer( "combined" );
+         } else {
+            us_timers.start_timer( "amplitudes" );
+            us_timers.start_timer( "combined" );
+            complex < float > i_( 0e0, 1e0 );
+
+            map < unsigned int, map < int , vector < complex < float > > > > A; // A[l][m][q_point]
+
+            for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+            {
+               complex < float > i_pow_l = pow( i_, l );
+               for ( int m = - (int) l ; m <= (int) l; m++ )
+               {
+                  A[ l ][ m ].resize( q_points );
+                  for ( unsigned int j = 0; j < q_points; j++ )
+                  {
+                     A[ l ][ m ][ j ] = complex < float > ( 0e0, 0e0 );
+                     for ( unsigned int i = 0; i < atoms.size(); i++ )
+                     {
+                        A[ l ][ m ][ j ] += J[ i ][ l ][ j ] * Y[ i ][ l ][ m ] * fp[ j ][ i ];
+                     }
+                     A[ l ][ m ][ j ] *= i_pow_l;
+                  }
+               }
             }
 
-         } // fib grid
-         for ( unsigned int j = 0; j < q_points; j++ )
-         {
-            I[ j ] *= 4e0 * M_PI / ( double )fib_grid.size();
-         }
-      } // else (alt_sh1)
+            us_timers.end_timer( "amplitudes" );
+            cout << "compute I\n";
+            us_timers.start_timer( "I" );
 
-#endif
+            for ( unsigned int j = 0; j < q_points; j++ )
+            {
+               I[ j ] = 0e0;
+               for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
+               {
+                  for ( int m = - (int) l ; m <= (int) l; m++ )
+                  {
+                     I[ j ] += norm( A[ l ][ m ][ j ] );
+                  }
+               }
+               I[ j ] *= 4e0 * M_PI;
+            }
+            us_timers.end_timer( "I" );
+            us_timers.end_timer( "combined" );
+         }
+      }
+
+      cout << "list times:\n" << us_timers.list_times() << endl << flush;
 
       unsigned int pts = 0;
       for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
@@ -787,8 +900,250 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       }
       printf( "pts %u\n", pts );
       
+      //QString name = 
+      //          QString("%1%2_%3%4")
+      //          .arg( QFileInfo(te_filename2->text()).fileName() )
+      //          .arg( specname )
+      //          .arg( model_vector[ current_model ].model_id )
+      //          .arg( iqq_suffix() );
 
-      plot_one_iqq( q, I, "hi" );
+      
+      //       name += our_saxs_options->alt_sh1 ? "_f" : "_d";
+      //       name += our_saxs_options->alt_sh2 ? "_fast" : "_org";
+
+      // plot_one_iqq( q, I, name );
+
+      // scaling fields
+      QString scaling_target = "";
+      set_scaling_target( scaling_target );
+
+      // crop_iq_data(q, I);
+         
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         rescale_iqq_curve( scaling_target, q, I );
+      }
+
+      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      if ( tot_excl_vol_noh != tot_excl_vol ||
+           total_e_noh      != total_e )
+      {
+         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+      }
+
+      QString name = 
+         QString("%1%2_%3%4")
+         .arg( QFileInfo(te_filename2->text()).fileName() )
+         .arg( specname )
+         .arg( model_vector[ current_model ].model_id )
+         .arg( iqq_suffix() );
+
+      QString plot_name = name;
+      int extension = 0;
+
+      while ( dup_plotted_iq_name_check.count(plot_name) )
+      {
+         plot_name = QString("%1-%2").arg(name).arg(++extension);
+      }
+      qsl_plotted_iq_names << plot_name;
+      dup_plotted_iq_name_check[plot_name] = true;
+
+#ifndef QT4
+      long Iq = plot_saxs->insertCurve( plot_name );
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
+#endif
+
+#ifndef QT4
+      plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
+#else
+      plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
+#endif
+
+#ifndef QT4
+      plotted_Iq.push_back(Iq);
+      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+#else
+      plotted_Iq_curves.push_back( curve );
+      curve->setStyle( QwtPlotCurve::Lines );
+#endif
+      plotted_q.push_back(q);
+      {
+         vector < double > q2(q.size());
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            q2[i] = q[i] * q[i];
+         }
+         plotted_q2.push_back(q2);
+      }
+      plotted_I.push_back(I);
+      push_back_zero_I_error();      
+      unsigned int p = plotted_q.size() - 1;
+#if defined(SAXS_DEBUG)
+      cout << "plot # " << p << endl;
+#endif
+      //      for ( unsigned int i = 0; i < plotted_I[p].size(); i++ ) 
+      //      {
+      //         plotted_I[p][i] = log10(plotted_I[p][i]);
+      //      }
+
+      vector < double > q2I;
+      if ( cb_kratky->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+
+#ifndef QT4
+      plot_saxs->setCurveData(Iq, 
+                              cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                              cb_kratky ->isChecked() ?
+                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
+                              q_points );
+      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+      curve->setData(
+                     cb_guinier->isChecked() ?
+                     (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                     cb_kratky ->isChecked() ?
+                     (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
+                     q_points
+                     );
+      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+      curve->attach( plot_saxs );
+#endif
+      cb_user_range->setChecked(false);
+      cb_guinier->setChecked(true);
+      rescale_plot();
+      cb_guinier->setChecked(false);
+      rescale_plot();
+      cb_guinier->setChecked(true);
+      rescale_plot();
+      cb_guinier->setChecked(false);
+      rescale_plot();
+
+      // save the data to a file
+      if ( create_native_saxs )
+      {
+         QString fsaxs_name = 
+            USglobal->config_list.root_dir + 
+            SLASH + "somo" + SLASH + "saxs" + SLASH + saxs_filestring();
+#if defined(SAXS_DEBUG)
+         cout << "output file " << fsaxs_name << endl;
+#endif
+         bool ok_to_write = true;
+         if ( QFile::exists(fsaxs_name) &&
+              !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+         {
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name, 0, this);
+            ok_to_write = true;
+            
+#if defined(OLD_WAY)
+            switch( QMessageBox::information( this, 
+                                              tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
+                                              tr("The file named \"") + 
+                                              saxs_filestring() +
+                                              + tr("\" will be overwriten"),
+                                              "&Ok",  "&Cancel", 0,
+                                              0,      // Enter == button 0
+                                              1 ) ) { // Escape == button 1
+            case 0: // just go ahead
+               ok_to_write = true;
+               break;
+            case 1: // Cancel clicked or Escape pressed
+               ok_to_write = false;
+               break;
+            }
+#endif
+         }
+         
+         if ( ok_to_write )
+         {
+            FILE *fsaxs = fopen(fsaxs_name, "w");
+            if ( fsaxs ) 
+            {
+#if defined(SAXS_DEBUG)
+               cout << "writing " << fsaxs_name << endl;
+#endif
+               editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+                  QString("")
+                  .sprintf(
+                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
+                           , model_filename.ascii()
+                           , US_Version.ascii()
+                           , REVISION
+                           , our_saxs_options->start_q
+                           , our_saxs_options->end_q
+                           , our_saxs_options->delta_q
+                           );
+               fprintf(fsaxs, "%s",
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+               for ( unsigned int i = 0; i < q.size(); i++ )
+               {
+                  fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i] );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.push_back(I[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.push_back(0e0);
+               }
+               fclose(fsaxs);
+            } 
+            else
+            {
+#if defined(SAXS_DEBUG)
+               cout << "can't create " << fsaxs_name << endl;
+#endif
+               editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+               QMessageBox mb(tr("UltraScan Warning"),
+                              tr("The output file ") + fsaxs_name + tr(" could not be created."), 
+                              QMessageBox::Critical,
+                              QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               mb.exec();
+            }
+         }
+      } else {
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+            QString("")
+            .sprintf(
+                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
+                     , model_filename.ascii()
+                     , US_Version.ascii()
+                     , REVISION
+                     , our_saxs_options->start_q
+                     , our_saxs_options->end_q
+                     , our_saxs_options->delta_q
+                     );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.push_back(I[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.push_back(0e0);
+         }
+      }
    }
 
 

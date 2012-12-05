@@ -181,14 +181,6 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    le_ev_exp_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_ev_exp_mult, SIGNAL(textChanged(const QString &)), SLOT(update_ev_exp_mult(const QString &)));
 
-   cb_multiply_iq_by_atomic_volume = new QCheckBox(this);
-   cb_multiply_iq_by_atomic_volume->setText( tr( " Multiply Iq by atomic volume (for structure facture computations)" ) );
-   cb_multiply_iq_by_atomic_volume->setEnabled(true);
-   cb_multiply_iq_by_atomic_volume->setChecked((*saxs_options).multiply_iq_by_atomic_volume);
-   cb_multiply_iq_by_atomic_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_multiply_iq_by_atomic_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_multiply_iq_by_atomic_volume, SIGNAL(clicked()), this, SLOT(set_multiply_iq_by_atomic_volume()));
-
    cb_alt_sh1 = new QCheckBox(this);
    cb_alt_sh1->setText(tr(" SH Alt 1"));
    cb_alt_sh1->setEnabled(true);

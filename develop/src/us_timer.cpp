@@ -58,12 +58,28 @@ QString US_Timer::list_time( QString qs )
 
    double avg = ( double ) times [ qs ] / counts[ qs ];
 
-   return QString("%1 %2 calls total time %3 ms avg time %4 ms sd %5 ms\n")
+   return
+      qs == 1 ?
+      QString("%1 %2 calls total time %3 ms\n")
       .arg( qs )
       .arg( counts[ qs ] )
       .arg( times [ qs ] )
-      .arg( avg )
-      .arg( sqrt( ( double )( 1e0 * times2[ qs ] / ( 1e0 * counts[ qs ] ) ) - avg * avg ) );
+      :
+      ( qs == 2 ?
+        QString("%1 %2 calls total time %3 ms avg time %4 ms sd %5 ms\n")
+        .arg( qs )
+        .arg( counts[ qs ] )
+        .arg( times [ qs ] )
+        .arg( avg ) 
+        :
+        QString("%1 %2 calls total time %3 ms avg time %4 ms sd %5 ms\n")
+        .arg( qs )
+        .arg( counts[ qs ] )
+        .arg( times [ qs ] )
+        .arg( avg )
+        .arg( sqrt( ( double )( 1e0 * times2[ qs ] / ( 1e0 * counts[ qs ] ) ) - avg * avg ) )
+        )
+      ;
 }
 
 QString US_Timer::list_times()
