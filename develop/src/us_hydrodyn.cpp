@@ -4947,6 +4947,9 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             {
                bead_model[i].exposed_code = 1;
                bead_model[i].bead_color = 8;
+               bead_model[i].chain      = 0;
+               bead_model[i].visibility = 1;
+               bead_model[i].active     = true;
             }
 
             bead_models[ current_model ] = bead_model;

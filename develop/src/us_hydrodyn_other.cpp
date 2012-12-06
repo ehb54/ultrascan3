@@ -4946,28 +4946,41 @@ void US_Hydrodyn::write_bead_model( QString fname,
       }
       break;
    case 1: // exposed sidechain -> exposed main chain -> buried
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].visibility == 1 &&
-             (*model)[i].chain == 1) {
-            use_model.push_back(&(*model)[i]);
+      {
+         map < unsigned int, bool > used;
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 1 &&
+                (*model)[i].chain == 1) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
          }
-      }
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].visibility == 1 &&
-             (*model)[i].chain == 0) {
-            use_model.push_back(&(*model)[i]);
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 1 &&
+                (*model)[i].chain == 0) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
          }
-      }
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].visibility == 0 &&
-             (*model)[i].chain == 1) {
-            use_model.push_back(&(*model)[i]);
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 0 &&
+                (*model)[i].chain == 1) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
          }
-      }
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].visibility == 0 &&
-             (*model)[i].chain == 0) {
-            use_model.push_back(&(*model)[i]);
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 0 &&
+                (*model)[i].chain == 0) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
+         }
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ( !used.count( i ) )
+            {
+               use_model.push_back(&(*model)[i]);
+            }
          }
       }
 
