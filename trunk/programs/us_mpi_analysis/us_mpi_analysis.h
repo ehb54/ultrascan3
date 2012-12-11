@@ -248,6 +248,7 @@ class US_MPI_Analysis : public QObject
     // Master
     void     _2dsa_master      ( void );
     void     submit            ( _2dsa_Job&, int );
+    void     add_to_queue      ( _2dsa_Job& );
     void     process_results   ( int, const int* );
     void     shutdown_all      ( void );
     void     write_noise       ( US_Noise::NoiseType, const QVector< double>& );

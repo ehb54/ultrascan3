@@ -1690,7 +1690,7 @@ void US_FeMatch::adjust_mc_model()
 {
    model_loaded       = model;
    int ncomp          = model.components.size();
-//DbgLv(1) << "AMM: ncomp" << ncomp;
+DbgLv(1) << "AMM: ncomp" << ncomp;
 
    QStringList mlistn;
    QStringList mlistx;
@@ -1706,8 +1706,8 @@ void US_FeMatch::adjust_mc_model()
 
       mlistx << amx;
       mlistn << amx.section( ':', 0, 1 );
-//if ( ii<3 || (ncomp-ii)<4 )
-//DbgLv(1) << "AMM:  ii" << ii << " amx" << amx;
+if ( ii<3 || (ncomp-ii)<4 )
+DbgLv(1) << "AMM:  ii" << ii << " amx" << amx;
    }
 
    // sort the lists
@@ -1731,7 +1731,7 @@ void US_FeMatch::adjust_mc_model()
       else
       {  // for multiples find average concentration; use modified component
          double cconc = mcomp.signal_concentration;
-//DbgLv(1) << "AMM:  ii kdup" << ii << kdup << "  cconc0" << cconc;
+DbgLv(1) << "AMM:  ii kdup" << ii << kdup << "  cconc0" << cconc;
 
          for ( int cc = 1; cc < kdup; cc++ )
          {
@@ -1740,12 +1740,12 @@ void US_FeMatch::adjust_mc_model()
          }
 
          mcomp.signal_concentration = cconc / (double)kdup;
-//DbgLv(1) << "AMM:      ii" << ii << " cconc" << cconc;
+DbgLv(1) << "AMM:      ii" << ii << " cconc" << cconc;
 
          model.components << mcomp;
       }
    }
-//DbgLv(1) << "AMM:  kcomp" << model.components.size();
+DbgLv(1) << "AMM:  kcomp" << model.components.size();
 }
 
 // load noise record(s) if there are any and user so chooses
@@ -2353,6 +2353,7 @@ void US_FeMatch::calc_residuals()
    double  rnoi   = 0.0;
    bool    ftin   = ti_noise.count > 0;
    bool    frin   = ri_noise.count > 0;
+   bool    matchd = ( dsize == ssize );
 
    QVector< double > resscan;
 
@@ -2367,6 +2368,7 @@ void US_FeMatch::calc_residuals()
    for ( int jj = 0; jj < ssize; jj++ )
    {
       sx[ jj ] = sdata->radius( jj );
+      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
    }
 
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2381,14 +2383,21 @@ void US_FeMatch::calc_residuals()
       }
 
       for ( int jj = 0; jj < dsize; jj++ )
-      {
+      { // Calculate the residuals and the RMSD
          tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
-         sval          = interp_sval( xx[ jj ], sx, sy, ssize );
+
+         if ( matchd )
+            sval          = sy[ jj ];
+         else
+            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
+
          yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
          //if ( xx[ jj ] < rl )
          //   yval          = 0.0;
+
          if ( usescan )
             rmsd         += sq( yval );
+
          resscan[ jj ] = yval;
       }
 
