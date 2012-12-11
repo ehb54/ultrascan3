@@ -133,7 +133,7 @@ DbgLv(1) << "SP:iFD: scan" << 1 << "rpm time omega2t"
    for ( int ii = 1; ii < scanCount; ii++ )
    {  // Loop to build speed steps where RPM changes
       rpmnext          = editdata.scanData[ ii ].rpm;
-DbgLv(1) << "SP:iFD: scan" << (ii+1) << "rpm time omega2t"
+DbgLv(2) << "SP:iFD: scan" << (ii+1) << "rpm time omega2t"
  << rpmnext << editdata.scanData[ii].seconds << editdata.scanData[ii].omega2t;
 
       if ( rpm != rpmnext  &&  ( qAbs( rpm - rpmnext ) / rpm ) < 0.005 )

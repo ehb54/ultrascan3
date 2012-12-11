@@ -271,7 +271,7 @@ void US_MPI_Analysis::fill_queue( void )
                                  orig_solutes[ i ].size() );
       _2dsa_Job job;
       job.solutes         = orig_solutes[ i ];
-      job_queue << job;
+      add_to_queue( job );
    }
 }
 
@@ -705,6 +705,24 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        my_communicator );
 }
 
+void US_MPI_Analysis::add_to_queue( _2dsa_Job& job )
+{
+   int jdepth = job.mpi_job.depth;
+
+   for ( int qq = 0; qq < job_queue.size(); qq++ )
+   {
+      if ( jdepth < job_queue[ qq ].mpi_job.depth )
+      { // Insert this job before any with a greater depth
+         job_queue.insert( qq, job ); 
+         return;
+      }
+   }
+
+   // In most circumstances, we just append the job to the end of the queue
+   job_queue << job;
+   return;
+}
+
 /////////////////////
 void US_MPI_Analysis::process_results( int        worker, 
                                        const int* size )
@@ -785,7 +803,7 @@ else { DbgLv(1) << "Mast:  process_results:      worker" << worker
       job.mpi_job.dataset_offset = current_dataset;
       job.mpi_job.dataset_count  = datasets_to_process;
       qSort( job.solutes );
-      job_queue << job;
+      add_to_queue( job );
 
 DbgLv(1) << "Mast:   queue new DEPTH sols" << job.solutes.size() << " d=" << job.mpi_job.depth;
       max_depth = max( depth + 1, max_depth );
@@ -835,7 +853,7 @@ DbgLv(1) << "Mast:   queue new DEPTH sols" << job.solutes.size() << " d=" << job
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
          qSort( job.solutes );
-         job_queue << job;
+         add_to_queue( job );
 DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
          calculated_solutes[ d ].clear();
@@ -865,7 +883,6 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
          qSort( job.solutes );
-         job_queue << job;
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1 << max_depth
  << "  nsvs=" << simulation_values.solutes.size();
 if(max_depth>10) calculated_solutes[depth+10].clear();  // Force abort if run-away
@@ -882,12 +899,14 @@ if(max_depth>10) calculated_solutes[depth+10].clear();  // Force abort if run-aw
          worknext  = ( worknext > my_workers ) ? 1 : worknext;
 
          if ( worker > 0 )
-         {
-            //_2dsa_Job job           = job_queue.takeFirst();
-            _2dsa_Job job2          = job_queue.takeFirst();
+         { // Submit what should be the last job of this iteration
             submit( job, worker );
             worker_depth [ worker ] = job.mpi_job.depth;
             worker_status[ worker ] = WORKING;
+         }
+         else
+         { // Shouldn't happen, but put job in queue if no worker is yet ready
+            job_queue << job;
          }
 
    }
