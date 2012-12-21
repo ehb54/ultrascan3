@@ -812,14 +812,22 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    while( c_solutes.size() < ( depth + 1 ) )
       c_solutes << QVector< US_Solute >();
 
-   int nextc    = c_solutes[ depth ].size() + wresult.csolutes.size();
+   int cs_size  = c_solutes[ depth ].size();
+   int wr_size  = wresult.csolutes.size();
+   int nextc    = cs_size + wr_size;
    int jnois    = fnoionly ? 0 : noisflag;
+   int depthn   = depth + 1;
+
+   if ( depthn > 4  &&  nextc > maxtsols  &&
+        ( ( cs_size / wr_size ) == 1  ||  ( wr_size / cs_size ) == 1 ) )
+   { // Adjust max solutes per task if it is only large enough for one output
+      maxtsols     = ( nextc * 11 + 9 ) / 10;
+   }
 
    if ( nextc > maxtsols )
    {  // if new solutes push count over limit, queue a job at next depth
       WorkPacket wtask = wresult;
       int taskx    = tkdepths.size();
-      int depthn   = depth + 1;
 
       queue_task( wtask, slolim, klolim, taskx, depthn, jnois,
                   c_solutes[ depth ] );
@@ -1034,6 +1042,7 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
    maxdepth     = 0;
    ntisols      = 0;
    ntcsols      = 0;
+   maxtsols     = mintsols;
    max_rss();
 
    int    jdpth = 0;
@@ -1074,6 +1083,7 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
       maxtsols       = max( maxtsols, isolutes.size() );
    }
+
 //*DEBUG
 if(ktadd<ncsol) {
  for(int kt=0;kt<nsubgrid;kt++)
