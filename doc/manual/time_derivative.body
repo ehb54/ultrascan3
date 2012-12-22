@@ -1,0 +1,185 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Time Derivative (dC/dt) Data Analysis'
+%]
+
+    <h2> <i>UltraScan</i> Time Derivative (dC/dt) Data Analysis: </h2>
+
+    <p> The DCDT or Time Derivative method will calculate g(S) differential
+    sedimentation profiles by subtracting consecutive scan pairs from each
+    other and mapping the resulting difference curves to the S domain to
+    obtain dcdt curves. The advantage of this method is its ability to nicely
+    subtract out time invariant noise, such as window scratches and dirt,
+    as well as refractive index hetereogeneities in the windows. The latter
+    is particularly important for low-concentration interference data. Unlike
+    the <a href=vhw_enhanced.html>van Holde - Weischet method</a>, the Time
+    Derivative method does not correct for diffusion. In order to obtain
+    accurate results with this method, it is important that you use only a
+    small scan range over which diffusion has not changed significantly.</p>
+
+    <img src="images/time_derivative.png" alt="Time Derivative Main Window"/>
+
+    <ul>
+        <li>
+            <b>Load Experiment</b> Click on this button and, in the resulting
+            <a href="data_loader.html">Load Data Dialog</a>, select an edited
+            data set to load.
+        </li>
+
+        <li>
+            <b>Run Details</b> Bring up a dialog with a summary of data
+            and run details.
+        </li>
+
+        <li>
+            <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+            than the latest one for the experimental data.
+        </li>
+
+        <li>
+            <b>Database</b> Check to specify data input from the database.
+        </li>
+
+        <li>
+            <b>Local Disk</b> Check to specify data input from local disk.
+        </li>
+
+        <li>
+            <b>View Data Report</b> Create a results text file and display
+            its contents in a text dialog.
+        </li>
+
+        <li>
+            <b>Save Data</b> Create several data and report files based on
+            input data and vHW parameters.
+        </li>
+
+        <li>
+            <b>Run ID / Edit ID:</b> The main run title of the data and
+            an edit identifier are displayed.
+        </li>
+
+        <li>
+            <b>Avg Temperature:</b> The average temperature of solute is
+            displayed in Celsius.
+        </li>
+
+        <li>
+            <b>(description)</b> The text box below the one for temperature
+            shows a full data description string.
+        </li>
+
+        <li>
+            <b>Cell / Channel / Wavelength</b> The text box below this label
+            gives cell, channel and wavelength triples available in this
+            data set. Highlight the desired value.
+        </li>
+
+        <li>
+            <b>Solution</b> Click this button to open a
+            <a href="us_solution.html">Solution Management dialog</a>
+            that allows changes to buffer and analyte characteristics of
+            the data set.
+        </li>
+
+        <li>
+            <b>Density (20&deg; C)</b> Shows the density value for the loaded
+            experiment. Click the Solution button to open a dialog in which
+            density and other values may be changed.
+        </li>
+
+        <li>
+            <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+            loaded experiment. Click the Solution button to open a dialog
+            in which viscosity and other values may be changed.
+        </li>
+
+        <li>
+            <b>Vbar (20&deg; C)</b> Shows the vbar value for the loaded
+            experiment. Click the Solution button to open a dialog in
+            which vbar and other values may be changed.
+        </li>
+
+        <li>
+            <b>Skipped</b> The count of experiment data scans skipped.
+        </li>
+
+        <li>
+            <b>Scan focus from:</b> Choose the first of a range of scan numbers
+            that may potentially be excluded from analysis.
+        </li>
+
+        <li>
+            <b>To:</b> Choose the end of a range of scan numbers that may
+            potentially be excluded from analysis. The From/To scan range
+            is illustrated in both plots to the right.
+        </li>
+
+        <li>
+            <b>Exclude Scan Range</b> If the From/To scan range selections
+            are as desired, click on this button to exclude the indicated
+            scans from analysis.
+        </li>
+
+        <li>
+            <b>Reset Scan Range</b> Reset to the full range of scans.
+        </li>
+
+        <li>
+            <b>Data Smoothing:</b> Choose the number of points to use for
+            any smoothing of raw input data.
+        </li>
+
+        <li>
+            <b>Boundary Pos. (%):</b> Choose the percent of the
+            plateau-baseline range that is to be added to the baseline to
+            form the beginning of analysis span.
+        </li>
+
+        <li>
+            <b>S-value Cutoff:</b> Choose the sedimentation coefficient
+            value to form the maximum X value of the Time Derivative plot.
+        </li>
+
+        <li>
+            <b>x:radius</b> Select this radio button to choose a
+            g*(S) versus radius dC/dt plot.
+        </li>
+
+        <li>
+            <b>x:S</b> Select this radio button to choose a
+            g*(S) versus sedimentation coefficient dC/dt plot.
+        </li>
+
+        <li>
+            <b>Average S</b> Select this radio button to choose an
+            Average g*(S) versus sedimentation coefficient dC/dt plot.
+        </li>
+
+        <li>
+            <b>Reset</b> Indicate that parameters are to be reset and the
+            plots re-displayed based on original parameters.
+        </li>
+
+        <li>
+            <b>Help</b> Display this detailed Time-Derivative help.
+        </li>
+
+        <li>
+            <b>Close</b> Close all windows and exit.
+        </li>
+
+        <li>
+            <b>(Time Derivative Plot)</b> The upper of the two right-side plots
+            shows one of three types (x:radius, x:S, Average S) of 
+            Time Derivative (dC/dt) plots.
+        </li>
+
+        <li>
+            <b>(Velocity Data Plot)</b> The lower of the right-side plots
+            shows selected velocity data for which a time derivative 
+            calculation has been made.
+        </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

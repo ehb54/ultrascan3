@@ -63,8 +63,10 @@
             <keyword id="r2" name="reporter"      ref="reporter.html"/>
             <keyword id="r3" name="rotor"         ref="rotor.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
-            <keyword id="s2" name="select_edits"  ref="select_edits.html"/>
-            <keyword id="s3" name="solution"      ref="us_solution.html"/>
+            <keyword id="s2" name="second-moment" ref="second_moment.html"/>
+            <keyword id="s3" name="select-edits"  ref="select_edits.html"/>
+            <keyword id="s4" name="solution"      ref="us_solution.html"/>
+            <keyword id="t1" name="time-derivative" ref="time_derivative.html"/>
             <keyword id="v1" name="vhw-combine"   ref="vhw_combine.html"/>
             <keyword id="v2" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
             <keyword id="v3" name="vhw-enhanced"  ref="vhw_enhanced.html"/>
@@ -305,6 +307,12 @@
             <file>images/load_auc.png</file>
             <file>images/load_auc-trips.png</file>
             <file>images/load_auc-search.png</file>
+
+            <file>second_moment.html</file>
+            <file>images/second_moment.png</file>
+
+            <file>time_derivative.html</file>
+            <file>images/time_derivative.png</file>
 
         </files>
     </filterSection>
