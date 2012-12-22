@@ -49,6 +49,6 @@ class US_Dcdt : public US_AnalysisBase2
       void    write_report  ( QTextStream& );
 
       void    help          ( void )
-      { showHelp.show_help( "manual/us_dcdt.html" ); };
+      { showHelp.show_help( "manual/time_derivative.html" ); };
 };
 #endif

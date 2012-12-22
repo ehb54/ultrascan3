@@ -26,6 +26,6 @@ class US_SecondMoment : public US_AnalysisBase2
       void view           ( void );
       void save           ( void );
       void help           ( void )
-      { showHelp.show_help( "manual/us_second_moment.html" ); };
+      { showHelp.show_help( "manual/second_moment.html" ); };
 };
 #endif

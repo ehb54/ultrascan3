@@ -1,0 +1,167 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Second Moment Data Analysis'
+%]
+
+    <h2> <i>UltraScan</i> Second Moment Data Analysis: </h2>
+
+    <p>The second moment analysis will calculate weight-average sedimentation
+    coefficients for each scan included in the analysis by finding the second
+    moment point in the boundary. The second moment analysis can serve as a
+    valuable diagnostics tool in identifying problems such as time-dependent
+    degradation, aggregation and even concentration dependency. It is
+    important to keep in mind that the second moment analysis is only
+    valid for scans that have cleared the meniscus and still have a stable
+    plateau. All other scans should be excluded from the analysis.</p>
+
+    <img src="images/second_moment.png" alt="Second Moment Main Window"/>
+
+    <ul>
+        <li>
+            <b>Load Experiment</b> Click on this button and, in the resulting
+            <a href="data_loader.html">Load Data Dialog</a>, select an edited
+            data set to load.
+        </li>
+
+        <li>
+            <b>Run Details</b> Bring up a dialog with a summary of data
+            and run details.
+        </li>
+
+        <li>
+            <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+            than the latest one for the experimental data.
+        </li>
+
+        <li>
+            <b>Database</b> Check to specify data input from the database.
+        </li>
+
+        <li>
+            <b>Local Disk</b> Check to specify data input from local disk.
+        </li>
+
+        <li>
+            <b>View Data Report</b> Create a results text file and display
+            its contents in a text dialog.
+        </li>
+
+        <li>
+            <b>Save Data</b> Create several data and report files based on
+            input data and vHW parameters.
+        </li>
+
+        <li>
+            <b>Run ID / Edit ID:</b> The main run title of the data and
+            an edit identifier are displayed.
+        </li>
+
+        <li>
+            <b>Avg Temperature:</b> The average temperature of solute is
+            displayed in Celsius.
+        </li>
+
+        <li>
+            <b>(description)</b> The text box below the one for temperature
+            shows a full data description string.
+        </li>
+
+        <li>
+            <b>Cell / Channel / Wavelength</b> The text box below this label
+            gives cell, channel and wavelength triples available in this
+            data set. Highlight the desired value.
+        </li>
+
+        <li>
+            <b>Solution</b> Click this button to open a
+            <a href="us_solution.html">Solution Management dialog</a>
+            that allows changes to buffer and analyte characteristics of
+            the data set.
+        </li>
+
+        <li>
+            <b>Density (20&deg; C)</b> Shows the density value for the loaded
+            experiment. Click the Solution button to open a dialog in which
+            density and other values may be changed.
+        </li>
+
+        <li>
+            <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+            loaded experiment. Click the Solution button to open a dialog
+            in which viscosity and other values may be changed.
+        </li>
+
+        <li>
+            <b>Vbar (20&deg; C)</b> Shows the vbar value for the loaded
+            experiment. Click the Solution button to open a dialog in
+            which vbar and other values may be changed.
+        </li>
+
+        <li>
+            <b>Skipped</b> The count of experiment data scans skipped.
+        </li>
+
+        <li>
+            <b>Scan focus from:</b> Choose the first of a range of scan numbers
+            that may potentially be excluded from analysis.
+        </li>
+
+        <li>
+            <b>To:</b> Choose the end of a range of scan numbers that may
+            potentially be excluded from analysis. The From/To scan range
+            is illustrated in both plots to the right.
+        </li>
+
+        <li>
+            <b>Exclude Scan Range</b> If the From/To scan range selections
+            are as desired, click on this button to exclude the indicated
+            scans from analysis.
+        </li>
+
+        <li>
+            <b>Reset Scan Range</b> Reset to the full range of scans.
+        </li>
+
+        <li>
+            <b>Data Smoothing:</b> Choose the number of points to use for
+            any smoothing of raw input data.
+        </li>
+
+        <li>
+            <b>% of Boundary:</b> Choose the percentage of the range from
+            concentration baseline to plateau that is to be used for analysis.
+        </li>
+
+        <li>
+            <b>Boundary Pos. (%):</b> Choose the percent of the
+            plateau-baseline range that is to be added to the baseline to
+            form the beginning of analysis span.
+        </li>
+
+        <li>
+            <b>Reset</b> Indicate that parameters are to be reset and the
+            plots re-displayed based on original parameters.
+        </li>
+
+        <li>
+            <b>Help</b> Display this detailed Second-Moment help.
+        </li>
+
+        <li>
+            <b>Close</b> Close all windows and exit.
+        </li>
+
+        <li>
+            <b>(Second Moment Plot)</b> The upper of the two right-side plots
+            shows the second moment plot of sedimentation coefficient for each
+            scan.
+        </li>
+
+        <li>
+            <b>(Velocity Data Plot)</b> The lower of the right-side plots
+            shows selected velocity data for which a second moment calculation
+            has been made.
+        </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]
