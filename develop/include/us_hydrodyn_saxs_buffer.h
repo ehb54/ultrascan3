@@ -178,6 +178,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
+      QPushButton   *pb_crop_zero;
       QPushButton   *pb_crop_vis;
       QPushButton   *pb_crop_common;
       QPushButton   *pb_crop_left;
@@ -353,6 +354,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void crop_left();
       void crop_common();
       void crop_vis();
+      void crop_zero();
       void crop_undo();
       void crop_right();
       void legend();

@@ -566,6 +566,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_crop_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
+   pb_crop_zero = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_crop_zero->setMinimumHeight(minHeight1);
+   pb_crop_zero->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crop_zero, SIGNAL(clicked()), SLOT(crop_zero()));
+
    pb_crop_left = new QPushButton(tr("Crop Left"), this);
    pb_crop_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_left->setMinimumHeight(minHeight1);
@@ -756,6 +762,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_common );
    hbl_plot_buttons->addWidget( pb_crop_vis );
+   hbl_plot_buttons->addWidget( pb_crop_zero );
    hbl_plot_buttons->addWidget( pb_crop_left );
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
@@ -1694,6 +1701,9 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     files_selected_count &&
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_zero         ->setEnabled( 
+                                    files_selected_count
                                     );
    pb_crop_left        ->setEnabled( 
                                     files_selected_count &&
@@ -6164,4 +6174,52 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
    {
       update_enables();
    }
+}
+
+void US_Hydrodyn_Saxs_Buffer::crop_zero()
+{
+   // delete points < zero of selected curves
+   map < QString, bool > selected_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+
+         vector < double > new_q;
+         vector < double > new_I;
+         vector < double > new_errors;
+
+         bool has_errors  = f_errors[ this_file ].size();
+
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            for ( unsigned int i = 0; i < f_qs[ this_file ].size(); i++ )
+            {
+               if ( f_Is[ this_file ][ i ] > 0e0 )
+               {
+                  new_q.push_back( f_qs[ this_file ][ i ] );
+                  new_I.push_back( f_Is[ this_file ][ i ] );
+                  if ( has_errors )
+                  {
+                     new_errors.push_back( f_errors[ this_file ][ i ] );
+                  }
+               }
+            }
+            f_qs    [ this_file ] = new_q;
+            f_Is    [ this_file ] = new_I;
+            f_errors[ this_file ] = new_errors;
+         }
+      }
+   }
+      
+   // we could check if it has changed and then delete
+   if ( plot_dist_zoomer )
+   {
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
 }
