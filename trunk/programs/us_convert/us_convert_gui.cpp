@@ -432,10 +432,10 @@ void US_ConvertGui::reset( void )
 void US_ConvertGui::resetAll( void )
 {
    int status = QMessageBox::information( this,
-            tr( "Warning" ),
-            tr( "This will erase all data currently on the screen, and reset "    ) +
-            tr( "the program to its starting condition. No hard-drive data  "     ) +
-            tr( "or database information will be affected. Proceed? "             ),
+            tr( "New Data Warning" ),
+            tr( "This will erase all data currently on the screen, and " 
+                "reset the program to its starting condition. No hard-drive "
+                "data or database information will be affected. Proceed? " ),
             tr( "&OK" ), tr( "&Cancel" ),
             0, 0, 1 );
    if ( status != 0 ) return;
@@ -451,6 +451,8 @@ void US_ConvertGui::resetAll( void )
    ct_tolerance    ->setValue   (   5.0 );
    ct_tolerance    ->setStep( 1 );
    scanTolerance   = 5.0;
+   runID           = "";
+   data_plot->setTitle( tr( "Absorbance Data" ) );
 }
 
 // Function to select the current investigator
@@ -901,6 +903,14 @@ void US_ConvertGui::runIDChanged( void )
    if ( rx.indexIn( new_runID ) >= 0 )
    {
       runID = new_runID;
+      if ( runID.length() > 50 )
+      {
+         QMessageBox::warning( this,
+               tr( "RunID Name Too Long" ),
+               tr( "The runID name may be at most\n"  
+                   "50 characters in length." ) );
+         runID = runID.left( 50 );
+      }
       plot_titles();
    }
 
