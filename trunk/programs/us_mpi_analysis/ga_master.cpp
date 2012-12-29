@@ -567,6 +567,13 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    }
 
    QString fn = data->runID + "." + id + "." + model.modelGUID + ".xml";
+   int lenfn  = fn.length();
+   if ( lenfn > 99 )
+   { // Insure a model file name less than 100 characters in length (tar limit)
+      int lenri  = data->runID.length() + 99 - lenfn;
+      fn         = data->runID.left( lenri )
+                   + "." + id + "." + model.modelGUID + ".xml";
+   }
 
    model.write( fn );                // Output the model to a file
 
