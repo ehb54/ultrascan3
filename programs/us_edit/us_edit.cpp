@@ -347,6 +347,7 @@ void US_Edit::reset( void )
    baseline      = 0.0;
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
+   triple_index  = 0;
 
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
@@ -426,6 +427,7 @@ void US_Edit::reset( void )
    changed_points.clear();
    trip_rpms     .clear();
    triples       .clear();
+   cb_triple    ->clear();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
    editGUIDs     .clear();
