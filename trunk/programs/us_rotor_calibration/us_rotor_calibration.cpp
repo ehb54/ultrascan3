@@ -507,10 +507,11 @@ void US_RotorCalibration::plotAll( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->clear();
-   data_plot->setTitle(tr( "Intensity Data (Channel A in red, Channel B in green)" ));
+   data_plot->setTitle(tr( "Intensity Data" ));
    data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Radius (in cm)" ) );
    data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity" ) );
-   QwtPlotCurve* c;
+   QwtPlotCurve* c1;
+   QwtPlotCurve* c2;
    QPen channelAPen( Qt::red );
    QPen channelBPen( Qt::green );
    for (int j=0; j<allData[current_triple].scanData.size(); j++) //all scans in each triple
@@ -528,31 +529,51 @@ void US_RotorCalibration::plotAll( void )
       << tr(", GUID ") << guid
       << tr(", Type ") << type;
       //qDebug() << title;
-      c = us_curve( data_plot, title );
-      c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-      int size = allData[current_triple].scanData[j].readings.size();
-      double *x = new double [size];
-      double *y = new double [size];
+      c1 = us_curve( data_plot, title );
+      c2 = us_curve( data_plot, title );
+      c1->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+      c2->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+      int size = (int) (allData[current_triple].scanData[j].readings.size()/2)-1;
+      double *x1 = new double [size];
+      double *y1 = new double [size];
+      double *x2 = new double [size];
+      double *y2 = new double [size];
       for (int k=0; k<size; k++)
       {
-         x[k] = allData[current_triple].x[k].radius;
-         y[k] = allData[current_triple].scanData[j].readings[k].value;
+         x1[k] = allData[current_triple].x[k].radius;
+         y1[k] = allData[current_triple].scanData[j].readings[k].value;
+      }
+      for (int k=0; k<size; k++)
+      {
+         x2[k] = allData[current_triple].x[size+k].radius;
+         y2[k] = allData[current_triple].scanData[j].readings[size+k].value;
       }
       ct_channel->disconnect();
-      if ((QString) allData[current_triple].channel == "A")
+      if ((QString) allData[current_triple].channel == "A") ct_channel->setValue(1);
+      if ((QString) allData[current_triple].channel == "B") ct_channel->setValue(2);
+      if ((QString) allData[current_triple].channel == "C") ct_channel->setValue(3);
+      if ((QString) allData[current_triple].channel == "D") ct_channel->setValue(4);
+      if ((QString) allData[current_triple].channel == "E") ct_channel->setValue(5);
+      if ((QString) allData[current_triple].channel == "F") ct_channel->setValue(6);
+      if ((QString) allData[current_triple].channel == "G") ct_channel->setValue(7);
+      if ((QString) allData[current_triple].channel == "H") ct_channel->setValue(8);
+      connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
+      c1->setData( x1, y1, size);
+      c2->setData( x2, y2, size);
+      if (top_of_cell)
       {
-         c->setPen(channelAPen);
-         ct_channel->setValue(1);
+         c1->setPen(channelAPen);
+         c2->setPen(channelBPen);
       }
       else
       {
-         c->setPen(channelBPen);
-         ct_channel->setValue(2);
+         c1->setPen(channelBPen);
+         c2->setPen(channelAPen);
       }
-      connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
-      c->setData( x, y, allData[current_triple].scanData[j].readings.size() );
-      delete x;
-      delete y;
+      delete x1;
+      delete y1;
+      delete x2;
+      delete y2;
    }
    if (top_of_cell)
    {
