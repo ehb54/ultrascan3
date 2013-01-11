@@ -58,6 +58,7 @@ class US_RotorCalibration : public US_Widgets
       QVector< double >  sd1;
       QVector< double >  sd2;
       int                maxcell;
+      int                maxchannel;
       int                current_triple;
       int                current_cell;
       bool               top_of_cell;
