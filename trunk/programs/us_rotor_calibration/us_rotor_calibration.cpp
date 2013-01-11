@@ -85,11 +85,11 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    ct_channel->setStep( 1 );
    top->addWidget( ct_channel, row++, 0);
 
-   QGridLayout* lo_top = us_radiobutton( tr( "Top of cell" ), rb_top );
+   QGridLayout* lo_top = us_radiobutton( tr( "Top of channel" ), rb_top );
    connect( rb_top, SIGNAL( clicked() ), SLOT( update_position() ) );
    top->addLayout( lo_top, row++, 0 );
 
-   QGridLayout* lo_bottom = us_radiobutton( tr( "Bottom of cell" ), rb_bottom );
+   QGridLayout* lo_bottom = us_radiobutton( tr( "Bottom of channel" ), rb_bottom );
    connect( rb_bottom, SIGNAL( clicked() ), SLOT( update_position() ) );
    top->addLayout( lo_bottom, row++, 0 );
 
@@ -269,11 +269,20 @@ void US_RotorCalibration::loadDisk( void )
 
    // Look for cell / channel / wavelength combinations
    maxcell=0;
+   maxchannel=0;
    for ( int i = 0; i < files.size(); i++ )
    {
       QStringList part = files[ i ].split( "." );
 
       QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+		if ((part[3] == "A") && (maxchannel < 1)) maxchannel = 1;
+		if ((part[3] == "B") && (maxchannel < 2)) maxchannel = 2;
+		if ((part[3] == "C") && (maxchannel < 3)) maxchannel = 3;
+		if ((part[3] == "D") && (maxchannel < 4)) maxchannel = 4;
+		if ((part[3] == "E") && (maxchannel < 5)) maxchannel = 5;
+		if ((part[3] == "F") && (maxchannel < 6)) maxchannel = 6;
+		if ((part[3] == "G") && (maxchannel < 7)) maxchannel = 7;
+		if ((part[3] == "H") && (maxchannel < 8)) maxchannel = 8;
       if (maxcell < part[2].toInt())
       {
          maxcell = part[2].toInt();
@@ -281,7 +290,7 @@ void US_RotorCalibration::loadDisk( void )
       if ( ! triples.contains( t ) ) triples << t;
    }
    ct_cell->setRange(1, maxcell, 1);
-   ct_channel->setRange(1, 2, 1);
+   ct_channel->setRange(1, maxchannel, 1);
 
    // Read all data
    if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
@@ -317,9 +326,14 @@ void US_RotorCalibration::loadDisk( void )
             + QString( QChar( data.type[ 1 ] ) );
 
    if ( dataType != "RI" )
-   {
-      le_instructions->setText( tr("Attention - ") + runID + tr(" is not intensity data!"));
-      return;
+	{
+		if ( dataType != "FI" )
+   	{
+      	le_instructions->setText( tr("Attention - ") + runID + 
+				tr(" is not absorbance or fluorescence intensity data,\nit is ") +
+				dataType + tr(" data - aborting."));
+      	return;
+		}
    }
    Limit tmp_limit;
    limit.clear();
@@ -392,11 +406,20 @@ void US_RotorCalibration::loadDB( void )
 
    // Look for cell / channel / wavelength combinations
    maxcell=0;
+	maxchannel=0;
    for ( int i = 0; i < filenames.size(); i++ )
    {
       QStringList part = filenames[ i ].split( "." );
 
       QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+		if ((part[3] == "A") && (maxchannel < 1)) maxchannel = 1;
+		if ((part[3] == "B") && (maxchannel < 2)) maxchannel = 2;
+		if ((part[3] == "C") && (maxchannel < 3)) maxchannel = 3;
+		if ((part[3] == "D") && (maxchannel < 4)) maxchannel = 4;
+		if ((part[3] == "E") && (maxchannel < 5)) maxchannel = 5;
+		if ((part[3] == "F") && (maxchannel < 6)) maxchannel = 6;
+		if ((part[3] == "G") && (maxchannel < 7)) maxchannel = 7;
+		if ((part[3] == "H") && (maxchannel < 8)) maxchannel = 8;
       if (maxcell < part[2].toInt())
       {
          maxcell = part[2].toInt();
@@ -404,7 +427,7 @@ void US_RotorCalibration::loadDB( void )
       if ( ! triples.contains( t ) ) triples << t;
    }
    ct_cell->setRange(1, maxcell, 1);
-   ct_channel->setRange(1, 2, 1);
+   ct_channel->setRange(1, maxchannel, 1);
 
    // Load the data
    QDir dir;
@@ -445,12 +468,15 @@ void US_RotorCalibration::loadDB( void )
       dataType = QString( QChar( data.type[ 0 ] ) ) 
                + QString( QChar( data.type[ 1 ] ) );
       
-      if ( dataType != "RI" )
+      if (dataType != "RI") 
       {
-         QMessageBox::information( this,
-                tr( "Error" ),
-                runID + tr( " is not intensity data!" ) );
-         return;
+			if (dataType != "FI")
+			{
+         	QMessageBox::information( this, tr( "Error" ),
+                runID + tr( " is not absorbance or fluorescence intensity data,\nit is ") +
+					 dataType + tr(" data - aborting."));
+         	return;
+			}
       }
 
       allData << data;
@@ -530,13 +556,13 @@ void US_RotorCalibration::plotAll( void )
    }
    if (top_of_cell)
    {
-      data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.1 );
+      data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
       cb_assigned->setChecked(limit[current_triple].used[0]);
       rb_top->setChecked( true );
    }
    else
    {
-      data_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.3 );
+      data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
       cb_assigned->setChecked(limit[current_triple].used[1]);
       rb_bottom->setChecked( true );
    }
@@ -594,14 +620,14 @@ void US_RotorCalibration::next()
       ct_cell->disconnect();
       ct_channel->disconnect();
       ct_cell->setValue(allData[current_triple].cell);
-      if ((QString) allData[current_triple].channel == "A")
-      {
-         ct_channel->setValue(1.0);
-      }
-      else
-      {
-         ct_channel->setValue(2.0);
-      }
+      if ((QString) allData[current_triple].channel == "A") ct_channel->setValue(1.0);
+      if ((QString) allData[current_triple].channel == "B") ct_channel->setValue(2.0);
+      if ((QString) allData[current_triple].channel == "C") ct_channel->setValue(3.0);
+      if ((QString) allData[current_triple].channel == "D") ct_channel->setValue(4.0);
+      if ((QString) allData[current_triple].channel == "E") ct_channel->setValue(5.0);
+      if ((QString) allData[current_triple].channel == "F") ct_channel->setValue(6.0);
+      if ((QString) allData[current_triple].channel == "G") ct_channel->setValue(7.0);
+      if ((QString) allData[current_triple].channel == "H") ct_channel->setValue(8.0);
       connect (ct_cell, SIGNAL(valueChanged (double)), this, SLOT(update_cell(double)));
       connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
    }
@@ -640,14 +666,14 @@ void US_RotorCalibration::calculate()
    {
       for ( int j = 0; j < allData[ i ].scanData.size(); j++ ) //all scans in each triple
       {
-         if ( ( QString)allData[ i ].channel == "A" )
-         {
-            tmp_avg.channel = 0;
-         }
-         else
-         {
-            tmp_avg.channel = 1;
-         }
+         if ( ( QString)allData[ i ].channel == "A" ) tmp_avg.channel = 0;
+         if ( ( QString)allData[ i ].channel == "B" ) tmp_avg.channel = 1;
+         if ( ( QString)allData[ i ].channel == "C" ) tmp_avg.channel = 2;
+         if ( ( QString)allData[ i ].channel == "D" ) tmp_avg.channel = 3;
+         if ( ( QString)allData[ i ].channel == "E" ) tmp_avg.channel = 4;
+         if ( ( QString)allData[ i ].channel == "F" ) tmp_avg.channel = 5;
+         if ( ( QString)allData[ i ].channel == "G" ) tmp_avg.channel = 6;
+         if ( ( QString)allData[ i ].channel == "H" ) tmp_avg.channel = 7;
          
          tmp_avg.cell = allData[ i ].cell;
          tmp_avg.rpm = (int) allData[ i ].scanData[ j ].rpm;
@@ -712,7 +738,7 @@ void US_RotorCalibration::calculate()
    {
       for ( int j = 0; j < cells.size(); j++ )
       {
-         for ( int k = 0; k < 2; k++ )
+         for ( int k = 0; k < maxchannel; k++ )
          {
             tmp_avg.top          = 0;
             tmp_avg.bottom       = 0;
@@ -784,7 +810,7 @@ void US_RotorCalibration::calculate()
    
    for ( int i = 0; i < maxcell; i++ ) //cells
    {
-      for ( int j = 0; j < 2; j++ ) //channels
+      for ( int j = 0; j < maxchannel; j++ ) //channels
       {
          entry_top.clear();
          entry_bottom.clear();
@@ -1010,7 +1036,7 @@ void US_RotorCalibration::calculate()
    
    for ( int j = 0; j < cells.size(); j++ )
    {
-      for ( int k = 0; k < 2; k++ )
+      for ( int k = 0; k < maxchannel; k++ )
       {
          double sum1 = 0.0;
          double sum2 = 0.0;
@@ -1049,7 +1075,7 @@ void US_RotorCalibration::calculate()
          {
             fileText += QString( "%1" ).arg( sum1 / m, 0, 'e', 5 ) + " ";
             
-            if ( cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7 )
+            if ( (cells.size() == 4 && j !=3) || (cells.size() == 8 && j != 7) )
             {
                top_avg += sum1 / m;
                top_count++;
@@ -1064,7 +1090,7 @@ void US_RotorCalibration::calculate()
          {
             fileText += QString("%1").arg(sum2/n, 0, 'e', 5 ) + " ";
             
-            if ( cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7 )
+            if ( (cells.size() == 4 && j !=3) || (cells.size() == 8 && j != 7) )
             {
                bottom_avg += sum2 / n;
                bottom_count++;
@@ -1081,7 +1107,7 @@ void US_RotorCalibration::calculate()
                         QString( "%1" ).arg( (sum1 / m) + 
                               ( ( sum2 / n) - ( sum1 / m ) ) / 2.0, 0, 'e', 5 ) + "\n";
             
-            if ( cells.size() == 4 && j != 3 || cells.size() == 8 && j != 7 )
+            if ( (cells.size() == 4 && j != 3) || (cells.size() == 8 && j != 7) )
             {
                length_avg += ( sum2 / n ) - ( sum1 / m );
                length_count++;
