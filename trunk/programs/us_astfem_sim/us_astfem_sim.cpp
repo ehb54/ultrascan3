@@ -42,7 +42,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    stopFlag            = false;
    movieFlag           = false;
-   time_correctionFlag = true;
+   time_correctionFlag = false;
 
    astfem_rsa          = NULL;
    astfvm              = NULL;
@@ -402,33 +402,36 @@ void US_Astfem_Sim::start_simulation( void )
    }
 
    // Set the time for the scans
-   double current_time;
-   double w2t_sum     = 0.0;
+   double current_time = 0.0;
+   double w2t_sum      = 0.0;
+   double delay;
    double duration;
-   double increment;
-   int    scan_number = 0;
+   double increment    = 0.0;
+   int    scan_number  = 0;
 
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
+   for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
    {
       // To get the right time, we need to take the last scan time from the
       // previous speed step and add the delays to it
 
       // First time point of this speed step in secs
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ii ];
       double w2t   = sq( sp->rotorspeed * M_PI / 30.0 );
 
-      current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
-      duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
-      increment    = ( duration - current_time ) / (double)( sp->scans );
-      if ( i == 0 )
+      delay         = sp->delay_hours * 3600 + sp->delay_minutes * 60;
+      duration      = sp->duration_hours * 3600 + sp->duration_minutes * 60;
+      increment     = ( duration - delay ) / (double)( sp->scans - 1 );
+      if ( ii == 0 )
          w2t_sum        = current_time * w2t;
       double w2t_inc = increment * w2t;
+      current_time += ( delay - increment );
 DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
 
-      for ( int j = 0; j < sp->scans; j++ )
+      for ( int jj = 0; jj < sp->scans; jj++ )
       {
          US_DataIO2::Scan* scan = &sim_data.scanData[ scan_number ];
-         scan->seconds = current_time + increment * ( j + 1 );
+         current_time += increment;
+         scan->seconds = current_time;
          scan->omega2t = w2t_sum;
          w2t_sum      += w2t_inc;
 
@@ -474,10 +477,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
 
       astfem_rsa->set_movie_flag( cb_movie->isChecked() );
  
-      // Interpolate simulation onto desired grid based on time, not based on
-      // omega-square-t integral
-      astfem_rsa->setTimeInterpolation( true ); 
-      //astfem_rsa->setTimeInterpolation( false ); 
+      astfem_rsa->setTimeInterpolation( false ); 
       astfem_rsa->setTimeCorrection( time_correctionFlag );
       astfem_rsa->setStopFlag( stopFlag );
    
@@ -496,7 +496,8 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
          for ( int ii=0; ii<nscn; ii++ )
          {
             double t0=sim_data.scanData[ii].seconds;
-            double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
+            double t1=(ii==0)?sim_data.scanData[1].seconds
+                             :sim_data.scanData[ii-1].seconds;
             if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
                DbgLv(2) << "  Scan" << ii << "  Time" << t0 << t1;
             for ( int jj=0; jj<ncvl; jj++ )
@@ -506,7 +507,8 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
               if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
               if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
               {
-                 if ( jj<10 || (jj+11)>ncvl || ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
+                 if ( jj<10 || (jj+11)>ncvl ||
+                    ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
                     DbgLv(2) << "    C index value" << jj << cval;
               }
             }
@@ -575,9 +577,11 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       for ( int ii=0; ii<nscn; ii++ )
       {
          double t0=sim_data.scanData[ii].seconds;
-         double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
+         double t1=(ii==0)?sim_data.scanData[1].seconds
+                          :sim_data.scanData[ii-1].seconds;
          if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
-            DbgLv(2) << "  Scan" << ii << "  Time" << t0 << t1 << "temp" << sim_data.scanData[ii].temperature;
+            DbgLv(2) << "  Scan" << ii << "  Time" << t0 << t1
+                     << "temp" << sim_data.scanData[ii].temperature;
          for ( int jj=0; jj<npts; jj++ )
          {
             double cval = sim_data.value(ii,jj);
@@ -585,16 +589,17 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
             if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
             if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
             {
-               if ( jj<10 || (jj+11)>npts || ((jj*2)>(npts-10)&&(jj*2)<(npts+11)) )
+               if ( jj<10 || (jj+11)>npts ||
+                   ((jj*2)>(npts-10)&&(jj*2)<(npts+11)) )
                   DbgLv(2) << "    C index value" << jj << cval;
             }
          }
       }
       DbgLv(1) << "SIM data min conc ilo jlo" << cmin << ilo << jlo;
       DbgLv(1) << "SIM data max conc ihi jhi" << cmax << ihi << jhi;
-      DbgLv(1) << "SIM:fem: m b  s D  rpm" << simparams.meniscus << simparams.bottom
-         << system.components[0].s << system.components[0].D
-         << simparams.speed_step[0].rotorspeed;
+      DbgLv(1) << "SIM:fem: m b  s D  rpm" << simparams.meniscus
+         << simparams.bottom << system.components[0].s
+         << system.components[0].D << simparams.speed_step[0].rotorspeed;
    }
 
    finish();

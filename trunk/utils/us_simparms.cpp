@@ -11,23 +11,23 @@
 
 US_SimulationParameters::US_SimulationParameters()
 {
-   mesh_radius.clear(); 
+   mesh_radius.clear();
    speed_step.clear();
 
    speed_step << SpeedProfile();
 
-   simpoints         = 200;  
+   simpoints         = 200;
    meshType          = ASTFEM;
    gridType          = MOVING;
    radial_resolution = 0.001;
    meniscus          = 5.8;
    bottom            = 7.2;
-   rnoise            = 0.0;  
-   tinoise           = 0.0;      
-   rinoise           = 0.0;     
+   rnoise            = 0.0;
+   tinoise           = 0.0;
+   rinoise           = 0.0;
    temperature       = NORMAL_TEMP;
-   rotorCalID        = "0";      
-   band_forming      = false;   
+   rotorCalID        = "0";
+   band_forming      = false;
    band_volume       = 0.015;
    bottom_position   = 7.2;
    rotorcoeffs[ 0 ]  = 0.0;
@@ -61,15 +61,16 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    int     dbg_level   = US_Settings::us_debug();
    int     scanCount   = editdata.scanData.size();
    double  time1       = editdata.scanData[ 0 ].seconds;
-   double  time2       = editdata.scanData[ 0 ].seconds;
+   double  time2       = 0.0;
+   double  delay_secs  = time1;
    double  rpm         = editdata.scanData[ 0 ].rpm;
    double  rpmnext     = rpm;
-   int     jj          = 0;
+   double  step_secs   = 0.0;
+   int     lscx        = 0;
    int     cp_id       = 0;
    QString channel     = editdata.channel;
    int     ch          = QString( "ABCDEFGH" ).indexOf( channel );
-           ch          = qMax( 0, ch );
-           ch         /= 2;
+           ch          = qMax( 0, ch ) / 2;
 //DbgLv(2) << "SP:iFD: ch" << ch << editdata.channel << (ch+1);
    QString ecell       = editdata.cell;
    int     iecell      = ecell.toInt();
@@ -148,37 +149,42 @@ DbgLv(2) << "SP:iFD: scan" << (ii+1) << "rpm time omega2t"
       if ( rpm != rpmnext )
       {  // RPM has changed, so need to create speed step for previous scans
          time2               = editdata.scanData[ ii - 1 ].seconds;
-         sp.duration_hours   = (int)( time2 / 3600.0 );
-         sp.duration_minutes = (int)( time2 / 60.0 )
+         step_secs           = time2 - time1 + delay_secs;
+         sp.duration_hours   = (int)( step_secs / 3600.0 );
+         sp.duration_minutes = (int)( step_secs / 60.0 )
                                - ( sp.duration_hours * 60 );
-         sp.delay_hours      = (int)( time1 / 3600.0 );
-         sp.delay_minutes    = ( time1 / 60.0 )
+         sp.delay_hours      = (int)( delay_secs / 3600.0 );
+         sp.delay_minutes    = ( delay_secs / 60.0 )
                                - ( (double)sp.delay_hours * 60.0 );
-         sp.scans            = ii - jj;
+         sp.scans            = ii - lscx;
          sp.rotorspeed       = (int)rpm;
          speed_step.append( sp );
 DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
- << "duration hrs mins" << sp.duration_hours << sp.duration_minutes
- << "delay hrs mins" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
+ << "duration h m" << sp.duration_hours << sp.duration_minutes
+ << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 
-         jj                  = ii;
+         lscx                = ii;
          rpm                 = rpmnext;
          time1               = editdata.scanData[ ii     ].seconds;
+         delay_secs          = time1 - time2;
       }
    }
 
    // Set final (only?) speed step
    time2               = editdata.scanData[ scanCount - 1 ].seconds;
-   sp.duration_hours   = (int)( time2 / 3600.0 );
-   sp.duration_minutes = (int)( time2 / 60.0 ) - ( sp.duration_hours * 60 );
-   sp.delay_hours      = (int)( time1 / 3600.0 );
-   sp.delay_minutes    = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
-   sp.scans            = scanCount - jj;
+   step_secs           = time2 - time1 + delay_secs;
+   sp.duration_hours   = (int)( step_secs / 3600.0 );
+   sp.duration_minutes = (int)( step_secs / 60.0 )
+                         - ( sp.duration_hours * 60 );
+   sp.delay_hours      = (int)( delay_secs / 3600.0 );
+   sp.delay_minutes    = ( delay_secs / 60.0 )
+                         - ( (double)sp.delay_hours * 60.0 );
+   sp.scans            = scanCount - lscx;
    sp.rotorspeed       = (int)rpm;
    speed_step.append( sp );
 DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
- << "duration hrs mins" << sp.duration_hours << sp.duration_minutes
- << "delay hrs mins" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
+ << "duration h m" << sp.duration_hours << sp.duration_minutes
+ << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 
 #ifndef NO_DB
    int     iechan      = ch + 1;
