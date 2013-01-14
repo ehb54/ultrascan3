@@ -110,12 +110,21 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param CT The test C value
       static double find_C1_mono_Nmer( int, double, double );
 
-      //! \brief Interpolate one dataset onto another usitn time or omega^2t
+      //! \brief Interpolate one dataset onto another using time or omega^2t
+      //! \param expdata  Experimental data to create, sized on input
+      //! \param simdata  Simulation from which to create modeled experiment
+      //! \param use_time Flag of whether to use time interpolation
+      //! \returns Success flag: 0 -> success
+      static int    interpolate  ( MfemData&, MfemData&, bool );  
+
+      //! \brief Interpolate one dataset onto another using time or omega^2t
       //! \param expdata  Experimental data to create, sized on input
       //! \param simdata  Simulation from which to create modeled experiment
       //! \param use_time Flag of whether to use time correction
+      //! \param fscan    First update expdata scan index
+      //! \param lscan    Last update expdata scan index plus one
       //! \returns Success flag: 0 -> success
-      static int    interpolate  ( MfemData&, MfemData&, bool );  
+      static int    interpolate  ( MfemData&, MfemData&, bool, int, int );  
 
       //! \brief Solve Quad-diagonal system
       //! \param ai   The initial a vector
@@ -373,6 +382,7 @@ class US_UTIL_EXTERN US_AstfemMath
          double omega_s;          //!< omega^2
          double start_time;       //!< start time in seconds of simulation
                                   //!<  at constant speed
+         double start_om2t;       //!< start omega^2t of simulation
          double current_meniscus; //!< actual meniscus for current speed
          double current_bottom;   //!< actual bottom for current speed
          int    first_speed;      //!< constant speed at first speed step

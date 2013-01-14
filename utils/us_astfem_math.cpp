@@ -393,6 +393,78 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
                                 bool      use_time )
 {
+   // NOTE: *expdata has to be initialized to have the proper size
+   //        (filled with zeros) before using this routine!
+   //        The radius also has to be assigned!
+
+   if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
+        simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
+      return -1;
+
+   // Iterate through all experimental data scans and find the first time point
+   // in simdata that is higher or equal to each time point in expdata:
+
+   int    fscan   = -1;
+   int    lscan   = -1;
+   int    escans  = expdata.scan.size();
+   int    sscans  = simdata.scan.size();
+   double e_omega = 0.0;
+   double e_time  = 0.0;
+
+   if ( use_time )
+   {
+      double s_time  = simdata.scan[ 0 ].time;
+      double l_time  = simdata.scan[ sscans - 1 ].time;
+
+      for ( int expscan = 0; expscan < escans; expscan++ )
+      { // First determine the scan range of current experiment data
+         e_time     = expdata.scan[ expscan ].time;
+         if ( fscan < 0  &&  e_time >= s_time )
+            fscan      = expscan;
+         if ( e_time > l_time  )
+         {
+            lscan      = expscan;
+            break;
+         }
+      }
+
+      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+   }
+   else // Use omega^2t integral for interpolation
+   {
+      double s_omega = simdata.scan[ 0 ].omega_s_t;
+      double l_omega = simdata.scan[ sscans - 1 ].omega_s_t;
+
+      for ( int expscan = 0; expscan < escans; expscan++ )
+      { // First determine the scan range of current experiment data
+         e_omega    = expdata.scan[ expscan ].omega_s_t;
+         if ( fscan < 0  &&  e_omega >= s_omega )
+            fscan      = expscan;
+         if ( e_omega > l_omega )
+         {
+            lscan      = expscan;
+            break;
+         }
+      }
+
+      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+//qDebug() << "MATHi: s_omega l_omega" << s_omega << e_omega
+// << "fscan lscan" << fscan << lscan;
+   }
+
+   // Interpolate all radial points from each scan in tmp_data onto expdata
+   //
+   interpolate( expdata, simdata, use_time, fscan, lscan );
+
+   return 0;
+}
+
+// Interpolation routine By B. Demeler 041708
+int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
+                                bool      use_time, int fscan, int lscan )
+{
 //*TIMING*
 //static int ncall=0;
 //static int totMs=0;
@@ -430,10 +502,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    // in simdata that is higher or equal to each time point in expdata:
 
    int    simscan = 0;
-   int    fscan   = -1;
-   int    lscan   = -1;
-   int    escans  = expdata.scan.size();
-   int    sscans  = simdata.scan.size();
    double e_omega = 0.0;
    double e_time  = 0.0;
    double s_omega1;
@@ -443,24 +511,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( use_time )
    {
-      double s_time  = simdata.scan[ 0 ].time;
-      double l_time  = simdata.scan[ sscans - 1 ].time;
-
-      for ( int expscan = 0; expscan < escans; expscan++ )
-      { // First determine the scan range of current experiment data
-         e_time     = expdata.scan[ expscan ].time;
-         if ( fscan < 0  &&  e_time >= s_time )
-            fscan      = expscan;
-         if ( e_time > l_time  )
-         {
-            lscan      = expscan;
-            break;
-         }
-      }
-
-      fscan         = ( fscan < 0 ) ? 0 : fscan;
-      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
-
       for ( int expscan = fscan; expscan < lscan; expscan++ )
       {  // Interpolate where needed to a range of experiment scans
          MfemScan* sscan1 = &simdata.scan[ simscan ];
@@ -485,10 +535,15 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                            "experimental time range and ends too early!\n"
                            "exiting...\n";
 
+#if 0
 #if defined(USE_MPI)
                MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
                exit( -1 );
+#endif
+#if 1
+               break;
+#endif
             }
          }
 
@@ -538,26 +593,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    }
    else // Use omega^2t integral for interpolation
    {
-      double s_omega = simdata.scan[ 0 ].omega_s_t;
-      double l_omega = simdata.scan[ sscans - 1 ].omega_s_t;
-
-      for ( int expscan = 0; expscan < escans; expscan++ )
-      { // First determine the scan range of current experiment data
-         e_omega    = expdata.scan[ expscan ].omega_s_t;
-         if ( fscan < 0  &&  e_omega >= s_omega )
-            fscan      = expscan;
-         if ( e_omega > l_omega )
-         {
-            lscan      = expscan;
-            break;
-         }
-      }
-
-      fscan         = ( fscan < 0 ) ? 0 : fscan;
-      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
-//qDebug() << "MATHi: s_omega l_omega" << s_omega << e_omega
-// << "fscan lscan" << fscan << lscan;
-
       for ( int expscan = fscan; expscan < lscan; expscan++ )
       { // Interpolate where needed to a range of experiment scans
          MfemScan* sscan1 = &simdata.scan[ simscan ];
@@ -589,12 +624,14 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 //e_time=simdata.scan[lsc].time;
 //qDebug() << "s-lsc e_omega e_time" << lsc << e_omega << e_time;
 #if defined(USE_MPI)
-               MPI_Abort( MPI_COMM_WORLD, -1 );
+//               MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
                qDebug() << "The simulated data does not cover the entire "
                            "experimental time range and ends too early!\n"
                            "exiting...";
-               exit( -1 );
+//               exit( -1 );
+               simscan--;
+               break;
             }
          }
 
