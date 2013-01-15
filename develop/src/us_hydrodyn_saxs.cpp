@@ -6,6 +6,7 @@
 #include "../include/us_hydrodyn_saxs_screen.h"
 #include "../include/us_hydrodyn_saxs_search.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
+#include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_1d.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
 #include "../include/us_hydrodyn_xsr.h"
@@ -115,6 +116,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_search_csv();
    reset_screen_csv();
    reset_buffer_csv();
+   reset_hplc_csv();
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
@@ -683,6 +685,13 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_buffer->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_buffer, SIGNAL(clicked()), SLOT(saxs_buffer()));
 
+      pb_saxs_hplc = new QPushButton("Hplc", this);
+      pb_saxs_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      pb_saxs_hplc->setMinimumHeight(minHeight1);
+      pb_saxs_hplc->setMaximumWidth( maxWidth * 6 );
+      pb_saxs_hplc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_saxs_hplc, SIGNAL(clicked()), SLOT(saxs_hplc()));
+
       pb_saxs_xsr = new QPushButton("CSA", this);
       pb_saxs_xsr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_xsr->setMinimumHeight(minHeight1);
@@ -1143,6 +1152,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    {
       hbl_various_0->addWidget(pb_saxs_screen);
       hbl_various_0->addWidget(pb_saxs_buffer);
+      hbl_various_0->addWidget(pb_saxs_hplc);
       hbl_various_0->addWidget(pb_saxs_xsr);
       hbl_various_0->addWidget(pb_saxs_1d);
       hbl_various_0->addWidget(pb_saxs_2d);
@@ -4732,6 +4742,46 @@ void US_Hydrodyn_Saxs::saxs_buffer()
    }
 }
 
+void US_Hydrodyn_Saxs::saxs_hplc()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->show();
+      }
+   }
+   else
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_hplc_csv.name != "__empty__" )
+      {
+         hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_hplc_csv;
+      } 
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window = new US_Hydrodyn_Saxs_Hplc( hplc_csv, us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window );
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->show();
+   }
+
+   for ( unsigned int i = 0; i < plotted_q.size(); i++ )
+   {
+      if ( plotted_I_error[ i ].size() == plotted_I.size() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ],
+                                                                   plotted_I_error[ i ] );
+      } else {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
+                                                                   plotted_q[ i ],
+                                                                   plotted_I[ i ] );
+      }
+   }
+}
+
 void US_Hydrodyn_Saxs::reset_buffer_csv()
 {
    if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_buffer_csv.name != "__empty__" )
@@ -4806,6 +4856,83 @@ void US_Hydrodyn_Saxs::reset_buffer_csv()
          tmp_num_data.push_back(buffer_csv.data[i][j].toDouble());
       }
       buffer_csv.num_data.push_back(tmp_num_data);
+   }
+}
+
+void US_Hydrodyn_Saxs::reset_hplc_csv()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->last_saxs_hplc_csv.name != "__empty__" )
+   {
+      hplc_csv = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_hplc_csv;
+      return;
+   } 
+
+   hplc_csv.name = "SAXS I(q) Hplc";
+
+   hplc_csv.header.clear();
+   hplc_csv.header_map.clear();
+   hplc_csv.data.clear();
+   hplc_csv.num_data.clear();
+   hplc_csv.prepended_names.clear();
+
+   hplc_csv.header.push_back("Parameter");
+   hplc_csv.header.push_back("Active");
+   hplc_csv.header.push_back("Low value");
+   hplc_csv.header.push_back("High value");
+   hplc_csv.header.push_back("Points");
+   hplc_csv.header.push_back("Interval");
+   hplc_csv.header.push_back("Current value");
+   hplc_csv.header.push_back("Best value");
+
+   vector < QString > tmp_data;
+   
+   tmp_data.clear();
+   tmp_data.push_back("Alpha (I=Isol-Alpha*Ibuf-(1-Alpha)*Iblank)");
+   tmp_data.push_back("Y");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   hplc_csv.prepended_names.push_back(tmp_data[0]);
+   hplc_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("PSV");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.5");
+   tmp_data.push_back("0.8");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   hplc_csv.prepended_names.push_back(tmp_data[0]);
+   hplc_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Gamma (Alpha=1-Gamma*Conc*PSV/1000)");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.95");
+   tmp_data.push_back("1.05");
+   tmp_data.push_back("51");
+   tmp_data.push_back("");
+   tmp_data.push_back("1");
+   tmp_data.push_back("");
+
+   hplc_csv.prepended_names.push_back(tmp_data[0]);
+   hplc_csv.data.push_back(tmp_data);
+
+   for ( unsigned int i = 0; i < hplc_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < hplc_csv.data[i].size(); j++ )
+      {
+         tmp_num_data.push_back(hplc_csv.data[i][j].toDouble());
+      }
+      hplc_csv.num_data.push_back(tmp_num_data);
    }
 }
 

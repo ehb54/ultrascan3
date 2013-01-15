@@ -169,6 +169,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_search_widget = false;
    saxs_screen_widget = false;
    saxs_buffer_widget = false;
+   saxs_hplc_widget = false;
    saxs_1d_widget = false;
    saxs_2d_widget = false;
    bd_widget = false;
@@ -190,6 +191,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_saxs_search_csv.name = "__empty__";
    last_saxs_screen_csv.name = "__empty__";
    last_saxs_buffer_csv.name = "__empty__";
+   last_saxs_hplc_csv.name = "__empty__";
 
    read_residue_file();
 

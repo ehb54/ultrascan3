@@ -58,6 +58,7 @@
 #include "us_hydrodyn_saxs_screen.h"
 #include "us_hydrodyn_saxs_search.h"
 #include "us_hydrodyn_saxs_buffer.h"
+#include "us_hydrodyn_saxs_hplc.h"
 #include "us_hydrodyn_saxs_1d.h"
 #include "us_hydrodyn_saxs_2d.h"
 #include "us_hydrodyn_advanced_config.h"
@@ -99,6 +100,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Buffer;
+      friend class US_Hydrodyn_Saxs_Hplc;
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
       friend class US_Hydrodyn_Misc;
@@ -716,6 +718,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool                     saxs_buffer_widget;
       US_Hydrodyn_Saxs_Buffer  *saxs_buffer_window;
       csv                      last_saxs_buffer_csv;
+
+      bool                     saxs_hplc_widget;
+      US_Hydrodyn_Saxs_Hplc    *saxs_hplc_window;
+      csv                      last_saxs_hplc_csv;
 
       bool                     saxs_search_widget;
       US_Hydrodyn_Saxs_Search  *saxs_search_window;

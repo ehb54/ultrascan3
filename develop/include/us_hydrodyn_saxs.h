@@ -52,6 +52,30 @@
 
 using namespace std;
 
+struct crop_undo_data
+{
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+   bool               is_left;
+   vector < QString > files;
+   vector < QString > q_string;
+   vector < double >  q;
+   vector < double >  I;
+   vector < bool >    has_e;
+   vector < double >  e;
+
+   bool               is_common;
+
+   map < QString, vector < QString > > f_qs_string;
+   map < QString, vector < double > >  f_qs;
+   map < QString, vector < double > >  f_Is;
+   map < QString, vector < double > >  f_errors;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+};
+
 class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 {
    Q_OBJECT
@@ -74,6 +98,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
+      friend class US_Hydrodyn_Saxs_Hplc;
+      friend class US_Hydrodyn_Saxs_Hplc_Conc;
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
 
@@ -176,6 +202,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
+      QPushButton *pb_saxs_hplc;
       QPushButton *pb_saxs_xsr;
       QPushButton *pb_saxs_1d;
       QPushButton *pb_saxs_2d;
@@ -547,6 +574,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void reset_screen_csv();
       csv  buffer_csv;
       void reset_buffer_csv();
+      csv  hplc_csv;
+      void reset_hplc_csv();
 
       void set_scaling_target( QString &scaling_target );
 
@@ -682,6 +711,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
+      void saxs_hplc();
       void saxs_xsr();
       void saxs_1d();
       void saxs_2d();

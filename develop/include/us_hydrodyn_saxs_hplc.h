@@ -1,5 +1,5 @@
-#ifndef US_HYDRODYN_SAXS_BUFFER_H
-#define US_HYDRODYN_SAXS_BUFFER_H
+#ifndef US_HYDRODYN_SAXS_HPLC_H
+#define US_HYDRODYN_SAXS_HPLC_H
 
 // QT defs:
 
@@ -30,28 +30,28 @@
 #include <iostream>
 
 #include "us_hydrodyn_saxs.h"
-#include "us_hydrodyn_saxs_buffer_conc.h"
+#include "us_hydrodyn_saxs_hplc_conc.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
 
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
-      friend class US_Hydrodyn_Saxs_Buffer_Conc;
+      friend class US_Hydrodyn_Saxs_Hplc_Conc;
 
    public:
-      US_Hydrodyn_Saxs_Buffer(
+      US_Hydrodyn_Saxs_Hplc(
                               csv csv1,
                               void *us_hydrodyn, 
                               QWidget *p = 0, 
                               const char *name = 0
                              );
-      ~US_Hydrodyn_Saxs_Buffer();
+      ~US_Hydrodyn_Saxs_Hplc();
 
       void add_plot( QString           name,
                      vector < double > q,
@@ -70,8 +70,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       US_Config     *USglobal;
 
       QLabel        *lbl_title;
-
-      QTable        *t_csv;             
 
       QProgressBar  *progress;
 
@@ -100,26 +98,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_avg;
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
+      QPushButton   *pb_create_i_of_t;
 
-      QPushButton   *pb_set_buffer;
-      QLabel        *lbl_buffer;
+      QPushButton   *pb_set_hplc;
+      QLabel        *lbl_hplc;
 
       QPushButton   *pb_set_empty;
       QLabel        *lbl_empty;
 
       QPushButton   *pb_set_signal;
       QLabel        *lbl_signal;
-
-      QLabel        *lbl_np;
-      QButtonGroup  *bg_np;
-      QRadioButton  *rb_np_crop;
-      QRadioButton  *rb_np_min;
-      QRadioButton  *rb_np_ignore;
-      QRadioButton  *rb_np_ask;
-
-      QCheckBox     *cb_multi_sub;
-      QCheckBox     *cb_multi_sub_avg;
-      QCheckBox     *cb_multi_sub_conc_avg;
 
       QLabel        *lbl_created_files;
       QListBox      *lb_created_files;
@@ -131,12 +119,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_save_created;
       QPushButton   *pb_show_created;
       QPushButton   *pb_show_only_created;
-
-      QPushButton   *pb_start;
-      QPushButton   *pb_run_current;
-      QPushButton   *pb_run_divide;
-      QPushButton   *pb_run_best;
-      QPushButton   *pb_stop;
 
       QFont         ft;
       QTextEdit     *editor;
@@ -164,9 +146,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
 
-      QCheckBox     *cb_guinier;
-      QLabel        *lbl_guinier;
-
       bool          order_ascending;
 
       void          editor_msg( QString color, QString msg );
@@ -174,18 +153,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       bool          running;
 
-      bool          validate();
-      bool          any_to_run();
-
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
       bool             activate_saxs_window();
-      void             run_one();
-      void             run_one_divide();
 
       void             do_replot_saxs();
-
-      double           best_fitness;
 
       QString          saxs_header_iqq;
 
@@ -213,15 +185,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       bool                                is_nonzero_vector( vector < double > &v );
 
+      vector < double >                   union_q( QStringList files );
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
       void save_csv_saxs_iqq();
 
       csv  current_csv();
-
-      void recompute_interval_from_points();
-      void recompute_points_from_interval();
 
       bool load_file( QString file );
 
@@ -254,7 +224,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool    save_files_csv( QStringList files );
 
       csv                          csv_conc;
-      US_Hydrodyn_Saxs_Buffer_Conc *conc_window;
+      US_Hydrodyn_Saxs_Hplc_Conc *conc_window;
       bool                         conc_widget;
       void                         update_csv_conc();
       bool                         all_selected_have_nonzero_conc();
@@ -266,6 +236,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       void                         avg     ( QStringList files );
       void                         conc_avg( QStringList files );
+      void                         create_i_of_t( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files );
@@ -273,6 +244,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         add_files( QStringList files );
       bool                         axis_x_log;
       bool                         axis_y_log;
+
 
    private slots:
 
@@ -297,7 +269,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void avg();
       void normalize();
       void conc_avg();
-      void set_buffer();
+      void create_i_of_t();
+      void set_hplc();
       void set_empty();
       void set_signal();
       void select_all_created();
@@ -306,14 +279,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void save_created();
       void show_created();
       void show_only_created();
-
-      void table_value( int, int );
-
-      void start();
-      void run_current();
-      void run_divide();
-      void run_best();
-      void stop();
 
       void clear_display();
       void update_font();
@@ -337,7 +302,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void axis_x();
       void axis_y();
       void legend_set();
-      void guinier();
 
       void rename_created( QListBoxItem *, const QPoint & );
 
