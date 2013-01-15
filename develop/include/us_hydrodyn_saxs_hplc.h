@@ -98,6 +98,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_avg;
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
+      QPushButton   *pb_smooth;
       QPushButton   *pb_create_i_of_t;
 
       QPushButton   *pb_set_hplc;
@@ -236,6 +237,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                         avg     ( QStringList files );
       void                         conc_avg( QStringList files );
+      void                         smooth( QStringList files );
       void                         create_i_of_t( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
@@ -269,6 +271,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void avg();
       void normalize();
       void conc_avg();
+      void smooth();
       void create_i_of_t();
       void set_hplc();
       void set_empty();

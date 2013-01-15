@@ -265,6 +265,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
+   pb_smooth = new QPushButton(tr("Smooth"), this);
+   pb_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_smooth->setMinimumHeight(minHeight1);
+   pb_smooth->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_smooth, SIGNAL(clicked()), SLOT(smooth()));
+
    pb_create_i_of_t = new QPushButton(tr("Create I(t) for each q"), this);
    pb_create_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_i_of_t->setMinimumHeight(minHeight1);
@@ -551,6 +557,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_3->addWidget ( pb_avg );
 
    QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout( 0 );
+   hbl_file_buttons_4->addWidget ( pb_smooth );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
 
    QBoxLayout *hbl_hplc = new QHBoxLayout( 0 );
@@ -832,6 +839,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_avg                ->setEnabled( files_selected_count > 1 );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
+   pb_smooth             ->setEnabled( files_selected_count );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 );
    pb_set_hplc           ->setEnabled( files_selected_count == 1 && 
                                        lb_files->text( last_selected_pos ) != lbl_hplc->text() &&
@@ -2586,6 +2594,77 @@ vector < double > US_Hydrodyn_Saxs_Hplc::union_q( QStringList files )
    return q;
 }
 
+
+void US_Hydrodyn_Saxs_Hplc::smooth()
+{
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) && 
+           lb_files->text( i ) != lbl_hplc->text() &&
+           lb_files->text( i ) != lbl_empty->text() )
+      {
+         files << lb_files->text( i );
+      }
+   }
+   smooth( files );
+}
+
+void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
+{
+   bool ok;
+   int smoothing = QInputDialog::getInteger(
+                                            tr( "SOMO: HPLC enter smoothing" ),
+                                            tr( "Enter the number of points of smoothing:" ),
+                                            1, 
+                                            1,
+                                            50,
+                                            1, 
+                                            &ok, 
+                                            this 
+                                            );
+   if ( !ok ) {
+      return;
+   }
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   US_Saxs_Util usu;
+   vector < double > smoothed_I;
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      int ext = 0;
+      QString smoothed_name = files[ i ] + QString( "-sm%1" ).arg( smoothing );
+      while ( current_files.count( smoothed_name ) )
+      {
+         smoothed_name = files[ i ] + QString( "-sm%1-%2" ).arg( smoothing ).arg( ++ext );
+      }
+
+      if ( usu.smooth( f_Is[ files[ i ] ], smoothed_I, smoothing ) )
+      {
+         lb_created_files->insertItem( smoothed_name );
+         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+         lb_files->insertItem( smoothed_name );
+         lb_files->setBottomItem( lb_files->numRows() - 1 );
+         created_files_not_saved[ smoothed_name ] = true;
+   
+         f_pos       [ smoothed_name ] = f_qs.size();
+         f_qs_string [ smoothed_name ] = f_qs_string[ files[ i ] ];
+         f_qs        [ smoothed_name ] = f_qs       [ files[ i ] ];
+         f_Is        [ smoothed_name ] = smoothed_I;
+         f_errors    [ smoothed_name ] = f_errors   [ files[ i ] ];
+         editor_msg( "gray", QString( "Created %1\n" ).arg( smoothed_name ) );
+      } else {
+         editor_msg( "red", QString( "Error: smoothing error trying to create %1\n" ).arg( smoothed_name ) );
+      }
+   }
+
+   update_enables();
+}
 
 void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
 {
