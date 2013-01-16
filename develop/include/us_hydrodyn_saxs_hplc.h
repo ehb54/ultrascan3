@@ -17,6 +17,7 @@
 #include <qradiobutton.h>
 #include <qtable.h>
 #include <qwt_plot_zoomer.h>
+#include <qwt_wheel.h>
 
 #include "us_util.h"
 
@@ -55,12 +56,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void add_plot( QString           name,
                      vector < double > q,
-                     vector < double > I );
+                     vector < double > I,
+                     bool              is_time = false );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
-                     vector < double > errors );
+                     vector < double > errors,
+                     bool              is_time = false );
 
    private:
       csv           csv1;
@@ -99,7 +102,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
       QPushButton   *pb_smooth;
+      QPushButton   *pb_repeak;
       QPushButton   *pb_create_i_of_t;
+
 
       QPushButton   *pb_set_hplc;
       QLabel        *lbl_hplc;
@@ -134,6 +139,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
 #endif
+
+      QPushButton   *pb_wheel_start;
+      QwtWheel      *qwtw_wheel;
+      QPushButton   *pb_wheel_cancel;
+      QPushButton   *pb_wheel_save;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -176,6 +186,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, unsigned int >       f_pos;
 
       map < QString, QString >            f_name;
+      map < QString, bool >               f_is_time;
 
       map < QString, bool >               created_files_not_saved;
 
@@ -187,6 +198,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                                is_nonzero_vector( vector < double > &v );
 
       vector < double >                   union_q( QStringList files );
+
+#ifdef QT4
+      map < QString, QwtPlotCurve * >     plotted_curves;
+#else
+      map < QString, long >               plotted_curves;
+#endif
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -238,6 +256,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         avg     ( QStringList files );
       void                         conc_avg( QStringList files );
       void                         smooth( QStringList files );
+      void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
@@ -246,7 +265,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         add_files( QStringList files );
       bool                         axis_x_log;
       bool                         axis_y_log;
+      bool                         compatible_files( QStringList files );
+      bool                         type_files( QStringList files );
+      bool                         get_peak( QString file, double &peak );
 
+      QString                      wheel_file;
+#ifdef QT4
+      QwtPlotCurve *               wheel_curve;
+#else
+      long                         wheel_curve;
+#endif
 
    private slots:
 
@@ -272,6 +300,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void normalize();
       void conc_avg();
       void smooth();
+      void repeak();
       void create_i_of_t();
       void set_hplc();
       void set_empty();
@@ -283,6 +312,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void show_created();
       void show_only_created();
 
+      void wheel_start();
+      void wheel_cancel();
+      void wheel_save();
+
       void clear_display();
       void update_font();
       void save();
@@ -292,6 +325,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void plot_zoomed( const QwtDoubleRect &rect );
       void plot_mouse ( const QMouseEvent &me );
+
+      void adjust_wheel ( double );
 
       void select_vis();
       void remove_vis();
