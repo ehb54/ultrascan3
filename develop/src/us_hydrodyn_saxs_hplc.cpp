@@ -5699,11 +5699,13 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    // save time adjusted selected as new
    map < QString, bool > current_files;
+
    int wheel_pos = -1;
+
    for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {
       current_files[ lb_files->text( i ) ] = true;
-      if ( lb_files->text( i ) == wheel_file ) 
+      if ( lb_files->text( i ) == wheel_file )
       {
          wheel_pos = i;
       }
@@ -5718,7 +5720,6 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    }
    
    cout << QString( "new name is %1\n" ).arg( save_name );
-   // disable_updates = true;
 
    lb_created_files->insertItem( save_name );
    lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
@@ -5739,12 +5740,26 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    f_Is        [ save_name ] = f_Is        [ wheel_file ];
    f_errors    [ save_name ] = f_errors    [ wheel_file ];
    f_is_time   [ save_name ] = true;
+
    lb_files->setSelected( f_pos[ save_name ], true );
    if ( wheel_pos != -1 )
    {
       lb_files->setSelected( wheel_pos, false );
    }
 
-   // disable_updates = false;
-   wheel_cancel();
+   // plot_dist->replot();
+
+   qwtw_wheel            ->setEnabled( false );
+   pb_wheel_save         ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( false );
+
+   pb_add_files          ->setEnabled( true );
+
+   lb_files              ->setEnabled( true );
+   lb_created_files      ->setEnabled( true );
+
+   running               = false;
+
+   update_enables();
+
 }
