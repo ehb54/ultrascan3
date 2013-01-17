@@ -688,7 +688,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_saxs_hplc = new QPushButton("Hplc", this);
       pb_saxs_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_saxs_hplc->setMinimumHeight(minHeight1);
-      pb_saxs_hplc->setMaximumWidth( maxWidth * 6 );
+      pb_saxs_hplc->setMaximumWidth( maxWidth * 4 );
       pb_saxs_hplc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_saxs_hplc, SIGNAL(clicked()), SLOT(saxs_hplc()));
 
@@ -714,7 +714,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       connect(pb_saxs_2d, SIGNAL(clicked()), SLOT(saxs_2d()));
    } 
 
-   pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
+   pb_guinier_analysis = new QPushButton("Guinier", this);
    pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_guinier_analysis->setMinimumHeight(minHeight1);
    pb_guinier_analysis->setEnabled(true);

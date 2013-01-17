@@ -493,7 +493,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_select_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_vis, SIGNAL(clicked()), SLOT(select_vis()));
 
-   pb_remove_vis = new QPushButton(tr("Remove Visible"), this);
+   pb_remove_vis = new QPushButton(tr("Remove Vis"), this);
    pb_remove_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_remove_vis->setMinimumHeight(minHeight1);
    pb_remove_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -505,13 +505,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_crop_common->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_common, SIGNAL(clicked()), SLOT(crop_common()));
 
-   pb_crop_vis = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_vis = new QPushButton(tr("Crop Vis"), this);
    pb_crop_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_vis->setMinimumHeight(minHeight1);
    pb_crop_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
-   pb_crop_zero = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_zero = new QPushButton(tr("Crop Vis"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
    pb_crop_zero->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
