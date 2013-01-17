@@ -188,7 +188,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lb_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_files->setEnabled(true);
-   lb_files->setSelectionMode( QListBox::Multi );
+   lb_files->setSelectionMode( QListBox::Extended );
    lb_files->setMinimumHeight( minHeight1 * 8 );
    connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files() ) );
 
@@ -465,6 +465,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wheel_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_wheel_start, SIGNAL(clicked()), SLOT(wheel_start()));
 
+   lbl_wheel_pos = new QLabel( "0", this );
+   lbl_wheel_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_wheel_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_wheel_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setMass         ( 0.5 );
    // qwtw_wheel->setRange        ( -1000, 1000, 1 );
@@ -486,6 +491,79 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wheel_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_wheel_save->setEnabled(false);
    connect(pb_wheel_save, SIGNAL(clicked()), SLOT(wheel_save()));
+
+   pb_gauss_start = new QPushButton(tr("Gaussians"), this);
+   pb_gauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_start->setMinimumHeight(minHeight1);
+   pb_gauss_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_gauss_start, SIGNAL(clicked()), SLOT(gauss_start()));
+
+   pb_gauss_clear = new QPushButton(tr("Clear"), this);
+   pb_gauss_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_clear->setMinimumHeight(minHeight1);
+   pb_gauss_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_clear->setEnabled( false );
+   connect(pb_gauss_clear, SIGNAL(clicked()), SLOT(gauss_clear()));
+
+   pb_gauss_new = new QPushButton(tr("New"), this);
+   pb_gauss_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_new->setMinimumHeight(minHeight1);
+   pb_gauss_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_new->setEnabled( false );
+   connect(pb_gauss_new, SIGNAL(clicked()), SLOT(gauss_new()));
+
+   pb_gauss_prev = new QPushButton( "<", this);
+   pb_gauss_prev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_prev->setMinimumHeight(minHeight1);
+   pb_gauss_prev->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_prev->setEnabled( false );
+   connect(pb_gauss_prev, SIGNAL(clicked()), SLOT(gauss_prev()));
+
+   lbl_gauss_pos = new QLabel( " 0 of 0 ", this );
+   lbl_gauss_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_gauss_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_gauss_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_gauss_next = new QPushButton( ">", this);
+   pb_gauss_next->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_next->setMinimumHeight(minHeight1);
+   pb_gauss_next->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_next->setEnabled( false );
+   connect(pb_gauss_next, SIGNAL(clicked()), SLOT(gauss_next()));
+
+   le_gauss_pos = new QLineEdit(this, "le_gauss_pos Line Edit");
+   le_gauss_pos->setText( "" );
+   le_gauss_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gauss_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_gauss_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_gauss_pos->setEnabled( false );
+   le_gauss_pos->setValidator( new QDoubleValidator( le_gauss_pos ) );
+   connect( le_gauss_pos, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text( const QString & ) ) );
+
+   pb_gauss_fit = new QPushButton(tr("Fit"), this);
+   pb_gauss_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_fit->setMinimumHeight(minHeight1);
+   pb_gauss_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_fit->setEnabled( false );
+   connect(pb_gauss_fit, SIGNAL(clicked()), SLOT(gauss_fit()));
+
+   le_gauss_fit_start = new QLineEdit(this, "le_gauss_fit_start Line Edit");
+   le_gauss_fit_start->setText( "" );
+   le_gauss_fit_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gauss_fit_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_gauss_fit_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_gauss_fit_start->setEnabled( false );
+   le_gauss_fit_start->setValidator( new QDoubleValidator( le_gauss_fit_start ) );
+   connect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_start_text( const QString & ) ) );
+
+   le_gauss_fit_end = new QLineEdit(this, "le_gauss_fit_end Line Edit");
+   le_gauss_fit_end->setText( "" );
+   le_gauss_fit_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gauss_fit_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_gauss_fit_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_gauss_fit_end->setEnabled( false );
+   le_gauss_fit_end->setValidator( new QDoubleValidator( le_gauss_fit_end ) );
+   connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
 
    pb_select_vis = new QPushButton(tr("Select Visible"), this);
    pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -659,13 +737,27 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    QGridLayout *gl_wheel = new QGridLayout(0);
    gl_wheel->addMultiCellWidget( pb_wheel_start , 0, 0, 0, 1 );
-   gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 2, 8 );
+   gl_wheel->addWidget         ( lbl_wheel_pos  , 0, 2 );
+   gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 3, 8 );
    gl_wheel->addWidget         ( pb_wheel_cancel, 0, 9 );
    gl_wheel->addWidget         ( pb_wheel_save  , 0, 10 );
+
+   QGridLayout *gl_gauss = new QGridLayout(0);
+   gl_gauss->addMultiCellWidget( pb_gauss_start     , 0, 0, 0, 1 );
+   gl_gauss->addWidget         ( pb_gauss_clear     , 0, 2 );
+   gl_gauss->addWidget         ( pb_gauss_new       , 0, 3 );
+   gl_gauss->addWidget         ( pb_gauss_prev      , 0, 4 );
+   gl_gauss->addWidget         ( lbl_gauss_pos      , 0, 5 );
+   gl_gauss->addWidget         ( pb_gauss_next      , 0, 6 );
+   gl_gauss->addWidget         ( le_gauss_pos       , 0, 7 );
+   gl_gauss->addWidget         ( pb_gauss_fit       , 0, 8 );
+   gl_gauss->addWidget         ( le_gauss_fit_start , 0, 9 );
+   gl_gauss->addWidget         ( le_gauss_fit_end   , 0, 10 );
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
    vbl_plot_group->addLayout ( gl_wheel  );
+   vbl_plot_group->addLayout ( gl_gauss  );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
@@ -887,6 +979,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    }
 
    pb_wheel_start        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
+   pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
 
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->numRows() > 0 );
@@ -2780,7 +2873,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       }
 
       int ext = 0;
-      QString repeak_name = files[ i ] + "+rp";
+      QString repeak_name = files[ i ] + "-rp";
       while ( current_files.count( repeak_name ) )
       {
          repeak_name = files[ i ] + QString( "-rp%1" ).arg( ++ext );
@@ -3844,10 +3937,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_zoomed( const QwtDoubleRect & /* rect */ )
    // .arg( rect.y2() );
    if ( !running )
    {
-      cout << "not running\n";
+      // cout << "not running\n";
       update_enables();
    } else {
-      cout << "is running, update_enables skipped\n";
+      // cout << "is running, update_enables skipped\n";
    }
 }
 
@@ -5546,36 +5639,58 @@ bool US_Hydrodyn_Saxs_Hplc::type_files( QStringList files )
 void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 {
    cout << QString("pos is now %1\n").arg(pos);
-   // adjust selected time
-   pb_wheel_save->setEnabled( pos != 0e0 );
-
-   vector < double > offset_q = f_qs[ wheel_file ];
-   for ( unsigned int i = 0; i < ( unsigned int ) offset_q.size(); i++ )
+   if ( gaussian_mode )
    {
-      offset_q[ i ] += pos;
-   }
+      QLineEdit *le_use = le_gauss_pos;
+
+      if ( le_gauss_fit_start->hasFocus() )
+      {
+         le_use = le_gauss_fit_start;
+      }
+      if ( le_gauss_fit_end->hasFocus() )
+      {
+         le_use = le_gauss_fit_end;
+      }
+
+      le_use->setText( QString( "%1" ).arg( pos ) );
+
+      lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
+
+   } else {
+      // adjust selected time
+      pb_wheel_save->setEnabled( pos != 0e0 );
+
+      lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
+
+      vector < double > offset_q = f_qs[ wheel_file ];
+      for ( unsigned int i = 0; i < ( unsigned int ) offset_q.size(); i++ )
+      {
+         offset_q[ i ] += pos;
+      }
 #ifndef QT4
-   plot_dist->setCurveData( wheel_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( offset_q[ 0 ] ),
-                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                            offset_q.size()
-                            );
+      plot_dist->setCurveData( wheel_curve, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( offset_q[ 0 ] ),
+                               (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                               offset_q.size()
+                               );
 #else
-   wheel_curve->setData(
-                        /* cb_guinier->isChecked() ?
-                           (double *)&(plotted_q2[p][0]) : */
-                        (double *)&( offset_q[ 0 ] ),
-                        (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                        offset_q.size()
-                        );
+      wheel_curve->setData(
+                           /* cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[p][0]) : */
+                           (double *)&( offset_q[ 0 ] ),
+                           (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                           offset_q.size()
+                           );
 #endif
-   plot_dist->replot();
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_start()
 {
    QStringList selected_files;
+   lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -5599,6 +5714,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_start()
       return;
    }
 
+   gaussian_mode = false;
+
    if ( !plotted_curves.count( wheel_file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: request to timeshift %1, but not found in data" ) ).arg( wheel_file ) );
@@ -5608,6 +5725,18 @@ void US_Hydrodyn_Saxs_Hplc::wheel_start()
    wheel_curve           = plotted_curves[ wheel_file ];
 
    running               = true;
+
+   disable_all();
+
+   pb_wheel_start        ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( true );
+   qwtw_wheel            ->setEnabled( true );
+   qwtw_wheel            ->setRange  ( -100, 100, .1 );
+   qwtw_wheel            ->setValue  ( 0 );
+}
+
+void US_Hydrodyn_Saxs_Hplc::disable_all()
+{
    pb_similar_files      ->setEnabled( false );
    pb_conc               ->setEnabled( false );
    pb_clear_files        ->setEnabled( false );
@@ -5651,31 +5780,48 @@ void US_Hydrodyn_Saxs_Hplc::wheel_start()
    lb_created_files      ->setEnabled( false );
 
    pb_wheel_start        ->setEnabled( false );
-   pb_wheel_cancel       ->setEnabled( true );
-   qwtw_wheel            ->setEnabled( true );
-   qwtw_wheel            ->setRange  ( -100, 100, .1 );
-   qwtw_wheel            ->setValue  ( 0 );
+
+   pb_gauss_start        ->setEnabled( false );
+   pb_gauss_clear        ->setEnabled( false );
+   pb_gauss_new          ->setEnabled( false );
+   pb_gauss_prev         ->setEnabled( false );
+   pb_gauss_next         ->setEnabled( false );
+   pb_gauss_fit          ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( false );
+
+   le_gauss_pos          ->setEnabled( false );
+   le_gauss_fit_start    ->setEnabled( false );
+   le_gauss_fit_end      ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 {
+   if ( gaussian_mode )
+   {
+      gauss_delete_markers();
+      plotted_markers.clear();
+   } else {
+      lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
 #ifndef QT4
-   plot_dist->setCurveData( wheel_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                            f_qs[ wheel_file ].size()
-                            );
+      plot_dist->setCurveData( wheel_curve, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                               (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                               f_qs[ wheel_file ].size()
+                               );
 #else
-   wheel_curve->setData(
-                        /* cb_guinier->isChecked() ?
-                           (double *)&(plotted_q2[p][0]) : */
-                        (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                        (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                        f_qs[ wheel_file ].size()
-                        );
+      wheel_curve->setData(
+                           /* cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[p][0]) : */
+                           (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                           (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                           f_qs[ wheel_file ].size()
+                           );
 #endif
+   }
    plot_dist->replot();
+
+   disable_all();
 
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
@@ -5696,58 +5842,65 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( false );
+   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
 
-   // save time adjusted selected as new
-   map < QString, bool > current_files;
-
-   int wheel_pos = -1;
-
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   if ( gaussian_mode )
    {
-      current_files[ lb_files->text( i ) ] = true;
-      if ( lb_files->text( i ) == wheel_file )
+      gauss_delete_markers();
+      plotted_markers.clear();
+   } else {
+      // save time adjusted selected as new
+      map < QString, bool > current_files;
+
+      int wheel_pos = -1;
+
+      for ( int i = 0; i < (int)lb_files->numRows(); i++ )
       {
-         wheel_pos = i;
+         current_files[ lb_files->text( i ) ] = true;
+         if ( lb_files->text( i ) == wheel_file )
+         {
+            wheel_pos = i;
+         }
+      }
+
+      QString save_name = wheel_file + QString( "_ts%1" ).arg( qwtw_wheel->value() ).replace( ".", "_" );
+
+      int ext = 0;
+      while ( current_files.count( save_name ) )
+      {
+         save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
+      }
+   
+      cout << QString( "new name is %1\n" ).arg( save_name );
+
+      lb_created_files->insertItem( save_name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( save_name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ save_name ] = true;
+
+      f_pos       [ save_name ] = f_qs.size();
+      f_qs        [ save_name ] = f_qs        [ wheel_file ];
+      f_qs_string [ save_name ] = f_qs_string [ wheel_file ];
+
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ save_name ].size(); i++ )
+      {
+         f_qs       [ save_name ][ i ] += qwtw_wheel->value();
+         f_qs_string[ save_name ][ i ] = QString( "%1" ).arg( f_qs[ save_name ][ i ] );
+      }
+
+      f_Is        [ save_name ] = f_Is        [ wheel_file ];
+      f_errors    [ save_name ] = f_errors    [ wheel_file ];
+      f_is_time   [ save_name ] = true;
+
+      lb_files->setSelected( f_pos[ save_name ], true );
+      if ( wheel_pos != -1 )
+      {
+         lb_files->setSelected( wheel_pos, false );
       }
    }
 
-   QString save_name = wheel_file + QString( "_ts%1" ).arg( qwtw_wheel->value() ).replace( ".", "_" );
-
-   int ext = 0;
-   while ( current_files.count( save_name ) )
-   {
-      save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
-   }
-   
-   cout << QString( "new name is %1\n" ).arg( save_name );
-
-   lb_created_files->insertItem( save_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( save_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
-   created_files_not_saved[ save_name ] = true;
-
-   f_pos       [ save_name ] = f_qs.size();
-   f_qs        [ save_name ] = f_qs        [ wheel_file ];
-   f_qs_string [ save_name ] = f_qs_string [ wheel_file ];
-
-   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ save_name ].size(); i++ )
-   {
-      f_qs       [ save_name ][ i ] += qwtw_wheel->value();
-      f_qs_string[ save_name ][ i ] = QString( "%1" ).arg( f_qs[ save_name ][ i ] );
-   }
-
-   f_Is        [ save_name ] = f_Is        [ wheel_file ];
-   f_errors    [ save_name ] = f_errors    [ wheel_file ];
-   f_is_time   [ save_name ] = true;
-
-   lb_files->setSelected( f_pos[ save_name ], true );
-   if ( wheel_pos != -1 )
-   {
-      lb_files->setSelected( wheel_pos, false );
-   }
-
-   // plot_dist->replot();
+   plot_dist->replot();
 
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
@@ -5762,4 +5915,254 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    update_enables();
 
+}
+
+void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
+{
+   unsigned int sizeover3 = ( unsigned int )gaussians.size() / 3;
+
+   pb_gauss_start      ->setEnabled( false );
+   pb_gauss_clear      ->setEnabled( sizeover3 );
+   pb_gauss_new        ->setEnabled( true );
+   pb_gauss_prev       ->setEnabled( sizeover3 > 1 && gaussian_pos > 0 );
+   pb_gauss_next       ->setEnabled( sizeover3 > 1 && gaussian_pos < sizeover3 - 1 );
+   pb_gauss_fit        ->setEnabled( sizeover3 > 1 && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
+   pb_wheel_cancel     ->setEnabled( true );
+   le_gauss_pos        ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   le_gauss_fit_start  ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   le_gauss_fit_end    ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   qwtw_wheel          ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+}
+
+void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
+{
+   if ( gaussians.size() )
+   {
+      lbl_gauss_pos->setText( QString( " %1 of %2 " ).arg( gaussian_pos + 1 ).arg( gaussians.size() / 3 ) );
+      le_gauss_pos ->setText( QString( "%1" ).arg( gaussians[ 1 + 3 * gaussian_pos ] ) );
+      if ( le_gauss_pos->hasFocus() )
+      {
+         qwtw_wheel   ->setValue( gaussians[ 1 + 3 * gaussian_pos ] );
+      }
+      for ( unsigned int i = 2; i < ( unsigned int ) plotted_markers.size(); i++ )
+      {
+         if ( gaussian_pos + 2 == i && !le_gauss_fit_start->hasFocus() && !le_gauss_fit_end->hasFocus() )
+         {
+#ifndef QT4
+            plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::magenta, 2, DashDotDotLine));
+#else
+#warn check how to do this in qt4 needs ymark symsize
+            plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                                        QBrush( Qt::white ), QPen( Qt::magenta, 2, Qt::DashLine ),
+                                                        QSize( 8, sizeym ) ) );
+#endif
+         } else {
+#ifndef QT4
+            plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::blue, 2, DashDotDotLine));
+#else
+#warn check how to do this in qt4 needs ymark symsize
+            plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                                        QBrush( Qt::white ), QPen( Qt::blue, 2, Qt::DashLine ),
+                                                        QSize( 8, sizeym ) ) );
+#endif
+         }
+      }
+      plot_dist->replot();
+   } else {
+      lbl_gauss_pos->setText( " 0 of 0 " );
+      le_gauss_pos ->setText( "" );
+   }      
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_start()
+{
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         wheel_file = lb_files->text( i );
+         break;
+      }
+   }
+
+   if ( !f_qs.count( wheel_file ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   if ( !f_qs[ wheel_file ].size() )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 empty data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   gaussian_mode = true;
+
+   running               = true;
+
+   qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
+                         f_qs[ wheel_file ].back(),
+                         0.001 );
+
+   if ( le_gauss_fit_start->text().isEmpty() ||
+        le_gauss_fit_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+   {
+      disconnect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_gauss_fit_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      connect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_start_text( const QString & ) ) );
+   }
+
+   if ( le_gauss_fit_end->text().isEmpty() ||
+        le_gauss_fit_end->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      disconnect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_gauss_fit_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
+   }
+
+   disable_all();
+   gauss_init_markers();
+   gaussian_enables();
+}
+      
+void US_Hydrodyn_Saxs_Hplc::gauss_clear()
+{
+   gaussian_pos = 0;
+   gaussians.clear();
+   gauss_init_markers();
+   update_gauss_pos();
+   gaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_new()
+{
+   gaussians.push_back( 0e0 );
+   gaussians.push_back( 0e0 );
+   gaussians.push_back( 0e0 );
+   gaussian_pos = ( gaussians.size() / 3 ) - 1;
+   gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
+   update_gauss_pos();
+   plot_dist->replot();
+   gaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_prev()
+{
+   if ( gaussian_pos > 0 )
+   {
+      gaussian_pos--;
+   }
+   update_gauss_pos();
+   gaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_next()
+{
+   if ( gaussian_pos < ( gaussians.size() / 3 ) - 1 )
+   {
+      gaussian_pos++;
+   }
+   update_gauss_pos();
+   gaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_fit()
+{
+}
+
+
+void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
+{
+   gaussians[ 1 + 3 * gaussian_pos ] = text.toDouble();
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 2 + gaussian_pos ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 2 + gaussian_pos ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 0 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 1 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, QColor color, QString text, int align )
+{
+#ifndef QT4
+   long marker = plot_dist->insertMarker();
+   plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
+   plot_dist->setMarkerPos       ( marker, pos, 0e0 );
+   plot_dist->setMarkerLabelAlign( marker, align );
+   plot_dist->setMarkerPen       ( marker, QPen( color, 2, DashDotDotLine));
+   plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
+   plot_dist->setMarkerLabelText ( marker, text );
+#else
+#warn check how to do this in qt4 needs ymark symsize
+   QwtPlotMarker* marker = new QwtPlotMarker;
+   marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                 QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
+                                 QSize( 8, sizeym ) ) );
+   marker->setValue( pos, ymark );
+   marker->setLabelAlignment( align );
+   marker->setLabel( text );
+   marker->attach( plot_dist );
+#endif
+   plotted_markers.push_back( marker );
+}   
+
+void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
+{
+   gauss_delete_markers();
+   plotted_markers.clear();
+
+   gauss_add_marker( le_gauss_fit_start->text().toDouble(), Qt::red, tr( "Fit start" ) );
+   gauss_add_marker( le_gauss_fit_end  ->text().toDouble(), Qt::red, tr( "Fit end"   ), Qt::AlignLeft | Qt::AlignTop );
+
+   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size() / 3; i++ )
+   {
+      gauss_add_marker( gaussians[ 1 + 3 * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+   }
+   plot_dist->replot();
+}
+
+
+void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
+{
+#ifndef QT4
+   plot_dist->removeMarkers();
+#else
+#warn check how to do this in qt4
+#endif
 }

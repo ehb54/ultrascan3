@@ -19,6 +19,11 @@
 #include <qwt_plot_zoomer.h>
 #include <qwt_wheel.h>
 
+#ifdef QT4
+#include "qwt_plot_marker.h"
+#include "qwt_symbol.h"
+#endif
+
 #include "us_util.h"
 
 //standard C and C++ defs:
@@ -141,9 +146,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #endif
 
       QPushButton   *pb_wheel_start;
+      QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
       QPushButton   *pb_wheel_cancel;
       QPushButton   *pb_wheel_save;
+
+      QPushButton   *pb_gauss_start;
+      QPushButton   *pb_gauss_clear;
+      QPushButton   *pb_gauss_new;
+      QPushButton   *pb_gauss_prev;
+      QLabel        *lbl_gauss_pos;
+      QPushButton   *pb_gauss_next;
+      QLineEdit     *le_gauss_pos;
+      QPushButton   *pb_gauss_fit;
+      QLineEdit     *le_gauss_fit_start;
+      QLineEdit     *le_gauss_fit_end;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -201,13 +218,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
+      vector < QwtPlotMarker * >          plotted_markers;
 #else
       map < QString, long >               plotted_curves;
+      vector < long >                     plotted_markers;
 #endif
+      // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
+      // the b values are fixed by the user
+      // a & c must be > 0
+      vector < double >                   gaussians;  
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      unsigned int                        gaussian_pos;
+      void                                update_gauss_pos();
+
       void save_csv_saxs_iqq();
 
       csv  current_csv();
@@ -275,6 +301,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #else
       long                         wheel_curve;
 #endif
+      void                         disable_all();
+
+      bool                         gaussian_mode;
+
+      void                         gaussian_enables();
+
+      void                         gauss_add_marker( double pos, QColor color, QString text, int align = Qt::AlignRight | Qt::AlignTop );
+      void                         gauss_init_markers();
+      void                         gauss_delete_markers();
 
    private slots:
 
@@ -327,6 +362,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void plot_mouse ( const QMouseEvent &me );
 
       void adjust_wheel ( double );
+
+      void gauss_start();
+      void gauss_clear();
+      void gauss_new();
+      void gauss_prev();
+      void gauss_next();
+      void gauss_fit();
+      void gauss_pos_text              ( const QString & );
+      void gauss_fit_start_text        ( const QString & );
+      void gauss_fit_end_text          ( const QString & );
 
       void select_vis();
       void remove_vis();
