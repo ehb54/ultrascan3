@@ -154,10 +154,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_gauss_start;
       QPushButton   *pb_gauss_clear;
       QPushButton   *pb_gauss_new;
+      QPushButton   *pb_gauss_delete;
       QPushButton   *pb_gauss_prev;
       QLabel        *lbl_gauss_pos;
       QPushButton   *pb_gauss_next;
       QLineEdit     *le_gauss_pos;
+      QLineEdit     *le_gauss_pos_width;
+      QLineEdit     *le_gauss_pos_height;
       QPushButton   *pb_gauss_fit;
       QLineEdit     *le_gauss_fit_start;
       QLineEdit     *le_gauss_fit_end;
@@ -219,14 +222,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
+      map < QString, QwtPlotCurve * >     plotted_gaussians;
 #else
       map < QString, long >               plotted_curves;
       vector < long >                     plotted_markers;
+      vector < long >                     plotted_gaussians;
 #endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
       // a & c must be > 0
       vector < double >                   gaussians;  
+      vector < double >                   gaussian( double center, double height, double width );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -311,6 +317,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         gauss_init_markers();
       void                         gauss_delete_markers();
 
+      void                         gauss_add_gaussian( double height, double center, double width, QColor color );
+      void                         gauss_init_gaussians();
+      void                         gauss_delete_gaussians();
+      void                         gauss_replot_gaussian();
+      
+      double                       gauss_max_height;
+
    private slots:
 
       void setupGUI();
@@ -366,10 +379,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_start();
       void gauss_clear();
       void gauss_new();
+      void gauss_delete();
       void gauss_prev();
       void gauss_next();
       void gauss_fit();
       void gauss_pos_text              ( const QString & );
+      void gauss_pos_width_text        ( const QString & );
+      void gauss_pos_height_text       ( const QString & );
       void gauss_fit_start_text        ( const QString & );
       void gauss_fit_end_text          ( const QString & );
 
