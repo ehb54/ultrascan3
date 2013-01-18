@@ -324,6 +324,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       
       double                       gauss_max_height;
 
+#ifdef QT4
+      QwtPlotCurve *               plotted_gaussian_sum;
+#else
+      long                         plotted_gaussian_sum;
+#endif
+
    private slots:
 
       void setupGUI();
