@@ -29,6 +29,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
    US_AstfemMath::MfemInitial  CT0;        // Initial total concentration
    US_AstfemMath::MfemData     simdata;
    double        current_time   = 0.0;
+   double        current_om2t   = 0.0;
    double        current_speed  = 0.0;
    double        duration       = 0.0;
    double        delay          = 0.0;
@@ -75,6 +76,8 @@ DbgLv(2) << "RSA:  af_c0size" << initial_npts;
    adjust_limits( af_params.first_speed );
 DbgLv(2) << "RSA:   sbottom acbottom" << simparams.bottom
  << af_params.current_bottom;
+   af_data.meniscus = simparams.meniscus;
+   af_data.bottom   = simparams.bottom;
 
    for ( int k = 0; k < size_cv; k++ )
    {
@@ -104,6 +107,7 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
       }
 
       current_time  = 0.0;
+      current_om2t  = 0.0;
       last_time     = 0.0;
       current_speed = 0.0;
       w2t_integral  = 0.0;
@@ -182,15 +186,16 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
          double omeg0 = 0.0;
          double omeg1 = 0.0;
          double omeg2 = 0.0;
+         US_SimulationParameters::SpeedProfile* sp;
+         US_AstfemMath::MfemData*               ed;
 
          for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
 #ifdef TIMING_RA
 QDateTime clcSt2 = QDateTime::currentDateTime();
 #endif
-            US_SimulationParameters::SpeedProfile* sp =
-               &simparams.speed_step[ step ];
-            US_AstfemMath::MfemData*               ed = &af_data;
+            sp      = &simparams.speed_step[ step ];
+            ed      = &af_data;
 
             adjust_limits( sp->rotorspeed );
 
@@ -205,10 +210,6 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
 
             ed->meniscus = af_params.current_meniscus;
             ed->bottom   = af_params.current_bottom;
-            //if ( step == 0 )
-            //   ed->meniscus = af_params.current_meniscus;
-            //if ( step == simparams.speed_step.size() - 1 )
-            //   ed->bottom   = af_params.current_bottom;
             accel_time   = 0.0;
 
             // We need to simulate acceleration
@@ -296,10 +297,10 @@ DbgLv(1) << "RSA:PO:     st_ time om2t"
                //  acceleration zone
                if ( step > 0  &&  dt1 > 2.0 )
                {
-                  double svnpts        = af_params.time_steps;
+                  int svnpts           = af_params.time_steps;
                   af_params.start_time = time0;
                   af_params.start_om2t = omeg0;
-                  af_params.time_steps = dt1 + 1.0;
+                  af_params.time_steps = (int)dt1 + 1;
 
                   calculate_ni( current_speed, current_speed,
                                 CT0, simdata, false );
@@ -319,12 +320,19 @@ DbgLv(1) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
 
                // Add the acceleration time:
                current_time  = af_params.start_time + accel_time;
+               current_om2t  = af_params.start_om2t + dw2;
 
 #ifndef NO_DB
                emit new_time( current_time );
                qApp->processEvents();
 #endif
             }  // End of acceleration
+
+            else
+            {  // No acceleration
+               current_time  = time1;
+               current_om2t  = omeg1;
+            }
 #ifdef TIMING_RA
 QDateTime clcSt3 = QDateTime::currentDateTime();
 totT2+=(clcSt2.msecsTo(clcSt3));
@@ -345,25 +353,26 @@ totT2+=(clcSt2.msecsTo(clcSt3));
             double omega = sp->rotorspeed * M_PI / 30;
             af_params.omega_s = sq( omega );
 
-            af_params.dt = log( ed->bottom / ( ed->meniscus ) )
-                        / ( ( fabs( sc->s ) * af_params.omega_s )
-                              * ( simparams.simpoints - 1 ) );
+            double lg_bm_rat = log(
+               af_params.current_bottom / af_params.current_meniscus );
+            double s_omg_fac = fabs( sc->s ) * af_params.omega_s;
+            af_params.dt     = lg_bm_rat 
+               / ( s_omg_fac * ( simparams.simpoints - 1 ) );
 
             if ( af_params.dt > duration)
             {
                af_params.dt        = duration;
                af_params.simpoints = 1 +
-                  (int) ( log( ed->bottom / ed->meniscus ) /
-                           ( fabs( sc->s ) * af_params.omega_s * af_params.dt )
-                         );
+                  (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
             }
 
             if ( af_params.simpoints > 10000 ) af_params.simpoints = 10000;
 
             // Find out the minimum number of simpoints needed to provide
             // the necessary dt:
-            af_params.time_steps = (int) ( 1.0 + duration / af_params.dt );
+            af_params.time_steps = (int)( duration / af_params.dt ) + 1;
             af_params.start_time = current_time;
+            af_params.start_om2t = current_om2t;
 #ifdef TIMING_RA
 QDateTime clcSt4 = QDateTime::currentDateTime();
 totT3+=(clcSt3.msecsTo(clcSt4));
@@ -380,6 +389,7 @@ totT3+=(clcSt3.msecsTo(clcSt4));
             // Set the current time to the last scan of this speed step
             duration      = time2 - time0;
             current_time  = time2;
+            current_om2t  = omeg2;
 DbgLv(1) << "RSA:    step rpm" << step << sp->rotorspeed
  << "start_ current_time" << af_params.start_time << current_time;
 int mmm=simdata.scan.size()-1;
@@ -405,6 +415,9 @@ totT4+=(clcSt4.msecsTo(clcSt5));
 #ifdef TIMING_RA
 totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
 #endif
+DbgLv(1) << "RSA: step=" << step << "tsteps sttime" << af_params.time_steps
+ << current_time << "bottoms" << simparams.bottom_position
+ << simparams.bottom << af_params.current_bottom << "sp" << current_speed;
 
          } // Speed step loop
 
@@ -534,12 +547,13 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       double time0 = 0.0;
       double time1 = 0.0;
       double time2 = 0.0;
+      US_SimulationParameters::SpeedProfile* sp;
+      US_AstfemMath::MfemData*               ed;
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
       {
-         US_SimulationParameters::SpeedProfile* sp =
-            &simparams.speed_step[ ss ];
-         US_AstfemMath::MfemData*               ed = &af_data;
+         sp           = &simparams.speed_step[ ss ];
+         ed           = &af_data;
 
          adjust_limits( sp->rotorspeed );
          ed->meniscus = af_params.current_meniscus;
@@ -608,22 +622,24 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
 
          af_params.omega_s = sq( sp->rotorspeed * M_PI / 30 );
 
-         af_params.dt = log( ed->bottom / ed->meniscus) /
-                    ( af_params.omega_s * s_max * ( simparams.simpoints - 1 ) );
+         double lg_bm_rat = log( af_params.current_bottom
+                                 / af_params.current_meniscus );
+         double s_omg_fac = af_params.omega_s * s_max;
+         af_params.dt     = lg_bm_rat
+                            / ( s_omg_fac * ( simparams.simpoints - 1 ) );
 
          if (af_params.dt > duration )
          {
-            af_params.dt = duration;
-            af_params.simpoints =
-               1 + (int) ( log( ed->bottom / ed->meniscus )
-               / ( s_max * af_params.omega_s * af_params.dt ) );
+            af_params.dt        = duration;
+            af_params.simpoints = 1 +
+               (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
          }
 
          if ( af_params.simpoints > 10000 ) af_params.simpoints = 10000;
 
          // Find out the minimum number of simpoints needed to provide the
          // necessary dt:
-         af_params.time_steps = (int)( 1.0 + duration / af_params.dt );
+         af_params.time_steps = (int)( duration / af_params.dt ) + 1;
          af_params.start_time = current_time;
 
 DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
@@ -777,11 +793,11 @@ DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
 void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
-   double stretch_value = stretch( simparams.rotorcoeffs,
-                                   af_params.first_speed );
+   double stretch_value        = stretch( simparams.rotorcoeffs,
+                                          af_params.first_speed );
 
    // This is the meniscus at rest
-   af_params.current_meniscus = simparams.meniscus - stretch_value;
+   af_params.current_meniscus  = simparams.meniscus - stretch_value;
 
    // Calculate rotor stretch at current speed
    stretch_value = stretch( simparams.rotorcoeffs, speed );
@@ -790,14 +806,15 @@ void US_Astfem_RSA::adjust_limits( int speed )
    af_params.current_meniscus += stretch_value;
 
    // Add current stretch to bottom at rest
-   af_params.current_bottom = simparams.bottom + stretch_value;
+   af_params.current_bottom    = simparams.bottom + stretch_value;
 }
 
 // Calculate stretch for rotor coefficients array and rpm
 double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
 {
-   return ( rotorcoeffs[ 0 ] * rpm
-          + rotorcoeffs[ 1 ] * sq( rpm ) );
+   double speed    = (double)rpm;
+   return ( rotorcoeffs[ 0 ] * speed
+          + rotorcoeffs[ 1 ] * sq( speed ) );
 }
 
 // Setup reaction groups
@@ -1306,7 +1323,6 @@ clcSt3 = QDateTime::currentDateTime();
 
    // Calculate all time steps (plus a little overlap)
    for ( int ii = 0; ii < af_params.time_steps + 1; ii++ )
-   //for ( int ii = 0; ii < af_params.time_steps + 2; ii++ )
    {
 #ifdef TIMING_NI
 clcSt4 = QDateTime::currentDateTime();
@@ -1345,10 +1361,10 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
 
       w2t_integral += ( simscan.time - last_time ) *
                       sq( rpm_current * M_PI / 30.0 );
-if(ii==0) {
-DbgLv(1) << "TMS:RSA:ni: sc0 time ltime omg" << simscan.time << last_time
- << w2t_integral << "rpm" << rpm_current << "st_omg" << af_params.start_om2t
- << "N" << N;}
+if(ii<2||ii>af_params.time_steps-1) {
+DbgLv(1) << "TMS:RSA:ni: sc" << ii << "time ltime omg"
+ << simscan.time << last_time << w2t_integral << "rpm" << rpm_current
+ << "st_omg" << af_params.start_om2t << "N" << N;}
 
       last_time           = simscan.time;
       simscan.omega_s_t   = w2t_integral;
