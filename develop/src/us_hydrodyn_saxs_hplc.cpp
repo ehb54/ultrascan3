@@ -7,6 +7,23 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+mQLineEdit::mQLineEdit( QWidget *parent, const char * name ) : QLineEdit( parent, name ) {}
+
+mQLineEdit::~mQLineEdit() {}
+
+void mQLineEdit::focusInEvent ( QFocusEvent *e )
+{
+   QLineEdit::focusInEvent( e );
+   emit( focussed( true ) );
+}
+
+void mQLineEdit::focusOutEvent ( QFocusEvent *e )
+{
+   QLineEdit::focusOutEvent( e );
+   emit( focussed( false ) );
+}
+
+
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 
@@ -34,6 +51,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_hplc_widget = true;
    plot_dist_zoomer = (ScrollZoomer *) 0;
+   le_last_focus = (mQLineEdit *) 0;
 
    disable_updates = false;
    setupGUI();
@@ -538,7 +556,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_next->setEnabled( false );
    connect(pb_gauss_next, SIGNAL(clicked()), SLOT(gauss_next()));
 
-   le_gauss_pos = new QLineEdit(this, "le_gauss_pos Line Edit");
+   le_gauss_pos = new mQLineEdit(this, "le_gauss_pos Line Edit");
    le_gauss_pos->setText( "" );
    le_gauss_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -546,8 +564,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_pos->setEnabled( false );
    le_gauss_pos->setValidator( new QDoubleValidator( le_gauss_pos ) );
    connect( le_gauss_pos, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text( const QString & ) ) );
+   connect( le_gauss_pos, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_focus( bool ) ) );
 
-   le_gauss_pos_width = new QLineEdit(this, "le_gauss_pos_width Line Edit");
+   le_gauss_pos_width = new mQLineEdit(this, "le_gauss_pos_width Line Edit");
    le_gauss_pos_width->setText( "" );
    le_gauss_pos_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_pos_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -555,8 +574,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_pos_width->setEnabled( false );
    le_gauss_pos_width->setValidator( new QDoubleValidator( le_gauss_pos_width ) );
    connect( le_gauss_pos_width, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_width_text( const QString & ) ) );
+   connect( le_gauss_pos_width, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_width_focus( bool ) ) );
 
-   le_gauss_pos_height = new QLineEdit(this, "le_gauss_pos_height Line Edit");
+   le_gauss_pos_height = new mQLineEdit(this, "le_gauss_pos_height Line Edit");
    le_gauss_pos_height->setText( "" );
    le_gauss_pos_height->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_pos_height->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -564,6 +584,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_pos_height->setEnabled( false );
    le_gauss_pos_height->setValidator( new QDoubleValidator( le_gauss_pos_height ) );
    connect( le_gauss_pos_height, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_height_text( const QString & ) ) );
+   connect( le_gauss_pos_height, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_height_focus( bool ) ) );
 
    pb_gauss_fit = new QPushButton(tr("Fit"), this);
    pb_gauss_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -572,7 +593,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_fit->setEnabled( false );
    connect(pb_gauss_fit, SIGNAL(clicked()), SLOT(gauss_fit()));
 
-   le_gauss_fit_start = new QLineEdit(this, "le_gauss_fit_start Line Edit");
+   le_gauss_fit_start = new mQLineEdit(this, "le_gauss_fit_start Line Edit");
    le_gauss_fit_start->setText( "" );
    le_gauss_fit_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_fit_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -580,8 +601,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_fit_start->setEnabled( false );
    le_gauss_fit_start->setValidator( new QDoubleValidator( le_gauss_fit_start ) );
    connect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_start_text( const QString & ) ) );
+   connect( le_gauss_fit_start, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_start_focus( bool ) ) );
 
-   le_gauss_fit_end = new QLineEdit(this, "le_gauss_fit_end Line Edit");
+   le_gauss_fit_end = new mQLineEdit(this, "le_gauss_fit_end Line Edit");
    le_gauss_fit_end->setText( "" );
    le_gauss_fit_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_fit_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -589,6 +611,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_fit_end->setEnabled( false );
    le_gauss_fit_end->setValidator( new QDoubleValidator( le_gauss_fit_end ) );
    connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
+   connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
 
    pb_select_vis = new QPushButton(tr("Select Visible"), this);
    pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -5672,35 +5695,33 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
    cout << QString("pos is now %1\n").arg(pos);
    if ( gaussian_mode )
    {
-      QLineEdit *le_use = le_gauss_pos; // ( QLineEdit * ) 0
-
       if ( le_gauss_pos->hasFocus() )
       {
-         le_use = le_gauss_pos;
+         le_last_focus = le_gauss_pos;
       }
       if ( le_gauss_pos_width->hasFocus() )
       {
-         le_use = le_gauss_pos_width;
+         le_last_focus = le_gauss_pos_width;
       }
       if ( le_gauss_pos_height->hasFocus() )
       {
-         le_use = le_gauss_pos_height;
+         le_last_focus = le_gauss_pos_height;
       }
       if ( le_gauss_fit_start->hasFocus() )
       {
-         le_use = le_gauss_fit_start;
+         le_last_focus = le_gauss_fit_start;
       }
       if ( le_gauss_fit_end->hasFocus() )
       {
-         le_use = le_gauss_fit_end;
+         le_last_focus = le_gauss_fit_end;
       }
 
-      if ( !le_use )
+      if ( !le_last_focus )
       {
-         return;
+         le_last_focus = le_gauss_pos;
       }
 
-      le_use->setText( QString( "%1" ).arg( pos ) );
+      le_last_focus->setText( QString( "%1" ).arg( pos ) );
 
       lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
 
@@ -5851,6 +5872,16 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    {
       gauss_delete_markers();
       plotted_markers.clear();
+      if ( plotted_curves.count( wheel_file ) &&
+           f_pos.count( wheel_file ) )
+      {
+#ifndef QT4
+         plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
+#else
+         plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+#endif
+         plot_dist->replot();
+      }
    } else {
       lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
 #ifndef QT4
@@ -6102,6 +6133,12 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       return;
    }
 
+#ifndef QT4
+   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, 1, SolidLine));
+#else
+   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, 1, Qt::SolidLine ) );
+#endif
+
    gaussian_mode = true;
 
    running               = true;
@@ -6147,11 +6184,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_clear()
 void US_Hydrodyn_Saxs_Hplc::gauss_new()
 {
    gaussians.push_back( 0e0 );
-   gaussians.push_back( 0e0 );
-   gaussians.push_back( 0e0 );
+   gaussians.push_back( 1e0 );
+   gaussians.push_back( gauss_max_height );
    gaussian_pos = ( gaussians.size() / 3 ) - 1;
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
-   gauss_add_gaussian( 0e0, 0e0, 0e0, Qt::green );
+   gauss_add_gaussian( 0e0, 1e0, gauss_max_height, Qt::green );
    update_gauss_pos();
    plot_dist->replot();
    gaussian_enables();
@@ -6444,3 +6481,64 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 #endif
    }
 }
+
+void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
+{
+   cout << QString( "gauss_pos_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, f_qs[ wheel_file ].back(), 0.001 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_focus( bool hasFocus )
+{
+   cout << QString( "gauss_pos_width_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, f_qs[ wheel_file ].back() / 3, 0.001 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_gauss_pos_width->text().toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_focus( bool hasFocus )
+{
+   cout << QString( "gauss_pos_height_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, gauss_max_height, 0.001 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_gauss_pos_height->text().toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_focus( bool hasFocus )
+{
+   cout << QString( "gauss_fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, f_qs[ wheel_file ].back(), 0.001 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_gauss_fit_start->text().toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_focus( bool hasFocus )
+{
+   cout << QString( "gauss_fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, f_qs[ wheel_file ].back(), 0.001 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_gauss_fit_end->text().toDouble() );
+   }
+}
+

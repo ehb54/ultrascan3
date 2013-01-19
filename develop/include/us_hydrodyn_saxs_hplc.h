@@ -42,6 +42,24 @@
 
 using namespace std;
 
+class mQLineEdit : public QLineEdit
+{
+   Q_OBJECT
+
+   public:
+
+      mQLineEdit ( QWidget *parent = 0 , const char * name = 0 );
+      ~mQLineEdit();
+
+   signals:
+      void focussed(bool hasFocus);
+
+   protected:
+      virtual void focusInEvent ( QFocusEvent *e );
+      virtual void focusOutEvent ( QFocusEvent *e );
+};
+
+
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
@@ -158,12 +176,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_gauss_prev;
       QLabel        *lbl_gauss_pos;
       QPushButton   *pb_gauss_next;
-      QLineEdit     *le_gauss_pos;
-      QLineEdit     *le_gauss_pos_width;
-      QLineEdit     *le_gauss_pos_height;
+      mQLineEdit    *le_gauss_pos;
+      mQLineEdit    *le_gauss_pos_width;
+      mQLineEdit    *le_gauss_pos_height;
       QPushButton   *pb_gauss_fit;
-      QLineEdit     *le_gauss_fit_start;
-      QLineEdit     *le_gauss_fit_end;
+      mQLineEdit    *le_gauss_fit_start;
+      mQLineEdit    *le_gauss_fit_end;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -329,6 +347,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #else
       long                         plotted_gaussian_sum;
 #endif
+      mQLineEdit                   *le_last_focus;
 
    private slots:
 
@@ -394,6 +413,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_pos_height_text       ( const QString & );
       void gauss_fit_start_text        ( const QString & );
       void gauss_fit_end_text          ( const QString & );
+
+      void gauss_pos_focus             ( bool );
+      void gauss_pos_width_focus       ( bool );
+      void gauss_pos_height_focus      ( bool );
+      void gauss_fit_start_focus       ( bool );
+      void gauss_fit_end_focus         ( bool );
 
       void select_vis();
       void remove_vis();
