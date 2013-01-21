@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_lm.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -6836,6 +6837,7 @@ static void printvector( QString qs, vector < double > x )
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit()
 {
+
    if ( !plotted_gaussian_sum.size() )
    {
       editor_msg( "red", QString( tr( "Internal error: gaussian fit: no gaussian sums" ) ) );
@@ -6848,6 +6850,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       return;
    }
 
+   US_Hydrodyn_Saxs_Hplc_Fit *shf = 
+      new US_Hydrodyn_Saxs_Hplc_Fit(
+                                    this,
+                                    this );
+   US_Hydrodyn::fixWinButtons( shf );
+   shf->exec();
+
+   return;
+   
    cout << "gauss fit start\n";
 
    lm_fit_gauss_size = gaussians.size();

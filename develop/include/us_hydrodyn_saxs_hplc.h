@@ -67,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Hplc_Conc;
+      friend class US_Hydrodyn_Saxs_Hplc_Fit;
 
    public:
       US_Hydrodyn_Saxs_Hplc(
