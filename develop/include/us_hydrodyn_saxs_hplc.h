@@ -180,8 +180,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_pos_width;
       mQLineEdit    *le_gauss_pos_height;
       QPushButton   *pb_gauss_fit;
+      QLabel        *lbl_gauss_fit;
       mQLineEdit    *le_gauss_fit_start;
       mQLineEdit    *le_gauss_fit_end;
+      QPushButton   *pb_gauss_save;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -240,11 +242,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
-      map < QString, QwtPlotCurve * >     plotted_gaussians;
+      vector < QwtPlotCurve * >           plotted_gaussians;
+      vector < QwtPlotCurve * >           plotted_gaussian_sum;
 #else
       map < QString, long >               plotted_curves;
       vector < long >                     plotted_markers;
       vector < long >                     plotted_gaussians;
+      vector < long >                     plotted_gaussian_sum;
 #endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
@@ -257,6 +261,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #endif
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();
+      void                                plot_gaussian_sum();
+      void                                replot_gaussian_sum();
 
       void save_csv_saxs_iqq();
 
@@ -342,11 +348,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       
       double                       gauss_max_height;
 
-#ifdef QT4
-      QwtPlotCurve *               plotted_gaussian_sum;
-#else
-      long                         plotted_gaussian_sum;
-#endif
       mQLineEdit                   *le_last_focus;
 
    private slots:
@@ -408,6 +409,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_prev();
       void gauss_next();
       void gauss_fit();
+      void gauss_save();
       void gauss_pos_text              ( const QString & );
       void gauss_pos_width_text        ( const QString & );
       void gauss_pos_height_text       ( const QString & );
