@@ -62,6 +62,7 @@ namespace LM {
    const lm_control_struct lm_control_float = {
       1.e-7, 1.e-7, 1.e-7, 1.e-7, 100., 100, 0, 0 };
 
+   double (*lm_use_norm) ( int n, const double *x );
 
    /*****************************************************************************/
    /*  set message texts (indexed by status.info)                               */
@@ -135,7 +136,7 @@ namespace LM {
             printf("  par: ");
             for (i = 0; i < n_par; ++i)
                printf(" %18.11g", par[i]);
-            printf(" => norm: %18.11g", lm_enorm(m_dat, fvec));
+            printf(" => norm: %18.11g", (*lm_use_norm)(m_dat, fvec));
          }
 
          if( printflags & 3 )
@@ -202,7 +203,7 @@ namespace LM {
          if ( printout )
             (*printout)( n, par, m, data, fvec,
                          control->printflags, -1, 0, status->nfev );
-         status->fnorm = lm_enorm(m, fvec);
+         status->fnorm = (*lm_use_norm)(m, fvec);
          if ( status->info < 0 )
             status->info = 11;
 
@@ -442,7 +443,7 @@ namespace LM {
             (*printout) (n, x, m, data, fvec, printflags, 0, 0, *nfev);
          if (*info < 0)
             return;
-         fnorm = lm_enorm(m, fvec);
+         fnorm = (*lm_use_norm)(m, fvec);
          if( fnorm <= LM_DWARF ){
             *info = 0;
             return;
@@ -500,7 +501,7 @@ namespace LM {
                /* use diag to scale x, then calculate the norm */
                for (j = 0; j < n; j++)
                   wa3[j] = diag[j] * x[j];
-               xnorm = lm_enorm(n, wa3);
+               xnorm = (*lm_use_norm)(n, wa3);
                /* initialize the step bound delta. */
                delta = factor * xnorm;
                if (delta == 0.)
@@ -563,7 +564,7 @@ namespace LM {
                for (j = 0; j < n; j++)
                   wa2[j] = x[j] - wa1[j]; /* new parameter vector ? */
 
-               pnorm = lm_enorm(n, wa3);
+               pnorm = (*lm_use_norm)(n, wa3);
 
                /* at first call, adjust the initial step bound. */
 
@@ -580,7 +581,7 @@ namespace LM {
                if (*info < 0)
                   return; /* user requested break. */
 
-               fnorm1 = lm_enorm(m, wa4);
+               fnorm1 = (*lm_use_norm)(m, wa4);
 #ifdef LMFIT_DEBUG_MESSAGES
                printf("lmdif/ pnorm %.10e  fnorm1 %.10e  fnorm %.10e"
                       " delta=%.10e par=%.10e\n",
@@ -602,7 +603,7 @@ namespace LM {
                   for (i = 0; i <= j; i++)
                      wa3[i] -= fjac[j*m+i] * wa1[ipvt[j]];
                }
-               temp1 = lm_enorm(n, wa3) / fnorm;
+               temp1 = (*lm_use_norm)(n, wa3) / fnorm;
                temp2 = sqrt(par) * pnorm / fnorm;
                prered = SQR(temp1) + 2 * SQR(temp2);
                dirder = -(SQR(temp1) + SQR(temp2));
@@ -643,7 +644,7 @@ namespace LM {
                   }
                   for (i = 0; i < m; i++)
                      fvec[i] = wa4[i];
-                  xnorm = lm_enorm(n, wa2);
+                  xnorm = (*lm_use_norm)(n, wa2);
                   fnorm = fnorm1;
                   iter++;
                }
@@ -818,7 +819,7 @@ namespace LM {
          iter = 0;
          for (j = 0; j < n; j++)
             xdi[j] = diag[j] * x[j];
-         dxnorm = lm_enorm(n, xdi);
+         dxnorm = (*lm_use_norm)(n, xdi);
          fp = dxnorm - delta;
          if (fp <= p1 * delta) {
 #ifdef LMFIT_DEBUG_MESSAGES
@@ -843,7 +844,7 @@ namespace LM {
                   sum += r[j * ldr + i] * aux[i];
                aux[j] = (aux[j] - sum) / r[j + ldr * j];
             }
-            temp = lm_enorm(n, aux);
+            temp = (*lm_use_norm)(n, aux);
             parl = fp / delta / temp / temp;
          }
 
@@ -855,7 +856,7 @@ namespace LM {
                sum += r[j * ldr + i] * qtb[i];
             aux[j] = sum / diag[ipvt[j]];
          }
-         gnorm = lm_enorm(n, aux);
+         gnorm = (*lm_use_norm)(n, aux);
          paru = gnorm / delta;
          if (paru == 0.)
             paru = LM_DWARF / MIN(delta, p1);
@@ -888,7 +889,7 @@ namespace LM {
 
             for (j = 0; j < n; j++)
                xdi[j] = diag[j] * x[j]; /* used as output */
-            dxnorm = lm_enorm(n, xdi);
+            dxnorm = (*lm_use_norm)(n, xdi);
             fp_old = fp;
             fp = dxnorm - delta;
         
@@ -911,7 +912,7 @@ namespace LM {
                for (i = j + 1; i < n; i++)
                   aux[i] -= r[j * ldr + i] * aux[j];
             }
-            temp = lm_enorm(n, aux);
+            temp = (*lm_use_norm)(n, aux);
             parc = fp / delta / temp / temp;
 
             /** depending on the sign of the function, update parl or paru. **/
@@ -995,7 +996,7 @@ namespace LM {
          /*** qrfac: compute initial column norms and initialize several arrays. ***/
 
          for (j = 0; j < n; j++) {
-            acnorm[j] = lm_enorm(m, &a[j*m]);
+            acnorm[j] = (*lm_use_norm)(m, &a[j*m]);
             rdiag[j] = acnorm[j];
             wa[j] = rdiag[j];
             if (pivot)
@@ -1036,7 +1037,7 @@ namespace LM {
             /** compute the Householder transformation to reduce the
                 j-th column of a to a multiple of the j-th unit vector. **/
 
-            ajnorm = lm_enorm(m-j, &a[j*m+j]);
+            ajnorm = (*lm_use_norm)(m-j, &a[j*m+j]);
             if (ajnorm == 0.) {
                rdiag[j] = 0;
                continue;
@@ -1068,7 +1069,7 @@ namespace LM {
                   rdiag[k] *= sqrt(temp);
                   temp = rdiag[k] / wa[k];
                   if ( 0.05 * SQR(temp) <= LM_MACHEP ) {
-                     rdiag[k] = lm_enorm(m-j-1, &a[m*k+j+1]);
+                     rdiag[k] = (*lm_use_norm)(m-j-1, &a[m*k+j+1]);
                      wa[k] = rdiag[k];
                   }
                }
@@ -1249,6 +1250,15 @@ namespace LM {
 
       } /*** lm_qrsolv. ***/
 
+   double lm_rmsdnorm(int n, const double *x)
+   {
+      double rmsd = 0e0;
+      for ( int i = 0; i < n; i++ )
+      {
+         rmsd += x[ i ] * x[ i ];
+      }
+      return sqrt( rmsd );
+   }
 
    /*****************************************************************************/
    /*  lm_enorm (Euclidean norm)                                                */
@@ -1350,6 +1360,19 @@ namespace LM {
                      const lm_control_struct *control, lm_status_struct *status )
    {
       lmcurve_data_struct data = { t, y, f };
+      lm_use_norm = lm_enorm;
+      lmmin( n_par, par, m_dat, (const void*) &data,
+             lmcurve_evaluate, control, status, lm_printout_std );
+   }
+
+   void lmcurve_fit_rmsd( int n_par, double *par, int m_dat, 
+                          const double *t, const double *y,
+                          double (*f)( double t, const double *par ),
+                          const lm_control_struct *control, lm_status_struct *status
+                          )
+   {
+      lmcurve_data_struct data = { t, y, f };
+      lm_use_norm = lm_rmsdnorm;
 
       lmmin( n_par, par, m_dat, (const void*) &data,
              lmcurve_evaluate, control, status, lm_printout_std );

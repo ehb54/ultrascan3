@@ -970,7 +970,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
    // determine total count
 
    unsigned int pop_size    = le_population->text().toUInt();
-   unsigned int total_count = ( unsigned int ) pow( (int) pop_size, HFIT::init_params.size() );
+   unsigned int total_count = ( unsigned int ) pow( (double) pop_size, (int) HFIT::init_params.size() );
 
    cout << QString( "total points %1\n" ).arg( total_count );
 

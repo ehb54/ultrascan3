@@ -47,6 +47,8 @@ namespace LM
                             const void *data, const double *fvec,
                             int printflags, int iflag, int iter, int nfev );
 
+      double lm_rmsdnorm( int, const double * );
+
       /* Refined calculation of Eucledian norm, typically used in printout routine. */
       double lm_enorm( int, const double * );
 
@@ -84,6 +86,11 @@ namespace LM
                         const double *t, const double *y,
                         double (*f)( double t, const double *par ),
                         const lm_control_struct *control, lm_status_struct *status );
+
+      void lmcurve_fit_rmsd( int n_par, double *par, int m_dat,
+                             const double *t, const double *y,
+                             double (*f)( double t, const double *par ),
+                             const lm_control_struct *control, lm_status_struct *status );
 
       extern unsigned int exponential_terms;
       extern double       minusoneoverfourpisq;
