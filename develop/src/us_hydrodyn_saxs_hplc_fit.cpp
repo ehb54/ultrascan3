@@ -611,7 +611,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          double ofs;
          double min = 0.0001;
          double max = 1e99;
-         if ( cb_pct_center->isChecked() )
+         if ( cb_pct_width->isChecked() )
          {
             ofs = hplc_win->gaussians[ 2 + i ] * le_pct_width->text().toDouble() / 100.0;
             min = hplc_win->gaussians[ 2 + i ] - ofs;

@@ -56,7 +56,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
    map < QString, QString > control_parameters;
    control_parameters[ "generations"      ] = le_iterations->text();
    control_parameters[ "population"       ] = le_population->text();
-   control_parameters[ "crossover"        ] = "0.5";
+   control_parameters[ "crossover"        ] = "0.3";
    control_parameters[ "mutate"           ] = "0.5";
    control_parameters[ "earlytermination" ] = "5";
    control_parameters[ "elitism"          ] = "2";
