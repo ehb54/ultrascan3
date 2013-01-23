@@ -6201,6 +6201,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       }
    }
 
+   gauss_max_height *= 1.2;
+
    if ( gauss_max_height <= 0e0 )
    {
       editor_msg( "red", QString( tr( "Error: maximum y value of signal %1 is not positive" ) ).arg( wheel_file ) );
@@ -6259,12 +6261,12 @@ void US_Hydrodyn_Saxs_Hplc::gauss_clear()
 
 void US_Hydrodyn_Saxs_Hplc::gauss_new()
 {
-   gaussians.push_back( gauss_max_height );
+   gaussians.push_back( gauss_max_height / 2 );
    gaussians.push_back( 0e0 );
-   gaussians.push_back( 1e0 );
+   gaussians.push_back( 2e0 );
    gaussian_pos = ( gaussians.size() / 3 ) - 1;
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
-   gauss_add_gaussian( 0e0, 1e0, gauss_max_height, Qt::green );
+   gauss_add_gaussian( 0e0, 1e0, gauss_max_height / 2, Qt::green );
    update_gauss_pos();
    plot_dist->replot();
    gaussian_enables();
@@ -6850,6 +6852,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       return;
    }
 
+   qwtw_wheel->setEnabled( false );
+   disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    US_Hydrodyn_Saxs_Hplc_Fit *shf = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
@@ -6857,6 +6861,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
    US_Hydrodyn::fixWinButtons( shf );
    shf->exec();
 
+   qwtw_wheel->setEnabled( true );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    return;
    
    cout << "gauss fit start\n";
