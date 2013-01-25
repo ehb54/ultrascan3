@@ -3,6 +3,10 @@
 #include <QtCore>
 #include <QTextStream>
 
+#ifdef Q_WS_X11
+#include <unistd.h>
+#endif
+
 US_Global::US_Global()
 {
   valid      = false;
