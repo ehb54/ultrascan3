@@ -1,6 +1,10 @@
 //! \file us_memory.cpp
 #include "us_memory.h"
 
+#ifdef Q_WS_X11
+#include <unistd.h>
+#endif
+
 #ifdef Q_WS_MAC                          // Mac includes
 #include <sys/types.h>
 #include <sys/sysctl.h>
