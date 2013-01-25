@@ -186,6 +186,7 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
          double omeg0 = 0.0;
          double omeg1 = 0.0;
          double omeg2 = 0.0;
+         double step_speed;
          US_SimulationParameters::SpeedProfile* sp;
          US_AstfemMath::MfemData*               ed;
 
@@ -196,6 +197,7 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
 #endif
             sp      = &simparams.speed_step[ step ];
             ed      = &af_data;
+            step_speed = (double)sp->rotorspeed;
 
             adjust_limits( sp->rotorspeed );
 
@@ -207,6 +209,7 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
             omeg0   = omeg2;
             omeg1   = ed->scan[ fscan     ].omega_s_t;
             omeg2   = ed->scan[ lscan - 1 ].omega_s_t;
+DbgLv(1) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "k step" << k << step;
 
             ed->meniscus = af_params.current_meniscus;
             ed->bottom   = af_params.current_bottom;
@@ -219,7 +222,7 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
                // we have at least 1 acceleration step
 
                af_params.time_steps = (int)
-                  fabs( sp->rotorspeed - current_speed ) / sp->acceleration;
+                  fabs( step_speed - current_speed ) / sp->acceleration;
 
                // Each simulation step is 1 second in the acceleration phase
                // Use a fixed grid with refinement at both ends and with
@@ -260,10 +263,10 @@ DbgLv(1) << "RSA:PO: time0 time1 omeg0 omeg1"
                double dw2   = 0.0;
                double dt2   = accel_time / af_params.dt;
                double ddw1  = wfac * sq( current_speed );
-               double ddw3  = wfac * sq( sp->rotorspeed );
+               double ddw3  = wfac * sq( step_speed );
                int    ndt2  = (int)dt2;
                double crpm  = current_speed;
-               double rpmi  = ( sp->rotorspeed - current_speed ) / dt2;
+               double rpmi  = ( step_speed - current_speed ) / dt2;
                for ( int kk = 0; kk < ndt2; kk++ )
                { // Accumulate omega^2t over acceleration zone
                   crpm += rpmi;
@@ -283,7 +286,7 @@ DbgLv(1) << "RSA:PO: time0 time1 omeg0 omeg1"
                                    / ( ddw1 - ddw3 ) );
                   dw1          = ddw1 * dt1;
                }
-DbgLv(1) << "RSA:PO:   ddw1 ddw3 dt2 dw2" << ddw1 << ddw3 << dt2 << dw2
+DbgLv(1) << "RSA:PO:   ddw1 ddw3" << ddw1 << ddw3 << "dt2 dw2" << dt2 << dw2
  << "dt1 dw1" << dt1 << dw1;
                af_params.start_time = time0 + dt1;
                af_params.start_om2t = omeg0 + dw1;
@@ -313,7 +316,7 @@ DbgLv(1) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
 
                // Calculate the simulation for the acceleration zone
 
-               calculate_ni( current_speed, sp->rotorspeed,
+               calculate_ni( current_speed, step_speed,
                              CT0, simdata, true );
 
                if ( stopFlag ) return 1;
@@ -350,7 +353,7 @@ totT2+=(clcSt2.msecsTo(clcSt3));
                return -1;
             }
 
-            double omega = sp->rotorspeed * M_PI / 30;
+            double omega = step_speed * M_PI / 30;
             af_params.omega_s = sq( omega );
 
             double lg_bm_rat = log(
@@ -381,7 +384,7 @@ totT3+=(clcSt3.msecsTo(clcSt4));
 
             // Calculate the simulation for the bulk of the speed step
 
-            calculate_ni( sp->rotorspeed, sp->rotorspeed,
+            calculate_ni( step_speed, step_speed,
                           CT0, simdata, false );
 
             if ( stopFlag ) return 1;
@@ -391,7 +394,7 @@ totT3+=(clcSt3.msecsTo(clcSt4));
             current_time  = time2;
             current_om2t  = omeg2;
 DbgLv(1) << "RSA:    step rpm" << step << sp->rotorspeed
- << "start_ current_time" << af_params.start_time << current_time;
+ << "st_ curr_time" << af_params.start_time << current_time;
 int mmm=simdata.scan.size()-1;
 DbgLv(1) << "RSA:     eomg1 eomg2" << ed->scan[fscan].omega_s_t
  << ed->scan[lscan-1].omega_s_t << " somg1 somg2"
@@ -407,7 +410,7 @@ totT4+=(clcSt4.msecsTo(clcSt5));
 
             // Set the current speed to the constant rotor speed of the
             // current speed step
-            current_speed = sp->rotorspeed;
+            current_speed = step_speed;
 
 #ifndef NO_DB
             qApp->processEvents();
@@ -547,6 +550,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       double time0 = 0.0;
       double time1 = 0.0;
       double time2 = 0.0;
+      double step_speed;
       US_SimulationParameters::SpeedProfile* sp;
       US_AstfemMath::MfemData*               ed;
 
@@ -564,6 +568,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
          time0        = time2;
          time1        = ed->scan[ fscan     ].time;
          time2        = ed->scan[ lscan - 1 ].time;
+         step_speed   = (double)sp->rotorspeed;
 
          // We need to simulate acceleration
          if ( sp->acceleration_flag )
@@ -572,7 +577,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
             // rate then we have at least 1 acceleration step
 
             af_params.time_steps = (int)
-               ( fabs( sp->rotorspeed - current_speed ) / sp->acceleration );
+               ( fabs( step_speed - current_speed ) / sp->acceleration );
 
             // Each simulation step is 1 second long in the acceleration phase
             af_params.dt        = 1.0;
@@ -584,7 +589,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
             current_time  = time0;
             af_params.start_time = current_time;
 
-            calculate_ra2( current_speed, (double) sp->rotorspeed,
+            calculate_ra2( current_speed, step_speed,
                   vC0, simdata, true );
 
             // Add the acceleration time:
@@ -620,7 +625,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
              if ( s_max < fabs( af_params.s[m] ) )
                 s_max = fabs( af_params.s[m] );
 
-         af_params.omega_s = sq( sp->rotorspeed * M_PI / 30 );
+         af_params.omega_s = sq( step_speed * M_PI / 30 );
 
          double lg_bm_rat = log( af_params.current_bottom
                                  / af_params.current_meniscus );
@@ -643,8 +648,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
          af_params.start_time = current_time;
 
 DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
-         calculate_ra2( (double) sp->rotorspeed, (double) sp->rotorspeed,
-               vC0, simdata, false );
+         calculate_ra2( step_speed, step_speed, vC0, simdata, false );
 
          // Set the current time to the last scan of this speed step
          duration      = sp->duration_hours * 3600.
@@ -661,7 +665,7 @@ DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
 
          // Set the current speed to the constant rotor speed of the
          // current speed step
-         current_speed = sp->rotorspeed;
+         current_speed = step_speed;
 
 #ifndef NO_DB
          qApp->processEvents();

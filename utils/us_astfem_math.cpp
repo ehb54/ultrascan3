@@ -667,12 +667,14 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                tmp_scan.conc << ( a * e_omega + b );
             }
 
+#if 0
             // Interpolate the omega_square_t integral data:
             a = ( s_time2 - s_time1 ) / ( s_omega2 - s_omega1 );
 
             b = s_time2 - a * s_omega2;
 
             escan->time = a * e_omega + b;
+#endif
 
             tmp_data.scan << tmp_scan;
          }
