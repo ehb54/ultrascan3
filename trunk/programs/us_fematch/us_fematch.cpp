@@ -1075,7 +1075,7 @@ void US_FeMatch::view_report( )
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
    editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 740, 700 );
+   editd->resize( 780, 700 );
    editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() ) );
    editd->e->setHtml( mtext );
@@ -1531,7 +1531,7 @@ void US_FeMatch::plot3d( )
       eplotcd->close();
    }
 
-   eplotcd = new US_PlotControl( this, &model );
+   eplotcd = new US_PlotControl( this, &model_loaded );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
