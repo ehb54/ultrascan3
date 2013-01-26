@@ -651,7 +651,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_crop_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
-   pb_crop_zero = new QPushButton(tr("Crop Vis"), this);
+   pb_crop_zero = new QPushButton(tr("Crop Zeros"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
    pb_crop_zero->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
