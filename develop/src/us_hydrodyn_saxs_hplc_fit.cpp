@@ -21,12 +21,39 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    global_Xpos += 30;
    global_Ypos += 30;
 
+   gaussians_undo.clear();
+   gaussians_undo.push_back( hplc_win->gaussians );
+
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
    update_enables();
 }
 
 US_Hydrodyn_Saxs_Hplc_Fit::~US_Hydrodyn_Saxs_Hplc_Fit()
 {
+}
+
+void US_Hydrodyn_Saxs_Hplc_Fit::restore()
+{
+   gaussians_undo.resize( 1 );
+   hplc_win->gaussians = gaussians_undo[ 0 ];
+   hplc_win->gauss_init_markers();
+   hplc_win->gauss_init_gaussians();
+   hplc_win->update_gauss_pos();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Fit::undo()
+{
+   if ( gaussians_undo.size() > 1 )
+   {
+      gaussians_undo.pop_back();
+   }
+
+   hplc_win->gaussians = gaussians_undo.back();
+   hplc_win->gauss_init_markers();
+   hplc_win->gauss_init_gaussians();
+   hplc_win->update_gauss_pos();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
@@ -57,13 +84,21 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_center, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    le_pct_center = new mQLineEdit(this, "le_pct_center Line Edit");
-   le_pct_center->setText( "50" );
+   le_pct_center->setText( "10" );
    le_pct_center->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_center->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    le_pct_center->setEnabled( false );
    le_pct_center->setValidator( new QDoubleValidator( le_pct_center ) );
    ( (QDoubleValidator *)le_pct_center->validator() )->setRange( 0, 100, 1 );
+
+   cb_pct_center_from_init = new QCheckBox(this);
+   cb_pct_center_from_init->setText(tr(" From initial value" ) );
+   cb_pct_center_from_init->setEnabled(true);
+   cb_pct_center_from_init->setChecked( false );
+   cb_pct_center_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_center_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_center_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_fix_width = new QCheckBox(this);
    cb_fix_width->setText(tr(" Fix Gaussian widths" ) );
@@ -90,6 +125,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_pct_width->setValidator( new QDoubleValidator( le_pct_width ) );
    ( (QDoubleValidator *)le_pct_width->validator() )->setRange( 0, 100, 1 );
 
+   cb_pct_width_from_init = new QCheckBox(this);
+   cb_pct_width_from_init->setText(tr(" From initial value" ) );
+   cb_pct_width_from_init->setEnabled(true);
+   cb_pct_width_from_init->setChecked( false );
+   cb_pct_width_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_width_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_width_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    cb_fix_amplitude = new QCheckBox(this);
    cb_fix_amplitude->setText(tr(" Fix Gaussian amplitudes" ) );
    cb_fix_amplitude->setEnabled(true);
@@ -114,6 +157,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_pct_amplitude->setEnabled( false );
    le_pct_amplitude->setValidator( new QDoubleValidator( le_pct_amplitude ) );
    ( (QDoubleValidator *)le_pct_amplitude->validator() )->setRange( 0, 100, 1 );
+
+   cb_pct_amplitude_from_init = new QCheckBox(this);
+   cb_pct_amplitude_from_init->setText(tr(" From initial value" ) );
+   cb_pct_amplitude_from_init->setEnabled(true);
+   cb_pct_amplitude_from_init->setChecked( false );
+   cb_pct_amplitude_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_amplitude_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_amplitude_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    lbl_fix_curves = new QLabel(tr(" Fix Gaussians: "), this);
    lbl_fix_curves->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
@@ -195,6 +246,18 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_population->setValidator( new QIntValidator( le_population ) );
    ( (QIntValidator *)le_population->validator() )->setRange( 2, 10000 );
 
+   pb_restore = new QPushButton(tr("Restore to initial values"), this);
+   pb_restore->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   // pb_restore->setMinimumHeight(minHeight1);
+   pb_restore->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_restore, SIGNAL(clicked()), SLOT(restore()));
+
+   pb_undo = new QPushButton(tr("Undo"), this);
+   pb_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   // pb_undo->setMinimumHeight(minHeight1);
+   pb_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_undo, SIGNAL(clicked()), SLOT(undo()));
+
    pb_lm = new QPushButton(tr("LM"), this);
    pb_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_lm->setMinimumHeight(minHeight1);
@@ -260,43 +323,50 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    QGridLayout *gl_main = new QGridLayout( 0 );
    int row = 0;
 
-   gl_main->addWidget( cb_fix_center , row, 0 );
-   gl_main->addWidget( cb_pct_center , row, 1 );
-   gl_main->addWidget( le_pct_center , row, 2 );
+   gl_main->addWidget( cb_fix_center           , row, 0 );
+   gl_main->addWidget( cb_pct_center           , row, 1 );
+   gl_main->addWidget( le_pct_center           , row, 2 );
+   gl_main->addWidget( cb_pct_center_from_init , row, 3 );
    row++;
 
-   gl_main->addWidget( cb_fix_width , row, 0 );
-   gl_main->addWidget( cb_pct_width , row, 1 );
-   gl_main->addWidget( le_pct_width , row, 2 );
+   gl_main->addWidget( cb_fix_width           , row, 0 );
+   gl_main->addWidget( cb_pct_width           , row, 1 );
+   gl_main->addWidget( le_pct_width           , row, 2 );
+   gl_main->addWidget( cb_pct_width_from_init , row, 3 );
    row++;
 
-   gl_main->addWidget( cb_fix_amplitude , row, 0 );
-   gl_main->addWidget( cb_pct_amplitude , row, 1 );
-   gl_main->addWidget( le_pct_amplitude , row, 2 );
+   gl_main->addWidget( cb_fix_amplitude           , row, 0 );
+   gl_main->addWidget( cb_pct_amplitude           , row, 1 );
+   gl_main->addWidget( le_pct_amplitude           , row, 2 );
+   gl_main->addWidget( cb_pct_amplitude_from_init , row, 3 );
    row++;
 
    gl_main->addWidget         ( lbl_fix_curves, row, 0 );
-   // gl_main->addMultiCellWidget( le_fix_curves , row, row, 1, 2 );
+   // gl_main->addMultiCellWidget( le_fix_curves , row, row, 1, 3 );
    QHBoxLayout *hbl_fix_curves = new QHBoxLayout;
    for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
    {
       hbl_fix_curves->addWidget( cb_fix_curves[ i ] );
    }
-   gl_main->addMultiCellLayout( hbl_fix_curves , row, row, 1, 2 );
+   gl_main->addMultiCellLayout( hbl_fix_curves , row, row, 1, 3 );
 
    row++;
 
    gl_main->addWidget         ( lbl_epsilon, row, 0 );
-   gl_main->addMultiCellWidget( le_epsilon , row, row, 1, 2 );
+   gl_main->addMultiCellWidget( le_epsilon , row, row, 1, 3 );
    row++;
 
    gl_main->addWidget         ( lbl_iterations, row, 0 );
-   gl_main->addMultiCellWidget( le_iterations , row, row, 1, 2 );
+   gl_main->addMultiCellWidget( le_iterations , row, row, 1, 3 );
    row++;
 
    gl_main->addWidget         ( lbl_population, row, 0 );
-   gl_main->addMultiCellWidget( le_population , row, row, 1, 2 );
+   gl_main->addMultiCellWidget( le_population , row, row, 1, 3 );
    row++;
+
+   QHBoxLayout *hbl_restore_undo = new QHBoxLayout;
+   hbl_restore_undo->addWidget ( pb_restore );
+   hbl_restore_undo->addWidget ( pb_undo );
 
    QHBoxLayout *hbl_runs = new QHBoxLayout;
    hbl_runs->addWidget ( pb_lm );
@@ -318,6 +388,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
    background->addLayout ( gl_main  );
+   background->addSpacing( 4 );
+   background->addLayout ( hbl_restore_undo );
    background->addSpacing( 4 );
    background->addLayout ( hbl_runs );
    background->addSpacing( 4 );
@@ -350,17 +422,20 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
    puts( "hf: ue()" );
    bool run_ok = setup_run();
 
-   cb_fix_center            ->setEnabled( !running );
-   cb_pct_center            ->setEnabled( !running && !cb_fix_center->isChecked() );
-   le_pct_center            ->setEnabled( !running && !cb_fix_center->isChecked() && cb_pct_center->isChecked() );
+   cb_fix_center                ->setEnabled( !running );
+   cb_pct_center                ->setEnabled( !running && !cb_fix_center->isChecked() );
+   le_pct_center                ->setEnabled( !running && !cb_fix_center->isChecked() && cb_pct_center->isChecked() );
+   cb_pct_center_from_init      ->setEnabled( !running && !cb_fix_center->isChecked() );
 
-   cb_fix_width             ->setEnabled( !running );
-   cb_pct_width             ->setEnabled( !running && !cb_fix_width->isChecked() );
-   le_pct_width             ->setEnabled( !running && !cb_fix_width->isChecked()  && cb_pct_width->isChecked() );
+   cb_fix_width                 ->setEnabled( !running );
+   cb_pct_width                 ->setEnabled( !running && !cb_fix_width->isChecked() );
+   le_pct_width                 ->setEnabled( !running && !cb_fix_width->isChecked()  && cb_pct_width->isChecked() );
+   cb_pct_width_from_init       ->setEnabled( !running && !cb_fix_width->isChecked() );
 
-   cb_fix_amplitude         ->setEnabled( !running );
-   cb_pct_amplitude         ->setEnabled( !running && !cb_fix_amplitude->isChecked() );
-   le_pct_amplitude         ->setEnabled( !running && !cb_fix_amplitude->isChecked() && cb_pct_amplitude->isChecked() );
+   cb_fix_amplitude             ->setEnabled( !running );
+   cb_pct_amplitude             ->setEnabled( !running && !cb_fix_amplitude->isChecked() );
+   le_pct_amplitude             ->setEnabled( !running && !cb_fix_amplitude->isChecked() && cb_pct_amplitude->isChecked() );
+   cb_pct_amplitude_from_init   ->setEnabled( !running && !cb_fix_amplitude->isChecked() );
 
    for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
    {
@@ -378,6 +453,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
       ( cb_fix_amplitude->isChecked() || cb_pct_amplitude->isChecked() )
       ;
 
+   pb_restore               ->setEnabled( !running && gaussians_undo.size() > 1 );
+   pb_undo                  ->setEnabled( !running && gaussians_undo.size() > 1 );
 
    pb_lm                    ->setEnabled( !running && run_ok );
    pb_gsm_sd                ->setEnabled( !running && run_ok );
@@ -392,6 +469,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 namespace HFIT 
 {
    vector < double       > init_params;    // variable param initial values
+   vector < double       > base_params;    // variable param initial values
+   vector < double       > last_params;    // variable param initial values
 
    vector < double       > fixed_params;   // the fixed params
    vector < unsigned int > param_pos;      // index into fixed params or variable params
@@ -502,6 +581,7 @@ namespace HFIT
 bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 {
    HFIT::init_params .clear();
+   HFIT::base_params .clear();
    HFIT::fixed_params.clear();
    HFIT::param_pos   .clear();
    HFIT::param_fixed .clear();
@@ -534,6 +614,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       return false;
    }
 
+   double base_val;
+
    for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size(); i+= 3 )
    {
       unsigned int pos = i / 3;
@@ -546,7 +628,16 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( true );
       } else {
          HFIT::param_pos   .push_back( HFIT::init_params.size() );
-         HFIT::init_params .push_back( hplc_win->gaussians[ 0 + i ] );
+
+         if ( cb_pct_amplitude_from_init->isChecked() )
+         {
+            base_val = gaussians_undo[ 0 ][ 0 + i ];
+         } else {
+            base_val = hplc_win->gaussians[ 0 + i ];
+         }            
+
+         HFIT::init_params .push_back( base_val );
+         HFIT::base_params .push_back( hplc_win->gaussians[ 0 + i ] );
          HFIT::param_fixed .push_back( false );
 
          double ofs;
@@ -554,9 +645,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          double max = hplc_win->gauss_max_height;
          if ( cb_pct_amplitude->isChecked() )
          {
-            ofs = hplc_win->gaussians[ 0 + i ] * le_pct_amplitude->text().toDouble() / 100.0;
-            min = hplc_win->gaussians[ 0 + i ] - ofs;
-            max = hplc_win->gaussians[ 0 + i ] + ofs;
+            ofs = base_val * le_pct_amplitude->text().toDouble() / 100.0;
+            min = base_val - ofs;
+            max = base_val + ofs;
          }
          if ( min < 0.001 )
          {
@@ -580,7 +671,16 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( true );
       } else {
          HFIT::param_pos   .push_back( HFIT::init_params.size() );
-         HFIT::init_params .push_back( hplc_win->gaussians[ 1 + i ] );
+
+         if ( cb_pct_center_from_init->isChecked() )
+         {
+            base_val = gaussians_undo[ 0 ][ 1 + i ];
+         } else {
+            base_val = hplc_win->gaussians[ 1 + i ];
+         }            
+
+         HFIT::init_params .push_back( base_val );
+         HFIT::base_params .push_back( hplc_win->gaussians[ 1 + i ] );
          HFIT::param_fixed .push_back( false );
 
          double ofs;
@@ -588,9 +688,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          double max = 1e99;
          if ( cb_pct_center->isChecked() )
          {
-            ofs = hplc_win->gaussians[ 1 + i ] * le_pct_center->text().toDouble() / 100.0;
-            min = hplc_win->gaussians[ 1 + i ] - ofs;
-            max = hplc_win->gaussians[ 1 + i ] + ofs;
+            ofs = base_val * le_pct_center->text().toDouble() / 100.0;
+            min = base_val - ofs;
+            max = base_val + ofs;
          }
 
          HFIT::param_min   .push_back( min );
@@ -605,7 +705,16 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( true );
       } else {
          HFIT::param_pos   .push_back( HFIT::init_params.size() );
-         HFIT::init_params .push_back( hplc_win->gaussians[ 2 + i ] );
+
+         if ( cb_pct_center_from_init->isChecked() )
+         {
+            base_val = gaussians_undo[ 0 ][ 2 + i ];
+         } else {
+            base_val = hplc_win->gaussians[ 2 + i ];
+         }            
+
+         HFIT::init_params .push_back( base_val );
+         HFIT::base_params .push_back( hplc_win->gaussians[ 2 + i ] );
          HFIT::param_fixed .push_back( false );
 
          double ofs;
@@ -613,9 +722,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          double max = 1e99;
          if ( cb_pct_width->isChecked() )
          {
-            ofs = hplc_win->gaussians[ 2 + i ] * le_pct_width->text().toDouble() / 100.0;
-            min = hplc_win->gaussians[ 2 + i ] - ofs;
-            max = hplc_win->gaussians[ 2 + i ] + ofs;
+            ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+            min = base_val - ofs;
+            max = base_val + ofs;
          }
          if ( min < 0.0001 )
          {
@@ -674,14 +783,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
    }
 
    vector < double > par = HFIT::init_params;
-   HFIT::printvector( QString( "par start" ), par );
+   HFIT::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
 
    LM::lmcurve_fit_rmsd( ( int )      par.size(),
                          ( double * ) &( par[ 0 ] ),
@@ -692,13 +801,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
                          (const LM::lm_control_struct *)&control,
                          &status );
    
-   HFIT::printvector( QString( "par is now (norm %1)" ).arg( status.fnorm ), par );
-
-   
+   HFIT::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
 
    if ( org_rmsd > status.fnorm )
    {
-
       for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
       {
          if ( !HFIT::param_fixed[ i ] )
@@ -706,6 +812,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
             hplc_win->gaussians[ i ] = par[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -726,7 +833,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -759,6 +866,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
             hplc_win->gaussians[ i ] = v->d[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -782,7 +890,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -815,6 +923,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
             hplc_win->gaussians[ i ] = v->d[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -838,7 +947,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -871,6 +980,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
             hplc_win->gaussians[ i ] = v->d[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -893,7 +1003,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -923,6 +1033,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
             hplc_win->gaussians[ i ] = par[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -989,7 +1100,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < t.size(); j++ )
    {
-      yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::init_params[ 0 ]) );
+      yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
    }
    
@@ -1048,6 +1159,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
             hplc_win->gaussians[ i ] = par[ HFIT::param_pos[ i ] ];
          }
       }
+      gaussians_undo.push_back( hplc_win->gaussians );
    } else {
       cout << "no improvement, reverting to original values\n";
    }

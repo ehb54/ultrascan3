@@ -76,14 +76,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       QCheckBox     *cb_fix_center;
       QCheckBox     *cb_pct_center;
       QLineEdit     *le_pct_center;
+      QCheckBox     *cb_pct_center_from_init;
 
       QCheckBox     *cb_fix_width;
       QCheckBox     *cb_pct_width;
       QLineEdit     *le_pct_width;
+      QCheckBox     *cb_pct_width_from_init;
 
       QCheckBox     *cb_fix_amplitude;
       QCheckBox     *cb_pct_amplitude;
       QLineEdit     *le_pct_amplitude;
+      QCheckBox     *cb_pct_amplitude_from_init;
       
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
@@ -103,6 +106,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       QLabel        *lbl_population;
       QLineEdit     *le_population;
+
+      QPushButton   *pb_restore;
+      QPushButton   *pb_undo;
 
       QPushButton   *pb_lm;
       QPushButton   *pb_gsm_sd;
@@ -130,6 +136,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       vector < double > gsm_t;
       vector < double > gsm_y;
       vector < double > gsm_yp;
+
+      vector < vector < double > > gaussians_undo;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -180,6 +189,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       void update_enables();
 
+      void restore();
+      void undo();
+
       void lm();
       void gsm_sd();
       void gsm_ih();
@@ -205,6 +217,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 namespace HFIT 
 {
    extern vector < double       > init_params;    // variable param initial values
+   extern vector < double       > base_params;    // variable param base values
 
    extern vector < double       > fixed_params;   // the fixed params
    extern vector < unsigned int > param_pos;      // index into fixed params or variable params
