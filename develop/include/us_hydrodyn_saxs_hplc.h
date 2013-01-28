@@ -186,6 +186,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_fit_end;
       QPushButton   *pb_gauss_save;
 
+      QPushButton   *pb_baseline_start;
+      mQLineEdit    *le_baseline_start;
+      mQLineEdit    *le_baseline_end;
+      QPushButton   *pb_baseline_apply;
+
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
       QPushButton   *pb_crop_zero;
@@ -245,11 +250,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QwtPlotMarker * >          plotted_markers;
       vector < QwtPlotCurve * >           plotted_gaussians;
       vector < QwtPlotCurve * >           plotted_gaussian_sum;
+      vector < QwtPlotCurve * >           plotted_baseline;
 #else
       map < QString, long >               plotted_curves;
       vector < long >                     plotted_markers;
       vector < long >                     plotted_gaussians;
       vector < long >                     plotted_gaussian_sum;
+      vector < long >                     plotted_baseline;
 #endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
@@ -335,6 +342,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         disable_all();
 
       bool                         gaussian_mode;
+      bool                         baseline_mode;
 
       void                         gaussian_enables();
 
@@ -350,6 +358,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       gauss_max_height;
 
       mQLineEdit                   *le_last_focus;
+
+      void                         baseline_enables();
+      void                         baseline_init_markers();
+      void                         replot_baseline();
+
+      double                       baseline_intercept;
+      double                       baseline_slope;
 
    private slots:
 
@@ -422,6 +437,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_pos_height_focus      ( bool );
       void gauss_fit_start_focus       ( bool );
       void gauss_fit_end_focus         ( bool );
+
+      void baseline_start();
+      void baseline_apply();
+      void baseline_start_text         ( const QString & );
+      void baseline_end_text           ( const QString & );
+      void baseline_start_focus        ( bool );
+      void baseline_end_focus          ( bool );
 
       void select_vis();
       void remove_vis();
