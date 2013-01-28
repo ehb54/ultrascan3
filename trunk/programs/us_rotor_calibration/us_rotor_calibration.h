@@ -1,5 +1,5 @@
-#ifndef US_EDIT_H
-#define US_EDIT_H
+#ifndef US_ROTOR_CALIBRATION_H
+#define US_ROTOR_CALIBRATION_H
 
 #include <QtGui>
 #include <QApplication>
