@@ -48,8 +48,9 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par1, row++, 0 );
 
    ct_par1 = new QwtCounter(this); // set parameter 1
-   ct_par1->setRange( -50, 50, 0.1 );
+   ct_par1->setRange( -50, 50, 0.01 );
    ct_par1->setValue( par1 );
+   ct_par1->setNumButtons( 3 );
    connect (ct_par1, SIGNAL(valueChanged (double)), this, SLOT(update_par1(double)));
    top->addWidget( ct_par1, row++, 0 );
    
@@ -57,8 +58,9 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par2, row++, 0 );
 
    ct_par2 = new QwtCounter(this); // set parameter 2
-   ct_par2->setRange( -50, 50, 0.1 );
+   ct_par2->setRange( -50, 50, 0.01 );
    ct_par2->setValue( par2 );
+   ct_par2->setNumButtons( 3 );
    connect (ct_par2, SIGNAL(valueChanged (double)), this, SLOT(update_par2(double)));
    top->addWidget( ct_par2, row++, 0 );
    
@@ -66,8 +68,9 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par3, row++, 0 );
 
    ct_par3 = new QwtCounter(this); // set parameter 3
-   ct_par3->setRange( -50, 50, 0.1 );
+   ct_par3->setRange( -50, 50, 0.01 );
    ct_par3->setValue( par3 );
+   ct_par3->setNumButtons( 3 );
    connect (ct_par3, SIGNAL(valueChanged (double)), this, SLOT(update_par3(double)));
    top->addWidget( ct_par3, row++, 0 );
    
@@ -75,8 +78,9 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par4, row++, 0 );
 
    ct_par4 = new QwtCounter(this); // set parameter 4
-   ct_par4->setRange( -50, 50, 0.1 );
+   ct_par4->setRange( -50, 50, 0.01 );
    ct_par4->setValue( par4 );
+   ct_par4->setNumButtons( 3 );
    connect (ct_par4, SIGNAL(valueChanged (double)), this, SLOT(update_par4(double)));
    top->addWidget( ct_par4, row++, 0 );
    
@@ -86,6 +90,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_resolution = new QwtCounter(this); // set s-value resolution
    ct_resolution->setRange( -50, 50, 0.1 );
    ct_resolution->setValue( resolution );
+   ct_resolution->setNumButtons( 3 );
    connect (ct_resolution, SIGNAL(valueChanged (double)), this, SLOT(update_resolution(double)));
    top->addWidget( ct_resolution, row++, 0 );
    
@@ -147,21 +152,25 @@ void US_2dPlot::calculate()
 void US_2dPlot::update_par1( double val )
 {
     par1 = val;
+    calculate();
 }
 
 void US_2dPlot::update_par2( double val )
 {
     par2 = val;
+    calculate();
 }
 
 void US_2dPlot::update_par3( double val )
 {
     par3 = val;
+    calculate();
 }
 
 void US_2dPlot::update_par4( double val )
 {
     par4 = val;
+    calculate();
 }
 
 void US_2dPlot::update_resolution( double val )
