@@ -7095,6 +7095,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
    }
 
    baseline_init_markers();
+   replot_baseline();
    disable_all();
    baseline_enables();
 }
