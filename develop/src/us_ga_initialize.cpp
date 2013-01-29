@@ -313,7 +313,7 @@ void US_GA_Initialize::setup_GUI()
 
    cnt_plot_smin= new QwtCounter(this);
    Q_CHECK_PTR(cnt_plot_smin);
-   cnt_plot_smin->setRange(0.0, 10000.0, 0.1);
+   cnt_plot_smin->setRange(0.0, 100000.0, 0.1);
    cnt_plot_smin->setValue(plot_smin);
    cnt_plot_smin->setEnabled(false);
    cnt_plot_smin->setNumButtons(3);
@@ -328,7 +328,7 @@ void US_GA_Initialize::setup_GUI()
 
    cnt_plot_smax= new QwtCounter(this);
    Q_CHECK_PTR(cnt_plot_smax);
-   cnt_plot_smax->setRange(0.0, 10000.0, 0.1);
+   cnt_plot_smax->setRange(0.0, 100000.0, 0.1);
    cnt_plot_smax->setValue(plot_smax);
    cnt_plot_smax->setEnabled(false);
    cnt_plot_smax->setNumButtons(3);
