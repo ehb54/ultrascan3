@@ -30,10 +30,13 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    unsigned int row = 0;
    s_max = 10.0;
    s_min = 1.0;
-   par1 = 4;
-   par2 = -3;
+	f_min = 1.0;
+	f_max = 4.0;
+   par1 = f_max;
+   par2 = f_min - f_max;
    par3 = 1;
-   par4 = 4;
+   par4 = 0;
+   model = 1;
    
    resolution = 100; //  start with 100 points in the s-domain
 
@@ -94,6 +97,16 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    connect (ct_resolution, SIGNAL(valueChanged (double)), this, SLOT(update_resolution(double)));
    top->addWidget( ct_resolution, row++, 0 );
    
+   QLabel* lbl_model = us_label( tr("Model #:"), -1 );
+   top->addWidget( lbl_model, row++, 0 );
+
+   ct_model = new QwtCounter(this); // set s-value model
+   ct_model->setRange( 1, 3, 1 );
+   ct_model->setValue( model );
+   ct_model->setNumButtons( 1 );
+   connect (ct_model, SIGNAL(valueChanged (double)), this, SLOT(update_model(double)));
+   top->addWidget( ct_model, row++, 0 );
+   
    
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
@@ -126,14 +139,39 @@ void US_2dPlot::calculate()
 
    x  .resize( resolution );
    y  .resize( resolution );
-   double inc = (s_max - s_min + 1.0)/resolution;
+   double inc = 1.0/resolution;
 
-   for ( int i = 0; i < resolution; i++ )
+	for ( int i = 0; i < resolution; i++ )
+	{
+		x[ i ] = i * inc;
+	}
+   switch (model)
    {
-      x[ i ] = s_min + i * inc;
-      y[ i ] = par1 + par2/(1.0 + par3 * x[ i ]);
-   }
-   
+		case 1:
+		{
+			for ( int i = 0; i < resolution; i++ )
+			{
+				y[ i ] = par1 + par2/(1.0 + par3 * x[ i ]);
+			}
+			break;
+  		}
+	   case 2:
+		{
+			for ( int i = 0; i < resolution; i++ )
+			{
+				y[ i ] = f_min + (f_max - f_min) * erf(x[i]/sqrt(2.0*par1));
+			}
+			break;
+		}
+	   case 3:
+		{
+			for ( int i = 0; i < resolution; i++ )
+			{
+				y[ i ] = f_max + (f_min - f_max) * erf(x[i]/sqrt(2.0*par1));
+			}
+			break;
+		}
+ 	}		
    plot->btnZoom->setChecked( false );
    data_plot->clear();
    data_plot->replot();
@@ -171,6 +209,41 @@ void US_2dPlot::update_par4( double val )
 {
     par4 = val;
     calculate();
+}
+
+void US_2dPlot::update_model( double val )
+{
+   model = (int) val;
+   switch (model)
+   {
+		case 1:
+		{
+   		par1 = 4;
+   		par2 = -3;
+   		par3 = 1;
+   		ct_par1->setRange( -50, 50, 0.01 );
+   		ct_par2->setRange( -50, 50, 0.01 );
+   		ct_par3->setRange( -50, 50, 0.01 );
+   		ct_par4->setRange( -50, 50, 0.01 );
+			break;
+		}
+		case 2: // error function
+		{
+   		par1 = 0.001;
+   		ct_par1->setRange( 0.001, 50, 0.001 );
+			break;
+		}
+		case 3: // error function
+		{
+   		par1 = 0.001;
+   		ct_par1->setRange( 0.001, 50, 0.001 );
+			break;
+		}
+	}
+   ct_par1->setValue( par1 );
+   ct_par2->setValue( par2 );
+   ct_par3->setValue( par3 );
+   ct_par4->setValue( par4 );
 }
 
 void US_2dPlot::update_resolution( double val )
