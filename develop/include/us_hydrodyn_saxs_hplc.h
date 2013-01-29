@@ -365,6 +365,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       double                       baseline_intercept;
       double                       baseline_slope;
+      void                         baseline_apply( QStringList files );
 
    private slots:
 

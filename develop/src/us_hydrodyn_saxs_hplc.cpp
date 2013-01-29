@@ -3127,6 +3127,8 @@ void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
       }
    }
 
+   disable_updates = true;
+
    lb_files->clearSelection();
    for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {
@@ -3135,6 +3137,9 @@ void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
          lb_files->setSelected( i, true );
       }
    }
+
+   disable_updates = false;
+   plot_files();
 
    update_enables();
 }
@@ -7102,7 +7107,140 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
 
 void US_Hydrodyn_Saxs_Hplc::baseline_apply()
 {
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) && 
+           lb_files->text( i ) != lbl_hplc->text() &&
+           lb_files->text( i ) != lbl_empty->text() )
+      {
+         files << lb_files->text( i );
+      }
+   }
+   baseline_apply( files );
 }
+
+void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
+{
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   map < QString, bool > select_files;
+
+   double start = le_baseline_start->text().toDouble();
+   double end   = le_baseline_end  ->text().toDouble();
+
+   US_Saxs_Util usu;
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      int ext = 0;
+      QString bl_name = files[ i ] + QString( "-bl%1-%2" ).arg( baseline_slope ).arg( baseline_intercept ).replace( ".", "_" );
+      while ( current_files.count( bl_name ) )
+      {
+         bl_name = files[ i ] + QString( "-bl%1-%2-%3" ).arg( baseline_slope ).arg( baseline_intercept ).arg( ++ext ).replace( ".", "_" );
+      }
+
+      unsigned int before_start = 0;
+      unsigned int after_start  = 1;
+      unsigned int before_end   = 0;
+      unsigned int after_end    = 1;
+
+      for ( unsigned int j = 1; j < f_qs[ files[ i ] ].size(); j++ )
+      {
+         if ( f_qs[ files[ i ] ][ j - 1 ] <= start &&
+              f_qs[ files[ i ] ][ j     ] >= start )
+         {
+            before_start = j - 1;
+            after_start  = j;
+         }
+         if ( f_qs[ files[ i ] ][ j - 1 ] <= end &&
+              f_qs[ files[ i ] ][ j     ] >= end )
+         {
+            before_end = j - 1;
+            after_end  = j;
+         }
+      }
+
+      double startt;
+
+      if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+      {
+         startt = 
+            ( f_qs[ files[ i ] ][ after_start ] - start )
+            / ( f_qs[ files[ i ] ][ after_start  ] -
+                f_qs[ files[ i ] ][ before_start ] );
+      } else {
+         startt = 0.5e0;
+      }
+      
+      double endt;
+
+      if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
+      {
+         endt = ( f_qs[ files[ i ] ][ after_end ] - end )
+            / ( f_qs[ files[ i ] ][ after_end  ] -
+                f_qs[ files[ i ] ][ before_end ] );
+      } else {
+         endt = 0.5e0;
+      }
+
+      double starty = 
+         ( startt ) * f_Is[ files[ i ] ][ before_start ] +
+         ( 1e0 - startt ) * f_Is[ files[ i ] ][ after_start ];
+
+      double endy = 
+         ( endt ) * f_Is[ files[ i ] ][ before_end ] +
+         ( 1e0 - endt ) * f_Is[ files[ i ] ][ after_end ];
+
+      baseline_slope     = ( endy - starty ) / ( end - start );
+      baseline_intercept = 
+         ( ( starty + endy ) -
+           baseline_slope * ( start + end ) ) / 2e0;
+
+      vector < double > bl_I = f_Is[ files[ i ] ];
+
+      for ( unsigned int j = 0; j < bl_I.size(); j++ )
+      {
+         bl_I[ j ] -= baseline_slope * f_qs[ files[ i ] ][ j ] + baseline_intercept;
+      }
+
+      select_files[ bl_name ] = true;
+
+      lb_created_files->insertItem( bl_name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( bl_name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ bl_name ] = true;
+   
+      f_pos       [ bl_name ] = f_qs.size();
+      f_qs_string [ bl_name ] = f_qs_string[ files[ i ] ];
+      f_qs        [ bl_name ] = f_qs       [ files[ i ] ];
+      f_Is        [ bl_name ] = bl_I;
+      f_errors    [ bl_name ] = f_errors   [ files[ i ] ];
+      f_is_time   [ bl_name ] = f_is_time  [ files[ i ] ];
+      editor_msg( "gray", QString( "Created %1\n" ).arg( bl_name ) );
+   }
+
+   disable_updates = true;
+
+   lb_files->clearSelection();
+
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      if ( select_files.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+
+   disable_updates = false;
+   plot_files();
+   update_enables();
+}
+
 
 void US_Hydrodyn_Saxs_Hplc::replot_baseline()
 {
