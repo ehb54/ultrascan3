@@ -167,6 +167,7 @@ class US_EXTERN US_GA_Initialize : public QFrame
       QPushButton *pb_replot3d;
       QPushButton *pb_print;
       QPushButton *pb_load_distro;
+      QPushButton *pb_make_pngs;
       QPushButton *pb_reset_peaks;
       QPushButton *pb_assign_peaks;
       QPushButton *pb_close;
@@ -179,6 +180,8 @@ class US_EXTERN US_GA_Initialize : public QFrame
       QCheckBox *cb_autolimit;
       QListBox *lb_solutes;
       QProgressBar *progress;
+
+      void load_distro( QString file, bool use_autolimit = true );
 
    public slots:
       
@@ -209,6 +212,7 @@ class US_EXTERN US_GA_Initialize : public QFrame
       void select_2dim();
       void select_autolimit();
       void load_distro();
+      void make_pngs();
       void load_color();
       void calc_distro();
       void reset_peaks_replot();

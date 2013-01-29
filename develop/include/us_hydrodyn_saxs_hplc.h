@@ -303,7 +303,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QString last_load_dir;
       bool    save_files( QStringList files );
-      bool    save_file( QString file );
+      bool    save_file ( QString file, bool &overwrite, bool &cancel );
       bool    save_files_csv( QStringList files );
 
       csv                          csv_conc;

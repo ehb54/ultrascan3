@@ -4653,6 +4653,95 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
    return *path + *base + *ext;
 }
 
+QString US_Hydrodyn::fileNameCheck2( QString filename, 
+                                     bool &cancel, 
+                                     bool &overwrite_all, 
+                                     int mode, QWidget *p )
+{
+   // checks to see if file name exists, and if it does, according to 'mode'
+   // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
+
+   if ( !QFile::exists(filename) )
+   {
+      return filename;
+   }
+
+   // file does exist
+   // based upon mode, do next stuff
+
+   QFileInfo fi(filename);
+   QString path = fi.dirPath() + QDir::separator();
+   QString base = fi.baseName(true);
+   QString ext = fi.extension(false);
+   ext = ext.length() ? "." + ext : ext;
+   fileNameCheck2( &path, &base, &ext, cancel, overwrite_all, mode, p);
+   return path + base + ext;
+}
+
+QString US_Hydrodyn::fileNameCheck2( QString *path, 
+                                     QString *base, 
+                                     QString *ext, 
+                                     bool &cancel,
+                                     bool &overwrite_all,
+                                     int mode, 
+                                     QWidget *p )
+{
+   if ( !QFile::exists(*path + *base + *ext) )
+   {
+      return *path + *base + *ext;
+   }
+
+   if ( mode == 1 )
+   {
+      // split filename into pieces, do increment until !exists
+      QRegExp rx("-(\\d+)$");
+      do 
+      {
+         if ( rx.search(*base) != -1 ) 
+         {
+            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+         } else {
+            *base += "-1";
+         }
+      } while ( QFile::exists(*path + *base + *ext) );
+         
+      return *path + *base + *ext;
+   }
+
+   // do the fancy window stuff with filename split up into pieces
+   // make up a window with notice,
+   // filename dirpath (fixed) base (editable) ext (fixed)
+   // choices: auto-increment / try again 
+
+   int result;
+
+   US_Hydrodyn_File2 *hf2 = new US_Hydrodyn_File2( path, 
+                                                   base, 
+                                                   ext, 
+                                                   cancel,
+                                                   overwrite_all,
+                                                   &result, 
+                                                   p );
+   fixWinButtons( hf2 );
+
+   do 
+   {
+      hf2->exec();
+   } while ( result == -1 );
+
+   switch ( result )
+   {
+   case 0 : // overwrite
+   case 2 : // try again
+      break;
+   case 1 : // auto inc
+      return fileNameCheck(path, base, ext, 1);
+      break;
+   }
+   delete hf2;
+   return *path + *base + *ext;
+}
+
 void US_Hydrodyn::dmd_run()
 {
    if ( pdb_file.isEmpty() )

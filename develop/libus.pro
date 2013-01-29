@@ -206,6 +206,7 @@ SOURCES += \
   src/us_hydrodyn_dmd_core.cpp \
   src/us_hydrodyn_dmd_options.cpp \
   src/us_hydrodyn_file.cpp \
+  src/us_hydrodyn_file2.cpp \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
   src/us_hydrodyn_hydrate.cpp \
@@ -505,6 +506,7 @@ HEADERS += \
   include/us_hydrodyn_dammin_opts.h \
   include/us_hydrodyn_dmd_options.h \
   include/us_hydrodyn_file.h \
+  include/us_hydrodyn_file2.h \
   include/us_hydrodyn_grid.h \
   include/us_hydrodyn_grid_atob.h \
   include/us_hydrodyn_hydro.h \

@@ -65,6 +65,7 @@
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
 #include "us_hydrodyn_file.h"
+#include "us_hydrodyn_file2.h"
 #include "us_hydrodyn_dammin_opts.h"
 #include "us_hydrodyn_bd_load_results_opts.h"
 #include "us_hydrodyn_bd.h"
@@ -163,6 +164,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       unsigned int numThreads; // local copy of USglobal->config_list.numThreads
       static QString fileNameCheck( QString filename, int mode = 0, QWidget *p = 0 ); 
       static QString fileNameCheck( QString *path, QString *base, QString *ext, int mode = 0, QWidget *p = 0 ); 
+      static QString fileNameCheck2( QString filename, bool &cancel, bool &overwrite_all, int mode = 0, QWidget *p = 0 ); 
+      static QString fileNameCheck2( QString *path, QString *base, QString *ext, bool &cancel, bool &overwrite_all, int mode = 0, QWidget *p = 0 ); 
       // checks to see if file name exists, and if it does, according to 'mode'
       // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo

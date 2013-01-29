@@ -353,7 +353,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lb_created_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_created_files->setEnabled(true);
-   lb_created_files->setSelectionMode( QListBox::Multi );
+   lb_created_files->setSelectionMode( QListBox::Extended );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( selectionChanged() ), SLOT( update_created_files() ) );
    connect( lb_created_files, 
@@ -2628,18 +2628,25 @@ bool US_Hydrodyn_Saxs_Hplc::save_files( QStringList files )
 {
 
    bool errors = false;
+   bool overwrite_all = false;
+   bool cancel        = false;
    for ( int i = 0; i < (int)files.size(); i++ )
    {
-      if ( !save_file( files[ i ] ) )
+      if ( !save_file( files[ i ], cancel, overwrite_all ) )
       {
          errors = true;
+      }
+      if ( cancel )
+      {
+         editor_msg( "red", tr( "save cancelled" ) );
+         break;
       }
    }
    update_enables();
    return !errors;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::save_file( QString file )
+bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwrite_all )
 {
    if ( !QDir::setCurrent( last_load_dir ) )
    {
@@ -2662,10 +2669,14 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file )
       use_filename = file + ".dat";
    }
 
-   if ( QFile::exists( use_filename ) )
+   if ( !overwrite_all && QFile::exists( use_filename ) )
    {
-      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck2( use_filename, cancel, overwrite_all, 0, this );
       raise();
+      if ( cancel )
+      {
+         return false;
+      }
    }
 
    QFile f( use_filename );

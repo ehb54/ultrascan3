@@ -342,6 +342,12 @@ void US_GA_Initialize::setup_GUI()
    pb_load_distro->setAutoDefault(false);
    connect(pb_load_distro, SIGNAL(clicked()), SLOT(load_distro()));
 
+   pb_make_pngs = new QPushButton(tr(" Make PNGs "), this);
+   pb_make_pngs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_make_pngs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_make_pngs->setAutoDefault(false);
+   connect(pb_make_pngs, SIGNAL(clicked()), SLOT(make_pngs()));
+
    pb_help = new QPushButton(tr(" Help "), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -552,7 +558,11 @@ void US_GA_Initialize::setup_GUI()
    controlGrid->addWidget(cb_1dim, j, 1);
    controlGrid->setRowStretch(j, 0);
    j++;
-   controlGrid->addWidget(pb_print, j, 0);
+   QHBoxLayout *hbl_print_pngs = new QHBoxLayout(0);
+   hbl_print_pngs->addWidget( pb_print );
+   hbl_print_pngs->addWidget( pb_make_pngs );
+
+   controlGrid->addLayout( hbl_print_pngs, j, 0);
    controlGrid->addWidget(cb_2dim, j, 1);
    controlGrid->setRowStretch(j, 0);
    j++;
@@ -758,7 +768,28 @@ void US_GA_Initialize::shrink()
    pb_save->setEnabled(true);
 }
 
-void US_GA_Initialize::load_distro()
+void US_GA_Initialize::make_pngs()
+{
+   QStringList filenames = QFileDialog::getOpenFileNames(
+                                                         "*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* *.global_mc_dis.* "
+                                                         , USglobal->config_list.result_dir
+                                                         , this
+                                                         , "open file dialog"
+                                                         , "Add files" // 
+                                                         );
+
+   cb_autolimit->setChecked( false );
+   for ( unsigned int i = 0; i < ( unsigned int ) filenames.size(); i++ )
+   {
+      load_distro( filenames[ i ], false );
+      qApp->processEvents();
+      plot_3dim();
+      qApp->processEvents();
+      cout << QString( "%1 of %2\n" ).arg( i + 1 ).arg( filenames.size() ).ascii();
+   }
+}   
+
+void US_GA_Initialize::load_distro( QString file, bool use_autolimit )
 {
    QFile f;
    unsigned int index, i;
@@ -787,8 +818,7 @@ void US_GA_Initialize::load_distro()
    struct SimulationComponent temp_component;
    component.clear(); // save monte carlo data for statistics and sort them from this vector
    Solute temp_solute;
-   filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-                                           "*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* *.global_mc_dis.* ", 0);
+   filename = file;
    index = filename.findRev(".", -1, true);
    cell_info = filename.right(filename.length() - index);
    f.setName(filename);
@@ -1073,7 +1103,7 @@ void US_GA_Initialize::load_distro()
       cnt_k_range->setRange(k_tmp, high_k*2, k_tmp);
       cnt_k_range->setValue(k_range);
       cnt_k_range->setEnabled(true);
-      cb_autolimit->setChecked(true);
+      cb_autolimit->setChecked( use_autolimit );
       connect(cnt_s_range, SIGNAL(valueChanged(double)), SLOT(update_s_range(double)));
       connect(cnt_k_range, SIGNAL(valueChanged(double)), SLOT(update_k_range(double)));
    }
@@ -1095,15 +1125,19 @@ void US_GA_Initialize::load_distro()
    diff = fmax - fmin;
    fmin -= diff/10;
    fmax += diff/10;
-   cnt_plot_fmin->setValue(fmin);
-   cnt_plot_smin->setValue(smin);
-   cnt_plot_fmax->setValue(fmax);
-   cnt_plot_smax->setValue(smax);
-   cnt_plot_fmin->setEnabled(false);
-   cnt_plot_smin->setEnabled(false);
-   cnt_plot_fmax->setEnabled(false);
-   cnt_plot_smax->setEnabled(false);
-   autolimit = false;
+
+   if ( use_autolimit )
+   {
+      cnt_plot_fmin->setValue(fmin);
+      cnt_plot_smin->setValue(smin);
+      cnt_plot_fmax->setValue(fmax);
+      cnt_plot_smax->setValue(smax);
+      cnt_plot_fmin->setEnabled(false);
+      cnt_plot_smin->setEnabled(false);
+      cnt_plot_fmax->setEnabled(false);
+      cnt_plot_smax->setEnabled(false);
+      autolimit = false;
+   }
    plot->clear();
    double *x, *y;
    unsigned int curve;
@@ -1149,6 +1183,13 @@ void US_GA_Initialize::load_distro()
       pb_assign_peaks->setEnabled(true);
    }
    //   //cerr << "Solute size in setup_gui: " << GA_Solute.size() << endl;
+}
+
+
+void US_GA_Initialize::load_distro()
+{
+   load_distro( QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
+                                             "*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* *.global_mc_dis.* ", 0) );
 }
 
 void US_GA_Initialize::plot_1dim()
