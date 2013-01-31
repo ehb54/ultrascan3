@@ -280,7 +280,7 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
  << "ets" << ktimes;
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
-   // compose final iteration status message
+   // compose final status message
    QString pmsg = pmessage_head() +
       tr( "The Solution has converged...\n"
           "Threads:  %1 ;   Lines/Models:  %2\n"
@@ -296,10 +296,14 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
          .arg( ktimem ).arg( ktimes );
 
    max_rss();
-   double memmb  = (double)maxrss / 1024.0;
+   int memmb  = qRound( (double)maxrss / 1024.0 );
 
-   pmsg += tr( "Maximum memory used:  " )
-           + QString::number( qRound( memmb ) ) + " MB";
+   pmsg += tr( "Maximum memory used:  " ) +
+           QString::number( memmb ) + " MB\n\n" +
+           tr( "The best model (RMSD=%1) is at index %2 :\n" )
+           .arg( mrec.rmsd ).arg( mrec.taskx ) + 
+           tr( "  the line from s,f/f0  %1, %2  to %3, %4 ." )
+           .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
 
    emit message_update( pmsg, false );          // signal final message
 
@@ -429,7 +433,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
  << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
 
    emit message_update( pmessage_head() +
-      tr( "Computations for %1 of %2 models are complete" )
+      tr( "Computations for %1 of %2 models are complete." )
       .arg( kctask ).arg( nmtasks ), false );
 
    if ( kctask >= nmtasks )
@@ -460,6 +464,17 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
       qSort( mrecs );                    // sort model records by variance
 
       process_final( mrecs[ 0 ] );
+//*DBG*
+if (dbg_level>0) {
+ for (int ii=0;ii<mrecs.size();ii++)
+ {
+   DbgLv(1) << "MREC:rank" << ii << "taskx" << mrecs[ii].taskx
+    << "st_k en_k" << mrecs[ii].str_k << mrecs[ii].end_k
+    << "vari,rmsd" << mrecs[ii].variance << mrecs[ii].rmsd
+    << "ncsols" << mrecs[ii].csolutes.size();
+ }
+}
+//*DBG*
    }
 }
 
@@ -503,8 +518,8 @@ void US_1dsaProcess::free_worker( int tx )
 QString US_1dsaProcess::pmessage_head()
 {
    QString ctype = tr( "Straight Line" );
-   return tr( "1DSA Analysis of %1 %2-solute %3 Models.\n" )
-          .arg( nmtasks ).arg( cresolu ).arg( ctype );
+   return tr( "Analysis of %1 %2 Models, with %3 solutes each.\n" )
+          .arg( nmtasks ).arg( ctype ).arg( cresolu );
 }
 
 // Get next job from queue, insuring we get the lowest depth

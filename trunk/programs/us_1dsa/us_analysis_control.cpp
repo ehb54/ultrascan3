@@ -87,7 +87,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_cresolu ->setStep(    1 );
    ct_thrdcnt ->setStep(    1 );
    cmb_curvtype = us_comboBox();
-   cmb_curvtype->addItem( "Straight Lines" );
+   cmb_curvtype->addItem( "Straight Line" );
    cmb_curvtype->addItem( "Horizontal" );
    cmb_curvtype->addItem( "Aggregating Fibrils" );
    cmb_curvtype->addItem( "Aggregating Clathrin" );
