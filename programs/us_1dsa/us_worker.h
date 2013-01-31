@@ -28,8 +28,8 @@ typedef struct work_packet_s
    int     state;      // state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
    int     noisf;      // noise flag (0-3 for NONE,TI,RI,BOTH)
 
-   double  ll_s;       // subgrid lower-limit s
-   double  ll_k;       // subgrid lower-limit k
+   double  str_k;      // model start k value
+   double  end_k;      // model end   k value
 
    QVector< US_Solute >     isolutes;  // input solutes
    QVector< US_Solute >     csolutes;  // computed solutes
@@ -76,8 +76,8 @@ class WorkerThread : public QThread
 
       long int maxrss;
 
-      double  llim_s;        // lower limit in s (UGRID)
-      double  llim_k;        // lower limit in k (UGRID)
+      double  str_k;         // start model k value
+      double  end_k;         // end   model k value
 
       int     thrn;          // thread number (1,...)
       int     taskx;         // grid refinement task index

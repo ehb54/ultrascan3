@@ -31,6 +31,35 @@ class US_1dsaProcess : public QObject
 
    public:
 
+      //! Class for holding information on computed models from 1dsa runs
+      class ModelRecord
+      {
+         public:
+            int                  taskx;      // Task index (submit order)
+            double               str_k;      // Start k value
+            double               end_k;      // End k value
+            double               variance;   // Variance value
+            double               rmsd;       // RMSD value
+            QVector< US_Solute > isolutes;   // Input solutes
+            QVector< US_Solute > csolutes;   // Computed solutes
+            QVector< double >    ti_noise;   // Computed TI noise
+            QVector< double >    ri_noise;   // Computed RI noise
+
+            US_Model             model;      // Computed model
+            US_DataIO2::RawData  sim_data;   // Simulation data from this fit
+            US_DataIO2::RawData  residuals;  // Residuals data from this fit
+
+            //! Constructor for model record class
+            ModelRecord() {};
+
+            //! A test for ordering model descriptions. Sort by variance.
+            bool operator< ( const ModelRecord& mrec ) const
+            {
+               return ( variance < mrec.variance );
+            }
+
+      };
+
       //! The state of a task
       enum TaskState  { READY, WORKING, ABORTED };
 
@@ -76,7 +105,7 @@ class US_1dsaProcess : public QObject
 private:
 
       signals:
-      void progress_update(  int  );
+      void progress_update(  double );
       void process_complete( int  );
       void stage_complete(   int,     int  );
       void message_update(   QString, bool );
@@ -91,20 +120,20 @@ private:
       QList< WorkerThread* >     wthreads;   // worker threads
       QList< WorkPacket >        job_queue;  // job queue
 
+      QVector< ModelRecord >     mrecs;      // model records for each task
+
       QVector< int >             wkstates;   // worker thread states
 
-      QList< double >            itvaris;    // iteration variances
+      QList< double >            tkvaris;    // task variances
 
+      QList< QVector< US_Solute > > orig_sols;  // input solutes
       QList< QVector< US_Solute > > c_solutes;  // calculated solutes
-      QList< QVector< US_Solute > > orig_sols;  // original solutes
-      QList< QVector< US_Solute > > ical_sols;  // iteration calculated solutes
 
       US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
       US_DataIO2::EditedData*    bdata;      // base experimental data
       US_DataIO2::EditedData     wdata;      // work experimental data
 
       US_DataIO2::RawData        sdata;      // simulation data
-      US_DataIO2::RawData        sdata1;     // simulation data (mc iter 1)
 
       US_DataIO2::RawData        rdata;      // residuals data
 
@@ -137,7 +166,6 @@ private:
       int        minvarx;      // minimum variance model index
 
       bool       abort;        // flag used with stop_fit clicked
-      bool       fnoionly;     // flag to use noise flag on final call only
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -150,18 +178,13 @@ private:
       QTime      timer;        // timer for elapsed time measure
 
    private slots:
-      void queue_task( WorkPacket&, double, double,
-                       int, int, QVector< US_Solute > );
-      int  slmodels  ( double, double, double, double, double, int );
-      void process_job(      WorkerThread* );
-      void process_final(    WorkerThread* );
-      void step_progress(    int );
-      void requeue_tasks(    void );
-      void submit_job(       WorkPacket&, int );
-      void free_worker(      int  );
-      int  running_at_depth( int );
-      int  queued_at_depth(  int );
-      int  jobs_at_depth(    int );
+      void queue_task   ( WorkPacket&, double, double,
+                          int, int, QVector< US_Solute > );
+      int  slmodels     ( double, double, double, double, double, int );
+      void process_job  ( WorkerThread* );
+      void process_final( ModelRecord&  );
+      void submit_job   ( WorkPacket&, int );
+      void free_worker  ( int  );
       QString pmessage_head( void );
       WorkPacket next_job  ( void );
 };
