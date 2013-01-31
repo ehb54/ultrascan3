@@ -41,8 +41,8 @@ DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
 void WorkerThread::define_work( WorkPacket& workin )
 {
 
-   llim_s      = workin.ll_s;
-   llim_k      = workin.ll_k;
+   str_k       = workin.str_k;
+   end_k       = workin.end_k;
    thrn        = workin.thrn;
    taskx       = workin.taskx;
    noisflag    = workin.noisf;
@@ -50,7 +50,6 @@ void WorkerThread::define_work( WorkPacket& workin )
 
    solutes_i   = workin.isolutes;
 
-   //dsets << workin.dsets[ 0 ];
    dset_wk              = *(workin.dsets[ 0 ]);  // local copy of data set
    dset_wk.noise_files  = workin.dsets[ 0 ]->noise_files;
    dset_wk.run_data     = workin.dsets[ 0 ]->run_data;
@@ -70,8 +69,8 @@ void WorkerThread::define_work( WorkPacket& workin )
 // get results of a completed worker thread
 void WorkerThread::get_result( WorkPacket& workout )
 {
-   workout.ll_s     = llim_s;
-   workout.ll_k     = llim_k;
+   workout.str_k    = str_k;
+   workout.end_k    = end_k;
    workout.thrn     = thrn;
    workout.taskx    = taskx;
    workout.noisf    = noisflag;
@@ -113,8 +112,8 @@ void WorkerThread::calc_residuals()
 
    solvesim            = new US_SolveSim( dsets, thrn, true );
 
-   connect( solvesim, SIGNAL(  work_progress( int ) ),
-            this,     SLOT( forward_progress( int ) ) );
+//   connect( solvesim, SIGNAL(  work_progress( int ) ),
+//            this,     SLOT( forward_progress( int ) ) );
 
    sim_vals.solutes    = solutes_i;
 

@@ -20,10 +20,9 @@ US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    maxrss           = 0;              // max memory
    ntisols          = 0;              // number total task input solutes
    ntcsols          = 0;              // number total task computed solutes
-   fnoionly         = US_Settings::debug_match( "1dsaFinalNoiseOnly" );
 
-   itvaris  .clear();                 // iteration variances
-   ical_sols.clear();                 // iteration final calculated solutes
+   tkvaris  .clear();                 // task variances
+   mrecs    .clear();                 // computed model records
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
    nscans           = bdata->scanData.size();
@@ -33,7 +32,8 @@ US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    nmtasks          = 100;
    kctask           = 0;
    kstask           = 0;
-
+   varimin          = 99e+99;
+   minvarx          = 99999;
 }
 
 // Get maximum used memory
@@ -69,8 +69,8 @@ DbgLv(1) << "2P(1dsaProc): start_fit()";
    c_solutes.clear();
 
    orig_sols.clear();
-   itvaris  .clear();
-   ical_sols.clear();
+   tkvaris  .clear();
+   mrecs    .clear();
 
 DbgLv(1) << "2P: sll sul" << slolim << suplim
  << " kll kul kin" << klolim << kuplim << kincr
@@ -103,17 +103,17 @@ DbgLv(1) << "2P:   nctotal nthreads" << nctotal << nthreads;
    max_rss();
 DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
-   int    jnois = fnoionly ? 0 : noisflag;
    QList< QVector< US_Solute > > solute_list;
 
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
    {
       WorkPacket wtask;
-      double llss = orig_sols[ ktask ][ 0 ].s;
-      double llsk = orig_sols[ ktask ][ 0 ].k;
+      int    mm   = orig_sols[ ktask ].size() - 1;
+      double strk = orig_sols[ ktask ][ 0  ].k;
+      double endk = orig_sols[ ktask ][ mm ].k;
 
-      queue_task( wtask, llss, llsk, ktask, jnois, orig_sols[ ktask ] );
+      queue_task( wtask, strk, endk, ktask, noisflag, orig_sols[ ktask ] );
    }
 
    // Start the first threads. This will begin the first work units (subgrids).
@@ -171,30 +171,12 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
       tr( "All computations have been aborted." ), false );
 }
 
-// Slot for thread step progress:  signal control progress bar
-void US_1dsaProcess::step_progress( int ksteps )
-{
-   max_rss();
-   ksteps = 1;
-//DbgLv(2) << "StpPr: ks kcs    " << ksteps << kcsteps;
-
-   emit progress_update( kcsteps );   // pass progress on to control window
-}
-
-// Slot to handle output of final pass on composite calculated solutes
-void US_1dsaProcess::process_final( WorkerThread* wthrd )
+// Slot to handle the low-variance record of calculated solutes
+void US_1dsaProcess::process_final( ModelRecord& mrec )
 {
    if ( abort ) return;
 
-   WorkPacket wresult;
-
-   wthrd->get_result( wresult );     // get results of thread task
-
-   if ( c_solutes.size() < 1 )
-      c_solutes << QVector< US_Solute >();
-
-   c_solutes[ 0 ] =  wresult.csolutes;  // final iter calc'd solutes
-   int nsolutes = c_solutes[ 0 ].size();
+   int nsolutes = mrec.csolutes.size();
 
    QVector< double > tinvec( npoints,  0.0 );
    QVector< double > rinvec( nscans,   0.0 );
@@ -208,8 +190,8 @@ void US_1dsaProcess::process_final( WorkerThread* wthrd )
 
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         ti_noise.values[ rr ] = wresult.ti_noise[ rr ];
-         tinvec         [ rr ] = wresult.ti_noise[ rr ];
+         ti_noise.values[ rr ] = mrec.ti_noise[ rr ];
+         tinvec         [ rr ] = mrec.ti_noise[ rr ];
       }
    }
 
@@ -220,8 +202,8 @@ void US_1dsaProcess::process_final( WorkerThread* wthrd )
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         ri_noise.values[ ss ] = wresult.ri_noise[ ss ];
-         rinvec         [ ss ] = wresult.ri_noise[ ss ];
+         ri_noise.values[ ss ] = mrec.ri_noise[ ss ];
+         rinvec         [ ss ] = mrec.ri_noise[ ss ];
       }
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
@@ -233,52 +215,42 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
  << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
-   qSort( c_solutes[ 0 ] );
-   //double bf_mult     = simparms->band_forming
-   //                   ? simparms->cp_width
-   //                   : 1.0;
+   qSort( mrec.csolutes );
 
    // build the final model
+   for ( int cc = 0; cc < nsolutes; cc++ )
+   {
+      // Get standard-space solute values (20,W)
+      US_Model::SimulationComponent mcomp;
+      mcomp.vbar20 = vbar20;
+      mcomp.s      = mrec.csolutes[ cc ].s;
+      mcomp.D      = 0.0;
+      mcomp.mw     = 0.0;
+      mcomp.f      = 0.0;
+      mcomp.f_f0   = mrec.csolutes[ cc ].k;
+      mcomp.signal_concentration
+                   = mrec.csolutes[ cc ].c;
 
-   {  // Normal case of varying f/f0
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         // Get standard-space solute values (20,W)
-         US_Model::SimulationComponent mcomp;
-         mcomp.vbar20 = vbar20;
-         mcomp.s      = c_solutes[ 0 ][ cc ].s;
-         mcomp.D      = 0.0;
-         mcomp.mw     = 0.0;
-         mcomp.f      = 0.0;
-         mcomp.f_f0   = c_solutes[ 0 ][ cc ].k;
-         //mcomp.signal_concentration
-         //             = c_solutes[ 0 ][ cc ].c * bf_mult;
-         mcomp.signal_concentration
-                      = c_solutes[ 0 ][ cc ].c;
-
-         // Complete other coefficients in standard-space
-         model.calc_coefficients( mcomp );
+      // Complete other coefficients in standard-space
+      model.calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D;
 
-         // Convert to experiment-space for simulation below
-         mcomp.s     *= sfactor;
-         mcomp.D     *= dfactor;
+      // Convert to experiment-space for simulation below
+      mcomp.s     *= sfactor;
+      mcomp.D     *= dfactor;
 DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
-         model.components[ cc ]  = mcomp;
-      }
-   }  // Constant vbar
+      model.components[ cc ]  = mcomp;
+   }
 
-DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0][0].c
- << c_solutes[0][qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
+DbgLv(1) << "FIN_FIN:    c0 cn" << mrec.csolutes[0].c
+ << mrec.csolutes[qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
    nscans           = edata->scanData.size();
    npoints          = edata->x.size();
-   double vari      = wresult.sim_vals.variances[ 0 ];
-DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-   US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
-   US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
+   US_DataIO2::RawData* simdat = &mrec.sim_data;
+   US_DataIO2::RawData* resids = &mrec.residuals;
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
@@ -295,12 +267,7 @@ int mmr=npoints/2;
 DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
  << sdata.value(mms,mmr) << rdata.value(mms,mmr);
 
-   // set variance and communicate to control through residual's scan 0
-   itvaris   << vari;
-   ical_sols << c_solutes[ 0 ];
-   US_DataIO2::Scan* rscan0 = &rdata.scanData[ 0 ];
-   rscan0->delta_r    = vari;
-DbgLv(1) << "FIN_FIN: vari" << rscan0->delta_r;
+DbgLv(1) << "FIN_FIN: vari" << mrec.variance;
 
    // determine elapsed time
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
@@ -308,7 +275,7 @@ DbgLv(1) << "FIN_FIN: vari" << rscan0->delta_r;
    int ktimem = ( ktimes - ktimeh * 3600 ) / 60;
 double bvol = dsets[0]->simparams.band_volume;
 bvol=dsets[0]->simparams.band_forming?bvol:0.0;
-DbgLv(1) << "done: vari bvol" << vari << bvol
+DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
  << "slun klun" << slolim << suplim << klolim << kuplim << kincr
  << "ets" << ktimes;
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
@@ -336,8 +303,6 @@ DbgLv(1) << "done: vari bvol" << vari << bvol
 
    emit message_update( pmsg, false );          // signal final message
 
-   int thrx   = wresult.thrn - 1;
-   free_worker( thrx );
 DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
@@ -395,9 +360,8 @@ void US_1dsaProcess::submit_job( WorkPacket& wtask, int thrx )
 
    connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
             this, SLOT(   process_job(   WorkerThread* ) ) );
-   connect( wthr, SIGNAL( work_progress( int           ) ),
-            this, SLOT(   step_progress( int           ) ) );
-DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx;
+DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
+ << "sk ek" << wtask.str_k << wtask.end_k;
 
    wthr->start();
 }
@@ -426,76 +390,89 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
     << " s,ff0" << wresult.csolutes[mm].s*1.0e+13
     << wresult.csolutes[mm].k; } }
 //DBG-CONC
+   double variance = wresult.sim_vals.variances[ 0 ];
+   if ( variance < varimin )
+   {
+      varimin   = variance;
+      minvarx   = taskx;
+   }
+
+   // Save variance and model record for this task result
+   ModelRecord mrec;
+   mrec.taskx      = taskx;
+   mrec.str_k      = wresult.str_k;
+   mrec.end_k      = wresult.end_k;
+   mrec.variance   = variance;
+   mrec.rmsd       = ( variance > 0.0 ) ? sqrt( variance ) : 99.9;
+   mrec.isolutes   = wresult.isolutes;
+   mrec.csolutes   = wresult.csolutes;
+   mrec.ti_noise   = wresult.ti_noise;
+   mrec.ri_noise   = wresult.ri_noise;
+   mrec.sim_data   = wresult.sim_vals.sim_data;
+   mrec.residuals  = wresult.sim_vals.residuals;
+
+   tkvaris   << variance;
+   c_solutes << mrec.csolutes;
+   mrecs     << mrec;
+DbgLv(1) << "THR_FIN:  taskx minvarx varimin" << taskx << minvarx << varimin;
 
    max_rss();
 
-   free_worker( thrx );            // free up this worker thread
+   free_worker( thrx );               // free up this worker thread
 
    if ( abort )
       return;
 
-   // This loop should only execute, at most, once per result
-   while( c_solutes.size() < 1 )
-      c_solutes << QVector< US_Solute >();
-
-   {  // this result is from depth 0, it is from initial subgrids pass
-      kctask++;                      // bump count of completed subgrid tasks
+   kctask++;                          // bump count of completed subgrid tasks
+   emit progress_update( variance );  // pass progress on to control window
 DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
  << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
 
+   emit message_update( pmessage_head() +
+      tr( "Computations for %1 of %2 models are complete" )
+      .arg( kctask ).arg( nmtasks ), false );
+
+   if ( kctask >= nmtasks )
+   {  // all subgrid tasks are now complete
+      emit stage_complete( kcsteps, nctotal );
+
       emit message_update( pmessage_head() +
-         tr( "Computations for %1 of %2 subgrids are complete" )
-         .arg( kctask ).arg( nmtasks ), false );
+         tr( "All models have now been completed. Evaluating..." ), false );
+   }
 
-      if ( kctask >= nmtasks )
-      {  // all subgrid tasks are now complete
-         emit stage_complete( kcsteps, nctotal );
+   if ( kctask < nmtasks )
+   { // Not the last:  add to the queue is necessary
+      // Submit jobs while queue is not empty and a worker thread is ready
+      while ( ! job_queue.isEmpty() &&
+              ( thrx = wkstates.indexOf( READY ) ) >= 0 )
+      {
+         WorkPacket wtask = next_job();
 
-         emit message_update( pmessage_head() +
-            tr( "Computing depth 1 solutions and beyond ..." ), false );
+         submit_job( wtask, thrx );
+         kstask++;                       // bump count of started worker threads
+
       }
    }
 
-   // Add the current results
-   c_solutes[ 0 ] += wresult.csolutes;
+   else
+   { // We have done the last computation, so determine the low-rmsd result
 
-   // Is anyone working?
-   bool no_working = wkstates.indexOf( WORKING ) < 0;
-DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working
- << c_solutes[0].size() << wresult.csolutes.size();
+      qSort( mrecs );                    // sort model records by variance
 
-   // Submit one last time with all solutes if necessary
-   if ( job_queue.isEmpty()  &&
-        no_working           &&
-        c_solutes[ 0 ].size() >= wresult.csolutes.size() )
-   {
-      return;
+      process_final( mrecs[ 0 ] );
    }
-DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
- << wkstates.indexOf( READY );
-
-   // Submit jobs while queue is not empty and a worker thread is ready
-   while ( ! job_queue.isEmpty() && ( thrx = wkstates.indexOf( READY ) ) >= 0 )
-   {
-      WorkPacket wtask = next_job();
-
-      submit_job( wtask, thrx );
-      kstask++;                       // bump count of started worker threads
-
-   }
-
 }
 
 // Build a task and add it to the queue
-void US_1dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
+void US_1dsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
       int taskx, int noisf, QVector< US_Solute > isolutes )
 {
    wtask.thrn     = 0;             // thread number (none while queued)
    wtask.taskx    = taskx;         // task index
    wtask.noisf    = noisf;         // noise flag
    wtask.state    = READY;         // initialized state, ready for submit
-   wtask.ll_s     = llss;          // lower limit s (x 1e13)
-   wtask.ll_k     = llsk;          // lower limit k
+   wtask.str_k    = strk;          // start k value
+   wtask.end_k    = endk;          // end   k value
    wtask.dsets    = dsets;         // pointer to experiment data
    wtask.isolutes = isolutes;      // solutes for calc_residuals task
 
@@ -523,89 +500,11 @@ void US_1dsaProcess::free_worker( int tx )
    }
 }
 
-// Estimate progress steps after depth 0 from given total of calculated solutes.
-//   For maxtsols=100, estimate 95 solutes per task
-//   Calculate tasks needed for given depth 0 calculated steps
-//   Bump a bit for NNLS and any noise
-//   Multiply steps per task times number of tasks
-//     Repeat for subsequent depths, assuming calculated solutes 1/8 of input
-int US_1dsaProcess::estimate_steps( int ncsol )
-{
-   return ( ncsol );
-}
-
-// count queued jobs at a given depth
-int US_1dsaProcess::queued_at_depth( int /*depth*/ )
-{
-   int count = job_queue.size();
-
-   return count;
-}
-
-// count running jobs at a given depth
-int US_1dsaProcess::running_at_depth( int /*depth*/ )
-{
-   int count = 0;
-
-   for ( int ii = 0; ii < nthreads; ii++ )
-   {
-      if ( wkstates[ ii ] == WORKING  &&
-           wthreads[ ii ] != 0 )
-         count++;
-   }
-
-   return count;
-}
-
-// count all queued and running jobs at a given depth
-int US_1dsaProcess::jobs_at_depth( int /*depth*/ )
-{
-   return queued_at_depth( 0 ) + running_at_depth( 0 );
-}
-
-// Re-queue all the original subgrid tasks
-void US_1dsaProcess::requeue_tasks()
-{
-   kcsteps   = 0;
-   emit stage_complete( kcsteps, nctotal );
-   int jnois = 0;
-
-   for ( int ktask = 0; ktask < nmtasks; ktask++ )
-   {
-      double llss = orig_sols[ ktask ][ 0 ].s;
-      double llsk = orig_sols[ ktask ][ 0 ].k;
-      // Get the solutes originally created for this subgrid
-      QVector< US_Solute > isolutes = orig_sols[ ktask ];
-      WorkPacket wtask;
-      queue_task( wtask, llss, llsk, ktask, jnois, isolutes );
-   }
-
-   // Make sure calculated solutes are cleared out for new iteration
-   for ( int ii = 0; ii < c_solutes.size(); ii++ )
-      c_solutes[ ii ].clear();
-
-   // Start the first threads
-   for ( int ii = 0; ii < nthreads; ii++ )
-   {
-      WorkPacket wtask = job_queue.takeFirst();
-      submit_job( wtask, ii );
-   }
-
-   kstask    = nthreads;
-   kctask    = 0;
-   ntisols   = 0;
-   ntcsols   = 0;
-
-   emit message_update(
-      tr( "Starting computations of %1 subgrids\n"
-          "  using %2 threads ..." )
-      .arg( nmtasks ).arg( nthreads ), true );
-}
-
 QString US_1dsaProcess::pmessage_head()
 {
-   return tr( "Model %1,  Iteration %2:\n" )
-          .arg( 1 ).arg( 1 );
+   QString ctype = tr( "Straight Line" );
+   return tr( "1DSA Analysis of %1 %2-solute %3 Models.\n" )
+          .arg( nmtasks ).arg( cresolu ).arg( ctype );
 }
 
 // Get next job from queue, insuring we get the lowest depth
@@ -628,13 +527,13 @@ DbgLv(1) << "NEXTJ:   wtask" << &wtask << &job_queue[jobx];
    return wtask;
 }
 
-
 // Build all the straight-line models
 int US_1dsaProcess::slmodels( double slo, double sup, double klo,
       double kup, double kin, int res )
 {
 DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
    << kin << res;
+   double vbar20   = dsets[ 0 ]->vbar20;
    double srng     = sup - slo;
    double rinc     = 1.0 / ( res - 1 );
    double incs     = srng * rinc;
@@ -660,14 +559,18 @@ DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
             double kval     = kst + inck * kk;
             solu.s          = sval * 1.0e-13;
             solu.k          = kval;
+            solu.v          = vbar20;
             solute_i << solu;
+DbgLv(1) << "SLMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
          }
 
+DbgLv(1) << "SLMO:   solute_i size" <<  solute_i.size();
          orig_sols << solute_i;
          ken            += kin;
       }
       kst            += kin;
    }
+DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size();
 
    return nmodels;
 }

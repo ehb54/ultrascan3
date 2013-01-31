@@ -17,6 +17,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    parentw        = p;
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
+   varimin        = 9e+99;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -91,7 +92,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    cmb_curvtype->addItem( "Aggregating Fibrils" );
    cmb_curvtype->addItem( "Aggregating Clathrin" );
    cmb_curvtype->setCurrentIndex( 0 );
-DbgLv(1) << "GUIsu-A";
 
    le_estmemory = us_lineedit( "100 MB", -1, true );
    le_minvari   = us_lineedit( "0.000e-05", -1, true );
@@ -133,7 +133,6 @@ DbgLv(1) << "GUIsu-A";
    QLabel* lb_optspace1    = us_banner( "" );
    controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
    controlsLayout->setRowStretch( row, 2 );
-DbgLv(1) << "GUIsu-C";
 
    row           = 0;
    optimizeLayout->addWidget( lb_estmemory,  row,   0, 1, 2 );
@@ -146,17 +145,13 @@ DbgLv(1) << "GUIsu-C";
    optimizeLayout->addWidget( te_status,     row,   0, 2, 4 );
    le_estmemory->setMinimumWidth( lb_estmemory->width() );
    te_status   ->setMinimumWidth( lb_estmemory->width()*4 );
-DbgLv(1) << "GUIsu-D4";
    row    += 6;
 
    QLabel* lb_optspace     = us_banner( "" );
    optimizeLayout->addWidget( lb_optspace,   row,   0, 1, 4 );
    optimizeLayout->setRowStretch( row, 2 );
-DbgLv(1) << "GUIsu-D5";
 
-DbgLv(1) << "GUIsu-D";
    optimize_options();
-DbgLv(1) << "GUIsu-E";
 
    connect( ct_thrdcnt,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
@@ -186,9 +181,7 @@ DbgLv(1) << "GUIsu-E";
 
    edata          = &dsets[ 0 ]->run_data;
 
-DbgLv(1) << "GUIsu-F";
    grid_change();
-DbgLv(1) << "GUIsu-G";
 
 //DbgLv(2) << "Pre-resize AC size" << size();
    resize( 710, 440 );
@@ -394,8 +387,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 
    nctotal         = 10000;
 
-   connect( processor, SIGNAL( progress_update(   int ) ),
-            this,      SLOT(   update_progress(   int ) ) );
+   connect( processor, SIGNAL( progress_update(   double ) ),
+            this,      SLOT(   update_progress(   double ) ) );
    connect( processor, SIGNAL( message_update(    QString, bool ) ),
             this,      SLOT(   progress_message(  QString, bool ) ) );
    connect( processor, SIGNAL( stage_complete(    int, int )  ),
@@ -621,9 +614,9 @@ void US_AnalysisControl::kstep_change()
 }
 
 // slot to handle progress update
-void US_AnalysisControl::update_progress( int ksteps )
+void US_AnalysisControl::update_progress( double variance )
 {
-   ncsteps += ksteps;
+   ncsteps ++;
 
    if ( ncsteps > nctotal )
    {
@@ -632,7 +625,14 @@ void US_AnalysisControl::update_progress( int ksteps )
    }
 
    b_progress->setValue( ncsteps );
-DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
+DbgLv(2) << "UpdPr: ncs nts vari" << ncsteps << nctotal << variance;
+   double rmsd = sqrt( variance );
+   if ( variance < varimin )
+   {
+      varimin = variance;
+      le_minvari->setText( QString::number( varimin ) );
+      le_minrmsd->setText( QString::number( rmsd    ) );
+   }
 }
 
 // slot to handle updated progress message

@@ -810,6 +810,7 @@ void US_1dsa::open_fitcntl()
 
    dset.run_data           = dataList[ drow ];
    dset.simparams.bottom   = dset.simparams.bottom_position;
+   dset.solute_type        = 0;
    dset.viscosity          = viscosity;
    dset.density            = density;
    dset.temperature        = avTemp;
