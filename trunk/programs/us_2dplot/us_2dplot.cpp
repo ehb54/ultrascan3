@@ -159,7 +159,7 @@ void US_2dPlot::calculate()
 		{
 			for ( int i = 0; i < resolution; i++ )
 			{
-				y[ i ] = f_min + (f_max - f_min) * erf((x[i]-par2)/sqrt(2.0*par1));
+				y[ i ] = f_min + (f_max - f_min) * (0.5 * erf((x[i]-par2)/sqrt(2.0*par1)) + 0.5) ;
 			}
 			break;
 		}
@@ -167,7 +167,7 @@ void US_2dPlot::calculate()
 		{
 			for ( int i = 0; i < resolution; i++ )
 			{
-				y[ i ] = f_max + (f_min - f_max) * erf((x[i]-par2)/sqrt(2.0*par1));
+				y[ i ] = f_max + (f_min - f_max) * (0.5 * erf((x[i]-par2)/sqrt(2.0*par1)) + 0.5);
 			}
 			break;
 		}
