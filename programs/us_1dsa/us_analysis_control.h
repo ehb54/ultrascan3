@@ -33,6 +33,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           ncsteps;
       int           nctotal;
       int           grtype;
+      int           bmndx;
       double        varimin;
 
       QHBoxLayout*  mainLayout;

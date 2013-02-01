@@ -8,11 +8,11 @@
 
 #include <qwt_legend.h>
 
-// constructor:  residuals plot widget
+// constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
-      double& slo, double& shi, int& nlp, QWidget* p = 0 )
+      double& slo, double& shi, int& nlp, int& bmx, QWidget* p = 0 )
    : US_WidgetsDialog( 0, 0 ), fmin( flo ), fmax( fhi ), finc( fin ),
-   smin( slo ), smax( shi ), nlpts( nlp )
+   smin( slo ), smax( shi ), nlpts( nlp ), bmndx( bmx )
 {
    // lay out the GUI
    setWindowTitle( tr( "1-D Spectrum Analysis Model Lines Viewer" ) );
@@ -21,7 +21,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QSize p1size( 560, 480 );
 
    dbg_level       = US_Settings::us_debug();
-   resbmap         = 0;
+   model           = 0;
 
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
@@ -82,43 +82,20 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    connect( pb_close,  SIGNAL( clicked()   ),
             this,      SLOT( close_all()   ) );
 
-   // get data pointers from parent of parent
-
-DbgLv(1) << "RP: P" << ( p != 0 );
-
-   if ( p )
-   {
-      QWidget* pp     = (QWidget*)p->parent();
-DbgLv(1) << "RP:  PP" << ( pp != 0 );
-      US_1dsa*  mainw = (US_1dsa*)pp;
-      edata           = mainw->mw_editdata();
-      sdata           = mainw->mw_simdata();
-      ti_noise        = mainw->mw_ti_noise();
-      ri_noise        = mainw->mw_ri_noise();
-   }
-
-   else
-   {
-      qDebug() << "*ERROR* unable to get RP parent";
-   }
-
 DbgLv(1) << "RP:  p1size" << p1size;
 
    data_plot1->resize( p1size );
 
    plot_data();
+DbgLv(1) << "RP:   PD returned";
 
    setVisible( true );
+DbgLv(1) << "RP:    setVis returned";
 }
 
 // close button clicked
 void US_MLinesPlot::close_all()
 {
-   if ( resbmap != 0 )
-   {
-      resbmap->close();
-   }
-
    close();
 }
 
@@ -129,6 +106,8 @@ void US_MLinesPlot::plot_data()
    data_plot1->clear();
 
    int    nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
+   bool   gotm  = ( model != 0  &&  bmndx >= 0 );
+DbgLv(1) << "RP:PD gotm" << gotm << "bmndx" << bmndx;
 
    us_grid( data_plot1 );
 
@@ -140,12 +119,15 @@ void US_MLinesPlot::plot_data()
    double  rinc = (double)( nlpts - 1 );
    double  xinc = ( smax - smin ) / rinc;
    double  ystr = fmin;
+   int     mndx = 0;
 
    QString       title;
    QwtPlotCurve* curv;
-   QPen          pen_red(  Qt::red );
+   QPen          pen_red(  Qt::red, 4.0 );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, 1.0 );
+   double  y1    = fmin;
+   double  y2    = fmax;
 
    for ( int ii = 0; ii < nkpts; ii++ )
    { 
@@ -165,16 +147,57 @@ void US_MLinesPlot::plot_data()
             yval       += yinc;
          }
 
-         title   = tr( "Curve " ) + QString::number( ii );
+         title   = tr( "Curve " ) + QString::number( mndx );
          curv    = us_curve( data_plot1, title );
 
-         curv->setPen  ( pen_plot );
+//DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
+         if ( mndx != bmndx )
+            curv->setPen  ( pen_plot );
+         else
+         {
+            y1 = yy[ 0 ];
+            y2 = yy[ nlpts - 1 ];
+            curv->setPen  ( pen_red  );
+         }
          curv->setData ( xx, yy, nlpts );
          yend   += finc;
+         mndx++;
       }
       ystr   += finc;
    }
+DbgLv(1) << "RP:PD call replot";
+   if ( bmndx >= 0  &&  model != 0 )
+   { // Replot best model line, then plot points along the best model
+      title    = tr( "CurveR " ) + QString::number( bmndx );
+      xx[ 1 ]  = xx[ nlpts - 1 ];
+      yy[ 0 ]  = y1;
+      yy[ 1 ]  = y2;
+      curv     = us_curve( data_plot1, title );
+      curv->setPen( pen_red );
+      curv->setData( xx, yy, 2 );
+
+      int ncomp   = model->components.size();
+      for ( int kk = 0; kk < ncomp; kk++ )
+      {
+         xx[ kk ]    = model->components[ kk ].s * 1.0e+13;
+         yy[ kk ]    = model->components[ kk ].f_f0;
+      }
+      title    = tr( "BestModelPoints" );
+      curv     = us_curve( data_plot1, title );
+      curv->setPen  ( QPen( Qt::cyan, 8.0 ) );
+      curv->setStyle( QwtPlotCurve::Dots );
+      curv->setData ( xx, yy, ncomp );
+   }
 
    data_plot1->replot();
+DbgLv(1) << "RP:PD  return";
+}
+
+// Public slot to set a pointer to a model to use in the plot for highlights
+void US_MLinesPlot::setModel( US_Model* a_model, int& bm_ndx )
+{
+   model = a_model;
+   bmndx = bm_ndx;
+DbgLv(1) << "RP:SM  bmndx" << bmndx;
 }
 

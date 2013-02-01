@@ -18,6 +18,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
    varimin        = 9e+99;
+   bmndx          = -1;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -678,8 +679,11 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
    b_progress->setValue( nctotal );
    qApp->processEvents();
 
-   processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
+   processor->get_results( sdata, rdata, model, ti_noise, ri_noise, bmndx );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
+DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
+
+   plot_lines();
 
    US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
    int    mmitnum  = (int)rscan0->seconds;
@@ -770,7 +774,14 @@ void US_AnalysisControl::plot_lines()
       nlpts++;
 
    US_MLinesPlot* mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
-         nlpts, this );
+                                                nlpts, bmndx, this );
+
+   if ( bmndx >= 0 )
+   {
+      mlnplotd->setModel( model, bmndx );
+      mlnplotd->plot_data();
+   }
+
    mlnplotd->setVisible( true );
 }
 
