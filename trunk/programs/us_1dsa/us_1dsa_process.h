@@ -89,9 +89,10 @@ class US_1dsaProcess : public QObject
       //! \param da_mdl  Composite model
       //! \param da_tin  Time-invariant noise (or null)
       //! \param da_rin  Radially-invariant noise (or null)
+      //! \param bm_ndx  Best model index
       //! \returns       Success flag:  true if successful
       bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
-                        US_Model*, US_Noise*, US_Noise* );
+                        US_Model*, US_Noise*, US_Noise*, int& );
 
       void stop_fit(       void );
       int  estimate_steps( int  );

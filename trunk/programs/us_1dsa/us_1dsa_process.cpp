@@ -311,6 +311,7 @@ DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
+   model.message = QString( "BINDEX=%1" ).arg( mrec.taskx );
 
    // Convert model components s,D back to 20,w form for output
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -329,7 +330,8 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
                                   US_DataIO2::RawData* da_res,
                                   US_Model*            da_mdl,
                                   US_Noise*            da_tin,
-                                  US_Noise*            da_rin )
+                                  US_Noise*            da_rin,
+                                  int&                 bm_ndx )
 {
    bool all_ok = true;
 
@@ -348,6 +350,8 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
 DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
  << da_res->scanData[0].delta_r;
+   bm_ndx      = mrecs[ 0 ].taskx;
+DbgLv(1) << " GET_RES:    BM_NDX" << bm_ndx;
    return all_ok;
 }
 

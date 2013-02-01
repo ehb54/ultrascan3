@@ -11,6 +11,7 @@
 #include "us_resids_bitmap.h"
 #include "us_noise.h"
 #include "us_plot.h"
+#include "us_model.h"
 #include "us_help.h"
 
 //! \brief A class to provide a window with a model lines plot
@@ -21,8 +22,11 @@ class US_MLinesPlot : public US_WidgetsDialog
 
    public:
       //! \param parent A pointer to the parent widget of this one
-      US_MLinesPlot( double&, double&, double&, double&, double&, int&,
+      US_MLinesPlot( double&, double&, double&, double&, double&, int&, int&,
             QWidget* );
+
+      void setModel ( US_Model*, int& );
+      void plot_data( void );
 
    private:
       double&       fmin;
@@ -32,6 +36,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       double&       smax;
 
       int&          nlpts;
+      int&          bmndx;
 
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;
@@ -46,21 +51,15 @@ class US_MLinesPlot : public US_WidgetsDialog
    protected:
       QwtPlot*      data_plot1;
 
-      US_DataIO2::EditedData*     edata;
-      US_DataIO2::Scan*           escan;
-      US_DataIO2::RawData*        sdata;
-      US_Noise*                   ri_noise;
-      US_Noise*                   ti_noise;
-      QPointer< US_ResidsBitmap > resbmap;
+      US_Model*     model;
 
-      QLineEdit*  le_mtype;
-      QLineEdit*  le_nlines;
-      QLineEdit*  le_npoints;
-      QLineEdit*  le_kincr;
+      QLineEdit*    le_mtype;
+      QLineEdit*    le_nlines;
+      QLineEdit*    le_npoints;
+      QLineEdit*    le_kincr;
 
    private slots:
-      void close_all  ( void );
-      void plot_data(   void );
+      void close_all( void );
 };
 #endif
 
