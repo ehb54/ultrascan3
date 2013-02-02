@@ -1,4 +1,4 @@
-//! \file us_rotor_calibration.cpp
+//! \file us_2dplot.cpp
 
 #include "us_2dplot.h"
 #include "us_settings.h"
@@ -40,7 +40,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    
    resolution = 100; //  start with 100 points in the s-domain
 
-   setWindowTitle( tr( "Edit Rotor Calibration" ) );
+   setWindowTitle( tr( "2D Plot : Curves" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QGridLayout* top = new QGridLayout( this );
@@ -177,7 +177,7 @@ void US_2dPlot::calculate()
    data_plot->replot();
    QwtPlotCurve* c1;
    
-   c1 = us_curve( data_plot, "Rotor Stretch" );
+   c1 = us_curve( data_plot, "1DSA Curve" );
    c1->setData  ( x.data(), y.data(), resolution);
    c1->setStyle ( QwtPlotCurve::Lines );
    c1->setPen   ( QColor( Qt::yellow ) );
