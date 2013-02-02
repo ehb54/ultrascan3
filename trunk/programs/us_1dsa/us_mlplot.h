@@ -22,10 +22,10 @@ class US_MLinesPlot : public US_WidgetsDialog
 
    public:
       //! \param parent A pointer to the parent widget of this one
-      US_MLinesPlot( double&, double&, double&, double&, double&, int&, int&,
-            QWidget* );
+      US_MLinesPlot( double&, double&, double&, double&, double&,
+                     int&, int&, int&, int& );
 
-      void setModel ( US_Model*, int& );
+      void setModel ( US_Model* );
       void plot_data( void );
 
    private:
@@ -37,6 +37,8 @@ class US_MLinesPlot : public US_WidgetsDialog
 
       int&          nlpts;
       int&          bmndx;
+      int&          nkpts;
+      int&          ctype;
 
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;

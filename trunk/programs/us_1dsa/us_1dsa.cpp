@@ -159,24 +159,13 @@ void US_1dsa::analysis_done( int updflag )
       pb_save   ->setEnabled( false );
       pb_plt3d  ->setEnabled( false );
       pb_pltres ->setEnabled( false );
-      models.clear();
-      tinoises.clear();
-      rinoises.clear();
 
       qApp->processEvents();
       return;
    }
 
    if ( updflag == (-2) )
-   {  // update model,noise lists and RMSD
-      models << model;
-
-      if ( ti_noise.count > 0 )
-         tinoises << ti_noise;
-
-      if ( ri_noise.count > 0 )
-         rinoises << ri_noise;
-
+   {  // update RMSD
       QString mdesc = model.description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  vari  = avari.section( " ", 0, 0 ).toDouble();
@@ -420,10 +409,8 @@ void US_1dsa::save( void )
    QString respath  = US_Settings::resultDir();
    QString mdlpath;
    QString noipath;
-   int     nmodels  = models.size();             // number of models to save
    int     knois    = min( ti_noise.count, 1 ) 
                     + min( ri_noise.count, 1 );  // noise files per model
-   int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -457,12 +444,10 @@ void US_1dsa::save( void )
    QStringList nfilt( "N*.xml" );
    QStringList mdnams   =  dirm.entryList( mfilt, QDir::Files, QDir::Name );
    QStringList ndnams   =  dirn.entryList( nfilt, QDir::Files, QDir::Name );
-   QStringList mnames;
    QStringList nnames;
    QString     mname    = "M0000000.xml";
    QString     nname    = "N0000000.xml";
    int         indx     = 1;
-   int         kmodels  = 0;
    int         knoises  = 0;
    bool        have_ti  = ( tinoises.size() > 0 );
    bool        have_ri  = ( rinoises.size() > 0 );
@@ -472,9 +457,7 @@ void US_1dsa::save( void )
       mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // no name with this index exists, so add it new-name list
-         mnames << mname;
-         if ( ++kmodels >= nmodels )
-            break;
+         break;
       }
    }
 
@@ -486,7 +469,7 @@ void US_1dsa::save( void )
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
-         if ( ++knoises >= nnoises )
+         if ( ++knoises >= knois )
             break;
       }
    }
@@ -496,105 +479,87 @@ void US_1dsa::save( void )
 //double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
 //DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
-   for ( int jj = 0; jj < nmodels; jj++ )
-   {  // loop to output models and noises
-      model             = models[ jj ];         // model to output
-      QString mdesc     = model.description;    // description from processor
-      double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
-                          .section( ' ', 0, 0 ).toDouble();
-      // create the iteration part of model description:
-      // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
-      QString iterID    = "i01";
-      int     iterNum   = jj + 1;
+   // Output model and noises
+   QString mdesc     = model.description;    // description from processor
+   double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
+                       .section( ' ', 0, 0 ).toDouble();
+   QString iterID    = "i01";
 
-      if ( montCar )
-         iterID.sprintf( "mc%04d", iterNum );
+   // fill in actual model parameters needed for output
+   model.description = descbase + iterID + ".model";
+   mname             = mdlpath + "/" + mname;
+   model.modelGUID   = US_Util::new_guid();
+   model.editGUID    = edata->editGUID;
+   model.requestGUID = reqGUID;
+   model.analysis    = US_Model::TWODSA;
+   model.variance    = variance;
+   model.meniscus    = meniscus;
+   model.wavelength  = dwavelen;
 
-      else if ( fitMeni )
-      {
-         meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                             .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
-      }
+   for ( int cc = 0; cc < model.components.size(); cc++ )
+      model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
-      // fill in actual model parameters needed for output
-      model.description = descbase + iterID + ".model";
-      mname             = mdlpath + "/" + mnames[ jj ];
-      model.modelGUID   = US_Util::new_guid();
-      model.editGUID    = edata->editGUID;
-      model.requestGUID = reqGUID;
-      model.analysis    = US_Model::TWODSA;
-      model.variance    = variance;
-      model.meniscus    = meniscus;
-      model.wavelength  = dwavelen;
+   // output the model
+   model.write( mname );
 
-      for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+   if ( dbP != NULL )
+      model.write( dbP );
 
-      // output the model
-      model.write( mname );
+   int kk  = 0;
+
+   if ( have_ti )
+   {  // output a TI noise
+      ti_noise.description = descbase + iterID + ".ti_noise";
+      ti_noise.type        = US_Noise::TI;
+      ti_noise.modelGUID   = model.modelGUID;
+      ti_noise.noiseGUID   = US_Util::new_guid();
+      nname                = noipath + "/" + nnames[ kk++ ];
+      int nicount          = ti_noise_in.count;
+
+      if ( nicount > 0 )   // Sum in any input noise
+         ti_noise.sum_noise( ti_noise_in, true );
+
+      ti_noise.write( nname );
 
       if ( dbP != NULL )
-         model.write( dbP );
+         ti_noise.write( dbP );
 
-      int kk  = jj * knois;
+      if ( nicount > 0 )   // Remove input noise in case re-plotted
+      {
+         US_Noise noise_rmv = ti_noise_in;
 
-      if ( have_ti )
-      {  // output a TI noise
-         ti_noise             = tinoises[ jj ];
-         ti_noise.description = descbase + iterID + ".ti_noise";
-         ti_noise.type        = US_Noise::TI;
-         ti_noise.modelGUID   = model.modelGUID;
-         ti_noise.noiseGUID   = US_Util::new_guid();
-         nname                = noipath + "/" + nnames[ kk++ ];
-         int nicount          = ti_noise_in.count;
+         for ( int kk = 0; kk < nicount; kk++ )
+            noise_rmv.values[ kk ] *= -1.0;
 
-         if ( nicount > 0 )   // Sum in any input noise
-            ti_noise.sum_noise( ti_noise_in, true );
-
-         ti_noise.write( nname );
-
-         if ( dbP != NULL )
-            ti_noise.write( dbP );
-
-         if ( nicount > 0 )   // Remove input noise in case re-plotted
-         {
-            US_Noise noise_rmv = ti_noise_in;
-
-            for ( int kk = 0; kk < nicount; kk++ )
-               noise_rmv.values[ kk ] *= -1.0;
-
-            ti_noise.sum_noise( noise_rmv, true );
-         }
+         ti_noise.sum_noise( noise_rmv, true );
       }
+   }
 
-      if ( have_ri )
-      {  // output an RI noise
-         ri_noise             = rinoises[ jj ];
-         ri_noise.description = descbase + iterID + ".ri_noise";
-         ri_noise.type        = US_Noise::RI;
-         ri_noise.modelGUID   = model.modelGUID;
-         ri_noise.noiseGUID   = US_Util::new_guid();
-         nname                = noipath + "/" + nnames[ kk++ ];
-         int nicount          = ri_noise_in.count;
+   if ( have_ri )
+   {  // output an RI noise
+      ri_noise.description = descbase + iterID + ".ri_noise";
+      ri_noise.type        = US_Noise::RI;
+      ri_noise.modelGUID   = model.modelGUID;
+      ri_noise.noiseGUID   = US_Util::new_guid();
+      nname                = noipath + "/" + nnames[ kk++ ];
+      int nicount          = ri_noise_in.count;
 
-         if ( nicount > 0 )   // Sum in any input noise
-            ri_noise.sum_noise( ri_noise_in, true );
+      if ( nicount > 0 )   // Sum in any input noise
+         ri_noise.sum_noise( ri_noise_in, true );
 
-         ri_noise.write( nname );
+      ri_noise.write( nname );
 
-         if ( dbP != NULL )
-            ri_noise.write( dbP );
+      if ( dbP != NULL )
+         ri_noise.write( dbP );
 
-         if ( nicount > 0 )   // Remove input noise in case re-plotted
-         {
-            US_Noise noise_rmv = ri_noise_in;
+      if ( nicount > 0 )   // Remove input noise in case re-plotted
+      {
+         US_Noise noise_rmv = ri_noise_in;
 
-            for ( int kk = 0; kk < nicount; kk++ )
-               noise_rmv.values[ kk ] *= -1.0;
+         for ( int kk = 0; kk < nicount; kk++ )
+            noise_rmv.values[ kk ] *= -1.0;
 
-            ri_noise.sum_noise( noise_rmv, true );
-         }
+         ri_noise.sum_noise( noise_rmv, true );
       }
    }
 //tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
@@ -637,7 +602,7 @@ void US_1dsa::save( void )
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
 
-   mname = mdlpath + "/" + mnames[ 0 ];
+   mname = mdlpath + "/" + mname;
    wmsg  = wmsg + mname + "\n";                // list 1st (only?) model file
 
    if ( knois > 0 )
@@ -652,29 +617,6 @@ void US_1dsa::save( void )
       }
    }
 
-   if ( nmodels > 1 )
-   {
-      int kk = ( nmodels - 2 ) * ( knois + 1 );
-      wmsg   = wmsg + " ...  ( "
-                    + QString::number( kk ) + tr( " files unshown )\n" );
-      kk     = nmodels - 1;
-      mname  = mdlpath + "/" + mnames[ kk ];   // list last model file
-      wmsg   = wmsg + mname + "\n";
-
-      if ( knois > 0 )
-      {                                        // list last noise file(s)
-         kk    *= knois;
-         nname  = noipath + "/" + nnames[ kk++ ];
-         wmsg   = wmsg + nname + "\n";
-
-         if ( knois > 1 )
-         {
-            nname  = noipath + "/" + nnames[ kk ];
-            wmsg   = wmsg + nname + "\n";
-         }
-      }
-   }
-
    // list report and plot files
    wmsg = wmsg + htmlFile  + "\n"
                + plot1File + "\n"
@@ -682,32 +624,6 @@ void US_1dsa::save( void )
                + plot3File + "\n";
    QStringList repfiles;
    repfiles << htmlFile << plot1File << plot2File << plot3File;
-
-   // Add fit files if fit-meniscus
-   if ( fitMeni )
-   {
-      QString fitstr = fit_meniscus_data();
-
-      QFile rep_f( fitFile );
-      QFile res_f( fresFile );
-
-      if ( rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      {
-         QTextStream ts( &rep_f );
-         ts << fitstr;
-         rep_f.close();
-         wmsg = wmsg + fitFile  + "\n";
-         repfiles << fitFile;
-      }
-
-      if ( res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      {
-         QTextStream ts( &res_f );
-         ts << fitstr;
-         res_f.close();
-         wmsg = wmsg + fresFile + "\n";
-      }
-   }
 
    if ( disk_controls->db() )
    {  // Write report files to the database
@@ -963,89 +879,6 @@ QString US_1dsa::distrib_info()
    return mstr;
 }
 
-// Iteration information HTML string
-QString US_1dsa::iteration_info()
-{
-   int nmodels   = models.size();
-   
-   if ( nmodels < 2 )
-      return "";
-
-   model            = models[ nmodels - 1 ];
-   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
-   bool    montCar  = model.monteCarlo;
-   QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
-
-   QString mstr   = "\n" + indent( 4 )
-      + tr( "<h3>Multiple Model Settings:</h3>\n" )
-      + indent( 4 ) + "<table>\n";
-
-   mstr += table_row( tr( "Number of Model Iterations:" ),
-                      QString::number( nmodels ) );
-   mstr += table_row( tr( "Iteration Analysis Type:" ), anType );
-
-   if ( fitMeni )
-   {
-      QString mdesc    = models[ 0 ].description;
-      QString mend1    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
-              mdesc    = model.description;
-      QString mend2    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
-      double  bmenis   = edata->meniscus;
-      double  smenis   = mend1.toDouble();
-      double  emenis   = mend2.toDouble();
-      double  rmenis   = emenis - smenis;
-      mstr += table_row( tr( "Meniscus Range:" ),
-                         QString::number( rmenis ) );
-      mstr += table_row( tr( "Base Experiment Meniscus:" ),
-                         QString::number( bmenis ) );
-      mstr += table_row( tr( "Start Fit Meniscus:" ),
-                         QString::number( smenis ) );
-      mstr += table_row( tr( "End Fit Meniscus:" ),
-                         QString::number( emenis ) );
-   }
-
-   mstr += indent( 4 ) + "</table>\n\n";
-
-   mstr += indent( 4 ) + tr( "<h3>Fit / Iteration Information:</h3>\n" )
-      + indent( 4 ) + "<table>\n";
-
-   if ( montCar )
-      mstr += table_row( tr( "Iteration" ),
-                         tr( "Iteration ID" ),
-                         tr( "RMSD" ) );
-
-   else
-      mstr += table_row( tr( "Iteration" ),
-                         tr( "Meniscus" ),
-                         tr( "RMSD" ) );
-
-   for ( int ii = 0; ii < nmodels; ii++ )
-   {
-      QString itnum = QString::number( ii + 1 ).rightJustified( 4, '_' );
-      QString mdesc = models[ ii ].description;
-      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
-      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
-
-      if ( montCar )
-      {
-         QString itID  = QString().sprintf( "i%04i", ii + 1 );
-         mstr         += table_row( itnum, itID, armsd );
-      }
-
-      else
-      {
-         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                         .section( " ", 0, 0 );
-         mstr         += table_row( itnum, ameni, armsd );
-      }
-   }
-
-   mstr += indent( 4 ) + "</table>\n";
-   
-   return mstr;
-}
-
 // Write HTML report file
 void US_1dsa::write_report( QTextStream& ts )
 {
@@ -1056,7 +889,6 @@ void US_1dsa::write_report( QTextStream& ts )
    ts << hydrodynamics();
    ts << scan_info();
    ts << distrib_info();
-   ts << iteration_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
@@ -1110,28 +942,5 @@ void US_1dsa::new_triple( int index )
    data_plot1->clear();
 
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
-}
-
-// Fit meniscus data table string
-QString US_1dsa::fit_meniscus_data()
-{
-   QString mstr  = "";
-   int nmodels   = models.size();
-   
-   if ( nmodels < 2 )
-      return mstr;
-
-   for ( int ii = 0; ii < nmodels; ii++ )
-   {
-      QString mdesc = models[ ii ].description;
-      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
-      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
-      QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                      .section( " ", 0, 0 );
-      mstr         += ( ameni + " " + armsd + "\n" );
-   }
-   
-   return mstr;
 }
 

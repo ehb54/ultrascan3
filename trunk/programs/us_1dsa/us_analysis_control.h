@@ -34,6 +34,9 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           nctotal;
       int           grtype;
       int           bmndx;
+      int           nkpts;
+      int           ctype;
+      double        f_inc;
       double        varimin;
 
       QHBoxLayout*  mainLayout;
@@ -56,12 +59,15 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QLabel*       lb_lolimitk;
       QLabel*       lb_uplimitk;
+      QLabel*       lb_incremk;
+      QLabel*       lb_varcount;
 
       QwtCounter*   ct_lolimits;
       QwtCounter*   ct_uplimits;
       QwtCounter*   ct_lolimitk;
       QwtCounter*   ct_uplimitk;
       QwtCounter*   ct_incremk;
+      QwtCounter*   ct_varcount;
       QwtCounter*   ct_cresolu;
       QwtCounter*   ct_thrdcnt;
 
@@ -70,7 +76,6 @@ class US_AnalysisControl : public US_WidgetsDialog
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
 
-      QLineEdit*    le_estmemory;
       QLineEdit*    le_minvari;
       QLineEdit*    le_minrmsd;
 
@@ -90,27 +95,12 @@ class US_AnalysisControl : public US_WidgetsDialog
    private slots:
       void optimize_options( void );
       void uncheck_optimize( int  );
-      void checkUniGrid (    bool );
-      void checkCusGrid (    bool );
-      void checkMeniscus(    bool );
-      void checkIterate (    bool );
-      void checkLocalUni(    bool );
-      void checkRandLoc (    bool );
-      void checkSoluCoal(    bool );
-      void checkClipLow (    bool );
-      void checkMonteCar(    bool );
-      void checkRegular (    bool );
-      void checkVaryVbar(    bool );
-      void grid_change(      void );
       void slim_change(      void );
       void klim_change(      void );
-      void kstep_change(     void );
       void start(            void );
       void stop_fit(         void );
       void plot(             void );
       void save(             void );
-      void close_all(        void );
-      void load_model(       void );
       void compute(          void );
       void plot_lines(       void );
 
