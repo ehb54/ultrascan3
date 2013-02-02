@@ -10,9 +10,10 @@
 
 // constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
-      double& slo, double& shi, int& nlp, int& bmx, QWidget* p = 0 )
+      double& slo, double& shi, int& nlp, int& bmx, int& nkp, int &typ )
    : US_WidgetsDialog( 0, 0 ), fmin( flo ), fmax( fhi ), finc( fin ),
-   smin( slo ), smax( shi ), nlpts( nlp ), bmndx( bmx )
+   smin( slo ), smax( shi ), nlpts( nlp ), bmndx( bmx ), nkpts( nkp ),
+   ctype( typ )
 {
    // lay out the GUI
    setWindowTitle( tr( "1-D Spectrum Analysis Model Lines Viewer" ) );
@@ -40,12 +41,18 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   int    nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
+   if ( ctype == 0 )
+      nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    int    nline = nkpts * nkpts;
    le_mtype     = us_lineedit( tr( "Straight Line" ), -1, true );
    le_nlines    = us_lineedit( QString::number( nline ), -1, true );
    le_npoints   = us_lineedit( QString::number( nlpts ), -1, true );
    le_kincr     = us_lineedit( QString::number( finc  ), -1, true );
+   if ( ctype == 1  ||  ctype == 2 )
+   {
+      lb_kincr->setText( tr( "Variation Count" ) );
+      le_kincr->setText( QString::number( nkpts ) );
+   }
 
    int row      = 0;
    pltctrlsLayout->addWidget( lb_datctrls, row++, 0, 1, 2 );
@@ -57,6 +64,9 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    pltctrlsLayout->addWidget( le_npoints,  row++, 1, 1, 1 );
    pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 1 );
    pltctrlsLayout->addWidget( le_kincr,    row++, 1, 1, 1 );
+   if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
+   else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
+   else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
 
    buttonsLayout ->addWidget( pb_close );
 
@@ -85,12 +95,6 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
 DbgLv(1) << "RP:  p1size" << p1size;
 
    data_plot1->resize( p1size );
-
-   plot_data();
-DbgLv(1) << "RP:   PD returned";
-
-   setVisible( true );
-DbgLv(1) << "RP:    setVis returned";
 }
 
 // close button clicked
@@ -105,17 +109,20 @@ void US_MLinesPlot::plot_data()
    data_plot1->detachItems();
    data_plot1->clear();
 
-   int    nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
-   bool   gotm  = ( model != 0  &&  bmndx >= 0 );
-DbgLv(1) << "RP:PD gotm" << gotm << "bmndx" << bmndx;
+   bool   got_best  = ( model != 0  &&  bmndx >= 0 );
+DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
 
    us_grid( data_plot1 );
 
    QVector< double > xvec( nlpts, 0.0 );
    QVector< double > yvec( nlpts, 0.0 );
+   QVector< double > bmxv( nlpts, 0.0 );
+   QVector< double > bmyv( nlpts, 0.0 );
 
    double* xx   = xvec.data();
    double* yy   = yvec.data();
+   double* bx   = bmxv.data();
+   double* by   = bmyv.data();
    double  rinc = (double)( nlpts - 1 );
    double  xinc = ( smax - smin ) / rinc;
    double  ystr = fmin;
@@ -123,58 +130,149 @@ DbgLv(1) << "RP:PD gotm" << gotm << "bmndx" << bmndx;
 
    QString       title;
    QwtPlotCurve* curv;
-   QPen          pen_red(  Qt::red, 4.0 );
+   QPen          pen_red(  Qt::red, 3.0 );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, 1.0 );
    double  y1    = fmin;
    double  y2    = fmax;
 
-   for ( int ii = 0; ii < nkpts; ii++ )
-   { 
-      double yend = fmin;
+   if ( ctype == 0 )
+   { // Generate and plot straight lines
+      for ( int ii = 0; ii < nkpts; ii++ )
+      { 
+         double yend = fmin;
 
-      for ( int jj = 0; jj < nkpts; jj++ )
-      {
-         double xval = smin;
-         double yval = ystr;
-         double yinc = ( yend - ystr ) / rinc; 
-
-         for ( int kk = 0; kk < nlpts; kk++ )
+         for ( int jj = 0; jj < nkpts; jj++ )
          {
-            xx[ kk ]    = xval;
-            yy[ kk ]    = yval;
-            xval       += xinc;
-            yval       += yinc;
-         }
+            double xval = smin;
+            double yval = ystr;
+            double yinc = ( yend - ystr ) / rinc; 
 
-         title   = tr( "Curve " ) + QString::number( mndx );
-         curv    = us_curve( data_plot1, title );
+            for ( int kk = 0; kk < nlpts; kk++ )
+            {
+               xx[ kk ]    = xval;
+               yy[ kk ]    = yval;
+               xval       += xinc;
+               yval       += yinc;
+            } // END: points-per-line loop
+
+            title   = tr( "Curve " ) + QString::number( mndx );
+            curv    = us_curve( data_plot1, title );
 
 //DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-         if ( mndx != bmndx )
-            curv->setPen  ( pen_plot );
-         else
-         {
-            y1 = yy[ 0 ];
-            y2 = yy[ nlpts - 1 ];
-            curv->setPen  ( pen_red  );
-         }
-         curv->setData ( xx, yy, nlpts );
-         yend   += finc;
-         mndx++;
+            if ( ! got_best  ||  mndx != bmndx )
+            { // Normal line
+               curv->setPen  ( pen_plot );    // Default color (yellow)
+            }
+            else
+            { // Best model line
+               y1 = yy[ 0 ];                  // Save best model end points
+               y2 = yy[ nlpts - 1 ];
+               curv->setPen  ( pen_red  );    // Red
+            }
+            curv->setData ( xx, yy, nlpts );
+            yend   += finc;
+            mndx++;
+         } // END: s loop
+         ystr   += finc;
+      } // END: k loop
+   } // END: ctype==0
+
+   if ( ctype == 1  ||  ctype == 2 )
+   { // Sigmoid curves
+      double p1lo  = 0.001;
+      double p1up  = 0.5;
+      double p2lo  = 0.0;
+      double p2up  = 1.0;
+      double srng  = smax - smin;
+      double p1llg = log( p1lo );
+      double p1ulg = log( p1up );
+      double lrng  = (double)( nlpts - 1 );
+      double krng  = (double)( nkpts - 1 );
+      double p1inc = ( p1ulg - p1llg ) / krng;
+      double p2inc = ( p2up  - p2lo  ) / krng;
+      double xinc  = 1.0 / lrng;
+      double kstr  = fmin;
+      double kdif  = fmax - fmin;
+      if ( ctype == 2 )
+      {
+         kstr         = fmax;
+         kdif         = -kdif;
       }
-      ystr   += finc;
-   }
+      double p1vlg = p1llg;
+
+      for ( int ii = 0; ii < nkpts; ii++ )
+      { // Loop over par1 values (logarithmic progression)
+         double p1val = exp( p1vlg );
+         double p2val = p2lo;
+
+         for ( int jj = 0; jj < nkpts; jj++ )
+         { // Loop over par2 value (linear progression)
+            double xval  = 0.0;
+
+            for ( int kk = 0; kk < nlpts; kk++ )
+            { // Loop over points on a curve
+               double efac  = 0.5 * erf( ( xval - p2val )
+                                         / sqrt( 2.0 * p1val ) ) + 0.5;
+               double kval  = kstr + kdif * efac;
+               xx[ kk ]     = smin + xval * srng;
+               yy[ kk ]     = kval;
+DbgLv(1) << "RP:PD    ii jj kk mx" << ii << jj << kk << mndx
+ << "xv sv kv" << xval << xx[kk] << kval << "p1 p2" << p1val << p2val;
+               xval        += xinc;
+            } // END: points-on-curve loop
+
+            title   = tr( "Curve " ) + QString::number( mndx );
+            curv    = us_curve( data_plot1, title );
+
+//DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
+            if ( ! got_best  ||  mndx != bmndx )
+            { // Normal line
+               curv->setPen  ( pen_plot );    // Default color (yellow)
+            }
+            else
+            { // Best model line
+               for ( int kk = 0; kk < nlpts; kk++ )
+               {                              // Save best model points
+                  bx[ kk ]     = xx[ kk ];
+                  by[ kk ]     = yy[ kk ];
+               }
+               curv->setPen  ( pen_red  );    // Red
+DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
+            }
+            curv->setData ( xx, yy, nlpts );
+            mndx++;
+            p2val    += p2inc;
+         } // END: par2 values loop
+
+         p1vlg    += p1inc;
+      } // END: par1 values loop
+
+   } // END: sigmoid curves
+
 DbgLv(1) << "RP:PD call replot";
-   if ( bmndx >= 0  &&  model != 0 )
+   if ( got_best )
    { // Replot best model line, then plot points along the best model
       title    = tr( "CurveR " ) + QString::number( bmndx );
-      xx[ 1 ]  = xx[ nlpts - 1 ];
-      yy[ 0 ]  = y1;
-      yy[ 1 ]  = y2;
+      int npts = 2;
+DbgLv(1) << "RP:PD   bmndx" << bmndx;
+      if ( ctype == 0 )
+      { // Re-do straight line by drawing from start to end point
+         bx[ 0 ]  = xx[ 0 ];
+         bx[ 1 ]  = xx[ nlpts - 1 ];
+         by[ 0 ]  = y1;
+         by[ 1 ]  = y2;
+DbgLv(1) << "RP:PD     y1 y2" << y1 << y2;
+      }
+      else if ( ctype == 1  ||  ctype == 2 )
+      { // Re-do sigmoid by copying saved curve points
+         npts     = nlpts;
+DbgLv(1) << "RP:PD     npts" << npts << "x0 y0 xn yn"
+ << xx[0] << yy[0] << xx[npts-1] << yy[npts-1];
+      }
       curv     = us_curve( data_plot1, title );
       curv->setPen( pen_red );
-      curv->setData( xx, yy, 2 );
+      curv->setData( bx, by, npts );
 
       int ncomp   = model->components.size();
       for ( int kk = 0; kk < ncomp; kk++ )
@@ -182,22 +280,23 @@ DbgLv(1) << "RP:PD call replot";
          xx[ kk ]    = model->components[ kk ].s * 1.0e+13;
          yy[ kk ]    = model->components[ kk ].f_f0;
       }
+DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
+ << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
       title    = tr( "BestModelPoints" );
       curv     = us_curve( data_plot1, title );
       curv->setPen  ( QPen( Qt::cyan, 8.0 ) );
       curv->setStyle( QwtPlotCurve::Dots );
       curv->setData ( xx, yy, ncomp );
-   }
+   } // END: replot best model
 
    data_plot1->replot();
 DbgLv(1) << "RP:PD  return";
 }
 
 // Public slot to set a pointer to a model to use in the plot for highlights
-void US_MLinesPlot::setModel( US_Model* a_model, int& bm_ndx )
+void US_MLinesPlot::setModel( US_Model* a_model )
 {
    model = a_model;
-   bmndx = bm_ndx;
 DbgLv(1) << "RP:SM  bmndx" << bmndx;
 }
 

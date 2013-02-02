@@ -182,6 +182,7 @@ private:
       void queue_task   ( WorkPacket&, double, double,
                           int, int, QVector< US_Solute > );
       int  slmodels     ( double, double, double, double, double, int );
+      int  sigmodels    ( int, double, double, double, double, int, int );
       void process_job  ( WorkerThread* );
       void process_final( ModelRecord&  );
       void submit_job   ( WorkPacket&, int );

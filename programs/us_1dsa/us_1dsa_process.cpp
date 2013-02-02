@@ -85,9 +85,17 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    npoints     = edata->x.size();
 
    if ( curvtype == 0 )
-   {  // For straight-line curves, determine the models
+   { // Determine models for straight-line curves
       nmtasks     = slmodels( slolim, suplim, klolim, kuplim, kincr, cresolu );
    }
+
+   else if ( curvtype == 1  ||  curvtype == 2 )
+   { // Determine models for sigmoid curves
+      int nkpts   = (int)kincr;
+      nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
+                               cresolu );
+   }
+
    else
       nmtasks     = 0;
 
@@ -267,7 +275,7 @@ int mmr=npoints/2;
 DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
  << sdata.value(mms,mmr) << rdata.value(mms,mmr);
 
-DbgLv(1) << "FIN_FIN: vari" << mrec.variance;
+DbgLv(1) << "FIN_FIN: vari" << mrec.variance << "bmndx" << mrec.taskx;
 
    // determine elapsed time
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
@@ -301,9 +309,25 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
    pmsg += tr( "Maximum memory used:  " ) +
            QString::number( memmb ) + " MB\n\n" +
            tr( "The best model (RMSD=%1) is at index %2 :\n" )
-           .arg( mrec.rmsd ).arg( mrec.taskx ) + 
-           tr( "  the line from s,f/f0  %1, %2  to %3, %4 ." )
-           .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
+           .arg( mrec.rmsd ).arg( mrec.taskx );
+   if ( curvtype == 0 )
+   {
+      pmsg += tr( "  the line from s,f/f0  %1, %2  to %3, %4 ." )
+              .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
+   }
+   else if ( curvtype == 1  ||  curvtype == 2 )
+   {
+      int    nkpts  = (int)kincr;
+      int    p1ndx  = mrec.taskx / nkpts;
+      int    p2ndx  = mrec.taskx - ( p1ndx * nkpts );
+      double krng   = (double)( nkpts - 1 );
+      double p1off  = (double)p1ndx / krng;
+      double par1   = exp( log( 0.001 )
+                           + ( log( 0.5 ) - log( 0.001 ) ) * p1off );
+      double par2   = (double)p2ndx / krng;
+      pmsg += tr( "  the curve with par1=%1 and par2=%2." )
+              .arg( par1 ).arg( par2 );
+   }
 
    emit message_update( pmsg, false );          // signal final message
 
@@ -311,7 +335,6 @@ DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
-   model.message = QString( "BINDEX=%1" ).arg( mrec.taskx );
 
    // Convert model components s,D back to 20,w form for output
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -347,11 +370,10 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
    if ( ( noisflag & 2 ) != 0  &&  da_rin != 0 )
       *da_rin     = ri_noise;                     // copy any ri noise
 
-DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
-DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
- << da_res->scanData[0].delta_r;
    bm_ndx      = mrecs[ 0 ].taskx;
-DbgLv(1) << " GET_RES:    BM_NDX" << bm_ndx;
+DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
+DbgLv(1) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
+ << "BM_NDX" << bm_ndx;
    return all_ok;
 }
 
@@ -379,6 +401,7 @@ DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
 // If there is more work to do, start a new thread for a new work unit.
 void US_1dsaProcess::process_job( WorkerThread* wthrd )
 {
+   if ( abort )  return;
    WorkPacket wresult;
 
    wthrd->get_result( wresult );   // get results of thread task
@@ -521,8 +544,13 @@ void US_1dsaProcess::free_worker( int tx )
 
 QString US_1dsaProcess::pmessage_head()
 {
-   QString ctype = tr( "Straight Line" );
-   return tr( "Analysis of %1 %2 Models, with %3 solutes each.\n" )
+   const char* ctp[] = { "Straight Line",
+                         "Increasing Sigmoid",
+                         "Decreasing Sigmoid",
+                         "?UNKNOWN?"
+                       };
+   QString ctype = QString( ctp[ curvtype ] );
+   return tr( "Analysis of %1 %2 models,\n  with %3 solutes each.\n" )
           .arg( nmtasks ).arg( ctype ).arg( cresolu );
 }
 
@@ -568,19 +596,22 @@ DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
 
       for ( int jj = 0; jj < nkpts; jj++ )
       {
-         double inck     = ( ken - kst ) * rinc;
          QVector< US_Solute > solute_i;
+         double inck     = ( ken - kst ) * rinc;
+         double sval     = slo;
+         double kval     = kst;
 
          for ( int kk = 0; kk < res; kk++ )
          {
             US_Solute solu;
-            double sval     = slo + incs * kk;
-            double kval     = kst + inck * kk;
             solu.s          = sval * 1.0e-13;
             solu.k          = kval;
             solu.v          = vbar20;
             solute_i << solu;
-DbgLv(1) << "SLMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
+            sval           += incs;
+            kval           += inck;
+if(dbg_level>0&&(kk<3||kk==(res/2)||kk>(res-3)))
+ DbgLv(1) << "SLMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
          }
 
 DbgLv(1) << "SLMO:   solute_i size" <<  solute_i.size();
@@ -593,3 +624,73 @@ DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size();
 
    return nmodels;
 }
+
+// Build all the sigmoid models
+int US_1dsaProcess::sigmodels( int ctp, double slo, double sup, double klo,
+      double kup, int nkpts, int nlpts )
+{
+DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
+   << klo << kup << nkpts << nlpts;
+   double vbar20   = dsets[ 0 ]->vbar20;
+   double p1lo     = 0.001;
+   double p1up     = 0.5;
+   double p2lo     = 0.0;
+   double p2up     = 1.0;
+   double srng     = sup - slo;
+   double lrng     = (double)( nlpts - 1 );
+   double krng     = (double)( nkpts - 1 );
+   double p1llg    = log( p1lo );
+   double p1ulg    = log( p1up );
+   double p1inc    = ( p1ulg - p1llg ) / krng;
+   double p2inc    = ( p2up  - p2lo  ) / krng;
+   double xinc     = 1.0 / lrng;
+   int    nmodels  = nkpts * nkpts;
+   orig_sols.clear();
+
+   double kstr     = klo;             // Increasing sigmoid controls
+   double kdif     = kup - klo;
+   if ( ctp == 2 )
+   {
+      kstr            = kup;          // Decreasing sigmoid controls
+      kdif            = -kdif;
+   }
+   double p1vlg    = p1llg;
+
+   for ( int ii = 0; ii < nkpts; ii++ )
+   { // Loop over par1 values (logarithmic progression)
+      double p1val    = exp( p1vlg );
+      double p2val    = p2lo;
+
+      for ( int jj = 0; jj < nkpts; jj++ )
+      { // Loop over par2 values (linear progression)
+         QVector< US_Solute > solute_i;
+         double xval     = 0.0;
+
+         for ( int kk = 0; kk < nlpts; kk++ )
+         { // Loop over points on a curve
+            US_Solute solu;
+            double efac     = 0.5 * erf( ( xval - p2val )
+                                         / sqrt( 2.0 * p1val ) ) + 0.5;
+            double kval     = kstr + kdif * efac;
+            double sval     = slo  + xval * srng;
+            solu.s          = sval * 1.0e-13;
+            solu.k          = kval;
+            solu.v          = vbar20;
+            solute_i << solu;
+            xval           += xinc;
+if(dbg_level>0&&(kk<3||kk==(nlpts/2)||kk>(nlpts-3)))
+DbgLv(1) << "SGMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
+         } // END: points-on-curve loop
+
+DbgLv(1) << "SGMO:   solute_i size" <<  solute_i.size()
+ << "p1val p2val" << p1val << p2val;
+         orig_sols << solute_i;
+         p2val          += p2inc;
+      } // END: par2 values loop
+      p1vlg          += p1inc;
+   } // END: par1 values loop
+DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size();
+
+   return nmodels;
+}
+
