@@ -12,8 +12,9 @@ namespace US_WinData
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
     P_SECOND,       P_DCDT,                // Velocity Menu
-    P_VHWE,         P_2DSA,         P_GAINIT,
-    P_FEMA,         P_PSEUDO3D,		P_GRIDEDIT,
+    P_VHWE,         P_2DSA,         P_1DSA,
+    P_GAINIT,       P_FEMA,         P_PSEUDO3D,
+    P_GRIDEDIT,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
@@ -101,6 +102,11 @@ namespace US_WinData
     { P_2DSA,  0, 0, "us_2dsa",
       QObject::tr( "Loading 2-D Spectrum Analysis" ),
       QObject::tr( "2-D Spectrum Analysis Program" )
+    },
+    
+    { P_1DSA,  0, 0, "us_1dsa",
+      QObject::tr( "Loading 1-D Spectrum Analysis" ),
+      QObject::tr( "1-D Spectrum Analysis Program" )
     },
     
     { P_GAINIT,  0, 0, "us_ga_init",
