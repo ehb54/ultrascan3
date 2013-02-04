@@ -141,7 +141,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
 DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
    emit message_update( pmessage_head() +
-      tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
+      tr( "Starting computations of %1 models\n using %2 threads ..." )
       .arg( nmtasks ).arg( nthreads ), false );
 }
 
@@ -354,7 +354,9 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
                                   US_Model*            da_mdl,
                                   US_Noise*            da_tin,
                                   US_Noise*            da_rin,
-                                  int&                 bm_ndx )
+                                  int&                 bm_ndx,
+                                  QStringList&         modstats,
+                                  QVector< int >&      elitexs )
 {
    bool all_ok = true;
 
@@ -374,6 +376,11 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
 DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(1) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
  << "BM_NDX" << bm_ndx;
+
+   model_statistics( mrecs, modstats );
+
+   elite_indexes( mrecs, elitexs );
+
    return all_ok;
 }
 
@@ -692,5 +699,142 @@ DbgLv(1) << "SGMO:   solute_i size" <<  solute_i.size()
 DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size();
 
    return nmodels;
+}
+
+// Generate the strings of model statistics for a report
+void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
+                                       QStringList&            modstats )
+{
+   const char* ctp[] = { "Straight Line",
+                         "Increasing Sigmoid",
+                         "Decreasing Sigmoid",
+                         "?UNKNOWN?"
+                       };
+
+   // Accumulate the statistics
+   int    nbmods    = qMin( 10, nmtasks );
+   int    nkpts     = (int)kincr;
+   int    nlpts     = cresolu;
+   if ( curvtype == 0 )
+      nkpts            = qRound( ( kuplim - klolim ) / kincr ) + 1;
+   double rmsdmin   = 99999.0;
+   double rmsdmax   = 0.0;
+   double rmsdavg   = 0.0;
+   double brmsmin   = 99999.0;
+   double brmsmax   = 0.0;
+   double brmsavg   = 0.0;
+   double rmsdmed   = mrecs[ nmtasks / 2 ].rmsd;
+   double brmsmed   = mrecs[ nbmods  / 2 ].rmsd;
+   int    nsolmin   = 999999;
+   int    nsolmax   = 0;
+   int    nsolavg   = 0;
+   int    nbsomin   = 999999;
+   int    nbsomax   = 0;
+   int    nbsoavg   = 0;
+
+   for ( int ii = 0; ii < nmtasks; ii++ )
+   {
+      double rmsd      = mrecs[ ii ].rmsd;
+      int    nsols     = mrecs[ ii ].csolutes.size();
+      rmsdmin          = qMin( rmsdmin, rmsd );
+      rmsdmax          = qMax( rmsdmax, rmsd );
+      rmsdavg         += rmsd;
+      nsolmin          = qMin( nsolmin, nsols );
+      nsolmax          = qMax( nsolmax, nsols );
+      nsolavg         += nsols;
+
+      if ( ii < nbmods )
+      {
+         brmsmin          = qMin( brmsmin, rmsd );
+         brmsmax          = qMax( brmsmax, rmsd );
+         brmsavg         += rmsd;
+         nbsomin          = qMin( nbsomin, nsols );
+         nbsomax          = qMax( nbsomax, nsols );
+         nbsoavg         += nsols;
+      }
+   }
+
+   rmsdavg         /= (double)nmtasks;
+   nsolavg          = ( nsolavg + nmtasks / 2 ) / nmtasks;
+   brmsavg         /= (double)nbmods;
+   nbsoavg          = ( nbsoavg + nbmods  / 2 ) / nbmods;
+
+   modstats.clear();
+
+   modstats << tr( "Curve Type:" )
+            << QString( ctp[ curvtype ] );
+   modstats << tr( "s (x 1e13) Range:" )
+            << QString().sprintf( "%10.4f %10.4f", slolim, suplim );
+   if ( curvtype == 0 )
+   {
+      modstats << tr( "k (f/f0) Range:" )
+               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+                     klolim, kuplim, kincr );
+      modstats << tr( "Best curve f/f0 end points:" )
+               << QString().sprintf( "%10.4f  %10.4f",
+                     mrecs[ 0 ].str_k, mrecs[ 0 ].end_k );
+   }
+   else
+   {
+      int    p1ndx  = mrecs[ 0 ].taskx / nkpts;
+      int    p2ndx  = mrecs[ 0 ].taskx - ( p1ndx * nkpts );
+      double krng   = (double)( nkpts - 1 );
+      double p1off  = (double)p1ndx / krng;
+      double par1   = exp( log( 0.001 )
+                           + ( log( 0.5 ) - log( 0.001 ) ) * p1off );
+      double par2   = (double)p2ndx / krng;
+      modstats << tr( "k (f/f0) Range:" )
+               << QString().sprintf( "%10.4f  %10.4f", klolim, kuplim );
+      modstats << tr( "Best curve par1 and par2:" )
+               << QString().sprintf( "%10.4f  %10.4f", par1, par2 );
+      modstats << tr( "Best curve f/f0 end points:" )
+               << QString().sprintf( "%10.4f  %10.4f",
+                     mrecs[ 0 ].str_k, mrecs[ 0 ].end_k );
+   }
+   modstats << tr( "Number of models:" )
+            << QString().sprintf( "%5d", nmtasks );
+   modstats << tr( "Number of curve variations:" )
+            << QString().sprintf( "%5d", nkpts );
+   modstats << tr( "Solute points per curve:" )
+            << QString().sprintf( "%5d", nlpts );
+   modstats << tr( "Best curve calculated solutes:" )
+            << QString().sprintf( "%5d", mrecs[ 0 ].csolutes.size() );
+   modstats << tr( "Index of best model:" )
+            << QString().sprintf( "%5d", mrecs[ 0 ].taskx );
+   modstats << tr( "Minimum, Maximum calculated solutes:" )
+            << QString().sprintf( "%5d  %5d", nsolmin, nsolmax );
+   modstats << tr( "Average calculated solutes:" )
+            << QString().sprintf( "%5d", nsolavg );
+   modstats << tr( "Number of \"better\" models:" )
+            << QString().sprintf( "%5d", nbmods );
+   modstats << tr( "Min,Max calculated solutes for better:" )
+            << QString().sprintf( "%5d  %5d", nbsomin, nbsomax );
+   modstats << tr( "Average calculated solutes for better:" )
+            << QString().sprintf( "%5d", nbsoavg );
+   modstats << tr( "Minimum variance:" )
+            << QString().sprintf( "%12.6e", varimin );
+   modstats << tr( "Minimum, Maximum rmsd:" )
+            << QString().sprintf( "%12.8f  %12.8f", rmsdmin, rmsdmax );
+   modstats << tr( "Average, Median rmsd:" )
+            << QString().sprintf( "%12.8f  %12.8f", rmsdavg, rmsdmed );
+   modstats << tr( "Minimum, Maximum rmsd for better:" )
+            << QString().sprintf( "%12.8f  %12.8f", brmsmin, brmsmax );
+   modstats << tr( "Average, Median rmsd for better:" )
+            << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
+
+
+}
+
+// Generate the ordered vector elite (top 30 percent) indexes
+void US_1dsaProcess::elite_indexes( QVector< ModelRecord >& mrecs,
+                                    QVector< int >&         elitexs )
+{
+   int nelite = ( mrecs.size() * 3 ) / 10;
+   elitexs.clear();
+
+   for ( int ii = 0; ii < nelite; ii++ )
+   {
+      elitexs << mrecs[ ii ].taskx;
+   }
 }
 

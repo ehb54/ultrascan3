@@ -25,7 +25,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       US_MLinesPlot( double&, double&, double&, double&, double&,
                      int&, int&, int&, int& );
 
-      void setModel ( US_Model* );
+      void setModel ( US_Model*, QVector< int >& );
       void plot_data( void );
 
    private:
@@ -50,6 +50,8 @@ class US_MLinesPlot : public US_WidgetsDialog
 
       int           dbg_level;
 
+      QVector< int > elitexs;
+
    protected:
       QwtPlot*      data_plot1;
 
@@ -61,6 +63,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       QLineEdit*    le_kincr;
 
    private slots:
+      void setElitePen( int&, int&, QPen& );
       void close_all( void );
 };
 #endif

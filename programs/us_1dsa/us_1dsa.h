@@ -40,6 +40,8 @@ class US_1dsa : public US_AnalysisBase2
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
       QPointer< QTextEdit >       mw_status_text();
+//      QPointer< QStringList >     mw_model_stats();
+      QStringList*     mw_model_stats();
 
    private:
       QGridLayout*         progressLayout;
@@ -66,6 +68,8 @@ class US_1dsa : public US_AnalysisBase2
       QList< US_Noise >    rinoises;
       QList< US_Noise >    tinoises;
 
+      QStringList          model_stats;
+
       QPoint               rbd_pos;
       QPoint               epd_pos;
       QPoint               acd_pos;
@@ -87,7 +91,8 @@ class US_1dsa : public US_AnalysisBase2
       void open_resplot( void );
       void open_3dplot(  void );
       void open_fitcntl( void );
-      QString distrib_info(      void );
+      QString model_statistics( void );
+      QString distrib_info(     void );
       void data_plot( void );
       void write_report( QTextStream& );
       void write_bmap( const QString );
