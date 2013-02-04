@@ -23,6 +23,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
 
    dbg_level       = US_Settings::us_debug();
    model           = 0;
+   elitexs.clear();
 
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
@@ -38,6 +39,19 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QLabel* lb_nlines      = us_label(  tr( "Lines (Models):" ) );
    QLabel* lb_npoints     = us_label(  tr( "Points per Line:" ) );
    QLabel* lb_kincr       = us_label(  tr( "f/f0 Increment:" ) );
+   QLabel* lb_legend      = us_banner( tr( "Model Line Color Legend" ) );
+   QTextEdit* te_legend   = us_textedit();
+   te_legend->setTextColor( Qt::blue );
+   te_legend->setText( 
+         tr( " Red -> Best;\n"
+             " Reddish -> High Elite;\n"
+             " Bluish -> Mid Elite;\n"
+             " Greenish -> Low Elite;\n"
+             " Yellow -> Non Elite / Undetermined." ) );
+   us_setReadOnly( te_legend, true );
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+   QFontMetrics fm( font );
+   te_legend->setMaximumHeight( fm.lineSpacing() * 6 );
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
@@ -64,6 +78,9 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    pltctrlsLayout->addWidget( le_npoints,  row++, 1, 1, 1 );
    pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 1 );
    pltctrlsLayout->addWidget( le_kincr,    row++, 1, 1, 1 );
+   pltctrlsLayout->addWidget( lb_legend,   row++, 0, 1, 2 );
+   pltctrlsLayout->addWidget( te_legend,   row++, 0, 1, 2 );
+//   row         += 6;
    if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
    else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
    else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
@@ -119,14 +136,16 @@ DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
    QVector< double > bmxv( nlpts, 0.0 );
    QVector< double > bmyv( nlpts, 0.0 );
 
-   double* xx   = xvec.data();
-   double* yy   = yvec.data();
-   double* bx   = bmxv.data();
-   double* by   = bmyv.data();
-   double  rinc = (double)( nlpts - 1 );
-   double  xinc = ( smax - smin ) / rinc;
-   double  ystr = fmin;
-   int     mndx = 0;
+   double* xx    = xvec.data();
+   double* yy    = yvec.data();
+   double* bx    = bmxv.data();
+   double* by    = bmyv.data();
+   double  rinc  = (double)( nlpts - 1 );
+   double  xinc  = ( smax - smin ) / rinc;
+   double  ystr  = fmin;
+   int     mndx  = 0;
+   int     elmx  = -1;
+   int     nepts = got_best ? elitexs.size() : 0;
 
    QString       title;
    QwtPlotCurve* curv;
@@ -160,15 +179,22 @@ DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
             curv    = us_curve( data_plot1, title );
 
 //DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            if ( ! got_best  ||  mndx != bmndx )
+            if ( ! got_best  ||  ( elmx = elitexs.indexOf( mndx ) ) < 0 )
             { // Normal line
                curv->setPen  ( pen_plot );    // Default color (yellow)
             }
-            else
+            else if ( mndx == bmndx )
             { // Best model line
-               y1 = yy[ 0 ];                  // Save best model end points
-               y2 = yy[ nlpts - 1 ];
+               y1           = yy[ 0 ];
+               y2           = yy[ nlpts - 1 ];
                curv->setPen  ( pen_red  );    // Red
+DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
+            }
+            else
+            { // Not best, but among the elite, so use special color
+               QPen epen;
+               setElitePen( elmx, nepts, epen );
+               curv->setPen( epen );           // Graduated color
             }
             curv->setData ( xx, yy, nlpts );
             yend   += finc;
@@ -226,11 +252,11 @@ DbgLv(1) << "RP:PD    ii jj kk mx" << ii << jj << kk << mndx
             curv    = us_curve( data_plot1, title );
 
 //DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            if ( ! got_best  ||  mndx != bmndx )
+            if ( ! got_best  ||  ( elmx = elitexs.indexOf( mndx ) ) < 0 )
             { // Normal line
                curv->setPen  ( pen_plot );    // Default color (yellow)
             }
-            else
+            else if ( mndx == bmndx )
             { // Best model line
                for ( int kk = 0; kk < nlpts; kk++ )
                {                              // Save best model points
@@ -239,6 +265,12 @@ DbgLv(1) << "RP:PD    ii jj kk mx" << ii << jj << kk << mndx
                }
                curv->setPen  ( pen_red  );    // Red
 DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
+            }
+            else
+            { // Not best, but among the elite, so use special color
+               QPen epen;
+               setElitePen( elmx, nepts, epen );
+               curv->setPen( epen );
             }
             curv->setData ( xx, yy, nlpts );
             mndx++;
@@ -294,9 +326,34 @@ DbgLv(1) << "RP:PD  return";
 }
 
 // Public slot to set a pointer to a model to use in the plot for highlights
-void US_MLinesPlot::setModel( US_Model* a_model )
+void US_MLinesPlot::setModel( US_Model* a_model, QVector< int >& exs )
 {
-   model = a_model;
-DbgLv(1) << "RP:SM  bmndx" << bmndx;
+   model   = a_model;
+   elitexs = exs;
+DbgLv(1) << "RP:SM  bmndx" << bmndx << "size elitexs" << elitexs.size();
+}
+
+// Private slot to calculate a pen for an elite model curve line
+void US_MLinesPlot::setElitePen( int& elmx, int& nepts, QPen& epen )
+{
+   int    neept = nepts / 3;
+   int    nsept = neept + neept;
+   int ired, igrn, iblu;
+   if ( elmx < neept )
+   { // Reddish for upper 1/3 of elite lines
+      ired  = ( ( neept - elmx ) * 256 ) / neept;
+      igrn  = iblu = ( 256 - ired ) / 2;
+   }
+   else if ( elmx < nsept )
+   { // Bluish for middle 1/3 of elite lines
+      iblu  = ( ( nsept - elmx ) * 256 ) / neept;
+      ired  = igrn = ( 256 - iblu ) / 2;
+   }
+   else
+   { // Greenish for lower 1/3 of elite lines
+      igrn  = ( ( nepts - elmx ) * 256 ) / neept;
+      ired  = iblu = ( 256 - igrn ) / 2;
+   }
+   epen  = QPen( QColor( ired, igrn, iblu ), 2.0 );
 }
 

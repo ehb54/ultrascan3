@@ -394,10 +394,7 @@ void US_1dsa::save( void )
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
-   bool    fitMeni      = ( model.global == US_Model::MENISCUS );
-   bool    montCar      = model.monteCarlo;
-   QString analysisType = fitMeni ?  "1DSA-FM" :
-                          ( montCar ? "1DSA-MC" : "1DSA" );
+   QString analysisType = "1DSA";
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
    QString analysisID   = dates + "_" + analysisType + "_" + requestID + "_";
@@ -574,9 +571,7 @@ void US_1dsa::save( void )
 
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
-   QString filebase  = reppath
-                    + ( fitMeni ? "1DSA-FM" : ( montCar ? "1DSA-MC" : "1DSA" ) )
-                    + dext + ".";
+   QString filebase  = reppath + "1DSA"   + dext + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
@@ -647,12 +642,13 @@ US_DataIO2::EditedData* US_1dsa::mw_editdata()
 
 // Return pointers to main window data and GUI elements
 
-US_DataIO2::RawData*        US_1dsa::mw_simdata()      { return &sdata;    }
-US_DataIO2::RawData*        US_1dsa::mw_resdata()      { return &rdata;    }
-US_Model*                   US_1dsa::mw_model()        { return &model;    }
-US_Noise*                   US_1dsa::mw_ti_noise()     { return &ti_noise; }
-US_Noise*                   US_1dsa::mw_ri_noise()     { return &ri_noise; }
-QPointer< QTextEdit    >    US_1dsa::mw_status_text()  { return te_status;  }
+US_DataIO2::RawData*      US_1dsa::mw_simdata()      { return &sdata;    }
+US_DataIO2::RawData*      US_1dsa::mw_resdata()      { return &rdata;    }
+US_Model*                 US_1dsa::mw_model()        { return &model;    }
+US_Noise*                 US_1dsa::mw_ti_noise()     { return &ti_noise; }
+US_Noise*                 US_1dsa::mw_ri_noise()     { return &ri_noise; }
+QPointer< QTextEdit   >   US_1dsa::mw_status_text()  { return te_status;    }
+QStringList*              US_1dsa::mw_model_stats()  { return &model_stats; }
 
 // Open residuals plot window
 void US_1dsa::open_resplot()
@@ -879,6 +875,25 @@ QString US_1dsa::distrib_info()
    return mstr;
 }
 
+// Model statistics HTML string
+QString US_1dsa::model_statistics()
+{
+DbgLv(1) << "ModStats0" << model_stats[ 0 ];
+DbgLv(1) << "ModStats1" << model_stats[ 1 ];
+   QString mstr = "\n" + indent( 4 )
+      + tr( "<h3>Model Statistics:</h3>\n" )
+      + indent( 4 ) + "<table>\n";
+
+   for ( int ii = 0; ii < model_stats.size(); ii += 2 )
+   {
+      mstr += table_row( model_stats[ ii ], model_stats[ ii + 1 ] );
+   }
+
+   mstr += indent( 4 ) + "</table>\n";
+   
+   return mstr;
+}
+   
 // Write HTML report file
 void US_1dsa::write_report( QTextStream& ts )
 {
@@ -888,6 +903,7 @@ void US_1dsa::write_report( QTextStream& ts )
    ts << run_details();
    ts << hydrodynamics();
    ts << scan_info();
+   ts << model_statistics();
    ts << distrib_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
 }

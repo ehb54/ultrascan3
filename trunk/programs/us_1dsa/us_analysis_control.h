@@ -53,6 +53,9 @@ class US_AnalysisControl : public US_WidgetsDialog
       US_Noise*                        ti_noise;
       US_SimulationParameters*         sparms;
       QPointer< QTextEdit    >         mw_stattext;
+      QStringList*                     mw_modstats;
+
+      QVector< int >                   elitexs;
 
       QWidget*                         parentw;
       US_1dsaProcess*                  processor;

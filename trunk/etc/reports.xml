@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE US_Reports>
 <US_Reports version="1.0">
+    <application name="1DSA"
+    label="1-Dimensional Spectrum Analysis" />
     <application name="2DSA"
     label="2-Dimensional Spectrum Analysis" />
     <application name="2DSA-MC"

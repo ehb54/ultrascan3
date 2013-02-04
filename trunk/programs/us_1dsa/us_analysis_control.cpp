@@ -19,6 +19,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    dbg_level      = US_Settings::us_debug();
    varimin        = 9e+99;
    bmndx          = -1;
+   elitexs.clear();
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -226,6 +227,7 @@ void US_AnalysisControl::start()
       ti_noise       = mainw->mw_ti_noise();
       ri_noise       = mainw->mw_ri_noise();
       mw_stattext    = mainw->mw_status_text();
+      mw_modstats    = mainw->mw_model_stats();
 
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
@@ -441,8 +443,10 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
    qApp->processEvents();
+   QStringList modelstats;
 
-   processor->get_results( sdata, rdata, model, ti_noise, ri_noise, bmndx );
+   processor->get_results( sdata, rdata, model, ti_noise, ri_noise, bmndx,
+         modelstats, elitexs );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
@@ -455,6 +459,8 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
    if ( alldone )
    {
+      *mw_modstats    = modelstats;
+
       mainw->analysis_done( -2 );
 
       mainw->analysis_done(  0 );
@@ -523,7 +529,7 @@ void US_AnalysisControl::plot_lines()
 
    if ( bmndx >= 0 )
    {
-      mlnplotd->setModel( model );
+      mlnplotd->setModel( model, elitexs );
    }
 
    mlnplotd->plot_data();
