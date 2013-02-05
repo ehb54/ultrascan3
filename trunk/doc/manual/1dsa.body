@@ -1,0 +1,248 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III 1-D Spectrum Analysis'
+%]
+
+    <h2> <i>UltraScan</i> 1-Dimensional Spectrum Analysis: </h2>
+
+    <p> This module enables you to perform 1-dimensional spectrum analysis
+    on a chosen experimental data set. Upon completion of an analysis fit,
+    plots available include: experiment; simulation; overlayed experiment
+    and simulation; residuals; time-invariant noise; radially-invariant noise;
+    3-d model. Final outputs may include a model and computed noises.</p>
+
+    <p> The 1DSA method is used for composition analysis of sedimentation
+    velocity experiments. It can generate sedimentation coefficient,
+    diffusion coefficient, frictional coefficient, f/f0 ratio, and molecular
+    weight distributions. The distributions can be plotted as 3-dimensional
+    plots (2 parameters from the above list against each other), with the
+    third dimension representing the concentration of the solute found in the
+    composition analysis. The set of all such final calculated solutes form a
+    model which is used to generate a simulation via Lamm equations. The
+    simulation is plotted overlaying a plot of experimental data.</p>
+
+    <p> The 1DSA pass proceeds for a set of models each of which consists of
+    the solute points along a curve in s,f/f0 space. The model whose RMSD of
+    the resulting residuals (simulation-experimental difference) is the lowest
+    forms the final output model. The set of curves is specified by s and
+    f/f0 ranges and a direct or implied number of variations in each
+    direction. The type of curve used may be any of the following.</p>
+
+    <ul>
+      <li><b>Straight Line</b></li>
+      <li><b>Increasing Sigmoid</b></li>
+      <li><b>Decreasing Sigmoid</b></li>
+    </ul>
+
+    <h3> Process:</h3>
+
+    <ul>
+       <li>
+          <b>Load Experimental Data:</b> First, load experimental velocity
+          data. Click on "Load Data" to select an edited velocity data set from
+          the database or from local disk.
+       </li>
+          
+       <li>
+          <b>Define the Analysis Fit:</b> Secondly, open an analysis
+          control window by clicking on "Fit Control". Within that dialog,
+          define the grids and iterations that comprise the analysis.
+       </li>
+          
+       <li>
+          <b>Start the Fit:</b> Next, after having specified analysis
+          parameters, begin the fit analysis by clicking "Start Fit".
+       </li>
+          
+       <li>
+          <b>Display and Save Results:</b> After simulation, a variety of
+          options are available for displaying simulation results, residuals,
+          and distributions. Report text files and graphics plot files can
+          also be generated.
+       </li>
+    </ul>
+
+    <h3> Main Window: </h3>
+    <p> The main 1DSA window is shown here in the state it appears after
+    the completion of a fit run.</p>
+
+    <img src="images/1dsa_main-c.png" alt="1DSA Main Window, fit complete"/>
+
+    <h3> The Curves: </h3>
+
+    <p> After specifying the curve type and the variations to analyze, a plot
+    of the model lines may be displayed. The sample shown here is for a
+    Straight Line type.</p>
+
+    <img src="images/1dsa_mlines-line1.png" alt="1DSA Lines as specified"/>
+
+    <p> After analysis, the display is modified to illustrate the best model,
+    as well as color coding of some of the other better fits. The sample
+    here is for an Increasing Sigmoid type.</p>
+
+    <img src="images/1dsa_mlines-sigm2.png" alt="1DSA Lines after analysis"/>
+
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Load Experiment</b> Click here and, in the resulting
+          <a href="data_loader.html">Load Data Dialog</a>, select an edited
+          data set to load.
+       </li>
+
+       <li>
+          <b>Run Details</b> Pop up a dialog showing run details.
+       </li>
+
+       <li>
+          <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+          than the latest one for the raw experimental data.
+       </li>
+
+       <li>
+          <b>Database</b> Select to specify data input from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b> Select to specify data input from local disk.
+       </li>
+
+       <li>
+          <b>View Data Report</b> Generate a report file and view it in
+          a dialog.
+       </li>
+
+       <li>
+          <b>Save Data</b> Save models and noises, as well as report and
+          plot images files.
+       </li>
+
+
+       <li>
+          <b>Run ID / Edit ID:</b> The Run identifier string and the Edit
+          identifier (generally a time string) are displayed for loaded edit.
+       </li>
+
+       <li>
+          <b>Avg Temperature:</b> The average temperature over all the
+          scans of the loaded data.
+       </li>
+
+       <li>
+          <b>(experiment description)</b> A text string is displayed giving
+          a fairly detailed description of the experiment.
+       </li>
+
+       <li>
+          <b>Cell / Channel / Wavelength</b> One or more rows of data edit
+          triples. If more than one, click on a row to select it as the
+          data of interest.
+       </li>
+
+       <li>
+          <b>Solution</b> Click this button to open a
+          <a href="us_solution.html">Solution Management dialog</a>
+          that allows changes to buffer and analyte characteristics of
+          the data set.
+       </li>
+
+       <li>
+          <b>Density (20&deg; C)</b> Shows the density value for the loaded
+          experiment. Click the Solution button to open a dialog in which
+          density and other values may be changed.
+       </li>
+
+       <li>
+          <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+          loaded experiment. Click the Solution button to open a dialog
+          in which viscosity and other values may be changed.
+       </li>
+
+       <li>
+          <b>Vbar (20&deg; C)</b> Shows the vbar value for the loaded
+          experiment. Click the Solution button to open a dialog in
+          which vbar and other values may be changed.
+       </li>
+
+       <li>
+          <b>Skipped</b> The count of experiment data scans skipped.
+       </li>
+
+       <li>
+          <b>Variance:</b> Variance value (square of RMSD) for residuals.
+       </li>
+
+       <li>
+          <b>RMSD:</b> Root-Mean-Square-of-Differences for residuals.
+       </li>
+
+       <li>
+          <b>Scan focus from:</b> Select a low scan of the range of values for
+          exclusion from analysis.
+       </li>
+
+       <li>
+          <b>to:</b> Select a high scan of the range of values for
+          exclusion from analysis.
+       </li>
+
+       <li>
+          <b>Exclude Scan Range</b> Initiate exclusion of the scans given
+          in the above controls.
+       </li>
+
+       <li>
+          <b>Reset Scan Range</b> Reset to the full range of scans.
+       </li>
+
+       <li>
+          <b>Fit Control</b> Open a dialog to set analysis parameters and
+          start a fit run.
+          For details on the results of clicking this button, see
+          <a href="1dsa_analys.html">1DSA Analysis Control</a>.
+       </li>
+
+       <li>
+          <b>3-D Plot</b> Open a control window for a 3-dimensional plot of
+          the final computed model. See
+          <a href="images/1dsa_3dplot.png">1DSA 3-D Plot Dialog</a> 
+          for an example of a 3-D plot, along with its control dialog.
+       </li>
+
+       <li>
+          <b>Residual Plot</b> Open a plot dialog for a far more detailed set
+          of result plots. See
+          <a href="images/1dsa_resplot.png">1DSA Residual Plot Dialog</a> 
+          for an example of the residual plot dialog.
+       </li>
+
+       <li>
+          <b>Status Info:</b> This text window displays continually updated
+          summaries of computational activity and results.
+       </li>
+
+       <li>
+          <b>Reset</b> Reset display parameters to defaults.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
+       </li>
+
+       <li>
+          <b>(upper right side plot)</b> Upon analysis completion, this plot
+          is of the Residuals (Experimental minus Simulation minus any Noise).
+       </li>
+
+       <li>
+          <b>(lower right side plot)</b> Upon analysis completion, this plot
+          is of an overlay of the Experimental and Simulation data.
+       </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

@@ -1,0 +1,206 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III 1DSA Analysis Control'
+%]
+
+    <h2> <i>UltraScan</i> Fit Controls for 1DSA: </h2>
+
+    <p> The parameters of this dialog define and control an analysis run
+    to find the set of solutes that best fits experimental data.
+
+    <p> Each refinement iteration proceeds over a defined grid of s and f/f0
+    values. That grid is divided into subgrids as defined by a number of
+    grid refinements in each direction. The base fit analysis pass thus
+    defined may be repeated a specified number of times, with the second
+    and subsequent refinement iterations adding calculated solutes from the
+    previous iteration to subgrid solutes in each subgrid analysis.</p>
+
+    <p> A full set of analysis iterations may be repeated for either a range
+    of meniscus points or a number of monte carlo iterations.</p>
+
+    <h3> Process:</h3>
+
+    <ul>
+       <li>
+          <b>Set the Curve Type:</b> First, specify the type of curve you
+          expect the species to follow. Choices are:
+          <ul>
+            <li>Straight Line</li>
+            <li>Increasing Sigmoid</li>
+            <li>Decreasing Sigmoid</li>
+          </ul>
+       </li>
+          
+       <li>
+          <b>Define the Ranges:</b> Next, define the s and f/f0 ranges; and
+          directly (sigmoids) or indirectly (lines) give the number of
+          variations in each dimension.
+       </li>
+          
+       <li>
+          <b>Specify Resolution Points:</b> Specify how many solute points
+          exist on each curve.
+       </li>
+          
+       <li>
+          <b>Set Threads:</b> Next, after control values are set, define
+          a number of threads that is appropriate to the complexity of the run
+          and the number of processors or cores available on your machine.
+       </li>
+          
+       <li>
+          <b>Start the Fit:</b> Begin the fit analysis by clicking
+          "Start Fit".
+       </li>
+          
+       <li>
+          <b>Display and Save Results:</b> After simulation, a variety of
+          options are available for displaying simulation results, residuals,
+          and distributions. Report text files and graphics plot files can
+          also be generated.
+       </li>
+    </ul>
+          
+    <h3> Sample Control Dialogs:</h3>
+
+    <p> Control dialogs differ slightly based on whether the curve type is
+    a line or a sigmoid. If straight line is specified, curve variation count
+    is given indirectly by f/f0 increment.</p>
+
+    <img src="images/1dsa_analys-line.png" alt="1DSA Analysis Control"/>
+
+    <p> If one of the sigmoid types is specified, you need to specify directly
+    the number of variations in par1 and par2 of the sigmoid function [ y =
+    y_start + y_diff * 0.5 * erf( ( x - par2 ) / sqrt(2.*par1) ) + 0.5 ]. </p>
+
+    <img src="images/1dsa_analys-sigm.png" alt="1DSA Analysis Control"/>
+
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Curve Type:</b> Select from the list of types; either a line
+          or one of the sigmoid types.
+       </li>
+
+       <li>
+          <b>Lower Limit (s x 1e-13):</b> Set a lower limit of sedimentation
+          coefficient values to scan.
+       </li>
+
+       <li>
+          <b>Upper Limit (s):</b> Set an upper limit of sedimentation
+          coefficient values to scan.
+       </li>
+
+       <li>
+          <b>Lower Limit (f/f0):</b> Set a lower limit of frictional
+          ratio values to scan.
+       </li>
+
+       <li>
+          <b>Upper Limit (f/f0):</b> Set an upper limit of frictional
+          ratio values to scan.
+       </li>
+
+       <li>
+          <b>Increment (f/f0):</b> Set the increment by which the start
+          f/f0 point and end f/f0 point values are varied to generate the
+          straight line models to analyze. The upper minus lower f/f0 limits
+          divided by this value plus one gives the number of variations in
+          each dimension. The square of the variation count gives the total
+          number of models to analyze. See
+          <a href="images/1dsa_mlines-line1.png">Straight Line Models</a> for
+          an illustration.
+       </li>
+
+       <li>
+          <b>Variations Count:</b> Directly specify the number of curve
+          variations in each direction to form the models. The square of this
+          value is the number of models to analyze. The number of variations
+          is applied to each of "par1" and "par2" in the sigmoid computations.
+          See
+          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>
+          for an illustration.
+       </li>
+
+       <li>
+          <b>Thread Count:</b> Specify by counter the number of threads
+          to use for computations. This value is the total number of worker
+          threads used at one time. The master thread generally has little
+          work to do during computations, so the value may be set to your
+          machine's total processors or cores.
+       </li>
+
+       <li>
+          <b>Fit Time-Invariant Noise</b> Check this box if you want to
+          calculate time-invariant noise.
+       </li>
+
+       <li>
+          <b>Fit Radially-Invariant Noise</b> Check this box if you want to
+          calculate radially-invariant noise.
+       </li>
+
+       <li>
+          <b>Plot Model Lines</b> Click on this button to open a dialog showing
+          the Model Lines specified (such as
+          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
+          the dialog is automatically opened upon analysis completion. But this
+          button can be used to re-display completed model lines if the dialog
+          has been closed by the user. The dialogs after analysis include
+          color-coded illustrations of best and near-best models:
+          <a href="images/1dsa_mlines-line2.png">Computed Line Models</a>) or
+          <a href="images/1dsa_mlines-sigm2.png">Computed Sigmoid Models</a>).
+       </li>
+
+       <li>
+          <b>Start Fit</b> Click to begin the fit analysis.
+       </li>
+
+       <li>
+          <b>Stop Fit</b> If something seems wrong with the progress of
+          analysis or if you realize you have parameterized incorrectly,
+          click this button to abort the fit run.
+       </li>
+
+       <li>
+          <b>Plot Results</b> Open 3-D and Residual plot dialogs to display
+          final results.
+       </li>
+
+       <li>
+          <b>Save Results:</b> Save final model(s) and any noises generated.
+          Also output report and plot image files.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
+       </li>
+
+       <li>
+          <b>Status:</b> A progress bar showing activity progress within
+          each iteration pass.
+       </li>
+
+       <li>
+          <b>Minimum Variance:</b> The minimum variance value for models
+          thus far computed is continually updated.
+       </li>
+
+       <li>
+          <b>Minimum Variance:</b> Simularly, the minimum RMSD value for models
+          thus far computed is continually updated.
+       </li>
+
+       <li>
+          <b>Status Information:</b> The text box here is continually updated
+          with summaries of analysis activity and results.
+       </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]
