@@ -534,5 +534,15 @@ void US_AnalysisControl::plot_lines()
 
    mlnplotd->plot_data();
    mlnplotd->setVisible( true );
+
+   QString filepath = US_Settings::tmpDir() + "/1DSA."
+                      + edata->cell + edata->channel + edata->wavelength
+                      + ".mlines."
+                      + QString::number( getpid() ) + ".png";
+   QPixmap pixmap   = QPixmap::grabWidget( mlnplotd, 0, 0,
+                         mlnplotd->width(), mlnplotd->height() );
+qDebug() << "PLOTLINE: mlines filepath" << filepath;
+qDebug() << "PLOTLINE: mlines w h" << pixmap.width() << pixmap.height();
+   pixmap.save( filepath );
 }
 

@@ -7,15 +7,25 @@
     <p> The parameters of this dialog define and control an analysis run
     to find the set of solutes that best fits experimental data.
 
-    <p> Each refinement iteration proceeds over a defined grid of s and f/f0
-    values. That grid is divided into subgrids as defined by a number of
-    grid refinements in each direction. The base fit analysis pass thus
-    defined may be repeated a specified number of times, with the second
-    and subsequent refinement iterations adding calculated solutes from the
-    previous iteration to subgrid solutes in each subgrid analysis.</p>
+    <p> Each analysis run proceeds over a defined set of curves in s and f/f0
+    space. The single analysis pass produces the model whose associated
+    simulation differs the least from the experimental data, as determined
+    by its RMSD value. Time-invariant and/or radially-invariant noise(s) may
+    also be computed. The curves in a set cover a specified s and f/f0 range
+    and vary according to a specified increment or count. Each model has
+    a specified number of input solute points along its curve.</p>
 
-    <p> A full set of analysis iterations may be repeated for either a range
-    of meniscus points or a number of monte carlo iterations.</p>
+    <p> For a straight line type, an f/f0 increment indirectly specifies the
+    number of variations. Lines cover the full s range, with end points along
+    the f/f0 range at the specified increment. Each implied starting point
+    connects with each of the possible end points. So the square of the implied
+    number of f/f0 end points is the number of models analyzed.</p>
+
+    <p> For sigmoid types, a variation count is directly specified. The curves
+    cover the full s and f/f0 ranges, with "par1" and "par2" values each varying
+    the specified number of times, yielding a number of test models equal to
+    the square of that count. The par1 value changes logarithmically from 0.001
+    to 0.5; and par2 changes linearly from 0.0 to 1.0.</p>
 
     <h3> Process:</h3>
 
@@ -69,8 +79,11 @@
     <img src="images/1dsa_analys-line.png" alt="1DSA Analysis Control"/>
 
     <p> If one of the sigmoid types is specified, you need to specify directly
-    the number of variations in par1 and par2 of the sigmoid function [ y =
-    y_start + y_diff * 0.5 * erf( ( x - par2 ) / sqrt(2.*par1) ) + 0.5 ]. </p>
+    the number of variations in par1 and par2 of the sigmoid function <br/>
+    &nbsp;&nbsp;
+    y = y_start + y_diff * 0.5 * erf( ( x - par2 )
+    / sqrt( 2.0 * par1 ) ) + 0.5
+    . </p>
 
     <img src="images/1dsa_analys-sigm.png" alt="1DSA Analysis Control"/>
 

@@ -47,11 +47,12 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
              " Reddish -> High Elite;\n"
              " Bluish -> Mid Elite;\n"
              " Greenish -> Low Elite;\n"
-             " Yellow -> Non Elite / Undetermined." ) );
+             " Yellow -> Non Elite / Undetermined;\n"
+             " Cyan -> Best Computed Solutes." ) );
    us_setReadOnly( te_legend, true );
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
-   te_legend->setMaximumHeight( fm.lineSpacing() * 6 );
+   te_legend->setMaximumHeight( fm.lineSpacing() * 7 );
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 

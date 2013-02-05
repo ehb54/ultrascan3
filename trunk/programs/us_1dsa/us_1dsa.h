@@ -59,6 +59,7 @@ class US_1dsa : public US_AnalysisBase2
       QPointer< US_ResidPlot >        resplotd;
       QPointer< US_PlotControl >      eplotcd;
       QPointer< US_AnalysisControl >  analcd;
+      QPointer< US_MLinesPlot >       mlplotd;
 
       US_Model             model;
       US_Noise             ri_noise_in;
