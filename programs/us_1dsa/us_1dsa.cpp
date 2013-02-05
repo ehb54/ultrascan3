@@ -404,6 +404,7 @@ void US_1dsa::save( void )
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
+   QString tmppath  = US_Settings::tmpDir();
    QString mdlpath;
    QString noipath;
    int     knois    = min( ti_noise.count, 1 ) 
@@ -576,8 +577,12 @@ void US_1dsa::save( void )
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
+   QString plot4File = filebase + "mlines.png";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "1dsa-fm" + dext2 + ".fitmen.dat";
+   QString ptmp4File = tmppath  + "/1DSA" + dext + ".mlines."
+                       + QString::number( getpid() ) + ".png";
+DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 
    // Write HTML report file
    QFile rep_f( htmlFile );
@@ -593,6 +598,10 @@ void US_1dsa::save( void )
    write_plot( plot1File, data_plot2 );
    write_plot( plot2File, data_plot1 );
    write_bmap( plot3File );
+
+   QFile::remove( plot4File );
+   if ( QFile::copy  ( ptmp4File, plot4File ) )
+      QFile::remove( ptmp4File );
    
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
@@ -616,9 +625,10 @@ void US_1dsa::save( void )
    wmsg = wmsg + htmlFile  + "\n"
                + plot1File + "\n"
                + plot2File + "\n"
-               + plot3File + "\n";
+               + plot3File + "\n"
+               + plot4File + "\n";
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << plot3File;
+   repfiles << htmlFile << plot1File << plot2File << plot3File << plot4File;
 
    if ( disk_controls->db() )
    {  // Write report files to the database

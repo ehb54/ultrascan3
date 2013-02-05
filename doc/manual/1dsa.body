@@ -45,7 +45,7 @@
        <li>
           <b>Define the Analysis Fit:</b> Secondly, open an analysis
           control window by clicking on "Fit Control". Within that dialog,
-          define the grids and iterations that comprise the analysis.
+          define the ranges and counts that comprise the analysis.
        </li>
           
        <li>

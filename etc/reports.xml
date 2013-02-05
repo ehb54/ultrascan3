@@ -97,4 +97,5 @@
     <report name="combo-listincl-ff0" label="Combo f/f0 List of Included Sets" />
     <report name="combo-listincl-vbar" label="Combo Vbar List of Included Sets" />
     <report name="combo-listincl-mwl" label="Combo Molec. Wt. Log List of Included Sets" />
+    <report name="mlines" label="Model Lines Plot" />
 </US_Reports>

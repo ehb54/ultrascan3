@@ -86,6 +86,8 @@ void US_ResidsBitmap::replot( QVector< QVector< double > >& resids )
    int    mhgt    = scanCount < 100 ? scanCount : 100;
 
    // create the label pixmap from the image
+   resize( mwid + 4, mhgt + 4 );
+   lb_bitmap->resize( mwid, mhgt );
    QPixmap pmap( mwid, mhgt );
    pmap = pmap.fromImage( res_image.scaled( mwid, mhgt ) );
 
