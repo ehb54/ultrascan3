@@ -16,6 +16,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ) );
 
+   update_hplc = true;
    running = false;
    setupGUI();
    global_Xpos += 30;
@@ -36,9 +37,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::restore()
 {
    gaussians_undo.resize( 1 );
    hplc_win->gaussians = gaussians_undo[ 0 ];
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    update_enables();
 }
 
@@ -50,9 +54,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::undo()
    }
 
    hplc_win->gaussians = gaussians_undo.back();
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    update_enables();
 }
 
@@ -208,7 +215,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    lbl_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_epsilon = new mQLineEdit(this, "le_epsilon Line Edit");
-   le_epsilon->setText( "0.001" );
+   double peak = hplc_win->compute_gaussian_peak( hplc_win->wheel_file, hplc_win->gaussians );
+   le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 ) );
    le_epsilon->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_epsilon->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -825,9 +833,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       cout << "no improvement, reverting to original values\n";
    }
       
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    update_enables();
 }
 
@@ -881,9 +892,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
       
    free_our_vector( v );
 
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    progress->reset();
    update_enables();
 }
@@ -938,9 +952,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
       
    free_our_vector( v );
 
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    progress->reset();
    update_enables();
 }
@@ -995,9 +1012,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
       
    free_our_vector( v );
 
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    progress->reset();
    update_enables();
 }
@@ -1046,9 +1066,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
       cout << "no improvement, reverting to original values\n";
    }
 
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    progress->reset();
    update_enables();
 }
@@ -1172,9 +1195,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
       cout << "no improvement, reverting to original values\n";
    }
 
-   hplc_win->gauss_init_markers();
-   hplc_win->gauss_init_gaussians();
-   hplc_win->update_gauss_pos();
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
    progress->reset();
    update_enables();
 }

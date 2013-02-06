@@ -6078,6 +6078,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 {
    if ( gaussian_mode )
    {
+      gaussians = org_gaussians;
       gauss_delete_markers();
       plotted_markers.clear();
       gauss_delete_gaussians();
@@ -6096,6 +6097,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    } else {
       if ( baseline_mode )
       {
+         le_baseline_start->setText( QString( "%1" ).arg( org_baseline_start ) );
+         le_baseline_end  ->setText( QString( "%1" ).arg( org_baseline_end   ) );
          gauss_delete_markers();
          plotted_markers.clear();
          for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
@@ -6159,66 +6162,79 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 
 void US_Hydrodyn_Saxs_Hplc::wheel_save()
 {
+   if ( gaussian_mode )
+   {
+      org_gaussians = gaussians;
+      // ? f_gaussians[ wheel_file ] = gaussians;
+      wheel_cancel();
+      return;
+   }
+
+   if ( baseline_mode )
+   {
+      org_baseline_start = le_baseline_start->text().toDouble();
+      org_baseline_end   = le_baseline_end  ->text().toDouble();
+      wheel_cancel();
+      return;
+   }
+
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( false );
    lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
 
-   if ( !gaussian_mode && !baseline_mode )
+   // save time adjusted selected as new
+   map < QString, bool > current_files;
+
+   int wheel_pos = -1;
+
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {
-      // save time adjusted selected as new
-      map < QString, bool > current_files;
-
-      int wheel_pos = -1;
-
-      for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+      current_files[ lb_files->text( i ) ] = true;
+      if ( lb_files->text( i ) == wheel_file )
       {
-         current_files[ lb_files->text( i ) ] = true;
-         if ( lb_files->text( i ) == wheel_file )
-         {
-            wheel_pos = i;
-         }
+         wheel_pos = i;
       }
+   }
 
-      QString save_name = wheel_file + QString( "_ts%1" ).arg( qwtw_wheel->value() ).replace( ".", "_" );
+   QString save_name = wheel_file + QString( "_ts%1" ).arg( qwtw_wheel->value() ).replace( ".", "_" );
 
-      int ext = 0;
-      while ( current_files.count( save_name ) )
-      {
-         save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
-      }
+   int ext = 0;
+   while ( current_files.count( save_name ) )
+   {
+      save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
+   }
    
-      cout << QString( "new name is %1\n" ).arg( save_name );
+   cout << QString( "new name is %1\n" ).arg( save_name );
 
-      lb_created_files->insertItem( save_name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( save_name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
-      created_files_not_saved[ save_name ] = true;
+   lb_created_files->insertItem( save_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( save_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ save_name ] = true;
 
-      f_pos       [ save_name ] = f_qs.size();
-      f_qs        [ save_name ] = f_qs        [ wheel_file ];
-      f_qs_string [ save_name ] = f_qs_string [ wheel_file ];
+   f_pos       [ save_name ] = f_qs.size();
+   f_qs        [ save_name ] = f_qs        [ wheel_file ];
+   f_qs_string [ save_name ] = f_qs_string [ wheel_file ];
 
-      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ save_name ].size(); i++ )
-      {
-         f_qs       [ save_name ][ i ] += qwtw_wheel->value();
-         f_qs_string[ save_name ][ i ] = QString( "%1" ).arg( f_qs[ save_name ][ i ] );
-      }
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ save_name ].size(); i++ )
+   {
+      f_qs       [ save_name ][ i ] += qwtw_wheel->value();
+      f_qs_string[ save_name ][ i ] = QString( "%1" ).arg( f_qs[ save_name ][ i ] );
+   }
 
-      f_Is        [ save_name ] = f_Is        [ wheel_file ];
-      f_errors    [ save_name ] = f_errors    [ wheel_file ];
-      f_is_time   [ save_name ] = true;
-      {
-         vector < double > tmp;
-         f_gaussians  [ save_name ] = tmp;
-      }
+   f_Is        [ save_name ] = f_Is        [ wheel_file ];
+   f_errors    [ save_name ] = f_errors    [ wheel_file ];
+   f_is_time   [ save_name ] = true;
+   {
+      vector < double > tmp;
+      f_gaussians  [ save_name ] = tmp;
+   }
 
-      lb_files->setSelected( f_pos[ save_name ], true );
-      if ( wheel_pos != -1 )
-      {
-         lb_files->setSelected( wheel_pos, false );
-      }
+   lb_files->setSelected( f_pos[ save_name ], true );
+   if ( wheel_pos != -1 )
+   {
+      lb_files->setSelected( wheel_pos, false );
    }
 
    plot_dist->replot();
@@ -6250,6 +6266,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_next       ->setEnabled( sizeover3 > 1 && gaussian_pos < sizeover3 - 1 );
    pb_gauss_fit        ->setEnabled( sizeover3 && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_wheel_cancel     ->setEnabled( true );
+   pb_wheel_save       ->setEnabled( true );
    le_gauss_pos        ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
    le_gauss_pos_width  ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
    le_gauss_pos_height ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
@@ -6365,15 +6382,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       return;
    }
 
-   gauss_max_height = f_Is[ wheel_file ][ 0 ];
-   for ( unsigned int i = 1; i < f_Is[ wheel_file ].size(); i++ )
-   {
-      if ( gauss_max_height < f_Is[ wheel_file ][ i ] )
-      {
-         gauss_max_height = f_Is[ wheel_file ][ i ];
-      }
-   }
-
+   get_peak( wheel_file, gauss_max_height );
    gauss_max_height *= 1.2;
 
    if ( gauss_max_height <= 0e0 )
@@ -6388,9 +6397,12 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, 1, Qt::SolidLine ) ) );
 #endif
 
+   org_gaussians = gaussians;
+
    if ( f_gaussians.count( wheel_file ) &&
         f_gaussians[ wheel_file ].size() )
    {
+      cout << "using file specific gaussians\n";
       gaussians = f_gaussians[ wheel_file ];
    }
 
@@ -7049,7 +7061,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
                                     this );
    US_Hydrodyn::fixWinButtons( shf );
    shf->exec();
-
+   delete shf;
+   
    qwtw_wheel->setEnabled( true );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    return;
@@ -7108,6 +7121,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 {
    pb_baseline_start   ->setEnabled( false );
    pb_wheel_cancel     ->setEnabled( true );
+   pb_wheel_save       ->setEnabled( le_baseline_start->text().toDouble() != org_baseline_start ||
+                                     le_baseline_end  ->text().toDouble() != org_baseline_end      );
    le_baseline_start   ->setEnabled( true );
    le_baseline_end     ->setEnabled( true );
    qwtw_wheel          ->setEnabled( le_baseline_start->hasFocus() || le_baseline_end->hasFocus() );
@@ -7115,6 +7130,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
 {
+   org_baseline_start = le_baseline_start->text().toDouble();
+   org_baseline_end   = le_baseline_end  ->text().toDouble();
+
    le_last_focus = (mQLineEdit *) 0;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -7161,6 +7179,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
                          ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
 
    if ( le_baseline_start->text().isEmpty() ||
+        le_baseline_start->text() == "0" ||
         le_baseline_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
    {
       disconnect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -7169,6 +7188,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
    }
 
    if ( le_baseline_end->text().isEmpty() ||
+        le_baseline_end->text() == "0" ||
         le_baseline_end->text().toDouble() > f_qs[ wheel_file ].back() )
    {
       cout << "setting baseline end\n";
@@ -7478,6 +7498,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
    }
    replot_baseline();
    plot_dist->replot();
+   baseline_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
@@ -7494,6 +7515,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
    }
    replot_baseline();
    plot_dist->replot();
+   baseline_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_init_markers()
@@ -7565,23 +7587,16 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
    {
       for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += 3 )
       {
-         double tmp = ( t[ i ] - g[ 1 + i ] ) / g[ 2 + i ];
-         result[ i ] += g[ 0 + i ] * exp( - tmp * tmp / 2 );
+         double tmp = ( t[ i ] - g[ 1 + j ] ) / g[ 2 + j ];
+         result[ i ] += g[ 0 + j ] * exp( - tmp * tmp / 2 );
       }
    }
    return result;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file )
+double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
-   // take current gaussians & compute for this curve
-   // find peak of curve
-   double peak;
-   if ( !get_peak( file, peak ) )
-   {
-      return false;
-   }
-   vector < double > gs = compute_gaussian_sum( f_qs[ file ], org_gaussians );
+   vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
    double gmax = gs[ 0 ];
    for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
    {
@@ -7590,16 +7605,60 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file )
          gmax = gs[ i ];
       }
    }
+   return gmax;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
+{
+   // take current gaussians & compute for this curve
+   // find peak of curve
+   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
+
+   double peak;
+   if ( !get_peak( file, peak ) )
+   {
+      return false;
+   }
+
+   printvector( "cfg: org_gauss", org_gaussians );
+
+   double gmax = compute_gaussian_peak( file, org_gaussians );
    
    double scale = peak / gmax;   
+
+   printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
    {
       gaussians[ 0 + i ] *= scale;
    }
 
-   // now setup and fit
+   printvector( "cfg: gaussians", gaussians );
 
+   double gmax2 = compute_gaussian_peak( file, gaussians );
+
+   cout << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
+      .arg( file )
+      .arg( gmax )
+      .arg( peak )
+      .arg( scale )
+      .arg( gmax2 )
+      ;
+
+   // now setup and fit
+   wheel_file = file;
+   fit->gaussians_undo.clear();
+   fit->gaussians_undo.push_back( gaussians );
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 ) );
+
+   fit->cb_fix_center    ->setChecked( true );
+   fit->cb_fix_width     ->setChecked( true );
+   fit->cb_fix_amplitude ->setChecked( false );
+   fit->lm();
+   fit->cb_fix_width     ->setChecked( false );
+   fit->lm();
+
+   f_gaussians[ file ] = gaussians;
    return true;
 }
 
@@ -7609,6 +7668,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    // extract q grid from file names
 
    org_gaussians = gaussians;
+   printvector( "ciq: org_gauss", org_gaussians );
 
    QRegExp rx_q( "_q(\\d+_\\d+)" );
    QRegExp rx_bl( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
@@ -7666,16 +7726,29 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    disable_all();
 
    // fit gaussians
-   // !!! **              ---- >>>> check for baseline, if present, optionally add back
 
+   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
+      new US_Hydrodyn_Saxs_Hplc_Fit(
+                                    this,
+                                    this );
+
+   hplc_fit_window->update_hplc = false;
+   
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
-      compute_f_gaussians( files[ i ] );
+      compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window );
    }
 
+   delete hplc_fit_window;
+
    // now for each I(t) distribute the I for each frame according to the gaussians
+   // !!! **              ---- >>>> check for baseline, if present, optionally add back
+
+
 
    running = false;
+
+   gaussians             = org_gaussians;
 
    pb_add_files          ->setEnabled( true );
 
@@ -7684,4 +7757,3 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    update_enables();
 }
-

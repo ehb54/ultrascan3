@@ -249,6 +249,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   org_gaussians;  
       vector < double >                   gaussian( double center, double height, double width );
       vector < double >                   compute_gaussian_sum( vector < double > t, vector < double > g );
+      double                              compute_gaussian_peak( QString file, vector < double > g );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -352,9 +353,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       double                       baseline_intercept;
       double                       baseline_slope;
+      double                       org_baseline_start;
+      double                       org_baseline_end;
       void                         baseline_apply( QStringList files );
 
-      bool                         compute_f_gaussians( QString file );
+      bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
 
    private slots:
 

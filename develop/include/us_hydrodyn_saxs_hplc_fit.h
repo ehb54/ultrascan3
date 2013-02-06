@@ -129,7 +129,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       bool          setup_run();
 
-
+      bool          update_hplc;
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
