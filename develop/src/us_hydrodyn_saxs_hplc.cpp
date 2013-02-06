@@ -6433,6 +6433,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
    }
 
+   if ( gaussian_pos >= gaussians.size() / 3 )
+   {
+      gaussian_pos = ( gaussians.size() / 3 ) - 1;
+   }
+
    disable_all();
    gauss_init_markers();
    gauss_init_gaussians();
