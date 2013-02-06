@@ -641,7 +641,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = 0.001;
+         double min = 1e-10;
          double max = hplc_win->gauss_max_height;
          if ( cb_pct_amplitude->isChecked() )
          {
@@ -649,13 +649,17 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < 0.001 )
+         if ( min < 1e-10 )
          {
-            min = 0.001;
+            min = 1e-10;
          }
          if ( max > hplc_win->gauss_max_height )
          {
             max = hplc_win->gauss_max_height;
+         }
+         if ( min > max )
+         {
+            min = max * 1e-15;
          }
 
          HFIT::param_min   .push_back( min );
@@ -718,7 +722,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = 0.0001;
+         double min = 1e-10;
          double max = 1e99;
          if ( cb_pct_width->isChecked() )
          {
@@ -726,9 +730,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < 0.0001 )
+         if ( min < 1e-10 )
          {
-            min = 0.0001;
+            min = 1e-10;
+         }
+         if ( min > max )
+         {
+            min = max * 1e-15;
          }
 
          HFIT::param_min   .push_back( min );

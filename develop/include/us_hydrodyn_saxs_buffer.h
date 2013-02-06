@@ -17,6 +17,12 @@
 #include <qradiobutton.h>
 #include <qtable.h>
 #include <qwt_plot_zoomer.h>
+#include <qwt_wheel.h>
+
+#ifdef QT4
+#include "qwt_plot_marker.h"
+#include "qwt_symbol.h"
+#endif
 
 #include "us_util.h"
 
@@ -145,6 +151,27 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
 
+      QLabel        *lbl_wheel_pos;
+      QwtWheel      *qwtw_wheel;
+      QPushButton   *pb_wheel_cancel;
+      QPushButton   *pb_wheel_save;
+
+      QPushButton   *pb_join_start;
+      QPushButton   *pb_join_swap;
+      QLabel        *lbl_join_offset;
+      mQLineEdit    *le_join_offset;
+      QLabel        *lbl_join_mult;
+      mQLineEdit    *le_join_mult;
+      QLabel        *lbl_join_start;
+      mQLineEdit    *le_join_start;
+      QLabel        *lbl_join_point;
+      mQLineEdit    *le_join_point;
+      QLabel        *lbl_join_end;
+      mQLineEdit    *le_join_end;
+      QPushButton   *pb_join_fit_scaling;
+      QPushButton   *pb_join_fit_linear;
+      QLabel        *lbl_join_rmsd;
+
       QwtPlot       *plot_dist;
       ScrollZoomer  *plot_dist_zoomer;
 #ifdef QT4
@@ -250,7 +277,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QString last_load_dir;
       bool    save_files( QStringList files );
-      bool    save_file( QString file );
+      bool    save_file ( QString file, bool &overwrite, bool &cancel );
       bool    save_files_csv( QStringList files );
 
       csv                          csv_conc;
@@ -273,6 +300,43 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         add_files( QStringList files );
       bool                         axis_x_log;
       bool                         axis_y_log;
+
+      void                         disable_all();
+
+      QString                      wheel_file;
+      QString                      join_file;
+      double                       join_low_q;
+      double                       join_high_q;
+      double                       join_offset_start;
+      double                       join_offset_end;
+      double                       join_offset_delta;
+      double                       join_mult_start;
+      double                       join_mult_end;
+      double                       join_mult_delta;
+
+#ifdef QT4
+      map < QString, QwtPlotCurve * >     plotted_curves;
+      vector < QwtPlotMarker * >          plotted_markers;
+      QwtPlotCurve *                      wheel_curve;
+      QwtPlotCurve *                      join_curve;
+#else
+      map < QString, long >               plotted_curves;
+      vector < long >                     plotted_markers;
+      long                                wheel_curve;
+      long                                join_curve;
+#endif
+
+      mQLineEdit                   *le_last_focus;
+
+      void                         join_enables();
+      void                         join_add_marker( double pos, QColor color, QString text, int align = Qt::AlignRight | Qt::AlignTop );
+      void                         join_init_markers();
+      void                         join_delete_markers();
+      void                         replot_join();
+
+      bool                         join_adjust_lowq;
+      void                         join_set_wheel_range();
+      void                         join_do_replot();
 
    private slots:
 
@@ -324,6 +388,27 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       void plot_zoomed( const QwtDoubleRect &rect );
       void plot_mouse ( const QMouseEvent &me );
+
+      void adjust_wheel ( double );
+      void wheel_cancel();
+      void wheel_save();
+
+      void join_start();
+      void join_swap();
+      void join_fit_scaling ();
+      void join_fit_linear  ();
+
+      void join_offset_text            ( const QString & );
+      void join_mult_text              ( const QString & );
+      void join_start_text             ( const QString & );
+      void join_point_text             ( const QString & );
+      void join_end_text               ( const QString & );
+
+      void join_offset_focus           ( bool );
+      void join_mult_focus             ( bool );
+      void join_start_focus            ( bool );
+      void join_point_focus            ( bool );
+      void join_end_focus              ( bool );
 
       void select_vis();
       void remove_vis();

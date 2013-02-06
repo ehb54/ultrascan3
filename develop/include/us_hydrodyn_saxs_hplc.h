@@ -42,24 +42,6 @@
 
 using namespace std;
 
-class mQLineEdit : public QLineEdit
-{
-   Q_OBJECT
-
-   public:
-
-      mQLineEdit ( QWidget *parent = 0 , const char * name = 0 );
-      ~mQLineEdit();
-
-   signals:
-      void focussed(bool hasFocus);
-
-   protected:
-      virtual void focusInEvent ( QFocusEvent *e );
-      virtual void focusOutEvent ( QFocusEvent *e );
-};
-
-
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
@@ -128,6 +110,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_create_i_of_t;
+      QPushButton   *pb_create_i_of_q;
 
 
       QPushButton   *pb_set_hplc;
@@ -229,6 +212,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, vector < double > >  f_qs;
       map < QString, vector < double > >  f_Is;
       map < QString, vector < double > >  f_errors;
+      map < QString, vector < double > >  f_gaussians;
       map < QString, unsigned int >       f_pos;
 
       map < QString, QString >            f_name;
@@ -262,7 +246,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // the b values are fixed by the user
       // a & c must be > 0
       vector < double >                   gaussians;  
+      vector < double >                   org_gaussians;  
       vector < double >                   gaussian( double center, double height, double width );
+      vector < double >                   compute_gaussian_sum( vector < double > t, vector < double > g );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -322,6 +308,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         smooth( QStringList files );
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
+      void                         create_i_of_q( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files );
@@ -367,6 +354,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       baseline_slope;
       void                         baseline_apply( QStringList files );
 
+      bool                         compute_f_gaussians( QString file );
+
    private slots:
 
       void setupGUI();
@@ -393,6 +382,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void smooth();
       void repeak();
       void create_i_of_t();
+      void create_i_of_q();
       void set_hplc();
       void set_empty();
       void set_signal();

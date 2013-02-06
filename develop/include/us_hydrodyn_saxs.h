@@ -52,6 +52,25 @@
 
 using namespace std;
 
+
+class mQLineEdit : public QLineEdit
+{
+   Q_OBJECT
+
+   public:
+
+      mQLineEdit ( QWidget *parent = 0 , const char * name = 0 );
+      ~mQLineEdit();
+
+   signals:
+      void focussed(bool hasFocus);
+
+   protected:
+      virtual void focusInEvent ( QFocusEvent *e );
+      virtual void focusOutEvent ( QFocusEvent *e );
+};
+
+
 struct crop_undo_data
 {
 #ifdef WIN32

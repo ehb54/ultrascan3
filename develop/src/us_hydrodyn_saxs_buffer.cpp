@@ -41,6 +41,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    running = false;
    axis_y_log = true;
    axis_x_log = false;
+   join_adjust_lowq = true;
 
    update_enables();
 
@@ -542,6 +543,140 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
 
+   lbl_wheel_pos = new QLabel( "0", this );
+   lbl_wheel_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_wheel_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_wheel_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   qwtw_wheel = new QwtWheel( this );
+   qwtw_wheel->setMass         ( 0.5 );
+   // qwtw_wheel->setRange        ( -1000, 1000, 1 );
+   qwtw_wheel->setMinimumHeight( minHeight1 );
+   // qwtw_wheel->setTotalAngle( 3600.0 );
+   qwtw_wheel->setEnabled      ( false );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
+   pb_wheel_cancel = new QPushButton(tr("Cancel"), this);
+   pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_wheel_cancel->setMinimumHeight(minHeight1);
+   pb_wheel_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_wheel_cancel->setEnabled(false);
+   connect(pb_wheel_cancel, SIGNAL(clicked()), SLOT(wheel_cancel()));
+
+   pb_wheel_save = new QPushButton(tr("Keep"), this);
+   pb_wheel_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_wheel_save->setMinimumHeight(minHeight1);
+   pb_wheel_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_wheel_save->setEnabled(false);
+   connect(pb_wheel_save, SIGNAL(clicked()), SLOT(wheel_save()));
+
+   pb_join_start = new QPushButton(tr("Join"), this);
+   pb_join_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_join_start->setMinimumHeight(minHeight1);
+   pb_join_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_join_start, SIGNAL(clicked()), SLOT(join_start()));
+
+   pb_join_swap = new QPushButton( join_adjust_lowq ? tr("Scale high-q") : tr("Scale low-q"), this);
+   pb_join_swap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_join_swap->setMinimumHeight(minHeight1);
+   pb_join_swap->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_join_swap->setEnabled(false);
+   connect(pb_join_swap, SIGNAL(clicked()), SLOT(join_swap()));
+
+   lbl_join_offset = new QLabel( tr( "Linear offset:" ), this );
+   lbl_join_offset->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_offset->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_offset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_join_offset = new mQLineEdit(this, "le_join_offset Line Edit");
+   le_join_offset->setText( "" );
+   le_join_offset->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_join_offset->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_join_offset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_join_offset->setEnabled( false );
+   le_join_offset->setValidator( new QDoubleValidator( le_join_offset ) );
+   connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
+   connect( le_join_offset, SIGNAL( focussed ( bool ) )             , SLOT( join_offset_focus( bool ) ) );
+
+   lbl_join_mult = new QLabel( tr( "Multiplier:" ), this );
+   lbl_join_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_mult->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_join_mult = new mQLineEdit(this, "le_join_mult Line Edit");
+   le_join_mult->setText( "" );
+   le_join_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_join_mult->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_join_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_join_mult->setEnabled( false );
+   le_join_mult->setValidator( new QDoubleValidator( le_join_mult ) );
+   connect( le_join_mult, SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text( const QString & ) ) );
+   connect( le_join_mult, SIGNAL( focussed ( bool ) )             , SLOT( join_mult_focus( bool ) ) );
+
+   lbl_join_start = new QLabel( tr( "Start:" ), this );
+   lbl_join_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_join_start = new mQLineEdit(this, "le_join_start Line Edit");
+   le_join_start->setText( "" );
+   le_join_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_join_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_join_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_join_start->setEnabled( false );
+   le_join_start->setValidator( new QDoubleValidator( le_join_start ) );
+   connect( le_join_start, SIGNAL( textChanged( const QString & ) ), SLOT( join_start_text( const QString & ) ) );
+   connect( le_join_start, SIGNAL( focussed ( bool ) )             , SLOT( join_start_focus( bool ) ) );
+
+   lbl_join_point = new QLabel( tr( "Cut:" ), this );
+   lbl_join_point->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_point->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_point->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_join_point = new mQLineEdit(this, "le_join_point Line Edit");
+   le_join_point->setText( "" );
+   le_join_point->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_join_point->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_join_point->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_join_point->setEnabled( false );
+   le_join_point->setValidator( new QDoubleValidator( le_join_point ) );
+   connect( le_join_point, SIGNAL( textChanged( const QString & ) ), SLOT( join_point_text( const QString & ) ) );
+   connect( le_join_point, SIGNAL( focussed ( bool ) )             , SLOT( join_point_focus( bool ) ) );
+
+   lbl_join_end = new QLabel( tr( "End:" ), this );
+   lbl_join_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_join_end = new mQLineEdit(this, "le_join_end Line Edit");
+   le_join_end->setText( "" );
+   le_join_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_join_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_join_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_join_end->setEnabled( false );
+   le_join_end->setValidator( new QDoubleValidator( le_join_end ) );
+   connect( le_join_end, SIGNAL( textChanged( const QString & ) ), SLOT( join_end_text( const QString & ) ) );
+   connect( le_join_end, SIGNAL( focussed ( bool ) )             , SLOT( join_end_focus( bool ) ) );
+
+   pb_join_fit_scaling = new QPushButton(tr("Fit"), this);
+   pb_join_fit_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_join_fit_scaling->setMinimumHeight(minHeight1);
+   pb_join_fit_scaling->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_join_fit_scaling->setEnabled( false );
+   connect(pb_join_fit_scaling, SIGNAL(clicked()), SLOT(join_fit_scaling()));
+
+   pb_join_fit_linear = new QPushButton(tr("Linear"), this);
+   pb_join_fit_linear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_join_fit_linear->setMinimumHeight(minHeight1);
+   pb_join_fit_linear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_join_fit_linear->setEnabled( false );
+   connect(pb_join_fit_linear, SIGNAL(clicked()), SLOT(join_fit_linear()));
+
+   lbl_join_rmsd = new QLabel( "", this );
+   lbl_join_rmsd->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_join_rmsd->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_join_rmsd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
    pb_select_vis = new QPushButton(tr("Select Visible"), this);
    pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_select_vis->setMinimumHeight(minHeight1);
@@ -566,7 +701,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_crop_vis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
-   pb_crop_zero = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_zero = new QPushButton(tr("Crop Zeros"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
    pb_crop_zero->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -756,6 +891,28 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
 
+   QGridLayout *gl_wheel = new QGridLayout(0);
+   gl_wheel->addMultiCellWidget( pb_join_start  , 0, 0, 0, 0 );
+   gl_wheel->addMultiCellWidget( pb_join_swap   , 0, 0, 1, 1 );
+   gl_wheel->addMultiCellWidget( lbl_wheel_pos  , 0, 0, 2, 2 );
+   gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 3, 8 );
+   gl_wheel->addWidget         ( pb_wheel_cancel, 0, 9 );
+   gl_wheel->addWidget         ( pb_wheel_save  , 0, 10 );
+
+   QHBoxLayout *hbl_join = new QHBoxLayout( 0 );
+   hbl_join->addWidget( lbl_join_offset );
+   hbl_join->addWidget( le_join_offset );
+   hbl_join->addWidget( lbl_join_mult );
+   hbl_join->addWidget( le_join_mult );
+   hbl_join->addWidget( lbl_join_start );
+   hbl_join->addWidget( le_join_start );
+   hbl_join->addWidget( lbl_join_point );
+   hbl_join->addWidget( le_join_point );
+   hbl_join->addWidget( lbl_join_end );
+   hbl_join->addWidget( le_join_end );
+   hbl_join->addWidget( pb_join_fit_scaling );
+   hbl_join->addWidget( pb_join_fit_linear );
+   hbl_join->addWidget( lbl_join_rmsd );
 
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
@@ -776,6 +933,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
+   vbl_plot_group->addLayout ( gl_wheel  );
+   vbl_plot_group->addLayout ( hbl_join  );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
    vbl_plot_group->addLayout ( hbl_plot_buttons_2 );
 
@@ -1612,6 +1771,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
    pb_join               ->setEnabled( files_selected_count == 2 );
+   pb_join_start         ->setEnabled( files_selected_count == 2 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count );
@@ -2187,6 +2347,9 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    double file_maxy;
    
    bool first = true;
+
+   plotted_curves.clear();
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
@@ -2307,9 +2470,11 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
 #ifndef QT4
    long Iq = plot_dist->insertCurve( file );
+   plotted_curves[ file ] = Iq;
    plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
 #else
    QwtPlotCurve *curve = new QwtPlotCurve( file );
+   plotted_curves[ file ] = curve;
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -3181,20 +3346,26 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
 bool US_Hydrodyn_Saxs_Buffer::save_files( QStringList files )
 {
-
    bool errors = false;
+   bool overwrite_all = false;
+   bool cancel        = false;
    for ( int i = 0; i < (int)files.size(); i++ )
    {
-      if ( !save_file( files[ i ] ) )
+      if ( !save_file( files[ i ], cancel, overwrite_all ) )
       {
          errors = true;
+      }
+      if ( cancel )
+      {
+         editor_msg( "red", tr( "save cancelled" ) );
+         break;
       }
    }
    update_enables();
    return !errors;
 }
 
-bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
+bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overwrite_all )
 {
    if ( !QDir::setCurrent( last_load_dir ) )
    {
@@ -3219,8 +3390,12 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file )
 
    if ( QFile::exists( use_filename ) )
    {
-      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck2( use_filename, cancel, overwrite_all, 0, this );
       raise();
+      if ( cancel )
+      {
+         return false;
+      }
    }
 
    QFile f( use_filename );
@@ -6222,4 +6397,1117 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
    plot_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::adjust_wheel( double pos )
+{
+   cout << QString("pos is now %1\n").arg(pos);
+
+   if ( le_join_offset->hasFocus() )
+   {
+      cout << "aw: join offset\n";
+      le_last_focus = le_join_offset;
+   }
+   if ( le_join_mult->hasFocus() )
+   {
+      cout << "aw: join mult\n";
+      le_last_focus = le_join_mult;
+   }
+   if ( le_join_start->hasFocus() )
+   {
+      cout << "aw: join start\n";
+      le_last_focus = le_join_start;
+   }
+   if ( le_join_point->hasFocus() )
+   {
+      cout << "aw: join point\n";
+      le_last_focus = le_join_point;
+   }
+   if ( le_join_end->hasFocus() )
+   {
+      cout << "aw: join end\n";
+      le_last_focus = le_join_end;
+   }
+
+   if ( !le_last_focus )
+   {
+      return;
+   }
+
+   le_last_focus->setText( QString( "%1" ).arg( pos ) );
+
+   lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
+
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_offset_focus( bool hasFocus )
+{
+   cout << QString( "join_offset_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( join_offset_start, join_offset_end, join_offset_delta );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_join_offset->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_mult_focus( bool hasFocus )
+{
+   cout << QString( "join_mult_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( join_mult_start, join_mult_end, join_mult_delta );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_join_mult->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_start_focus( bool hasFocus )
+{
+   cout << QString( "join_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_join_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_point_focus( bool hasFocus )
+{
+   cout << QString( "join_point_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_join_point->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_end_focus( bool hasFocus )
+{
+   cout << QString( "join_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_join_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
+{
+   lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
+#ifndef QT4
+   plot_dist->setCurveData( wheel_curve, 
+                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                            f_qs[ wheel_file ].size()
+                            );
+   plot_dist->setCurveData( join_curve, 
+                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                            (double *)&( f_qs[ join_file ][ 0 ] ),
+                            (double *)&( f_Is[ join_file ][ 0 ] ),
+                            f_qs[ join_file ].size()
+                            );
+#else
+   wheel_curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                        (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                        f_qs[ wheel_file ].size()
+                        );
+   join_curve->setData(
+                       /* cb_guinier->isChecked() ?
+                          (double *)&(plotted_q2[p][0]) : */
+                       (double *)&( f_qs[ join_file ][ 0 ] ),
+                       (double *)&( f_Is[ join_file ][ 0 ] ),
+                       f_qs[ join_file ].size()
+                        );
+#endif
+
+   join_delete_markers();
+
+   if ( plotted_curves.count( wheel_file ) &&
+        f_pos.count( wheel_file ) )
+   {
+#ifndef QT4
+      plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
+#else
+      plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+#endif
+   }
+
+   if ( plotted_curves.count( join_file ) &&
+        f_pos.count( join_file ) )
+   {
+#ifndef QT4
+      plot_dist->setCurvePen( plotted_curves[ join_file ], QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size()], 1, SolidLine));
+#else
+      plotted_curves[ join_file ]->setPen( QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+#endif
+   }
+
+   plot_dist->replot();
+
+   disable_all();
+
+   qwtw_wheel            ->setEnabled( false );
+   pb_wheel_save         ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( false );
+
+   pb_add_files          ->setEnabled( true );
+
+   lb_files              ->setEnabled( true );
+   lb_created_files      ->setEnabled( true );
+
+   running               = false;
+
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_offset_text( const QString & text )
+{
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   join_do_replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_do_replot()
+{
+   vector < double > offset_I = f_Is[ join_adjust_lowq ? wheel_file : join_file ];
+   double pos  = le_join_offset->text().toDouble();
+   double mult = le_join_mult  ->text().toDouble();
+   for ( unsigned int i = 0; i < ( unsigned int ) offset_I.size(); i++ )
+   {
+      offset_I[ i ] = mult * offset_I[ i ] + pos;
+   }
+#ifndef QT4
+   plot_dist->setCurveData( join_adjust_lowq ? wheel_curve : join_curve, 
+                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                            (double *)&( offset_I[ 0 ] ),
+                            offset_I.size()
+                            );
+#else
+   ( join_adjust_lowq ? wheel_curve : join_curve )->setData(
+                                                            /* cb_guinier->isChecked() ?
+                                                               (double *)&(plotted_q2[p][0]) : */
+                                                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                                                            (double *)&( offset_I[ 0 ] ),
+                                                            offset_I.size()
+                                                            );
+#endif
+   plot_dist->replot();
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::join_mult_text( const QString & text )
+{
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   join_do_replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 0 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_join();
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 0 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_join();
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 0 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_join();
+   plot_dist->replot();
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::disable_all()
+{
+   pb_similar_files      ->setEnabled( false );
+   pb_conc               ->setEnabled( false );
+   pb_clear_files        ->setEnabled( false );
+   pb_avg                ->setEnabled( false );
+   pb_normalize          ->setEnabled( false );
+   pb_conc_avg           ->setEnabled( false );
+   pb_set_buffer         ->setEnabled( false );
+   pb_set_signal         ->setEnabled( false );
+   pb_set_empty          ->setEnabled( false );
+   pb_select_all         ->setEnabled( false );
+   pb_invert             ->setEnabled( false );
+   pb_join               ->setEnabled( false );
+   pb_adjacent           ->setEnabled( false );
+   pb_to_saxs            ->setEnabled( false );
+   pb_view               ->setEnabled( false );
+   pb_rescale            ->setEnabled( false );
+   pb_select_all_created ->setEnabled( false );
+   pb_adjacent_created   ->setEnabled( false );
+   pb_save_created_csv   ->setEnabled( false );
+   pb_save_created       ->setEnabled( false );
+   pb_show_created       ->setEnabled( false );
+   pb_show_only_created  ->setEnabled( false );
+   pb_select_vis         ->setEnabled( false );
+   pb_remove_vis         ->setEnabled( false ); 
+   pb_crop_common        ->setEnabled( false ); 
+   pb_crop_vis           ->setEnabled( false ); 
+   pb_crop_zero          ->setEnabled( false ); 
+   pb_crop_left          ->setEnabled( false ); 
+   pb_crop_undo          ->setEnabled( false );
+   pb_crop_right         ->setEnabled( false ); 
+   pb_legend             ->setEnabled( false );
+   pb_axis_x             ->setEnabled( false );
+   pb_axis_y             ->setEnabled( false );
+
+   pb_add_files          ->setEnabled( false );
+
+   lb_files              ->setEnabled( false );
+   lb_created_files      ->setEnabled( false );
+
+   qwtw_wheel            ->setEnabled( false );
+   pb_wheel_save         ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( false );
+
+   pb_join_start         ->setEnabled( false );
+   pb_join_swap          ->setEnabled( false );
+   le_join_offset        ->setEnabled( false );
+   le_join_mult          ->setEnabled( false );
+   le_join_start         ->setEnabled( false );
+   le_join_point         ->setEnabled( false );
+   le_join_end           ->setEnabled( false );
+   pb_join_fit_scaling   ->setEnabled( false );
+   pb_join_fit_linear    ->setEnabled( false );
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::join_enables()
+{
+   pb_join_start         ->setEnabled( false );
+   pb_join_swap          ->setEnabled( true  );
+   pb_wheel_cancel       ->setEnabled( true  );
+   pb_wheel_save         ->setEnabled( true  );
+   le_join_offset        ->setEnabled( true  );
+   le_join_mult          ->setEnabled( true  );
+   le_join_start         ->setEnabled( true  );
+   le_join_point         ->setEnabled( true  );
+   le_join_end           ->setEnabled( true  );
+   pb_join_fit_scaling   ->setEnabled( true  );
+   // pb_join_fit_linear    ->setEnabled( true  );
+   qwtw_wheel            ->setEnabled( 
+                                      le_join_offset->hasFocus() || 
+                                      le_join_mult  ->hasFocus() || 
+                                      le_join_start ->hasFocus() || 
+                                      le_join_point ->hasFocus() || 
+                                      le_join_end   ->hasFocus() 
+                                      );
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_fit_linear()
+{
+   // needs common grid or interpolation!
+
+   vector < double > wheel_t;
+   vector < double > wheel_y;
+   vector < double > wheel_e;
+
+   vector < double > join_t;
+   vector < double > join_y;
+   vector < double > join_e;
+
+   double join_start = le_join_start->text().toDouble();
+   double join_end   = le_join_end  ->text().toDouble();
+
+   bool use_errors = 
+      f_errors.count( join_file ) && 
+      f_errors[ join_file ].size() > 0 &&
+      f_errors.count( wheel_file ) && 
+      f_errors[ wheel_file ].size() > 0;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+   {
+      if ( f_qs[ wheel_file ][ i ] >= join_start &&
+           f_qs[ wheel_file ][ i ] >= join_end )
+      {
+         wheel_t.push_back( f_qs[ wheel_file ][ i ] );
+         wheel_y.push_back( f_Is[ wheel_file ][ i ] );
+         if ( use_errors )
+         {
+            wheel_e.push_back( f_errors[ wheel_file ][ i ] );
+         }
+      }
+   }
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+   {
+      if ( f_qs[ join_file ][ i ] >= join_start &&
+           f_qs[ join_file ][ i ] >= join_end )
+      {
+         join_t.push_back( f_qs[ join_file ][ i ] );
+         join_y.push_back( f_Is[ join_file ][ i ] );
+         if ( use_errors )
+         {
+            join_e.push_back( f_errors[ join_file ][ i ] );
+         }
+      }
+   }
+
+   if ( wheel_t != join_t )
+   {
+      editor_msg( "red", "not yet supported: incompatible grids" );
+      return;
+   }
+
+   US_Saxs_Util usu;
+   double a;
+   double b;
+   double siga;
+   double sigb;
+   double chi2;
+
+   usu.linear_fit( wheel_y, join_y, a, b, siga, sigb, chi2 );
+   le_join_offset->setText( QString( "%1" ).arg( a ) );
+   le_join_mult  ->setText( QString( "%1" ).arg( b ) );
+
+   replot_join();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_fit_scaling()
+{
+   // needs common grid or interpolation!
+
+   vector < double > wheel_t;
+   vector < double > wheel_y;
+   vector < double > wheel_e;
+
+   vector < double > join_t;
+   vector < double > join_y;
+   vector < double > join_e;
+
+   double join_start = le_join_start->text().toDouble();
+   double join_end   = le_join_end  ->text().toDouble();
+
+   bool use_errors = 
+      f_errors.count( join_file ) && 
+      f_errors[ join_file ].size() > 0 &&
+      f_errors.count( wheel_file ) && 
+      f_errors[ wheel_file ].size() > 0;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+   {
+      if ( f_qs[ wheel_file ][ i ] >= join_start &&
+           f_qs[ wheel_file ][ i ] >= join_end )
+      {
+         wheel_t.push_back( f_qs[ wheel_file ][ i ] );
+         wheel_y.push_back( f_Is[ wheel_file ][ i ] );
+         if ( use_errors )
+         {
+            wheel_e.push_back( f_errors[ wheel_file ][ i ] );
+         }
+      }
+   }
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+   {
+      if ( f_qs[ join_file ][ i ] >= join_start &&
+           f_qs[ join_file ][ i ] >= join_end )
+      {
+         join_t.push_back( f_qs[ join_file ][ i ] );
+         join_y.push_back( f_Is[ join_file ][ i ] );
+         if ( use_errors )
+         {
+            join_e.push_back( f_errors[ join_file ][ i ] );
+         }
+      }
+   }
+
+   if ( wheel_t != join_t )
+   {
+      editor_msg( "red", "not yet supported: incompatible grids" );
+      return;
+   }
+
+   US_Saxs_Util usu;
+   double a;
+   double chi2;
+
+   if ( join_adjust_lowq )
+   {
+      if ( use_errors )
+      {
+         if ( !usu.scaling_fit( wheel_y, join_y, wheel_e, a, chi2 ) )
+         {
+            editor_msg( "red", "not Fit error: " + usu.errormsg );
+            return;
+         }
+         
+      } else {
+         if ( !usu.scaling_fit( wheel_y, join_y, a, chi2 ) )
+         {
+            editor_msg( "red", "not Fit error: " + usu.errormsg );
+            return;
+         }
+      }
+   } else {
+      if ( use_errors )
+      {
+         if ( !usu.scaling_fit( join_y, wheel_y, join_e, a, chi2 ) )
+         {
+            editor_msg( "red", "not Fit error: " + usu.errormsg );
+            return;
+         }
+         
+      } else {
+         if ( !usu.scaling_fit( join_y, wheel_y, a, chi2 ) )
+         {
+            editor_msg( "red", "not Fit error: " + usu.errormsg );
+            return;
+         }
+      }
+   }
+
+   le_join_offset->setText( "0" );
+   le_join_mult  ->setText( QString( "%1" ).arg( a ) );
+
+   replot_join();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_swap()
+{
+
+#ifndef QT4
+   plot_dist->setCurveData( wheel_curve, 
+                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                            f_qs[ wheel_file ].size()
+                            );
+   plot_dist->setCurveData( join_curve, 
+                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                            (double *)&( f_qs[ join_file ][ 0 ] ),
+                            (double *)&( f_Is[ join_file ][ 0 ] ),
+                            f_qs[ join_file ].size()
+                            );
+#else
+   wheel_curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( f_qs[ wheel_file ][ 0 ] ),
+                        (double *)&( f_Is[ wheel_file ][ 0 ] ),
+                        f_qs[ wheel_file ].size()
+                        );
+   join_curve->setData(
+                       /* cb_guinier->isChecked() ?
+                          (double *)&(plotted_q2[p][0]) : */
+                       (double *)&( f_qs[ join_file ][ 0 ] ),
+                       (double *)&( f_Is[ join_file ][ 0 ] ),
+                       f_qs[ join_file ].size()
+                        );
+#endif
+
+   join_adjust_lowq = !join_adjust_lowq;
+   pb_join_swap->setText( join_adjust_lowq ? tr("Scale high-q") : tr("Scale low-q") );
+   // disconnect( le_join_offset, SIGNAL( textChanged( const QString & ) ) );
+   // disconnect( le_join_mult  , SIGNAL( textChanged( const QString & ) ) );
+   le_join_offset->setText( QString( "%1" ).arg( -le_join_offset->text().toDouble() ) );
+   le_join_mult  ->setText( QString( "%1" ).arg( 1e0 / le_join_mult->text().toDouble() ) );
+   // connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
+   // connect( le_join_mult  , SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text  ( const QString & ) ) );
+   // replot_join();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_set_wheel_range()
+{
+
+   // find the range:
+
+   double min_wheel_I = 0e0;
+   double max_wheel_I = 0e0;
+   double min_join_I  = 0e0;
+   double max_join_I  = 0e0;
+
+   bool any_set = false;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+   {
+      if ( f_qs[ wheel_file ][ i ] >= join_low_q &&
+           f_qs[ wheel_file ][ i ] <= join_high_q )
+      {
+         if ( !any_set ||  min_wheel_I > f_Is[ wheel_file ][ i ] )
+         {
+            min_wheel_I = f_Is[ wheel_file ][ i ];
+         }           
+         if ( !any_set || max_wheel_I < f_Is[ wheel_file ][ i ] )
+         {
+            max_wheel_I = f_Is[ wheel_file ][ i ];
+         }           
+         any_set = true;
+      }
+   }
+      
+   any_set = false;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+   {
+      if ( f_qs[ join_file ][ i ] >= join_low_q &&
+           f_qs[ join_file ][ i ] <= join_high_q )
+      {
+         if ( !any_set || min_join_I > f_Is[ join_file ][ i ] )
+         {
+            min_join_I = f_Is[ join_file ][ i ];
+         }           
+         if ( !any_set || max_join_I < f_Is[ join_file ][ i ] )
+         {
+            max_join_I = f_Is[ join_file ][ i ];
+         }           
+         any_set = true;
+      }
+   }
+      
+   // maybe recompute based upon range
+
+   if ( join_adjust_lowq )
+   {
+      join_offset_start = min_join_I - max_wheel_I;
+      join_offset_end   = max_join_I - min_wheel_I;
+   } else {
+      join_offset_start = min_wheel_I - max_join_I;
+      join_offset_end   = max_wheel_I - min_join_I;
+   }      
+
+   join_offset_delta = ( join_offset_end - join_offset_start ) / 10000000e0;
+
+   join_mult_start = 1e-1;
+   join_mult_end   = 1e1;
+   join_mult_delta = ( join_mult_end - join_mult_start ) / 10000000e0;
+
+   cout << QString(
+                   "join vals:\n"
+                   "           join_I %1 %2\n"
+                   "          wheel_I %3 %4\n"
+                   "     offset range %5 %6\n"
+                   "            delta  %7\n" )
+      .arg( min_join_I )
+      .arg( max_join_I )
+      .arg( min_wheel_I )
+      .arg( max_wheel_I )
+      .arg( join_offset_start )
+      .arg( join_offset_end )
+      .arg( join_offset_delta )
+      ;
+      
+   if ( le_join_offset->text().isEmpty() )
+   {
+      disconnect( le_join_offset, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_join_offset->setText( "0" );
+      connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
+   }
+
+   if ( le_join_mult->text().isEmpty() )
+   {
+      disconnect( le_join_mult, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_join_mult->setText( "1" );
+      connect( le_join_mult, SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text( const QString & ) ) );
+   }
+
+   if ( le_join_start->text().isEmpty() ||
+        le_join_start->text().toDouble() < join_low_q )
+   {
+      disconnect( le_join_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_join_start->setText( QString( "%1" ).arg( join_low_q ) );
+      connect( le_join_start, SIGNAL( textChanged( const QString & ) ), SLOT( join_start_text( const QString & ) ) );
+   }
+
+   if ( le_join_point->text().isEmpty() ||
+        le_join_point->text().toDouble() < join_low_q )
+   {
+      disconnect( le_join_point, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_join_point->setText( QString( "%1" ).arg( ( join_low_q + join_high_q / 2 ) ) );
+      connect( le_join_point, SIGNAL( textChanged( const QString & ) ), SLOT( join_point_text( const QString & ) ) );
+   }
+
+   if ( le_join_end->text().isEmpty() ||
+        le_join_end->text().toDouble() > join_high_q )
+   {
+      cout << "setting join end\n";
+      disconnect( le_join_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_join_end->setText( QString( "%1" ).arg( join_high_q ) );
+      connect( le_join_end, SIGNAL( textChanged( const QString & ) ), SLOT( join_end_text( const QString & ) ) );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_start()
+{
+   QStringList selected_files;
+   lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
+   pb_join_swap->setText( join_adjust_lowq ? tr("Scale low-q") : tr("Scale high-q") );
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_files << lb_files->text( i );
+      }
+   }
+
+   if ( selected_files.size() != 2 )
+   {
+      editor_msg( "red", tr( "Internal error: not exactly 2 curves to join" ) );
+      return;
+   }
+
+   bool ok;
+
+   wheel_file = QInputDialog::getItem(
+                                      tr( "SOMO: Buffer join: select file" ),
+                                      tr("Select the low-q valued curve:\n" ),
+                                      selected_files, 
+                                      0, 
+                                      FALSE, 
+                                      &ok,
+                                      this );
+   if ( !ok ) {
+      return;
+   }
+
+   join_file = selected_files[ selected_files[ 0 ] == wheel_file ? 1 : 0 ];
+      
+   le_last_focus = (mQLineEdit *) 0;
+   
+   for ( unsigned int i = 0; i < ( unsigned int ) selected_files.size(); i++ )
+   {
+      if ( !plotted_curves.count( selected_files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: curve %1 not found in data" ) ).arg( selected_files[ i ] ) );
+         return;
+      }
+
+      if ( !f_qs.count( selected_files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( selected_files[ i ] ) );
+         return;
+      }
+
+      if ( f_qs[ selected_files[ i ] ].size() < 2 )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( selected_files[ i ] ) );
+         return;
+      }
+
+      if ( !f_Is.count( selected_files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( selected_files[ i ] ) );
+         return;
+      }
+
+      if ( !f_Is[ selected_files[ i ] ].size() )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( selected_files[ i ] ) );
+         return;
+      }
+   }
+
+   wheel_curve           = plotted_curves[ wheel_file ];
+   join_curve            = plotted_curves[ join_file ];
+
+#ifndef QT4
+   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan  , 1, SolidLine));
+   plot_dist->setCurvePen( plotted_curves[ join_file  ], QPen( Qt::yellow, 1, SolidLine));
+#else
+   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan  , 1, Qt::SolidLine ) ) );
+   plotted_curves[ join_file  ]->setPen( QPen( plot_colors[ Qt::yellow, 1, Qt::SolidLine ) ) );
+#endif
+
+   join_low_q = 
+      f_qs[ wheel_file ][ 0 ] > f_qs[ join_file ][ 0 ] ?
+      f_qs[ wheel_file ][ 0 ] : f_qs[ join_file ][ 1 ];
+
+   join_high_q = 
+      f_qs[ wheel_file ].back() < f_qs[ join_file ].back() ?
+      f_qs[ wheel_file ].back() : f_qs[ join_file ].back();
+
+   if ( join_low_q >= join_high_q )
+   {
+      editor_msg( "red", QString( tr( "Error: no overlap for join" ) ) );
+      return;
+   }
+      
+   running       = true;
+
+   join_set_wheel_range();
+
+   join_init_markers();
+   replot_join();
+   disable_all();
+   join_enables();
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::join_delete_markers()
+{
+#ifndef QT4
+   plot_dist->removeMarkers();
+#else
+#warn check how to do this in qt4
+#endif
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_init_markers()
+{
+   join_delete_markers();
+
+   plotted_markers.clear();
+
+   join_add_marker( le_join_start->text().toDouble(), Qt::red, tr( "Start" ) );
+   join_add_marker( le_join_point->text().toDouble(), Qt::magenta, tr( "Join point" ) );
+   join_add_marker( le_join_end  ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
+
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, QColor color, QString text, int align )
+{
+#ifndef QT4
+   long marker = plot_dist->insertMarker();
+   plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
+   plot_dist->setMarkerPos       ( marker, pos, 0e0 );
+   plot_dist->setMarkerLabelAlign( marker, align );
+   plot_dist->setMarkerPen       ( marker, QPen( color, 2, DashDotDotLine));
+   plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
+   plot_dist->setMarkerLabelText ( marker, text );
+#else
+#warn check how to do this in qt4 needs ymark symsize
+   QwtPlotMarker* marker = new QwtPlotMarker;
+   marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                 QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
+                                 QSize( 8, sizeym ) ) );
+   marker->setValue( pos, ymark );
+   marker->setLabelAlignment( align );
+   marker->setLabel( text );
+   marker->attach( plot_dist );
+#endif
+   plotted_markers.push_back( marker );
+}   
+
+void US_Hydrodyn_Saxs_Buffer::replot_join()
+{
+   // recompute rmsd and display ?
+   vector < double > wheel_t;
+   vector < double > wheel_y;
+   vector < double > wheel_e;
+
+   vector < double > join_t;
+   vector < double > join_y;
+   vector < double > join_e;
+
+   double join_start = le_join_start->text().toDouble();
+   double join_end   = le_join_end  ->text().toDouble();
+
+   double offset  = le_join_offset->text().toDouble();
+   double mult    = le_join_mult  ->text().toDouble();
+
+   bool use_errors = 
+      f_errors.count( join_file ) && 
+      f_errors[ join_file ].size() > 0 &&
+      f_errors.count( wheel_file ) && 
+      f_errors[ wheel_file ].size() > 0;
+
+   if ( join_adjust_lowq )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+      {
+         if ( f_qs[ wheel_file ][ i ] >= join_start &&
+              f_qs[ wheel_file ][ i ] >= join_end )
+         {
+            wheel_t.push_back( f_qs[ wheel_file ][ i ] );
+            wheel_y.push_back( mult * f_Is[ wheel_file ][ i ] + offset );
+            if ( use_errors )
+            {
+               // which one's errors to use?, what about compatible grids etc?
+               // wheel_y.push_back( ( mult * f_Is[ wheel_file ][ i ] + offset ) / f_errors[ wheel_file ][ i ] );
+               wheel_e.push_back( mult * f_errors[ wheel_file ][ i ] );
+            }
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+      {
+         if ( f_qs[ join_file ][ i ] >= join_start &&
+              f_qs[ join_file ][ i ] >= join_end )
+         {
+            join_t.push_back( f_qs[ join_file ][ i ] );
+            join_y.push_back( f_Is[ join_file ][ i ] );
+            if ( use_errors )
+            {
+               join_e.push_back( f_errors[ join_file ][ i ] );
+            }
+         }
+      }
+   } else {
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+      {
+         if ( f_qs[ wheel_file ][ i ] >= join_start &&
+              f_qs[ wheel_file ][ i ] >= join_end )
+         {
+            wheel_t.push_back( f_qs[ wheel_file ][ i ] );
+            wheel_y.push_back( f_Is[ wheel_file ][ i ] );
+            if ( use_errors )
+            {
+               // which one's errors to use?, what about compatible grids etc?
+               // nwheel_y.push_back( ( mult * f_Is[ wheel_file ][ i ] + offset ) / f_errors[ wheel_file ][ i ] );
+               wheel_e.push_back( f_errors[ wheel_file ][ i ] );
+            }
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+      {
+         if ( f_qs[ join_file ][ i ] >= join_start &&
+              f_qs[ join_file ][ i ] >= join_end )
+         {
+            join_t.push_back( f_qs[ join_file ][ i ] );
+            join_y.push_back( mult * f_Is[ join_file ][ i ] + offset );
+            if ( use_errors )
+            {
+               join_e.push_back( mult * f_errors[ join_file ][ i ] );
+            }
+         }
+      }
+   }
+
+   lbl_join_rmsd->setText( QString( "%1" ).arg( US_Saxs_Util::calc_rmsd( join_y, wheel_y ) ) );
+}
+
+void US_Hydrodyn_Saxs_Buffer::wheel_save()
+{
+   disable_all();
+
+   if ( le_join_offset->text().toDouble() != 0e0 )
+   {
+      QMessageBox::information( this,
+                                tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                tr( 
+                                   "You have a non-zero linear offset\n"
+                                   "Quoting P. Vachette:\n"
+                                   "This additional constant is to be avoided and if introduced,\n"
+                                   "requires great care because it can hide an experimental problem\n"
+                                   "which is thus swept under the carpet but could lead to erroneous interpretation." )
+                                );
+   }
+
+   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
+
+   // join the adjusted curves and save
+
+   map < QString, bool > current_files;
+
+   int wheel_pos = -1;
+   int join_pos = -1;
+
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+      if ( lb_files->text( i ) == wheel_file )
+      {
+         wheel_pos = i;
+      }
+      if ( lb_files->text( i ) == join_file )
+      {
+         join_pos = i;
+      }
+   }
+
+   QString save_name = join_file + "-" + wheel_file + 
+      QString( "_j%1-%2-%3" )
+      .arg( le_join_offset->text() )
+      .arg( le_join_mult->text() )
+      .arg( le_join_point->text() )
+      .replace( ".", "_" );
+
+   int ext = 0;
+   while ( current_files.count( save_name ) )
+   {
+      save_name = join_file + "-" + wheel_file + 
+      QString( "_j%1-%2-%3-%4" )
+      .arg( le_join_offset->text() )
+      .arg( le_join_mult->text() )
+      .arg( le_join_point->text() )
+      .arg( ++ext )
+      .replace( ".", "_" );
+   }
+   
+   cout << QString( "new name is %1\n" ).arg( save_name );
+
+   vector < double >  q;
+   vector < QString > q_string;
+   vector < double >  I;
+   vector < double >  errors;
+
+   bool use_errors = 
+      f_errors.count( join_file ) && 
+      f_errors[ join_file ].size() > 0 &&
+      f_errors.count( wheel_file ) && 
+      f_errors[ wheel_file ].size() > 0;
+
+   double offset = le_join_offset->text().toDouble();
+   double mult   = le_join_mult  ->text().toDouble();
+   double point  = le_join_point ->text().toDouble();
+
+   bool was_equal_point = false;
+
+   if ( join_adjust_lowq )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+      {
+         if ( f_qs[ wheel_file ][ i ] <= point )
+         {
+            if ( f_qs[ wheel_file ][ i ] == point )
+            {
+               was_equal_point = true;
+            }
+            q.push_back( f_qs[ wheel_file ][ i ] );
+            q_string.push_back( f_qs_string[ wheel_file ][ i ] );
+            I.push_back( mult * f_Is[ wheel_file ][ i ] + offset );
+            if ( use_errors )
+            {
+               errors.push_back( mult * f_errors[ wheel_file ][ i ] );
+            }
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+      {
+         if ( f_qs[ join_file ][ i ] > point ||
+              ( !was_equal_point && f_qs[ join_file ][ i ] == point ) )
+         {
+            q.push_back( f_qs[ join_file ][ i ] );
+            q_string.push_back( f_qs_string[ join_file ][ i ] );
+            I.push_back( f_Is[ join_file ][ i ] );
+            if ( use_errors )
+            {
+               errors.push_back( f_errors[ join_file ][ i ] );
+            }
+         }
+      }
+   } else {
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
+      {
+         if ( f_qs[ wheel_file ][ i ] <= point )
+         {
+            if ( f_qs[ wheel_file ][ i ] == point )
+            {
+               was_equal_point = true;
+            }
+            q.push_back( f_qs[ wheel_file ][ i ] );
+            q_string.push_back( f_qs_string[ wheel_file ][ i ] );
+            I.push_back( f_Is[ wheel_file ][ i ] );
+            if ( use_errors )
+            {
+               errors.push_back( f_errors[ wheel_file ][ i ] );
+            }
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
+      {
+         if ( f_qs[ join_file ][ i ] > point ||
+              ( !was_equal_point && f_qs[ join_file ][ i ] == point ) )
+         {
+            q.push_back( f_qs[ join_file ][ i ] );
+            q_string.push_back( f_qs_string[ join_file ][ i ] );
+            I.push_back( mult * f_Is[ join_file ][ i ] + offset );
+            if ( use_errors )
+            {
+               errors.push_back( mult * f_errors[ join_file ][ i ] );
+            }
+         }
+      }
+   }
+
+   lb_created_files->insertItem( save_name );
+
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( save_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ save_name ] = true;
+
+   f_pos       [ save_name ] = f_qs.size();
+   f_qs        [ save_name ] = q;
+   f_qs_string [ save_name ] = q_string;
+   f_Is        [ save_name ] = I;
+   f_errors    [ save_name ] = errors;
+
+   lb_files->setSelected( f_pos[ save_name ], true );
+
+   if ( wheel_pos != -1 )
+   {
+      lb_files->setSelected( wheel_pos, false );
+   }
+   if ( join_pos != -1 )
+   {
+      lb_files->setSelected( join_pos, false );
+   }
+
+   plot_dist->replot();
+
+   pb_add_files          ->setEnabled( true );
+
+   lb_files              ->setEnabled( true );
+   lb_created_files      ->setEnabled( true );
+
+   running               = false;
+
+   update_enables();
+
 }
