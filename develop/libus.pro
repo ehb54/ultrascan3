@@ -259,6 +259,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_hplc_conc.cpp \
   src/us_hydrodyn_saxs_hplc_conc_load.cpp \
   src/us_hydrodyn_saxs_hplc_fit.cpp \
+  src/us_hydrodyn_saxs_hplc_fit_global.cpp \
   src/us_hydrodyn_saxs_hplc_fit_gsm.cpp \
   src/us_hydrodyn_saxs_hplc_fit_ga.cpp \
   src/us_hydrodyn_saxs_1d.cpp \
@@ -548,6 +549,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_hplc_conc.h \
   include/us_hydrodyn_saxs_hplc_conc_load.h \
   include/us_hydrodyn_saxs_hplc_fit.h \
+  include/us_hydrodyn_saxs_hplc_fit_global.h \
   include/us_hydrodyn_saxs_1d.h \
   include/us_hydrodyn_saxs_2d.h \
   include/us_hydrodyn_supc.h \

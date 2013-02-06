@@ -42,6 +42,26 @@
 
 using namespace std;
 
+class ga_individual
+{
+ public:
+   vector < double > v;
+   double            fitness;
+   bool operator < (const ga_individual & objIn) const
+   {
+      return fitness < objIn.fitness;
+   }
+
+   bool operator == (const ga_individual & objIn) const
+   {
+      return v == objIn.v;
+   }
+   bool operator != (const ga_individual & objIn) const
+   {
+      return v != objIn.v;
+   }
+};
+
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
@@ -50,6 +70,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Hplc_Conc;
       friend class US_Hydrodyn_Saxs_Hplc_Fit;
+      friend class US_Hydrodyn_Saxs_Hplc_Fit_Global;
 
    public:
       US_Hydrodyn_Saxs_Hplc(
@@ -168,6 +189,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_fit_start;
       mQLineEdit    *le_gauss_fit_end;
       QPushButton   *pb_gauss_save;
+
+      QPushButton   *pb_ggauss_start;
 
       QPushButton   *pb_baseline_start;
       mQLineEdit    *le_baseline_start;
@@ -330,9 +353,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         disable_all();
 
       bool                         gaussian_mode;
+      bool                         ggaussian_mode;
       bool                         baseline_mode;
 
       void                         gaussian_enables();
+      void                         ggaussian_enables();
 
       void                         gauss_add_marker( double pos, QColor color, QString text, int align = Qt::AlignRight | Qt::AlignTop );
       void                         gauss_init_markers();
@@ -431,6 +456,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_pos_height_focus      ( bool );
       void gauss_fit_start_focus       ( bool );
       void gauss_fit_end_focus         ( bool );
+
+      void ggauss_start();
 
       void baseline_start();
       void baseline_apply();

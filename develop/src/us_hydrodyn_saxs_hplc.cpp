@@ -2,6 +2,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
+#include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -62,8 +63,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    axis_y();
    axis_x_log = false;
 
-   gaussian_mode = false;
-   baseline_mode = false;
+   gaussian_mode  = false;
+   ggaussian_mode = false;
+   baseline_mode  = false;
 
    update_enables();
 
@@ -636,6 +638,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_save->setEnabled( false );
    connect(pb_gauss_save, SIGNAL(clicked()), SLOT(gauss_save()));
 
+   pb_ggauss_start = new QPushButton(tr("Global gaussians"), this);
+   pb_ggauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_ggauss_start->setMinimumHeight(minHeight1);
+   pb_ggauss_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_ggauss_start, SIGNAL(clicked()), SLOT(ggauss_start()));
+
    le_baseline_start = new mQLineEdit(this, "le_baseline_start Line Edit");
    le_baseline_start->setText( "" );
    le_baseline_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -859,13 +867,22 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_gauss->addWidget         ( le_gauss_pos        , 0, ofs++ );
       gl_gauss->addWidget         ( le_gauss_pos_width  , 0, ofs++ );
       gl_gauss->addWidget         ( le_gauss_pos_height , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_fit        , 0, ofs++ );
-      gl_gauss->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
+      //       gl_gauss->addWidget         ( pb_gauss_fit        , 0, ofs++ );
+      //       gl_gauss->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
+      //       gl_gauss->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
+      //       gl_gauss->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
       gl_gauss->addWidget         ( pb_gauss_save       , 0, ofs++ );
    }
 
+   QGridLayout *gl_gauss2 = new QGridLayout(0);
+   { 
+      int ofs = 1;
+      gl_gauss2->addMultiCellWidget( pb_ggauss_start      , 0, 0, 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_gauss_fit        , 0, ofs++ );
+      gl_gauss2->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
+      gl_gauss2->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
+      gl_gauss2->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
+   }
 
    QHBoxLayout *hbl_baseline = new QHBoxLayout( 0 );
    hbl_baseline->addWidget( pb_baseline_start );
@@ -877,6 +894,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addWidget ( plot_dist );
    vbl_plot_group->addLayout ( gl_wheel  );
    vbl_plot_group->addLayout ( gl_gauss  );
+   vbl_plot_group->addLayout ( gl_gauss2  );
    vbl_plot_group->addLayout ( hbl_baseline );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
@@ -1100,6 +1118,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    pb_wheel_start        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
+   pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
    pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
@@ -6072,6 +6091,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_baseline_end       ->setEnabled( false );
    pb_baseline_apply     ->setEnabled( false );
 
+   pb_ggauss_start       ->setEnabled( false );
+
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
@@ -6348,6 +6369,7 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
 {
    le_last_focus = (mQLineEdit *) 0;
+   pb_gauss_fit->setText( tr( "Fit" ) );
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -7601,6 +7623,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
 
 double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
+   cout << QString( "gaussian peak file %1\n" ).arg( file );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
    double gmax = gs[ 0 ];
    for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
@@ -7732,6 +7755,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    // fit gaussians
 
+   wheel_file = files[ 0 ];
+
    US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
@@ -7761,4 +7786,29 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    lb_created_files      ->setEnabled( true );
 
    update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_start()
+{
+   le_last_focus = (mQLineEdit *) 0;
+   pb_gauss_fit->setText( tr( "Global Fit" ) );
+   disable_all();
+   ggaussian_enables();
+   ggaussian_mode = true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
+{
+   unsigned int sizeover3 = ( unsigned int )gaussians.size() / 3;
+
+   pb_ggauss_start     ->setEnabled( false );
+   pb_gauss_prev       ->setEnabled( sizeover3 > 1 && gaussian_pos > 0 );
+   pb_gauss_next       ->setEnabled( sizeover3 > 1 && gaussian_pos < sizeover3 - 1 );
+   pb_gauss_fit        ->setEnabled( sizeover3 && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
+   pb_wheel_cancel     ->setEnabled( true );
+   le_gauss_pos        ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   le_gauss_fit_start  ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   le_gauss_fit_end    ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   pb_gauss_save       ->setEnabled( sizeover3 );
+   qwtw_wheel          ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
 }

@@ -1,5 +1,5 @@
-#ifndef US_HYDRODYN_SAXS_HPLC_FIT_H
-#define US_HYDRODYN_SAXS_HPLC_FIT_H
+#ifndef US_HYDRODYN_SAXS_HPLC_FIT_GLOBAL_H
+#define US_HYDRODYN_SAXS_HPLC_FIT_GLOBAL_H
 
 // QT defs:
 
@@ -31,19 +31,20 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
+
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 {
    Q_OBJECT
 
       friend class US_Hydrodyn_Saxs_Hplc;
 
    public:
-      US_Hydrodyn_Saxs_Hplc_Fit(
+      US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                 US_Hydrodyn_Saxs_Hplc *hplc_win,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
-      ~US_Hydrodyn_Saxs_Hplc_Fit();
+      ~US_Hydrodyn_Saxs_Hplc_Fit_Global();
 
    private:
       US_Hydrodyn_Saxs_Hplc *hplc_win;
@@ -193,7 +194,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
   #pragma warning ( disable: 4251 )
 #endif
 
-namespace HFIT 
+namespace HFIT_GLOBAL 
 {
    extern vector < double       > init_params;    // variable param initial values
    extern vector < double       > base_params;    // variable param base values
