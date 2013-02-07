@@ -14,7 +14,7 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption( tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ) );
+   setCaption( tr( "US-SOMO: SAXS Hplc: Global Gaussian Fit" ) );
 
    update_hplc = true;
    running = false;
@@ -67,7 +67,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ), this);
+   lbl_title = new QLabel( tr( "US-SOMO: SAXS Hplc: Global Gaussian Fit" ), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);

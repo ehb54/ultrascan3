@@ -274,13 +274,38 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   compute_gaussian_sum( vector < double > t, vector < double > g );
       double                              compute_gaussian_peak( QString file, vector < double > g );
 
+      vector < double >                   unified_ggaussian_params; // global centers first, then height, width for each file
+      vector < unsigned int >             unified_ggaussian_param_index; // index into params
+      vector < double >                   unified_ggaussian_q;
+      vector < double >                   unified_ggaussian_q_offset;
+      vector < double >                   unified_ggaussian_I;
+      vector < double >                   unified_ggaussian_e;
+      vector < double >                   unified_ggaussian_t;
+
+      vector < double >                   compute_ggaussian_gaussian_sum();
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      unsigned int                        unified_ggaussian_curves;
+      unsigned int                        unified_ggaussian_gaussians_size;
+      QStringList                         unified_ggaussian_files;
+      bool                                unified_ggaussian_use_errors;
+      bool                                unified_ggaussian_ok;
+
+      bool                                initial_ggaussian_fit( QStringList & files );
+      bool                                create_unified_ggaussian_target();
+      bool                                create_unified_ggaussian_target( QStringList & files );
+      double                              ggaussian_rmsd();
+      bool                                ggaussian_compatible();
+      bool                                ggaussian_compatible( QStringList & files);
+
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();
       void                                plot_gaussian_sum();
       void                                replot_gaussian_sum();
+
+      QStringList                         all_selected_files();
 
       void save_csv_saxs_iqq();
 
@@ -383,6 +408,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         baseline_apply( QStringList files );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
+
 
    private slots:
 
