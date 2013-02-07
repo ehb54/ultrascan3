@@ -55,7 +55,6 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
 
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
-//   pb_computem             = us_pushbutton( tr( "Compute Models" ), true  );
    pb_pltlines             = us_pushbutton( tr( "Plot Model Lines" ), true  );
    pb_strtfit              = us_pushbutton( tr( "Start Fit" ),        true  );
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),         false );
@@ -124,7 +123,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
    controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
    controlsLayout->addLayout( lo_rinois,     row++, 2, 1, 2 );
-//   controlsLayout->addWidget( pb_computem,   row,   0, 1, 2 );
    controlsLayout->addWidget( pb_pltlines,   row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_strtfit,    row,   0, 1, 2 );
    controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
@@ -509,7 +507,9 @@ void US_AnalysisControl::compute()
           " with each curve model consisting of %3 points." )
       .arg( nlmodl ).arg( nkpts ).arg( nlpts );
    te_status  ->setText( amsg );
-         
+
+   bmndx          = -1;
+   elitexs.clear();
 }
 
 // slot to launch a plot dialog showing model lines

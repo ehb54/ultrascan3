@@ -32,8 +32,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_datctrls    = us_banner( tr( "2DSA Data Viewer" ) );
-   QLabel* lb_resctrls    = us_banner( tr( "2DSA Residuals Viewer" ) );
+   QLabel* lb_datctrls    = us_banner( tr( "1DSA Data Viewer" ) );
+   QLabel* lb_resctrls    = us_banner( tr( "1DSA Residuals Viewer" ) );
    QLabel* lb_vari        = us_label(  tr( "Variance:" ) );
    QLabel* lb_rmsd        = us_label(  tr( "RMSD:" ) );
 

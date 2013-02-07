@@ -111,8 +111,8 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
             this,      SLOT( close_all()   ) );
 
 DbgLv(1) << "RP:  p1size" << p1size;
-
    data_plot1->resize( p1size );
+   setAttribute( Qt::WA_DeleteOnClose, true );
 }
 
 // close button clicked

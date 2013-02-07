@@ -84,7 +84,6 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QTextEdit*    te_status;
 
-      QPushButton*  pb_computem;
       QPushButton*  pb_pltlines;
       QPushButton*  pb_strtfit;
       QPushButton*  pb_stopfit;
