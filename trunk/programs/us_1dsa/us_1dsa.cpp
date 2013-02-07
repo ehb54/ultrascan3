@@ -489,7 +489,7 @@ void US_1dsa::save( void )
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = edata->editGUID;
    model.requestGUID = reqGUID;
-   model.analysis    = US_Model::TWODSA;
+   model.analysis    = US_Model::ONEDSA;
    model.variance    = variance;
    model.meniscus    = meniscus;
    model.wavelength  = dwavelen;
