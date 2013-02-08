@@ -6106,6 +6106,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    if ( ggaussian_mode )
    {
       f_gaussians = org_f_gaussians;
+      gaussians = org_gaussians;
       gauss_delete_markers();
       plotted_markers.clear();
       plot_dist->replot();
@@ -6196,6 +6197,26 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    update_enables();
 }
 
+static   void printvector( QString qs, vector < unsigned int > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
+static void printvector( QString qs, vector < double > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
 void US_Hydrodyn_Saxs_Hplc::wheel_save()
 {
    if ( ggaussian_mode )
@@ -6207,7 +6228,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
          {
             vector < double > g;
-            unsigned int  index = unified_ggaussian_gaussians_size + i * 2;
+            unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
 
             for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
             {
@@ -6218,6 +6239,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
             f_gaussians[ unified_ggaussian_files[ i ] ] = g;
          }
          org_f_gaussians = f_gaussians;
+         org_gaussians   = f_gaussians[ wheel_file ];
       }               
 
       wheel_cancel();
@@ -7176,31 +7198,15 @@ static double compute_gaussian_f( double t, const double *par )
    return result;
 }
 
-static   void printvector( QString qs, vector < unsigned int > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
-
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
-
 void US_Hydrodyn_Saxs_Hplc::gauss_fit()
 {
 
    if ( ggaussian_mode )
    {
+      double peak;
+      get_peak( wheel_file, peak );
+      gauss_max_height = peak * 1.2;
+
       qwtw_wheel->setEnabled( false );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       US_Hydrodyn_Saxs_Hplc_Fit_Global *shfg = 
@@ -7922,10 +7928,19 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( tr( "Global Fit" ) );
 
+   if ( !ggaussian_compatible() )
+   {
+      editor_msg( "dark red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians, these will be reset to the last Gaussian settings" ) );
+   }
+
    if ( !create_unified_ggaussian_target() )
    {
       return;
    }
+
+   // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
+   // add_ggaussian_curve( "unified_ggaussian_sum",    compute_ggaussian_gaussian_sum() );
+
    lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
    wheel_file = unified_ggaussian_files[ 0 ];
       
@@ -7980,6 +7995,26 @@ QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
    return files;
 }
 
+QStringList US_Hydrodyn_Saxs_Hplc::all_files()
+{
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      files << lb_files->text( i );
+   }
+   return files;
+}
+
+map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
+{
+   map < QString, bool > files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      files[ lb_files->text( i ) ] = true;
+   }
+   return files;
+}
+
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible()
 {
    QStringList files = all_selected_files();
@@ -7996,10 +8031,15 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
    }
 
    vector < double > centers;
+
+   bool any_f_gaussians = false;
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
-      if ( f_gaussians.count( files[ i ] ) )
+      if ( f_gaussians.count( files[ i ] ) &&
+           f_gaussians[ files[ i ] ].size() )
       {
+         any_f_gaussians = true;
          if ( !centers.size() )
          {
             for ( unsigned int j = 0; j < f_gaussians[ files[ i ] ].size(); j+= 3 )
@@ -8016,7 +8056,20 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
             {
                return false;
             }
-         }
+         }            
+      }
+   }
+
+   if ( any_f_gaussians )
+   {
+      vector < double > tmp_centers;
+      for ( unsigned int j = 0; j < gaussians.size(); j+= 3 )
+      {
+         tmp_centers.push_back( gaussians[ 1 + j ] );
+      }
+      if ( tmp_centers != centers )
+      {
+         return false;
       }
    }
 
@@ -8046,15 +8099,15 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
          double height  = unified_ggaussian_params[ index + 2 * j + 0 ];
          double width   = unified_ggaussian_params[ index + 2 * j + 1 ];
 
-         cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
-            .arg( i )
-            .arg( t )
-            .arg( index )
-            .arg( j )
-            .arg( center )
-            .arg( height )
-            .arg( width )
-            ;
+         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+         //             .arg( i )
+         //             .arg( t )
+         //             .arg( index )
+         //             .arg( j )
+         //             .arg( center )
+         //             .arg( height )
+         //             .arg( width )
+         //             ;
 
          double tmp = ( t - center ) / width;
          result[ i ] += height * exp( - tmp * tmp / 2 );
@@ -8145,7 +8198,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
               f_qs[ unified_ggaussian_files[ i ] ][ j ] <= q_end )
          {
             unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
-            unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size + i * 2 );
+            unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
             unified_ggaussian_q           .push_back( f_qs[ unified_ggaussian_files[ i ] ][ j ] );
             unified_ggaussian_I           .push_back( f_Is[ unified_ggaussian_files[ i ] ][ j ] );
             if ( unified_ggaussian_use_errors )
@@ -8247,4 +8300,43 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
 
    delete hplc_fit_window;
    return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_ggaussian_curve( QString name, vector < double > y )
+{
+   if ( y.size() != unified_ggaussian_q.size() )
+   {
+      editor_msg( "red", QString( tr( "Internal error: add_ggaussian_curve size %1 but unified ggaussian q size %2" ) ).arg( y.size() ).arg( unified_ggaussian_q.size() ) );
+   }
+
+   map < QString, bool > current_files = all_files_map();
+
+   QString use_name = name;
+
+   unsigned int ext = 0;
+   while ( current_files.count( use_name ) )
+   {
+      use_name = name + QString( "-%1" ).arg( ++ext );
+   }
+
+   lb_created_files->insertItem( use_name );
+   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+   lb_files->insertItem( use_name );
+   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   created_files_not_saved[ use_name ] = true;
+   
+   f_pos       [ use_name ] = f_qs.size();
+   f_qs        [ use_name ] = unified_ggaussian_t;
+   f_qs_string [ use_name ].clear();
+   for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_t.size(); i++ )
+   {
+      f_qs_string [ use_name ].push_back( QString( "%1" ).arg( unified_ggaussian_t[ i ] ) );
+   }
+   f_Is        [ use_name ] = y;
+   f_errors    [ use_name ].clear();
+   f_is_time   [ use_name ] = true;
+   {
+      vector < double > tmp;
+      f_gaussians  [ use_name ] = tmp;
+   }
 }

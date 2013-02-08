@@ -718,7 +718,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       } else {
          HFIT::param_pos   .push_back( HFIT::init_params.size() );
 
-         if ( cb_pct_center_from_init->isChecked() )
+         if ( cb_pct_width_from_init->isChecked() )
          {
             base_val = gaussians_undo[ 0 ][ 2 + i ];
          } else {

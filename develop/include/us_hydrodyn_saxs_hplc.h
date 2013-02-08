@@ -278,7 +278,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   unified_ggaussian_params; // global centers first, then height, width for each file
       vector < unsigned int >             unified_ggaussian_param_index; // index into params
       vector < double >                   unified_ggaussian_q;
-      vector < double >                   unified_ggaussian_q_offset;
       vector < double >                   unified_ggaussian_I;
       vector < double >                   unified_ggaussian_e;
       vector < double >                   unified_ggaussian_t;
@@ -286,7 +285,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, vector < double > >  org_f_gaussians;
 
       vector < double >                   compute_ggaussian_gaussian_sum();
+      void                                add_ggaussian_curve( QString name, vector < double > y );
 
+      map < QString, bool >               all_files_map();
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -309,6 +310,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                replot_gaussian_sum();
 
       QStringList                         all_selected_files();
+      QStringList                         all_files();
 
       void save_csv_saxs_iqq();
 

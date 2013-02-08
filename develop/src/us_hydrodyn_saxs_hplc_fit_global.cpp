@@ -23,7 +23,7 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    global_Ypos += 30;
 
    gaussians_undo.clear();
-   gaussians_undo.push_back( hplc_win->gaussians );
+   gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
    update_enables();
@@ -36,11 +36,10 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::~US_Hydrodyn_Saxs_Hplc_Fit_Global()
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::restore()
 {
    gaussians_undo.resize( 1 );
-   hplc_win->gaussians = gaussians_undo[ 0 ];
+   hplc_win->unified_ggaussian_params = gaussians_undo[ 0 ];
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    update_enables();
@@ -53,11 +52,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::undo()
       gaussians_undo.pop_back();
    }
 
-   hplc_win->gaussians = gaussians_undo.back();
+   hplc_win->unified_ggaussian_params = gaussians_undo.back();
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    update_enables();
@@ -486,29 +484,22 @@ namespace HFIT_GLOBAL
    vector < double       > param_min;      // minimum values for variable params
    vector < double       > param_max;      // maximum values for variable params
 
+   vector < double       > unified_q;                        // copy from hplc win
+   vector < unsigned int > unified_ggaussian_param_index;    // copy from hplc win
+   unsigned int            unified_ggaussian_gaussians_size; // copy from hplc win
+   unsigned int            unified_ggaussian_curves;         // copy from hplc win
+
    double compute_gaussian_f( double t, const double *par )
    {
       double result = 0e0;
       double height;
       double center;
       double width;
+      unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
+      unsigned int base;
 
-      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
+      for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
       {
-         if ( param_fixed[ i ] )
-         {
-            height = fixed_params[ param_pos[ i ] ];
-         } else {
-            height = par         [ param_pos[ i ] ];
-            if ( height < param_min[ param_pos[ i ] ] ||
-                 height > param_max[ param_pos[ i ] ] )
-            {
-               return 1e99;
-            }
-         }
-
-         i++;
-
          if ( param_fixed[ i ] )
          {
             center = fixed_params[ param_pos[ i ] ];
@@ -521,23 +512,43 @@ namespace HFIT_GLOBAL
             }
          }
 
-         i++;
+         base = index + 2 * i;
 
-         if ( param_fixed[ i ] )
+         if ( param_fixed[ base + 0 ] )
          {
-            width = fixed_params[ param_pos[ i ] ];
+            height = fixed_params[ param_pos[ base + 0 ] ];
          } else {
-            width = par         [ param_pos[ i ] ];
-            if ( width < param_min[ param_pos[ i ] ] ||
-                 width > param_max[ param_pos[ i ] ] )
+            height = par         [ param_pos[ base + 0 ] ];
+            if ( height < param_min[ param_pos[ base + 0 ] ] ||
+                 height > param_max[ param_pos[ base + 0 ] ] )
             {
                return 1e99;
             }
          }
 
-         i++;
+         if ( param_fixed[ base + 1 ] )
+         {
+            width = fixed_params[ param_pos[ base + 1 ] ];
+         } else {
+            width = par         [ param_pos[ base + 1 ] ];
+            if ( width < param_min[ param_pos[ base + 1 ] ] ||
+                 width > param_max[ param_pos[ base + 1 ] ] )
+            {
+               return 1e99;
+            }
+         }
 
-         double tmp = ( t - center ) / width;
+         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+         //             .arg( t )
+         //             .arg( unified_q[ ( unsigned int ) t ] )
+         //             .arg( index )
+         //             .arg( i )
+         //             .arg( center )
+         //             .arg( height )
+         //             .arg( width )
+         //             ;
+
+         double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
          result += height * exp( - tmp * tmp / 2 );
       }
       
@@ -588,13 +599,17 @@ namespace HFIT_GLOBAL
 
 bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 {
-   HFIT_GLOBAL::init_params .clear();
-   HFIT_GLOBAL::base_params .clear();
-   HFIT_GLOBAL::fixed_params.clear();
-   HFIT_GLOBAL::param_pos   .clear();
-   HFIT_GLOBAL::param_fixed .clear();
-   HFIT_GLOBAL::param_min   .clear();
-   HFIT_GLOBAL::param_max   .clear();
+   HFIT_GLOBAL::init_params                       .clear();
+   HFIT_GLOBAL::base_params                       .clear();
+   HFIT_GLOBAL::fixed_params                      .clear();
+   HFIT_GLOBAL::param_pos                         .clear();
+   HFIT_GLOBAL::param_fixed                       .clear();
+   HFIT_GLOBAL::param_min                         .clear();
+   HFIT_GLOBAL::param_max                         .clear();
+   HFIT_GLOBAL::unified_q                         = hplc_win->unified_ggaussian_q;
+   HFIT_GLOBAL::unified_ggaussian_param_index     = hplc_win->unified_ggaussian_param_index;
+   HFIT_GLOBAL::unified_ggaussian_gaussians_size  = hplc_win->unified_ggaussian_gaussians_size;
+   HFIT_GLOBAL::unified_ggaussian_curves          = hplc_win->unified_ggaussian_curves;
 
    map < unsigned int, bool > fixed_curves;
 
@@ -611,7 +626,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    {
       if ( cb_fix_curves[ i ]->isChecked() )
       {
-         fixed_curves[ i + 1 ] = true;
+         fixed_curves[ i ] = true;
       } else {
          any_not_fixed = true;
       }
@@ -624,28 +639,74 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
    double base_val;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size(); i+= 3 )
-   {
-      unsigned int pos = i / 3;
+   // unified_ggaussians have first "unified_ggaussian_gaussians_size" elements as common centers
+   // and the next unified_ggaussian_gaussians_size * 2 * unified_ggaussian_curves elements as the curve specific
+   // height, widths
 
-      if ( cb_fix_amplitude->isChecked() ||
-           fixed_curves.count( pos + 1 ) )
+   // the centers first:
+
+   for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; i++ )
+   {
+      if ( cb_fix_center->isChecked() ||
+           fixed_curves.count( i ) )
       {
          HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-         HFIT_GLOBAL::fixed_params.push_back( hplc_win->gaussians[ 0 + i ] );
+         HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ i ] );
+         HFIT_GLOBAL::param_fixed .push_back( true );
+      } else {
+         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+         if ( cb_pct_center_from_init->isChecked() )
+         {
+            base_val = gaussians_undo[ 0 ][ i ];
+         } else {
+            base_val = hplc_win->unified_ggaussian_params[ i ];
+         }            
+
+         HFIT_GLOBAL::init_params .push_back( base_val );
+         HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ i ] );
+         HFIT_GLOBAL::param_fixed .push_back( false );
+
+         double ofs;
+         double min = -1e99;
+         double max = 1e99;
+         if ( cb_pct_center->isChecked() )
+         {
+            ofs = base_val * le_pct_center->text().toDouble() / 100.0;
+            min = base_val - ofs;
+            max = base_val + ofs;
+         }
+
+         HFIT_GLOBAL::param_min   .push_back( min );
+         HFIT_GLOBAL::param_max   .push_back( max );
+      }
+   }         
+      
+   for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size * 2 * hplc_win->unified_ggaussian_curves; i+= 2 )
+   {
+      unsigned int pos = i / 2;
+
+      unsigned int height_pos = hplc_win->unified_ggaussian_gaussians_size + i + 0;
+      unsigned int width_pos  = hplc_win->unified_ggaussian_gaussians_size + i + 1;
+
+      if ( cb_fix_amplitude->isChecked() ||
+           fixed_curves.count( pos ) )
+      {
+         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+         HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ height_pos ] );
          HFIT_GLOBAL::param_fixed .push_back( true );
       } else {
          HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
          if ( cb_pct_amplitude_from_init->isChecked() )
          {
-            base_val = gaussians_undo[ 0 ][ 0 + i ];
+            base_val = gaussians_undo[ 0 ][ height_pos ];
          } else {
-            base_val = hplc_win->gaussians[ 0 + i ];
+            base_val = hplc_win->unified_ggaussian_params[ height_pos ];
          }            
 
          HFIT_GLOBAL::init_params .push_back( base_val );
-         HFIT_GLOBAL::base_params .push_back( hplc_win->gaussians[ 0 + i ] );
+         HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ height_pos ] );
          HFIT_GLOBAL::param_fixed .push_back( false );
 
          double ofs;
@@ -674,59 +735,24 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
          HFIT_GLOBAL::param_max   .push_back( max );
       }
          
-
-      if ( cb_fix_center->isChecked() ||
-           fixed_curves.count( pos + 1 ) )
-      {
-         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-         HFIT_GLOBAL::fixed_params.push_back( hplc_win->gaussians[ 1 + i ] );
-         HFIT_GLOBAL::param_fixed .push_back( true );
-      } else {
-         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
-
-         if ( cb_pct_center_from_init->isChecked() )
-         {
-            base_val = gaussians_undo[ 0 ][ 1 + i ];
-         } else {
-            base_val = hplc_win->gaussians[ 1 + i ];
-         }            
-
-         HFIT_GLOBAL::init_params .push_back( base_val );
-         HFIT_GLOBAL::base_params .push_back( hplc_win->gaussians[ 1 + i ] );
-         HFIT_GLOBAL::param_fixed .push_back( false );
-
-         double ofs;
-         double min = -1e99;
-         double max = 1e99;
-         if ( cb_pct_center->isChecked() )
-         {
-            ofs = base_val * le_pct_center->text().toDouble() / 100.0;
-            min = base_val - ofs;
-            max = base_val + ofs;
-         }
-
-         HFIT_GLOBAL::param_min   .push_back( min );
-         HFIT_GLOBAL::param_max   .push_back( max );
-      }
-
       if ( cb_fix_width->isChecked() ||
            fixed_curves.count( pos + 1 ) )
       {
          HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-         HFIT_GLOBAL::fixed_params.push_back( hplc_win->gaussians[ 2 + i ] );
+         HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ width_pos ] );
          HFIT_GLOBAL::param_fixed .push_back( true );
       } else {
          HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
-         if ( cb_pct_center_from_init->isChecked() )
+         if ( cb_pct_width_from_init->isChecked() )
          {
-            base_val = gaussians_undo[ 0 ][ 2 + i ];
+            base_val = gaussians_undo[ 0 ][ width_pos ];
          } else {
-            base_val = hplc_win->gaussians[ 2 + i ];
+            base_val = hplc_win->unified_ggaussian_params[ width_pos ];
          }            
 
          HFIT_GLOBAL::init_params .push_back( base_val );
-         HFIT_GLOBAL::base_params .push_back( hplc_win->gaussians[ 2 + i ] );
+         HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ width_pos ] );
          HFIT_GLOBAL::param_fixed .push_back( false );
 
          double ofs;
@@ -764,7 +790,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 {
-   setup_run();
+   running = true;
+   update_enables();
+   // setup_run();
    puts( "lm" );
    cout << "gauss fit start\n";
 
@@ -776,34 +804,30 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    LM::lm_status_struct status;
 
-   vector < double > x = hplc_win->f_qs[ hplc_win->wheel_file ];
-   vector < double > t;
-   vector < double > y;
-
-   double start = hplc_win->le_gauss_fit_start->text().toDouble();
-   double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();
-
-   for ( unsigned int j = 0; j < x.size(); j++ )
-   {
-      if ( x[ j ] >= start && x[ j ] <= end )
-      {
-         t.push_back( x[ j ] );
-         y.push_back( hplc_win->f_Is[ hplc_win->wheel_file ][ j ] );
-      }
-   }
+   vector < double > t = hplc_win->unified_ggaussian_t;
+   vector < double > y = hplc_win->unified_ggaussian_I;
 
    vector < double >    org_params = HFIT_GLOBAL::init_params;
-   double org_rmsd = 0e0;
-   {
-      vector < double >    yp( x.size() );
 
-      for ( unsigned int j = 0; j < t.size(); j++ )
-      {
-         yp[ j ]  = HFIT_GLOBAL::compute_gaussian_f( t[ j ], (double *)(&HFIT_GLOBAL::base_params[ 0 ] ) );
-         org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
-      }
-      org_rmsd = sqrt( org_rmsd );
+   double org_rmsd = hplc_win->ggaussian_rmsd();
+
+
+   vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
+   vector < double > gsumf( t.size() );
+   for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
+   {
+      gsumf[ i ] = HFIT_GLOBAL::compute_gaussian_f( t[ i ], &HFIT_GLOBAL::init_params[ 0 ] );
    }
+
+   if ( gsum != gsumf )
+   {
+      HFIT_GLOBAL::printvector( "gsum", gsum );
+      HFIT_GLOBAL::printvector( "gsumf", gsumf );
+   } else {
+      cout << "gsums match\n";
+   }
+
+   // hplc_win->add_ggaussian_curve( "lm_start", gsumf );
 
    vector < double > par = HFIT_GLOBAL::init_params;
    HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
@@ -825,10 +849,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       {
          if ( !HFIT_GLOBAL::param_fixed[ i ] )
          {
-            hplc_win->gaussians[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->unified_ggaussian_params[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
          }
       }
-      gaussians_undo.push_back( hplc_win->gaussians );
+      cout << QString( "back checking rmsd gives %1\n" ).arg( hplc_win->ggaussian_rmsd() );
+      // hplc_win->add_ggaussian_curve( "lm_after_pushback", hplc_win->compute_ggaussian_gaussian_sum() );
+
+      gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
    } else {
       cout << "no improvement, reverting to original values\n";
    }
@@ -836,15 +863,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
+   running = false;
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
 {
    puts( "gsm_sd" );
+   return; // have to rewrite this 
 
    gsm_setup();
 
@@ -895,7 +923,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    progress->reset();
@@ -905,6 +932,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
 {
    puts( "gsm_ih" );
+   return; // have to rewrite this 
 
    gsm_setup();
 
@@ -955,7 +983,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    progress->reset();
@@ -965,6 +992,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
 {
    puts( "gsm_cg" );
+   return; // have to rewrite this 
 
    gsm_setup();
 
@@ -1015,7 +1043,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    progress->reset();
@@ -1069,7 +1096,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    progress->reset();
@@ -1084,6 +1110,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::stop()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 {
+   return; // have to rewrite this 
    setup_run();
    puts( "grid" );
    cout << "gauss fit start\n";
@@ -1198,7 +1225,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();
-      hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
    }
    progress->reset();
