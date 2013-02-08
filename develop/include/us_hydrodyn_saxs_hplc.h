@@ -191,6 +191,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_gauss_save;
 
       QPushButton   *pb_ggauss_start;
+      QPushButton   *pb_ggauss_rmsd;
 
       QPushButton   *pb_baseline_start;
       mQLineEdit    *le_baseline_start;
@@ -281,6 +282,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   unified_ggaussian_I;
       vector < double >                   unified_ggaussian_e;
       vector < double >                   unified_ggaussian_t;
+
+      map < QString, vector < double > >  org_f_gaussians;
 
       vector < double >                   compute_ggaussian_gaussian_sum();
 
@@ -409,6 +412,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
 
+      bool                         ggauss_recompute();
 
    private slots:
 
@@ -484,6 +488,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_fit_end_focus         ( bool );
 
       void ggauss_start();
+      void ggauss_rmsd();
 
       void baseline_start();
       void baseline_apply();

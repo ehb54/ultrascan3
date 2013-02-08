@@ -465,11 +465,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    pb_undo                  ->setEnabled( !running && gaussians_undo.size() > 1 );
 
    pb_lm                    ->setEnabled( !running && run_ok );
-   pb_gsm_sd                ->setEnabled( !running && run_ok );
-   pb_gsm_ih                ->setEnabled( !running && run_ok );
-   pb_gsm_cg                ->setEnabled( !running && run_ok );
-   pb_ga                    ->setEnabled( !running && run_ok && variations_set );
-   pb_grid                  ->setEnabled( !running && run_ok && variations_set );
+   pb_gsm_sd                ->setEnabled( false && !running && run_ok );
+   pb_gsm_ih                ->setEnabled( false && !running && run_ok );
+   pb_gsm_cg                ->setEnabled( false && !running && run_ok );
+   pb_ga                    ->setEnabled( false && !running && run_ok && variations_set );
+   pb_grid                  ->setEnabled( false && !running && run_ok && variations_set );
 
    pb_stop                  ->setEnabled( running );
 }
