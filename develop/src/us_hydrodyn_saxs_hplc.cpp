@@ -30,6 +30,26 @@ void mQLineEdit::focusOutEvent ( QFocusEvent *e )
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 
+static   void printvector( QString qs, vector < unsigned int > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
+static void printvector( QString qs, vector < double > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                                csv csv1,
                                                void *us_hydrodyn, 
@@ -47,6 +67,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 #ifdef QT4
    legend_vis      = true;
 #endif
+   usu             = new US_Saxs_Util();
 
    QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );
 
@@ -151,6 +172,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 US_Hydrodyn_Saxs_Hplc::~US_Hydrodyn_Saxs_Hplc()
 {
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget = false;
+   delete usu;
 }
 
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
@@ -653,6 +675,23 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggauss_rmsd->setEnabled( false );
    connect(pb_ggauss_rmsd, SIGNAL(clicked()), SLOT(ggauss_rmsd()));
 
+   pb_ggauss_results = new QPushButton(tr("Make result curves"), this);
+   pb_ggauss_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_ggauss_results->setMinimumHeight(minHeight1);
+   pb_ggauss_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_ggauss_results->setEnabled( false );
+   connect(pb_ggauss_results, SIGNAL(clicked()), SLOT(ggauss_results()));
+
+   le_baseline_start_s = new mQLineEdit(this, "le_baseline_start_s Line Edit");
+   le_baseline_start_s->setText( "" );
+   le_baseline_start_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline_start_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_start_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline_start_s->setEnabled( false );
+   le_baseline_start_s->setValidator( new QDoubleValidator( le_baseline_start_s ) );
+   connect( le_baseline_start_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_s_text( const QString & ) ) );
+   connect( le_baseline_start_s, SIGNAL( focussed ( bool ) )             , SLOT( baseline_start_s_focus( bool ) ) );
+
    le_baseline_start = new mQLineEdit(this, "le_baseline_start Line Edit");
    le_baseline_start->setText( "" );
    le_baseline_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -663,6 +702,26 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_text( const QString & ) ) );
    connect( le_baseline_start, SIGNAL( focussed ( bool ) )             , SLOT( baseline_start_focus( bool ) ) );
 
+   le_baseline_start_e = new mQLineEdit(this, "le_baseline_start_e Line Edit");
+   le_baseline_start_e->setText( "" );
+   le_baseline_start_e->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline_start_e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_start_e->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline_start_e->setEnabled( false );
+   le_baseline_start_e->setValidator( new QDoubleValidator( le_baseline_start_e ) );
+   connect( le_baseline_start_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_e_text( const QString & ) ) );
+   connect( le_baseline_start_e, SIGNAL( focussed ( bool ) )             , SLOT( baseline_start_e_focus( bool ) ) );
+
+   le_baseline_end_s = new mQLineEdit(this, "le_baseline_end_s Line Edit");
+   le_baseline_end_s->setText( "" );
+   le_baseline_end_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline_end_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_end_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline_end_s->setEnabled( false );
+   le_baseline_end_s->setValidator( new QDoubleValidator( le_baseline_end_s ) );
+   connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
+   connect( le_baseline_end_s, SIGNAL( focussed ( bool ) )             , SLOT( baseline_end_s_focus( bool ) ) );
+
    le_baseline_end = new mQLineEdit(this, "le_baseline_end Line Edit");
    le_baseline_end->setText( "" );
    le_baseline_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -672,6 +731,16 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_end->setValidator( new QDoubleValidator( le_baseline_end ) );
    connect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_text( const QString & ) ) );
    connect( le_baseline_end, SIGNAL( focussed ( bool ) )             , SLOT( baseline_end_focus( bool ) ) );
+
+   le_baseline_end_e = new mQLineEdit(this, "le_baseline_end_e Line Edit");
+   le_baseline_end_e->setText( "" );
+   le_baseline_end_e->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline_end_e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_end_e->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline_end_e->setEnabled( false );
+   le_baseline_end_e->setValidator( new QDoubleValidator( le_baseline_end_e ) );
+   connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
+   connect( le_baseline_end_e, SIGNAL( focussed ( bool ) )             , SLOT( baseline_end_e_focus( bool ) ) );
 
    pb_baseline_start = new QPushButton(tr("Baseline"), this);
    pb_baseline_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -892,13 +961,18 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_gauss2->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
       gl_gauss2->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
       gl_gauss2->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_ggauss_results   , 0, ofs++ );
    }
 
    QHBoxLayout *hbl_baseline = new QHBoxLayout( 0 );
-   hbl_baseline->addWidget( pb_baseline_start );
-   hbl_baseline->addWidget( le_baseline_start );
-   hbl_baseline->addWidget( le_baseline_end   );
-   hbl_baseline->addWidget( pb_baseline_apply );
+   hbl_baseline->addWidget( pb_baseline_start   );
+   hbl_baseline->addWidget( le_baseline_start_s );
+   hbl_baseline->addWidget( le_baseline_start   );
+   hbl_baseline->addWidget( le_baseline_start_e );
+   hbl_baseline->addWidget( le_baseline_end_s   );
+   hbl_baseline->addWidget( le_baseline_end     );
+   hbl_baseline->addWidget( le_baseline_end_e   );
+   hbl_baseline->addWidget( pb_baseline_apply   );
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
@@ -5898,16 +5972,36 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
    } else {
       if ( baseline_mode )
       {
+         if ( le_baseline_start_s->hasFocus() )
+         {
+            cout << "aw: baseline start_s focus\n";
+            le_last_focus = le_baseline_start_s;
+         }
          if ( le_baseline_start->hasFocus() )
          {
             cout << "aw: baseline start focus\n";
             le_last_focus = le_baseline_start;
          }
+         if ( le_baseline_start_e->hasFocus() )
+         {
+            cout << "aw: baseline start_e focus\n";
+            le_last_focus = le_baseline_start_e;
+         }
 
+         if ( le_baseline_end_s->hasFocus() )
+         {
+            cout << "aw: baseline end_s focus\n";
+            le_last_focus = le_baseline_end_s;
+         }
          if ( le_baseline_end->hasFocus() )
          {
             cout << "aw: baseline end focus\n";
             le_last_focus = le_baseline_end;
+         }
+         if ( le_baseline_end_e->hasFocus() )
+         {
+            cout << "aw: baseline end_e focus\n";
+            le_last_focus = le_baseline_end_e;
          }
 
          if ( !le_last_focus )
@@ -6093,12 +6187,17 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_gauss_fit_end      ->setEnabled( false );
 
    pb_baseline_start     ->setEnabled( false );
+   le_baseline_start_s   ->setEnabled( false );
    le_baseline_start     ->setEnabled( false );
+   le_baseline_start_e   ->setEnabled( false );
+   le_baseline_end_s     ->setEnabled( false );
    le_baseline_end       ->setEnabled( false );
+   le_baseline_end_e     ->setEnabled( false );
    pb_baseline_apply     ->setEnabled( false );
 
    pb_ggauss_start       ->setEnabled( false );
    pb_ggauss_rmsd        ->setEnabled( false );
+   pb_ggauss_results     ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
@@ -6131,8 +6230,12 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
       } else {
          if ( baseline_mode )
          {
-            le_baseline_start->setText( QString( "%1" ).arg( org_baseline_start ) );
-            le_baseline_end  ->setText( QString( "%1" ).arg( org_baseline_end   ) );
+            le_baseline_start_s->setText( QString( "%1" ).arg( org_baseline_start_s ) );
+            le_baseline_start  ->setText( QString( "%1" ).arg( org_baseline_start   ) );
+            le_baseline_start_e->setText( QString( "%1" ).arg( org_baseline_start_e ) );
+            le_baseline_end_s  ->setText( QString( "%1" ).arg( org_baseline_end_s   ) );
+            le_baseline_end    ->setText( QString( "%1" ).arg( org_baseline_end     ) );
+            le_baseline_end_e  ->setText( QString( "%1" ).arg( org_baseline_end_e   ) );
             gauss_delete_markers();
             plotted_markers.clear();
             for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
@@ -6197,26 +6300,6 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    update_enables();
 }
 
-static   void printvector( QString qs, vector < unsigned int > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
-
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
-
 void US_Hydrodyn_Saxs_Hplc::wheel_save()
 {
    if ( ggaussian_mode )
@@ -6259,8 +6342,12 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    if ( baseline_mode )
    {
-      org_baseline_start = le_baseline_start->text().toDouble();
-      org_baseline_end   = le_baseline_end  ->text().toDouble();
+      org_baseline_start_s = le_baseline_start_s->text().toDouble();
+      org_baseline_start   = le_baseline_start  ->text().toDouble();
+      org_baseline_start_e = le_baseline_start_e->text().toDouble();
+      org_baseline_end_s   = le_baseline_end_s  ->text().toDouble();
+      org_baseline_end     = le_baseline_end    ->text().toDouble();
+      org_baseline_end_e   = le_baseline_end_e  ->text().toDouble();
       wheel_cancel();
       return;
    }
@@ -7302,17 +7389,38 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 {
    pb_baseline_start   ->setEnabled( false );
    pb_wheel_cancel     ->setEnabled( true );
-   pb_wheel_save       ->setEnabled( le_baseline_start->text().toDouble() != org_baseline_start ||
-                                     le_baseline_end  ->text().toDouble() != org_baseline_end      );
+   pb_wheel_save       ->setEnabled( 
+                                    le_baseline_start_s->text().toDouble() != org_baseline_start_s ||
+                                    le_baseline_start  ->text().toDouble() != org_baseline_start   ||
+                                    le_baseline_start_e->text().toDouble() != org_baseline_start_e ||
+                                    le_baseline_end_s  ->text().toDouble() != org_baseline_end_s   ||
+                                    le_baseline_end    ->text().toDouble() != org_baseline_end     ||   
+                                    le_baseline_end_e  ->text().toDouble() != org_baseline_end_e
+                                    );
+   le_baseline_start_s ->setEnabled( true );
    le_baseline_start   ->setEnabled( true );
+   le_baseline_start_e ->setEnabled( true );
+   le_baseline_end_s   ->setEnabled( true );
    le_baseline_end     ->setEnabled( true );
-   qwtw_wheel          ->setEnabled( le_baseline_start->hasFocus() || le_baseline_end->hasFocus() );
+   le_baseline_end_e   ->setEnabled( true );
+   qwtw_wheel          ->setEnabled( 
+                                    le_baseline_start_s->hasFocus() || 
+                                    le_baseline_start  ->hasFocus() || 
+                                    le_baseline_start_e->hasFocus() || 
+                                    le_baseline_end_s  ->hasFocus() ||
+                                    le_baseline_end    ->hasFocus() ||
+                                    le_baseline_end_e  ->hasFocus()
+                                    );
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
 {
-   org_baseline_start = le_baseline_start->text().toDouble();
-   org_baseline_end   = le_baseline_end  ->text().toDouble();
+   org_baseline_start_s = le_baseline_start_s->text().toDouble();
+   org_baseline_start   = le_baseline_start  ->text().toDouble();
+   org_baseline_start_e = le_baseline_start_e->text().toDouble();
+   org_baseline_end_s   = le_baseline_end_s  ->text().toDouble();
+   org_baseline_end     = le_baseline_end    ->text().toDouble();
+   org_baseline_end_e   = le_baseline_end_e  ->text().toDouble();
 
    le_last_focus = (mQLineEdit *) 0;
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -7359,23 +7467,61 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
                          f_qs[ wheel_file ].back(), 
                          ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
 
+   double q_len       = f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ];
+   double q_len_delta = q_len * 0.05;
+
+   if ( le_baseline_start_s->text().isEmpty() ||
+        le_baseline_start_s->text() == "0" ||
+        le_baseline_start_s->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+   {
+      disconnect( le_baseline_start_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_baseline_start_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      connect( le_baseline_start_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_s_text( const QString & ) ) );
+   }
+
    if ( le_baseline_start->text().isEmpty() ||
         le_baseline_start->text() == "0" ||
         le_baseline_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
    {
       disconnect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      le_baseline_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] /* + q_len_delta */ ) );
       connect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_text( const QString & ) ) );
+   }
+
+   if ( le_baseline_start_e->text().isEmpty() ||
+        le_baseline_start_e->text() == "0" ||
+        le_baseline_start_e->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+   {
+      disconnect( le_baseline_start_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_baseline_start_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] + 2e0 * q_len_delta) );
+      connect( le_baseline_start_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_e_text( const QString & ) ) );
+   }
+
+   if ( le_baseline_end_s->text().isEmpty() ||
+        le_baseline_end_s->text() == "0" ||
+        le_baseline_end_s->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - 2e0 * q_len_delta ) );
+      connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
    }
 
    if ( le_baseline_end->text().isEmpty() ||
         le_baseline_end->text() == "0" ||
         le_baseline_end->text().toDouble() > f_qs[ wheel_file ].back() )
    {
-      cout << "setting baseline end\n";
       disconnect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() /* - q_len_delta */ ) );
       connect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_text( const QString & ) ) );
+   }
+
+   if ( le_baseline_end_e->text().isEmpty() ||
+        le_baseline_end_e->text() == "0" ||
+        le_baseline_end_e->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
    }
 
    baseline_init_markers();
@@ -7409,10 +7555,15 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
 
    map < QString, bool > select_files;
 
-   double start = le_baseline_start->text().toDouble();
-   double end   = le_baseline_end  ->text().toDouble();
+   double start_s = le_baseline_start_s->text().toDouble();
+   double start   = le_baseline_start  ->text().toDouble();
+   double start_e = le_baseline_start_e->text().toDouble();
+   double end_s   = le_baseline_end_s  ->text().toDouble();
+   double end     = le_baseline_end    ->text().toDouble();
+   double end_e   = le_baseline_end_e  ->text().toDouble();
 
-   US_Saxs_Util usu;
+   // redo this to compute from best linear fit over ranges
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
       int ext = 0;
@@ -7427,8 +7578,43 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
       unsigned int before_end   = 0;
       unsigned int after_end    = 1;
 
+      vector < double > start_q;
+      vector < double > start_I;
+
+      vector < double > end_q;
+      vector < double > end_I;
+
+      {
+         unsigned int j = 0;
+         if ( f_qs[ files[ i ] ][ j ] >= start_s &&
+              f_qs[ files[ i ] ][ j ] <= start_e )
+         {
+            start_q.push_back( f_qs[ files[ i ] ][ j ] );
+            start_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
+              f_qs[ files[ i ] ][ j ] <= end_e )
+         {
+            end_q.push_back( f_qs[ files[ i ] ][ j ] );
+            end_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+      }
+
       for ( unsigned int j = 1; j < f_qs[ files[ i ] ].size(); j++ )
       {
+         if ( f_qs[ files[ i ] ][ j ] >= start_s &&
+              f_qs[ files[ i ] ][ j ] <= start_e )
+         {
+            start_q.push_back( f_qs[ files[ i ] ][ j ] );
+            start_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
+              f_qs[ files[ i ] ][ j ] <= end_e )
+         {
+            end_q.push_back( f_qs[ files[ i ] ][ j ] );
+            end_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+
          if ( f_qs[ files[ i ] ][ j - 1 ] <= start &&
               f_qs[ files[ i ] ][ j     ] >= start )
          {
@@ -7443,40 +7629,112 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
          }
       }
 
-      double startt;
+      bool   set_start = ( start_q.size() > 1 );
+      bool   set_end   = ( end_q  .size() > 1 );
+      double start_intercept = 0e0;
+      double start_slope     = 0e0;
+      double end_intercept   = 0e0;
+      double end_slope       = 0e0;
 
-      if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+      double start_y;
+      double end_y;
+
+      double siga;
+      double sigb;
+      double chi2;
+
+      if ( set_start && set_end )
       {
-         startt = 
-            ( f_qs[ files[ i ] ][ after_start ] - start )
-            / ( f_qs[ files[ i ] ][ after_start  ] -
-                f_qs[ files[ i ] ][ before_start ] );
+         // linear fit on each
+         usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+         usu->linear_fit( end_q  , end_I  , end_intercept  , end_slope  , siga, sigb, chi2 );
+
+         // find intercepts for baseline
+
+         start_y = start_intercept + start_slope * start;
+         end_y   = end_intercept   + end_slope   * end;
       } else {
-         startt = 0.5e0;
-      }
+         if ( set_start )
+         {
+            usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+
+            start_y = start_intercept + start_slope * start;
+
+            double end_t;
+
+            if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
+            {
+               end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
+                  / ( f_qs[ files[ i ] ][ after_end  ] -
+                      f_qs[ files[ i ] ][ before_end ] );
+            } else {
+               end_t = 0.5e0;
+            }
+
+            end_y = 
+               ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
+               ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
+         } else {
+            if ( set_end )
+            {
+               usu->linear_fit( end_q, end_I, end_intercept, end_slope, siga, sigb, chi2 );
+
+               end_y = end_intercept + end_slope * end;
+
+               double start_t;
+               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+               {
+                  start_t = 
+                     ( f_qs[ files[ i ] ][ after_start ] - start )
+                     / ( f_qs[ files[ i ] ][ after_start  ] -
+                         f_qs[ files[ i ] ][ before_start ] );
+               } else {
+                  start_t = 0.5e0;
+               }
+
+               start_y = 
+                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
+                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
+            
+            } else {
+               // for now, we are going to do this way for all conditions
+
+               double start_t;
+               double end_t;
+
+               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+               {
+                  start_t = 
+                     ( f_qs[ files[ i ] ][ after_start ] - start )
+                     / ( f_qs[ files[ i ] ][ after_start  ] -
+                         f_qs[ files[ i ] ][ before_start ] );
+               } else {
+                  start_t = 0.5e0;
+               }
       
-      double endt;
+               if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
+               {
+                  end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
+                     / ( f_qs[ files[ i ] ][ after_end  ] -
+                         f_qs[ files[ i ] ][ before_end ] );
+               } else {
+                  end_t = 0.5e0;
+               }
 
-      if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
-      {
-         endt = ( f_qs[ files[ i ] ][ after_end ] - end )
-            / ( f_qs[ files[ i ] ][ after_end  ] -
-                f_qs[ files[ i ] ][ before_end ] );
-      } else {
-         endt = 0.5e0;
+               start_y = 
+                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
+                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
+
+               end_y = 
+                  ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
+                  ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
+            }
+         }
       }
 
-      double starty = 
-         ( startt ) * f_Is[ files[ i ] ][ before_start ] +
-         ( 1e0 - startt ) * f_Is[ files[ i ] ][ after_start ];
-
-      double endy = 
-         ( endt ) * f_Is[ files[ i ] ][ before_end ] +
-         ( 1e0 - endt ) * f_Is[ files[ i ] ][ after_end ];
-
-      baseline_slope     = ( endy - starty ) / ( end - start );
+      baseline_slope     = ( end_y - start_y ) / ( end - start );
       baseline_intercept = 
-         ( ( starty + endy ) -
+         ( ( start_y + end_y ) -
            baseline_slope * ( start + end ) ) / 2e0;
 
       vector < double > bl_I = f_Is[ files[ i ] ];
@@ -7524,9 +7782,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
    update_enables();
 }
 
+static QColor start_color( 255, 165, 0 );
+static QColor end_color  ( 255, 160, 122 );
 
 void US_Hydrodyn_Saxs_Hplc::replot_baseline()
 {
+   // cout << "replot baseline\n";
    // compute & plot baseline
    // baseline_slope =
    // baseline_intercept =
@@ -7537,11 +7798,50 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
    unsigned int before_end   = 0;
    unsigned int after_end    = 1;
 
-   double start = le_baseline_start->text().toDouble();
-   double end   = le_baseline_end  ->text().toDouble();
+   double start_s = le_baseline_start_s->text().toDouble();
+   double start   = le_baseline_start  ->text().toDouble();
+   double start_e = le_baseline_start_e->text().toDouble();
+   double end_s   = le_baseline_end_s  ->text().toDouble();
+   double end     = le_baseline_end    ->text().toDouble();
+   double end_e   = le_baseline_end_e  ->text().toDouble();
+
+   vector < double > start_q;
+   vector < double > start_I;
+
+   vector < double > end_q;
+   vector < double > end_I;
+
+   {
+      unsigned int i = 0;
+      if ( f_qs[ wheel_file ][ i ] >= start_s &&
+           f_qs[ wheel_file ][ i ] <= start_e )
+      {
+         start_q.push_back( f_qs[ wheel_file ][ i ] );
+         start_I.push_back( f_Is[ wheel_file ][ i ] );
+      }
+      if ( f_qs[ wheel_file ][ i ] >= end_s &&
+           f_qs[ wheel_file ][ i ] <= end_e )
+      {
+         end_q.push_back( f_qs[ wheel_file ][ i ] );
+         end_I.push_back( f_Is[ wheel_file ][ i ] );
+      }
+   }
 
    for ( unsigned int i = 1; i < f_qs[ wheel_file ].size(); i++ )
    {
+      if ( f_qs[ wheel_file ][ i ] >= start_s &&
+           f_qs[ wheel_file ][ i ] <= start_e )
+      {
+         start_q.push_back( f_qs[ wheel_file ][ i ] );
+         start_I.push_back( f_Is[ wheel_file ][ i ] );
+      }
+      if ( f_qs[ wheel_file ][ i ] >= end_s &&
+           f_qs[ wheel_file ][ i ] <= end_e )
+      {
+         end_q.push_back( f_qs[ wheel_file ][ i ] );
+         end_I.push_back( f_Is[ wheel_file ][ i ] );
+      }
+
       if ( f_qs[ wheel_file ][ i - 1 ] <= start &&
            f_qs[ wheel_file ][ i     ] >= start )
       {
@@ -7556,69 +7856,141 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       }
    }
 
-   double startt;
+   bool   set_start = ( start_q.size() > 1 );
+   bool   set_end   = ( end_q  .size() > 1 );
+   double start_intercept = 0e0;
+   double start_slope     = 0e0;
+   double end_intercept   = 0e0;
+   double end_slope       = 0e0;
 
-   if ( f_qs[ wheel_file ][ after_start  ] != f_qs[ wheel_file ][ before_start ] )
+   double start_y;
+   double end_y;
+
+   double siga;
+   double sigb;
+   double chi2;
+
+   if ( set_start && set_end )
    {
-      startt = 
-         ( f_qs[ wheel_file ][ after_start ] - start )
-         / ( f_qs[ wheel_file ][ after_start  ] -
-             f_qs[ wheel_file ][ before_start ] );
+      // linear fit on each
+      usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+      usu->linear_fit( end_q  , end_I  , end_intercept  , end_slope  , siga, sigb, chi2 );
+
+      // find intercepts for baseline
+
+      start_y = start_intercept + start_slope * start;
+      end_y   = end_intercept   + end_slope   * end;
    } else {
-      startt = 0.5e0;
-   }
+      if ( set_start )
+      {
+         usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+
+         start_y = start_intercept + start_slope * start;
+
+         double end_t;
+
+         if ( f_qs[ wheel_file ][ after_end  ] != f_qs[ wheel_file ][ before_end ] )
+         {
+            end_t = ( f_qs[ wheel_file ][ after_end ] - end )
+               / ( f_qs[ wheel_file ][ after_end  ] -
+                   f_qs[ wheel_file ][ before_end ] );
+         } else {
+            end_t = 0.5e0;
+         }
+
+         end_y = 
+            ( end_t ) * f_Is[ wheel_file ][ before_end ] +
+            ( 1e0 - end_t ) * f_Is[ wheel_file ][ after_end ];
+      } else {
+         if ( set_end )
+         {
+            usu->linear_fit( end_q, end_I, end_intercept, end_slope, siga, sigb, chi2 );
+
+            end_y = end_intercept + end_slope * end;
+
+            double start_t;
+            if ( f_qs[ wheel_file ][ after_start  ] != f_qs[ wheel_file ][ before_start ] )
+            {
+               start_t = 
+                  ( f_qs[ wheel_file ][ after_start ] - start )
+                  / ( f_qs[ wheel_file ][ after_start  ] -
+                      f_qs[ wheel_file ][ before_start ] );
+            } else {
+               start_t = 0.5e0;
+            }
+
+            start_y = 
+               ( start_t ) * f_Is[ wheel_file ][ before_start ] +
+               ( 1e0 - start_t ) * f_Is[ wheel_file ][ after_start ];
+            
+         } else {
+            // for now, we are going to do this way for all conditions
+
+            double start_t;
+            double end_t;
+
+            if ( f_qs[ wheel_file ][ after_start  ] != f_qs[ wheel_file ][ before_start ] )
+            {
+               start_t = 
+                  ( f_qs[ wheel_file ][ after_start ] - start )
+                  / ( f_qs[ wheel_file ][ after_start  ] -
+                      f_qs[ wheel_file ][ before_start ] );
+            } else {
+               start_t = 0.5e0;
+            }
       
-   double endt;
+            if ( f_qs[ wheel_file ][ after_end  ] != f_qs[ wheel_file ][ before_end ] )
+            {
+               end_t = ( f_qs[ wheel_file ][ after_end ] - end )
+                  / ( f_qs[ wheel_file ][ after_end  ] -
+                      f_qs[ wheel_file ][ before_end ] );
+            } else {
+               end_t = 0.5e0;
+            }
 
-   if ( f_qs[ wheel_file ][ after_end  ] != f_qs[ wheel_file ][ before_end ] )
-   {
-      endt = ( f_qs[ wheel_file ][ after_end ] - end )
-         / ( f_qs[ wheel_file ][ after_end  ] -
-             f_qs[ wheel_file ][ before_end ] );
-   } else {
-      endt = 0.5e0;
+            start_y = 
+               ( start_t ) * f_Is[ wheel_file ][ before_start ] +
+               ( 1e0 - start_t ) * f_Is[ wheel_file ][ after_start ];
+
+            end_y = 
+               ( end_t ) * f_Is[ wheel_file ][ before_end ] +
+               ( 1e0 - end_t ) * f_Is[ wheel_file ][ after_end ];
+         }
+      }
    }
 
-   double starty = 
-      ( startt ) * f_Is[ wheel_file ][ before_start ] +
-      ( 1e0 - startt ) * f_Is[ wheel_file ][ after_start ];
-
-   double endy = 
-      ( endt ) * f_Is[ wheel_file ][ before_end ] +
-      ( 1e0 - endt ) * f_Is[ wheel_file ][ after_end ];
-
-   baseline_slope     = ( endy - starty ) / ( end - start );
+   baseline_slope     = ( end_y - start_y ) / ( end - start );
    baseline_intercept = 
-      ( ( starty + endy ) -
+      ( ( start_y + end_y ) -
         baseline_slope * ( start + end ) ) / 2e0;
 
-//    cout << QString( "x %1 %2 t %3 %4, y %5 %6 m %7 b %8\n" )
-//       .arg( start )
-//       .arg( end )
-//       .arg( startt )
-//       .arg( endt )
-//       .arg( starty )
-//       .arg( endy )
-//       .arg( baseline_slope )
-//       .arg( baseline_intercept )
-//       ;
-   
    vector < double > x( 2 );
    vector < double > y( 2 );
-
-//    x[ 0 ] = start;
-//    x[ 1 ] = end;
-//    y[ 0 ] = starty;
-//    y[ 1 ] = endy;
 
    x[ 0 ] = f_qs[ wheel_file ][ 0 ];
    x[ 1 ] = f_qs[ wheel_file ].back();
 
-   y[ 0 ] = baseline_slope * f_qs[ wheel_file ][ 0 ] + baseline_intercept;
-   y[ 1 ] = baseline_slope * f_qs[ wheel_file ].back() + baseline_intercept;
+   y[ 0 ] = baseline_slope * x[ 0 ] + baseline_intercept;
+   y[ 1 ] = baseline_slope * x[ 1 ] + baseline_intercept;
 
-   if ( !plotted_baseline.size() )
+   // remove any baseline curves
+
+   for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
    {
+#ifndef QT4
+      plot_dist->removeCurve( plotted_baseline[ i ] );
+#else
+#warn check how to do this in qt4
+#endif
+   }
+   plotted_baseline.clear();
+
+   // the baseline
+   {
+      // cout << QString( "baseline slope %1 intercept %2\n" ).arg( baseline_slope ).arg( baseline_intercept );
+      // printvector( "baseline x", x );
+      // printvector( "baseline y", y );
+
 #ifndef QT4
       long curve;
       curve = plot_dist->insertCurve( "baseline" );
@@ -7639,7 +8011,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
                                2
                                );
 #else
-      curve->setPen( QPen( Qt:, 1, Qt::DashLine ) );
+      curve->setPen( QPen( Qt:green, 1, Qt::DashLine ) );
       plotted_baseline[ 0 ]->setData(
                                      (double *)&x[ 0 ],
                                      (double *)&y[ 0 ],
@@ -7647,25 +8019,89 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
                                      );
       curve->attach( plot_dist );
 #endif
-   } else {
+   }
+   if ( set_start )
+   {
+      y[ 0 ] = start_slope * f_qs[ wheel_file ][ 0 ] + start_intercept;
+      y[ 1 ] = start_slope * f_qs[ wheel_file ].back() + start_intercept;
+
+      // cout << QString( "start slope %1 intercept %2\n" ).arg( start_slope ).arg( start_intercept );
+      // printvector( "start x", x );
+      // printvector( "start y", y );
+
 #ifndef QT4
-      plot_dist->setCurveData( plotted_baseline[ 0 ],
+      long curve;
+      curve = plot_dist->insertCurve( "baseline s" );
+      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
+#else
+      QwtPlotCurve *curve;
+      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+      plotted_baseline.push_back( curve );
+
+#ifndef QT4
+      plot_dist->setCurvePen( curve, QPen( start_color, 1, Qt::DashLine ) );
+      plot_dist->setCurveData( plotted_baseline.back(),
                                (double *)&x[ 0 ],
                                (double *)&y[ 0 ],
                                2
                                );
 #else
-      plotted_baseline[ 0 ]->setData(
-                                     (double *)&x[ 0 ],
-                                     (double *)&y[ 0 ],
-                                     2
+      curve->setPen( QPen( QColor( start_color, 1, Qt::DashLine ) );
+      plotted_baseline.back()->setData(
+                                       (double *)&x[ 0 ],
+                                       (double *)&y[ 0 ],
+                                       2
                                      );
+      curve->attach( plot_dist );
 #endif
    }
+
+   if ( set_end )
+   {
+      y[ 0 ] = end_slope * f_qs[ wheel_file ][ 0 ] + end_intercept;
+      y[ 1 ] = end_slope * f_qs[ wheel_file ].back() + end_intercept;
+
+      // cout << QString( "end slope %1 intercept %2\n" ).arg( end_slope ).arg( end_intercept );
+      // printvector( "end x", x );
+      // printvector( "end y", y );
+
+#ifndef QT4
+      long curve;
+      curve = plot_dist->insertCurve( "baseline e" );
+      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
+#else
+      QwtPlotCurve *curve;
+      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+      plotted_baseline.push_back( curve );
+
+#ifndef QT4
+      plot_dist->setCurvePen( curve, QPen( end_color, 1, Qt::DashLine ) );
+      plot_dist->setCurveData( plotted_baseline.back(),
+                               (double *)&x[ 0 ],
+                               (double *)&y[ 0 ],
+                               2
+                               );
+#else
+      curve->setPen( QPen( end_color, 1, Qt::DashLine ) );
+      plotted_baseline.back()->setData(
+                                       (double *)&x[ 0 ],
+                                       (double *)&y[ 0 ],
+                                       2
+                                     );
+      curve->attach( plot_dist );
+#endif
+   }
+
    plot_dist->replot();
 }
 
-void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
+void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
 {
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
@@ -7682,13 +8118,81 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
    baseline_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
+void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
 {
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
 #warn check how to do this in qt4 needs ymark
    plotted_markers[ 1 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_baseline();
+   plot_dist->replot();
+   baseline_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_start_e_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 2 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_baseline();
+   plot_dist->replot();
+   baseline_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 3 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 3 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_baseline();
+   plot_dist->replot();
+   baseline_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 4 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 4 ]->setValue( pos, ymark );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   replot_baseline();
+   plot_dist->replot();
+   baseline_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 5 ], text.toDouble(), 0e0 );
+#else
+#warn check how to do this in qt4 needs ymark
+   plotted_markers[ 5 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7706,10 +8210,28 @@ void US_Hydrodyn_Saxs_Hplc::baseline_init_markers()
    plotted_markers.clear();
    plotted_baseline.clear();
 
-   gauss_add_marker( le_baseline_start->text().toDouble(), Qt::red, tr( "Start" ) );
-   gauss_add_marker( le_baseline_end  ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
+   gauss_add_marker( le_baseline_start_s->text().toDouble(), Qt::magenta, tr( "\nLFS\nStart"   ) );
+   gauss_add_marker( le_baseline_start  ->text().toDouble(), Qt::red,     tr( "Start"          ) );
+   gauss_add_marker( le_baseline_start_e->text().toDouble(), Qt::magenta, tr( "\n\n\nLFS\nEnd" ) );
+   gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, tr( "\nLFE\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
+   gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
+   gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\n\n\nLFE\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
 
    plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_start_s_focus( bool hasFocus )
+{
+   cout << QString( "baseline_start_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_baseline_start_s->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start_focus( bool hasFocus )
@@ -7726,6 +8248,35 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_focus( bool hasFocus )
    }
 }
 
+void US_Hydrodyn_Saxs_Hplc::baseline_start_e_focus( bool hasFocus )
+{
+   cout << QString( "baseline_start_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_baseline_start_e->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_end_s_focus( bool hasFocus )
+{
+   cout << QString( "baseline_end_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
+                            f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_baseline_end_s->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
 void US_Hydrodyn_Saxs_Hplc::baseline_end_focus( bool hasFocus )
 {
    cout << QString( "baseline_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
@@ -7737,6 +8288,21 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_baseline_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_end_e_focus( bool hasFocus )
+{
+   cout << QString( "baseline_end_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
+                            f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_baseline_end_e->text().toDouble() );
       qwtw_wheel->setEnabled( true );
    }
 }
@@ -7980,6 +8546,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    le_gauss_fit_end    ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
    pb_wheel_save       ->setEnabled( unified_ggaussian_gaussians_size );
    qwtw_wheel          ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+   pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
 }
 
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
@@ -8338,5 +8905,14 @@ void US_Hydrodyn_Saxs_Hplc::add_ggaussian_curve( QString name, vector < double >
    {
       vector < double > tmp;
       f_gaussians  [ use_name ] = tmp;
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_results()
+{
+   if ( unified_ggaussian_ok )
+   {
+      add_ggaussian_curve( tr( "joined_target" )   , unified_ggaussian_I );
+      add_ggaussian_curve( tr( "joined_gaussians" ), compute_ggaussian_gaussian_sum() );
    }
 }

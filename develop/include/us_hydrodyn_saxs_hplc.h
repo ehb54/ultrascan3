@@ -39,6 +39,7 @@
 #include "us_hydrodyn_saxs_hplc_conc.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
+#include "us_saxs_util.h"
 
 using namespace std;
 
@@ -192,10 +193,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
+      QPushButton   *pb_ggauss_results;
 
       QPushButton   *pb_baseline_start;
+      mQLineEdit    *le_baseline_start_s;
       mQLineEdit    *le_baseline_start;
+      mQLineEdit    *le_baseline_start_e;
+      mQLineEdit    *le_baseline_end_s;
       mQLineEdit    *le_baseline_end;
+      mQLineEdit    *le_baseline_end_e;
       QPushButton   *pb_baseline_apply;
 
       QPushButton   *pb_select_vis;
@@ -408,13 +414,19 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       double                       baseline_intercept;
       double                       baseline_slope;
+      double                       org_baseline_start_s;
       double                       org_baseline_start;
+      double                       org_baseline_start_e;
+      double                       org_baseline_end_s;
       double                       org_baseline_end;
+      double                       org_baseline_end_e;
       void                         baseline_apply( QStringList files );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
 
       bool                         ggauss_recompute();
+
+      US_Saxs_Util                 *usu;
 
    private slots:
 
@@ -491,13 +503,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void ggauss_start();
       void ggauss_rmsd();
+      void ggauss_results();
 
       void baseline_start();
       void baseline_apply();
+
+      void baseline_start_s_text       ( const QString & );
       void baseline_start_text         ( const QString & );
+      void baseline_start_e_text       ( const QString & );
+      void baseline_end_s_text         ( const QString & );
       void baseline_end_text           ( const QString & );
+      void baseline_end_e_text         ( const QString & );
+      void baseline_start_s_focus      ( bool );
       void baseline_start_focus        ( bool );
+      void baseline_start_e_focus      ( bool );
+      void baseline_end_s_focus        ( bool );
       void baseline_end_focus          ( bool );
+      void baseline_end_e_focus        ( bool );
 
       void select_vis();
       void remove_vis();

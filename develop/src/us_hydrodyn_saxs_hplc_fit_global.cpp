@@ -854,8 +854,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       }
       cout << QString( "back checking rmsd gives %1\n" ).arg( hplc_win->ggaussian_rmsd() );
       // hplc_win->add_ggaussian_curve( "lm_after_pushback", hplc_win->compute_ggaussian_gaussian_sum() );
-
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
+      if ( update_hplc )
+      {
+         hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( status.fnorm, 0, 'g', 5 ) );
+      }
    } else {
       cout << "no improvement, reverting to original values\n";
    }
