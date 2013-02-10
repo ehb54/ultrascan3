@@ -13,20 +13,15 @@
 US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    QObject* parent /*=0*/ ) : QObject( parent ), dsets( dsets )
 {
-   bdata    = &dsets[ 0 ]->run_data;  // pointer to base experiment data
-   edata            = bdata;          // working pointer to experiment
-   parentw          = parent; 
+   edata            = &dsets[ 0 ]->run_data;  // pointer to  experiment data
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
-   ntisols          = 0;              // number total task input solutes
-   ntcsols          = 0;              // number total task computed solutes
 
-   tkvaris  .clear();                 // task variances
    mrecs    .clear();                 // computed model records
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
-   nscans           = bdata->scanData.size();
-   npoints          = bdata->x.size();
+   nscans           = edata->scanData.size();
+   npoints          = edata->x.size();
    cresolu          = 100;
    curvtype         = 0;
    nmtasks          = 100;
@@ -60,16 +55,12 @@ DbgLv(1) << "2P(1dsaProc): start_fit()";
    noisflag    = noi;
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
-   ntisols     = 0;
-   ntcsols     = 0;
 
    wkstates .resize(  nthreads );
    wthreads .clear();
    job_queue.clear();
-   c_solutes.clear();
 
    orig_sols.clear();
-   tkvaris  .clear();
    mrecs    .clear();
 
 DbgLv(1) << "2P: sll sul" << slolim << suplim
@@ -77,8 +68,6 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
 
    timer.start();              // start a timer to measure run time
-
-   edata       = bdata;        // initial iteration base experiment data
 
    // experiment data dimensions
    nscans      = edata->scanData.size();
@@ -99,10 +88,10 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    else
       nmtasks     = 0;
 
-   nctotal     = nmtasks;
-
    kcsteps     = 0;
+   nctotal     = nmtasks;
    emit stage_complete( kcsteps, nctotal );
+
    kctask      = 0;
    kstask      = 0;
    nthreads    = ( nthreads < nmtasks ) ? nthreads : nmtasks;
@@ -171,9 +160,6 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
    }
 
    job_queue.clear();
-   c_solutes.clear();
-   ntisols   = 0;
-   ntcsols   = 0;
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
@@ -183,11 +169,6 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 void US_1dsaProcess::process_final( ModelRecord& mrec )
 {
    if ( abort ) return;
-
-   int nsolutes = mrec.csolutes.size();
-
-   QVector< double > tinvec( npoints,  0.0 );
-   QVector< double > rinvec( nscans,   0.0 );
 
    if ( ( noisflag & 1 ) != 0 )
    {  // copy TI noise to caller and internal vector
@@ -199,7 +180,6 @@ void US_1dsaProcess::process_final( ModelRecord& mrec )
       for ( int rr = 0; rr < npoints; rr++ )
       {
          ti_noise.values[ rr ] = mrec.ti_noise[ rr ];
-         tinvec         [ rr ] = mrec.ti_noise[ rr ];
       }
    }
 
@@ -211,19 +191,19 @@ void US_1dsaProcess::process_final( ModelRecord& mrec )
       for ( int ss = 0; ss < nscans; ss++ )
       {
          ri_noise.values[ ss ] = mrec.ri_noise[ ss ];
-         rinvec         [ ss ] = mrec.ri_noise[ ss ];
       }
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
    US_SolveSim::DataSet* dset = dsets[ 0 ];
+   int    nsolutes    = mrec.csolutes.size();
    double sfactor     = 1.0 / dset->s20w_correction;
    double dfactor     = 1.0 / dset->D20w_correction;
    double vbar20      = dset->vbar20;
-DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
- << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
    qSort( mrec.csolutes );
+DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
+ << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -416,11 +396,6 @@ void US_1dsaProcess::process_job( WorkerThread* wthrd )
    int thrx   = thrn - 1;          // index into thread list
    int taskx  = wresult.taskx;     // task index of task
 DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx;
-   int nrcso  = wresult.csolutes.size();
-   ntcsols   += nrcso;
-if ( taskx < 9 || taskx > (nmtasks-4) )
-DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols
-   << QDateTime::currentDateTime().toMSecsSinceEpoch();
 //DBG-CONC
 if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
  if ( wresult.csolutes[mm].c > 100.0 ) {
@@ -429,11 +404,6 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
     << wresult.csolutes[mm].k; } }
 //DBG-CONC
    double variance = wresult.sim_vals.variances[ 0 ];
-   if ( variance < varimin )
-   {
-      varimin   = variance;
-      minvarx   = taskx;
-   }
 
    // Save variance and model record for this task result
    ModelRecord mrec;
@@ -444,34 +414,56 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    mrec.rmsd       = ( variance > 0.0 ) ? sqrt( variance ) : 99.9;
    mrec.isolutes   = wresult.isolutes;
    mrec.csolutes   = wresult.csolutes;
-   mrec.ti_noise   = wresult.ti_noise;
-   mrec.ri_noise   = wresult.ri_noise;
-   mrec.sim_data   = wresult.sim_vals.sim_data;
-   mrec.residuals  = wresult.sim_vals.residuals;
+   if ( variance < varimin )
+   { // Handle a new minimum variance record
+      if ( minvarx < mrecs.size() )
+      { // Clear vectors from the previous minimum
+         mrecs[ minvarx ].sim_data .scanData.clear();
+         mrecs[ minvarx ].sim_data .x       .clear();
+         mrecs[ minvarx ].residuals.scanData.clear();
+         mrecs[ minvarx ].residuals.x       .clear();
+         mrecs[ minvarx ].ti_noise          .clear();
+         mrecs[ minvarx ].ri_noise          .clear();
+      }
+      // Save information from the minimum-variance model record
+      varimin         = variance;
+      minvarx         = taskx;
+      mrec.sim_data   = wresult.sim_vals.sim_data;
+      mrec.residuals  = wresult.sim_vals.residuals;
+      mrec.ti_noise   = wresult.ti_noise;
+      mrec.ri_noise   = wresult.ri_noise;
+   }
+   else
+   { // Clear vectors from a model record that is not minimum-variance
+      mrec.sim_data .scanData.clear();
+      mrec.sim_data .x       .clear();
+      mrec.residuals.scanData.clear();
+      mrec.residuals.x       .clear();
+      mrec.ti_noise          .clear();
+      mrec.ri_noise          .clear();
+   }
 
-   tkvaris   << variance;
-   c_solutes << mrec.csolutes;
-   mrecs     << mrec;
+   mrecs     << mrec;                 // Append to the vector of model records
 DbgLv(1) << "THR_FIN:  taskx minvarx varimin" << taskx << minvarx << varimin;
 
    max_rss();
 
-   free_worker( thrx );               // free up this worker thread
+   free_worker( thrx );               // Free up this worker thread
 
    if ( abort )
       return;
 
-   kctask++;                          // bump count of completed subgrid tasks
-   emit progress_update( variance );  // pass progress on to control window
+   kctask++;                          // Bump count of completed subgrid tasks
+   emit progress_update( variance );  // Pass progress on to control window
 DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
- << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
+ << " kct kst" << kctask << kstask;
 
    emit message_update( pmessage_head() +
       tr( "Computations for %1 of %2 models are complete." )
       .arg( kctask ).arg( nmtasks ), false );
 
    if ( kctask >= nmtasks )
-   {  // all subgrid tasks are now complete
+   {  // All model tasks are now complete
       emit stage_complete( kcsteps, nctotal );
 
       emit message_update( pmessage_head() +
@@ -479,7 +471,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
    }
 
    if ( kctask < nmtasks )
-   { // Not the last:  add to the queue is necessary
+   { // Not the last:  add to the queue if necessary
       // Submit jobs while queue is not empty and a worker thread is ready
       while ( ! job_queue.isEmpty() &&
               ( thrx = wkstates.indexOf( READY ) ) >= 0 )
@@ -487,7 +479,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
          WorkPacket wtask = next_job();
 
          submit_job( wtask, thrx );
-         kstask++;                       // bump count of started worker threads
+         kstask++;                       // Bump count of started worker threads
 
       }
    }
@@ -495,7 +487,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
    else
    { // We have done the last computation, so determine the low-rmsd result
 
-      qSort( mrecs );                    // sort model records by variance
+      qSort( mrecs );                    // Sort model records by variance
 
       process_final( mrecs[ 0 ] );
 //*DBG*
@@ -528,10 +520,6 @@ void US_1dsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
    wtask.csolutes.clear();         // clear output vectors
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
-   int nrisols    = isolutes.size();
-   ntisols       += nrisols;
-if ( taskx < 9 || taskx > (nmtasks-4) )
-DbgLv(1) << "QT: taskx" << taskx << " isolutes size tot" << nrisols << ntisols;
 
    job_queue << wtask;             // put the task on the queue
 }
@@ -712,7 +700,7 @@ void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
                        };
 
    // Accumulate the statistics
-   int    nbmods    = qMin( 10, nmtasks );
+   int    nbmods    = nmtasks / 10;
    int    nkpts     = (int)kincr;
    int    nlpts     = cresolu;
    if ( curvtype == 0 )
@@ -822,15 +810,30 @@ void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    modstats << tr( "Average, Median rmsd for better:" )
             << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
 
-
 }
 
-// Generate the ordered vector elite (top 30 percent) indexes
+// Generate the ordered vector elite (lowest RMSDs) indexes
 void US_1dsaProcess::elite_indexes( QVector< ModelRecord >& mrecs,
                                     QVector< int >&         elitexs )
 {
-   int nelite = ( mrecs.size() * 3 ) / 10;
+   const double thrfact = 1.8;
+
+   int    nmodel  = mrecs.size();
+   int    nelite  = ( nmodel * 3 ) / 10;
+   double thrrmsd = mrecs[ 0 ].rmsd * thrfact;
+
+   for ( int ii = 0; ii < nmodel; ii++ )
+   {
+      if ( mrecs[ ii ].rmsd > thrrmsd )
+      {
+DbgLv(1) << "2P:EI:   ii" << ii << "rmsd thrrmsd" << mrecs[ii].rmsd << thrrmsd;
+         nelite  = qMin( qMax( ii, 12 ), ( nmodel / 2 ) );
+         break;
+      }
+   }
    elitexs.clear();
+DbgLv(1) << "2P:EI: nelite" << nelite << "nmodel" << nmodel
+ << "thrfact thrrmsd rmsd0" << thrfact << thrrmsd << mrecs[0].rmsd;
 
    for ( int ii = 0; ii < nelite; ii++ )
    {

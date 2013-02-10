@@ -230,7 +230,7 @@ DbgLv(1) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "k step" << k << step;
                af_params.dt         = 1.0;
                af_params.simpoints  = 2 * simparams.simpoints;
                accel_time           = af_params.dt * af_params.time_steps;
-               delay        = time1 - time0;
+               delay                = time1 - time0;
 
                // Do calculations to find the position of the acceleration
                //  zone within the gap between speed steps.
@@ -308,9 +308,9 @@ DbgLv(1) << "RSA:PO:     st_ time om2t"
                   calculate_ni( current_speed, current_speed,
                                 CT0, simdata, false );
 
-                  af_params.start_time = time0 + dt1;
-                  af_params.start_om2t = omeg0 + dw1;
-                  af_params.time_steps = svnpts;
+                  af_params.start_time += dt1;
+                  af_params.start_om2t += dw1;
+                  af_params.time_steps  = svnpts;
 DbgLv(1) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
                }
 
@@ -1320,19 +1320,20 @@ ttT2+=(clcSt2.msecsTo(clcSt3));
 ttT3+=(clcSt3.msecsTo(QDateTime::currentDateTime()));
 clcSt3 = QDateTime::currentDateTime();
 #endif
-   double time_inc    = ( af_params.time_steps > 0  &&  rpm_stop != rpm_start )
+   double time_dif    = ( af_params.time_steps > 1  &&  rpm_stop != rpm_start )
                         ? (double)( af_params.time_steps ) : 1.0;
-   double rpm_inc     = ( rpm_stop - rpm_start ) / time_inc;
+   double rpm_inc     = ( rpm_stop - rpm_start ) / time_dif;
    double rpm_current = rpm_start - rpm_inc;
 
    // Calculate all time steps (plus a little overlap)
-   for ( int ii = 0; ii < af_params.time_steps + 1; ii++ )
+   for ( int ii = 0; ii < af_params.time_steps + 2; ii++ )
    {
 #ifdef TIMING_NI
 clcSt4 = QDateTime::currentDateTime();
 ttT3+=(clcSt3.msecsTo(clcSt4));
 #endif
-      rpm_current   += rpm_inc;
+      if ( ii < af_params.time_steps )
+         rpm_current   += rpm_inc;
 
 #ifndef NO_DB
       emit current_speed( (int) rpm_current );
@@ -1453,7 +1454,6 @@ ttT6+=(clcSt6.msecsTo(clcSt7));
       for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
 
 #ifndef NO_DB
-      //if ( show_movie  &&  (ii%4) == 0 )
       if ( show_movie )
       {
          if ( stopFlag ) break;
@@ -1461,29 +1461,30 @@ ttT6+=(clcSt6.msecsTo(clcSt7));
          emit new_scan( &x, C0 );
          emit new_time( simscan.time );
          qApp->processEvents();
-         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
-         //US_Sleep::msleep( 1 );  // 1 ms to let the display update.
       }
 #endif
 #ifdef TIMING_NI
 clcSt3 = QDateTime::currentDateTime();
 ttT7+=(clcSt7.msecsTo(clcSt3));
 #endif
+
+      if ( ii == af_params.time_steps )
+      {
+         C_init.radius       .clear();
+         C_init.concentration.clear();
+         C_init.radius       .reserve( N );
+         C_init.concentration.reserve( N );
+         for ( int jj = 0; jj < N; jj++ )
+         {
+            C_init.radius        .append( x [ jj ] );
+            C_init.concentration .append( C1[ jj ] );
+         }
+      }
    } // time loop
 
 #ifdef TIMING_NI
 clcSt8 = QDateTime::currentDateTime();
 #endif
-   C_init.radius       .clear();
-   C_init.concentration.clear();
-   C_init.radius       .reserve( N );
-   C_init.concentration.reserve( N );
-
-   for ( int j = 0; j < N; j++ )
-   {
-      C_init.radius        .append( x [ j ] );
-      C_init.concentration .append( C1[ j ] );
-   }
 
 #ifndef NO_DB
    US_AstfemMath::clear_2d( 3, CA );

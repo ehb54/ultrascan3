@@ -64,11 +64,9 @@ class US_1dsaProcess : public QObject
       enum TaskState  { READY, WORKING, ABORTED };
 
       //! \brief Create a 1DSA processor object
-      //! \param da_exper  Pointer to input experiment data
-      //! \param sim_pars  Pointer to simulation parameters
+      //! \param dsets     List of experiment data sets
       //! \param parent    Pointer to parent object
-      US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
-                      QObject* = 0 );
+      US_1dsaProcess( QList< US_SolveSim::DataSet* >&, QObject* = 0 );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit
@@ -128,17 +126,10 @@ private:
 
       QVector< int >             wkstates;   // worker thread states
 
-      QList< double >            tkvaris;    // task variances
-
       QList< QVector< US_Solute > > orig_sols;  // input solutes
-      QList< QVector< US_Solute > > c_solutes;  // calculated solutes
 
       US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
-      US_DataIO2::EditedData*    bdata;      // base experimental data
-      US_DataIO2::EditedData     wdata;      // work experimental data
-
       US_DataIO2::RawData        sdata;      // simulation data
-
       US_DataIO2::RawData        rdata;      // residuals data
 
       US_Model                   model;      // constructed model
@@ -147,8 +138,6 @@ private:
       US_Noise                   ri_noise;   // radially-invariant noise
 
       US_SimulationParameters*   simparms;   // simulation parameters
-
-      QObject*   parentw;      // parent object
 
       QString    errMsg;       // message from last error
 
@@ -164,9 +153,6 @@ private:
       int        nmtasks;      // number of models/tasks to do
       int        kctask;       // count of completed subgrid tasks
       int        kstask;       // count of started subgrid tasks;
-      int        maxtsols;     // maximum number of task solutes
-      int        ntisols;      // number total task input solutes
-      int        ntcsols;      // number total task computed solutes
       int        minvarx;      // minimum variance model index
 
       bool       abort;        // flag used with stop_fit clicked
