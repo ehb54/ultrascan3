@@ -857,6 +857,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
       if ( update_hplc )
       {
+         cout << QString( "new rmsd: %1" ).arg( status.fnorm, 0, 'g', 5 );
          hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( status.fnorm, 0, 'g', 5 ) );
       }
    } else {

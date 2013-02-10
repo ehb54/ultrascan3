@@ -51,11 +51,11 @@ static void printvector( QString qs, vector < double > x )
 }
 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
-                                               csv csv1,
-                                               void *us_hydrodyn, 
-                                               QWidget *p, 
-                                               const char *name
-                                               ) : QFrame(p, name)
+                                             csv csv1,
+                                             void *us_hydrodyn, 
+                                             QWidget *p, 
+                                             const char *name
+                                             ) : QFrame(p, name)
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
@@ -1974,13 +1974,13 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       gaussians.clear();
       int i = 1;
       QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-      
+
       if ( tokens.size() != 2 )
       {
          errormsg = QString("Error: Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
          return false;
       }
-
+      
       disconnect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
       disconnect( le_gauss_fit_start, SIGNAL( focussed ( bool ) )             , 0, 0 );
       disconnect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -1994,22 +1994,85 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
       connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
 
-      for ( i = 2; i < (int) qv.size(); i++ )
+
+      if ( qv[ 0 ].contains( "Multiple Gaussians" ) )
       {
-         tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         
-         if ( tokens.size() != 3 )
+         cout << "multiple gaussians\n";
+
+         QString           this_gaussian;
+         QRegExp           rx_gname( "^Gaussians (.*)$" ); 
+         vector < double > g;
+         unsigned int      loaded  = 0;
+         unsigned int      skipped = 0;
+
+         for ( i = 2; i < (int) qv.size(); i++ )
          {
-            errormsg = QString("Error: Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
-            return false;
+            if ( rx_gname.search( qv[ i ] ) != -1 )
+            {
+               cout << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
+               // new file specific gaussian
+               if ( g.size() && !this_gaussian.isEmpty() )
+               {
+                  f_gaussians[ this_gaussian ] = g;
+                  gaussians = g;
+                  loaded++;
+               }
+               g.clear();
+               this_gaussian = rx_gname.cap( 1 );
+               if ( !f_qs.count( this_gaussian ) )
+               {
+                  skipped++;
+                  editor_msg( "red", QString( tr( "Gaussians for file %1 present but the file is not loaded, please load the file first" ) ).arg( this_gaussian ) );
+                  this_gaussian = "";
+               }
+               continue;
+            }
+
+            if ( !this_gaussian.isEmpty() )
+            {
+               tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         
+               if ( tokens.size() != 3 )
+               {
+                  errormsg = QString("Error: Multiple Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
+                  return false;
+               }
+
+               g.push_back( tokens[ 0 ].toDouble() );
+               g.push_back( tokens[ 1 ].toDouble() );
+               g.push_back( tokens[ 2 ].toDouble() );
+            }
+         }
+         if ( g.size() && !this_gaussian.isEmpty() )
+         {
+            f_gaussians[ this_gaussian ] = g;
+            gaussians = g;
+            loaded++;
+            g.clear();
+         }
+         editor_msg( "black", QString( "Gaussians for %1 files loaded from %2" ).arg( loaded ).arg( filename ) );
+         if ( skipped )
+         {
+            editor_msg( "red" , QString( "WARNING: Gaussians for %1 files SKIPPED from %2" ).arg( skipped ).arg( filename ) );
+         }
+      } else {
+         for ( i = 2; i < (int) qv.size(); i++ )
+         {
+            tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         
+            if ( tokens.size() != 3 )
+            {
+               errormsg = QString("Error: Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
+               return false;
+            }
+
+            gaussians.push_back( tokens[ 0 ].toDouble() );
+            gaussians.push_back( tokens[ 1 ].toDouble() );
+            gaussians.push_back( tokens[ 2 ].toDouble() );
          }
 
-         gaussians.push_back( tokens[ 0 ].toDouble() );
-         gaussians.push_back( tokens[ 1 ].toDouble() );
-         gaussians.push_back( tokens[ 2 ].toDouble() );
+         editor_msg( "black", QString( "%1 Gaussians loaded from file %2" ).arg( gaussians.size() / 3 ).arg( filename ) );
       }
-
-      editor_msg( "black", QString( "%1 Gaussians loaded from file %2" ).arg( gaussians.size() / 3 ).arg( filename ) );
       errormsg = "";
       return false;
    }
@@ -6718,36 +6781,86 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
       editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
    }
 
-   QString use_filename = wheel_file + "-gauss.dat";
+   if ( gaussian_mode )
+   {
+      QString use_filename = wheel_file + "-gauss.dat";
    
-   if ( QFile::exists( use_filename ) )
-   {
-      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
-      raise();
-   }
+      if ( QFile::exists( use_filename ) )
+      {
+         use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+         raise();
+      }
 
-   QFile f( use_filename );
-   if ( !f.open( IO_WriteOnly ) )
-   {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
-   }
+      QFile f( use_filename );
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
+      }
 
-   QTextStream ts( &f );
+      QTextStream ts( &f );
 
-   ts << QString( tr( "US-SOMO Hplc Gaussians: %1\n" ) ).arg( wheel_file );
+      ts << QString( "US-SOMO Hplc Gaussians: %1\n" ).arg( wheel_file );
 
-   ts << QString( "%1 %2\n" ).arg( le_gauss_fit_start->text() ).arg( le_gauss_fit_end->text() );
+      ts << QString( "%1 %2\n" )
+         .arg( le_gauss_fit_start->text() )
+         .arg( le_gauss_fit_end  ->text() )
+         ;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
-   {
-      ts << QString( "%1 %2 %3\n" )
-         .arg( gaussians[ 0 + i ] )
-         .arg( gaussians[ 1 + i ] )
-         .arg( gaussians[ 2 + i ] );
-   }
-   f.close();
-   editor_msg( "black", QString( tr( "Gaussians written as %1" ) )
-               .arg( use_filename ) );
+      for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+      {
+         ts << QString( "%1 %2 %3\n" )
+            .arg( gaussians[ 0 + i ], 0, 'g', 10 )
+            .arg( gaussians[ 1 + i ], 0, 'g', 10 )
+            .arg( gaussians[ 2 + i ], 0, 'g', 10 );
+      }
+      f.close();
+      editor_msg( "black", QString( tr( "Gaussians written as %1" ) )
+                  .arg( use_filename ) );
+   } else {
+      if ( unified_ggaussian_ok )
+      {
+         QString use_filename = wheel_file + "-mgauss.dat";
+   
+         if ( QFile::exists( use_filename ) )
+         {
+            use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
+            raise();
+         }
+
+         QFile f( use_filename );
+         if ( !f.open( IO_WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
+         }
+
+         QTextStream ts( &f );
+
+         ts << QString( "US-SOMO Hplc Multiple Gaussians: %1\n").arg( wheel_file );
+
+         ts << QString( "%1 %2\n" ).arg( le_gauss_fit_start->text() ).arg( le_gauss_fit_end->text() );
+
+
+         for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
+         {
+            unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
+
+            ts << QString( "Gaussians %1\n" ).arg( unified_ggaussian_files[ i ] );
+            for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
+            {
+               ts << 
+                  QString( "%1 %2 %3\n" )
+               .arg( unified_ggaussian_params[ index + 2 * j + 0 ], 0, 'g', 10 )
+               .arg( unified_ggaussian_params[ j ]                , 0, 'g', 10 )
+               .arg( unified_ggaussian_params[ index + 2 * j + 1 ], 0, 'g', 10 )
+               ;
+            }
+         }
+
+         f.close();
+         editor_msg( "black", QString( tr( "Gaussians written as %1" ) )
+                     .arg( use_filename ) );
+      }
+   }      
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
@@ -8547,6 +8660,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_wheel_save       ->setEnabled( unified_ggaussian_gaussians_size );
    qwtw_wheel          ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
    pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
+   pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
 }
 
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
