@@ -26,6 +26,16 @@ void mQLineEdit::focusOutEvent ( QFocusEvent *e )
    emit( focussed( false ) );
 }
 
+mQLabel::mQLabel( QWidget *parent, const char * name ) : QLabel( parent, name ) {}
+mQLabel::mQLabel( const QString & text, QWidget *parent, const char * name ) : QLabel( text, parent, name ) {}
+
+mQLabel::~mQLabel() {}
+
+void mQLabel::mousePressEvent ( QMouseEvent *e )
+{
+   QLabel::mousePressEvent( e );
+   emit( pressed() );
+}
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
@@ -169,10 +179,23 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    plot_colors.push_back(Qt::white);
 }
 
+
 US_Hydrodyn_Saxs_Hplc::~US_Hydrodyn_Saxs_Hplc()
 {
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget = false;
    delete usu;
+}
+
+void US_Hydrodyn_Saxs_Hplc::color_rotate()
+{
+   vector < QColor >  new_plot_colors;
+
+   for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
+   {
+      new_plot_colors.push_back( plot_colors[ i ] );
+   }
+   new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_files();
 }
 
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
@@ -184,12 +207,20 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_dir = new QLabel( QDir::currentDirPath(), this );
+   cb_lock_dir = new QCheckBox(this);
+   cb_lock_dir->setText(tr(" Lock "));
+   cb_lock_dir->setEnabled( true );
+   cb_lock_dir->setChecked( false );
+   cb_lock_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_lock_dir->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   lbl_dir = new mQLabel( QDir::currentDirPath(), this );
    lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( lbl_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
    pb_add_files = new QPushButton(tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -379,7 +410,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_created_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_created_files->setMinimumHeight(minHeight1);
    lbl_created_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_created_dir = new mQLabel( QDir::currentDirPath(), this );
+   lbl_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_created_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( lbl_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
 
    lb_created_files = new QListBox(this, "created_files created_files listbox" );
    lb_created_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -890,9 +927,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_editor_group->addWidget (frame);
    vbl_editor_group->addWidget (editor);
 
+   QHBoxLayout *hbl_dir = new QHBoxLayout( 0 );
+   hbl_dir->addWidget( cb_lock_dir );
+   hbl_dir->addWidget( lbl_dir );
+
    QBoxLayout *vbl_files = new QVBoxLayout( 0 );
    vbl_files->addWidget( lbl_files );
-   vbl_files->addWidget( lbl_dir );
+   vbl_files->addLayout( hbl_dir );
    vbl_files->addLayout( hbl_file_buttons );
    vbl_files->addLayout( hbl_file_buttons_1 );
    //   vbl_files->addLayout( hbl_file_buttons_1b );
@@ -905,12 +946,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_files->addLayout( hbl_empty );
    vbl_files->addLayout( hbl_signal );
    vbl_files->addWidget( lbl_created_files );
+   vbl_files->addWidget( lbl_created_dir );
    vbl_files->addWidget( lb_created_files );
    vbl_files->addWidget( lbl_selected_created );
    vbl_files->addLayout( hbl_created );
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
-
 
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
@@ -1503,9 +1544,12 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
    if ( filenames.size() )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
-      QDir::setCurrent( last_load_dir );
-      lbl_dir->setText(  QDir::currentDirPath() );
-
+      if ( !cb_lock_dir->isChecked() )
+      {
+         QDir::setCurrent( last_load_dir );
+         lbl_dir        ->setText( QDir::currentDirPath() );
+         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+      }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -1580,8 +1624,12 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
    if ( filenames.size() )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
-      QDir::setCurrent( last_load_dir );
-      lbl_dir->setText(  QDir::currentDirPath() );
+      if ( !cb_lock_dir->isChecked() )
+      {
+         QDir::setCurrent( last_load_dir );
+         lbl_dir        ->setText( QDir::currentDirPath() );
+         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+      }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -2651,13 +2699,25 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
       return false;
    }
 
-   if ( !QDir::setCurrent( last_load_dir ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return false;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
       return false;
    }
-   lbl_dir->setText(  QDir::currentDirPath() );
-
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -2824,18 +2884,32 @@ bool US_Hydrodyn_Saxs_Hplc::save_files( QStringList files )
 
 bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwrite_all )
 {
-   if ( !QDir::setCurrent( last_load_dir ) )
-   {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
-      return false;
-   }
-   lbl_dir->setText(  QDir::currentDirPath() );
-
    if ( !f_qs.count( file ) )
    {
       editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( file ) );
       return false;
    } 
+
+
+   {
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return false;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      return false;
+   }
 
    QString use_filename;
    if ( f_name.count( file ) )
@@ -5623,7 +5697,10 @@ void US_Hydrodyn_Saxs_Hplc::similar_files()
    // turn basename into regexp \\d{2,} into \\d+
    // load unloaded files found with match
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentDirPath() );
+   if ( !cb_lock_dir->isChecked() )
+   {
+      lbl_dir->setText( QDir::currentDirPath() );
+   }
    QDir qd;
    add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
 }
@@ -6776,9 +6853,24 @@ void US_Hydrodyn_Saxs_Hplc::gauss_next()
 
 void US_Hydrodyn_Saxs_Hplc::gauss_save()
 {
-   if ( !QDir::setCurrent( last_load_dir ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      return;
    }
 
    if ( gaussian_mode )
@@ -8612,8 +8704,17 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       editor_msg( "dark red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians, these will be reset to the last Gaussian settings" ) );
    }
 
+   disable_all();
+
    if ( !create_unified_ggaussian_target() )
    {
+      pb_add_files          ->setEnabled( true );
+      pb_regex_load         ->setEnabled( true );
+
+      lb_files              ->setEnabled( true );
+      lb_created_files      ->setEnabled( true );
+
+      update_enables();
       return;
    }
 
@@ -8794,7 +8895,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
          result[ i ] += height * exp( - tmp * tmp / 2 );
       }
    }
-   printvector( "cggs:", result );
+   // printvector( "cggs:", result );
 
    return result;
 }
@@ -8914,6 +9015,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
 
    if ( !initial_ggaussian_fit( files ) )
    {
+      progress->reset();
       return false;
    }
 
@@ -8945,18 +9047,22 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       }
    }
 
+   progress->setProgress( unified_ggaussian_curves * 1.1, unified_ggaussian_curves * 1.2 );
+   qApp->processEvents();
    if ( !ggauss_recompute() )
    {
+      progress->reset();
       return false;
    }
 
-   printvector( "unified q:", unified_ggaussian_q );
-   printvector( "unified t:", unified_ggaussian_t );
-   printvector( "unified I:", unified_ggaussian_I );
-   printvector( "unified params:", unified_ggaussian_params );
-   printvector( "unified param index:", unified_ggaussian_param_index );
+   //    printvector( "unified q:", unified_ggaussian_q );
+   //    printvector( "unified t:", unified_ggaussian_t );
+   //    printvector( "unified I:", unified_ggaussian_I );
+   //    printvector( "unified params:", unified_ggaussian_params );
+   //    printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
+   progress->setProgress( 1, 1 );
    return true;
 }
 
@@ -8971,8 +9077,11 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
 
    hplc_fit_window->update_hplc = false;
    
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
+      progress->setProgress( i, files.size() * 1.2 );
+      qApp->processEvents();
       if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) )
       {
          return false;
@@ -9028,5 +9137,42 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_results()
    {
       add_ggaussian_curve( tr( "joined_target" )   , unified_ggaussian_I );
       add_ggaussian_curve( tr( "joined_gaussians" ), compute_ggaussian_gaussian_sum() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::dir_pressed()
+{
+   QString s = QFileDialog::getExistingDirectory(
+                                                 lbl_dir->text(),
+                                                 this,
+                                                 "get existing directory",
+                                                 tr( "Choose a new base directory" ),
+                                                 true );
+   if ( !s.isEmpty() )
+   {
+      QDir::setCurrent( s );
+      lbl_dir->setText(  QDir::currentDirPath() );
+      if ( *saxs_widget )
+      {
+         saxs_window->add_to_directory_history( s );
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::created_dir_pressed()
+{
+   QString s = QFileDialog::getExistingDirectory(
+                                                 lbl_dir->text(),
+                                                 this,
+                                                 "get existing directory",
+                                                 tr( "Choose a new base directory for saving files" ),
+                                                 true );
+   if ( !s.isEmpty() )
+   {
+      lbl_created_dir->setText( s );
+      if ( *saxs_widget )
+      {
+         saxs_window->add_to_directory_history( s );
+      }
    }
 }

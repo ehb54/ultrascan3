@@ -105,7 +105,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QProgressBar  *progress;
 
       QLabel        *lbl_files;
-      QLabel        *lbl_dir;
+      QCheckBox     *cb_lock_dir;
+      mQLabel       *lbl_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
@@ -145,6 +146,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel        *lbl_signal;
 
       QLabel        *lbl_created_files;
+      mQLabel       *lbl_created_dir;
       QListBox      *lb_created_files;
       QLabel        *lbl_selected_created;
 
@@ -203,6 +205,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_baseline_end;
       mQLineEdit    *le_baseline_end_e;
       QPushButton   *pb_baseline_apply;
+
+      QPushButton   *pb_color_rotate;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -431,6 +435,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
    private slots:
 
       void setupGUI();
+
+      void color_rotate();
+      void dir_pressed();
+      void created_dir_pressed();
 
       void update_enables();
       void update_files();

@@ -877,7 +877,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
 {
    puts( "gsm_sd" );
    return; // have to rewrite this 
-
+   /*
    gsm_setup();
 
    vector < double >    org_params = HFIT_GLOBAL::init_params;
@@ -930,6 +930,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
       hplc_win->update_gauss_pos();
    }
    progress->reset();
+   */
    update_enables();
 }
 
@@ -938,6 +939,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
    puts( "gsm_ih" );
    return; // have to rewrite this 
 
+   /*
    gsm_setup();
 
    vector < double >    org_params = HFIT_GLOBAL::init_params;
@@ -990,6 +992,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
       hplc_win->update_gauss_pos();
    }
    progress->reset();
+   */
    update_enables();
 }
 
@@ -997,6 +1000,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
 {
    puts( "gsm_cg" );
    return; // have to rewrite this 
+
+   /*
 
    gsm_setup();
 
@@ -1050,12 +1055,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
       hplc_win->update_gauss_pos();
    }
    progress->reset();
+   */
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
 {
    puts( "ga" );
+   /*
    gsm_setup();
 
    vector < double >    org_params = HFIT_GLOBAL::init_params;
@@ -1103,6 +1110,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
       hplc_win->update_gauss_pos();
    }
    progress->reset();
+   */
    update_enables();
 }
 

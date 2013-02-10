@@ -52,7 +52,6 @@
 
 using namespace std;
 
-
 class mQLineEdit : public QLineEdit
 {
    Q_OBJECT
@@ -68,6 +67,23 @@ class mQLineEdit : public QLineEdit
    protected:
       virtual void focusInEvent ( QFocusEvent *e );
       virtual void focusOutEvent ( QFocusEvent *e );
+};
+
+class mQLabel : public QLabel
+{
+   Q_OBJECT
+
+   public:
+
+      mQLabel ( QWidget *parent = 0 , const char * name = 0 );
+      mQLabel ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
+      ~mQLabel();
+
+   signals:
+      void pressed();
+
+   protected:
+      virtual void mousePressEvent ( QMouseEvent *e );
 };
 
 
