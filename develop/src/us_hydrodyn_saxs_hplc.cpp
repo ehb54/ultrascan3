@@ -130,7 +130,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
-      pbs.push_back( pb_join );
+      pbs.push_back( pb_color_rotate );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
@@ -195,6 +195,7 @@ void US_Hydrodyn_Saxs_Hplc::color_rotate()
       new_plot_colors.push_back( plot_colors[ i ] );
    }
    new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_colors = new_plot_colors;
    plot_files();
 }
 
@@ -210,7 +211,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    cb_lock_dir = new QCheckBox(this);
-   cb_lock_dir->setText(tr(" Lock "));
+   cb_lock_dir->setText(tr("Lock "));
    cb_lock_dir->setEnabled( true );
    cb_lock_dir->setChecked( false );
    cb_lock_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
@@ -289,12 +290,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_join = new QPushButton(tr("J"), this);
-   pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_join->setMinimumHeight( minHeight1 );
-   pb_join->setMaximumWidth ( minHeight1 * 2 );
-   pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_join, SIGNAL(clicked()), SLOT(join()));
+   pb_color_rotate = new QPushButton(tr("C"), this);
+   pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_color_rotate->setMinimumHeight(minHeight1);
+   pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
+   pb_color_rotate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
+
+   //    pb_join = new QPushButton(tr("J"), this);
+   //    pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   //    pb_join->setMinimumHeight( minHeight1 );
+   //    pb_join->setMaximumWidth ( minHeight1 * 2 );
+   //    pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
    pb_adjacent = new QPushButton(tr("Similar"), this);
    pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -885,7 +893,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
-   hbl_file_buttons_2->addWidget ( pb_join );
+   hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -1274,7 +1282,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
-   pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
+   pb_color_rotate       ->setEnabled( files_selected_count );
+   //    pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_view               ->setEnabled( files_selected_count );
@@ -6279,7 +6288,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_set_empty          ->setEnabled( false );
    pb_select_all         ->setEnabled( false );
    pb_invert             ->setEnabled( false );
-   pb_join               ->setEnabled( false );
+   pb_color_rotate       ->setEnabled( false );
+   //    pb_join               ->setEnabled( false );
    pb_adjacent           ->setEnabled( false );
    pb_to_saxs            ->setEnabled( false );
    pb_view               ->setEnabled( false );
