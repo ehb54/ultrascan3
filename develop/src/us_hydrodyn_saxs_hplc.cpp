@@ -6352,6 +6352,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 {
+   disable_all();
+
    if ( ggaussian_mode )
    {
       f_gaussians = org_f_gaussians;
@@ -6432,8 +6434,6 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    gaussian_mode         = false;
    ggaussian_mode        = false;
    baseline_mode         = false;
-
-   disable_all();
 
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
