@@ -752,7 +752,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   HFIT::list_params();
+   // HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -806,7 +806,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    }
 
    vector < double > par = HFIT::init_params;
-   HFIT::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   // HFIT::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
+
+   // LM::qpb  = ( QProgressBar * )0;
+   // LM::qApp = ( QApplication * )0;
 
    LM::lmcurve_fit_rmsd( ( int )      par.size(),
                          ( double * ) &( par[ 0 ] ),
@@ -817,7 +821,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
                          (const LM::lm_control_struct *)&control,
                          &status );
    
-   HFIT::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   if ( status.fnorm < 0e0 )
+   {
+      status.fnorm = 1e99;
+      cout << "WARNING: lm() returned negative rmsd\n";
+   }
+
+   // HFIT::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {

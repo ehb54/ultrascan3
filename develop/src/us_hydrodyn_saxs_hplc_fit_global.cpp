@@ -778,7 +778,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
       }
    }
 
-   HFIT_GLOBAL::list_params();
+   // HFIT_GLOBAL::list_params();
 
    if ( !HFIT_GLOBAL::init_params.size() )
    {
@@ -821,8 +821,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    if ( gsum != gsumf )
    {
-      HFIT_GLOBAL::printvector( "gsum", gsum );
-      HFIT_GLOBAL::printvector( "gsumf", gsumf );
+      //       HFIT_GLOBAL::printvector( "gsum", gsum );
+      //       HFIT_GLOBAL::printvector( "gsumf", gsumf );
+      cout << "WARNING: gsums don't match\n";
    } else {
       cout << "gsums match\n";
    }
@@ -830,7 +831,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    // hplc_win->add_ggaussian_curve( "lm_start", gsumf );
 
    vector < double > par = HFIT_GLOBAL::init_params;
-   HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   // HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
+
+   progress->setProgress( 0, 0 );
+   qApp->processEvents();
+   // LM::qpb  = hplc_win->progress;
+   // LM::qApp = qApp;
 
    LM::lmcurve_fit_rmsd( ( int )      par.size(),
                          ( double * ) &( par[ 0 ] ),
@@ -841,7 +848,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
                          (const LM::lm_control_struct *)&control,
                          &status );
    
-   HFIT_GLOBAL::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   progress->reset();
+
+   if ( status.fnorm < 0e0 )
+   {
+      status.fnorm = 1e99;
+      cout << "WARNING: lm() returned negative rmsd\n";
+   }
+
+   // HFIT_GLOBAL::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {

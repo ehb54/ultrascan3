@@ -432,6 +432,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       US_Saxs_Util                 *usu;
 
+      void                         push_back_color_if_ok( QColor bg, QColor set );
+
    private slots:
 
       void setupGUI();
