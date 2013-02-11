@@ -294,6 +294,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       map < QString, vector < double > >  org_f_gaussians;
 
+      vector < double >                   compute_gaussian( vector < double > t, vector < double > g );
       vector < double >                   compute_ggaussian_gaussian_sum();
       void                                add_ggaussian_curve( QString name, vector < double > y );
 
