@@ -6836,7 +6836,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_new()
    gaussian_pos = ( gaussians.size() / 3 ) - 1;
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
    gauss_add_gaussian( 0e0, 1e0, gauss_max_height / 2, Qt::green );
+   disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    update_gauss_pos();
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    plot_dist->replot();
    gaussian_enables();
 }
@@ -7161,7 +7163,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete()
    {
       gaussian_pos = ( unsigned int ) gaussians.size() / 3 - 1;
    }
+   disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    update_gauss_pos();
+   qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
    gauss_init_markers();
    gauss_init_gaussians();
    gaussian_enables();
