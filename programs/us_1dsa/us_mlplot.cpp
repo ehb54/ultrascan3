@@ -23,7 +23,10 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
 
    dbg_level       = US_Settings::us_debug();
    model           = 0;
-   elitexs.clear();
+   le_fact         = 1.5;
+   me_fact         = 1.3;
+   he_fact         = 1.1;
+   mp_fact         = 0.30;
 
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
@@ -40,6 +43,10 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QLabel* lb_npoints     = us_label(  tr( "Points per Line:" ) );
    QLabel* lb_kincr       = us_label(  tr( "f/f0 Increment:" ) );
    QLabel* lb_legend      = us_banner( tr( "Model Line Color Legend" ) );
+           lb_lefact      = us_label(  tr( "Low-Elite Factor" ) );
+           lb_mefact      = us_label(  tr( "Mid-Elite Factor" ) );
+           lb_hefact      = us_label(  tr( "High-Elite Factor" ) );
+           lb_mpfact      = us_label(  tr( "Mid-Poor Factor" ) );
    QTextEdit* te_legend   = us_textedit();
    te_legend->setTextColor( Qt::blue );
    te_legend->setText( 
@@ -48,21 +55,29 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
              " Bluish -> Mid Elite;\n"
              " Greenish -> Low Elite;\n"
              " Yellow -> Non Elite / Undetermined;\n"
+             " Gray -> Poorest (Highest) RMSD;\n"
              " Cyan -> Best Computed Solutes." ) );
    us_setReadOnly( te_legend, true );
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
-   te_legend->setMaximumHeight( fm.lineSpacing() * 7 );
+   te_legend->setMaximumHeight( fm.lineSpacing() * 8 );
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   if ( ctype == 0 )
-      nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    int    nline = nkpts * nkpts;
    le_mtype     = us_lineedit( tr( "Straight Line" ), -1, true );
    le_nlines    = us_lineedit( QString::number( nline ), -1, true );
    le_npoints   = us_lineedit( QString::number( nlpts ), -1, true );
    le_kincr     = us_lineedit( QString::number( finc  ), -1, true );
+   ct_lefact    = us_counter( 3, 1.01, 10.0, le_fact );
+   ct_mefact    = us_counter( 3, 1.01, 10.0, me_fact );
+   ct_hefact    = us_counter( 3, 1.01, 10.0, he_fact );
+   ct_mpfact    = us_counter( 3, 0.00, 1.00, mp_fact );
+   ct_lefact->setStep( 0.001 );
+   ct_mefact->setStep( 0.001 );
+   ct_hefact->setStep( 0.001 );
+   ct_mpfact->setStep( 0.001 );
+
    if ( ctype == 1  ||  ctype == 2 )
    {
       lb_kincr->setText( tr( "Variation Count" ) );
@@ -79,12 +94,30 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    pltctrlsLayout->addWidget( le_npoints,  row++, 1, 1, 1 );
    pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 1 );
    pltctrlsLayout->addWidget( le_kincr,    row++, 1, 1, 1 );
+   pltctrlsLayout->addWidget( lb_lefact,   row,   0, 1, 1 );
+   pltctrlsLayout->addWidget( ct_lefact,   row++, 1, 1, 1 );
+   pltctrlsLayout->addWidget( lb_mefact,   row,   0, 1, 1 );
+   pltctrlsLayout->addWidget( ct_mefact,   row++, 1, 1, 1 );
+   pltctrlsLayout->addWidget( lb_hefact,   row,   0, 1, 1 );
+   pltctrlsLayout->addWidget( ct_hefact,   row++, 1, 1, 1 );
+   pltctrlsLayout->addWidget( lb_mpfact,   row,   0, 1, 1 );
+   pltctrlsLayout->addWidget( ct_mpfact,   row++, 1, 1, 1 );
    pltctrlsLayout->addWidget( lb_legend,   row++, 0, 1, 2 );
    pltctrlsLayout->addWidget( te_legend,   row++, 0, 1, 2 );
-//   row         += 6;
+//   row         += 7;
    if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
    else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
    else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
+
+   bool fact_vis = ( model != 0 );
+   lb_lefact->setVisible( fact_vis );
+   ct_lefact->setVisible( fact_vis );
+   lb_mefact->setVisible( fact_vis );
+   ct_mefact->setVisible( fact_vis );
+   lb_hefact->setVisible( fact_vis );
+   ct_hefact->setVisible( fact_vis );
+   lb_mpfact->setVisible( fact_vis );
+   ct_mpfact->setVisible( fact_vis );
 
    buttonsLayout ->addWidget( pb_close );
 
@@ -108,7 +141,15 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    mainLayout->setStretchFactor( rightLayout, 5 );
 
    connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT( close_all()   ) );
+            this,      SLOT  ( close_all() ) );
+   connect( ct_lefact, SIGNAL( valueChanged( double ) ),
+            this,      SLOT  ( updateLeFact( double ) ) );
+   connect( ct_mefact, SIGNAL( valueChanged( double ) ),
+            this,      SLOT  ( updateMeFact( double ) ) );
+   connect( ct_hefact, SIGNAL( valueChanged( double ) ),
+            this,      SLOT  ( updateHeFact( double ) ) );
+   connect( ct_mpfact, SIGNAL( valueChanged( double ) ),
+            this,      SLOT  ( updateMpFact( double ) ) );
 
 DbgLv(1) << "RP:  p1size" << p1size;
    data_plot1->resize( p1size );
@@ -131,230 +172,268 @@ void US_MLinesPlot::plot_data()
 DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
 
    us_grid( data_plot1 );
-
-   QVector< double > xvec( nlpts, 0.0 );
-   QVector< double > yvec( nlpts, 0.0 );
-   QVector< double > bmxv( nlpts, 0.0 );
-   QVector< double > bmyv( nlpts, 0.0 );
-
-   double* xx    = xvec.data();
-   double* yy    = yvec.data();
-   double* bx    = bmxv.data();
-   double* by    = bmyv.data();
-   double  rinc  = (double)( nlpts - 1 );
-   double  xinc  = ( smax - smin ) / rinc;
-   double  ystr  = fmin;
-   int     mndx  = 0;
-   int     elmx  = -1;
-   int     nepts = got_best ? elitexs.size() : 0;
+DbgLv(1) << "RP:PD us_grid RTN";
 
    QString       title;
    QwtPlotCurve* curv;
-   QPen          pen_red(  Qt::red, 3.0 );
-   QPen          pen_plot( US_GuiSettings::plotCurve() );
+DbgLv(1) << "RP:PD smin smax" << smin << smax;
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, 1.0 );
-   double  y1    = fmin;
-   double  y2    = fmax;
+DbgLv(1) << "RP:PD AxisScale RTN";
 
-   if ( ctype == 0 )
-   { // Generate and plot straight lines
-      for ( int ii = 0; ii < nkpts; ii++ )
-      { 
-         double yend = fmin;
+   QVector< double > xvec( nlpts, 0.0 );
+   QVector< double > yvec( nlpts, 0.0 );
 
-         for ( int jj = 0; jj < nkpts; jj++ )
+   double* xx    = xvec.data();
+   double* yy    = yvec.data();
+   int     nmodl = mrecs.size();
+   QPen    pen_plot( US_GuiSettings::plotCurve(), 1 );
+
+DbgLv(1) << "RP:PD   got_best" << got_best;
+DbgLv(1) << "RP:PD (2)smin smax" << smin << smax;
+
+   if ( got_best )
+   { // Plot lines after best and sorted model records have been produced
+DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
+      le_fact       = ct_lefact->value();
+      me_fact       = ct_mefact->value();
+      he_fact       = ct_hefact->value();
+      mp_fact       = ct_mpfact->value();
+      best_rmsd     = mrecs[ 0         ].rmsd;
+      worst_rmsd    = mrecs[ nmodl - 1 ].rmsd;
+DbgLv(1) << "RP:PD  best worst" << best_rmsd << worst_rmsd;
+      low_elite     = best_rmsd * le_fact;
+      mid_elite     = best_rmsd * me_fact;
+      high_elite    = best_rmsd * he_fact;
+      mid_poor      = low_elite + ( worst_rmsd - low_elite ) * mp_fact;
+DbgLv(1) << "RP:PD  l,m,h elite" << low_elite << mid_elite << high_elite;
+DbgLv(1) << "RP:PD   mid_poor" << mid_poor;
+DbgLv(1) << "RP:PD (3)smin smax" << smin << smax;
+
+      QColor colr_he( Qt::red );
+      QColor colr_me( Qt::blue );
+      QColor colr_le( Qt::green );
+      QColor colr_hp( US_GuiSettings::plotCurve() );
+      QColor colr_lp( 160, 160, 160 );
+      QPen   pen_red(  Qt::red, 3.0 );
+      QPen   pen_heli( colr_he, 2 );
+      QPen   peh_meli( colr_me, 2 );
+      QPen   pen_leli( colr_le, 2 );
+      QPen   pen_hipo( colr_hp, 1 );
+      QPen   pen_lopo( colr_lp, 1 );
+      QPen   pen_gray( QColor( 160, 160, 160 ),     1 );
+      int    ired_he = colr_he.red();
+      int    igrn_he = colr_he.green();
+      int    iblu_he = colr_he.blue();
+      int    ired_me = colr_me.red();
+      int    igrn_me = colr_me.green();
+      int    iblu_me = colr_me.blue();
+      int    ired_le = colr_le.red();
+      int    igrn_le = colr_le.green();
+      int    iblu_le = colr_le.blue();
+      int    ired_hp = colr_hp.red();
+      int    igrn_hp = colr_hp.green();
+      int    iblu_hp = colr_hp.blue();
+      int    ired, igrn, iblu;
+
+      // Determine maximum concentration in 10 best models
+      double max_conc = 0.0;
+      for ( int ii = 0; ii < qMin( nmodl, 10 ); ii++ )
+      {
+         for ( int kk = 0; kk < mrecs[ ii ].csolutes.size(); kk++ )
          {
-            double xval = smin;
-            double yval = ystr;
-            double yinc = ( yend - ystr ) / rinc; 
+            max_conc     = qMax( max_conc, mrecs[ ii ].csolutes[ kk ].c );
+         }
+      }
+DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 
+      for ( int ii = ( nmodl - 1 ); ii >= 0; ii-- )
+      { // Loop over model records from worst (highest) rmsd to best
+         double rmsd_rec  = mrecs[ ii ].rmsd;
+         title   = tr( "Curve " ) + QString::number( ii );
+         curv    = us_curve( data_plot1, title );
+//DbgLv(1) << "RP:PD    ii" << ii << "rmsd_rec" << rmsd_rec;
+
+         if ( rmsd_rec >= mid_poor )
+         { // Poorest (highest) RMSD:  gray line
+            curv->setPen( pen_gray );
+         }
+
+         else if ( rmsd_rec > low_elite )
+         { // Non-elite, low-poor RMSD:  default (yellow?) line
+            curv->setPen( pen_plot );
+         }
+
+         else if ( rmsd_rec > mid_elite )
+         { // Between low- and mid-elite:  greenish line
+            double crange = low_elite - mid_elite;
+            double cfrac  = low_elite - rmsd_rec;
+            ired  = ired_hp + ( ired_le - ired_hp ) * cfrac / crange;
+            igrn  = igrn_hp + ( igrn_le - igrn_hp ) * cfrac / crange;
+            iblu  = iblu_hp + ( iblu_le - iblu_hp ) * cfrac / crange;
+            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
+         }
+
+         else if ( rmsd_rec > high_elite )
+         { // Between mid- and high-elite:  bluish line
+            double crange = mid_elite - high_elite;
+            double cfrac  = mid_elite - rmsd_rec;
+            ired  = ired_le + ( ired_me - ired_le ) * cfrac / crange;
+            igrn  = igrn_le + ( igrn_me - igrn_le ) * cfrac / crange;
+            iblu  = iblu_le + ( iblu_me - iblu_le ) * cfrac / crange;
+            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
+         }
+
+         else if ( ii != 0 )
+         { // Between high_elite and best:  reddish line
+            double crange = high_elite - best_rmsd;
+            double cfrac  = high_elite - rmsd_rec;
+            ired  = ired_me + ( ired_he - ired_me ) * cfrac / crange;
+            igrn  = igrn_me + ( igrn_he - igrn_me ) * cfrac / crange;
+            iblu  = iblu_me + ( iblu_he - iblu_me ) * cfrac / crange;
+            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
+         }
+
+         else
+         { // The best RMSD:  red
+            curv->setPen  ( pen_heli );    // Red
+         }
+
+         int klpts   = nlpts;
+
+         if ( ctype == 0 )
+         { // For straight line, just draw from start to end
+            klpts       = 2;
+            xx[ 0 ]     = smin;
+            xx[ 1 ]     = smax;
+            yy[ 0 ]     = mrecs[ ii ].str_k;
+            yy[ 1 ]     = mrecs[ ii ].end_k;
+         }
+
+         else
+         { // Otherwise, set each point on the curve
+//DbgLv(1) << "RP:PD nlpts" << nlpts;
+//DbgLv(1) << "RP:PD   isol size" << mrecs[ii].isolutes.size();
             for ( int kk = 0; kk < nlpts; kk++ )
             {
-               xx[ kk ]    = xval;
-               yy[ kk ]    = yval;
-               xval       += xinc;
-               yval       += yinc;
-            } // END: points-per-line loop
-
-            title   = tr( "Curve " ) + QString::number( mndx );
-            curv    = us_curve( data_plot1, title );
-
-//DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            if ( ! got_best  ||  ( elmx = elitexs.indexOf( mndx ) ) < 0 )
-            { // Normal line
-               curv->setPen  ( pen_plot );    // Default color (yellow)
+               xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
+               yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
             }
-            else if ( mndx == bmndx )
-            { // Best model line
-               y1           = yy[ 0 ];
-               y2           = yy[ nlpts - 1 ];
-               curv->setPen  ( pen_red  );    // Red
-DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            }
-            else
-            { // Not best, but among the elite, so use special color
-               QPen epen;
-               setElitePen( elmx, nepts, epen );
-               curv->setPen( epen );           // Graduated color
-            }
-            curv->setData ( xx, yy, nlpts );
-            yend   += finc;
-            mndx++;
-         } // END: s loop
-         ystr   += finc;
-      } // END: k loop
-   } // END: ctype==0
+         }
 
-   if ( ctype == 1  ||  ctype == 2 )
-   { // Sigmoid curves
-      double p1lo  = 0.001;
-      double p1up  = 0.5;
-      double p2lo  = 0.0;
-      double p2up  = 1.0;
-      double srng  = smax - smin;
-      double p1llg = log( p1lo );
-      double p1ulg = log( p1up );
-      double lrng  = (double)( nlpts - 1 );
-      double krng  = (double)( nkpts - 1 );
-      double p1inc = ( p1ulg - p1llg ) / krng;
-      double p2inc = ( p2up  - p2lo  ) / krng;
-      double xinc  = 1.0 / lrng;
-      double kstr  = fmin;
-      double kdif  = fmax - fmin;
-      if ( ctype == 2 )
+//DbgLv(1) << "RP:PD   klpts" << klpts;
+         curv->setData ( xx, yy, klpts );
+
+         if ( rmsd_rec < mid_elite )
+         { // For mid and high elite, plot the solute points
+            int ncomp   = mrecs[ ii ].csolutes.size();
+            for ( int kk = 0; kk < ncomp; kk++ )
+            {
+               double xv  = mrecs[ ii ].csolutes[ kk ].s * 1.0e+13;
+               double yv  = mrecs[ ii ].csolutes[ kk ].k;
+               double cv  = mrecs[ ii ].csolutes[ kk ].c;
+               int    szd = qMax( 2, qRound( 9.0 * cv / max_conc ) );
+               title      = tr( "ElitePoint " ) + QString::number( ii )
+                            + " " + QString::number( kk );
+               curv       = us_curve( data_plot1, title );
+               curv->setPen  ( QPen( Qt::cyan, szd ) );
+               curv->setStyle( QwtPlotCurve::Dots );
+               curv->setData ( &xv, &yv, 1 );
+            }
+//DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
+// << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
+         }
+      } // END: models loop
+DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
+   }
+   else
+   { // Plot lines before any best-fit computations
+      for ( int ii = 0; ii < nmodl; ii++ )
       {
-         kstr         = fmax;
-         kdif         = -kdif;
-      }
-      double p1vlg = p1llg;
+         for ( int kk = 0; kk < nlpts; kk++ )
+         {
+            xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
+            yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
+         }
 
-      for ( int ii = 0; ii < nkpts; ii++ )
-      { // Loop over par1 values (logarithmic progression)
-         double p1val = exp( p1vlg );
-         double p2val = p2lo;
+         title   = tr( "Curve " ) + QString::number( ii );
+         curv    = us_curve( data_plot1, title );
+         curv->setPen  ( pen_plot );    // Default color (yellow)
+         curv->setData ( xx, yy, nlpts );
+      } // END: model lines loop
+   } // END: pre-fit lines
 
-         for ( int jj = 0; jj < nkpts; jj++ )
-         { // Loop over par2 value (linear progression)
-            double xval  = 0.0;
-
-            for ( int kk = 0; kk < nlpts; kk++ )
-            { // Loop over points on a curve
-               double efac  = 0.5 * erf( ( xval - p2val )
-                                         / sqrt( 2.0 * p1val ) ) + 0.5;
-               double kval  = kstr + kdif * efac;
-               xx[ kk ]     = smin + xval * srng;
-               yy[ kk ]     = kval;
-DbgLv(1) << "RP:PD    ii jj kk mx" << ii << jj << kk << mndx
- << "xv sv kv" << xval << xx[kk] << kval << "p1 p2" << p1val << p2val;
-               xval        += xinc;
-            } // END: points-on-curve loop
-
-            title   = tr( "Curve " ) + QString::number( mndx );
-            curv    = us_curve( data_plot1, title );
-
-//DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            if ( ! got_best  ||  ( elmx = elitexs.indexOf( mndx ) ) < 0 )
-            { // Normal line
-               curv->setPen  ( pen_plot );    // Default color (yellow)
-            }
-            else if ( mndx == bmndx )
-            { // Best model line
-               for ( int kk = 0; kk < nlpts; kk++ )
-               {                              // Save best model points
-                  bx[ kk ]     = xx[ kk ];
-                  by[ kk ]     = yy[ kk ];
-               }
-               curv->setPen  ( pen_red  );    // Red
-DbgLv(1) << "RP:PD    bmndx mndx" << bmndx << mndx;
-            }
-            else
-            { // Not best, but among the elite, so use special color
-               QPen epen;
-               setElitePen( elmx, nepts, epen );
-               curv->setPen( epen );
-            }
-            curv->setData ( xx, yy, nlpts );
-            mndx++;
-            p2val    += p2inc;
-         } // END: par2 values loop
-
-         p1vlg    += p1inc;
-      } // END: par1 values loop
-
-   } // END: sigmoid curves
-
-DbgLv(1) << "RP:PD call replot";
-   if ( got_best )
-   { // Replot best model line, then plot points along the best model
-      title    = tr( "CurveR " ) + QString::number( bmndx );
-      int npts = 2;
-DbgLv(1) << "RP:PD   bmndx" << bmndx;
-      if ( ctype == 0 )
-      { // Re-do straight line by drawing from start to end point
-         bx[ 0 ]  = xx[ 0 ];
-         bx[ 1 ]  = xx[ nlpts - 1 ];
-         by[ 0 ]  = y1;
-         by[ 1 ]  = y2;
-DbgLv(1) << "RP:PD     y1 y2" << y1 << y2;
-      }
-      else if ( ctype == 1  ||  ctype == 2 )
-      { // Re-do sigmoid by copying saved curve points
-         npts     = nlpts;
-DbgLv(1) << "RP:PD     npts" << npts << "x0 y0 xn yn"
- << xx[0] << yy[0] << xx[npts-1] << yy[npts-1];
-      }
-      curv     = us_curve( data_plot1, title );
-      curv->setPen( pen_red );
-      curv->setData( bx, by, npts );
-
-      int ncomp   = model->components.size();
-      for ( int kk = 0; kk < ncomp; kk++ )
-      {
-         xx[ kk ]    = model->components[ kk ].s * 1.0e+13;
-         yy[ kk ]    = model->components[ kk ].f_f0;
-      }
-DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
- << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
-      title    = tr( "BestModelPoints" );
-      curv     = us_curve( data_plot1, title );
-      curv->setPen  ( QPen( Qt::cyan, 8.0 ) );
-      curv->setStyle( QwtPlotCurve::Dots );
-      curv->setData ( xx, yy, ncomp );
-   } // END: replot best model
-
+DbgLv(1) << "RP:PD (6)smin smax" << smin << smax;
    data_plot1->replot();
 DbgLv(1) << "RP:PD  return";
+DbgLv(1) << "RP:PD   R: smin smax" << smin << smax;
 }
 
 // Public slot to set a pointer to a model to use in the plot for highlights
-void US_MLinesPlot::setModel( US_Model* a_model, QVector< int >& exs )
+void US_MLinesPlot::setModel( US_Model* a_model, QVector< ModelRecord >& mrs )
 {
    model   = a_model;
-   elitexs = exs;
-DbgLv(1) << "RP:SM  bmndx" << bmndx << "size elitexs" << elitexs.size();
+   mrecs   = mrs;
+DbgLv(1) << "RP:SM  bmndx" << bmndx;
+DbgLv(1) << "RP:PD (7)smin smax" << smin << smax;
+
+   bool fact_vis = ( model != 0 );
+   lb_lefact->setVisible( fact_vis );
+   ct_lefact->setVisible( fact_vis );
+   lb_mefact->setVisible( fact_vis );
+   ct_mefact->setVisible( fact_vis );
+   lb_hefact->setVisible( fact_vis );
+   ct_hefact->setVisible( fact_vis );
+   lb_mpfact->setVisible( fact_vis );
+   ct_mpfact->setVisible( fact_vis );
+DbgLv(1) << "RP:PD (8)smin smax" << smin << smax;
 }
 
-// Private slot to calculate a pen for an elite model curve line
-void US_MLinesPlot::setElitePen( int& elmx, int& nepts, QPen& epen )
+// Private slot to handle change in Low-Elite Factor value
+void US_MLinesPlot::updateLeFact( double value )
 {
-   int    neept = nepts / 3;
-   int    nsept = neept + neept;
-   int ired, igrn, iblu;
-   if ( elmx < neept )
-   { // Reddish for upper 1/3 of elite lines
-      ired  = ( ( neept - elmx ) * 256 ) / neept;
-      igrn  = iblu = ( 256 - ired ) / 2;
-   }
-   else if ( elmx < nsept )
-   { // Bluish for middle 1/3 of elite lines
-      iblu  = ( ( nsept - elmx ) * 256 ) / neept;
-      ired  = igrn = ( 256 - iblu ) / 2;
-   }
-   else
-   { // Greenish for lower 1/3 of elite lines
-      igrn  = ( ( nepts - elmx ) * 256 ) / neept;
-      ired  = iblu = ( 256 - igrn ) / 2;
-   }
-   epen  = QPen( QColor( ired, igrn, iblu ), 2.0 );
+   le_fact  = value;
+   ct_mefact->setRange( he_fact, le_fact, 0.001 );
+   me_fact  = ct_mefact->value();
+   ct_hefact->setRange( 1.01,    me_fact, 0.001 );
+   he_fact  = ct_hefact->value();
+
+   if ( model != 0 )
+      plot_data();
+}
+
+// Private slot to handle change in Mid-Elite Factor value
+void US_MLinesPlot::updateMeFact( double value )
+{
+   me_fact = value;
+   ct_hefact->setRange( 1.01,    me_fact, 0.001 );
+   he_fact = ct_hefact->value();
+   ct_lefact->setRange( me_fact, 10.00,   0.001 );
+   le_fact = ct_lefact->value();
+
+   if ( model != 0 )
+      plot_data();
+}
+
+// Private slot to handle change in High-Elite Factor value
+void US_MLinesPlot::updateHeFact( double value )
+{
+   he_fact = value;
+   ct_mefact->setRange( he_fact, le_fact, 0.001 );
+   me_fact = ct_mefact->value();
+   ct_lefact->setRange( me_fact, 10.00,   0.001 );
+   le_fact = ct_lefact->value();
+
+   if ( model != 0 )
+      plot_data();
+}
+
+// Private slot to handle change in Mid-Poor Factor value
+void US_MLinesPlot::updateMpFact( double value )
+{
+   mp_fact = value;
+//DbgLv(1) << "updMF: smin smax" << smin << smax;
+
+   if ( model != 0 )
+      plot_data();
 }
 

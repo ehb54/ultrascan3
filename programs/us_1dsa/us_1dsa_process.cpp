@@ -27,7 +27,7 @@ US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    nmtasks          = 100;
    kctask           = 0;
    kstask           = 0;
-   varimin          = 99e+99;
+   varimin          = 9.e+9;
    minvarx          = 99999;
 }
 
@@ -55,6 +55,8 @@ DbgLv(1) << "2P(1dsaProc): start_fit()";
    noisflag    = noi;
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
+   varimin     = 9.e+9;
+   minvarx     = 99999;
 
    wkstates .resize(  nthreads );
    wthreads .clear();
@@ -91,6 +93,7 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    kcsteps     = 0;
    nctotal     = nmtasks;
    emit stage_complete( kcsteps, nctotal );
+   mrecs    .clear();
 
    kctask      = 0;
    kstask      = 0;
@@ -99,8 +102,6 @@ DbgLv(1) << "2P:   nscans npoints" << nscans << npoints;
 DbgLv(1) << "2P:   nctotal nthreads" << nctotal << nthreads;
    max_rss();
 DbgLv(1) << "2P: (1)maxrss" << maxrss;
-
-   QList< QVector< US_Solute > > solute_list;
 
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
@@ -239,6 +240,15 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << mrec.csolutes[0].c
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO2::RawData* simdat = &mrec.sim_data;
    US_DataIO2::RawData* resids = &mrec.residuals;
+DbgLv(1) << "FIN_FIN: nscans npoints" << nscans << npoints;
+DbgLv(1) << "FIN_FIN: simdat nsc npt"
+ << simdat->scanData.size() << simdat->x.size();
+DbgLv(1) << "FIN_FIN: resids nsc npt"
+ << resids->scanData.size() << resids->x.size();
+DbgLv(1) << "FIN_FIN: rdata  nsc npt"
+ << rdata.scanData.size() << rdata.x.size();
+DbgLv(1) << "FIN_FIN: sdata  nsc npt"
+ << sdata.scanData.size() << sdata.x.size();
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
@@ -329,14 +339,14 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 }
 
 // Public slot to get results upon completion of all refinements
-bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
-                                  US_DataIO2::RawData* da_res,
-                                  US_Model*            da_mdl,
-                                  US_Noise*            da_tin,
-                                  US_Noise*            da_rin,
-                                  int&                 bm_ndx,
-                                  QStringList&         modstats,
-                                  QVector< int >&      elitexs )
+bool US_1dsaProcess::get_results( US_DataIO2::RawData*    da_sim,
+                                  US_DataIO2::RawData*    da_res,
+                                  US_Model*               da_mdl,
+                                  US_Noise*               da_tin,
+                                  US_Noise*               da_rin,
+                                  int&                    bm_ndx,
+                                  QStringList&            modstats,
+                                  QVector< ModelRecord >& p_mrecs )
 {
    bool all_ok = true;
 
@@ -352,14 +362,13 @@ bool US_1dsaProcess::get_results( US_DataIO2::RawData* da_sim,
    if ( ( noisflag & 2 ) != 0  &&  da_rin != 0 )
       *da_rin     = ri_noise;                     // copy any ri noise
 
+   p_mrecs     = mrecs;                           // copy model records vector
    bm_ndx      = mrecs[ 0 ].taskx;
 DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(1) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
  << "BM_NDX" << bm_ndx;
 
    model_statistics( mrecs, modstats );
-
-   elite_indexes( mrecs, elitexs );
 
    return all_ok;
 }
@@ -395,7 +404,8 @@ void US_1dsaProcess::process_job( WorkerThread* wthrd )
    int thrn   = wresult.thrn;      // thread number of task
    int thrx   = thrn - 1;          // index into thread list
    int taskx  = wresult.taskx;     // task index of task
-DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx;
+   int orecx  = mrecs.size();      // output record index 
+DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx orecx" << taskx << orecx;
 //DBG-CONC
 if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
  if ( wresult.csolutes[mm].c > 100.0 ) {
@@ -410,37 +420,31 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    mrec.taskx      = taskx;
    mrec.str_k      = wresult.str_k;
    mrec.end_k      = wresult.end_k;
+   mrec.par1       = wresult.par1;
+   mrec.par2       = wresult.par2;
    mrec.variance   = variance;
    mrec.rmsd       = ( variance > 0.0 ) ? sqrt( variance ) : 99.9;
    mrec.isolutes   = wresult.isolutes;
    mrec.csolutes   = wresult.csolutes;
+
    if ( variance < varimin )
    { // Handle a new minimum variance record
-      if ( minvarx < mrecs.size() )
+      if ( minvarx < orecx )
       { // Clear vectors from the previous minimum
-         mrecs[ minvarx ].sim_data .scanData.clear();
-         mrecs[ minvarx ].sim_data .x       .clear();
-         mrecs[ minvarx ].residuals.scanData.clear();
-         mrecs[ minvarx ].residuals.x       .clear();
-         mrecs[ minvarx ].ti_noise          .clear();
-         mrecs[ minvarx ].ri_noise          .clear();
+         mrecs[ minvarx ].clear_data();
       }
       // Save information from the minimum-variance model record
       varimin         = variance;
-      minvarx         = taskx;
+      minvarx         = orecx;
       mrec.sim_data   = wresult.sim_vals.sim_data;
       mrec.residuals  = wresult.sim_vals.residuals;
       mrec.ti_noise   = wresult.ti_noise;
       mrec.ri_noise   = wresult.ri_noise;
+DbgLv(1) << "PJ: MINVARX=" << minvarx;
    }
    else
    { // Clear vectors from a model record that is not minimum-variance
-      mrec.sim_data .scanData.clear();
-      mrec.sim_data .x       .clear();
-      mrec.residuals.scanData.clear();
-      mrec.residuals.x       .clear();
-      mrec.ti_noise          .clear();
-      mrec.ri_noise          .clear();
+      mrec.clear_data();
    }
 
    mrecs     << mrec;                 // Append to the vector of model records
@@ -455,7 +459,7 @@ DbgLv(1) << "THR_FIN:  taskx minvarx varimin" << taskx << minvarx << varimin;
 
    kctask++;                          // Bump count of completed subgrid tasks
    emit progress_update( variance );  // Pass progress on to control window
-DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
+DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
  << " kct kst" << kctask << kstask;
 
    emit message_update( pmessage_head() +
@@ -576,46 +580,25 @@ int US_1dsaProcess::slmodels( double slo, double sup, double klo,
 DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
    << kin << res;
    double vbar20   = dsets[ 0 ]->vbar20;
-   double srng     = sup - slo;
-   double rinc     = 1.0 / ( res - 1 );
-   double incs     = srng * rinc;
-   int    nkpts    = qRound( ( kup - klo ) / kin ) + 1;
-   int    nmodels  = nkpts * nkpts;
    orig_sols.clear();
 
-   double kst      = klo;
+   // Compute straight-line model records
+   int nmodels = ModelRecord::compute_slines( slo, sup, klo, kup, kin,
+                                              res, mrecs );
 
-   for ( int ii = 0; ii < nkpts; ii++ )
+   // Update the solutes with vbar and add to task solutes list
+   for ( int ii = 0; ii < nmodels; ii++ )
    {
-      double ken      = klo;
+      QVector< US_Solute >* isols = &mrecs[ ii ].isolutes;
 
-      for ( int jj = 0; jj < nkpts; jj++ )
+      for ( int jj = 0; jj < isols->size(); jj++ )
       {
-         QVector< US_Solute > solute_i;
-         double inck     = ( ken - kst ) * rinc;
-         double sval     = slo;
-         double kval     = kst;
-
-         for ( int kk = 0; kk < res; kk++ )
-         {
-            US_Solute solu;
-            solu.s          = sval * 1.0e-13;
-            solu.k          = kval;
-            solu.v          = vbar20;
-            solute_i << solu;
-            sval           += incs;
-            kval           += inck;
-if(dbg_level>0&&(kk<3||kk==(res/2)||kk>(res-3)))
- DbgLv(1) << "SLMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
-         }
-
-DbgLv(1) << "SLMO:   solute_i size" <<  solute_i.size();
-         orig_sols << solute_i;
-         ken            += kin;
+         (*isols)[ jj ].v    = vbar20;
       }
-      kst            += kin;
+
+      orig_sols << *isols;
    }
-DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size();
+DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 
    return nmodels;
 }
@@ -627,64 +610,25 @@ int US_1dsaProcess::sigmodels( int ctp, double slo, double sup, double klo,
 DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
    << klo << kup << nkpts << nlpts;
    double vbar20   = dsets[ 0 ]->vbar20;
-   double p1lo     = 0.001;
-   double p1up     = 0.5;
-   double p2lo     = 0.0;
-   double p2up     = 1.0;
-   double srng     = sup - slo;
-   double lrng     = (double)( nlpts - 1 );
-   double krng     = (double)( nkpts - 1 );
-   double p1llg    = log( p1lo );
-   double p1ulg    = log( p1up );
-   double p1inc    = ( p1ulg - p1llg ) / krng;
-   double p2inc    = ( p2up  - p2lo  ) / krng;
-   double xinc     = 1.0 / lrng;
-   int    nmodels  = nkpts * nkpts;
    orig_sols.clear();
 
-   double kstr     = klo;             // Increasing sigmoid controls
-   double kdif     = kup - klo;
-   if ( ctp == 2 )
+   // Compute sigmoid model records
+   int nmodels = ModelRecord::compute_sigmoids( ctp, slo, sup, klo, kup,
+                                                nkpts, nlpts, mrecs );
+
+   // Update the solutes with vbar and add to task solutes list
+   for ( int ii = 0; ii < nmodels; ii++ )
    {
-      kstr            = kup;          // Decreasing sigmoid controls
-      kdif            = -kdif;
+      QVector< US_Solute >* isols = &mrecs[ ii ].isolutes;
+
+      for ( int jj = 0; jj < isols->size(); jj++ )
+      {
+         (*isols)[ jj ].v    = vbar20;
+      }
+
+      orig_sols << *isols;
    }
-   double p1vlg    = p1llg;
-
-   for ( int ii = 0; ii < nkpts; ii++ )
-   { // Loop over par1 values (logarithmic progression)
-      double p1val    = exp( p1vlg );
-      double p2val    = p2lo;
-
-      for ( int jj = 0; jj < nkpts; jj++ )
-      { // Loop over par2 values (linear progression)
-         QVector< US_Solute > solute_i;
-         double xval     = 0.0;
-
-         for ( int kk = 0; kk < nlpts; kk++ )
-         { // Loop over points on a curve
-            US_Solute solu;
-            double efac     = 0.5 * erf( ( xval - p2val )
-                                         / sqrt( 2.0 * p1val ) ) + 0.5;
-            double kval     = kstr + kdif * efac;
-            double sval     = slo  + xval * srng;
-            solu.s          = sval * 1.0e-13;
-            solu.k          = kval;
-            solu.v          = vbar20;
-            solute_i << solu;
-            xval           += xinc;
-if(dbg_level>0&&(kk<3||kk==(nlpts/2)||kk>(nlpts-3)))
-DbgLv(1) << "SGMO:  ii jj kk" << ii << jj << kk << "s k" << solu.s << solu.k;
-         } // END: points-on-curve loop
-
-DbgLv(1) << "SGMO:   solute_i size" <<  solute_i.size()
- << "p1val p2val" << p1val << p2val;
-         orig_sols << solute_i;
-         p2val          += p2inc;
-      } // END: par2 values loop
-      p1vlg          += p1inc;
-   } // END: par1 values loop
-DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size();
+DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 
    return nmodels;
 }
@@ -810,34 +754,5 @@ void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    modstats << tr( "Average, Median rmsd for better:" )
             << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
 
-}
-
-// Generate the ordered vector elite (lowest RMSDs) indexes
-void US_1dsaProcess::elite_indexes( QVector< ModelRecord >& mrecs,
-                                    QVector< int >&         elitexs )
-{
-   const double thrfact = 1.8;
-
-   int    nmodel  = mrecs.size();
-   int    nelite  = ( nmodel * 3 ) / 10;
-   double thrrmsd = mrecs[ 0 ].rmsd * thrfact;
-
-   for ( int ii = 0; ii < nmodel; ii++ )
-   {
-      if ( mrecs[ ii ].rmsd > thrrmsd )
-      {
-DbgLv(1) << "2P:EI:   ii" << ii << "rmsd thrrmsd" << mrecs[ii].rmsd << thrrmsd;
-         nelite  = qMin( qMax( ii, 12 ), ( nmodel / 2 ) );
-         break;
-      }
-   }
-   elitexs.clear();
-DbgLv(1) << "2P:EI: nelite" << nelite << "nmodel" << nmodel
- << "thrfact thrrmsd rmsd0" << thrfact << thrrmsd << mrecs[0].rmsd;
-
-   for ( int ii = 0; ii < nelite; ii++ )
-   {
-      elitexs << mrecs[ ii ].taskx;
-   }
 }
 

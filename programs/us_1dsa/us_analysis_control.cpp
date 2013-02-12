@@ -19,7 +19,6 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    dbg_level      = US_Settings::us_debug();
    varimin        = 9e+99;
    bmndx          = -1;
-   elitexs.clear();
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -444,7 +443,7 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
    QStringList modelstats;
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise, bmndx,
-         modelstats, elitexs );
+         modelstats, mrecs );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
@@ -478,18 +477,23 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 // slot to compute model lines
 void US_AnalysisControl::compute()
 {
-   int    ctype   = cmb_curvtype->currentIndex();
-   double fmin    = ct_lolimitk->value();
-   double fmax    = ct_uplimitk->value();
-   double finc    = ct_incremk ->value();
-   int    nlpts   = (int)ct_cresolu ->value();
-   int    nkpts   = qRound( ( fmax - fmin ) / finc ) + 1;
+   ctype   = cmb_curvtype->currentIndex();
+   smin    = ct_lolimits->value();
+   smax    = ct_uplimits->value();
+   fmin    = ct_lolimitk->value();
+   fmax    = ct_uplimitk->value();
+   finc    = ct_incremk ->value();
+   nlpts   = (int)ct_cresolu ->value();
+   nkpts   = qRound( ( fmax - fmin ) / finc ) + 1;
    if ( ctype == 0 )
    {
       lb_incremk ->setVisible( true  );
       ct_incremk ->setVisible( true  );
       lb_varcount->setVisible( false );
       ct_varcount->setVisible( false );
+
+      ModelRecord::compute_slines( smin, smax, fmin, fmax, finc, nlpts,
+            mrecs );
    }
    if ( ctype == 1  ||  ctype == 2 )
    {
@@ -498,6 +502,9 @@ void US_AnalysisControl::compute()
       ct_incremk ->setVisible( false );
       lb_varcount->setVisible( true  );
       ct_varcount->setVisible( true  );
+
+      ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
+            nkpts, nlpts, mrecs );
    }
    int    nlmodl  = nkpts * nkpts;
 
@@ -509,27 +516,32 @@ void US_AnalysisControl::compute()
    te_status  ->setText( amsg );
 
    bmndx          = -1;
-   elitexs.clear();
 }
 
 // slot to launch a plot dialog showing model lines
 void US_AnalysisControl::plot_lines()
 {
-   int    type    = cmb_curvtype->currentIndex();
-   double smin    = ct_lolimits->value();
-   double smax    = ct_uplimits->value();
-   double fmin    = ct_lolimitk->value();
-   double fmax    = ct_uplimitk->value();
-   double finc    = ct_incremk ->value();
-   int    nlpts   = (int)ct_cresolu ->value();
-   int    nkpts   = (int)ct_varcount->value();
+   ctype   = cmb_curvtype->currentIndex();
+   smin    = ct_lolimits->value();
+   smax    = ct_uplimits->value();
+   fmin    = ct_lolimitk->value();
+   fmax    = ct_uplimitk->value();
+   finc    = ct_incremk ->value();
+   nlpts   = (int)ct_cresolu ->value();
+   nkpts   = (int)ct_varcount->value();
+   if ( ctype > 0 )
+      nkpts       = qRound( ( fmax - fmin ) / finc ) + 1;
 
    US_MLinesPlot* mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
-                                                nlpts, bmndx, nkpts, type );
+                                                nlpts, bmndx, nkpts, ctype );
 
    if ( bmndx >= 0 )
    {
-      mlnplotd->setModel( model, elitexs );
+      mlnplotd->setModel( model, mrecs );
+   }
+   else
+   {
+      mlnplotd->setModel( 0, mrecs );
    }
 
    mlnplotd->plot_data();

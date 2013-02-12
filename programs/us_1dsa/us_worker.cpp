@@ -75,6 +75,7 @@ void WorkerThread::get_result( WorkPacket& workout )
    workout.taskx    = taskx;
    workout.noisf    = noisflag;
 
+   workout.isolutes = solutes_i;
    workout.csolutes = solutes_c;
    workout.ti_noise = ti_noise.values;
    workout.ri_noise = ri_noise.values;
