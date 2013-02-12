@@ -6093,21 +6093,23 @@ void US_Hydrodyn_Saxs_Hplc::normalize()
 void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > q,
                                       vector < double > I,
-                                      bool              is_time )
+                                      bool              is_time,
+                                      bool              replot )
 {
    vector < double > errors( I.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
    {
       errors[ i ] = 0e0;
    }
-   add_plot( name, q, I, errors, is_time );
+   add_plot( name, q, I, errors, is_time, replot );
 }
 
 void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > q,
                                       vector < double > I,
                                       vector < double > errors,
-                                      bool              is_time )
+                                      bool              is_time,
+                                      bool              replot )
 {
    name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    
@@ -6157,8 +6159,11 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
-   plot_files();
-   update_enables();
+   if ( replot )
+   {
+      plot_files();
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::crop_zero()
@@ -8809,6 +8814,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    // extract q grid from file names
 
    QString head = qstring_common_head( files, true );
+   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
+   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
 
    if ( !ggaussian_compatible() )
    {
@@ -8888,8 +8895,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             {
                e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
             } else {
-               use_errors = false;
-               editor_msg( "dark red", tr( "Notice: missing errors, so no errors at all" ) );
+               if ( use_errors )
+               {
+                  use_errors = false;
+                  editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                              .arg( files[ i ] ) );
+               }
             }
             if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
             {
@@ -8965,7 +8976,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          tmp_g[ 1 ] = f_gaussians[ files[ i ] ][ 1 + j ];
          tmp_g[ 2 ] = f_gaussians[ files[ i ] ][ 2 + j ];
 
-         vector < double > tmp = compute_gaussian( qv, tmp_g );
+         vector < double > tmp = compute_gaussian( tv, tmp_g );
          tmp_v.push_back( tmp );
          if ( j )
          {
@@ -8976,25 +8987,30 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          } else {
             tmp_sum = tmp;
          }
+         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / 3 ), tv, tmp );
+
       }
       fg.push_back( tmp_v );
       fs.push_back( tmp_sum );
+      // add_plot( QString( "fg_%1_gsum" ).arg( i ), tv, tmp_sum );
    }
 
-
    // build up resulting curves
-
 
    // for each time, tv[ t ] 
    for ( unsigned int t = 0; t < tv.size(); t++ )
    {
       progress->setProgress( files.size() + t, files.size() + tv.size() );
       // for each gaussian 
+      vector < double > gsI;
+      vector < double > gse;
+      vector < double > gsG;
+
       for ( unsigned int g = 0; g < gaussians.size() / 3; g++ )
       {
          // build up an I(q)
-         QString name = head + QString( "_%1%2pk%3_t%4" )
-            .arg( any_bl   ? "bs" : "" )
+         QString name = head + QString( "%1%2_pk%3_t%4" )
+            .arg( any_bl   ? "_bs" : "" )
             .arg( bl_count ? "ba" : "" )
             .arg( g + 1 )
             .arg( tv[ t ] )
@@ -9071,6 +9087,21 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             G.push_back( tmp_G );
          }
          
+         if ( g )
+         {
+            for ( unsigned int m = 0; m < ( unsigned int ) qv.size(); m++ )
+            {
+               gsI[ m ] += I[ m ];
+               gse[ m ] += e[ m ];
+               gsG[ m ] += G[ m ];
+            }
+         } else {
+            gsI = I;
+            gsG = G;
+            gse = e;
+         }
+
+
          lb_created_files->insertItem( name );
          lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
          lb_files->insertItem( name );
@@ -9087,7 +9118,9 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             vector < double > tmp;
             f_gaussians  [ name ] = tmp;
          }
-      }            
+      }
+      add_plot( QString( "sumI_t%1" ).arg( tv[ t ] ), qv, gsI, gse, false, false );
+      add_plot( QString( "sumG_t%1" ).arg( tv[ t ] ), qv, gsG, gse, false, false );
    }
 
    progress->setProgress( 1, 1 );

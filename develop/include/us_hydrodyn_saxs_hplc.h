@@ -85,13 +85,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
-                     bool              is_time = false );
+                     bool              is_time = false,
+                     bool              replot  = true );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
                      vector < double > errors,
-                     bool              is_time = false );
+                     bool              is_time = false,
+                     bool              replot  = true );
 
    private:
       csv           csv1;
