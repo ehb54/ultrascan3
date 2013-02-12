@@ -10,33 +10,6 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
-mQLineEdit::mQLineEdit( QWidget *parent, const char * name ) : QLineEdit( parent, name ) {}
-
-mQLineEdit::~mQLineEdit() {}
-
-void mQLineEdit::focusInEvent ( QFocusEvent *e )
-{
-   QLineEdit::focusInEvent( e );
-   emit( focussed( true ) );
-}
-
-void mQLineEdit::focusOutEvent ( QFocusEvent *e )
-{
-   QLineEdit::focusOutEvent( e );
-   emit( focussed( false ) );
-}
-
-mQLabel::mQLabel( QWidget *parent, const char * name ) : QLabel( parent, name ) {}
-mQLabel::mQLabel( const QString & text, QWidget *parent, const char * name ) : QLabel( text, parent, name ) {}
-
-mQLabel::~mQLabel() {}
-
-void mQLabel::mousePressEvent ( QMouseEvent *e )
-{
-   QLabel::mousePressEvent( e );
-   emit( pressed() );
-}
-
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 
@@ -3073,7 +3046,6 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( file ) );
       return false;
    } 
-
 
    {
       QDir dir1( lbl_created_dir->text() );
@@ -9047,7 +9019,13 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             double tmp_I = I_values[ tv[ t ] ][ qv[ i ] ];
             double tmp_e = 0e0;
             double tmp_G = fg[ i ][ g ][ t ];
-            double frac_of_gaussian_sum = tmp_G / fs[ i ][ t ];
+            double frac_of_gaussian_sum;
+            if ( fs[ i ][ t ] == 0e0 )
+            {
+               frac_of_gaussian_sum = 1e0;
+            } else {
+               frac_of_gaussian_sum = tmp_G / fs[ i ][ t ];
+            }
 
             if ( use_errors )
             {

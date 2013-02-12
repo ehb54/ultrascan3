@@ -146,7 +146,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_sans_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_sans_iq_native_debye = new QCheckBox(this);
-   cb_sans_iq_native_debye->setText(tr("Full "));
+   cb_sans_iq_native_debye->setText(tr("F-DB "));
    cb_sans_iq_native_debye->setEnabled(true);
    cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
    cb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -186,7 +186,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cb_sans_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_sans_iq_hybrid_adaptive()));
 
    cb_sans_iq_native_fast = new QCheckBox(this);
-   cb_sans_iq_native_fast->setText(tr("Fast "));
+   cb_sans_iq_native_fast->setText(tr("F-DB "));
    cb_sans_iq_native_fast->setEnabled(true);
    cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
    cb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

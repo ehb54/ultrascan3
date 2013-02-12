@@ -82,7 +82,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QProgressBar  *progress;
 
       QLabel        *lbl_files;
-      QLabel        *lbl_dir;
+      QCheckBox     *cb_lock_dir;
+      mQLabel       *lbl_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
@@ -128,6 +129,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QCheckBox     *cb_multi_sub_conc_avg;
 
       QLabel        *lbl_created_files;
+      mQLabel       *lbl_created_dir;
       QListBox      *lb_created_files;
       QLabel        *lbl_selected_created;
 
@@ -178,6 +180,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
 #endif
+
+      QPushButton   *pb_color_rotate;
 
       QPushButton   *pb_select_vis;
       QPushButton   *pb_remove_vis;
@@ -338,9 +342,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         join_set_wheel_range();
       void                         join_do_replot();
 
+      void                         push_back_color_if_ok( QColor bg, QColor set );
+
+      QString                      title;
+
    private slots:
 
       void setupGUI();
+
+      void color_rotate();
+      void dir_pressed();
+      void created_dir_pressed();
 
       void update_enables();
       void update_files();

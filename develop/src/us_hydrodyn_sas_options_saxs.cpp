@@ -61,7 +61,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    lbl_saxs_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_saxs_iq_native_debye = new QCheckBox(this);
-   cb_saxs_iq_native_debye->setText(tr("Full "));
+   cb_saxs_iq_native_debye->setText(tr("F-DB "));
    cb_saxs_iq_native_debye->setEnabled(true);
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -69,7 +69,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_saxs_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_debye()));
 
    cb_saxs_iq_native_sh = new QCheckBox(this);
-   cb_saxs_iq_native_sh->setText(tr("SH "));
+   cb_saxs_iq_native_sh->setText(tr("SH-DB "));
    cb_saxs_iq_native_sh->setEnabled(true);
    cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -109,7 +109,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_saxs_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_saxs_iq_hybrid_adaptive()));
 
    cb_saxs_iq_native_fast = new QCheckBox(this);
-   cb_saxs_iq_native_fast->setText(tr("Fast "));
+   cb_saxs_iq_native_fast->setText(tr("F-DB "));
    cb_saxs_iq_native_fast->setEnabled(true);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

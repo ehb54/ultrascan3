@@ -20,8 +20,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
+   title = tr( "US-SOMO: SAXS: Data Utility" );
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("US-SOMO: SAXS Buffer Subtraction Utility"));
+   setCaption( title );
    order_ascending = false;
    conc_widget     = false;
 #ifdef QT4
@@ -92,7 +93,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
-      pbs.push_back( pb_join );
+      pbs.push_back( pb_color_rotate );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
@@ -126,19 +127,163 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
    pb_set_signal->setMaximumWidth ( pb_select_all->width() + 10 );
    plot_colors.clear();
-   plot_colors.push_back(Qt::yellow);
-   plot_colors.push_back(Qt::green);
-   plot_colors.push_back(Qt::cyan);
-   plot_colors.push_back(Qt::blue);
-   plot_colors.push_back(Qt::red);
-   plot_colors.push_back(Qt::magenta);
-   plot_colors.push_back(Qt::darkYellow);
-   plot_colors.push_back(Qt::darkGreen);
-   plot_colors.push_back(Qt::darkCyan);
-   plot_colors.push_back(Qt::darkBlue);
-   //   plot_colors.push_back(Qt::darkRed);
-   plot_colors.push_back(Qt::darkMagenta);
-   plot_colors.push_back(Qt::white);
+
+   QColor bgc = plot_dist->canvasBackground();
+
+   push_back_color_if_ok( bgc, Qt::yellow );
+   push_back_color_if_ok( bgc, Qt::green );
+   push_back_color_if_ok( bgc, Qt::cyan );
+   push_back_color_if_ok( bgc, Qt::blue );
+   push_back_color_if_ok( bgc, Qt::red );
+   push_back_color_if_ok( bgc, Qt::magenta );
+   push_back_color_if_ok( bgc, Qt::darkYellow );
+   push_back_color_if_ok( bgc, Qt::darkGreen );
+   push_back_color_if_ok( bgc, Qt::darkCyan );
+   push_back_color_if_ok( bgc, Qt::darkBlue );
+   push_back_color_if_ok( bgc, Qt::darkRed );
+   push_back_color_if_ok( bgc, Qt::darkMagenta );
+   push_back_color_if_ok( bgc, Qt::white );
+   push_back_color_if_ok( bgc, QColor( 240, 248, 255 ) ); /* Alice Blue */
+   push_back_color_if_ok( bgc, QColor( 250, 235, 215 ) ); /* Antique White */
+   push_back_color_if_ok( bgc, QColor( 0, 255, 255 ) ); /* Aqua* */
+   push_back_color_if_ok( bgc, QColor( 127, 255, 212 ) ); /* Aquamarine */
+   push_back_color_if_ok( bgc, QColor( 240, 255, 255 ) ); /* Azure */
+   push_back_color_if_ok( bgc, QColor( 245, 245, 220 ) ); /* Beige */
+   push_back_color_if_ok( bgc, QColor( 255, 228, 196 ) ); /* Bisque */
+   push_back_color_if_ok( bgc, QColor( 0, 0, 0 ) ); /* Black* */
+   push_back_color_if_ok( bgc, QColor( 255, 235, 205 ) ); /* Blanched Almond */
+   push_back_color_if_ok( bgc, QColor( 0, 0, 255 ) ); /* Blue* */
+   push_back_color_if_ok( bgc, QColor( 138, 43, 226 ) ); /* Blue-Violet */
+   push_back_color_if_ok( bgc, QColor( 165, 42, 42 ) ); /* Brown */
+   push_back_color_if_ok( bgc, QColor( 222, 184, 135 ) ); /* Burlywood */
+   push_back_color_if_ok( bgc, QColor( 95, 158, 160 ) ); /* Cadet Blue */
+   push_back_color_if_ok( bgc, QColor( 127, 255, 0 ) ); /* Chartreuse */
+   push_back_color_if_ok( bgc, QColor( 210, 105, 30 ) ); /* Chocolate */
+   push_back_color_if_ok( bgc, QColor( 255, 127, 80 ) ); /* Coral */
+   push_back_color_if_ok( bgc, QColor( 100, 149, 237 ) ); /* Cornflower Blue */
+   push_back_color_if_ok( bgc, QColor( 255, 248, 220 ) ); /* Cornsilk */
+   push_back_color_if_ok( bgc, QColor( 0, 255, 255 ) ); /* Cyan */
+   push_back_color_if_ok( bgc, QColor( 0, 0, 139 ) ); /* Dark Blue */
+   push_back_color_if_ok( bgc, QColor( 0, 139, 139 ) ); /* Dark Cyan */
+   push_back_color_if_ok( bgc, QColor( 184, 134, 11 ) ); /* Dark Goldenrod */
+   push_back_color_if_ok( bgc, QColor( 169, 169, 169 ) ); /* Dark Gray */
+   push_back_color_if_ok( bgc, QColor( 0, 100, 0 ) ); /* Dark Green */
+   push_back_color_if_ok( bgc, QColor( 189, 183, 107 ) ); /* Dark Khaki */
+   push_back_color_if_ok( bgc, QColor( 139, 0, 139 ) ); /* Dark Magenta */
+   push_back_color_if_ok( bgc, QColor( 85, 107, 47 ) ); /* Dark Olive Green */
+   push_back_color_if_ok( bgc, QColor( 255, 140, 0 ) ); /* Dark Orange */
+   push_back_color_if_ok( bgc, QColor( 153, 50, 204 ) ); /* Dark Orchid */
+   push_back_color_if_ok( bgc, QColor( 139, 0, 0 ) ); /* Dark Red */
+   push_back_color_if_ok( bgc, QColor( 233, 150, 122 ) ); /* Dark Salmon */
+   push_back_color_if_ok( bgc, QColor( 143, 188, 143 ) ); /* Dark Sea Green */
+   push_back_color_if_ok( bgc, QColor( 72, 61, 139 ) ); /* Dark Slate Blue */
+   push_back_color_if_ok( bgc, QColor( 47, 79, 79 ) ); /* Dark Slate Gray */
+   push_back_color_if_ok( bgc, QColor( 0, 206, 209 ) ); /* Dark Turquoise */
+   push_back_color_if_ok( bgc, QColor( 148, 0, 211 ) ); /* Dark Violet */
+   push_back_color_if_ok( bgc, QColor( 255, 20, 147 ) ); /* Deep Pink */
+   push_back_color_if_ok( bgc, QColor( 0, 191, 255 ) ); /* Deep Sky Blue */
+   push_back_color_if_ok( bgc, QColor( 105, 105, 105 ) ); /* Dim Gray */
+   push_back_color_if_ok( bgc, QColor( 30, 144, 255 ) ); /* Dodger Blue */
+   push_back_color_if_ok( bgc, QColor( 178, 34, 34 ) ); /* Firebrick */
+   push_back_color_if_ok( bgc, QColor( 255, 250, 240 ) ); /* Floral White */
+   push_back_color_if_ok( bgc, QColor( 34, 139, 34 ) ); /* Forest Green */
+   push_back_color_if_ok( bgc, QColor( 255, 0, 255 ) ); /* Fuschia* */
+   push_back_color_if_ok( bgc, QColor( 220, 220, 220 ) ); /* Gainsboro */
+   push_back_color_if_ok( bgc, QColor( 255, 250, 250 ) ); /* Ghost White */
+   push_back_color_if_ok( bgc, QColor( 255, 215, 0 ) ); /* Gold */
+   push_back_color_if_ok( bgc, QColor( 218, 165, 32 ) ); /* Goldenrod */
+   push_back_color_if_ok( bgc, QColor( 128, 128, 128 ) ); /* Gray* */
+   push_back_color_if_ok( bgc, QColor( 0, 128, 0 ) ); /* Green* */
+   push_back_color_if_ok( bgc, QColor( 173, 255, 47 ) ); /* Green-Yellow */
+   push_back_color_if_ok( bgc, QColor( 240, 255, 240 ) ); /* Honeydew */
+   push_back_color_if_ok( bgc, QColor( 255, 105, 180 ) ); /* Hot Pink */
+   push_back_color_if_ok( bgc, QColor( 205, 92, 92 ) ); /* Indian Red */
+   push_back_color_if_ok( bgc, QColor( 255, 255, 240 ) ); /* Ivory */
+   push_back_color_if_ok( bgc, QColor( 240, 230, 140 ) ); /* Khaki */
+   push_back_color_if_ok( bgc, QColor( 230, 230, 250 ) ); /* Lavender */
+   push_back_color_if_ok( bgc, QColor( 255, 240, 245 ) ); /* Lavender Blush */
+   push_back_color_if_ok( bgc, QColor( 124, 252, 0 ) ); /* Lawn Green */
+   push_back_color_if_ok( bgc, QColor( 255, 250, 205 ) ); /* Lemon Chiffon */
+   push_back_color_if_ok( bgc, QColor( 173, 216, 230 ) ); /* Light Blue */
+   push_back_color_if_ok( bgc, QColor( 240, 128, 128 ) ); /* Light Coral */
+   push_back_color_if_ok( bgc, QColor( 224, 255, 255 ) ); /* Light Cyan */
+   push_back_color_if_ok( bgc, QColor( 238, 221, 130 ) ); /* Light Goldenrod */
+   push_back_color_if_ok( bgc, QColor( 250, 250, 210 ) ); /* Light Goldenrod Yellow */
+   push_back_color_if_ok( bgc, QColor( 211, 211, 211 ) ); /* Light Gray */
+   push_back_color_if_ok( bgc, QColor( 144, 238, 144 ) ); /* Light Green */
+   push_back_color_if_ok( bgc, QColor( 255, 182, 193 ) ); /* Light Pink */
+   push_back_color_if_ok( bgc, QColor( 255, 160, 122 ) ); /* Light Salmon */
+   push_back_color_if_ok( bgc, QColor( 32, 178, 170 ) ); /* Light Sea Green */
+   push_back_color_if_ok( bgc, QColor( 135, 206, 250 ) ); /* Light Sky Blue */
+   push_back_color_if_ok( bgc, QColor( 132, 112, 255 ) ); /* Light Slate Blue */
+   push_back_color_if_ok( bgc, QColor( 119, 136, 153 ) ); /* Light Slate Gray */
+   push_back_color_if_ok( bgc, QColor( 176, 196, 222 ) ); /* Light Steel Blue */
+   push_back_color_if_ok( bgc, QColor( 255, 255, 224 ) ); /* Light Yellow */
+   push_back_color_if_ok( bgc, QColor( 0, 255, 0 ) ); /* Lime* */
+   push_back_color_if_ok( bgc, QColor( 50, 205, 50 ) ); /* Lime Green */
+   push_back_color_if_ok( bgc, QColor( 250, 240, 230 ) ); /* Linen */
+   push_back_color_if_ok( bgc, QColor( 255, 0, 255 ) ); /* Magenta */
+   push_back_color_if_ok( bgc, QColor( 128, 0, 0 ) ); /* Maroon* */
+   push_back_color_if_ok( bgc, QColor( 102, 205, 170 ) ); /* Medium Aquamarine */
+   push_back_color_if_ok( bgc, QColor( 0, 0, 205 ) ); /* Medium Blue */
+   push_back_color_if_ok( bgc, QColor( 186, 85, 211 ) ); /* Medium Orchid */
+   push_back_color_if_ok( bgc, QColor( 147, 112, 219 ) ); /* Medium Purple */
+   push_back_color_if_ok( bgc, QColor( 60, 179, 113 ) ); /* Medium Sea Green */
+   push_back_color_if_ok( bgc, QColor( 123, 104, 238 ) ); /* Medium Slate Blue */
+   push_back_color_if_ok( bgc, QColor( 0, 250, 154 ) ); /* Medium Spring Green */
+   push_back_color_if_ok( bgc, QColor( 72, 209, 204 ) ); /* Medium Turquoise */
+   push_back_color_if_ok( bgc, QColor( 199, 21, 133 ) ); /* Medium Violet-Red */
+   push_back_color_if_ok( bgc, QColor( 25, 25, 112 ) ); /* Midnight Blue */
+   push_back_color_if_ok( bgc, QColor( 245, 255, 250 ) ); /* Mint Cream */
+   push_back_color_if_ok( bgc, QColor( 255, 228, 225 ) ); /* Misty Rose */
+   push_back_color_if_ok( bgc, QColor( 255, 228, 181 ) ); /* Moccasin */
+   push_back_color_if_ok( bgc, QColor( 255, 222, 173 ) ); /* Navajo White */
+   push_back_color_if_ok( bgc, QColor( 0, 0, 128 ) ); /* Navy* */
+   push_back_color_if_ok( bgc, QColor( 253, 245, 230 ) ); /* Old Lace */
+   push_back_color_if_ok( bgc, QColor( 128, 128, 0 ) ); /* Olive* */
+   push_back_color_if_ok( bgc, QColor( 107, 142, 35 ) ); /* Olive Drab */
+   push_back_color_if_ok( bgc, QColor( 255, 165, 0 ) ); /* Orange */
+   push_back_color_if_ok( bgc, QColor( 255, 69, 0 ) ); /* Orange-Red */
+   push_back_color_if_ok( bgc, QColor( 218, 112, 214 ) ); /* Orchid */
+   push_back_color_if_ok( bgc, QColor( 238, 232, 170 ) ); /* Pale Goldenrod */
+   push_back_color_if_ok( bgc, QColor( 152, 251, 152 ) ); /* Pale Green */
+   push_back_color_if_ok( bgc, QColor( 175, 238, 238 ) ); /* Pale Turquoise */
+   push_back_color_if_ok( bgc, QColor( 219, 112, 147 ) ); /* Pale Violet-Red */
+   push_back_color_if_ok( bgc, QColor( 255, 239, 213 ) ); /* Papaya Whip */
+   push_back_color_if_ok( bgc, QColor( 255, 218, 185 ) ); /* Peach Puff */
+   push_back_color_if_ok( bgc, QColor( 205, 133, 63 ) ); /* Peru */
+   push_back_color_if_ok( bgc, QColor( 255, 192, 203 ) ); /* Pink */
+   push_back_color_if_ok( bgc, QColor( 221, 160, 221 ) ); /* Plum */
+   push_back_color_if_ok( bgc, QColor( 176, 224, 230 ) ); /* Powder Blue */
+   push_back_color_if_ok( bgc, QColor( 128, 0, 128 ) ); /* Purple* */
+   push_back_color_if_ok( bgc, QColor( 255, 0, 0 ) ); /* Red* */
+   push_back_color_if_ok( bgc, QColor( 188, 143, 143 ) ); /* Rosy Brown */
+   push_back_color_if_ok( bgc, QColor( 65, 105, 225 ) ); /* Royal Blue */
+   push_back_color_if_ok( bgc, QColor( 139, 69, 19 ) ); /* Saddle Brown */
+   push_back_color_if_ok( bgc, QColor( 250, 128, 114 ) ); /* Salmon */
+   push_back_color_if_ok( bgc, QColor( 244, 164, 96 ) ); /* Sandy Brown */
+   push_back_color_if_ok( bgc, QColor( 46, 139, 87 ) ); /* Sea Green */
+   push_back_color_if_ok( bgc, QColor( 255, 245, 238 ) ); /* Seashell */
+   push_back_color_if_ok( bgc, QColor( 160, 82, 45 ) ); /* Sienna */
+   push_back_color_if_ok( bgc, QColor( 192, 192, 192 ) ); /* Silver* */
+   push_back_color_if_ok( bgc, QColor( 135, 206, 235 ) ); /* Sky Blue */
+   push_back_color_if_ok( bgc, QColor( 106, 90, 205 ) ); /* Slate Blue */
+   push_back_color_if_ok( bgc, QColor( 112, 128, 144 ) ); /* Slate Gray */
+   push_back_color_if_ok( bgc, QColor( 255, 250, 250 ) ); /* Snow */
+   push_back_color_if_ok( bgc, QColor( 0, 255, 127 ) ); /* Spring Green */
+   push_back_color_if_ok( bgc, QColor( 70, 130, 180 ) ); /* Steel Blue */
+   push_back_color_if_ok( bgc, QColor( 210, 180, 140 ) ); /* Tan */
+   push_back_color_if_ok( bgc, QColor( 0, 128, 128 ) ); /* Teal* */
+   push_back_color_if_ok( bgc, QColor( 216, 191, 216 ) ); /* Thistle */
+   push_back_color_if_ok( bgc, QColor( 255, 99, 71 ) ); /* Tomato */
+   push_back_color_if_ok( bgc, QColor( 64, 224, 208 ) ); /* Turquoise */
+   push_back_color_if_ok( bgc, QColor( 238, 130, 238 ) ); /* Violet */
+   push_back_color_if_ok( bgc, QColor( 208, 32, 144 ) ); /* Violet-Red */
+   push_back_color_if_ok( bgc, QColor( 245, 222, 179 ) ); /* Wheat */
+   push_back_color_if_ok( bgc, QColor( 255, 255, 255 ) ); /* White* */
+   push_back_color_if_ok( bgc, QColor( 245, 245, 245 ) ); /* White Smoke */
+   push_back_color_if_ok( bgc, QColor( 255, 255, 0 ) ); /* Yellow* */
+   push_back_color_if_ok( bgc, QColor( 154, 205, 50 ) ); /* Yellow-Green */
 }
 
 US_Hydrodyn_Saxs_Buffer::~US_Hydrodyn_Saxs_Buffer()
@@ -162,12 +307,20 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
    lbl_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_dir = new QLabel( QDir::currentDirPath(), this );
+   cb_lock_dir = new QCheckBox(this);
+   cb_lock_dir->setText(tr("Lock "));
+   cb_lock_dir->setEnabled( true );
+   cb_lock_dir->setChecked( false );
+   cb_lock_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_lock_dir->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   lbl_dir = new mQLabel( QDir::currentDirPath(), this );
    lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( lbl_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
    pb_add_files = new QPushButton(tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -236,12 +389,19 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_join = new QPushButton(tr("J"), this);
-   pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_join->setMinimumHeight( minHeight1 );
-   pb_join->setMaximumWidth ( minHeight1 * 2 );
-   pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_join, SIGNAL(clicked()), SLOT(join()));
+   pb_color_rotate = new QPushButton(tr("C"), this);
+   pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_color_rotate->setMinimumHeight(minHeight1);
+   pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
+   pb_color_rotate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
+
+   //    pb_join = new QPushButton(tr("J"), this);
+   //    pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   //    pb_join->setMinimumHeight( minHeight1 );
+   //    pb_join->setMaximumWidth ( minHeight1 * 2 );
+   //    pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
    pb_adjacent = new QPushButton(tr("Similar"), this);
    pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -333,7 +493,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_created_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_created_files->setMinimumHeight(minHeight1);
    lbl_created_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_created_dir = new mQLabel( QDir::currentDirPath(), this );
+   lbl_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_created_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
+   connect( lbl_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
 
    lb_created_files = new QListBox(this, "created_files created_files listbox" );
    lb_created_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -835,7 +1001,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
-   hbl_file_buttons_2->addWidget ( pb_join );
+   hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -871,9 +1037,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_editor_group->addWidget (frame);
    vbl_editor_group->addWidget (editor);
 
+   QHBoxLayout *hbl_dir = new QHBoxLayout( 0 );
+   hbl_dir->addWidget( cb_lock_dir );
+   hbl_dir->addWidget( lbl_dir );
+
    QBoxLayout *vbl_files = new QVBoxLayout( 0 );
    vbl_files->addWidget( lbl_files );
-   vbl_files->addWidget( lbl_dir );
+   vbl_files->addLayout( hbl_dir );
    vbl_files->addLayout( hbl_file_buttons );
    vbl_files->addLayout( hbl_file_buttons_1 );
    //   vbl_files->addLayout( hbl_file_buttons_1b );
@@ -885,6 +1055,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_empty );
    vbl_files->addLayout( hbl_signal );
    vbl_files->addWidget( lbl_created_files );
+   vbl_files->addWidget( lbl_created_dir );
    vbl_files->addWidget( lb_created_files );
    vbl_files->addWidget( lbl_selected_created );
    vbl_files->addLayout( hbl_created );
@@ -1027,7 +1198,7 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
       }
 
       switch ( QMessageBox::warning(this, 
-                                    tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                    title,
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -1558,7 +1729,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
       if ( rb_np_ask->isChecked() )
       {
          result = QMessageBox::warning(this, 
-                                       tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                       title,
                                        QString( tr( "Please note:\n\n"
                                                     "The buffer subtraction causes %1 points be non-positive\n"
                                                     "Starting at a q value of %2\n\n"
@@ -1582,7 +1753,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
                if ( rb_np_ask->isChecked() )
                {
                   QMessageBox::warning(this, 
-                                       tr("US-SOMO: SAXS Buffer Subtraction Utility"),
+                                       title,
                                        tr("Insufficient data left after cropping"));
                } else {
                   editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
@@ -1770,7 +1941,8 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
-   pb_join               ->setEnabled( files_selected_count == 2 );
+   pb_color_rotate       ->setEnabled( files_selected_count );
+   //    pb_join               ->setEnabled( files_selected_count == 2 );
    pb_join_start         ->setEnabled( files_selected_count == 2 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count );
@@ -2066,7 +2238,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
       }
 
       switch ( QMessageBox::warning(this, 
-                                    tr( "US-SOMO: SAXS Buffer Subtraction Utility Remove Files" ),
+                                    title + tr( " Remove Files" ),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -2160,6 +2332,11 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       existing_items[ lb_files->text( i ) ] = true;
    }
 
+   if ( cb_lock_dir->isChecked() )
+   {
+      QDir::setCurrent( lbl_dir->text() );
+   }
+
    QString use_dir = QDir::currentDirPath();
    
    if ( !*saxs_widget )
@@ -2171,6 +2348,10 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 
    if ( *saxs_widget )
    {
+      if ( cb_lock_dir->isChecked() )
+      {
+         saxs_window->add_to_directory_history( lbl_dir->text() );
+      }
       saxs_window->select_from_directory_history( use_dir, this );
       raise();
    }
@@ -2194,9 +2375,12 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    if ( filenames.size() )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
-      QDir::setCurrent( last_load_dir );
-      lbl_dir->setText(  QDir::currentDirPath() );
-
+      if ( !cb_lock_dir->isChecked() )
+      {
+         QDir::setCurrent( last_load_dir );
+         lbl_dir        ->setText( QDir::currentDirPath() );
+         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+      }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -2271,8 +2455,12 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
    if ( filenames.size() )
    {
       last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
-      QDir::setCurrent( last_load_dir );
-      lbl_dir->setText(  QDir::currentDirPath() );
+      if ( !cb_lock_dir->isChecked() )
+      {
+         QDir::setCurrent( last_load_dir );
+         lbl_dir        ->setText( QDir::currentDirPath() );
+         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+      }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
@@ -3195,13 +3383,25 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
       return false;
    }
 
-   if ( !QDir::setCurrent( last_load_dir ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return false;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
       return false;
    }
-   lbl_dir->setText(  QDir::currentDirPath() );
-
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -3311,7 +3511,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    ts << 
       QString( "\"Name\",\"Type; q:\",%1,\"%2%3\"\n" )
       .arg( qline.join( "," ) )
-      .arg( tr( "US-SOMO Buffer Subtraction utility output" ) )
+      .arg( title + tr( " utility output" ) )
       .arg( crop ? tr( " cropped" ) : "" );
 
    for ( int i = 0; i < (int)files.size(); i++ )
@@ -3367,18 +3567,31 @@ bool US_Hydrodyn_Saxs_Buffer::save_files( QStringList files )
 
 bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overwrite_all )
 {
-   if ( !QDir::setCurrent( last_load_dir ) )
-   {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( last_load_dir ) );
-      return false;
-   }
-   lbl_dir->setText(  QDir::currentDirPath() );
-
    if ( !f_qs.count( file ) )
    {
       editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( file ) );
       return false;
    } 
+
+   {
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return false;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      return false;
+   }
 
    QString use_filename;
    if ( f_name.count( file ) )
@@ -3407,7 +3620,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
 
    QTextStream ts( &f );
 
-   ts << QString( tr( "US-SOMO Buffer Subtraction utility output: %1\n" ) ).arg( file );
+   ts << QString( title + tr( " output: %1\n" ) ).arg( file );
 
    bool use_errors = ( f_errors.count( file ) && 
                        f_errors[ file ].size() > 0 );
@@ -3580,12 +3793,12 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
       if ( !quiet && any_different )
       {
          QMessageBox::warning( this, 
-                              tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
-                              tr( "There are unsaved updates in the open Solution Concentration window\n"
-                                  "This will cause the concentration values used by the current calculation\n"
-                                  "to differ from those shown in the Solution Concentration window\n"
-                                  "You probably want to save the values in the Solution Concentration window and repeat the computation."
-                                  ) );
+                               title,
+                               tr( "There are unsaved updates in the open Solution Concentration window\n"
+                                   "This will cause the concentration values used by the current calculation\n"
+                                   "to differ from those shown in the Solution Concentration window\n"
+                                   "You probably want to save the values in the Solution Concentration window and repeat the computation."
+                                   ) );
       }
    }
    return concs;
@@ -4298,7 +4511,7 @@ void US_Hydrodyn_Saxs_Buffer::join()
       // ask for overlap point
       bool ok;
       double res = QInputDialog::getDouble(
-                                           tr( "US-SOMO: Saxs Buffer Subtraction: Join" ),
+                                           title + tr( ": Join" ),
                                            QString( tr( "The curves %1 and %2\n"
                                                         "have an overlap q-range of %3 to %4.\n"
                                                         "Enter the join q-value:" ) )
@@ -4684,13 +4897,14 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2() )
+       maxy > plot_dist_zoomer->zoomRect().y2()
 #else
        minx < plot_dist_zoomer->zoomRect().left()  ||
        maxx > plot_dist_zoomer->zoomRect().right() ||
        miny < plot_dist_zoomer->zoomRect().top()   ||
-       maxy > plot_dist_zoomer->zoomRect().bottom() )
+       maxy > plot_dist_zoomer->zoomRect().bottom()
 #endif
+       )
    {
       all_lefts_visible = false;
    }
@@ -5430,7 +5644,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    update_files();
 }
 
-
 void US_Hydrodyn_Saxs_Buffer::view()
 {
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -5441,7 +5654,7 @@ void US_Hydrodyn_Saxs_Buffer::view()
 
          QString text;
 
-         text += QString( tr( "US-SOMO Buffer Subtraction utility output: %1\n" ) ).arg( file );
+         text += QString( title + tr( " output: %1\n" ) ).arg( file );
 
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
@@ -5792,7 +6005,10 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    // turn basename into regexp \\d{2,} into \\d+
    // load unloaded files found with match
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentDirPath() );
+   if ( !cb_lock_dir->isChecked() )
+   {
+      lbl_dir->setText( QDir::currentDirPath() );
+   }
    QDir qd;
    add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
 }
@@ -6245,7 +6461,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       if ( rb_np_ask->isChecked() )
       {
          result = QMessageBox::warning(this, 
-                                       tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                       title,
                                        QString( tr( "Please note:\n\n"
                                                     "The buffer subtraction causes %1 points be non-positive\n"
                                                     "Starting at a q value of %2\n\n"
@@ -6269,7 +6485,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
                if ( rb_np_ask->isChecked() )
                {
                   QMessageBox::warning(this, 
-                                       tr("US-SOMO: SAXS Buffer Subtraction Utility"),
+                                       title,
                                        tr("Insufficient data left after cropping"));
                } else {
                   editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
@@ -7336,7 +7552,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
    if ( le_join_offset->text().toDouble() != 0e0 )
    {
       QMessageBox::information( this,
-                                tr( "US-SOMO: SAXS Buffer Subtraction Utility" ),
+                                title,
                                 tr( 
                                    "You have a non-zero linear offset\n"
                                    "Quoting P. Vachette:\n"
@@ -7510,4 +7726,66 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
 
    update_enables();
 
+}
+
+void US_Hydrodyn_Saxs_Buffer::color_rotate()
+{
+   vector < QColor >  new_plot_colors;
+
+   for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
+   {
+      new_plot_colors.push_back( plot_colors[ i ] );
+   }
+   new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_colors = new_plot_colors;
+   plot_files();
+}
+
+void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
+{
+   double sum = 
+      fabs( bg.red  () - set.red  () ) +
+      fabs( bg.green() - set.green() ) +
+      fabs( bg.blue () - set.blue () );
+   if ( sum > 100 )
+   {
+      plot_colors.push_back( set );
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::dir_pressed()
+{
+   QString s = QFileDialog::getExistingDirectory(
+                                                 lbl_dir->text(),
+                                                 this,
+                                                 "get existing directory",
+                                                 tr( "Choose a new base directory" ),
+                                                 true );
+   if ( !s.isEmpty() )
+   {
+      QDir::setCurrent( s );
+      lbl_dir->setText(  QDir::currentDirPath() );
+      if ( *saxs_widget )
+      {
+         saxs_window->add_to_directory_history( s );
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
+{
+   QString s = QFileDialog::getExistingDirectory(
+                                                 lbl_dir->text(),
+                                                 this,
+                                                 "get existing directory",
+                                                 tr( "Choose a new base directory for saving files" ),
+                                                 true );
+   if ( !s.isEmpty() )
+   {
+      lbl_created_dir->setText( s );
+      if ( *saxs_widget )
+      {
+         saxs_window->add_to_directory_history( s );
+      }
+   }
 }
