@@ -9119,13 +9119,24 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             f_gaussians  [ name ] = tmp;
          }
       }
-      add_plot( QString( "sumI_t%1" ).arg( tv[ t ] ), qv, gsI, gse, false, false );
-      add_plot( QString( "sumG_t%1" ).arg( tv[ t ] ), qv, gsG, gse, false, false );
+      add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
+      add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
    }
 
    progress->setProgress( 1, 1 );
    running = false;
    update_enables();
+}
+
+QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
+{
+   unsigned int len = QString( "%1" ).arg( max ).length();
+   QString      s   = QString( "%1" ).arg( val );
+   while ( s.length() < len )
+   {
+      s = "0" + s;
+   }
+   return s;
 }
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_start()
