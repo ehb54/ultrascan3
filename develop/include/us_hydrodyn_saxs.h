@@ -242,6 +242,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_saxs_1d;
       QPushButton *pb_saxs_2d;
       QPushButton *pb_guinier_analysis;
+      QPushButton *pb_guinier_cs;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
       QPushButton *pb_select_saxs_file;
@@ -729,6 +730,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_saxs_sans();
 
       void run_guinier_analysis();
+      void run_guinier_cs();
       QString saxs_filestring();
       QString sprr_filestring();
       void set_create_native_saxs();

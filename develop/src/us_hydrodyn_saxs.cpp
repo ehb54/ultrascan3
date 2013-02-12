@@ -763,6 +763,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
 
+   pb_guinier_cs = new QPushButton("CS-Guinier", this);
+   pb_guinier_cs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_guinier_cs->setMinimumHeight(minHeight1);
+   pb_guinier_cs->setEnabled(true);
+   pb_guinier_cs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_guinier_cs, SIGNAL(clicked()), SLOT(run_guinier_cs()));
+
 #if defined(ADD_GUINIER)      
       lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
       Q_CHECK_PTR(lbl_guinier_cutoff);
@@ -1212,6 +1219,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
 
    hbl_various_0->addWidget(pb_guinier_analysis);
+   hbl_various_0->addWidget(pb_guinier_cs);
    background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;
 
@@ -5757,6 +5765,9 @@ void US_Hydrodyn_Saxs::clear_guinier()
    plotted_guinier_y.clear();
 }
 
+void US_Hydrodyn_Saxs::run_guinier_cs()
+{
+}
 
 void US_Hydrodyn_Saxs::run_guinier_analysis()
 {
