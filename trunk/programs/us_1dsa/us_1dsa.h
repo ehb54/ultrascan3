@@ -6,6 +6,7 @@
 #include "us_noise_loader.h"
 #include "us_resplot.h"
 #include "us_mlplot.h"
+#include "us_model_record.h"
 #include "us_dataIO2.h"
 #include "us_db2.h"
 #include "us_astfem_rsa.h"
@@ -46,7 +47,8 @@ class US_1dsa : public US_AnalysisBase2
       US_Noise*                   mw_ri_noise();
       QPointer< QTextEdit >       mw_status_text();
 //      QPointer< QStringList >     mw_model_stats();
-      QStringList*     mw_model_stats();
+      QStringList*                mw_model_stats();
+      QVector< ModelRecord >*     mw_mrecs();
 
    private:
       QGridLayout*         progressLayout;
@@ -65,6 +67,8 @@ class US_1dsa : public US_AnalysisBase2
       QPointer< US_PlotControl >      eplotcd;
       QPointer< US_AnalysisControl >  analcd;
       QPointer< US_MLinesPlot >       mlplotd;
+
+      QVector< ModelRecord >          mrecs;
 
       US_Model             model;
       US_Noise             ri_noise_in;

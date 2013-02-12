@@ -30,6 +30,8 @@ typedef struct work_packet_s
 
    double  str_k;      // model start k value
    double  end_k;      // model end   k value
+   double  par1;       // sigmoid model par1 value
+   double  par2;       // sigmoid model par2 value
 
    QVector< US_Solute >     isolutes;  // input solutes
    QVector< US_Solute >     csolutes;  // computed solutes

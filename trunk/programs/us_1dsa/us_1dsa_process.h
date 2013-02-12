@@ -12,6 +12,7 @@
 #include "us_db2.h"
 #include "us_solute.h"
 #include "us_worker.h"
+#include "us_model_record.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -30,36 +31,6 @@ class US_1dsaProcess : public QObject
    Q_OBJECT
 
    public:
-
-      //! Class for holding information on computed models from 1dsa runs
-      class ModelRecord
-      {
-         public:
-            int                  taskx;      // Task index (submit order)
-            double               str_k;      // Start k value
-            double               end_k;      // End k value
-            double               variance;   // Variance value
-            double               rmsd;       // RMSD value
-            QVector< US_Solute > isolutes;   // Input solutes
-            QVector< US_Solute > csolutes;   // Computed solutes
-            QVector< double >    ti_noise;   // Computed TI noise
-            QVector< double >    ri_noise;   // Computed RI noise
-
-            US_Model             model;      // Computed model
-            US_DataIO2::RawData  sim_data;   // Simulation data from this fit
-            US_DataIO2::RawData  residuals;  // Residuals data from this fit
-
-            //! Constructor for model record class
-            ModelRecord() {};
-
-            //! A test for ordering model descriptions. Sort by variance.
-            bool operator< ( const ModelRecord& mrec ) const
-            {
-               return ( variance < mrec.variance );
-            }
-
-      };
-
       //! The state of a task
       enum TaskState  { READY, WORKING, ABORTED };
 
@@ -89,11 +60,11 @@ class US_1dsaProcess : public QObject
       //! \param da_rin  Radially-invariant noise (or null)
       //! \param bm_ndx  Best model index
       //! \param report  Mrecs report stringlist
-      //! \param elitexs Elite (top 1/3) indexes
+      //! \param mrecs   Model record vector
       //! \returns       Success flag:  true if successful
       bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
                         US_Model*, US_Noise*, US_Noise*, int&,
-                        QStringList&, QVector< int >& );
+                        QStringList&, QVector< ModelRecord >& );
 
       void stop_fit(       void );
       int  estimate_steps( int  );
@@ -177,7 +148,6 @@ private:
       void submit_job   ( WorkPacket&, int );
       void free_worker  ( int  );
       void model_statistics( QVector< ModelRecord >&, QStringList& );
-      void elite_indexes   ( QVector< ModelRecord >&, QVector< int >& );
       QString pmessage_head( void );
       WorkPacket next_job  ( void );
 };

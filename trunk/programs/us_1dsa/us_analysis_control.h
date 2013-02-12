@@ -35,8 +35,14 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           grtype;
       int           bmndx;
       int           nkpts;
+      int           nlpts;
       int           ctype;
-      double        f_inc;
+      int           nlmodl;
+      double        smin;
+      double        smax;
+      double        fmin;
+      double        fmax;
+      double        finc;
       double        varimin;
 
       QHBoxLayout*  mainLayout;
@@ -44,6 +50,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       QGridLayout*  optimizeLayout;
 
       QList< US_SolveSim::DataSet* >&  dsets;
+
+      QVector< ModelRecord >           mrecs;
 
       US_DataIO2::EditedData*          edata;
       US_DataIO2::RawData*             sdata;
@@ -54,8 +62,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       US_SimulationParameters*         sparms;
       QPointer< QTextEdit    >         mw_stattext;
       QStringList*                     mw_modstats;
-
-      QVector< int >                   elitexs;
+      QVector< ModelRecord >*          mw_mrecs;
 
       QWidget*                         parentw;
       US_1dsaProcess*                  processor;

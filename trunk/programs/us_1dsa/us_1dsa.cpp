@@ -659,6 +659,7 @@ US_Noise*                 US_1dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                 US_1dsa::mw_ri_noise()     { return &ri_noise; }
 QPointer< QTextEdit   >   US_1dsa::mw_status_text()  { return te_status;    }
 QStringList*              US_1dsa::mw_model_stats()  { return &model_stats; }
+QVector< ModelRecord >*   US_1dsa::mw_mrecs()        { return &mrecs;       }
 
 // Open residuals plot window
 void US_1dsa::open_resplot()
