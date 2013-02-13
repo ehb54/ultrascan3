@@ -1170,8 +1170,8 @@ void US_PlotCurveConfig::apply( void )
          }
       }
 
-      plot->replot();
    }
+   plot->replot();
 }
 
 //**** Custom class to display curve configuration  ********

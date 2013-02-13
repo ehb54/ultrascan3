@@ -5,8 +5,13 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
+#include "us_colorgradIO.h"
 
 #include <qwt_legend.h>
+#include <qwt_double_interval.h>
+#include <qwt_scale_widget.h>
+#include <qwt_color_map.h>
+#include <qwt_scale_draw.h>
 
 // constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
@@ -19,14 +24,15 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    setWindowTitle( tr( "1-D Spectrum Analysis Model Lines Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
+DbgLv(1) << "MLP: IN";
    QSize p1size( 560, 480 );
 
    dbg_level       = US_Settings::us_debug();
    model           = 0;
-   le_fact         = 1.5;
-   me_fact         = 1.3;
-   he_fact         = 1.1;
-   mp_fact         = 0.30;
+   rmsd_best       = 0.0;
+   rmsd_worst      = 0.0;
+   rmsd_elite      = 0.0;
+   rmsd_visib      = 0.0;
 
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
@@ -42,41 +48,39 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QLabel* lb_nlines      = us_label(  tr( "Lines (Models):" ) );
    QLabel* lb_npoints     = us_label(  tr( "Points per Line:" ) );
    QLabel* lb_kincr       = us_label(  tr( "f/f0 Increment:" ) );
-   QLabel* lb_legend      = us_banner( tr( "Model Line Color Legend" ) );
-           lb_lefact      = us_label(  tr( "Low-Elite Factor" ) );
-           lb_mefact      = us_label(  tr( "Mid-Elite Factor" ) );
-           lb_hefact      = us_label(  tr( "High-Elite Factor" ) );
-           lb_mpfact      = us_label(  tr( "Mid-Poor Factor" ) );
-   QTextEdit* te_legend   = us_textedit();
-   te_legend->setTextColor( Qt::blue );
-   te_legend->setText( 
-         tr( " Red -> Best;\n"
-             " Reddish -> High Elite;\n"
-             " Bluish -> Mid Elite;\n"
-             " Greenish -> Low Elite;\n"
-             " Yellow -> Non Elite / Undetermined;\n"
-             " Gray -> Poorest (Highest) RMSD;\n"
-             " Cyan -> Best Computed Solutes." ) );
-   us_setReadOnly( te_legend, true );
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
-   QFontMetrics fm( font );
-   te_legend->setMaximumHeight( fm.lineSpacing() * 8 );
+           lb_rmsdhd      = us_label(  tr( "RMSD Cuts" ) );
+           lb_ltypeh      = us_label(  tr( "Line Type" ) );
+           lb_counth      = us_label(  tr( "Counts" ) );
+           lb_neline      = us_label(  tr( "Elite:" ) );
+           lb_nsline      = us_label(  tr( "Solutes:" ) );
+           lb_nvline      = us_label(  tr( "Visible:" ) );
+           lb_rmsdb       = us_label(  tr( "Overall Best Fit:" ) );
+           lb_rmsdw       = us_label(  tr( "Overall Worst Fit:" ) );
+           pb_colmap      = us_pushbutton( tr( "Color Map" ) );
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   int    nline = nkpts * nkpts;
-   le_mtype     = us_lineedit( tr( "Straight Line" ), -1, true );
-   le_nlines    = us_lineedit( QString::number( nline ), -1, true );
-   le_npoints   = us_lineedit( QString::number( nlpts ), -1, true );
-   le_kincr     = us_lineedit( QString::number( finc  ), -1, true );
-   ct_lefact    = us_counter( 3, 1.01, 10.0, le_fact );
-   ct_mefact    = us_counter( 3, 1.01, 10.0, me_fact );
-   ct_hefact    = us_counter( 3, 1.01, 10.0, he_fact );
-   ct_mpfact    = us_counter( 3, 0.00, 1.00, mp_fact );
-   ct_lefact->setStep( 0.001 );
-   ct_mefact->setStep( 0.001 );
-   ct_hefact->setStep( 0.001 );
-   ct_mpfact->setStep( 0.001 );
+   nmodel       = nkpts * nkpts;
+   neline       = qMax( 2, nmodel / 10 );
+   nsline       = qMax( 1, neline / 4  );
+   nvline       = nmodel;
+DbgLv(1) << "RP:  nkpts nmodel" << nkpts << nmodel;
+   le_mtype     = us_lineedit( tr( "Straight Line" ),     -1, true );
+   le_nlines    = us_lineedit( QString::number( nmodel ), -1, true );
+   le_npoints   = us_lineedit( QString::number( nlpts  ), -1, true );
+   le_kincr     = us_lineedit( QString::number( finc   ), -1, true );
+   le_rmsdb     = us_lineedit( QString::number( rmsd_best   ), -1, true );
+   le_rmsdw     = us_lineedit( QString::number( rmsd_worst  ), -1, true );
+   le_rmsde     = us_lineedit( QString::number( rmsd_elite  ), -1, true );
+   le_rmsds     = us_lineedit( QString::number( rmsd_solut  ), -1, true );
+   le_rmsdv     = us_lineedit( QString::number( rmsd_visib  ), -1, true );
+   ct_neline    = us_counter( 2, 1, nmodel, neline );
+   ct_nsline    = us_counter( 2, 1, nmodel, nsline );
+   ct_nvline    = us_counter( 2, 1, nmodel, nvline );
+   ct_neline->setStep( 1 );
+   ct_nsline->setStep( 1 );
+   ct_nvline->setStep( 1 );
+   le_colmap    = us_lineedit( cmapname,                       -1, true );
 
    if ( ctype == 1  ||  ctype == 2 )
    {
@@ -84,43 +88,74 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
       le_kincr->setText( QString::number( nkpts ) );
    }
 
-   int row      = 0;
-   pltctrlsLayout->addWidget( lb_datctrls, row++, 0, 1, 2 );
-   pltctrlsLayout->addWidget( lb_mtype,    row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( le_mtype,    row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_nlines,   row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( le_nlines,   row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_npoints,  row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( le_npoints,  row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( le_kincr,    row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_lefact,   row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( ct_lefact,   row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_mefact,   row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( ct_mefact,   row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_hefact,   row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( ct_hefact,   row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_mpfact,   row,   0, 1, 1 );
-   pltctrlsLayout->addWidget( ct_mpfact,   row++, 1, 1, 1 );
-   pltctrlsLayout->addWidget( lb_legend,   row++, 0, 1, 2 );
-   pltctrlsLayout->addWidget( te_legend,   row++, 0, 1, 2 );
+   // Set the default color map (rainbow)
+   defaultColorMap();
+
+   // Adjust the size of line counters and rmsd text
+   lb_nvline->adjustSize();
+   QFont        font( US_GuiSettings::fontFamily(),
+                      US_GuiSettings::fontSize() );
+   QFontMetrics fmet( font );
+   int  fwidth   = fmet.maxWidth();
+   int  rheight  = lb_nvline->height();
+   int  cminw    = fwidth * ( nmodel < 1000 ? 6 : 7 );
+   int  csizw    = cminw + fwidth;
+   int  tminw    = cminw;
+   int  tsizw    = csizw;
+   ct_neline->resize( rheight, csizw );
+   ct_nsline->resize( rheight, csizw );
+   ct_nvline->resize( rheight, csizw );
+   ct_neline->setMinimumWidth( cminw );
+   ct_nsline->setMinimumWidth( cminw );
+   ct_nvline->setMinimumWidth( cminw );
+   le_rmsde ->resize( rheight, tsizw );
+   le_rmsds ->resize( rheight, tsizw );
+   le_rmsdv ->resize( rheight, tsizw );
+   le_rmsde ->setMinimumWidth( tminw );
+   le_rmsds ->setMinimumWidth( tminw );
+   le_rmsdv ->setMinimumWidth( tminw );
+DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
+
+   // Add elements to the controls layout
+   int  row      = 0;
+   pltctrlsLayout->addWidget( lb_datctrls, row++, 0, 1, 6 );
+   pltctrlsLayout->addWidget( lb_mtype,    row,   0, 1, 3 );
+   pltctrlsLayout->addWidget( le_mtype,    row++, 3, 1, 3 );
+   pltctrlsLayout->addWidget( lb_nlines,   row,   0, 1, 3 );
+   pltctrlsLayout->addWidget( le_nlines,   row++, 3, 1, 3 );
+   pltctrlsLayout->addWidget( lb_npoints,  row,   0, 1, 3 );
+   pltctrlsLayout->addWidget( le_npoints,  row++, 3, 1, 3 );
+   pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 3 );
+   pltctrlsLayout->addWidget( le_kincr,    row++, 3, 1, 3 );
+   pltctrlsLayout->addWidget( lb_ltypeh,   row,   0, 1, 2 );
+   pltctrlsLayout->addWidget( lb_counth,   row,   2, 1, 2 );
+   pltctrlsLayout->addWidget( lb_rmsdhd,   row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( lb_neline,   row,   0, 1, 2 );
+   pltctrlsLayout->addWidget( ct_neline,   row,   2, 1, 2 );
+   pltctrlsLayout->addWidget( le_rmsde,    row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( lb_nsline,   row,   0, 1, 2 );
+   pltctrlsLayout->addWidget( ct_nsline,   row,   2, 1, 2 );
+   pltctrlsLayout->addWidget( le_rmsds,    row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( lb_nvline,   row,   0, 1, 2 );
+   pltctrlsLayout->addWidget( ct_nvline,   row,   2, 1, 2 );
+   pltctrlsLayout->addWidget( le_rmsdv,    row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( lb_rmsdb,    row,   0, 1, 4 );
+   pltctrlsLayout->addWidget( le_rmsdb,    row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( lb_rmsdw,    row,   0, 1, 4 );
+   pltctrlsLayout->addWidget( le_rmsdw,    row++, 4, 1, 2 );
+   pltctrlsLayout->addWidget( pb_colmap,   row,   0, 1, 2 );
+   pltctrlsLayout->addWidget( le_colmap,   row++, 2, 1, 4 );
 //   row         += 7;
    if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
    else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
    else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
 
-   bool fact_vis = ( model != 0 );
-   lb_lefact->setVisible( fact_vis );
-   ct_lefact->setVisible( fact_vis );
-   lb_mefact->setVisible( fact_vis );
-   ct_mefact->setVisible( fact_vis );
-   lb_hefact->setVisible( fact_vis );
-   ct_hefact->setVisible( fact_vis );
-   lb_mpfact->setVisible( fact_vis );
-   ct_mpfact->setVisible( fact_vis );
+   // Hide the color items for now
+   showColorItems( false );
 
    buttonsLayout ->addWidget( pb_close );
 
+   // Complete layouts and set up signals/slots
    plotLayout1 = new US_Plot( data_plot1,
          tr( "Model Lines" ),
          tr( "Sedimentation Coefficient (x 1e13)" ),
@@ -137,38 +172,43 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
 
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
-   mainLayout->setStretchFactor( leftLayout,  2 );
+   mainLayout->setStretchFactor( leftLayout,  3 );
    mainLayout->setStretchFactor( rightLayout, 5 );
 
-   connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT  ( close_all() ) );
-   connect( ct_lefact, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( updateLeFact( double ) ) );
-   connect( ct_mefact, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( updateMeFact( double ) ) );
-   connect( ct_hefact, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( updateHeFact( double ) ) );
-   connect( ct_mpfact, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( updateMpFact( double ) ) );
+   connect( ct_neline, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( updateElite  ( double ) ) );
+   connect( ct_nsline, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( updateSolutes( double ) ) );
+   connect( ct_nvline, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( updateVisible( double ) ) );
+   connect( pb_colmap, SIGNAL( clicked()        ),
+            this,      SLOT  ( selectColorMap() ) );
+   connect( pb_close,  SIGNAL( clicked()        ),
+            this,      SLOT  ( close_all()      ) );
 
 DbgLv(1) << "RP:  p1size" << p1size;
    data_plot1->resize( p1size );
+   ct_neline ->resize( rheight, csizw );
+   ct_nsline ->resize( rheight, csizw );
+   ct_nvline ->resize( rheight, csizw );
    setAttribute( Qt::WA_DeleteOnClose, true );
+   adjustSize();
+DbgLv(1) << "RP:   actual csizw" << ct_nvline->width();
 }
 
-// close button clicked
+// Close button clicked
 void US_MLinesPlot::close_all()
 {
    close();
 }
 
-// plot the data
+// Plot the data
 void US_MLinesPlot::plot_data()
 {
    data_plot1->detachItems();
    data_plot1->clear();
 
-   bool   got_best  = ( model != 0  &&  bmndx >= 0 );
+   bool   got_best  = ( model != 0  &&  bmndx >= 0 );   // Got best model?
 DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
 
    us_grid( data_plot1 );
@@ -189,55 +229,44 @@ DbgLv(1) << "RP:PD AxisScale RTN";
    QPen    pen_plot( US_GuiSettings::plotCurve(), 1 );
 
 DbgLv(1) << "RP:PD   got_best" << got_best;
-DbgLv(1) << "RP:PD (2)smin smax" << smin << smax;
+DbgLv(1) << "RP:PD nmodel mrecs_size" << nmodel << nmodl;
 
    if ( got_best )
    { // Plot lines after best and sorted model records have been produced
 DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
-      le_fact       = ct_lefact->value();
-      me_fact       = ct_mefact->value();
-      he_fact       = ct_hefact->value();
-      mp_fact       = ct_mpfact->value();
-      best_rmsd     = mrecs[ 0         ].rmsd;
-      worst_rmsd    = mrecs[ nmodl - 1 ].rmsd;
-DbgLv(1) << "RP:PD  best worst" << best_rmsd << worst_rmsd;
-      low_elite     = best_rmsd * le_fact;
-      mid_elite     = best_rmsd * me_fact;
-      high_elite    = best_rmsd * he_fact;
-      mid_poor      = low_elite + ( worst_rmsd - low_elite ) * mp_fact;
-DbgLv(1) << "RP:PD  l,m,h elite" << low_elite << mid_elite << high_elite;
-DbgLv(1) << "RP:PD   mid_poor" << mid_poor;
-DbgLv(1) << "RP:PD (3)smin smax" << smin << smax;
+      rmsd_best     = mrecs[ 0          ].rmsd;            // Get RMSDs
+      rmsd_worst    = mrecs[ nmodel - 1 ].rmsd;
+      rmsd_elite    = mrecs[ neline - 1 ].rmsd;
+      rmsd_solut    = mrecs[ nsline - 1 ].rmsd;
+      rmsd_visib    = mrecs[ nvline - 1 ].rmsd;
+      le_rmsdb->setText( QString::number( rmsd_best  ) );  // Document RMSDs
+      le_rmsdw->setText( QString::number( rmsd_worst ) );
+      le_rmsde->setText( QString::number( rmsd_elite ) );
+      le_rmsds->setText( QString::number( rmsd_solut ) );
+      le_rmsdv->setText( QString::number( rmsd_visib ) );
 
-      QColor colr_he( Qt::red );
-      QColor colr_me( Qt::blue );
-      QColor colr_le( Qt::green );
-      QColor colr_hp( US_GuiSettings::plotCurve() );
-      QColor colr_lp( 160, 160, 160 );
-      QPen   pen_red(  Qt::red, 3.0 );
-      QPen   pen_heli( colr_he, 2 );
-      QPen   peh_meli( colr_me, 2 );
-      QPen   pen_leli( colr_le, 2 );
-      QPen   pen_hipo( colr_hp, 1 );
-      QPen   pen_lopo( colr_lp, 1 );
-      QPen   pen_gray( QColor( 160, 160, 160 ),     1 );
-      int    ired_he = colr_he.red();
-      int    igrn_he = colr_he.green();
-      int    iblu_he = colr_he.blue();
-      int    ired_me = colr_me.red();
-      int    igrn_me = colr_me.green();
-      int    iblu_me = colr_me.blue();
-      int    ired_le = colr_le.red();
-      int    igrn_le = colr_le.green();
-      int    iblu_le = colr_le.blue();
-      int    ired_hp = colr_hp.red();
-      int    igrn_hp = colr_hp.green();
-      int    iblu_hp = colr_hp.blue();
-      int    ired, igrn, iblu;
+      QFont             afont = data_plot1->axisTitle( QwtPlot::yLeft ).font();
+      QwtDoubleInterval cdrange( rmsd_best, rmsd_elite );
+      QwtScaleWidget*   rightAxis = data_plot1->axisWidget( QwtPlot::yRight );
+      QwtLinearColorMap revcmap   = reverseColorMap();
 
-      // Determine maximum concentration in 10 best models
+      // Set up the right-side axis with the color map
+      rightAxis->setColorBarEnabled( true );
+      rightAxis->setColorMap       ( cdrange, revcmap );
+      data_plot1->enableAxis  ( QwtPlot::yRight, true );
+      data_plot1->axisTitle   ( QwtPlot::yRight ).setFont( afont );
+      data_plot1->setAxisTitle( QwtPlot::yRight, tr( "RMSD" ) );
+      data_plot1->setAxisScale( QwtPlot::yRight, rmsd_best, rmsd_elite );
+
+      QColor c_white( Qt::white );                    // Color white
+      QPen   pen_best( colormap->color2(), 3 );       // Pen for best line
+      QPen   pen_gray( QColor(  64,  64,  64 ), 1 );  // Pen for gray lines
+      int    eloffs   = neline - 1;                   // Elite count offset
+      double elrange  = (double)eloffs;               // Elite line count range
+
+      // Determine maximum concentration in models with solutes to display
       double max_conc = 0.0;
-      for ( int ii = 0; ii < qMin( nmodl, 10 ); ii++ )
+      for ( int ii = 0; ii < nsline; ii++ )
       {
          for ( int kk = 0; kk < mrecs[ ii ].csolutes.size(); kk++ )
          {
@@ -246,56 +275,37 @@ DbgLv(1) << "RP:PD (3)smin smax" << smin << smax;
       }
 DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 
-      for ( int ii = ( nmodl - 1 ); ii >= 0; ii-- )
-      { // Loop over model records from worst (highest) rmsd to best
-         double rmsd_rec  = mrecs[ ii ].rmsd;
-         title   = tr( "Curve " ) + QString::number( ii );
-         curv    = us_curve( data_plot1, title );
+      // Draw the lines and solute points
+
+      for ( int ii = ( nmodel - 1 ); ii >= 0; ii-- )
+      { // Loop over model records from worst (highest rmsd) to best
+
+         // Skip line processing if beyond visible count
+         if ( ii >= nvline )
+            continue;
+
 //DbgLv(1) << "RP:PD    ii" << ii << "rmsd_rec" << rmsd_rec;
 
-         if ( rmsd_rec >= mid_poor )
-         { // Poorest (highest) RMSD:  gray line
-            curv->setPen( pen_gray );
+         if ( ii == 0 )
+         { // Best:  color with top color and use wider line
+            title   = tr( "Best Curve " ) + QString::number( ii );
+            curv    = us_curve( data_plot1, title );
+            curv->setPen  ( pen_best );    // Red
          }
 
-         else if ( rmsd_rec > low_elite )
-         { // Non-elite, low-poor RMSD:  default (yellow?) line
-            curv->setPen( pen_plot );
-         }
-
-         else if ( rmsd_rec > mid_elite )
-         { // Between low- and mid-elite:  greenish line
-            double crange = low_elite - mid_elite;
-            double cfrac  = low_elite - rmsd_rec;
-            ired  = ired_hp + ( ired_le - ired_hp ) * cfrac / crange;
-            igrn  = igrn_hp + ( igrn_le - igrn_hp ) * cfrac / crange;
-            iblu  = iblu_hp + ( iblu_le - iblu_hp ) * cfrac / crange;
-            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
-         }
-
-         else if ( rmsd_rec > high_elite )
-         { // Between mid- and high-elite:  bluish line
-            double crange = mid_elite - high_elite;
-            double cfrac  = mid_elite - rmsd_rec;
-            ired  = ired_le + ( ired_me - ired_le ) * cfrac / crange;
-            igrn  = igrn_le + ( igrn_me - igrn_le ) * cfrac / crange;
-            iblu  = iblu_le + ( iblu_me - iblu_le ) * cfrac / crange;
-            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
-         }
-
-         else if ( ii != 0 )
-         { // Between high_elite and best:  reddish line
-            double crange = high_elite - best_rmsd;
-            double cfrac  = high_elite - rmsd_rec;
-            ired  = ired_me + ( ired_he - ired_me ) * cfrac / crange;
-            igrn  = igrn_me + ( igrn_he - igrn_me ) * cfrac / crange;
-            iblu  = iblu_me + ( iblu_he - iblu_me ) * cfrac / crange;
-            curv->setPen( QPen( QColor( ired, igrn, iblu ), 2 ) );
+         else if ( ii < neline )
+         { // Elite:  color according to position in elite range
+            title   = tr( "Elite Curve " ) + QString::number( ii );
+            curv    = us_curve( data_plot1, title );
+            double position = (double)( eloffs - ii ) / elrange;
+            curv->setPen( QPen( positionColor( position ), 2 ) );
          }
 
          else
-         { // The best RMSD:  red
-            curv->setPen  ( pen_heli );    // Red
+         { // Non-elite:  color gray
+            title   = tr( "Curve " ) + QString::number( ii );
+            curv    = us_curve( data_plot1, title );
+            curv->setPen( pen_gray );
          }
 
          int klpts   = nlpts;
@@ -323,21 +333,28 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 //DbgLv(1) << "RP:PD   klpts" << klpts;
          curv->setData ( xx, yy, klpts );
 
-         if ( rmsd_rec < mid_elite )
-         { // For mid and high elite, plot the solute points
+         if ( ii < nsline )
+         { // If within solutes-lines count, plot the solute points
             int ncomp   = mrecs[ ii ].csolutes.size();
             for ( int kk = 0; kk < ncomp; kk++ )
             {
-               double xv  = mrecs[ ii ].csolutes[ kk ].s * 1.0e+13;
-               double yv  = mrecs[ ii ].csolutes[ kk ].k;
-               double cv  = mrecs[ ii ].csolutes[ kk ].c;
-               int    szd = qMax( 2, qRound( 9.0 * cv / max_conc ) );
-               title      = tr( "ElitePoint " ) + QString::number( ii )
-                            + " " + QString::number( kk );
-               curv       = us_curve( data_plot1, title );
-               curv->setPen  ( QPen( Qt::cyan, szd ) );
-               curv->setStyle( QwtPlotCurve::Dots );
-               curv->setData ( &xv, &yv, 1 );
+               double xv   = mrecs[ ii ].csolutes[ kk ].s * 1.0e+13;
+               double yv   = mrecs[ ii ].csolutes[ kk ].k;
+               double cv   = mrecs[ ii ].csolutes[ kk ].c;
+               double cfra = cv / max_conc;
+               int    szd  = qMax( 2, qRound( 9.0 * cfra ) );
+               title       = tr( "Solute Curve " ) + QString::number( ii )
+                             + " Point " + QString::number( kk );
+               curv        = us_curve( data_plot1, title );
+               QwtSymbol symbol;
+               symbol.setPen  ( c_white );
+               symbol.setSize ( szd );
+               symbol.setStyle( QwtSymbol::Ellipse );
+               symbol.setBrush( c_white );
+
+               curv->setStyle ( QwtPlotCurve::NoCurve );
+               curv->setSymbol( symbol );
+               curv->setData  ( &xv, &yv, 1 );
             }
 //DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
 // << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
@@ -350,7 +367,7 @@ DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
       for ( int ii = 0; ii < nmodl; ii++ )
       {
          for ( int kk = 0; kk < nlpts; kk++ )
-         {
+         { // Accumulate the curve points
             xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
             yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
          }
@@ -362,10 +379,7 @@ DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
       } // END: model lines loop
    } // END: pre-fit lines
 
-DbgLv(1) << "RP:PD (6)smin smax" << smin << smax;
    data_plot1->replot();
-DbgLv(1) << "RP:PD  return";
-DbgLv(1) << "RP:PD   R: smin smax" << smin << smax;
 }
 
 // Public slot to set a pointer to a model to use in the plot for highlights
@@ -374,66 +388,153 @@ void US_MLinesPlot::setModel( US_Model* a_model, QVector< ModelRecord >& mrs )
    model   = a_model;
    mrecs   = mrs;
 DbgLv(1) << "RP:SM  bmndx" << bmndx;
-DbgLv(1) << "RP:PD (7)smin smax" << smin << smax;
 
-   bool fact_vis = ( model != 0 );
-   lb_lefact->setVisible( fact_vis );
-   ct_lefact->setVisible( fact_vis );
-   lb_mefact->setVisible( fact_vis );
-   ct_mefact->setVisible( fact_vis );
-   lb_hefact->setVisible( fact_vis );
-   ct_hefact->setVisible( fact_vis );
-   lb_mpfact->setVisible( fact_vis );
-   ct_mpfact->setVisible( fact_vis );
-DbgLv(1) << "RP:PD (8)smin smax" << smin << smax;
+   // Show or hide the color items based on presence of a model
+   showColorItems( ( model != 0 ) );
 }
 
-// Private slot to handle change in Low-Elite Factor value
-void US_MLinesPlot::updateLeFact( double value )
+// Handle change in elite line count
+void US_MLinesPlot::updateElite( double value )
 {
-   le_fact  = value;
-   ct_mefact->setRange( he_fact, le_fact, 0.001 );
-   me_fact  = ct_mefact->value();
-   ct_hefact->setRange( 1.01,    me_fact, 0.001 );
-   he_fact  = ct_hefact->value();
+   neline      = (int)value;
 
    if ( model != 0 )
+   {
+      rmsd_elite  = mrecs[ neline - 1 ].rmsd;
+      le_rmsde->setText( QString::number( rmsd_elite ) );
       plot_data();
+   }
 }
 
-// Private slot to handle change in Mid-Elite Factor value
-void US_MLinesPlot::updateMeFact( double value )
+// Handle change in solutes line count
+void US_MLinesPlot::updateSolutes( double value )
 {
-   me_fact = value;
-   ct_hefact->setRange( 1.01,    me_fact, 0.001 );
-   he_fact = ct_hefact->value();
-   ct_lefact->setRange( me_fact, 10.00,   0.001 );
-   le_fact = ct_lefact->value();
+   nsline      = (int)value;
 
    if ( model != 0 )
+   {
+      rmsd_solut  = mrecs[ nsline - 1 ].rmsd;
+      le_rmsds->setText( QString::number( rmsd_solut ) );
       plot_data();
+   }
 }
 
-// Private slot to handle change in High-Elite Factor value
-void US_MLinesPlot::updateHeFact( double value )
+// Handle change in visible line count
+void US_MLinesPlot::updateVisible( double value )
 {
-   he_fact = value;
-   ct_mefact->setRange( he_fact, le_fact, 0.001 );
-   me_fact = ct_mefact->value();
-   ct_lefact->setRange( me_fact, 10.00,   0.001 );
-   le_fact = ct_lefact->value();
+   nvline      = (int)value;
 
    if ( model != 0 )
+   {
+      rmsd_visib  = mrecs[ nvline - 1 ].rmsd;
+      le_rmsdv->setText( QString::number( rmsd_visib ) );
       plot_data();
+   }
 }
 
-// Private slot to handle change in Mid-Poor Factor value
-void US_MLinesPlot::updateMpFact( double value )
+// Generate the default color map (rainbow)
+void US_MLinesPlot::defaultColorMap()
 {
-   mp_fact = value;
-//DbgLv(1) << "updMF: smin smax" << smin << smax;
+   cmapname  = tr( "Default (rainbow)" );
+   le_colmap->setText( cmapname );
+DbgLv(1) << "dCM: cmapname" << cmapname;
+   colormap  = new QwtLinearColorMap( Qt::magenta, Qt::red );
+   colormap->addColorStop( 0.2000, Qt::blue   );
+   colormap->addColorStop( 0.4000, Qt::cyan   );
+   colormap->addColorStop( 0.6000, Qt::green  );
+   colormap->addColorStop( 0.8000, Qt::yellow );
+DbgLv(1) << "dCM: RTN  cmCstopSize" << colormap->colorStops().size();
+for ( double pos=0.0; pos<=1.0; pos+=0.1 ) {
+DbgLv(1) << "Color at position" << pos << positionColor( pos ); }
+}
 
-   if ( model != 0 )
-      plot_data();
+// Generate the colors given relative position
+QColor US_MLinesPlot::positionColor( double pos )
+{
+//DbgLv(1) << "pC: position" << pos;
+   QwtDoubleInterval colorinterv( 0.0, 1.0 );
+   return QColor( colormap->rgb( colorinterv, pos ) );
+}
+
+// Produce a copy of the color map in reverse order for right-side axis
+QwtLinearColorMap US_MLinesPlot::reverseColorMap()
+{
+   QwtLinearColorMap rcolmap( colormap->color2(), colormap->color1() );
+
+   QwtDoubleInterval cinterv( 0.0, 1.0 );
+   QVector< double > cstops = colormap->colorStops();
+   int kstops = cstops.size() - 1;
+
+   for ( int ii = kstops; ii >= 0; ii-- )
+   {
+      double csvalue  = cstops[ ii ];
+      QColor mcolor( colormap->rgb( cinterv, csvalue ) );
+DbgLv(1) << "rCM: pos" << csvalue << "color" << mcolor;
+      rcolmap.addColorStop( 1.0 - csvalue, mcolor );
+   }
+DbgLv(1) << "rCM:   color1" << rcolmap.color1() << "color2" << rcolmap.color2();
+
+for ( double pos=0.0; pos<=1.0; pos+=0.2 ) {
+DbgLv(1) << "  CM position" << pos << "InColor" << positionColor( pos )
+   << "RevColor" << QColor(rcolmap.rgb(cinterv,pos)); }
+   return rcolmap;
+}
+
+// Show or hide the color-related GUI items
+void US_MLinesPlot::showColorItems( bool visible )
+{
+   lb_ltypeh->setVisible( visible );
+   lb_counth->setVisible( visible );
+   lb_rmsdhd->setVisible( visible );
+   lb_neline->setVisible( visible );
+   lb_nsline->setVisible( visible );
+   lb_nvline->setVisible( visible );
+   lb_rmsdb ->setVisible( visible );
+   lb_rmsdw ->setVisible( visible );
+   le_rmsde ->setVisible( visible );
+   le_rmsds ->setVisible( visible );
+   le_rmsdv ->setVisible( visible );
+   le_rmsdb ->setVisible( visible );
+   le_rmsdw ->setVisible( visible );
+   ct_neline->setVisible( visible );
+   ct_nsline->setVisible( visible );
+   ct_nvline->setVisible( visible );
+   pb_colmap->setVisible( visible );
+   le_colmap->setVisible( visible );
+}
+
+// Select a color map from a file
+void US_MLinesPlot::selectColorMap( void )
+{
+   QString filter = tr( "Color Map files (cm*.xml);;"
+                        "Any XML files (*.xml);;"
+                        "Any files (*)" );
+
+   // get an xml file name for the color map
+   QString fname = QFileDialog::getOpenFileName( this,
+       tr( "Load Color Map File" ),
+       US_Settings::appBaseDir() + "/etc",
+       filter, 0, 0 );
+
+   if ( fname.isEmpty() )
+        return;
+
+   // get the map from the file
+   QList< QColor > cmcolors;
+   QList< double > cmvalues;
+
+   US_ColorGradIO::read_color_steps( fname, cmcolors, cmvalues );
+   colormap  = new QwtLinearColorMap( cmcolors.first(), cmcolors.last() );
+
+   for ( int jj = 1; jj < cmvalues.size() - 1; jj++ )
+   {
+      colormap->addColorStop( cmvalues.at( jj ), cmcolors.at( jj ) );
+   }
+
+   cmapname  = QFileInfo( fname ).baseName().replace( ".xml$", "" );
+   le_colmap->setText( cmapname );
+   plot_data();
+for ( double pos=0.0; pos<=1.0; pos+=0.1 ) {
+DbgLv(1) << "Color at position" << pos << positionColor( pos ); }
 }
 
