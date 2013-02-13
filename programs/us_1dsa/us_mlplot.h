@@ -14,6 +14,7 @@
 #include "us_model.h"
 #include "us_model_record.h"
 #include "us_help.h"
+#include "qwt_color_map.h"
 
 //! \brief A class to provide a window with a model lines plot
 
@@ -51,44 +52,61 @@ class US_MLinesPlot : public US_WidgetsDialog
       QGridLayout*  pltctrlsLayout;
       QVBoxLayout*  buttonsLayout;
 
-      QLabel*       lb_lefact;
-      QLabel*       lb_mefact;
-      QLabel*       lb_hefact;
-      QLabel*       lb_mpfact;
+      QLabel*       lb_ltypeh;
+      QLabel*       lb_counth;
+      QLabel*       lb_rmsdhd;
+      QLabel*       lb_rmsdb;
+      QLabel*       lb_rmsdw;
+      QLabel*       lb_neline;
+      QLabel*       lb_nsline;
+      QLabel*       lb_nvline;
 
-      QwtCounter*   ct_lefact;
-      QwtCounter*   ct_mefact;
-      QwtCounter*   ct_hefact;
-      QwtCounter*   ct_mpfact;
+      QwtCounter*   ct_neline;
+      QwtCounter*   ct_nsline;
+      QwtCounter*   ct_nvline;
 
       QLineEdit*    le_mtype;
       QLineEdit*    le_nlines;
       QLineEdit*    le_npoints;
       QLineEdit*    le_kincr;
+      QLineEdit*    le_rmsdb;
+      QLineEdit*    le_rmsdw;
+      QLineEdit*    le_rmsde;
+      QLineEdit*    le_rmsds;
+      QLineEdit*    le_rmsdv;
+      QLineEdit*    le_colmap;
+
+      QPushButton*  pb_colmap;
 
       QVector< ModelRecord > mrecs;
+      QVector< QColor >      cs_colors;
+      QwtLinearColorMap*     colormap;
+      QString                cmapname;
 
       US_Model*              model;
 
       int           dbg_level;
+      int           nmodel;
+      int           neline;
+      int           nsline;
+      int           nvline;
 
-      double        le_fact;
-      double        me_fact;
-      double        he_fact;
-      double        mp_fact;
-      double        low_elite;
-      double        mid_elite;
-      double        high_elite;
-      double        mid_poor;
-      double        best_rmsd;
-      double        worst_rmsd;
+      double        rmsd_best;
+      double        rmsd_worst;
+      double        rmsd_elite;
+      double        rmsd_solut;
+      double        rmsd_visib;
 
    private slots:
-      void close_all   ( void );
-      void updateLeFact( double );
-      void updateMeFact( double );
-      void updateHeFact( double );
-      void updateMpFact( double );
+      void close_all      ( void   );
+      void updateElite    ( double );
+      void updateSolutes  ( double );
+      void updateVisible  ( double );
+      void defaultColorMap( void   );
+      void selectColorMap ( void   );
+      void showColorItems ( bool   );
+      QColor positionColor( double );
+      QwtLinearColorMap reverseColorMap( void );
 };
 #endif
 

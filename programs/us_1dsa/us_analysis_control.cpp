@@ -23,7 +23,9 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
-   setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
+   setFont( QFont( US_GuiSettings::fontFamily(),
+                   US_GuiSettings::fontSize() ) );
+   QFontMetrics fmet( font() );
 
    // lay out the GUI
    setWindowTitle( tr( "1-D Spectrum Analysis Controls" ) );
@@ -120,15 +122,15 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_cresolu,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_rinois,     row++, 2, 1, 2 );
-   controlsLayout->addWidget( pb_pltlines,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( pb_strtfit,    row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
+   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_strtfit,    row++, 3, 1, 1 );
+   controlsLayout->addLayout( lo_rinois,     row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_stopfit,    row++, 3, 1, 1 );
    controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
    controlsLayout->addWidget( pb_save,       row++, 2, 1, 2 );
-   controlsLayout->addWidget( pb_help,       row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_close,      row++, 2, 1, 2 );
+   controlsLayout->addWidget( pb_pltlines,   row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_help,       row,   2, 1, 1 );
+   controlsLayout->addWidget( pb_close,      row++, 3, 1, 1 );
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
    controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
    QLabel* lb_optspace1    = us_banner( "" );
@@ -190,9 +192,31 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount->setVisible( false );
    edata          = &dsets[ 0 ]->run_data;
 
+
    compute();
 
 //DbgLv(2) << "Pre-resize AC size" << size();
+   int  fwidth   = fmet.maxWidth();
+   int  rheight  = ct_lolimits->height();
+   int  cminw    = fwidth * 8;
+   int  csizw    = cminw + fwidth;
+   ct_lolimits->setMinimumWidth( cminw );
+   ct_uplimits->setMinimumWidth( cminw );
+   ct_lolimitk->setMinimumWidth( cminw );
+   ct_uplimitk->setMinimumWidth( cminw );
+   ct_incremk ->setMinimumWidth( cminw );
+   ct_varcount->setMinimumWidth( cminw );
+   ct_cresolu ->setMinimumWidth( cminw );
+   ct_thrdcnt ->setMinimumWidth( cminw );
+   ct_lolimits->resize( rheight, csizw );
+   ct_uplimits->resize( rheight, csizw );
+   ct_lolimitk->resize( rheight, csizw );
+   ct_uplimitk->resize( rheight, csizw );
+   ct_incremk ->resize( rheight, csizw );
+   ct_varcount->resize( rheight, csizw );
+   ct_cresolu ->resize( rheight, csizw );
+   ct_thrdcnt ->resize( rheight, csizw );
+
    resize( 710, 440 );
 //DbgLv(2) << "Post-resize AC size" << size();
 }
@@ -528,9 +552,9 @@ void US_AnalysisControl::plot_lines()
    fmax    = ct_uplimitk->value();
    finc    = ct_incremk ->value();
    nlpts   = (int)ct_cresolu ->value();
-   nkpts   = (int)ct_varcount->value();
-   if ( ctype > 0 )
-      nkpts       = qRound( ( fmax - fmin ) / finc ) + 1;
+   nkpts   = ( ctype > 0 )
+             ? (int)ct_varcount->value()
+             : qRound( ( fmax - fmin ) / finc ) + 1;
 
    US_MLinesPlot* mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
                                                 nlpts, bmndx, nkpts, ctype );
