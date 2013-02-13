@@ -643,13 +643,22 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
    
    cb_guinier = new QCheckBox(this);
-   cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
+   cb_guinier->setText(tr(" Guinier "));
    // cb_guinier->setMinimumHeight(minHeight1);
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_guinier, SIGNAL(clicked()), SLOT(set_guinier()));
+
+   cb_cs_guinier = new QCheckBox(this);
+   cb_cs_guinier->setText(tr(" CS plot    q^2 range:"));
+   // cb_cs_guinier->setMinimumHeight(minHeight1);
+   cb_cs_guinier->setEnabled(true);
+   cb_cs_guinier->setChecked(false);
+   cb_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_cs_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_cs_guinier, SIGNAL(clicked()), SLOT(set_cs_guinier()));
 
    le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
    le_guinier_lowq2->setText("");
@@ -668,7 +677,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_guinier_highq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_highq2(const QString &)));
 
    cb_user_range = new QCheckBox(this);
-   cb_user_range->setText(tr(" Standard"));
+   cb_user_range->setText(tr(" Standard "));
    // cb_user_range->setMinimumHeight(minHeight1);
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
@@ -1228,11 +1237,22 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
 
-   background->addWidget(cb_guinier, j, 0);
-   QHBoxLayout *hbl_guinier = new QHBoxLayout;
-   hbl_guinier->addWidget(le_guinier_lowq2);
-   hbl_guinier->addWidget(le_guinier_highq2);
-   background->addLayout(hbl_guinier, j, 1);
+   QGridLayout *gl_plot_ctls = new QGridLayout( 0 );
+
+   gl_plot_ctls->addWidget( cb_guinier    , 0, 0 );
+   gl_plot_ctls->addWidget( cb_cs_guinier , 0, 1 );
+   gl_plot_ctls->addWidget( cb_user_range , 1, 0 );
+   gl_plot_ctls->addWidget( cb_kratky     , 1, 1 );
+
+   //    QHBoxLayout *hbl_guinier = new QHBoxLayout;
+   //    hbl_guinier->addWidget( cb_guinier );
+   //    hbl_guinier->addWidget( cb_cs_guinier );
+   //    background->addLayout(hbl_guinier, j, 0);
+
+   QHBoxLayout *hbl_guinier_range = new QHBoxLayout;
+   hbl_guinier_range->addWidget( le_guinier_lowq2 );
+   hbl_guinier_range->addWidget( le_guinier_highq2 );
+   background->addLayout(hbl_guinier_range, j, 1);
    j++;
 
 #if defined(ADD_GUINIER)      
@@ -1240,10 +1260,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_guinier->addWidget(cnt_guinier_cutoff);
 #endif
 
-   QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
-   hbl_cb_std_kratky->addWidget( cb_user_range );
-   hbl_cb_std_kratky->addWidget( cb_kratky );
-   background->addLayout( hbl_cb_std_kratky, j, 0 );
+   //    QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
+   //    hbl_cb_std_kratky->addWidget( cb_user_range );
+   //    hbl_cb_std_kratky->addWidget( cb_kratky );
+   //    background->addLayout( hbl_cb_std_kratky, j, 0 );
+
+   background->addMultiCellLayout( gl_plot_ctls, j-1, j, 0, 0 );
+
    QHBoxLayout *hbl_user_range = new QHBoxLayout;
    hbl_user_range->addWidget(le_user_lowq);
    hbl_user_range->addWidget(le_user_highq);
@@ -5515,6 +5538,10 @@ void US_Hydrodyn_Saxs::set_user_range()
    }
 }
       
+void US_Hydrodyn_Saxs::set_cs_guinier()
+{
+}
+
 void US_Hydrodyn_Saxs::set_guinier()
 {
    if ( rb_sans->isChecked() ) 

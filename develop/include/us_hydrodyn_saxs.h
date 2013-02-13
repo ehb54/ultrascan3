@@ -260,6 +260,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QwtCounter *cnt_guinier_cutoff;
 
       QCheckBox *cb_guinier;
+      QCheckBox *cb_cs_guinier;
       QLineEdit *le_guinier_lowq2;
       QLineEdit *le_guinier_highq2;
 
@@ -735,6 +736,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString sprr_filestring();
       void set_create_native_saxs();
       void set_guinier();
+      void set_cs_guinier();
       void set_pr_contrib();
       void set_user_range();
       void set_kratky();
