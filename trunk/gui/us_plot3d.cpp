@@ -1423,7 +1423,7 @@ void US_Plot3D::pick_data_co()
    Qwt3D::StandardColor* stdcol;
    Qwt3D::RGBA           rgb;
 
-   QString filter = tr( "Color Map files (cm*.xml);;" )
+   QString filter = tr( "Color Map files (*cm-*.xml);;" )
       + tr( "Any XML files (*.xml);;" )
       + tr( "Any files (*)" );
 

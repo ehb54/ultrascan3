@@ -209,7 +209,7 @@ void US_ColorGradient::save_gradient( void )
    QString save_file = grad_dir + "/new_gradient.xml";
    save_file = QFileDialog::getSaveFileName( this,
       tr( "Specify XML File Name for Gradient Save" ), grad_dir,
-      tr( "Color Map files (cm*.xml);;"
+      tr( "Color Map files (*cm-*.xml);;"
           "Any XML files (*.xml);;Any files (*)" ) );
 
    save_file    = save_file.replace( "\\", "/" );
@@ -362,7 +362,7 @@ void US_ColorGradient::load_gradient( void )
    QString load_file = grad_dir + "/old_gradient.xml";
    load_file = QFileDialog::getOpenFileName( this,
          tr( "Select XML File Name for Gradient Load" ), grad_dir,
-         tr( "Color Map files (cm*.xml);;"
+         tr( "Color Map files (*cm-*.xml);;"
              "Any XML files (*.xml);;Any files (*)" ) );
 
    if ( !load_file.isEmpty() )

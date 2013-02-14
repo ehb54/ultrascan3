@@ -1535,7 +1535,7 @@ DbgLv(1) << "Constant-Vbar" << cnstvbar;
 // load the color map from a file
 void US_GA_Initialize::load_color()
 {
-   QString filter = tr( "Color Map files (cm*.xml);;" )
+   QString filter = tr( "Color Map files (*cm-*.xml);;" )
          + tr( "Any XML files (*.xml);;" )
          + tr( "Any files (*)" );
 

@@ -69,7 +69,7 @@
 
        <li>
           <b>Lines (Models):</b> Documentation of the number of model lines
-          that were analyzed.
+          that were created.
        </li>
 
        <li>
@@ -78,13 +78,13 @@
        </li>
 
        <li>
-          <b>f/f0 Increment:</b> The increment between starting and ending
-          frictional ratio straight-line points.
+          <b>f/f0 Increment:</b> The frictional ratio increment between the
+          set of start and end point variations for straight-line models.
        </li>
 
        <li>
-          <b>Variation Count:</b> The number of sigmoid variations in each
-          of par1 and par2.
+          <b>Variation Count:</b> The number of variations in each of par1
+          and par2 in the computation of sigmoid model curves.
        </li>
 
        <li>
