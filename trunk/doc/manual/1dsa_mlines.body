@@ -1,0 +1,170 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III 1DSA Model Lines Plot'
+%]
+
+    <h2> <i>UltraScan</i> Model Lines Plot for 1DSA: </h2>
+
+    <p> This dialog displays the lines in s x f/f0 space that define models
+    evaluated by 1-Dimensional Spectrum Analysis. The lines from the best
+    models are illustrated with color coding. Worst-model lines are shown
+    with dark gray lines or may be removed from the plot. A selected set of
+    the best model lines contain white dots showing computed solute points,
+    with size proportional to relative concentration.</p>
+
+    <p> The appearance of the plot may be governed by setting the cutoff
+    points in terms of line counts for (1) the number of "elite" (best-model,
+    lowest-RMSD) colored lines; (2) the number of the best models for which
+    to show solute points; and (3) the number of overall visible lines.
+    It is also possible to choose an alternative color map. The default color
+    map ranges through the colors of the rainbow from red (best) to magenta
+    (worst of the elite).</p>
+
+    <h3> Dialog Sections:</h3>
+
+    <ul>
+       <li>
+          <b>Model Documentation: </b> A set of read-only text boxes that
+          document the type of analysis that was performed.
+       </li>
+          
+       <li>
+          <b>Display Controls: </b> A set of line counters and their
+          accompanying read-only RMSD equivalents for specifying the
+          cutoff points of elite, solute-containing, and visible lines.
+          There are also read-only text boxes showing the best and worst
+          overall RMSD values from the fits.
+       </li>
+          
+       <li>
+          <b>Color Map: </b> A button for choosing a file containing an
+          alternative to the default color map.
+       </li>
+          
+       <li>
+          <b>General Control: </b> For example, the Close button.
+       </li>
+          
+       <li>
+          <b>Model Lines Plot: </b> Plotted lines and axes including the
+          color gradient.
+       </li>
+    </ul>
+          
+    <h3> Sample Model Lines Dialogs:</h3>
+
+    <p> The plot dialog differs slightly based on whether the curve type is
+    a line or a sigmoid. Below are images for sigmoids and straight line.</p>
+
+    <img src="images/1dsa_mlines-sigm2.png" alt="1DSA Sigmoid Plot"/>
+    <p/>
+    <img src="images/1dsa_mlines-line2.png" alt="1DSA Straight-Line Plot"/>
+
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Model Type:</b> Documentation of the type of curve that defines
+          models.
+       </li>
+
+       <li>
+          <b>Lines (Models):</b> Documentation of the number of model lines
+          that were analyzed.
+       </li>
+
+       <li>
+          <b>Points per Line:</b> Documentation of the number of solute points
+          in input models.
+       </li>
+
+       <li>
+          <b>f/f0 Increment:</b> The increment between starting and ending
+          frictional ratio straight-line points.
+       </li>
+
+       <li>
+          <b>Variation Count:</b> The number of sigmoid variations in each
+          of par1 and par2.
+       </li>
+
+       <li>
+          <b>Elite:</b> To the right of this label is a counter for setting
+          the number of colored best-model lines to display.
+          To the right of the counter is the RMSD-cutoff equivalent.
+       </li>
+
+       <li>
+          <b>Solutes:</b> To the right of this label is a counter for setting
+          the number of best-model lines for which solute points are to
+          be displayed.
+          To the right of the counter is the RMSD-cutoff equivalent.
+       </li>
+
+       <li>
+          <b>Visible:</b> To the right of this label is a counter for setting
+          the number of visible lines to show. Normally, this should range
+          from the Elite count to the number of total lines.
+          To the right of the counter is the RMSD-cutoff equivalent.
+       </li>
+
+       <li>
+          <b>Overall Best Fit:</b> The read-only text box to the right of
+          this label documents the lowest overall RMSD value encountered.
+       </li>
+
+       <li>
+          <b>Overall Worst Fit:</b> The read-only text box to the right of
+          this label documents the highest overall RMSD value encountered.
+       </li>
+
+       <li>
+          <b>Color Map</b> This button opens a
+          <a href="load_colormap.html">Load Color Map dialog</a>
+          in which an alternative color map file may be selected.
+          To the right of the button is a text box giving the name for the
+          current selection. A default UltraScan installation will contain
+          a number of color map files. You can construct your own variation
+          using the
+          <a href="colorgradient.html">Color Gradient Generator</a>.
+          At the opening of the plot dialog, a default rainbow colors map
+          is selected.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
+       </li>
+
+       <li>
+          <b>(Model Lines)</b> The plot on the right of the dialog window
+          displays model lines as controlled by the user. The right side
+          axis shows the color gradient annotated with corresponding RMSD
+          values. Note that RMSD values increase from bottom to top, as is
+          the convention with numeric annotation. But this means that the
+          color corresponding to the best model is shown on the bottom.
+       </li>
+
+    </ul>
+
+    <p> Note that the images and controls documented above are for model
+    lines plots shown after a fit computation. There are also variations of
+    this dialog showing pure single-color lines before any fit. There are
+    4 basic variations of this dialog depending on whether it is displayed
+    before or after a fit and on whether the curve type is straight line
+    or sigmoid.</p>
+    <ul>
+      <li>
+      <a href="images/1dsa_mlines-line1.png">Pre-fit Straight Lines</a>
+      </li><li>
+      <a href="images/1dsa_mlines-sigm1.png">Pre-fit Sigmoid Curves</a>
+      </li><li>
+      <a href="images/1dsa_mlines-line2.png">Post-fit Straight Lines</a>
+      </li><li>
+      <a href="images/1dsa_mlines-sigm2.png">Post-fit Sigmoid Curves</a>
+      </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
