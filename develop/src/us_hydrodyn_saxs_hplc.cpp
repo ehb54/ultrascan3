@@ -9627,7 +9627,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
       add_plot( wheel_file + QString( "_pksum" ),
                 f_qs[ wheel_file ],
                 compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
-                false,
+                true,
                 false );
    } else {
       // ggaussian mode
@@ -9657,7 +9657,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
          add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
                    unified_ggaussian_q,
                    compute_gaussian_sum( unified_ggaussian_q, g ),
-                   false,
+                   true,
                    false );
       }
    }
