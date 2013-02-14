@@ -3105,18 +3105,28 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
 
    QTextStream ts( &f );
 
-   ts << QString( tr( "US-SOMO Hplc %1 data: %2\n" ) )
-      .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame" : "" ) )
+   ts << QString( tr( "US-SOMO Hplc %1data: %2\n" ) )
+      .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file );
 
    bool use_errors = ( f_errors.count( file ) && 
                        f_errors[ file ].size() > 0 );
 
-   if ( use_errors )
+   if ( f_is_time.count( file ) && f_is_time[ file ] )
    {
-      ts << "q                 \tI(q)         \tsd\n";
+      if ( use_errors )
+      {
+         ts << "t                 \tI(t)         \tsd\n";
+      } else {
+         ts << "t                 \tI(t)\n";
+      }
    } else {
-      ts << "q                 \tI(q)\n";
+      if ( use_errors )
+      {
+         ts << "q                 \tI(q)         \tsd\n";
+      } else {
+         ts << "q                 \tI(q)\n";
+      }
    }
 
    for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
@@ -9621,7 +9631,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
          add_plot( wheel_file + QString( "_pk%1" ).arg( ( i / 3 ) + 1 ),
                    f_qs[ wheel_file ],
                    compute_gaussian( f_qs[ wheel_file ], tmp_g ),
-                   false,
+                   true,
                    false );
       }
       add_plot( wheel_file + QString( "_pksum" ),
@@ -9651,7 +9661,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
             add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / 3 ) + 1 ),
                       unified_ggaussian_q,
                       compute_gaussian( unified_ggaussian_q, tmp_g ),
-                      false,
+                      true,
                       false );
          }
          add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
