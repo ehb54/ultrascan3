@@ -38,7 +38,7 @@ DbgLv(1) << "MLP: IN";
    leftLayout      = new QVBoxLayout();
    rightLayout     = new QVBoxLayout();
    pltctrlsLayout  = new QGridLayout();
-   buttonsLayout   = new QVBoxLayout();
+   buttonsLayout   = new QHBoxLayout();
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
@@ -58,6 +58,7 @@ DbgLv(1) << "MLP: IN";
            lb_rmsdw       = us_label(  tr( "Overall Worst Fit:" ) );
            pb_colmap      = us_pushbutton( tr( "Color Map" ) );
 
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
    nmodel       = nkpts * nkpts;
@@ -153,6 +154,7 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    // Hide the color items for now
    showColorItems( false );
 
+   buttonsLayout ->addWidget( pb_help  );
    buttonsLayout ->addWidget( pb_close );
 
    // Complete layouts and set up signals/slots
@@ -183,6 +185,8 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
             this,      SLOT  ( updateVisible( double ) ) );
    connect( pb_colmap, SIGNAL( clicked()        ),
             this,      SLOT  ( selectColorMap() ) );
+   connect( pb_help,   SIGNAL( clicked()        ),
+            this,      SLOT  ( help()           ) );
    connect( pb_close,  SIGNAL( clicked()        ),
             this,      SLOT  ( close_all()      ) );
 

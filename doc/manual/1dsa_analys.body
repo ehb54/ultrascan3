@@ -121,9 +121,7 @@
           straight line models to analyze. The upper minus lower f/f0 limits
           divided by this value plus one gives the number of variations in
           each dimension. The square of the variation count gives the total
-          number of models to analyze. See
-          <a href="images/1dsa_mlines-line1.png">Straight Line Models</a> for
-          an illustration.
+          number of models to analyze.
        </li>
 
        <li>
@@ -131,9 +129,6 @@
           variations in each direction to form the models. The square of this
           value is the number of models to analyze. The number of variations
           is applied to each of "par1" and "par2" in the sigmoid computations.
-          See
-          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>
-          for an illustration.
        </li>
 
        <li>
@@ -155,18 +150,6 @@
        </li>
 
        <li>
-          <b>Plot Model Lines</b> Click on this button to open a dialog showing
-          the Model Lines specified (such as
-          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
-          the dialog is automatically opened upon analysis completion. But this
-          button can be used to re-display completed model lines if the dialog
-          has been closed by the user. The dialogs after analysis include
-          color-coded illustrations of best and near-best models:
-          <a href="images/1dsa_mlines-line2.png">Computed Line Models</a>) or
-          <a href="images/1dsa_mlines-sigm2.png">Computed Sigmoid Models</a>).
-       </li>
-
-       <li>
           <b>Start Fit</b> Click to begin the fit analysis.
        </li>
 
@@ -184,6 +167,17 @@
        <li>
           <b>Save Results:</b> Save final model(s) and any noises generated.
           Also output report and plot image files.
+       </li>
+
+       <li>
+          <b>Plot Model Lines</b> Click on this button to open a dialog showing
+          the Model Lines specified (such as
+          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
+          the dialog is automatically opened upon analysis completion. But this
+          button can be used to re-display completed model lines if the dialog
+          has been closed by the user. The dialogs after analysis include
+          color-coded illustrations of best and near-best models:
+          <a href="1dsa_mlines.html">Fitted Models</a>).
        </li>
 
        <li>

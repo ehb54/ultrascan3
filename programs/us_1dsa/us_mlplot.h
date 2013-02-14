@@ -50,7 +50,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       QVBoxLayout*  leftLayout;
       QVBoxLayout*  rightLayout;
       QGridLayout*  pltctrlsLayout;
-      QVBoxLayout*  buttonsLayout;
+      QHBoxLayout*  buttonsLayout;
 
       QLabel*       lb_ltypeh;
       QLabel*       lb_counth;
@@ -97,6 +97,9 @@ class US_MLinesPlot : public US_WidgetsDialog
       double        rmsd_solut;
       double        rmsd_visib;
 
+   protected:
+      US_Help       showHelp;
+
    private slots:
       void close_all      ( void   );
       void updateElite    ( double );
@@ -107,6 +110,10 @@ class US_MLinesPlot : public US_WidgetsDialog
       void showColorItems ( bool   );
       QColor positionColor( double );
       QwtLinearColorMap reverseColorMap( void );
+
+      void help     ( void )
+      { showHelp.show_help( "1dsa_mlines.html" ); };
+
 };
 #endif
 
