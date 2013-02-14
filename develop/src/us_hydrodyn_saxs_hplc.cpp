@@ -124,8 +124,8 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       }
    }
 
-   lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
-   lbl_created_dir->setMaximumWidth( lb_files->width() );
+   // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
+   // lbl_created_dir->setMaximumWidth( lb_files->width() );
    
    int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    le_regex->setMaximumWidth( left_over / 3 );
@@ -9619,7 +9619,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
          tmp_g[ 1 ] = gaussians[ 1 + i ];
          tmp_g[ 2 ] = gaussians[ 2 + i ];
          add_plot( wheel_file + QString( "_pk%1" ).arg( ( i / 3 ) + 1 ),
-                   unified_ggaussian_q,
+                   f_qs[ wheel_file ],
                    compute_gaussian( f_qs[ wheel_file ], tmp_g ),
                    false,
                    false );
@@ -9645,7 +9645,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
             tmp_g[ 2 ] = g[ 2 + j ];
             add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / 3 ) + 1 ),
                       unified_ggaussian_q,
-                      compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
+                      compute_gaussian( unified_ggaussian_q, tmp_g ),
                       false,
                       false );
          }
