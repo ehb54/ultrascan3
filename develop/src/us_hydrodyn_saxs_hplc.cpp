@@ -9624,6 +9624,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    false,
                    false );
       }
+      add_plot( wheel_file + QString( "_pksum" ),
+                f_qs[ wheel_file ],
+                compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
+                false,
+                false );
    } else {
       // ggaussian mode
       for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
@@ -9649,6 +9654,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                       false,
                       false );
          }
+         add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
+                   unified_ggaussian_q,
+                   compute_gaussian_sum( unified_ggaussian_q, g ),
+                   false,
+                   false );
       }
    }
 }
