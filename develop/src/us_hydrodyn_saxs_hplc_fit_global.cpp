@@ -214,7 +214,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
 
    le_epsilon = new mQLineEdit(this, "le_epsilon Line Edit");
    double peak = hplc_win->compute_gaussian_peak( hplc_win->wheel_file, hplc_win->gaussians );
-   le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 ) );
+   le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
    le_epsilon->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_epsilon->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));

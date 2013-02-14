@@ -6259,6 +6259,8 @@ bool US_Hydrodyn_Saxs_Hplc::type_files( QStringList files )
    return f_is_time[ files[ 0 ] ];
 }
 
+#define UHSH_WHEEL_RES 100000
+
 void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 {
    cout << QString("pos is now %1\n").arg(pos);
@@ -6292,8 +6294,14 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
       if ( !le_last_focus )
       {
-         cout << "aw: pos focus, since no last\n";
          le_last_focus = le_gauss_pos;
+         cout << "aw: pos focus, since no last\n";
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
+                               f_qs[ wheel_file ].back(), 
+                               ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+         return;
       }
 
       le_last_focus->setText( QString( "%1" ).arg( pos ) );
@@ -6887,8 +6895,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
       }
    }
 }
-
-#define UHSH_WHEEL_RES 100000
 
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
 {
