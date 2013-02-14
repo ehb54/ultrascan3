@@ -6105,6 +6105,13 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       bool              replot )
 {
    name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
+   if ( q.size() != I.size() )
+   {
+      cout << QString( "add_plot: size error %1 %2\n" ).arg( q.size() ).arg( I.size() );
+   }
+
+   // printvector( "add_plot q", q );
+   // printvector( "add_plot I", I );
    
    QString bsub_name = name;
    unsigned int ext = 0;
@@ -8983,12 +8990,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          } else {
             tmp_sum = tmp;
          }
-         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / 3 ), tv, tmp );
+         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / 3 ), tv, tmp, true, false );
 
       }
       fg.push_back( tmp_v );
       fs.push_back( tmp_sum );
-      // add_plot( QString( "fg_%1_gsum" ).arg( i ), tv, tmp_sum );
+      // add_plot( QString( "fg_%1_gsum" ).arg( i ), tv, tmp_sum, true, false );
    }
 
    // build up resulting curves
@@ -9659,14 +9666,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
             tmp_g[ 1 ] = g[ 1 + j ];
             tmp_g[ 2 ] = g[ 2 + j ];
             add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / 3 ) + 1 ),
-                      unified_ggaussian_q,
-                      compute_gaussian( unified_ggaussian_q, tmp_g ),
+                      f_qs[ unified_ggaussian_files[ i ] ],
+                      compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
                       true,
                       false );
          }
          add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
-                   unified_ggaussian_q,
-                   compute_gaussian_sum( unified_ggaussian_q, g ),
+                   f_qs[ unified_ggaussian_files[ i ] ],
+                   compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
                    true,
                    false );
       }
