@@ -114,6 +114,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       }
    }
    
+   lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
+   lbl_created_dir->setMaximumWidth( lb_files->width() );
+
    int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    le_regex->setMaximumWidth( left_over / 3 );
    le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );

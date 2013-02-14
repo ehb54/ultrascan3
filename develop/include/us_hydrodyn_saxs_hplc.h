@@ -199,6 +199,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_ggauss_rmsd;
       QPushButton   *pb_ggauss_results;
 
+      QPushButton   *pb_gauss_as_curves;
+
       QPushButton   *pb_baseline_start;
       mQLineEdit    *le_baseline_start_s;
       mQLineEdit    *le_baseline_start;
@@ -519,6 +521,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_start();
       void ggauss_rmsd();
       void ggauss_results();
+
+      void gauss_as_curves();
 
       void baseline_start();
       void baseline_apply();

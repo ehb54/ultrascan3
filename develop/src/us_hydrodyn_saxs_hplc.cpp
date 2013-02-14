@@ -123,6 +123,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
          pbs[ i ]->setMaximumWidth( percharwidth * ( pbs[ i ]->text().length() + 2 ) );
       }
    }
+
+   lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
+   lbl_created_dir->setMaximumWidth( lb_files->width() );
    
    int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    le_regex->setMaximumWidth( left_over / 3 );
@@ -859,6 +862,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggauss_results->setEnabled( false );
    connect(pb_ggauss_results, SIGNAL(clicked()), SLOT(ggauss_results()));
 
+   pb_gauss_as_curves = new QPushButton(tr("Produce Gaussians as curves"), this);
+   pb_gauss_as_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_as_curves->setMinimumHeight(minHeight1);
+   pb_gauss_as_curves->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_gauss_as_curves->setEnabled( false );
+   connect(pb_gauss_as_curves, SIGNAL(clicked()), SLOT(gauss_as_curves()));
+
    le_baseline_start_s = new mQLineEdit(this, "le_baseline_start_s Line Edit");
    le_baseline_start_s->setText( "" );
    le_baseline_start_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1143,6 +1153,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_gauss2->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
       gl_gauss2->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
       gl_gauss2->addWidget         ( pb_ggauss_results   , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_gauss_as_curves  , 0, ofs++ );
    }
 
    QHBoxLayout *hbl_baseline = new QHBoxLayout( 0 );
@@ -6502,6 +6513,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_ggauss_start       ->setEnabled( false );
    pb_ggauss_rmsd        ->setEnabled( false );
    pb_ggauss_results     ->setEnabled( false );
+
+   pb_gauss_as_curves    ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
@@ -6740,6 +6753,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    le_gauss_fit_start  ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
    le_gauss_fit_end    ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
    pb_gauss_save       ->setEnabled( sizeover3 );
+   pb_gauss_as_curves  ->setEnabled( sizeover3 );
    qwtw_wheel          ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
 }
 
@@ -9178,6 +9192,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    qwtw_wheel          ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
    pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
    pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
+   pb_gauss_as_curves  ->setEnabled( unified_ggaussian_ok );
 }
 
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
@@ -9589,6 +9604,51 @@ void US_Hydrodyn_Saxs_Hplc::created_dir_pressed()
       if ( *saxs_widget )
       {
          saxs_window->add_to_directory_history( s );
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
+{
+   if ( gaussian_mode )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i+= 3 )
+      {
+         vector < double > tmp_g(3);
+         tmp_g[ 0 ] = gaussians[ 0 + i ];
+         tmp_g[ 1 ] = gaussians[ 1 + i ];
+         tmp_g[ 2 ] = gaussians[ 2 + i ];
+         add_plot( wheel_file + QString( "_pk%1" ).arg( ( i / 3 ) + 1 ),
+                   unified_ggaussian_q,
+                   compute_gaussian( f_qs[ wheel_file ], tmp_g ),
+                   false,
+                   false );
+      }
+   } else {
+      // ggaussian mode
+      for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
+      {
+         vector < double > g;
+         unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
+
+         for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
+         {
+            g.push_back( unified_ggaussian_params[ index + 2 * j + 0 ] );
+            g.push_back( unified_ggaussian_params[ j ] );
+            g.push_back( unified_ggaussian_params[ index + 2 * j + 1 ] );
+         }
+         for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j+= 3 )
+         {
+            vector < double > tmp_g(3);
+            tmp_g[ 0 ] = g[ 0 + j ];
+            tmp_g[ 1 ] = g[ 1 + j ];
+            tmp_g[ 2 ] = g[ 2 + j ];
+            add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / 3 ) + 1 ),
+                      unified_ggaussian_q,
+                      compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
+                      false,
+                      false );
+         }
       }
    }
 }
