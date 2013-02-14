@@ -1039,7 +1039,7 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
 
 void US_Pseudo3D_Combine::load_color()
 {
-   QString filter = tr( "Color Map files (cm*.xml);;" )
+   QString filter = tr( "Color Map files (*cm-*.xml);;" )
          + tr( "Any XML files (*.xml);;" )
          + tr( "Any files (*)" );
 

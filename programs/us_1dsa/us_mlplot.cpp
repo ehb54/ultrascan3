@@ -510,7 +510,8 @@ void US_MLinesPlot::showColorItems( bool visible )
 // Select a color map from a file
 void US_MLinesPlot::selectColorMap( void )
 {
-   QString filter = tr( "Color Map files (cm*.xml);;"
+   //QString filter = tr( "Color Map files (cm*.xml);;"
+   QString filter = tr( "Color Map files (*cm-*.xml);;"
                         "Any XML files (*.xml);;"
                         "Any files (*)" );
 
