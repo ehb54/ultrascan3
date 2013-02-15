@@ -430,7 +430,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_saxs_iq_native_hybrid3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    }
 
-   rb_saxs_iq_native_fast = new QRadioButton(tr("F-DB"), this);
+   rb_saxs_iq_native_fast = new QRadioButton(tr("Q-DB"), this);
    rb_saxs_iq_native_fast->setEnabled(true);
    rb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -508,7 +508,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_sans_iq_native_hybrid3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    }
 
-   rb_sans_iq_native_fast = new QRadioButton(tr("F-DB"), this);
+   rb_sans_iq_native_fast = new QRadioButton(tr("Q-DB"), this);
    rb_sans_iq_native_fast->setEnabled(true);
    rb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -1037,6 +1037,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
                 SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
 #endif
+   plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
    plot_pr = new QwtPlot(this);
 #ifndef QT4
@@ -6710,7 +6711,7 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             }
             if ( our_saxs_options->saxs_iq_native_fast )
             {
-               qs += "fd";
+               qs += "qd";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid )
             {

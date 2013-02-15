@@ -345,6 +345,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         push_back_color_if_ok( QColor bg, QColor set );
 
       QString                      title;
+      QStringList                  all_selected_files();
 
    private slots:
 

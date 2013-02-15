@@ -109,7 +109,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_saxs_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_saxs_iq_hybrid_adaptive()));
 
    cb_saxs_iq_native_fast = new QCheckBox(this);
-   cb_saxs_iq_native_fast->setText(tr("F-DB "));
+   cb_saxs_iq_native_fast->setText(tr("Q-DB "));
    cb_saxs_iq_native_fast->setEnabled(true);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

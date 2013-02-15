@@ -186,7 +186,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cb_sans_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_sans_iq_hybrid_adaptive()));
 
    cb_sans_iq_native_fast = new QCheckBox(this);
-   cb_sans_iq_native_fast->setText(tr("F-DB "));
+   cb_sans_iq_native_fast->setText(tr("Q-DB "));
    cb_sans_iq_native_fast->setEnabled(true);
    cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
    cb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

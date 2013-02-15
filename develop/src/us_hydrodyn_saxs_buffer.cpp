@@ -1949,7 +1949,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_join_start         ->setEnabled( files_selected_count == 2 );
    pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
    pb_to_saxs            ->setEnabled( files_selected_count );
-   pb_view               ->setEnabled( files_selected_count );
+   pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
@@ -2051,7 +2051,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
-   pb_legend           ->setEnabled( lb_files->numRows() );
+   pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
    pb_axis_x           ->setEnabled( lb_files->numRows() );
    pb_axis_y           ->setEnabled( lb_files->numRows() );
    // cb_guinier          ->setEnabled( files_selected_count );
@@ -2540,6 +2540,17 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    bool first = true;
 
    plotted_curves.clear();
+
+   if ( all_selected_files().size() > 20 &&
+#ifndef QT4
+        plot_dist->autoLegend() 
+#else
+        legend_vis
+#endif
+        )
+   {
+      legend();
+   }
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -7791,4 +7802,17 @@ void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
          saxs_window->add_to_directory_history( s );
       }
    }
+}
+
+QStringList US_Hydrodyn_Saxs_Buffer::all_selected_files()
+{
+   QStringList files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         files << lb_files->text( i );
+      }
+   }
+   return files;
 }
