@@ -121,7 +121,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
       QPushButton   *pb_adjacent;
-      QPushButton   *pb_join;
+      QPushButton   *pb_select_nth;
+      // QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
       QPushButton   *pb_rescale;
@@ -189,6 +190,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_pos;
       mQLineEdit    *le_gauss_pos_width;
       mQLineEdit    *le_gauss_pos_height;
+      QCheckBox     *cb_sd_weight;
       QPushButton   *pb_gauss_fit;
       QLabel        *lbl_gauss_fit;
       mQLineEdit    *le_gauss_fit_start;
@@ -459,6 +461,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void regex_load();
 
       void select_all();
+      void select_nth();
       void invert();
       void join();
       void adjacent();

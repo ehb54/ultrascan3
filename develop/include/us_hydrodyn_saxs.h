@@ -86,6 +86,23 @@ class mQLabel : public QLabel
       virtual void mousePressEvent ( QMouseEvent *e );
 };
 
+class mQPushButton : public QPushButton
+{
+   Q_OBJECT
+
+   public:
+
+      mQPushButton ( QWidget *parent = 0 , const char * name = 0 );
+      mQPushButton ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
+      ~mQPushButton();
+
+   signals:
+      void doubleClicked();
+
+   protected:
+      virtual void mouseDoubleClickEvent ( QMouseEvent *e );
+};
+
 
 struct crop_undo_data
 {
@@ -681,6 +698,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
      #pragma warning ( default: 4251 )
 #endif      
       
+      void fix_sas_options();
 
    public slots:
       void show_plot_saxs_sans();

@@ -59,6 +59,18 @@ void mQLabel::mousePressEvent ( QMouseEvent *e )
    emit( pressed() );
 }
 
+mQPushButton::mQPushButton( QWidget *parent, const char * name ) : QPushButton( parent, name ) {}
+mQPushButton::mQPushButton( const QString & text, QWidget *parent, const char * name ) : QPushButton( text, parent, name ) {}
+
+mQPushButton::~mQPushButton() {}
+
+void mQPushButton::mouseDoubleClickEvent ( QMouseEvent *e )
+{
+   QPushButton::mouseDoubleClickEvent( e );
+   emit( doubleClicked() );
+}
+
+
 // #define SAXS_DEBUG
 // #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
@@ -145,6 +157,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    reset_buffer_csv();
    reset_hplc_csv();
    setupGUI();
+
+   fix_sas_options();
+
    editor->append("\n\n");
    QFileInfo fi(filename);
    bead_model_ok_for_saxs = true;
@@ -6467,17 +6482,27 @@ void US_Hydrodyn_Saxs::set_saxs_iq(int val)
       our_saxs_options->saxs_iq_native_hybrid  = rb_saxs_iq_native_hybrid ->isChecked();
       our_saxs_options->saxs_iq_native_hybrid2 = rb_saxs_iq_native_hybrid2->isChecked();
       our_saxs_options->saxs_iq_native_hybrid3 = rb_saxs_iq_native_hybrid3->isChecked();
+   } else {
+      our_saxs_options->saxs_iq_native_hybrid  = false;
+      our_saxs_options->saxs_iq_native_hybrid2 = false;
+      our_saxs_options->saxs_iq_native_hybrid3 = false;
    }
+      
+
    our_saxs_options->saxs_iq_native_fast    = rb_saxs_iq_native_fast   ->isChecked();
    if ( started_in_expert_mode )
    {
       our_saxs_options->saxs_iq_foxs           = rb_saxs_iq_foxs          ->isChecked();
-   }
+   } else {
+      our_saxs_options->saxs_iq_foxs           = false;
+   }      
    our_saxs_options->saxs_iq_crysol         = rb_saxs_iq_crysol        ->isChecked();
    if ( started_in_expert_mode )
    {
       our_saxs_options->saxs_iq_sastbx         = rb_saxs_iq_sastbx        ->isChecked();
-   }
+   } else {
+      our_saxs_options->saxs_iq_sastbx         = false;
+   }      
 
    update_iqq_suffix();
 }
@@ -6503,6 +6528,10 @@ void US_Hydrodyn_Saxs::set_sans_iq(int val)
       our_saxs_options->sans_iq_native_hybrid  = rb_sans_iq_native_hybrid ->isChecked();
       our_saxs_options->sans_iq_native_hybrid2 = rb_sans_iq_native_hybrid2->isChecked();
       our_saxs_options->sans_iq_native_hybrid3 = rb_sans_iq_native_hybrid3->isChecked();
+   } else {
+      our_saxs_options->sans_iq_native_hybrid  = false;
+      our_saxs_options->sans_iq_native_hybrid2 = false;
+      our_saxs_options->sans_iq_native_hybrid3 = false;
    }
    our_saxs_options->sans_iq_native_fast    = rb_sans_iq_native_fast   ->isChecked();
    our_saxs_options->sans_iq_cryson         = rb_sans_iq_cryson        ->isChecked();
@@ -7132,4 +7161,163 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
    // cout <<  QString("%1 %2\n").arg(our_saxs_options->end_q).arg((float) plotted_q[ 0 ][ plotted_q[ 0 ].size() - 1 ]);
    // cout <<  QString("%1 %2\n").arg(our_saxs_options->delta_q).arg((float) (plotted_q[ 0 ][ 1 ] - plotted_q[ 0 ][ 0 ]) );
    return false;
+}
+
+void US_Hydrodyn_Saxs::fix_sas_options()
+{
+   
+   cout << "fix_sas_options";
+   bool any_selected = false;
+
+   if ( our_saxs_options->saxs_iq_native_debye )
+   {
+      any_selected = true;
+   }
+
+   if ( our_saxs_options->saxs_iq_native_sh )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_sh = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid  )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_hybrid = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid2 )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_hybrid2 = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_native_hybrid3 )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_hybrid3 = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_native_fast )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_fast = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_native_fast_compute_pr )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_native_fast_compute_pr = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_foxs )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_foxs = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_crysol )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_crysol = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->saxs_iq_sastbx )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->saxs_iq_sastbx = false;
+      }
+      any_selected = true;
+   }
+
+   if ( !any_selected )
+   {
+      our_saxs_options->saxs_iq_native_debye = true;
+   }
+
+   any_selected = false;
+
+   if ( our_saxs_options->sans_iq_native_debye )
+   {
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_sh )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_sh = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_hybrid )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_hybrid = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_hybrid2 )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_hybrid2 = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_hybrid3 )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_hybrid3 = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_fast )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_fast = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_native_fast_compute_pr )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_native_fast_compute_pr = false;
+      }
+      any_selected = true;
+   }
+   if ( our_saxs_options->sans_iq_cryson )
+   {
+      if ( any_selected )
+      {
+         our_saxs_options->sans_iq_cryson = false;
+      }
+      any_selected = true;
+   }
+
+   if ( !any_selected )
+   {
+      our_saxs_options->sans_iq_native_debye = true;
+   }
+   set_current_method_buttons();
 }

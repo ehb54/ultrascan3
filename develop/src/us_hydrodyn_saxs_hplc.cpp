@@ -103,6 +103,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
+      pbs.push_back( pb_select_nth );
       pbs.push_back( pb_color_rotate );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
@@ -413,7 +414,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
 
-   pb_select_all = new QPushButton(tr("Select all"), this);
+   pb_select_all = new mQPushButton(tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -424,6 +425,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_invert->setMinimumHeight(minHeight1);
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
+
+   pb_select_nth = new mQPushButton(tr("Nth"), this);
+   pb_select_nth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_select_nth->setMinimumHeight(minHeight1);
+   pb_select_nth->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_nth, SIGNAL(clicked()), SLOT(select_nth()));
 
    pb_color_rotate = new QPushButton(tr("C"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -803,6 +810,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_gauss_pos_height, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_height_text( const QString & ) ) );
    connect( le_gauss_pos_height, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_height_focus( bool ) ) );
 
+   cb_sd_weight = new QCheckBox(this);
+   cb_sd_weight->setText(tr("SD weighting "));
+   cb_sd_weight->setEnabled( true );
+   cb_sd_weight->setChecked( false );
+   cb_sd_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_sd_weight->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_gauss_fit = new QPushButton(tr("Fit"), this);
    pb_gauss_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_gauss_fit->setMinimumHeight(minHeight1);
@@ -1035,6 +1049,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
+   hbl_file_buttons_2->addWidget ( pb_select_nth );
    hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
@@ -1147,6 +1162,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    { 
       int ofs = 1;
       gl_gauss2->addMultiCellWidget( pb_ggauss_start     , 0, 0, 0, ofs++ );
+      gl_gauss2->addWidget         ( cb_sd_weight        , 0, ofs++ );
       gl_gauss2->addWidget         ( pb_gauss_fit        , 0, ofs++ );
       gl_gauss2->addWidget         ( pb_ggauss_rmsd      , 0, ofs++ );
       gl_gauss2->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
@@ -1402,6 +1418,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_wheel_start        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
+   cb_sd_weight          ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
    pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
@@ -1431,6 +1448,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
+   pb_select_nth         ->setEnabled( lb_files->numRows() > 2 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
@@ -2086,6 +2104,34 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
 void US_Hydrodyn_Saxs_Hplc::invert()
 {
    lb_files->invertSelection();
+}
+
+void US_Hydrodyn_Saxs_Hplc::select_nth()
+{
+   bool ok;
+   int n = QInputDialog::getInteger(
+                                    tr( "SOMO: HPLC select every Nth file" ),
+                                    tr( "Select every Nth file\nEnter N:" ),
+                                    2, 
+                                    2,
+                                    lb_files->numRows(),
+                                    1, 
+                                    &ok, 
+                                    this 
+                                    );
+   if ( !ok ) {
+      return;
+   }
+
+   disable_updates = true;
+   lb_files->clearSelection();
+   for ( int i = 0; i < lb_files->numRows(); i += n )
+   {
+      lb_files->setSelected( i, true );
+   }
+   disable_updates = false;
+   plot_files();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::select_all()
@@ -6489,6 +6535,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_set_empty          ->setEnabled( false );
    pb_select_all         ->setEnabled( false );
    pb_invert             ->setEnabled( false );
+   pb_select_nth         ->setEnabled( false );
    pb_color_rotate       ->setEnabled( false );
    //    pb_join               ->setEnabled( false );
    pb_adjacent           ->setEnabled( false );
@@ -6551,6 +6598,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_ggauss_results     ->setEnabled( false );
 
    pb_gauss_as_curves    ->setEnabled( false );
+   cb_sd_weight          ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
@@ -6780,6 +6828,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_delete     ->setEnabled( sizeover3 );
    pb_gauss_prev       ->setEnabled( sizeover3 > 1 && gaussian_pos > 0 );
    pb_gauss_next       ->setEnabled( sizeover3 > 1 && gaussian_pos < sizeover3 - 1 );
+   cb_sd_weight        ->setEnabled( sizeover3 && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_gauss_fit        ->setEnabled( sizeover3 && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_wheel_cancel     ->setEnabled( true );
    pb_wheel_save       ->setEnabled( true );
@@ -9217,6 +9266,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_ggauss_start     ->setEnabled( false );
    pb_gauss_prev       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos > 0 );
    pb_gauss_next       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos < unified_ggaussian_gaussians_size - 1 );
+   cb_sd_weight        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_gauss_fit        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_wheel_cancel     ->setEnabled( true );
    le_gauss_pos        ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
