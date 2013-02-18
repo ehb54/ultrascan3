@@ -221,7 +221,9 @@ DbgLv(1) << "RP:PD us_grid RTN";
    QString       title;
    QwtPlotCurve* curv;
 DbgLv(1) << "RP:PD smin smax" << smin << smax;
-   data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, 1.0 );
+   double srng   = smax - smin;
+   double xinc   = srng < 15.0 ? 1.0 : ( srng < 50.0 ? 2.0 : 5.0 );
+   data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, xinc );
 DbgLv(1) << "RP:PD AxisScale RTN";
 
    QVector< double > xvec( nlpts, 0.0 );

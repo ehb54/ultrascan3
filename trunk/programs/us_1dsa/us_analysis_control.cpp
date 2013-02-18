@@ -77,7 +77,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3, -10000, 10000,    1 );
    ct_uplimits  = us_counter( 3, -10000, 10000,   10 );
    ct_lolimitk  = us_counter( 3,      1,     8,    1 );
-   ct_uplimitk  = us_counter( 3,      1,    20,    4 );
+   ct_uplimitk  = us_counter( 3,      1,   100,    4 );
    ct_incremk   = us_counter( 3,   0.01,     2, 0.25 );
    ct_varcount  = us_counter( 2,      3,   200,   16 );
    ct_cresolu   = us_counter( 2,     20,   200,  100 );
@@ -192,7 +192,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount->setVisible( false );
    edata          = &dsets[ 0 ]->run_data;
 
-
+   pb_pltlines->setEnabled( false );
    compute();
 
 //DbgLv(2) << "Pre-resize AC size" << size();
@@ -312,10 +312,11 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 
    processor->start_fit( slo, sup, klo, kup, kin, res, typ, nthr, noif );
 
-   pb_strtfit->setEnabled( false );
-   pb_stopfit->setEnabled( true  );
-   pb_plot   ->setEnabled( false );
-   pb_save   ->setEnabled( false );
+   pb_strtfit ->setEnabled( false );
+   pb_stopfit ->setEnabled( true  );
+   pb_plot    ->setEnabled( false );
+   pb_save    ->setEnabled( false );
+   pb_pltlines->setEnabled( false );
 }
 
 // stop fit button clicked
@@ -465,6 +466,7 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
    b_progress->setValue( nctotal );
    qApp->processEvents();
    QStringList modelstats;
+   mrecs.clear();
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise, bmndx,
          modelstats, mrecs );
@@ -486,10 +488,11 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
       mainw->analysis_done(  0 );
 
-      pb_strtfit->setEnabled( true  );
-      pb_stopfit->setEnabled( false );
-      pb_plot   ->setEnabled( true  );
-      pb_save   ->setEnabled( true  );
+      pb_strtfit ->setEnabled( true  );
+      pb_stopfit ->setEnabled( false );
+      pb_plot    ->setEnabled( true  );
+      pb_save    ->setEnabled( true  );
+      pb_pltlines->setEnabled( true  );
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )
@@ -509,6 +512,8 @@ void US_AnalysisControl::compute()
    finc    = ct_incremk ->value();
    nlpts   = (int)ct_cresolu ->value();
    nkpts   = qRound( ( fmax - fmin ) / finc ) + 1;
+   mrecs.clear();
+
    if ( ctype == 0 )
    {
       lb_incremk ->setVisible( true  );
@@ -540,6 +545,7 @@ void US_AnalysisControl::compute()
    te_status  ->setText( amsg );
 
    bmndx          = -1;
+   pb_pltlines->setEnabled( true );
 }
 
 // slot to launch a plot dialog showing model lines
