@@ -2123,9 +2123,23 @@ void US_Hydrodyn_Saxs_Hplc::select_nth()
       return;
    }
 
+   int ofs = QInputDialog::getInteger(
+                                    tr( "SOMO: HPLC select every Nth file: enter offset" ),
+                                    tr( "Select the starting curve offset\nEnter offset:" ),
+                                    1, 
+                                    1,
+                                    lb_files->numRows(),
+                                    1, 
+                                    &ok, 
+                                    this 
+                                    );
+   if ( !ok ) {
+      return;
+   }
+
    disable_updates = true;
    lb_files->clearSelection();
-   for ( int i = 0; i < lb_files->numRows(); i += n )
+   for ( int i = ofs - 1; i < lb_files->numRows(); i += n )
    {
       lb_files->setSelected( i, true );
    }
