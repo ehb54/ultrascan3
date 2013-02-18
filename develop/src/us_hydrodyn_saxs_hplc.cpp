@@ -72,6 +72,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    baseline_mode  = false;
 
    unified_ggaussian_ok = false;
+   wheel_errors_ok      = false;
 
    update_enables();
 
@@ -816,6 +817,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cb_sd_weight->setChecked( false );
    cb_sd_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_sd_weight->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_sd_weight, SIGNAL( clicked() ), SLOT( set_sd_weight() ) );
 
    pb_gauss_fit = new QPushButton(tr("Fit"), this);
    pb_gauss_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -7008,6 +7010,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       return;
    }
 
+   wheel_errors_ok = 
+      f_errors.count( wheel_file ) &&
+      f_errors[ wheel_file ].size() == f_qs[ wheel_file ].size() &&
+      is_nonzero_vector( f_errors[ wheel_file ] );
+
    get_peak( wheel_file, gauss_max_height );
    gauss_max_height *= 1.2;
 
@@ -7728,13 +7735,27 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
    double rmsd  = 0e0;
    double start = le_gauss_fit_start->text().toDouble();
    double end   = le_gauss_fit_end  ->text().toDouble();
-   for ( unsigned int j = 0; j < x.size(); j++ )
+   if ( wheel_errors_ok && cb_sd_weight->isChecked() )
    {
-      if ( x[ j ] >= start && x[ j ] <= end )
+      for ( unsigned int j = 0; j < x.size(); j++ )
       {
-         rmsd += ( y[ j ] - f_Is[ wheel_file ][ j ] ) * ( y[ j ] - f_Is[ wheel_file ][ j ] );
+         if ( x[ j ] >= start && x[ j ] <= end )
+         {
+            double tmp = ( y[ j ] - f_Is[ wheel_file ][ j ] ) / f_errors[ wheel_file ][ j ];
+            rmsd += tmp * tmp;
+         }
+      }
+   } else {
+
+      for ( unsigned int j = 0; j < x.size(); j++ )
+      {
+         if ( x[ j ] >= start && x[ j ] <= end )
+         {
+            rmsd += ( y[ j ] - f_Is[ wheel_file ][ j ] ) * ( y[ j ] - f_Is[ wheel_file ][ j ] );
+         }
       }
    }
+
    lbl_gauss_fit->setText( QString( " %1 " ).arg( sqrt( rmsd ), 0, 'g', 5 ) );
 }
 
@@ -8882,9 +8903,12 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
    fit->cb_fix_amplitude ->setChecked( false );
+
    fit->lm();
+
    fit->cb_fix_width     ->setChecked( false );
    fit->lm();
+
 
    f_gaussians[ file ] = gaussians;
    gaussians = org_gaussians;
@@ -9442,7 +9466,7 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
 
    double rmsd = 0e0;
 
-   if ( unified_ggaussian_use_errors )
+   if ( unified_ggaussian_use_errors && cb_sd_weight->isChecked() )
    {
       for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
       {
@@ -9538,7 +9562,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    unified_ggaussian_use_errors      = true;
 
    // for testing
-   unified_ggaussian_use_errors      = false;
+   // unified_ggaussian_use_errors      = false;
 
    unified_ggaussian_gaussians_size  = ( unsigned int ) gaussians.size() / 3;
 
@@ -9760,3 +9784,18 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
       }
    }
 }
+
+
+void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
+{
+   if ( gaussian_mode )
+   {
+      replot_gaussian_sum();
+   } else {
+      lbl_gauss_fit ->setText( "?" );
+      pb_ggauss_rmsd->setEnabled( true );
+   }
+}
+
+
+

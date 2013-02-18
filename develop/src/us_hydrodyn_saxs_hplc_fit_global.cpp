@@ -26,6 +26,40 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
+
+   use_errors = hplc_win->cb_sd_weight->isChecked();
+   if ( use_errors &&
+        ( hplc_win->unified_ggaussian_e.size() != hplc_win->unified_ggaussian_q.size() ||
+          !hplc_win->is_nonzero_vector ( hplc_win->unified_ggaussian_e ) ) )
+   {
+      use_errors = false;
+      QMessageBox::information( this, this->caption(),
+                                tr( "SD weighting requested, but the errors associated\n"
+                                    "with the selected files are not all non-zero.\n" 
+                                    "SD weighting turned off"
+                                    ) );
+
+   }
+   if ( use_errors )
+   {
+      // check t vector for all non-negative integers
+      vector < double > x = hplc_win->unified_ggaussian_t;
+      for ( unsigned i = 0; i < x.size(); i++ )
+      {
+         unsigned int xui = ( unsigned int ) fabs( x[ i ] );
+         if ( ( double ) xui != x[ i ] )
+         {
+            use_errors = false;
+            QMessageBox::information( this, this->caption(),
+                                      tr( "SD weighting requested, but this currently\n"
+                                          "does not support fractional or negative frame numbers.\n"
+                                          "SD weighting turned off."
+                                          ) );
+            break;
+         }
+      }
+   }
+
    update_enables();
 }
 
@@ -463,11 +497,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    pb_undo                  ->setEnabled( !running && gaussians_undo.size() > 1 );
 
    pb_lm                    ->setEnabled( !running && run_ok );
-   pb_gsm_sd                ->setEnabled( false && !running && run_ok );
-   pb_gsm_ih                ->setEnabled( false && !running && run_ok );
-   pb_gsm_cg                ->setEnabled( false && !running && run_ok );
-   pb_ga                    ->setEnabled( false ); // && !running && run_ok && variations_set );
-   pb_grid                  ->setEnabled( false ); // && !running && run_ok && variations_set );
+   pb_gsm_sd                ->setEnabled( false && !running && run_ok && !use_errors );
+   pb_gsm_ih                ->setEnabled( false && !running && run_ok && !use_errors );
+   pb_gsm_cg                ->setEnabled( false && !running && run_ok && !use_errors );
+   pb_ga                    ->setEnabled( false ); // && !running && run_ok && variations_set && !use_errors );
+   pb_grid                  ->setEnabled( false ); // && !running && run_ok && variations_set && !use_errors );
 
    pb_stop                  ->setEnabled( running );
 }
@@ -488,6 +522,11 @@ namespace HFIT_GLOBAL
    vector < unsigned int > unified_ggaussian_param_index;    // copy from hplc win
    unsigned int            unified_ggaussian_gaussians_size; // copy from hplc win
    unsigned int            unified_ggaussian_curves;         // copy from hplc win
+
+   bool                    use_errors;
+
+   vector < double       > errors;
+   vector < unsigned int > errors_index;
 
    double compute_gaussian_f( double t, const double *par )
    {
@@ -552,6 +591,11 @@ namespace HFIT_GLOBAL
          result += height * exp( - tmp * tmp / 2 );
       }
       
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+
       return result;
    }
 
@@ -612,6 +656,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    HFIT_GLOBAL::unified_ggaussian_curves          = hplc_win->unified_ggaussian_curves;
 
    map < unsigned int, bool > fixed_curves;
+
+   HFIT_GLOBAL::use_errors = use_errors;
 
    //    QStringList qsl = QStringList::split( ",", le_fix_curves->text() );
 
@@ -793,8 +839,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    running = true;
    update_enables();
    // setup_run();
-   puts( "lm" );
-   cout << "gauss fit start\n";
+   cout << "lm fit start\n";
 
    LM::lm_control_struct control = LM::lm_control_double;
    control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
@@ -809,8 +854,24 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    vector < double >    org_params = HFIT_GLOBAL::init_params;
 
-   double org_rmsd = hplc_win->ggaussian_rmsd();
+   HFIT_GLOBAL::errors        = hplc_win->unified_ggaussian_e;
+   HFIT_GLOBAL::errors_index  .clear();
 
+   if ( use_errors )
+   {
+      HFIT_GLOBAL::errors_index.resize( ( unsigned int ) t.back() + 1 );
+      for ( unsigned int i = 0; i <= ( unsigned int ) t.back(); i++ )
+      {
+         HFIT_GLOBAL::errors_index[ i ] = 0;
+      }
+      for ( unsigned int i = 0; i < y.size(); i++ )
+      {
+         y[ i ] /= HFIT_GLOBAL::errors[ i ];
+         HFIT_GLOBAL::errors_index[ ( unsigned int )t[ i ] ] = i;
+      }
+   }
+
+   double org_rmsd = hplc_win->ggaussian_rmsd();
 
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > gsumf( t.size() );
@@ -829,6 +890,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    }
 
    // hplc_win->add_ggaussian_curve( "lm_start", gsumf );
+
 
    vector < double > par = HFIT_GLOBAL::init_params;
    // HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
@@ -868,13 +930,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
             hplc_win->unified_ggaussian_params[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
          }
       }
-      cout << QString( "back checking rmsd gives %1\n" ).arg( hplc_win->ggaussian_rmsd() );
+      double new_rmsd = hplc_win->ggaussian_rmsd();
+      cout << QString( "back checking rmsd gives %1\n" ).arg( new_rmsd  );
       // hplc_win->add_ggaussian_curve( "lm_after_pushback", hplc_win->compute_ggaussian_gaussian_sum() );
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
       if ( update_hplc )
       {
-         cout << QString( "new rmsd: %1" ).arg( status.fnorm, 0, 'g', 5 );
-         hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( status.fnorm, 0, 'g', 5 ) );
+         cout << QString( "new rmsd: %1" ).arg( new_rmsd, 0, 'g', 5 );
+         hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
       }
    } else {
       cout << "no improvement, reverting to original values\n";
@@ -891,7 +954,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
 {
-   puts( "gsm_sd" );
    return; // have to rewrite this 
    /*
    gsm_setup();

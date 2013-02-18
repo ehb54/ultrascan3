@@ -26,6 +26,51 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    gaussians_undo.push_back( hplc_win->gaussians );
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
+
+   use_errors = hplc_win->cb_sd_weight->isChecked();
+   if ( use_errors &&
+        ( !hplc_win->f_errors.count( hplc_win->wheel_file ) ||
+          hplc_win->f_errors[ hplc_win->wheel_file ].size() != hplc_win->f_qs[ hplc_win->wheel_file ].size() ||
+          !hplc_win->is_nonzero_vector ( hplc_win->f_errors[ hplc_win->wheel_file ] ) ) )
+   {
+      use_errors = false;
+
+      //       QMessageBox::information( this, this->caption(),
+      //                                 tr( "SD weighting requested, but the errors associated\n"
+      //                                     "with the selected file are not all non-zero.\n" 
+      //                                     "SD weighting turned off"
+      //                                     ) );
+
+      hplc_win->editor_msg( "dark red",  tr( "SD weighting requested, but the errors associated\n"
+                                             "with the selected file are not all non-zero.\n" 
+                                             "SD weighting turned off" ) );
+   }
+   if ( use_errors )
+   {
+      // check t vector for all non-negative integers
+      vector < double > x = hplc_win->f_qs[ hplc_win->wheel_file ];
+      for ( unsigned i = 0; i < x.size(); i++ )
+      {
+         unsigned int xui = ( unsigned int ) fabs( x[ i ] );
+         if ( ( double ) xui != x[ i ] )
+         {
+            use_errors = false;
+
+            //             QMessageBox::information( this, this->caption(),
+            //                                       tr( "SD weighting requested, but this currently\n"
+            //                                           "does not support fractional or negative frame numbers.\n"
+            //                                           "SD weighting turned off."
+            //                                           ) );
+
+            hplc_win->editor_msg( "dark red",  
+                                  tr( "SD weighting requested, but this currently\n"
+                                      "does not support fractional or negative frame numbers.\n"
+                                      "SD weighting turned off." ) );
+            break;
+         }
+      }
+   }
+
    update_enables();
 }
 
@@ -465,11 +510,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
    pb_undo                  ->setEnabled( !running && gaussians_undo.size() > 1 );
 
    pb_lm                    ->setEnabled( !running && run_ok );
-   pb_gsm_sd                ->setEnabled( !running && run_ok );
-   pb_gsm_ih                ->setEnabled( !running && run_ok );
-   pb_gsm_cg                ->setEnabled( !running && run_ok );
-   pb_ga                    ->setEnabled( !running && run_ok && variations_set );
-   pb_grid                  ->setEnabled( !running && run_ok && variations_set );
+   pb_gsm_sd                ->setEnabled( !running && run_ok && !use_errors );
+   pb_gsm_ih                ->setEnabled( !running && run_ok && !use_errors );
+   pb_gsm_cg                ->setEnabled( !running && run_ok && !use_errors );
+   pb_ga                    ->setEnabled( !running && run_ok && variations_set && !use_errors );
+   pb_grid                  ->setEnabled( !running && run_ok && variations_set && !use_errors );
 
    pb_stop                  ->setEnabled( running );
 }
@@ -485,6 +530,11 @@ namespace HFIT
    vector < bool         > param_fixed;    
    vector < double       > param_min;      // minimum values for variable params
    vector < double       > param_max;      // maximum values for variable params
+
+   vector < double       > errors;
+   vector < unsigned int > errors_index;
+
+   bool                    use_errors;
 
    double compute_gaussian_f( double t, const double *par )
    {
@@ -541,6 +591,11 @@ namespace HFIT
          result += height * exp( - tmp * tmp / 2 );
       }
       
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+      
       return result;
    }
 
@@ -585,7 +640,6 @@ namespace HFIT
    }
 };
 
-
 bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 {
    HFIT::init_params .clear();
@@ -597,6 +651,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
    HFIT::param_max   .clear();
 
    map < unsigned int, bool > fixed_curves;
+
+   HFIT::use_errors = use_errors;
 
    //    QStringList qsl = QStringList::split( ",", le_fix_curves->text() );
 
@@ -779,6 +835,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    vector < double > x = hplc_win->f_qs[ hplc_win->wheel_file ];
    vector < double > t;
    vector < double > y;
+   HFIT::errors        = hplc_win->f_errors[ hplc_win->wheel_file ];
+   HFIT::errors_index  .clear();
 
    double start = hplc_win->le_gauss_fit_start->text().toDouble();
    double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();
@@ -792,8 +850,24 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       }
    }
 
+   if ( use_errors )
+   {
+      HFIT::errors_index.resize( ( unsigned int ) t.back() + 1 );
+      for ( unsigned int i = 0; i <= ( unsigned int ) t.back(); i++ )
+      {
+         HFIT::errors_index[ i ] = 0;
+      }
+      for ( unsigned int i = 0; i < y.size(); i++ )
+      {
+         y[ i ] /= HFIT::errors[ i ];
+         HFIT::errors_index[ ( unsigned int )t[ i ] ] = i;
+      }
+   }
+
    vector < double >    org_params = HFIT::init_params;
    double org_rmsd = 0e0;
+
+   if ( use_errors ) 
    {
       vector < double >    yp( x.size() );
 
@@ -803,7 +877,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
-   }
+   } else {
+      vector < double >    yp( x.size() );
+
+      for ( unsigned int j = 0; j < t.size(); j++ )
+      {
+         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
+         org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
+      }
+      org_rmsd = sqrt( org_rmsd );
+   } 
 
    vector < double > par = HFIT::init_params;
    // HFIT::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );

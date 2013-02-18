@@ -326,6 +326,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                plot_gaussian_sum();
       void                                replot_gaussian_sum();
 
+      bool                                wheel_errors_ok;
+
       QStringList                         all_selected_files();
       QStringList                         all_files();
 
@@ -524,6 +526,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_start();
       void ggauss_rmsd();
       void ggauss_results();
+
+      void set_sd_weight();
 
       void gauss_as_curves();
 

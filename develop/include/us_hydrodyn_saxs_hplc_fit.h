@@ -164,6 +164,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          ga_fitness       ( ga_individual & individual );
       bool          ga_run           ( double & nrmsd );
 
+      bool          use_errors;
+
    private slots:
 
       void update_enables();
@@ -203,6 +205,12 @@ namespace HFIT
    extern vector < bool         > param_fixed;    
    extern vector < double       > param_min;      // minimum values for variable params
    extern vector < double       > param_max;      // maximum values for variable params
+
+   extern bool                    use_errors;
+
+   extern vector < double       > errors;
+   extern vector < unsigned int > errors_index;
+
 
    double compute_gaussian_f( double t, const double *par );
 
