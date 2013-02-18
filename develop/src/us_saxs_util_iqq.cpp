@@ -555,7 +555,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
             if ( !ok && trial < retries )
             {
                cout << QString( "DAMMIN: failed, retrying %1 of %2" ).arg( trial ).arg( retries );
+#ifndef WIN32
                sleep( trial * trial * 60 );
+#endif
             }
          }
          if ( !ok )

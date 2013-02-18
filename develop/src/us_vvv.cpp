@@ -51,7 +51,7 @@ namespace vvv
 
       while(cont) {
          counts++;
-         if(grid < 0.0001) { grid += 0.01; }
+         if(grid < 0.0001f) { grid += 0.01f; }
          dx=int((XMAX-XMIN)/grid+1);
          dy=int((YMAX-YMIN)/grid+1);
          dz=int((ZMAX-ZMIN)/grid+1);
@@ -67,14 +67,14 @@ namespace vvv
                bng = grid;
                bnd = diff;
             }
-            grid += 0.0001;
+            grid += 0.0001f;
          }
          if(diff > 0) {
             if(bpg < 0 || diff < bpd) {
                bpg = grid;
                bpd = diff;
             }
-            grid -= 0.0001;
+            grid -= 0.0001f;
          }
          //    cerr << "\tbpg = " << bpg << "\tbng = " << bng << endl;
          //    cerr << "\tbpdiff = " << bpd << "\tbndiff = " << bnd << endl;
@@ -1184,14 +1184,14 @@ namespace vvv
       //const float xp = 53.652;
       //const float yp = 141.358;
       //const float zp = 66.460;
-      const float xp = 58.920;
-      const float yp = 140.063;
-      const float zp = 80.060;
+      const float xp = 58.920f;
+      const float yp = 140.063f;
+      const float zp = 80.060f;
 
       //VECTOR
-      const float xv =  0.58092;
-      const float yv = -0.60342;
-      const float zv =  0.54627;
+      const float xv =  0.58092f;
+      const float yv = -0.60342f;
+      const float zv =  0.54627f;
 
       //DIFFERENCE VECTOR
       const float dx = x - xp;
@@ -1224,19 +1224,19 @@ namespace vvv
 
       //TUNNEL VECTOR
       struct vector v;
-      v.x = -0.58092;
-      v.y =  0.60342;
-      v.z = -0.54627;
+      v.x = -0.58092f;
+      v.y =  0.60342f;
+      v.z = -0.54627f;
 
       //GENERATE 2D GRID
       //  FIND 2 PERP VECTORS
       struct vector v1, v2;
-      v1.x =  0.60342; // =v.y
-      v1.y =  0.58092; // =-v.x
-      v1.z =  0.00000; // =0
-      v2.x = -0.31734; //
-      v2.y =  0.32963;
-      v2.z =  0.70159;
+      v1.x =  0.60342f; // =v.y
+      v1.y =  0.58092f; // =-v.x
+      v1.z =  0.00000f; // =0
+      v2.x = -0.31734f; //
+      v2.y =  0.32963f;
+      v2.z =  0.70159f;
 
       //  const float x = int(pt % DX) * GRID + XMIN;
       //  const float y = int((pt % DXY)/ DX) * GRID + YMIN;
@@ -1458,8 +1458,8 @@ namespace vvv
    float surface_area (gridpt grid[]) {
       //Initialize Variables
       float surf=0.0;
-      const float wt[] = { 0.0, 0.894, 1.3409, 1.5879, 4.0, 2.6667, 
-                           3.3333, 1.79, 2.68, 4.08, 0.0}; //weighting factors
+      const float wt[] = { 0.0f, 0.894f, 1.3409f, 1.5879f, 4.0f, 2.6667f, 
+                           3.3333f, 1.79f, 2.68f, 4.08f, 0.0f}; //weighting factors
       /*
         wt[0]=0.0;   wt[1]=0.894; wt[2]=1.3409; wt[3]=1.5879;
         wt[4]=4.0;   wt[5]=2.6667; wt[6]=3.3333;

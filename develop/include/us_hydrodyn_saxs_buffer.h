@@ -318,6 +318,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       double                       join_mult_end;
       double                       join_mult_delta;
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
@@ -328,6 +331,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < long >                     plotted_markers;
       long                                wheel_curve;
       long                                join_curve;
+#endif
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
 #endif
 
       mQLineEdit                   *le_last_focus;

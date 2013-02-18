@@ -70,7 +70,11 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
    }
 #endif
 }
-void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem* pitem )
+void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem* 
+#ifdef QT4
+                                               pitem
+#endif
+                                               )
 {
 #ifdef QT4
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
@@ -99,7 +103,11 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
 #endif
 }
-void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem* pitem )
+void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem* 
+#ifdef QT4
+                                             pitem
+#endif
+                                             )
 {
 #ifdef QT4
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;

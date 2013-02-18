@@ -3563,7 +3563,7 @@ float US_Hydrodyn::min_dist_to_struct_and_waters( point p )
    double water_radius   = multi_residue_map.count( "SWH" ) ?
       residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
    
-   float min_dist = 1e30;
+   float min_dist = (float)1e30;
    float this_dist;
 
    // check structure:
@@ -3657,7 +3657,7 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
 float US_Hydrodyn::min_dist_to_waters( point p )
 {
    // check already added waters:
-   float min_dist = 1.0e15;
+   float min_dist = (float)1.0e15;
    bool first = true;
 
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
@@ -5491,7 +5491,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                // find clash distance of each one, then exit for now:
 
-               float        min_dist        = 1e30;
+               float        min_dist        = (float)1e30;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
@@ -5717,7 +5717,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   return false;
                }
          
-               float        min_dist        = 1e30;
+               float        min_dist        = (float)1e30;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;

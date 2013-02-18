@@ -5300,7 +5300,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
 
                // find clash distance of each one, then exit for now:
 
-               float        min_dist        = 1e30;
+               float        min_dist        = 1e30f;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
@@ -5528,7 +5528,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
                   return false;
                }
          
-               float        min_dist        = 1e30;
+               float        min_dist        = 1e30f;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
@@ -6235,7 +6235,7 @@ float US_Saxs_Util::min_dist_to_struct_and_waters( point p )
    double water_radius   = multi_residue_map.count( "SWH" ) ?
       residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
    
-   float min_dist = 1e30;
+   float min_dist = 1e30f;
    float this_dist;
 
    // check structure:

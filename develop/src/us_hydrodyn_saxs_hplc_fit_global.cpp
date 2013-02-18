@@ -453,11 +453,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    le_iterations            ->setEnabled( !running );
    le_population            ->setEnabled( !running );
 
-   bool variations_set      = 
-      ( cb_fix_center   ->isChecked() || cb_pct_center   ->isChecked() ) &&
-      ( cb_fix_width    ->isChecked() || cb_pct_width    ->isChecked() ) &&
-      ( cb_fix_amplitude->isChecked() || cb_pct_amplitude->isChecked() )
-      ;
+   // bool variations_set      = 
+   //    ( cb_fix_center   ->isChecked() || cb_pct_center   ->isChecked() ) &&
+   //    ( cb_fix_width    ->isChecked() || cb_pct_width    ->isChecked() ) &&
+   //    ( cb_fix_amplitude->isChecked() || cb_pct_amplitude->isChecked() )
+   //    ;
 
    pb_restore               ->setEnabled( !running && gaussians_undo.size() > 1 );
    pb_undo                  ->setEnabled( !running && gaussians_undo.size() > 1 );
@@ -466,8 +466,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    pb_gsm_sd                ->setEnabled( false && !running && run_ok );
    pb_gsm_ih                ->setEnabled( false && !running && run_ok );
    pb_gsm_cg                ->setEnabled( false && !running && run_ok );
-   pb_ga                    ->setEnabled( false && !running && run_ok && variations_set );
-   pb_grid                  ->setEnabled( false && !running && run_ok && variations_set );
+   pb_ga                    ->setEnabled( false ); // && !running && run_ok && variations_set );
+   pb_grid                  ->setEnabled( false ); // && !running && run_ok && variations_set );
 
    pb_stop                  ->setEnabled( running );
 }

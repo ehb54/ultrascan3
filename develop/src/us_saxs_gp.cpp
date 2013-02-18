@@ -433,7 +433,7 @@ point sgp_node::get_coordinate()
       }
    }
 
-   point ptest = norm( p1 );
+   // point ptest = norm( p1 );
 
    p1 = scale( norm( p1 ), (float) distance );
    if ( parent )

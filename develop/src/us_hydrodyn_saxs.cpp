@@ -4462,64 +4462,64 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
    p.axis[ 2 ] = 0.0;
    hybrid_coords[ "C" ].push_back( p );
 
-   p.axis[ 0 ] = 1.070;
-   p.axis[ 1 ] = 0.0;
-   p.axis[ 2 ] = 0.0;
+   p.axis[ 0 ] = 1.070f;
+   p.axis[ 1 ] = 0.0f;
+   p.axis[ 2 ] = 0.0f;
    hybrid_coords[ "C" ].push_back( p );
 
-   p.axis[ 0 ] = -0.366;
-   p.axis[ 1 ] = 1.039;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = -0.366f;
+   p.axis[ 1 ] = 1.039f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "C" ].push_back( p );
 
-   p.axis[ 0 ] = -0.222;
-   p.axis[ 1 ] = -0.722;
-   p.axis[ 2 ] = -0.724;
+   p.axis[ 0 ] = -0.222f;
+   p.axis[ 1 ] = -0.722f;
+   p.axis[ 2 ] = -0.724f;
    hybrid_coords[ "C" ].push_back( p );
 
-   p.axis[ 0 ] = 0.000;
-   p.axis[ 1 ] = 0.000;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = 0.000f;
+   p.axis[ 1 ] = 0.000f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "N" ].push_back( p );
 
-   p.axis[ 0 ] = 1.000;
-   p.axis[ 1 ] = 0.0;
-   p.axis[ 2 ] = 0.0;
+   p.axis[ 0 ] = 1.000f;
+   p.axis[ 1 ] = 0.0f;
+   p.axis[ 2 ] = 0.0f;
    hybrid_coords[ "N" ].push_back( p );
 
-   p.axis[ 0 ] = -0.531;
-   p.axis[ 1 ] = 0.868;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = -0.531f;
+   p.axis[ 1 ] = 0.868f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "N" ].push_back( p );
 
-   p.axis[ 0 ] = -0.314;
-   p.axis[ 1 ] = 1.039;
-   p.axis[ 2 ] = -0.414;
+   p.axis[ 0 ] = -0.314f;
+   p.axis[ 1 ] = 1.039f;
+   p.axis[ 2 ] = -0.414f;
    hybrid_coords[ "N" ].push_back( p );
 
-   p.axis[ 0 ] = 0.000;
-   p.axis[ 1 ] = 0.000;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = 0.000f;
+   p.axis[ 1 ] = 0.000f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "O" ].push_back( p );
 
-   p.axis[ 0 ] = 0.960;
-   p.axis[ 1 ] = 0.000;
-   p.axis[ 2 ] = 0.00;
+   p.axis[ 0 ] = 0.960f;
+   p.axis[ 1 ] = 0.000f;
+   p.axis[ 2 ] = 0.00f;
    hybrid_coords[ "O" ].push_back( p );
 
-   p.axis[ 0 ] = -0.240;
-   p.axis[ 1 ] = 0.929;
-   p.axis[ 2 ] = 0.00;
+   p.axis[ 0 ] = -0.240f;
+   p.axis[ 1 ] = 0.929f;
+   p.axis[ 2 ] = 0.00f;
    hybrid_coords[ "O" ].push_back( p );
 
-   p.axis[ 0 ] = 0.000;
-   p.axis[ 1 ] = 0.000;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = 0.000f;
+   p.axis[ 1 ] = 0.000f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "S" ].push_back( p );
 
-   p.axis[ 0 ] = 1.000;
-   p.axis[ 1 ] = 0.000;
-   p.axis[ 2 ] = 0.000;
+   p.axis[ 0 ] = 1.000f;
+   p.axis[ 1 ] = 0.000f;
+   p.axis[ 2 ] = 0.000f;
    hybrid_coords[ "S" ].push_back( p );
 #endif
    // compute pairwise distances

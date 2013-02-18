@@ -7758,9 +7758,9 @@ void US_Hydrodyn_Saxs_Buffer::color_rotate()
 void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
 {
    double sum = 
-      fabs( bg.red  () - set.red  () ) +
-      fabs( bg.green() - set.green() ) +
-      fabs( bg.blue () - set.blue () );
+      fabs( (float) bg.red  () - (float) set.red  () ) +
+      fabs( (float) bg.green() - (float) set.green() ) +
+      fabs( (float) bg.blue () - (float) set.blue () );
    if ( sum > 100 )
    {
       plot_colors.push_back( set );

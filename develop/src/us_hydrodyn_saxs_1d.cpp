@@ -4,7 +4,9 @@
 #include "../include/us_hydrodyn_saxs_2d.h"
 #include "../include/us_file_util.h"
 #include "../include/us_vvv.h"
-#include <sys/time.h>
+#ifndef WIN32
+# include <sys/time.h>
+#endif
 
 #if defined( HAS_CBF )
 #  include <cbf.h>
@@ -58,9 +60,11 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
 
    plot_saxs_zoomer = (ScrollZoomer *)0;
 
+#ifndef WIN32
    struct timeval tv;
    gettimeofday(&tv, NULL);
    srand48( tv.tv_usec );
+#endif
 
    our_saxs_options            = saxs_window->our_saxs_options;
    atom_list                   = saxs_window->atom_list;

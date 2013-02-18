@@ -670,7 +670,7 @@ class US_EXTERN US_Saxs_Util
                                                              );
                                                              
 #ifdef WIN32
-  #pragma default ( disable: 4251 )
+  #pragma warning ( default: 4251 )
 #endif
 
       bool         align_test();
