@@ -83,11 +83,8 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
       plotted = true;
       editor->append("P(r) plot legend:\n");
    }
-   QColor save_color = editor->color();
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-   editor->setColor(plot_colors[p % plot_colors.size()]);
-   editor->append(name + "\n");
-   editor->setColor(save_color);
+
+   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground(), name );
 
    // to save to csv, write just contributing models?, target, model & residual
    // don't forget to make target part of it even if it isn't selected.
@@ -709,11 +706,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       editor->append("I(q) vs q plot legend:\n");
    }
 
-   QColor save_color = editor->color();
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-   editor->setColor(plot_colors[p % plot_colors.size()]);
-   editor->append(name + "\n");
-   editor->setColor(save_color);
+   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground(), name );
+
    saxs_search_update_enables();
 }
 

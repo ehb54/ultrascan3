@@ -427,10 +427,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             if ( qsl_iq.size() < 3 )
             {
                QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient I(q) values in data row " + qsl_iq[0] + ", skipping\n");
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(msg);
-               editor->setColor(save_color);
+               editor_msg( "red", msg );
             } else {
                // build up new row to append to qsl
                if ( all_match )
@@ -450,10 +447,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   {
                      interp_msg_done[f2.name()] = true;
                      QString msg = tr("The csv file ") + f2.name() + tr(" will be interpolated\n");
-                     QColor save_color = editor->color();
-                     editor->setColor("dark red");
-                     editor->append(msg);
-                     editor->setColor(save_color);
+                     editor_msg( "dark red", msg );
                   }
                   // the new iq:
                   QStringList new_iq_fields;
@@ -889,10 +883,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          if ( qsl_iq.size() < 3 )
          {
             QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient I(q) values in data row " + qsl_tmp[0] + "\n");
-            QColor save_color = editor->color();
-            editor->setColor("red");
-            editor->append(msg);
-            editor->setColor(save_color);
+            editor_msg( "red", msg );
             QMessageBox mb(tr("UltraScan Warning"),
                            msg,
                            QMessageBox::Critical,
@@ -1142,8 +1133,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }
       if ( plotted )
       {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-         editor->append("I(q) plot done\n");
+         editor_msg( "black", "I(q) plot done\n");
          plotted = false;
       }
       if ( save_to_csv )
@@ -1196,10 +1186,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             fclose(of);
             editor->append(tr("Created file: " + fname + "\n"));
          } else {
-            QColor save_color = editor->color();
-            editor->setColor("red");
-            editor->append(tr("ERROR creating file: " + fname + "\n"));
-            editor->setColor(save_color);
+            editor_msg( "red", tr("ERROR creating file: " + fname + "\n"));
          }
       }
    } else {
@@ -1242,8 +1229,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       }
       if ( plotted )
       {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-         editor->append("I(q) plot done\n");
+         editor_msg( "black", "I(q) plot done\n");
          plotted = false;
       }
    }
@@ -1660,15 +1646,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
       }
       if ( plotted )
       {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-         editor->append("I(q) plot done\n");
-         plotted = false;
-      }
-
-      if ( plotted )
-      {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-         editor->append("I(q) vs q plot done\n");
+         editor_msg( "black", "I(q) plot done\n");
          plotted = false;
       }
 
@@ -2127,10 +2105,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   if ( qsl_pr.size() < 6 )
                   {
                      QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient p(r) values in data row " + qsl_pr[0] + ", skipping\n");
-                     QColor save_color = editor->color();
-                     editor->setColor("red");
-                     editor->append(msg);
-                     editor->setColor(save_color);
+                     editor_msg( "red", msg );
                   } else {
                      // build up new row to append to qsl
                      if ( all_match )
@@ -2149,10 +2124,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                         {
                            interp_msg_done[f2.name()] = true;
                            QString msg = tr("The csv file ") + f2.name() + tr(" will be interpolated\n");
-                           QColor save_color = editor->color();
-                           editor->setColor("dark red");
-                           editor->append(msg);
-                           editor->setColor(save_color);
+                           editor_msg( "dark red", msg );
                         }
                         // the new pr:
                         QStringList new_pr_fields;
@@ -2420,10 +2392,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                if ( qsl_pr.size() < 6 )
                {
                   QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + qsl_tmp[0] + "\n");
-                  QColor save_color = editor->color();
-                  editor->setColor("red");
-                  editor->append(msg);
-                  editor->setColor(save_color);
+                  editor_msg( "red", msg );
                   QMessageBox mb(tr("UltraScan Warning"),
                                  msg,
                                  QMessageBox::Critical,
@@ -2694,8 +2663,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             }
             if ( plotted )
             {
-               editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-               editor->append("P(r) plot done\n");
+               editor_msg( "black", "P(r) plot done\n");
                plotted = false;
             }
             if ( save_to_csv )
@@ -2756,10 +2724,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   fclose(of);
                   editor->append(tr("Created file: " + fname + "\n"));
                } else {
-                  QColor save_color = editor->color();
-                  editor->setColor("red");
-                  editor->append(tr("ERROR creating file: " + fname + "\n"));
-                  editor->setColor(save_color);
+                  editor_msg( "red", tr("ERROR creating file: " + fname + "\n" ) );
                }
             }
          } else {
@@ -2788,8 +2753,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             }
             if ( plotted )
             {
-               editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-               editor->append("P(r) plot done\n");
+               editor_msg( "black", "P(r) plot done\n");
                plotted = false;
             }
          }

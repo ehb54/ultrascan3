@@ -1670,13 +1670,13 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    if ( !contrib_pdb_atom.size() ||
         !contrib_array.size() ) 
    {
-      editor->append("Plot contributions: Nothing to plot\n");
+      editor_msg( "red", "Plot contributions: Nothing to plot\n" );
       return;
    }
 
    if ( pr_contrib_low >= pr_contrib_high ) 
    {
-      editor->append("Plot contributions: Range error\n");
+      editor_msg( "red", "Plot contributions: Range error\n");
       return;
    }
    progress_pr->reset();
@@ -1773,7 +1773,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    QFile f(fname);
    if ( !f.open( IO_WriteOnly ) )
    {
-      editor->append("Error creating file " + fname + "\n");
+      editor_msg( "red", "Error creating file " + fname + "\n");
       return;
    }
    QTextStream t( &f );
@@ -1861,17 +1861,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
       printf("creating pr %u\n", current_model); fflush(stdout);
 #endif
-      editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot in %3 mode%4.\n\n")
-                     .arg(te_filename2->text())
-                     .arg(current_model + 1)
-                     .arg(rb_curve_raw->isChecked() ? "Raw" :
-                          ( rb_curve_saxs->isChecked() ? "SAXS" : "SANS" ) )
-                     .arg(cb_normalize->isChecked() ? ", Normalized" : "")
-                     );
+      editor_msg( "black", 
+                  QString("\n\nPreparing file %1 model %2 for p(r) vs r plot in %3 mode%4.\n\n")
+                  .arg(te_filename2->text())
+                  .arg(current_model + 1)
+                  .arg(rb_curve_raw->isChecked() ? "Raw" :
+                       ( rb_curve_saxs->isChecked() ? "SAXS" : "SANS" ) )
+                  .arg(cb_normalize->isChecked() ? ", Normalized" : "")
+                  );
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor_msg( "dark red", tr("Terminated by user request.\n" ) );
          progress_pr->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2026,16 +2027,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      if ( !hybrid_map.count(hybrid_name) )
                      {
                         cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-                        QColor save_color = editor->color();
-                        editor->setColor("red");
-                        editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Assuming zero radius!.\n")
-                                       .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                                       .arg(j+1)
-                                       .arg(this_atom->resName)
-                                       .arg(this_atom->resSeq)
-                                       .arg(hybrid_name)
-                                       );
-                        editor->setColor(save_color);
+                        editor_msg( "red", 
+                                    QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Assuming zero radius!.\n")
+                                    .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                    .arg(j+1)
+                                    .arg(this_atom->resName)
+                                    .arg(this_atom->resSeq)
+                                    .arg(hybrid_name)
+                                    );
                         qApp->processEvents();
                      } else {
                         radius = hybrid_map[hybrid_name].radius;
@@ -2083,10 +2082,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                rb_curve_raw->setChecked(true);
                rb_curve_saxs->setChecked(false);
                rb_curve_sans->setChecked(false);
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation."));
-               editor->setColor(save_color);
+               editor_msg( "red", tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
             }
          }
       }
@@ -2099,9 +2095,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
       // ok now we have all the atoms
 
-      editor->append(QString("Number of atoms %1. Bin size %2.\n")
-                     .arg(atoms.size())
-                     .arg(delta));
+      editor_msg( "black", 
+                  QString("Number of atoms %1. Bin size %2.\n")
+                  .arg(atoms.size())
+                  .arg(delta));
       qApp->processEvents();
 
       // we want to keep a tally of each atom's contribution to each position
@@ -2120,7 +2117,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          
          unsigned int j;
          unsigned int threads = USglobal->config_list.numThreads;
-         editor->append(QString("Using %1 threads.\n").arg(threads));
+         editor_msg( "blue", QString("Using %1 threads.\n").arg(threads));
          vector < saxs_pr_thr_t* > saxs_pr_thr_threads(threads);
          for ( j = 0; j < threads; j++ )
          {
@@ -2613,12 +2610,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    // pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
 
-   QColor save_color = editor->color();
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-   editor->setColor(plot_colors[p % plot_colors.size()]);
-   editor->append(QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName()));
-   editor->setColor(save_color);
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground(), QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName() ) );
 }
 
 
@@ -3063,14 +3055,11 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq));
-               editor->setColor(save_color);
+               editor_msg( "red", QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->resName)
+                           .arg(this_atom->resSeq));
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -3087,16 +3076,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             if ( !hybrid_map.count(hybrid_name) )
             {
                cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->resName)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -3117,17 +3104,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     << " atom name "
                     << this_atom->name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->name)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(this_atom->resName)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -3152,17 +3137,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     << " saxs name "
                     << hybrid_map[hybrid_name].saxs_name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              .arg(hybrid_map[hybrid_name].saxs_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->resName)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           .arg(hybrid_map[hybrid_name].saxs_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -3953,8 +3936,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
    }
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("I(q) plot done\n");
+      editor_msg( "black", "I(q) plot done\n" );
       plotted = false;
    }
    rescale_plot();
@@ -5239,8 +5221,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
                   if ( plotted )
                   {
-                     editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-                     editor->append("P(r) plot done\n");
+                     editor_msg( "black", "P(r) plot done\n" );
                      plotted = false;
                   }
                   break;
@@ -5321,8 +5302,7 @@ void US_Hydrodyn_Saxs::load_gnom()
          plot_one_iqq(gnom_q_reg, gnom_Iq_reg, QFileInfo(filename).fileName() + " Regularized");
          if ( plotted )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("I(q) vs q plot done\n");
+            editor_msg( "black", "I(q) vs q plot done\n" );
             plotted = false;
          }
          cb_guinier->setChecked(false);
@@ -5811,7 +5791,6 @@ void US_Hydrodyn_Saxs::clear_guinier()
 void US_Hydrodyn_Saxs::run_guinier_cs()
 {
    editor->append("CS Guinier analysis:\n");
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
    clear_guinier();
 
    QString csvlog = 
@@ -5841,7 +5820,6 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
    {
       cs_guinier_analysis(i, csvlog);
    }
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
    cb_cs_guinier->setChecked(true);
    set_guinier();
 
@@ -5852,7 +5830,7 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
 
       if ( !f.open(IO_WriteOnly) )
       {
-         editor->append(QString(tr("Can not create file %1\n")).arg(f.name()));
+         editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
       }
       QTextStream ts(&f);
       ts << csvlog;
@@ -5864,7 +5842,7 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
 void US_Hydrodyn_Saxs::run_guinier_analysis()
 {
    editor->append("Guinier analysis:\n");
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, plot_saxs->canvasBackground() );
    clear_guinier();
 
    QString csvlog = 
@@ -6008,9 +5986,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       // cout << log;
    }
 
-   QColor save_color = editor->color();
-   editor->setColor(plot_colors[i % plot_colors.size()]);
-
    QString report;
    if ( too_few_points )
    {
@@ -6119,8 +6094,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             ;
       }
    }
-   editor->append(report);
-   editor->setColor(save_color);
+   editor_msg( plot_colors[i % plot_colors.size()], report );
 
    //   cout << csvlog;
    return true;
@@ -6209,8 +6183,9 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                             bestend
                             ) )
       {
-         editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
-                        .arg(qsl_plotted_iq_names[i]));
+         editor_msg( "red",
+                     QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                     .arg(qsl_plotted_iq_names[i]));
          return false;
       }
 
@@ -6219,9 +6194,6 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    
       // cout << log;
    }
-
-   QColor save_color = editor->color();
-   editor->setColor(plot_colors[i % plot_colors.size()]);
 
    QString report;
    if ( too_few_points )
@@ -6331,8 +6303,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             ;
       }
    }
-   editor->append(report);
-   editor->setColor(save_color);
+   editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground(), report );
 
    //   cout << csvlog;
    return true;

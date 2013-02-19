@@ -1384,8 +1384,7 @@ void US_Hydrodyn_Saxs_Screen::do_replot_saxs()
    }
    if ( saxs_window->plotted )
    {
-      saxs_window->editor->setParagraphBackgroundColor ( saxs_window->editor->paragraphs() - 1, QColor("white") );
-      saxs_window->editor->append("I(q) plot done\n");
+      saxs_window->editor_msg( "black", "I(q) plot done\n");
       saxs_window->plotted = false;
    }
    saxs_window->rescale_plot();

@@ -656,7 +656,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 #endif
       if ( plotted )
       {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
          plotted = false;
       }
       editor->append("I(q) computed.\n");
@@ -891,7 +890,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
 
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
       plotted = false;
    }
 

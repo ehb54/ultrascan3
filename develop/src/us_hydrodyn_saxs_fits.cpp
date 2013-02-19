@@ -195,28 +195,27 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    vector < double > rescaled_x = rescale(use_x);
    // list models & concs
    
-   QColor save_color = editor->color();
+   QString use_color = "black";
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
       if ( rescaled_x[i] == 0 )
       {
-         editor->setColor("gray");
+         use_color = "gray";
       } else {
          if ( rescaled_x[i] < .1 )
          {
-            editor->setColor("darkCyan");
+            use_color = "darkCyan";
          } else {
             if ( rescaled_x[i] < .2 )
             {
-               editor->setColor("blue");
+               use_color = "blue";
             } else {
-               editor->setColor("darkBlue");
+               use_color = "darkBlue";
             }
          }
       }
-      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i]));
+      editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i] ) );
    }
-   editor->setColor(save_color);
    
    // build model & residuals
    vector < double > model(use_B.size());
@@ -248,8 +247,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("I(q) plot done\n");
+      editor_msg( "black", "I(q) plot done\n");
       plotted = false;
    }
    
@@ -310,16 +308,12 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
          fclose(of);
          if ( plotted )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("I(q) plot done\n");
+            editor_msg( "black", "I(q) plot done\n" );
             plotted = false;
          }
          editor->append(tr("Created file: " + fname + "\n"));
       } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
+         editor_msg( "red", tr("ERROR creating file: " + fname + "\n" ) );
       }
    }
 }
@@ -449,14 +443,12 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    clear_plot_saxs( true );
       
    // best is model with lowest_chi2_pos
-   QColor save_color = editor->color();
-   editor->setColor("darkBlue");
-   editor->append(QString("Best fit model: %1 %2 %3\n")
-                  .arg(model_names[lowest_chi2_pos])
-                  .arg(use_errors ? "nchi" : "RMSD" )
-                  .arg(chi2s[lowest_chi2_pos])
-                  );
-   editor->setColor(save_color);
+   editor_msg( "dark blue", 
+               QString("Best fit model: %1 %2 %3\n")
+               .arg(model_names[lowest_chi2_pos])
+               .arg(use_errors ? "nchi" : "RMSD" )
+               .arg(chi2s[lowest_chi2_pos])
+               );
 
    // plot 
    plotted = false;
@@ -479,8 +471,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
 
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("I(q) plot done\n");
+      editor_msg( "black", "I(q) plot done\n");
       plotted = false;
    }
    
@@ -540,16 +531,12 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
          fclose(of);
          if ( plotted )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("I(q) plot done\n");
+            editor_msg( "black", "I(q) plot done\n");
             plotted = false;
          }
          editor->append(tr("Created file: " + fname + "\n"));
       } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
+         editor_msg( "red", tr("ERROR creating file: " + fname + "\n" ) );
       }
    }
 }
@@ -691,28 +678,27 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    vector < double > rescaled_x = rescale(use_x);
    // list models & concs
    
-   QColor save_color = editor->color();
+   QString use_color = "black";
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
       if ( rescaled_x[i] == 0 )
       {
-         editor->setColor("gray");
+         use_color = "gray";
       } else {
          if ( rescaled_x[i] < .1 )
          {
-            editor->setColor("darkCyan");
+            use_color = "darkCyan";
          } else {
             if ( rescaled_x[i] < .2 )
             {
-               editor->setColor("blue");
+               use_color = "blue";
             } else {
-               editor->setColor("darkBlue");
+               use_color = "darkBlue";
             }
          }
       }
-      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i]));
+      editor_msg( use_color, QString("%1 %2\n").arg(model_names[i]).arg( rescaled_x[i] ) );
    }
-   editor->setColor(save_color);
    
    // build model & residuals
    double model_mw = 0e0;
@@ -750,8 +736,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("P(r) plot done\n");
+      editor_msg( "black", "P(r) plot done\n");
       plotted = false;
    }
 
@@ -832,16 +817,12 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
          fclose(of);
          if ( plotted )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("P(r) plot done\n");
+            editor_msg( "black", "P(r) plot done\n");
             plotted = false;
          }
          editor->append(tr("Created file: " + fname + "\n"));
       } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
+         editor_msg( "red", tr("ERROR creating file: " + fname + "\n" ) );
       }
    }
 }
@@ -948,10 +929,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                                        chi2[i],
                                        prob[i] ) )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("Internal error computing chi2"));
-         editor->setColor(save_color);
+         editor_msg( "red", tr("Internal error computing chi2" ) );
       }
 
       if ( !i )
@@ -987,16 +965,14 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    double model_mw = nnls_mw[model_names[lowest_rmsd_pos]];
 
    // best is model with lowest_rmsd_pos
-   QColor save_color = editor->color();
-   editor->setColor("darkBlue");
-   editor->append(QString("Best fit model: %1 NRMSD %2% Chi^2 %3 nu %4\n")
-                  .arg(model_names[lowest_rmsd_pos])
-                  .arg(rmsds[lowest_rmsd_pos])
-                  .arg(chi2[lowest_rmsd_pos])
-                  .arg(df[lowest_rmsd_pos])
-                  // .arg(prob[lowest_rmsd_pos])
-                  );
-   editor->setColor(save_color);
+   editor_msg( "darkBlue",
+               QString("Best fit model: %1 NRMSD %2% Chi^2 %3 nu %4\n")
+               .arg(model_names[lowest_rmsd_pos])
+               .arg(rmsds[lowest_rmsd_pos])
+               .arg(chi2[lowest_rmsd_pos])
+               .arg(df[lowest_rmsd_pos])
+               // .arg(prob[lowest_rmsd_pos])
+               );
 
    vector < double > residual(best_fit_target.size());
    vector < double > difference(best_fit_target.size());
@@ -1017,8 +993,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
 
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-      editor->append("P(r) plot done\n");
+      editor_msg( "black", "P(r) plot done\n");
       plotted = false;
    }
    
@@ -1104,16 +1079,12 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          fclose(of);
          if ( plotted )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("P(r) plot done\n");
+            editor_msg( "black", "P(r) plot done\n");
             plotted = false;
          }
          editor->append(tr("Created file: " + fname + "\n"));
       } else {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(tr("ERROR creating file: " + fname + "\n"));
-         editor->setColor(save_color);
+         editor_msg( "red", tr("ERROR creating file: " + fname + "\n" ) );
       }
    }
 }

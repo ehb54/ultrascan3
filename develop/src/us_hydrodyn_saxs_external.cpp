@@ -6,13 +6,64 @@
 
 #define SLASH QDir::separator()
 
-void US_Hydrodyn_Saxs::editor_msg( QString color, QString msg )
+void US_Hydrodyn_Saxs::editor_msg( QColor color, QColor bgcolor, QString msg )
+{
+   msg.replace( QRegExp( "\n*$" ), "" );
+   msg += "\n";
+   QColor save_color_bg = editor->paragraphBackgroundColor( editor->paragraphs() - 1 );
+   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  bgcolor );
+   editor_msg( color, msg );
+   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  "white" );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( QColor color, QString msg )
 {
    QColor save_color = editor->color();
    editor->setColor(color);
    editor->append(msg);
    editor->setColor(save_color);
 }
+
+void US_Hydrodyn_Saxs::editor_msg( QString color, QString msg )
+{
+   editor_msg( QColor( color ), msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( const char * color, QString msg )
+{
+   editor_msg( QString( color ), msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( QString color, QColor bgcolor, QString msg )
+{
+   editor_msg( QColor( color ), bgcolor, msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( const char *color, QColor bgcolor, QString msg )
+{
+   editor_msg( QColor( color ), bgcolor, msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( QColor color, QString bgcolor, QString msg )
+{
+   editor_msg( color, QColor( bgcolor ), msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( QColor color, const char * bgcolor, QString msg )
+{
+   editor_msg( color, QColor( bgcolor ), msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( QString color, QString bgcolor, QString msg )
+{
+   editor_msg( QColor( color ), QColor( bgcolor ), msg );
+}
+
+void US_Hydrodyn_Saxs::editor_msg( const char * color, const char * bgcolor, QString msg )
+{
+   editor_msg( QColor( color ), QColor( bgcolor ), msg );
+}
+
 
 // -------------------- FoXS ------------------------------
 
@@ -36,12 +87,12 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
       QFileInfo qfi(prog);
       if ( !qfi.exists() )
       {
-         editor_msg("red", QString("FoXS program '%1' does not exist\n").arg(prog));
+         editor_msg( (QString) "red", QString("FoXS program '%1' does not exist\n").arg(prog));
          return -1;
       }
       if ( !qfi.isExecutable() )
       {
-         editor_msg("red", QString("FoXS program '%1' is not executable\n").arg(prog));
+         editor_msg( "red", QString("FoXS program '%1' is not executable\n").arg(prog));
          return -1;
       }
    }
@@ -80,7 +131,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
    connect( foxs, SIGNAL(processExited()), this, SLOT(foxs_processExited()) );
    connect( foxs, SIGNAL(launchFinished()), this, SLOT(foxs_launchFinished()) );
 
-   editor->append("\n\nStarting FoXS\n");
+   editor_msg( "black", "\nStarting FoXS\n");
    foxs->start();
    external_running = true;
 

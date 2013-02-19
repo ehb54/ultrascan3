@@ -571,7 +571,17 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                               vector < double > &I2,
                               QColor plot_color );
 
+      void editor_msg( QColor  color, QString msg );
       void editor_msg( QString color, QString msg );
+      void editor_msg( const char *color, QString msg );
+
+      void editor_msg( QColor  color, QColor  bgcolor, QString msg );
+      void editor_msg( QString color, QColor  bgcolor, QString msg );
+      void editor_msg( const char * color, QColor  bgcolor, QString msg );
+      void editor_msg( QColor  color, QString bgcolor, QString msg );
+      void editor_msg( QColor  color, const char * bgcolor, QString msg );
+      void editor_msg( QString color, QString bgcolor, QString msg );
+      void editor_msg( const char * color, const char * bgcolor, QString msg );
 
       int run_saxs_iq_foxs( QString pdb );
       int run_saxs_iq_crysol( QString pdb );

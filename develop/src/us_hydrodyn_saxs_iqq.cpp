@@ -140,14 +140,11 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq));
-               editor->setColor(save_color);
+               editor_msg( "red", QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq));
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -164,16 +161,13 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             if ( !hybrid_map.count(hybrid_name) )
             {
                cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+               editor_msg( "red", QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
                               .arg(use_resname)
                               .arg(this_atom->resSeq)
                               .arg(hybrid_name)
                               );
-               editor->setColor(save_color);
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -194,17 +188,15 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                     << " atom name "
                     << this_atom->name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->name)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -353,14 +345,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq));
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq));
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -377,16 +367,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             if ( !hybrid_map.count(hybrid_name) )
             {
                cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -407,17 +395,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                     << " atom name "
                     << this_atom->name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->name)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -483,17 +469,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                     << " saxs name "
                     << hybrid_map[hybrid_name].saxs_name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              .arg(hybrid_map[hybrid_name].saxs_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           .arg(hybrid_map[hybrid_name].saxs_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -1202,7 +1186,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
       if ( plotted )
       {
-         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
          plotted = false;
       }
       editor->append("I(q) computed.\n");
@@ -1438,7 +1421,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
    if ( plotted )
    {
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
       plotted = false;
    }
 
@@ -1531,14 +1513,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq));
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq));
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -1555,16 +1535,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             if ( !hybrid_map.count(hybrid_name) )
             {
                cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -1585,17 +1563,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                     << " atom name "
                     << this_atom->name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->name)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -1680,17 +1656,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                     << " saxs name "
                     << hybrid_map[hybrid_name].saxs_name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              .arg(hybrid_map[hybrid_name].saxs_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           .arg(hybrid_map[hybrid_name].saxs_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -2565,14 +2539,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << use_resname << "|" << this_atom->name << endl; 
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq));
-               editor->setColor(save_color);
+               editor_msg( "red", 
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq));
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -2589,16 +2561,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             if ( !hybrid_map.count(hybrid_name) )
             {
                cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -2619,17 +2589,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                     << " atom name "
                     << this_atom->name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(this_atom->name)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(this_atom->name)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
@@ -2693,17 +2661,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                     << " saxs name "
                     << hybrid_map[hybrid_name].saxs_name
                     << endl;
-               QColor save_color = editor->color();
-               editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j+1)
-                              .arg(use_resname)
-                              .arg(this_atom->resSeq)
-                              .arg(hybrid_name)
-                              .arg(hybrid_map[hybrid_name].saxs_name)
-                              );
-               editor->setColor(save_color);
+               editor_msg( "red",
+                           QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                           .arg(j+1)
+                           .arg(use_resname)
+                           .arg(this_atom->resSeq)
+                           .arg(hybrid_name)
+                           .arg(hybrid_map[hybrid_name].saxs_name)
+                           );
                qApp->processEvents();
                if ( stopFlag ) 
                {
