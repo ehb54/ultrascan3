@@ -175,7 +175,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    cb_ignore_errors->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_ignore_errors, SIGNAL(clicked()), this, SLOT(set_ignore_errors()));
 
-   lbl_swh_excl_vol = new QLabel(tr(" Excluded volume SWH [A^3]: "), this);
+   lbl_swh_excl_vol = new QLabel(tr(" Excluded volume WAT [A^3]: "), this);
    lbl_swh_excl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_swh_excl_vol->setMinimumHeight(minHeight1);
    lbl_swh_excl_vol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
