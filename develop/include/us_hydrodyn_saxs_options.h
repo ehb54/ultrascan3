@@ -45,6 +45,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
                                const char *name = 0 );
       ~US_Hydrodyn_SaxsOptions();
 
+
    public:
       struct saxs_options *saxs_options;
       bool *saxs_options_widget;
@@ -75,6 +76,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
+
+      bool        started_in_expert_mode;
 
    private slots:
       

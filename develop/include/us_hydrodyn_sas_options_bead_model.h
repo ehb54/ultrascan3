@@ -65,7 +65,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsBeadModel : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
-      void update_q();
+      void         update_q();
+
+      bool         started_in_expert_mode;
 
    private slots:
       

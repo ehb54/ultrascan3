@@ -93,6 +93,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
 
       void update_q();
 
+      bool        started_in_expert_mode;
+
    private slots:
       
       void setupGUI();

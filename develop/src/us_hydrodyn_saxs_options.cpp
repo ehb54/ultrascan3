@@ -61,7 +61,7 @@ US_Hydrodyn_SaxsOptions::~US_Hydrodyn_SaxsOptions()
 
 void US_Hydrodyn_SaxsOptions::setupGUI()
 {
-   bool started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
 
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("US-SOMO SAS Options:"), this);
@@ -95,13 +95,16 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_sas_options_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_sas_options_bead_model, SIGNAL(clicked()), SLOT(sas_options_bead_model()));
 
-   pb_sas_options_hydration = new QPushButton( tr( "Hydration options"), this);
-   pb_sas_options_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_sas_options_hydration->setMinimumHeight(minHeight1);
-   pb_sas_options_hydration->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   if ( started_in_expert_mode )
+   {
+      pb_sas_options_hydration = new QPushButton( tr( "Hydration options"), this);
+      pb_sas_options_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_sas_options_hydration->setMinimumHeight(minHeight1);
+      pb_sas_options_hydration->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 #if defined( USE_H )
-   connect(pb_sas_options_hydration, SIGNAL(clicked()), SLOT(sas_options_hydration()));
+      connect(pb_sas_options_hydration, SIGNAL(clicked()), SLOT(sas_options_hydration()));
 #endif
+   }
 
    pb_sas_options_guinier = new QPushButton( tr( "Guinier options"), this);
    pb_sas_options_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -152,7 +155,10 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget( pb_sas_options_sans         );
    background->addWidget( pb_sas_options_curve        );
    background->addWidget( pb_sas_options_bead_model   );
-   background->addWidget( pb_sas_options_hydration    );
+   if ( started_in_expert_mode )
+   {
+      background->addWidget( pb_sas_options_hydration    );
+   }
    background->addWidget( pb_sas_options_guinier      );
    if ( started_in_expert_mode )
    {

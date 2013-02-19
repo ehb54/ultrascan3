@@ -29,6 +29,8 @@ US_Hydrodyn_SasOptionsSans::~US_Hydrodyn_SasOptionsSans()
 
 void US_Hydrodyn_SasOptionsSans::setupGUI()
 {
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("US-SOMO SANS Computation Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -153,37 +155,40 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_sans_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_debye()));
 
-   cb_sans_iq_native_hybrid = new QCheckBox(this);
-   cb_sans_iq_native_hybrid->setText(tr("Hybrid "));
-   cb_sans_iq_native_hybrid->setEnabled(true);
-   cb_sans_iq_native_hybrid->setChecked((*saxs_options).sans_iq_native_hybrid);
-   cb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sans_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_sans_iq_native_hybrid, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid()));
+   if ( started_in_expert_mode )
+   {
+      cb_sans_iq_native_hybrid = new QCheckBox(this);
+      cb_sans_iq_native_hybrid->setText(tr("Hybrid "));
+      cb_sans_iq_native_hybrid->setEnabled(true);
+      cb_sans_iq_native_hybrid->setChecked((*saxs_options).sans_iq_native_hybrid);
+      cb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_sans_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_sans_iq_native_hybrid, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid()));
 
-   cb_sans_iq_native_hybrid2 = new QCheckBox(this);
-   cb_sans_iq_native_hybrid2->setText(tr("H2 "));
-   cb_sans_iq_native_hybrid2->setEnabled(true);
-   cb_sans_iq_native_hybrid2->setChecked((*saxs_options).sans_iq_native_hybrid2);
-   cb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sans_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_sans_iq_native_hybrid2, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid2()));
+      cb_sans_iq_native_hybrid2 = new QCheckBox(this);
+      cb_sans_iq_native_hybrid2->setText(tr("H2 "));
+      cb_sans_iq_native_hybrid2->setEnabled(true);
+      cb_sans_iq_native_hybrid2->setChecked((*saxs_options).sans_iq_native_hybrid2);
+      cb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_sans_iq_native_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_sans_iq_native_hybrid2, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid2()));
 
-   cb_sans_iq_native_hybrid3 = new QCheckBox(this);
-   cb_sans_iq_native_hybrid3->setText(tr("H3 "));
-   cb_sans_iq_native_hybrid3->setEnabled(true);
-   cb_sans_iq_native_hybrid3->setChecked((*saxs_options).sans_iq_native_hybrid3);
-   cb_sans_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sans_iq_native_hybrid3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_sans_iq_native_hybrid3, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid3()));
+      cb_sans_iq_native_hybrid3 = new QCheckBox(this);
+      cb_sans_iq_native_hybrid3->setText(tr("H3 "));
+      cb_sans_iq_native_hybrid3->setEnabled(true);
+      cb_sans_iq_native_hybrid3->setChecked((*saxs_options).sans_iq_native_hybrid3);
+      cb_sans_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_sans_iq_native_hybrid3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_sans_iq_native_hybrid3, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid3()));
 
-   cb_sans_iq_hybrid_adaptive = new QCheckBox(this);
-   cb_sans_iq_hybrid_adaptive->setText(tr("Adaptive "));
-   cb_sans_iq_hybrid_adaptive->setEnabled(true);
-   cb_sans_iq_hybrid_adaptive->setChecked((*saxs_options).sans_iq_hybrid_adaptive);
-   cb_sans_iq_hybrid_adaptive->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_sans_iq_hybrid_adaptive->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_sans_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_sans_iq_hybrid_adaptive()));
+      cb_sans_iq_hybrid_adaptive = new QCheckBox(this);
+      cb_sans_iq_hybrid_adaptive->setText(tr("Adaptive "));
+      cb_sans_iq_hybrid_adaptive->setEnabled(true);
+      cb_sans_iq_hybrid_adaptive->setChecked((*saxs_options).sans_iq_hybrid_adaptive);
+      cb_sans_iq_hybrid_adaptive->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_sans_iq_hybrid_adaptive->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_sans_iq_hybrid_adaptive, SIGNAL(clicked()), this, SLOT(set_sans_iq_hybrid_adaptive()));
+   }
 
    cb_sans_iq_native_fast = new QCheckBox(this);
    cb_sans_iq_native_fast->setText(tr("Q-DB "));
@@ -249,10 +254,13 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    QHBoxLayout *hbl_sans_iq = new QHBoxLayout;
    hbl_sans_iq->addWidget(lbl_sans_iq);
    hbl_sans_iq->addWidget(cb_sans_iq_native_debye);
-   hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid);
-   hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid2);
-   hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid3);
-   hbl_sans_iq->addWidget(cb_sans_iq_hybrid_adaptive);
+   if ( started_in_expert_mode )
+   {
+      hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid);
+      hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid2);
+      hbl_sans_iq->addWidget(cb_sans_iq_native_hybrid3);
+      hbl_sans_iq->addWidget(cb_sans_iq_hybrid_adaptive);
+   }
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast_compute_pr);
    hbl_sans_iq->addWidget(cb_sans_iq_cryson);

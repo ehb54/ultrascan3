@@ -29,6 +29,8 @@ US_Hydrodyn_SasOptionsBeadModel::~US_Hydrodyn_SasOptionsBeadModel()
 
 void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
 {
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("US-SOMO SAS Bead Model Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -61,89 +63,92 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    cb_bead_model_rayleigh->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_bead_model_rayleigh, SIGNAL(clicked()), this, SLOT(set_bead_model_rayleigh()));
 
-   cb_bead_models_use_bead_radius_ev = new QCheckBox(this);
-   cb_bead_models_use_bead_radius_ev->setText(tr(" Use bead radius for excluded volume"));
-   cb_bead_models_use_bead_radius_ev->setEnabled(true);
-   cb_bead_models_use_bead_radius_ev->setChecked((*saxs_options).bead_models_use_bead_radius_ev);
-   cb_bead_models_use_bead_radius_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_models_use_bead_radius_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_bead_models_use_bead_radius_ev, SIGNAL(clicked()), this, SLOT(set_bead_models_use_bead_radius_ev()));
+   if ( started_in_expert_mode )
+   {
+      cb_bead_models_use_bead_radius_ev = new QCheckBox(this);
+      cb_bead_models_use_bead_radius_ev->setText(tr(" Use bead radius for excluded volume"));
+      cb_bead_models_use_bead_radius_ev->setEnabled(true);
+      cb_bead_models_use_bead_radius_ev->setChecked((*saxs_options).bead_models_use_bead_radius_ev);
+      cb_bead_models_use_bead_radius_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_bead_models_use_bead_radius_ev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_bead_models_use_bead_radius_ev, SIGNAL(clicked()), this, SLOT(set_bead_models_use_bead_radius_ev()));
 
-   cb_bead_models_rho0_in_scat_factors = new QCheckBox(this);
-   cb_bead_models_rho0_in_scat_factors->setText(tr(" rho0 included in computed scattering factors"));
-   cb_bead_models_rho0_in_scat_factors->setEnabled(true);
-   cb_bead_models_rho0_in_scat_factors->setChecked((*saxs_options).bead_models_rho0_in_scat_factors);
-   cb_bead_models_rho0_in_scat_factors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_models_rho0_in_scat_factors->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_bead_models_rho0_in_scat_factors, SIGNAL(clicked()), this, SLOT(set_bead_models_rho0_in_scat_factors()));
+      cb_bead_models_rho0_in_scat_factors = new QCheckBox(this);
+      cb_bead_models_rho0_in_scat_factors->setText(tr(" rho0 included in computed scattering factors"));
+      cb_bead_models_rho0_in_scat_factors->setEnabled(true);
+      cb_bead_models_rho0_in_scat_factors->setChecked((*saxs_options).bead_models_rho0_in_scat_factors);
+      cb_bead_models_rho0_in_scat_factors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_bead_models_rho0_in_scat_factors->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_bead_models_rho0_in_scat_factors, SIGNAL(clicked()), this, SLOT(set_bead_models_rho0_in_scat_factors()));
 
-   cb_iq_global_avg_for_bead_models = new QCheckBox(this);
-   cb_iq_global_avg_for_bead_models->setText(tr(" Use global average scattering factors for loading bead models"));
-   cb_iq_global_avg_for_bead_models->setEnabled(true);
-   cb_iq_global_avg_for_bead_models->setChecked((*saxs_options).iq_global_avg_for_bead_models);
-   cb_iq_global_avg_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
+      cb_iq_global_avg_for_bead_models = new QCheckBox(this);
+      cb_iq_global_avg_for_bead_models->setText(tr(" Use global average scattering factors for loading bead models"));
+      cb_iq_global_avg_for_bead_models->setEnabled(true);
+      cb_iq_global_avg_for_bead_models->setChecked((*saxs_options).iq_global_avg_for_bead_models);
+      cb_iq_global_avg_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_iq_global_avg_for_bead_models->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
 
-   cb_bead_models_use_quick_fitting = new QCheckBox(this);
-   cb_bead_models_use_quick_fitting->setText(tr(" Use quick method for computing scattering factors"));
-   cb_bead_models_use_quick_fitting->setEnabled(true);
-   cb_bead_models_use_quick_fitting->setChecked((*saxs_options).bead_models_use_quick_fitting);
-   cb_bead_models_use_quick_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_models_use_quick_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_bead_models_use_quick_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_quick_fitting()));
+      cb_bead_models_use_quick_fitting = new QCheckBox(this);
+      cb_bead_models_use_quick_fitting->setText(tr(" Use quick method for computing scattering factors"));
+      cb_bead_models_use_quick_fitting->setEnabled(true);
+      cb_bead_models_use_quick_fitting->setChecked((*saxs_options).bead_models_use_quick_fitting);
+      cb_bead_models_use_quick_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_bead_models_use_quick_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_bead_models_use_quick_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_quick_fitting()));
 
-   cb_bead_models_use_gsm_fitting = new QCheckBox(this);
-   cb_bead_models_use_gsm_fitting->setText(tr(" Use gsm method for computing scattering factors"));
-   cb_bead_models_use_gsm_fitting->setEnabled(true);
-   cb_bead_models_use_gsm_fitting->setChecked((*saxs_options).bead_models_use_gsm_fitting);
-   cb_bead_models_use_gsm_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_models_use_gsm_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_bead_models_use_gsm_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_gsm_fitting()));
+      cb_bead_models_use_gsm_fitting = new QCheckBox(this);
+      cb_bead_models_use_gsm_fitting->setText(tr(" Use gsm method for computing scattering factors"));
+      cb_bead_models_use_gsm_fitting->setEnabled(true);
+      cb_bead_models_use_gsm_fitting->setChecked((*saxs_options).bead_models_use_gsm_fitting);
+      cb_bead_models_use_gsm_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_bead_models_use_gsm_fitting->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_bead_models_use_gsm_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_gsm_fitting()));
 
-   cb_apply_loaded_sf_repeatedly_to_pdb = new QCheckBox(this);
-   cb_apply_loaded_sf_repeatedly_to_pdb->setText(tr(" Apply preloaded individual bead structure factors to bead model PDB"));
-   cb_apply_loaded_sf_repeatedly_to_pdb->setEnabled(true);
-   cb_apply_loaded_sf_repeatedly_to_pdb->setChecked((*saxs_options).apply_loaded_sf_repeatedly_to_pdb);
-   cb_apply_loaded_sf_repeatedly_to_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_apply_loaded_sf_repeatedly_to_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_apply_loaded_sf_repeatedly_to_pdb, SIGNAL(clicked()), this, SLOT(set_apply_loaded_sf_repeatedly_to_pdb()));
+      cb_apply_loaded_sf_repeatedly_to_pdb = new QCheckBox(this);
+      cb_apply_loaded_sf_repeatedly_to_pdb->setText(tr(" Apply preloaded individual bead structure factors to bead model PDB"));
+      cb_apply_loaded_sf_repeatedly_to_pdb->setEnabled(true);
+      cb_apply_loaded_sf_repeatedly_to_pdb->setChecked((*saxs_options).apply_loaded_sf_repeatedly_to_pdb);
+      cb_apply_loaded_sf_repeatedly_to_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_apply_loaded_sf_repeatedly_to_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_apply_loaded_sf_repeatedly_to_pdb, SIGNAL(clicked()), this, SLOT(set_apply_loaded_sf_repeatedly_to_pdb()));
 
-   cb_bead_models_use_var_len_sf = new QCheckBox(this);
-   cb_bead_models_use_var_len_sf->setText(tr(" Compute and use variable length scattering factors"));
-   cb_bead_models_use_var_len_sf->setEnabled(true);
-   cb_bead_models_use_var_len_sf->setChecked((*saxs_options).bead_models_use_var_len_sf);
-   cb_bead_models_use_var_len_sf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_bead_models_use_var_len_sf->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_bead_models_use_var_len_sf, SIGNAL(clicked()), this, SLOT(set_bead_models_use_var_len_sf()));
+      cb_bead_models_use_var_len_sf = new QCheckBox(this);
+      cb_bead_models_use_var_len_sf->setText(tr(" Compute and use variable length scattering factors"));
+      cb_bead_models_use_var_len_sf->setEnabled(true);
+      cb_bead_models_use_var_len_sf->setChecked((*saxs_options).bead_models_use_var_len_sf);
+      cb_bead_models_use_var_len_sf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_bead_models_use_var_len_sf->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_bead_models_use_var_len_sf, SIGNAL(clicked()), this, SLOT(set_bead_models_use_var_len_sf()));
 
-   lbl_bead_models_var_len_sf_max = new QLabel(tr(" Variable length scattering factors max length: "), this);
-   lbl_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_bead_models_var_len_sf_max->setMinimumHeight(minHeight1);
-   lbl_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+      lbl_bead_models_var_len_sf_max = new QLabel(tr(" Variable length scattering factors max length: "), this);
+      lbl_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+      lbl_bead_models_var_len_sf_max->setMinimumHeight(minHeight1);
+      lbl_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+      lbl_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_bead_models_var_len_sf_max = new QLineEdit( this, "" );
-   le_bead_models_var_len_sf_max->setText( QString( "%1" ).arg( (*saxs_options).bead_models_var_len_sf_max ) );
-   le_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   le_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   le_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_bead_models_var_len_sf_max_qv = new QIntValidator( 5, 25, this );
-   le_bead_models_var_len_sf_max->setValidator( le_bead_models_var_len_sf_max_qv );
-   connect( le_bead_models_var_len_sf_max, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_bead_models_var_len_sf_max( const QString & ) ) );
+      le_bead_models_var_len_sf_max = new QLineEdit( this, "" );
+      le_bead_models_var_len_sf_max->setText( QString( "%1" ).arg( (*saxs_options).bead_models_var_len_sf_max ) );
+      le_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+      le_bead_models_var_len_sf_max->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+      le_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      le_bead_models_var_len_sf_max_qv = new QIntValidator( 5, 25, this );
+      le_bead_models_var_len_sf_max->setValidator( le_bead_models_var_len_sf_max_qv );
+      connect( le_bead_models_var_len_sf_max, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_bead_models_var_len_sf_max( const QString & ) ) );
 
-   lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
-   lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
-   lbl_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+      lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
+      lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+      lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
+      lbl_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+      lbl_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_dummy_saxs_name = new QLineEdit( this, "" );
-   le_dummy_saxs_name->setText( (*saxs_options).dummy_saxs_name );
-   le_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   le_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   le_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect( le_dummy_saxs_name, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_dummy_saxs_name( const QString & ) ) );
+      le_dummy_saxs_name = new QLineEdit( this, "" );
+      le_dummy_saxs_name->setText( (*saxs_options).dummy_saxs_name );
+      le_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+      le_dummy_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+      le_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      connect( le_dummy_saxs_name, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_dummy_saxs_name( const QString & ) ) );
+   }
 
    cb_dummy_atom_pdbs_in_nm = new QCheckBox(this);
    cb_dummy_atom_pdbs_in_nm->setText(tr(" Dummy atom PDB's in NM " ) );
@@ -177,28 +182,31 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    j++;
    background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
    j++;
-   background->addMultiCellWidget( cb_bead_models_use_bead_radius_ev    , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_bead_models_rho0_in_scat_factors  , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_bead_models_use_quick_fitting     , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_bead_models_use_gsm_fitting       , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
-   j++;
-   background->addMultiCellWidget( cb_bead_models_use_var_len_sf        , j, j, 0, 1 );
-   j++;
+   if ( started_in_expert_mode )
+   {
+      background->addMultiCellWidget( cb_bead_models_use_bead_radius_ev    , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_bead_models_rho0_in_scat_factors  , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_bead_models_use_quick_fitting     , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_bead_models_use_gsm_fitting       , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
+      j++;
+      background->addMultiCellWidget( cb_bead_models_use_var_len_sf        , j, j, 0, 1 );
+      j++;
 
-   background->addWidget         ( lbl_bead_models_var_len_sf_max       , j, 0 );
-   background->addWidget         ( le_bead_models_var_len_sf_max        , j, 1 );
-   j++;
+      background->addWidget         ( lbl_bead_models_var_len_sf_max       , j, 0 );
+      background->addWidget         ( le_bead_models_var_len_sf_max        , j, 1 );
+      j++;
 
-   background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
-   background->addWidget         ( le_dummy_saxs_name                   , j, 1 );
-   j++;
+      background->addWidget         ( lbl_dummy_saxs_name                  , j, 0 );
+      background->addWidget         ( le_dummy_saxs_name                   , j, 1 );
+      j++;
+   }
 
    background->addMultiCellWidget( cb_dummy_atom_pdbs_in_nm             , j, j, 0, 1 );
    j++;

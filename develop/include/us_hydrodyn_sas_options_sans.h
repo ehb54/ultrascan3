@@ -68,6 +68,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSans : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
+      bool        started_in_expert_mode;
+
    private slots:
       
       void setupGUI();
