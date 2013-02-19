@@ -89,7 +89,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    editor          ->setMaximumWidth( 3 * csv_width / 7 );
    plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
 #endif
-   // lb_files        ->setMaximumWidth( csv_width / 3 );
+   // lb_files        ->setMaximumWidth( 2 * csv_width / 5 );
    // lb_created_files->setMaximumWidth( csv_width / 3 );
    // editor          ->setMaximumWidth( csv_width / 3 );
    // lbl_created_dir    ->setMaximumWidth( csv_width / 3 );
@@ -1248,10 +1248,16 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_baseline );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
-   QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
-   // hbl_files_plot->addLayout( vbl_files );
-   hbl_files_plot->addLayout( gl_files );
-   hbl_files_plot->addLayout( vbl_plot_group );
+//    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
+//    // hbl_files_plot->addLayout( vbl_files );
+//    hbl_files_plot->addLayout( gl_files );
+//    hbl_files_plot->addLayout( vbl_plot_group );
+
+   QGridLayout *gl_files_plot = new QGridLayout( 0 );
+   gl_files_plot->addLayout( gl_files      , 0, 0 );
+   gl_files_plot->addLayout( vbl_plot_group, 0, 1 );
+   gl_files_plot->setColStretch( 0, 0 );
+   gl_files_plot->setColStretch( 1, 1 );
 
    QGridLayout *gl_bottom = new QGridLayout( 0 );
    gl_bottom->addWidget( pb_help  , 0, 0 );
@@ -1262,7 +1268,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    background->addSpacing( 1 );
    // background->addWidget ( lbl_title );
    // background->addSpacing( 1 );
-   background->addLayout ( hbl_files_plot );
+   background->addLayout ( gl_files_plot );
    background->addSpacing( 1 );
    background->addLayout ( gl_bottom );
    background->addSpacing( 1 );

@@ -1126,9 +1126,15 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_plot_group->addLayout ( hbl_plot_buttons );
    vbl_plot_group->addLayout ( hbl_plot_buttons_2 );
 
-   QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
-   hbl_files_plot->addLayout( vbl_files );
-   hbl_files_plot->addLayout( vbl_plot_group );
+   // QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
+   // hbl_files_plot->addLayout( vbl_files );
+   // hbl_files_plot->addLayout( vbl_plot_group );
+
+   QGridLayout *gl_files_plot = new QGridLayout( 0 );
+   gl_files_plot->addLayout( vbl_files     , 0, 0 );
+   gl_files_plot->addLayout( vbl_plot_group, 0, 1 );
+   gl_files_plot->setColStretch( 0, 0 );
+   gl_files_plot->setColStretch( 1, 1 );
 
    QHBoxLayout *hbl_np = new QHBoxLayout(0);
    hbl_np->addWidget ( lbl_np );
@@ -1164,7 +1170,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    background->addSpacing( 1 );
    // background->addWidget ( lbl_title );
    // background->addSpacing( 1 );
-   background->addLayout ( hbl_files_plot );
+   background->addLayout ( gl_files_plot );
    background->addWidget ( t_csv );
    background->addSpacing( 1 );
    background->addLayout ( hbl_np );
