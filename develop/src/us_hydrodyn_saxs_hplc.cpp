@@ -94,7 +94,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // editor          ->setMaximumWidth( csv_width / 3 );
    // lbl_created_dir    ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 7 * ( USglobal->config_list.fontSize - 1 ) / 10;
+   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    {
       vector < QPushButton * > pbs;
       // pbs.push_back( pb_add_files );

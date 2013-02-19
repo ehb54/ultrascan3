@@ -82,7 +82,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 7 * ( USglobal->config_list.fontSize - 1 ) / 10;
+   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
 
    {
       vector < QPushButton * > pbs;
