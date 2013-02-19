@@ -89,11 +89,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    editor          ->setMaximumWidth( 3 * csv_width / 7 );
    plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
 #endif
-   lb_files        ->setMaximumWidth( csv_width / 3 );
-   lb_created_files->setMaximumWidth( csv_width / 3 );
-   editor          ->setMaximumWidth( csv_width / 3 );
+   // lb_files        ->setMaximumWidth( csv_width / 3 );
+   // lb_created_files->setMaximumWidth( csv_width / 3 );
+   // editor          ->setMaximumWidth( csv_width / 3 );
+   // lbl_created_dir    ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 7;
+   int percharwidth = 7 * ( USglobal->config_list.fontSize - 1 ) / 10;
    {
       vector < QPushButton * > pbs;
       // pbs.push_back( pb_add_files );
@@ -119,6 +120,22 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       // pbs.push_back( pb_save_created );
       // pbs.push_back( pb_show_created );
       // pbs.push_back( pb_show_only_created );
+
+      pbs.push_back( pb_gauss_start );
+      pbs.push_back( pb_gauss_clear );
+      pbs.push_back( pb_gauss_new );
+      pbs.push_back( pb_gauss_delete );
+      pbs.push_back( pb_gauss_prev );
+      pbs.push_back( pb_gauss_next );
+      pbs.push_back( pb_legend );
+      pbs.push_back( pb_axis_x );
+      pbs.push_back( pb_axis_y );
+      pbs.push_back( pb_ggauss_rmsd );
+      pbs.push_back( pb_ggauss_start );
+      pbs.push_back( pb_gauss_save );
+      pbs.push_back( pb_gauss_as_curves );
+      pbs.push_back( pb_baseline_start );
+      pbs.push_back( pb_baseline_apply );
         
       for ( unsigned int i = 0; i < pbs.size(); i++ )
       {
@@ -129,9 +146,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
    // lbl_created_dir->setMaximumWidth( lb_files->width() );
    
-   int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
-   le_regex->setMaximumWidth( left_over / 3 );
-   le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );
+   // int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
+   // le_regex->setMaximumWidth( left_over / 3 );
+   // le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );
 
    // progress        ->setMaximumWidth( csv_width / 3 );
    pb_help         ->setMinimumWidth( csv_width / 3 );

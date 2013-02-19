@@ -82,7 +82,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    lb_created_files->setMaximumWidth( csv_width / 3 );
    editor          ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 7;
+   int percharwidth = 7 * ( USglobal->config_list.fontSize - 1 ) / 10;
+
    {
       vector < QPushButton * > pbs;
       // pbs.push_back( pb_add_files );
@@ -98,6 +99,18 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
       pbs.push_back( pb_normalize );
+
+      pbs.push_back( pb_legend );
+      pbs.push_back( pb_axis_x );
+      pbs.push_back( pb_axis_y );
+      pbs.push_back( pb_wheel_cancel );
+      pbs.push_back( pb_wheel_save );
+      pbs.push_back( pb_wheel_save );
+      pbs.push_back( pb_crop_undo );
+      pbs.push_back( pb_join_start );
+      pbs.push_back( pb_join_swap );
+      pbs.push_back( pb_join_fit_scaling );
+      pbs.push_back( pb_join_fit_linear );
 
       // pbs.push_back( pb_avg );
       // pbs.push_back( pb_conc_avg );
