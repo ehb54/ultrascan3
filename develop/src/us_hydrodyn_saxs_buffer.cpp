@@ -78,9 +78,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    editor          ->setMaximumWidth( 3 * csv_width / 7 );
    plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
 #endif
-   lb_files        ->setMaximumWidth( csv_width / 3 );
-   lb_created_files->setMaximumWidth( csv_width / 3 );
-   editor          ->setMaximumWidth( csv_width / 3 );
+   //    lb_files        ->setMaximumWidth( csv_width / 3 );
+   //    lb_created_files->setMaximumWidth( csv_width / 3 );
+   //    editor          ->setMaximumWidth( csv_width / 3 );
 
    int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
 
@@ -91,6 +91,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       // pbs.push_back( pb_clear_files );
 
       // pbs.push_back( pb_select_all );
+      pbs.push_back( pb_similar_files );
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
@@ -130,9 +131,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
    // lbl_created_dir->setMaximumWidth( lb_files->width() );
 
-   int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
-   le_regex->setMaximumWidth( left_over / 3 );
-   le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );
+   // int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
+   // le_regex->setMaximumWidth( left_over / 3 );
+   // le_regex_args->setMaximumWidth( left_over - le_regex->maximumWidth() );
 
    // progress        ->setMaximumWidth( csv_width / 3 );
    pb_help         ->setMinimumWidth( csv_width / 3 );
