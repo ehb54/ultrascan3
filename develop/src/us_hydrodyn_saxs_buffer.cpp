@@ -7761,9 +7761,22 @@ void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
       fabs( (float) bg.red  () - (float) set.red  () ) +
       fabs( (float) bg.green() - (float) set.green() ) +
       fabs( (float) bg.blue () - (float) set.blue () );
-   if ( sum > 100 )
+   if ( sum > 150 )
    {
-      plot_colors.push_back( set );
+      if ( plot_colors.size() )
+      {
+         bg = plot_colors.back();
+         double sum = 
+            fabs( (float) bg.red  () - (float) set.red  () ) +
+            fabs( (float) bg.green() - (float) set.green() ) +
+            fabs( (float) bg.blue () - (float) set.blue () );
+         if ( sum > 100 )
+         {
+            plot_colors.push_back( set );
+         }
+      } else {
+         plot_colors.push_back( set );
+      }
    }
 }
 
