@@ -25,6 +25,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
 
+   pen_width = 1;
    plot_zoomer = (ScrollZoomer *)0;
 
    // make sure things aren't to big
@@ -304,7 +305,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                          (double *)&(r[0]), 
                          plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
                          (int)r.size());
-      plot->setCurvePen(prr, QPen(Qt::green, 2, SolidLine));
+      plot->setCurvePen(prr, QPen(Qt::green, pen_width, SolidLine));
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
@@ -313,7 +314,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                      plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
                      (int)r.size()
                      );
-      curve->setPen( QPen(Qt::green, 2, SolidLine) );
+      curve->setPen( QPen(Qt::green, pen_width, SolidLine) );
       curve->attach( plot );
 #endif
       double this_miny = plot_as_percent ? residuals_pct[ 0 ] : residuals[ 0 ];
@@ -356,7 +357,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                          (double *)&(r[0]), 
                          plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                          (int)r.size());
-      plot->setCurvePen(prr, QPen(Qt::yellow, 2, SolidLine));
+      plot->setCurvePen(prr, QPen(Qt::yellow, pen_width, SolidLine));
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
@@ -365,7 +366,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                      plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                      (int)r.size()
                      );
-      curve->setPen( QPen(Qt::yellow, 2, SolidLine) );
+      curve->setPen( QPen(Qt::yellow, pen_width, SolidLine) );
       curve->attach( plot );
 #endif
       double this_miny = plot_as_percent ? difference_pct[ 0 ] : difference[ 0 ];

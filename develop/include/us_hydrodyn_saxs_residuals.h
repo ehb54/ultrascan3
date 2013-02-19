@@ -99,6 +99,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       QPushButton        *pb_cancel;
 
       void               update_plot();
+      unsigned int       pen_width;
 
    private slots:
       

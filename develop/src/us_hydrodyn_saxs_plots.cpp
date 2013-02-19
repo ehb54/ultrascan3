@@ -44,14 +44,14 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 
 #ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
    curve->setData(
                   (double *)&( r[ 0 ] ), 
                   (double *)&( pr[ 0 ] ),
                   (int)r.size()
                   );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
    curve->attach( plot_pr );
 #endif
 
@@ -672,7 +672,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            cb_kratky ->isChecked() ?
                            (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
                            q_points);
-   plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+   plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
    curve->setData(
                   cb_guinier->isChecked() ?
@@ -681,7 +681,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
                   q_points
                   );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
    curve->attach( plot_saxs );
 #endif
 

@@ -135,6 +135,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 
       void update_plot();
 
+      unsigned int       pen_width;
+
    private slots:
       
       void setupGUI();

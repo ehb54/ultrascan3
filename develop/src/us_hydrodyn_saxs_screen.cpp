@@ -24,6 +24,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    plot_dist_zoomer = (ScrollZoomer *)0;
 
    best_fitness = 1e99;
+   pen_width = 1;
 
    setupGUI();
    running = false;
@@ -1109,14 +1110,14 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                              (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
                              (double *)&( intensitys[ current_row ][ i ][ 0 ] ), 
                              radiis[ current_row ][ i ].size() );
-   plot_dist->setCurvePen  ( curvekey, QPen( "yellow", 2, SolidLine ) );
+   plot_dist->setCurvePen  ( curvekey, QPen( "yellow", pen_width, SolidLine ) );
 #else
    QwtPlotCurve *curve = new QwtPlotCurve( tr( "Radii histogram" ) );
    curve->setStyle( QwtPlotCurve::Sticks );
    curve->setData( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
                    (double *)&( intensitys[ current_row ][ i ][ 0 ] ),
                    radiis[ current_row ][ i ].size() );
-   curve->setPen( QPen( Qt::yellow, 2, Qt::SolidLine ) );
+   curve->setPen( QPen( Qt::yellow, pen_width, Qt::SolidLine ) );
    curve->attach( plot_dist );
    int    sizeym = ( plot_dist->height() * 45 ) / 100;
    double ymark  = ( curve->minYValue() + curve->maxYValue() ) * 0.40;

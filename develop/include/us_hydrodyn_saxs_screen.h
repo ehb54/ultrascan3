@@ -210,6 +210,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       unsigned int last_target_pos;
       bool         last_target_found;
 
+      unsigned int pen_width;
+
    private slots:
 
       void setupGUI();
