@@ -1098,27 +1098,53 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_dir->addWidget( cb_lock_dir );
    hbl_dir->addWidget( lbl_dir );
 
-   QBoxLayout *vbl_files = new QVBoxLayout( 0 );
-   vbl_files->addWidget( lbl_files );
-   vbl_files->addLayout( hbl_dir );
-   vbl_files->addLayout( hbl_file_buttons );
-   vbl_files->addLayout( hbl_file_buttons_1 );
-   //   vbl_files->addLayout( hbl_file_buttons_1b );
-   vbl_files->addWidget( lb_files );
-   vbl_files->addWidget( lbl_selected );
-   vbl_files->addLayout( hbl_file_buttons_2 );
-   vbl_files->addLayout( hbl_file_buttons_3 );
-   vbl_files->addLayout( hbl_file_buttons_4 );
-   vbl_files->addLayout( hbl_hplc );
-   vbl_files->addLayout( hbl_empty );
-   vbl_files->addLayout( hbl_signal );
-   vbl_files->addWidget( lbl_created_files );
-   vbl_files->addWidget( lbl_created_dir );
-   vbl_files->addWidget( lb_created_files );
-   vbl_files->addWidget( lbl_selected_created );
-   vbl_files->addLayout( hbl_created );
-   vbl_files->addLayout( hbl_created_2 );
-   vbl_files->addLayout( vbl_editor_group );
+   QGridLayout *gl_files = new QGridLayout( 0 );
+   {
+      unsigned int j = 0;
+      gl_files->addWidget( lbl_files, j, 0 ); j++;
+      gl_files->addLayout( hbl_dir, j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons, j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_1 , j, 0 ); j++;
+      gl_files->addWidget( lb_files , j, 0 ); j++;
+      gl_files->addWidget( lbl_selected, j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_2 , j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_3 , j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_4 , j, 0 ); j++;
+      gl_files->addLayout( hbl_hplc, j, 0 ); j++;
+      gl_files->addLayout( hbl_empty, j, 0 ); j++;
+      gl_files->addLayout( hbl_signal, j, 0 ); j++;
+      gl_files->addWidget( lbl_created_files , j, 0 ); j++;
+      gl_files->addWidget( lbl_created_dir , j, 0 ); j++;
+      gl_files->addWidget( lb_created_files, j, 0 ); j++;
+      gl_files->addWidget( lbl_selected_created, j, 0 ); j++;
+      gl_files->addLayout( hbl_created , j, 0 ); j++;
+      gl_files->addLayout( hbl_created_2, j, 0 ); j++;
+      gl_files->addLayout( vbl_editor_group , j, 0 ); j++;
+   }
+
+   /* old way
+      QBoxLayout *vbl_files = new QVBoxLayout( 0 );
+      vbl_files->addWidget( lbl_files );
+      vbl_files->addLayout( hbl_dir );
+      vbl_files->addLayout( hbl_file_buttons );
+      vbl_files->addLayout( hbl_file_buttons_1 );
+      //   vbl_files->addLayout( hbl_file_buttons_1b );
+      vbl_files->addWidget( lb_files );
+      vbl_files->addWidget( lbl_selected );
+      vbl_files->addLayout( hbl_file_buttons_2 );
+      vbl_files->addLayout( hbl_file_buttons_3 );
+      vbl_files->addLayout( hbl_file_buttons_4 );
+      vbl_files->addLayout( hbl_hplc );
+      vbl_files->addLayout( hbl_empty );
+      vbl_files->addLayout( hbl_signal );
+      vbl_files->addWidget( lbl_created_files );
+      vbl_files->addWidget( lbl_created_dir );
+      vbl_files->addWidget( lb_created_files );
+      vbl_files->addWidget( lbl_selected_created );
+      vbl_files->addLayout( hbl_created );
+      vbl_files->addLayout( hbl_created_2 );
+      vbl_files->addLayout( vbl_editor_group );
+   */
 
    QBoxLayout *hbl_plot_buttons = new QHBoxLayout(0);
    hbl_plot_buttons->addWidget( pb_select_vis );
@@ -1193,7 +1219,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
-   hbl_files_plot->addLayout( vbl_files );
+   // hbl_files_plot->addLayout( vbl_files );
+   hbl_files_plot->addLayout( gl_files );
    hbl_files_plot->addLayout( vbl_plot_group );
 
    QGridLayout *gl_bottom = new QGridLayout( 0 );
