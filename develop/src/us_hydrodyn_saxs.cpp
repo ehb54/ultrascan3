@@ -5810,6 +5810,55 @@ void US_Hydrodyn_Saxs::clear_guinier()
 
 void US_Hydrodyn_Saxs::run_guinier_cs()
 {
+   editor->append("CS Guinier analysis:\n");
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   clear_guinier();
+
+   QString csvlog = 
+      "\"Source file\","
+      "\"Notes\","
+      "\"Rg\","
+      "\"Rg sd\","
+      "\"I(0)\","
+      "\"I(0) sd\","
+      "\"q min\","
+      "\"q max\","
+      "\"q*Rg min\","
+      "\"q*Rg max\","
+      "\"starting point\","
+      "\"ending point\","
+      "\"points used\","
+      "\"chi^2\","
+      "\n";
+   
+   for ( unsigned int i = 0; 
+#ifndef QT4
+         i < plotted_Iq.size();
+#else
+         i < plotted_Iq_curves.size();
+#endif
+         i++ )
+   {
+      cs_guinier_analysis(i, csvlog);
+   }
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+   cb_cs_guinier->setChecked(true);
+   set_guinier();
+
+   if ( our_saxs_options->guinier_csv )
+   {
+      QFile f(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
+              our_saxs_options->guinier_csv_filename + "_cs.csv");
+
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString(tr("Can not create file %1\n")).arg(f.name()));
+      }
+      QTextStream ts(&f);
+      ts << csvlog;
+      f.close();
+      editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+   }
 }
 
 void US_Hydrodyn_Saxs::run_guinier_analysis()
@@ -6003,6 +6052,218 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     
+                     , qsl_plotted_iq_names[i].ascii()
+                     , Rg
+                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                     , Io
+                     , siga
+                     , sRgmin
+                     , sRgmax
+                     , bestend - beststart + 1
+                     , chi2
+                     );
+         
+         plotted_guinier_valid[i] = true;
+         plotted_guinier_lowq2[i] = smin * smin;
+         plotted_guinier_highq2[i] = smax * smax;
+         plotted_guinier_a[i] = a;
+         plotted_guinier_b[i] = b;
+         plotted_guinier_plotted[i] = false;
+         
+         plotted_guinier_x[i].clear();
+         plotted_guinier_x[i].push_back(plotted_guinier_lowq2[i]);
+         plotted_guinier_x[i].push_back(plotted_guinier_highq2[i]);
+         
+         plotted_guinier_y[i].clear();
+         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
+         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+
+         csvlog += 
+            QString(
+                    "\"%1\","
+                    "\"Ok\","
+                    "%2,"
+                    "%3,"
+                    "%4,"
+                    "%5,"
+                    "%6,"
+                    "%7,"
+                    "%8,"
+                    "%9,"
+                    )
+            .arg(qsl_plotted_iq_names[i])
+            .arg(Rg)
+            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
+            .arg(Io)
+            .arg(siga)
+            .arg(smin)
+            .arg(smax)
+            .arg(sRgmin)
+            .arg(sRgmax)
+            ;
+
+         csvlog += 
+            QString( 
+                    "%1,"
+                    "%2,"
+                    "%3,"
+                    "%4"
+                    "\n"
+                    )
+            .arg(beststart)
+            .arg(bestend)
+            .arg(bestend - beststart + 1)
+            .arg(chi2)
+            ;
+      }
+   }
+   editor->append(report);
+   editor->setColor(save_color);
+
+   //   cout << csvlog;
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
+{
+   if (
+#ifndef QT4 
+       i > plotted_Iq.size() 
+#else
+       i > plotted_Iq_curves.size() 
+#endif
+       )
+   {
+      editor->append("internal error: invalid plot selected\n");
+      return false;
+   }
+
+   US_Saxs_Util usu;
+   usu.wave["data"].q.clear();
+   usu.wave["data"].r.clear();
+   usu.wave["data"].s.clear();
+   for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+   {
+      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+      {
+         usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+         usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+         usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] ); // shouldn't this be errors?
+      }
+   }
+   QString log;
+
+   int pointsmin = our_saxs_options->pointsmin;
+   int pointsmax = our_saxs_options->pointsmax;
+   double sRgmaxlimit = our_saxs_options->qRgmax;
+   double pointweightpower = 3e0;
+   double p_guinier_maxq = our_saxs_options->qend;
+   
+   // these are function output values
+   double a;
+   double b;
+   double siga;
+   double sigb;
+   double chi2;
+   double Rg;
+   double Io;
+   double smin;
+   double smax;
+   double sRgmin;
+   double sRgmax;
+
+   unsigned int beststart;
+   unsigned int bestend;
+
+   bool too_few_points = plotted_q[i].size() <= 25;
+
+   if ( !too_few_points )
+   {
+      if ( 
+          !usu.guinier_plot(
+                            "cs_guinier",
+                            "data"
+                            )   ||
+          !usu.guinier_fit2(
+                            log,
+                            "cs_guinier", 
+                            pointsmin,
+                            pointsmax,
+                            sRgmaxlimit,
+                            pointweightpower,
+                            p_guinier_maxq,
+                            a,
+                            b,
+                            siga,
+                            sigb,
+                            chi2,
+                            Rg,
+                            Io,
+                            smax, // don't know why these are flipped
+                            smin,
+                            sRgmin,
+                            sRgmax,
+                            beststart,
+                            bestend
+                            ) )
+      {
+         editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                        .arg(qsl_plotted_iq_names[i]));
+         return false;
+      }
+
+      // cout << "guinier siga " << siga << endl;
+      // cout << "guinier sigb " << sigb << endl;
+   
+      // cout << log;
+   }
+
+   QColor save_color = editor->color();
+   editor->setColor(plot_colors[i % plot_colors.size()]);
+
+   QString report;
+   if ( too_few_points )
+   {
+      report =
+         QString(
+                 "CS Guinier analysis of %1:\n"
+                 "**** Could not compute Rg, too few data points %2 ****\n"
+                 )
+         .arg(plotted_q[i].size());
+
+      csvlog += 
+         QString(
+                 "\"%1\","
+                 "\"Too few data points (%2)\"\n"
+                 )
+         .arg(qsl_plotted_iq_names[i])
+         .arg(plotted_q[i].size());
+   } else {
+      if ( isnan(Rg) ||
+           b >= 0e0 )
+      {
+         plotted_guinier_valid[i] = false;
+         report =
+            QString(
+                    "CS Guinier analysis of %1:\n"
+                    "**** Could not compute Rg ****\n"
+                    )
+            .arg(qsl_plotted_iq_names[i]);
+
+         csvlog += 
+            QString(
+                    "\"%1\","
+                    "\"Could not compute Rg\"\n"
+                    )
+            .arg(qsl_plotted_iq_names[i]);
+
+      } else {
+         report = 
+            QString("")
+            .sprintf(
+                     "CS Guinier analysis of %s:\n"
                      "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      
                      , qsl_plotted_iq_names[i].ascii()

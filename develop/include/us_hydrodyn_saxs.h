@@ -507,6 +507,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString curve_type_string(int curve);
 
       bool guinier_analysis( unsigned int i, QString &csvlog );
+      bool cs_guinier_analysis( unsigned int i, QString &csvlog );
       void crop_iq_data( vector < double > &q,
                          vector < double > &I );
 
