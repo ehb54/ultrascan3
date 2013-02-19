@@ -9043,7 +9043,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    if ( bl_count &&
         QMessageBox::question(this, 
-                              tr( "US-SOMO: SAXS Hplc" ),
+                              this->caption(),
                               QString( tr( "Baselines were found for %1 of the %2 curves\n"
                                            "Do you want to add back the baselines when making I(q)?" ) )
                               .arg( bl_count )
@@ -9059,6 +9059,16 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       bl_count = 0;
    }
 
+   bool save_gaussians = 
+        QMessageBox::question(this, 
+                              this->caption(),
+                              tr( "Save as Gaussians or a percent of the original I(q)?" ),
+                              tr( "&Gaussians" ),
+                              tr( "Percent of &I(q)" ),
+                              QString::null,
+                              0,
+                              1
+                              ) == 0;
    running = true;
 
    // now for each I(t) distribute the I for each frame according to the gaussians
@@ -9116,7 +9126,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       for ( unsigned int g = 0; g < gaussians.size() / 3; g++ )
       {
          // build up an I(q)
-         QString name = head + QString( "%1%2_pk%3_t%4" )
+         QString name = head + QString( "%1%2%3_pk%4_t%5" )
+            .arg( save_gaussians  ? "_G" : "" )
             .arg( any_bl   ? "_bs" : "" )
             .arg( bl_count ? "ba" : "" )
             .arg( g + 1 )
@@ -9224,7 +9235,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_pos       [ name ] = f_qs.size();
          f_qs_string [ name ] = qv_string;
          f_qs        [ name ] = qv;
-         f_Is        [ name ] = G;
+         f_Is        [ name ] = save_gaussians ? G : I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
          {
