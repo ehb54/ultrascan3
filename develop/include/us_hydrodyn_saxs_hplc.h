@@ -191,6 +191,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_pos_width;
       mQLineEdit    *le_gauss_pos_height;
       QCheckBox     *cb_sd_weight;
+      QCheckBox     *cb_fix_width;
       QPushButton   *pb_gauss_fit;
       QLabel        *lbl_gauss_fit;
       mQLineEdit    *le_gauss_fit_start;
@@ -528,6 +529,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void ggauss_results();
 
       void set_sd_weight();
+      void set_fix_width();
 
       void gauss_as_curves();
 

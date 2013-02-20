@@ -506,7 +506,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_signal->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lbl_created_files = new QLabel("Produced Files", this);
+   lbl_created_files = new QLabel("Produced Data", this);
    lbl_created_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_created_files->setMinimumHeight(minHeight1);
    lbl_created_files->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
