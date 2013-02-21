@@ -209,7 +209,11 @@ namespace HFIT_GLOBAL
 
    extern bool                    use_errors;
 
-   double compute_gaussian_f( double t, const double *par );
+   extern vector < double       > errors;
+   extern vector < unsigned int > errors_index;
+
+   double compute_gaussian_f         ( double t, const double *par );
+   double compute_gaussian_f_eq_width( double t, const double *par );
 
    void printvector( QString qs, vector < double > x );
    void printvector( QString qs, vector < unsigned int > x );

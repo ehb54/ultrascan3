@@ -23,15 +23,15 @@
 //    cout << endl;
 // }
 
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ] );
-   }
-   cout << endl;
-}
+// static void printvector( QString qs, vector < double > x )
+// {
+//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    for ( unsigned int i = 0; i < x.size(); i++ )
+//    {
+//       cout << QString( " %1" ).arg( x[ i ] );
+//    }
+//    cout << endl;
+// }
 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                              csv csv1,
@@ -70,6 +70,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    gaussian_mode  = false;
    ggaussian_mode = false;
    baseline_mode  = false;
+   timeshift_mode = false;
 
    unified_ggaussian_ok = false;
    wheel_errors_ok      = false;
@@ -850,7 +851,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( cb_sd_weight, SIGNAL( clicked() ), SLOT( set_sd_weight() ) );
 
    cb_fix_width = new QCheckBox(this);
-   cb_fix_width->setText(tr("Fix width  "));
+   cb_fix_width->setText(tr("Eq width  "));
    cb_fix_width->setEnabled( true );
    cb_fix_width->setChecked( false );
    cb_fix_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -4307,7 +4308,13 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    
    legend_set();
    plot_dist->replot();
-   update_enables();
+   if ( !gaussian_mode &&
+        !ggaussian_mode && 
+        !baseline_mode &&
+        !timeshift_mode )
+   {
+      update_enables();
+   }
 }
 
 bool US_Hydrodyn_Saxs_Hplc::adjacent_ok( QString name )
@@ -6595,8 +6602,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_start()
       return;
    }
 
-   gaussian_mode = false;
-   baseline_mode = false;
+   gaussian_mode  = false;
+   ggaussian_mode = false;
+   baseline_mode  = false;
 
    if ( !plotted_curves.count( wheel_file ) )
    {
@@ -6609,7 +6617,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_start()
    running               = true;
 
    disable_all();
+   timeshift_mode = true;
 
+   pb_rescale            ->setEnabled( true );
    pb_wheel_start        ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
    qwtw_wheel            ->setEnabled( true );
@@ -6785,6 +6795,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
    gaussian_mode         = false;
    ggaussian_mode        = false;
    baseline_mode         = false;
+   timeshift_mode        = false;
 
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
@@ -6930,6 +6941,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    pb_wheel_save         ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( false );
 
+   timeshift_mode        = false;
    running               = false;
 
    update_enables();
@@ -6958,6 +6970,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_save       ->setEnabled( sizeover3 );
    pb_gauss_as_curves  ->setEnabled( sizeover3 );
    qwtw_wheel          ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
+   pb_rescale          ->setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
@@ -8044,7 +8057,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
    }
 
    vector < double > par = gaussians;
-   printvector( QString( "par start" ), par );
+   // printvector( QString( "par start" ), par );
 
    for ( control.epsilon    = 1;
          control.epsilon    > 0.01;
@@ -8059,7 +8072,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
                        (const LM::lm_control_struct *)&control,
                        &status );
 
-      printvector( QString( "par is now (norm %1)" ).arg( status.fnorm ), par );
+      // printvector( QString( "par is now (norm %1)" ).arg( status.fnorm ), par );
    }
    gaussians = par;
    gauss_init_markers();
@@ -8093,6 +8106,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
                                     le_baseline_end    ->hasFocus() ||
                                     le_baseline_end_e  ->hasFocus()
                                     );
+   pb_rescale          ->setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
@@ -9054,7 +9068,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       return false;
    }
 
-   printvector( "cfg: org_gauss", org_gaussians );
+   // printvector( "cfg: org_gauss", org_gaussians );
 
    double gmax = compute_gaussian_peak( file, org_gaussians );
    
@@ -9062,14 +9076,14 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    gauss_max_height = peak * 1.2;
 
-   printvector( "cfg: org_gauss 2", org_gaussians );
+   // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
    {
       gaussians[ 0 + i ] *= scale;
    }
 
-   printvector( "cfg: gaussians", gaussians );
+   // printvector( "cfg: gaussians", gaussians );
 
    double gmax2 = compute_gaussian_peak( file, gaussians );
 
@@ -9510,7 +9524,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_gauss_prev       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos > 0 );
    pb_gauss_next       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos < unified_ggaussian_gaussians_size - 1 );
    cb_sd_weight        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
-   pb_gauss_fit        ->setEnabled( !cb_fix_width->isChecked() && unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
+   pb_gauss_fit        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
    pb_wheel_cancel     ->setEnabled( true );
    le_gauss_pos        ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
    le_gauss_pos_width  ->setEnabled( cb_fix_width->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
@@ -9521,6 +9535,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
    pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
    pb_gauss_as_curves  ->setEnabled( unified_ggaussian_ok );
+   pb_rescale          ->setEnabled( true );
 }
 
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
@@ -9774,9 +9789,9 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
             unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
             if ( cb_fix_width->isChecked() )
             {
-               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
-            } else {
                unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 2 + i ) );
+            } else {
+               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
             }               
             unified_ggaussian_q           .push_back( f_qs[ unified_ggaussian_files[ i ] ][ j ] );
             unified_ggaussian_I           .push_back( f_Is[ unified_ggaussian_files[ i ] ][ j ] );
@@ -9796,7 +9811,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    unified_ggaussian_ok = false;
 
    org_gaussians = gaussians;
-   printvector( "cugt: org_gauss", org_gaussians );
+   // printvector( "cugt: org_gauss", org_gaussians );
 
    unified_ggaussian_params          .clear();
 
@@ -9862,8 +9877,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    //    printvector( "unified q:", unified_ggaussian_q );
    //    printvector( "unified t:", unified_ggaussian_t );
    //    printvector( "unified I:", unified_ggaussian_I );
-   //    printvector( "unified params:", unified_ggaussian_params );
-   //    printvector( "unified param index:", unified_ggaussian_param_index );
+   // printvector( "unified params:", unified_ggaussian_params );
+   // printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
    progress->setProgress( 1, 1 );

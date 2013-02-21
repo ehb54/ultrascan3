@@ -405,6 +405,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         gaussian_mode;
       bool                         ggaussian_mode;
       bool                         baseline_mode;
+      bool                         timeshift_mode;
 
       void                         gaussian_enables();
       void                         ggaussian_enables();
