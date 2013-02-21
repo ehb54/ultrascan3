@@ -276,12 +276,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QwtPlotCurve * >           plotted_gaussians;
       vector < QwtPlotCurve * >           plotted_gaussian_sum;
       vector < QwtPlotCurve * >           plotted_baseline;
+      vector < QwtPlotCurve * >           plotted_hlines;
 #else
       map < QString, long >               plotted_curves;
       vector < long >                     plotted_markers;
       vector < long >                     plotted_gaussians;
       vector < long >                     plotted_gaussian_sum;
       vector < long >                     plotted_baseline;
+      vector < long >                     plotted_hlines;
 #endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
@@ -304,6 +306,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   compute_gaussian( vector < double > t, vector < double > g );
       vector < double >                   compute_ggaussian_gaussian_sum();
       void                                add_ggaussian_curve( QString name, vector < double > y );
+      void                                gauss_add_hline( double center, double width );
 
       map < QString, bool >               all_files_map();
 #ifdef WIN32
