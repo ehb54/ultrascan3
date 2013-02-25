@@ -63,6 +63,33 @@ class ga_individual
    }
 };
 
+struct hplc_stack_data
+{
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+   map < QString, vector < QString > > f_qs_string;
+   map < QString, vector < double > >  f_qs;
+   map < QString, vector < double > >  f_Is;
+   map < QString, vector < double > >  f_errors;
+   map < QString, vector < double > >  f_gaussians;
+   map < QString, unsigned int >       f_pos;
+
+   map < QString, QString >            f_name;
+   map < QString, bool >               f_is_time;
+
+   map < QString, bool >               created_files_not_saved;
+   QStringList                         files;
+   map < QString, bool >               selected_files;
+   QStringList                         created_files;
+   map < QString, bool >               created_selected_files;
+   vector < double >                   gaussians;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+};
+
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
@@ -126,6 +153,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
       QPushButton   *pb_rescale;
+
+      QPushButton   *pb_stack_push_all;
+      QPushButton   *pb_stack_push_sel;
+      QLabel        *lbl_stack;
+      QPushButton   *pb_stack_drop;
+      QPushButton   *pb_stack_join;
+      QPushButton   *pb_stack_swap;
+      QPushButton   *pb_stack_rot_up;
+      QPushButton   *pb_stack_rot_down;
 
       QListBox      *lb_files;
       QLabel        *lbl_selected;
@@ -254,6 +290,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
+      vector < hplc_stack_data >         stack_data;
+
       vector < QColor >                  plot_colors;
 
       map < QString, vector < QString > > f_qs_string;
@@ -460,6 +498,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QString                      pad_zeros( int val, int max );
       void                         plot_errors_jump_markers();
+      bool                         check_fit_range();
+
+      hplc_stack_data              current_data( bool selected_only = false );
+      void                         set_current_data( hplc_stack_data & data );
 
    private slots:
 
@@ -502,6 +544,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void save_created();
       void show_created();
       void show_only_created();
+
+      void stack_push_all();
+      void stack_push_sel();
+      void stack_drop();
+      void stack_join();
+      void stack_rot_up();
+      void stack_rot_down();
+      void stack_swap();
 
       void wheel_start();
       void errors();
