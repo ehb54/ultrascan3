@@ -174,9 +174,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool          legend_vis;
 #endif
 
+      QwtPlot       *plot_errors;
+      ScrollZoomer  *plot_errors_zoomer;
+#ifdef QT4
+      QwtPlotGrid   *grid_errors;
+#endif
+
       QPushButton   *pb_wheel_start;
       QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
+      QPushButton   *pb_errors;
       QPushButton   *pb_wheel_cancel;
       QPushButton   *pb_wheel_save;
 
@@ -297,6 +304,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   unified_ggaussian_params; // global centers first, then height, width for each file
       vector < unsigned int >             unified_ggaussian_param_index; // index into params
       vector < double >                   unified_ggaussian_q;
+      vector < double >                   unified_ggaussian_jumps;
       vector < double >                   unified_ggaussian_I;
       vector < double >                   unified_ggaussian_e;
       vector < double >                   unified_ggaussian_t;
@@ -309,6 +317,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                gauss_add_hline( double center, double width );
 
       map < QString, bool >               all_files_map();
+
+      void                                update_plot_errors( vector < double > &grid, vector < double > &target, vector< double > &fit );
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -449,6 +459,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         push_back_color_if_ok( QColor bg, QColor set );
 
       QString                      pad_zeros( int val, int max );
+      void                         plot_errors_jump_markers();
 
    private slots:
 
@@ -493,6 +504,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void show_only_created();
 
       void wheel_start();
+      void errors();
       void wheel_cancel();
       void wheel_save();
 
@@ -505,6 +517,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void plot_zoomed( const QwtDoubleRect &rect );
       void plot_mouse ( const QMouseEvent &me );
+
+      void plot_errors_zoomed( const QwtDoubleRect &rect );
 
       void adjust_wheel ( double );
 
