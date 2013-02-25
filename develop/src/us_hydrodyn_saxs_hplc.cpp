@@ -3741,6 +3741,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    map < double, bool > used_q;
    list < double >      ql;
 
+   QRegExp rx_cap( "(\\d+)_(\\d+)" );
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
       if ( !f_qs.count( files[ i ] ) )
@@ -3749,6 +3751,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       } else {
          QString tmp = files[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( rx_cap.search( tmp ) != -1 )
+         {
+            tmp = rx_cap.cap( 2 );
+         }
          double timestamp = tmp.toDouble();
          
          for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
