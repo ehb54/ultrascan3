@@ -1,6 +1,7 @@
 #ifndef US_1DSA_H
 #define US_1DSA_H
 
+#include <unistd.h>
 #include "us_plot_control.h"
 #include "us_analysis_control.h"
 #include "us_noise_loader.h"
