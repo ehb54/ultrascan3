@@ -873,7 +873,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
+         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
@@ -882,7 +882,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
+         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );

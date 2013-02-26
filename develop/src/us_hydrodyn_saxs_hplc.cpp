@@ -12,6 +12,7 @@
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
+#define UHSH_VAL_DEC 10
 
 // static   void printvector( QString qs, vector < unsigned int > x )
 // {
@@ -23,16 +24,15 @@
 //    cout << endl;
 // }
 
-// static void printvector( QString qs, vector < double > x )
-// {
-//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-//    for ( unsigned int i = 0; i < x.size(); i++ )
-//    {
-//       cout << QString( " %1" ).arg( x[ i ] );
-//    }
-//    cout << endl;
-// }
-
+static void printvector( QString qs, vector < double > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ], 0, 'f', 18 );
+   }
+   cout << endl;
+}
 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                              csv csv1,
@@ -58,6 +58,8 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
    ((US_Hydrodyn *) us_hydrodyn)->saxs_hplc_widget = true;
+
+   errors_were_on = false;
 
    plot_dist_zoomer   = (ScrollZoomer *) 0;
    plot_errors_zoomer = (ScrollZoomer *) 0;
@@ -927,13 +929,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_next->setEnabled( false );
    connect(pb_gauss_next, SIGNAL(clicked()), SLOT(gauss_next()));
 
+
    le_gauss_pos = new mQLineEdit(this, "le_gauss_pos Line Edit");
    le_gauss_pos->setText( "" );
    le_gauss_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gauss_pos->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_gauss_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_gauss_pos->setEnabled( false );
-   le_gauss_pos->setValidator( new QDoubleValidator( le_gauss_pos ) );
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( le_gauss_pos );
+      qdv->setDecimals( UHSH_VAL_DEC );
+      // le_gauss_pos->setValidator( qdv );
+   }
+   // le_gauss_pos->validator()->setDecimals( UHSH_VAL_DEC );
    connect( le_gauss_pos, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text( const QString & ) ) );
    connect( le_gauss_pos, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_focus( bool ) ) );
 
@@ -943,7 +951,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_pos_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_gauss_pos_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_gauss_pos_width->setEnabled( false );
-   le_gauss_pos_width->setValidator( new QDoubleValidator( le_gauss_pos_width ) );
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( le_gauss_pos_width );
+      qdv->setDecimals( UHSH_VAL_DEC );
+      // le_gauss_pos_width->setValidator( qdv );
+   }
+   // le_gauss_pos_width->setValidator( new QDoubleValidator( le_gauss_pos_width ) );
+   // le_gauss_pos_width->validator()->setDecimals( UHSH_VAL_DEC );
    connect( le_gauss_pos_width, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_width_text( const QString & ) ) );
    connect( le_gauss_pos_width, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_width_focus( bool ) ) );
 
@@ -953,7 +967,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_pos_height->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_gauss_pos_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_gauss_pos_height->setEnabled( false );
-   le_gauss_pos_height->setValidator( new QDoubleValidator( le_gauss_pos_height ) );
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( le_gauss_pos_height );
+      qdv->setDecimals( UHSH_VAL_DEC );
+      // le_gauss_pos_height->setValidator( qdv );
+   }
+   // le_gauss_pos_height->setValidator( new QDoubleValidator( le_gauss_pos_height ) );
+   // le_gauss_pos_height->validator()->setDecimals( UHSH_VAL_DEC );
    connect( le_gauss_pos_height, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_height_text( const QString & ) ) );
    connect( le_gauss_pos_height, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_height_focus( bool ) ) );
 
@@ -6582,11 +6602,11 @@ bool US_Hydrodyn_Saxs_Hplc::type_files( QStringList files )
    return f_is_time[ files[ 0 ] ];
 }
 
-#define UHSH_WHEEL_RES 100000
+#define UHSH_WHEEL_RES 10000000
 
 void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 {
-   cout << QString("pos is now %1\n").arg(pos);
+   cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
    if ( gaussian_mode )
    {
       if ( le_gauss_pos->hasFocus() )
@@ -6891,6 +6911,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 {
+   errors_were_on = plot_errors->isVisible();
    plot_errors->hide();
    disable_all();
 
@@ -7165,9 +7186,9 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          disconnect( le_gauss_pos_width , SIGNAL( textChanged( const QString & ) ), 0, 0 );
          disconnect( le_gauss_pos_height, SIGNAL( textChanged( const QString & ) ), 0, 0 );
 
-         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + 3 * gaussian_pos ] ) );
-         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + 3 * gaussian_pos ] ) );
-         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + 3 * gaussian_pos ] ) );
+         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + 3 * gaussian_pos ], 0, 'f', 10 ) );
+         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + 3 * gaussian_pos ], 0, 'f', 10 ) );
+         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + 3 * gaussian_pos ], 0, 'f', 10 ) );
 
          connect( le_gauss_pos       , SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text       ( const QString & ) ) );
          connect( le_gauss_pos_width , SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_width_text ( const QString & ) ) );
@@ -7522,6 +7543,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    gauss_init_markers();
    gauss_init_gaussians();
    update_gauss_pos();
+   if ( errors_were_on )
+   {
+      plot_errors->show();
+   }
    gaussian_enables();
 }
       
@@ -7709,6 +7734,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 {
    if ( gaussian_mode )
    {
+      cout << QString( "gauss_pos_text <%1>\n" ).arg( text );
       gaussians[ 1 + 3 * gaussian_pos ] = text.toDouble();
    } else {
       if ( cb_fix_width->isChecked() )
@@ -7764,7 +7790,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setValue( text.toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
 
    if ( gaussian_mode )
@@ -7826,7 +7854,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
 
    if ( qwtw_wheel->value() != text.toDouble() )
    {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setValue( text.toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
 
    if ( gaussian_mode )
@@ -7841,7 +7871,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_text( const QString & text )
    gaussians[ 0 + 3 * gaussian_pos ] = text.toDouble();
    if ( qwtw_wheel->value() != text.toDouble() )
    {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setValue( text.toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
    gauss_replot_gaussian();
    plot_dist->replot();
@@ -8185,8 +8217,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
                             f_qs[ wheel_file ].back(), 
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
 }
 
@@ -8200,8 +8232,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_focus( bool hasFocus )
       qwtw_wheel->setRange( 0, 
                             f_qs[ wheel_file ].back() / 3, 
                             ( f_qs[ wheel_file ].back() / 3 ) / UHSH_WHEEL_RES ), 
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_gauss_pos_width->text().toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
 }
 
@@ -8215,8 +8247,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_focus( bool hasFocus )
       qwtw_wheel->setRange( 0,
                             gauss_max_height,
                             gauss_max_height / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_gauss_pos_height->text().toDouble() );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
 }
 
@@ -9510,22 +9542,22 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       return false;
    }
 
-   // printvector( "cfg: org_gauss", org_gaussians );
-
+   printvector( "cfg: org_gauss", org_gaussians );
+   
    double gmax = compute_gaussian_peak( file, org_gaussians );
    
    double scale = peak / gmax;   
 
    gauss_max_height = peak * 1.2;
 
-   // printvector( "cfg: org_gauss 2", org_gaussians );
+   printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
    {
       gaussians[ 0 + i ] *= scale;
    }
 
-   // printvector( "cfg: gaussians", gaussians );
+   printvector( "cfg: gaussians", gaussians );
 
    double gmax2 = compute_gaussian_peak( file, gaussians );
 
@@ -9969,6 +10001,11 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    check_fit_range();
 
+   if ( errors_were_on )
+   {
+      plot_errors->show();
+   }
+
    ggaussian_enables();
 }
 
@@ -10223,7 +10260,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    double q_start = le_gauss_fit_start->text().toDouble();
    double q_end   = le_gauss_fit_end  ->text().toDouble();
 
-   unified_ggaussian_jumps.push_back( f_qs[ unified_ggaussian_files[ 0 ] ][ 0 ] );
+   unified_ggaussian_jumps.push_back( 0e0 );
 
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
@@ -10268,8 +10305,6 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
          }
       }
    }
-
-   //    printvector( "unified_gaussian_jumps", unified_ggaussian_jumps );
 
    pb_ggauss_rmsd->setEnabled( false );
    return true;
@@ -10346,7 +10381,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    //    printvector( "unified q:", unified_ggaussian_q );
    //    printvector( "unified t:", unified_ggaussian_t );
    //    printvector( "unified I:", unified_ggaussian_I );
-   // printvector( "unified params:", unified_ggaussian_params );
+   printvector( "unified params:", unified_ggaussian_params );
    // printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;

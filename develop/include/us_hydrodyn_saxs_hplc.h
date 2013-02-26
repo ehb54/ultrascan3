@@ -503,6 +503,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       hplc_stack_data              current_data( bool selected_only = false );
       void                         set_current_data( hplc_stack_data & data );
 
+      bool                         errors_were_on;
+
    private slots:
 
       void setupGUI();
