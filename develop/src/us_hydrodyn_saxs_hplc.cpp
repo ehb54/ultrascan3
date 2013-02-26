@@ -10230,8 +10230,8 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
 
    //    printvector( "rmsd, ugq", unified_ggaussian_q );
 
-   plot_errors_jump_markers();
    update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result );
+   plot_errors_jump_markers();
 
    return sqrt( rmsd );
 }
@@ -10645,6 +10645,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
       marker->attach( plot_errors );
 #endif
    }
+   plot_errors->replot();
 }
 
 bool US_Hydrodyn_Saxs_Hplc::check_fit_range()
