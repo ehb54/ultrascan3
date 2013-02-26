@@ -12,7 +12,7 @@
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 10
+#define UHSH_VAL_DEC 8
 
 // static   void printvector( QString qs, vector < unsigned int > x )
 // {
@@ -24,15 +24,15 @@
 //    cout << endl;
 // }
 
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ], 0, 'f', 18 );
-   }
-   cout << endl;
-}
+// static void printvector( QString qs, vector < double > x )
+// {
+//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    for ( unsigned int i = 0; i < x.size(); i++ )
+//    {
+//       cout << QString( " %1" ).arg( x[ i ], 0, 'f', 18 );
+//    }
+//    cout << endl;
+// }
 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                              csv csv1,
@@ -7186,9 +7186,9 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          disconnect( le_gauss_pos_width , SIGNAL( textChanged( const QString & ) ), 0, 0 );
          disconnect( le_gauss_pos_height, SIGNAL( textChanged( const QString & ) ), 0, 0 );
 
-         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + 3 * gaussian_pos ], 0, 'f', 10 ) );
-         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + 3 * gaussian_pos ], 0, 'f', 10 ) );
-         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + 3 * gaussian_pos ], 0, 'f', 10 ) );
+         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + 3 * gaussian_pos ], 0, 'f', 6 ) );
+         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + 3 * gaussian_pos ], 0, 'f', 6 ) );
+         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + 3 * gaussian_pos ], 0, 'f', 6 ) );
 
          connect( le_gauss_pos       , SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text       ( const QString & ) ) );
          connect( le_gauss_pos_width , SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_width_text ( const QString & ) ) );
@@ -9542,7 +9542,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       return false;
    }
 
-   printvector( "cfg: org_gauss", org_gaussians );
+   // printvector( "cfg: org_gauss", org_gaussians );
    
    double gmax = compute_gaussian_peak( file, org_gaussians );
    
@@ -9550,14 +9550,14 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    gauss_max_height = peak * 1.2;
 
-   printvector( "cfg: org_gauss 2", org_gaussians );
+   // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
    {
       gaussians[ 0 + i ] *= scale;
    }
 
-   printvector( "cfg: gaussians", gaussians );
+   // printvector( "cfg: gaussians", gaussians );
 
    double gmax2 = compute_gaussian_peak( file, gaussians );
 
@@ -9573,18 +9573,20 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    wheel_file = file;
    fit->gaussians_undo.clear();
    fit->gaussians_undo.push_back( gaussians );
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 ) );
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
 
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
    fit->cb_fix_amplitude ->setChecked( false );
 
    fit->lm();
+   // printvector( "cfg: after fit gaussians", gaussians );
 
    if ( !cb_fix_width->isChecked() )
    {
       fit->cb_fix_width     ->setChecked( false );
       fit->lm();
+      // printvector( "cfg: after fit2 gaussians", gaussians );
    }
 
    f_gaussians[ file ] = gaussians;
@@ -10228,8 +10230,8 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
 
    //    printvector( "rmsd, ugq", unified_ggaussian_q );
 
-   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result );
    plot_errors_jump_markers();
+   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result );
 
    return sqrt( rmsd );
 }
@@ -10381,7 +10383,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    //    printvector( "unified q:", unified_ggaussian_q );
    //    printvector( "unified t:", unified_ggaussian_t );
    //    printvector( "unified I:", unified_ggaussian_I );
-   printvector( "unified params:", unified_ggaussian_params );
+   // printvector( "unified params:", unified_ggaussian_params );
    // printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
