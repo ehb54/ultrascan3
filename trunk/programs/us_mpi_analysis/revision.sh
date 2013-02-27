@@ -1,11 +1,14 @@
 #  revision.sh  - fill us_revision.h with lastest revision string
-REV1=`svn info|grep 'Changed Rev'`
-REV2=`(cd ../../utils;svn info|grep 'Changed Rev')`
+MVERS="2.0"
+REV1=`svn info|grep 'Changed Rev'|cut -f4 -d' '`
+REV2=`(cd ../../utils;svn info|grep 'Changed Rev'|cut -f4 -d' ')`
+DATE1=`svn info|grep 'Changed Date'|cut -f4 -d' '`
+DATE2=`(cd ../../utils;svn info|grep 'Changed Date'|cut -f4 -d' ')`
 # Compare revisions of programs/us_mpi_analysis and utils
-NREV1=`echo $REV1|cut -f4 -d' '`
-NREV2=`echo $REV2|cut -f4 -d' '`
-NREV1=`expr $NREV1 + 0`
-NREV2=`expr $NREV2 + 0`
+NREV1=`expr $REV1 + 0`
+NREV2=`expr $REV2 + 0`
+REV1="$MVERS.$REV1 $DATE1"
+REV2="$MVERS.$REV2 $DATE2"
 if [ $NREV2 -gt $NREV1 ]; then
   # If utils is latest, use its revision to store in the header
   REV1=$REV2
@@ -17,6 +20,6 @@ if [ "$REV1" != "$REV2" ]; then
   # If svn shows revision later than header, report and store that one
   echo "REVISION WAS -- \"$REV2\""
   echo "REVISION NOW -- \"$REV1\""
-  echo "#define REVISION \"$REV1\"" > us_revision.h
+  echo "#define REVISION \"$REV1\"" >us_revision.h
 fi
 

@@ -78,7 +78,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits  = us_counter( 3, -10000, 10000,   10 );
    ct_lolimitk  = us_counter( 3,      1,     8,    1 );
    ct_uplimitk  = us_counter( 3,      1,   100,    4 );
-   ct_incremk   = us_counter( 3,   0.01,     2, 0.25 );
+   ct_incremk   = us_counter( 3,   0.01,    10, 0.25 );
    ct_varcount  = us_counter( 2,      3,   200,   16 );
    ct_cresolu   = us_counter( 2,     20,   200,  100 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );

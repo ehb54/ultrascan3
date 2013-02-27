@@ -41,13 +41,16 @@ void US_MPI_Analysis::ga_worker( void )
    MPI_Status status;
    MPI_Job    job;
    bool       finished = false;
+   int        grp_nbr  = ( my_rank / gcores_count );
+   int        deme_nbr = my_rank - grp_nbr * gcores_count;
 
    while ( ! finished )
    {
       ga_worker_loop();
 
       msg.size = max_rss();
-DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDSEC;
+DbgLv(0) << "Deme" << grp_nbr << deme_nbr
+         << ": Generations finished, second" << ELAPSEDSEC;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -73,8 +76,8 @@ DbgLv(0) << "Deme" << my_rank << ": Generations finished, second" << ELAPSEDSEC;
       {
          case FINISHED: 
             finished = true;
-            DbgLv(0) << "    Deme" << my_rank << ":" << fitness_hits
-               << "fitness hits" << "  maxrss" << maxrss;
+            DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
+               << fitness_hits << "fitness hits" << "  maxrss" << maxrss;
             break;
 
          case UPDATE:   
@@ -164,6 +167,8 @@ void US_MPI_Analysis::ga_worker_loop( void )
    int p_mutate    = mutation;
    int p_crossover = p_mutate + crossover;
    int p_plague    = p_crossover + plague;
+   int grp_nbr     = ( my_rank / gcores_count );
+   int deme_nbr    = my_rank - grp_nbr * gcores_count;
 
    fitness_map.clear();
    fitness_hits = 0;
@@ -207,7 +212,7 @@ DbTimMsg("Worker after gsm rank/generation/elapsed");
 DbTimMsg("Worker after align_gene");
 
       // Send best gene to master
-DbgLv(1) << "Best gene to master: gen" << generation << "worker" << my_rank;
+DbgLv(1) << "Best gene to master: gen" << generation << "worker" << deme_nbr;
 dump_fitness( fitness );
       msg.generation = generation;
       msg.size       = genes[ fitness[ 0 ].index ].size();
@@ -568,8 +573,10 @@ int US_MPI_Analysis::migrate_genes( void )
    // The number returned equals the number sent or zero.
    if ( mgenes_count > 0 )
    {
-DbgLv(1) << "MG:Deme" << my_rank << ": solsent mg_count" << solutes_sent << mgenes_count << " elit" << elitism_count
-   << "sol_dbls" << solute_doubles;
+      int grp_nbr  = ( my_rank / gcores_count );
+      int deme_nbr = my_rank - grp_nbr * gcores_count;
+DbgLv(1) << "MG:Deme" << deme_nbr << ": solsent mg_count" << solutes_sent
+   << mgenes_count << " elit" << elitism_count << "sol_dbls" << solute_doubles;
       for ( int i = 0; i < mgenes_count; i++ )
       {
          Gene gene = immigres.mid( i * bucket_sols, bucket_sols );
