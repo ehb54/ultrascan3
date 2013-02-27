@@ -921,7 +921,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
-   pb_errors = new QPushButton(tr("Errors"), this);
+   pb_errors = new QPushButton(tr("Residuals"), this);
    pb_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_errors->setMinimumHeight(minHeight1);
    pb_errors->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -6937,6 +6937,12 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
          if ( ggaussian_mode )
          {
             lbl_gauss_fit ->setText( "?" );
+            plot_errors      ->clear();
+            plot_errors      ->replot();
+            plot_errors_grid  .clear();
+            plot_errors_target.clear();
+            plot_errors_fit   .clear();
+            plot_errors_errors.clear();
             pb_ggauss_rmsd->setEnabled( true );
 
             if ( le_gauss_pos->hasFocus() )
@@ -7555,199 +7561,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          plot_dist->replot();
       }
    }
-}
-
-void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, vector < double > &target, vector< double > &fit, vector < double > &errors )
-{
-   plot_errors->clear();
-
-   plot_errors_grid   = grid;
-   plot_errors_target = target;
-   plot_errors_fit    = fit;
-   plot_errors_errors = errors;
-
-   vector < double > x;
-   vector < double > y;
-   vector < double > e;
-
-   if ( !target.size() )
-   {
-      editor_msg( "red", "Internal error: update_plot_errors(): empty data\n" );
-      return;
-   }
-
-   if ( target.size() != fit.size() )
-   {
-      editor_msg( "red", "Internal error: update_plot_errors(): target.size() != fit.size()\n" );
-      return;
-   }
-   if ( target.size() != grid.size() )
-   {
-      editor_msg( "red", "Internal error: update_plot_errors(): target.size() != grid.size()\n" );
-      return;
-   }
-
-   // well, I good compiler should unwrap the if's if I put them inside one loop, but I am uncertain
-   // printvector( "target", target );
-   // printvector( "fit", fit );
-
-   if ( cb_plot_errors_pct->isChecked() )
-   {
-      if ( cb_plot_errors_sd->isChecked() && errors.size() == target.size() && is_nonzero_vector( errors ))
-      {
-         // does % and errors make sense?, I am excluding this for now
-         // cout << "pct mode with errors, not acceptable\n";
-         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
-         {
-            if ( target[ i ] != 0e0 )
-            {
-               x.push_back( grid[ i ] );
-               y.push_back( 0e0 );
-               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
-            }
-         }
-      } else {
-         // cout << "pct mode, not using errors\n";
-
-         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
-         {
-            if ( target[ i ] != 0e0 )
-            {
-               x.push_back( grid[ i ] );
-               y.push_back( 0e0 );
-               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
-            } else {
-               cout << QString( "target at pos %1 is zero\n" ).arg( i );
-            }
-         }
-      }         
-   } else {
-      if ( cb_plot_errors_sd->isChecked() && errors.size() == target.size() && is_nonzero_vector( errors ))
-      {
-         // cout << "errors ok & used\n";
-         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
-         {
-            x.push_back( grid[ i ] );
-            y.push_back( 0e0 );
-            e.push_back( ( target[ i ] - fit[ i ] ) / errors[ i ] );
-         }
-      } else {
-         // cout << "errors not ok & not used\n";
-         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
-         {
-            x.push_back( grid[ i ] );
-            y.push_back( 0e0 );
-            e.push_back( target[ i ] - fit[ i ] );
-         }
-      }
-   }
-
-   for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
-   {
-      if ( e[ i ] < -50e0 )
-      {
-         e[ i ] = -50e0;
-      } else {
-         if ( e[ i ] > 50e0 )
-         {
-            e[ i ] = 50e0;
-         }
-      }
-   }
-
-   // printvector( "x", x );
-   // printvector( "e", e );
-
-   {
-#ifndef QT4
-      long curve;
-      curve = plot_errors->insertCurve( "base" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::green, 1, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&y[ 0 ],
-                                 x.size()
-                                 );
-#else
-      curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
-      curve->setData(
-                     (double *)&x[ 0 ],
-                     (double *)&y[ 0 ],
-                     x.size()
-                     );
-      curve->attach( plot_errors );
-#endif
-   }
-
-   {
-#ifndef QT4
-      long curve;
-      curve = plot_errors->insertCurve( "errors" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::red, 1, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&e[ 0 ],
-                                 x.size()
-                                 );
-      plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#else
-      curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
-      curre->setData(
-                     (double *)&x[ 0 ],
-                     (double *)&e[ 0 ],
-                     x.size()
-                     );
-      curve->setStyle( QwtCurve::Sticks );
-      curve->attach( plot_errors );
-#endif
-   }
-
-   if ( !plot_errors_zoomer )
-   {
-      double maxy = e[ 0 ];
-
-      for ( unsigned int i = 1; i < ( unsigned int )e.size(); i++ )
-      {
-         if ( maxy < fabs( e[ i ] ) )
-         {
-            maxy = fabs( e[ i ] );
-         }
-      }            
-
-      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
-                                                    "% difference" :
-                                                    ( cb_plot_errors_sd->isChecked() ?
-                                                      "delta I(q)/sd" : "delta I(q)" 
-                                                      ) ) );
-
-      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
-      plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
-
-      plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
-      plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-      connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
-   }
-
-   plot_errors->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
@@ -10308,6 +10121,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
    // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
    // add_ggaussian_curve( "unified_ggaussian_sum",    compute_ggaussian_gaussian_sum() );
 
+   ggaussian_mode = true;
+
    lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
    wheel_file = unified_ggaussian_files[ 0 ];
 
@@ -10315,8 +10130,6 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
    gauss_max_height *= 1.2;
       
    org_f_gaussians = f_gaussians;
-
-   ggaussian_mode = true;
 
    running        = true;
 
@@ -10597,11 +10410,13 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    unified_ggaussian_e               .clear();
    unified_ggaussian_t               .clear();
    unified_ggaussian_param_index     .clear();
+   unified_ggaussian_q_start         .clear();
+   unified_ggaussian_q_end           .clear();
    
    double q_start = le_gauss_fit_start->text().toDouble();
    double q_end   = le_gauss_fit_end  ->text().toDouble();
 
-   unified_ggaussian_jumps.push_back( 0e0 );
+   unified_ggaussian_jumps  .push_back( 0e0 );
 
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
@@ -10625,6 +10440,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
          unified_ggaussian_e.clear();
       }
 
+      unified_ggaussian_q_start.push_back( unified_ggaussian_t.size() );
       for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ unified_ggaussian_files[ i ] ].size(); j++ )
       {
          if ( f_qs[ unified_ggaussian_files[ i ] ][ j ] >= q_start &&
@@ -10645,6 +10461,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
             }
          }
       }
+      unified_ggaussian_q_end.push_back( unified_ggaussian_t.size() );
    }
 
    if ( !is_nonzero_vector( unified_ggaussian_e ) )
@@ -10652,6 +10469,9 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
       unified_ggaussian_use_errors = false;
       editor_msg( "dark red", tr( "WARNING: some errors are zero so errors are off globally" ) );
    }
+
+   //    printvector( "q_start", unified_ggaussian_q_start );
+   //    printvector( "q_end"  , unified_ggaussian_q_end   );
 
    pb_ggauss_rmsd->setEnabled( false );
    return true;
@@ -10943,74 +10763,18 @@ void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
       if ( ggaussian_mode )
       {
          pb_ggauss_rmsd->setEnabled( true );
+         plot_errors      ->clear();
+         plot_errors      ->replot();
+         plot_errors_grid  .clear();
+         plot_errors_target.clear();
+         plot_errors_fit   .clear();
+         plot_errors_errors.clear();
       }
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::set_fix_width()
 {
-}
-
-void US_Hydrodyn_Saxs_Hplc::errors()
-{
-   if ( plot_errors->isVisible() )
-   {
-      hide_widgets( plot_errors_widgets, true );
-   } else {
-      hide_widgets( plot_errors_widgets, false );
-      if ( ggaussian_mode )
-      {
-         if ( !unified_ggaussian_use_errors )
-         {
-            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
-            cb_plot_errors_sd->setChecked( false );
-            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
-            cb_plot_errors_sd->hide();
-         }
-      } else {
-         if ( !f_errors.count( wheel_file ) ||
-              !is_nonzero_vector( f_errors[ wheel_file ] ) )
-         {
-            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
-            cb_plot_errors_sd->setChecked( false );
-            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
-            cb_plot_errors_sd->hide();
-         }
-         cb_plot_errors_group->hide();
-      }
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
-{
-   if ( !unified_ggaussian_ok )
-   {
-      return;
-   }
-
-   for ( unsigned int i = 0; i < unified_ggaussian_curves; i++ )
-   {
-#ifndef QT4
-      long marker = plot_errors->insertMarker();
-      plot_errors->setMarkerLineStyle ( marker, QwtMarker::VLine );
-      plot_errors->setMarkerPos       ( marker, unified_ggaussian_jumps[ i ], 0e0 );
-      plot_errors->setMarkerLabelAlign( marker, Qt::AlignRight | Qt::AlignTop );
-      plot_errors->setMarkerPen       ( marker, QPen( Qt::cyan, 2, DashDotDotLine));
-      plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
-      plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
-#else
-#warn check how to do this in qt4 needs ymark symsize
-      QwtPlotMarker* marker = new QwtPlotMarker;
-      marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                    QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
-                                    QSize( 8, sizeym ) ) );
-      marker->setValue( unified_ggaussian_jumps[ i ] );
-      marker->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
-      marker->setLabel( QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
-      marker->attach( plot_errors );
-#endif
-   }
-   plot_errors->replot();
 }
 
 bool US_Hydrodyn_Saxs_Hplc::check_fit_range()
@@ -11358,69 +11122,6 @@ void US_Hydrodyn_Saxs_Hplc::hide_widgets( vector < QWidget *> widgets, bool hide
    {
       hide ? widgets[ i ]->hide() : widgets[ i ]->show();
    }
-}
-
-
-void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
-{
-   plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
-                                                 "%" : "delta I(q)" ) );
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
-   vector < double > grid   = plot_errors_grid;
-   vector < double > fit    = plot_errors_fit;
-   vector < double > target = plot_errors_target;
-   vector < double > errors = plot_errors_errors;
-
-   update_plot_errors( grid, target, fit, errors );
-   if ( ggaussian_mode )
-   {
-      plot_errors_jump_markers();
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::set_plot_errors_rev()
-{
-
-   vector < double > tmp = plot_errors_fit;
-   plot_errors_fit       = plot_errors_target;
-   plot_errors_target    = tmp;
-
-   redo_plot_errors();
-}
-
-void US_Hydrodyn_Saxs_Hplc::set_plot_errors_sd()
-{
-   if ( cb_plot_errors_sd->isChecked() &&
-        cb_plot_errors_pct->isChecked() )
-   {
-      disconnect( cb_plot_errors_pct, SIGNAL( clicked() ), 0, 0 );
-      cb_plot_errors_pct->setChecked( false );
-      connect( cb_plot_errors_pct, SIGNAL( clicked() ), SLOT( set_plot_errors_pct() ) );
-   }
-
-   redo_plot_errors();
-}
-
-void US_Hydrodyn_Saxs_Hplc::set_plot_errors_pct()
-{
-
-   if ( cb_plot_errors_pct->isChecked() &&
-        cb_plot_errors_sd->isChecked() )
-   {
-      disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
-      cb_plot_errors_sd->setChecked( false );
-      connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
-   }
-   redo_plot_errors();
-}
-
-void US_Hydrodyn_Saxs_Hplc::set_plot_errors_group()
-{
-   redo_plot_errors();
 }
 
 void US_Hydrodyn_Saxs_Hplc::save_state()

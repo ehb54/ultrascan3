@@ -359,6 +359,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                   unified_ggaussian_e;
       vector < double >                   unified_ggaussian_t;
 
+      vector < unsigned int >             unified_ggaussian_q_start;        // the start q pos - one for each curve
+      vector < unsigned int >             unified_ggaussian_q_end;          // the end q pos   - one for each curve
+
       map < QString, vector < double > >  org_f_gaussians;
 
       vector < double >                   compute_gaussian( vector < double > t, vector < double > g );
@@ -372,6 +375,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                               vector < double > &target, 
                                                               vector < double > &fit,
                                                               vector < double > &errors );
+      void                                update_plot_errors_group();
 
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 

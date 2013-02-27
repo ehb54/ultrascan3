@@ -256,6 +256,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_buffer_conc.cpp \
   src/us_hydrodyn_saxs_buffer_conc_load.cpp \
   src/us_hydrodyn_saxs_hplc.cpp \
+  src/us_hydrodyn_saxs_hplc_util.cpp \
   src/us_hydrodyn_saxs_hplc_conc.cpp \
   src/us_hydrodyn_saxs_hplc_conc_load.cpp \
   src/us_hydrodyn_saxs_hplc_fit.cpp \
