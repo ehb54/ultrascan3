@@ -29,7 +29,7 @@
 //    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
 //    for ( unsigned int i = 0; i < x.size(); i++ )
 //    {
-//       cout << QString( " %1" ).arg( x[ i ], 0, 'f', 18 );
+//       cout << QString( " %1" ).arg( x[ i ], 0, 'f', 10 );
 //    }
 //    cout << endl;
 // }
@@ -111,6 +111,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
       // pbs.push_back( pb_select_all );
       pbs.push_back( pb_regex_load );
+      pbs.push_back( pb_save_state );
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
       pbs.push_back( pb_select_nth );
@@ -447,6 +448,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_regex_args->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_regex_args->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_regex_args->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_save_state = new QPushButton(tr("SS"), this);
+   pb_save_state->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_save_state->setMinimumHeight(minHeight3);
+   pb_save_state->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_save_state, SIGNAL(clicked()), SLOT(save_state()));
 
    lb_files = new QListBox(this, "files files listbox" );
    lb_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -834,7 +841,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_errors->setMargin(USglobal->config_list.margin);
    plot_errors->setTitle("");
    plot_errors->setCanvasBackground(USglobal->global_colors.plot);
-   plot_errors->hide();
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
@@ -842,6 +848,59 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
+
+   cb_plot_errors_rev = new QCheckBox(this);
+   cb_plot_errors_rev->setText(tr("Reverse"));
+   cb_plot_errors_rev->setEnabled( true );
+   cb_plot_errors_rev->setChecked( false );
+   cb_plot_errors_rev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_plot_errors_rev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_plot_errors_rev, SIGNAL( clicked() ), SLOT( set_plot_errors_rev() ) );
+
+   cb_plot_errors_sd = new QCheckBox(this);
+   cb_plot_errors_sd->setText(tr("Use standard deviations  "));
+   cb_plot_errors_sd->setEnabled( true );
+   cb_plot_errors_sd->setChecked( false );
+   cb_plot_errors_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_plot_errors_sd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+
+   cb_plot_errors_pct = new QCheckBox(this);
+   cb_plot_errors_pct->setText(tr("By percent "));
+   cb_plot_errors_pct->setEnabled( true );
+   cb_plot_errors_pct->setChecked( false );
+   cb_plot_errors_pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_plot_errors_pct->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_plot_errors_pct, SIGNAL( clicked() ), SLOT( set_plot_errors_pct() ) );
+
+   cb_plot_errors_group = new QCheckBox(this);
+   cb_plot_errors_group->setText(tr("Group"));
+   cb_plot_errors_group->setEnabled( true );
+   cb_plot_errors_group->setChecked( false );
+   cb_plot_errors_group->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_plot_errors_group->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_plot_errors_group, SIGNAL( clicked() ), SLOT( set_plot_errors_group() ) );
+
+   plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                 "%" : "delta I(q)" ) );
+
+   QHBoxLayout *hbl_plot_errors_buttons = new QHBoxLayout( 0 );
+   hbl_plot_errors_buttons->addWidget( cb_plot_errors_rev );
+   hbl_plot_errors_buttons->addWidget( cb_plot_errors_sd );
+   hbl_plot_errors_buttons->addWidget( cb_plot_errors_pct );
+   hbl_plot_errors_buttons->addWidget( cb_plot_errors_group );
+
+   l_plot_errors = new QVBoxLayout( 0 );
+   l_plot_errors->addWidget( plot_errors );
+   l_plot_errors->addLayout( hbl_plot_errors_buttons );
+
+   plot_errors_widgets.push_back( plot_errors );
+   plot_errors_widgets.push_back( cb_plot_errors_rev );
+   plot_errors_widgets.push_back( cb_plot_errors_sd );
+   plot_errors_widgets.push_back( cb_plot_errors_pct );
+   plot_errors_widgets.push_back( cb_plot_errors_group );
+
+   hide_widgets( plot_errors_widgets, true );
 
    pb_wheel_start = new QPushButton(tr("Timeshift on"), this);
    pb_wheel_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1220,6 +1279,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_1->addWidget ( pb_regex_load );
    hbl_file_buttons_1->addWidget ( le_regex );
    hbl_file_buttons_1->addWidget ( le_regex_args );
+   hbl_file_buttons_1->addWidget ( pb_save_state );
 
    QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
@@ -1243,6 +1303,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
+      pb_regex_load->hide();
+      le_regex->hide();
+      le_regex_args->hide();
+      pb_save_state->hide();
+
       pb_stack_push_all->hide();
       pb_stack_push_sel->hide();
       lbl_stack->hide();
@@ -1411,7 +1476,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
-   vbl_plot_group->addWidget ( plot_errors );
+   vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addLayout ( gl_wheel  );
    vbl_plot_group->addLayout ( gl_gauss  );
    vbl_plot_group->addLayout ( gl_gauss2  );
@@ -1751,6 +1816,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_stack_rot_down   ->setEnabled( stack_data.size() > 1 );
    pb_stack_swap       ->setEnabled( stack_data.size() );
 
+   pb_save_state       ->setEnabled( lb_files->numRows() || stack_data.size() );
    if ( *saxs_widget )
    {
       saxs_window->update_iqq_suffix();
@@ -2499,6 +2565,177 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    if ( ext == "dat" && qv[ 0 ].contains( "Frame data" ) )
    {
       is_time = true;
+   }
+
+   if ( ext == "dat" && qv[ 0 ].contains( " Global State file" ) )
+   {
+      QRegExp rx_dir         ( "^# __dir: (\\S+)\\s*$" );
+      QRegExp rx_lock_dir    ( "^# __lock_dir\\s*$" );
+      QRegExp rx_created_dir ( "^# __created_dir: (\\S+)\\s*$" );
+      QRegExp rx_files       ( "^# __files\\s*$" );
+      QRegExp rx_end         ( "^# __end\\s*$" );
+      QRegExp rx_gaussians   ( "^# __gaussians\\s*$" );
+      QRegExp rx_f_gaussians ( "^# __f_gaussians: (\\S+)\\s*$" );
+      QRegExp rx_push        ( "^# __push_stack\\s*$" );
+
+      clear_files( all_files() );
+
+      cb_lock_dir->setChecked( false );
+      for ( int i = 1; i < (int) qv.size(); i++ )
+      {
+         if ( rx_dir.search( qv[ i ] ) != -1 )
+         {
+            lbl_dir->setText( rx_dir.cap( 1 ) );
+            continue;
+         }
+         if ( rx_lock_dir.search( qv[ i ] ) != -1 )
+         {
+            cb_lock_dir->setChecked( true );
+            continue;
+         }
+         if ( rx_created_dir.search( qv[ i ] ) != -1 )
+         {
+            lbl_created_dir->setText( rx_dir.cap( 1 ) );
+            continue;
+         }
+         if ( rx_files.search( qv[ i ] ) != -1 )
+         {
+            i++;
+            QStringList files;
+            for ( ; i < ( int ) qv.size(); i++ )
+            {
+               if ( rx_end.search( qv[ i ] ) == -1 )
+               {
+                  files << qv[ i ];
+               } else {
+                  break;
+               }
+            }
+            if ( i < ( int ) qv.size() && rx_end.search( qv[ i ] ) != -1 )
+            {
+               if ( files.size() )
+               {
+                  add_files( files );
+               }
+               continue;
+            }
+            errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
+            return false;
+         }
+         if ( rx_gaussians.search( qv[ i ] ) != -1 )
+         {
+            i++;
+            if ( i >= ( int ) qv.size() )
+            {
+               errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
+               return false;
+            }               
+            
+            gaussians.clear();
+
+            QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+
+            if ( tokens.size() != 2 )
+            {
+               errormsg = QString("Error: loading Gaussians file %1 incorrect format line %2 tokens found %3 value <%4>").arg( filename ).arg( i + 1 ).arg( tokens.size() ).arg( qv[ i ] );
+               return false;
+            }
+      
+            disconnect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+            disconnect( le_gauss_fit_start, SIGNAL( focussed ( bool ) )             , 0, 0 );
+            disconnect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+            disconnect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , 0, 0 );
+
+            le_gauss_fit_start->setText( QString( "%1" ).arg( tokens[ 0 ].toDouble() ) );
+            le_gauss_fit_end  ->setText( QString( "%1" ).arg( tokens[ 1 ].toDouble() ) );
+
+            connect( le_gauss_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_start_text( const QString & ) ) );
+            connect( le_gauss_fit_start, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_start_focus( bool ) ) );
+            connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
+            connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
+
+            i++;
+
+            for ( ; i < ( int ) qv.size(); i++ )
+            {
+               if ( rx_end.search( qv[ i ] ) == -1 )
+               {
+                  tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+                  if ( tokens.size() != 3 )
+                  {
+                     errormsg = QString("Error: Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
+                     return false;
+                  }
+
+                  gaussians.push_back( tokens[ 0 ].toDouble() );
+                  gaussians.push_back( tokens[ 1 ].toDouble() );
+                  gaussians.push_back( tokens[ 2 ].toDouble() );
+
+               } else {
+                  break;
+               }
+            }
+            if ( i < ( int ) qv.size() && rx_end.search( qv[ i ] ) != -1 )
+            {
+               continue;
+            }
+            errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
+            return false;
+
+         }
+
+         if ( rx_f_gaussians.search( qv[ i ] ) != -1 )
+         {
+            i++;
+            if ( i >= ( int ) qv.size() )
+            {
+               errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
+               return false;
+            }               
+
+            vector < double > tmp_g;
+
+            for ( ; i < ( int ) qv.size(); i++ )
+            {
+               if ( rx_end.search( qv[ i ] ) == -1 )
+               {
+                  QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+                  if ( tokens.size() != 3 )
+                  {
+                     errormsg = QString("Error: loading file specific Gaussians from file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
+                     return false;
+                  }
+
+                  tmp_g.push_back( tokens[ 0 ].toDouble() );
+                  tmp_g.push_back( tokens[ 1 ].toDouble() );
+                  tmp_g.push_back( tokens[ 2 ].toDouble() );
+
+               } else {
+                  break;
+               }
+            }
+            if ( i < ( int ) qv.size() && rx_end.search( qv[ i ] ) != -1 )
+            {
+               f_gaussians[ rx_f_gaussians.cap( 1 ) ] = tmp_g;
+               continue;
+            }
+            errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
+            return false;
+         }
+
+         if ( rx_push.search( qv[ i ] ) != -1 )
+         {
+            stack_push_all();
+            clear_files( all_files() );
+            continue;
+         }
+
+         errormsg = QString( tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
+         return false;
+      }
+      
+      errormsg = "";
+      return false;
    }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Gaussians" ) )
@@ -3428,7 +3665,8 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       .arg( file );
 
    bool use_errors = ( f_errors.count( file ) && 
-                       f_errors[ file ].size() > 0 );
+                       f_errors[ file ].size() > 0 &&
+                       !is_nonzero_vector( f_errors[ file ] ) );
 
    if ( f_is_time.count( file ) && f_is_time[ file ] )
    {
@@ -6907,12 +7145,15 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_stack_rot_up       ->setEnabled( false );
    pb_stack_rot_down     ->setEnabled( false );
    pb_stack_swap         ->setEnabled( false );
+
+   pb_save_state         ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 {
    errors_were_on = plot_errors->isVisible();
-   plot_errors->hide();
+   hide_widgets( plot_errors_widgets, true );
+
    disable_all();
 
    if ( ggaussian_mode )
@@ -7171,6 +7412,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_as_curves  ->setEnabled( sizeover3 );
    qwtw_wheel          ->setEnabled( sizeover3 && gaussian_pos < sizeover3 );
    pb_rescale          ->setEnabled( true );
+   pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
 }
 
@@ -7315,9 +7557,14 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, vector < double > &target, vector< double > &fit )
+void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, vector < double > &target, vector< double > &fit, vector < double > &errors )
 {
    plot_errors->clear();
+
+   plot_errors_grid   = grid;
+   plot_errors_target = target;
+   plot_errors_fit    = fit;
+   plot_errors_errors = errors;
 
    vector < double > x;
    vector < double > y;
@@ -7340,12 +7587,76 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, vector 
       return;
    }
 
-   for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
+   // well, I good compiler should unwrap the if's if I put them inside one loop, but I am uncertain
+   // printvector( "target", target );
+   // printvector( "fit", fit );
+
+   if ( cb_plot_errors_pct->isChecked() )
    {
-      x.push_back( grid[ i ] );
-      y.push_back( 0e0 );
-      e.push_back( target[ i ] - fit[ i ] );
+      if ( cb_plot_errors_sd->isChecked() && errors.size() == target.size() && is_nonzero_vector( errors ))
+      {
+         // does % and errors make sense?, I am excluding this for now
+         // cout << "pct mode with errors, not acceptable\n";
+         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
+         {
+            if ( target[ i ] != 0e0 )
+            {
+               x.push_back( grid[ i ] );
+               y.push_back( 0e0 );
+               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
+            }
+         }
+      } else {
+         // cout << "pct mode, not using errors\n";
+
+         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
+         {
+            if ( target[ i ] != 0e0 )
+            {
+               x.push_back( grid[ i ] );
+               y.push_back( 0e0 );
+               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
+            } else {
+               cout << QString( "target at pos %1 is zero\n" ).arg( i );
+            }
+         }
+      }         
+   } else {
+      if ( cb_plot_errors_sd->isChecked() && errors.size() == target.size() && is_nonzero_vector( errors ))
+      {
+         // cout << "errors ok & used\n";
+         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
+         {
+            x.push_back( grid[ i ] );
+            y.push_back( 0e0 );
+            e.push_back( ( target[ i ] - fit[ i ] ) / errors[ i ] );
+         }
+      } else {
+         // cout << "errors not ok & not used\n";
+         for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
+         {
+            x.push_back( grid[ i ] );
+            y.push_back( 0e0 );
+            e.push_back( target[ i ] - fit[ i ] );
+         }
+      }
    }
+
+   for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
+   {
+      if ( e[ i ] < -50e0 )
+      {
+         e[ i ] = -50e0;
+      } else {
+         if ( e[ i ] > 50e0 )
+         {
+            e[ i ] = 50e0;
+         }
+      }
+   }
+
+   // printvector( "x", x );
+   // printvector( "e", e );
 
    {
 #ifndef QT4
@@ -7418,6 +7729,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, vector 
             maxy = fabs( e[ i ] );
          }
       }            
+
+      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                    "% difference" :
+                                                    ( cb_plot_errors_sd->isChecked() ?
+                                                      "delta I(q)/sd" : "delta I(q)" 
+                                                      ) ) );
 
       plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
@@ -7545,7 +7862,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    update_gauss_pos();
    if ( errors_were_on )
    {
-      plot_errors->show();
+      hide_widgets( plot_errors_widgets, false );
+      cb_plot_errors_group->hide();
+      if ( !f_errors.count( wheel_file ) ||
+           !is_nonzero_vector(  f_errors[ wheel_file ]  ) ||
+           f_errors[ wheel_file ].size() != f_qs[ wheel_file ].size() )
+      {
+         cb_plot_errors_sd->setChecked( false );
+         cb_plot_errors_sd->hide();
+      }
    }
    gaussian_enables();
 }
@@ -7747,11 +8072,13 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 
             double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
             double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+            double fwhm   = 2.354820045e0 * width;
+
             vector < double > x( 2 );
             vector < double > y( 2 );
 
-            x[ 0 ] = center - width / 2e0;
-            x[ 1 ] = center + width / 2e0;
+            x[ 0 ] = center - fwhm / 2e0;
+            x[ 1 ] = center + fwhm / 2e0;
             y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
             y[ 1 ] = y[ 0 ];
 
@@ -7819,11 +8146,13 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
 
             double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
             double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+            double fwhm   = 2.354820045e0 * width;
+
             vector < double > x( 2 );
             vector < double > y( 2 );
 
-            x[ 0 ] = center - width / 2e0;
-            x[ 1 ] = center + width / 2e0;
+            x[ 0 ] = center - fwhm / 2e0;
+            x[ 1 ] = center + fwhm / 2e0;
             y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
             y[ 1 ] = y[ 0 ];
 
@@ -7943,11 +8272,13 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, QColor color, QString 
 
 void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
 {
+   double fwhm = 2.354820045e0 * width;
+
    vector < double > x( 2 );
    vector < double > y( 2 );
 
-   x[ 0 ] = center - width / 2e0;
-   x[ 1 ] = center + width / 2e0;
+   x[ 0 ] = center - fwhm / 2e0;
+   x[ 1 ] = center + fwhm / 2e0;
    y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) plotted_hlines.size() / 100e0 );
    y[ 1 ] = y[ 0 ];
 
@@ -8429,7 +8760,8 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
    }
 
    lbl_gauss_fit->setText( QString( " %1 " ).arg( sqrt( rmsd ), 0, 'g', 5 ) );
-   update_plot_errors( x, y, f_Is[ wheel_file ] );
+   vector < double > empty;
+   update_plot_errors( x, y, f_Is[ wheel_file ], f_errors.count( wheel_file ) ? f_errors[ wheel_file ] : empty );
 }
 
 static unsigned int lm_fit_gauss_size;
@@ -8581,6 +8913,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
                                     le_baseline_end_e  ->hasFocus()
                                     );
    pb_rescale          ->setEnabled( true );
+   pb_view             ->setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
@@ -10005,7 +10338,12 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    if ( errors_were_on )
    {
-      plot_errors->show();
+      hide_widgets( plot_errors_widgets, false );
+      if ( !unified_ggaussian_use_errors )
+      {
+         cb_plot_errors_sd->setChecked( false );
+         cb_plot_errors_sd->hide();
+      }
    }
 
    ggaussian_enables();
@@ -10029,6 +10367,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
    pb_gauss_as_curves  ->setEnabled( unified_ggaussian_ok );
    pb_rescale          ->setEnabled( true );
+   pb_view             ->setEnabled( unified_ggaussian_curves <= 10 );
    pb_errors           ->setEnabled( true );
 }
 
@@ -10230,7 +10569,7 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
 
    //    printvector( "rmsd, ugq", unified_ggaussian_q );
 
-   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result );
+   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result, unified_ggaussian_e );
    plot_errors_jump_markers();
 
    return sqrt( rmsd );
@@ -10306,6 +10645,12 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
             }
          }
       }
+   }
+
+   if ( !is_nonzero_vector( unified_ggaussian_e ) )
+   {
+      unified_ggaussian_use_errors = false;
+      editor_msg( "dark red", tr( "WARNING: some errors are zero so errors are off globally" ) );
    }
 
    pb_ggauss_rmsd->setEnabled( false );
@@ -10610,9 +10955,29 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 {
    if ( plot_errors->isVisible() )
    {
-      plot_errors->hide();
+      hide_widgets( plot_errors_widgets, true );
    } else {
-      plot_errors->show();
+      hide_widgets( plot_errors_widgets, false );
+      if ( ggaussian_mode )
+      {
+         if ( !unified_ggaussian_use_errors )
+         {
+            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+            cb_plot_errors_sd->setChecked( false );
+            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+            cb_plot_errors_sd->hide();
+         }
+      } else {
+         if ( !f_errors.count( wheel_file ) ||
+              !is_nonzero_vector( f_errors[ wheel_file ] ) )
+         {
+            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+            cb_plot_errors_sd->setChecked( false );
+            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+            cb_plot_errors_sd->hide();
+         }
+         cb_plot_errors_group->hide();
+      }
    }
 }
 
@@ -10985,4 +11350,235 @@ void US_Hydrodyn_Saxs_Hplc::stack_join()
    lbl_stack->setText( QString( tr( "%1" ) ).arg( stack_data.size() ) );
    plot_files();
    update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::hide_widgets( vector < QWidget *> widgets, bool hide )
+{
+   for ( unsigned int i = 0; i < ( unsigned int ) widgets.size(); i++ )
+   {
+      hide ? widgets[ i ]->hide() : widgets[ i ]->show();
+   }
+}
+
+
+void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
+{
+   plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                 "%" : "delta I(q)" ) );
+   if ( plot_errors_zoomer )
+   {
+      delete plot_errors_zoomer;
+      plot_errors_zoomer = (ScrollZoomer *) 0;
+   }
+   vector < double > grid   = plot_errors_grid;
+   vector < double > fit    = plot_errors_fit;
+   vector < double > target = plot_errors_target;
+   vector < double > errors = plot_errors_errors;
+
+   update_plot_errors( grid, target, fit, errors );
+   if ( ggaussian_mode )
+   {
+      plot_errors_jump_markers();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_plot_errors_rev()
+{
+
+   vector < double > tmp = plot_errors_fit;
+   plot_errors_fit       = plot_errors_target;
+   plot_errors_target    = tmp;
+
+   redo_plot_errors();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_plot_errors_sd()
+{
+   if ( cb_plot_errors_sd->isChecked() &&
+        cb_plot_errors_pct->isChecked() )
+   {
+      disconnect( cb_plot_errors_pct, SIGNAL( clicked() ), 0, 0 );
+      cb_plot_errors_pct->setChecked( false );
+      connect( cb_plot_errors_pct, SIGNAL( clicked() ), SLOT( set_plot_errors_pct() ) );
+   }
+
+   redo_plot_errors();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_plot_errors_pct()
+{
+
+   if ( cb_plot_errors_pct->isChecked() &&
+        cb_plot_errors_sd->isChecked() )
+   {
+      disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+      cb_plot_errors_sd->setChecked( false );
+      connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+   }
+   redo_plot_errors();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_plot_errors_group()
+{
+   redo_plot_errors();
+}
+
+void US_Hydrodyn_Saxs_Hplc::save_state()
+{
+   QString use_dir = QDir::currentDirPath();
+   
+   if ( !*saxs_widget )
+   {
+      // try and activate
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+      raise();
+   }
+
+   if ( *saxs_widget )
+   {
+      if ( cb_lock_dir->isChecked() )
+      {
+         saxs_window->add_to_directory_history( lbl_dir->text() );
+      }
+      saxs_window->select_from_directory_history( use_dir, this );
+      raise();
+   }
+
+   QString fn = QFileDialog::getSaveFileName( use_dir, "*.dat", this, this->caption() + tr( " Save State" ),
+                                              tr( "Select a name to save the state" ) );
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn.replace( QRegExp( "(|-global-state)\\.(dat|DAT)$" ), "" );
+   fn += "-global-state.dat";
+
+   QFile f( fn );
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      return;
+   }
+
+   QTextStream ts( &f );
+
+   // write out all the loaded file names (for each stack element)
+
+   ts << "# US-SOMO Global State file\n";
+
+   if ( stack_data.size() )
+   {
+      for ( unsigned int j = 0; j < ( unsigned int ) stack_data.size(); j++ )
+      {
+         ts << "# __files\n";
+
+         for ( map < QString, QString >::iterator it = stack_data[ j ].f_name.begin();
+               it != stack_data[ j ].f_name.end();
+               it++ )
+         {
+            if ( !it->second.isEmpty() )
+            {
+               ts << it->second << endl;
+            }
+         }
+
+         ts << "# __end\n";
+   
+         if ( stack_data[ j ].gaussians.size() )
+         {
+            ts << "# __gaussians\n";
+            ts << QString( "%1 %2\n" )
+               .arg( le_gauss_fit_start->text() )
+               .arg( le_gauss_fit_end  ->text() )
+               ;
+
+            for ( unsigned int i = 0; i < ( unsigned int ) stack_data[ j ].gaussians.size(); i += 3 )
+            {
+               ts << QString( "%1 %2 %3\n" )
+                  .arg( stack_data[ j ].gaussians[ 0 + i ], 0, 'g', 10 )
+                  .arg( stack_data[ j ].gaussians[ 1 + i ], 0, 'g', 10 )
+                  .arg( stack_data[ j ].gaussians[ 2 + i ], 0, 'g', 10 );
+            }
+            ts << "# __end\n";
+         }
+
+         for ( map < QString, vector < double > >::iterator it = stack_data[ j ].f_gaussians.begin();
+               it != stack_data[ j ].f_gaussians.end();
+               it++ )
+         {
+            ts << "# __f_gaussians: " << it->first << endl;
+            for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += 3 )
+            {
+               ts << 
+                  QString( "%1 %2 %3\n" )
+                  .arg( it->second[ i + 0 ], 0, 'g', 10 )
+                  .arg( it->second[ i + 1 ], 0, 'g', 10 )
+                  .arg( it->second[ i + 2 ], 0, 'g', 10 )
+                  ;
+            }
+            ts << "# __end\n";
+         } 
+      }
+      ts << "# __push_stack\n";
+   }
+
+   ts << "# __files\n";
+
+   for ( map < QString, QString >::iterator it = f_name.begin();
+         it != f_name.end();
+         it++ )
+   {
+      if ( !it->second.isEmpty() )
+      {
+         ts << it->second << endl;
+      }
+   }
+
+   ts << "# __end\n";
+   
+   if ( gaussians.size() )
+   {
+      ts << "# __gaussians\n";
+      ts << QString( "%1 %2\n" )
+         .arg( le_gauss_fit_start->text() )
+         .arg( le_gauss_fit_end  ->text() )
+         ;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+      {
+         ts << QString( "%1 %2 %3\n" )
+            .arg( gaussians[ 0 + i ], 0, 'g', 10 )
+            .arg( gaussians[ 1 + i ], 0, 'g', 10 )
+            .arg( gaussians[ 2 + i ], 0, 'g', 10 );
+      }
+      ts << "# __end\n";
+   }
+
+   for ( map < QString, vector < double > >::iterator it = f_gaussians.begin();
+         it != f_gaussians.end();
+         it++ )
+   {
+      ts << "# __f_gaussians: " << it->first << endl;
+      for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += 3 )
+      {
+         ts << 
+            QString( "%1 %2 %3\n" )
+            .arg( it->second[ i + 0 ], 0, 'g', 10 )
+            .arg( it->second[ i + 1 ], 0, 'g', 10 )
+            .arg( it->second[ i + 2 ], 0, 'g', 10 )
+            ;
+      }
+      ts << "# __end\n";
+   }      
+
+   ts << "# __dir: " << lbl_dir->text() << endl;
+   if ( cb_lock_dir->isChecked() )
+   {
+      ts << "# __lock_dir\n";
+   }
+
+   ts << "# __created_dir: " << lbl_created_dir->text() << endl;
+
+   f.close();
+   editor_msg( "blue", QString( tr( "State saved in file %1" ) ).arg( fn ) );
 }

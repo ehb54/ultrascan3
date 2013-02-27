@@ -144,6 +144,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_regex_load;
       QLineEdit     *le_regex;
       QLineEdit     *le_regex_args;
+      QPushButton   *pb_save_state;
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
@@ -215,6 +216,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef QT4
       QwtPlotGrid   *grid_errors;
 #endif
+      QCheckBox     *cb_plot_errors_rev;
+      QCheckBox     *cb_plot_errors_sd;
+      QCheckBox     *cb_plot_errors_pct;
+      QCheckBox     *cb_plot_errors_group;
+
+      QBoxLayout    *l_plot_errors;
 
       QPushButton   *pb_wheel_start;
       QLabel        *lbl_wheel_pos;
@@ -290,6 +297,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
+      vector < double >                  plot_errors_grid;
+      vector < double >                  plot_errors_target;
+      vector < double >                  plot_errors_fit;
+      vector < double >                  plot_errors_errors;
+
       vector < hplc_stack_data >         stack_data;
 
       vector < QColor >                  plot_colors;
@@ -356,7 +368,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       map < QString, bool >               all_files_map();
 
-      void                                update_plot_errors( vector < double > &grid, vector < double > &target, vector< double > &fit );
+      void                                update_plot_errors( vector < double > &grid, 
+                                                              vector < double > &target, 
+                                                              vector < double > &fit,
+                                                              vector < double > &errors );
+
+      void                                hide_widgets( vector < QWidget *> widgets, bool hide );
+
+      vector < QWidget * >                plot_errors_widgets;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -505,6 +524,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         errors_were_on;
 
+      void                         redo_plot_errors();
+
    private slots:
 
       void setupGUI();
@@ -633,6 +654,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void legend_set();
 
       void rename_created( QListBoxItem *, const QPoint & );
+
+      void set_plot_errors_rev();
+      void set_plot_errors_sd();
+      void set_plot_errors_pct();
+      void set_plot_errors_group();
+
+      void save_state();
 
    protected slots:
 
