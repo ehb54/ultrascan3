@@ -544,9 +544,9 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    {
       hide_widgets( plot_errors_widgets, true );
    } else {
-      hide_widgets( plot_errors_widgets, false );
       if ( ggaussian_mode )
       {
+         hide_widgets( plot_errors_widgets, false );
          if ( !unified_ggaussian_use_errors )
          {
             disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
@@ -555,15 +555,53 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             cb_plot_errors_sd->hide();
          }
       } else {
-         if ( !f_errors.count( wheel_file ) ||
-              !is_nonzero_vector( f_errors[ wheel_file ] ) )
+         if ( gaussian_mode )
          {
-            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
-            cb_plot_errors_sd->setChecked( false );
-            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
-            cb_plot_errors_sd->hide();
-         }
-         cb_plot_errors_group->hide();
+            if ( !f_errors.count( wheel_file ) ||
+                 !is_nonzero_vector( f_errors[ wheel_file ] ) )
+            {
+               disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+               cb_plot_errors_sd->setChecked( false );
+               connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+               cb_plot_errors_sd->hide();
+            }
+
+            hide_widgets( plot_errors_widgets, false );
+            cb_plot_errors_group->hide();
+         } else {
+            // compare 2 files
+            QStringList files = all_selected_files();
+            if ( files.size() != 2 )
+            {
+               editor_msg( "red", tr( "Internal error: plot residuals, not 2 selected files" ) );
+               return;
+            }
+            if ( f_qs[ files[ 0 ] ] != f_qs[ files[ 1 ] ] )
+            {
+               editor_msg( "red", tr( "Error: Residuals incompatible grids" ) );
+               return;
+            }
+            vector < double > errors;
+            bool use_errors_0 = 
+               f_errors.count( files[ 0 ] ) && is_nonzero_vector( f_errors[ files[ 0 ] ] );
+            bool use_errors_1 = 
+               f_errors.count( files[ 1 ] ) && is_nonzero_vector( f_errors[ files[ 1 ] ] );
+            update_plot_errors( f_qs[ files[ 0 ] ], 
+                                f_Is[ files[ 0 ] ], 
+                                f_Is[ files[ 1 ] ],
+                                use_errors_0 ? f_errors[ files[ 0 ] ] :
+                                ( use_errors_1 ? f_errors[ files[ 1 ] ] : errors ) );
+
+            hide_widgets( plot_errors_widgets, false );
+            cb_plot_errors_group->hide();
+            if ( !use_errors_0 && !use_errors_0 )
+            {
+               disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+               cb_plot_errors_sd->setChecked( false );
+               connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+               cb_plot_errors_sd->hide();
+            }
+         }   
       }
    }
 }

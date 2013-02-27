@@ -1641,7 +1641,6 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    lb_files              ->setEnabled( true );
    lb_created_files      ->setEnabled( true );
 
-
    unsigned int files_selected_count                      = 0;
    // unsigned int non_hplc_non_empty_files_selected_count = 0;
    unsigned int last_selected_pos                         = 0;
@@ -1815,6 +1814,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_stack_rot_up     ->setEnabled( stack_data.size() > 1 );
    pb_stack_rot_down   ->setEnabled( stack_data.size() > 1 );
    pb_stack_swap       ->setEnabled( stack_data.size() );
+
+   if ( files_selected_count == 2 && files_compatible )
+   {
+      pb_errors           ->setEnabled( true );
+   } else {
+      pb_errors           ->setEnabled( false );
+      hide_widgets( plot_errors_widgets, true );
+   }
 
    pb_save_state       ->setEnabled( lb_files->numRows() || stack_data.size() );
    if ( *saxs_widget )
