@@ -1777,11 +1777,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
                                     );
-   pb_crop_common      ->setEnabled( 
-                                    files_selected_count &&
-                                    plot_dist_zoomer && 
-                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
-                                    );
+   pb_crop_common      ->setEnabled( files_selected_count && files_compatible );
+
    pb_crop_vis         ->setEnabled( 
                                     files_selected_count &&
                                     plot_dist_zoomer && 
@@ -2602,7 +2599,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          }
          if ( rx_created_dir.search( qv[ i ] ) != -1 )
          {
-            lbl_created_dir->setText( rx_dir.cap( 1 ) );
+            lbl_created_dir->setText( rx_created_dir.cap( 1 ) );
             continue;
          }
          if ( rx_files.search( qv[ i ] ) != -1 )
@@ -3713,6 +3710,8 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
                .arg( file )
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
+   f_name[ file ] = QDir::current().path() + QDir::separator() + use_filename;
+   cout << QString( "file <%1> path <%2>\n" ).arg( file ).arg( f_name[ file ] );
    return true;
 }
 
@@ -5832,7 +5831,7 @@ void US_Hydrodyn_Saxs_Hplc::crop_common()
    // of no movement needed, then start cropping points
    
    // find selected curves & their left most position:
-   bool all_lefts_visible = true;
+   // bool all_lefts_visible = true;
    map < QString, bool > selected_files;
 
    double minx = 0e0;
@@ -5935,6 +5934,7 @@ void US_Hydrodyn_Saxs_Hplc::crop_common()
       editor_msg( "black", tr( "Crop common: no differences between selected grids" ) );
    }         
 
+   /* this is not needed?
    // is the rectangle contained?
    if (
 #ifndef QT4
@@ -6038,6 +6038,9 @@ void US_Hydrodyn_Saxs_Hplc::crop_common()
       plot_dist_zoomer->zoom( dr );
       return;
    }
+
+   */
+
 
    if ( !any_differences )
    {
