@@ -969,6 +969,7 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
    int               index = 0;
    QVector< int    > included;
    QVector< double > integral;
+   double            val_min = 1.e+99;
 
    for ( int scan = 0; scan < data.scanData.size(); scan++ )
    {
@@ -991,6 +992,12 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
          integral[ index ] += data.value( scan, r ) + 1000.0;
 
       index++;
+
+      if ( scan == 0 )
+      {
+         for ( int r = r_left; r <= r_right; r++ )
+            val_min  = qMin( val_min, s->readings[ r ].value );
+      }
    }
 
    // Integral fringe shifts contribute exactly ( r_right - r_left + 1 ) 
@@ -1037,10 +1044,34 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
          // Update integral for this scan
          integral[ current ] += points;
       }
+
+      // Accumulate minimum reading after integral adjustment
+      for ( int r = r_left; r <= r_right; r++ )
+         val_min  = qMin( val_min, s->readings[ r ].value );
+   }
+
+   // Apply a bias to the data so that its minimum is above zero
+   if ( val_min < 0.0 )
+   {
+      double val_bias = (double)qCeil( -val_min );
+
+      for ( int scan = 0; scan < included.size(); scan++ )
+      {
+         US_DataIO2::Scan* s = &data.scanData[ included[ scan ] ];
+
+         int r_left  = US_DataIO2::index( *s, data.x, e.rangeLeft  );
+         int r_right = US_DataIO2::index( *s, data.x, e.rangeRight );
+
+         for ( int rad = r_left; rad <= r_right; rad++ )
+         {
+             double new_val = s->readings[ rad ].value + val_bias;
+             s->readings[ rad ] = US_DataIO2::Reading( new_val );
+         }
+      }
    }
 }
 
-void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& dest, 
+void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& dest,
                              const QVector< XValue >& origx )
 {
    dest.temperature = orig.temperature;
