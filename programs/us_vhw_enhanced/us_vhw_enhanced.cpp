@@ -442,7 +442,8 @@ DbgLv(1) << "plot2 jj" << jj << "x0 y0 x1 y1" << x[0] << y[0] << x[1] << y[1];
    xmax  *= 1.05;
    xmax   = (double)qRound( ( xmax + 0.0009 ) / 0.001 ) * 0.001;
    ymax   = (double)qRound( ( ymax + 0.3900 ) / 0.400 ) * 0.400;
-   data_plot1->setAxisScale(     QwtPlot::xBottom, 0.0, xmax, 0.005 );
+//   data_plot1->setAxisScale(     QwtPlot::xBottom, 0.0, xmax, 0.005 );
+   data_plot1->setAxisAutoScale(     QwtPlot::xBottom);
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
 
    count  = 0;
