@@ -45,7 +45,8 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
    data_plot->setCanvasBackground( Qt::black );
    data_plot->setMinimumSize( 600, 500 );
    data_plot->setAxisScale( QwtPlot::yLeft,   0.0, 100.0, 20.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,   6.9,  1.0 );
+   //data_plot->setAxisScale( QwtPlot::xBottom, 0.0,   6.9,  1.0 );
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
@@ -290,7 +291,7 @@ void US_DistribPlot::plot_distrib( void )
    double* yy = bfracs.data();
    double maxx = 0.0;
    double minx = 100.0;
-   double xinc = 1.0;
+//   double xinc = 1.0;
    double rngx = 100.0;
 
    for ( int jj = 0; jj < divsCount; jj++ )
@@ -302,9 +303,10 @@ void US_DistribPlot::plot_distrib( void )
    rngx     = maxx - minx;
    minx     = minx - rngx * 0.1;
    maxx     = maxx + rngx * 0.1;
-   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
-   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
-   data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, xinc );
+//   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+//   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
+//   data_plot->setAxisScale( QwtPlot::xBottom, minx, maxx, xinc );
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
    // first draw the yellow line through points
    dcurve  = us_curve( data_plot, tr( "Distrib Line" ) );
@@ -332,7 +334,7 @@ void US_DistribPlot::plot_histogram( void )
    QVector< double > yvec;
    double  minx = dsedcs[ 0 ];
    double  maxx = minx;;
-   double  xinc = 1.0;
+//   double  xinc = 1.0;
    double  xval;
    double  rngx;
    int     npoints;
@@ -360,10 +362,11 @@ void US_DistribPlot::plot_histogram( void )
    rngx     = maxx - minx;
    minx     = minx - rngx * 0.10;
    maxx     = maxx + rngx * 0.10;
-   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
-   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
-   data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
+//   xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+//   xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
+//   data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
 DbgLv(2) << "HISTO_DAT:" << npoints;
 for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
@@ -390,7 +393,7 @@ void US_DistribPlot::plot_envelope( void )
    double* yy;
    double  minx = dsedcs[ 0 ];
    double  maxx = minx;
-   double  xinc = 1.0;
+//   double  xinc = 1.0;
    double  xval;
    double  rngx;
    int     npoints;
@@ -419,10 +422,11 @@ void US_DistribPlot::plot_envelope( void )
       npoints  = histo_data( xvec, yvec );
       xx       = xvec.data();
       yy       = yvec.data();
-      xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
-      xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
-      data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
+//      xinc     = ( rngx < 15.0 ) ? xinc : ( xinc * 5.0 );
+//      xinc     = ( rngx >  1.0 ) ? xinc : ( xinc * 0.2 );
+//      data_plot->setAxisScale(     QwtPlot::xBottom, minx, maxx, xinc );
       data_plot->setAxisAutoScale( QwtPlot::yLeft );
+      data_plot->setAxisAutoScale( QwtPlot::xBottom );
    }
 
    // Calculate envelope data
