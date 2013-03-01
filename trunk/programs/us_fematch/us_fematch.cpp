@@ -209,6 +209,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    viscosity = VISC_20W;
    vbar      = TYPICAL_VBAR;
    compress  = 0.0;
+//Hardwire compressibility to zero and make read-only, for now
+le_compress->setText( "0.0" );
+us_setReadOnly( le_compress, true );
 
    row      = 0;
    parameterLayout->addWidget( lb_experiment   , row++, 0, 1, 4 );
@@ -499,6 +502,8 @@ void US_FeMatch::update( int drow )
                  new US_DB2( pw.getPasswd() ) : 0;
    bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
                                     bvisc, bcomp, errmsg );
+//Hardwire compressibility to zero, for now
+bcomp="0.0";
 
    if ( bufvl )
    {
@@ -1990,6 +1995,9 @@ DbgLv(1) << " afrsa calc";
 
       else
       {  // ASTFVM
+DbgLv(1) << " afvm calc: sigma delta coSed compress"
+ << model.components[ 0 ].sigma << model.components[ 0 ].delta
+ << model.coSedSolute << compress;
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
 
          connect( astfvm,     SIGNAL( comp_progress(     int ) ),
