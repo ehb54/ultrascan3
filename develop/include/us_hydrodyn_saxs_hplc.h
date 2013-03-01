@@ -158,7 +158,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_stack_push_all;
       QPushButton   *pb_stack_push_sel;
       QLabel        *lbl_stack;
+      QPushButton   *pb_stack_copy;
+      QPushButton   *pb_stack_pcopy;
+      QPushButton   *pb_stack_paste;
       QPushButton   *pb_stack_drop;
+      QPushButton   *pb_stack_clear;
       QPushButton   *pb_stack_join;
       QPushButton   *pb_stack_swap;
       QPushButton   *pb_stack_rot_up;
@@ -191,7 +195,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel        *lbl_selected_created;
 
       QPushButton   *pb_select_all_created;
+      QPushButton   *pb_invert_all_created;
       QPushButton   *pb_adjacent_created;
+      QPushButton   *pb_remove_created;
       QPushButton   *pb_save_created_csv;
       QPushButton   *pb_save_created;
       QPushButton   *pb_show_created;
@@ -524,11 +530,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         check_fit_range();
 
       hplc_stack_data              current_data( bool selected_only = false );
+      hplc_stack_data              clipboard;
       void                         set_current_data( hplc_stack_data & data );
 
       bool                         errors_were_on;
 
       void                         redo_plot_errors();
+
+      void                         stack_join( hplc_stack_data & );
 
    private slots:
 
@@ -566,7 +575,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void set_empty();
       void set_signal();
       void select_all_created();
+      void invert_all_created();
       void adjacent_created();
+      void remove_created();
       void save_created_csv();
       void save_created();
       void show_created();
@@ -574,6 +585,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void stack_push_all();
       void stack_push_sel();
+      void stack_copy();
+      void stack_pcopy();
+      void stack_paste();
+      void stack_clear();
       void stack_drop();
       void stack_join();
       void stack_rot_up();
