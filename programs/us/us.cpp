@@ -143,7 +143,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
   addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),          velocity );
   addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
-  addMenu(  P_1DSA     , tr( "&1-D Spectrum Analysis" ),           velocity );
+//  addMenu(  P_1DSA     , tr( "&1-D Spectrum Analysis" ),           velocity );
   addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
   addMenu(  P_SECOND   , tr( "&Second Moment" ),                   velocity );
   addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );

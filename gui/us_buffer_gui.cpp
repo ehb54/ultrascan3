@@ -218,6 +218,8 @@ US_BufferGui::US_BufferGui(
 
    le_compressibility = us_lineedit();
    main->addWidget( le_compressibility, row++, 2 );
+// Make compresssibility read-only for now
+us_setReadOnly( le_compressibility, true );
 
    QLabel* lb_optics = us_label( tr( "Optics:" ) );
    main->addWidget( lb_optics, row, 0 );
@@ -765,6 +767,9 @@ void US_BufferGui::update_buffer( void )
    buffer.density         = le_density    ->text().toDouble();
    buffer.viscosity       = le_viscosity  ->text().toDouble();
    buffer.compressibility = le_compressibility->text().toDouble();
+//hardwire compressibility to zero, for now
+buffer.compressibility = 0.0;
+
 
    // These are updated in other places
    //buffer.component

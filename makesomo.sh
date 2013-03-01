@@ -33,12 +33,12 @@ if [ $ISWIN -eq 2 ]; then
   cp Makefile.Release Makefile.R-lib
   cp Makefile.Debug Makefile.D-lib
   ls -l Make*
-  echo "QMAKE complete. Rerun $0 in MingW window"
+  echo "QMAKE complete. Rerun $0 in MSYS (MINGW32) window"
   exit 0
 fi
 
 if [ $ISWIN -eq 1 ]; then
-  # Run makes for lib,all in MingW window
+  # Run makes for lib,all in MSYS window
   cd /c/Users/Admin/Documents/ultrascan3/somo/develop
   pwd
   cp Makefile-lib Makefile
@@ -56,6 +56,7 @@ if [ $ISWIN -eq 1 ]; then
   exit 0
 fi
 
+# Do makes for Linux,Mac
 cd $us3/somo/develop
 ./revision.sh
 qmake us_somo.pro
@@ -65,7 +66,9 @@ cp -p Makefile  Makefile-lib
 make -j2 -f Makefile-lib
 make -j2 -f Makefile-all
 ls -lrt ../lib ../bin
-echo "MAKE of somo complete"
+echo ""
+echo "rsync -av $us3/somo/lib $us3"
+rsync -av $us3/somo/lib $us3
 
 if [ $ISMAC -ne 0 ]; then
   echo "RUN libnames, appnames"
@@ -73,6 +76,8 @@ if [ $ISMAC -ne 0 ]; then
   ./bin/libnames.sh
   ./bin/appnames.sh
 fi
+echo ""
+echo "MAKE of somo complete"
 
 exit 0
 
