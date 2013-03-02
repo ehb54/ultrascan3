@@ -43,6 +43,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    total_speeds = 0;
    v_line       = NULL;
    dbg_level    = US_Settings::us_debug();
+	current_scan = 1;
 
    setWindowTitle( tr( "Buoyancy Equilibrium Data Analysis" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -119,7 +120,11 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 
    ct_selectScan = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_selectScan->setStep( 1 );
+   ct_selectScan->setValue   ( current_scan );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
+	connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
+	         SLOT  ( plot_scan( double ) ) );
+
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -172,53 +177,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 void US_Buoyancy::new_triple( int index )
 {
    current_triple = index;
-   //reset_triple();
-
-   // Need to reconnect after reset
-   //connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-   //                    SLOT  ( new_triple         ( int ) ) );
-
    data = allData[ index ];
-
-   // Enable pushbuttons
-   pb_details  ->setEnabled( true );
-//   pb_meniscus ->setEnabled( true );
-//   pb_write    ->setEnabled( all_edits );
-/*
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-   if ( expIsEquil )
-   {  // Equilibrium
-      cb_rpms->clear();
-      trip_rpms.clear();
-
-      for ( int ii = 0; ii < data.scanData.size(); ii++ )
-      {  // build unique-rpm list for triple
-         QString arpm = QString::number( data.scanData[ ii ].rpm );
-
-         if ( ! trip_rpms.contains( arpm ) )
-         {
-            trip_rpms << arpm;
-         }
-      }
-      cb_rpms->addItems( trip_rpms );
-
-      le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
-
-      init_includes();
-   }
-
-   else
-   {  // non-Equilibrium
-      set_pbColors( pb_meniscus );
-      plot_current( index );
-   }
-*/
-//   plot_current( index );
-
+	plot_scan( current_scan );
    set_meniscus();
 }
 
@@ -320,13 +280,13 @@ void US_Buoyancy::load( void )
 	if (expIsBuoyancy)
 	{
 		update_speedData();
-      pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+		pick     ->disconnect();
+		connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 
-      plot_scan();
+		plot_scan( current_scan );
 
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
+		connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
                           SLOT  ( new_rpmval         ( int ) ) );
    }
    else
@@ -398,6 +358,8 @@ void US_Buoyancy::reset( void )
    ct_selectScan->setMinValue( 0 );
    ct_selectScan->setMaxValue( 0 );
    ct_selectScan->setValue   ( 0 );
+	connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
+	         SLOT  ( plot_scan( double ) ) );
 
    cb_triple->disconnect();
 
@@ -434,8 +396,10 @@ void US_Buoyancy::update_disk_db( bool isDB )
 }
 
 // Plot a single scan curve
-void US_Buoyancy::plot_scan( void )
+void US_Buoyancy::plot_scan( double scan_number )
 {
+		  // current scan is global
+   current_scan = (int) scan_number;
    int    rsize = data.scanData[ 0 ].readings.size();
    int    ssize = data.scanData.size();
    int    count = 0;
@@ -451,6 +415,7 @@ void US_Buoyancy::plot_scan( void )
    double minR  =  1.0e99;
    double maxV  = -1.0e99;
    double minV  =  1.0e99;
+   int maxscan = 0;
    QString srpm = cb_rpms->currentText();
 
    // Plot only the currently selected scan(s)
@@ -461,9 +426,16 @@ void US_Buoyancy::plot_scan( void )
 
       QString arpm        = QString::number( s->rpm );
 
-      if ( arpm != srpm )
-         continue;
 
+      //how many scans are included in the current set of speeds? Increment maxscan...
+      if ( arpm == srpm ) 
+      {
+	      maxscan++;
+      }
+      else 
+      {
+	      continue;
+      }
       count = 0;
 
       for ( int jj = 0; jj < rsize; jj++ )
@@ -485,6 +457,7 @@ void US_Buoyancy::plot_scan( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
+      if (ii == current_scan - 1 ) c->setPen( QPen( Qt::red ) );
 
       // Reset the scan curves within the new limits
       double padR = ( maxR - minR ) / 30.0;
@@ -492,7 +465,10 @@ void US_Buoyancy::plot_scan( void )
 
       data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
       data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
    }
+   ct_selectScan->setMinValue( 1 );
+   ct_selectScan->setMaxValue( maxscan );
 
    data_plot->replot();
 }
@@ -568,10 +544,10 @@ void US_Buoyancy::write( void )
 // Select a new speed within a triple
 void US_Buoyancy::new_rpmval( int index )
 {
+		  qDebug() << "rpmval: " << index;
    QString srpm = cb_rpms->itemText( index );
-	update_speedData();
    set_meniscus();
-   plot_scan();
+   plot_scan( current_scan );
 }
 
 void US_Buoyancy::set_meniscus( void )

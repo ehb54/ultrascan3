@@ -25,6 +25,7 @@ class US_Buoyancy : public US_Widgets
 		QList< US_DataIO2::SpeedData > sData;
 
       int                current_triple;
+      int                current_scan;
       int                total_speeds;
       int                dbg_level;
 
@@ -77,7 +78,7 @@ private slots:
 	void load              ( void );
 	void details           ( void );
 	void new_triple        ( int  );
-	void plot_scan         ( void );
+	void plot_scan         ( double );
 	void write             ( void );
 	void reset             ( void );
 	void new_rpmval        ( int  );
