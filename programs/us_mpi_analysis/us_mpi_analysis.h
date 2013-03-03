@@ -161,6 +161,17 @@ class US_MPI_Analysis : public QObject
     SIMULATION simulation_values;
     SIMULATION previous_values;
 
+    // 2DSA class
+    class Result
+    {
+       public:
+          int                   depth;
+          int                   worker;
+          QVector< US_Solute >  solutes;
+    };
+
+    QList< Result >             cached_results;
+
     // GA class variables and classes
 
     class Bucket
@@ -262,6 +273,10 @@ class US_MPI_Analysis : public QObject
     void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
     void     pm_2dsa_master    ( void );
     void     pm_ga_master      ( void );
+    int      ready_worker      ( void );
+    int      low_working_depth ( void );
+    void     cache_result      ( Result& );
+    void     process_solutes   ( int&, int&, QVector< US_Solute >& );
 
     // Worker
     void     _2dsa_worker      ( void );
