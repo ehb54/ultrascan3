@@ -30,18 +30,9 @@ void US_MPI_Analysis::_2dsa_master( void )
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
-         worker    = worker_status.indexOf( READY, worknext );
+         worker    = ready_worker();
 
-         if ( worker < 1 )
-         {
-            worknext  = 1;
-            worker    = worker_status.indexOf( READY, worknext );
-         }
-
-         worknext  = worker + 1;
-         worknext  = ( worknext > my_workers ) ? 1 : worknext;
-
-         _2dsa_Job job          = job_queue.takeFirst();
+         _2dsa_Job job           = job_queue.takeFirst();
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
@@ -103,8 +94,8 @@ void US_MPI_Analysis::_2dsa_master( void )
             US_SolveSim::Simulation sim = simulation_values;
             sim.solutes                 = calculated_solutes[ max_depth ]; 
             calc_residuals( 0, data_sets.size(), sim );
-            qDebug() << "Fit RMSD" << sqrt( simulation_values.variance )
-                     << "  E-S RMSD" << sqrt( sim.variance )
+            qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
+                     << "  Exp-Sim RMSD" << sqrt( sim.variance )
                      << "  of MC_Iteration" << mc_iteration;
             max_iterations    = max_iters_all;
 
@@ -400,7 +391,6 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
    {
       set_gaussians();
 
-//      sim_data1 = simulation_values.sim_data;
       US_AstfemMath::initSimData( sim_data1, data_sets[ 0 ]->run_data, 0.0 );
       int scan_count    = sim_data1.scanData.size();
       int radius_points = sim_data1.x.size();
@@ -409,6 +399,10 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
          for ( int rr = 0; rr < radius_points; rr++ )
             sim_data1.scanData[ ss ].readings[ rr ].value = 
                simulation_values.sim_data.value( ss, rr );
+
+      double fitrmsd = sqrt( simulation_values.variance );
+      qDebug() << "  MC_Iteration 1 Simulation RMSD"
+               << QString::number( fitrmsd, 'f', 7 );
    }
 
    int total_points = 0;
@@ -465,9 +459,9 @@ datasum += mcdata;
       }
 
       varrmsd = sqrt( varrmsd / (double)( scan_count * radius_points ) );
-      double fitrmsd = sqrt( simulation_values.variance );
-      qDebug() << "  Variation RMSD" << QString::number( varrmsd, 'f', 7 )
-               << "Fit RMSD" << QString::number( fitrmsd, 'f', 7 )
+//      double fitrmsd = sqrt( simulation_values.variance );
+      qDebug() << "  Box_Muller Variation RMSD"
+               << QString::number( varrmsd, 'f', 7 )
                << "  for MC_Iteration" << mc_iteration + 1;
 
 DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
@@ -644,9 +638,6 @@ void US_MPI_Analysis::iterate( void )
       max_experiment_size = qMax( max_experiment_size,
                                   job.solutes.size() );
    }
-//
-//   // Add a fudge factor of 20% to max solutes per task
-//   max_experiment_size = ( max_experiment_size * 12 + 9 ) / 10;
 
    // Clear depth and calculated-solutes lists
    worker_depth.fill( 0 );
@@ -788,28 +779,65 @@ void US_MPI_Analysis::process_results( int        worker,
 
    worker_status[ worker ] = INIT;
    int depth       = worker_depth[ worker ];   
-   int next_depth  = depth + 1;
 
 if (depth == 0) { DbgLv(1) << "Mast:  process_results: worker" << worker
  << " solsize" << size[0] << "depth" << depth; }
 else { DbgLv(1) << "Mast:  process_results:      worker" << worker
  << " solsize" << size[0] << "depth" << depth; }
+    Result result;
+    result.depth   = depth;
+    result.worker  = worker;
+    result.solutes = simulation_values.solutes;
+
+    int lwdepth    = low_working_depth();
+
+    // If there are no cached results and the job result's depth
+    // is not beyond the low working depth, just process the result solutes
+    if ( cached_results.size() == 0  &&  depth <= lwdepth )
+    {
+       process_solutes( depth, worker, result.solutes );
+    }
+
+    // If there are cached results or the job result's depth is below
+    // the low working depth, then first cache the current result
+    // in its proper depth-ordered place in the cached list
+    else
+    {
+       cache_result( result );
+    }
+
+    // Process any previous results that were cached.
+    // As long as there are cached depth-ordered results and the low on
+    // the list is less than or equal to the low-working depth;
+    // each first-on-the-list gets taken off and processed.
+
+    while ( cached_results.size() > 0  &&
+            cached_results[ 0 ].depth <= lwdepth )
+    {
+       result     = cached_results.takeFirst();
+       depth      = result.depth;
+       worker     = result.worker;
+
+       process_solutes( depth, worker, result.solutes );
+    }
+}
  
+// Process the calculated solute vector from a job result
+void US_MPI_Analysis::process_solutes( int& depth, int& worker,
+                                       QVector< US_Solute >& result_solutes )
+{
+DbgLv(1) << "Mast:    process_solutes:      worker" << worker
+ << " solsize" << result_solutes.size() << "depth" << depth;
+   int next_depth  = depth + 1;
    // This loop should only execute, at most, once per result.
    while ( calculated_solutes.size() < next_depth )
       calculated_solutes << QVector< US_Solute >();
 
    // How big will our vector be?
-   int calc_size  = calculated_solutes[ depth ].size();
-   int simv_size  = simulation_values.solutes.size();
-   int new_size   = calc_size + simv_size;
+   int csol_size  = calculated_solutes[ depth ].size();
+   int rsol_size  = result_solutes.size();
+   int new_size   = csol_size + rsol_size;
 
-   if ( next_depth > 4  &&  new_size > max_experiment_size  &&
-        ( ( calc_size / simv_size ) == 1  ||  ( simv_size / calc_size ) == 1 ) )
-   { // Adjust max_experiment_size if it is only large enough for one output
-      max_experiment_size = ( new_size * 11 + 9 ) / 10;
-   }
-  
    // Submit with previous solutes if new size would be too big
    if ( new_size > max_experiment_size )
    {
@@ -824,12 +852,21 @@ else { DbgLv(1) << "Mast:  process_results:      worker" << worker
 
 DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
  << job.mpi_job.depth << " newsz mxesz" << new_size << max_experiment_size;
-      max_depth                  = qMax( next_depth, max_depth );
+      max_depth           = qMax( next_depth, max_depth );
       calculated_solutes[ depth ].clear();
+      new_size            = rsol_size * 2;
+
+      if ( next_depth > 1  &&  new_size > max_experiment_size )
+      { // Adjust max_experiment_size if it is only large enough for one output
+         max_experiment_size = ( new_size * 11 + 9 ) / 10;  // 10% above
+DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
+ << "from new_size rsol_size" << new_size << rsol_size;
+      }
    }
 
    // Add in the current results
-   calculated_solutes[ depth ] += simulation_values.solutes;
+   calculated_solutes[ depth ] += result_solutes;
+   csol_size  = calculated_solutes[ depth ].size();
 
    // At this point we need to clean up,  For each depth
    // below the current one, if there is nothing in the queue or working
@@ -900,7 +937,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
    if ( depth == max_depth     &&
         job_queue.isEmpty()    &&
         ! working              &&
-        calculated_solutes[ depth ].size() > simulation_values.solutes.size() )
+        csol_size > rsol_size )
    {
       _2dsa_Job job;
       job.solutes                = calculated_solutes[ depth ];
@@ -912,15 +949,9 @@ DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();
 
       calculated_solutes[ depth ].clear();
+      csol_size = 0;
       max_depth = next_depth;
-      worker    = worker_status.indexOf( READY, worknext );
-      if ( worker < 1 )
-      {
-         worknext  = 1;
-         worker    = worker_status.indexOf( READY, worknext );
-      }
-      worknext  = worker + 1;
-      worknext  = ( worknext > my_workers ) ? 1 : worknext;
+      worker    = ready_worker();
 
       if ( worker > 0 )
       { // Submit what should be the last job of this iteration
@@ -935,6 +966,7 @@ DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
       }
       else
       { // Shouldn't happen, but put job in queue if no worker is yet ready
+DbgLv(1) << "Mast:   WARNING: LAST depth and no worker ready!";
          job_queue << job;
       }
    }
@@ -969,16 +1001,19 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
       type_name = "ri";
    }
 
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
-   // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
+   // demo1_veloc.1A999.e201101171200_a201101171400_2DSA us3-0000003
+   //    _i01
+   //    _mc001
+   //    _i01-m62345.ri_noise
+   //                        .model
+   //                        .ri_noise
    // runID.tripleID.analysID.recordType
-   //    analysID = editID_analysisDate_analysisType_requestID_iterID (underscores)
+   //    analysID = editID_analysisDate_analysisType_requestID_iterID
    //       editID:     
    //       requestID: from lims or 'local' 
    //       analysisType : 2DSA GA others
-   //       iterID:       'i01-m62345' for meniscus, mc001 for monte carlo, i01 default 
+   //       iterID:       'i01-m62345' for meniscus,
+   //                     'mc001' for monte carlo, 'i01' default 
    //      
    //       recordType: ri_noise, ti_noise, model
 
@@ -1037,5 +1072,59 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    QTextStream out( &f );
    out << fn << "\n";
    f.close();
+}
+
+int US_MPI_Analysis::ready_worker( )
+{
+   // Find next ready worker by searching status array
+   int worker = worker_status.indexOf( READY, worknext );
+   worker     = ( worker > 0 ) ? worker :
+                worker_status.indexOf( READY, 1 );
+
+   // Set index to start with on next search
+   worknext   = ( worker > 0 ) ? ( worker + 1 ) : 1;
+   worknext   = ( worknext > my_workers ) ? 1 : worknext;
+
+   return worker;
+}
+
+// Find the lowest depth among working jobs
+int US_MPI_Analysis::low_working_depth( )
+{
+   int depth = 99;      // Default to a depth higher than any reasonable one
+
+   for ( int ii = 1; ii <= my_workers; ii++ )
+   { // Test all worker statuses and depths
+      int wdepth = worker_depth[ ii ];
+
+      if ( worker_status[ ii ] == WORKING  &&
+           wdepth < depth )
+      { // If working and low depth so far, save depth
+         depth      = wdepth;
+      }
+   }
+
+   return depth;
+}
+
+// Cache a job result in a depth-ordered list
+void US_MPI_Analysis::cache_result( Result& result )
+{
+   int rdepth = result.depth;
+
+   for ( int ii = 0; ii < cached_results.size(); ii++ )
+   { // Examine all cached results
+      int cdepth = cached_results[ ii ].depth;
+
+      if ( rdepth < cdepth )
+      { // Insert new result before next highest depth
+         cached_results.insert( ii, result );
+         return;
+      }
+   }
+
+   // If no higher depth cached, append new result to the end
+   cached_results << result;
+   return;
 }
 

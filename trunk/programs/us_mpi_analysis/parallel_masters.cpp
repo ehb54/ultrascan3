@@ -510,18 +510,9 @@ DbgLv(1) << "master start 2DSA" << startTime;
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
-         worker    = worker_status.indexOf( READY, worknext );
+         worker    = ready_worker();
 
-         if ( worker < 1 )
-         {
-            worknext  = 1;
-            worker    = worker_status.indexOf( READY, worknext );
-         }
-
-         worknext  = worker + 1;
-         worknext  = ( worknext > my_workers ) ? 1 : worknext;
-
-         _2dsa_Job job          = job_queue.takeFirst();
+         _2dsa_Job job           = job_queue.takeFirst();
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
