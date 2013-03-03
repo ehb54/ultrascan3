@@ -152,10 +152,9 @@ void US_MPI_Analysis::_2dsa_master( void )
    }
 }
 
-
+// Generate the initial set of solutes
 void US_MPI_Analysis::init_solutes( void )
 {
-// For now assume one data set
    calculated_solutes.clear();
    orig_solutes.clear();
    simulation_values.noisflag    = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -241,7 +240,7 @@ DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
    }
 }
 
-//////////////////
+// Fill the job queue, using the list of initial solutes
 void US_MPI_Analysis::fill_queue( void )
 {
    worker_status.resize( gcores_count );
@@ -360,7 +359,7 @@ void US_MPI_Analysis::global_fit( void )
       calculated_solutes[ ii ].clear();
 }
 
-//////////////////
+// Reset for a fit-meniscus iteration
 void US_MPI_Analysis::set_meniscus( void )
 {
    meniscus_run++;
@@ -380,7 +379,7 @@ void US_MPI_Analysis::set_meniscus( void )
       calculated_solutes[ ii ].clear();
 }
 
-//////////////////
+// Reset for a Monte Carlo iteration
 void US_MPI_Analysis::set_monteCarlo( void )
 {
 DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solutes[max_depth].size()
@@ -459,7 +458,6 @@ datasum += mcdata;
       }
 
       varrmsd = sqrt( varrmsd / (double)( scan_count * radius_points ) );
-//      double fitrmsd = sqrt( simulation_values.variance );
       qDebug() << "  Box_Muller Variation RMSD"
                << QString::number( varrmsd, 'f', 7 )
                << "  for MC_Iteration" << mc_iteration + 1;
@@ -553,6 +551,7 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanData.size() << res_data
    }
 }
 
+// Write model (and maybe noise) output at the end of an iteration
 void US_MPI_Analysis::write_output( void )
 {
    US_SolveSim::Simulation sim = simulation_values;
@@ -574,6 +573,7 @@ DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols si
       write_noise( US_Noise::RI, sim.ri_noise );
 }
 
+// Reset for a refinement iteration
 void US_MPI_Analysis::iterate( void )
 {
    // Just return if the number of iterations exceeds the max
@@ -705,6 +705,7 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        my_communicator );
 }
 
+// Add a job to the queue, maintaining depth order
 void US_MPI_Analysis::add_to_queue( _2dsa_Job& job )
 {
    int jdepth = job.mpi_job.depth;
@@ -723,7 +724,7 @@ void US_MPI_Analysis::add_to_queue( _2dsa_Job& job )
    return;
 }
 
-/////////////////////
+// Process the results from a just-completed worker task
 void US_MPI_Analysis::process_results( int        worker, 
                                        const int* size )
 {
@@ -854,14 +855,15 @@ DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
  << job.mpi_job.depth << " newsz mxesz" << new_size << max_experiment_size;
       max_depth           = qMax( next_depth, max_depth );
       calculated_solutes[ depth ].clear();
-      new_size            = rsol_size * 2;
+   }
 
-      if ( next_depth > 1  &&  new_size > max_experiment_size )
-      { // Adjust max_experiment_size if it is only large enough for one output
-         max_experiment_size = ( new_size * 11 + 9 ) / 10;  // 10% above
+   new_size            = rsol_size * 2;
+
+   if ( next_depth > 1  &&  new_size > max_experiment_size )
+   { // Adjust max_experiment_size if it is only large enough for one output
+      max_experiment_size = ( new_size * 11 + 9 ) / 10;  // 10% above
 DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
  << "from new_size rsol_size" << new_size << rsol_size;
-      }
    }
 
    // Add in the current results
