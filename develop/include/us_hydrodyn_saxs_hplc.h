@@ -18,6 +18,7 @@
 #include <qtable.h>
 #include <qwt_plot_zoomer.h>
 #include <qwt_wheel.h>
+#include "../3dplot/mesh2mainwindow.h"
 
 #ifdef QT4
 #include "qwt_plot_marker.h"
@@ -42,6 +43,10 @@
 #include "us_saxs_util.h"
 
 using namespace std;
+
+#ifndef M_SQRT2PI
+# define M_SQRT2PI 2.50662827463e0
+#endif
 
 class ga_individual
 {
@@ -123,6 +128,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                      bool              replot  = true );
 
    private:
+      Mesh2MainWindow *plot3d_window;
+      bool             plot3d_flag;
+
       csv           csv1;
 
       void          *us_hydrodyn;
@@ -171,14 +179,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QListBox      *lb_files;
       QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
-      QPushButton   *pb_avg;
-      QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
+      QPushButton   *pb_normalize;
+      QPushButton   *pb_add;
+      QPushButton   *pb_avg;
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_create_i_of_q;
 
+
+      QPushButton   *pb_conc_file;
+      QLabel        *lbl_conc_file;
+
+      QPushButton   *pb_detector;
 
       QPushButton   *pb_set_hplc;
       QLabel        *lbl_hplc;
@@ -230,6 +244,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QBoxLayout    *l_plot_errors;
 
       QPushButton   *pb_wheel_start;
+      QPushButton   *pb_p3d;
       QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
       QPushButton   *pb_errors;
@@ -539,6 +554,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                         stack_join( hplc_stack_data & );
 
+      bool                         all_have_f_gaussians( QStringList & files );
+
+      bool                         detector_uv;
+      bool                         detector_ri;
+      double                       detector_conv;
+
    private slots:
 
       void setupGUI();
@@ -564,13 +585,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void to_saxs();
       void view();
       void rescale();
-      void avg();
-      void normalize();
       void conc_avg();
+      void normalize();
+      void add();
+      void avg();
       void smooth();
       void repeak();
       void create_i_of_t();
       void create_i_of_q();
+      void set_conc_file();
+      void set_detector();
       void set_hplc();
       void set_empty();
       void set_signal();
@@ -596,6 +620,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void stack_swap();
 
       void wheel_start();
+      void p3d();
       void errors();
       void wheel_cancel();
       void wheel_save();

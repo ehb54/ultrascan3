@@ -482,7 +482,298 @@ void Mesh2MainWindow::setParameters(QString xtitle, QString ytitle, QString ztit
    dataWidget->setTitle("Multiwavelength Data");
 }
 
+void Mesh2MainWindow::setParameters(QString title_3d, QString xtitle, QString ytitle, QString ztitle,
+                                    double **data, SA2d_control_variables *sa2d_ctrl_vars)
+{
+   this->sa2d_ctrl_vars = sa2d_ctrl_vars;
+   this->xtitle = xtitle;
+   this->ytitle = ytitle;
+   this->ztitle = ztitle;
+   dataWidget->setTitle( title_3d );
+   //   dataWidget->setMesh((*sa2d_ctrl_vars).meshx, (*sa2d_ctrl_vars).meshy);
+   //   dataWidget->setDomain((*sa2d_ctrl_vars).minx, (*sa2d_ctrl_vars).maxx, (*sa2d_ctrl_vars).miny, (*sa2d_ctrl_vars).maxy);
+   //   dataWidget->setMinZ(-0.1);
+   dataWidget->loadFromData(data, (*sa2d_ctrl_vars).meshx, (*sa2d_ctrl_vars).meshy,
+                            (*sa2d_ctrl_vars).miny, (*sa2d_ctrl_vars).maxy, (*sa2d_ctrl_vars).minx, (*sa2d_ctrl_vars).maxx );
+	if ((*sa2d_ctrl_vars).xscaling != 0)
+	{
+		x_scale = (*sa2d_ctrl_vars).xscaling;
+	}
+	else
+	{
+   	x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
+	}
+	if ((*sa2d_ctrl_vars).yscaling != 0)
+	{
+		y_scale = (*sa2d_ctrl_vars).yscaling;
+	}
+	else
+	{
+   	y_scale = 1;
+	}
+   z_scale = (*sa2d_ctrl_vars).zscaling;
 
+   dataWidget->coordinates()->axes[X1].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X2].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X3].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X4].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[Y1].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y2].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y3].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y4].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Z1].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z2].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z3].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z4].setLabelString(QString(ztitle));
+
+   //  dataWidget->coordinates()->axes[X1].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X2].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X3].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X4].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   dataWidget->coordinates()->axes[Y1].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y2].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y3].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y4].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Z1].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z2].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z3].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z4].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   setStandardView();
+
+   pickCoordSystem(activeCoordSystem);
+   dataWidget->setTitle( title_3d );
+}
+
+Mesh2MainWindow::Mesh2MainWindow(bool *widget_flag, 
+                                 QString title_3d,
+                                 QString tmp_xtitle, 
+                                 QString tmp_ytitle,
+                                 QString tmp_ztitle, 
+                                 double **data, 
+                                 SA2d_control_variables *tmp_sa2d_ctrl_vars,
+                                 QWidget* parent, 
+                                 const char* name, WFlags f ) : Mesh2MainWindowBase( parent, name, f )
+{
+   this->widget_flag = widget_flag;
+   *widget_flag = true;
+   col_ = 0;
+   legend_ = false;
+   redrawWait = 50;
+   activeCoordSystem = None;
+   setCaption( title_3d );
+   sa2d_ctrl_vars = tmp_sa2d_ctrl_vars;
+   this->data = data;
+   xtitle = tmp_xtitle;
+   ytitle = tmp_ytitle;
+   ztitle = tmp_ztitle;
+
+   QGridLayout *grid = new QGridLayout( frame, 0, 0 );
+
+   dataWidget = new SurfacePlot(frame);
+   grid->addWidget( dataWidget, 0, 0 );
+
+   connect( coord, SIGNAL( selected( QAction* ) ), this, SLOT( pickCoordSystem( QAction* ) ) );
+   connect( plotstyle, SIGNAL( selected( QAction* ) ), this, SLOT( pickPlotStyle( QAction* ) ) );
+   connect( axescolor, SIGNAL( activated() ), this, SLOT( pickAxesColor() ) );
+   connect( backgroundcolor, SIGNAL( activated() ), this, SLOT( pickBgColor() ) );
+   connect( floorstyle, SIGNAL( selected( QAction* ) ), this, SLOT( pickFloorStyle( QAction* ) ) );
+   connect( meshcolor, SIGNAL( activated() ), this, SLOT( pickMeshColor() ) );
+   connect( numbercolor, SIGNAL( activated() ), this, SLOT( pickNumberColor() ) );
+   connect( labelcolor, SIGNAL( activated() ), this, SLOT( pickLabelColor() ) );
+   connect( titlecolor, SIGNAL( activated() ), this, SLOT( pickTitleColor() ) );
+   connect( datacolor, SIGNAL( activated() ), this, SLOT( pickDataColor() ) );
+   connect( lighting, SIGNAL( clicked() ), this, SLOT( pickLighting() ) );
+   connect( resetcolor, SIGNAL( activated() ), this, SLOT( resetColors() ) );
+   connect( numberfont, SIGNAL( activated() ), this, SLOT( pickNumberFont() ) );
+   connect( labelfont, SIGNAL( activated() ), this, SLOT( pickLabelFont() ) );
+   connect( titlefont, SIGNAL( activated() ), this, SLOT( pickTitleFont() ) );
+   connect( resetfont, SIGNAL( activated() ), this, SLOT( resetFonts() ) );
+   connect( animation, SIGNAL( toggled(bool) ) , this, SLOT( toggleAnimation(bool) ) );
+   connect( dump, SIGNAL( activated() ) , this, SLOT( dumpImage() ) );
+   connect( openFile, SIGNAL( activated() ) , this, SLOT( open() ) );
+   connect( openMeshFile, SIGNAL( activated() ) , this, SLOT( openMesh() ) );
+
+   // only EXCLUSIVE groups emit selected :-/
+   connect( left, SIGNAL( toggled( bool ) ), this, SLOT( setLeftGrid( bool ) ) );
+   connect( right, SIGNAL( toggled( bool ) ), this, SLOT( setRightGrid( bool ) ) );
+   connect( ceil, SIGNAL( toggled( bool ) ), this, SLOT( setCeilGrid( bool ) ) );
+   connect( floor, SIGNAL( toggled( bool ) ), this, SLOT( setFloorGrid( bool ) ) );
+   connect( back, SIGNAL( toggled( bool ) ), this, SLOT( setBackGrid( bool ) ) );
+   connect( front, SIGNAL( toggled( bool ) ), this, SLOT( setFrontGrid( bool ) ) );
+
+   timer = new QTimer( this );
+   connect( timer, SIGNAL(timeout()), this, SLOT(rotate()) );
+
+   resSlider->setRange(1,70);
+   connect( resSlider, SIGNAL(valueChanged(int)), dataWidget, SLOT(setResolution(int)) );
+   connect( dataWidget, SIGNAL(resolutionChanged(int)), resSlider, SLOT(setValue(int)) );
+   resSlider->setValue(1);
+
+   connect( offsSlider, SIGNAL(valueChanged(int)), this, SLOT(setPolygonOffset(int)) );
+
+   connect(normButton, SIGNAL(clicked()), this, SLOT(setStandardView()));
+
+   QString qwtstr( title_3d + " " );
+   qwtstr += QString::number(QWT3D_MAJOR_VERSION) + ".";
+   qwtstr += QString::number(QWT3D_MINOR_VERSION) + ".";
+   qwtstr += QString::number(QWT3D_PATCH_VERSION) + " ";
+
+   QLabel* info = new QLabel(qwtstr, statusBar());
+   info->setPaletteForegroundColor(Qt::darkBlue);
+   statusBar()->addWidget(info, 0, false);
+   filenameWidget = new QLabel("                                  ", statusBar());
+   statusBar()->addWidget(filenameWidget,0, false);
+   dimWidget = new QLabel("", statusBar());
+   statusBar()->addWidget(dimWidget,0, false);
+   rotateLabel = new QLabel("", statusBar());
+   statusBar()->addWidget(rotateLabel,0, false);
+   shiftLabel = new QLabel("", statusBar());
+   statusBar()->addWidget(shiftLabel,0, false);
+   scaleLabel = new QLabel("", statusBar());
+   statusBar()->addWidget(scaleLabel,0, false);
+   zoomLabel = new QLabel("", statusBar());
+   statusBar()->addWidget(zoomLabel,0, false);
+
+   connect(dataWidget, SIGNAL(rotationChanged(double,double,double)),this,SLOT(showRotate(double,double,double)));
+   connect(dataWidget, SIGNAL(vieportShiftChanged(double,double)),this,SLOT(showShift(double,double)));
+   connect(dataWidget, SIGNAL(scaleChanged(double,double,double)),this,SLOT(showScale(double,double,double)));
+   connect(dataWidget, SIGNAL(zoomChanged(double)),this,SLOT(showZoom(double)));
+
+   connect(projection, SIGNAL( toggled(bool) ), this, SLOT( toggleProjectionMode(bool)));
+   connect(colorlegend, SIGNAL( toggled(bool) ), this, SLOT( toggleColorLegend(bool)));
+   connect(autoscale, SIGNAL( toggled(bool) ), this, SLOT( toggleAutoScale(bool)));
+   connect(shader, SIGNAL( toggled(bool) ), this, SLOT( toggleShader(bool)));
+   connect(mouseinput, SIGNAL( toggled(bool) ), dataWidget, SLOT( enableMouse(bool)));
+   connect(lightingswitch, SIGNAL( toggled(bool) ), this, SLOT( enableLighting(bool)));
+   connect(normals, SIGNAL( toggled(bool) ), this, SLOT( showNormals(bool)));
+   connect(normalsquality,  SIGNAL(valueChanged(int)), this, SLOT(setNormalQuality(int)) );
+   connect(normalslength,  SIGNAL(valueChanged(int)), this, SLOT(setNormalLength(int)) );
+
+   setStandardView();
+
+   dataWidget->coordinates()->setLineSmooth(true);
+   dataWidget->coordinates()->setGridLinesColor(RGBA(0.35,0.35,0.35,1));
+   dataWidget->enableMouse(true);
+   dataWidget->setKeySpeed(15,20,20);
+
+   colormappv_ = new ColorMapPreview;
+   datacolordlg_ = new QFileDialog( this );
+   lightingdlg_ = new LightingDlg( this );
+   lightingdlg_->assign( dataWidget);
+
+   QDir dir("../../data/colormaps");
+   if (dir.exists("../../data/colormaps"))
+   {
+      datacolordlg_->setDir("../../data/colormaps");
+   }
+   datacolordlg_->setFilter("Colormap files (*.map;*.MAP)");
+   datacolordlg_->setContentsPreviewEnabled( TRUE );
+   datacolordlg_->setContentsPreview( colormappv_, colormappv_ );
+   datacolordlg_->setPreviewMode( QFileDialog::Contents );
+
+   connect(datacolordlg_, SIGNAL(fileHighlighted(const QString&)), this, SLOT(adaptDataColors(const QString&)));
+   connect(filetypeCB, SIGNAL(activated(const QString&)), this, SLOT(setFileType(const QString&)));
+
+   filetypeCB->clear();
+
+   QStringList list = IO::outputFormatList();
+   filetypeCB->insertStringList(list);
+
+   filetype_ = "PNG";
+   filetypeCB->setCurrentText("PNG");
+
+   dataWidget->setTitleFont( "Arial", 14, QFont::Normal );
+
+   grids->setEnabled(false);
+
+   PixmapWriter* pmhandler = (PixmapWriter*)IO::outputHandler("JPEG");
+   if (pmhandler)
+      pmhandler->setQuality(70);
+   VectorWriter* handler = (VectorWriter*)IO::outputHandler("PDF");
+   handler->setTextMode(VectorWriter::TEX);
+   handler = (VectorWriter*)IO::outputHandler("EPS");
+   handler->setTextMode(VectorWriter::TEX);
+   handler = (VectorWriter*)IO::outputHandler("EPS_GZ");
+   if (handler) // with zlib support only
+      handler->setTextMode(VectorWriter::TEX);
+
+   dataWidget->makeCurrent();
+
+   dataWidget->legend()->setScale(LINEARSCALE);
+   for (unsigned i=0; i!=dataWidget->coordinates()->axes.size(); ++i)
+   {
+      dataWidget->coordinates()->axes[i].setMajors(7);
+      dataWidget->coordinates()->axes[i].setMinors(5);
+   }
+
+   double a = dataWidget->facets().first;
+   double b = dataWidget->facets().second;
+
+   dimWidget->setText(QString("Cells ") + QString::number(a*b)
+                      + " (" + QString::number(a) + "x" + QString::number(b) +")" );
+
+   updateColorLegend(7,5);
+
+   dataWidget->loadFromData(data, 
+                            (*sa2d_ctrl_vars).meshx, 
+                            (*sa2d_ctrl_vars).meshy,
+                            (*sa2d_ctrl_vars).miny, 
+                            (*sa2d_ctrl_vars).maxy, 
+                            (*sa2d_ctrl_vars).minx, 
+                            (*sa2d_ctrl_vars).maxx );
+
+   if ((*sa2d_ctrl_vars).xscaling != 0)
+   {
+      x_scale = (*sa2d_ctrl_vars).xscaling;
+   }
+   else
+   {
+      x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
+   }
+   if ((*sa2d_ctrl_vars).yscaling != 0)
+   {
+      y_scale = (*sa2d_ctrl_vars).yscaling;
+   }
+   else
+   {
+      y_scale = 1;
+   }
+
+   z_scale = (*sa2d_ctrl_vars).zscaling;
+
+   dataWidget->coordinates()->axes[X1].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X2].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X3].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[X4].setLabelString(QString(xtitle));
+   dataWidget->coordinates()->axes[Y1].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y2].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y3].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Y4].setLabelString(QString(ytitle));
+   dataWidget->coordinates()->axes[Z1].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z2].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z3].setLabelString(QString(ztitle));
+   dataWidget->coordinates()->axes[Z4].setLabelString(QString(ztitle));
+
+   //  dataWidget->coordinates()->axes[X1].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X2].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X3].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   //  dataWidget->coordinates()->axes[X4].setTicLength(1/(10*x_scale), 1/(20*x_scale));
+   dataWidget->coordinates()->axes[Y1].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y2].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y3].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Y4].setTicLength(1/(15*y_scale), 1/(30*y_scale));
+   dataWidget->coordinates()->axes[Z1].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z2].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z3].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   dataWidget->coordinates()->axes[Z4].setTicLength(1/(2*z_scale), 1/(5*z_scale));
+   setStandardView();
+
+   pickCoordSystem(activeCoordSystem);
+   dataWidget->setTitle( title_3d );
+   //   dataWidget->setMesh((*sa2d_ctrl_vars).meshx, (*sa2d_ctrl_vars).meshy);
+   //   dataWidget->setDomain((*sa2d_ctrl_vars).minx, (*sa2d_ctrl_vars).maxx, (*sa2d_ctrl_vars).miny, (*sa2d_ctrl_vars).maxy);
+   //   dataWidget->setMinZ(-0.1);
+}
 
 void Mesh2MainWindow::setParameters(QString xtitle, QString ytitle,
                                     vector <struct element_3D> solutes, SA2d_control_variables *sa2d_ctrl_vars)

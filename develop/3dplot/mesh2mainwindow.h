@@ -19,6 +19,7 @@ class Mesh2MainWindow : public Mesh2MainWindowBase
 public:
 	Mesh2MainWindow(bool *, QString, QString, vector <struct element_3D>, SA2d_control_variables *,QWidget* parent = 0, const char* name = 0, WFlags f = WType_TopLevel );
 	Mesh2MainWindow(bool *, QString, QString, QString, double **, SA2d_control_variables *,QWidget* parent = 0, const char* name = 0, WFlags f = WType_TopLevel );
+	Mesh2MainWindow(bool *, QString, QString, QString, QString, double **, SA2d_control_variables *,QWidget* parent = 0, const char* name = 0, WFlags f = WType_TopLevel );
 	~Mesh2MainWindow();
 
   Qwt3D::SurfacePlot* dataWidget;
@@ -59,6 +60,8 @@ public slots:
 
 	void setParameters(QString, QString, vector <struct element_3D>, SA2d_control_variables *);
 	void setParameters(QString, QString, QString, double **, SA2d_control_variables *);
+        void setParameters(QString title_3d, QString xtitle, QString ytitle, QString ztitle,
+                           double **data, SA2d_control_variables *sa2d_ctrl_vars);
 
 	void showRotate(double x, double y, double z);
 	void showShift(double x, double y);

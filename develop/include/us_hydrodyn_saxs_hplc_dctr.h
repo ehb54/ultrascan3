@@ -1,0 +1,64 @@
+#ifndef US_HYDRODYN_SAXS_HPLC_DCTR_H
+#define US_HYDRODYN_SAXS_HPLC_DCTR_H
+
+#include "us_hydrodyn_saxs_hplc.h"
+#include "qlabel.h"
+#include "qstring.h"
+#include "qlayout.h"
+#include "qvalidator.h"
+
+using namespace std;
+
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Dctr : public QDialog
+{
+   Q_OBJECT
+
+   public:
+      US_Hydrodyn_Saxs_Hplc_Dctr(
+                                 void                     *              us_hydrodyn_saxs_hplc,
+                                 map < QString, QString > *              parameters,
+                                 QWidget *                               p = 0,
+                                 const char *                            name = 0
+                                 );
+
+      ~US_Hydrodyn_Saxs_Hplc_Dctr();
+
+   private:
+
+      US_Config *                             USglobal;
+
+      QLabel *                                lbl_title;
+
+      QLabel *                                lbl_type;
+      QCheckBox *                             cb_uv;
+      QCheckBox *                             cb_ri;
+
+      QLabel *                                lbl_conv;
+      QLineEdit *                             le_conv;
+
+      QPushButton *                           pb_help;
+      QPushButton *                           pb_quit;
+      QPushButton *                           pb_save;
+
+      void                     *              us_hydrodyn_saxs_hplc;
+      map < QString, QString > *              parameters;
+
+
+      void                                    setupGUI();
+
+   private slots:
+
+      void                                    set_uv();
+      void                                    set_ri();
+
+      void                                    conv_text( const QString & );
+      void                                    help();
+      void                                    quit();
+      void                                    save();
+
+   protected slots:
+
+      void                                    closeEvent( QCloseEvent * );
+};
+
+#endif

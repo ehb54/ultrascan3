@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
@@ -14,10 +15,6 @@
 #define Q_VAL_TOL 5e-6
 #define UHSH_VAL_DEC 8
 
-#ifndef M_SQRT2PI
-# define M_SQRT2PI 2.50662827463e0
-#endif
-
 // static   void printvector( QString qs, vector < unsigned int > x )
 // {
 //    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
@@ -28,15 +25,15 @@
 //    cout << endl;
 // }
 
-static void printvector( QString qs, vector < double > x )
-{
-   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-   for ( unsigned int i = 0; i < x.size(); i++ )
-   {
-      cout << QString( " %1" ).arg( x[ i ], 0, 'g', 8 );
-   }
-   cout << endl;
-}
+// static void printvector( QString qs, vector < double > x )
+// {
+//    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+//    for ( unsigned int i = 0; i < x.size(); i++ )
+//    {
+//       cout << QString( " %1" ).arg( x[ i ], 0, 'g', 8 );
+//    }
+//    cout << endl;
+// }
 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                              csv csv1,
@@ -71,6 +68,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    le_last_focus      = (mQLineEdit *) 0;
    
    disable_updates = false;
+   plot3d_flag     = false;
 
    setupGUI();
    running = false;
@@ -85,6 +83,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    unified_ggaussian_ok = false;
    wheel_errors_ok      = false;
+
+   detector_conv = 0e0;
+   detector_uv   = false;
+   detector_ri   = false;
 
    update_enables();
 
@@ -125,9 +127,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_rescale );
       pbs.push_back( pb_normalize );
 
-      // pbs.push_back( pb_avg );
+      pbs.push_back( pb_avg );
+      pbs.push_back( pb_add );
       // pbs.push_back( pb_conc_avg );
-      pbs.push_back( pb_select_all_created );
+      // pbs.push_back( pb_select_all_created );
       pbs.push_back( pb_invert_all_created );
       pbs.push_back( pb_adjacent_created );
       pbs.push_back( pb_remove_created );
@@ -148,6 +151,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_stack_swap );
 
       pbs.push_back( pb_gauss_start );
+      pbs.push_back( pb_p3d );
       pbs.push_back( pb_gauss_clear );
       pbs.push_back( pb_gauss_new );
       pbs.push_back( pb_gauss_delete );
@@ -181,6 +185,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    pb_cancel       ->setMinimumWidth( csv_width / 3 );
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
+   // pb_set_conc_file->setMaximumWidth ( pb_select_all->width() + 10 );
    //    pb_set_hplc->setMaximumWidth ( pb_select_all->width() + 10 );
    //    pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
    //    pb_set_signal->setMaximumWidth ( pb_select_all->width() + 10 );
@@ -606,11 +611,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // pb_plot_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
-   pb_avg = new QPushButton(tr("Average"), this);
-   pb_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_avg->setMinimumHeight(minHeight1);
-   pb_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
+   pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
+   pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_conc_avg->setMinimumHeight(minHeight1);
+   pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
    pb_normalize = new QPushButton(tr("N"), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -618,11 +623,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_normalize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_normalize, SIGNAL(clicked()), SLOT(normalize()));
 
-   pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
-   pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_conc_avg->setMinimumHeight(minHeight1);
-   pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
+   pb_add = new QPushButton(tr("Add"), this);
+   pb_add->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_add->setMinimumHeight(minHeight1);
+   pb_add->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_add, SIGNAL(clicked()), SLOT(add()));
+
+   pb_avg = new QPushButton(tr("Average"), this);
+   pb_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_avg->setMinimumHeight(minHeight1);
+   pb_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
 
    pb_smooth = new QPushButton(tr("Smooth"), this);
    pb_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -648,12 +659,30 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_create_i_of_q->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_create_i_of_q, SIGNAL(clicked()), SLOT(create_i_of_q()));
 
+   pb_conc_file = new QPushButton(tr("Set concentration file"), this);
+   pb_conc_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_conc_file->setMinimumHeight(minHeight1);
+   pb_conc_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_conc_file, SIGNAL(clicked()), SLOT(set_conc_file()));
+
+   lbl_conc_file = new QLabel("", this );
+   lbl_conc_file->setMinimumHeight(minHeight1);
+   lbl_conc_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_conc_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_conc_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_detector = new QPushButton(tr("Detector"), this);
+   pb_detector->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_detector->setMinimumHeight(minHeight1);
+   pb_detector->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+
    //    pb_set_hplc = new QPushButton(tr("Set buffer"), this);
    //    pb_set_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    pb_set_hplc->setMinimumHeight(minHeight1);
    //    pb_set_hplc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //    connect(pb_set_hplc, SIGNAL(clicked()), SLOT(set_hplc()));
-
+   
    //    lbl_hplc = new QLabel("", this );
    //    lbl_hplc->setMinimumHeight(minHeight1);
    //    lbl_hplc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -946,6 +975,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wheel_start->setMinimumHeight(minHeight1);
    pb_wheel_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_wheel_start, SIGNAL(clicked()), SLOT(wheel_start()));
+
+   pb_p3d = new QPushButton(tr("3D"), this);
+   pb_p3d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_p3d->setMinimumHeight(minHeight1);
+   pb_p3d->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_p3d, SIGNAL(clicked()), SLOT(p3d()));
 
    lbl_wheel_pos = new QLabel( "0", this );
    lbl_wheel_pos->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1361,11 +1396,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pb_stack_rot_up->hide();
       pb_stack_rot_down->hide();
       pb_stack_swap->hide();
+
+      pb_add->hide();
    }
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
+   hbl_file_buttons_3->addWidget ( pb_add );
    hbl_file_buttons_3->addWidget ( pb_avg );
 
    QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout( 0 );
@@ -1373,6 +1411,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_repeak );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
+
+   QBoxLayout *hbl_conc_file = new QHBoxLayout( 0 );
+   hbl_conc_file->addWidget ( pb_conc_file );
+   hbl_conc_file->addWidget ( pb_detector );
 
    //    QBoxLayout *hbl_hplc = new QHBoxLayout( 0 );
    //    hbl_hplc->addWidget ( pb_set_hplc );
@@ -1419,6 +1461,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_files->addLayout( hbl_file_buttons_2b , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_3 , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_4 , j, 0 ); j++;
+      gl_files->addLayout( hbl_conc_file, j, 0 ); j++;
+      gl_files->addWidget( lbl_conc_file, j, 0 ); j++;
       //       gl_files->addLayout( hbl_hplc, j, 0 ); j++;
       //       gl_files->addLayout( hbl_empty, j, 0 ); j++;
       //       gl_files->addLayout( hbl_signal, j, 0 ); j++;
@@ -1480,6 +1524,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    { 
       int ofs = 1;
       gl_gauss->addMultiCellWidget( pb_gauss_start      , 0, 0, 0, ofs++ );
+      gl_gauss->addWidget         ( pb_p3d              , 0, ofs++ );
       gl_gauss->addWidget         ( pb_gauss_clear      , 0, ofs++ );
       gl_gauss->addWidget         ( pb_gauss_new        , 0, ofs++ );
       gl_gauss->addWidget         ( pb_gauss_delete     , 0, ofs++ );
@@ -1777,13 +1822,18 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->numRows() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
-   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
-   pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
+   pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
+   pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
+   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && gaussians.size() );
+   pb_conc_file          ->setEnabled( files_selected_count == 1 );
+   pb_detector           ->setEnabled( true );
+
+   //                                        );
    //    pb_set_hplc           ->setEnabled( files_selected_count == 1 && 
    //                                        lb_files->text( last_selected_pos ) != lbl_hplc->text() &&
    //                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
@@ -1875,10 +1925,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    }
 
    pb_save_state       ->setEnabled( lb_files->numRows() || stack_data.size() );
-   if ( *saxs_widget )
-   {
-      saxs_window->update_iqq_suffix();
-   }
+
+   pb_p3d              ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
 }
 
 void US_Hydrodyn_Saxs_Hplc::editor_msg( QString color, QString msg )
@@ -2005,6 +2053,10 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
       if ( selected_map.count( lb_files->text( i ) ) )
       {
          editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
+         if ( lbl_conc_file->text() == lb_files->text( i ) )
+         {
+            lbl_conc_file->setText( "" );
+         }
          //          if ( lbl_hplc->text() == lb_files->text( i ) )
          //          {
          //             lbl_hplc->setText( "" );
@@ -3008,6 +3060,23 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    return true;
 }
 
+void US_Hydrodyn_Saxs_Hplc::set_conc_file()
+{
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         lbl_conc_file->setText( lb_files->text( i ) );
+      }
+   }
+   update_csv_conc();
+   if ( conc_widget )
+   {
+      conc_window->refresh( csv_conc );
+   }
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Hplc::set_hplc()
 {
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -3696,7 +3765,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    }
 
    QString use_filename;
-   if ( f_name.count( file ) )
+   if ( f_name.count( file ) && !f_name[ file ].isEmpty() )
    {
       use_filename = f_name[ file ];
    } else {
@@ -7156,6 +7225,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_smooth             ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
+   pb_conc_file          ->setEnabled( false );
+   pb_detector           ->setEnabled( false );
    //    pb_set_hplc           ->setEnabled( false );
    //    pb_set_signal         ->setEnabled( false );
    //    pb_set_empty          ->setEnabled( false );
@@ -7243,6 +7314,9 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_save_state         ->setEnabled( false );
    pb_invert_all_created ->setEnabled( false );
    pb_remove_created     ->setEnabled( false );
+
+   pb_add                ->setEnabled( false );
+   pb_p3d                ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
@@ -9835,390 +9909,6 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    return true;
 }
 
-void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
-{
-   // for each selected file
-   // extract q grid from file names
-
-   QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
-
-   if ( !ggaussian_compatible() )
-   {
-      editor_msg( "red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians, Please enter \"Global Gaussians\" with these files selected and then \"Keep\" before pressing \"Make I(q)\"" ) );
-      return;
-   }
-
-   QRegExp rx_q( "_q(\\d+_\\d+)" );
-   QRegExp rx_bl( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-
-   vector < QString > q_string;
-   vector < double  > q;
-   vector < double  > bl_slope;
-   vector < double  > bl_intercept;
-
-   bool         any_bl = false;
-   unsigned int bl_count = 0;
-
-   // get q and bl
-
-   // map: [ timestamp ][ q_value ] = intensity
-
-   map < double, map < double , double > > I_values;
-   map < double, map < double , double > > e_values;
-
-   map < double, bool > used_t;
-   list < double >      tl;
-
-   map < double, bool > used_q;
-   list < double >      ql;
-
-   bool                 use_errors = true;
-
-   disable_all();
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
-      progress->setProgress( i, files.size() * 2 );
-      qApp->processEvents();
-      if ( rx_q.search( files[ i ] ) == -1 )
-      {
-         editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
-         update_enables();
-         return;
-      }
-      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
-      if ( used_q.count( ql.back() ) )
-      {
-         editor_msg( "red", QString( tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
-         update_enables();
-         return;
-      }
-      used_q[ ql.back() ] = true;
-         
-      if ( rx_bl.search( files[ i ] ) == -1 )
-      {
-         bl_slope    .push_back( 0e0 );
-         bl_intercept.push_back( 0e0 );
-      } else {
-         // cout << QString( "bl_cap 1 <%1>\n" ).arg( rx_bl.cap( 1 ) );
-         // cout << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
-         bl_slope    .push_back( rx_bl.cap( 1 ).replace( "_", "." ).toDouble() );
-         bl_intercept.push_back( rx_bl.cap( 3 ).replace( "_", "." ).toDouble() );
-         cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).ascii();
-         bl_count++;
-         any_bl = true;
-      }
-
-      if ( !f_qs.count( files[ i ] ) )
-      {
-         editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
-      } else {
-         for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
-         {
-            I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
-            if ( use_errors && f_errors[ files[ i ] ].size() )
-            {
-               e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
-            } else {
-               if ( use_errors )
-               {
-                  use_errors = false;
-                  editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
-                              .arg( files[ i ] ) );
-               }
-            }
-            if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
-            {
-               tl.push_back( f_qs[ files[ i ] ][ j ] );
-               used_t[ f_qs[ files[ i ] ][ j ] ] = true;
-            }
-         }
-      }
-   }
-   
-   tl.sort();
-
-   vector < double > tv;
-   for ( list < double >::iterator it = tl.begin();
-         it != tl.end();
-         it++ )
-   {
-      tv.push_back( *it );
-   }
-
-
-   ql.sort();
-
-   vector < double  > qv;
-   vector < QString > qv_string;
-   for ( list < double >::iterator it = ql.begin();
-         it != ql.end();
-         it++ )
-   {
-      qv.push_back( *it );
-      qv_string.push_back( QString( "%1" ).arg( *it ) );
-   }
-
-   if ( bl_count &&
-        QMessageBox::question(this, 
-                              this->caption(),
-                              QString( tr( "Baselines were found for %1 of the %2 curves\n"
-                                           "Do you want to add back the baselines when making I(q)?" ) )
-                              .arg( bl_count )
-                              .arg( files.size() ),
-                              tr( "&Yes" ),
-                              tr( "&No" ),
-                              QString::null,
-                              0,
-                              1
-                              ) == 1 )
-   {
-      cout << "not using baselines\n";
-      bl_count = 0;
-   }
-
-   bool save_gaussians = 
-        QMessageBox::question(this, 
-                              this->caption(),
-                              tr( "Save as Gaussians or a percent of the original I(q)?" ),
-                              tr( "&Gaussians" ),
-                              tr( "Percent of &I(q)" ),
-                              QString::null,
-                              0,
-                              1
-                              ) == 0;
-   running = true;
-
-   // now for each I(t) distribute the I for each frame according to the gaussians
-   // !!! **              ---- >>>> check for baseline, if present, optionally add back
-
-   // compute all gaussians over q range
-
-   // [ file ][ gaussian ][ time ]
-   vector < vector < vector < double > > > fg; // a vector of the individual gaussians
-   // [ file ][ time ]
-   vector < vector < double > >            fs; // a vector of the gaussian sums
-   vector < vector < double > >            g_area;      // a vector of the gaussian area
-   vector < double >                       g_area_sum; // a vector of the gaussian area
-
-   for ( unsigned int i = 0; i < files.size(); i++ )
-   {
-      vector < vector < double > > tmp_v;
-      vector < double >            tmp_sum;
-      vector < double >            tmp_area;
-      double                       tmp_area_sum = 0e0;
-
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
-      {
-         vector < double > tmp_g(3);
-         tmp_g[ 0 ] = f_gaussians[ files[ i ] ][ 0 + j ];
-         tmp_g[ 1 ] = f_gaussians[ files[ i ] ][ 1 + j ];
-         tmp_g[ 2 ] = f_gaussians[ files[ i ] ][ 2 + j ];
-
-         vector < double > tmp = compute_gaussian( tv, tmp_g );
-         tmp_v.push_back( tmp );
-         if ( j )
-         {
-            for ( unsigned int k = 0; k < tmp.size(); k++ )
-            {
-               tmp_sum[ k ] += tmp[ k ];
-            }
-         } else {
-            tmp_sum = tmp;
-         }
-
-         tmp_area.push_back( tmp_g[ 0 ] * tmp_g[ 2 ] * M_SQRT2PI );
-         tmp_area_sum += tmp_area.back();
-
-         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / 3 ), tv, tmp, true, false );
-
-      }
-      fg.push_back( tmp_v );
-      fs.push_back( tmp_sum );
-
-      for ( unsigned int j = 0; j < ( unsigned int ) tmp_area.size(); j++ )
-      {
-         tmp_area[ j ] /= tmp_area_sum;
-      }
-         
-      g_area    .push_back( tmp_area );
-      g_area_sum.push_back( tmp_area_sum );
-      printvector( QString( "areas file %1 (sum %2)" ).arg( i ).arg( tmp_area_sum, 0, 'g', 8 ), tmp_area );
-      // add_plot( QString( "fg_%1_gsum" ).arg( i ), tv, tmp_sum, true, false );
-   }
-
-   printvector( "area sums", g_area_sum );
-
-   // build up resulting curves
-
-   // for each time, tv[ t ] 
-   unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / 3;
-   // cout << QString( "num of gauss %1\n" ).arg( num_of_gauss );
-
-   bool reported_gs0 = false;
-
-   for ( unsigned int t = 0; t < tv.size(); t++ )
-   {
-      progress->setProgress( files.size() + t, files.size() + tv.size() );
-      // for each gaussian 
-      vector < double > gsI;
-      vector < double > gse;
-      vector < double > gsG;
-      // vector < double > gsI_recon;
-      // vector < double > gsG_recon;
-
-      for ( unsigned int g = 0; g < num_of_gauss; g++ )
-      {
-         // build up an I(q)
-         QString name = head + QString( "%1%2%3_pk%4_t%5" )
-            .arg( save_gaussians  ? "_G" : "" )
-            .arg( any_bl   ? "_bs" : "" )
-            .arg( bl_count ? "ba" : "" )
-            .arg( g + 1 )
-            .arg( tv[ t ] )
-            .replace( ".", "_" )
-            ;
-
-         // cout << QString( "name %1\n" ).arg( name );
-
-         // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
-         // we could also reassemble the original sum of gaussians curves as a comparative
-
-         vector < double > I;
-         vector < double > e;
-         vector < double > G;
-
-         // vector < double > I_recon;
-         // vector < double > G_recon;
-
-         for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-         {
-            if ( !I_values.count( tv[ t ] ) )
-            {
-               editor_msg( "red", QString( tr( "Internal error: I values missing t %1" ) ).arg( tv[ t ] ) );
-               running = false;
-               update_enables();
-               return;
-            }
-
-            if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
-            {
-               editor_msg( "red", QString( tr( "Internal error: I values missing q %1" ) ).arg( qv[ i ] ) );
-               running = false;
-               update_enables();
-               return;
-            }
-
-            double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ];
-            double tmp_e       = 0e0;
-            double tmp_G       = fg[ i ][ g ][ t ];
-
-            double frac_of_gaussian_sum;
-            if ( fs[ i ][ t ] == 0e0 )
-            {
-               if ( !reported_gs0 )
-               {
-                  cout << QString( "Notice: file %1 t %2 gaussian sum is zero (further instances ignored)\n" ).arg( i ).arg( t );
-                  reported_gs0 = true;
-               }
-               frac_of_gaussian_sum = 1e0 / ( double ) num_of_gauss;
-            } else {
-               frac_of_gaussian_sum = tmp_G / fs[ i ][ t ];
-            }
-
-            if ( use_errors )
-            {
-               if ( !e_values.count( tv[ t ] ) )
-               {
-                  editor_msg( "red", QString( tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
-                  running = false;
-                  update_enables();
-                  progress->reset();
-                  return;
-               }
-
-               if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
-               {
-                  editor_msg( "red", QString( tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] ) );
-                  running = false;
-                  update_enables();
-                  progress->reset();
-                  return;
-               }
-
-               tmp_e = e_values[ tv[ t ] ][ qv[ i ] ];
-            }
-            
-            tmp_I *= frac_of_gaussian_sum;
-            tmp_e *= frac_of_gaussian_sum;
-
-            // double tmp_I_recon = tmp_I;
-            // double tmp_G_recon = tmp_G;
-
-            if ( bl_count )
-            {
-               double pct_area = 1e0 / ( double ) num_of_gauss; // g_area[ i ][ g ];
-               double ofs = ( bl_intercept[ i ] + tv[ t ] * bl_slope[ i ] ) * pct_area;
-               tmp_I += ofs;
-               tmp_G += ofs;
-               // tmp_I_recon += ofs;
-               // tmp_G_recon += ofs;
-            }
-
-            I      .push_back( tmp_I );
-            e      .push_back( tmp_e );
-            G      .push_back( tmp_G );
-            // I_recon.push_back( tmp_I_recon );
-            // G_recon.push_back( tmp_G_recon );
-         } // for each file
-         
-         if ( g )
-         {
-            for ( unsigned int m = 0; m < ( unsigned int ) qv.size(); m++ )
-            {
-               gsI[ m ]       += I[ m ];
-               gse[ m ]       += e[ m ];
-               gsG[ m ]       += G[ m ];
-               // gsI_recon[ m ] += I_recon[ m ];
-               // gsG_recon[ m ] += G_recon[ m ];
-            }
-         } else {
-            gsI       = I;
-            gsG       = G;
-            gse       = e;
-            // gsI_recon = I_recon;
-            // gsG_recon = G_recon;
-         }
-
-         lb_created_files->insertItem( name );
-         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-         lb_files->insertItem( name );
-         lb_files->setBottomItem( lb_files->numRows() - 1 );
-         created_files_not_saved[ name ] = true;
-   
-         f_pos       [ name ] = f_qs.size();
-         f_qs_string [ name ] = qv_string;
-         f_qs        [ name ] = qv;
-         f_Is        [ name ] = save_gaussians ? G : I;
-         f_errors    [ name ] = e;
-         f_is_time   [ name ] = false;
-         {
-            vector < double > tmp;
-            f_gaussians  [ name ] = tmp;
-         }
-      } // for each gaussian
-      add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
-      add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
-      // add_plot( QString( "sumIr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
-      // add_plot( QString( "sumGr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
-   } // for each q value
-
-   progress->setProgress( 1, 1 );
-   running = false;
-   update_enables();
-}
 
 QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
 {
