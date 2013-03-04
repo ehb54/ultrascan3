@@ -557,8 +557,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         all_have_f_gaussians( QStringList & files );
 
       bool                         detector_uv;
+      double                       detector_uv_conv;
+
       bool                         detector_ri;
-      double                       detector_conv;
+      double                       detector_ri_conv;
 
    private slots:
 

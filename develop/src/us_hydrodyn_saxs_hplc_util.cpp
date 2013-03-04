@@ -1793,7 +1793,8 @@ void US_Hydrodyn_Saxs_Hplc::set_detector()
 
    {
       map < QString, QString > parameters;
-      parameters[ "conv" ] = QString( "%1" ).arg( detector_conv, 0, 'g', 8 );
+      parameters[ "uv_conv" ] = QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 );
+      parameters[ "ri_conv" ] = QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 );
       if ( detector_uv )
       {
          parameters[ "uv" ] = "true";
@@ -1819,9 +1820,10 @@ void US_Hydrodyn_Saxs_Hplc::set_detector()
          return;
       }
 
-      detector_uv   = ( parameters.count( "uv" ) && parameters[ "uv" ] == "true" ) ? true : false;
-      detector_ri   = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
-      detector_conv = parameters[ "conv" ].toDouble();
+      detector_uv      = ( parameters.count( "uv" ) && parameters[ "uv" ] == "true" ) ? true : false;
+      detector_ri      = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
+      detector_ri_conv = parameters[ "ri_conv" ].toDouble();
+      detector_uv_conv = parameters[ "uv_conv" ].toDouble();
    }
    update_enables();
 }

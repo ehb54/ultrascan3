@@ -84,9 +84,11 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    unified_ggaussian_ok = false;
    wheel_errors_ok      = false;
 
-   detector_conv = 0e0;
    detector_uv   = false;
+   detector_uv_conv = 0e0;
+
    detector_ri   = false;
+   detector_ri_conv = 0e0;
 
    update_enables();
 

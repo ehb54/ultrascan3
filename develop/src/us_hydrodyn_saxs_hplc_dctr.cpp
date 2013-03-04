@@ -42,38 +42,62 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    lbl_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
    cb_uv = new QCheckBox(this);
-   cb_uv->setText( "UV" );
+   cb_uv->setText( "UV  " );
    cb_uv->setEnabled( true );
    connect( cb_uv, SIGNAL( clicked() ), SLOT( set_uv() ) );
    cb_uv->setChecked( parameters->count( "uv" ) );
    cb_uv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_uv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_uv -> setMinimumHeight( minHeight1 );
+
+   lbl_uv_conv = new QLabel( tr( "Conversion factor (signal -> concentration) : " ), this );
+   lbl_uv_conv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_uv_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_uv_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_uv_conv-> setMinimumHeight( minHeight1 );
+   
+   le_uv_conv = new QLineEdit(this, "le_uv_conv Line Edit");
+   le_uv_conv->setText( (*parameters)[ "conv" ] );
+   le_uv_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_uv_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_uv_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( le_uv_conv );
+      qdv->setDecimals( 8 );
+      le_uv_conv->setValidator( qdv );
+   }
+   connect( le_uv_conv, SIGNAL( textChanged( const QString & ) ), SLOT( uv_conv_text( const QString & ) ) );
+   le_uv_conv->setMinimumWidth( 200 );
+   le_uv_conv-> setMinimumHeight( minHeight1 );
 
    cb_ri = new QCheckBox(this);
-   cb_ri->setText( "RI" );
+   cb_ri->setText( "RI  " );
    cb_ri->setEnabled( true );
    connect( cb_ri, SIGNAL( clicked() ), SLOT( set_ri() ) );
    cb_ri->setChecked( parameters->count( "ri" ) );
    cb_ri->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_ri->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_ri-> setMinimumHeight( minHeight1 );
 
-   lbl_conv = new QLabel( tr( "Conversion factor (signal -> concentration) : " ), this );
-   lbl_conv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-   
-   le_conv = new QLineEdit(this, "le_conv Line Edit");
-   le_conv->setText( (*parameters)[ "conv" ] );
-   le_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_ri_conv = new QLabel( tr( "Conversion factor (signal -> concentration) : " ), this );
+   lbl_ri_conv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_ri_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_ri_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_ri_conv-> setMinimumHeight( minHeight1 );
+
+   le_ri_conv = new QLineEdit(this, "le_ri_conv Line Edit");
+   le_ri_conv->setText( (*parameters)[ "conv" ] );
+   le_ri_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_ri_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ri_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    {
-      QDoubleValidator *qdv = new QDoubleValidator( le_conv );
+      QDoubleValidator *qdv = new QDoubleValidator( le_ri_conv );
       qdv->setDecimals( 8 );
-      le_conv->setValidator( qdv );
+      le_ri_conv->setValidator( qdv );
    }
-   connect( le_conv, SIGNAL( textChanged( const QString & ) ), SLOT( conv_text( const QString & ) ) );
-   le_conv->setMinimumWidth( 200 );
+   connect( le_ri_conv, SIGNAL( textChanged( const QString & ) ), SLOT( ri_conv_text( const QString & ) ) );
+   le_ri_conv->setMinimumWidth( 200 );
+   le_ri_conv-> setMinimumHeight( minHeight1 );
 
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -97,19 +121,20 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
+   background->addSpacing( 2 );
+   background->addWidget( lbl_type );
 
-   QHBoxLayout * hbl = new QHBoxLayout( 0 );
-   hbl->addWidget( lbl_type );
-   hbl->addWidget( cb_uv );
-   hbl->addWidget( cb_ri );
+   QGridLayout * gbl = new QGridLayout( 0 );
 
-   background->addLayout( hbl );
+   gbl->addWidget( cb_uv, 0, 0 );
+   gbl->addWidget( lbl_uv_conv, 0, 1 );
+   gbl->addWidget( le_uv_conv, 0, 2 );
 
-   QHBoxLayout * hbl_2 = new QHBoxLayout( 0 );
-   hbl_2->addWidget( lbl_conv );
-   hbl_2->addWidget( le_conv );
+   gbl->addWidget( cb_ri, 1, 0 );
+   gbl->addWidget( lbl_ri_conv, 1, 1 );
+   gbl->addWidget( le_ri_conv, 1, 2 );
 
-   background->addLayout( hbl_2 );
+   background->addLayout( gbl );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addWidget ( pb_help );
@@ -165,7 +190,12 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::set_ri()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc_Dctr::conv_text( const QString & text )
+void US_Hydrodyn_Saxs_Hplc_Dctr::uv_conv_text( const QString & text )
 {
-   (*parameters)[ "conv" ] = text;
+   (*parameters)[ "uv_conv" ] = text;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Dctr::ri_conv_text( const QString & text )
+{
+   (*parameters)[ "ir_conv" ] = text;
 }

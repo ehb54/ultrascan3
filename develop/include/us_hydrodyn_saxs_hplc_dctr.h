@@ -31,10 +31,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Dctr : public QDialog
 
       QLabel *                                lbl_type;
       QCheckBox *                             cb_uv;
-      QCheckBox *                             cb_ri;
+      QLabel *                                lbl_uv_conv;
+      QLineEdit *                             le_uv_conv;
 
-      QLabel *                                lbl_conv;
-      QLineEdit *                             le_conv;
+      QCheckBox *                             cb_ri;
+      QLabel *                                lbl_ri_conv;
+      QLineEdit *                             le_ri_conv;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
@@ -51,7 +53,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Dctr : public QDialog
       void                                    set_uv();
       void                                    set_ri();
 
-      void                                    conv_text( const QString & );
+      void                                    ri_conv_text( const QString & );
+      void                                    uv_conv_text( const QString & );
+
       void                                    help();
       void                                    quit();
       void                                    save();
