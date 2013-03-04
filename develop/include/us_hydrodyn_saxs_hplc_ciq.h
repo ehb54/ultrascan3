@@ -5,6 +5,7 @@
 #include "qlabel.h"
 #include "qstring.h"
 #include "qlayout.h"
+#include "qvalidator.h"
 
 using namespace std;
 
@@ -31,9 +32,25 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       QCheckBox *                             cb_add_bl;
       QCheckBox *                             cb_save_as_pct_iq;
 
+      QLabel *                                lbl_error;
+      QLabel *                                lbl_gaussian;
+      QLabel *                                lbl_conv;
+      QLabel *                                lbl_psv;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < QLabel * >                     lbl_gaussian_id;
+      vector < QLineEdit * >                  le_conv;
+      vector < QLineEdit * >                  le_psv;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
       QPushButton *                           pb_go;
+
       void                     *              us_hydrodyn_saxs_hplc;
       map < QString, QString > *              parameters;
 
@@ -43,6 +60,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       void                                    set_add_bl();
       void                                    set_save_as_pct_iq();
+
+      void                                    update_enables();
 
       void                                    help();
       void                                    quit();

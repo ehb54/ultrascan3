@@ -1151,6 +1151,9 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    bool save_gaussians;
 
+   vector < double > conv;
+   vector < double > psv ;
+
    {
       map < QString, QString > parameters;
       if ( bl_count )
@@ -1160,6 +1163,54 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             .arg( bl_count )
             .arg( files.size() );
       }
+
+      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / 3 );
+
+      bool any_detector = false;
+      if ( detector_uv )
+      {
+         parameters[ "uv" ] = "true";
+         any_detector = true;
+      } else {
+         if ( detector_ri )
+         {
+            parameters[ "ri" ] = "true";
+            any_detector = true;
+         }
+      }
+
+      bool no_conc = false;
+      if ( lbl_conc_file->text().isEmpty() )
+      {
+         parameters[ "error" ] = QString( tr( "Concentration controls disabled: no concentration file set" ) );
+         no_conc = true;
+      } else {
+         if ( !f_gaussians.count( lbl_conc_file->text() ) )
+         {
+            parameters[ "error" ] = QString( tr( "Concentration controls disabled: no Gaussians defined for concentration file" ) );
+            no_conc = true;
+         } else {
+            if ( f_gaussians[ lbl_conc_file->text() ].size() / 3  != f_gaussians[ files[ 0 ] ].size() / 3 )
+            {
+               parameters[ "error" ] = 
+                  QString( tr( "Concentration controls disabled: Concentratin file Gaussian count (%1) does not match other curve Gaussian count (%2)" ) )
+                  .arg( f_gaussians[ lbl_conc_file->text() ].size() )
+                  .arg( f_gaussians[ files[ 0 ] ].size() / 3 )
+                  ;
+               no_conc = true;
+            }
+         }
+      }
+
+      if ( !any_detector )
+      {
+         if ( parameters.count( "error" ) )
+         {
+            parameters[ "error" ] += "\nYou must also select a detector type";
+         } else {
+            parameters[ "error" ] = "\nYou must select a detector type";
+         }
+      }            
 
       US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
          new US_Hydrodyn_Saxs_Hplc_Ciq(
@@ -1187,6 +1238,17 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       if ( !parameters.count( "go" ) )
       {
          return;
+      }
+
+      if ( !no_conc )
+      {
+         for ( unsigned int i = 0; i < ( unsigned int ) f_gaussians[ files[ 0 ] ].size() / 3; i++ )
+         {
+            conv.push_back( parameters.count( QString( "conv %1" ).arg( i ) ) ?
+                            parameters[ QString( "conv %1" ).arg( i ) ].toDouble() : 0e0 );
+            psv .push_back( parameters.count( QString( "psv %1" ).arg( i ) ) ?
+                            parameters[ QString( "psv %1" ).arg( i ) ].toDouble() : 0e0 );
+         }
       }
    }
 
