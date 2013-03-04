@@ -57,7 +57,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    lbl_uv_conv-> setMinimumHeight( minHeight1 );
    
    le_uv_conv = new QLineEdit(this, "le_uv_conv Line Edit");
-   le_uv_conv->setText( (*parameters)[ "conv" ] );
+   le_uv_conv->setText( (*parameters)[ "uv_conv" ] );
    le_uv_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_uv_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_uv_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -86,7 +86,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    lbl_ri_conv-> setMinimumHeight( minHeight1 );
 
    le_ri_conv = new QLineEdit(this, "le_ri_conv Line Edit");
-   le_ri_conv->setText( (*parameters)[ "conv" ] );
+   le_ri_conv->setText( (*parameters)[ "ri_conv" ] );
    le_ri_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_ri_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ri_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -197,5 +197,5 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::uv_conv_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc_Dctr::ri_conv_text( const QString & text )
 {
-   (*parameters)[ "ir_conv" ] = text;
+   (*parameters)[ "ri_conv" ] = text;
 }
