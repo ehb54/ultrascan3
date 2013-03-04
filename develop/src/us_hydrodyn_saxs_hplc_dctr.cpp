@@ -50,7 +50,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    cb_uv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_uv -> setMinimumHeight( minHeight1 );
 
-   lbl_uv_conv = new QLabel( tr( "Conversion factor (signal -> concentration) : " ), this );
+   lbl_uv_conv = new QLabel( tr( "Calibration constant : " ), this );
    lbl_uv_conv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_uv_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_uv_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -79,7 +79,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    cb_ri->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_ri-> setMinimumHeight( minHeight1 );
 
-   lbl_ri_conv = new QLabel( tr( "Conversion factor (signal -> concentration) : " ), this );
+   lbl_ri_conv = new QLabel( tr( "Calibration constant : " ), this );
    lbl_ri_conv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ri_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_ri_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -117,6 +117,12 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    pb_save -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
+   pb_keep =  new QPushButton ( tr( "Keep" ), this );
+   pb_keep -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_keep -> setMinimumHeight( minHeight1 );
+   pb_keep -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   connect( pb_keep, SIGNAL( clicked() ), SLOT( keep() ) );
+
    QVBoxLayout *background = new QVBoxLayout( this );
    background->addSpacing(4);
 
@@ -140,6 +146,7 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::setupGUI()
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_quit );
    hbl_bottom->addWidget ( pb_save );
+   hbl_bottom->addWidget ( pb_keep );
 
    background->addLayout ( hbl_bottom );
 }
@@ -150,6 +157,12 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::quit()
 }
 
 void US_Hydrodyn_Saxs_Hplc_Dctr::save()
+{
+   // save to disk
+   keep();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Dctr::keep()
 {
    (*parameters)[ "save" ] = "set";
    close();

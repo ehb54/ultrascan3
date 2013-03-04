@@ -47,6 +47,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
   #pragma warning ( default: 4251 )
 #endif
 
+      QPushButton *                           pb_global;
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
       QPushButton *                           pb_go;
@@ -62,6 +63,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       void                                    set_save_as_pct_iq();
 
       void                                    update_enables();
+
+      void                                    global();
 
       void                                    help();
       void                                    quit();

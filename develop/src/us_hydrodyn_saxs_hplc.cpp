@@ -123,13 +123,13 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_invert );
       pbs.push_back( pb_adjacent );
       pbs.push_back( pb_select_nth );
-      pbs.push_back( pb_color_rotate );
-      pbs.push_back( pb_to_saxs );
+      // pbs.push_back( pb_color_rotate );
+      // pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
       pbs.push_back( pb_rescale );
       pbs.push_back( pb_normalize );
 
-      pbs.push_back( pb_avg );
+      // pbs.push_back( pb_avg );
       pbs.push_back( pb_add );
       // pbs.push_back( pb_conc_avg );
       // pbs.push_back( pb_select_all_created );
@@ -502,7 +502,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_select_nth->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_nth, SIGNAL(clicked()), SLOT(select_nth()));
 
-   pb_color_rotate = new QPushButton(tr("C"), this);
+   pb_color_rotate = new QPushButton(tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight1);
    pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
@@ -522,10 +522,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
-   pb_to_saxs = new QPushButton(tr("S"), this);
+   pb_to_saxs = new QPushButton(tr("To SOMO/SAS"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_to_saxs->setMinimumHeight( minHeight1 );
-   pb_to_saxs->setMaximumWidth ( minHeight1 * 2 );
+   // pb_to_saxs->setMaximumWidth ( minHeight1 * 2 );
    pb_to_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
 
@@ -838,7 +838,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
 #endif
-   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Frame"));
+   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Time/Frame"));
    plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
 #ifndef QT4
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
@@ -1362,8 +1362,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_invert );
    hbl_file_buttons_2->addWidget ( pb_adjacent );
    hbl_file_buttons_2->addWidget ( pb_select_nth );
-   hbl_file_buttons_2->addWidget ( pb_color_rotate );
-   hbl_file_buttons_2->addWidget ( pb_to_saxs );
+   // hbl_file_buttons_2->addWidget ( pb_color_rotate );
+   // hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
@@ -1400,13 +1400,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pb_stack_swap->hide();
 
       pb_add->hide();
+
+      pb_conc->hide();
+      pb_conc_avg->hide();
+      pb_normalize->hide();
    }
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_add );
+   hbl_file_buttons_3->addWidget ( pb_to_saxs );
    hbl_file_buttons_3->addWidget ( pb_avg );
+   hbl_file_buttons_3->addWidget ( pb_color_rotate );
 
    QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout( 0 );
    hbl_file_buttons_4->addWidget ( pb_smooth );

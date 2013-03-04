@@ -63,14 +63,20 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_error->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   lbl_error->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
+
+   pb_global =  new QPushButton ( tr( "Duplicate Gaussian 1 values globally" ), this );
+   pb_global -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_global -> setMinimumHeight( minHeight1 );
+   pb_global -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   connect( pb_global, SIGNAL( clicked() ), SLOT( global() ) );
 
    lbl_gaussian = new QLabel( tr( "Gaussian" ), this );
    lbl_gaussian->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_gaussian->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_gaussian->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
-   lbl_conv = new QLabel( tr( (*parameters).count( "uv" ) ? "Extinction coefficient" : "Differeitail R.I. increment (dn/dc)" ), this );
+   lbl_conv = new QLabel( tr( (*parameters).count( "uv" ) ? "Extinction coefficient" : "Differential RI increment (dn/dc)" ), this );
    lbl_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -79,6 +85,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+
 
    for ( unsigned int i = 0; i < (* parameters)[ "gaussians" ].toUInt(); i++ )
    {
@@ -177,8 +184,13 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
          le_conv        [ i ]->hide();
          le_psv         [ i ]->hide();
       }
+      pb_global   ->hide();
    } else {
       lbl_error    ->hide();
+      if ( lbl_gaussian_id.size() <= 1 )
+      {
+         pb_global    ->hide();
+      }
    }
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
@@ -188,6 +200,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    background->addLayout ( vbl );
    background->addLayout ( gl );
+   background->addWidget ( pb_global);
    background->addLayout ( hbl_bottom );
    // background->addSpacing( 4 );
 }
@@ -231,6 +244,16 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_add_bl()
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::global()
+{
+   for ( unsigned int i = 1; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
+   {
+      le_conv[ i ]->setText( le_conv[ 0 ]->text() );
+      le_psv [ i ]->setText( le_psv [ 0 ]->text() );
+   }
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
