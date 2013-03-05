@@ -1804,7 +1804,21 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
          // cout << QString( "row %1:" ).arg( i );
          for ( unsigned int j = 0; j < columns; j++ )
          {
-            data3d[ i ][ j ] = fs[ i ][ j ];
+            // cout << QString( "%1 " ).arg( data3d[ i ][ j ] );
+            if ( maxI < fs[ i ][ j ] )
+            {
+               maxI = fs[ i ][ j ];
+            }
+         }
+         // cout << endl;
+      }
+
+      for ( unsigned int i = 0; i < rows; i++ )
+      {
+         // cout << QString( "row %1:" ).arg( i );
+         for ( unsigned int j = 0; j < columns; j++ )
+         {
+            data3d[ i ][ j ] = fs[ i ][ j ] / maxI;
             // cout << QString( "%1 " ).arg( data3d[ i ][ j ] );
             if ( maxI < fs[ i ][ j ] )
             {
@@ -1832,7 +1846,7 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
       controlvar_3d.maxy = 10e0;
       controlvar_3d.xscaling = 1e0;
       controlvar_3d.yscaling = 1e0;
-      controlvar_3d.zscaling = 10e0 / maxI;
+      controlvar_3d.zscaling = 10e0; // 10e0 / maxI > 1e0 ? 10e0 / maxI : 1e0;
 
       cout << QString( "3d params t %1,%2 scaling %3\n"
                        "          q %4,%5 scaling %6\n"

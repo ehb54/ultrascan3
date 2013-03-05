@@ -2727,6 +2727,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          errormsg = QString( tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
          return false;
       }
+      errormsg = "";
+      return false;
    }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Global State file" ) )
@@ -10827,17 +10829,20 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
                it != stack_data[ j ].f_gaussians.end();
                it++ )
          {
-            ts << "# __f_gaussians: " << it->first << endl;
-            for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += 3 )
+            if ( it->second.size() )
             {
-               ts << 
-                  QString( "%1 %2 %3\n" )
-                  .arg( it->second[ i + 0 ], 0, 'g', 10 )
-                  .arg( it->second[ i + 1 ], 0, 'g', 10 )
-                  .arg( it->second[ i + 2 ], 0, 'g', 10 )
-                  ;
+               ts << "# __f_gaussians: " << it->first << endl;
+               for ( unsigned int i = 0; i < ( unsigned int) it->second.size(); i += 3 )
+               {
+                  ts << 
+                     QString( "%1 %2 %3\n" )
+                     .arg( it->second[ i + 0 ], 0, 'g', 10 )
+                     .arg( it->second[ i + 1 ], 0, 'g', 10 )
+                     .arg( it->second[ i + 2 ], 0, 'g', 10 )
+                     ;
+               }
+               ts << "# __end\n";
             }
-            ts << "# __end\n";
          } 
       }
       ts << "# __push_stack\n";
