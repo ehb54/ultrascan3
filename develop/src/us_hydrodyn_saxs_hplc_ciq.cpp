@@ -68,6 +68,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_sd_source = new QCheckBox(this);
+   cb_sd_source->setText( tr( "Compute standard deviations as a difference between Gaussians and original I(q)" ) );
+   cb_sd_source->setEnabled( true );
+   connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
+   cb_sd_source->setChecked( false );
+   cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_sd_source->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -162,6 +170,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
    vbl->addWidget( cb_normalize );
+   vbl->addWidget( cb_sd_source );
    
    QGridLayout * gl = new QGridLayout( 0 );
 
@@ -224,6 +233,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 {
    (*parameters)[ "go" ] = "true";
    (*parameters)[ "normalize" ] = cb_normalize->isChecked() ? "true" : "false";
+   (*parameters)[ "sd_source" ] = cb_sd_source->isChecked() ? "difference" : "original";
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       (*parameters)[ QString( "conv %1" ).arg( i ) ] = le_conv[ i ]->text();
@@ -250,6 +260,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::closeEvent( QCloseEvent *e )
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_add_bl()
 {
    (*parameters)[ "add_baseline" ] = cb_add_bl->isChecked() ? "true" : "false";
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_source()
+{
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()

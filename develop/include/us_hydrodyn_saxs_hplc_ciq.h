@@ -33,6 +33,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       QCheckBox *                             cb_save_as_pct_iq;
 
       QCheckBox *                             cb_normalize;
+      QCheckBox *                             cb_sd_source;
 
       QLabel *                                lbl_error;
       QLabel *                                lbl_gaussian;
@@ -65,6 +66,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       void                                    set_add_bl();
       void                                    set_save_as_pct_iq();
       void                                    set_normalize();
+      void                                    set_sd_source();
 
       void                                    update_enables();
 

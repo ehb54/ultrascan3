@@ -1182,6 +1182,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       }
 
       bool no_conc = false;
+      bool sd_from_difference = false;
       if ( lbl_conc_file->text().isEmpty() )
       {
          parameters[ "error" ] = QString( tr( "Concentration controls disabled: no concentration file set" ) );
@@ -1236,6 +1237,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       } else {
          save_gaussians = true;
          cout << "ciq: save_gaussians true\n";
+      }
+      if (  parameters.count( "sd_source" ) && parameters[ "sd_source" ] == "difference" )
+      {
+         sd_from_difference = true;
+         cout << "ciq: sd_from_difference true\n";
+      } else {
+         save_gaussians = false;
+         cout << "ciq: sd_from_difference false\n";
       }
       if ( !parameters.count( "go" ) )
       {
