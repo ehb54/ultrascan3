@@ -1153,6 +1153,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    vector < double > conv;
    vector < double > psv ;
+   
+   bool normalize_by_conc = false;
 
    {
       map < QString, QString > parameters;
@@ -1193,7 +1195,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             if ( f_gaussians[ lbl_conc_file->text() ].size() / 3  != f_gaussians[ files[ 0 ] ].size() / 3 )
             {
                parameters[ "error" ] = 
-                  QString( tr( "Concentration controls disabled: Concentratin file Gaussian count (%1) does not match other curve Gaussian count (%2)" ) )
+                  QString( tr( "Concentration controls disabled: Concentration file Gaussian count (%1)\n does not match global curves Gaussian count (%2)" ) )
                   .arg( f_gaussians[ lbl_conc_file->text() ].size() )
                   .arg( f_gaussians[ files[ 0 ] ].size() / 3 )
                   ;
@@ -1248,6 +1250,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                             parameters[ QString( "conv %1" ).arg( i ) ].toDouble() : 0e0 );
             psv .push_back( parameters.count( QString( "psv %1" ).arg( i ) ) ?
                             parameters[ QString( "psv %1" ).arg( i ) ].toDouble() : 0e0 );
+         }
+         if ( parameters.count( "normalize" ) )
+         {
+            normalize_by_conc = true;
          }
       }
    }
@@ -1482,6 +1488,19 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             // gsI_recon = I_recon;
             // gsG_recon = G_recon;
          }
+
+         // do we need to compute a concentration?
+         // add to csv conc stuff?
+         // normalize by conc (optionally, first compute concentrations)
+
+         // idea: match gaussians from conc file & this file we are
+         // creating a I(q) for a t, so across the gaussians (q) our t
+         // is at some % of the gaussian, which we map back to the
+         // conc gaussian and the use multipliers etc to compute conc
+         
+         //          if ( conv.size() )
+         //          {
+         //          }
 
          lb_created_files->insertItem( name );
          lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
@@ -1876,7 +1895,7 @@ void US_Hydrodyn_Saxs_Hplc::set_detector()
       hplc_dctr->exec();
       delete hplc_dctr;
 
-      if ( !parameters.count( "save" ) )
+      if ( !parameters.count( "keep" ) )
       {
          update_enables();
          return;

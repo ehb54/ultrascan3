@@ -353,6 +353,13 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    push_back_color_if_ok( bgc, QColor( 255, 255, 0 ) ); /* Yellow* */
    push_back_color_if_ok( bgc, QColor( 154, 205, 50 ) ); /* Yellow-Green */
 
+   QString dctr_file = 
+      USglobal->config_list.root_dir + QDir::separator() + "etc" + 
+      QDir::separator() + "somo_hplc_default_dctr.dat" ;
+   if ( QFile( dctr_file ).exists() )
+   {
+      load_file( dctr_file );
+   }
 }
 
 US_Hydrodyn_Saxs_Hplc::~US_Hydrodyn_Saxs_Hplc()
@@ -2687,6 +2694,41 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       is_time = true;
    }
 
+   if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
+   {
+      QRegExp rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
+      QRegExp rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
+      QRegExp rx_uv_set     ( "^# __detector_uv_set\\s*$" );
+      QRegExp rx_ri_set     ( "^# __detector_ri_set\\s*$" );
+      for ( int i = 1; i < (int) qv.size(); i++ )
+      {
+         if ( rx_uv.search( qv[ i ] ) != -1 )
+         {
+            detector_uv_conv = rx_uv.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_ri.search( qv[ i ] ) != -1 )
+         {
+            detector_ri_conv = rx_ri.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_uv_set.search( qv[ i ] ) != -1 )
+         {
+            detector_uv = true;
+            detector_ri = false;
+            continue;
+         }
+         if ( rx_ri_set.search( qv[ i ] ) != -1 )
+         {
+            detector_ri = true;
+            detector_uv = false;
+            continue;
+         }
+         errormsg = QString( tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
+         return false;
+      }
+   }
+
    if ( ext == "dat" && qv[ 0 ].contains( " Global State file" ) )
    {
       QRegExp rx_dir         ( "^# __dir: (\\S+)\\s*$" );
@@ -2698,11 +2740,38 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       QRegExp rx_f_gaussians ( "^# __f_gaussians: (\\S+)\\s*$" );
       QRegExp rx_push        ( "^# __push_stack\\s*$" );
 
+      QRegExp rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
+      QRegExp rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
+      QRegExp rx_uv_set     ( "^# __detector_uv_set\\s*$" );
+      QRegExp rx_ri_set     ( "^# __detector_ri_set\\s*$" );
+
       clear_files( all_files() );
 
       cb_lock_dir->setChecked( false );
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
+         if ( rx_uv.search( qv[ i ] ) != -1 )
+         {
+            detector_uv_conv = rx_uv.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_ri.search( qv[ i ] ) != -1 )
+         {
+            detector_ri_conv = rx_ri.cap( 1 ).toDouble();
+            continue;
+         }
+         if ( rx_uv_set.search( qv[ i ] ) != -1 )
+         {
+            detector_uv = true;
+            detector_ri = false;
+            continue;
+         }
+         if ( rx_ri_set.search( qv[ i ] ) != -1 )
+         {
+            detector_ri = true;
+            detector_uv = false;
+            continue;
+         }
          if ( rx_dir.search( qv[ i ] ) != -1 )
          {
             lbl_dir->setText( rx_dir.cap( 1 ) );
@@ -10700,6 +10769,23 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
    // write out all the loaded file names (for each stack element)
 
    ts << "# US-SOMO Global State file\n";
+
+   if ( detector_uv_conv != 0e0 )
+   {
+      ts << "# __detector_uv: " << QString( "%1" ).arg( detector_uv_conv, 0, 'g', 8 ) << endl;
+   }
+   if ( detector_ri_conv != 0e0 )
+   {
+      ts << "# __detector_ri: " << QString( "%1" ).arg( detector_ri_conv, 0, 'g', 8 ) << endl;
+   }
+   if ( detector_uv )
+   {
+      ts << "# __detector_uv_set" << endl;
+   } 
+   if ( detector_ri )
+   {
+      ts << "# __detector_ri_set" << endl;
+   } 
 
    if ( stack_data.size() )
    {

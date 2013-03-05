@@ -60,6 +60,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_normalize = new QCheckBox(this);
+   cb_normalize->setText( tr( "Normalize resulting I(q) by concentration" ) );
+   cb_normalize->setEnabled( true );
+   connect( cb_normalize, SIGNAL( clicked() ), SLOT( set_normalize() ) );
+   cb_normalize->setChecked( true );
+   cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -153,6 +161,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    QVBoxLayout * vbl = new QVBoxLayout( 0 );
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
+   vbl->addWidget( cb_normalize );
    
    QGridLayout * gl = new QGridLayout( 0 );
 
@@ -185,6 +194,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
          le_psv         [ i ]->hide();
       }
       pb_global   ->hide();
+      cb_normalize->hide();
    } else {
       lbl_error    ->hide();
       if ( lbl_gaussian_id.size() <= 1 )
@@ -213,6 +223,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::quit()
 void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 {
    (*parameters)[ "go" ] = "true";
+   (*parameters)[ "normalize" ] = cb_normalize->isChecked() ? "true" : "false";
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       (*parameters)[ QString( "conv %1" ).arg( i ) ] = le_conv[ i ]->text();
@@ -241,6 +252,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_add_bl()
    (*parameters)[ "add_baseline" ] = cb_add_bl->isChecked() ? "true" : "false";
 }
 
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
+{
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
@@ -259,7 +275,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::global()
 void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 {
    bool no_go = false;
-   if ( parameters->count( "error" ) )
+
+   if ( !parameters->count( "error" ) )
    {
       for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
       {
@@ -276,6 +293,5 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
       }
    }
 
-   pb_go->setEnabled( no_go );
+   pb_go->setEnabled( !no_go );
 }
-

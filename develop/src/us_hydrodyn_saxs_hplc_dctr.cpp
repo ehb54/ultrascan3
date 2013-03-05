@@ -158,13 +158,63 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::quit()
 
 void US_Hydrodyn_Saxs_Hplc_Dctr::save()
 {
+
+   QString use_dir = 
+      USglobal->config_list.root_dir + QDir::separator() + "etc" + 
+      QDir::separator() + "somo_hplc_default_dctr.dat" ;
+
+   QString fn = QFileDialog::getSaveFileName( use_dir, "*_dctr.dat", this, this->caption() + tr( " Save" ),
+                                              tr( "Select a name to save the detector settings" ) );
+
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn.replace( QRegExp( "(|_dctr)\\.(dat|DAT)$" ), "" );
+   fn += "_dctr.dat";
+
+   QFile f( fn );
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      return;
+   }
+
+   QTextStream ts( &f );
+
+   ts << "# US-SOMO Detector State file\n";
+
+   if ( !le_uv_conv->text().isEmpty() )
+   {
+      ts << "# __detector_uv: " << le_uv_conv->text() << endl;
+   }
+   if ( !le_ri_conv->text().isEmpty() )
+   {
+      ts << "# __detector_ri: " << le_ri_conv->text() << endl;
+   }
+   if ( cb_uv->isChecked() )
+   {
+      ts << "# __detector_uv_set" << endl;
+   } 
+   if ( cb_ri->isChecked() )
+   {
+      ts << "# __detector_ri_set" << endl;
+   } 
+
+   f.close();
+
    // save to disk
    keep();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Dctr::keep()
 {
-   (*parameters)[ "save" ] = "set";
+   (*parameters)[ "keep" ] = "set";
    close();
 }
 
