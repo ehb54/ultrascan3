@@ -5,6 +5,7 @@
 
 #define SLASH QDir::separator()
 #define USPTM_DEBUG
+// #define USPTM_DEBUG2
 
 ostream& operator<<(ostream& out, const range_entry& c)
 {
@@ -467,6 +468,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
    running = true;
    update_enables();
 
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+   QString filename = le_chains_to->text();
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
+                                                    filename,
+                                                    true );
+
    if ( !validate_commands() )
    {
       running = false;
@@ -591,9 +598,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
 
    f.close();
 
+   bool no_model = false;
+
    if ( model_count == 0 )
    {
       model_count = 1;
+      no_model = true;
    }
 
    editor_msg( "dark blue", QString( tr( "File %1 contains %2 models" ) ).arg( f.name() ).arg( model_count ) );
@@ -641,7 +651,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
 
    QStringList   model_lines;
    unsigned int  pos = 0;
-   in_model = false;
+   in_model = no_model;
 
    if ( !ts.atEnd() )
    {
@@ -661,10 +671,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                progress->setProgress( pos, model_count + 1 );
                qApp->processEvents();
                // process model
-               editor_msg( "dark blue", QString( "Processing model %1\n" ).arg( model_name_vector[ pos ] ) );
+               if ( !no_model )
+               {
+                  editor_msg( "dark blue", QString( "Processing model %1\n" ).arg( model_name_vector[ pos ] ) );
+               }
                qApp->processEvents();
                ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
-               ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load_from_qsl( lv_csv_to, model_lines, QString( "model %1\n" ).arg( model_name_vector[ pos ] ) );
+               ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load_from_qsl( lv_csv_to, model_lines, QString( "model %1\n" ).arg( no_model ? "1" : model_name_vector[ pos ] ) );
                qApp->processEvents();
                run_one();
                if ( !running )
@@ -673,13 +686,22 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   return;
                }
                
-               tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
-               tso << model_remarks[ model_name_vector[ pos ] ];
+               if ( !no_model )
+               {
+                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
+                  tso << model_remarks[ model_name_vector[ pos ] ];
+               }
                tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
-               tso << "ENDMDL\n";
+               if ( !no_model )
+               {
+                  tso << "ENDMDL\n";
+               }
                in_model = false;
                model_lines.clear();
-               editor_msg( "dark blue", QString( "Processing model %1 done\n" ).arg( model_name_vector[ pos ] ) );
+               if ( !no_model )
+               {
+                  editor_msg( "dark blue", QString( "Processing model %1 done\n" ).arg( model_name_vector[ pos ] ) );
+               }
                pos++;
             }
             if ( qs.contains( rx_model ) )
@@ -921,6 +943,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
             p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
             from_fit_points[ chain ].push_back( p );
             // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
+#if defined( USPTM_DEBUG2 )
+            cout << QString("adding from fit_point for %1 %2 %3\n").arg(chain).arg(pos).arg(atom);
+#endif
          }
 
          // check for cross/extra chains
@@ -949,6 +974,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
                   p.axis[ 2 ] = csv_from.data[ i ][ 10 ].toDouble();
                   from_fit_points[ chain ].push_back( p );
                   // editor_msg("blue", QString("adding fit point for %1 %2 %3").arg(chain).arg(pos).arg(atom));
+#if defined( USPTM_DEBUG2 )
+                  cout << QString("adding xchain from_fit point for %1 %2 %3\n").arg(chain).arg(pos).arg(atom);
+#endif
                }
             }
          }               
@@ -1084,6 +1112,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          p.axis[ 1 ] = csv_to.data[ i ][ 9  ].toDouble();
          p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
          to_fit_points[ chain ].push_back( p );
+#if defined( USPTM_DEBUG2 )
+         cout << QString("adding to_fit point for %1 %2 %3\n").arg(chain).arg(pos).arg(atom) ;
+#endif
       }
 
       if ( cross_fit_chains.count( chain ) )
@@ -1109,13 +1140,18 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
                p.axis[ 1 ] = csv_to.data[ i ][ 9  ].toDouble();
                p.axis[ 2 ] = csv_to.data[ i ][ 10 ].toDouble();
                to_fit_points[ chain ].push_back( p );
+#if defined( USPTM_DEBUG2 )
+               cout << QString("adding xchain to_fit point for %1 %2 %3\n").arg(chain).arg(pos).arg(atom) ;
+#endif
             }
          }
       }               
    }
 
    // validate from/to fit points
-
+#if defined( USPTM_DEBUG2 )
+   cout << "Trial Validate fit points\n";
+#endif
    for ( map < QString, vector < point > >::iterator it = from_fit_points.begin();
          it != from_fit_points.end();
          it++ )
@@ -1123,11 +1159,17 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       if ( !to_fit_points.count( it->first ) ||
            to_fit_points[ it->first ].size() != it->second.size() )
       {
-         editor_msg( "red", QString( "Error: Fit point mismatch for %1" ).arg( it->first ) );
+         editor_msg( "red", QString( "Error (trial): Fit point mismatch for %1 (%2 vs %3)" ).arg( it->first ).arg( to_fit_points.count( it->first ) ? to_fit_points[ it->first ].size() : -1 ).arg( it->second.size() ) );
          running = false;
          update_enables();
          return;
+      } 
+#if defined( USPTM_DEBUG2 )
+      else {
+         cout << 
+            QString( "Ok (trial): Fit points for %1 (%2 vs %3)\n" ).arg( it->first ).arg( to_fit_points.count( it->first ) ? to_fit_points[ it->first ].size() : -1 ).arg( it->second.size() );
       }
+#endif
    }
 
    // editor_msg("dark red", "transform next");
@@ -1667,6 +1709,42 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
          }       
       }  
    }
+
+#if defined( USPTM_DEBUG2 )
+   cout << "cache summary:\n";
+   cout << "From ranges:\n";
+   for ( unsigned int i = 0; i < ( unsigned int ) cache_from_ranges.size(); i++ )
+   {
+      cout << cache_from_ranges[ i ] << endl;
+   }
+   cout << "To ranges:\n";
+   for ( unsigned int i = 0; i < ( unsigned int ) cache_to_ranges.size(); i++ )
+   {
+      cout << cache_to_ranges[ i ] << endl;
+   }
+   cout << "From range pos:\n";
+   for ( map < QString, unsigned int >::iterator it = cache_from_range_pos.begin();
+         it != cache_from_range_pos.end();
+         it++ )
+   {
+      cout << it->first << " pos " << it->second << endl;
+   }
+   cout << "To range pos:\n";
+   for ( map < QString, unsigned int >::iterator it = cache_to_range_pos.begin();
+         it != cache_to_range_pos.end();
+         it++ )
+   {
+      cout << it->first << " pos " << it->second << endl;
+   }
+   cout << "Use start:\n";
+   for ( map < QString, bool >::iterator it = cache_use_start.begin();
+         it != cache_use_start.end();
+         it++ )
+   {
+      cout << it->first << " " << QString( "%1" ).arg( it->second ? "true" : "false" ) << endl;
+   }
+#endif
+
    update_enables();
 }
 
@@ -2805,11 +2883,17 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       if ( !to_fit_points.count( it->first ) ||
            to_fit_points[ it->first ].size() != it->second.size() )
       {
-         editor_msg( "red", QString( "Error: Fit point mismatch for %1" ).arg( it->first ) );
+         editor_msg( "red", QString( "Error (run): Fit point mismatch for %1 (%2 vs %3)" ).arg( it->first ).arg( to_fit_points[ it->first ].size() ).arg( it->second.size() ) );
          running = false;
          update_enables();
          return;
       }
+#if defined( USPTM_DEBUG2 )
+      else {
+         cout << 
+            QString( "Ok (run): Fit points for %1 (%2 vs %3)\n" ).arg( it->first ).arg( to_fit_points.count( it->first ) ? to_fit_points[ it->first ].size() : -1 ).arg( it->second.size() );
+      }
+#endif
    }
 
    // editor_msg("dark red", "transform next");
