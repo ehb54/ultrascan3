@@ -3875,8 +3875,8 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       .arg( file );
 
    bool use_errors = ( f_errors.count( file ) && 
-                       f_errors[ file ].size() > 0 &&
-                       !is_nonzero_vector( f_errors[ file ] ) );
+                       f_errors[ file ].size() > 0 );
+                       // is_nonzero_vector( f_errors[ file ] ) );
 
    if ( f_is_time.count( file ) && f_is_time[ file ] )
    {

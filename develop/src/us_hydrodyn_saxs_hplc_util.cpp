@@ -1248,6 +1248,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       }
       if ( !parameters.count( "go" ) )
       {
+         progress->reset();
          return;
       }
 

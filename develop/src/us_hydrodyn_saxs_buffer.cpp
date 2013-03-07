@@ -385,7 +385,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lb_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_files->setEnabled(true);
-   lb_files->setSelectionMode( QListBox::Multi );
+   lb_files->setSelectionMode( QListBox::Extended );
    lb_files->setMinimumHeight( minHeight1 * 8 );
    connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files() ) );
 
@@ -522,7 +522,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lb_created_files->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_created_files->setEnabled(true);
-   lb_created_files->setSelectionMode( QListBox::Multi );
+   lb_created_files->setSelectionMode( QListBox::Extended );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( selectionChanged() ), SLOT( update_created_files() ) );
    connect( lb_created_files, 
