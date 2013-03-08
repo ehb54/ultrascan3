@@ -41,9 +41,9 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
       //                                     "SD weighting turned off"
       //                                     ) );
 
-      hplc_win->editor_msg( "dark red",  tr( "SD weighting requested, but the errors associated\n"
-                                             "with the selected file are not all non-zero.\n" 
-                                             "SD weighting turned off" ) );
+      hplc_win->editor_msg( "dark red",  QString( tr( "SD weighting requested, but the errors associated\n"
+                                                      "with the selected file %1 are not all non-zero.\n" 
+                                                      "SD weighting turned off" ) ).arg( hplc_win->wheel_file ) );
    }
    if ( use_errors )
    {

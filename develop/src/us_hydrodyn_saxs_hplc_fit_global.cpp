@@ -1039,7 +1039,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
       }
    }
 
-   HFIT_GLOBAL::list_params();
+   // HFIT_GLOBAL::list_params();
 
    if ( !HFIT_GLOBAL::init_params.size() )
    {

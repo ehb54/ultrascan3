@@ -60,6 +60,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_sd_source = new QCheckBox(this);
+   cb_sd_source->setText( tr( "Compute standard deviations as a difference between the sum of Gaussians and original I(q)" ) );
+   cb_sd_source->setEnabled( true );
+   connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
+   cb_sd_source->setChecked( false );
+   cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_sd_source->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    cb_normalize = new QCheckBox(this);
    cb_normalize->setText( tr( "Normalize resulting I(q) by concentration" ) );
    cb_normalize->setEnabled( true );
@@ -67,14 +75,6 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setChecked( true );
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-   cb_sd_source = new QCheckBox(this);
-   cb_sd_source->setText( tr( "Compute standard deviations as a difference between Gaussians and original I(q)" ) );
-   cb_sd_source->setEnabled( true );
-   connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
-   cb_sd_source->setChecked( false );
-   cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   cb_sd_source->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -92,12 +92,12 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_gaussian->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_gaussian->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
-   lbl_conv = new QLabel( tr( (*parameters).count( "uv" ) ? "Extinction coefficient" : "Differential RI increment (dn/dc)" ), this );
+   lbl_conv = new QLabel( tr( (*parameters).count( "uv" ) ? "Extinction coefficient (ml mg^-1 cm^-1)" : "Differential RI increment [dn/dc] (ml/g)" ), this );
    lbl_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_conv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
 
-   lbl_psv = new QLabel( tr( "Partial specific volume" ), this );
+   lbl_psv = new QLabel( tr( "Partial specific volume (ml/g)" ), this );
    lbl_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -169,8 +169,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    QVBoxLayout * vbl = new QVBoxLayout( 0 );
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
-   vbl->addWidget( cb_normalize );
    vbl->addWidget( cb_sd_source );
+   vbl->addWidget( cb_normalize );
    
    QGridLayout * gl = new QGridLayout( 0 );
 
@@ -275,6 +275,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
+   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( false ), cb_sd_source->hide() ) : cb_sd_source->show();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::global()

@@ -408,14 +408,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       unsigned int                        unified_ggaussian_gaussians_size;
       QStringList                         unified_ggaussian_files;
       bool                                unified_ggaussian_use_errors;
+      bool                                unified_ggaussian_errors_skip;
       bool                                unified_ggaussian_ok;
 
       bool                                initial_ggaussian_fit( QStringList & files );
-      bool                                create_unified_ggaussian_target();
-      bool                                create_unified_ggaussian_target( QStringList & files );
+      bool                                create_unified_ggaussian_target( bool do_init = true );
+      bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true );
       double                              ggaussian_rmsd();
-      bool                                ggaussian_compatible();
-      bool                                ggaussian_compatible( QStringList & files);
+      bool                                ggaussian_compatible( bool check_against_global = true );
+      bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
 
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();

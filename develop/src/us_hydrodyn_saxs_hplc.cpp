@@ -680,7 +680,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_conc_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_conc_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_detector = new QPushButton(tr("Detector"), this);
+   pb_detector = new QPushButton(tr("Concentration detector"), this);
    pb_detector->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1654,7 +1654,7 @@ void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
       }
 
       switch ( QMessageBox::warning(this, 
-                                    tr( "US-SOMO: SAXS Hplc" ),
+                                    caption(),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -3053,7 +3053,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
 
    if ( ext == "txt" && qv[ 0 ].contains( "temps depuis le debut" ) )
    {
-      I_offset   = 3;
+      I_offset   = 2;
       e_offset   = 10;
       row_offset = 4;
       is_time    = true;
@@ -3103,7 +3103,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             q_string.push_back( this_q_string );
             q       .push_back( this_q );
             I       .push_back( this_I );
-            if ( (int)tokens.size() > e_offset && this_e )
+            if ( (int)tokens.size() > e_offset ) // && this_e )
             {
                e.push_back( this_e );
             }
@@ -4216,17 +4216,20 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          return;
       }
 
+      
+      double scale = peak / this_peak;
+
       vector < double > repeak_I = f_Is[ files[ i ] ];
       for ( unsigned int j = 0; j < repeak_I.size(); j++ )
       {
-         repeak_I[ j ] *= peak / this_peak;
+         repeak_I[ j ] *= scale;
       }
 
       int ext = 0;
-      QString repeak_name = files[ i ] + "-rp";
+      QString repeak_name = files[ i ] + QString( "-rp%1" ).arg( scale, 0, 'g', 8 );
       while ( current_files.count( repeak_name ) )
       {
-         repeak_name = files[ i ] + QString( "-rp%1" ).arg( ++ext );
+         repeak_name = files[ i ] + QString( "-rp%1-%2" ).arg( scale, 0, 'g', 8 ).arg( ++ext );
       }
 
       select_files[ repeak_name ] = true;
@@ -10129,14 +10132,14 @@ map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
    return files;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible()
+bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )
 {
    QStringList files = all_selected_files();
-   return ggaussian_compatible( files );
+   return ggaussian_compatible( files, check_against_global );
 }
    
 
-bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
+bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool check_against_global )
 {
    // see if all the centers match
    if ( files.size() < 2 )
@@ -10147,7 +10150,8 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
    vector < double > centers;
    vector < double > widths;
 
-   bool any_f_gaussians = false;
+   bool any_f_gaussians     = false;
+   bool any_non_f_gaussians = false;
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -10176,9 +10180,16 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
                return false;
             }
          }            
+      } else {
+         any_non_f_gaussians = true;
       }
    }
 
+   if ( !check_against_global ) 
+   { 
+      return !any_non_f_gaussians;
+   }
+      
    if ( any_f_gaussians )
    {
       vector < double > tmp_centers;
@@ -10191,6 +10202,33 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files )
       if ( tmp_centers != centers ||
            ( cb_fix_width->isChecked() && tmp_widths != widths ) )
       {
+         if ( !any_non_f_gaussians )
+         {
+            
+            switch ( QMessageBox::warning(this, 
+                                          caption(),
+                                          QString( tr( "Please note:\n\n"
+                                                       "The file specific Gaussians are internally consistent, "
+                                                       "but they do not match the last Gaussians in terms of count %1\n"
+                                                       "What would you like to do?\n" ) )
+                                          .arg( cb_fix_width->isChecked() ?
+                                                ", centers or widths." : " or centers." ),
+                                          tr( "&Set the last Gaussians to the file specific ones" ), 
+                                          tr( "&Overwrite the file specific Gaussians with the last Gaussians" ),
+                                          QString::null,
+                                          0, // Stop == button 0
+                                          0 // Escape == button 0
+                                          ) )
+            {
+            case 0 : // set the last Gaussians
+               gaussians = f_gaussians[ files[ 0 ] ];
+               return true;
+               break;
+            case 1 : // just ignore them
+               return false;
+               break;
+            }
+         }
          return false;
       }
    }
@@ -10300,12 +10338,6 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
    return sqrt( rmsd );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target()
-{
-   QStringList files = all_selected_files();
-   return create_unified_ggaussian_target( files );
-}
-
 void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
 {
    if ( ggauss_recompute() )
@@ -10314,162 +10346,9 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
    }
 }
 
-bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
-{
-   unified_ggaussian_q               .clear();
-   unified_ggaussian_jumps           .clear();
-   unified_ggaussian_I               .clear();
-   unified_ggaussian_e               .clear();
-   unified_ggaussian_t               .clear();
-   unified_ggaussian_param_index     .clear();
-   unified_ggaussian_q_start         .clear();
-   unified_ggaussian_q_end           .clear();
-   
-   double q_start = le_gauss_fit_start->text().toDouble();
-   double q_end   = le_gauss_fit_end  ->text().toDouble();
-
-   unified_ggaussian_jumps  .push_back( 0e0 );
-
-   for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
-   {
-      if ( i )
-      {
-         unified_ggaussian_jumps.push_back( unified_ggaussian_t.back() );
-      }
-      if ( !f_qs.count( unified_ggaussian_files[ i ] ) ||
-           f_qs[ unified_ggaussian_files[ i ] ].size() < 2 )
-      {
-         editor_msg( "red", QString( tr( "Internal error: %1 has no or empty or insufficient data" ) ).arg( unified_ggaussian_files[ i ] ) );
-         return false;
-      }
-
-      if ( unified_ggaussian_use_errors && 
-           ( !f_errors.count( unified_ggaussian_files[ i ] ) ||
-             f_errors[ unified_ggaussian_files[ i ] ].size() != f_qs[ unified_ggaussian_files[ i ] ].size() ) )
-      {
-         editor_msg( "dark red", QString( tr( "WARNING: %1 has no errors so errors are off globally" ) ).arg( unified_ggaussian_files[ i ] ) );
-         unified_ggaussian_use_errors = false;
-         unified_ggaussian_e.clear();
-      }
-
-      unified_ggaussian_q_start.push_back( unified_ggaussian_t.size() );
-      for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ unified_ggaussian_files[ i ] ].size(); j++ )
-      {
-         if ( f_qs[ unified_ggaussian_files[ i ] ][ j ] >= q_start &&
-              f_qs[ unified_ggaussian_files[ i ] ][ j ] <= q_end )
-         {
-            unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
-            if ( cb_fix_width->isChecked() )
-            {
-               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 2 + i ) );
-            } else {
-               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
-            }               
-            unified_ggaussian_q           .push_back( f_qs[ unified_ggaussian_files[ i ] ][ j ] );
-            unified_ggaussian_I           .push_back( f_Is[ unified_ggaussian_files[ i ] ][ j ] );
-            if ( unified_ggaussian_use_errors )
-            {
-               unified_ggaussian_e        .push_back( f_errors[ unified_ggaussian_files[ i ] ][ j ] );
-            }
-         }
-      }
-      unified_ggaussian_q_end.push_back( unified_ggaussian_t.size() );
-   }
-
-   if ( !is_nonzero_vector( unified_ggaussian_e ) )
-   {
-      unified_ggaussian_use_errors = false;
-      editor_msg( "dark red", tr( "WARNING: some errors are zero so errors are off globally" ) );
-   }
-
-   //    printvector( "q_start", unified_ggaussian_q_start );
-   //    printvector( "q_end"  , unified_ggaussian_q_end   );
-
-   pb_ggauss_rmsd->setEnabled( false );
-   return true;
-}
-
-bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files )
-{
-   unified_ggaussian_ok = false;
-
-   org_gaussians = gaussians;
-   // printvector( "cugt: org_gauss", org_gaussians );
-
-   unified_ggaussian_params          .clear();
-
-   unified_ggaussian_files           = files;
-   unified_ggaussian_curves          = files.size();
-
-   unified_ggaussian_use_errors      = true;
-
-   // for testing
-   // unified_ggaussian_use_errors      = false;
-
-   unified_ggaussian_gaussians_size  = ( unsigned int ) gaussians.size() / 3;
-
-   if ( !initial_ggaussian_fit( files ) )
-   {
-      progress->reset();
-      return false;
-   }
-
-   // push back centers first
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
-   {
-      unified_ggaussian_params.push_back( gaussians[ 1 + i ] );
-      if ( cb_fix_width->isChecked() )
-      {
-         unified_ggaussian_params.push_back( gaussians[ 2 + i ] );
-      }
-   }
-
-  // now push back all the file specific amplitude & widths
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
-      if ( !f_gaussians.count( files[ i ] ) )
-      {
-         editor_msg( "red", QString( tr( "Internal error: %1 does not have a gaussian set" ) ).arg( files[ i ] ) );
-         return false;
-      }
-      if ( f_gaussians[ files[ i ] ].size() != gaussians.size() )
-      {
-         editor_msg( "red", QString( tr( "Internal error: %1 has an incompatible gaussian set" ) ).arg( files[ i ] ) );
-         return false;
-      }
-      
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
-      {
-         unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 0 + j ] ); // height
-         if ( !cb_fix_width->isChecked() )
-         {
-            unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 2 + j ] ); // width
-         }
-      }
-   }
-
-   progress->setProgress( unified_ggaussian_curves * 1.1, unified_ggaussian_curves * 1.2 );
-   qApp->processEvents();
-   if ( !ggauss_recompute() )
-   {
-      progress->reset();
-      return false;
-   }
-
-   //    printvector( "unified q:", unified_ggaussian_q );
-   //    printvector( "unified t:", unified_ggaussian_t );
-   //    printvector( "unified I:", unified_ggaussian_I );
-   // printvector( "unified params:", unified_ggaussian_params );
-   // printvector( "unified param index:", unified_ggaussian_param_index );
-
-   unified_ggaussian_ok = true;
-   progress->setProgress( 1, 1 );
-   return true;
-}
-
 bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
 {
+
    wheel_file = files[ 0 ];
 
    US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 

@@ -1032,9 +1032,9 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
 
-   if ( !ggaussian_compatible() )
+   if ( !ggaussian_compatible( false ) )
    {
-      editor_msg( "red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians, Please enter \"Global Gaussians\" with these files selected and then \"Keep\" before pressing \"Make I(q)\"" ) );
+      editor_msg( "red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers, Please enter \"Global Gaussians\" with these files selected and then \"Keep\" before pressing \"Make I(q)\"" ) );
       return;
    }
 
@@ -1243,7 +1243,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          sd_from_difference = true;
          cout << "ciq: sd_from_difference true\n";
       } else {
-         save_gaussians = false;
+         sd_from_difference = false;
          cout << "ciq: sd_from_difference false\n";
       }
       if ( !parameters.count( "go" ) )
@@ -1627,9 +1627,14 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
       update_enables();
       return;
    }
-   if ( !ggaussian_compatible( files ) )
+   if ( !ggaussian_compatible( files, false ) )
    {
-      editor_msg( "red", tr( "Error: Not all files have the same numbers of Gaussians defined" ) );
+      editor_msg( "dark red", 
+                  cb_fix_width->isChecked() ?
+                  tr( "NOTICE: Some files selected have Gaussians with varying centers or widths or a different number of Gaussians or centers or widths that do not match the last Gaussians" )
+                  :
+                  tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians." ) 
+                  );
       update_enables();
       return;
    }
@@ -1931,4 +1936,341 @@ void US_Hydrodyn_Saxs_Hplc::set_detector()
       detector_uv_conv = parameters[ "uv_conv" ].toDouble();
    }
    update_enables();
+}
+
+
+/*
+
+   for ( int i = 0; i < (int)files.size(); i++ )
+   {
+      QString this_file = files[ i ];
+      selected_map[ this_file ] = true;
+      if ( created_files_not_saved.count( this_file ) )
+      {
+         created_not_saved_list << this_file;
+         created_not_saved_map[ this_file ] = true;
+      }
+   }
+
+   if ( created_not_saved_list.size() )
+   {
+      QStringList qsl;
+      for ( int i = 0; i < (int)created_not_saved_list.size() && i < 15; i++ )
+      {
+         qsl << created_not_saved_list[ i ];
+      }
+
+      if ( qsl.size() < created_not_saved_list.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
+      }
+
+      switch ( QMessageBox::warning(this, 
+                                    tr( "US-SOMO: SAXS Hplc Remove Files" ),
+                                    QString( tr( "Please note:\n\n"
+                                                 "These files were created but not saved as .dat files:\n"
+                                                 "%1\n\n"
+                                                 "What would you like to do?\n" ) )
+                                    .arg( qsl.join( "\n" ) ),
+                                    tr( "&Save them now" ), 
+                                    tr( "&Remove them anyway" ), 
+                                    tr( "&Quit from removing files" ), 
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // save them now
+         // set the ones listed to selected
+         if ( !save_files( created_not_saved_list ) )
+         {
+            return;
+         }
+      case 1 : // just remove them
+         break;
+      case 2 : // quit
+         disable_updates = false;
+         return;
+         break;
+      }
+
+   }
+*/
+
+bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
+{
+   unified_ggaussian_q               .clear();
+   unified_ggaussian_jumps           .clear();
+   unified_ggaussian_I               .clear();
+   unified_ggaussian_e               .clear();
+   unified_ggaussian_t               .clear();
+   unified_ggaussian_param_index     .clear();
+   unified_ggaussian_q_start         .clear();
+   unified_ggaussian_q_end           .clear();
+   
+   double q_start = le_gauss_fit_start->text().toDouble();
+   double q_end   = le_gauss_fit_end  ->text().toDouble();
+
+   unified_ggaussian_jumps  .push_back( 0e0 );
+
+   for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
+   {
+      if ( i )
+      {
+         unified_ggaussian_jumps.push_back( unified_ggaussian_t.back() );
+      }
+      if ( !f_qs.count( unified_ggaussian_files[ i ] ) ||
+           f_qs[ unified_ggaussian_files[ i ] ].size() < 2 )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 has no or empty or insufficient data" ) ).arg( unified_ggaussian_files[ i ] ) );
+         return false;
+      }
+
+      if ( unified_ggaussian_use_errors && 
+           ( !f_errors.count( unified_ggaussian_files[ i ] ) ||
+             f_errors[ unified_ggaussian_files[ i ] ].size() != f_qs[ unified_ggaussian_files[ i ] ].size() ) )
+      {
+         editor_msg( "dark red", QString( tr( "WARNING: %1 has no errors so errors are off globally" ) ).arg( unified_ggaussian_files[ i ] ) );
+         unified_ggaussian_use_errors = false;
+         unified_ggaussian_e.clear();
+      }
+
+      unified_ggaussian_q_start.push_back( unified_ggaussian_t.size() );
+      for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ unified_ggaussian_files[ i ] ].size(); j++ )
+      {
+         if ( f_qs[ unified_ggaussian_files[ i ] ][ j ] >= q_start &&
+              f_qs[ unified_ggaussian_files[ i ] ][ j ] <= q_end )
+         {
+            if ( unified_ggaussian_use_errors && unified_ggaussian_errors_skip &&
+                 f_errors[ unified_ggaussian_files[ i ] ][ j ] <= 0e0 )
+            {
+               continue;
+            }
+                 
+            unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
+            if ( cb_fix_width->isChecked() )
+            {
+               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 2 + i ) );
+            } else {
+               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
+            }               
+            unified_ggaussian_q           .push_back( f_qs[ unified_ggaussian_files[ i ] ][ j ] );
+            unified_ggaussian_I           .push_back( f_Is[ unified_ggaussian_files[ i ] ][ j ] );
+            if ( unified_ggaussian_use_errors )
+            {
+               unified_ggaussian_e        .push_back( f_errors[ unified_ggaussian_files[ i ] ][ j ] );
+            }
+         }
+      }
+      unified_ggaussian_q_end.push_back( unified_ggaussian_t.size() );
+   }
+
+   if ( !is_nonzero_vector( unified_ggaussian_e ) )
+   {
+      unified_ggaussian_use_errors = false;
+      editor_msg( "dark red", tr( "WARNING: some errors are zero so errors are off globally" ) );
+   }
+
+   //    printvector( "q_start", unified_ggaussian_q_start );
+   //    printvector( "q_end"  , unified_ggaussian_q_end   );
+
+   pb_ggauss_rmsd->setEnabled( false );
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init )
+{
+   QStringList files = all_selected_files();
+   return create_unified_ggaussian_target( files, do_init );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files, bool do_init )
+{
+   unified_ggaussian_ok = false;
+
+   org_gaussians = gaussians;
+   // printvector( "cugt: org_gauss", org_gaussians );
+
+   unified_ggaussian_params          .clear();
+
+   unified_ggaussian_files           = files;
+   unified_ggaussian_curves          = files.size();
+
+   unified_ggaussian_use_errors      = true;
+
+   // for testing
+   // unified_ggaussian_use_errors      = false;
+
+   unified_ggaussian_gaussians_size  = ( unsigned int ) gaussians.size() / 3;
+
+   if ( do_init )
+   {
+      unified_ggaussian_errors_skip = false;
+      if ( !initial_ggaussian_fit( files ) )
+      {
+         progress->reset();
+         return false;
+      }
+   }
+
+   // push back centers first
+   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+   {
+      unified_ggaussian_params.push_back( gaussians[ 1 + i ] );
+      if ( cb_fix_width->isChecked() )
+      {
+         unified_ggaussian_params.push_back( gaussians[ 2 + i ] );
+      }
+   }
+
+   // now push back all the file specific amplitude & widths
+
+   map < QString, bool >    no_errors;
+   map < QString, QString > zero_points;
+   QStringList              qsl_no_errors;
+   QStringList              qsl_zero_points;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      if ( !f_gaussians.count( files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 does not have a gaussian set" ) ).arg( files[ i ] ) );
+         return false;
+      }
+      if ( f_gaussians[ files[ i ] ].size() != gaussians.size() )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 has an incompatible gaussian set" ) ).arg( files[ i ] ) );
+         return false;
+      }
+      
+      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
+      {
+         unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 0 + j ] ); // height
+         if ( !cb_fix_width->isChecked() )
+         {
+            unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 2 + j ] ); // width
+         }
+      }
+
+      if ( cb_sd_weight->isChecked() )
+      {
+         if ( !f_errors.count( files[ i ] ) ||
+              f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
+         {
+            cout << QString( "file %1 no errors %2\n" )
+               .arg( files[ i ] ).arg( f_errors.count( files[ i ] ) ?
+                                       QString( "errors %1 vs Is %2" )
+                                       .arg( f_errors[ files[ i ] ].size() )
+                                       .arg( f_Is[ files[ i ] ].size() )
+                                       :
+                                       "at all" );
+            no_errors[ files[ i ] ] = true;
+            qsl_no_errors           << files[ i ];
+         } else {
+            if ( !is_nonzero_vector( f_errors[ files[ i ] ] ) )
+            {
+               unsigned int zero_pts = 0;
+               for ( unsigned int j = 0; j < ( unsigned int ) f_errors[ files[ i ] ].size(); j++ )
+               {
+                  if ( isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                  {
+                     zero_pts++;
+                  }
+               }
+               zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( f_errors[ files[ i ] ].size() );
+               qsl_zero_points           << zero_points[ files[ i ] ];
+            }
+         }
+      }
+   }
+
+   if ( zero_points.size() || no_errors.size() )
+   {
+      unsigned int used = 0;
+
+      QStringList qsl_list_no_errors;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_no_errors.size() && i < 12; i++ )
+      {
+         qsl_list_no_errors << qsl_no_errors[ i ];
+         used++;
+      }
+      if ( qsl_list_no_errors.size() < qsl_no_errors.size() )
+      {
+         qsl_list_no_errors << QString( tr( "... and %1 more not listed" ) ).arg( qsl_no_errors.size() - qsl_list_no_errors.size() );
+      }
+
+      QStringList qsl_list_zero_points;
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_zero_points.size() && i < 24 - used; i++ )
+      {
+         qsl_list_zero_points << qsl_zero_points[ i ];
+      }
+      if ( qsl_list_zero_points.size() < qsl_zero_points.size() )
+      {
+         qsl_list_zero_points << QString( tr( "... and %1 more not listed" ) ).arg( qsl_zero_points.size() - qsl_list_zero_points.size() );
+      }
+
+      switch ( QMessageBox::warning(this, 
+                                    caption() + tr( ": Create unified global Gaussians" ),
+                                    QString( tr( "Please note:\n\n"
+                                                 "%1"
+                                                 "%2"
+                                                 "What would you like to do?\n" ) )
+                                    .arg( qsl_list_no_errors.size() ?
+                                          QString( tr( "These files have no associated errors:\n%1\n\n" ) ).arg( qsl_list_no_errors.join( "\n" ) ) : "" )
+                                    .arg( qsl_list_zero_points.size() ?
+                                          QString( tr( "These files have zero points:\n%1\n\n" ) ).arg( qsl_list_zero_points.join( "\n" ) ) : "" )
+                                    ,
+                                    tr( "&Turn off SD weighting" ), 
+                                    qsl_zero_points.size() ? tr( "Drop &points with zero SDs" ) : QString::null, 
+                                    tr( "Drop &full curves with zero SDs" ), 
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // turn off sd weighting
+         cb_sd_weight->setChecked( false );
+         return create_unified_ggaussian_target( files, false );
+         break;
+      case 1 : // drop zero sd points
+         unified_ggaussian_errors_skip = true;
+         break;
+      case 2 : // drop zero sd curves
+         running = true;
+         disable_updates = true;
+         for ( int i = 0; i < lb_files->numRows(); i++ )
+         {
+            if ( zero_points.count( lb_files->text( i ) ) ||
+                 no_errors  .count( lb_files->text( i ) ) )
+            {
+               lb_files->setSelected( i, false );
+            }
+         }
+         disable_updates = false;
+         running = false;
+         update_enables();
+         disable_all();
+         plot_files();
+         QStringList files = all_selected_files();
+         return create_unified_ggaussian_target( files, false );
+         break;
+      }
+   }
+
+   progress->setProgress( unified_ggaussian_curves * 1.1, unified_ggaussian_curves * 1.2 );
+   qApp->processEvents();
+   if ( !ggauss_recompute() )
+   {
+      progress->reset();
+      return false;
+   }
+
+   //    printvector( "unified q:", unified_ggaussian_q );
+   //    printvector( "unified t:", unified_ggaussian_t );
+   //    printvector( "unified I:", unified_ggaussian_I );
+   // printvector( "unified params:", unified_ggaussian_params );
+   // printvector( "unified param index:", unified_ggaussian_param_index );
+
+   unified_ggaussian_ok = true;
+   progress->setProgress( 1, 1 );
+   return true;
 }
