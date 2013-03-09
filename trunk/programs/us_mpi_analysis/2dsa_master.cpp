@@ -557,14 +557,39 @@ void US_MPI_Analysis::write_output( void )
    US_SolveSim::Simulation sim = simulation_values;
 
    double     save_meniscus = meniscus_value;
-   sim.solutes              = calculated_solutes[ max_depth ]; 
-   meniscus_value           = meniscus_values[ meniscus_run ];
+   sim.solutes  = calculated_solutes[ max_depth ]; 
+   int mxdssz   = sim.solutes.size();
+
+   if ( mxdssz == 0 )
+   { // Handle the case of a zero-solute final model
+      int simssz   = simulation_values.solutes.size();
+      int dm1ssz   = calculated_solutes[ max_depth - 1 ].size();
+      DbgLv( 0 ) << "*WARNING* Final solutes size" << mxdssz
+         << "max_depth" << max_depth << "Sim and Depth-1 solutes size"
+         << simssz << dm1ssz;
+      if ( simssz > 0 )
+      { // Use the last result solutes if there are some
+         sim.solutes  = simulation_values.solutes;
+         DbgLv( 0 ) << "   SimValues solutes used";
+      }
+      else if ( dm1ssz > 0 )
+      { // Else use the max-depth-minus-1 solutes if there are some
+         sim.solutes  = calculated_solutes[ max_depth - 1 ];
+         DbgLv( 0 ) << "   CalcValue[mxdepth-1] solutes used";
+      }
+      else
+      { // Else report the bad situation of no solutes available
+         DbgLv( 0 ) << "   *ERROR* No solutes will be used";
+      }
+   }
+
+   meniscus_value  = meniscus_values[ meniscus_run ];
    qSort( sim.solutes );
 DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
  << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
 
    write_model( sim, US_Model::TWODSA );
-   meniscus_value = save_meniscus;
+   meniscus_value  = save_meniscus;
 
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
       write_noise( US_Noise::TI, sim.ti_noise );
