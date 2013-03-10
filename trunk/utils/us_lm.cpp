@@ -1367,7 +1367,7 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
 
    void US_LM::lmcurve_fit( int n_par, double *par, int m_dat, 
                      const double *t, const double *y,
-                     double (*f)( double, double * ),
+                     double (*f)( double t, double *par ),
                      const LM_Control *control, LM_Status *status )
    {
       LM_CurveData data( (double*)t, (double*)y, f );
