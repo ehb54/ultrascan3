@@ -31,9 +31,19 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       QCheckBox *                             cb_add_bl;
       QCheckBox *                             cb_save_as_pct_iq;
+      QCheckBox *                             cb_sd_source;
+
+      QLabel *                                lbl_sd_zeros_found;
+      QCheckBox *                             cb_sd_zero_avg_local_sd;
+      QCheckBox *                             cb_sd_zero_keep_as_zeros;
+      QCheckBox *                             cb_sd_zero_set_to_pt1pct;
+
+      mQLabel *                               lbl_zeros_found;
+      QCheckBox *                             cb_zero_drop_points;
+      QCheckBox *                             cb_zero_avg_local_sd;
+      QCheckBox *                             cb_zero_keep_as_zeros;
 
       QCheckBox *                             cb_normalize;
-      QCheckBox *                             cb_sd_source;
 
       QLabel *                                lbl_error;
       QLabel *                                lbl_gaussian;
@@ -61,12 +71,33 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       void                                    setupGUI();
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      void                                    ws_hide( vector < QWidget * >, bool hide = true );
+      vector < QWidget * >                    ws_zeros;
+      vector < QWidget * >                    ws_sd_zeros;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+
    private slots:
 
       void                                    set_add_bl();
       void                                    set_save_as_pct_iq();
-      void                                    set_normalize();
       void                                    set_sd_source();
+
+      void                                    set_sd_zero_avg_local_sd();
+      void                                    set_sd_zero_keep_as_zeros();
+      void                                    set_sd_zero_set_to_pt1pct();
+
+      void                                    zeros_found();
+      void                                    set_zero_drop_points();
+      void                                    set_zero_avg_local_sd();
+      void                                    set_zero_keep_as_zeros();
+
+      void                                    set_normalize();
 
       void                                    update_enables();
 

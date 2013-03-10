@@ -1027,6 +1027,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 {
    // for each selected file
    // extract q grid from file names
+   editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
 
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
@@ -1066,6 +1067,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    disable_all();
 
+   map < QString, bool >    no_errors;
+   map < QString, QString > zero_points;
+   QStringList              qsl_no_errors;
+   QStringList              qsl_zero_points;
+
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
       progress->setProgress( i, files.size() * 2 );
@@ -1073,6 +1079,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       if ( rx_q.search( files[ i ] ) == -1 )
       {
          editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
          update_enables();
          return;
       }
@@ -1080,6 +1087,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       if ( used_q.count( ql.back() ) )
       {
          editor_msg( "red", QString( tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
          update_enables();
          return;
       }
@@ -1106,7 +1114,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
          {
             I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
-            if ( use_errors && f_errors[ files[ i ] ].size() )
+            if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
             {
                e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
             } else {
@@ -1123,9 +1131,31 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                used_t[ f_qs[ files[ i ] ][ j ] ] = true;
             }
          }
+
+         if ( !f_errors.count( files[ i ] ) ||
+              f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
+         {
+            no_errors[ files[ i ] ] = true;
+            qsl_no_errors           << files[ i ];
+         } else {
+            if ( !is_nonzero_vector( f_errors[ files[ i ] ] ) )
+            {
+               unsigned int zero_pts = 0;
+               for ( unsigned int j = 0; j < ( unsigned int ) f_errors[ files[ i ] ].size(); j++ )
+               {
+                  if ( isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                  {
+                     zero_pts++;
+                  }
+               }
+               zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( f_errors[ files[ i ] ].size() );
+               qsl_zero_points           << zero_points[ files[ i ] ];
+            }
+         }
+
       }
    }
-   
+
    tl.sort();
 
    vector < double > tv;
@@ -1149,6 +1179,39 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       qv_string.push_back( QString( "%1" ).arg( *it ) );
    }
 
+
+   QString qs_no_errors;
+   QString qs_zero_points;
+
+   if ( zero_points.size() || no_errors.size() )
+   {
+      unsigned int used = 0;
+
+      QStringList qsl_list_no_errors;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_no_errors.size() && i < 12; i++ )
+      {
+         qsl_list_no_errors << qsl_no_errors[ i ];
+         used++;
+      }
+      if ( qsl_list_no_errors.size() < qsl_no_errors.size() )
+      {
+         qsl_list_no_errors << QString( tr( "... and %1 more not listed" ) ).arg( qsl_no_errors.size() - qsl_list_no_errors.size() );
+      }
+      qs_no_errors = qsl_list_no_errors.join( "\n" );
+      
+      QStringList qsl_list_zero_points;
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_zero_points.size() && i < 24 - used; i++ )
+      {
+         qsl_list_zero_points << qsl_zero_points[ i ];
+      }
+      if ( qsl_list_zero_points.size() < qsl_zero_points.size() )
+      {
+         qsl_list_zero_points << QString( tr( "... and %1 more not listed" ) ).arg( qsl_zero_points.size() - qsl_list_zero_points.size() );
+      }
+      qs_zero_points = qsl_list_zero_points.join( "\n" );
+   }
+
    bool save_gaussians;
 
    vector < double > conv;
@@ -1156,8 +1219,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    
    bool normalize_by_conc = false;
 
+   bool sd_avg_local  = false;
+   bool sd_drop_zeros = false;
+   bool sd_keep_zeros = false;
+   bool sd_set_pt1pct = false;
+
+   bool sd_from_difference = false;
    {
       map < QString, QString > parameters;
+      bool no_conc = false;
       if ( bl_count )
       {
          parameters[ "baseline" ] = 
@@ -1181,8 +1251,6 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          }
       }
 
-      bool no_conc = false;
-      bool sd_from_difference = false;
       if ( lbl_conc_file->text().isEmpty() )
       {
          parameters[ "error" ] = QString( tr( "Concentration controls disabled: no concentration file set" ) );
@@ -1215,6 +1283,18 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          }
       }            
 
+      parameters[ "no_errors"   ] = qs_no_errors;
+      parameters[ "zero_points" ] = qs_zero_points;
+
+      //       cout << "parameters b4 ciq:\n";
+      //       for ( map < QString, QString >::iterator it = parameters.begin();
+      //             it != parameters.end();
+      //             it++ )
+      //       {
+      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+      //       }
+      //       cout << "end parameters b4 ciq:\n";
+
       US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
          new US_Hydrodyn_Saxs_Hplc_Ciq(
                                        this,
@@ -1224,6 +1304,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       hplc_ciq->exec();
       delete hplc_ciq;
       
+      //       cout << "parameters:\n";
+      //       for ( map < QString, QString >::iterator it = parameters.begin();
+      //             it != parameters.end();
+      //             it++ )
+      //       {
+      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+      //       }
+      //       cout << "end parameters:\n";
+
       if ( bl_count && ( !parameters.count( "add_baseline" ) || parameters[ "add_baseline" ] == "false" ) )
       {
          bl_count = 0;
@@ -1249,6 +1338,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       if ( !parameters.count( "go" ) )
       {
          progress->reset();
+         update_enables();
          return;
       }
 
@@ -1266,6 +1356,27 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             normalize_by_conc = true;
          }
       }
+
+      if ( sd_from_difference )
+      {
+         sd_avg_local  = parameters[ "sd_zero_avg_local_sd"  ] == "true";
+         sd_keep_zeros = parameters[ "sd_zero_keep_as_zeros" ] == "true";
+         sd_set_pt1pct = parameters[ "sd_zero_set_to_pt1pct" ] == "true";
+      } else {
+         sd_drop_zeros = parameters[ "zero_drop_points"   ] == "true";
+         sd_avg_local  = parameters[ "zero_avg_local_sd"  ] == "true";
+         sd_keep_zeros = parameters[ "zero_keep_as_zeros" ] == "true";
+      }
+
+      cout << QString( "sd_avg_local  %1\n"
+                       "sd_drop_zeros %2\n"
+                       "sd_set_pt1pct %3\n"
+                       "sd_keep_zeros %4\n" )
+         .arg( sd_avg_local  ? "true" : "false" )
+         .arg( sd_drop_zeros ? "true" : "false" )
+         .arg( sd_set_pt1pct ? "true" : "false" )
+         .arg( sd_keep_zeros ? "true" : "false" )
+         ;
    }
 
    //    if ( bl_count &&
@@ -1376,6 +1487,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       // vector < double > gsI_recon;
       // vector < double > gsG_recon;
 
+      // for "sd by differece"
+      vector < vector < double > > used_pcts;
+      vector < QString >           used_names;
+
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
          // build up an I(q)
@@ -1400,22 +1515,26 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          // vector < double > I_recon;
          // vector < double > G_recon;
 
+         vector < double > this_used_pcts;
+
          for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
          {
             if ( !I_values.count( tv[ t ] ) )
             {
-               editor_msg( "red", QString( tr( "Internal error: I values missing t %1" ) ).arg( tv[ t ] ) );
-               running = false;
-               update_enables();
-               return;
+               editor_msg( "dark red", QString( tr( "Notice: I values missing frame/time = %1" ) ).arg( tv[ t ] ) );
+               //                running = false;
+               //                update_enables();
+               //                return;
+               continue;
             }
 
             if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
             {
-               editor_msg( "red", QString( tr( "Internal error: I values missing q %1" ) ).arg( qv[ i ] ) );
-               running = false;
-               update_enables();
-               return;
+               editor_msg( "red", QString( tr( "Notice: I values missing q = %1" ) ).arg( qv[ i ] ) );
+               //                running = false;
+               //                update_enables();
+               //                return;
+               continue;
             }
 
             double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ];
@@ -1460,6 +1579,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             
             tmp_I *= frac_of_gaussian_sum;
             tmp_e *= frac_of_gaussian_sum;
+
+            if ( sd_from_difference )
+            {
+               this_used_pcts.push_back( frac_of_gaussian_sum );
+            }
 
             // double tmp_I_recon = tmp_I;
             // double tmp_G_recon = tmp_G;
@@ -1518,23 +1642,232 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          lb_files->setBottomItem( lb_files->numRows() - 1 );
          created_files_not_saved[ name ] = true;
    
+         vector < QString > use_qv_string = qv_string;
+         vector < double  > use_qv        = qv;
+         vector < double  > use_I         = save_gaussians ? G : I;
+         vector < double  > use_e         = e;
+
+         if ( sd_from_difference )
+         {
+            used_names.push_back( name );
+            used_pcts .push_back( this_used_pcts );
+         } else {
+            if ( sd_drop_zeros )
+            {
+               vector < QString > tmp_qv_string;
+               vector < double  > tmp_qv       ;
+               vector < double  > tmp_I        ; 
+               vector < double  > tmp_e        ;
+               for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+               {
+                  if ( use_e[ i ] > 0e0 )
+                  {
+                     tmp_qv_string.push_back( use_qv_string[ i ] );
+                     tmp_qv       .push_back( use_qv       [ i ] );
+                     tmp_I        .push_back( use_I        [ i ] );
+                     tmp_e        .push_back( use_e        [ i ] );
+                  }
+               }
+               use_qv_string = tmp_qv_string;
+               use_qv        = tmp_qv;
+               use_I         = tmp_I;
+               use_e         = tmp_e;
+            }
+
+            if ( sd_avg_local )
+            {
+               bool more_zeros;
+               unsigned int tries = 0;
+               do 
+               {
+                  more_zeros = false;
+                  tries++;
+                  for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+                  {
+                     if ( use_e[ i ] <= 0e0 )
+                     {
+                        if ( !i && i < ( unsigned int ) use_e.size() - 1 )
+                        {
+                           use_e[ i ] = use_e[ i + 1 ];
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        if ( i == ( unsigned int ) use_e.size() - 1 && i > 0 )
+                        {
+                           use_e[ i ] = use_e[ i - 1 ];
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        if ( i < ( unsigned int ) use_e.size() - 1 && i > 0 )
+                        {
+                           use_e[ i ] = ( use_e[ i - 1 ] + use_e[ i + 1 ] ) * 5e-1;
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        more_zeros = true;
+                     }
+                  }
+               } while ( more_zeros && tries < 5 );
+               if ( more_zeros )
+               {
+                  editor_msg( "dark red", tr( "Warning: too many adjacent S.D. zeros, could not set all S.D.'s to non-zero values" ) );
+               }
+            }
+            
+            if ( sd_set_pt1pct )
+            {
+               for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+               {
+                  if ( use_e[ i ] <= 0e0 )
+                  {
+                     use_e[ i ] = use_I[ i ] * 0.001;
+                  }
+               }
+            }
+         }
+
          f_pos       [ name ] = f_qs.size();
-         f_qs_string [ name ] = qv_string;
-         f_qs        [ name ] = qv;
-         f_Is        [ name ] = save_gaussians ? G : I;
-         f_errors    [ name ] = e;
+         f_qs_string [ name ] = use_qv_string;
+         f_qs        [ name ] = use_qv;
+         f_Is        [ name ] = use_I;
+         f_errors    [ name ] = use_e;
          f_is_time   [ name ] = false;
          {
             vector < double > tmp;
             f_gaussians  [ name ] = tmp;
          }
       } // for each gaussian
+
+      if ( sd_from_difference )
+      {
+         vector < double >  total_e;
+         for ( unsigned int i = 0; i < gsG.size(); i++ )
+         {
+            total_e.push_back( fabs( gsG[ i ] - gsI[ i ] ) );
+         }
+
+         // printvector( "total_e", total_e );
+
+         for ( unsigned int i = 0; i < ( unsigned int ) used_names.size(); i++ )
+         {
+            vector < QString > use_qv_string = f_qs_string[ used_names[ i ] ];
+            vector < double >  use_qv        = f_qs       [ used_names[ i ] ];
+            vector < double >  use_I         = f_Is       [ used_names[ i ] ];
+            vector < double >  use_e         = total_e;
+            
+            // printvector( QString( "used_pcts for %1" ).arg( used_names[ i ] ), used_pcts[ i ] );
+
+            for ( unsigned int j = 0; j < ( unsigned int ) use_e.size(); j++ )
+            {
+               use_e[ j ] *= used_pcts[ i ][ j ];
+            }
+
+            // printvector( "use_e", use_e );
+
+            if ( sd_drop_zeros )
+            {
+               vector < QString > tmp_qv_string;
+               vector < double  > tmp_qv       ;
+               vector < double  > tmp_I        ; 
+               vector < double  > tmp_e        ;
+               for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+               {
+                  if ( use_e[ i ] > 0e0 )
+                  {
+                     tmp_qv_string.push_back( use_qv_string[ i ] );
+                     tmp_qv       .push_back( use_qv       [ i ] );
+                     tmp_I        .push_back( use_I        [ i ] );
+                     tmp_e        .push_back( use_e        [ i ] );
+                  }
+               }
+               use_qv_string = tmp_qv_string;
+               use_qv        = tmp_qv;
+               use_I         = tmp_I;
+               use_e         = tmp_e;
+            }
+
+            if ( sd_avg_local )
+            {
+               bool more_zeros;
+               unsigned int tries = 0;
+               do 
+               {
+                  more_zeros = false;
+                  tries++;
+                  for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+                  {
+                     if ( use_e[ i ] <= 0e0 )
+                     {
+                        if ( !i && i < ( unsigned int ) use_e.size() - 1 )
+                        {
+                           use_e[ i ] = use_e[ i + 1 ];
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        if ( i == ( unsigned int ) use_e.size() - 1 && i > 0 )
+                        {
+                           use_e[ i ] = use_e[ i - 1 ];
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        if ( i < ( unsigned int ) use_e.size() - 1 && i > 0 )
+                        {
+                           use_e[ i ] = ( use_e[ i - 1 ] + use_e[ i + 1 ] ) * 5e-1;
+                           if ( use_e[ i ] <= 0e0 )
+                           {
+                              more_zeros = true;
+                           }
+                           continue;
+                        }
+                        more_zeros = true;
+                     }
+                  }
+               } while ( more_zeros && tries < 5 );
+               if ( more_zeros )
+               {
+                  editor_msg( "dark red", tr( "Warning: too many adjacent S.D. zeros, could not set all S.D.'s to non-zero values" ) );
+               }
+            }
+            
+            if ( sd_set_pt1pct )
+            {
+               for ( unsigned int i = 0; i < ( unsigned int ) use_e.size(); i++ )
+               {
+                  if ( use_e[ i ] <= 0e0 )
+                  {
+                     use_e[ i ] = use_I[ i ] * 0.001;
+                  }
+               }
+            }
+            
+            f_qs_string[ used_names[ i ] ] = use_qv_string;
+            f_qs       [ used_names[ i ] ] = use_qv;
+            f_Is       [ used_names[ i ] ] = use_I;
+            f_errors   [ used_names[ i ] ] = use_e;
+         }
+      }         
       add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
       add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
       // add_plot( QString( "sumIr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
       // add_plot( QString( "sumGr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
    } // for each q value
 
+   editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
    progress->setProgress( 1, 1 );
    running = false;
    update_enables();
@@ -2274,3 +2607,54 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    progress->setProgress( 1, 1 );
    return true;
 }
+
+bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
+{
+   if ( !gaussians.size() )
+   {
+      return false;
+   } 
+      
+   double peak;
+   if ( !get_peak( file, peak ) )
+   {
+      return false;
+   }
+   
+   double gmax = compute_gaussian_peak( file, gaussians );
+   
+   double scale = peak / gmax;   
+
+   if ( scale < .5 || scale > 1.5 )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    caption(),
+                                    QString( tr( "Please note:\n\n"
+                                                 "The current Gaussians should be scaled by %1 to be in the range of this curve.\n"
+                                                 "What would you like to do?\n" ) ).arg( scale ),
+                                    tr( "&Rescale the Gaussian amplitudes" ), 
+                                    tr( "&Do not rescale" ),
+                                    QString::null,
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // rescale the Gaussians
+         for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+         {
+            gaussians[ 0 + i ] *= scale;
+         }
+         return true;
+         break;
+      case 1 : // just ignore them
+         return false;
+         break;
+      }
+   }
+      
+   return false;
+}
+
+      
+
+

@@ -425,6 +425,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                                wheel_errors_ok;
 
+      bool                                opt_repeak_gaussians( QString file );
+
       QStringList                         all_selected_files();
       QStringList                         all_files();
 

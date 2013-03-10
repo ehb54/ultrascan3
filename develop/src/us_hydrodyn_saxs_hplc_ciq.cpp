@@ -68,6 +68,75 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_source->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   QLabel * lbl_sd_zeros_found = new QLabel( tr( "If zeros are produced when computing S.D.'s:  " ), this );
+   lbl_sd_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_sd_zeros_found->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_sd_zeros_found->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
+
+   cb_sd_zero_avg_local_sd = new QCheckBox(this);
+   cb_sd_zero_avg_local_sd->setText( tr( "Average adjacent S.D.'s  " ) );
+   cb_sd_zero_avg_local_sd->setEnabled( true );
+   connect( cb_sd_zero_avg_local_sd, SIGNAL( clicked() ), SLOT( set_sd_zero_avg_local_sd() ) );
+   cb_sd_zero_avg_local_sd->setChecked( true );
+   cb_sd_zero_avg_local_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_sd_zero_avg_local_sd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_sd_zero_keep_as_zeros = new QCheckBox(this);
+   cb_sd_zero_keep_as_zeros->setText( tr( "Leave as zero  " ) );
+   cb_sd_zero_keep_as_zeros->setEnabled( true );
+   connect( cb_sd_zero_keep_as_zeros, SIGNAL( clicked() ), SLOT( set_sd_zero_keep_as_zeros() ) );
+   cb_sd_zero_keep_as_zeros->setChecked( false );
+   cb_sd_zero_keep_as_zeros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_sd_zero_keep_as_zeros->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_sd_zero_set_to_pt1pct = new QCheckBox(this);
+   cb_sd_zero_set_to_pt1pct->setText( tr( "Set to 0.1 % of peak's I(q)  " ) );
+   cb_sd_zero_set_to_pt1pct->setEnabled( true );
+   connect( cb_sd_zero_set_to_pt1pct, SIGNAL( clicked() ), SLOT( set_sd_zero_set_to_pt1pct() ) );
+   cb_sd_zero_set_to_pt1pct->setChecked( false );
+   cb_sd_zero_set_to_pt1pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_sd_zero_set_to_pt1pct->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   ws_sd_zeros.push_back( lbl_sd_zeros_found );
+   ws_sd_zeros.push_back( cb_sd_zero_avg_local_sd );
+   ws_sd_zeros.push_back( cb_sd_zero_keep_as_zeros );
+   ws_sd_zeros.push_back( cb_sd_zero_set_to_pt1pct );
+
+   QLabel * lbl_zeros_found = new mQLabel( tr( "I(t) contains S.D.'s of zeros. When computing I(q) S.D.'s : " ), this );
+   lbl_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_zeros_found->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_zeros_found->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
+   connect( lbl_zeros_found, SIGNAL(pressed()), SLOT( zeros_found() ));
+
+   cb_zero_drop_points = new QCheckBox(this);
+   cb_zero_drop_points->setText( tr( "Drop points  " ) );
+   cb_zero_drop_points->setEnabled( true );
+   connect( cb_zero_drop_points, SIGNAL( clicked() ), SLOT( set_zero_drop_points() ) );
+   cb_zero_drop_points->setChecked( false );
+   cb_zero_drop_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zero_drop_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_zero_avg_local_sd = new QCheckBox(this);
+   cb_zero_avg_local_sd->setText( tr( "Average adjacent S.D.'s  " ) );
+   cb_zero_avg_local_sd->setEnabled( true );
+   connect( cb_zero_avg_local_sd, SIGNAL( clicked() ), SLOT( set_zero_avg_local_sd() ) );
+   cb_zero_avg_local_sd->setChecked( true );
+   cb_zero_avg_local_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zero_avg_local_sd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_zero_keep_as_zeros = new QCheckBox(this);
+   cb_zero_keep_as_zeros->setText( tr( "Leave as zeros " ) );
+   cb_zero_keep_as_zeros->setEnabled( true );
+   connect( cb_zero_keep_as_zeros, SIGNAL( clicked() ), SLOT( set_zero_keep_as_zeros() ) );
+   cb_zero_keep_as_zeros->setChecked( false );
+   cb_zero_keep_as_zeros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zero_keep_as_zeros->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   ws_zeros.push_back( lbl_zeros_found );
+   ws_zeros.push_back( cb_zero_drop_points );
+   ws_zeros.push_back( cb_zero_avg_local_sd );
+   ws_zeros.push_back( cb_zero_keep_as_zeros );
+
    cb_normalize = new QCheckBox(this);
    cb_normalize->setText( tr( "Normalize resulting I(q) by concentration" ) );
    cb_normalize->setEnabled( true );
@@ -169,7 +238,23 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    QVBoxLayout * vbl = new QVBoxLayout( 0 );
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
+
    vbl->addWidget( cb_sd_source );
+
+   QHBoxLayout * hbl_sd_zeros = new QHBoxLayout( 0 );
+   for ( unsigned int i = 0; i < ( unsigned int )ws_sd_zeros.size(); i++ )
+   {
+      hbl_sd_zeros->addWidget( ws_sd_zeros[ i ] );
+   }
+   vbl->addLayout( hbl_sd_zeros );
+
+   QHBoxLayout * hbl_zeros = new QHBoxLayout( 0 );
+   for ( unsigned int i = 0; i < ( unsigned int )ws_zeros.size(); i++ )
+   {
+      hbl_zeros->addWidget( ws_zeros[ i ] );
+   }
+   vbl->addLayout( hbl_zeros );
+
    vbl->addWidget( cb_normalize );
    
    QGridLayout * gl = new QGridLayout( 0 );
@@ -234,6 +319,15 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
    (*parameters)[ "go" ] = "true";
    (*parameters)[ "normalize" ] = cb_normalize->isChecked() ? "true" : "false";
    (*parameters)[ "sd_source" ] = cb_sd_source->isChecked() ? "difference" : "original";
+
+   (*parameters)[ "sd_zero_avg_local_sd"  ] = cb_sd_zero_avg_local_sd ->isChecked() ? "true" : "false";
+   (*parameters)[ "sd_zero_keep_as_zeros" ] = cb_sd_zero_keep_as_zeros->isChecked() ? "true" : "false";
+   (*parameters)[ "sd_zero_set_to_pt1pct" ] = cb_sd_zero_set_to_pt1pct->isChecked() ? "true" : "false";
+
+   (*parameters)[ "zero_drop_points"   ] = cb_zero_drop_points  ->isChecked() ? "true" : "false";
+   (*parameters)[ "zero_avg_local_sd"  ] = cb_zero_avg_local_sd ->isChecked() ? "true" : "false";
+   (*parameters)[ "zero_keep_as_zeros" ] = cb_zero_keep_as_zeros->isChecked() ? "true" : "false";
+
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
       (*parameters)[ QString( "conv %1" ).arg( i ) ] = le_conv[ i ]->text();
@@ -276,6 +370,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
    cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( false ), cb_sd_source->hide() ) : cb_sd_source->show();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::global()
@@ -288,9 +383,76 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::global()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_zero_avg_local_sd()
+{
+   (*parameters)[ "sd_zero_avg_local_sd" ] = cb_sd_zero_avg_local_sd->isChecked() ? "true" : "false";
+   if ( cb_sd_zero_avg_local_sd->isChecked() )
+   {
+      cb_sd_zero_keep_as_zeros->setChecked( false );
+      cb_sd_zero_set_to_pt1pct->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_zero_keep_as_zeros()
+{
+   (*parameters)[ "sd_zero_keep_as_zeros" ] = cb_sd_zero_keep_as_zeros->isChecked() ? "true" : "false";
+   if ( cb_sd_zero_keep_as_zeros->isChecked() )
+   {
+      cb_sd_zero_avg_local_sd ->setChecked( false );
+      cb_sd_zero_set_to_pt1pct->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_zero_set_to_pt1pct()
+{
+   (*parameters)[ "sd_zero_set_to_pt1pct" ] = cb_sd_zero_set_to_pt1pct->isChecked() ? "true" : "false";
+   if ( cb_sd_zero_set_to_pt1pct->isChecked() )
+   {
+      cb_sd_zero_avg_local_sd ->setChecked( false );
+      cb_sd_zero_keep_as_zeros->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_zero_drop_points()
+{
+   (*parameters)[ "zero_drop_points" ] = cb_zero_drop_points->isChecked() ? "true" : "false";
+   if ( cb_zero_drop_points->isChecked() )
+   {
+      cb_zero_avg_local_sd ->setChecked( false );
+      cb_zero_keep_as_zeros->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_zero_avg_local_sd()
+{
+   (*parameters)[ "zero_avg_local_sd" ] = cb_zero_avg_local_sd->isChecked() ? "true" : "false";
+   if ( cb_zero_avg_local_sd->isChecked() )
+   {
+      cb_zero_drop_points  ->setChecked( false );
+      cb_zero_keep_as_zeros->setChecked( false );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_zero_keep_as_zeros()
+{
+   (*parameters)[ "zero_keep_as_zeros" ] = cb_zero_keep_as_zeros->isChecked() ? "true" : "false";
+   if ( cb_zero_keep_as_zeros->isChecked() )
+   {
+      cb_zero_drop_points  ->setChecked( false );
+      cb_zero_avg_local_sd ->setChecked( false );
+   }
+}
+
+
 void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 {
    bool no_go = false;
+
+   ws_hide( ws_sd_zeros, !cb_sd_source->isChecked() );
+   ws_hide( ws_zeros   , 
+            cb_sd_source->isChecked() || 
+            ( (*parameters)[ "no_errors" ].isEmpty() && 
+              (*parameters)[ "zero_points" ].isEmpty() ) );
 
    if ( !parameters->count( "error" ) )
    {
@@ -311,3 +473,27 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
 
    pb_go->setEnabled( !no_go );
 }
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::ws_hide( vector < QWidget * > ws, bool hide )
+{
+   for ( unsigned int i = 0; i < ( unsigned int )ws.size(); i++ )
+   {
+      hide ? ws[ i ]->hide() : ws[ i ]->show();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::zeros_found()
+{
+   QMessageBox::information( this,
+                             caption() + tr( ": S.D. Zeros" ),
+                             QString( tr( "Please note:\n\n"
+                                          "%1"
+                                          "%2"
+                                          "\n" ) )
+                             .arg( (*parameters)[ "no_errors" ].isEmpty() ?
+                                   "" : QString( tr( "These files have no associated errors:\n%1\n\n" ) ).arg( (*parameters)[ "no_errors" ] ) )
+                             .arg( (*parameters)[ "zero_points" ].isEmpty() ?
+                                   "" : QString( tr( "These files have zero points:\n%1\n\n" ) ).arg( (*parameters)[ "zero_points" ] ) ),
+                             QMessageBox::Ok
+                             );
+}                             

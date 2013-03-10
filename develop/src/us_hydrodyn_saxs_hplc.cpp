@@ -7883,6 +7883,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       gaussians = f_gaussians[ wheel_file ];
    }
 
+   opt_repeak_gaussians( wheel_file );
+
    gaussian_mode = true;
 
    running               = true;
