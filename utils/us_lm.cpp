@@ -1269,7 +1269,7 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
 
       } /*** lm_qrsolv. ***/
 
-   double lm_rmsdnorm(int n, const double *x)
+   double US_LM::lm_rmsdnorm(int n, const double *x)
    {
       double rmsd = 0e0;
       for ( int i = 0; i < n; i++ )
