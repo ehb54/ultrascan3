@@ -131,7 +131,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
       // pbs.push_back( pb_avg );
       pbs.push_back( pb_add );
-      // pbs.push_back( pb_conc_avg );
+      pbs.push_back( pb_conc_avg );
       // pbs.push_back( pb_select_all_created );
       pbs.push_back( pb_invert_all_created );
       pbs.push_back( pb_adjacent_created );
@@ -1408,9 +1408,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
       pb_add->hide();
 
-      pb_conc->hide();
-      pb_conc_avg->hide();
-      pb_normalize->hide();
+      // pb_conc->hide();
+      // pb_conc_avg->hide();
+      // pb_normalize->hide();
    }
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );

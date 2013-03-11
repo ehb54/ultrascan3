@@ -16,6 +16,7 @@
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 #define UHSH_VAL_DEC 8
+#define UHSH_UV_CONC_FACTOR 1e0
 
 // static   void printvector( QString qs, vector < unsigned int > x )
 // {
@@ -1029,6 +1030,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    // extract q grid from file names
    editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
 
+   update_csv_conc();
+
    {
       QStringList tmp_files;
       for ( unsigned int i = 0; i < files.size(); i++ )
@@ -1230,6 +1233,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    vector < double > psv ;
    
    bool normalize_by_conc = false;
+   bool conc_ok           = false;
 
    bool sd_avg_local  = false;
    bool sd_drop_zeros = false;
@@ -1363,6 +1367,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             psv .push_back( parameters.count( QString( "psv %1" ).arg( i ) ) ?
                             parameters[ QString( "psv %1" ).arg( i ) ].toDouble() : 0e0 );
          }
+         conc_ok = true;
          if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" )
          {
             normalize_by_conc = true;
@@ -1423,7 +1428,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    vector < vector < double > > concs;
 
-   if ( normalize_by_conc )
+   if ( normalize_by_conc || conc_ok )
    {
       // test, produce conc curves for each gaussian
       for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
@@ -1434,7 +1439,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             double detector_conv = 0e0;
             if ( detector_uv )
             {
-               detector_conv = detector_uv_conv * 1000e0;
+               detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
             }
             if ( detector_ri )
             {
@@ -1538,10 +1543,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
          // build up an I(q)
-         double conc_factor = 1e0;
+         double conc_factor = 0e0;
          double norm_factor = 1e0;
          QString qs_fwhm;
-         if ( normalize_by_conc && concs[ g ][ t ] > 0e0 )
+         if ( ( conc_ok || normalize_by_conc ) && concs[ g ][ t ] > 0e0 )
          {
             conc_factor = concs[ g ][ t ];
             norm_factor = 1e0 / conc_factor;
@@ -1549,7 +1554,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             double detector_conv = 0e0;
             if ( detector_uv )
             {
-               detector_conv = detector_uv_conv * 1000e0;
+               detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
             }
             if ( detector_ri )
             {
@@ -1722,6 +1727,25 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          vector < double  > use_qv        = qv;
          vector < double  > use_I         = save_gaussians ? G : I;
          vector < double  > use_e         = e;
+
+         if ( conc_ok )
+         {
+            update_csv_conc();
+
+            for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+            {
+               if ( csv_conc.data[ i ].size() > 1 &&
+                    csv_conc.data[ i ][ 0 ] == name )
+               {
+                  csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( conc_factor );
+               }
+            }
+            if ( conc_widget )
+            {
+               conc_window->refresh( csv_conc );
+            }
+         }
+
 
          if ( normalize_by_conc && norm_factor != 1e0 )
          {
@@ -2775,7 +2799,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::conc_curve( vector < double > &t,
    double detector_conv = 0e0;
    if ( detector_uv )
    {
-      detector_conv = detector_uv_conv * 1000e0;
+      detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
    }
    if ( detector_ri )
    {
