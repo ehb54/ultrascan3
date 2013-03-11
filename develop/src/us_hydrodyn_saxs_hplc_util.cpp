@@ -2905,8 +2905,11 @@ void US_Hydrodyn_Saxs_Hplc::adjacent()
       {
          if ( lb_files->text( i ).contains( rx ) )
          {
-            lb_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_files->isSelected( i ) )
+            {
+               lb_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
@@ -2914,19 +2917,25 @@ void US_Hydrodyn_Saxs_Hplc::adjacent()
       {
          if ( lb_files->text( i ).contains( rx ) )
          {
-            lb_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_files->isSelected( i ) )
+            {
+               lb_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
       if ( !newly_set )
       {
-         // for later, loosen up and try again
-         // ask for a regex pattern
+         adjacent_select( lb_files, match_name );
+         return;
       }
       disable_updates = false;
       update_files();
-   }
+   } else {
+      adjacent_select( lb_files, match_name );
+      return;
+   }      
    update_enables();
 }
 
@@ -3000,8 +3009,11 @@ void US_Hydrodyn_Saxs_Hplc::adjacent_created()
       {
          if ( lb_created_files->text( i ).contains( rx ) )
          {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_created_files->isSelected( i ) )
+            {
+               lb_created_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
@@ -3009,18 +3021,94 @@ void US_Hydrodyn_Saxs_Hplc::adjacent_created()
       {
          if ( lb_created_files->text( i ).contains( rx ) )
          {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_created_files->isSelected( i ) )
+            {
+               lb_created_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
 
       if ( !newly_set )
       {
-         // for later, loosen up and try again
-         // ask for a regex pattern
+         adjacent_select( lb_created_files, match_name );
+         return;
       }
       disable_updates = false;
       update_files();
-   }
+   } else {
+      adjacent_select( lb_files, match_name );
+      return;
+   }      
+
    update_enables();
+}
+
+bool US_Hydrodyn_Saxs_Hplc::adjacent_select( QListBox *lb, QString match )
+{
+   bool ok;
+
+   static QString last_match;
+   if ( match.isEmpty() )
+   {
+      match = last_match;
+   }
+
+   match = QInputDialog::getText(
+                                 caption() + tr( ": Select by pattern" ), 
+                                 tr( "Regular expression search\n"
+                                     "\n"
+                                     "Special matches:\n"
+                                     " ^ beginning of a line\n"
+                                     " $ end of a line\n"
+                                     " \\d any digit\n"
+                                     " \\d+ one or more digits\n"
+                                     " \\d* zero or more digits\n"
+                                     " \\d? zero or one digit\n"
+                                     " \\d{3} exactly 3 digits\n"
+                                     " \\d{1,5} one true five digits\n"
+                                     " \\D any non digit\n"
+                                     " \\s whitespace\n"
+                                     " \\S non-whitespace\n"
+                                     " [X-Z] a range of characters\n"
+                                     " () group\n"
+                                     "e.g.:\n"
+                                     " ^([A-B]\\d){2} would match anything that started with A or B followed by a digit twice,\n"
+                                     " i.e. A1B2 would match\n\n"
+                                     "Enter regular expression pattern:\n"                                     
+                                     ), 
+                                 QLineEdit::Normal,
+                                 match, 
+                                 &ok, 
+                                 this 
+                                 );
+
+   if ( !ok )
+   {
+      update_enables();
+      return false;
+   }
+
+   disable_updates = true;
+      
+   last_match = match;
+
+   QRegExp rx( match );
+   bool any_set = false;
+
+   for ( int i = 0; i < lb->numRows(); i++ )
+   {
+      if ( lb->text( i ).contains( rx ) )
+      {
+         if ( !lb->isSelected( i ) )
+         {
+            lb->setSelected( i, true );
+            any_set = true;
+         }
+      }
+   }
+   disable_updates = false;
+   update_files();
+   update_enables();
+   return any_set;
 }

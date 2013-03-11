@@ -1867,14 +1867,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
-   pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
+   pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
    pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
    pb_invert_all_created ->setEnabled( lb_created_files->numRows() > 0 );
-   pb_adjacent_created   ->setEnabled( files_created_selected_count == 1 && adjacent_ok( last_created_selected_file ) );
+   pb_adjacent_created   ->setEnabled( lb_created_files->numRows() > 1 );
    pb_remove_created     ->setEnabled( files_created_selected_count > 0 );
    pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );

@@ -353,6 +353,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString                      title;
       QStringList                  all_selected_files();
 
+      bool                         adjacent_select( QListBox *lb, QString match );
+
    private slots:
 
       void setupGUI();

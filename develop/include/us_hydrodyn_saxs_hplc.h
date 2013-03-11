@@ -569,6 +569,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         detector_ri;
       double                       detector_ri_conv;
 
+      bool                         adjacent_select( QListBox *lb, QString match_pattern );
+
    private slots:
 
       void setupGUI();

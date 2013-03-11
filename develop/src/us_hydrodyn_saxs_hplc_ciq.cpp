@@ -454,7 +454,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
             ( (*parameters)[ "no_errors" ].isEmpty() && 
               (*parameters)[ "zero_points" ].isEmpty() ) );
 
-   if ( !parameters->count( "error" ) && cb_normalize->isChecked() )
+   if ( !parameters->count( "error" ) ) //  && cb_normalize->isChecked() )
    {
       for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
       {

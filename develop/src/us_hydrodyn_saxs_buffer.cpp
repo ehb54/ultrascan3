@@ -1967,13 +1967,13 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 );
    pb_join_start         ->setEnabled( files_selected_count == 2 );
-   pb_adjacent           ->setEnabled( files_selected_count == 1 && adjacent_ok( last_selected_file ) );
+   pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
-   pb_adjacent_created   ->setEnabled( files_created_selected_count == 1 && adjacent_ok( last_created_selected_file ) );
+   pb_adjacent_created   ->setEnabled( lb_created_files->numRows() > 1 );
    pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
 
@@ -4342,6 +4342,8 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
    int     match_pos = 0;
    QStringList turn_on;
 
+   disable_all();
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
@@ -4372,6 +4374,16 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
                     );
    }
 
+   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    );
+   }
+
    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
    {
       found = true;
@@ -4382,7 +4394,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
                     );
    }
 
-   cout << "rx: " << rx.pattern() << endl;
+   // cout << "rx: " << rx.pattern() << endl;
 
    unsigned int newly_set = 0;
 
@@ -4394,8 +4406,11 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
       {
          if ( lb_files->text( i ).contains( rx ) )
          {
-            lb_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_files->isSelected( i ) )
+            {
+               lb_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
@@ -4403,18 +4418,26 @@ void US_Hydrodyn_Saxs_Buffer::adjacent()
       {
          if ( lb_files->text( i ).contains( rx ) )
          {
-            lb_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_files->isSelected( i ) )
+            {
+               lb_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
       if ( !newly_set )
       {
-         // for later, loosen up and try again
+         adjacent_select( lb_files, match_name );
+         return;
       }
       disable_updates = false;
       update_files();
-   }
+   } else {
+      adjacent_select( lb_files, match_name );
+      return;
+   }      
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::adjacent_created()
@@ -4422,6 +4445,8 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
    QString match_name;
    int     match_pos = 0;
    QStringList turn_on;
+
+   disable_all();
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
    {
@@ -4453,6 +4478,16 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
                     );
    }
 
+   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    );
+   }
+
    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
    {
       found = true;
@@ -4475,8 +4510,11 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       {
          if ( lb_created_files->text( i ).contains( rx ) )
          {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_created_files->isSelected( i ) )
+            {
+               lb_created_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
       
@@ -4484,18 +4522,94 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       {
          if ( lb_created_files->text( i ).contains( rx ) )
          {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
+            if ( !lb_created_files->isSelected( i ) )
+            {
+               lb_created_files->setSelected( i, true );
+               newly_set++;
+            }
          }
       }
 
       if ( !newly_set )
       {
-         // for later, loosen up and try again
+         adjacent_select( lb_created_files, match_name );
+         return;
       }
       disable_updates = false;
       update_files();
+   } else {
+      adjacent_select( lb_files, match_name );
+      return;
+   }      
+
+   update_enables();
+}
+
+bool US_Hydrodyn_Saxs_Buffer::adjacent_select( QListBox *lb, QString match )
+{
+   bool ok;
+   static QString last_match;
+   if ( match.isEmpty() )
+   {
+      match = last_match;
    }
+
+   match = QInputDialog::getText(
+                                 caption() + tr( ": Select by pattern" ), 
+                                 tr( "Regular expression search\n"
+                                     "\n"
+                                     "Special matches:\n"
+                                     " ^ beginning of a line\n"
+                                     " $ end of a line\n"
+                                     " \\d any digit\n"
+                                     " \\d+ one or more digits\n"
+                                     " \\d* zero or more digits\n"
+                                     " \\d? zero or one digit\n"
+                                     " \\d{3} exactly 3 digits\n"
+                                     " \\d{1,5} one true five digits\n"
+                                     " \\D any non digit\n"
+                                     " \\s whitespace\n"
+                                     " \\S non-whitespace\n"
+                                     " [X-Z] a range of characters\n"
+                                     " () group\n"
+                                     "e.g.:\n"
+                                     " ^([A-B]\\d){2} would match anything that started with A or B followed by a digit twice,\n"
+                                     " i.e. A1B2 would match\n\n"
+                                     "Enter regular expression pattern:\n"                                     
+                                     ), 
+                                 QLineEdit::Normal,
+                                 match, 
+                                 &ok, 
+                                 this 
+                                 );
+   if ( !ok )
+   {
+      update_enables();
+      return false;
+   }
+
+   disable_updates = true;
+
+   last_match = match;
+      
+   QRegExp rx( match );
+   bool any_set = false;
+
+   for ( int i = 0; i < lb->numRows(); i++ )
+   {
+      if ( lb->text( i ).contains( rx ) )
+      {
+         if ( !lb->isSelected( i ) )
+         {
+            lb->setSelected( i, true );
+            any_set = true;
+         }
+      }
+   }
+   disable_updates = false;
+   update_files();
+   update_enables();
+   return any_set;
 }
 
 void US_Hydrodyn_Saxs_Buffer::join()
