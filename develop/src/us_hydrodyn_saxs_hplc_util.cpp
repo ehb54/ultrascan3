@@ -1029,6 +1029,18 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    // extract q grid from file names
    editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
 
+   {
+      QStringList tmp_files;
+      for ( unsigned int i = 0; i < files.size(); i++ )
+      {
+         if ( files[ i ] != lbl_conc_file->text() )
+         {
+            tmp_files << files[ i ];
+         }
+      }
+      files = tmp_files;
+   }
+
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
    head = head.replace( QRegExp( "_q\\d*_$" ), "" );
@@ -1351,7 +1363,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             psv .push_back( parameters.count( QString( "psv %1" ).arg( i ) ) ?
                             parameters[ QString( "psv %1" ).arg( i ) ].toDouble() : 0e0 );
          }
-         if ( parameters.count( "normalize" ) )
+         if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" )
          {
             normalize_by_conc = true;
          }
@@ -1409,6 +1421,37 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    //                               ) == 0;
    running = true;
 
+   vector < vector < double > > concs;
+
+   if ( normalize_by_conc )
+   {
+      // test, produce conc curves for each gaussian
+      for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
+      {
+         // add_plot( QString( "conc_g_per_ml_peak%1" ).arg( i + 1 ), tv, conc_curve( tv, i, conv[ i ] ), true, false );
+         // alt method
+         {
+            double detector_conv = 0e0;
+            if ( detector_uv )
+            {
+               detector_conv = detector_uv_conv * 1000e0;
+            }
+            if ( detector_ri )
+            {
+               detector_conv = detector_ri_conv;
+            }
+            vector < double > tmp_g(3);
+            QString conc_file = lbl_conc_file->text();
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * 3 ] * detector_conv / conv[ i ];
+            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + i * 3 ];
+            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + i * 3 ];
+
+            concs.push_back( compute_gaussian( tv, tmp_g ) );
+            add_plot( QString( "conc_g_per_ml_peak%1" ).arg( i + 1 ), tv, concs.back(), true, false );
+         }
+      }
+   }
+
    // now for each I(t) distribute the I for each frame according to the gaussians
    // !!! **              ---- >>>> check for baseline, if present, optionally add back
 
@@ -1420,6 +1463,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    vector < vector < double > >            fs; // a vector of the gaussian sums
    vector < vector < double > >            g_area;      // a vector of the gaussian area
    vector < double >                       g_area_sum; // a vector of the gaussian area
+
 
    for ( unsigned int i = 0; i < files.size(); i++ )
    {
@@ -1494,11 +1538,54 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
          // build up an I(q)
-         QString name = head + QString( "%1%2%3_pk%4_t%5" )
+         double conc_factor = 1e0;
+         double norm_factor = 1e0;
+         QString qs_fwhm;
+         if ( normalize_by_conc && concs[ g ][ t ] > 0e0 )
+         {
+            conc_factor = concs[ g ][ t ];
+            norm_factor = 1e0 / conc_factor;
+
+            double detector_conv = 0e0;
+            if ( detector_uv )
+            {
+               detector_conv = detector_uv_conv * 1000e0;
+            }
+            if ( detector_ri )
+            {
+               detector_conv = detector_ri_conv;
+            }
+
+            vector < double > tmp_g(3);
+            QString conc_file = lbl_conc_file->text();
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * 3 ] * detector_conv / conv[ g ];
+            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + g * 3 ];
+            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + g * 3 ];
+
+            double center = tmp_g[ 1 ];
+            double width  = tmp_g[ 2 ];
+            double fwhm   = 2.354820045e0 * width;
+            //             cout << QString( "peak %1 center %2 fwhm %3 t %4 tv[t] %5\n" )
+            //                .arg( g + 1 )
+            //                .arg( center )
+            //                .arg( fwhm )
+            //                .arg( t )
+            //                .arg( tv[ t ] );
+            if ( tv[ t ] >= center - fwhm && tv[ t ] <= center + fwhm )
+            {
+               qs_fwhm = "_fwhm";
+            }
+         }
+
+         QString name = head + QString( "%1%2%3_pk%4%5_t%6" )
             .arg( save_gaussians  ? "_G" : "" )
             .arg( any_bl   ? "_bs" : "" )
             .arg( bl_count ? "ba" : "" )
             .arg( g + 1 )
+            .arg( normalize_by_conc ? 
+                  QString( "%1_cn%2" )
+                  .arg( qs_fwhm )
+                  .arg( conc_factor, 0, 'g', 6 ) : QString( "" ) )
             .arg( tv[ t ] )
             .replace( ".", "_" )
             ;
@@ -1623,18 +1710,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             // gsG_recon = G_recon;
          }
 
-         // do we need to compute a concentration?
          // add to csv conc stuff?
-         // normalize by conc (optionally, first compute concentrations)
-
-         // idea: match gaussians from conc file & this file we are
-         // creating a I(q) for a t, so across the gaussians (q) our t
-         // is at some % of the gaussian, which we map back to the
-         // conc gaussian and the use multipliers etc to compute conc
-         
-         //          if ( conv.size() )
-         //          {
-         //          }
 
          lb_created_files->insertItem( name );
          lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
@@ -1646,6 +1722,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          vector < double  > use_qv        = qv;
          vector < double  > use_I         = save_gaussians ? G : I;
          vector < double  > use_e         = e;
+
+         if ( normalize_by_conc && norm_factor != 1e0 )
+         {
+            for ( unsigned int i = 0; i < use_I.size(); i++ )
+            {
+               use_I[ i ] *= norm_factor;
+            }
+         }
 
          if ( sd_from_difference )
          {
@@ -2655,6 +2739,264 @@ bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
    return false;
 }
 
+vector < double > US_Hydrodyn_Saxs_Hplc::conc_curve( vector < double > &t,
+                                                     unsigned int peak,
+                                                     double conv
+                                                     )
+{
+   vector < double > result;
+   QString conc_file = lbl_conc_file->text();
+   if ( conc_file.isEmpty() )
+   {
+      editor_msg( "red", tr( "Internal error: conc_curve(): no concentration file set" ) );
+      return result;
+   } else {
+      if ( !f_gaussians.count( conc_file ) )
+      {
+         editor_msg( "red", tr( "Internal error: conc_curve(): no Gaussians defined for concentration file" ) );
+         return result;
+      }
+   }
+
+   if ( peak >= ( unsigned int ) f_gaussians[ conc_file ].size() / 3 )
+   {
+      editor_msg( "red", QString( tr( "Internal error: conc_curve(): Gaussian requested (%1) exceedes available (%2)" ) )
+                  .arg( peak + 1 )
+                  .arg( f_gaussians[ conc_file ].size() / 3 ) );
+      return result;
+   }
+
+   if ( !detector_uv && !detector_ri )
+   {
+      editor_msg( "red", tr( "Internal error: conc_curve(): No detector type set" ) );
+      return result;
+   }
       
+   double detector_conv = 0e0;
+   if ( detector_uv )
+   {
+      detector_conv = detector_uv_conv * 1000e0;
+   }
+   if ( detector_ri )
+   {
+      detector_conv = detector_ri_conv;
+   }
+   // printvector( QString( "conc_curve peak %1 conv %2 detector_conv %3" ).arg( peak + 1 ).arg( conv ).arg( detector_conv ), t );
 
+   vector < double > tmp_g(3);
+   tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + peak * 3 ];
+   tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + peak * 3 ];
+   tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + peak * 3 ];
 
+   result = compute_gaussian( t, tmp_g );
+   // printvector( "conc curve gaussians", tmp_g );
+   // printvector( QString( "conc_curve gaussian before conversion" ), result );
+
+   for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
+   {
+      result[ i ] *= detector_conv / conv;
+   }
+
+   return result;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::adjacent_ok( QString name )
+{
+   if ( name.contains( "_bsub_a" ) ||
+        name.contains( QRegExp( "\\d+$" ) ) )
+   {
+
+      return true;
+   }
+   return false;
+}
+
+void US_Hydrodyn_Saxs_Hplc::adjacent()
+{
+   QString match_name;
+   int     match_pos = 0;
+   QStringList turn_on;
+
+   disable_all();
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         match_name = lb_files->text( i );
+         turn_on << match_name;
+         match_pos = i;
+         break;
+      }
+   }
+
+   QRegExp rx;
+
+   bool found = false;
+   // if we have bsub
+   if ( match_name.contains( "_bsub_a" ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_bsub_a.*$" ), "" )
+                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    + 
+                    QString( "%1$" )
+                    .arg( match_name )
+                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    );
+   }
+
+   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    );
+   }
+
+   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    );
+   }
+
+   // cout << "rx: " << rx.pattern() << endl;
+
+   unsigned int newly_set = 0;
+
+   if ( found )
+   {
+      disable_updates = true;
+      
+      for ( int i = match_pos - 1; i >= 0; i-- )
+      {
+         if ( lb_files->text( i ).contains( rx ) )
+         {
+            lb_files->setSelected( i, true );
+            newly_set++;
+         }
+      }
+      
+      for ( int i = match_pos + 1; i < lb_files->numRows(); i++ )
+      {
+         if ( lb_files->text( i ).contains( rx ) )
+         {
+            lb_files->setSelected( i, true );
+            newly_set++;
+         }
+      }
+      
+      if ( !newly_set )
+      {
+         // for later, loosen up and try again
+         // ask for a regex pattern
+      }
+      disable_updates = false;
+      update_files();
+   }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::adjacent_created()
+{
+   QString match_name;
+   int     match_pos = 0;
+   QStringList turn_on;
+
+   disable_all();
+
+   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   {
+      if ( lb_created_files->isSelected( i ) )
+      {
+         match_name = lb_created_files->text( i );
+         turn_on << match_name;
+         match_pos = i;
+         break;
+      }
+   }
+
+   QRegExp rx;
+
+   bool found = false;
+   // if we have bsub
+   if ( match_name.contains( "_bsub_a" ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_bsub_a.*$" ), "" )
+                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    + 
+                    QString( "%1$" )
+                    .arg( match_name )
+                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    );
+   }
+
+   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    );
+   }
+
+   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   {
+      found = true;
+      rx.setPattern(
+                    QString( "^%1" )
+                    .arg( match_name )
+                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    );
+   }
+
+   cout << "rx: " << rx.pattern() << endl;
+
+   unsigned int newly_set = 0;
+
+   if ( found )
+   {
+      disable_updates = true;
+      
+      for ( int i = match_pos - 1; i >= 0; i-- )
+      {
+         if ( lb_created_files->text( i ).contains( rx ) )
+         {
+            lb_created_files->setSelected( i, true );
+            newly_set++;
+         }
+      }
+      
+      for ( int i = match_pos + 1; i < lb_created_files->numRows(); i++ )
+      {
+         if ( lb_created_files->text( i ).contains( rx ) )
+         {
+            lb_created_files->setSelected( i, true );
+            newly_set++;
+         }
+      }
+
+      if ( !newly_set )
+      {
+         // for later, loosen up and try again
+         // ask for a regex pattern
+      }
+      disable_updates = false;
+      update_files();
+   }
+   update_enables();
+}

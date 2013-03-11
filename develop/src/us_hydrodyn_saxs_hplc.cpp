@@ -1827,8 +1827,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_wheel_start        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
-   cb_sd_weight          ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
-   cb_fix_width          ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
+   cb_sd_weight          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
+   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
    pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
@@ -4947,185 +4947,6 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    {
       update_enables();
    }
-}
-
-bool US_Hydrodyn_Saxs_Hplc::adjacent_ok( QString name )
-{
-   if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
-   {
-
-      return true;
-   }
-   return false;
-}
-
-void US_Hydrodyn_Saxs_Hplc::adjacent()
-{
-   QString match_name;
-   int     match_pos = 0;
-   QStringList turn_on;
-
-   disable_all();
-
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         match_name = lb_files->text( i );
-         turn_on << match_name;
-         match_pos = i;
-         break;
-      }
-   }
-
-   QRegExp rx;
-
-   bool found = false;
-   // if we have bsub
-   if ( match_name.contains( "_bsub_a" ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
-                    + 
-                    QString( "%1$" )
-                    .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
-                    );
-   }
-
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
-                    );
-   }
-
-   // cout << "rx: " << rx.pattern() << endl;
-
-   unsigned int newly_set = 0;
-
-   if ( found )
-   {
-      disable_updates = true;
-      
-      for ( int i = match_pos - 1; i >= 0; i-- )
-      {
-         if ( lb_files->text( i ).contains( rx ) )
-         {
-            lb_files->setSelected( i, true );
-            newly_set++;
-         }
-      }
-      
-      for ( int i = match_pos + 1; i < lb_files->numRows(); i++ )
-      {
-         if ( lb_files->text( i ).contains( rx ) )
-         {
-            lb_files->setSelected( i, true );
-            newly_set++;
-         }
-      }
-      
-      if ( !newly_set )
-      {
-         // for later, loosen up and try again
-      }
-      disable_updates = false;
-      update_files();
-   }
-   update_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::adjacent_created()
-{
-   QString match_name;
-   int     match_pos = 0;
-   QStringList turn_on;
-
-   disable_all();
-
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
-   {
-      if ( lb_created_files->isSelected( i ) )
-      {
-         match_name = lb_created_files->text( i );
-         turn_on << match_name;
-         match_pos = i;
-         break;
-      }
-   }
-
-   QRegExp rx;
-
-   bool found = false;
-   // if we have bsub
-   if ( match_name.contains( "_bsub_a" ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
-                    + 
-                    QString( "%1$" )
-                    .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
-                    );
-   }
-
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
-                    );
-   }
-
-   // cout << "rx: " << rx.pattern() << endl;
-
-   unsigned int newly_set = 0;
-
-   if ( found )
-   {
-      disable_updates = true;
-      
-      for ( int i = match_pos - 1; i >= 0; i-- )
-      {
-         if ( lb_created_files->text( i ).contains( rx ) )
-         {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
-         }
-      }
-      
-      for ( int i = match_pos + 1; i < lb_created_files->numRows(); i++ )
-      {
-         if ( lb_created_files->text( i ).contains( rx ) )
-         {
-            lb_created_files->setSelected( i, true );
-            newly_set++;
-         }
-      }
-
-      if ( !newly_set )
-      {
-         // for later, loosen up and try again
-      }
-      disable_updates = false;
-      update_files();
-   }
-   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::join()
@@ -10640,6 +10461,12 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
 
    fn.replace( QRegExp( "(|-global-state)\\.(dat|DAT)$" ), "" );
    fn += "-global-state.dat";
+
+   if ( QFile::exists( fn ) )
+   {
+      fn = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fn, 0, this );
+      raise();
+   }
 
    QFile f( fn );
    if ( !f.open( IO_WriteOnly ) )

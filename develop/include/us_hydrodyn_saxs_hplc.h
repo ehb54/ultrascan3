@@ -401,6 +401,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 
       vector < QWidget * >                plot_errors_widgets;
+
+      vector < double >                   conc_curve( vector < double > &t,
+                                                      unsigned int peak,
+                                                      double conv );
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
