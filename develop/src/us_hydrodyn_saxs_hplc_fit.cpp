@@ -141,6 +141,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_pct_center->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    le_pct_center->setEnabled( false );
+   le_pct_center->setMinimumWidth( 50 );
    le_pct_center->setValidator( new QDoubleValidator( le_pct_center ) );
    ( (QDoubleValidator *)le_pct_center->validator() )->setRange( 0, 100, 1 );
 
@@ -174,6 +175,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_pct_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    le_pct_width->setEnabled( false );
+   le_pct_width->setMinimumWidth( 50 );
    le_pct_width->setValidator( new QDoubleValidator( le_pct_width ) );
    ( (QDoubleValidator *)le_pct_width->validator() )->setRange( 0, 100, 1 );
 
@@ -207,6 +209,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_pct_amplitude->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_amplitude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    le_pct_amplitude->setEnabled( false );
+   le_pct_amplitude->setMinimumWidth( 50 );
    le_pct_amplitude->setValidator( new QDoubleValidator( le_pct_amplitude ) );
    ( (QDoubleValidator *)le_pct_amplitude->validator() )->setRange( 0, 100, 1 );
 
@@ -284,7 +287,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_iterations->setValidator( new QIntValidator( le_iterations ) );
    ( (QIntValidator *)le_iterations->validator() )->setRange( 1, 10000 );
 
-   lbl_population = new QLabel(tr(" Population/Grid: "), this);
+   lbl_population = new QLabel(tr(" Maximum calls/Population/Grid: "), this);
    lbl_population->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_population->setMinimumHeight(minHeight1);
    lbl_population->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -449,6 +452,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    background->addLayout ( hbl_prog );
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
+
+   if ( !( ( US_Hydrodyn * ) hplc_win->us_hydrodyn )->advanced_config.expert_mode )
+   {
+      // pb_gsm_sd->hide();
+      // pb_gsm_ih->hide();
+      // pb_gsm_cg->hide();
+      pb_ga    ->hide();
+      pb_grid  ->hide();
+      lbl_population->setText( tr( "Maximum calls" ) );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit::cancel()
