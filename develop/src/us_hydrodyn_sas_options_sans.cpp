@@ -269,6 +269,13 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
+   //    if ( !started_in_expert_mode )
+   //    {
+   //       cb_sans_iq_native_hybrid->hide();
+   //       cb_sans_iq_native_hybrid2->hide();
+   //       cb_sans_iq_native_hybrid3->hide();
+   //       cb_sans_iq_hybrid_adaptive->hide();
+   //    }      
 }
 
 void US_Hydrodyn_SasOptionsSans::cancel()

@@ -432,6 +432,15 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
+   //    if ( !started_in_expert_mode )
+   //    {
+   //       cb_saxs_iq_native_hybrid->hide();
+   //       cb_saxs_iq_native_hybrid2->hide();
+   //       cb_saxs_iq_native_hybrid3->hide();
+   //       cb_saxs_iq_hybrid_adaptive->hide();
+   //       cb_saxs_iq_foxs->hide();
+   //       cb_saxs_iq_sastbx->hide();
+   //    }      
 }
 
 void US_Hydrodyn_SasOptionsSaxs::cancel()
