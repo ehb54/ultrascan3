@@ -6059,8 +6059,17 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
 
    if ( our_saxs_options->guinier_csv )
    {
-      QFile f(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
-              our_saxs_options->guinier_csv_filename + ".csv");
+      QString filename = 
+         USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
+         our_saxs_options->guinier_csv_filename + "_cs.csv";
+
+      QString fname = filename;
+      if ( QFile::exists(fname) )
+      {
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+      }
+
+      QFile f( fname );
 
       if ( !f.open(IO_WriteOnly) )
       {
