@@ -159,7 +159,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       connect(cb_saxs_iq_sastbx, SIGNAL(clicked()), this, SLOT(set_saxs_iq_sastbx()));
    }
 
-   lbl_fast_bin_size = new QLabel(tr(" Fast Debye: Bin size"), this);
+   lbl_fast_bin_size = new QLabel(tr(" Quick Debye: Bin size"), this);
    lbl_fast_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fast_bin_size->setMinimumHeight(minHeight1);
    lbl_fast_bin_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -176,7 +176,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cnt_fast_bin_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_fast_bin_size, SIGNAL(valueChanged(double)), SLOT(update_fast_bin_size(double)));
 
-   lbl_fast_modulation = new QLabel(tr(" Fast Debye: Modulation"), this);
+   lbl_fast_modulation = new QLabel(tr(" Quick Debye: Modulation"), this);
    lbl_fast_modulation->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fast_modulation->setMinimumHeight(minHeight1);
    lbl_fast_modulation->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -441,6 +441,11 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    //       cb_saxs_iq_foxs->hide();
    //       cb_saxs_iq_sastbx->hide();
    //    }      
+   if ( !started_in_expert_mode )
+   {
+      lbl_hybrid2_q_points->hide();
+      cnt_hybrid2_q_points->hide();
+   }
 }
 
 void US_Hydrodyn_SasOptionsSaxs::cancel()
