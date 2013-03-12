@@ -60,6 +60,13 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_save_sum = new QCheckBox(this);
+   cb_save_sum->setText(tr( "Create sum of peaks curves" ) );
+   cb_save_sum->setEnabled( true );
+   cb_save_sum->setChecked( false );
+   cb_save_sum->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_save_sum->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    cb_sd_source = new QCheckBox(this);
    cb_sd_source->setText( tr( "Compute standard deviations as a difference between the sum of Gaussians and original I(q)" ) );
    cb_sd_source->setEnabled( true );
@@ -141,7 +148,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setText( tr( "Normalize resulting I(q) by concentration" ) );
    cb_normalize->setEnabled( true );
    connect( cb_normalize, SIGNAL( clicked() ), SLOT( set_normalize() ) );
-   cb_normalize->setChecked( true );
+   cb_normalize->setChecked( false );
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
@@ -149,6 +156,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_error->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
+
+   lbl_conc = new QLabel( tr( "Concentrations will be computed and will be written along with PSVs to the output I(q) curves" ), this );
+   lbl_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_conc->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
 
    pb_global =  new QPushButton ( tr( "Duplicate Gaussian 1 values globally" ), this );
    pb_global -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -238,6 +250,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    QVBoxLayout * vbl = new QVBoxLayout( 0 );
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
+   vbl->addWidget( cb_save_sum );
 
    vbl->addWidget( cb_sd_source );
 
@@ -262,6 +275,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    int j = 0;
    gl->addMultiCellWidget( lbl_error, j, j, 0, 2 );
    j++;
+
+   gl->addMultiCellWidget( lbl_conc, j, j, 0, 2 );
+   j++;
    
    gl->addWidget( lbl_gaussian, j, 0 );
    gl->addWidget( lbl_conv    , j, 1 );
@@ -278,6 +294,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    if ( parameters->count( "error" ) )
    {
+      lbl_conc    ->hide();
       lbl_gaussian->hide();
       lbl_conv    ->hide();
       lbl_psv     ->hide();
@@ -288,7 +305,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
          le_psv         [ i ]->hide();
       }
       pb_global   ->hide();
-      cb_normalize->hide();
+      // cb_normalize->hide();
    } else {
       lbl_error    ->hide();
       if ( lbl_gaussian_id.size() <= 1 )
@@ -296,6 +313,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
          pb_global    ->hide();
       }
    }
+   cb_normalize->hide();
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addWidget ( pb_help );
@@ -319,6 +337,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
    (*parameters)[ "go" ] = "true";
    (*parameters)[ "normalize" ] = cb_normalize->isChecked() ? "true" : "false";
    (*parameters)[ "sd_source" ] = cb_sd_source->isChecked() ? "difference" : "original";
+   (*parameters)[ "save_sum"  ] = cb_save_sum ->isChecked() ? "true" : "false";
 
    (*parameters)[ "sd_zero_avg_local_sd"  ] = cb_sd_zero_avg_local_sd ->isChecked() ? "true" : "false";
    (*parameters)[ "sd_zero_keep_as_zeros" ] = cb_sd_zero_keep_as_zeros->isChecked() ? "true" : "false";

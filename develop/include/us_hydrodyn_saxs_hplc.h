@@ -82,6 +82,8 @@ struct hplc_stack_data
 
    map < QString, QString >            f_name;
    map < QString, bool >               f_is_time;
+   map < QString, double >             f_psv;
+   map < QString, double >             f_conc;
 
    map < QString, bool >               created_files_not_saved;
    QStringList                         files;
@@ -336,6 +338,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       map < QString, QString >            f_name;
       map < QString, bool >               f_is_time;
+      map < QString, double >             f_psv;
+      map < QString, double >             f_conc;
 
       map < QString, bool >               created_files_not_saved;
 

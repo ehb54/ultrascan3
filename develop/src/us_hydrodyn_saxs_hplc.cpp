@@ -626,7 +626,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
-   pb_normalize = new QPushButton(tr("N"), this);
+   pb_normalize = new QPushButton(tr("Normalize"), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_normalize->setMinimumHeight(minHeight1);
    pb_normalize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1409,9 +1409,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pb_add->hide();
 
       // pb_conc->hide();
-      // pb_conc_avg->hide();
       // pb_normalize->hide();
    }
+   pb_conc_avg->hide();
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
@@ -2092,6 +2092,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
          f_name     .erase( lb_files->text( i ) );
          f_is_time  .erase( lb_files->text( i ) );
          f_gaussians.erase( lb_files->text( i ) );
+         f_psv      .erase( lb_files->text( i ) );
+         f_conc     .erase( lb_files->text( i ) );
          lb_files->removeItem( i );
       }
    }
@@ -2683,6 +2685,23 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
 
    bool is_time = false;
 
+   double this_conc = 0e0;
+   double this_psv  = 0e0;
+
+   if ( ext == "dat" )
+   {
+      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
+      if ( rx_conc.search( qv[ 0 ] ) )
+      {
+         this_conc = rx_conc.cap( 1 ).toDouble();
+      }
+      if ( rx_psv.search( qv[ 0 ] ) )
+      {
+         this_psv = rx_psv.cap( 1 ).toDouble();
+      }
+   }
+
    // we should make some configuration for matches & offsets or column mapping
    // just an ad-hoc fix for APS 5IDD
    int q_offset   = 0;
@@ -3136,6 +3155,27 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       vector < double > tmp;
       f_gaussians  [ basename ] = tmp;
    }
+   f_conc       [ basename ] = this_conc;
+   f_psv        [ basename ] = this_psv;
+
+   if ( this_conc != 0e0 )
+   {
+      update_csv_conc();
+
+      for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+      {
+         if ( csv_conc.data[ i ].size() > 1 &&
+              csv_conc.data[ i ][ 0 ] == basename )
+         {
+            csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( this_conc );
+         }
+      }
+      if ( conc_widget )
+      {
+         conc_window->refresh( csv_conc );
+      }
+   }
+
    return true;
 }
 
@@ -3243,6 +3283,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
+   double avg_psv  = 0e0;
 
    // copies for potential cropping:
 
@@ -3375,6 +3416,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -3399,6 +3441,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
       }            
    }
 
@@ -3426,6 +3469,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    }
 
    avg_conc /= files.size();
+   avg_psv  /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -3471,6 +3515,9 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    f_is_time   [ avg_name ] = false;
+   f_conc      [ avg_name ] = avg_conc;
+   f_psv       [ avg_name ] = avg_psv;
+
    {
       vector < double > tmp;
       f_gaussians  [ avg_name ] = tmp;
@@ -3870,9 +3917,12 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
 
    QTextStream ts( &f );
 
-   ts << QString( tr( "US-SOMO Hplc %1data: %2\n" ) )
+   ts << QString( tr( "US-SOMO Hplc %1data: %2%3%4\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
-      .arg( file );
+      .arg( file )
+      .arg( f_psv.count( file ) ? QString( " PSV:%1" ).arg( f_psv[ file ] ) : QString( "" ) )
+      .arg( f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+      ;
 
    bool use_errors = ( f_errors.count( file ) && 
                        f_errors[ file ].size() > 0 );
@@ -4245,6 +4295,8 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       f_Is        [ repeak_name ] = repeak_I;
       f_errors    [ repeak_name ] = f_errors   [ files[ i ] ];
       f_is_time   [ repeak_name ] = f_is_time  [ files[ i ] ];
+      f_conc      [ repeak_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+      f_psv       [ repeak_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
       {
          vector < double > tmp;
          f_gaussians  [ repeak_name ] = tmp;
@@ -4316,6 +4368,8 @@ void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
          f_Is        [ smoothed_name ] = smoothed_I;
          f_errors    [ smoothed_name ] = f_errors   [ files[ i ] ];
          f_is_time   [ smoothed_name ] = f_is_time  [ files[ i ] ];
+         f_conc      [ smoothed_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+         f_psv       [ smoothed_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
          {
             vector < double > tmp;
             f_gaussians  [ smoothed_name ] = tmp;
@@ -4468,6 +4522,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       f_Is        [ fname ] = I;
       f_errors    [ fname ] = e;
       f_is_time   [ fname ] = true;
+      f_conc      [ fname ] = 0e0;
+      f_psv       [ fname ] = 0e0;
       {
          vector < double > tmp;
          f_gaussians  [ fname ] = tmp;
@@ -4504,6 +4560,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    }
 
    double avg_conc = 0e0;
+   double avg_psv  = 0e0;
 
    vector < double > nIs;
 
@@ -4654,6 +4711,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -4682,6 +4740,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
       }            
    }
 
@@ -4694,6 +4753,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    vector < double > avg_sd( avg_qs.size() );
 
    avg_conc /= files.size();
+   avg_psv  /= files.size();
 
    for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
@@ -4759,6 +4819,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    f_is_time   [ avg_name ] = false;
+   f_conc      [ avg_name ] = avg_conc;
+   f_psv       [ avg_name ] = avg_psv;
    {
       vector < double > tmp;
       f_gaussians  [ avg_name ] = tmp;
@@ -5022,6 +5084,9 @@ void US_Hydrodyn_Saxs_Hplc::join()
       q_join = q0_max;
    }
 
+   double avg_conc = 0e0;
+   double avg_psv  = 0e0;
+
    // join them
    vector < QString > q_string;
    vector < double >  q;
@@ -5065,6 +5130,16 @@ void US_Hydrodyn_Saxs_Hplc::join()
       }
    }
 
+   map < QString, double > concs = current_concs( true );
+
+   avg_conc = concs.count( selected[ 0 ] ) ? concs[ selected[ 0 ] ] : 0e0;
+   avg_conc += concs.count( selected[ 1 ] ) ? concs[ selected[ 1 ] ] : 0e0;
+   avg_conc /= 2e0;
+
+   avg_psv = f_psv.count( selected[ 0 ] ) ? f_psv[ selected[ 0 ] ] : 0e0;
+   avg_psv += f_psv.count( selected[ 1 ] ) ? f_psv[ selected[ 1 ] ] : 0e0;
+   avg_psv /= 2e0;
+
    QString basename = 
       QString( "%1-%2-join%3" )
       .arg( selected[ 0 ] )
@@ -5096,6 +5171,9 @@ void US_Hydrodyn_Saxs_Hplc::join()
       f_errors    [ use_basename ] = e;
    }
    f_is_time   [ use_basename ] = false;
+   f_conc      [ use_basename ] = avg_conc;
+   f_psv       [ use_basename ] = avg_psv;
+
    {
       vector < double > tmp;
       f_gaussians  [ use_basename ] = tmp;
@@ -6695,6 +6773,8 @@ void US_Hydrodyn_Saxs_Hplc::normalize()
          }
       }
       f_is_time  [ norm_name ] = false;
+      f_psv      [ norm_name ] = f_psv.count( files[ i ] ) ? f_psv[ files[ i ] ] : 0;
+      f_conc     [ norm_name ] = 1e0;
       {
          vector < double > tmp;
          f_gaussians  [ norm_name ] = tmp;
@@ -6785,6 +6865,7 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
    f_Is        [ bsub_name ] = I;
    f_errors    [ bsub_name ] = errors;
    f_is_time   [ bsub_name ] = is_time;
+   f_conc      [ bsub_name ] = f_conc.count( bsub_name ) ? f_conc[ bsub_name ] : 0e0;
    {
       vector < double > tmp;
       f_gaussians  [ bsub_name ] = tmp;
@@ -7438,6 +7519,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    f_Is        [ save_name ] = f_Is        [ wheel_file ];
    f_errors    [ save_name ] = f_errors    [ wheel_file ];
    f_is_time   [ save_name ] = true;
+   f_conc      [ save_name ] = f_conc.count( wheel_file ) ? f_conc[ wheel_file ] : 0e0;
+   f_psv       [ save_name ] = f_psv .count( wheel_file ) ? f_psv [ wheel_file ] : 0e0;
    {
       vector < double > tmp;
       f_gaussians  [ save_name ] = tmp;
@@ -9144,6 +9227,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
       f_Is        [ bl_name ] = bl_I;
       f_errors    [ bl_name ] = f_errors   [ files[ i ] ];
       f_is_time   [ bl_name ] = f_is_time  [ files[ i ] ];
+      f_psv       [ bl_name ] = f_psv.count( files[ i ] ) ? f_psv[ files[ i ] ] : 0e0;
+      f_conc      [ bl_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
       {
          vector < double > tmp;
          f_gaussians  [ bl_name ] = tmp;
@@ -10229,6 +10314,8 @@ void US_Hydrodyn_Saxs_Hplc::add_ggaussian_curve( QString name, vector < double >
    f_Is        [ use_name ] = y;
    f_errors    [ use_name ].clear();
    f_is_time   [ use_name ] = true;
+   f_psv       [ use_name ] = 0e0;
+   f_conc      [ use_name ] = 0e0;
    {
       vector < double > tmp;
       f_gaussians  [ use_name ] = tmp;

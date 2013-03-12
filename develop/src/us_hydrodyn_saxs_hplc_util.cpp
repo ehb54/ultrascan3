@@ -636,6 +636,8 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          tmp_stack.f_pos                   [ files[ i ] ] = i;
          tmp_stack.f_name                  [ files[ i ] ] = f_name[ files[ i ] ];
          tmp_stack.f_is_time               [ files[ i ] ] = f_is_time[ files[ i ] ];
+         tmp_stack.f_conc                  [ files[ i ] ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+         tmp_stack.f_psv                   [ files[ i ] ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
          if ( created_files_not_saved.count( files[ i ] ) )
          {
             tmp_stack.created_files_not_saved [ files[ i ] ] = created_files_not_saved[ files[ i ] ];
@@ -668,6 +670,8 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
       tmp_stack.f_pos                   = f_pos;
       tmp_stack.f_name                  = f_name;
       tmp_stack.f_is_time               = f_is_time;
+      tmp_stack.f_psv                   = f_psv;
+      tmp_stack.f_conc                  = f_conc;
       tmp_stack.created_files_not_saved = created_files_not_saved;
       tmp_stack.gaussians               = gaussians;
 
@@ -719,6 +723,8 @@ void US_Hydrodyn_Saxs_Hplc::set_current_data( hplc_stack_data & tmp_stack )
    f_pos                   = tmp_stack.f_pos;
    f_name                  = tmp_stack.f_name;
    f_is_time               = tmp_stack.f_is_time;
+   f_psv                   = tmp_stack.f_psv;
+   f_conc                  = tmp_stack.f_conc;
    created_files_not_saved = tmp_stack.created_files_not_saved;
    gaussians               = tmp_stack.gaussians;
 
@@ -897,6 +903,12 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
          f_is_time[ name ] = 
             tmp_stack.f_is_time.count( name ) ?
             tmp_stack.f_is_time[ name ] : false;
+         f_psv[ name ] = 
+            tmp_stack.f_psv.count( name ) ?
+            tmp_stack.f_psv[ name ] : 0e0;
+         f_conc[ name ] = 
+            tmp_stack.f_conc.count( name ) ?
+            tmp_stack.f_conc[ name ] : 0e0;
          if ( tmp_stack.created_files_not_saved.count( name ) )
          {
             created_files_not_saved[ name ] = tmp_stack.created_files_not_saved[ name ];
@@ -960,6 +972,12 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
          clipboard.f_is_time[ name ] = 
             adds.f_is_time.count( name ) ?
             adds.f_is_time[ name ] : false;
+         clipboard.f_psv[ name ] = 
+            adds.f_psv.count( name ) ?
+            adds.f_psv[ name ] : 0e0;
+         clipboard.f_conc[ name ] = 
+            adds.f_conc.count( name ) ?
+            adds.f_conc[ name ] : 0e0;
 
          if ( adds.created_files_not_saved.count( name ) )
          {
@@ -1239,6 +1257,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    bool sd_drop_zeros = false;
    bool sd_keep_zeros = false;
    bool sd_set_pt1pct = false;
+   bool save_sum      = false;
 
    bool sd_from_difference = false;
    {
@@ -1335,7 +1354,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          cout << "ciq: bl off\n";
       }
 
-      if (  parameters.count( "save_as_pct_iq" ) && parameters[ "save_as_pct_iq" ] == "true" )
+      if ( parameters.count( "save_as_pct_iq" ) && parameters[ "save_as_pct_iq" ] == "true" )
       {
          save_gaussians = false;
          cout << "ciq: save_gaussians false\n";
@@ -1343,7 +1362,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          save_gaussians = true;
          cout << "ciq: save_gaussians true\n";
       }
-      if (  parameters.count( "sd_source" ) && parameters[ "sd_source" ] == "difference" )
+      if ( parameters.count( "save_sum" ) && parameters[ "save_sum" ] == "true" )
+      {
+         save_sum = true;
+      }
+      if ( parameters.count( "sd_source" ) && parameters[ "sd_source" ] == "difference" )
       {
          sd_from_difference = true;
          cout << "ciq: sd_from_difference true\n";
@@ -1849,6 +1872,9 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_Is        [ name ] = use_I;
          f_errors    [ name ] = use_e;
          f_is_time   [ name ] = false;
+         f_conc      [ name ] = conc_factor;
+         f_psv       [ name ] = psv[ g ];
+
          {
             vector < double > tmp;
             f_gaussians  [ name ] = tmp;
@@ -1969,8 +1995,16 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             f_errors   [ used_names[ i ] ] = use_e;
          }
       }         
-      add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
-      add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
+      if ( save_sum )
+      {
+         if ( save_gaussians )
+         {
+            add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
+         } else {
+            add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
+         }
+      }
+
       // add_plot( QString( "sumIr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
       // add_plot( QString( "sumGr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
    } // for each q value
@@ -2453,6 +2487,8 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
 
    unified_ggaussian_jumps  .push_back( 0e0 );
 
+   bool error_msg = false;
+
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
       if ( i )
@@ -2470,7 +2506,8 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
            ( !f_errors.count( unified_ggaussian_files[ i ] ) ||
              f_errors[ unified_ggaussian_files[ i ] ].size() != f_qs[ unified_ggaussian_files[ i ] ].size() ) )
       {
-         editor_msg( "dark red", QString( tr( "WARNING: %1 has no errors so errors are off globally" ) ).arg( unified_ggaussian_files[ i ] ) );
+         editor_msg( "dark red", QString( tr( "WARNING: %1 has no errors so global errors are off for computing RMSD and global fitting" ) ).arg( unified_ggaussian_files[ i ] ) );
+         error_msg = true;
          unified_ggaussian_use_errors = false;
          unified_ggaussian_e.clear();
       }
@@ -2508,7 +2545,10 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    if ( !is_nonzero_vector( unified_ggaussian_e ) )
    {
       unified_ggaussian_use_errors = false;
-      editor_msg( "dark red", tr( "WARNING: some errors are zero so errors are off globally" ) );
+      if ( !error_msg )
+      {
+         editor_msg( "dark red", tr( "WARNING: some errors are zero so global errors are off for computing RMSD and global fitting" ) );
+      }
    }
 
    //    printvector( "q_start", unified_ggaussian_q_start );
@@ -2662,37 +2702,41 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
                                           QString( tr( "These files have zero points:\n%1\n\n" ) ).arg( qsl_list_zero_points.join( "\n" ) ) : "" )
                                     ,
                                     tr( "&Turn off SD weighting" ), 
-                                    qsl_zero_points.size() ? tr( "Drop &points with zero SDs" ) : QString::null, 
                                     tr( "Drop &full curves with zero SDs" ), 
+                                    qsl_zero_points.size() ? tr( "Drop &points with zero SDs" ) : QString::null, 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
       {
       case 0 : // turn off sd weighting
-         cb_sd_weight->setChecked( false );
-         return create_unified_ggaussian_target( files, false );
-         break;
-      case 1 : // drop zero sd points
-         unified_ggaussian_errors_skip = true;
-         break;
-      case 2 : // drop zero sd curves
-         running = true;
-         disable_updates = true;
-         for ( int i = 0; i < lb_files->numRows(); i++ )
          {
-            if ( zero_points.count( lb_files->text( i ) ) ||
-                 no_errors  .count( lb_files->text( i ) ) )
-            {
-               lb_files->setSelected( i, false );
-            }
+            cb_sd_weight->setChecked( false );
+            return create_unified_ggaussian_target( files, false );
          }
-         disable_updates = false;
-         running = false;
-         update_enables();
-         disable_all();
-         plot_files();
-         QStringList files = all_selected_files();
-         return create_unified_ggaussian_target( files, false );
+         break;
+      case 1 : // drop zero sd curves
+         {
+            running = true;
+            disable_updates = true;
+            for ( int i = 0; i < lb_files->numRows(); i++ )
+            {
+               if ( zero_points.count( lb_files->text( i ) ) ||
+                    no_errors  .count( lb_files->text( i ) ) )
+               {
+                  lb_files->setSelected( i, false );
+               }
+            }
+            disable_updates = false;
+            running = false;
+            update_enables();
+            disable_all();
+            plot_files();
+            QStringList files = all_selected_files();
+            return create_unified_ggaussian_target( files, false );
+         }
+         break;
+      case 2 : // drop zero sd points
+         unified_ggaussian_errors_skip = true;
          break;
       }
    }
