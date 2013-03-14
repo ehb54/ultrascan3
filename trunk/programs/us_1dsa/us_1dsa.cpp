@@ -124,9 +124,10 @@ US_1dsa::US_1dsa() : US_AnalysisBase2()
        "Iterations:  0" ) );
    us_setReadOnly( te_status, true );
 
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_help,  SIGNAL( clicked() ), SLOT( help()  ) );
+   connect( pb_view,  SIGNAL( clicked() ), SLOT( view()  ) );
+   connect( pb_save,  SIGNAL( clicked() ), SLOT( save()  ) );
+   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
 
    pb_view   ->setEnabled( false );
    pb_save   ->setEnabled( false );
@@ -185,6 +186,8 @@ DbgLv(1) << "Analysis Done VARI" << vari;
 
 DbgLv(1) << "Analysis Done";
 DbgLv(1) << "  model components size" << model.components.size();
+DbgLv(1) << "  ti_noise size" << ti_noise.values.size() << ti_noise.count;
+DbgLv(1) << "  ri_noise size" << ri_noise.values.size() << ri_noise.count;
 DbgLv(1) << "  edat0 sdat0 rdat0"
  << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0);
 
@@ -447,8 +450,8 @@ void US_1dsa::save( void )
    QString     nname    = "N0000000.xml";
    int         indx     = 1;
    int         knoises  = 0;
-   bool        have_ti  = ( tinoises.size() > 0 );
-   bool        have_ri  = ( rinoises.size() > 0 );
+   bool        have_ti  = ( ti_noise.count > 0 );
+   bool        have_ri  = ( ri_noise.count > 0 );
 
    while( indx > 0 )
    {  // build a list of available model file names
@@ -504,6 +507,7 @@ void US_1dsa::save( void )
       model.write( dbP );
 
    int kk  = 0;
+   int err = 0;
 
    if ( have_ti )
    {  // output a TI noise
@@ -517,10 +521,16 @@ void US_1dsa::save( void )
       if ( nicount > 0 )   // Sum in any input noise
          ti_noise.sum_noise( ti_noise_in, true );
 
-      ti_noise.write( nname );
+      err = ti_noise.write( nname );
+      if ( err != US_DB2::OK )
+         qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
-         ti_noise.write( dbP );
+      {
+         err = ti_noise.write( dbP );
+         if ( err != US_DB2::OK )
+            qDebug() << "*ERROR* writing noise to DB" << ti_noise.description;
+      }
 
       if ( nicount > 0 )   // Remove input noise in case re-plotted
       {
@@ -545,10 +555,16 @@ void US_1dsa::save( void )
       if ( nicount > 0 )   // Sum in any input noise
          ri_noise.sum_noise( ri_noise_in, true );
 
-      ri_noise.write( nname );
+      err = ri_noise.write( nname );
+      if ( err != US_DB2::OK )
+         qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
-         ri_noise.write( dbP );
+      {
+         err = ri_noise.write( dbP );
+         if ( err != US_DB2::OK )
+            qDebug() << "*ERROR* writing noise to DB" << ri_noise.description;
+      }
 
       if ( nicount > 0 )   // Remove input noise in case re-plotted
       {
@@ -606,7 +622,6 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
 
-   mname = mdlpath + "/" + mname;
    wmsg  = wmsg + mname + "\n";                // list 1st (only?) model file
 
    if ( knois > 0 )
@@ -675,6 +690,8 @@ void US_1dsa::open_resplot()
    resplotd = new US_ResidPlot( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
+   connect( resplotd, SIGNAL( destroyed   ( QObject *) ),
+            this,     SLOT(   child_closed( QObject* ) ) );
 }
 
 // Open 3-D plot control window
@@ -691,6 +708,8 @@ void US_1dsa::open_3dplot()
    eplotcd = new US_PlotControl( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
+   connect( eplotcd,  SIGNAL( destroyed   ( QObject *) ),
+            this,     SLOT(   child_closed( QObject* ) ) );
 }
 
 // Open fit analysis control window
@@ -762,6 +781,8 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
    analcd  = new US_AnalysisControl( dsets, this );
    analcd->move( acd_pos );
    analcd->show();
+   connect( analcd,   SIGNAL( destroyed   ( QObject *) ),
+            this,     SLOT(   child_closed( QObject* ) ) );
    qApp->processEvents();
 }
 
@@ -954,6 +975,7 @@ void US_1dsa::write_bmap( const QString plotFile )
       qDebug() << "*ERROR* Unable to write file" << plotFile;
 
    resbmap->close();
+   resbmap = 0;
 }
 
 // New triple selected
@@ -969,5 +991,44 @@ void US_1dsa::new_triple( int index )
    data_plot1->clear();
 
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
+}
+
+// Remove any temporary plot file and close all opened windows
+void US_1dsa::close( void )
+{
+   QString tripleID  = edata->cell + edata->channel + edata->wavelength; 
+   QString ptmp4File = US_Settings::tmpDir() + "/1DSA." + tripleID
+      + ".mlines." + QString::number( getpid() ) + ".png";
+
+   QFile tfile( ptmp4File );
+   if ( tfile.exists() )
+   {
+      tfile.remove();
+DbgLv(1) << "1dsa: removed: " << ptmp4File;
+   }
+DbgLv(1) << "1dsa:  close d's res epl ana" << resplotd << eplotcd << analcd;
+
+   if ( resplotd != 0 )
+      resplotd->close();
+   if ( eplotcd != 0 )
+      eplotcd->close();
+   if ( analcd != 0 )
+      analcd->close();
+}
+
+// Private slot to mark a child widgets as closed, if it has been destroyed
+void US_1dsa::child_closed( QObject* o )
+{
+   QString oname = o->objectName();
+DbgLv(1) << "1dsa:CC: d's res epl ana" << resplotd << eplotcd << analcd;
+
+   if ( oname.contains( "AnalysisControl" ) )
+      analcd    = 0;
+   else if ( oname.contains( "ResidPlot" ) )
+      resplotd  = 0;
+   else if ( oname.contains( "PlotControl" ) )
+      eplotcd   = 0;
+DbgLv(1) << "1dsa:CC: return res epl ana" << resplotd << eplotcd << analcd
+   << "oname" << oname;
 }
 

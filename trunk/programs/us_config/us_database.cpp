@@ -325,7 +325,7 @@ void US_Database::check_add()
         db.replace( 1, le_username->text() );
         db.replace( 2, le_dbname  ->text() );
         db.replace( 3, le_host    ->text() );
-        db.replace( 4, pw_list.at( 0 )     );  // Ecnrypted password
+        db.replace( 4, pw_list.at( 0 )     );  // Encrypted password
         db.replace( 5, pw_list.at( 1 )     );  // Initialization vector
         db.replace( 6, le_investigator_email->text() );  
         db.replace( 7, inv_pw.at( 0 )      );
@@ -508,6 +508,7 @@ bool US_Database::test_connect( void )
 
    QString error;
    US_DB2  db;
+//qDebug() << "USCFG: call test_secure...";
    bool ok = db.test_secure_connection( 
                le_host              ->text(), le_dbname         ->text(), 
                le_username          ->text(), le_password       ->text(), 

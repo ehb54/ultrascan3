@@ -202,6 +202,7 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
          int n = n_par;
          int m = m_dat;
 
+#if 0
          if ( (fvec = (double *) malloc(m * sizeof(double))) == NULL ||
               (diag = (double *) malloc(n * sizeof(double))) == NULL ||
               (qtf  = (double *) malloc(n * sizeof(double))) == NULL ||
@@ -214,6 +215,25 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
             status->info = 9;
             return;
          }
+#endif
+         QVector< double > v_fvec( m );
+         QVector< double > v_diag( n );
+         QVector< double > v_qtf ( n );
+         QVector< double > v_fjac( m*n );
+         QVector< double > v_wa1 ( n );
+         QVector< double > v_wa2 ( n );
+         QVector< double > v_wa3 ( n );
+         QVector< double > v_wa4 ( m );
+         QVector< int    > v_ipvt( n );
+         fvec = v_fvec.data();
+         diag = v_diag.data();
+         qtf  = v_qtf .data();
+         fjac = v_fjac.data();
+         wa1  = v_wa1 .data();
+         wa2  = v_wa2 .data();
+         wa3  = v_wa3 .data();
+         wa4  = v_wa4 .data();
+         ipvt = v_ipvt.data();
 
          if( ! control->scale_diag )
             for( j=0; j<n_par; ++j )
@@ -240,6 +260,7 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
 
          /*** clean up. ***/
 
+#if 0
          free(fvec);
          free(diag);
          free(qtf);
@@ -249,6 +270,7 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
          free(wa3);
          free(wa4);
          free(ipvt);
+#endif
       } /*** lmmin. ***/
 
 

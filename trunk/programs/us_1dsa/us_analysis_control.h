@@ -7,6 +7,7 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_1dsa_process.h"
+#include "us_mlplot.h"
 #include "us_plot.h"
 #include "us_help.h"
 
@@ -21,6 +22,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       //! \param dat_exp Pointer to the experiment data
       //! \param         Pointer to the parent of this widget
       US_AnalysisControl( QList< US_SolveSim::DataSet* >&, QWidget* p = 0 );
+
+      void close( void );
 
    public slots:
       void update_progress (  double );
@@ -66,6 +69,7 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QWidget*                         parentw;
       US_1dsaProcess*                  processor;
+      US_MLinesPlot*                   mlnplotd;
 
       QLabel*       lb_lolimitk;
       QLabel*       lb_uplimitk;
@@ -104,16 +108,16 @@ class US_AnalysisControl : public US_WidgetsDialog
    private slots:
       void optimize_options( void );
       void uncheck_optimize( int  );
-      void slim_change(      void );
-      void klim_change(      void );
-      void start(            void );
-      void stop_fit(         void );
-      void plot(             void );
-      void save(             void );
-      void compute(          void );
-      void plot_lines(       void );
+      void slim_change( void );
+      void klim_change( void );
+      void start      ( void );
+      void stop_fit   ( void );
+      void plot       ( void );
+      void save       ( void );
+      void compute    ( void );
+      void plot_lines ( void );
 
-      void help     ( void )
+      void help       ( void )
       { showHelp.show_help( "1dsa_analys.html" ); };
 };
 #endif
