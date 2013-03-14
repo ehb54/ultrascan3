@@ -80,6 +80,8 @@ class WorkerThread : public QThread
 
       double  str_k;         // start model k value
       double  end_k;         // end   model k value
+      double  par1;          // task par1 value
+      double  par2;          // task par1 value
 
       int     thrn;          // thread number (1,...)
       int     taskx;         // grid refinement task index

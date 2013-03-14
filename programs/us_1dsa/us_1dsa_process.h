@@ -3,8 +3,10 @@
 #define US_1DSA_PROCESS_H
 
 #include <QtCore>
+#include <QTimer>
 
 #include "us_extern.h"
+#include "us_widgets.h"
 #include "us_dataIO2.h"
 #include "us_simparms.h"
 #include "us_model.h"
@@ -75,6 +77,10 @@ class US_1dsaProcess : public QObject
 
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
+      static double fit_function_SL( double, double* );
+      static double fit_function_IS( double, double* );
+      static double fit_function_DS( double, double* );
+
 private:
 
       signals:
@@ -125,8 +131,12 @@ private:
       int        kctask;       // count of completed subgrid tasks
       int        kstask;       // count of started subgrid tasks;
       int        minvarx;      // minimum variance model index
+      int        time_fg;      // time in milliseconds for fixed-grid calcs
+      int        time_lm;      // time in milliseconds for L-M calcs
+      int        lmtm_id;      // L-M timing event ID
 
       bool       abort;        // flag used with stop_fit clicked
+      bool       lm_done;      // flag for L-M completion
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -150,6 +160,14 @@ private:
       void model_statistics( QVector< ModelRecord >&, QStringList& );
       QString pmessage_head( void );
       WorkPacket next_job  ( void );
+      void LevMarq_fit     ( void );
+      void elite_limits    ( QVector< ModelRecord >&, double&, double&,
+                             double&, double&, double&, double& );
+      static double evaluate_model( QList< US_SolveSim::DataSet* >&,
+                                    US_SolveSim::Simulation& );
+
+   protected:
+      virtual void timerEvent( QTimerEvent *e );
 };
 #endif
 

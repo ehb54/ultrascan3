@@ -15,6 +15,10 @@
 
 #include "us_extern.h"
 #include "us_math2.h"
+#include <math.h>
+#include <float.h>
+
+#define LM_USRTOL 30*DBL_EPSILON
 
 /*! \class US_LM
  * Class of static functions for Levenberg-Marquardt computations
@@ -38,11 +42,12 @@ class US_UTIL_EXTERN US_LM
             int printflags;   //!< OR'ed to produce more noise
 
             //! Constructor for LM_Control class
-            LM_Control( double, double, double, double, double,
-                        int, int, int );
+            LM_Control( double = LM_USRTOL, double = LM_USRTOL,
+                        double = LM_USRTOL, double = LM_USRTOL,
+                        double = 100.0, int = 100, int = 1, int = 0 );
       };
 
-      //! Collection of output status parameters from LM computatons.
+      //! Collection of output status parameters from LM computations.
       class US_UTIL_EXTERN LM_Status
       {
          public:
@@ -51,20 +56,20 @@ class US_UTIL_EXTERN US_LM
             int info;         //!< status (index for infmsg and shortmsg).
 
             //! Constructor for LM_Status class
-            LM_Status( double, int, int );
+            LM_Status( double = 0.0, int = 0, int = 0 );
       };
 
       //! Collection of LM Curve data
       class US_UTIL_EXTERN LM_CurveData
       {
          public:
-            double* t;                              //!< time array
-            double* y;                              //!< Y value array
-            double (*f)( double ,       double* );  //!< Function
+            double* t;                        //!< test value array
+            double* y;                        //!< Y value array
+            double (*f)( double , double* );  //!< Function for eval.
 
             //! Constructor for LM_CurveData class
             LM_CurveData( double*, double*,
-                          double(*)( double,       double* ) );
+                          double(*)( double, double* ) );
       };
 
       //! Recommended control parameter settings.

@@ -13,6 +13,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    : US_WidgetsDialog( 0, 0 )
 {
    // lay out the GUI
+   setObjectName( "US_ResidPlot" );
+   setAttribute( Qt::WA_DeleteOnClose, true );
    setWindowTitle( tr( "1-D Spectrum Analysis Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 

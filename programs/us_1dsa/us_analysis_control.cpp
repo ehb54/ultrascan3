@@ -19,6 +19,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    dbg_level      = US_Settings::us_debug();
    varimin        = 9e+99;
    bmndx          = -1;
+   mlnplotd       = 0;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -77,9 +78,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3, -10000, 10000,    1 );
    ct_uplimits  = us_counter( 3, -10000, 10000,   10 );
    ct_lolimitk  = us_counter( 3,      1,     8,    1 );
-   ct_uplimitk  = us_counter( 3,      1,   100,    4 );
-   ct_incremk   = us_counter( 3,   0.01,    10, 0.25 );
-   ct_varcount  = us_counter( 2,      3,   200,   16 );
+   ct_uplimitk  = us_counter( 3,      1,   100,    5 );
+   ct_incremk   = us_counter( 3,   0.01,    10, 0.50 );
+   ct_varcount  = us_counter( 2,      3,   200,   11 );
    ct_cresolu   = us_counter( 2,     20,   200,  100 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_lolimits->setStep(  0.1 );
@@ -367,6 +368,13 @@ void US_AnalysisControl::save()
    mainw->analysis_done( 2 );
 }
 
+// Close all windows
+void US_AnalysisControl::close()
+{
+   if ( mlnplotd != 0 )
+      mlnplotd->close();
+}
+
 // Reset s-limit step sizes when s-limit value changes
 void US_AnalysisControl::slim_change()
 {
@@ -430,7 +438,7 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
 
    if ( append )
    {  // append to existing progress message
-      amsg   = te_status->toPlainText() + "\n" + pmsg;
+      amsg   = te_status->toPlainText() + pmsg;
    }
 
    else
@@ -476,16 +484,17 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
    plot_lines();
 
    US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
-   int    mmitnum  = (int)rscan0->seconds;
-
-   US_1dsa* mainw = (US_1dsa*)parentw;
+   int      mmitnum  = (int)rscan0->seconds;
+   US_1dsa* mainw    = (US_1dsa*)parentw;
 
    if ( alldone )
    {
       *mw_modstats    = modelstats;
 
+DbgLv(1) << "AC:cp: main done -2";
       mainw->analysis_done( -2 );
 
+DbgLv(1) << "AC:cp: main done 0";
       mainw->analysis_done(  0 );
 
       pb_strtfit ->setEnabled( true  );
@@ -497,6 +506,7 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
    else if ( mmitnum > 0  &&  stage > 0 )
    {  // signal main to update lists of models,noises
+DbgLv(1) << "AC:cp: main done -2 upd lists";
       mainw->analysis_done( -2 );
    }
 }
@@ -562,8 +572,11 @@ void US_AnalysisControl::plot_lines()
              ? (int)ct_varcount->value()
              : qRound( ( fmax - fmin ) / finc ) + 1;
 
-   US_MLinesPlot* mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
-                                                nlpts, bmndx, nkpts, ctype );
+   if ( mlnplotd != 0 )
+      mlnplotd->close();
+
+   mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
+                                 nlpts, bmndx, nkpts, ctype );
 
    if ( bmndx >= 0 )
    {

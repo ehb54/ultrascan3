@@ -85,8 +85,10 @@ int ModelRecord::compute_slines( double& smin, double& smax,
          mrec.taskx     = mndx;
          mrec.str_k     = ystr;
          mrec.end_k     = yend;
-         mrec.par1      = 0.0;
+         mrec.par1      = ystr;
          mrec.par2      = ( yend - ystr ) / xrng;
+//qDebug() << "MR: ii jj" << ii << jj << "ys ye p1 p2" << ystr << yend
+// << mrec.par1 << mrec.par2;
          mrecs << mrec;
 
          yend   += finc;

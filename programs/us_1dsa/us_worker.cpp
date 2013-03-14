@@ -43,6 +43,8 @@ void WorkerThread::define_work( WorkPacket& workin )
 
    str_k       = workin.str_k;
    end_k       = workin.end_k;
+   par1        = workin.par1;
+   par2        = workin.par2;
    thrn        = workin.thrn;
    taskx       = workin.taskx;
    noisflag    = workin.noisf;
@@ -71,6 +73,8 @@ void WorkerThread::get_result( WorkPacket& workout )
 {
    workout.str_k    = str_k;
    workout.end_k    = end_k;
+   workout.par1     = par1;
+   workout.par2     = par2;
    workout.thrn     = thrn;
    workout.taskx    = taskx;
    workout.noisf    = noisflag;
