@@ -972,9 +972,6 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2 t" << par1 << par2 << t
 if(ffcall<6)
 qDebug() << "ffIS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
-//qDebug() << "ffIS:  dsets[0]" << dsets[0] << parP[0]
-// << "dsets[0]->vbar20" << dsets[0]->vbar20;
-qDebug() << "ffIS:    ys ye yl yh" << ystart << yend << ylow << yhigh;
 
    return rmsd;
 }
@@ -1079,9 +1076,6 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2 t" << par1 << par2 << t
 if(ffcall<6)
 qDebug() << "ffDS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
-//qDebug() << "ffDS:  dsets[0]" << dsets[0] << parP[0]
-// << "dsets[0]->vbar20" << dsets[0]->vbar20;
-qDebug() << "ffDS:    ys ye yl yh" << ystart << yend << ylow << yhigh;
 
    return rmsd;
 }
@@ -1171,10 +1165,10 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << slolim << ys << suplim << ye
 
    else if ( curvtype == 1 )
    { // Fit with Levenberg-Marquardt for increasing-sigmoid curves
-      control.ftol     = 1.e-16;
-      control.xtol     = 1.e-16;
-      control.gtol     = 1.e-16;
-      control.epsilon  = 1.e-4;
+      control.ftol     = 1.e-3;
+      control.xtol     = 1.e-3;
+      control.gtol     = 1.e-3;
+      control.epsilon  = 1.e-3;
       par[ 8 ]      = 0.001;
       par[ 9 ]      = 0.5;
       par[ 10 ]     = 0.0;
@@ -1185,9 +1179,18 @@ DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1];
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_1dsaProcess::fit_function_IS), &control, &status );
 DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1];
+DbgLv(0) << "   lmcfit status: fnorm nfev info"
+   << status.fnorm << status.nfev << status.info;
+double rmsd = sqrt( dsets[0]->model.variance );
+int    nsol = dsets[0]->model.components.size();
+DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
    else if ( curvtype == 2 )
    { // Fit with Levenberg-Marquardt for decreasing-sigmoid curves
+      control.ftol     = 1.e-16;
+      control.xtol     = 1.e-16;
+      control.gtol     = 1.e-16;
+      control.epsilon  = 1.e-4;
       par[ 8 ]      = 0.001;
       par[ 9 ]      = 0.5;
       par[ 10 ]     = 0.0;
@@ -1198,6 +1201,11 @@ DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1];
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_1dsaProcess::fit_function_DS), &control, &status );
 DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1];
+DbgLv(0) << "   lmcfit status: fnorm nfev info"
+   << status.fnorm << status.nfev << status.info;
+double rmsd = sqrt( dsets[0]->model.variance );
+int    nsol = dsets[0]->model.components.size();
+DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
    else
    {
@@ -1228,29 +1236,41 @@ DbgLv(0) << "  lmcfit time:" << ktimeh << "h" << ktimem << "m" << ktimes << "s";
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
+   ModelRecord mrec = mrecs[ 0 ];
+   US_SimulationParameters* spar = &dset->simparams;
+   int  jsp       = 0;
+
    if ( curvtype == 0 )
    {
-      mrecs[ 0 ].str_k     = par[ 0 ];
-      mrecs[ 0 ].end_k     = par[ 0 ] + par[ 1 ] * ( suplim -slolim );
+      mrec.str_k     = par[ 0 ];
+      mrec.end_k     = par[ 0 ] + par[ 1 ] * ( suplim -slolim );
    }
-   mrecs[ 0 ].par1      = par[ 0 ];
-   mrecs[ 0 ].par2      = par[ 1 ];
-   mrecs[ 0 ].variance  = dset->model.variance;
-   mrecs[ 0 ].rmsd      = rmsd;
-   mrecs[ 0 ].csolutes.clear();
+
+   mrec.par1      = par[ 0 ];
+   mrec.par2      = par[ 1 ];
+   mrec.variance  = dset->model.variance;
+   mrec.rmsd      = rmsd;
+
+   for ( int ii = 0; ii < mrec.isolutes.size(); ii++ )
+   { // Replace s and k in top model input solutes
+      mrec.isolutes[ ii ].s = spar->mesh_radius[ jsp++ ];
+      mrec.isolutes[ ii ].k = spar->mesh_radius[ jsp++ ];
+   }
+
+   mrec.csolutes.clear();
    model      = dset->model;
-   double sfactor       = 1.0 / dset->s20w_correction;
-   double dfactor       = 1.0 / dset->D20w_correction;
+   double sfactor = 1.0 / dset->s20w_correction;
+   double dfactor = 1.0 / dset->D20w_correction;
 
    for ( int ii = 0; ii < nsol; ii++ )
    {
-      // Insert calculate solutes into top model record
+      // Insert calculated solutes into top model record
       US_Solute solute;
       solute.s   = model.components[ ii ].s;
       solute.k   = model.components[ ii ].f_f0;
       solute.c   = model.components[ ii ].signal_concentration;
       solute.v   = model.components[ ii ].vbar20;
-      mrecs[ 0 ].csolutes << solute;
+      mrec.csolutes << solute;
 DbgLv(1) << "LMf:  ii" << ii << "s k c" << solute.s << solute.k << solute.c;
 
       // Calculate the remainder of component values
@@ -1267,8 +1287,8 @@ DbgLv(1) << "LMf:     s D mw" << model.components[ii].s
    }
 
    // Recalculate final refined simulation and residual
-   US_DataIO2::RawData* simdat = &mrecs[ 0 ].sim_data;
-   US_DataIO2::RawData* resids = &mrecs[ 0 ].residuals;
+   US_DataIO2::RawData* simdat = &mrec.sim_data;
+   US_DataIO2::RawData* resids = &mrec.residuals;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
 DbgLv(1) << "LMf:simparms: spts meni bott temp bpos"
@@ -1286,36 +1306,37 @@ DbgLv(1) << "LMf:model: desc analys vari" << model.description
    // Fetch any noise saved in dset
    bool tino       = ( ( noisflag & 1 ) != 0 );
    bool rino       = ( ( noisflag & 2 ) != 0 );
-   int  jj         = 0;
    ti_noise.count  = 0;
    ri_noise.count  = 0;
    ti_noise.values.clear();
    ri_noise.values.clear();
-   mrecs[ 0 ].ti_noise.clear();
-   mrecs[ 0 ].ri_noise.clear();
-   US_SimulationParameters* spar = &dset->simparams;
+   mrec.ti_noise.clear();
+   mrec.ri_noise.clear();
 
    if ( tino )
    {
       for ( int ii = 0; ii < npoints; ii++ )
-         ti_noise.values << spar->mesh_radius[ jj++ ];
+         ti_noise.values << spar->mesh_radius[ jsp++ ];
 
-      ti_noise.minradius  = edata->radius( 0 );
-      ti_noise.maxradius  = edata->radius( npoints - 1 );
-      ti_noise.count      = npoints;
-      mrecs[ 0 ].ti_noise = ti_noise.values;
+      ti_noise.minradius = edata->radius( 0 );
+      ti_noise.maxradius = edata->radius( npoints - 1 );
+      ti_noise.count     = npoints;
+      mrec.ti_noise      = ti_noise.values;
 DbgLv(1) << "LMf: ti count size" << ti_noise.count << ti_noise.values.size();
    }
 
    if ( rino )
    {
       for ( int ii = 0; ii < nscans; ii++ )
-         ri_noise.values << spar->mesh_radius[ jj++ ];
+         ri_noise.values << spar->mesh_radius[ jsp++ ];
 
-      ri_noise.count      = nscans;
-      mrecs[ 0 ].ri_noise = ri_noise.values;
+      ri_noise.count     = nscans;
+      mrec.ri_noise      = ri_noise.values;
 DbgLv(1) << "LMf: ri count size" << ri_noise.count << ri_noise.values.size();
    }
+
+   // Insert new refined best model at the top of the list
+   mrecs.insert( 0, mrec );
 
    // Re-compute simulation and residuals
 DbgLv(0) << "LMf: tino rino" << tino << rino;
@@ -1327,16 +1348,17 @@ DbgLv(0) << "LMf: rdata  nsc npt"
  << rdata.scanData.size() << rdata.x.size();
 DbgLv(0) << "LMf: sdata  nsc npt"
  << sdata.scanData.size() << sdata.x.size();
+   spar->mesh_radius.clear();
    double cvari = 0.0;
    double crmsd = 0.0;
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
-      double rnois = rino ? mrecs[ 0 ].ri_noise[ ss ] : 0.0;
+      double rnois = rino ? mrec.ri_noise[ ss ] : 0.0;
 
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         double tnois  = tino ? mrecs[ 0 ].ti_noise[ rr ] : 0.0;
+         double tnois  = tino ? mrec.ti_noise[ rr ] : 0.0;
          double resval = edata->value( ss, rr )
                        - sdata. value( ss, rr ) - tnois - rnois;
          rdata.  scanData[ ss ].readings[ rr ].value = resval;
@@ -1353,7 +1375,6 @@ DbgLv(1) << "LMf:  ss rr" << ss << rr << "edat sdat resv"
    crmsd          = sqrt( cvari );
    emit progress_update( cvari );     // Pass progress on to control window
 DbgLv(0) << "LMf: recomputed variance rmsd" << cvari << crmsd;
-
 }
 
 void US_1dsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
@@ -1388,13 +1409,23 @@ DbgLv(1) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 double US_1dsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    US_SolveSim::Simulation& sim_vals )
 {
+   US_SolveSim::DataSet*    dset = dsets[ 0 ];
+   US_SimulationParameters* spar = &dset->simparams;
+   spar->mesh_radius.clear();
+
+   // Save the s and k of the input solutes
+   for ( int ii = 0; ii < sim_vals.solutes.size(); ii++ )
+   {
+      spar->mesh_radius << sim_vals.solutes[ ii ].s;
+      spar->mesh_radius << sim_vals.solutes[ ii ].k;
+   }
+
    // Do astfem fit, mostly to get an RMSD
    US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
 
    solvesim->calc_residuals( 0, 1, sim_vals );
 
    // Construct a rudimentary model from computed solutes and save it
-   US_SolveSim::DataSet* dset = dsets[ 0 ];
    dset->model          = US_Model();
    dset->model.variance = sim_vals.variances[ 0 ];
    dset->model.components.clear();
@@ -1413,8 +1444,6 @@ double US_1dsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    // If noise was computed, save it in simparams mesh_radius vector
    if ( sim_vals.noisflag != 0 )
    {
-      US_SimulationParameters* spar = &dset->simparams;
-      spar->mesh_radius.clear();
       int ntin  = ( ( sim_vals.noisflag & 1 ) == 0 ) ? 0
                   : sim_vals.ti_noise.size();
       int nrin  = ( ( sim_vals.noisflag & 2 ) == 0 ) ? 0
