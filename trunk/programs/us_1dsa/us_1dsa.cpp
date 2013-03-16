@@ -81,11 +81,10 @@ US_1dsa::US_1dsa() : US_AnalysisBase2()
    for ( int ii = 0; ii < controlsLayout->count(); ii++ )
       if ( ( widg = controlsLayout->itemAt( ii )->widget() ) != 0 )
          widg->setVisible( false );
-   ct_from->setVisible(true);
-   ct_to->setVisible(true);
-   pb_exclude->setVisible(true);
-   pb_reset_exclude->setVisible(true);
-   //ct_to->setVisible(true);
+   ct_from         ->setVisible( true );
+   ct_to           ->setVisible( true );
+   pb_exclude      ->setVisible( true );
+   pb_reset_exclude->setVisible( true );
 
    // Add variance and rmsd to parameters layout
    QLabel* lb_vari     = us_label ( tr( "Variance:" ) );
@@ -93,26 +92,26 @@ US_1dsa::US_1dsa() : US_AnalysisBase2()
    QLabel* lb_rmsd     = us_label ( tr( "RMSD:" ) );
    le_rmsd             = us_lineedit( "0.00000", 0, true );
    int row   = parameterLayout->rowCount();
-   parameterLayout->addWidget( lb_vari,     row,   0, 1, 1 );
-   parameterLayout->addWidget( le_vari,     row,   1, 1, 1 );
-   parameterLayout->addWidget( lb_rmsd,     row,   2, 1, 1 );
-   parameterLayout->addWidget( le_rmsd,     row++, 3, 1, 1 );
+   parameterLayout->addWidget( lb_vari,         row,   0, 1, 1 );
+   parameterLayout->addWidget( le_vari,         row,   1, 1, 1 );
+   parameterLayout->addWidget( lb_rmsd,         row,   2, 1, 1 );
+   parameterLayout->addWidget( le_rmsd,         row++, 3, 1, 1 );
 
    // Reconstruct controls layout with some 1dsa-specific elements
    row       = 0;
-   controlsLayout->addWidget( lb_scan,      row++, 0, 1, 3 );
-   controlsLayout->addWidget( lb_from,      row,   0, 1, 1 );
-   controlsLayout->addWidget( ct_from,      row++, 1, 1, 2 );
-   controlsLayout->addWidget( lb_to,        row,   0, 1, 1 );
-   controlsLayout->addWidget( ct_to,        row++, 1, 1, 2 );
-   controlsLayout->addWidget( pb_exclude,   row,   0, 1, 1 );
-   controlsLayout->addWidget( pb_reset_exclude, row++, 1, 1, 2 );
-   controlsLayout->addWidget( lb_analysis,  row++, 0, 1, 3 );
-   controlsLayout->addWidget( pb_fitcntl,   row,   0, 1, 1 );
-   controlsLayout->addWidget( pb_plt3d,     row,   1, 1, 1 );
-   controlsLayout->addWidget( pb_pltres,    row++, 2, 1, 1 );
-   controlsLayout->addWidget( lb_status,    row,   0, 1, 1 );
-   controlsLayout->addWidget( te_status,    row,   1, 1, 2 );
+   controlsLayout->addWidget( lb_scan,          row++, 0, 1, 6 );
+   controlsLayout->addWidget( lb_from,          row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_from,          row++, 2, 1, 4 );
+   controlsLayout->addWidget( lb_to,            row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_to,            row++, 2, 1, 4 );
+   controlsLayout->addWidget( pb_exclude,       row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_reset_exclude, row++, 2, 1, 4 );
+   controlsLayout->addWidget( lb_analysis,      row++, 0, 1, 6 );
+   controlsLayout->addWidget( pb_fitcntl,       row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_plt3d,         row,   2, 1, 2 );
+   controlsLayout->addWidget( pb_pltres,        row++, 4, 1, 2 );
+   controlsLayout->addWidget( lb_status,        row,   0, 1, 1 );
+   controlsLayout->addWidget( te_status,        row,   1, 1, 5 );
    row      += 3;
 
    // Set initial status text
