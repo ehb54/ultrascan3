@@ -21,10 +21,11 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    ctype( typ )
 {
    // lay out the GUI
+   setObjectName( "US_MLinesPlot" );
+   setAttribute( Qt::WA_DeleteOnClose, true );
    setWindowTitle( tr( "1-D Spectrum Analysis Model Lines Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-DbgLv(1) << "MLP: IN";
    QSize p1size( 560, 480 );
 
    dbg_level       = US_Settings::us_debug();

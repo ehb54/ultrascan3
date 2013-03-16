@@ -303,14 +303,17 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
    max_rss();
    int memmb  = qRound( (double)maxrss / 1024.0 );
 
-   pmsg += tr( "   Max. memory:  " ) +
+   pmsg += tr( "   Maximum memory used:  " ) +
            QString::number( memmb ) + " MB\n\n" +
            tr( "The best model (RMSD=%1, %2 solutes, index %3) is:\n" )
            .arg( mrec.rmsd ).arg( nsolutes ).arg( mrec.taskx );
    if ( curvtype == 0 )
    {
-      pmsg += tr( "  the line from s,f/f0  %1, %2  to %3, %4 ." )
-              .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
+      double slopel = (double)( mrec.end_k - mrec.str_k ) 
+                    / (double)( suplim     - slolim     );
+      pmsg += tr( "  the line from s,f/f0  %1, %2  to %3, %4  (slope %5)." )
+              .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k )
+              .arg( slopel );
    }
    else if ( curvtype == 1  ||  curvtype == 2 )
    {
@@ -332,6 +335,7 @@ DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
+   emit process_complete( 8 );     // signal that L-M is starting
 
    // Compute a best model using Levenberg-Marquardt
    LevMarq_fit();
@@ -475,8 +479,8 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
  << " kct kst" << kctask << kstask;
 
    emit message_update( pmessage_head() +
-      tr( "Computations for %1 of %2 models are complete." )
-      .arg( kctask ).arg( nmtasks ), false );
+      tr( "Of %1 models, computations are complete for %2." )
+      .arg( nmtasks ).arg( kctask ), false );
 
    if ( kctask >= nmtasks )
    {  // All model tasks are now complete
@@ -561,7 +565,7 @@ QString US_1dsaProcess::pmessage_head()
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
-   return tr( "Analysis of %1 %2 models,\n  with %3 solutes each.\n" )
+   return tr( "Analysis of %1 %2 %3-solute models.\n" )
           .arg( nmtasks ).arg( ctype ).arg( cresolu );
 }
 
@@ -833,7 +837,11 @@ double US_1dsaProcess::fit_function_SL( double t, double* par )
            par1   > p1hi   ||  par2   > p2hi  ||
            ystart < ylow   ||  yend   < ylow  ||
            ystart > yhigh  ||  yend   > yhigh )
+      {
+qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
+ << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
          return 1e+99;
+      }
    }
 
    double prange = (double)( nlpts - 1 );
@@ -858,8 +866,8 @@ double US_1dsaProcess::fit_function_SL( double t, double* par )
 
    epar[ 12 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
-qDebug() << "ffSL: call" << ffcall << "par1 par2 t" << par1 << par2 << t
- << "eval time" << ktimms << "ms.";
+qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
+ << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
 if(ffcall<6)
 qDebug() << "ffSL:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
@@ -920,8 +928,8 @@ double US_1dsaProcess::fit_function_IS( double t, double* par )
    double kdif   = yhigh - ylow;
    double srange = xend - xstart;
    double p1fac  = sqrt( 2.0 * par1 );
-   double ystart = kstr + kdif * ( 0.5 + erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
-   double yend   = kstr + kdif * ( 0.5 + erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
+   double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
+   double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
@@ -929,17 +937,21 @@ double US_1dsaProcess::fit_function_IS( double t, double* par )
       // Leave a little wiggle room on limits
       ylow         -= 0.1;
       yhigh        += 0.1;
-      p1lo         -= 0.1;
-      p1hi         += 0.1;
+      p1lo         -= 0.00001;
+      p1hi         += 0.00001;
       p2lo         -= 0.01;
-      p2hi         += 0.02;
+      p2hi         += 0.01;
 
       // If this record is beyond any limit, return now with it marked as bad
       if ( par1   < p1lo   ||  par2   < p2lo  ||
            par1   > p1hi   ||  par2   > p2hi  ||
            ystart < ylow   ||  yend   < ylow  ||
            ystart > yhigh  ||  yend   > yhigh )
+      {
+qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
+ << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
          return 1e+99;
+      }
    }
 
    double prange = (double)( nlpts - 1 );
@@ -967,8 +979,8 @@ double US_1dsaProcess::fit_function_IS( double t, double* par )
 
    epar[ 12 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
-qDebug() << "ffIS: call" << ffcall << "par1 par2 t" << par1 << par2 << t
- << "eval time" << ktimms << "ms.";
+qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
+ << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
 if(ffcall<6)
 qDebug() << "ffIS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
@@ -1024,8 +1036,8 @@ double US_1dsaProcess::fit_function_DS( double t, double* par )
    double kdif   = ylow - yhigh;
    double srange = xend - xstart;
    double p1fac  = sqrt( 2.0 * par1 );
-   double ystart = kstr + kdif * ( 0.5 + erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
-   double yend   = kstr + kdif * ( 0.5 + erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
+   double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
+   double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
@@ -1033,17 +1045,21 @@ double US_1dsaProcess::fit_function_DS( double t, double* par )
       // Leave a little wiggle room on limits
       ylow         -= 0.1;
       yhigh        += 0.1;
-      p1lo         -= 0.1;
-      p1hi         += 0.1;
+      p1lo         -= 0.00001;
+      p1hi         += 0.00001;
       p2lo         -= 0.01;
-      p2hi         += 0.02;
+      p2hi         += 0.01;
 
       // If this record is beyond any limit, return now with it marked as bad
       if ( par1   < p1lo   ||  par2   < p2lo  ||
            par1   > p1hi   ||  par2   > p2hi  ||
            ystart < ylow   ||  yend   < ylow  ||
            ystart > yhigh  ||  yend   > yhigh )
+      {
+qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
+ << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
          return 1e+99;
+      }
    }
 
    double prange = (double)( nlpts - 1 );
@@ -1071,8 +1087,8 @@ double US_1dsaProcess::fit_function_DS( double t, double* par )
 
    epar[ 12 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
-qDebug() << "ffDS: call" << ffcall << "par1 par2 t" << par1 << par2 << t
- << "eval time" << ktimms << "ms.";
+qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
+ << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
 if(ffcall<6)
 qDebug() << "ffDS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
@@ -1083,10 +1099,13 @@ qDebug() << "ffDS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
 // Do Levenberg-Marquardt fit
 void US_1dsaProcess::LevMarq_fit( void )
 {
+   const int eslnc = 32;   // Estimated straight-line LM eval calls
+   const int esigc = 44;   // Estimated sigmoid LM eval calls
 //   static US_LM::LM_Control control;
 //   static US_LM::LM_Control control( 1.e-7, 1.e-7, 1.e-7, 1.e-7,
 //                                     100., 100, 0, 0 );
-   static US_LM::LM_Control control( 1.e-5, 1.e-5, 1.e-5, 1.e-5 );
+   static US_LM::LM_Control control( 1.e-5, 1.e-5, 1.e-5, 1.e-5,
+                                     100., 100, 0, 0 );
    static US_LM::LM_Status  status;
    static int    n_par  = 2;
    static int    m_dat  = 3;
@@ -1098,16 +1117,19 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    double maxkv  = klolim;
    double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
    double minsl  = -maxsl;
-   double minp1  = minkv;
-   double maxp1  = maxkv;
-   double minp2  = maxsl;
-   double maxp2  = minsl;
+   double minp1  = ( curvtype == 0 ) ? maxkv : 0.5;
+   double maxp1  = ( curvtype == 0 ) ? minkv : 0.001;
+   double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
+   double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
    lm_done       = false;
+   // Start timer for L-M progress bar, based on estimated duration
    kcsteps       = 0;
    int    stepms = 500;
-   nctotal       = ( curvtype == 0 )
-                   ? ( time_fg * 3 ) / ( stepms * 2 )
-                   : ( time_fg * 1 ) / ( stepms * 8 );
+   kctask        = ( curvtype == 0 )
+                   ? ( time_fg * nthreads * eslnc + nmtasks / 2 ) / nmtasks
+                   : ( time_fg * nthreads * esigc + nmtasks / 2 ) / nmtasks;
+   nctotal       = ( kctask + stepms / 2 ) / stepms;
+   kctask        = nctotal * stepms;
    lmtm_id       = startTimer( stepms );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -1151,6 +1173,7 @@ DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1];
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_1dsaProcess::fit_function_SL), &control, &status );
+
 DbgLv(0) << "  lmcurve_fit (SL) return: par1,par2" << par[0] << par[1];
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
    << status.fnorm << status.nfev << status.info;
@@ -1165,20 +1188,19 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << slolim << ys << suplim << ye
 
    else if ( curvtype == 1 )
    { // Fit with Levenberg-Marquardt for increasing-sigmoid curves
-      control.ftol     = 1.e-3;
-      control.xtol     = 1.e-3;
-      control.gtol     = 1.e-3;
-      control.epsilon  = 1.e-3;
-      par[ 8 ]      = 0.001;
-      par[ 9 ]      = 0.5;
-      par[ 10 ]     = 0.0;
-      par[ 11 ]     = 1.0;
+      control.ftol     = 1.e-5;
+      control.xtol     = 1.e-5;
+      control.gtol     = 1.e-5;
+      control.epsilon  = 1.e-5;
       fit_function_IS( -1.0, par );    // Make sure to reset eval. function
+DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 
-DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1];
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_1dsaProcess::fit_function_IS), &control, &status );
-DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1];
+
+DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1]
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
    << status.fnorm << status.nfev << status.info;
 double rmsd = sqrt( dsets[0]->model.variance );
@@ -1191,16 +1213,15 @@ DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol;
       control.xtol     = 1.e-16;
       control.gtol     = 1.e-16;
       control.epsilon  = 1.e-4;
-      par[ 8 ]      = 0.001;
-      par[ 9 ]      = 0.5;
-      par[ 10 ]     = 0.0;
-      par[ 11 ]     = 1.0;
       fit_function_DS( -1.0, par );    // Make sure to reset eval. function
+DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1]
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 
-DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1];
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_1dsaProcess::fit_function_DS), &control, &status );
-DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1];
+
+DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1]
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
    << status.fnorm << status.nfev << status.info;
 double rmsd = sqrt( dsets[0]->model.variance );
@@ -1217,13 +1238,15 @@ DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol;
    US_SolveSim::DataSet* dset = dsets[ 0 ];
    double rmsd   = sqrt( dset->model.variance );
    int    nsol   = dset->model.components.size();
-//   timefs ktimes = ( timer.elapsed() + 500 ) / 1000;
    time_lm       = timer.elapsed();
    int    ktimes = ( time_lm + 500 ) / 1000;
    int    ktimeh = ktimes / 3600;
    int    ktimem = ( ktimes - ktimeh * 3600 ) / 60;
    ktimes        = ktimes - ktimeh * 3600 - ktimem * 60;
-DbgLv(0) << "  lmcfit time:" << ktimeh << "h" << ktimem << "m" << ktimes << "s";
+DbgLv(0) << "     lmcfit time: " << ktimeh << "h" << ktimem
+ << "m" << ktimes << "s";
+DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
+ << "actual" << time_lm;
    QString fmsg = tr( "New best model has par1 %1,  par2 %2,\n"
                       "  RMSD %3,  %4 solutes  " )
        .arg( par[ 0 ] ).arg( par[ 1 ] ).arg( rmsd ).arg( nsol );
@@ -1336,17 +1359,23 @@ DbgLv(1) << "LMf: ri count size" << ri_noise.count << ri_noise.values.size();
    }
 
    // Insert new refined best model at the top of the list
+DbgLv(0) << "LMf:insert-new: old par1 par2" << mrecs[0].par1 << mrecs[0].par2
+ << "new par1 par2" << mrec.par1 << mrec.par2;
+DbgLv(0) << "LMf: old01 s,k" << mrecs[0].isolutes[0].s << mrecs[0].isolutes[0].k
+ << mrecs[0].isolutes[1].s << mrecs[0].isolutes[1].k;
+DbgLv(0) << "LMf: new01 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
+ << mrec.isolutes[1].s << mrec.isolutes[1].k;
    mrecs.insert( 0, mrec );
 
    // Re-compute simulation and residuals
 DbgLv(0) << "LMf: tino rino" << tino << rino;
 DbgLv(0) << "LMf: simdat nsc npt"
  << simdat->scanData.size() << simdat->x.size();
-DbgLv(0) << "LMf: resids nsc npt"
+DbgLv(1) << "LMf: resids nsc npt"
  << resids->scanData.size() << resids->x.size();
-DbgLv(0) << "LMf: rdata  nsc npt"
+DbgLv(1) << "LMf: rdata  nsc npt"
  << rdata.scanData.size() << rdata.x.size();
-DbgLv(0) << "LMf: sdata  nsc npt"
+DbgLv(1) << "LMf: sdata  nsc npt"
  << sdata.scanData.size() << sdata.x.size();
    spar->mesh_radius.clear();
    double cvari = 0.0;
@@ -1383,7 +1412,7 @@ void US_1dsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
 {
    int nmr        = mrecs.size();
    int nelite     = ( nmr * 2 ) / 10;
-DbgLv(1) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
+DbgLv(0) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
 DbgLv(1) << " ElLim: in minkv maxkv" << minkv << maxkv;
 DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 
@@ -1401,8 +1430,8 @@ DbgLv(1) << " ElLim:   ii" << ii << "par1 par2"
       minp2          = qMin( minp2, mrecs[ ii ].par2  );
       maxp2          = qMax( maxp2, mrecs[ ii ].par2  );
    }
-DbgLv(1) << " ElLim: out minkv maxkv" << minkv << maxkv;
-DbgLv(1) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+DbgLv(0) << " ElLim: out minkv maxkv" << minkv << maxkv;
+DbgLv(0) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 }
 
 // Evaluate a model; return rmsd, model, noises

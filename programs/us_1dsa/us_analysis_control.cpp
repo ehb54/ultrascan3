@@ -62,8 +62,8 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),         false );
    pb_plot                 = us_pushbutton( tr( "Plot Results" ),     false );
    pb_save                 = us_pushbutton( tr( "Save Results" ),     false );
-   QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
-   QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
+   pb_help                 = us_pushbutton( tr( "Help" ) );
+   pb_close                = us_pushbutton( tr( "Close" ) );
    te_status               = us_textedit();
    us_setReadOnly( te_status, true );
 
@@ -81,7 +81,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk  = us_counter( 3,      1,   100,    5 );
    ct_incremk   = us_counter( 3,   0.01,    10, 0.50 );
    ct_varcount  = us_counter( 2,      3,   200,   11 );
-   ct_cresolu   = us_counter( 2,     20,   200,  100 );
+   ct_cresolu   = us_counter( 2,     20,   401,  101 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_lolimits->setStep(  0.1 );
    ct_uplimits->setStep(  0.1 );
@@ -185,7 +185,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_help,     SIGNAL( clicked()    ),
             this,        SLOT(   help()       ) );
    connect( pb_close,    SIGNAL( clicked()    ),
-            this,        SLOT(   close()      ) );
+            this,        SLOT(   close_all()  ) );
 
    lb_incremk ->setVisible( true  );
    ct_incremk ->setVisible( true  );
@@ -369,10 +369,19 @@ void US_AnalysisControl::save()
 }
 
 // Close all windows
-void US_AnalysisControl::close()
+void US_AnalysisControl::close_all()
 {
+DbgLv(1) << "AC:close: mlnplotd" << mlnplotd;
    if ( mlnplotd != 0 )
       mlnplotd->close();
+
+   accept();
+}
+
+// Public close slot
+void US_AnalysisControl::close()
+{
+   close_all();
 }
 
 // Reset s-limit step sizes when s-limit value changes
@@ -468,8 +477,13 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 // slot to handle completed processing
 void US_AnalysisControl::completed_process( int stage )
 {
-   bool alldone = ( stage == 9 );
-DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
+DbgLv(1) << "AC:cp: stage" << stage;
+
+   if ( stage == 8 )
+   { // If starting L-M, turn off Stop Fit
+      pb_stopfit->setEnabled( false );
+      return;
+   }
 
    b_progress->setValue( nctotal );
    qApp->processEvents();
@@ -487,7 +501,7 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
    int      mmitnum  = (int)rscan0->seconds;
    US_1dsa* mainw    = (US_1dsa*)parentw;
 
-   if ( alldone )
+   if ( stage == 9 )
    {
       *mw_modstats    = modelstats;
 
@@ -572,11 +586,18 @@ void US_AnalysisControl::plot_lines()
              ? (int)ct_varcount->value()
              : qRound( ( fmax - fmin ) / finc ) + 1;
 
+DbgLv(1) << "PL: mlnplotd" << mlnplotd;
    if ( mlnplotd != 0 )
       mlnplotd->close();
+DbgLv(1) << "PL:  mlnplotd closed";
 
    mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
                                  nlpts, bmndx, nkpts, ctype );
+
+   connect( mlnplotd, SIGNAL( destroyed( QObject* ) ),
+            this,     SLOT  ( closed   ( QObject* ) ) );
+
+DbgLv(1) << "PL:  new mlnplotd" << mlnplotd;
 
    if ( bmndx >= 0 )
    {
@@ -596,8 +617,17 @@ void US_AnalysisControl::plot_lines()
                       + QString::number( getpid() ) + ".png";
    QPixmap pixmap   = QPixmap::grabWidget( mlnplotd, 0, 0,
                          mlnplotd->width(), mlnplotd->height() );
-qDebug() << "PLOTLINE: mlines filepath" << filepath;
-qDebug() << "PLOTLINE: mlines w h" << pixmap.width() << pixmap.height();
+DbgLv(0) << "PLOTLINE: mlines filepath" << filepath;
+DbgLv(0) << "PLOTLINE: mlines w h" << pixmap.width() << pixmap.height();
    pixmap.save( filepath );
+}
+
+// Private slot to mark a child widget as closed, if it has been destroyed
+void US_AnalysisControl::closed( QObject* o )
+{
+   QString oname = o->objectName();
+
+   if ( oname.contains( "MLinesPlot" ) )
+      mlnplotd    = 0;
 }
 

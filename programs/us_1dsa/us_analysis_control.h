@@ -100,6 +100,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       QPushButton*  pb_stopfit;
       QPushButton*  pb_plot;
       QPushButton*  pb_save;
+      QPushButton*  pb_help;
+      QPushButton*  pb_close;
 
    protected:
       US_Help       showHelp;
@@ -114,8 +116,10 @@ class US_AnalysisControl : public US_WidgetsDialog
       void stop_fit   ( void );
       void plot       ( void );
       void save       ( void );
+      void close_all  ( void );
       void compute    ( void );
       void plot_lines ( void );
+      void closed     ( QObject* );
 
       void help       ( void )
       { showHelp.show_help( "1dsa_analys.html" ); };
