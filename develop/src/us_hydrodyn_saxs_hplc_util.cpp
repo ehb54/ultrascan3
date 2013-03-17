@@ -1873,7 +1873,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_errors    [ name ] = use_e;
          f_is_time   [ name ] = false;
          f_conc      [ name ] = conc_factor;
-         f_psv       [ name ] = psv[ g ];
+         f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
 
          {
             vector < double > tmp;

@@ -1416,9 +1416,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
+   hbl_file_buttons_3->addWidget ( pb_avg );
    hbl_file_buttons_3->addWidget ( pb_add );
    hbl_file_buttons_3->addWidget ( pb_to_saxs );
-   hbl_file_buttons_3->addWidget ( pb_avg );
    hbl_file_buttons_3->addWidget ( pb_color_rotate );
 
    QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout( 0 );
