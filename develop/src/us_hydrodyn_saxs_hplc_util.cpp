@@ -3219,11 +3219,17 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
 
    if ( peak_target_has_errors )
    {
+      unsigned int pts = 0;
       for ( unsigned int i = 0; i < ( unsigned int ) f_errors[ peak_target ].size(); i++ )
       {
-         avg_sd_mult += f_Is[ peak_target ][ i ] / f_errors[ peak_target ][ i ];
+         if ( f_Is[ peak_target ][ i ] != 0e0 )
+         {
+            avg_sd_mult += f_errors[ peak_target ][ i ] / f_Is[ peak_target ][ i ];
+            pts++;
+         }
+
       }
-      avg_sd_mult /= ( double ) f_errors[ peak_target ].size();
+      avg_sd_mult /= ( double ) pts;
 
       unsigned int wo_errors_count = 0;
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
