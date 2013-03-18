@@ -3216,6 +3216,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
                                    is_nonzero_vector( f_errors[ peak_target ] ) );
    bool any_without_errors = false;
    double avg_sd_mult = 0e0;
+   bool match_sd = false;
 
    if ( peak_target_has_errors )
    {
@@ -3252,8 +3253,8 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
                                                      "What would you like to do?\n" ) )
                                         .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
                                         tr( "&Ignore S.D.'s" ), 
-                                        tr( "&Set S.D.'s to the\ntarget average %1 %" ).arg( avg_sd_mult * 100e0, 0, 'f', 2 ),
-                                        tr( "S&et S.D.'s to 5 %" ), 
+                                        tr( "&Copy target S.D.'s" ),
+                                        tr( "Set S.D.'s to 5 %" ), 
                                         0, // Stop == button 0
                                         0 // Escape == button 0
                                         ) )
@@ -3261,9 +3262,8 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          case 0 : // ignore S.D.'s
             any_without_errors = false;
             break;
-            
          case 1 : // keep avg_sd_mult
-            
+            match_sd = true;
             break;
          case 2 : // set to 5%
             avg_sd_mult = 0.05;
@@ -3304,13 +3304,21 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          repeak_e[ j ] *= scale;
       }
 
-      if ( any_without_errors && avg_sd_mult != 0e0 &&
+      if ( any_without_errors && 
            ( repeak_e.size() != repeak_I.size() || !is_nonzero_vector( repeak_e ) ) )
       {
-         repeak_e.resize( repeak_I.size() );
-         for ( unsigned int j = 0; j < repeak_I.size(); j++ )
+         if ( match_sd )
          {
-            repeak_e[ j ] = repeak_I[ j ] * avg_sd_mult;
+            repeak_e = f_errors[ peak_target ];
+         } else {
+            if ( avg_sd_mult != 0e0 )
+            {
+               repeak_e.resize( repeak_I.size() );
+               for ( unsigned int j = 0; j < repeak_I.size(); j++ )
+               {
+                  repeak_e[ j ] = repeak_I[ j ] * avg_sd_mult;
+               }
+            } 
          }
       }
 
