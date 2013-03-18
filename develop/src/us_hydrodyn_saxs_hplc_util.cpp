@@ -3224,7 +3224,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       {
          if ( f_Is[ peak_target ][ i ] != 0e0 )
          {
-            avg_sd_mult += f_errors[ peak_target ][ i ] / f_Is[ peak_target ][ i ];
+            avg_sd_mult += fabs( f_errors[ peak_target ][ i ] / f_Is[ peak_target ][ i ] );
             pts++;
          }
 
