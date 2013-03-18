@@ -775,7 +775,7 @@ void US_Hydrodyn_Saxs_Hplc::stack_drop()
       }
 
       switch ( QMessageBox::warning(this, 
-                                    tr( "US-SOMO: SAXS Hplc" ),
+                                    caption(),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -1072,8 +1072,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       return;
    }
 
-   QRegExp rx_q( "_q(\\d+_\\d+)" );
-   QRegExp rx_bl( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -1250,6 +1250,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    vector < double > conv;
    vector < double > psv ;
    
+   double conc_repeak = 1e0;
+   
    bool normalize_by_conc = false;
    bool conc_ok           = false;
 
@@ -1308,6 +1310,20 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          }
       }
 
+      if ( !no_conc )
+      {
+         QRegExp rx_repeak( "-rp(.\\d*_\\d+(|e.\\d+))" );
+         if ( rx_repeak.search( lbl_conc_file->text() ) != -1 )
+         {
+            conc_repeak = rx_repeak.cap( 1 ).toDouble();
+            if ( conc_repeak == 0e0 )
+            {
+               conc_repeak = 1e0;
+               editor_msg( "red", tr( "Error: concentration repeak scaling value extracted is 0, turning off back scaling" ) );
+            }
+         }
+      }
+         
       if ( !any_detector )
       {
          if ( parameters.count( "error" ) )
@@ -1470,7 +1486,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             }
             vector < double > tmp_g(3);
             QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * 3 ] * detector_conv / conv[ i ];
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * 3 ] * detector_conv / ( conc_repeak * conv[ i ] );
             tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + i * 3 ];
             tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + i * 3 ];
 
@@ -1586,7 +1602,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
             vector < double > tmp_g(3);
             QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * 3 ] * detector_conv / conv[ g ];
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * 3 ] * detector_conv / ( conc_repeak * conv[ g ] );
             tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + g * 3 ];
             tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + g * 3 ];
 
@@ -3155,4 +3171,180 @@ bool US_Hydrodyn_Saxs_Hplc::adjacent_select( QListBox *lb, QString match )
    update_files();
    update_enables();
    return any_set;
+}
+
+void US_Hydrodyn_Saxs_Hplc::repeak()
+{
+   QStringList files = all_selected_files();
+   repeak( files );
+}
+
+void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
+{
+   bool ok;
+
+   QString peak_target = QInputDialog::getItem(
+                                               tr( "SOMO: HPLC repeak: enter peak target" ),
+                                               tr("Select the file to peak match:\n" ),
+                                               files, 
+                                               0, 
+                                               FALSE, 
+                                               &ok,
+                                               this );
+   if ( !ok ) {
+      return;
+   }
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   map < QString, bool > select_files;
+   select_files[ peak_target ] = true;
+
+   double peak;
+   if ( !get_peak( peak_target, peak ) )
+   {
+      return;
+   }
+
+   // check files for errors
+   bool peak_target_has_errors = ( f_errors.count( peak_target ) && 
+                                   f_errors[ peak_target ].size() == f_qs[ peak_target ].size() && 
+                                   is_nonzero_vector( f_errors[ peak_target ] ) );
+   bool any_without_errors = false;
+   double avg_sd_mult = 0e0;
+
+   if ( peak_target_has_errors )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) f_errors[ peak_target ].size(); i++ )
+      {
+         avg_sd_mult += f_errors[ peak_target ][ i ];
+      }
+      avg_sd_mult /= ( double ) f_errors[ peak_target ].size();
+
+      unsigned int wo_errors_count = 0;
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+      {
+         if ( files[ i ] == peak_target )
+         {
+            continue;
+         }
+         any_without_errors = ( !f_errors.count( files[ i ] ) || 
+                                f_errors[ files[ i ] ].size() != f_qs[ files[ i ] ].size() ||
+                                !is_nonzero_vector( f_errors[ peak_target ] ) );
+         wo_errors_count++;
+      }
+
+      if ( any_without_errors )
+      {
+         switch ( QMessageBox::question(this, 
+                                        caption() + tr( ": repeak" ),
+                                        QString( tr( "The target has S.D.'s but %1 of %2 file%3 to repeak do not have S.D.'s at every point\n"
+                                                     "What would you like to do?\n" ) )
+                                        .arg( wo_errors_count ).arg( files.size() ).arg( files.size() > 1 ? "s" : "" ),
+                                        tr( "&Ignore S.D.'s" ), 
+                                        tr( "&Set repeaked S.D.'s to the average of %1 %" ).arg( avg_sd_mult * 100e0, 0, 'f', 5 ),
+                                        tr( "&Set repeaked S.D.'s to 5 %" ), 
+                                        0, // Stop == button 0
+                                        0 // Escape == button 0
+                                        ) )
+         {
+         case 0 : // ignore S.D.'s
+            any_without_errors = false;
+            break;
+            
+         case 1 : // keep avg_sd_mult
+            
+            break;
+         case 2 : // set to 5%
+            avg_sd_mult = 0.05;
+            break;
+         }  
+      }       
+   }
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      if ( files[ i ] == peak_target )
+      {
+         continue;
+      }
+
+      double this_peak;
+      if ( !get_peak( files[ i ], this_peak ) )
+      {
+         return;
+      }
+
+      
+      double scale = peak / this_peak;
+
+      vector < double > repeak_I = f_Is[ files[ i ] ];
+      for ( unsigned int j = 0; j < repeak_I.size(); j++ )
+      {
+         repeak_I[ j ] *= scale;
+      }
+
+      vector < double > repeak_e;
+      if ( f_errors.count( files[ i ] ) )
+      {
+         repeak_e = f_errors[ files[ i ] ];
+      }         
+      for ( unsigned int j = 0; j < repeak_e.size(); j++ )
+      {
+         repeak_e[ j ] *= scale;
+      }
+
+      if ( any_without_errors && avg_sd_mult != 0e0 &&
+           ( repeak_e.size() != repeak_I.size() || !is_nonzero_vector( repeak_e ) ) )
+      {
+         repeak_e.resize( repeak_I.size() );
+         for ( unsigned int j = 0; j < repeak_I.size(); j++ )
+         {
+            repeak_e[ j ] = repeak_I[ j ] * avg_sd_mult;
+         }
+      }
+
+      int ext = 0;
+      QString repeak_name = files[ i ] + QString( "-rp%1" ).arg( scale, 0, 'g', 8 ).replace( ".", "_" );
+      while ( current_files.count( repeak_name ) )
+      {
+         repeak_name = files[ i ] + QString( "-rp%1-%2" ).arg( scale, 0, 'g', 8 ).arg( ++ext ).replace( ".", "_" );
+      }
+
+      select_files[ repeak_name ] = true;
+      lb_created_files->insertItem( repeak_name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( repeak_name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ repeak_name ] = true;
+   
+      f_pos       [ repeak_name ] = f_qs.size();
+      f_qs_string [ repeak_name ] = f_qs_string[ files[ i ] ];
+      f_qs        [ repeak_name ] = f_qs       [ files[ i ] ];
+      f_Is        [ repeak_name ] = repeak_I;
+      f_errors    [ repeak_name ] = repeak_e;
+      f_is_time   [ repeak_name ] = f_is_time  [ files[ i ] ];
+      f_conc      [ repeak_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+      f_psv       [ repeak_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+      {
+         vector < double > tmp;
+         f_gaussians  [ repeak_name ] = tmp;
+      }
+      editor_msg( "gray", QString( "Created %1\n" ).arg( repeak_name ) );
+   }
+
+   lb_files->clearSelection();
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      if ( select_files.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+
+   update_enables();
 }

@@ -4185,12 +4185,6 @@ vector < double > US_Hydrodyn_Saxs_Hplc::union_q( QStringList files )
    return q;
 }
 
-void US_Hydrodyn_Saxs_Hplc::repeak()
-{
-   QStringList files = all_selected_files();
-   repeak( files );
-}
-
 void US_Hydrodyn_Saxs_Hplc::smooth()
 {
    QStringList files = all_selected_files();
@@ -4222,99 +4216,6 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
    return true;
 }
 
-void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
-{
-   bool ok;
-
-   QString peak_target = QInputDialog::getItem(
-                                               tr( "SOMO: HPLC repeak: enter peak target" ),
-                                               tr("Select the file to peak match:\n" ),
-                                               files, 
-                                               0, 
-                                               FALSE, 
-                                               &ok,
-                                               this );
-   if ( !ok ) {
-      return;
-   }
-
-   map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
-   {
-      current_files[ lb_files->text( i ) ] = true;
-   }
-
-   map < QString, bool > select_files;
-   select_files[ peak_target ] = true;
-
-   double peak;
-   if ( !get_peak( peak_target, peak ) )
-   {
-      return;
-   }
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
-      if ( files[ i ] == peak_target )
-      {
-         continue;
-      }
-
-      double this_peak;
-      if ( !get_peak( files[ i ], this_peak ) )
-      {
-         return;
-      }
-
-      
-      double scale = peak / this_peak;
-
-      vector < double > repeak_I = f_Is[ files[ i ] ];
-      for ( unsigned int j = 0; j < repeak_I.size(); j++ )
-      {
-         repeak_I[ j ] *= scale;
-      }
-
-      int ext = 0;
-      QString repeak_name = files[ i ] + QString( "-rp%1" ).arg( scale, 0, 'g', 8 );
-      while ( current_files.count( repeak_name ) )
-      {
-         repeak_name = files[ i ] + QString( "-rp%1-%2" ).arg( scale, 0, 'g', 8 ).arg( ++ext );
-      }
-
-      select_files[ repeak_name ] = true;
-      lb_created_files->insertItem( repeak_name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( repeak_name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
-      created_files_not_saved[ repeak_name ] = true;
-   
-      f_pos       [ repeak_name ] = f_qs.size();
-      f_qs_string [ repeak_name ] = f_qs_string[ files[ i ] ];
-      f_qs        [ repeak_name ] = f_qs       [ files[ i ] ];
-      f_Is        [ repeak_name ] = repeak_I;
-      f_errors    [ repeak_name ] = f_errors   [ files[ i ] ];
-      f_is_time   [ repeak_name ] = f_is_time  [ files[ i ] ];
-      f_conc      [ repeak_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
-      f_psv       [ repeak_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
-      {
-         vector < double > tmp;
-         f_gaussians  [ repeak_name ] = tmp;
-      }
-      editor_msg( "gray", QString( "Created %1\n" ).arg( repeak_name ) );
-   }
-
-   lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
-   {
-      if ( select_files.count( lb_files->text( i ) ) )
-      {
-         lb_files->setSelected( i, true );
-      }
-   }
-
-   update_enables();
-}
 
 void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
 {
