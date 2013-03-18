@@ -3252,8 +3252,8 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
                                                      "What would you like to do?\n" ) )
                                         .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
                                         tr( "&Ignore S.D.'s" ), 
-                                        tr( "&Set repeaked S.D.'s to the average of %1 %" ).arg( avg_sd_mult * 100e0, 0, 'f', 5 ),
-                                        tr( "&Set repeaked S.D.'s to 5 %" ), 
+                                        tr( "&Set S.D.'s to the\ntarget average %1 %" ).arg( avg_sd_mult * 100e0, 0, 'f', 2 ),
+                                        tr( "S&et S.D.'s to 5 %" ), 
                                         0, // Stop == button 0
                                         0 // Escape == button 0
                                         ) )
