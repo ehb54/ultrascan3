@@ -3221,7 +3221,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    {
       for ( unsigned int i = 0; i < ( unsigned int ) f_errors[ peak_target ].size(); i++ )
       {
-         avg_sd_mult += f_errors[ peak_target ][ i ];
+         avg_sd_mult += f_Is[ peak_target ][ i ] / f_errors[ peak_target ][ i ];
       }
       avg_sd_mult /= ( double ) f_errors[ peak_target ].size();
 
@@ -3244,7 +3244,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
                                         caption() + tr( ": repeak" ),
                                         QString( tr( "The target has S.D.'s but %1 of %2 file%3 to repeak do not have S.D.'s at every point\n"
                                                      "What would you like to do?\n" ) )
-                                        .arg( wo_errors_count ).arg( files.size() ).arg( files.size() > 1 ? "s" : "" ),
+                                        .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
                                         tr( "&Ignore S.D.'s" ), 
                                         tr( "&Set repeaked S.D.'s to the average of %1 %" ).arg( avg_sd_mult * 100e0, 0, 'f', 5 ),
                                         tr( "&Set repeaked S.D.'s to 5 %" ), 
