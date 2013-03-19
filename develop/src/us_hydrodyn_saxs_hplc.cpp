@@ -845,8 +845,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
 #endif
-   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Time/Frame"));
-   plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
+   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Time or Frame"));
+   plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q) or I(t) or OD or RI"));
 #ifndef QT4
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -6395,14 +6395,14 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
 
    if ( axis_y_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)") );
+      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q) or I(t) or OD or RI") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
 #endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q)") );
+      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q) or I(t) or OD or RI") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
@@ -6418,14 +6418,14 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
    axis_x_log = !axis_x_log;
    if ( axis_x_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("Log10 q (1/Angstrom)") );
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("Log10 q (1/Angstrom) or Time or Frame") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
 #endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom)") );
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom) or Time or Frame") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else

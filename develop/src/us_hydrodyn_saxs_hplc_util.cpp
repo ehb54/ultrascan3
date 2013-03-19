@@ -1315,7 +1315,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          QRegExp rx_repeak( "-rp(.\\d*_\\d+(|e.\\d+))" );
          if ( rx_repeak.search( lbl_conc_file->text() ) != -1 )
          {
-            conc_repeak = rx_repeak.cap( 1 ).toDouble();
+            conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
             if ( conc_repeak == 0e0 )
             {
                conc_repeak = 1e0;
@@ -3185,7 +3185,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
 
    QString peak_target = QInputDialog::getItem(
                                                tr( "SOMO: HPLC repeak: enter peak target" ),
-                                               tr("Select the file to peak match:\n" ),
+                                               tr("Select the peak target file:\n" ),
                                                files, 
                                                0, 
                                                FALSE, 
@@ -3253,7 +3253,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
                                                      "What would you like to do?\n" ) )
                                         .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
                                         tr( "&Ignore S.D.'s" ), 
-                                        tr( "&Copy target S.D.'s" ),
+                                        tr( "Match target S.D.% pointwise" ),
                                         tr( "Set S.D.'s to 5 %" ), 
                                         0, // Stop == button 0
                                         0 // Escape == button 0
@@ -3285,7 +3285,6 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          return;
       }
 
-      
       double scale = peak / this_peak;
 
       vector < double > repeak_I = f_Is[ files[ i ] ];
@@ -3309,7 +3308,29 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       {
          if ( match_sd )
          {
-            repeak_e = f_errors[ peak_target ];
+            map < double, double > fracsd;
+            for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ peak_target ].size(); j++ )
+            {
+               if ( f_Is[ peak_target ][ j ] != 0e0 )
+               {
+                  fracsd[ floor( f_qs[ peak_target ][ j ] + 5e-1 ) ] = fabs( f_errors[ peak_target ][ j ] / f_Is[ peak_target ][ j ] );
+               }
+            }
+            repeak_e.resize( repeak_I.size() );
+            for ( unsigned int j = 0; j < ( unsigned int ) repeak_I.size(); j++ )
+            {
+               if ( fracsd.count( floor( f_qs[ files[ i ] ][ j ] + 5e-1 ) ) )
+               {
+                  repeak_e[ j ] = fabs( repeak_I[ j ] * fracsd[ floor(f_qs[ files[ i ] ][ j ] + 5e-1 ) ] );
+               } else {
+                  if ( f_qs[ files[ i ] ][ j ] < f_qs[ peak_target ][ 0 ] )
+                  {
+                     repeak_e[ j ] = fabs( repeak_I[ j ] * fracsd[ floor( f_qs[ peak_target ][ 0 ] + 5e-1 ) ] );
+                  } else {
+                     repeak_e[ j ] = fabs( repeak_I[ j ] * fracsd[ floor( f_qs[ peak_target ].back() + 5e-1 ) ] );
+                  }
+               }
+            }
          } else {
             if ( avg_sd_mult != 0e0 )
             {
