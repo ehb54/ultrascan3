@@ -369,7 +369,7 @@ QString US_Model::typeText( void )
       { GA_MW,       QObject::tr( "GA-MW"       ) },
       { COFS,        QObject::tr( "COFS"        ) },
       { FE,          QObject::tr( "FE"          ) },
-      { ONEDSA,      QObject::tr( "1DSA"        ) },
+      { PCSA,        QObject::tr( "PCSA"        ) },
       { CUSTOMGRID,  QObject::tr( "CUSTOMGRID"  ) }
    };
 

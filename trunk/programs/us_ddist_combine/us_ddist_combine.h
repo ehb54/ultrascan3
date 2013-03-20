@@ -85,6 +85,9 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_gamw;
       QCheckBox*     ck_gamcmw;
       QCheckBox*     ck_gagl;
+      QCheckBox*     ck_pcsasl;
+      QCheckBox*     ck_pcsais;
+      QCheckBox*     ck_pcsads;
       QCheckBox*     ck_dtall;
 
       QRadioButton*  rb_pltsw;

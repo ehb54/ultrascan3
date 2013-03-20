@@ -1,7 +1,7 @@
 //! \file us_resplot.cpp
 
 #include "us_resplot.h"
-#include "us_1dsa.h"
+#include "us_pcsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
@@ -15,7 +15,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    // lay out the GUI
    setObjectName( "US_ResidPlot" );
    setAttribute( Qt::WA_DeleteOnClose, true );
-   setWindowTitle( tr( "1-D Spectrum Analysis Data/Residuals Viewer" ) );
+   setWindowTitle( tr( "Param. Constrained Spectrum Analysis "
+                       "Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QSize p1size( 560, 240 );
@@ -34,8 +35,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_datctrls    = us_banner( tr( "1DSA Data Viewer" ) );
-   QLabel* lb_resctrls    = us_banner( tr( "1DSA Residuals Viewer" ) );
+   QLabel* lb_datctrls    = us_banner( tr( "PCSA Data Viewer" ) );
+   QLabel* lb_resctrls    = us_banner( tr( "PCSA Residuals Viewer" ) );
    QLabel* lb_vari        = us_label(  tr( "Variance:" ) );
    QLabel* lb_rmsd        = us_label(  tr( "RMSD:" ) );
 
@@ -152,7 +153,7 @@ DbgLv(1) << "RP: P" << ( p != 0 );
 
    if ( p )
    {
-      US_1dsa*  mainw = (US_1dsa*)p;
+      US_pcsa*  mainw = (US_pcsa*)p;
       edata           = mainw->mw_editdata();
       sdata           = mainw->mw_simdata();
       ti_noise        = mainw->mw_ti_noise();

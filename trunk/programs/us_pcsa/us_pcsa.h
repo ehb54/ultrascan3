@@ -1,5 +1,5 @@
-#ifndef US_1DSA_H
-#define US_1DSA_H
+#ifndef US_PCSA_H
+#define US_PCSA_H
 
 #include <unistd.h>
 #include "us_plot_control.h"
@@ -31,12 +31,12 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_1dsa : public US_AnalysisBase2
+class US_pcsa : public US_AnalysisBase2
 {
    Q_OBJECT
 
    public:
-      US_1dsa();
+      US_pcsa();
 
       void analysis_done( int );
 
@@ -114,6 +114,6 @@ class US_1dsa : public US_AnalysisBase2
       void close    ( void );
       void new_triple( int );
       void help     ( void )
-      { showHelp.show_help( "manual/1dsa.html" ); };
+      { showHelp.show_help( "manual/pcsa.html" ); };
 };
 #endif

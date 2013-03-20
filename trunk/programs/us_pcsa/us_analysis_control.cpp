@@ -1,6 +1,6 @@
 //! \file us_analysis_control.cpp
 
-#include "us_1dsa.h"
+#include "us_pcsa.h"
 #include "us_analysis_control.h"
 #include "us_settings.h"
 #include "us_passwd.h"
@@ -10,7 +10,7 @@
 
 #include <qwt_legend.h>
 
-// constructor:  1dsa analysis controls widget
+// constructor:  pcsa analysis controls widget
 US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
     QWidget* p ) : US_WidgetsDialog( p, 0 ), dsets( dsets )
 {
@@ -29,7 +29,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QFontMetrics fmet( font() );
 
    // lay out the GUI
-   setWindowTitle( tr( "1-D Spectrum Analysis Controls" ) );
+   setWindowTitle( tr( "Parametrically Constrained Spectrum Analysis Controls" ) );
 
    mainLayout      = new QHBoxLayout( this );
    controlsLayout  = new QGridLayout( );
@@ -241,7 +241,7 @@ void US_AnalysisControl::start()
 {
    if ( parentw )
    {  // Get pointers to needed objects from the main
-      US_1dsa* mainw = (US_1dsa*)parentw;
+      US_pcsa* mainw = (US_pcsa*)parentw;
       edata          = mainw->mw_editdata();
       sdata          = mainw->mw_simdata();
       rdata          = mainw->mw_resdata();
@@ -270,7 +270,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 
    // Start a processing object if need be
    if ( processor == 0 )
-      processor   = new US_1dsaProcess( dsets, this );
+      processor   = new US_pcsaProcess( dsets, this );
 
    else
       processor->disconnect();
@@ -346,7 +346,7 @@ DbgLv(1) << "AC:SF: processor deleted";
 
    if ( parentw )
    {
-      US_1dsa* mainw = (US_1dsa*)parentw;
+      US_pcsa* mainw = (US_pcsa*)parentw;
       mainw->analysis_done( -1 );
    }
 DbgLv(1) << "AC:SF: analysis done";
@@ -357,14 +357,14 @@ DbgLv(1) << "AC:SF: analysis done";
 // plot button clicked
 void US_AnalysisControl::plot()
 {
-   US_1dsa* mainw = (US_1dsa*)parentw;
+   US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( 1 );
 }
 
 // save button clicked
 void US_AnalysisControl::save()
 {
-   US_1dsa* mainw = (US_1dsa*)parentw;
+   US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( 2 );
 }
 
@@ -499,7 +499,7 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
    US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
    int      mmitnum  = (int)rscan0->seconds;
-   US_1dsa* mainw    = (US_1dsa*)parentw;
+   US_pcsa* mainw    = (US_pcsa*)parentw;
 
    if ( stage == 9 )
    {
@@ -611,7 +611,7 @@ DbgLv(1) << "PL:  new mlnplotd" << mlnplotd;
    mlnplotd->plot_data();
    mlnplotd->setVisible( true );
 
-   QString filepath = US_Settings::tmpDir() + "/1DSA."
+   QString filepath = US_Settings::tmpDir() + "/PCSA."
                       + edata->cell + edata->channel + edata->wavelength
                       + ".mlines."
                       + QString::number( getpid() ) + ".png";

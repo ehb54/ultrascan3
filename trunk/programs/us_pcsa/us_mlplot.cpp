@@ -1,7 +1,7 @@
 //! \file us_mlplot.cpp
 
 #include "us_mlplot.h"
-#include "us_1dsa.h"
+#include "us_pcsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
@@ -23,7 +23,8 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    // lay out the GUI
    setObjectName( "US_MLinesPlot" );
    setAttribute( Qt::WA_DeleteOnClose, true );
-   setWindowTitle( tr( "1-D Spectrum Analysis Model Lines Viewer" ) );
+   setWindowTitle( tr( "Parametrically Constrained Spectrum Analysis "
+                       "Model Lines Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QSize p1size( 560, 480 );
@@ -44,7 +45,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_datctrls    = us_banner( tr( "1DSA Model Parameters" ) );
+   QLabel* lb_datctrls    = us_banner( tr( "PCSA Model Parameters" ) );
    QLabel* lb_mtype       = us_label(  tr( "Model Type:" ) );
    QLabel* lb_nlines      = us_label(  tr( "Lines (Models):" ) );
    QLabel* lb_npoints     = us_label(  tr( "Points per Line:" ) );

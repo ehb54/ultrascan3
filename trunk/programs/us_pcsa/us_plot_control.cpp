@@ -1,6 +1,6 @@
 //! \file us_plot_control.cpp
 
-#include "us_1dsa.h"
+#include "us_pcsa.h"
 #include "us_plot_control.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"

@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_1dsa_process.h"
+#include "us_pcsa_process.h"
 #include "us_mlplot.h"
 #include "us_plot.h"
 #include "us_help.h"
@@ -68,7 +68,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QVector< ModelRecord >*          mw_mrecs;
 
       QWidget*                         parentw;
-      US_1dsaProcess*                  processor;
+      US_pcsaProcess*                  processor;
       US_MLinesPlot*                   mlnplotd;
 
       QLabel*       lb_lolimitk;
@@ -122,7 +122,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void closed     ( QObject* );
 
       void help       ( void )
-      { showHelp.show_help( "1dsa_analys.html" ); };
+      { showHelp.show_help( "pcsa_analys.html" ); };
 };
 #endif
 

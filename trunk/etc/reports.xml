@@ -2,30 +2,38 @@
 <!DOCTYPE US_Reports>
 <US_Reports version="1.0">
     <application name="1DSA"
-    label="1-Dimensional Spectrum Analysis" />
+      label="1-Dimensional Spectrum Analysis" />
     <application name="2DSA"
-    label="2-Dimensional Spectrum Analysis" />
+      label="2-Dimensional Spectrum Analysis" />
     <application name="2DSA-MC"
-    label="2-Dimensional Spectrum Analysis with Monte Carlo" />
+      label="2-Dimensional Spectrum Analysis with Monte Carlo" />
     <application name="2DSA-FM"
-    label="2-Dimensional Spectrum Analysis with Fit Meniscus" />
+      label="2-Dimensional Spectrum Analysis with Fit Meniscus" />
     <application name="2DSA-MW"
-    label="2-D Spectrum Analysis with Molec. Weight constraints" />
+      label="2-D Spectrum Analysis with Molec. Weight constraints" />
     <application name="2DSA-MW-MC"
-    label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
+      label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
+    <application name="PCSA"
+      label="Parametrically Constrained Spectrum Analysis" />
+    <application name="PCSA_SL"
+      label="Parametrically Constrained Spectrum Analysis (Straight Line)" />
+    <application name="PCSA_IS"
+      label="Parametrically Constrained Spectrum Analysis (Incr. Sigmoid)" />
+    <application name="PCSA_DS"
+      label="Parametrically Constrained Spectrum Analysis (Decr. Sigmoid)" />
     <application name="2DSA-GL"
-    label="2-D Spectrum Analysis - Global" />
+      label="2-D Spectrum Analysis - Global" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="GA" label="Genetic Algorithm Analysis" />
     <application name="GA-MC"
-    label="Genetic Algorithm - Monte Carlo Analysis" />
+      label="Genetic Algorithm - Monte Carlo Analysis" />
     <application name="GA-MW"
-    label="Genetic Algorithm with Molecular Weight constraints" />
+      label="Genetic Algorithm with Molecular Weight constraints" />
     <application name="GA-MW-MC"
-    label="Genetic Algorithm with MW constraints - Monte Carlo" />
+      label="Genetic Algorithm with MW constraints - Monte Carlo" />
     <application name="GA-GL"
-    label="Genetic Algorithm - Global" />
+      label="Genetic Algorithm - Global" />
     <application name="gain" label="Genetic Algorithm Initialize" />
     <application name="gainit" label="Genetic Algorithm Initialize" />
     <application name="secmo" label="Second Moment Analysis" />
