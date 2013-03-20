@@ -85,7 +85,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_cs_qRgmax = new QLabel(tr(" Maximum q^2 * Rg : "), this);
+   lbl_cs_qRgmax = new QLabel(tr(" Maximum q * Rc : "), this);
    lbl_cs_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cs_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_cs_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -309,26 +309,26 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_qRgmax, j, 0);
    background->addWidget(le_qRgmax, j, 1);
    j++;
-   background->addWidget(lbl_qstart, j, 0);
-   background->addWidget(le_qstart, j, 1);
-   j++;
-   background->addWidget(lbl_qend, j, 0);
-   background->addWidget(le_qend, j, 1);
-   j++;
 
    background->addMultiCellWidget(lbl_cs_guinier, j, j, 0, 1);
    j++;
    background->addWidget(lbl_cs_qRgmax, j, 0);
    background->addWidget(le_cs_qRgmax, j, 1);
    j++;
+
+   background->addMultiCellWidget(lbl_guinier_and_cs_guinier, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_qstart, j, 0);
+   background->addWidget(le_qstart, j, 1);
+   j++;
+   background->addWidget(lbl_qend, j, 0);
+   background->addWidget(le_qend, j, 1);
+   j++;
    background->addWidget(lbl_cs_qstart, j, 0);
    background->addWidget(le_cs_qstart, j, 1);
    j++;
    background->addWidget(lbl_cs_qend, j, 0);
    background->addWidget(le_cs_qend, j, 1);
-   j++;
-
-   background->addMultiCellWidget(lbl_guinier_and_cs_guinier, j, j, 0, 1);
    j++;
    background->addWidget(lbl_pointsmin, j, 0);
    background->addWidget(le_pointsmin, j, 1);
