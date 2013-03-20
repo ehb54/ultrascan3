@@ -365,6 +365,12 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
 
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
+
+   if ( !started_in_expert_mode )
+   {
+      pb_default_ff_filename->hide();
+      le_default_ff_filename->hide();
+   }
 }
 
 void US_Hydrodyn_SasOptionsMisc::cancel()
