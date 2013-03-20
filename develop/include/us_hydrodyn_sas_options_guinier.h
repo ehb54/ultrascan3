@@ -47,16 +47,36 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLineEdit  *le_guinier_csv_filename;
 
       QLabel     *lbl_qRgmax;
-      QLabel     *lbl_qstart;
-      QLabel     *lbl_qend;
-      QLabel     *lbl_pointsmin;
-      QLabel     *lbl_pointsmax;
+      QLineEdit  *le_qRgmax;
 
-      QwtCounter *cnt_qRgmax;
-      QwtCounter *cnt_qstart;
-      QwtCounter *cnt_qend;
-      QwtCounter *cnt_pointsmin;
-      QwtCounter *cnt_pointsmax;
+      QLabel     *lbl_qstart;
+      QLineEdit  *le_qstart;
+
+      QLabel     *lbl_qend;
+      QLineEdit  *le_qend;
+
+      QLabel     *lbl_pointsmin;
+      QLineEdit  *le_pointsmin;
+
+      QLabel     *lbl_pointsmax;
+      QLineEdit  *le_pointsmax;
+
+      QLabel     *lbl_conc;
+
+      QLabel     *lbl_I0_exp;
+      QLineEdit  *le_I0_exp;
+
+      QLabel     *lbl_I0_theo;
+      QLineEdit  *le_I0_theo;
+
+      QLabel     *lbl_diffusion_len;
+      QLineEdit  *le_diffusion_len;
+
+      QLabel     *lbl_nuclear_mass;
+      QLineEdit  *le_nuclear_mass;
+
+      QCheckBox  *cb_use_cs_psv;
+      QLineEdit  *le_cs_psv;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -67,11 +87,19 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
 
       void set_guinier_csv();
       void update_guinier_csv_filename(const QString &);
-      void update_qRgmax(double);
-      void update_qstart(double);
-      void update_qend(double);
-      void update_pointsmin(double);
-      void update_pointsmax(double);
+      void update_qRgmax   ( const QString & );
+      void update_qstart   ( const QString & );
+      void update_qend     ( const QString & );
+      void update_pointsmin( const QString & );
+      void update_pointsmax( const QString & );
+
+      void update_I0_exp        ( const QString & );
+      void update_I0_theo       ( const QString & );
+      void update_diffusion_len ( const QString & );
+      void update_nuclear_mass  ( const QString & );
+
+      void set_use_cs_psv();
+      void update_cs_psv        ( const QString & );
 
       void cancel();
       void help();

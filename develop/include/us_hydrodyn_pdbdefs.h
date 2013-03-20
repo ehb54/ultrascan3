@@ -368,6 +368,13 @@ struct saxs_options
 
    bool         alt_sh1;
    bool         alt_sh2;
+
+   double       I0_exp;
+   double       I0_theo;
+   double       diffusion_len;
+   double       nuclear_mass;
+   bool         use_cs_psv;
+   double       cs_psv;
 };
 
 struct saxs_atom

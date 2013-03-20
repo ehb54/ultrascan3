@@ -33,7 +33,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_info = new QLabel(tr("US-SOMO Guinier Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_info->setMinimumHeight(minHeight1);
+   // lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
@@ -55,88 +55,184 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    lbl_qRgmax = new QLabel(tr(" Maximum q * Rg : "), this);
    lbl_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_qRgmax->setMinimumHeight(minHeight1);
+   // lbl_qRgmax->setMinimumHeight(minHeight1);
    lbl_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_qRgmax = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_qRgmax );
-   cnt_qRgmax->setRange(0.5, 3, 0.001);
-   cnt_qRgmax->setValue((*saxs_options).qRgmax);
-   cnt_qRgmax->setMinimumHeight(minHeight1);
-   cnt_qRgmax->setEnabled(true);
-   cnt_qRgmax->setNumButtons(SAXS_Q_BUTTONS);
-   cnt_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_qRgmax, SIGNAL(valueChanged(double)), SLOT(update_qRgmax(double)));
+   le_qRgmax = new QLineEdit(this);
+   // le_qRgmax->setRange(0.5, 3, 0.001);
+   le_qRgmax->setValidator( new QDoubleValidator( le_qRgmax) );
+   ( (QDoubleValidator *)le_qRgmax->validator() )->setRange( 0.5, 3, 3 );
+   le_qRgmax->setText( QString( "%1" ).arg( (*saxs_options).qRgmax ) );
+   // le_qRgmax->setMinimumHeight(minHeight1);
+   le_qRgmax->setEnabled(true);
+   // le_qRgmax->setNumButtons(SAXS_Q_BUTTONS);
+   le_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_qRgmax( const QString & )));
 
    lbl_qstart = new QLabel(tr(" Minimum q value for Guinier search : "), this);
    lbl_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_qstart->setMinimumHeight(minHeight1);
+   // lbl_qstart->setMinimumHeight(minHeight1);
    lbl_qstart->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qstart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_qstart = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_qstart );
-   cnt_qstart->setRange(0, 1, 0.001);
-   cnt_qstart->setValue((*saxs_options).qstart);
-   cnt_qstart->setMinimumHeight(minHeight1);
-   cnt_qstart->setEnabled(true);
-   cnt_qstart->setNumButtons(SAXS_Q_BUTTONS);
-   cnt_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_qstart, SIGNAL(valueChanged(double)), SLOT(update_qstart(double)));
+   le_qstart = new QLineEdit(this);
+   // le_qstart->setRange(0, 1, 0.001);
+   le_qstart->setValidator( new QDoubleValidator( le_qstart ) );
+   ( (QDoubleValidator *)le_qstart->validator() )->setRange( 0, 1, 3 );
+   le_qstart->setText( QString( "%1" ).arg( (*saxs_options).qstart ) );
+   // le_qstart->setMinimumHeight(minHeight1);
+   le_qstart->setEnabled(true);
+   // le_qstart->setNumButtons(SAXS_Q_BUTTONS);
+   le_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
 
    lbl_qend = new QLabel(tr(" Maximum q value for Guinier search : "), this);
    lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_qend->setMinimumHeight(minHeight1);
+   // lbl_qend->setMinimumHeight(minHeight1);
    lbl_qend->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_qend = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_qend );
-   cnt_qend->setRange(0, 1, 0.001);
-   cnt_qend->setValue((*saxs_options).qend);
-   cnt_qend->setMinimumHeight(minHeight1);
-   cnt_qend->setEnabled(true);
-   cnt_qend->setNumButtons(SAXS_Q_BUTTONS);
-   cnt_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_qend, SIGNAL(valueChanged(double)), SLOT(update_qend(double)));
+   le_qend = new QLineEdit(this);
+   // le_qend->setRange(0, 1, 0.001);
+   le_qend->setValidator( new QDoubleValidator( le_qend ) );
+   ( (QDoubleValidator *)le_qend->validator() )->setRange( 0, 1, 3 );
+   le_qend->setText( QString( "%1" ).arg( (*saxs_options).qend ) );
+   // le_qend->setMinimumHeight(minHeight1);
+   le_qend->setEnabled(true);
+   // le_qend->setNumButtons(SAXS_Q_BUTTONS);
+   le_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_qend, SIGNAL( textChanged( const QString & )), SLOT(update_qend( const QString & )));
 
    lbl_pointsmin = new QLabel(tr(" Minimum number of points : "), this);
    lbl_pointsmin->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_pointsmin->setMinimumHeight(minHeight1);
+   // lbl_pointsmin->setMinimumHeight(minHeight1);
    lbl_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pointsmin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_pointsmin = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_pointsmin );
-   cnt_pointsmin->setRange(4, 50, 1);
-   cnt_pointsmin->setValue((*saxs_options).pointsmin);
-   cnt_pointsmin->setMinimumHeight(minHeight1);
-   cnt_pointsmin->setEnabled(true);
-   cnt_pointsmin->setNumButtons(SAXS_Q_BUTTONS);
-   cnt_pointsmin->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_pointsmin, SIGNAL(valueChanged(double)), SLOT(update_pointsmin(double)));
+   le_pointsmin = new QLineEdit(this);
+   // le_pointsmin->setRange(4, 50, 1);
+   le_pointsmin->setValidator( new QIntValidator( le_pointsmin ) );
+   ( (QIntValidator *)le_pointsmin->validator() )->setRange( 4, 50 );
+   le_pointsmin->setText( QString( "%1" ).arg( (*saxs_options).pointsmin ) );
+   // le_pointsmin->setMinimumHeight(minHeight1);
+   le_pointsmin->setEnabled(true);
+   // le_pointsmin->setNumButtons(SAXS_Q_BUTTONS);
+   le_pointsmin->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_pointsmin, SIGNAL( textChanged( const QString & )), SLOT(update_pointsmin( const QString & )));
 
    lbl_pointsmax = new QLabel(tr(" Maximum number of points : "), this);
    lbl_pointsmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_pointsmax->setMinimumHeight(minHeight1);
+   // lbl_pointsmax->setMinimumHeight(minHeight1);
    lbl_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pointsmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cnt_pointsmax = new QwtCounter(this);
-   US_Hydrodyn::sizeArrows( cnt_pointsmax );
-   cnt_pointsmax->setRange(10, 100, 1);
-   cnt_pointsmax->setValue((*saxs_options).pointsmax);
-   cnt_pointsmax->setMinimumHeight(minHeight1);
-   cnt_pointsmax->setEnabled(true);
-   cnt_pointsmax->setNumButtons(SAXS_Q_BUTTONS);
-   cnt_pointsmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_pointsmax, SIGNAL(valueChanged(double)), SLOT(update_pointsmax(double)));
+   le_pointsmax = new QLineEdit(this);
+   // le_pointsmax->setRange(10, 100, 1);
+   le_pointsmax->setValidator( new QIntValidator( le_pointsmax ) );
+   ( (QIntValidator *)le_pointsmax->validator() )->setRange( 10, 100 );
+   le_pointsmax->setText( QString( "%1" ).arg( (*saxs_options).pointsmax ) );
+   // le_pointsmax->setMinimumHeight(minHeight1);
+   le_pointsmax->setEnabled(true);
+   // le_pointsmax->setNumButtons(SAXS_Q_BUTTONS);
+   le_pointsmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
+
+   lbl_conc = new QLabel(tr("Concentration computation options:"), this);
+   lbl_conc->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   // lbl_conc->setMinimumHeight(minHeight1);
+   lbl_conc->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_I0_exp = new QLabel(tr(" I0 experimental (arbitrary) : "), this);
+   lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_I0_exp->setMinimumHeight(minHeight1);
+   lbl_I0_exp->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_I0_exp = new QLineEdit(this);
+   le_I0_exp->setValidator( new QDoubleValidator( le_I0_exp ) );
+   le_I0_exp->setText( QString( "%1" ).arg( (*saxs_options).I0_exp ) );
+   // le_I0_exp->setMinimumHeight(minHeight1);
+   le_I0_exp->setEnabled(true);
+   le_I0_exp->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_I0_exp->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_I0_exp, SIGNAL( textChanged( const QString & )), SLOT(update_I0_exp( const QString &)));
+
+   lbl_I0_theo = new QLabel(tr(" I0 theoretical (cm^-1) : "), this);
+   lbl_I0_theo->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_I0_theo->setMinimumHeight(minHeight1);
+   lbl_I0_theo->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_I0_theo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_I0_theo = new QLineEdit(this);
+   le_I0_theo->setValidator( new QDoubleValidator( le_I0_theo ) );
+   le_I0_theo->setText( QString( "%1" ).arg( (*saxs_options).I0_theo ) );
+   // le_I0_theo->setMinimumHeight(minHeight1);
+   le_I0_theo->setEnabled(true);
+   le_I0_theo->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_I0_theo->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_I0_theo, SIGNAL( textChanged( const QString & )), SLOT(update_I0_theo( const QString &)));
+
+   lbl_diffusion_len = new QLabel(tr(" Diffusion length (cm) : "), this);
+   lbl_diffusion_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_diffusion_len->setMinimumHeight(minHeight1);
+   lbl_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_diffusion_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_diffusion_len = new QLineEdit(this);
+   le_diffusion_len->setValidator( new QDoubleValidator( le_diffusion_len ) );
+   le_diffusion_len->setText( QString( "%1" ).arg( (*saxs_options).diffusion_len ) );
+   // le_diffusion_len->setMinimumHeight(minHeight1);
+   le_diffusion_len->setEnabled(true);
+   le_diffusion_len->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
+
+   lbl_nuclear_mass = new QLabel(tr(" Nuclear mass (g) : "), this);
+   lbl_nuclear_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_nuclear_mass->setMinimumHeight(minHeight1);
+   lbl_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_nuclear_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_nuclear_mass = new QLineEdit(this);
+   le_nuclear_mass->setValidator( new QDoubleValidator( le_nuclear_mass ) );
+   le_nuclear_mass->setText( QString( "%1" ).arg( (*saxs_options).nuclear_mass ) );
+   // le_nuclear_mass->setMinimumHeight(minHeight1);
+   le_nuclear_mass->setEnabled(true);
+   le_nuclear_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_nuclear_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nuclear_mass( const QString &)));
+
+   //    lbl_cs_psv = new QLabel(tr(" CS partial specific volume (ml/g): "), this);
+   //    lbl_cs_psv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   //    // lbl_cs_psv->setMinimumHeight(minHeight1);
+   //    lbl_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   //    lbl_cs_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_use_cs_psv = new QCheckBox(this);
+   cb_use_cs_psv->setText( tr(" overide partial specific volume for CS (ml/g): ") );
+   cb_use_cs_psv->setEnabled( true );
+   connect( cb_use_cs_psv, SIGNAL( clicked() ), SLOT( set_use_cs_psv() ) );
+   cb_use_cs_psv->setChecked( false );
+   cb_use_cs_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_use_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // cb_use_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+
+   le_cs_psv = new QLineEdit(this);
+   le_cs_psv->setValidator( new QDoubleValidator( le_cs_psv ) );
+   le_cs_psv->setText( QString( "%1" ).arg( (*saxs_options).cs_psv ) );
+   // le_cs_psv->setMinimumHeight(minHeight1);
+   le_cs_psv->setEnabled(true);
+   le_cs_psv->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_cs_psv, SIGNAL( textChanged( const QString & )), SLOT(update_cs_psv( const QString &)));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -160,19 +256,43 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_guinier_csv_filename, j, 1);
    j++;
    background->addWidget(lbl_qRgmax, j, 0);
-   background->addWidget(cnt_qRgmax, j, 1);
+   background->addWidget(le_qRgmax, j, 1);
    j++;
    background->addWidget(lbl_qstart, j, 0);
-   background->addWidget(cnt_qstart, j, 1);
+   background->addWidget(le_qstart, j, 1);
    j++;
    background->addWidget(lbl_qend, j, 0);
-   background->addWidget(cnt_qend, j, 1);
+   background->addWidget(le_qend, j, 1);
    j++;
    background->addWidget(lbl_pointsmin, j, 0);
-   background->addWidget(cnt_pointsmin, j, 1);
+   background->addWidget(le_pointsmin, j, 1);
    j++;
    background->addWidget(lbl_pointsmax, j, 0);
-   background->addWidget(cnt_pointsmax, j, 1);
+   background->addWidget(le_pointsmax, j, 1);
+   j++;
+
+   background->addMultiCellWidget(lbl_conc, j, j, 0, 1);
+   j++;
+
+   background->addWidget(lbl_I0_exp, j, 0);
+   background->addWidget(le_I0_exp, j, 1);
+   j++;
+
+   background->addWidget(lbl_I0_theo, j, 0);
+   background->addWidget(le_I0_theo, j, 1);
+   j++;
+
+
+   background->addWidget(lbl_diffusion_len, j, 0);
+   background->addWidget(le_diffusion_len, j, 1);
+   j++;
+
+   background->addWidget(lbl_nuclear_mass, j, 0);
+   background->addWidget(le_nuclear_mass, j, 1);
+   j++;
+
+   background->addWidget(cb_use_cs_psv, j, 0);
+   background->addWidget(le_cs_psv, j, 1);
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -214,40 +334,88 @@ void US_Hydrodyn_SasOptionsGuinier::update_guinier_csv_filename(const QString &s
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_SasOptionsGuinier::update_qRgmax(double val)
+void US_Hydrodyn_SasOptionsGuinier::update_qRgmax( const QString & str )
 {
+   double val = str.toDouble();
    (*saxs_options).qRgmax = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_SasOptionsGuinier::update_qstart(double val)
+void US_Hydrodyn_SasOptionsGuinier::update_qstart( const QString & str )
 {
+   double val = str.toDouble();
    (*saxs_options).qstart = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_SasOptionsGuinier::update_qend(double val)
+void US_Hydrodyn_SasOptionsGuinier::update_qend( const QString & str )
 {
+   double val = str.toDouble();
    (*saxs_options).qend = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
-void US_Hydrodyn_SasOptionsGuinier::update_pointsmin(double val)
+
+void US_Hydrodyn_SasOptionsGuinier::update_pointsmin( const QString & str )
 {
+   unsigned int val = str.toUInt();
    (*saxs_options).pointsmin = (unsigned int) val;
    if ( (*saxs_options).pointsmax < (unsigned int) val )
    {
       (*saxs_options).pointsmax = (unsigned int) val;
-      cnt_pointsmax->setValue(val);
+      le_pointsmax->setText( QString( "%1" ).arg( val ) );
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
-void US_Hydrodyn_SasOptionsGuinier::update_pointsmax(double val)
+void US_Hydrodyn_SasOptionsGuinier::update_pointsmax( const QString & str )
 {
-   (*saxs_options).pointsmax = (unsigned int) val;
-   if ( (*saxs_options).pointsmin > (unsigned int) val )
+   unsigned int val = str.toUInt();
+   (*saxs_options).pointsmax = val;
+   if ( (*saxs_options).pointsmin > val )
    {
-      (*saxs_options).pointsmin = (unsigned int) val;
-      cnt_pointsmin->setValue(val);
+      (*saxs_options).pointsmin = val;
+      le_pointsmin->setText( QString( "%1" ).arg( val ) );
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+
+void US_Hydrodyn_SasOptionsGuinier::update_I0_exp( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).I0_exp = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_I0_theo( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).I0_theo = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_diffusion_len( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).diffusion_len = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_nuclear_mass( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).nuclear_mass = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_use_cs_psv()
+{
+   (*saxs_options).use_cs_psv = cb_use_cs_psv->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_cs_psv( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).cs_psv = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
