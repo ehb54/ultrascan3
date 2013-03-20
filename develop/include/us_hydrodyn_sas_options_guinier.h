@@ -41,10 +41,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void       *us_hydrodyn;
       US_Config  *USglobal;
 
-      QLabel     *lbl_info;
-
-      QCheckBox  *cb_guinier_csv;
-      QLineEdit  *le_guinier_csv_filename;
+      QLabel     *lbl_guinier;
 
       QLabel     *lbl_qRgmax;
       QLineEdit  *le_qRgmax;
@@ -55,13 +52,38 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_qend;
       QLineEdit  *le_qend;
 
+      QLabel     *lbl_cs_guinier;
+
+      QLabel     *lbl_cs_qRgmax;
+      QLineEdit  *le_cs_qRgmax;
+
+      QLabel     *lbl_cs_qstart;
+      QLineEdit  *le_cs_qstart;
+
+      QLabel     *lbl_cs_qend;
+      QLineEdit  *le_cs_qend;
+
+      QLabel     *lbl_guinier_and_cs_guinier;
+
       QLabel     *lbl_pointsmin;
       QLineEdit  *le_pointsmin;
 
       QLabel     *lbl_pointsmax;
       QLineEdit  *le_pointsmax;
 
+      QCheckBox  *cb_guinier_csv;
+      QLineEdit  *le_guinier_csv_filename;
+
+      QLabel     *lbl_conc_header;
+
       QLabel     *lbl_conc;
+      QLineEdit  *le_conc;
+
+      QLabel     *lbl_psv;
+      QLineEdit  *le_psv;
+
+      QCheckBox  *cb_use_cs_psv;
+      QLineEdit  *le_cs_psv;
 
       QLabel     *lbl_I0_exp;
       QLineEdit  *le_I0_exp;
@@ -75,8 +97,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_nuclear_mass;
       QLineEdit  *le_nuclear_mass;
 
-      QCheckBox  *cb_use_cs_psv;
-      QLineEdit  *le_cs_psv;
+      QPushButton *pb_guinier;
+      QPushButton *pb_cs_guinier;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -86,20 +108,31 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void setupGUI();
 
       void set_guinier_csv();
-      void update_guinier_csv_filename(const QString &);
-      void update_qRgmax   ( const QString & );
-      void update_qstart   ( const QString & );
-      void update_qend     ( const QString & );
-      void update_pointsmin( const QString & );
-      void update_pointsmax( const QString & );
 
-      void update_I0_exp        ( const QString & );
-      void update_I0_theo       ( const QString & );
-      void update_diffusion_len ( const QString & );
-      void update_nuclear_mass  ( const QString & );
+      void update_qRgmax                ( const QString & );
+      void update_qstart                ( const QString & );
+      void update_qend                  ( const QString & );
 
-      void set_use_cs_psv();
-      void update_cs_psv        ( const QString & );
+      void update_cs_qRgmax             ( const QString & );
+      void update_cs_qstart             ( const QString & );
+      void update_cs_qend               ( const QString & );
+
+      void update_pointsmin             ( const QString & );
+      void update_pointsmax             ( const QString & );
+      void update_guinier_csv_filename  ( const QString & );
+
+      void update_conc                  ( const QString & );
+      void update_psv                   ( const QString & );
+      void set_use_cs_psv               ();
+      void update_cs_psv                ( const QString & );
+
+      void update_I0_exp                ( const QString & );
+      void update_I0_theo               ( const QString & );
+      void update_diffusion_len         ( const QString & );
+      void update_nuclear_mass          ( const QString & );
+
+      void guinier();
+      void cs_guinier();
 
       void cancel();
       void help();
