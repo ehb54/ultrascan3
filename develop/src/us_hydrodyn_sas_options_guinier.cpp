@@ -217,7 +217,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    //    lbl_cs_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_use_cs_psv = new QCheckBox(this);
-   cb_use_cs_psv->setText( tr(" overide partial specific volume for CS (ml/g): ") );
+   cb_use_cs_psv->setText( tr(" Partial specific volume overide for CS (ml/g): ") );
    cb_use_cs_psv->setEnabled( true );
    connect( cb_use_cs_psv, SIGNAL( clicked() ), SLOT( set_use_cs_psv() ) );
    cb_use_cs_psv->setChecked( false );
