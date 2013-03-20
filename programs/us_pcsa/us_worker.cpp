@@ -124,7 +124,7 @@ void WorkerThread::calc_residuals()
 
    sim_vals.noisflag   = noisflag;
    sim_vals.dbg_level  = dbg_level;
-   sim_vals.dbg_timing = US_Settings::debug_match( "1dsaTiming" );
+   sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
 
    solvesim->calc_residuals( 0, 1, sim_vals );
 

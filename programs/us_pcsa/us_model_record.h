@@ -18,8 +18,8 @@
 /*! \class ModelRecord
  *
     This class sets up a record of a model used in the set
-    of models defined by curves in 1DSA. A vector of such objects
-    can be sorted and evaluated in analysis and display of a 1DSA run.
+    of models defined by curves in PCSA. A vector of such objects
+    can be sorted and evaluated in analysis and display of a PCSA run.
 */
 class ModelRecord
 {

@@ -1,8 +1,8 @@
-//! \file us_1dsa_process.cpp
+//! \file us_pcsa_process.cpp
 #include <QApplication>
 #include <QtCore>
 
-#include "us_1dsa_process.h"
+#include "us_pcsa_process.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_astfem_math.h"
@@ -14,8 +14,8 @@
 #include "us_constants.h"
 #include "us_memory.h"
 
-// Class to process 1DSA simulations
-US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
+// Class to process PCSA simulations
+US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    QObject* parent /*=0*/ ) : QObject( parent ), dsets( dsets )
 {
    edata            = &dsets[ 0 ]->run_data;  // pointer to  experiment data
@@ -37,17 +37,17 @@ US_1dsaProcess::US_1dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
 }
 
 // Get maximum used memory
-long int US_1dsaProcess::max_rss( void )
+long int US_pcsaProcess::max_rss( void )
 {
    return US_Memory::rss_max( maxrss );
 }
 
-// Start a specified 1DSA fit run
-void US_1dsaProcess::start_fit( double sll, double sul, double kll, double kul,
+// Start a specified PCSA fit run
+void US_pcsaProcess::start_fit( double sll, double sul, double kll, double kul,
                                 double kin, int    res, int    typ, int    nth,
                                 int    noi )
 {
-DbgLv(1) << "2P(1dsaProc): start_fit()";
+DbgLv(1) << "2P(pcsaProc): start_fit()";
    abort       = false;
    slolim      = sll;
    suplim      = sul;
@@ -143,7 +143,7 @@ DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
 }
 
 // Abort a fit run
-void US_1dsaProcess::stop_fit()
+void US_pcsaProcess::stop_fit()
 {
    abort   = true;
 
@@ -174,7 +174,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 }
 
 // Slot to handle the low-variance record of calculated solutes
-void US_1dsaProcess::process_final( ModelRecord& mrec )
+void US_pcsaProcess::process_final( ModelRecord& mrec )
 {
    if ( abort ) return;
 
@@ -355,7 +355,7 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 }
 
 // Public slot to get results upon completion of all refinements
-bool US_1dsaProcess::get_results( US_DataIO2::RawData*    da_sim,
+bool US_pcsaProcess::get_results( US_DataIO2::RawData*    da_sim,
                                   US_DataIO2::RawData*    da_res,
                                   US_Model*               da_mdl,
                                   US_Noise*               da_tin,
@@ -390,7 +390,7 @@ DbgLv(0) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
 }
 
 // Submit a job
-void US_1dsaProcess::submit_job( WorkPacket& wtask, int thrx )
+void US_pcsaProcess::submit_job( WorkPacket& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
 
@@ -411,7 +411,7 @@ DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
 // Slot to handle the results of a just-completed worker thread.
 // Accumulate computed solutes.
 // If there is more work to do, start a new thread for a new work unit.
-void US_1dsaProcess::process_job( WorkerThread* wthrd )
+void US_pcsaProcess::process_job( WorkerThread* wthrd )
 {
    if ( abort )  return;
    WorkPacket wresult;
@@ -525,7 +525,7 @@ if (dbg_level>0) {
 }
 
 // Build a task and add it to the queue
-void US_1dsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
+void US_pcsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
       int taskx, int noisf, QVector< US_Solute > isolutes )
 {
    wtask.thrn     = 0;             // thread number (none while queued)
@@ -545,7 +545,7 @@ void US_1dsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
 }
 
 // Free up a worker thread
-void US_1dsaProcess::free_worker( int tx )
+void US_pcsaProcess::free_worker( int tx )
 {
    if ( tx >= 0  &&  tx < nthreads )
    {
@@ -557,7 +557,7 @@ void US_1dsaProcess::free_worker( int tx )
    }
 }
 
-QString US_1dsaProcess::pmessage_head()
+QString US_pcsaProcess::pmessage_head()
 {
    const char* ctp[] = { "Straight Line",
                          "Increasing Sigmoid",
@@ -570,7 +570,7 @@ QString US_1dsaProcess::pmessage_head()
 }
 
 // Get next job from queue, insuring we get the lowest depth
-WorkPacket US_1dsaProcess::next_job()
+WorkPacket US_pcsaProcess::next_job()
 {
    WorkPacket wtask;
    if ( job_queue.size() == 0 )  return wtask;
@@ -590,7 +590,7 @@ DbgLv(1) << "NEXTJ:   wtask" << &wtask << &job_queue[jobx];
 }
 
 // Build all the straight-line models
-int US_1dsaProcess::slmodels( double slo, double sup, double klo,
+int US_pcsaProcess::slmodels( double slo, double sup, double klo,
       double kup, double kin, int res )
 {
 DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
@@ -620,7 +620,7 @@ DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 }
 
 // Build all the sigmoid models
-int US_1dsaProcess::sigmodels( int ctp, double slo, double sup, double klo,
+int US_pcsaProcess::sigmodels( int ctp, double slo, double sup, double klo,
       double kup, int nkpts, int nlpts )
 {
 DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
@@ -650,7 +650,7 @@ DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 }
 
 // Generate the strings of model statistics for a report
-void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
+void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
                                        QStringList&            modstats )
 {
    const char* ctp[] = { "Straight Line",
@@ -712,15 +712,19 @@ void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    modstats << tr( "Curve Type:" )
             << QString( ctp[ curvtype ] );
    modstats << tr( "s (x 1e13) Range:" )
-            << QString().sprintf( "%10.4f %10.4f", slolim, suplim );
+            << QString().sprintf( "%10.4f  %10.4f", slolim, suplim );
+   double str_k  = mrecs[ 0 ].str_k;
+   double end_k  = mrecs[ 0 ].end_k;
+
    if ( curvtype == 0 )
    {
-      modstats << tr( "k (f/f0) Range:" )
+      double slope  = ( end_k - str_k ) / ( suplim - slolim );
+      modstats << tr( "k (f/f0) Range + delta:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      klolim, kuplim, kincr );
-      modstats << tr( "Best curve f/f0 end points:" )
-               << QString().sprintf( "%10.4f  %10.4f",
-                     mrecs[ 0 ].str_k, mrecs[ 0 ].end_k );
+      modstats << tr( "Best curve f/f0 end points + slope:" )
+               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+                     str_k, end_k, slope );
    }
    else
    {
@@ -745,35 +749,35 @@ void US_1dsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
             << QString().sprintf( "%5d", nkpts );
    modstats << tr( "Solute points per curve:" )
             << QString().sprintf( "%5d", nlpts );
-   modstats << tr( "Best curve calculated solutes:" )
-            << QString().sprintf( "%5d", mrecs[ 0 ].csolutes.size() );
    modstats << tr( "Index of best model:" )
             << QString().sprintf( "%5d", mrecs[ 0 ].taskx );
+   modstats << tr( "Best curve calculated solutes:" )
+            << QString().sprintf( "%5d", mrecs[ 0 ].csolutes.size() );
    modstats << tr( "Minimum, Maximum calculated solutes:" )
             << QString().sprintf( "%5d  %5d", nsolmin, nsolmax );
    modstats << tr( "Average calculated solutes:" )
             << QString().sprintf( "%5d", nsolavg );
-   modstats << tr( "Number of \"better\" models:" )
-            << QString().sprintf( "%5d", nbmods );
-   modstats << tr( "Min,Max calculated solutes for better:" )
-            << QString().sprintf( "%5d  %5d", nbsomin, nbsomax );
-   modstats << tr( "Average calculated solutes for better:" )
-            << QString().sprintf( "%5d", nbsoavg );
    modstats << tr( "Minimum variance:" )
             << QString().sprintf( "%12.6e", varimin );
    modstats << tr( "Minimum, Maximum rmsd:" )
             << QString().sprintf( "%12.8f  %12.8f", rmsdmin, rmsdmax );
    modstats << tr( "Average, Median rmsd:" )
             << QString().sprintf( "%12.8f  %12.8f", rmsdavg, rmsdmed );
-   modstats << tr( "Minimum, Maximum rmsd for better:" )
+   modstats << tr( "Number of \"better\" models:" )
+            << QString().sprintf( "%5d", nbmods );
+   modstats << tr( "%1 Best Min,Max calculated solutes:" ).arg( nbmods )
+            << QString().sprintf( "%5d  %5d", nbsomin, nbsomax );
+   modstats << tr( "%1 Best Average calculated solutes:" ).arg( nbmods )
+            << QString().sprintf( "%5d", nbsoavg );
+   modstats << tr( "%1 Best Minimum, Maximum rmsd:" ).arg( nbmods )
             << QString().sprintf( "%12.8f  %12.8f", brmsmin, brmsmax );
-   modstats << tr( "Average, Median rmsd for better:" )
+   modstats << tr( "%1 Best Average, Median rmsd:" ).arg( nbmods )
             << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
 
 }
 
 // Do curve-fit evaluate function (return RMSD) for a Straight Line model
-double US_1dsaProcess::fit_function_SL( double t, double* par )
+double US_pcsaProcess::fit_function_SL( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
    static double epar[ 13 ];     // Static array for holding parameters
@@ -880,7 +884,7 @@ qDebug() << "ffSL:    ys ye sl yl yh" << ystart << yend << slope
 }
 
 // Do curve-fit evaluate function (return RMSD) for a Increasing Sigmoid model
-double US_1dsaProcess::fit_function_IS( double t, double* par )
+double US_pcsaProcess::fit_function_IS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
    static double epar[ 13 ];     // Static array for holding parameters
@@ -989,7 +993,7 @@ qDebug() << "ffIS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
 }
 
 // Do curve-fit evaluate function (return RMSD) for a Decreasing Sigmoid model
-double US_1dsaProcess::fit_function_DS( double t, double* par )
+double US_pcsaProcess::fit_function_DS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
    static double epar[ 13 ];     // Static array for holding parameters
@@ -1097,7 +1101,7 @@ qDebug() << "ffDS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
 }
 
 // Do Levenberg-Marquardt fit
-void US_1dsaProcess::LevMarq_fit( void )
+void US_pcsaProcess::LevMarq_fit( void )
 {
    const int eslnc = 32;   // Estimated straight-line LM eval calls
    const int esigc = 44;   // Estimated sigmoid LM eval calls
@@ -1172,7 +1176,7 @@ DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1];
       fit_function_SL( -1.0, par );    // Make sure to reset eval. function
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
-            &(US_1dsaProcess::fit_function_SL), &control, &status );
+            &(US_pcsaProcess::fit_function_SL), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (SL) return: par1,par2" << par[0] << par[1];
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
@@ -1197,7 +1201,7 @@ DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
-            &(US_1dsaProcess::fit_function_IS), &control, &status );
+            &(US_pcsaProcess::fit_function_IS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
@@ -1218,7 +1222,7 @@ DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
-            &(US_1dsaProcess::fit_function_DS), &control, &status );
+            &(US_pcsaProcess::fit_function_DS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
@@ -1406,7 +1410,7 @@ DbgLv(1) << "LMf:  ss rr" << ss << rr << "edat sdat resv"
 DbgLv(0) << "LMf: recomputed variance rmsd" << cvari << crmsd;
 }
 
-void US_1dsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
+void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
       double& minkv, double& maxkv, double& minp1, double& maxp1,
       double& minp2, double& maxp2 )
 {
@@ -1435,7 +1439,7 @@ DbgLv(0) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 }
 
 // Evaluate a model; return rmsd, model, noises
-double US_1dsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
+double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    US_SolveSim::Simulation& sim_vals )
 {
    US_SolveSim::DataSet*    dset = dsets[ 0 ];
@@ -1491,7 +1495,7 @@ double US_1dsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
 }
 
 // Protected slot to filter timer event and handle L-M status timing
-void US_1dsaProcess::timerEvent( QTimerEvent *event )
+void US_pcsaProcess::timerEvent( QTimerEvent *event )
 {
    int tm_id   = event->timerId();
 

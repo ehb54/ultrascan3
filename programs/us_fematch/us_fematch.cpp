@@ -2277,9 +2277,9 @@ QString US_FeMatch::text_model( US_Model model, int width )
             tr( "Finite Element Analysis" );
          break;
 
-      case (int)US_Model::ONEDSA:
-         title = ( width == 0 ) ? "1DSA" :
-            tr( "1-Dimensional Spectrum Analysis" );
+      case (int)US_Model::PCSA:
+         title = ( width == 0 ) ? "PCSA" :
+            tr( "Parametrically Constrained Spectrum Analysis" );
          break;
 
       case (int)US_Model::MANUAL:

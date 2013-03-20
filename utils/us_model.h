@@ -21,7 +21,7 @@ class US_UTIL_EXTERN US_Model
       enum OpticsType{ ABSORBANCE, INTERFERENCE, FLUORESCENCE };
 
       //! The type of analysis used with the model
-      enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, ONEDSA,
+      enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, PCSA,
                           COFS, FE, CUSTOMGRID };
 
       //! The type of global analysis used with the model

@@ -1,6 +1,6 @@
-//! \file us_1dsa_process.h
-#ifndef US_1DSA_PROCESS_H
-#define US_1DSA_PROCESS_H
+//! \file us_pcsa_process.h
+#ifndef US_PCSA_PROCESS_H
+#define US_PCSA_PROCESS_H
 
 #include <QtCore>
 #include <QTimer>
@@ -20,15 +20,15 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \brief 1DSA Processor object
+//! \brief PCSA Processor object
 
-/*! \class US_1dsaProcess
+/*! \class US_pcsaProcess
  *
-    This class sets up a set of 1DSA simulations for a
+    This class sets up a set of PCSA simulations for a
     grid across an s and k range. It divides the refinements
     in the grid across a specified number of worker threads.
 */
-class US_1dsaProcess : public QObject
+class US_pcsaProcess : public QObject
 {
    Q_OBJECT
 
@@ -36,10 +36,10 @@ class US_1dsaProcess : public QObject
       //! The state of a task
       enum TaskState  { READY, WORKING, ABORTED };
 
-      //! \brief Create a 1DSA processor object
+      //! \brief Create a PCSA processor object
       //! \param dsets     List of experiment data sets
       //! \param parent    Pointer to parent object
-      US_1dsaProcess( QList< US_SolveSim::DataSet* >&, QObject* = 0 );
+      US_pcsaProcess( QList< US_SolveSim::DataSet* >&, QObject* = 0 );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit

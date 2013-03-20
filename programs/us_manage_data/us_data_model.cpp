@@ -1741,8 +1741,8 @@ QString US_DataModel::model_type( int imtype, int nassoc, int gtype, bool isMC )
       case (int)US_Model::FE:
          mtype = "FE";
          break;
-      case (int)US_Model::ONEDSA:
-         mtype = "1DSA";
+      case (int)US_Model::PCSA:
+         mtype = "PCSA";
          break;
       case (int)US_Model::CUSTOMGRID:
          mtype = "CUSTOMGRID";

@@ -1,9 +1,9 @@
-//! \file us_1dsa.cpp
+//! \file us_pcsa.cpp
 
 #include <QApplication>
 #include <QtSvg>
 
-#include "us_1dsa.h"
+#include "us_pcsa.h"
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
 #include "us_analysis_control.h"
@@ -22,8 +22,8 @@
 #include "us_noise_loader.h"
 #include "us_loadable_noise.h"
 
-//! \brief Main program for us_1dsa. Loads translators and starts
-//         the class US_1dsa.
+//! \brief Main program for us_pcsa. Loads translators and starts
+//         the class US_pcsa.
 
 int main( int argc, char* argv[] )
 {
@@ -33,19 +33,19 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    
-   US_1dsa w;
+   US_pcsa w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
 // constructor, based on AnalysisBase
-US_1dsa::US_1dsa() : US_AnalysisBase2()
+US_pcsa::US_pcsa() : US_AnalysisBase2()
 {
-   setWindowTitle( tr( "1-Dimensional Spectrum Analysis" ) );
-   setObjectName( "US_1dsa" );
+   setWindowTitle( tr( "Parametrically Constrained Spectrum Analysis" ) );
+   setObjectName( "US_pcsa" );
    dbg_level  = US_Settings::us_debug();
 
-   // Build local and 1dsa-specific GUI elements
+   // Build local and pcsa-specific GUI elements
    te_results = NULL;
 
    QLabel* lb_analysis = us_banner( tr( "Analysis Controls" ) );
@@ -97,7 +97,7 @@ US_1dsa::US_1dsa() : US_AnalysisBase2()
    parameterLayout->addWidget( lb_rmsd,         row,   2, 1, 1 );
    parameterLayout->addWidget( le_rmsd,         row++, 3, 1, 1 );
 
-   // Reconstruct controls layout with some 1dsa-specific elements
+   // Reconstruct controls layout with some pcsa-specific elements
    row       = 0;
    controlsLayout->addWidget( lb_scan,          row++, 0, 1, 6 );
    controlsLayout->addWidget( lb_from,          row,   0, 1, 2 );
@@ -150,8 +150,8 @@ US_1dsa::US_1dsa() : US_AnalysisBase2()
    dsets << &dset;
 }
 
-// slot to handle the completion of a 1-D spectrum analysis stage
-void US_1dsa::analysis_done( int updflag )
+// slot to handle the completion of a PC spectrum analysis stage
+void US_pcsa::analysis_done( int updflag )
 {
    if ( updflag == (-1) )
    {  // fit has been aborted or reset for new fit
@@ -210,7 +210,7 @@ DbgLv(1) << "  edat0 sdat0 rdat0"
 }
 
 // load the experiment data, mostly thru AnalysisBase; then disable view,save
-void US_1dsa::load( void )
+void US_pcsa::load( void )
 {
    US_AnalysisBase2::load();       // load edited experiment data
 
@@ -235,7 +235,7 @@ DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
 }
 
 // plot the data
-void US_1dsa::data_plot( void )
+void US_pcsa::data_plot( void )
 {
 DbgLv(1) << "Data Plot by Base";
    US_AnalysisBase2::data_plot();      // plot experiment data
@@ -363,7 +363,7 @@ DbgLv(1) << "Data Plot VARI" << vari;
 }
 
 // view data report
-void US_1dsa::view( void )
+void US_pcsa::view( void )
 {
    // Create the report text
    QString rtext;
@@ -386,7 +386,7 @@ void US_1dsa::view( void )
 }
 
 // Save data (model,noise), report, and PNG image files
-void US_1dsa::save( void )
+void US_pcsa::save( void )
 {
    QString analysisDate = QDateTime::currentDateTime().toUTC()
                           .toString( "yyMMddhhmm" );
@@ -396,7 +396,15 @@ void US_1dsa::save( void )
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
-   QString analysisType = "1DSA";
+   QString analysisType = "PCSA";
+   QString curvType     = model_stats[ 1 ];
+   if ( curvType.contains( "Straight L" ) )
+      analysisType      = "PCSA-SL";
+   else if ( curvType.contains( "Increasing Sig" ) )
+      analysisType      = "PCSA-IS";
+   else if ( curvType.contains( "Decreasing Sig" ) )
+      analysisType      = "PCSA-DS";
+
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
    QString analysisID   = dates + "_" + analysisType + "_" + requestID + "_";
@@ -491,7 +499,7 @@ void US_1dsa::save( void )
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = edata->editGUID;
    model.requestGUID = reqGUID;
-   model.analysis    = US_Model::ONEDSA;
+   model.analysis    = US_Model::PCSA;
    model.variance    = variance;
    model.meniscus    = meniscus;
    model.wavelength  = dwavelen;
@@ -587,15 +595,15 @@ void US_1dsa::save( void )
 
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
-   QString filebase  = reppath + "1DSA"   + dext + ".";
+   QString filebase  = reppath + analysisType + dext + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";
    QString fitFile   = filebase + "fitmen.dat";
-   QString fresFile  = respath  + "1dsa-fm" + dext2 + ".fitmen.dat";
-   QString ptmp4File = tmppath  + "/1DSA" + dext + ".mlines."
+   QString fresFile  = respath  + "pcsa-fm" + dext2 + ".fitmen.dat";
+   QString ptmp4File = tmppath  + "/PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 
@@ -656,7 +664,7 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 }
 
 // Return pointer to main window edited data
-US_DataIO2::EditedData* US_1dsa::mw_editdata()
+US_DataIO2::EditedData* US_pcsa::mw_editdata()
 {
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
@@ -666,17 +674,17 @@ US_DataIO2::EditedData* US_1dsa::mw_editdata()
 
 // Return pointers to main window data and GUI elements
 
-US_DataIO2::RawData*      US_1dsa::mw_simdata()      { return &sdata;    }
-US_DataIO2::RawData*      US_1dsa::mw_resdata()      { return &rdata;    }
-US_Model*                 US_1dsa::mw_model()        { return &model;    }
-US_Noise*                 US_1dsa::mw_ti_noise()     { return &ti_noise; }
-US_Noise*                 US_1dsa::mw_ri_noise()     { return &ri_noise; }
-QPointer< QTextEdit   >   US_1dsa::mw_status_text()  { return te_status;    }
-QStringList*              US_1dsa::mw_model_stats()  { return &model_stats; }
-QVector< ModelRecord >*   US_1dsa::mw_mrecs()        { return &mrecs;       }
+US_DataIO2::RawData*      US_pcsa::mw_simdata()      { return &sdata;    }
+US_DataIO2::RawData*      US_pcsa::mw_resdata()      { return &rdata;    }
+US_Model*                 US_pcsa::mw_model()        { return &model;    }
+US_Noise*                 US_pcsa::mw_ti_noise()     { return &ti_noise; }
+US_Noise*                 US_pcsa::mw_ri_noise()     { return &ri_noise; }
+QPointer< QTextEdit   >   US_pcsa::mw_status_text()  { return te_status;    }
+QStringList*              US_pcsa::mw_model_stats()  { return &model_stats; }
+QVector< ModelRecord >*   US_pcsa::mw_mrecs()        { return &mrecs;       }
 
 // Open residuals plot window
-void US_1dsa::open_resplot()
+void US_pcsa::open_resplot()
 {
    if ( resplotd )
    {
@@ -694,7 +702,7 @@ void US_1dsa::open_resplot()
 }
 
 // Open 3-D plot control window
-void US_1dsa::open_3dplot()
+void US_pcsa::open_3dplot()
 {
    if ( eplotcd )
    {
@@ -712,7 +720,7 @@ void US_1dsa::open_3dplot()
 }
 
 // Open fit analysis control window
-void US_1dsa::open_fitcntl()
+void US_pcsa::open_fitcntl()
 {
    int    drow     = lw_triples->currentRow();
    if ( drow < 0 )   return;
@@ -728,7 +736,7 @@ void US_1dsa::open_fitcntl()
       QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
          tr( "The current vbar20 value (%1) implies a buoyancy\n"
              "value (%2) that is non-positive.\n\n"
-             "1DSA cannot proceed with this value. Click on the\n"
+             "PCSA cannot proceed with this value. Click on the\n"
              "<Solution> button and change the vbar20 value.\n"
              "Note that the Solution may be accepted without being saved.\n"
              "Include negative values in the sedimentation coefficient\n"
@@ -786,7 +794,7 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 }
 
 // Distribution information HTML string
-QString US_1dsa::distrib_info()
+QString US_pcsa::distrib_info()
 {
    int ncomp     = model.components.size();
    
@@ -907,7 +915,7 @@ QString US_1dsa::distrib_info()
 }
 
 // Model statistics HTML string
-QString US_1dsa::model_statistics()
+QString US_pcsa::model_statistics()
 {
 DbgLv(1) << "ModStats0" << model_stats[ 0 ];
 DbgLv(1) << "ModStats1" << model_stats[ 1 ];
@@ -924,23 +932,23 @@ DbgLv(1) << "ModStats1" << model_stats[ 1 ];
    
    return mstr;
 }
-   
+
 // Write HTML report file
-void US_1dsa::write_report( QTextStream& ts )
+void US_pcsa::write_report( QTextStream& ts )
 {
-   ts << html_header( QString( "US_1dsa" ),
-                      tr( "1-Dimensional Spectrum Analysis" ),
-                      edata );
-   ts << run_details();
-   ts << hydrodynamics();
-   ts << scan_info();
+   QString curvtype = model_stats[ 1 ];
+
+   ts << html_header( QString( "US_pcsa" ),
+           tr( "Parametrically Constrained Spectrum Analysis" )
+           + "<br/>( " + curvtype + " )",
+           edata );
    ts << model_statistics();
    ts << distrib_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
 // Write resids bitmap plot file
-void US_1dsa::write_bmap( const QString plotFile )
+void US_pcsa::write_bmap( const QString plotFile )
 {
    // Generate the residuals array
    bool have_ri = ri_noise.count > 0;
@@ -978,11 +986,11 @@ void US_1dsa::write_bmap( const QString plotFile )
 }
 
 // New triple selected
-void US_1dsa::new_triple( int index )
+void US_pcsa::new_triple( int index )
 {
    edata = &dataList[ index ];
 
-   // Restore pure data type string (other values added in 1dsa processing)
+   // Restore pure data type string (other values added in pcsa processing)
    edata->dataType = edata->dataType.section( " ", 0, 0 );
 
    sdata.scanData.clear();                 // Clear simulation and upper plot
@@ -993,19 +1001,19 @@ void US_1dsa::new_triple( int index )
 }
 
 // Remove any temporary plot file and close all opened windows
-void US_1dsa::close( void )
+void US_pcsa::close( void )
 {
    QString tripleID  = edata->cell + edata->channel + edata->wavelength; 
-   QString ptmp4File = US_Settings::tmpDir() + "/1DSA." + tripleID
+   QString ptmp4File = US_Settings::tmpDir() + "/PCSA." + tripleID
       + ".mlines." + QString::number( getpid() ) + ".png";
 
    QFile tfile( ptmp4File );
    if ( tfile.exists() )
    {
       tfile.remove();
-DbgLv(1) << "1dsa: removed: " << ptmp4File;
+DbgLv(1) << "pcsa: removed: " << ptmp4File;
    }
-DbgLv(1) << "1dsa:  close d's res epl ana" << resplotd << eplotcd << analcd;
+DbgLv(1) << "pcsa:  close d's res epl ana" << resplotd << eplotcd << analcd;
 
    if ( resplotd != 0 )
       resplotd->close();
@@ -1016,10 +1024,10 @@ DbgLv(1) << "1dsa:  close d's res epl ana" << resplotd << eplotcd << analcd;
 }
 
 // Private slot to mark a child widgets as closed, if it has been destroyed
-void US_1dsa::child_closed( QObject* o )
+void US_pcsa::child_closed( QObject* o )
 {
    QString oname = o->objectName();
-DbgLv(1) << "1dsa:CC: d's res epl ana" << resplotd << eplotcd << analcd;
+DbgLv(1) << "pcsa:CC: d's res epl ana" << resplotd << eplotcd << analcd;
 
    if ( oname.contains( "AnalysisControl" ) )
       analcd    = 0;
@@ -1027,7 +1035,7 @@ DbgLv(1) << "1dsa:CC: d's res epl ana" << resplotd << eplotcd << analcd;
       resplotd  = 0;
    else if ( oname.contains( "PlotControl" ) )
       eplotcd   = 0;
-DbgLv(1) << "1dsa:CC: return res epl ana" << resplotd << eplotcd << analcd
+DbgLv(1) << "pcsa:CC: return res epl ana" << resplotd << eplotcd << analcd
    << "oname" << oname;
 }
 
