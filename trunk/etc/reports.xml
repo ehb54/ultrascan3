@@ -15,11 +15,11 @@
       label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
     <application name="PCSA"
       label="Parametrically Constrained Spectrum Analysis" />
-    <application name="PCSA_SL"
+    <application name="PCSA-SL"
       label="Parametrically Constrained Spectrum Analysis (Straight Line)" />
-    <application name="PCSA_IS"
+    <application name="PCSA-IS"
       label="Parametrically Constrained Spectrum Analysis (Incr. Sigmoid)" />
-    <application name="PCSA_DS"
+    <application name="PCSA-DS"
       label="Parametrically Constrained Spectrum Analysis (Decr. Sigmoid)" />
     <application name="2DSA-GL"
       label="2-D Spectrum Analysis - Global" />
