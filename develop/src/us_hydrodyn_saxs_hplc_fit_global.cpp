@@ -516,7 +516,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    pb_ga                    ->setEnabled( false ); // && !running && run_ok && variations_set && !use_errors );
    pb_grid                  ->setEnabled( false ); // && !running && run_ok && variations_set && !use_errors );
 
-   pb_stop                  ->setEnabled( running );
+   pb_stop                  ->setEnabled( false /* running */ );
 }
 
 namespace HFIT_GLOBAL 
@@ -1132,7 +1132,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    // HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
    cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
 
-   progress->setProgress( 0, 0 );
+   progress->setProgress( 1, 2 );
    qApp->processEvents();
    // LM::qpb  = hplc_win->progress;
    // LM::qApp = qApp;

@@ -25,8 +25,20 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    gaussians_undo.clear();
    gaussians_undo.push_back( hplc_win->gaussians );
 
-   setGeometry(global_Xpos, global_Ypos, 0, 0 );
+   redo_settings();
 
+   setGeometry(global_Xpos, global_Ypos, 0, 0 );
+   
+   update_enables();
+}
+
+
+US_Hydrodyn_Saxs_Hplc_Fit::~US_Hydrodyn_Saxs_Hplc_Fit()
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc_Fit::redo_settings()
+{
    use_errors = hplc_win->cb_sd_weight->isChecked();
    if ( use_errors &&
         ( !hplc_win->f_errors.count( hplc_win->wheel_file ) ||
@@ -70,12 +82,6 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
          }
       }
    }
-
-   update_enables();
-}
-
-US_Hydrodyn_Saxs_Hplc_Fit::~US_Hydrodyn_Saxs_Hplc_Fit()
-{
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit::restore()
@@ -853,6 +859,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
    double start = hplc_win->le_gauss_fit_start->text().toDouble();
    double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();
+
+   // US_Vector::printvector( QString( "lm %1 q" ).arg( hplc_win->wheel_file ), x );
+   // US_Vector::printvector( QString( "lm %1 I" ).arg( hplc_win->wheel_file ), hplc_win->f_Is[ hplc_win->wheel_file ] );
+   // US_Vector::printvector( QString( "lm %1 e" ).arg( hplc_win->wheel_file ), hplc_win->f_errors[ hplc_win->wheel_file ] );
 
    for ( unsigned int j = 0; j < x.size(); j++ )
    {

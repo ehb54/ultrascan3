@@ -166,6 +166,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       bool          use_errors;
 
+      void          redo_settings();
+
    private slots:
 
       void update_enables();

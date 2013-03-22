@@ -9456,70 +9456,6 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
    return gmax;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
-{
-   // take current gaussians & compute for this curve
-   // find peak of curve
-   US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
-
-   double peak;
-   if ( !get_peak( file, peak ) )
-   {
-      return false;
-   }
-
-   // printvector( "cfg: org_gauss", org_gaussians );
-   
-   double gmax = compute_gaussian_peak( file, org_gaussians );
-   
-   double scale = peak / gmax;   
-
-   gauss_max_height = peak * 1.2;
-
-   // printvector( "cfg: org_gauss 2", org_gaussians );
-   gaussians = org_gaussians;
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
-   {
-      gaussians[ 0 + i ] *= scale;
-   }
-
-   // printvector( "cfg: gaussians", gaussians );
-
-   double gmax2 = compute_gaussian_peak( file, gaussians );
-
-   cout << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
-      .arg( file )
-      .arg( gmax )
-      .arg( peak )
-      .arg( scale )
-      .arg( gmax2 )
-      ;
-
-   // now setup and fit
-   wheel_file = file;
-   fit->gaussians_undo.clear();
-   fit->gaussians_undo.push_back( gaussians );
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
-
-   fit->cb_fix_center    ->setChecked( true );
-   fit->cb_fix_width     ->setChecked( true );
-   fit->cb_fix_amplitude ->setChecked( false );
-
-   fit->lm();
-   // printvector( "cfg: after fit gaussians", gaussians );
-
-   if ( !cb_fix_width->isChecked() )
-   {
-      fit->cb_fix_width     ->setChecked( false );
-      fit->lm();
-      // printvector( "cfg: after fit2 gaussians", gaussians );
-   }
-
-   f_gaussians[ file ] = gaussians;
-   gaussians = org_gaussians;
-   return true;
-}
-
 
 QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
 {
@@ -9873,33 +9809,6 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
    {
       lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
    }
-}
-
-bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
-{
-
-   wheel_file = files[ 0 ];
-
-   US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
-      new US_Hydrodyn_Saxs_Hplc_Fit(
-                                    this,
-                                    this );
-
-   hplc_fit_window->update_hplc = false;
-   
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
-      progress->setProgress( i, files.size() * 1.2 );
-      qApp->processEvents();
-      if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) )
-      {
-         return false;
-      }
-   }
-
-   delete hplc_fit_window;
-   return true;
 }
 
 void US_Hydrodyn_Saxs_Hplc::add_ggaussian_curve( QString name, vector < double > y )
