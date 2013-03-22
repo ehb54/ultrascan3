@@ -82,8 +82,15 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_psv;
       QLineEdit  *le_psv;
 
+      QCheckBox  *cb_guinier_use_sd;
+
+      QCheckBox  *cb_guinier_outlier_reject;
+      QLineEdit  *le_guinier_outlier_reject_dist;
+
       QCheckBox  *cb_use_cs_psv;
       QLineEdit  *le_cs_psv;
+
+      QCheckBox  *cb_guinier_use_standards;
 
       QLabel     *lbl_I0_exp;
       QLineEdit  *le_I0_exp;
@@ -105,37 +112,42 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
 
    private slots:
       
-      void setupGUI();
+      void setupGUI                             ();
 
-      void set_guinier_csv();
+      void set_guinier_csv                      ();
 
-      void update_qRgmax                ( const QString & );
-      void update_qstart                ( const QString & );
-      void update_qend                  ( const QString & );
+      void update_qRgmax                        ( const QString & );
+      void update_qstart                        ( const QString & );
+      void update_qend                          ( const QString & );
 
-      void update_cs_qRgmax             ( const QString & );
-      void update_cs_qstart             ( const QString & );
-      void update_cs_qend               ( const QString & );
+      void update_cs_qRgmax                     ( const QString & );
+      void update_cs_qstart                     ( const QString & );
+      void update_cs_qend                       ( const QString & );
 
-      void update_pointsmin             ( const QString & );
-      void update_pointsmax             ( const QString & );
-      void update_guinier_csv_filename  ( const QString & );
+      void update_pointsmin                     ( const QString & );
+      void update_pointsmax                     ( const QString & );
+      void update_guinier_csv_filename          ( const QString & );
 
-      void update_conc                  ( const QString & );
-      void update_psv                   ( const QString & );
-      void set_use_cs_psv               ();
-      void update_cs_psv                ( const QString & );
+      void update_conc                          ( const QString & );
+      void update_psv                           ( const QString & );
+      void set_use_cs_psv                       ();
+      void update_cs_psv                        ( const QString & );
 
-      void update_I0_exp                ( const QString & );
-      void update_I0_theo               ( const QString & );
-      void update_diffusion_len         ( const QString & );
-      void update_nuclear_mass          ( const QString & );
+      void update_I0_exp                        ( const QString & );
+      void update_I0_theo                       ( const QString & );
+      void update_diffusion_len                 ( const QString & );
+      void update_nuclear_mass                  ( const QString & );
 
-      void guinier();
-      void cs_guinier();
+      void set_guinier_outlier_reject           ();
+      void update_guinier_outlier_reject_dist   ( const QString & );
+      void set_guinier_use_sd                   ();
+      void set_guinier_use_standards            ();
 
-      void cancel();
-      void help();
+      void guinier                              ();
+      void cs_guinier                           ();
+
+      void cancel                               ();
+      void help                                 ();
    
    protected slots:
 

@@ -813,6 +813,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
 
+   pb_ift = new QPushButton("IFT", this);
+   pb_ift->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_ift->setMinimumHeight(minHeight1);
+   pb_ift->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_ift, SIGNAL(clicked()), SLOT(ift()));
+   pb_ift->setEnabled( false );
+
    pb_saxs_search = new QPushButton("Search", this);
    pb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_search->setMinimumHeight(minHeight1);
@@ -957,7 +964,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_analysis->setMinimumHeight(minHeight1);
    pb_guinier_analysis->setEnabled(true);
    pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
+   connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT( guinier_window() ) );
 
    pb_guinier_cs = new QPushButton("CS-Guinier", this);
    pb_guinier_cs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -965,6 +972,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_cs->setEnabled(true);
    pb_guinier_cs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_guinier_cs, SIGNAL(clicked()), SLOT(run_guinier_cs()));
+   pb_guinier_cs->hide();
 
 #if defined(ADD_GUINIER)      
       lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
@@ -1399,6 +1407,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
    hbl_various_0->addWidget(pb_load_gnom);
+   hbl_various_0->addWidget(pb_ift);
    hbl_various_0->addWidget(pb_saxs_search);
    if ( started_in_expert_mode )
    {
@@ -6061,7 +6070,7 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    {
       QString filename = 
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
-         our_saxs_options->guinier_csv_filename + "_cs.csv";
+         our_saxs_options->guinier_csv_filename + ".csv";
 
       QString fname = filename;
       if ( QFile::exists(fname) )
@@ -7742,4 +7751,31 @@ void US_Hydrodyn_Saxs::fix_sas_options()
       our_saxs_options->sans_iq_native_debye = true;
    }
    set_current_method_buttons();
+}
+
+void US_Hydrodyn_Saxs::ift()
+{
+}
+
+void US_Hydrodyn_Saxs::guinier_window()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
+      }
+   }
+   else
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window = new US_Hydrodyn_SasOptionsGuinier( &((US_Hydrodyn *)us_hydrodyn)->saxs_options, 
+                                                                                                    &((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget, 
+                                                                                                    us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
+   }
 }

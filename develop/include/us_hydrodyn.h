@@ -27,6 +27,7 @@
 #include "us_extern.h"
 #include "us_util.h"
 #include "us_math.h"
+#include "us_json.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
@@ -762,6 +763,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
       void add_to_directory_history( QString dir );
+      bool load_config_json ( QString &json );
+      void hard_coded_defaults();
 
    public:
 

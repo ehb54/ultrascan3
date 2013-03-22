@@ -2168,7 +2168,21 @@ int US_Hydrodyn::read_config(QFile& f)
    // i.e. via merging
    // similar things should also be done with the somo.residue, hybrid, atom & saxs_atoms files
 
-   if ( ts.readLine() == QString::null ) return -10000; // first line is comment
+   str = ts.readLine();
+
+   if ( str == QString::null ) return -10000; // first line is comment
+   if ( str.contains( "JSON" ) )
+   {
+      QString qs;
+      while ( !ts.atEnd() )
+      {
+         qs += ts.readLine() + "\n";
+      }
+      f.close();
+      return load_config_json( qs ) ? 0 : -3;
+   }
+
+   hard_coded_defaults();
 
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10001;
@@ -3407,873 +3421,1724 @@ int US_Hydrodyn::read_config(const QString& fname)
    return read_config(f);
 }
 
-
 void US_Hydrodyn::write_config(const QString& fname)
 {
    QFile f;
    QString str;
-   f.setName(fname);
+   f.setName( fname );
    cout << fname << endl;
    if (f.open(IO_WriteOnly | IO_Translate)) // first try user's directory for default settings
    {
       QTextStream ts(&f);
-      ts << "SOMO Config file - computer generated, please do not edit...\n";
-
-      ts << replicate_o_r_method_somo << "\t\t# Replicate overlap removal method flag\n";
       
-      ts << sidechain_overlap.remove_overlap << "\t\t# Remove side chain overlaps flag\n";
-      ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << sidechain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << sidechain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << sidechain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << sidechain_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
-      ts << sidechain_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << sidechain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+      map < QString, QString > parameters;
 
-      ts << mainchain_overlap.remove_overlap << "\t\t# Remove mainchain overlaps flag\n";
-      ts << mainchain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << mainchain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << mainchain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << mainchain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << mainchain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << mainchain_overlap.remove_sync_percent << "\t\t# percent synchronously step\n";
-      ts << mainchain_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << mainchain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
-
-      ts << buried_overlap.remove_overlap << "\t\t# Remove buried beads overlaps flag\n";
-      ts << buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
-      ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
-
-      ts << replicate_o_r_method_grid << "\t\t# Replicate overlap removal method flag\n";
-
-      ts << grid_exposed_overlap.remove_overlap << "\t\t# Remove exposed grid bead overlaps flag\n";
-      ts << grid_exposed_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << grid_exposed_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << grid_exposed_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << grid_exposed_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << grid_exposed_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << grid_exposed_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
-      ts << grid_exposed_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << grid_exposed_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
-
-      ts << grid_buried_overlap.remove_overlap << "\t\t# Remove buried grid bead overlaps flag\n";
-      ts << grid_buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << grid_buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << grid_buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << grid_buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << grid_buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << grid_buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
-      ts << grid_buried_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << grid_buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
-
-      ts << grid_overlap.remove_overlap << "\t\t# Remove grid bead overlaps flag\n";
-      ts << grid_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
-      ts << grid_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
-      ts << grid_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
-      ts << grid_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
-      ts << grid_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
-      ts << grid_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
-      ts << grid_overlap.translate_out << "\t\t# Outward translation flag\n";
-      ts << grid_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
-
-      ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
-
-      ts << bead_output.output << "\t\t# flag for selecting output format\n";
-      ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
-      ts << bead_output.correspondence << "\t\t# flag for residue correspondence (BEAMS only)\n";
-      ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
-      ts << asa.probe_recheck_radius << "\t\t# probe recheck radius in angstrom\n";
-      ts << asa.threshold << "\t\t# SOMO ASA threshold\n";
-      ts << asa.threshold_percent << "\t\t# SOMO ASA threshold percent\n";
-      ts << asa.grid_threshold << "\t\t# Grid ASA threshold\n";
-      ts << asa.grid_threshold_percent << "\t\t# Grid ASA threshold percent\n";
-      ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
-      ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
-      ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
-      ts << asa.asab1_step << "\t\t# ASAB1 step size\n";
-
-      ts << grid.cubic << "\t\t# flag to apply cubic grid\n";
-      ts << grid.hydrate << "\t\t# flag to hydrate original model (grid)\n";
-      ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
-      ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
-      ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
-      ts << grid.enable_asa << "\t\t# flag for enabling asa options (grid)\n";
-
-      ts << misc.hydrovol << "\t\t# hydration volume\n";
-      ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
-      ts << misc.vbar << "\t\t# vbar value\n";
-      ts << misc.vbar_temperature << "\t\t# manual vbar temperature \n";
-      ts << misc.pb_rule_on << "\t\t# flag for usage of peptide bond rule\n";
-      ts << misc.avg_radius << "\t\t# Average atomic radius value\n";
-      ts << misc.avg_mass << "\t\t# Average atomic mass value\n";
-      ts << misc.avg_hydration << "\t\t# Average atomic hydration value\n";
-      ts << misc.avg_volume << "\t\t# Average bead/atom volume value\n";
-      ts << misc.avg_vbar << "\t\t# Average vbar value\n";
-
-      ts << hydro.unit << "\t\t# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)\n";
-      ts << hydro.solvent_name << "\t\t# solvent name\n";
-      ts << hydro.solvent_acronym << "\t\t# solvent acronym\n";
-      ts << hydro.temperature << "\t\t# solvent temperature in degrees C\n";
-      ts << hydro.solvent_viscosity << "\t\t# viscosity of the solvent in cP\n";
-      ts << hydro.solvent_density << "\t\t# denisty of the solvent (g/ml)\n";
-      ts << hydro.reference_system << "\t\t# flag for reference system\n";
-      ts << hydro.boundary_cond << "\t\t# flag for boundary condition: false: stick, true: slip\n";
-      ts << hydro.volume_correction << "\t\t# flag for volume correction - false: Automatic, true: manual\n";
-      ts << hydro.volume << "\t\t# volume correction value for manual entry\n";
-      ts << hydro.mass_correction << "\t\t# flag for mass correction: false: Automatic, true: manual\n";
-      ts << hydro.mass << "\t\t# mass correction value for manual entry\n";
-      ts << hydro.bead_inclusion << "\t\t# flag for bead inclusion in computation - false: exclude hidden beads; true: use all beads\n";
-      ts << hydro.rotational << "\t\t# flag false: include beads in volume correction for rotational diffusion, true: exclude\n";
-      ts << hydro.viscosity << "\t\t# flag false: include beads in volume correction for intrinsic viscosity, true: exclude\n";
-      ts << hydro.overlap_cutoff << "\t\t# flag for overlap cutoff: false: same as in model building, true: enter manually\n";
-      ts << hydro.overlap << "\t\t# overlap value\n";
-
-      ts << pdb_vis.visualization << "\t\t# PDB visualization option\n";
-      ts << pdb_vis.filename << endl; // "\t\t# RasMol color filename\n";
-
-      ts << pdb_parse.skip_hydrogen << "\t\t# skip hydrogen atoms?\n";
-      ts << pdb_parse.skip_water << "\t\t# skip water molecules?\n";
-      ts << pdb_parse.alternate << "\t\t# skip alternate conformations?\n";
-      ts << pdb_parse.find_sh << "\t\t# find SH groups?\n";
-      ts << pdb_parse.missing_residues << "\t\t# how to handle missing residues\n";
-      ts << pdb_parse.missing_atoms << "\t\t# how to handle missing atoms\n";
-
-      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
-
-      ts << saxs_options.h_scat_len << "\t\t# H scattering length (*10^-12 cm)\n";
-      ts << saxs_options.d_scat_len << "\t\t# D scattering length (*10^-12 cm)\n";
-      ts << saxs_options.h2o_scat_len_dens << "\t\t# H2O scattering length density (*10^-10 cm^2)\n";
-      ts << saxs_options.d2o_scat_len_dens << "\t\t# D2O scattering length density (*10^-10 cm^2)\n";
-      ts << saxs_options.d2o_conc << "\t\t# D2O concentration (0 to 1)\n";
-      ts << saxs_options.frac_of_exch_pep << "\t\t# Fraction of exchanged peptide H (0 to 1)\n";
-
-      ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
-      ts << saxs_options.start_angle << "\t\t# starting angle\n";
-      ts << saxs_options.end_angle << "\t\t# ending angle\n";
-      ts << saxs_options.delta_angle << "\t\t# angle stepsize\n";
-      ts << saxs_options.max_size << "\t\t# maximum size\n";
-      ts << saxs_options.bin_size << "\t\t# bin size\n";
-      ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
-      ts << saxs_options.curve << "\t\t# 0 = raw, 1 = saxs, 2 = sans\n";
-      ts << saxs_options.saxs_sans << "\t\t# 0 = saxs, 1 = sans\n";
-
-      ts << bd_options.threshold_pb_pb << "\t\t# bd_options.threshold_pb_pb\n";
-      ts << bd_options.threshold_pb_sc << "\t\t# bd_options.threshold_pb_sc\n";
-      ts << bd_options.threshold_sc_sc << "\t\t# bd_options.threshold_sc_sc\n";
-      ts << bd_options.do_rr << "\t\t# bd_options.do_rr\n";
-      ts << bd_options.force_chem << "\t\t# bd_options.force_chem\n";
-      ts << bd_options.bead_size_type << "\t\t# bd_options.bead_size_type\n";
-      ts << bd_options.show_pdb << "\t\t# bd_options.show_pdb\n";
-      ts << bd_options.run_browflex << "\t\t# bd_options.run_browflex\n";
-      ts << bd_options.tprev << "\t\t# bd_options.tprev\n";
-      ts << bd_options.ttraj << "\t\t# bd_options.ttraj\n";
-      ts << bd_options.deltat << "\t\t# bd_options.deltat\n";
-      ts << bd_options.npadif << "\t\t# bd_options.npadif\n";
-      ts << bd_options.nconf << "\t\t# bd_options.nconf\n";
-      ts << bd_options.inter << "\t\t# bd_options.inter\n";
-      ts << bd_options.iorder << "\t\t# bd_options.iorder\n";
-      ts << bd_options.iseed << "\t\t# bd_options.iseed\n";
-      ts << bd_options.icdm << "\t\t# bd_options.icdm\n";
-      ts << bd_options.chem_pb_pb_bond_type << "\t\t# bd_options.chem_pb_pb_bond_type\n";
-      ts << bd_options.compute_chem_pb_pb_force_constant << "\t\t# bd_options.compute_chem_pb_pb_force_constant\n";
-      ts << bd_options.chem_pb_pb_force_constant << "\t\t# bd_options.chem_pb_pb_force_constant\n";
-      ts << bd_options.compute_chem_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_pb_equilibrium_dist\n";
-      ts << bd_options.chem_pb_pb_equilibrium_dist << "\t\t# bd_options.chem_pb_pb_equilibrium_dist\n";
-      ts << bd_options.compute_chem_pb_pb_max_elong << "\t\t# bd_options.compute_chem_pb_pb_max_elong\n";
-      ts << bd_options.chem_pb_pb_max_elong << "\t\t# bd_options.chem_pb_pb_max_elong\n";
-      ts << bd_options.chem_pb_sc_bond_type << "\t\t# bd_options.chem_pb_sc_bond_type\n";
-      ts << bd_options.compute_chem_pb_sc_force_constant << "\t\t# bd_options.compute_chem_pb_sc_force_constant\n";
-      ts << bd_options.chem_pb_sc_force_constant << "\t\t# bd_options.chem_pb_sc_force_constant\n";
-      ts << bd_options.compute_chem_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_sc_equilibrium_dist\n";
-      ts << bd_options.chem_pb_sc_equilibrium_dist << "\t\t# bd_options.chem_pb_sc_equilibrium_dist\n";
-      ts << bd_options.compute_chem_pb_sc_max_elong << "\t\t# bd_options.compute_chem_pb_sc_max_elong\n";
-      ts << bd_options.chem_pb_sc_max_elong << "\t\t# bd_options.chem_pb_sc_max_elong\n";
-      ts << bd_options.chem_sc_sc_bond_type << "\t\t# bd_options.chem_sc_sc_bond_type\n";
-      ts << bd_options.compute_chem_sc_sc_force_constant << "\t\t# bd_options.compute_chem_sc_sc_force_constant\n";
-      ts << bd_options.chem_sc_sc_force_constant << "\t\t# bd_options.chem_sc_sc_force_constant\n";
-      ts << bd_options.compute_chem_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_sc_sc_equilibrium_dist\n";
-      ts << bd_options.chem_sc_sc_equilibrium_dist << "\t\t# bd_options.chem_sc_sc_equilibrium_dist\n";
-      ts << bd_options.compute_chem_sc_sc_max_elong << "\t\t# bd_options.compute_chem_sc_sc_max_elong\n";
-      ts << bd_options.chem_sc_sc_max_elong << "\t\t# bd_options.chem_sc_sc_max_elong\n";
-      ts << bd_options.pb_pb_bond_type << "\t\t# bd_options.pb_pb_bond_type\n";
-      ts << bd_options.compute_pb_pb_force_constant << "\t\t# bd_options.compute_pb_pb_force_constant\n";
-      ts << bd_options.pb_pb_force_constant << "\t\t# bd_options.pb_pb_force_constant\n";
-      ts << bd_options.compute_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_pb_pb_equilibrium_dist\n";
-      ts << bd_options.pb_pb_equilibrium_dist << "\t\t# bd_options.pb_pb_equilibrium_dist\n";
-      ts << bd_options.compute_pb_pb_max_elong << "\t\t# bd_options.compute_pb_pb_max_elong\n";
-      ts << bd_options.pb_pb_max_elong << "\t\t# bd_options.pb_pb_max_elong\n";
-      ts << bd_options.pb_sc_bond_type << "\t\t# bd_options.pb_sc_bond_type\n";
-      ts << bd_options.compute_pb_sc_force_constant << "\t\t# bd_options.compute_pb_sc_force_constant\n";
-      ts << bd_options.pb_sc_force_constant << "\t\t# bd_options.pb_sc_force_constant\n";
-      ts << bd_options.compute_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_pb_sc_equilibrium_dist\n";
-      ts << bd_options.pb_sc_equilibrium_dist << "\t\t# bd_options.pb_sc_equilibrium_dist\n";
-      ts << bd_options.compute_pb_sc_max_elong << "\t\t# bd_options.compute_pb_sc_max_elong\n";
-      ts << bd_options.pb_sc_max_elong << "\t\t# bd_options.pb_sc_max_elong\n";
-      ts << bd_options.sc_sc_bond_type << "\t\t# bd_options.sc_sc_bond_type\n";
-      ts << bd_options.compute_sc_sc_force_constant << "\t\t# bd_options.compute_sc_sc_force_constant\n";
-      ts << bd_options.sc_sc_force_constant << "\t\t# bd_options.sc_sc_force_constant\n";
-      ts << bd_options.compute_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_sc_sc_equilibrium_dist\n";
-      ts << bd_options.sc_sc_equilibrium_dist << "\t\t# bd_options.sc_sc_equilibrium_dist\n";
-      ts << bd_options.compute_sc_sc_max_elong << "\t\t# bd_options.compute_sc_sc_max_elong\n";
-      ts << bd_options.sc_sc_max_elong << "\t\t# bd_options.sc_sc_max_elong\n";
-      ts << bd_options.nmol << "\t\t# bd_options.nmol\n";
-
-      ts << anaflex_options.run_anaflex << "\t\t# anaflex_options.run_anaflex\n";
-      ts << anaflex_options.nfrec << "\t\t# anaflex_options.nfrec\n";
-      ts << anaflex_options.instprofiles << "\t\t# anaflex_options.instprofiles\n";
-      ts << anaflex_options.run_mode_1 << "\t\t# anaflex_options.run_mode_1\n";
-      ts << anaflex_options.run_mode_1_1 << "\t\t# anaflex_options.run_mode_1_1\n";
-      ts << anaflex_options.run_mode_1_2 << "\t\t# anaflex_options.run_mode_1_2\n";
-      ts << anaflex_options.run_mode_1_3 << "\t\t# anaflex_options.run_mode_1_3\n";
-      ts << anaflex_options.run_mode_1_4 << "\t\t# anaflex_options.run_mode_1_4\n";
-      ts << anaflex_options.run_mode_1_5 << "\t\t# anaflex_options.run_mode_1_5\n";
-      ts << anaflex_options.run_mode_1_7 << "\t\t# anaflex_options.run_mode_1_7\n";
-      ts << anaflex_options.run_mode_1_8 << "\t\t# anaflex_options.run_mode_1_8\n";
-      ts << anaflex_options.run_mode_1_12 << "\t\t# anaflex_options.run_mode_1_12\n";
-      ts << anaflex_options.run_mode_1_13 << "\t\t# anaflex_options.run_mode_1_13\n";
-      ts << anaflex_options.run_mode_1_14 << "\t\t# anaflex_options.run_mode_1_14\n";
-      ts << anaflex_options.run_mode_1_18 << "\t\t# anaflex_options.run_mode_1_18\n";
-      ts << anaflex_options.run_mode_1_20 << "\t\t# anaflex_options.run_mode_1_20\n";
-      ts << anaflex_options.run_mode_1_24 << "\t\t# anaflex_options.run_mode_1_24\n";
-      ts << anaflex_options.run_mode_2 << "\t\t# anaflex_options.run_mode_2\n";
-      ts << anaflex_options.run_mode_2_1 << "\t\t# anaflex_options.run_mode_2_1\n";
-      ts << anaflex_options.run_mode_2_2 << "\t\t# anaflex_options.run_mode_2_2\n";
-      ts << anaflex_options.run_mode_2_3 << "\t\t# anaflex_options.run_mode_2_3\n";
-      ts << anaflex_options.run_mode_2_4 << "\t\t# anaflex_options.run_mode_2_4\n";
-      ts << anaflex_options.run_mode_2_5 << "\t\t# anaflex_options.run_mode_2_5\n";
-      ts << anaflex_options.run_mode_2_7 << "\t\t# anaflex_options.run_mode_2_7\n";
-      ts << anaflex_options.run_mode_2_8 << "\t\t# anaflex_options.run_mode_2_8\n";
-      ts << anaflex_options.run_mode_2_12 << "\t\t# anaflex_options.run_mode_2_12\n";
-      ts << anaflex_options.run_mode_2_13 << "\t\t# anaflex_options.run_mode_2_13\n";
-      ts << anaflex_options.run_mode_2_14 << "\t\t# anaflex_options.run_mode_2_14\n";
-      ts << anaflex_options.run_mode_2_18 << "\t\t# anaflex_options.run_mode_2_18\n";
-      ts << anaflex_options.run_mode_2_20 << "\t\t# anaflex_options.run_mode_2_20\n";
-      ts << anaflex_options.run_mode_2_24 << "\t\t# anaflex_options.run_mode_2_24\n";
-      ts << anaflex_options.run_mode_3 << "\t\t# anaflex_options.run_mode_3\n";
-      ts << anaflex_options.run_mode_3_1 << "\t\t# anaflex_options.run_mode_3_1\n";
-      ts << anaflex_options.run_mode_3_5 << "\t\t# anaflex_options.run_mode_3_5\n";
-      ts << anaflex_options.run_mode_3_9 << "\t\t# anaflex_options.run_mode_3_9\n";
-      ts << anaflex_options.run_mode_3_10 << "\t\t# anaflex_options.run_mode_3_10\n";
-      ts << anaflex_options.run_mode_3_14 << "\t\t# anaflex_options.run_mode_3_14\n";
-      ts << anaflex_options.run_mode_3_15 << "\t\t# anaflex_options.run_mode_3_15\n";
-      ts << anaflex_options.run_mode_3_16 << "\t\t# anaflex_options.run_mode_3_16\n";
-      ts << anaflex_options.run_mode_4 << "\t\t# anaflex_options.run_mode_4\n";
-      ts << anaflex_options.run_mode_4_1 << "\t\t# anaflex_options.run_mode_4_1\n";
-      ts << anaflex_options.run_mode_4_6 << "\t\t# anaflex_options.run_mode_4_6\n";
-      ts << anaflex_options.run_mode_4_7 << "\t\t# anaflex_options.run_mode_4_7\n";
-      ts << anaflex_options.run_mode_4_8 << "\t\t# anaflex_options.run_mode_4_8\n";
-      ts << anaflex_options.run_mode_9 << "\t\t# anaflex_options.run_mode_9\n";
-      ts << anaflex_options.ntimc << "\t\t# anaflex_options.ntimc\n";
-      ts << anaflex_options.tmax << "\t\t# anaflex_options.tmax\n";
-      ts << anaflex_options.run_mode_3_5_iii << "\t\t# anaflex_options.run_mode_3_5_iii\n";
-      ts << anaflex_options.run_mode_3_5_jjj << "\t\t# anaflex_options.run_mode_3_5_jjj\n";
-      ts << anaflex_options.run_mode_3_10_theta << "\t\t# anaflex_options.run_mode_3_10_theta\n";
-      ts << anaflex_options.run_mode_3_10_refractive_index << "\t\t# anaflex_options.run_mode_3_10_refractive_index\n";
-      ts << anaflex_options.run_mode_3_10_lambda << "\t\t# anaflex_options.run_mode_3_10_lambda\n";
-      ts << anaflex_options.run_mode_3_14_iii << "\t\t# anaflex_options.run_mode_3_14_iii\n";
-      ts << anaflex_options.run_mode_3_14_jjj << "\t\t# anaflex_options.run_mode_3_14_jjj\n";
+      ts << "US-SOMO JSON Config file\n";
       
-      ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
-      ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
-      ts << batch.somo << "\t\t# batch run somo\n";
-      ts << batch.grid << "\t\t# batch run grid\n";
-      ts << batch.hydro << "\t\t# batch run hydro\n";
-      ts << batch.avg_hydro << "\t\t# batch avg hydro\n";
-      ts << batch.avg_hydro_name << "\t\t# batch avg hydro name\n";
-      ts << batch.height << "\t\t# batch window last height\n";
-      ts << batch.width << "\t\t# batch window last width\n";
-      ts << batch.file.size() << "\t\t# batch number of files to follow\n";
-      for ( unsigned int i = 0; i < batch.file.size(); i++ )
+      parameters[ "replicate_o_r_method_somo" ] = QString( "%1" ).arg( replicate_o_r_method_somo );
+      parameters[ "sidechain_overlap.remove_overlap" ] = QString( "%1" ).arg( sidechain_overlap.remove_overlap );
+      parameters[ "sidechain_overlap.fuse_beads" ] = QString( "%1" ).arg( sidechain_overlap.fuse_beads );
+      parameters[ "sidechain_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( sidechain_overlap.fuse_beads_percent );
+      parameters[ "sidechain_overlap.remove_hierarch" ] = QString( "%1" ).arg( sidechain_overlap.remove_hierarch );
+      parameters[ "sidechain_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( sidechain_overlap.remove_hierarch_percent );
+      parameters[ "sidechain_overlap.remove_sync" ] = QString( "%1" ).arg( sidechain_overlap.remove_sync );
+      parameters[ "sidechain_overlap.remove_sync_percent" ] = QString( "%1" ).arg( sidechain_overlap.remove_sync_percent );
+      parameters[ "sidechain_overlap.translate_out" ] = QString( "%1" ).arg( sidechain_overlap.translate_out );
+      parameters[ "sidechain_overlap.show_translate" ] = QString( "%1" ).arg( sidechain_overlap.show_translate );
+      parameters[ "mainchain_overlap.remove_overlap" ] = QString( "%1" ).arg( mainchain_overlap.remove_overlap );
+      parameters[ "mainchain_overlap.fuse_beads" ] = QString( "%1" ).arg( mainchain_overlap.fuse_beads );
+      parameters[ "mainchain_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( mainchain_overlap.fuse_beads_percent );
+      parameters[ "mainchain_overlap.remove_hierarch" ] = QString( "%1" ).arg( mainchain_overlap.remove_hierarch );
+      parameters[ "mainchain_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( mainchain_overlap.remove_hierarch_percent );
+      parameters[ "mainchain_overlap.remove_sync" ] = QString( "%1" ).arg( mainchain_overlap.remove_sync );
+      parameters[ "mainchain_overlap.remove_sync_percent" ] = QString( "%1" ).arg( mainchain_overlap.remove_sync_percent );
+      parameters[ "mainchain_overlap.translate_out" ] = QString( "%1" ).arg( mainchain_overlap.translate_out );
+      parameters[ "mainchain_overlap.show_translate" ] = QString( "%1" ).arg( mainchain_overlap.show_translate );
+      parameters[ "buried_overlap.remove_overlap" ] = QString( "%1" ).arg( buried_overlap.remove_overlap );
+      parameters[ "buried_overlap.fuse_beads" ] = QString( "%1" ).arg( buried_overlap.fuse_beads );
+      parameters[ "buried_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( buried_overlap.fuse_beads_percent );
+      parameters[ "buried_overlap.remove_hierarch" ] = QString( "%1" ).arg( buried_overlap.remove_hierarch );
+      parameters[ "buried_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( buried_overlap.remove_hierarch_percent );
+      parameters[ "buried_overlap.remove_sync" ] = QString( "%1" ).arg( buried_overlap.remove_sync );
+      parameters[ "buried_overlap.remove_sync_percent" ] = QString( "%1" ).arg( buried_overlap.remove_sync_percent );
+      parameters[ "buried_overlap.translate_out" ] = QString( "%1" ).arg( buried_overlap.translate_out );
+      parameters[ "buried_overlap.show_translate" ] = QString( "%1" ).arg( buried_overlap.show_translate );
+      parameters[ "replicate_o_r_method_grid" ] = QString( "%1" ).arg( replicate_o_r_method_grid );
+      parameters[ "grid_exposed_overlap.remove_overlap" ] = QString( "%1" ).arg( grid_exposed_overlap.remove_overlap );
+      parameters[ "grid_exposed_overlap.fuse_beads" ] = QString( "%1" ).arg( grid_exposed_overlap.fuse_beads );
+      parameters[ "grid_exposed_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( grid_exposed_overlap.fuse_beads_percent );
+      parameters[ "grid_exposed_overlap.remove_hierarch" ] = QString( "%1" ).arg( grid_exposed_overlap.remove_hierarch );
+      parameters[ "grid_exposed_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( grid_exposed_overlap.remove_hierarch_percent );
+      parameters[ "grid_exposed_overlap.remove_sync" ] = QString( "%1" ).arg( grid_exposed_overlap.remove_sync );
+      parameters[ "grid_exposed_overlap.remove_sync_percent" ] = QString( "%1" ).arg( grid_exposed_overlap.remove_sync_percent );
+      parameters[ "grid_exposed_overlap.translate_out" ] = QString( "%1" ).arg( grid_exposed_overlap.translate_out );
+      parameters[ "grid_exposed_overlap.show_translate" ] = QString( "%1" ).arg( grid_exposed_overlap.show_translate );
+      parameters[ "grid_buried_overlap.remove_overlap" ] = QString( "%1" ).arg( grid_buried_overlap.remove_overlap );
+      parameters[ "grid_buried_overlap.fuse_beads" ] = QString( "%1" ).arg( grid_buried_overlap.fuse_beads );
+      parameters[ "grid_buried_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( grid_buried_overlap.fuse_beads_percent );
+      parameters[ "grid_buried_overlap.remove_hierarch" ] = QString( "%1" ).arg( grid_buried_overlap.remove_hierarch );
+      parameters[ "grid_buried_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( grid_buried_overlap.remove_hierarch_percent );
+      parameters[ "grid_buried_overlap.remove_sync" ] = QString( "%1" ).arg( grid_buried_overlap.remove_sync );
+      parameters[ "grid_buried_overlap.remove_sync_percent" ] = QString( "%1" ).arg( grid_buried_overlap.remove_sync_percent );
+      parameters[ "grid_buried_overlap.translate_out" ] = QString( "%1" ).arg( grid_buried_overlap.translate_out );
+      parameters[ "grid_buried_overlap.show_translate" ] = QString( "%1" ).arg( grid_buried_overlap.show_translate );
+      parameters[ "grid_overlap.remove_overlap" ] = QString( "%1" ).arg( grid_overlap.remove_overlap );
+      parameters[ "grid_overlap.fuse_beads" ] = QString( "%1" ).arg( grid_overlap.fuse_beads );
+      parameters[ "grid_overlap.fuse_beads_percent" ] = QString( "%1" ).arg( grid_overlap.fuse_beads_percent );
+      parameters[ "grid_overlap.remove_hierarch" ] = QString( "%1" ).arg( grid_overlap.remove_hierarch );
+      parameters[ "grid_overlap.remove_hierarch_percent" ] = QString( "%1" ).arg( grid_overlap.remove_hierarch_percent );
+      parameters[ "grid_overlap.remove_sync" ] = QString( "%1" ).arg( grid_overlap.remove_sync );
+      parameters[ "grid_overlap.remove_sync_percent" ] = QString( "%1" ).arg( grid_overlap.remove_sync_percent );
+      parameters[ "grid_overlap.translate_out" ] = QString( "%1" ).arg( grid_overlap.translate_out );
+      parameters[ "grid_overlap.show_translate" ] = QString( "%1" ).arg( grid_overlap.show_translate );
+      parameters[ "overlap_tolerance" ] = QString( "%1" ).arg( overlap_tolerance );
+      parameters[ "bead_output.output" ] = QString( "%1" ).arg( bead_output.output );
+      parameters[ "bead_output.sequence" ] = QString( "%1" ).arg( bead_output.sequence );
+      parameters[ "bead_output.correspondence" ] = QString( "%1" ).arg( bead_output.correspondence );
+      parameters[ "asa.probe_radius" ] = QString( "%1" ).arg( asa.probe_radius );
+      parameters[ "asa.probe_recheck_radius" ] = QString( "%1" ).arg( asa.probe_recheck_radius );
+      parameters[ "asa.threshold" ] = QString( "%1" ).arg( asa.threshold );
+      parameters[ "asa.threshold_percent" ] = QString( "%1" ).arg( asa.threshold_percent );
+      parameters[ "asa.grid_threshold" ] = QString( "%1" ).arg( asa.grid_threshold );
+      parameters[ "asa.grid_threshold_percent" ] = QString( "%1" ).arg( asa.grid_threshold_percent );
+      parameters[ "asa.calculation" ] = QString( "%1" ).arg( asa.calculation );
+      parameters[ "asa.recheck_beads" ] = QString( "%1" ).arg( asa.recheck_beads );
+      parameters[ "asa.method" ] = QString( "%1" ).arg( asa.method );
+      parameters[ "asa.asab1_step" ] = QString( "%1" ).arg( asa.asab1_step );
+      parameters[ "grid.cubic" ] = QString( "%1" ).arg( grid.cubic );
+      parameters[ "grid.hydrate" ] = QString( "%1" ).arg( grid.hydrate );
+      parameters[ "grid.center" ] = QString( "%1" ).arg( grid.center );
+      parameters[ "grid.tangency" ] = QString( "%1" ).arg( grid.tangency );
+      parameters[ "grid.cube_side" ] = QString( "%1" ).arg( grid.cube_side );
+      parameters[ "grid.enable_asa" ] = QString( "%1" ).arg( grid.enable_asa );
+      parameters[ "misc.hydrovol" ] = QString( "%1" ).arg( misc.hydrovol );
+      parameters[ "misc.compute_vbar" ] = QString( "%1" ).arg( misc.compute_vbar );
+      parameters[ "misc.vbar" ] = QString( "%1" ).arg( misc.vbar );
+      parameters[ "misc.vbar_temperature" ] = QString( "%1" ).arg( misc.vbar_temperature );
+      parameters[ "misc.pb_rule_on" ] = QString( "%1" ).arg( misc.pb_rule_on );
+      parameters[ "misc.avg_radius" ] = QString( "%1" ).arg( misc.avg_radius );
+      parameters[ "misc.avg_mass" ] = QString( "%1" ).arg( misc.avg_mass );
+      parameters[ "misc.avg_hydration" ] = QString( "%1" ).arg( misc.avg_hydration );
+      parameters[ "misc.avg_volume" ] = QString( "%1" ).arg( misc.avg_volume );
+      parameters[ "misc.avg_vbar" ] = QString( "%1" ).arg( misc.avg_vbar );
+      parameters[ "hydro.unit" ] = QString( "%1" ).arg( hydro.unit );
+      parameters[ "hydro.solvent_name" ] = QString( "%1" ).arg( hydro.solvent_name );
+      parameters[ "hydro.solvent_acronym" ] = QString( "%1" ).arg( hydro.solvent_acronym );
+      parameters[ "hydro.temperature" ] = QString( "%1" ).arg( hydro.temperature );
+      parameters[ "hydro.solvent_viscosity" ] = QString( "%1" ).arg( hydro.solvent_viscosity );
+      parameters[ "hydro.solvent_density" ] = QString( "%1" ).arg( hydro.solvent_density );
+      parameters[ "hydro.reference_system" ] = QString( "%1" ).arg( hydro.reference_system );
+      parameters[ "hydro.boundary_cond" ] = QString( "%1" ).arg( hydro.boundary_cond );
+      parameters[ "hydro.volume_correction" ] = QString( "%1" ).arg( hydro.volume_correction );
+      parameters[ "hydro.volume" ] = QString( "%1" ).arg( hydro.volume );
+      parameters[ "hydro.mass_correction" ] = QString( "%1" ).arg( hydro.mass_correction );
+      parameters[ "hydro.mass" ] = QString( "%1" ).arg( hydro.mass );
+      parameters[ "hydro.bead_inclusion" ] = QString( "%1" ).arg( hydro.bead_inclusion );
+      parameters[ "hydro.rotational" ] = QString( "%1" ).arg( hydro.rotational );
+      parameters[ "hydro.viscosity" ] = QString( "%1" ).arg( hydro.viscosity );
+      parameters[ "hydro.overlap_cutoff" ] = QString( "%1" ).arg( hydro.overlap_cutoff );
+      parameters[ "hydro.overlap" ] = QString( "%1" ).arg( hydro.overlap );
+      parameters[ "pdb_vis.visualization" ] = QString( "%1" ).arg( pdb_vis.visualization );
+      parameters[ "pdb_vis.filename" ] = QString( "%1" ).arg( pdb_vis.filename );
+      parameters[ "pdb_parse.skip_hydrogen" ] = QString( "%1" ).arg( pdb_parse.skip_hydrogen );
+      parameters[ "pdb_parse.skip_water" ] = QString( "%1" ).arg( pdb_parse.skip_water );
+      parameters[ "pdb_parse.alternate" ] = QString( "%1" ).arg( pdb_parse.alternate );
+      parameters[ "pdb_parse.find_sh" ] = QString( "%1" ).arg( pdb_parse.find_sh );
+      parameters[ "pdb_parse.missing_residues" ] = QString( "%1" ).arg( pdb_parse.missing_residues );
+      parameters[ "pdb_parse.missing_atoms" ] = QString( "%1" ).arg( pdb_parse.missing_atoms );
+      parameters[ "saxs_options.water_e_density" ] = QString( "%1" ).arg( saxs_options.water_e_density );
+      parameters[ "saxs_options.h_scat_len" ] = QString( "%1" ).arg( saxs_options.h_scat_len );
+      parameters[ "saxs_options.d_scat_len" ] = QString( "%1" ).arg( saxs_options.d_scat_len );
+      parameters[ "saxs_options.h2o_scat_len_dens" ] = QString( "%1" ).arg( saxs_options.h2o_scat_len_dens );
+      parameters[ "saxs_options.d2o_scat_len_dens" ] = QString( "%1" ).arg( saxs_options.d2o_scat_len_dens );
+      parameters[ "saxs_options.d2o_conc" ] = QString( "%1" ).arg( saxs_options.d2o_conc );
+      parameters[ "saxs_options.frac_of_exch_pep" ] = QString( "%1" ).arg( saxs_options.frac_of_exch_pep );
+      parameters[ "saxs_options.wavelength" ] = QString( "%1" ).arg( saxs_options.wavelength );
+      parameters[ "saxs_options.start_angle" ] = QString( "%1" ).arg( saxs_options.start_angle );
+      parameters[ "saxs_options.end_angle" ] = QString( "%1" ).arg( saxs_options.end_angle );
+      parameters[ "saxs_options.delta_angle" ] = QString( "%1" ).arg( saxs_options.delta_angle );
+      parameters[ "saxs_options.max_size" ] = QString( "%1" ).arg( saxs_options.max_size );
+      parameters[ "saxs_options.bin_size" ] = QString( "%1" ).arg( saxs_options.bin_size );
+      parameters[ "saxs_options.hydrate_pdb" ] = QString( "%1" ).arg( saxs_options.hydrate_pdb );
+      parameters[ "saxs_options.curve" ] = QString( "%1" ).arg( saxs_options.curve );
+      parameters[ "saxs_options.saxs_sans" ] = QString( "%1" ).arg( saxs_options.saxs_sans );
+      parameters[ "bd_options.threshold_pb_pb" ] = QString( "%1" ).arg( bd_options.threshold_pb_pb );
+      parameters[ "bd_options.threshold_pb_sc" ] = QString( "%1" ).arg( bd_options.threshold_pb_sc );
+      parameters[ "bd_options.threshold_sc_sc" ] = QString( "%1" ).arg( bd_options.threshold_sc_sc );
+      parameters[ "bd_options.do_rr" ] = QString( "%1" ).arg( bd_options.do_rr );
+      parameters[ "bd_options.force_chem" ] = QString( "%1" ).arg( bd_options.force_chem );
+      parameters[ "bd_options.bead_size_type" ] = QString( "%1" ).arg( bd_options.bead_size_type );
+      parameters[ "bd_options.show_pdb" ] = QString( "%1" ).arg( bd_options.show_pdb );
+      parameters[ "bd_options.run_browflex" ] = QString( "%1" ).arg( bd_options.run_browflex );
+      parameters[ "bd_options.tprev" ] = QString( "%1" ).arg( bd_options.tprev );
+      parameters[ "bd_options.ttraj" ] = QString( "%1" ).arg( bd_options.ttraj );
+      parameters[ "bd_options.deltat" ] = QString( "%1" ).arg( bd_options.deltat );
+      parameters[ "bd_options.npadif" ] = QString( "%1" ).arg( bd_options.npadif );
+      parameters[ "bd_options.nconf" ] = QString( "%1" ).arg( bd_options.nconf );
+      parameters[ "bd_options.inter" ] = QString( "%1" ).arg( bd_options.inter );
+      parameters[ "bd_options.iorder" ] = QString( "%1" ).arg( bd_options.iorder );
+      parameters[ "bd_options.iseed" ] = QString( "%1" ).arg( bd_options.iseed );
+      parameters[ "bd_options.icdm" ] = QString( "%1" ).arg( bd_options.icdm );
+      parameters[ "bd_options.chem_pb_pb_bond_type" ] = QString( "%1" ).arg( bd_options.chem_pb_pb_bond_type );
+      parameters[ "bd_options.compute_chem_pb_pb_force_constant" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_pb_force_constant );
+      parameters[ "bd_options.chem_pb_pb_force_constant" ] = QString( "%1" ).arg( bd_options.chem_pb_pb_force_constant );
+      parameters[ "bd_options.compute_chem_pb_pb_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_pb_equilibrium_dist );
+      parameters[ "bd_options.chem_pb_pb_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.chem_pb_pb_equilibrium_dist );
+      parameters[ "bd_options.compute_chem_pb_pb_max_elong" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_pb_max_elong );
+      parameters[ "bd_options.chem_pb_pb_max_elong" ] = QString( "%1" ).arg( bd_options.chem_pb_pb_max_elong );
+      parameters[ "bd_options.chem_pb_sc_bond_type" ] = QString( "%1" ).arg( bd_options.chem_pb_sc_bond_type );
+      parameters[ "bd_options.compute_chem_pb_sc_force_constant" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_sc_force_constant );
+      parameters[ "bd_options.chem_pb_sc_force_constant" ] = QString( "%1" ).arg( bd_options.chem_pb_sc_force_constant );
+      parameters[ "bd_options.compute_chem_pb_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_sc_equilibrium_dist );
+      parameters[ "bd_options.chem_pb_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.chem_pb_sc_equilibrium_dist );
+      parameters[ "bd_options.compute_chem_pb_sc_max_elong" ] = QString( "%1" ).arg( bd_options.compute_chem_pb_sc_max_elong );
+      parameters[ "bd_options.chem_pb_sc_max_elong" ] = QString( "%1" ).arg( bd_options.chem_pb_sc_max_elong );
+      parameters[ "bd_options.chem_sc_sc_bond_type" ] = QString( "%1" ).arg( bd_options.chem_sc_sc_bond_type );
+      parameters[ "bd_options.compute_chem_sc_sc_force_constant" ] = QString( "%1" ).arg( bd_options.compute_chem_sc_sc_force_constant );
+      parameters[ "bd_options.chem_sc_sc_force_constant" ] = QString( "%1" ).arg( bd_options.chem_sc_sc_force_constant );
+      parameters[ "bd_options.compute_chem_sc_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_chem_sc_sc_equilibrium_dist );
+      parameters[ "bd_options.chem_sc_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.chem_sc_sc_equilibrium_dist );
+      parameters[ "bd_options.compute_chem_sc_sc_max_elong" ] = QString( "%1" ).arg( bd_options.compute_chem_sc_sc_max_elong );
+      parameters[ "bd_options.chem_sc_sc_max_elong" ] = QString( "%1" ).arg( bd_options.chem_sc_sc_max_elong );
+      parameters[ "bd_options.pb_pb_bond_type" ] = QString( "%1" ).arg( bd_options.pb_pb_bond_type );
+      parameters[ "bd_options.compute_pb_pb_force_constant" ] = QString( "%1" ).arg( bd_options.compute_pb_pb_force_constant );
+      parameters[ "bd_options.pb_pb_force_constant" ] = QString( "%1" ).arg( bd_options.pb_pb_force_constant );
+      parameters[ "bd_options.compute_pb_pb_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_pb_pb_equilibrium_dist );
+      parameters[ "bd_options.pb_pb_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.pb_pb_equilibrium_dist );
+      parameters[ "bd_options.compute_pb_pb_max_elong" ] = QString( "%1" ).arg( bd_options.compute_pb_pb_max_elong );
+      parameters[ "bd_options.pb_pb_max_elong" ] = QString( "%1" ).arg( bd_options.pb_pb_max_elong );
+      parameters[ "bd_options.pb_sc_bond_type" ] = QString( "%1" ).arg( bd_options.pb_sc_bond_type );
+      parameters[ "bd_options.compute_pb_sc_force_constant" ] = QString( "%1" ).arg( bd_options.compute_pb_sc_force_constant );
+      parameters[ "bd_options.pb_sc_force_constant" ] = QString( "%1" ).arg( bd_options.pb_sc_force_constant );
+      parameters[ "bd_options.compute_pb_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_pb_sc_equilibrium_dist );
+      parameters[ "bd_options.pb_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.pb_sc_equilibrium_dist );
+      parameters[ "bd_options.compute_pb_sc_max_elong" ] = QString( "%1" ).arg( bd_options.compute_pb_sc_max_elong );
+      parameters[ "bd_options.pb_sc_max_elong" ] = QString( "%1" ).arg( bd_options.pb_sc_max_elong );
+      parameters[ "bd_options.sc_sc_bond_type" ] = QString( "%1" ).arg( bd_options.sc_sc_bond_type );
+      parameters[ "bd_options.compute_sc_sc_force_constant" ] = QString( "%1" ).arg( bd_options.compute_sc_sc_force_constant );
+      parameters[ "bd_options.sc_sc_force_constant" ] = QString( "%1" ).arg( bd_options.sc_sc_force_constant );
+      parameters[ "bd_options.compute_sc_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.compute_sc_sc_equilibrium_dist );
+      parameters[ "bd_options.sc_sc_equilibrium_dist" ] = QString( "%1" ).arg( bd_options.sc_sc_equilibrium_dist );
+      parameters[ "bd_options.compute_sc_sc_max_elong" ] = QString( "%1" ).arg( bd_options.compute_sc_sc_max_elong );
+      parameters[ "bd_options.sc_sc_max_elong" ] = QString( "%1" ).arg( bd_options.sc_sc_max_elong );
+      parameters[ "bd_options.nmol" ] = QString( "%1" ).arg( bd_options.nmol );
+      parameters[ "anaflex_options.run_anaflex" ] = QString( "%1" ).arg( anaflex_options.run_anaflex );
+      parameters[ "anaflex_options.nfrec" ] = QString( "%1" ).arg( anaflex_options.nfrec );
+      parameters[ "anaflex_options.instprofiles" ] = QString( "%1" ).arg( anaflex_options.instprofiles );
+      parameters[ "anaflex_options.run_mode_1" ] = QString( "%1" ).arg( anaflex_options.run_mode_1 );
+      parameters[ "anaflex_options.run_mode_1_1" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_1 );
+      parameters[ "anaflex_options.run_mode_1_2" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_2 );
+      parameters[ "anaflex_options.run_mode_1_3" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_3 );
+      parameters[ "anaflex_options.run_mode_1_4" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_4 );
+      parameters[ "anaflex_options.run_mode_1_5" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_5 );
+      parameters[ "anaflex_options.run_mode_1_7" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_7 );
+      parameters[ "anaflex_options.run_mode_1_8" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_8 );
+      parameters[ "anaflex_options.run_mode_1_12" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_12 );
+      parameters[ "anaflex_options.run_mode_1_13" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_13 );
+      parameters[ "anaflex_options.run_mode_1_14" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_14 );
+      parameters[ "anaflex_options.run_mode_1_18" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_18 );
+      parameters[ "anaflex_options.run_mode_1_20" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_20 );
+      parameters[ "anaflex_options.run_mode_1_24" ] = QString( "%1" ).arg( anaflex_options.run_mode_1_24 );
+      parameters[ "anaflex_options.run_mode_2" ] = QString( "%1" ).arg( anaflex_options.run_mode_2 );
+      parameters[ "anaflex_options.run_mode_2_1" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_1 );
+      parameters[ "anaflex_options.run_mode_2_2" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_2 );
+      parameters[ "anaflex_options.run_mode_2_3" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_3 );
+      parameters[ "anaflex_options.run_mode_2_4" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_4 );
+      parameters[ "anaflex_options.run_mode_2_5" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_5 );
+      parameters[ "anaflex_options.run_mode_2_7" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_7 );
+      parameters[ "anaflex_options.run_mode_2_8" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_8 );
+      parameters[ "anaflex_options.run_mode_2_12" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_12 );
+      parameters[ "anaflex_options.run_mode_2_13" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_13 );
+      parameters[ "anaflex_options.run_mode_2_14" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_14 );
+      parameters[ "anaflex_options.run_mode_2_18" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_18 );
+      parameters[ "anaflex_options.run_mode_2_20" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_20 );
+      parameters[ "anaflex_options.run_mode_2_24" ] = QString( "%1" ).arg( anaflex_options.run_mode_2_24 );
+      parameters[ "anaflex_options.run_mode_3" ] = QString( "%1" ).arg( anaflex_options.run_mode_3 );
+      parameters[ "anaflex_options.run_mode_3_1" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_1 );
+      parameters[ "anaflex_options.run_mode_3_5" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_5 );
+      parameters[ "anaflex_options.run_mode_3_9" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_9 );
+      parameters[ "anaflex_options.run_mode_3_10" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_10 );
+      parameters[ "anaflex_options.run_mode_3_14" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_14 );
+      parameters[ "anaflex_options.run_mode_3_15" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_15 );
+      parameters[ "anaflex_options.run_mode_3_16" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_16 );
+      parameters[ "anaflex_options.run_mode_4" ] = QString( "%1" ).arg( anaflex_options.run_mode_4 );
+      parameters[ "anaflex_options.run_mode_4_1" ] = QString( "%1" ).arg( anaflex_options.run_mode_4_1 );
+      parameters[ "anaflex_options.run_mode_4_6" ] = QString( "%1" ).arg( anaflex_options.run_mode_4_6 );
+      parameters[ "anaflex_options.run_mode_4_7" ] = QString( "%1" ).arg( anaflex_options.run_mode_4_7 );
+      parameters[ "anaflex_options.run_mode_4_8" ] = QString( "%1" ).arg( anaflex_options.run_mode_4_8 );
+      parameters[ "anaflex_options.run_mode_9" ] = QString( "%1" ).arg( anaflex_options.run_mode_9 );
+      parameters[ "anaflex_options.ntimc" ] = QString( "%1" ).arg( anaflex_options.ntimc );
+      parameters[ "anaflex_options.tmax" ] = QString( "%1" ).arg( anaflex_options.tmax );
+      parameters[ "anaflex_options.run_mode_3_5_iii" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_5_iii );
+      parameters[ "anaflex_options.run_mode_3_5_jjj" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_5_jjj );
+      parameters[ "anaflex_options.run_mode_3_10_theta" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_10_theta );
+      parameters[ "anaflex_options.run_mode_3_10_refractive_index" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_10_refractive_index );
+      parameters[ "anaflex_options.run_mode_3_10_lambda" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_10_lambda );
+      parameters[ "anaflex_options.run_mode_3_14_iii" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_14_iii );
+      parameters[ "anaflex_options.run_mode_3_14_jjj" ] = QString( "%1" ).arg( anaflex_options.run_mode_3_14_jjj );
+      parameters[ "batch.missing_atoms" ] = QString( "%1" ).arg( batch.missing_atoms );
+      parameters[ "batch.missing_residues" ] = QString( "%1" ).arg( batch.missing_residues );
+      parameters[ "batch.somo" ] = QString( "%1" ).arg( batch.somo );
+      parameters[ "batch.grid" ] = QString( "%1" ).arg( batch.grid );
+      parameters[ "batch.hydro" ] = QString( "%1" ).arg( batch.hydro );
+      parameters[ "batch.avg_hydro" ] = QString( "%1" ).arg( batch.avg_hydro );
+      parameters[ "batch.avg_hydro_name" ] = QString( "%1" ).arg( batch.avg_hydro_name );
+      parameters[ "batch.height" ] = QString( "%1" ).arg( batch.height );
+      parameters[ "batch.width" ] = QString( "%1" ).arg( batch.width );
+      parameters[ "path_load_pdb" ] = QString( "%1" ).arg( path_load_pdb );
+      parameters[ "path_view_pdb" ] = QString( "%1" ).arg( path_view_pdb );
+      parameters[ "path_load_bead_model" ] = QString( "%1" ).arg( path_load_bead_model );
+      parameters[ "path_view_asa_res" ] = QString( "%1" ).arg( path_view_asa_res );
+      parameters[ "path_view_bead_model" ] = QString( "%1" ).arg( path_view_bead_model );
+      parameters[ "path_open_hydro_res" ] = QString( "%1" ).arg( path_open_hydro_res );
+      parameters[ "saxs_options.path_load_saxs_curve" ] = QString( "%1" ).arg( saxs_options.path_load_saxs_curve );
+      parameters[ "saxs_options.path_load_gnom" ] = QString( "%1" ).arg( saxs_options.path_load_gnom );
+      parameters[ "saxs_options.path_load_prr" ] = QString( "%1" ).arg( saxs_options.path_load_prr );
+      parameters[ "asa.hydrate_probe_radius" ] = QString( "%1" ).arg( asa.hydrate_probe_radius );
+      parameters[ "asa.hydrate_threshold" ] = QString( "%1" ).arg( asa.hydrate_threshold );
+      parameters[ "misc.target_e_density" ] = QString( "%1" ).arg( misc.target_e_density );
+      parameters[ "misc.target_volume" ] = QString( "%1" ).arg( misc.target_volume );
+      parameters[ "misc.set_target_on_load_pdb" ] = QString( "%1" ).arg( misc.set_target_on_load_pdb );
+      parameters[ "misc.equalize_radii" ] = QString( "%1" ).arg( misc.equalize_radii );
+      parameters[ "dmd_options.force_chem" ] = QString( "%1" ).arg( dmd_options.force_chem );
+      parameters[ "dmd_options.pdb_static_pairs" ] = QString( "%1" ).arg( dmd_options.pdb_static_pairs );
+      parameters[ "dmd_options.threshold_pb_pb" ] = QString( "%1" ).arg( dmd_options.threshold_pb_pb );
+      parameters[ "dmd_options.threshold_pb_sc" ] = QString( "%1" ).arg( dmd_options.threshold_pb_sc );
+      parameters[ "dmd_options.threshold_sc_sc" ] = QString( "%1" ).arg( dmd_options.threshold_sc_sc );
+      parameters[ "saxs_options.normalize_by_mw" ] = QString( "%1" ).arg( saxs_options.normalize_by_mw );
+      parameters[ "saxs_options.saxs_iq_native_debye" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_debye );
+      parameters[ "saxs_options.saxs_iq_native_hybrid" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_hybrid );
+      parameters[ "saxs_options.saxs_iq_native_hybrid2" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_hybrid2 );
+      parameters[ "saxs_options.saxs_iq_native_hybrid3" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_hybrid3 );
+      parameters[ "saxs_options.saxs_iq_native_fast" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_fast );
+      parameters[ "saxs_options.saxs_iq_native_fast_compute_pr" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_fast_compute_pr );
+      parameters[ "saxs_options.saxs_iq_foxs" ] = QString( "%1" ).arg( saxs_options.saxs_iq_foxs );
+      parameters[ "saxs_options.saxs_iq_crysol" ] = QString( "%1" ).arg( saxs_options.saxs_iq_crysol );
+      parameters[ "saxs_options.sans_iq_native_debye" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_debye );
+      parameters[ "saxs_options.sans_iq_native_hybrid" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_hybrid );
+      parameters[ "saxs_options.sans_iq_native_hybrid2" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_hybrid2 );
+      parameters[ "saxs_options.sans_iq_native_hybrid3" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_hybrid3 );
+      parameters[ "saxs_options.sans_iq_native_fast" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_fast );
+      parameters[ "saxs_options.sans_iq_native_fast_compute_pr" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_fast_compute_pr );
+      parameters[ "saxs_options.sans_iq_cryson" ] = QString( "%1" ).arg( saxs_options.sans_iq_cryson );
+      parameters[ "saxs_options.hybrid2_q_points" ] = QString( "%1" ).arg( saxs_options.hybrid2_q_points );
+      parameters[ "saxs_options.iq_ask" ] = QString( "%1" ).arg( saxs_options.iq_ask );
+      parameters[ "saxs_options.iq_scale_ask" ] = QString( "%1" ).arg( saxs_options.iq_scale_ask );
+      parameters[ "saxs_options.iq_scale_angstrom" ] = QString( "%1" ).arg( saxs_options.iq_scale_angstrom );
+      parameters[ "saxs_options.iq_scale_nm" ] = QString( "%1" ).arg( saxs_options.iq_scale_nm );
+      parameters[ "saxs_options.sh_max_harmonics" ] = QString( "%1" ).arg( saxs_options.sh_max_harmonics );
+      parameters[ "saxs_options.sh_fibonacci_grid_order" ] = QString( "%1" ).arg( saxs_options.sh_fibonacci_grid_order );
+      parameters[ "saxs_options.crysol_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.crysol_hydration_shell_contrast );
+      parameters[ "saxs_options.crysol_default_load_difference_intensity" ] = QString( "%1" ).arg( saxs_options.crysol_default_load_difference_intensity );
+      parameters[ "saxs_options.crysol_version_26" ] = QString( "%1" ).arg( saxs_options.crysol_version_26 );
+      parameters[ "saxs_options.fast_bin_size" ] = QString( "%1" ).arg( saxs_options.fast_bin_size );
+      parameters[ "saxs_options.fast_modulation" ] = QString( "%1" ).arg( saxs_options.fast_modulation );
+      parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] = QString( "%1" ).arg( saxs_options.compute_saxs_coeff_for_bead_models );
+      parameters[ "saxs_options.compute_sans_coeff_for_bead_models" ] = QString( "%1" ).arg( saxs_options.compute_sans_coeff_for_bead_models );
+      parameters[ "saxs_options.default_atom_filename" ] = QString( "%1" ).arg( saxs_options.default_atom_filename );
+      parameters[ "saxs_options.default_hybrid_filename" ] = QString( "%1" ).arg( saxs_options.default_hybrid_filename );
+      parameters[ "saxs_options.default_saxs_filename" ] = QString( "%1" ).arg( saxs_options.default_saxs_filename );
+      parameters[ "saxs_options.default_rotamer_filename" ] = QString( "%1" ).arg( saxs_options.default_rotamer_filename );
+      parameters[ "saxs_options.steric_clash_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_distance );
+      parameters[ "saxs_options.steric_clash_recheck_distance" ] = QString( "%1" ).arg( saxs_options.steric_clash_recheck_distance );
+      parameters[ "saxs_options.disable_iq_scaling" ] = QString( "%1" ).arg( saxs_options.disable_iq_scaling );
+      parameters[ "saxs_options.autocorrelate" ] = QString( "%1" ).arg( saxs_options.autocorrelate );
+      parameters[ "saxs_options.hybrid_radius_excl_vol" ] = QString( "%1" ).arg( saxs_options.hybrid_radius_excl_vol );
+      parameters[ "saxs_options.scale_excl_vol" ] = QString( "%1" ).arg( saxs_options.scale_excl_vol );
+      parameters[ "saxs_options.subtract_radius" ] = QString( "%1" ).arg( saxs_options.subtract_radius );
+      parameters[ "saxs_options.iqq_scale_minq" ] = QString( "%1" ).arg( saxs_options.iqq_scale_minq );
+      parameters[ "saxs_options.iqq_scale_maxq" ] = QString( "%1" ).arg( saxs_options.iqq_scale_maxq );
+      parameters[ "saxs_options.iqq_scale_nnls" ] = QString( "%1" ).arg( saxs_options.iqq_scale_nnls );
+      parameters[ "saxs_options.iqq_scale_linear_offset" ] = QString( "%1" ).arg( saxs_options.iqq_scale_linear_offset );
+      parameters[ "saxs_options.iqq_scale_chi2_fitting" ] = QString( "%1" ).arg( saxs_options.iqq_scale_chi2_fitting );
+      parameters[ "saxs_options.iqq_expt_data_contains_variances" ] = QString( "%1" ).arg( saxs_options.iqq_expt_data_contains_variances );
+      parameters[ "saxs_options.iqq_ask_target_grid" ] = QString( "%1" ).arg( saxs_options.iqq_ask_target_grid );
+      parameters[ "saxs_options.iqq_scale_play" ] = QString( "%1" ).arg( saxs_options.iqq_scale_play );
+      parameters[ "saxs_options.swh_excl_vol" ] = QString( "%1" ).arg( saxs_options.swh_excl_vol );
+      parameters[ "saxs_options.iqq_default_scaling_target" ] = QString( "%1" ).arg( saxs_options.iqq_default_scaling_target );
+      parameters[ "saxs_options.saxs_iq_hybrid_adaptive" ] = QString( "%1" ).arg( saxs_options.saxs_iq_hybrid_adaptive );
+      parameters[ "saxs_options.sans_iq_hybrid_adaptive" ] = QString( "%1" ).arg( saxs_options.sans_iq_hybrid_adaptive );
+      parameters[ "saxs_options.bead_model_rayleigh" ] = QString( "%1" ).arg( saxs_options.bead_model_rayleigh );
+      parameters[ "saxs_options.iqq_log_fitting" ] = QString( "%1" ).arg( saxs_options.iqq_log_fitting );
+      parameters[ "saxs_options.iqq_kratky_fit" ] = QString( "%1" ).arg( saxs_options.iqq_kratky_fit );
+      parameters[ "saxs_options.iqq_use_atomic_ff" ] = QString( "%1" ).arg( saxs_options.iqq_use_atomic_ff );
+      parameters[ "saxs_options.iqq_use_saxs_excl_vol" ] = QString( "%1" ).arg( saxs_options.iqq_use_saxs_excl_vol );
+      parameters[ "saxs_options.alt_hydration" ] = QString( "%1" ).arg( saxs_options.alt_hydration );
+      parameters[ "saxs_options.xsr_symmop" ] = QString( "%1" ).arg( saxs_options.xsr_symmop );
+      parameters[ "saxs_options.xsr_nx" ] = QString( "%1" ).arg( saxs_options.xsr_nx );
+      parameters[ "saxs_options.xsr_ny" ] = QString( "%1" ).arg( saxs_options.xsr_ny );
+      parameters[ "saxs_options.xsr_griddistance" ] = QString( "%1" ).arg( saxs_options.xsr_griddistance );
+      parameters[ "saxs_options.xsr_ncomponents" ] = QString( "%1" ).arg( saxs_options.xsr_ncomponents );
+      parameters[ "saxs_options.xsr_compactness_weight" ] = QString( "%1" ).arg( saxs_options.xsr_compactness_weight );
+      parameters[ "saxs_options.xsr_looseness_weight" ] = QString( "%1" ).arg( saxs_options.xsr_looseness_weight );
+      parameters[ "saxs_options.xsr_temperature" ] = QString( "%1" ).arg( saxs_options.xsr_temperature );
+      parameters[ "hydro.zeno_zeno" ] = QString( "%1" ).arg( hydro.zeno_zeno );
+      parameters[ "hydro.zeno_interior" ] = QString( "%1" ).arg( hydro.zeno_interior );
+      parameters[ "hydro.zeno_surface" ] = QString( "%1" ).arg( hydro.zeno_surface );
+      parameters[ "hydro.zeno_zeno_steps" ] = QString( "%1" ).arg( hydro.zeno_zeno_steps );
+      parameters[ "hydro.zeno_interior_steps" ] = QString( "%1" ).arg( hydro.zeno_interior_steps );
+      parameters[ "hydro.zeno_surface_steps" ] = QString( "%1" ).arg( hydro.zeno_surface_steps );
+      parameters[ "hydro.zeno_surface_thickness" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness );
+      parameters[ "misc.hydro_supc" ] = QString( "%1" ).arg( misc.hydro_supc );
+      parameters[ "misc.hydro_zeno" ] = QString( "%1" ).arg( misc.hydro_zeno );
+      parameters[ "batch.saxs_search" ] = QString( "%1" ).arg( batch.saxs_search );
+      parameters[ "batch.zeno" ] = QString( "%1" ).arg( batch.zeno );
+
+      parameters[ "saxs_options.ignore_errors" ] = QString( "%1" ).arg( saxs_options.ignore_errors );
+      parameters[ "saxs_options.alt_ff" ] = QString( "%1" ).arg( saxs_options.alt_ff );
+      parameters[ "saxs_options.crysol_explicit_hydrogens" ] = QString( "%1" ).arg( saxs_options.crysol_explicit_hydrogens );
+      parameters[ "saxs_options.use_somo_ff" ] = QString( "%1" ).arg( saxs_options.use_somo_ff );
+      parameters[ "saxs_options.five_term_gaussians" ] = QString( "%1" ).arg( saxs_options.five_term_gaussians );
+      parameters[ "saxs_options.iq_exact_q" ] = QString( "%1" ).arg( saxs_options.iq_exact_q );
+      parameters[ "saxs_options.use_iq_target_ev" ] = QString( "%1" ).arg( saxs_options.use_iq_target_ev );
+      parameters[ "saxs_options.set_iq_target_ev_from_vbar" ] = QString( "%1" ).arg( saxs_options.set_iq_target_ev_from_vbar );
+      parameters[ "saxs_options.iq_target_ev" ] = QString( "%1" ).arg( saxs_options.iq_target_ev );
+      parameters[ "saxs_options.hydration_rev_asa" ] = QString( "%1" ).arg( saxs_options.hydration_rev_asa );
+      parameters[ "saxs_options.compute_exponentials" ] = QString( "%1" ).arg( saxs_options.compute_exponentials );
+      parameters[ "saxs_options.compute_exponential_terms" ] = QString( "%1" ).arg( saxs_options.compute_exponential_terms );
+      parameters[ "saxs_options.dummy_saxs_name" ] = QString( "%1" ).arg( saxs_options.dummy_saxs_name );
+      parameters[ "saxs_options.multiply_iq_by_atomic_volume" ] = QString( "%1" ).arg( saxs_options.multiply_iq_by_atomic_volume );
+      parameters[ "saxs_options.dummy_atom_pdbs_in_nm" ] = QString( "%1" ).arg( saxs_options.dummy_atom_pdbs_in_nm );
+      parameters[ "saxs_options.iq_global_avg_for_bead_models" ] = QString( "%1" ).arg( saxs_options.iq_global_avg_for_bead_models );
+      parameters[ "saxs_options.apply_loaded_sf_repeatedly_to_pdb" ] = QString( "%1" ).arg( saxs_options.apply_loaded_sf_repeatedly_to_pdb );
+      parameters[ "saxs_options.bead_models_use_var_len_sf" ] = QString( "%1" ).arg( saxs_options.bead_models_use_var_len_sf );
+      parameters[ "saxs_options.bead_models_var_len_sf_max" ] = QString( "%1" ).arg( saxs_options.bead_models_var_len_sf_max );
+      parameters[ "saxs_options.bead_models_use_gsm_fitting" ] = QString( "%1" ).arg( saxs_options.bead_models_use_gsm_fitting );
+      parameters[ "saxs_options.bead_models_use_quick_fitting" ] = QString( "%1" ).arg( saxs_options.bead_models_use_quick_fitting );
+      parameters[ "saxs_options.bead_models_use_bead_radius_ev" ] = QString( "%1" ).arg( saxs_options.bead_models_use_bead_radius_ev );
+      parameters[ "saxs_options.bead_models_rho0_in_scat_factors" ] = QString( "%1" ).arg( saxs_options.bead_models_rho0_in_scat_factors );
+      parameters[ "saxs_options.smooth" ] = QString( "%1" ).arg( saxs_options.smooth );
+      parameters[ "saxs_options.ev_exp_mult" ] = QString( "%1" ).arg( saxs_options.ev_exp_mult );
+      parameters[ "saxs_options.sastbx_method" ] = QString( "%1" ).arg( saxs_options.sastbx_method );
+      parameters[ "saxs_options.saxs_iq_sastbx" ] = QString( "%1" ).arg( saxs_options.saxs_iq_sastbx );
+      parameters[ "saxs_options.saxs_iq_native_sh" ] = QString( "%1" ).arg( saxs_options.saxs_iq_native_sh );
+      parameters[ "saxs_options.sans_iq_native_sh" ] = QString( "%1" ).arg( saxs_options.sans_iq_native_sh );
+      parameters[ "saxs_options.alt_sh1" ] = QString( "%1" ).arg( saxs_options.alt_sh1 );
+      parameters[ "saxs_options.alt_sh2" ] = QString( "%1" ).arg( saxs_options.alt_sh2 );
+      parameters[ "grid.create_nmr_bead_pdb" ] = QString( "%1" ).arg( grid.create_nmr_bead_pdb );
+      parameters[ "batch.compute_iq_only_avg" ] = QString( "%1" ).arg( batch.compute_iq_only_avg );
+      parameters[ "asa.vvv" ] = QString( "%1" ).arg( asa.vvv );
+      parameters[ "asa.vvv_probe_radius" ] = QString( "%1" ).arg( asa.vvv_probe_radius );
+      parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
+      parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
+
+      parameters[ "saxs_options.cs_qRgmax" ] = QString( "%1" ).arg( saxs_options.cs_qRgmax );
+      parameters[ "saxs_options.cs_qstart" ] = QString( "%1" ).arg( saxs_options.cs_qstart );
+      parameters[ "saxs_options.cs_qend" ] = QString( "%1" ).arg( saxs_options.cs_qend );
+      parameters[ "saxs_options.conc" ] = QString( "%1" ).arg( saxs_options.conc );
+      parameters[ "saxs_options.psv" ] = QString( "%1" ).arg( saxs_options.psv );
+      parameters[ "saxs_options.use_cs_psv" ] = QString( "%1" ).arg( saxs_options.use_cs_psv );
+      parameters[ "saxs_options.cs_psv" ] = QString( "%1" ).arg( saxs_options.cs_psv );
+      parameters[ "saxs_options.I0_exp" ] = QString( "%1" ).arg( saxs_options.I0_exp );
+      parameters[ "saxs_options.I0_theo" ] = QString( "%1" ).arg( saxs_options.I0_theo );
+      parameters[ "saxs_options.diffusion_len" ] = QString( "%1" ).arg( saxs_options.diffusion_len );
+      parameters[ "saxs_options.nuclear_mass" ] = QString( "%1" ).arg( saxs_options.nuclear_mass );
+      parameters[ "saxs_options.guinier_outlier_reject" ] = QString( "%1" ).arg( saxs_options.guinier_outlier_reject );
+      parameters[ "saxs_options.guinier_outlier_reject_dist" ] = QString( "%1" ).arg( saxs_options.guinier_outlier_reject_dist );
+      parameters[ "saxs_options.guinier_use_sd" ] = QString( "%1" ).arg( saxs_options.guinier_use_sd );
+      parameters[ "saxs_options.guinier_use_standards" ] = QString( "%1" ).arg( saxs_options.guinier_use_standards );
+
+      // vectors to write:
       {
-         ts << batch.file[i] << endl;
+         QStringList qsl_tmp;
+         for ( unsigned int i = 0; i < saxs_options.dummy_saxs_names.size(); i++ )
+         {
+            qsl_tmp << saxs_options.dummy_saxs_names[ i ];
+         }
+         parameters[ "saxs_options.dummy_saxs_names" ] = qsl_tmp.join( "\n" );
       }
-
-      ts << save_params.field.size() << "\t\t# save params number of fields to follow\n";
-      for ( unsigned int i = 0; i < save_params.field.size(); i++ )
       {
-         ts << save_params.field[i] << endl;
+         QStringList qsl_tmp;
+         for ( unsigned int i = 0; i < batch.file.size(); i++ )
+         {
+            qsl_tmp << batch.file[ i ];
+         }
+         parameters[ "batch.file" ] = qsl_tmp.join( "\n" );
       }
-
-      ts << path_load_pdb << endl;
-      ts << path_view_pdb << endl;
-      ts << path_load_bead_model << endl;
-      ts << path_view_asa_res << endl;
-      ts << path_view_bead_model << endl;
-      ts << path_open_hydro_res << endl;
-      ts << saxs_options.path_load_saxs_curve << endl;
-      ts << saxs_options.path_load_gnom << endl;
-      ts << saxs_options.path_load_prr << endl;
-
-      ts << asa.hydrate_probe_radius << "\t\t#asa.hydrate_probe_radius\n";
-      ts << asa.hydrate_threshold << "\t\t#asa.hydrate_threshold\n";
-
-      ts << misc.target_e_density       << "\t\t#misc.target_e_density      \n";
-      ts << misc.target_volume          << "\t\t#misc.target_volume         \n";
-      ts << misc.set_target_on_load_pdb << "\t\t#misc.set_target_on_load_pdb\n";
-      ts << misc.equalize_radii         << "\t\t#misc.equalize_radii        \n";
-
-      ts << dmd_options.force_chem << "\t\t#dmd_options.force_chem\n";
-      ts << dmd_options.pdb_static_pairs << "\t\t#dmd_options.pdb_static_pairs\n";
-      ts << dmd_options.threshold_pb_pb << "\t\t#dmd_options.threshold_pb_pb\n";
-      ts << dmd_options.threshold_pb_sc << "\t\t#dmd_options.threshold_pb_sc\n";
-      ts << dmd_options.threshold_sc_sc << "\t\t#dmd_options.threshold_sc_sc\n";
-
-      ts << saxs_options.normalize_by_mw << "\t\t#saxs_options.normalize_by_mw\n";
-
-      ts << saxs_options.saxs_iq_native_debye << "\t\t#saxs_options.saxs_iq_native_debye\n";
-      ts << saxs_options.saxs_iq_native_hybrid << "\t\t#saxs_options.saxs_iq_native_hybrid\n";
-      ts << saxs_options.saxs_iq_native_hybrid2 << "\t\t#saxs_options.saxs_iq_native_hybrid2\n";
-      ts << saxs_options.saxs_iq_native_hybrid3 << "\t\t#saxs_options.saxs_iq_native_hybrid3\n";
-      ts << saxs_options.saxs_iq_native_fast << "\t\t#saxs_options.saxs_iq_native_fast\n";
-      ts << saxs_options.saxs_iq_native_fast_compute_pr << "\t\t#saxs_options.saxs_iq_native_fast_compute_pr\n";
-      ts << saxs_options.saxs_iq_foxs << "\t\t#saxs_options.saxs_iq_foxs\n";
-      ts << saxs_options.saxs_iq_crysol << "\t\t#saxs_options.saxs_iq_crysol\n";
-
-      ts << saxs_options.sans_iq_native_debye << "\t\t#saxs_options.sans_iq_native_debye\n";
-      ts << saxs_options.sans_iq_native_hybrid << "\t\t#saxs_options.sans_iq_native_hybrid\n";
-      ts << saxs_options.sans_iq_native_hybrid2 << "\t\t#saxs_options.sans_iq_native_hybrid2\n";
-      ts << saxs_options.sans_iq_native_hybrid3 << "\t\t#saxs_options.sans_iq_native_hybrid3\n";
-      ts << saxs_options.sans_iq_native_fast << "\t\t#saxs_options.sans_iq_native_fast\n";
-      ts << saxs_options.sans_iq_native_fast_compute_pr << "\t\t#saxs_options.sans_iq_native_fast_compute_pr\n";
-      ts << saxs_options.sans_iq_cryson << "\t\t#saxs_options.sans_iq_cryson\n";
-
-      ts << saxs_options.hybrid2_q_points << "\t\t#saxs_options.hybrid2_q_points\n";
-
-      ts << saxs_options.iq_ask << "\t\t#saxs_options.iq_ask\n";
-
-      ts << saxs_options.iq_scale_ask << "\t\t#saxs_options.iq_scale_ask\n";
-      ts << saxs_options.iq_scale_angstrom << "\t\t#saxs_options.iq_scale_angstrom\n";
-      ts << saxs_options.iq_scale_nm << "\t\t#saxs_options.iq_scale_nm\n";
-
-      ts << saxs_options.sh_max_harmonics << "\t\t#saxs_options.sh_max_harmonics\n";
-      ts << saxs_options.sh_fibonacci_grid_order << "\t\t#saxs_options.sh_fibonacci_grid_order\n";
-      ts << saxs_options.crysol_hydration_shell_contrast << "\t\t#saxs_options.crysol_hydration_shell_contrast\n";
-      ts << saxs_options.crysol_default_load_difference_intensity << "\t\t#saxs_options.crysol_default_load_difference_intensity\n";
-      ts << saxs_options.crysol_version_26 << "\t\t#saxs_options.crysol_version_26\n";
-
-      ts << saxs_options.fast_bin_size << "\t\t#saxs_options.fast_bin_size\n";
-      ts << saxs_options.fast_modulation << "\t\t#saxs_options.fast_modulation\n";
-
-      ts << saxs_options.compute_saxs_coeff_for_bead_models << "\t\t#saxs_options.compute_saxs_coeff_for_bead_models\n";
-      ts << saxs_options.compute_sans_coeff_for_bead_models << "\t\t#saxs_options.compute_sans_coeff_for_bead_models\n";
-
-      ts << saxs_options.default_atom_filename << endl;
-      ts << saxs_options.default_hybrid_filename << endl;
-      ts << saxs_options.default_saxs_filename << endl;
-      ts << saxs_options.default_rotamer_filename << endl;
-
-      ts << saxs_options.steric_clash_distance         << "\t\t#saxs_options.steric_clash_distance        \n";
-      ts << saxs_options.steric_clash_recheck_distance << "\t\t#saxs_options.steric_clash_recheck_distance\n";
-
-      ts << saxs_options.disable_iq_scaling << "\t\t#saxs_options.disable_iq_scaling\n";
-      ts << saxs_options.autocorrelate << "\t\t#saxs_options.autocorrelate\n";
-      ts << saxs_options.hybrid_radius_excl_vol << "\t\t#saxs_options.hybrid_radius_excl_vol\n";
-      ts << saxs_options.scale_excl_vol << "\t\t#saxs_options.scale_excl_vol\n";
-      ts << saxs_options.subtract_radius << "\t\t#saxs_options.subtract_radius\n";
-      ts << saxs_options.iqq_scale_minq << "\t\t#saxs_options.iqq_scale_minq\n";
-      ts << saxs_options.iqq_scale_maxq << "\t\t#saxs_options.iqq_scale_maxq\n";
-
-      ts << saxs_options.iqq_scale_nnls << "\t\t#saxs_options.iqq_scale_nnls\n";
-      ts << saxs_options.iqq_scale_linear_offset << "\t\t#saxs_options.iqq_scale_linear_offset\n";
-      ts << saxs_options.iqq_scale_chi2_fitting << "\t\t#saxs_options.iqq_scale_chi2_fitting\n";
-      ts << saxs_options.iqq_expt_data_contains_variances << "\t\t#saxs_options.iqq_expt_data_contains_variances\n";
-      ts << saxs_options.iqq_ask_target_grid << "\t\t#saxs_options.iqq_ask_target_grid\n";
-      ts << saxs_options.iqq_scale_play << "\t\t#saxs_options.iqq_scale_play\n";
-      ts << saxs_options.swh_excl_vol << "\t\t#saxs_options.swh_excl_vol\n";
-      ts << saxs_options.iqq_default_scaling_target << endl;
-
-      ts << saxs_options.saxs_iq_hybrid_adaptive << "\t\t#saxs_options.saxs_iq_hybrid_adaptive\n";
-      ts << saxs_options.sans_iq_hybrid_adaptive << "\t\t#saxs_options.sans_iq_hybrid_adaptive\n";
-
-      ts << saxs_options.bead_model_rayleigh   << "\t\t#saxs_options.bead_model_rayleigh  \n";
-      ts << saxs_options.iqq_log_fitting       << "\t\t#saxs_options.iqq_log_fitting      \n";
-      ts << saxs_options.iqq_kratky_fit        << "\t\t#saxs_options.iqq_kratky_fit       \n";
-      ts << saxs_options.iqq_use_atomic_ff     << "\t\t#saxs_options.iqq_use_atomic_ff    \n";
-      ts << saxs_options.iqq_use_saxs_excl_vol << "\t\t#saxs_options.iqq_use_saxs_excl_vol\n";
-      ts << saxs_options.alt_hydration         << "\t\t#saxs_options.alt_hydration        \n";
-
-      ts << saxs_options.xsr_symmop                << "\t\t#saxs_options.xsr_symmop               \n";
-      ts << saxs_options.xsr_nx                    << "\t\t#saxs_options.xsr_nx                   \n";
-      ts << saxs_options.xsr_ny                    << "\t\t#saxs_options.xsr_ny                   \n";
-      ts << saxs_options.xsr_griddistance          << "\t\t#saxs_options.xsr_griddistance         \n";
-      ts << saxs_options.xsr_ncomponents           << "\t\t#saxs_options.xsr_ncomponents          \n";
-      ts << saxs_options.xsr_compactness_weight    << "\t\t#saxs_options.xsr_compactness_weight   \n";
-      ts << saxs_options.xsr_looseness_weight      << "\t\t#saxs_options.xsr_looseness_weight     \n";
-      ts << saxs_options.xsr_temperature           << "\t\t#saxs_options.xsr_temperature          \n";
-
-      ts << hydro.zeno_zeno              << "\t\t#hydro.zeno_zeno             \n";
-      ts << hydro.zeno_interior          << "\t\t#hydro.zeno_interior         \n";
-      ts << hydro.zeno_surface           << "\t\t#hydro.zeno_surface          \n";
-      ts << hydro.zeno_zeno_steps        << "\t\t#hydro.zeno_zeno_steps       \n";
-      ts << hydro.zeno_interior_steps    << "\t\t#hydro.zeno_interior_steps   \n";
-      ts << hydro.zeno_surface_steps     << "\t\t#hydro.zeno_surface_steps    \n";
-      ts << hydro.zeno_surface_thickness << "\t\t#hydro.zeno_surface_thickness\n";
-
-      ts << misc.hydro_supc              << "\t\t#misc.hydro_supc             \n";
-      ts << misc.hydro_zeno              << "\t\t#misc.hydro_zeno             \n";
-
-      ts << batch.saxs_search << "\t\t#batch.saxs_search\n";
-      ts << batch.zeno        << "\t\t#batch.zeno       \n";
-
+      {
+         QStringList qsl_tmp;
+         for ( unsigned int i = 0; i < save_params.field.size(); i++ )
+         {
+            qsl_tmp << save_params.field[ i ];
+         }
+         parameters[ "save_params.field" ] = qsl_tmp.join( "\n" );
+      }
+      
+      ts << US_Json::compose( parameters );
       f.close();
    }
 }
 
-void US_Hydrodyn::set_default()
+bool US_Hydrodyn::load_config_json ( QString &json )
 {
-   QFile f;
-   QString str;
-   int j;
-   // only keep one copy of defaults in system root dir
-   f.setName(USglobal->config_list.system_dir + "/etc/somo.defaults");
-   bool config_read = false;
-   if (f.open(IO_ReadOnly)) // read system directory
+   map < QString, QString > parameters = US_Json::split( json );
+
+   // first set to default parameters
+   hard_coded_defaults();
+
+   if ( parameters.count( "replicate_o_r_method_somo" ) ) replicate_o_r_method_somo = parameters[ "replicate_o_r_method_somo" ] == "1";
+   if ( parameters.count( "sidechain_overlap.remove_overlap" ) ) sidechain_overlap.remove_overlap = parameters[ "sidechain_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "sidechain_overlap.fuse_beads" ) ) sidechain_overlap.fuse_beads = parameters[ "sidechain_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "sidechain_overlap.fuse_beads_percent" ) ) sidechain_overlap.fuse_beads_percent = parameters[ "sidechain_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "sidechain_overlap.remove_hierarch" ) ) sidechain_overlap.remove_hierarch = parameters[ "sidechain_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "sidechain_overlap.remove_hierarch_percent" ) ) sidechain_overlap.remove_hierarch_percent = parameters[ "sidechain_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "sidechain_overlap.remove_sync" ) ) sidechain_overlap.remove_sync = parameters[ "sidechain_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "sidechain_overlap.remove_sync_percent" ) ) sidechain_overlap.remove_sync_percent = parameters[ "sidechain_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "sidechain_overlap.translate_out" ) ) sidechain_overlap.translate_out = parameters[ "sidechain_overlap.translate_out" ] == "1";
+   if ( parameters.count( "sidechain_overlap.show_translate" ) ) sidechain_overlap.show_translate = parameters[ "sidechain_overlap.show_translate" ] == "1";
+   if ( parameters.count( "mainchain_overlap.remove_overlap" ) ) mainchain_overlap.remove_overlap = parameters[ "mainchain_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "mainchain_overlap.fuse_beads" ) ) mainchain_overlap.fuse_beads = parameters[ "mainchain_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "mainchain_overlap.fuse_beads_percent" ) ) mainchain_overlap.fuse_beads_percent = parameters[ "mainchain_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "mainchain_overlap.remove_hierarch" ) ) mainchain_overlap.remove_hierarch = parameters[ "mainchain_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "mainchain_overlap.remove_hierarch_percent" ) ) mainchain_overlap.remove_hierarch_percent = parameters[ "mainchain_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "mainchain_overlap.remove_sync" ) ) mainchain_overlap.remove_sync = parameters[ "mainchain_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "mainchain_overlap.remove_sync_percent" ) ) mainchain_overlap.remove_sync_percent = parameters[ "mainchain_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "mainchain_overlap.translate_out" ) ) mainchain_overlap.translate_out = parameters[ "mainchain_overlap.translate_out" ] == "1";
+   if ( parameters.count( "mainchain_overlap.show_translate" ) ) mainchain_overlap.show_translate = parameters[ "mainchain_overlap.show_translate" ] == "1";
+   if ( parameters.count( "buried_overlap.remove_overlap" ) ) buried_overlap.remove_overlap = parameters[ "buried_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "buried_overlap.fuse_beads" ) ) buried_overlap.fuse_beads = parameters[ "buried_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "buried_overlap.fuse_beads_percent" ) ) buried_overlap.fuse_beads_percent = parameters[ "buried_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "buried_overlap.remove_hierarch" ) ) buried_overlap.remove_hierarch = parameters[ "buried_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "buried_overlap.remove_hierarch_percent" ) ) buried_overlap.remove_hierarch_percent = parameters[ "buried_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "buried_overlap.remove_sync" ) ) buried_overlap.remove_sync = parameters[ "buried_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "buried_overlap.remove_sync_percent" ) ) buried_overlap.remove_sync_percent = parameters[ "buried_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "buried_overlap.translate_out" ) ) buried_overlap.translate_out = parameters[ "buried_overlap.translate_out" ] == "1";
+   if ( parameters.count( "buried_overlap.show_translate" ) ) buried_overlap.show_translate = parameters[ "buried_overlap.show_translate" ] == "1";
+   if ( parameters.count( "replicate_o_r_method_grid" ) ) replicate_o_r_method_grid = parameters[ "replicate_o_r_method_grid" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.remove_overlap" ) ) grid_exposed_overlap.remove_overlap = parameters[ "grid_exposed_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.fuse_beads" ) ) grid_exposed_overlap.fuse_beads = parameters[ "grid_exposed_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.fuse_beads_percent" ) ) grid_exposed_overlap.fuse_beads_percent = parameters[ "grid_exposed_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "grid_exposed_overlap.remove_hierarch" ) ) grid_exposed_overlap.remove_hierarch = parameters[ "grid_exposed_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.remove_hierarch_percent" ) ) grid_exposed_overlap.remove_hierarch_percent = parameters[ "grid_exposed_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "grid_exposed_overlap.remove_sync" ) ) grid_exposed_overlap.remove_sync = parameters[ "grid_exposed_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.remove_sync_percent" ) ) grid_exposed_overlap.remove_sync_percent = parameters[ "grid_exposed_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "grid_exposed_overlap.translate_out" ) ) grid_exposed_overlap.translate_out = parameters[ "grid_exposed_overlap.translate_out" ] == "1";
+   if ( parameters.count( "grid_exposed_overlap.show_translate" ) ) grid_exposed_overlap.show_translate = parameters[ "grid_exposed_overlap.show_translate" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.remove_overlap" ) ) grid_buried_overlap.remove_overlap = parameters[ "grid_buried_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.fuse_beads" ) ) grid_buried_overlap.fuse_beads = parameters[ "grid_buried_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.fuse_beads_percent" ) ) grid_buried_overlap.fuse_beads_percent = parameters[ "grid_buried_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "grid_buried_overlap.remove_hierarch" ) ) grid_buried_overlap.remove_hierarch = parameters[ "grid_buried_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.remove_hierarch_percent" ) ) grid_buried_overlap.remove_hierarch_percent = parameters[ "grid_buried_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "grid_buried_overlap.remove_sync" ) ) grid_buried_overlap.remove_sync = parameters[ "grid_buried_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.remove_sync_percent" ) ) grid_buried_overlap.remove_sync_percent = parameters[ "grid_buried_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "grid_buried_overlap.translate_out" ) ) grid_buried_overlap.translate_out = parameters[ "grid_buried_overlap.translate_out" ] == "1";
+   if ( parameters.count( "grid_buried_overlap.show_translate" ) ) grid_buried_overlap.show_translate = parameters[ "grid_buried_overlap.show_translate" ] == "1";
+   if ( parameters.count( "grid_overlap.remove_overlap" ) ) grid_overlap.remove_overlap = parameters[ "grid_overlap.remove_overlap" ] == "1";
+   if ( parameters.count( "grid_overlap.fuse_beads" ) ) grid_overlap.fuse_beads = parameters[ "grid_overlap.fuse_beads" ] == "1";
+   if ( parameters.count( "grid_overlap.fuse_beads_percent" ) ) grid_overlap.fuse_beads_percent = parameters[ "grid_overlap.fuse_beads_percent" ].toDouble();
+   if ( parameters.count( "grid_overlap.remove_hierarch" ) ) grid_overlap.remove_hierarch = parameters[ "grid_overlap.remove_hierarch" ] == "1";
+   if ( parameters.count( "grid_overlap.remove_hierarch_percent" ) ) grid_overlap.remove_hierarch_percent = parameters[ "grid_overlap.remove_hierarch_percent" ].toDouble();
+   if ( parameters.count( "grid_overlap.remove_sync" ) ) grid_overlap.remove_sync = parameters[ "grid_overlap.remove_sync" ] == "1";
+   if ( parameters.count( "grid_overlap.remove_sync_percent" ) ) grid_overlap.remove_sync_percent = parameters[ "grid_overlap.remove_sync_percent" ].toDouble();
+   if ( parameters.count( "grid_overlap.translate_out" ) ) grid_overlap.translate_out = parameters[ "grid_overlap.translate_out" ] == "1";
+   if ( parameters.count( "grid_overlap.show_translate" ) ) grid_overlap.show_translate = parameters[ "grid_overlap.show_translate" ] == "1";
+   if ( parameters.count( "overlap_tolerance" ) ) overlap_tolerance = parameters[ "overlap_tolerance" ].toDouble();
+   if ( parameters.count( "bead_output.output" ) ) bead_output.output = parameters[ "bead_output.output" ].toInt();
+   if ( parameters.count( "bead_output.sequence" ) ) bead_output.sequence = parameters[ "bead_output.sequence" ].toInt();
+   if ( parameters.count( "bead_output.correspondence" ) ) bead_output.correspondence = parameters[ "bead_output.correspondence" ] == "1";
+   if ( parameters.count( "asa.probe_radius" ) ) asa.probe_radius = parameters[ "asa.probe_radius" ].toFloat();
+   if ( parameters.count( "asa.probe_recheck_radius" ) ) asa.probe_recheck_radius = parameters[ "asa.probe_recheck_radius" ].toFloat();
+   if ( parameters.count( "asa.threshold" ) ) asa.threshold = parameters[ "asa.threshold" ].toFloat();
+   if ( parameters.count( "asa.threshold_percent" ) ) asa.threshold_percent = parameters[ "asa.threshold_percent" ].toFloat();
+   if ( parameters.count( "asa.grid_threshold" ) ) asa.grid_threshold = parameters[ "asa.grid_threshold" ].toFloat();
+   if ( parameters.count( "asa.grid_threshold_percent" ) ) asa.grid_threshold_percent = parameters[ "asa.grid_threshold_percent" ].toFloat();
+   if ( parameters.count( "asa.calculation" ) ) asa.calculation = parameters[ "asa.calculation" ] == "1";
+   if ( parameters.count( "asa.recheck_beads" ) ) asa.recheck_beads = parameters[ "asa.recheck_beads" ] == "1";
+   if ( parameters.count( "asa.method" ) ) asa.method = parameters[ "asa.method" ].toInt();
+   if ( parameters.count( "asa.asab1_step" ) ) asa.asab1_step = parameters[ "asa.asab1_step" ].toFloat();
+   if ( parameters.count( "grid.cubic" ) ) grid.cubic = parameters[ "grid.cubic" ] == "1";
+   if ( parameters.count( "grid.hydrate" ) ) grid.hydrate = parameters[ "grid.hydrate" ] == "1";
+   if ( parameters.count( "grid.center" ) ) grid.center = parameters[ "grid.center" ].toInt();
+   if ( parameters.count( "grid.tangency" ) ) grid.tangency = parameters[ "grid.tangency" ] == "1";
+   if ( parameters.count( "grid.cube_side" ) ) grid.cube_side = parameters[ "grid.cube_side" ].toDouble();
+   if ( parameters.count( "grid.enable_asa" ) ) grid.enable_asa = parameters[ "grid.enable_asa" ] == "1";
+   if ( parameters.count( "misc.hydrovol" ) ) misc.hydrovol = parameters[ "misc.hydrovol" ].toDouble();
+   if ( parameters.count( "misc.compute_vbar" ) ) misc.compute_vbar = parameters[ "misc.compute_vbar" ] == "1";
+   if ( parameters.count( "misc.vbar" ) ) misc.vbar = parameters[ "misc.vbar" ].toDouble();
+   if ( parameters.count( "misc.vbar_temperature" ) ) misc.vbar_temperature = parameters[ "misc.vbar_temperature" ].toDouble();
+   if ( parameters.count( "misc.pb_rule_on" ) ) misc.pb_rule_on = parameters[ "misc.pb_rule_on" ] == "1";
+   if ( parameters.count( "misc.avg_radius" ) ) misc.avg_radius = parameters[ "misc.avg_radius" ].toDouble();
+   if ( parameters.count( "misc.avg_mass" ) ) misc.avg_mass = parameters[ "misc.avg_mass" ].toDouble();
+   if ( parameters.count( "misc.avg_hydration" ) ) misc.avg_hydration = parameters[ "misc.avg_hydration" ].toDouble();
+   if ( parameters.count( "misc.avg_volume" ) ) misc.avg_volume = parameters[ "misc.avg_volume" ].toDouble();
+   if ( parameters.count( "misc.avg_vbar" ) ) misc.avg_vbar = parameters[ "misc.avg_vbar" ].toDouble();
+   if ( parameters.count( "hydro.unit" ) ) hydro.unit = parameters[ "hydro.unit" ].toInt();
+   if ( parameters.count( "hydro.solvent_name" ) ) hydro.solvent_name = parameters[ "hydro.solvent_name" ];
+   if ( parameters.count( "hydro.solvent_acronym" ) ) hydro.solvent_acronym = parameters[ "hydro.solvent_acronym" ];
+   if ( parameters.count( "hydro.temperature" ) ) hydro.temperature = parameters[ "hydro.temperature" ].toDouble();
+   if ( parameters.count( "hydro.solvent_viscosity" ) ) hydro.solvent_viscosity = parameters[ "hydro.solvent_viscosity" ].toDouble();
+   if ( parameters.count( "hydro.solvent_density" ) ) hydro.solvent_density = parameters[ "hydro.solvent_density" ].toDouble();
+   if ( parameters.count( "hydro.reference_system" ) ) hydro.reference_system = parameters[ "hydro.reference_system" ] == "1";
+   if ( parameters.count( "hydro.boundary_cond" ) ) hydro.boundary_cond = parameters[ "hydro.boundary_cond" ] == "1";
+   if ( parameters.count( "hydro.volume_correction" ) ) hydro.volume_correction = parameters[ "hydro.volume_correction" ] == "1";
+   if ( parameters.count( "hydro.volume" ) ) hydro.volume = parameters[ "hydro.volume" ].toDouble();
+   if ( parameters.count( "hydro.mass_correction" ) ) hydro.mass_correction = parameters[ "hydro.mass_correction" ] == "1";
+   if ( parameters.count( "hydro.mass" ) ) hydro.mass = parameters[ "hydro.mass" ].toDouble();
+   if ( parameters.count( "hydro.bead_inclusion" ) ) hydro.bead_inclusion = parameters[ "hydro.bead_inclusion" ] == "1";
+   if ( parameters.count( "hydro.rotational" ) ) hydro.rotational = parameters[ "hydro.rotational" ] == "1";
+   if ( parameters.count( "hydro.viscosity" ) ) hydro.viscosity = parameters[ "hydro.viscosity" ] == "1";
+   if ( parameters.count( "hydro.overlap_cutoff" ) ) hydro.overlap_cutoff = parameters[ "hydro.overlap_cutoff" ] == "1";
+   if ( parameters.count( "hydro.overlap" ) ) hydro.overlap = parameters[ "hydro.overlap" ].toDouble();
+   if ( parameters.count( "pdb_vis.visualization" ) ) pdb_vis.visualization = parameters[ "pdb_vis.visualization" ].toInt();
+   if ( parameters.count( "pdb_vis.filename" ) ) pdb_vis.filename = parameters[ "pdb_vis.filename" ];
+   if ( parameters.count( "pdb_parse.skip_hydrogen" ) ) pdb_parse.skip_hydrogen = parameters[ "pdb_parse.skip_hydrogen" ] == "1";
+   if ( parameters.count( "pdb_parse.skip_water" ) ) pdb_parse.skip_water = parameters[ "pdb_parse.skip_water" ] == "1";
+   if ( parameters.count( "pdb_parse.alternate" ) ) pdb_parse.alternate = parameters[ "pdb_parse.alternate" ] == "1";
+   if ( parameters.count( "pdb_parse.find_sh" ) ) pdb_parse.find_sh = parameters[ "pdb_parse.find_sh" ] == "1";
+   if ( parameters.count( "pdb_parse.missing_residues" ) ) pdb_parse.missing_residues = parameters[ "pdb_parse.missing_residues" ].toInt();
+   if ( parameters.count( "pdb_parse.missing_atoms" ) ) pdb_parse.missing_atoms = parameters[ "pdb_parse.missing_atoms" ].toInt();
+   if ( parameters.count( "saxs_options.water_e_density" ) ) saxs_options.water_e_density = parameters[ "saxs_options.water_e_density" ].toFloat();
+   if ( parameters.count( "saxs_options.h_scat_len" ) ) saxs_options.h_scat_len = parameters[ "saxs_options.h_scat_len" ].toFloat();
+   if ( parameters.count( "saxs_options.d_scat_len" ) ) saxs_options.d_scat_len = parameters[ "saxs_options.d_scat_len" ].toFloat();
+   if ( parameters.count( "saxs_options.h2o_scat_len_dens" ) ) saxs_options.h2o_scat_len_dens = parameters[ "saxs_options.h2o_scat_len_dens" ].toFloat();
+   if ( parameters.count( "saxs_options.d2o_scat_len_dens" ) ) saxs_options.d2o_scat_len_dens = parameters[ "saxs_options.d2o_scat_len_dens" ].toFloat();
+   if ( parameters.count( "saxs_options.d2o_conc" ) ) saxs_options.d2o_conc = parameters[ "saxs_options.d2o_conc" ].toFloat();
+   if ( parameters.count( "saxs_options.frac_of_exch_pep" ) ) saxs_options.frac_of_exch_pep = parameters[ "saxs_options.frac_of_exch_pep" ].toFloat();
+   if ( parameters.count( "saxs_options.wavelength" ) ) saxs_options.wavelength = parameters[ "saxs_options.wavelength" ].toFloat();
+   if ( parameters.count( "saxs_options.start_angle" ) ) saxs_options.start_angle = parameters[ "saxs_options.start_angle" ].toFloat();
+   if ( parameters.count( "saxs_options.end_angle" ) ) saxs_options.end_angle = parameters[ "saxs_options.end_angle" ].toFloat();
+   if ( parameters.count( "saxs_options.delta_angle" ) ) saxs_options.delta_angle = parameters[ "saxs_options.delta_angle" ].toFloat();
+   if ( parameters.count( "saxs_options.max_size" ) ) saxs_options.max_size = parameters[ "saxs_options.max_size" ].toFloat();
+   if ( parameters.count( "saxs_options.bin_size" ) ) saxs_options.bin_size = parameters[ "saxs_options.bin_size" ].toFloat();
+   if ( parameters.count( "saxs_options.hydrate_pdb" ) ) saxs_options.hydrate_pdb = parameters[ "saxs_options.hydrate_pdb" ] == "1";
+   if ( parameters.count( "saxs_options.curve" ) ) saxs_options.curve = parameters[ "saxs_options.curve" ].toInt();
+   if ( parameters.count( "saxs_options.saxs_sans" ) ) saxs_options.saxs_sans = parameters[ "saxs_options.saxs_sans" ].toInt();
+   if ( parameters.count( "bd_options.threshold_pb_pb" ) ) bd_options.threshold_pb_pb = parameters[ "bd_options.threshold_pb_pb" ].toFloat();
+   if ( parameters.count( "bd_options.threshold_pb_sc" ) ) bd_options.threshold_pb_sc = parameters[ "bd_options.threshold_pb_sc" ].toFloat();
+   if ( parameters.count( "bd_options.threshold_sc_sc" ) ) bd_options.threshold_sc_sc = parameters[ "bd_options.threshold_sc_sc" ].toFloat();
+   if ( parameters.count( "bd_options.do_rr" ) ) bd_options.do_rr = parameters[ "bd_options.do_rr" ] == "1";
+   if ( parameters.count( "bd_options.force_chem" ) ) bd_options.force_chem = parameters[ "bd_options.force_chem" ] == "1";
+   if ( parameters.count( "bd_options.bead_size_type" ) ) bd_options.bead_size_type = parameters[ "bd_options.bead_size_type" ].toInt();
+   if ( parameters.count( "bd_options.show_pdb" ) ) bd_options.show_pdb = parameters[ "bd_options.show_pdb" ] == "1";
+   if ( parameters.count( "bd_options.run_browflex" ) ) bd_options.run_browflex = parameters[ "bd_options.run_browflex" ] == "1";
+   if ( parameters.count( "bd_options.tprev" ) ) bd_options.tprev = parameters[ "bd_options.tprev" ].toDouble();
+   if ( parameters.count( "bd_options.ttraj" ) ) bd_options.ttraj = parameters[ "bd_options.ttraj" ].toDouble();
+   if ( parameters.count( "bd_options.deltat" ) ) bd_options.deltat = parameters[ "bd_options.deltat" ].toDouble();
+   if ( parameters.count( "bd_options.npadif" ) ) bd_options.npadif = parameters[ "bd_options.npadif" ].toInt();
+   if ( parameters.count( "bd_options.nconf" ) ) bd_options.nconf = parameters[ "bd_options.nconf" ].toInt();
+   if ( parameters.count( "bd_options.inter" ) ) bd_options.inter = parameters[ "bd_options.inter" ].toInt();
+   if ( parameters.count( "bd_options.iorder" ) ) bd_options.iorder = parameters[ "bd_options.iorder" ].toInt();
+   if ( parameters.count( "bd_options.iseed" ) ) bd_options.iseed = parameters[ "bd_options.iseed" ].toInt();
+   if ( parameters.count( "bd_options.icdm" ) ) bd_options.icdm = parameters[ "bd_options.icdm" ].toInt();
+   if ( parameters.count( "bd_options.chem_pb_pb_bond_type" ) ) bd_options.chem_pb_pb_bond_type = parameters[ "bd_options.chem_pb_pb_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_chem_pb_pb_force_constant" ) ) bd_options.compute_chem_pb_pb_force_constant = parameters[ "bd_options.compute_chem_pb_pb_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_pb_force_constant" ) ) bd_options.chem_pb_pb_force_constant = parameters[ "bd_options.chem_pb_pb_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_pb_pb_equilibrium_dist" ) ) bd_options.compute_chem_pb_pb_equilibrium_dist = parameters[ "bd_options.compute_chem_pb_pb_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_pb_equilibrium_dist" ) ) bd_options.chem_pb_pb_equilibrium_dist = parameters[ "bd_options.chem_pb_pb_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_pb_pb_max_elong" ) ) bd_options.compute_chem_pb_pb_max_elong = parameters[ "bd_options.compute_chem_pb_pb_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_pb_max_elong" ) ) bd_options.chem_pb_pb_max_elong = parameters[ "bd_options.chem_pb_pb_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.chem_pb_sc_bond_type" ) ) bd_options.chem_pb_sc_bond_type = parameters[ "bd_options.chem_pb_sc_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_chem_pb_sc_force_constant" ) ) bd_options.compute_chem_pb_sc_force_constant = parameters[ "bd_options.compute_chem_pb_sc_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_sc_force_constant" ) ) bd_options.chem_pb_sc_force_constant = parameters[ "bd_options.chem_pb_sc_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_pb_sc_equilibrium_dist" ) ) bd_options.compute_chem_pb_sc_equilibrium_dist = parameters[ "bd_options.compute_chem_pb_sc_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_sc_equilibrium_dist" ) ) bd_options.chem_pb_sc_equilibrium_dist = parameters[ "bd_options.chem_pb_sc_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_pb_sc_max_elong" ) ) bd_options.compute_chem_pb_sc_max_elong = parameters[ "bd_options.compute_chem_pb_sc_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.chem_pb_sc_max_elong" ) ) bd_options.chem_pb_sc_max_elong = parameters[ "bd_options.chem_pb_sc_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.chem_sc_sc_bond_type" ) ) bd_options.chem_sc_sc_bond_type = parameters[ "bd_options.chem_sc_sc_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_chem_sc_sc_force_constant" ) ) bd_options.compute_chem_sc_sc_force_constant = parameters[ "bd_options.compute_chem_sc_sc_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.chem_sc_sc_force_constant" ) ) bd_options.chem_sc_sc_force_constant = parameters[ "bd_options.chem_sc_sc_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_sc_sc_equilibrium_dist" ) ) bd_options.compute_chem_sc_sc_equilibrium_dist = parameters[ "bd_options.compute_chem_sc_sc_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.chem_sc_sc_equilibrium_dist" ) ) bd_options.chem_sc_sc_equilibrium_dist = parameters[ "bd_options.chem_sc_sc_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_chem_sc_sc_max_elong" ) ) bd_options.compute_chem_sc_sc_max_elong = parameters[ "bd_options.compute_chem_sc_sc_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.chem_sc_sc_max_elong" ) ) bd_options.chem_sc_sc_max_elong = parameters[ "bd_options.chem_sc_sc_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.pb_pb_bond_type" ) ) bd_options.pb_pb_bond_type = parameters[ "bd_options.pb_pb_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_pb_pb_force_constant" ) ) bd_options.compute_pb_pb_force_constant = parameters[ "bd_options.compute_pb_pb_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.pb_pb_force_constant" ) ) bd_options.pb_pb_force_constant = parameters[ "bd_options.pb_pb_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_pb_pb_equilibrium_dist" ) ) bd_options.compute_pb_pb_equilibrium_dist = parameters[ "bd_options.compute_pb_pb_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.pb_pb_equilibrium_dist" ) ) bd_options.pb_pb_equilibrium_dist = parameters[ "bd_options.pb_pb_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_pb_pb_max_elong" ) ) bd_options.compute_pb_pb_max_elong = parameters[ "bd_options.compute_pb_pb_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.pb_pb_max_elong" ) ) bd_options.pb_pb_max_elong = parameters[ "bd_options.pb_pb_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.pb_sc_bond_type" ) ) bd_options.pb_sc_bond_type = parameters[ "bd_options.pb_sc_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_pb_sc_force_constant" ) ) bd_options.compute_pb_sc_force_constant = parameters[ "bd_options.compute_pb_sc_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.pb_sc_force_constant" ) ) bd_options.pb_sc_force_constant = parameters[ "bd_options.pb_sc_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_pb_sc_equilibrium_dist" ) ) bd_options.compute_pb_sc_equilibrium_dist = parameters[ "bd_options.compute_pb_sc_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.pb_sc_equilibrium_dist" ) ) bd_options.pb_sc_equilibrium_dist = parameters[ "bd_options.pb_sc_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_pb_sc_max_elong" ) ) bd_options.compute_pb_sc_max_elong = parameters[ "bd_options.compute_pb_sc_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.pb_sc_max_elong" ) ) bd_options.pb_sc_max_elong = parameters[ "bd_options.pb_sc_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.sc_sc_bond_type" ) ) bd_options.sc_sc_bond_type = parameters[ "bd_options.sc_sc_bond_type" ].toInt();
+   if ( parameters.count( "bd_options.compute_sc_sc_force_constant" ) ) bd_options.compute_sc_sc_force_constant = parameters[ "bd_options.compute_sc_sc_force_constant" ] == "1";
+   if ( parameters.count( "bd_options.sc_sc_force_constant" ) ) bd_options.sc_sc_force_constant = parameters[ "bd_options.sc_sc_force_constant" ].toFloat();
+   if ( parameters.count( "bd_options.compute_sc_sc_equilibrium_dist" ) ) bd_options.compute_sc_sc_equilibrium_dist = parameters[ "bd_options.compute_sc_sc_equilibrium_dist" ] == "1";
+   if ( parameters.count( "bd_options.sc_sc_equilibrium_dist" ) ) bd_options.sc_sc_equilibrium_dist = parameters[ "bd_options.sc_sc_equilibrium_dist" ].toFloat();
+   if ( parameters.count( "bd_options.compute_sc_sc_max_elong" ) ) bd_options.compute_sc_sc_max_elong = parameters[ "bd_options.compute_sc_sc_max_elong" ] == "1";
+   if ( parameters.count( "bd_options.sc_sc_max_elong" ) ) bd_options.sc_sc_max_elong = parameters[ "bd_options.sc_sc_max_elong" ].toFloat();
+   if ( parameters.count( "bd_options.nmol" ) ) bd_options.nmol = parameters[ "bd_options.nmol" ].toInt();
+   if ( parameters.count( "anaflex_options.run_anaflex" ) ) anaflex_options.run_anaflex = parameters[ "anaflex_options.run_anaflex" ] == "1";
+   if ( parameters.count( "anaflex_options.nfrec" ) ) anaflex_options.nfrec = parameters[ "anaflex_options.nfrec" ].toInt();
+   if ( parameters.count( "anaflex_options.instprofiles" ) ) anaflex_options.instprofiles = parameters[ "anaflex_options.instprofiles" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1" ) ) anaflex_options.run_mode_1 = parameters[ "anaflex_options.run_mode_1" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_1" ) ) anaflex_options.run_mode_1_1 = parameters[ "anaflex_options.run_mode_1_1" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_2" ) ) anaflex_options.run_mode_1_2 = parameters[ "anaflex_options.run_mode_1_2" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_3" ) ) anaflex_options.run_mode_1_3 = parameters[ "anaflex_options.run_mode_1_3" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_4" ) ) anaflex_options.run_mode_1_4 = parameters[ "anaflex_options.run_mode_1_4" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_5" ) ) anaflex_options.run_mode_1_5 = parameters[ "anaflex_options.run_mode_1_5" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_7" ) ) anaflex_options.run_mode_1_7 = parameters[ "anaflex_options.run_mode_1_7" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_8" ) ) anaflex_options.run_mode_1_8 = parameters[ "anaflex_options.run_mode_1_8" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_12" ) ) anaflex_options.run_mode_1_12 = parameters[ "anaflex_options.run_mode_1_12" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_13" ) ) anaflex_options.run_mode_1_13 = parameters[ "anaflex_options.run_mode_1_13" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_14" ) ) anaflex_options.run_mode_1_14 = parameters[ "anaflex_options.run_mode_1_14" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_18" ) ) anaflex_options.run_mode_1_18 = parameters[ "anaflex_options.run_mode_1_18" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_20" ) ) anaflex_options.run_mode_1_20 = parameters[ "anaflex_options.run_mode_1_20" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_1_24" ) ) anaflex_options.run_mode_1_24 = parameters[ "anaflex_options.run_mode_1_24" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2" ) ) anaflex_options.run_mode_2 = parameters[ "anaflex_options.run_mode_2" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_1" ) ) anaflex_options.run_mode_2_1 = parameters[ "anaflex_options.run_mode_2_1" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_2" ) ) anaflex_options.run_mode_2_2 = parameters[ "anaflex_options.run_mode_2_2" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_3" ) ) anaflex_options.run_mode_2_3 = parameters[ "anaflex_options.run_mode_2_3" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_4" ) ) anaflex_options.run_mode_2_4 = parameters[ "anaflex_options.run_mode_2_4" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_5" ) ) anaflex_options.run_mode_2_5 = parameters[ "anaflex_options.run_mode_2_5" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_7" ) ) anaflex_options.run_mode_2_7 = parameters[ "anaflex_options.run_mode_2_7" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_8" ) ) anaflex_options.run_mode_2_8 = parameters[ "anaflex_options.run_mode_2_8" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_12" ) ) anaflex_options.run_mode_2_12 = parameters[ "anaflex_options.run_mode_2_12" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_13" ) ) anaflex_options.run_mode_2_13 = parameters[ "anaflex_options.run_mode_2_13" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_14" ) ) anaflex_options.run_mode_2_14 = parameters[ "anaflex_options.run_mode_2_14" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_18" ) ) anaflex_options.run_mode_2_18 = parameters[ "anaflex_options.run_mode_2_18" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_20" ) ) anaflex_options.run_mode_2_20 = parameters[ "anaflex_options.run_mode_2_20" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_2_24" ) ) anaflex_options.run_mode_2_24 = parameters[ "anaflex_options.run_mode_2_24" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3" ) ) anaflex_options.run_mode_3 = parameters[ "anaflex_options.run_mode_3" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_1" ) ) anaflex_options.run_mode_3_1 = parameters[ "anaflex_options.run_mode_3_1" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_5" ) ) anaflex_options.run_mode_3_5 = parameters[ "anaflex_options.run_mode_3_5" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_9" ) ) anaflex_options.run_mode_3_9 = parameters[ "anaflex_options.run_mode_3_9" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_10" ) ) anaflex_options.run_mode_3_10 = parameters[ "anaflex_options.run_mode_3_10" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_14" ) ) anaflex_options.run_mode_3_14 = parameters[ "anaflex_options.run_mode_3_14" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_15" ) ) anaflex_options.run_mode_3_15 = parameters[ "anaflex_options.run_mode_3_15" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_3_16" ) ) anaflex_options.run_mode_3_16 = parameters[ "anaflex_options.run_mode_3_16" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_4" ) ) anaflex_options.run_mode_4 = parameters[ "anaflex_options.run_mode_4" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_4_1" ) ) anaflex_options.run_mode_4_1 = parameters[ "anaflex_options.run_mode_4_1" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_4_6" ) ) anaflex_options.run_mode_4_6 = parameters[ "anaflex_options.run_mode_4_6" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_4_7" ) ) anaflex_options.run_mode_4_7 = parameters[ "anaflex_options.run_mode_4_7" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_4_8" ) ) anaflex_options.run_mode_4_8 = parameters[ "anaflex_options.run_mode_4_8" ] == "1";
+   if ( parameters.count( "anaflex_options.run_mode_9" ) ) anaflex_options.run_mode_9 = parameters[ "anaflex_options.run_mode_9" ] == "1";
+   if ( parameters.count( "anaflex_options.ntimc" ) ) anaflex_options.ntimc = parameters[ "anaflex_options.ntimc" ].toInt();
+   if ( parameters.count( "anaflex_options.tmax" ) ) anaflex_options.tmax = parameters[ "anaflex_options.tmax" ].toFloat();
+   if ( parameters.count( "anaflex_options.run_mode_3_5_iii" ) ) anaflex_options.run_mode_3_5_iii = parameters[ "anaflex_options.run_mode_3_5_iii" ].toInt();
+   if ( parameters.count( "anaflex_options.run_mode_3_5_jjj" ) ) anaflex_options.run_mode_3_5_jjj = parameters[ "anaflex_options.run_mode_3_5_jjj" ].toInt();
+   if ( parameters.count( "anaflex_options.run_mode_3_10_theta" ) ) anaflex_options.run_mode_3_10_theta = parameters[ "anaflex_options.run_mode_3_10_theta" ].toFloat();
+   if ( parameters.count( "anaflex_options.run_mode_3_10_refractive_index" ) ) anaflex_options.run_mode_3_10_refractive_index = parameters[ "anaflex_options.run_mode_3_10_refractive_index" ].toFloat();
+   if ( parameters.count( "anaflex_options.run_mode_3_10_lambda" ) ) anaflex_options.run_mode_3_10_lambda = parameters[ "anaflex_options.run_mode_3_10_lambda" ].toFloat();
+   if ( parameters.count( "anaflex_options.run_mode_3_14_iii" ) ) anaflex_options.run_mode_3_14_iii = parameters[ "anaflex_options.run_mode_3_14_iii" ].toInt();
+   if ( parameters.count( "anaflex_options.run_mode_3_14_jjj" ) ) anaflex_options.run_mode_3_14_jjj = parameters[ "anaflex_options.run_mode_3_14_jjj" ].toInt();
+   if ( parameters.count( "batch.missing_atoms" ) ) batch.missing_atoms = parameters[ "batch.missing_atoms" ].toInt();
+   if ( parameters.count( "batch.missing_residues" ) ) batch.missing_residues = parameters[ "batch.missing_residues" ].toInt();
+   if ( parameters.count( "batch.somo" ) ) batch.somo = parameters[ "batch.somo" ] == "1";
+   if ( parameters.count( "batch.grid" ) ) batch.grid = parameters[ "batch.grid" ] == "1";
+   if ( parameters.count( "batch.hydro" ) ) batch.hydro = parameters[ "batch.hydro" ] == "1";
+   if ( parameters.count( "batch.avg_hydro" ) ) batch.avg_hydro = parameters[ "batch.avg_hydro" ] == "1";
+   if ( parameters.count( "batch.avg_hydro_name" ) ) batch.avg_hydro_name = parameters[ "batch.avg_hydro_name" ];
+   if ( parameters.count( "batch.height" ) ) batch.height = parameters[ "batch.height" ].toInt();
+   if ( parameters.count( "batch.width" ) ) batch.width = parameters[ "batch.width" ].toInt();
+   if ( parameters.count( "path_load_pdb" ) ) path_load_pdb = parameters[ "path_load_pdb" ];
+   if ( parameters.count( "path_view_pdb" ) ) path_view_pdb = parameters[ "path_view_pdb" ];
+   if ( parameters.count( "path_load_bead_model" ) ) path_load_bead_model = parameters[ "path_load_bead_model" ];
+   if ( parameters.count( "path_view_asa_res" ) ) path_view_asa_res = parameters[ "path_view_asa_res" ];
+   if ( parameters.count( "path_view_bead_model" ) ) path_view_bead_model = parameters[ "path_view_bead_model" ];
+   if ( parameters.count( "path_open_hydro_res" ) ) path_open_hydro_res = parameters[ "path_open_hydro_res" ];
+   if ( parameters.count( "saxs_options.path_load_saxs_curve" ) ) saxs_options.path_load_saxs_curve = parameters[ "saxs_options.path_load_saxs_curve" ];
+   if ( parameters.count( "saxs_options.path_load_gnom" ) ) saxs_options.path_load_gnom = parameters[ "saxs_options.path_load_gnom" ];
+   if ( parameters.count( "saxs_options.path_load_prr" ) ) saxs_options.path_load_prr = parameters[ "saxs_options.path_load_prr" ];
+   if ( parameters.count( "asa.hydrate_probe_radius" ) ) asa.hydrate_probe_radius = parameters[ "asa.hydrate_probe_radius" ].toFloat();
+   if ( parameters.count( "asa.hydrate_threshold" ) ) asa.hydrate_threshold = parameters[ "asa.hydrate_threshold" ].toFloat();
+   if ( parameters.count( "misc.target_e_density" ) ) misc.target_e_density = parameters[ "misc.target_e_density" ].toDouble();
+   if ( parameters.count( "misc.target_volume" ) ) misc.target_volume = parameters[ "misc.target_volume" ].toDouble();
+   if ( parameters.count( "misc.set_target_on_load_pdb" ) ) misc.set_target_on_load_pdb = parameters[ "misc.set_target_on_load_pdb" ] == "1";
+   if ( parameters.count( "misc.equalize_radii" ) ) misc.equalize_radii = parameters[ "misc.equalize_radii" ] == "1";
+   if ( parameters.count( "dmd_options.force_chem" ) ) dmd_options.force_chem = parameters[ "dmd_options.force_chem" ] == "1";
+   if ( parameters.count( "dmd_options.pdb_static_pairs" ) ) dmd_options.pdb_static_pairs = parameters[ "dmd_options.pdb_static_pairs" ] == "1";
+   if ( parameters.count( "dmd_options.threshold_pb_pb" ) ) dmd_options.threshold_pb_pb = parameters[ "dmd_options.threshold_pb_pb" ].toFloat();
+   if ( parameters.count( "dmd_options.threshold_pb_sc" ) ) dmd_options.threshold_pb_sc = parameters[ "dmd_options.threshold_pb_sc" ].toFloat();
+   if ( parameters.count( "dmd_options.threshold_sc_sc" ) ) dmd_options.threshold_sc_sc = parameters[ "dmd_options.threshold_sc_sc" ].toFloat();
+   if ( parameters.count( "saxs_options.normalize_by_mw" ) ) saxs_options.normalize_by_mw = parameters[ "saxs_options.normalize_by_mw" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_debye" ) ) saxs_options.saxs_iq_native_debye = parameters[ "saxs_options.saxs_iq_native_debye" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_hybrid" ) ) saxs_options.saxs_iq_native_hybrid = parameters[ "saxs_options.saxs_iq_native_hybrid" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_hybrid2" ) ) saxs_options.saxs_iq_native_hybrid2 = parameters[ "saxs_options.saxs_iq_native_hybrid2" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_hybrid3" ) ) saxs_options.saxs_iq_native_hybrid3 = parameters[ "saxs_options.saxs_iq_native_hybrid3" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_fast" ) ) saxs_options.saxs_iq_native_fast = parameters[ "saxs_options.saxs_iq_native_fast" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_fast_compute_pr" ) ) saxs_options.saxs_iq_native_fast_compute_pr = parameters[ "saxs_options.saxs_iq_native_fast_compute_pr" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_foxs" ) ) saxs_options.saxs_iq_foxs = parameters[ "saxs_options.saxs_iq_foxs" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_crysol" ) ) saxs_options.saxs_iq_crysol = parameters[ "saxs_options.saxs_iq_crysol" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_debye" ) ) saxs_options.sans_iq_native_debye = parameters[ "saxs_options.sans_iq_native_debye" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_hybrid" ) ) saxs_options.sans_iq_native_hybrid = parameters[ "saxs_options.sans_iq_native_hybrid" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_hybrid2" ) ) saxs_options.sans_iq_native_hybrid2 = parameters[ "saxs_options.sans_iq_native_hybrid2" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_hybrid3" ) ) saxs_options.sans_iq_native_hybrid3 = parameters[ "saxs_options.sans_iq_native_hybrid3" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_fast" ) ) saxs_options.sans_iq_native_fast = parameters[ "saxs_options.sans_iq_native_fast" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_fast_compute_pr" ) ) saxs_options.sans_iq_native_fast_compute_pr = parameters[ "saxs_options.sans_iq_native_fast_compute_pr" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_cryson" ) ) saxs_options.sans_iq_cryson = parameters[ "saxs_options.sans_iq_cryson" ] == "1";
+   if ( parameters.count( "saxs_options.hybrid2_q_points" ) ) saxs_options.hybrid2_q_points = parameters[ "saxs_options.hybrid2_q_points" ].toUInt();
+   if ( parameters.count( "saxs_options.iq_ask" ) ) saxs_options.iq_ask = parameters[ "saxs_options.iq_ask" ] == "1";
+   if ( parameters.count( "saxs_options.iq_scale_ask" ) ) saxs_options.iq_scale_ask = parameters[ "saxs_options.iq_scale_ask" ] == "1";
+   if ( parameters.count( "saxs_options.iq_scale_angstrom" ) ) saxs_options.iq_scale_angstrom = parameters[ "saxs_options.iq_scale_angstrom" ] == "1";
+   if ( parameters.count( "saxs_options.iq_scale_nm" ) ) saxs_options.iq_scale_nm = parameters[ "saxs_options.iq_scale_nm" ] == "1";
+   if ( parameters.count( "saxs_options.sh_max_harmonics" ) ) saxs_options.sh_max_harmonics = parameters[ "saxs_options.sh_max_harmonics" ].toDouble();
+   if ( parameters.count( "saxs_options.sh_fibonacci_grid_order" ) ) saxs_options.sh_fibonacci_grid_order = parameters[ "saxs_options.sh_fibonacci_grid_order" ].toDouble();
+   if ( parameters.count( "saxs_options.crysol_hydration_shell_contrast" ) ) saxs_options.crysol_hydration_shell_contrast = parameters[ "saxs_options.crysol_hydration_shell_contrast" ].toFloat();
+   if ( parameters.count( "saxs_options.crysol_default_load_difference_intensity" ) ) saxs_options.crysol_default_load_difference_intensity = parameters[ "saxs_options.crysol_default_load_difference_intensity" ] == "1";
+   if ( parameters.count( "saxs_options.crysol_version_26" ) ) saxs_options.crysol_version_26 = parameters[ "saxs_options.crysol_version_26" ] == "1";
+   if ( parameters.count( "saxs_options.fast_bin_size" ) ) saxs_options.fast_bin_size = parameters[ "saxs_options.fast_bin_size" ].toFloat();
+   if ( parameters.count( "saxs_options.fast_modulation" ) ) saxs_options.fast_modulation = parameters[ "saxs_options.fast_modulation" ].toFloat();
+   if ( parameters.count( "saxs_options.compute_saxs_coeff_for_bead_models" ) ) saxs_options.compute_saxs_coeff_for_bead_models = parameters[ "saxs_options.compute_saxs_coeff_for_bead_models" ] == "1";
+   if ( parameters.count( "saxs_options.compute_sans_coeff_for_bead_models" ) ) saxs_options.compute_sans_coeff_for_bead_models = parameters[ "saxs_options.compute_sans_coeff_for_bead_models" ] == "1";
+   if ( parameters.count( "saxs_options.default_atom_filename" ) ) saxs_options.default_atom_filename = parameters[ "saxs_options.default_atom_filename" ];
+   if ( parameters.count( "saxs_options.default_hybrid_filename" ) ) saxs_options.default_hybrid_filename = parameters[ "saxs_options.default_hybrid_filename" ];
+   if ( parameters.count( "saxs_options.default_saxs_filename" ) ) saxs_options.default_saxs_filename = parameters[ "saxs_options.default_saxs_filename" ];
+   if ( parameters.count( "saxs_options.default_rotamer_filename" ) ) saxs_options.default_rotamer_filename = parameters[ "saxs_options.default_rotamer_filename" ];
+   if ( parameters.count( "saxs_options.steric_clash_distance" ) ) saxs_options.steric_clash_distance = parameters[ "saxs_options.steric_clash_distance" ].toDouble();
+   if ( parameters.count( "saxs_options.steric_clash_recheck_distance" ) ) saxs_options.steric_clash_recheck_distance = parameters[ "saxs_options.steric_clash_recheck_distance" ].toDouble();
+   if ( parameters.count( "saxs_options.disable_iq_scaling" ) ) saxs_options.disable_iq_scaling = parameters[ "saxs_options.disable_iq_scaling" ] == "1";
+   if ( parameters.count( "saxs_options.autocorrelate" ) ) saxs_options.autocorrelate = parameters[ "saxs_options.autocorrelate" ] == "1";
+   if ( parameters.count( "saxs_options.hybrid_radius_excl_vol" ) ) saxs_options.hybrid_radius_excl_vol = parameters[ "saxs_options.hybrid_radius_excl_vol" ] == "1";
+   if ( parameters.count( "saxs_options.scale_excl_vol" ) ) saxs_options.scale_excl_vol = parameters[ "saxs_options.scale_excl_vol" ].toFloat();
+   if ( parameters.count( "saxs_options.subtract_radius" ) ) saxs_options.subtract_radius = parameters[ "saxs_options.subtract_radius" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_scale_minq" ) ) saxs_options.iqq_scale_minq = parameters[ "saxs_options.iqq_scale_minq" ].toFloat();
+   if ( parameters.count( "saxs_options.iqq_scale_maxq" ) ) saxs_options.iqq_scale_maxq = parameters[ "saxs_options.iqq_scale_maxq" ].toFloat();
+   if ( parameters.count( "saxs_options.iqq_scale_nnls" ) ) saxs_options.iqq_scale_nnls = parameters[ "saxs_options.iqq_scale_nnls" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_scale_linear_offset" ) ) saxs_options.iqq_scale_linear_offset = parameters[ "saxs_options.iqq_scale_linear_offset" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_scale_chi2_fitting" ) ) saxs_options.iqq_scale_chi2_fitting = parameters[ "saxs_options.iqq_scale_chi2_fitting" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_expt_data_contains_variances" ) ) saxs_options.iqq_expt_data_contains_variances = parameters[ "saxs_options.iqq_expt_data_contains_variances" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_ask_target_grid" ) ) saxs_options.iqq_ask_target_grid = parameters[ "saxs_options.iqq_ask_target_grid" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_scale_play" ) ) saxs_options.iqq_scale_play = parameters[ "saxs_options.iqq_scale_play" ] == "1";
+   if ( parameters.count( "saxs_options.swh_excl_vol" ) ) saxs_options.swh_excl_vol = parameters[ "saxs_options.swh_excl_vol" ].toFloat();
+   if ( parameters.count( "saxs_options.iqq_default_scaling_target" ) ) saxs_options.iqq_default_scaling_target = parameters[ "saxs_options.iqq_default_scaling_target" ];
+   if ( parameters.count( "saxs_options.saxs_iq_hybrid_adaptive" ) ) saxs_options.saxs_iq_hybrid_adaptive = parameters[ "saxs_options.saxs_iq_hybrid_adaptive" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_hybrid_adaptive" ) ) saxs_options.sans_iq_hybrid_adaptive = parameters[ "saxs_options.sans_iq_hybrid_adaptive" ] == "1";
+   if ( parameters.count( "saxs_options.bead_model_rayleigh" ) ) saxs_options.bead_model_rayleigh = parameters[ "saxs_options.bead_model_rayleigh" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_log_fitting" ) ) saxs_options.iqq_log_fitting = parameters[ "saxs_options.iqq_log_fitting" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_kratky_fit" ) ) saxs_options.iqq_kratky_fit = parameters[ "saxs_options.iqq_kratky_fit" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_use_atomic_ff" ) ) saxs_options.iqq_use_atomic_ff = parameters[ "saxs_options.iqq_use_atomic_ff" ] == "1";
+   if ( parameters.count( "saxs_options.iqq_use_saxs_excl_vol" ) ) saxs_options.iqq_use_saxs_excl_vol = parameters[ "saxs_options.iqq_use_saxs_excl_vol" ] == "1";
+   if ( parameters.count( "saxs_options.alt_hydration" ) ) saxs_options.alt_hydration = parameters[ "saxs_options.alt_hydration" ] == "1";
+   if ( parameters.count( "saxs_options.xsr_symmop" ) ) saxs_options.xsr_symmop = parameters[ "saxs_options.xsr_symmop" ].toUInt();
+   if ( parameters.count( "saxs_options.xsr_nx" ) ) saxs_options.xsr_nx = parameters[ "saxs_options.xsr_nx" ].toUInt();
+   if ( parameters.count( "saxs_options.xsr_ny" ) ) saxs_options.xsr_ny = parameters[ "saxs_options.xsr_ny" ].toUInt();
+   if ( parameters.count( "saxs_options.xsr_griddistance" ) ) saxs_options.xsr_griddistance = parameters[ "saxs_options.xsr_griddistance" ].toDouble();
+   if ( parameters.count( "saxs_options.xsr_ncomponents" ) ) saxs_options.xsr_ncomponents = parameters[ "saxs_options.xsr_ncomponents" ].toUInt();
+   if ( parameters.count( "saxs_options.xsr_compactness_weight" ) ) saxs_options.xsr_compactness_weight = parameters[ "saxs_options.xsr_compactness_weight" ].toDouble();
+   if ( parameters.count( "saxs_options.xsr_looseness_weight" ) ) saxs_options.xsr_looseness_weight = parameters[ "saxs_options.xsr_looseness_weight" ].toDouble();
+   if ( parameters.count( "saxs_options.xsr_temperature" ) ) saxs_options.xsr_temperature = parameters[ "saxs_options.xsr_temperature" ].toDouble();
+   if ( parameters.count( "hydro.zeno_zeno" ) ) hydro.zeno_zeno = parameters[ "hydro.zeno_zeno" ] == "1";
+   if ( parameters.count( "hydro.zeno_interior" ) ) hydro.zeno_interior = parameters[ "hydro.zeno_interior" ] == "1";
+   if ( parameters.count( "hydro.zeno_surface" ) ) hydro.zeno_surface = parameters[ "hydro.zeno_surface" ] == "1";
+   if ( parameters.count( "hydro.zeno_zeno_steps" ) ) hydro.zeno_zeno_steps = parameters[ "hydro.zeno_zeno_steps" ].toUInt();
+   if ( parameters.count( "hydro.zeno_interior_steps" ) ) hydro.zeno_interior_steps = parameters[ "hydro.zeno_interior_steps" ].toUInt();
+   if ( parameters.count( "hydro.zeno_surface_steps" ) ) hydro.zeno_surface_steps = parameters[ "hydro.zeno_surface_steps" ].toUInt();
+   if ( parameters.count( "hydro.zeno_surface_thickness" ) ) hydro.zeno_surface_thickness = parameters[ "hydro.zeno_surface_thickness" ].toFloat();
+   if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
+   if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
+   if ( parameters.count( "batch.saxs_search" ) ) batch.saxs_search = parameters[ "batch.saxs_search" ] == "1";
+   if ( parameters.count( "batch.zeno" ) ) batch.zeno = parameters[ "batch.zeno" ] == "1";
+
+   if ( parameters.count( "saxs_options.ignore_errors" ) ) saxs_options.ignore_errors = parameters[ "saxs_options.ignore_errors" ] == "1";
+   if ( parameters.count( "saxs_options.alt_ff" ) ) saxs_options.alt_ff = parameters[ "saxs_options.alt_ff" ] == "1";
+   if ( parameters.count( "saxs_options.crysol_explicit_hydrogens" ) ) saxs_options.crysol_explicit_hydrogens = parameters[ "saxs_options.crysol_explicit_hydrogens" ] == "1";
+   if ( parameters.count( "saxs_options.use_somo_ff" ) ) saxs_options.use_somo_ff = parameters[ "saxs_options.use_somo_ff" ] == "1";
+   if ( parameters.count( "saxs_options.five_term_gaussians" ) ) saxs_options.five_term_gaussians = parameters[ "saxs_options.five_term_gaussians" ] == "1";
+   if ( parameters.count( "saxs_options.iq_exact_q" ) ) saxs_options.iq_exact_q = parameters[ "saxs_options.iq_exact_q" ] == "1";
+   if ( parameters.count( "saxs_options.use_iq_target_ev" ) ) saxs_options.use_iq_target_ev = parameters[ "saxs_options.use_iq_target_ev" ] == "1";
+   if ( parameters.count( "saxs_options.set_iq_target_ev_from_vbar" ) ) saxs_options.set_iq_target_ev_from_vbar = parameters[ "saxs_options.set_iq_target_ev_from_vbar" ] == "1";
+   if ( parameters.count( "saxs_options.iq_target_ev" ) ) saxs_options.iq_target_ev = parameters[ "saxs_options.iq_target_ev" ].toDouble();
+   if ( parameters.count( "saxs_options.hydration_rev_asa" ) ) saxs_options.hydration_rev_asa = parameters[ "saxs_options.hydration_rev_asa" ] == "1";
+   if ( parameters.count( "saxs_options.compute_exponentials" ) ) saxs_options.compute_exponentials = parameters[ "saxs_options.compute_exponentials" ] == "1";
+   if ( parameters.count( "saxs_options.compute_exponential_terms" ) ) saxs_options.compute_exponential_terms = parameters[ "saxs_options.compute_exponential_terms" ].toUInt();
+   if ( parameters.count( "saxs_options.dummy_saxs_name" ) ) saxs_options.dummy_saxs_name = parameters[ "saxs_options.dummy_saxs_name" ];
+   if ( parameters.count( "saxs_options.multiply_iq_by_atomic_volume" ) ) saxs_options.multiply_iq_by_atomic_volume = parameters[ "saxs_options.multiply_iq_by_atomic_volume" ] == "1";
+   if ( parameters.count( "saxs_options.dummy_atom_pdbs_in_nm" ) ) saxs_options.dummy_atom_pdbs_in_nm = parameters[ "saxs_options.dummy_atom_pdbs_in_nm" ] == "1";
+   if ( parameters.count( "saxs_options.iq_global_avg_for_bead_models" ) ) saxs_options.iq_global_avg_for_bead_models = parameters[ "saxs_options.iq_global_avg_for_bead_models" ] == "1";
+   if ( parameters.count( "saxs_options.apply_loaded_sf_repeatedly_to_pdb" ) ) saxs_options.apply_loaded_sf_repeatedly_to_pdb = parameters[ "saxs_options.apply_loaded_sf_repeatedly_to_pdb" ] == "1";
+   if ( parameters.count( "saxs_options.bead_models_use_var_len_sf" ) ) saxs_options.bead_models_use_var_len_sf = parameters[ "saxs_options.bead_models_use_var_len_sf" ] == "1";
+   if ( parameters.count( "saxs_options.bead_models_var_len_sf_max" ) ) saxs_options.bead_models_var_len_sf_max = parameters[ "saxs_options.bead_models_var_len_sf_max" ].toUInt();
+   if ( parameters.count( "saxs_options.bead_models_use_gsm_fitting" ) ) saxs_options.bead_models_use_gsm_fitting = parameters[ "saxs_options.bead_models_use_gsm_fitting" ] == "1";
+   if ( parameters.count( "saxs_options.bead_models_use_quick_fitting" ) ) saxs_options.bead_models_use_quick_fitting = parameters[ "saxs_options.bead_models_use_quick_fitting" ] == "1";
+   if ( parameters.count( "saxs_options.bead_models_use_bead_radius_ev" ) ) saxs_options.bead_models_use_bead_radius_ev = parameters[ "saxs_options.bead_models_use_bead_radius_ev" ] == "1";
+   if ( parameters.count( "saxs_options.bead_models_rho0_in_scat_factors" ) ) saxs_options.bead_models_rho0_in_scat_factors = parameters[ "saxs_options.bead_models_rho0_in_scat_factors" ] == "1";
+   if ( parameters.count( "saxs_options.smooth" ) ) saxs_options.smooth = parameters[ "saxs_options.smooth" ].toUInt();
+   if ( parameters.count( "saxs_options.ev_exp_mult" ) ) saxs_options.ev_exp_mult = parameters[ "saxs_options.ev_exp_mult" ].toDouble();
+   if ( parameters.count( "saxs_options.sastbx_method" ) ) saxs_options.sastbx_method = parameters[ "saxs_options.sastbx_method" ].toUInt();
+   if ( parameters.count( "saxs_options.saxs_iq_sastbx" ) ) saxs_options.saxs_iq_sastbx = parameters[ "saxs_options.saxs_iq_sastbx" ] == "1";
+   if ( parameters.count( "saxs_options.saxs_iq_native_sh" ) ) saxs_options.saxs_iq_native_sh = parameters[ "saxs_options.saxs_iq_native_sh" ] == "1";
+   if ( parameters.count( "saxs_options.sans_iq_native_sh" ) ) saxs_options.sans_iq_native_sh = parameters[ "saxs_options.sans_iq_native_sh" ] == "1";
+   if ( parameters.count( "saxs_options.alt_sh1" ) ) saxs_options.alt_sh1 = parameters[ "saxs_options.alt_sh1" ] == "1";
+   if ( parameters.count( "saxs_options.alt_sh2" ) ) saxs_options.alt_sh2 = parameters[ "saxs_options.alt_sh2" ] == "1";
+   if ( parameters.count( "grid.create_nmr_bead_pdb" ) ) grid.create_nmr_bead_pdb = parameters[ "grid.create_nmr_bead_pdb" ] == "1";
+   if ( parameters.count( "batch.compute_iq_only_avg" ) ) batch.compute_iq_only_avg = parameters[ "batch.compute_iq_only_avg" ] == "1";
+   if ( parameters.count( "asa.vvv" ) ) asa.vvv = parameters[ "asa.vvv" ] == "1";
+   if ( parameters.count( "asa.vvv_probe_radius" ) ) asa.vvv_probe_radius = parameters[ "asa.vvv_probe_radius" ].toFloat();
+   if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
+   if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
+
+   if ( parameters.count( "saxs_options.cs_qRgmax" ) ) saxs_options.cs_qRgmax = parameters[ "saxs_options.cs_qRgmax" ].toDouble();
+   if ( parameters.count( "saxs_options.cs_qstart" ) ) saxs_options.cs_qstart = parameters[ "saxs_options.cs_qstart" ].toDouble();
+   if ( parameters.count( "saxs_options.cs_qend" ) ) saxs_options.cs_qend = parameters[ "saxs_options.cs_qend" ].toDouble();
+   if ( parameters.count( "saxs_options.conc" ) ) saxs_options.conc = parameters[ "saxs_options.conc" ].toDouble();
+   if ( parameters.count( "saxs_options.psv" ) ) saxs_options.psv = parameters[ "saxs_options.psv" ].toDouble();
+   if ( parameters.count( "saxs_options.use_cs_psv" ) ) saxs_options.use_cs_psv = parameters[ "saxs_options.use_cs_psv" ] == "1";
+   if ( parameters.count( "saxs_options.cs_psv" ) ) saxs_options.cs_psv = parameters[ "saxs_options.cs_psv" ].toDouble();
+   if ( parameters.count( "saxs_options.I0_exp" ) ) saxs_options.I0_exp = parameters[ "saxs_options.I0_exp" ].toDouble();
+   if ( parameters.count( "saxs_options.I0_theo" ) ) saxs_options.I0_theo = parameters[ "saxs_options.I0_theo" ].toDouble();
+   if ( parameters.count( "saxs_options.diffusion_len" ) ) saxs_options.diffusion_len = parameters[ "saxs_options.diffusion_len" ].toDouble();
+   if ( parameters.count( "saxs_options.nuclear_mass" ) ) saxs_options.nuclear_mass = parameters[ "saxs_options.nuclear_mass" ].toDouble();
+   if ( parameters.count( "saxs_options.guinier_outlier_reject" ) ) saxs_options.guinier_outlier_reject = parameters[ "saxs_options.guinier_outlier_reject" ] == "1";
+   if ( parameters.count( "saxs_options.guinier_outlier_reject_dist" ) ) saxs_options.guinier_outlier_reject_dist = parameters[ "saxs_options.guinier_outlier_reject_dist" ].toDouble();
+   if ( parameters.count( "saxs_options.guinier_use_sd" ) ) saxs_options.guinier_use_sd = parameters[ "saxs_options.guinier_use_sd" ] == "1";
+   if ( parameters.count( "saxs_options.guinier_use_standards" ) ) saxs_options.guinier_use_standards = parameters[ "saxs_options.guinier_use_standards" ] == "1";
+
+   // vectors to read:
+
+   saxs_options.dummy_saxs_names.clear();
+   if ( parameters.count( "saxs_options.dummy_saxs_names" ) )
    {
-      j=read_config(f);
-      if ( j )
+      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "saxs_options.dummy_saxs_names" ] );
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
-         cout << "read config returned " << j << endl;
-         QMessageBox::message(tr("Please note:"),
-                              tr("The somo.default configuration file was found to be corrupt.\n"
-                                 "Resorting to hard-coded defaults."));
-      }
-      else
-      {
-         config_read = true;
+         saxs_options.dummy_saxs_names.push_back( qsl_tmp[ i ] );
       }
    }
-   else
+
+   batch.file.clear();
+   if ( parameters.count( "batch.file" ) )
    {
-      QMessageBox::message(tr("Notice:"),
-                           tr("Configuration defaults file ") +
-                           f.name() + tr(" not found\nUsing hard-coded defaults."));
+      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "batch.file" ] );
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
+      {
+         batch.file.push_back( qsl_tmp[ i ] );
+      }
    }
 
-   if ( !config_read )
+   save_params.field.clear();
+   if ( parameters.count( "save_params.field" ) )
    {
-      // hard coded defaults
-      replicate_o_r_method_somo = false;
+      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "save_params.field" ] );
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
+      {
+         save_params.field.push_back( qsl_tmp[ i ] );
+      }
+   }
+   return true;
+}
 
-      sidechain_overlap.remove_overlap = true;
-      sidechain_overlap.fuse_beads = true;
-      sidechain_overlap.fuse_beads_percent = 70.0;
-      sidechain_overlap.remove_hierarch = true;
-      sidechain_overlap.remove_hierarch_percent = 1.0;
-      sidechain_overlap.remove_sync = false;
-      sidechain_overlap.remove_sync_percent = 1.0;
-      sidechain_overlap.translate_out = true;
-      sidechain_overlap.show_translate = true;
+#if defined( OLD_WAY )
+{
+   ts << "SOMO Config file - computer generated, please do not edit...\n";
 
-      mainchain_overlap.remove_overlap = true;
-      mainchain_overlap.fuse_beads = true;
-      mainchain_overlap.fuse_beads_percent = 70.0;
-      mainchain_overlap.remove_hierarch = true;
-      mainchain_overlap.remove_hierarch_percent = 1.0;
-      mainchain_overlap.remove_sync = false;
-      mainchain_overlap.remove_sync_percent = 1.0;
-      mainchain_overlap.translate_out = false;
-      mainchain_overlap.show_translate = false;
-
-      buried_overlap.remove_overlap = true;
-      buried_overlap.fuse_beads = false;
-      buried_overlap.fuse_beads_percent = 0.0;
-      buried_overlap.remove_hierarch = true;
-      buried_overlap.remove_hierarch_percent = 1.0;
-      buried_overlap.remove_sync = false;
-      buried_overlap.remove_sync_percent = 1.0;
-      buried_overlap.translate_out = false;
-      buried_overlap.show_translate = false;
-
-      replicate_o_r_method_grid = false;
-
-      grid_exposed_overlap.remove_overlap = true;
-      grid_exposed_overlap.fuse_beads = false;
-      grid_exposed_overlap.fuse_beads_percent = 0.0;
-      grid_exposed_overlap.remove_hierarch = false;
-      grid_exposed_overlap.remove_hierarch_percent = 1.0;
-      grid_exposed_overlap.remove_sync = true;
-      grid_exposed_overlap.remove_sync_percent = 1.0;
-      grid_exposed_overlap.translate_out = true;
-      grid_exposed_overlap.show_translate = true;
-
-      grid_buried_overlap.remove_overlap = true;
-      grid_buried_overlap.fuse_beads = false;
-      grid_buried_overlap.fuse_beads_percent = 0.0;
-      grid_buried_overlap.remove_hierarch = false;
-      grid_buried_overlap.remove_hierarch_percent = 1.0;
-      grid_buried_overlap.remove_sync = true;
-      grid_buried_overlap.remove_sync_percent = 1.0;
-      grid_buried_overlap.translate_out = false;
-      grid_buried_overlap.show_translate = false;
-
-      grid_overlap.remove_overlap = true;
-      grid_overlap.fuse_beads = false;
-      grid_overlap.fuse_beads_percent = 0.0;
-      grid_overlap.remove_hierarch = false;
-      grid_overlap.remove_hierarch_percent = 1.0;
-      grid_overlap.remove_sync = true;
-      grid_overlap.remove_sync_percent = 1.0;
-      grid_overlap.translate_out = false;
-      grid_overlap.show_translate = false;
-
-      overlap_tolerance = 0.001;
-
-      sidechain_overlap.title = "exposed side chain beads";
-      mainchain_overlap.title = "exposed main/main and main/side chain beads";
-      buried_overlap.title = "buried beads";
-      grid_exposed_overlap.title = "exposed grid beads";
-      grid_buried_overlap.title = "buried grid beads";
-      grid_overlap.title = "grid beads";
-
-      bead_output.sequence = 0;
-      bead_output.output = 1;
-      bead_output.correspondence = true;
-
-      asa.probe_radius = (float) 1.4;
-      asa.probe_recheck_radius = (float) 1.4;
-      asa.threshold = 20.0;
-      asa.threshold_percent = 50.0;
-      asa.grid_threshold = 10.0;
-      asa.grid_threshold_percent = 30.0;
-      asa.calculation = true;
-      asa.recheck_beads = true;
-      asa.method = true; // by default use ASAB1
-      asa.asab1_step = 1.0;
-
-      grid.cubic = true;       // apply cubic grid
-      grid.hydrate = true;    // true: hydrate model
-      grid.center = 0;    // 1: center of cubelet, 0: center of mass, 2: center of scattering
-      grid.tangency = false;   // true: Expand beads to tangency
-      grid.cube_side = 5.0;
-      grid.enable_asa = true;   // true: enable asa
-
-      misc.hydrovol = 24.041;
-      misc.compute_vbar = true;
-      misc.vbar = 0.72;
-      misc.vbar_temperature = 20.0;
-      misc.pb_rule_on = true;
-      misc.avg_radius = 1.68;
-      misc.avg_mass = 16.0;
-      misc.avg_hydration = 0.4;
-      misc.avg_volume = 15.3;
-      misc.avg_vbar = 0.72;
-      overlap_tolerance = 0.001;
-
-      hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
-
-      hydro.solvent_name = "Water";
-      hydro.solvent_acronym = "w";
-      hydro.temperature = K20 - K0;
-      hydro.solvent_viscosity = VISC_20W * 100;
-      hydro.solvent_density = DENS_20W;
-
-      hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
-      hydro.boundary_cond = false;      // false: stick, true: slip (default false)
-      hydro.volume_correction = false;   // false: Automatic, true: manual (provide value)
-      hydro.volume = 0.0;               // volume correction
-      hydro.mass_correction = false;      // false: Automatic, true: manual (provide value)
-      hydro.mass = 0.0;                  // mass correction
-      hydro.bead_inclusion = false;      // false: exclude hidden beads; true: use all beads
-      hydro.rotational = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
-      hydro.viscosity = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
-      hydro.overlap_cutoff = false;      // false: same as in model building, true: enter manually
-      hydro.overlap = 0.0;               // overlap
-
-      pdb_parse.skip_hydrogen = true;
-      pdb_parse.skip_water = true;
-      pdb_parse.alternate = true;
-      pdb_parse.find_sh = false;
-      pdb_parse.missing_residues = 0;
-      pdb_parse.missing_atoms = 0;
-
-      saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
-
-      saxs_options.h_scat_len = -0.3742f;        // H scattering length (*10^-12 cm)
-      saxs_options.d_scat_len = 0.6671f ;        // D scattering length (*10^-12 cm)
-      saxs_options.h2o_scat_len_dens = -0.562f;  // H2O scattering length density (*10^-10 cm^2)
-      saxs_options.d2o_scat_len_dens = 6.404f;   // D2O scattering length density (*10^-10 cm^2)
-      saxs_options.d2o_conc = 0.16f;             // D2O concentration (0 to 1)
-      saxs_options.frac_of_exch_pep = 0.1f;      // Fraction of exchanged peptide H (0 to 1)
-
-      saxs_options.wavelength = 1.5;         // scattering wavelength
-      saxs_options.start_angle = 0.014f;     // start angle
-      saxs_options.end_angle = 8.214f;       // ending angle
-      saxs_options.delta_angle = 0.2f;       // angle stepsize
-      saxs_options.max_size = 40.0;          // maximum size (A)
-      saxs_options.bin_size = 1.0f;          // Bin size (A)
-      saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
-      saxs_options.curve = 1;                // 0 = raw, 1 = saxs, 2 = sans
-      saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
-
-      saxs_options.guinier_csv = false;
-      saxs_options.guinier_csv_filename = "guinier";
-      saxs_options.qRgmax = 1.3e0;
-      saxs_options.qstart = 1e-7;
-      saxs_options.qend = .5e0;
-      saxs_options.pointsmin = 10;
-      saxs_options.pointsmax = 100;
-
-      bd_options.threshold_pb_pb = 5;
-      bd_options.threshold_pb_sc = 5;
-      bd_options.threshold_sc_sc = 5;
-      bd_options.do_rr = true;
-      bd_options.force_chem = true;
-      bd_options.bead_size_type = 0;
-      bd_options.show_pdb = true;
-      bd_options.run_browflex = true;
-      bd_options.tprev = 8.0e-9;
-      bd_options.ttraj = 8.0e-6;
-      bd_options.deltat = 1.6e-13;
-      bd_options.npadif = 10;
-      bd_options.nconf = 1000;
-      bd_options.inter = 2;
-      bd_options.iorder = 1;
-      bd_options.iseed = 1234;
-      bd_options.icdm = 0;
-      bd_options.chem_pb_pb_bond_type = 0;
-      bd_options.compute_chem_pb_pb_force_constant = false;
-      bd_options.chem_pb_pb_force_constant = 10.0;
-      bd_options.compute_chem_pb_pb_equilibrium_dist = true;
-      bd_options.chem_pb_pb_equilibrium_dist = 0.0;
-      bd_options.compute_chem_pb_pb_max_elong = true;
-      bd_options.chem_pb_pb_max_elong = 0.0;
-      bd_options.chem_pb_sc_bond_type = 0;
-      bd_options.compute_chem_pb_sc_force_constant = false;
-      bd_options.chem_pb_sc_force_constant = 10.0;
-      bd_options.compute_chem_pb_sc_equilibrium_dist = true;
-      bd_options.chem_pb_sc_equilibrium_dist = 0.0;
-      bd_options.compute_chem_pb_sc_max_elong = true;
-      bd_options.chem_pb_sc_max_elong = 0.0;
-      bd_options.chem_sc_sc_bond_type = 0;
-      bd_options.compute_chem_sc_sc_force_constant = false;
-      bd_options.chem_sc_sc_force_constant = 10.0;
-      bd_options.compute_chem_sc_sc_equilibrium_dist = true;
-      bd_options.chem_sc_sc_equilibrium_dist = 0.0;
-      bd_options.compute_chem_sc_sc_max_elong = true;
-      bd_options.chem_sc_sc_max_elong = 0.0;
-      bd_options.pb_pb_bond_type = 0;
-      bd_options.compute_pb_pb_force_constant = false;
-      bd_options.pb_pb_force_constant = 10.0;
-      bd_options.compute_pb_pb_equilibrium_dist = true;
-      bd_options.pb_pb_equilibrium_dist = 0.0;
-      bd_options.compute_pb_pb_max_elong = true;
-      bd_options.pb_pb_max_elong = 0.0;
-      bd_options.pb_sc_bond_type = 0;
-      bd_options.compute_pb_sc_force_constant = false;
-      bd_options.pb_sc_force_constant = 10.0;
-      bd_options.compute_pb_sc_equilibrium_dist = true;
-      bd_options.pb_sc_equilibrium_dist = 0.0;
-      bd_options.compute_pb_sc_max_elong = true;
-      bd_options.pb_sc_max_elong = 0.0;
-      bd_options.sc_sc_bond_type = 0;
-      bd_options.compute_sc_sc_force_constant = false;
-      bd_options.sc_sc_force_constant = 10.0;
-      bd_options.compute_sc_sc_equilibrium_dist = true;
-      bd_options.sc_sc_equilibrium_dist = 0.0;
-      bd_options.compute_sc_sc_max_elong = true;
-      bd_options.sc_sc_max_elong = 0.0;
-      bd_options.nmol = 1;
-
-      anaflex_options.run_anaflex = true;
-      anaflex_options.nfrec = 10;
-      anaflex_options.instprofiles = false;
-      anaflex_options.run_mode_1 = false;
-      anaflex_options.run_mode_1_1 = false;
-      anaflex_options.run_mode_1_2 = false;
-      anaflex_options.run_mode_1_3 = false;
-      anaflex_options.run_mode_1_4 = false;
-      anaflex_options.run_mode_1_5 = false;
-      anaflex_options.run_mode_1_7 = false;
-      anaflex_options.run_mode_1_8 = false;
-      anaflex_options.run_mode_1_12 = false;
-      anaflex_options.run_mode_1_13 = false;
-      anaflex_options.run_mode_1_14 = false;
-      anaflex_options.run_mode_1_18 = true;
-      anaflex_options.run_mode_1_20 = false;
-      anaflex_options.run_mode_1_24 = false;
-      anaflex_options.run_mode_2 = false;
-      anaflex_options.run_mode_2_1 = false;
-      anaflex_options.run_mode_2_2 = false;
-      anaflex_options.run_mode_2_3 = false;
-      anaflex_options.run_mode_2_4 = false;
-      anaflex_options.run_mode_2_5 = false;
-      anaflex_options.run_mode_2_7 = false;
-      anaflex_options.run_mode_2_8 = false;
-      anaflex_options.run_mode_2_12 = false;
-      anaflex_options.run_mode_2_13 = false;
-      anaflex_options.run_mode_2_14 = false;
-      anaflex_options.run_mode_2_18 = true;
-      anaflex_options.run_mode_2_20 = false;
-      anaflex_options.run_mode_2_24 = false;
-      anaflex_options.run_mode_3 = true;
-      anaflex_options.run_mode_3_1 = true;
-      anaflex_options.run_mode_3_5 = false;
-      anaflex_options.run_mode_3_9 = false;
-      anaflex_options.run_mode_3_10 = false;
-      anaflex_options.run_mode_3_14 = false;
-      anaflex_options.run_mode_3_15 = false;
-      anaflex_options.run_mode_3_16 = false;
-      anaflex_options.run_mode_4 = false;
-      anaflex_options.run_mode_4_1 = false;
-      anaflex_options.run_mode_4_6 = false;
-      anaflex_options.run_mode_4_7 = false;
-      anaflex_options.run_mode_4_8 = true;
-      anaflex_options.run_mode_9 = false;
-      anaflex_options.ntimc = 21;
-      anaflex_options.tmax = (float)1.6e-6;
-      anaflex_options.run_mode_3_5_iii = 1;
-      anaflex_options.run_mode_3_5_jjj = 99999;
-      anaflex_options.run_mode_3_10_theta = 90.0;
-      anaflex_options.run_mode_3_10_refractive_index = (float)1.3312;
-      anaflex_options.run_mode_3_10_lambda = 633.0;
-      anaflex_options.run_mode_3_14_iii = 1;
-      anaflex_options.run_mode_3_14_jjj = 99999;
+   ts << replicate_o_r_method_somo << "\t\t# Replicate overlap removal method flag\n";
       
-      batch.missing_atoms = 0;
-      batch.missing_residues = 0;
-      batch.somo = true;
-      batch.grid = false;
-      batch.hydro = true;
-      batch.avg_hydro = false;
-      batch.avg_hydro_name = "results";
-      batch.height = 0;
-      batch.width = 0;
-      batch.file.clear();
+   ts << sidechain_overlap.remove_overlap << "\t\t# Remove side chain overlaps flag\n";
+   ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << sidechain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << sidechain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << sidechain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << sidechain_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+   ts << sidechain_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << sidechain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      path_load_pdb = "";
-      path_view_pdb = "";
-      path_load_bead_model = "";
-      path_view_asa_res = "";
-      path_view_bead_model = "";
-      path_open_hydro_res = "";
-      saxs_options.path_load_saxs_curve = "";
-      saxs_options.path_load_gnom = "";
-      saxs_options.path_load_prr = "";
+   ts << mainchain_overlap.remove_overlap << "\t\t# Remove mainchain overlaps flag\n";
+   ts << mainchain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << mainchain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << mainchain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << mainchain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << mainchain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << mainchain_overlap.remove_sync_percent << "\t\t# percent synchronously step\n";
+   ts << mainchain_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << mainchain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      save_params.field.clear();
+   ts << buried_overlap.remove_overlap << "\t\t# Remove buried beads overlaps flag\n";
+   ts << buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+   ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      asa.hydrate_probe_radius = 1.4f;
-      asa.hydrate_threshold = 10.0f;
+   ts << replicate_o_r_method_grid << "\t\t# Replicate overlap removal method flag\n";
 
-      misc.target_e_density       = 0e0;
-      misc.target_volume          = 0e0;
-      misc.set_target_on_load_pdb = false;
-      misc.equalize_radii         = false;
+   ts << grid_exposed_overlap.remove_overlap << "\t\t# Remove exposed grid bead overlaps flag\n";
+   ts << grid_exposed_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << grid_exposed_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << grid_exposed_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << grid_exposed_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << grid_exposed_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << grid_exposed_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+   ts << grid_exposed_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << grid_exposed_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      dmd_options.force_chem = true;
-      dmd_options.pdb_static_pairs = false;
-      dmd_options.threshold_pb_pb = 5;
-      dmd_options.threshold_pb_sc = 5;
-      dmd_options.threshold_sc_sc = 5;
+   ts << grid_buried_overlap.remove_overlap << "\t\t# Remove buried grid bead overlaps flag\n";
+   ts << grid_buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << grid_buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << grid_buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << grid_buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << grid_buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << grid_buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+   ts << grid_buried_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << grid_buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      saxs_options.normalize_by_mw = true;
+   ts << grid_overlap.remove_overlap << "\t\t# Remove grid bead overlaps flag\n";
+   ts << grid_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+   ts << grid_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+   ts << grid_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+   ts << grid_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+   ts << grid_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+   ts << grid_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+   ts << grid_overlap.translate_out << "\t\t# Outward translation flag\n";
+   ts << grid_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      saxs_options.saxs_iq_native_debye = false;
-      saxs_options.saxs_iq_native_hybrid = false;
-      saxs_options.saxs_iq_native_hybrid2 = false;
-      saxs_options.saxs_iq_native_hybrid3 = true;
-      saxs_options.saxs_iq_native_fast = false;
-      saxs_options.saxs_iq_native_fast_compute_pr = false;
-      saxs_options.saxs_iq_foxs = false;
-      saxs_options.saxs_iq_crysol = false;
+   ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
-      saxs_options.sans_iq_native_debye = true;
-      saxs_options.sans_iq_native_hybrid = false;
-      saxs_options.sans_iq_native_hybrid2 = false;
-      saxs_options.sans_iq_native_hybrid3 = false;
-      saxs_options.sans_iq_native_fast = false;
-      saxs_options.sans_iq_native_fast_compute_pr = false;
-      saxs_options.sans_iq_cryson = false;
+   ts << bead_output.output << "\t\t# flag for selecting output format\n";
+   ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
+   ts << bead_output.correspondence << "\t\t# flag for residue correspondence (BEAMS only)\n";
+   ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
+   ts << asa.probe_recheck_radius << "\t\t# probe recheck radius in angstrom\n";
+   ts << asa.threshold << "\t\t# SOMO ASA threshold\n";
+   ts << asa.threshold_percent << "\t\t# SOMO ASA threshold percent\n";
+   ts << asa.grid_threshold << "\t\t# Grid ASA threshold\n";
+   ts << asa.grid_threshold_percent << "\t\t# Grid ASA threshold percent\n";
+   ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
+   ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
+   ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
+   ts << asa.asab1_step << "\t\t# ASAB1 step size\n";
 
-      saxs_options.hybrid2_q_points = 15;
+   ts << grid.cubic << "\t\t# flag to apply cubic grid\n";
+   ts << grid.hydrate << "\t\t# flag to hydrate original model (grid)\n";
+   ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
+   ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
+   ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
+   ts << grid.enable_asa << "\t\t# flag for enabling asa options (grid)\n";
 
-      saxs_options.iq_ask = false;
+   ts << misc.hydrovol << "\t\t# hydration volume\n";
+   ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
+   ts << misc.vbar << "\t\t# vbar value\n";
+   ts << misc.vbar_temperature << "\t\t# manual vbar temperature \n";
+   ts << misc.pb_rule_on << "\t\t# flag for usage of peptide bond rule\n";
+   ts << misc.avg_radius << "\t\t# Average atomic radius value\n";
+   ts << misc.avg_mass << "\t\t# Average atomic mass value\n";
+   ts << misc.avg_hydration << "\t\t# Average atomic hydration value\n";
+   ts << misc.avg_volume << "\t\t# Average bead/atom volume value\n";
+   ts << misc.avg_vbar << "\t\t# Average vbar value\n";
 
-      saxs_options.iq_scale_ask = false;
-      saxs_options.iq_scale_angstrom = true;
-      saxs_options.iq_scale_nm = false;
+   ts << hydro.unit << "\t\t# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)\n";
+   ts << hydro.solvent_name << "\t\t# solvent name\n";
+   ts << hydro.solvent_acronym << "\t\t# solvent acronym\n";
+   ts << hydro.temperature << "\t\t# solvent temperature in degrees C\n";
+   ts << hydro.solvent_viscosity << "\t\t# viscosity of the solvent in cP\n";
+   ts << hydro.solvent_density << "\t\t# denisty of the solvent (g/ml)\n";
+   ts << hydro.reference_system << "\t\t# flag for reference system\n";
+   ts << hydro.boundary_cond << "\t\t# flag for boundary condition: false: stick, true: slip\n";
+   ts << hydro.volume_correction << "\t\t# flag for volume correction - false: Automatic, true: manual\n";
+   ts << hydro.volume << "\t\t# volume correction value for manual entry\n";
+   ts << hydro.mass_correction << "\t\t# flag for mass correction: false: Automatic, true: manual\n";
+   ts << hydro.mass << "\t\t# mass correction value for manual entry\n";
+   ts << hydro.bead_inclusion << "\t\t# flag for bead inclusion in computation - false: exclude hidden beads; true: use all beads\n";
+   ts << hydro.rotational << "\t\t# flag false: include beads in volume correction for rotational diffusion, true: exclude\n";
+   ts << hydro.viscosity << "\t\t# flag false: include beads in volume correction for intrinsic viscosity, true: exclude\n";
+   ts << hydro.overlap_cutoff << "\t\t# flag for overlap cutoff: false: same as in model building, true: enter manually\n";
+   ts << hydro.overlap << "\t\t# overlap value\n";
 
-      saxs_options.sh_max_harmonics = 15;
-      saxs_options.sh_fibonacci_grid_order = 17;
-      saxs_options.crysol_hydration_shell_contrast = 0.03f;
-      saxs_options.crysol_default_load_difference_intensity = true;
-      saxs_options.crysol_version_26 = true;
+   ts << pdb_vis.visualization << "\t\t# PDB visualization option\n";
+   ts << pdb_vis.filename << endl; // "\t\t# RasMol color filename\n";
 
-      saxs_options.fast_bin_size = 0.5f;
-      saxs_options.fast_modulation = 0.23f;
+   ts << pdb_parse.skip_hydrogen << "\t\t# skip hydrogen atoms?\n";
+   ts << pdb_parse.skip_water << "\t\t# skip water molecules?\n";
+   ts << pdb_parse.alternate << "\t\t# skip alternate conformations?\n";
+   ts << pdb_parse.find_sh << "\t\t# find SH groups?\n";
+   ts << pdb_parse.missing_residues << "\t\t# how to handle missing residues\n";
+   ts << pdb_parse.missing_atoms << "\t\t# how to handle missing atoms\n";
 
-      saxs_options.compute_saxs_coeff_for_bead_models = true;
-      saxs_options.compute_sans_coeff_for_bead_models = false;
+   ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
 
-      saxs_options.default_atom_filename = "";
-      saxs_options.default_hybrid_filename = "";
-      saxs_options.default_saxs_filename = "";
-      saxs_options.default_rotamer_filename = "";
+   ts << saxs_options.h_scat_len << "\t\t# H scattering length (*10^-12 cm)\n";
+   ts << saxs_options.d_scat_len << "\t\t# D scattering length (*10^-12 cm)\n";
+   ts << saxs_options.h2o_scat_len_dens << "\t\t# H2O scattering length density (*10^-10 cm^2)\n";
+   ts << saxs_options.d2o_scat_len_dens << "\t\t# D2O scattering length density (*10^-10 cm^2)\n";
+   ts << saxs_options.d2o_conc << "\t\t# D2O concentration (0 to 1)\n";
+   ts << saxs_options.frac_of_exch_pep << "\t\t# Fraction of exchanged peptide H (0 to 1)\n";
 
-      saxs_options.steric_clash_distance         = 20.0;
-      saxs_options.steric_clash_recheck_distance = 0.0;
+   ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
+   ts << saxs_options.start_angle << "\t\t# starting angle\n";
+   ts << saxs_options.end_angle << "\t\t# ending angle\n";
+   ts << saxs_options.delta_angle << "\t\t# angle stepsize\n";
+   ts << saxs_options.max_size << "\t\t# maximum size\n";
+   ts << saxs_options.bin_size << "\t\t# bin size\n";
+   ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
+   ts << saxs_options.curve << "\t\t# 0 = raw, 1 = saxs, 2 = sans\n";
+   ts << saxs_options.saxs_sans << "\t\t# 0 = saxs, 1 = sans\n";
 
-      saxs_options.disable_iq_scaling = false;
-      saxs_options.autocorrelate = true;
-      saxs_options.hybrid_radius_excl_vol = false;
-      saxs_options.scale_excl_vol = 1.0f;
-      saxs_options.subtract_radius = false;
-      saxs_options.iqq_scale_minq = 0.0f;
-      saxs_options.iqq_scale_maxq = 0.0f;
+   ts << bd_options.threshold_pb_pb << "\t\t# bd_options.threshold_pb_pb\n";
+   ts << bd_options.threshold_pb_sc << "\t\t# bd_options.threshold_pb_sc\n";
+   ts << bd_options.threshold_sc_sc << "\t\t# bd_options.threshold_sc_sc\n";
+   ts << bd_options.do_rr << "\t\t# bd_options.do_rr\n";
+   ts << bd_options.force_chem << "\t\t# bd_options.force_chem\n";
+   ts << bd_options.bead_size_type << "\t\t# bd_options.bead_size_type\n";
+   ts << bd_options.show_pdb << "\t\t# bd_options.show_pdb\n";
+   ts << bd_options.run_browflex << "\t\t# bd_options.run_browflex\n";
+   ts << bd_options.tprev << "\t\t# bd_options.tprev\n";
+   ts << bd_options.ttraj << "\t\t# bd_options.ttraj\n";
+   ts << bd_options.deltat << "\t\t# bd_options.deltat\n";
+   ts << bd_options.npadif << "\t\t# bd_options.npadif\n";
+   ts << bd_options.nconf << "\t\t# bd_options.nconf\n";
+   ts << bd_options.inter << "\t\t# bd_options.inter\n";
+   ts << bd_options.iorder << "\t\t# bd_options.iorder\n";
+   ts << bd_options.iseed << "\t\t# bd_options.iseed\n";
+   ts << bd_options.icdm << "\t\t# bd_options.icdm\n";
+   ts << bd_options.chem_pb_pb_bond_type << "\t\t# bd_options.chem_pb_pb_bond_type\n";
+   ts << bd_options.compute_chem_pb_pb_force_constant << "\t\t# bd_options.compute_chem_pb_pb_force_constant\n";
+   ts << bd_options.chem_pb_pb_force_constant << "\t\t# bd_options.chem_pb_pb_force_constant\n";
+   ts << bd_options.compute_chem_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_pb_equilibrium_dist\n";
+   ts << bd_options.chem_pb_pb_equilibrium_dist << "\t\t# bd_options.chem_pb_pb_equilibrium_dist\n";
+   ts << bd_options.compute_chem_pb_pb_max_elong << "\t\t# bd_options.compute_chem_pb_pb_max_elong\n";
+   ts << bd_options.chem_pb_pb_max_elong << "\t\t# bd_options.chem_pb_pb_max_elong\n";
+   ts << bd_options.chem_pb_sc_bond_type << "\t\t# bd_options.chem_pb_sc_bond_type\n";
+   ts << bd_options.compute_chem_pb_sc_force_constant << "\t\t# bd_options.compute_chem_pb_sc_force_constant\n";
+   ts << bd_options.chem_pb_sc_force_constant << "\t\t# bd_options.chem_pb_sc_force_constant\n";
+   ts << bd_options.compute_chem_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_sc_equilibrium_dist\n";
+   ts << bd_options.chem_pb_sc_equilibrium_dist << "\t\t# bd_options.chem_pb_sc_equilibrium_dist\n";
+   ts << bd_options.compute_chem_pb_sc_max_elong << "\t\t# bd_options.compute_chem_pb_sc_max_elong\n";
+   ts << bd_options.chem_pb_sc_max_elong << "\t\t# bd_options.chem_pb_sc_max_elong\n";
+   ts << bd_options.chem_sc_sc_bond_type << "\t\t# bd_options.chem_sc_sc_bond_type\n";
+   ts << bd_options.compute_chem_sc_sc_force_constant << "\t\t# bd_options.compute_chem_sc_sc_force_constant\n";
+   ts << bd_options.chem_sc_sc_force_constant << "\t\t# bd_options.chem_sc_sc_force_constant\n";
+   ts << bd_options.compute_chem_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_sc_sc_equilibrium_dist\n";
+   ts << bd_options.chem_sc_sc_equilibrium_dist << "\t\t# bd_options.chem_sc_sc_equilibrium_dist\n";
+   ts << bd_options.compute_chem_sc_sc_max_elong << "\t\t# bd_options.compute_chem_sc_sc_max_elong\n";
+   ts << bd_options.chem_sc_sc_max_elong << "\t\t# bd_options.chem_sc_sc_max_elong\n";
+   ts << bd_options.pb_pb_bond_type << "\t\t# bd_options.pb_pb_bond_type\n";
+   ts << bd_options.compute_pb_pb_force_constant << "\t\t# bd_options.compute_pb_pb_force_constant\n";
+   ts << bd_options.pb_pb_force_constant << "\t\t# bd_options.pb_pb_force_constant\n";
+   ts << bd_options.compute_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_pb_pb_equilibrium_dist\n";
+   ts << bd_options.pb_pb_equilibrium_dist << "\t\t# bd_options.pb_pb_equilibrium_dist\n";
+   ts << bd_options.compute_pb_pb_max_elong << "\t\t# bd_options.compute_pb_pb_max_elong\n";
+   ts << bd_options.pb_pb_max_elong << "\t\t# bd_options.pb_pb_max_elong\n";
+   ts << bd_options.pb_sc_bond_type << "\t\t# bd_options.pb_sc_bond_type\n";
+   ts << bd_options.compute_pb_sc_force_constant << "\t\t# bd_options.compute_pb_sc_force_constant\n";
+   ts << bd_options.pb_sc_force_constant << "\t\t# bd_options.pb_sc_force_constant\n";
+   ts << bd_options.compute_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_pb_sc_equilibrium_dist\n";
+   ts << bd_options.pb_sc_equilibrium_dist << "\t\t# bd_options.pb_sc_equilibrium_dist\n";
+   ts << bd_options.compute_pb_sc_max_elong << "\t\t# bd_options.compute_pb_sc_max_elong\n";
+   ts << bd_options.pb_sc_max_elong << "\t\t# bd_options.pb_sc_max_elong\n";
+   ts << bd_options.sc_sc_bond_type << "\t\t# bd_options.sc_sc_bond_type\n";
+   ts << bd_options.compute_sc_sc_force_constant << "\t\t# bd_options.compute_sc_sc_force_constant\n";
+   ts << bd_options.sc_sc_force_constant << "\t\t# bd_options.sc_sc_force_constant\n";
+   ts << bd_options.compute_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_sc_sc_equilibrium_dist\n";
+   ts << bd_options.sc_sc_equilibrium_dist << "\t\t# bd_options.sc_sc_equilibrium_dist\n";
+   ts << bd_options.compute_sc_sc_max_elong << "\t\t# bd_options.compute_sc_sc_max_elong\n";
+   ts << bd_options.sc_sc_max_elong << "\t\t# bd_options.sc_sc_max_elong\n";
+   ts << bd_options.nmol << "\t\t# bd_options.nmol\n";
 
-      saxs_options.iqq_scale_nnls = false;
-      saxs_options.iqq_scale_linear_offset = false;
-      saxs_options.iqq_scale_chi2_fitting = true;
-      saxs_options.iqq_expt_data_contains_variances = false;
-      saxs_options.iqq_ask_target_grid = true;
-      saxs_options.iqq_scale_play = false;
-      saxs_options.swh_excl_vol = 0.0f;
-      saxs_options.iqq_default_scaling_target = "";
-
-      saxs_options.saxs_iq_hybrid_adaptive = true;
-      saxs_options.sans_iq_hybrid_adaptive = true;
-
-      saxs_options.bead_model_rayleigh   = true;
-      saxs_options.iqq_log_fitting       = false;
-      saxs_options.iqq_kratky_fit        = false;
-      saxs_options.iqq_use_atomic_ff     = false;
-      saxs_options.iqq_use_saxs_excl_vol = false;
-      saxs_options.alt_hydration         = false;
-
-      saxs_options.xsr_symmop                = 2;
-      saxs_options.xsr_nx                    = 32;
-      saxs_options.xsr_ny                    = 32;
-      saxs_options.xsr_griddistance          = 3e0;
-      saxs_options.xsr_ncomponents           = 1;
-      saxs_options.xsr_compactness_weight    = 10e0;
-      saxs_options.xsr_looseness_weight      = 10e0;
-      saxs_options.xsr_temperature           = 1e-3;
-
-      hydro.zeno_zeno              = true;
-      hydro.zeno_interior          = true;
-      hydro.zeno_surface           = true;
-      hydro.zeno_zeno_steps        = 1000;
-      hydro.zeno_interior_steps    = 1000;
-      hydro.zeno_surface_steps     = 1000;
-      hydro.zeno_surface_thickness = 0.0f;
-
-      misc.hydro_supc              = true;
-      misc.hydro_zeno              = false;
-
-      rotamer_changed = true;  // force on-demand loading of rotamer file
-
-      batch.saxs_search = false;
-      batch.zeno        = false;
+   ts << anaflex_options.run_anaflex << "\t\t# anaflex_options.run_anaflex\n";
+   ts << anaflex_options.nfrec << "\t\t# anaflex_options.nfrec\n";
+   ts << anaflex_options.instprofiles << "\t\t# anaflex_options.instprofiles\n";
+   ts << anaflex_options.run_mode_1 << "\t\t# anaflex_options.run_mode_1\n";
+   ts << anaflex_options.run_mode_1_1 << "\t\t# anaflex_options.run_mode_1_1\n";
+   ts << anaflex_options.run_mode_1_2 << "\t\t# anaflex_options.run_mode_1_2\n";
+   ts << anaflex_options.run_mode_1_3 << "\t\t# anaflex_options.run_mode_1_3\n";
+   ts << anaflex_options.run_mode_1_4 << "\t\t# anaflex_options.run_mode_1_4\n";
+   ts << anaflex_options.run_mode_1_5 << "\t\t# anaflex_options.run_mode_1_5\n";
+   ts << anaflex_options.run_mode_1_7 << "\t\t# anaflex_options.run_mode_1_7\n";
+   ts << anaflex_options.run_mode_1_8 << "\t\t# anaflex_options.run_mode_1_8\n";
+   ts << anaflex_options.run_mode_1_12 << "\t\t# anaflex_options.run_mode_1_12\n";
+   ts << anaflex_options.run_mode_1_13 << "\t\t# anaflex_options.run_mode_1_13\n";
+   ts << anaflex_options.run_mode_1_14 << "\t\t# anaflex_options.run_mode_1_14\n";
+   ts << anaflex_options.run_mode_1_18 << "\t\t# anaflex_options.run_mode_1_18\n";
+   ts << anaflex_options.run_mode_1_20 << "\t\t# anaflex_options.run_mode_1_20\n";
+   ts << anaflex_options.run_mode_1_24 << "\t\t# anaflex_options.run_mode_1_24\n";
+   ts << anaflex_options.run_mode_2 << "\t\t# anaflex_options.run_mode_2\n";
+   ts << anaflex_options.run_mode_2_1 << "\t\t# anaflex_options.run_mode_2_1\n";
+   ts << anaflex_options.run_mode_2_2 << "\t\t# anaflex_options.run_mode_2_2\n";
+   ts << anaflex_options.run_mode_2_3 << "\t\t# anaflex_options.run_mode_2_3\n";
+   ts << anaflex_options.run_mode_2_4 << "\t\t# anaflex_options.run_mode_2_4\n";
+   ts << anaflex_options.run_mode_2_5 << "\t\t# anaflex_options.run_mode_2_5\n";
+   ts << anaflex_options.run_mode_2_7 << "\t\t# anaflex_options.run_mode_2_7\n";
+   ts << anaflex_options.run_mode_2_8 << "\t\t# anaflex_options.run_mode_2_8\n";
+   ts << anaflex_options.run_mode_2_12 << "\t\t# anaflex_options.run_mode_2_12\n";
+   ts << anaflex_options.run_mode_2_13 << "\t\t# anaflex_options.run_mode_2_13\n";
+   ts << anaflex_options.run_mode_2_14 << "\t\t# anaflex_options.run_mode_2_14\n";
+   ts << anaflex_options.run_mode_2_18 << "\t\t# anaflex_options.run_mode_2_18\n";
+   ts << anaflex_options.run_mode_2_20 << "\t\t# anaflex_options.run_mode_2_20\n";
+   ts << anaflex_options.run_mode_2_24 << "\t\t# anaflex_options.run_mode_2_24\n";
+   ts << anaflex_options.run_mode_3 << "\t\t# anaflex_options.run_mode_3\n";
+   ts << anaflex_options.run_mode_3_1 << "\t\t# anaflex_options.run_mode_3_1\n";
+   ts << anaflex_options.run_mode_3_5 << "\t\t# anaflex_options.run_mode_3_5\n";
+   ts << anaflex_options.run_mode_3_9 << "\t\t# anaflex_options.run_mode_3_9\n";
+   ts << anaflex_options.run_mode_3_10 << "\t\t# anaflex_options.run_mode_3_10\n";
+   ts << anaflex_options.run_mode_3_14 << "\t\t# anaflex_options.run_mode_3_14\n";
+   ts << anaflex_options.run_mode_3_15 << "\t\t# anaflex_options.run_mode_3_15\n";
+   ts << anaflex_options.run_mode_3_16 << "\t\t# anaflex_options.run_mode_3_16\n";
+   ts << anaflex_options.run_mode_4 << "\t\t# anaflex_options.run_mode_4\n";
+   ts << anaflex_options.run_mode_4_1 << "\t\t# anaflex_options.run_mode_4_1\n";
+   ts << anaflex_options.run_mode_4_6 << "\t\t# anaflex_options.run_mode_4_6\n";
+   ts << anaflex_options.run_mode_4_7 << "\t\t# anaflex_options.run_mode_4_7\n";
+   ts << anaflex_options.run_mode_4_8 << "\t\t# anaflex_options.run_mode_4_8\n";
+   ts << anaflex_options.run_mode_9 << "\t\t# anaflex_options.run_mode_9\n";
+   ts << anaflex_options.ntimc << "\t\t# anaflex_options.ntimc\n";
+   ts << anaflex_options.tmax << "\t\t# anaflex_options.tmax\n";
+   ts << anaflex_options.run_mode_3_5_iii << "\t\t# anaflex_options.run_mode_3_5_iii\n";
+   ts << anaflex_options.run_mode_3_5_jjj << "\t\t# anaflex_options.run_mode_3_5_jjj\n";
+   ts << anaflex_options.run_mode_3_10_theta << "\t\t# anaflex_options.run_mode_3_10_theta\n";
+   ts << anaflex_options.run_mode_3_10_refractive_index << "\t\t# anaflex_options.run_mode_3_10_refractive_index\n";
+   ts << anaflex_options.run_mode_3_10_lambda << "\t\t# anaflex_options.run_mode_3_10_lambda\n";
+   ts << anaflex_options.run_mode_3_14_iii << "\t\t# anaflex_options.run_mode_3_14_iii\n";
+   ts << anaflex_options.run_mode_3_14_jjj << "\t\t# anaflex_options.run_mode_3_14_jjj\n";
+      
+   ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
+   ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
+   ts << batch.somo << "\t\t# batch run somo\n";
+   ts << batch.grid << "\t\t# batch run grid\n";
+   ts << batch.hydro << "\t\t# batch run hydro\n";
+   ts << batch.avg_hydro << "\t\t# batch avg hydro\n";
+   ts << batch.avg_hydro_name << "\t\t# batch avg hydro name\n";
+   ts << batch.height << "\t\t# batch window last height\n";
+   ts << batch.width << "\t\t# batch window last width\n";
+   ts << batch.file.size() << "\t\t# batch number of files to follow\n";
+   for ( unsigned int i = 0; i < batch.file.size(); i++ )
+   {
+      ts << batch.file[i] << endl;
    }
 
-   // defaults that SHOULD BE MOVED INTO somo.config
+   ts << save_params.field.size() << "\t\t# save params number of fields to follow\n";
+   for ( unsigned int i = 0; i < save_params.field.size(); i++ )
+   {
+      ts << save_params.field[i] << endl;
+   }
+
+   ts << path_load_pdb << endl;
+   ts << path_view_pdb << endl;
+   ts << path_load_bead_model << endl;
+   ts << path_view_asa_res << endl;
+   ts << path_view_bead_model << endl;
+   ts << path_open_hydro_res << endl;
+   ts << saxs_options.path_load_saxs_curve << endl;
+   ts << saxs_options.path_load_gnom << endl;
+   ts << saxs_options.path_load_prr << endl;
+
+   ts << asa.hydrate_probe_radius << "\t\t#asa.hydrate_probe_radius\n";
+   ts << asa.hydrate_threshold << "\t\t#asa.hydrate_threshold\n";
+
+   ts << misc.target_e_density       << "\t\t#misc.target_e_density      \n";
+   ts << misc.target_volume          << "\t\t#misc.target_volume         \n";
+   ts << misc.set_target_on_load_pdb << "\t\t#misc.set_target_on_load_pdb\n";
+   ts << misc.equalize_radii         << "\t\t#misc.equalize_radii        \n";
+
+   ts << dmd_options.force_chem << "\t\t#dmd_options.force_chem\n";
+   ts << dmd_options.pdb_static_pairs << "\t\t#dmd_options.pdb_static_pairs\n";
+   ts << dmd_options.threshold_pb_pb << "\t\t#dmd_options.threshold_pb_pb\n";
+   ts << dmd_options.threshold_pb_sc << "\t\t#dmd_options.threshold_pb_sc\n";
+   ts << dmd_options.threshold_sc_sc << "\t\t#dmd_options.threshold_sc_sc\n";
+
+   ts << saxs_options.normalize_by_mw << "\t\t#saxs_options.normalize_by_mw\n";
+
+   ts << saxs_options.saxs_iq_native_debye << "\t\t#saxs_options.saxs_iq_native_debye\n";
+   ts << saxs_options.saxs_iq_native_hybrid << "\t\t#saxs_options.saxs_iq_native_hybrid\n";
+   ts << saxs_options.saxs_iq_native_hybrid2 << "\t\t#saxs_options.saxs_iq_native_hybrid2\n";
+   ts << saxs_options.saxs_iq_native_hybrid3 << "\t\t#saxs_options.saxs_iq_native_hybrid3\n";
+   ts << saxs_options.saxs_iq_native_fast << "\t\t#saxs_options.saxs_iq_native_fast\n";
+   ts << saxs_options.saxs_iq_native_fast_compute_pr << "\t\t#saxs_options.saxs_iq_native_fast_compute_pr\n";
+   ts << saxs_options.saxs_iq_foxs << "\t\t#saxs_options.saxs_iq_foxs\n";
+   ts << saxs_options.saxs_iq_crysol << "\t\t#saxs_options.saxs_iq_crysol\n";
+
+   ts << saxs_options.sans_iq_native_debye << "\t\t#saxs_options.sans_iq_native_debye\n";
+   ts << saxs_options.sans_iq_native_hybrid << "\t\t#saxs_options.sans_iq_native_hybrid\n";
+   ts << saxs_options.sans_iq_native_hybrid2 << "\t\t#saxs_options.sans_iq_native_hybrid2\n";
+   ts << saxs_options.sans_iq_native_hybrid3 << "\t\t#saxs_options.sans_iq_native_hybrid3\n";
+   ts << saxs_options.sans_iq_native_fast << "\t\t#saxs_options.sans_iq_native_fast\n";
+   ts << saxs_options.sans_iq_native_fast_compute_pr << "\t\t#saxs_options.sans_iq_native_fast_compute_pr\n";
+   ts << saxs_options.sans_iq_cryson << "\t\t#saxs_options.sans_iq_cryson\n";
+
+   ts << saxs_options.hybrid2_q_points << "\t\t#saxs_options.hybrid2_q_points\n";
+
+   ts << saxs_options.iq_ask << "\t\t#saxs_options.iq_ask\n";
+
+   ts << saxs_options.iq_scale_ask << "\t\t#saxs_options.iq_scale_ask\n";
+   ts << saxs_options.iq_scale_angstrom << "\t\t#saxs_options.iq_scale_angstrom\n";
+   ts << saxs_options.iq_scale_nm << "\t\t#saxs_options.iq_scale_nm\n";
+
+   ts << saxs_options.sh_max_harmonics << "\t\t#saxs_options.sh_max_harmonics\n";
+   ts << saxs_options.sh_fibonacci_grid_order << "\t\t#saxs_options.sh_fibonacci_grid_order\n";
+   ts << saxs_options.crysol_hydration_shell_contrast << "\t\t#saxs_options.crysol_hydration_shell_contrast\n";
+   ts << saxs_options.crysol_default_load_difference_intensity << "\t\t#saxs_options.crysol_default_load_difference_intensity\n";
+   ts << saxs_options.crysol_version_26 << "\t\t#saxs_options.crysol_version_26\n";
+
+   ts << saxs_options.fast_bin_size << "\t\t#saxs_options.fast_bin_size\n";
+   ts << saxs_options.fast_modulation << "\t\t#saxs_options.fast_modulation\n";
+
+   ts << saxs_options.compute_saxs_coeff_for_bead_models << "\t\t#saxs_options.compute_saxs_coeff_for_bead_models\n";
+   ts << saxs_options.compute_sans_coeff_for_bead_models << "\t\t#saxs_options.compute_sans_coeff_for_bead_models\n";
+
+   ts << saxs_options.default_atom_filename << endl;
+   ts << saxs_options.default_hybrid_filename << endl;
+   ts << saxs_options.default_saxs_filename << endl;
+   ts << saxs_options.default_rotamer_filename << endl;
+
+   ts << saxs_options.steric_clash_distance         << "\t\t#saxs_options.steric_clash_distance        \n";
+   ts << saxs_options.steric_clash_recheck_distance << "\t\t#saxs_options.steric_clash_recheck_distance\n";
+
+   ts << saxs_options.disable_iq_scaling << "\t\t#saxs_options.disable_iq_scaling\n";
+   ts << saxs_options.autocorrelate << "\t\t#saxs_options.autocorrelate\n";
+   ts << saxs_options.hybrid_radius_excl_vol << "\t\t#saxs_options.hybrid_radius_excl_vol\n";
+   ts << saxs_options.scale_excl_vol << "\t\t#saxs_options.scale_excl_vol\n";
+   ts << saxs_options.subtract_radius << "\t\t#saxs_options.subtract_radius\n";
+   ts << saxs_options.iqq_scale_minq << "\t\t#saxs_options.iqq_scale_minq\n";
+   ts << saxs_options.iqq_scale_maxq << "\t\t#saxs_options.iqq_scale_maxq\n";
+
+   ts << saxs_options.iqq_scale_nnls << "\t\t#saxs_options.iqq_scale_nnls\n";
+   ts << saxs_options.iqq_scale_linear_offset << "\t\t#saxs_options.iqq_scale_linear_offset\n";
+   ts << saxs_options.iqq_scale_chi2_fitting << "\t\t#saxs_options.iqq_scale_chi2_fitting\n";
+   ts << saxs_options.iqq_expt_data_contains_variances << "\t\t#saxs_options.iqq_expt_data_contains_variances\n";
+   ts << saxs_options.iqq_ask_target_grid << "\t\t#saxs_options.iqq_ask_target_grid\n";
+   ts << saxs_options.iqq_scale_play << "\t\t#saxs_options.iqq_scale_play\n";
+   ts << saxs_options.swh_excl_vol << "\t\t#saxs_options.swh_excl_vol\n";
+   ts << saxs_options.iqq_default_scaling_target << endl;
+
+   ts << saxs_options.saxs_iq_hybrid_adaptive << "\t\t#saxs_options.saxs_iq_hybrid_adaptive\n";
+   ts << saxs_options.sans_iq_hybrid_adaptive << "\t\t#saxs_options.sans_iq_hybrid_adaptive\n";
+
+   ts << saxs_options.bead_model_rayleigh   << "\t\t#saxs_options.bead_model_rayleigh  \n";
+   ts << saxs_options.iqq_log_fitting       << "\t\t#saxs_options.iqq_log_fitting      \n";
+   ts << saxs_options.iqq_kratky_fit        << "\t\t#saxs_options.iqq_kratky_fit       \n";
+   ts << saxs_options.iqq_use_atomic_ff     << "\t\t#saxs_options.iqq_use_atomic_ff    \n";
+   ts << saxs_options.iqq_use_saxs_excl_vol << "\t\t#saxs_options.iqq_use_saxs_excl_vol\n";
+   ts << saxs_options.alt_hydration         << "\t\t#saxs_options.alt_hydration        \n";
+
+   ts << saxs_options.xsr_symmop                << "\t\t#saxs_options.xsr_symmop               \n";
+   ts << saxs_options.xsr_nx                    << "\t\t#saxs_options.xsr_nx                   \n";
+   ts << saxs_options.xsr_ny                    << "\t\t#saxs_options.xsr_ny                   \n";
+   ts << saxs_options.xsr_griddistance          << "\t\t#saxs_options.xsr_griddistance         \n";
+   ts << saxs_options.xsr_ncomponents           << "\t\t#saxs_options.xsr_ncomponents          \n";
+   ts << saxs_options.xsr_compactness_weight    << "\t\t#saxs_options.xsr_compactness_weight   \n";
+   ts << saxs_options.xsr_looseness_weight      << "\t\t#saxs_options.xsr_looseness_weight     \n";
+   ts << saxs_options.xsr_temperature           << "\t\t#saxs_options.xsr_temperature          \n";
+
+   ts << hydro.zeno_zeno              << "\t\t#hydro.zeno_zeno             \n";
+   ts << hydro.zeno_interior          << "\t\t#hydro.zeno_interior         \n";
+   ts << hydro.zeno_surface           << "\t\t#hydro.zeno_surface          \n";
+   ts << hydro.zeno_zeno_steps        << "\t\t#hydro.zeno_zeno_steps       \n";
+   ts << hydro.zeno_interior_steps    << "\t\t#hydro.zeno_interior_steps   \n";
+   ts << hydro.zeno_surface_steps     << "\t\t#hydro.zeno_surface_steps    \n";
+   ts << hydro.zeno_surface_thickness << "\t\t#hydro.zeno_surface_thickness\n";
+
+   ts << misc.hydro_supc              << "\t\t#misc.hydro_supc             \n";
+   ts << misc.hydro_zeno              << "\t\t#misc.hydro_zeno             \n";
+
+   ts << batch.saxs_search << "\t\t#batch.saxs_search\n";
+   ts << batch.zeno        << "\t\t#batch.zeno       \n";
+
+   f.close();
+}
+#endif
+
+void US_Hydrodyn::hard_coded_defaults()
+{
+   // hard coded defaults
+   replicate_o_r_method_somo = false;
+
+   sidechain_overlap.remove_overlap = true;
+   sidechain_overlap.fuse_beads = true;
+   sidechain_overlap.fuse_beads_percent = 70.0;
+   sidechain_overlap.remove_hierarch = true;
+   sidechain_overlap.remove_hierarch_percent = 1.0;
+   sidechain_overlap.remove_sync = false;
+   sidechain_overlap.remove_sync_percent = 1.0;
+   sidechain_overlap.translate_out = true;
+   sidechain_overlap.show_translate = true;
+
+   mainchain_overlap.remove_overlap = true;
+   mainchain_overlap.fuse_beads = true;
+   mainchain_overlap.fuse_beads_percent = 70.0;
+   mainchain_overlap.remove_hierarch = true;
+   mainchain_overlap.remove_hierarch_percent = 1.0;
+   mainchain_overlap.remove_sync = false;
+   mainchain_overlap.remove_sync_percent = 1.0;
+   mainchain_overlap.translate_out = false;
+   mainchain_overlap.show_translate = false;
+
+   buried_overlap.remove_overlap = true;
+   buried_overlap.fuse_beads = false;
+   buried_overlap.fuse_beads_percent = 0.0;
+   buried_overlap.remove_hierarch = true;
+   buried_overlap.remove_hierarch_percent = 1.0;
+   buried_overlap.remove_sync = false;
+   buried_overlap.remove_sync_percent = 1.0;
+   buried_overlap.translate_out = false;
+   buried_overlap.show_translate = false;
+
+   replicate_o_r_method_grid = false;
+
+   grid_exposed_overlap.remove_overlap = true;
+   grid_exposed_overlap.fuse_beads = false;
+   grid_exposed_overlap.fuse_beads_percent = 0.0;
+   grid_exposed_overlap.remove_hierarch = false;
+   grid_exposed_overlap.remove_hierarch_percent = 1.0;
+   grid_exposed_overlap.remove_sync = true;
+   grid_exposed_overlap.remove_sync_percent = 1.0;
+   grid_exposed_overlap.translate_out = true;
+   grid_exposed_overlap.show_translate = true;
+
+   grid_buried_overlap.remove_overlap = true;
+   grid_buried_overlap.fuse_beads = false;
+   grid_buried_overlap.fuse_beads_percent = 0.0;
+   grid_buried_overlap.remove_hierarch = false;
+   grid_buried_overlap.remove_hierarch_percent = 1.0;
+   grid_buried_overlap.remove_sync = true;
+   grid_buried_overlap.remove_sync_percent = 1.0;
+   grid_buried_overlap.translate_out = false;
+   grid_buried_overlap.show_translate = false;
+
+   grid_overlap.remove_overlap = true;
+   grid_overlap.fuse_beads = false;
+   grid_overlap.fuse_beads_percent = 0.0;
+   grid_overlap.remove_hierarch = false;
+   grid_overlap.remove_hierarch_percent = 1.0;
+   grid_overlap.remove_sync = true;
+   grid_overlap.remove_sync_percent = 1.0;
+   grid_overlap.translate_out = false;
+   grid_overlap.show_translate = false;
+
+   overlap_tolerance = 0.001;
+
+   sidechain_overlap.title = "exposed side chain beads";
+   mainchain_overlap.title = "exposed main/main and main/side chain beads";
+   buried_overlap.title = "buried beads";
+   grid_exposed_overlap.title = "exposed grid beads";
+   grid_buried_overlap.title = "buried grid beads";
+   grid_overlap.title = "grid beads";
+
+   bead_output.sequence = 0;
+   bead_output.output = 1;
+   bead_output.correspondence = true;
+
+   asa.probe_radius = (float) 1.4;
+   asa.probe_recheck_radius = (float) 1.4;
+   asa.threshold = 20.0;
+   asa.threshold_percent = 50.0;
+   asa.grid_threshold = 10.0;
+   asa.grid_threshold_percent = 30.0;
+   asa.calculation = true;
+   asa.recheck_beads = true;
+   asa.method = true; // by default use ASAB1
+   asa.asab1_step = 1.0;
+
+   grid.cubic = true;       // apply cubic grid
+   grid.hydrate = true;    // true: hydrate model
+   grid.center = 0;    // 1: center of cubelet, 0: center of mass, 2: center of scattering
+   grid.tangency = false;   // true: Expand beads to tangency
+   grid.cube_side = 5.0;
+   grid.enable_asa = true;   // true: enable asa
+
+   misc.hydrovol = 24.041;
+   misc.compute_vbar = true;
+   misc.vbar = 0.72;
+   misc.vbar_temperature = 20.0;
+   misc.pb_rule_on = true;
+   misc.avg_radius = 1.68;
+   misc.avg_mass = 16.0;
+   misc.avg_hydration = 0.4;
+   misc.avg_volume = 15.3;
+   misc.avg_vbar = 0.72;
+   overlap_tolerance = 0.001;
+
+   hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+
+   hydro.solvent_name = "Water";
+   hydro.solvent_acronym = "w";
+   hydro.temperature = K20 - K0;
+   hydro.solvent_viscosity = VISC_20W * 100;
+   hydro.solvent_density = DENS_20W;
+
+   hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
+   hydro.boundary_cond = false;      // false: stick, true: slip (default false)
+   hydro.volume_correction = false;   // false: Automatic, true: manual (provide value)
+   hydro.volume = 0.0;               // volume correction
+   hydro.mass_correction = false;      // false: Automatic, true: manual (provide value)
+   hydro.mass = 0.0;                  // mass correction
+   hydro.bead_inclusion = false;      // false: exclude hidden beads; true: use all beads
+   hydro.rotational = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
+   hydro.viscosity = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
+   hydro.overlap_cutoff = false;      // false: same as in model building, true: enter manually
+   hydro.overlap = 0.0;               // overlap
+
+   pdb_parse.skip_hydrogen = true;
+   pdb_parse.skip_water = true;
+   pdb_parse.alternate = true;
+   pdb_parse.find_sh = false;
+   pdb_parse.missing_residues = 0;
+   pdb_parse.missing_atoms = 0;
+
+   saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
+
+   saxs_options.h_scat_len = -0.3742f;        // H scattering length (*10^-12 cm)
+   saxs_options.d_scat_len = 0.6671f ;        // D scattering length (*10^-12 cm)
+   saxs_options.h2o_scat_len_dens = -0.562f;  // H2O scattering length density (*10^-10 cm^2)
+   saxs_options.d2o_scat_len_dens = 6.404f;   // D2O scattering length density (*10^-10 cm^2)
+   saxs_options.d2o_conc = 0.16f;             // D2O concentration (0 to 1)
+   saxs_options.frac_of_exch_pep = 0.1f;      // Fraction of exchanged peptide H (0 to 1)
+
+   saxs_options.wavelength = 1.5;         // scattering wavelength
+   saxs_options.start_angle = 0.014f;     // start angle
+   saxs_options.end_angle = 8.214f;       // ending angle
+   saxs_options.delta_angle = 0.2f;       // angle stepsize
+   saxs_options.max_size = 40.0;          // maximum size (A)
+   saxs_options.bin_size = 1.0f;          // Bin size (A)
+   saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
+   saxs_options.curve = 1;                // 0 = raw, 1 = saxs, 2 = sans
+   saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
+
+   saxs_options.guinier_csv = false;
+   saxs_options.guinier_csv_filename = "guinier";
+   saxs_options.qRgmax = 1.3e0;
+   saxs_options.qstart = 1e-7;
+   saxs_options.qend = .5e0;
+   saxs_options.pointsmin = 10;
+   saxs_options.pointsmax = 100;
+
+   bd_options.threshold_pb_pb = 5;
+   bd_options.threshold_pb_sc = 5;
+   bd_options.threshold_sc_sc = 5;
+   bd_options.do_rr = true;
+   bd_options.force_chem = true;
+   bd_options.bead_size_type = 0;
+   bd_options.show_pdb = true;
+   bd_options.run_browflex = true;
+   bd_options.tprev = 8.0e-9;
+   bd_options.ttraj = 8.0e-6;
+   bd_options.deltat = 1.6e-13;
+   bd_options.npadif = 10;
+   bd_options.nconf = 1000;
+   bd_options.inter = 2;
+   bd_options.iorder = 1;
+   bd_options.iseed = 1234;
+   bd_options.icdm = 0;
+   bd_options.chem_pb_pb_bond_type = 0;
+   bd_options.compute_chem_pb_pb_force_constant = false;
+   bd_options.chem_pb_pb_force_constant = 10.0;
+   bd_options.compute_chem_pb_pb_equilibrium_dist = true;
+   bd_options.chem_pb_pb_equilibrium_dist = 0.0;
+   bd_options.compute_chem_pb_pb_max_elong = true;
+   bd_options.chem_pb_pb_max_elong = 0.0;
+   bd_options.chem_pb_sc_bond_type = 0;
+   bd_options.compute_chem_pb_sc_force_constant = false;
+   bd_options.chem_pb_sc_force_constant = 10.0;
+   bd_options.compute_chem_pb_sc_equilibrium_dist = true;
+   bd_options.chem_pb_sc_equilibrium_dist = 0.0;
+   bd_options.compute_chem_pb_sc_max_elong = true;
+   bd_options.chem_pb_sc_max_elong = 0.0;
+   bd_options.chem_sc_sc_bond_type = 0;
+   bd_options.compute_chem_sc_sc_force_constant = false;
+   bd_options.chem_sc_sc_force_constant = 10.0;
+   bd_options.compute_chem_sc_sc_equilibrium_dist = true;
+   bd_options.chem_sc_sc_equilibrium_dist = 0.0;
+   bd_options.compute_chem_sc_sc_max_elong = true;
+   bd_options.chem_sc_sc_max_elong = 0.0;
+   bd_options.pb_pb_bond_type = 0;
+   bd_options.compute_pb_pb_force_constant = false;
+   bd_options.pb_pb_force_constant = 10.0;
+   bd_options.compute_pb_pb_equilibrium_dist = true;
+   bd_options.pb_pb_equilibrium_dist = 0.0;
+   bd_options.compute_pb_pb_max_elong = true;
+   bd_options.pb_pb_max_elong = 0.0;
+   bd_options.pb_sc_bond_type = 0;
+   bd_options.compute_pb_sc_force_constant = false;
+   bd_options.pb_sc_force_constant = 10.0;
+   bd_options.compute_pb_sc_equilibrium_dist = true;
+   bd_options.pb_sc_equilibrium_dist = 0.0;
+   bd_options.compute_pb_sc_max_elong = true;
+   bd_options.pb_sc_max_elong = 0.0;
+   bd_options.sc_sc_bond_type = 0;
+   bd_options.compute_sc_sc_force_constant = false;
+   bd_options.sc_sc_force_constant = 10.0;
+   bd_options.compute_sc_sc_equilibrium_dist = true;
+   bd_options.sc_sc_equilibrium_dist = 0.0;
+   bd_options.compute_sc_sc_max_elong = true;
+   bd_options.sc_sc_max_elong = 0.0;
+   bd_options.nmol = 1;
+
+   anaflex_options.run_anaflex = true;
+   anaflex_options.nfrec = 10;
+   anaflex_options.instprofiles = false;
+   anaflex_options.run_mode_1 = false;
+   anaflex_options.run_mode_1_1 = false;
+   anaflex_options.run_mode_1_2 = false;
+   anaflex_options.run_mode_1_3 = false;
+   anaflex_options.run_mode_1_4 = false;
+   anaflex_options.run_mode_1_5 = false;
+   anaflex_options.run_mode_1_7 = false;
+   anaflex_options.run_mode_1_8 = false;
+   anaflex_options.run_mode_1_12 = false;
+   anaflex_options.run_mode_1_13 = false;
+   anaflex_options.run_mode_1_14 = false;
+   anaflex_options.run_mode_1_18 = true;
+   anaflex_options.run_mode_1_20 = false;
+   anaflex_options.run_mode_1_24 = false;
+   anaflex_options.run_mode_2 = false;
+   anaflex_options.run_mode_2_1 = false;
+   anaflex_options.run_mode_2_2 = false;
+   anaflex_options.run_mode_2_3 = false;
+   anaflex_options.run_mode_2_4 = false;
+   anaflex_options.run_mode_2_5 = false;
+   anaflex_options.run_mode_2_7 = false;
+   anaflex_options.run_mode_2_8 = false;
+   anaflex_options.run_mode_2_12 = false;
+   anaflex_options.run_mode_2_13 = false;
+   anaflex_options.run_mode_2_14 = false;
+   anaflex_options.run_mode_2_18 = true;
+   anaflex_options.run_mode_2_20 = false;
+   anaflex_options.run_mode_2_24 = false;
+   anaflex_options.run_mode_3 = true;
+   anaflex_options.run_mode_3_1 = true;
+   anaflex_options.run_mode_3_5 = false;
+   anaflex_options.run_mode_3_9 = false;
+   anaflex_options.run_mode_3_10 = false;
+   anaflex_options.run_mode_3_14 = false;
+   anaflex_options.run_mode_3_15 = false;
+   anaflex_options.run_mode_3_16 = false;
+   anaflex_options.run_mode_4 = false;
+   anaflex_options.run_mode_4_1 = false;
+   anaflex_options.run_mode_4_6 = false;
+   anaflex_options.run_mode_4_7 = false;
+   anaflex_options.run_mode_4_8 = true;
+   anaflex_options.run_mode_9 = false;
+   anaflex_options.ntimc = 21;
+   anaflex_options.tmax = (float)1.6e-6;
+   anaflex_options.run_mode_3_5_iii = 1;
+   anaflex_options.run_mode_3_5_jjj = 99999;
+   anaflex_options.run_mode_3_10_theta = 90.0;
+   anaflex_options.run_mode_3_10_refractive_index = (float)1.3312;
+   anaflex_options.run_mode_3_10_lambda = 633.0;
+   anaflex_options.run_mode_3_14_iii = 1;
+   anaflex_options.run_mode_3_14_jjj = 99999;
+      
+   batch.missing_atoms = 0;
+   batch.missing_residues = 0;
+   batch.somo = true;
+   batch.grid = false;
+   batch.hydro = true;
+   batch.avg_hydro = false;
+   batch.avg_hydro_name = "results";
+   batch.height = 0;
+   batch.width = 0;
+   batch.file.clear();
+
+   path_load_pdb = "";
+   path_view_pdb = "";
+   path_load_bead_model = "";
+   path_view_asa_res = "";
+   path_view_bead_model = "";
+   path_open_hydro_res = "";
+   saxs_options.path_load_saxs_curve = "";
+   saxs_options.path_load_gnom = "";
+   saxs_options.path_load_prr = "";
+
+   save_params.field.clear();
+
+   asa.hydrate_probe_radius = 1.4f;
+   asa.hydrate_threshold = 10.0f;
+
+   misc.target_e_density       = 0e0;
+   misc.target_volume          = 0e0;
+   misc.set_target_on_load_pdb = false;
+   misc.equalize_radii         = false;
+
+   dmd_options.force_chem = true;
+   dmd_options.pdb_static_pairs = false;
+   dmd_options.threshold_pb_pb = 5;
+   dmd_options.threshold_pb_sc = 5;
+   dmd_options.threshold_sc_sc = 5;
+
+   saxs_options.normalize_by_mw = true;
+
+   saxs_options.saxs_iq_native_debye = false;
+   saxs_options.saxs_iq_native_hybrid = false;
+   saxs_options.saxs_iq_native_hybrid2 = false;
+   saxs_options.saxs_iq_native_hybrid3 = true;
+   saxs_options.saxs_iq_native_fast = false;
+   saxs_options.saxs_iq_native_fast_compute_pr = false;
+   saxs_options.saxs_iq_foxs = false;
+   saxs_options.saxs_iq_crysol = false;
+
+   saxs_options.sans_iq_native_debye = true;
+   saxs_options.sans_iq_native_hybrid = false;
+   saxs_options.sans_iq_native_hybrid2 = false;
+   saxs_options.sans_iq_native_hybrid3 = false;
+   saxs_options.sans_iq_native_fast = false;
+   saxs_options.sans_iq_native_fast_compute_pr = false;
+   saxs_options.sans_iq_cryson = false;
+
+   saxs_options.hybrid2_q_points = 15;
+
+   saxs_options.iq_ask = false;
+
+   saxs_options.iq_scale_ask = false;
+   saxs_options.iq_scale_angstrom = true;
+   saxs_options.iq_scale_nm = false;
+
+   saxs_options.sh_max_harmonics = 15;
+   saxs_options.sh_fibonacci_grid_order = 17;
+   saxs_options.crysol_hydration_shell_contrast = 0.03f;
+   saxs_options.crysol_default_load_difference_intensity = true;
+   saxs_options.crysol_version_26 = true;
+
+   saxs_options.fast_bin_size = 0.5f;
+   saxs_options.fast_modulation = 0.23f;
+
+   saxs_options.compute_saxs_coeff_for_bead_models = true;
+   saxs_options.compute_sans_coeff_for_bead_models = false;
+
+   saxs_options.default_atom_filename = "";
+   saxs_options.default_hybrid_filename = "";
+   saxs_options.default_saxs_filename = "";
+   saxs_options.default_rotamer_filename = "";
+
+   saxs_options.steric_clash_distance         = 20.0;
+   saxs_options.steric_clash_recheck_distance = 0.0;
+
+   saxs_options.disable_iq_scaling = false;
+   saxs_options.autocorrelate = true;
+   saxs_options.hybrid_radius_excl_vol = false;
+   saxs_options.scale_excl_vol = 1.0f;
+   saxs_options.subtract_radius = false;
+   saxs_options.iqq_scale_minq = 0.0f;
+   saxs_options.iqq_scale_maxq = 0.0f;
+
+   saxs_options.iqq_scale_nnls = false;
+   saxs_options.iqq_scale_linear_offset = false;
+   saxs_options.iqq_scale_chi2_fitting = true;
+   saxs_options.iqq_expt_data_contains_variances = false;
+   saxs_options.iqq_ask_target_grid = true;
+   saxs_options.iqq_scale_play = false;
+   saxs_options.swh_excl_vol = 0.0f;
+   saxs_options.iqq_default_scaling_target = "";
+
+   saxs_options.saxs_iq_hybrid_adaptive = true;
+   saxs_options.sans_iq_hybrid_adaptive = true;
+
+   saxs_options.bead_model_rayleigh   = true;
+   saxs_options.iqq_log_fitting       = false;
+   saxs_options.iqq_kratky_fit        = false;
+   saxs_options.iqq_use_atomic_ff     = false;
+   saxs_options.iqq_use_saxs_excl_vol = false;
+   saxs_options.alt_hydration         = false;
+
+   saxs_options.xsr_symmop                = 2;
+   saxs_options.xsr_nx                    = 32;
+   saxs_options.xsr_ny                    = 32;
+   saxs_options.xsr_griddistance          = 3e0;
+   saxs_options.xsr_ncomponents           = 1;
+   saxs_options.xsr_compactness_weight    = 10e0;
+   saxs_options.xsr_looseness_weight      = 10e0;
+   saxs_options.xsr_temperature           = 1e-3;
+
+   hydro.zeno_zeno              = true;
+   hydro.zeno_interior          = true;
+   hydro.zeno_surface           = true;
+   hydro.zeno_zeno_steps        = 1000;
+   hydro.zeno_interior_steps    = 1000;
+   hydro.zeno_surface_steps     = 1000;
+   hydro.zeno_surface_thickness = 0.0f;
+
+   misc.hydro_supc              = true;
+   misc.hydro_zeno              = false;
+
+   rotamer_changed = true;  // force on-demand loading of rotamer file
+
+   batch.saxs_search = false;
+   batch.zeno        = false;
 
    saxs_options.ignore_errors                      = false;
    saxs_options.alt_ff                             = true;
@@ -4319,6 +5184,61 @@ void US_Hydrodyn::set_default()
    asa.vvv_grid_dR                                 = 0.5f;
 
    misc.export_msroll                              = false;
+
+   saxs_options.cs_qRgmax                          = 1e0;
+   saxs_options.cs_qstart                          = 1e-14;
+   saxs_options.cs_qend                            = 2.5e-1;
+
+   saxs_options.conc                               = 1e0;
+   saxs_options.psv                                = 0e0;
+   saxs_options.use_cs_psv                         = false;
+   saxs_options.cs_psv                             = 0e0;
+   saxs_options.I0_exp                             = 1.633e-2;
+   saxs_options.I0_theo                            = 5.4e-5;
+   saxs_options.diffusion_len                      = 2.82e-13;
+   saxs_options.nuclear_mass                       = 1.674e-24;
+
+   saxs_options.guinier_outlier_reject             = false;
+   saxs_options.guinier_outlier_reject_dist        = 2e0;
+   saxs_options.guinier_use_sd                     = false;
+   saxs_options.guinier_use_standards              = false;
+}
+
+void US_Hydrodyn::set_default()
+{
+   QFile f;
+   QString str;
+   int j;
+   // only keep one copy of defaults in system root dir
+   f.setName(USglobal->config_list.system_dir + "/etc/somo.defaults");
+   bool config_read = false;
+   if (f.open(IO_ReadOnly)) // read system directory
+   {
+      j=read_config(f);
+      if ( j )
+      {
+         cout << "read config returned " << j << endl;
+         QMessageBox::message(tr("Please note:"),
+                              tr("The somo.default configuration file was found to be corrupt.\n"
+                                 "Resorting to hard-coded defaults."));
+      }
+      else
+      {
+         config_read = true;
+      }
+   }
+   else
+   {
+      QMessageBox::message(tr("Notice:"),
+                           tr("Configuration defaults file ") +
+                           f.name() + tr(" not found\nUsing hard-coded defaults."));
+   }
+
+   if ( !config_read )
+   {
+      hard_coded_defaults();
+
+   }
 
    // defaults that SHOULD NOT BE MOVED INTO somo.config
 

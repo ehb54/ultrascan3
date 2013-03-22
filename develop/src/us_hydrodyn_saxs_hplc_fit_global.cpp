@@ -123,7 +123,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    connect(cb_pct_center, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    le_pct_center = new mQLineEdit(this, "le_pct_center Line Edit");
-   le_pct_center->setText( "10" );
+   le_pct_center->setText( "5" );
    le_pct_center->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_center->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -157,7 +157,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    connect(cb_pct_width, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    le_pct_width = new mQLineEdit(this, "le_pct_width Line Edit");
-   le_pct_width->setText( "50" );
+   le_pct_width->setText( "5" );
    le_pct_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_width->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -191,7 +191,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    connect(cb_pct_amplitude, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    le_pct_amplitude = new mQLineEdit(this, "le_pct_amplitude Line Edit");
-   le_pct_amplitude->setText( "50" );
+   le_pct_amplitude->setText( "5" );
    le_pct_amplitude->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_amplitude->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pct_amplitude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));

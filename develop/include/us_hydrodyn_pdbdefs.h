@@ -381,6 +381,11 @@ struct saxs_options
    double       I0_theo;
    double       diffusion_len;
    double       nuclear_mass;
+
+   bool         guinier_outlier_reject;
+   double       guinier_outlier_reject_dist;
+   bool         guinier_use_sd;
+   bool         guinier_use_standards;
 };
 
 struct saxs_atom

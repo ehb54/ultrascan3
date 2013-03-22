@@ -161,6 +161,31 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
+   cb_guinier_use_sd = new QCheckBox(this);
+   cb_guinier_use_sd->setText(tr(" Use SD's for fitting "));
+   cb_guinier_use_sd->setEnabled(true);
+   cb_guinier_use_sd->setChecked((*saxs_options).guinier_use_sd);
+   cb_guinier_use_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_use_sd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_use_sd, SIGNAL(clicked()), this, SLOT(set_guinier_use_sd()));
+
+   cb_guinier_outlier_reject = new QCheckBox(this);
+   cb_guinier_outlier_reject->setText(tr(" Repeat the analysis after discarding points\n over the regression line by more than SD of "));
+   cb_guinier_outlier_reject->setEnabled(true);
+   cb_guinier_outlier_reject->setChecked((*saxs_options).guinier_outlier_reject);
+   cb_guinier_outlier_reject->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_outlier_reject->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_outlier_reject, SIGNAL(clicked()), this, SLOT(set_guinier_outlier_reject()));
+
+   le_guinier_outlier_reject_dist = new QLineEdit(this);
+   le_guinier_outlier_reject_dist->setValidator( new QDoubleValidator( le_guinier_outlier_reject_dist ) );
+   ( (QDoubleValidator *)le_guinier_outlier_reject_dist->validator() )->setRange( 0, 1, 2 );
+   le_guinier_outlier_reject_dist->setText( QString( "%1" ).arg( (*saxs_options).guinier_outlier_reject_dist ) );
+   le_guinier_outlier_reject_dist->setEnabled(true);
+   le_guinier_outlier_reject_dist->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_guinier_outlier_reject_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_guinier_outlier_reject_dist, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
+
    cb_guinier_csv = new QCheckBox(this);
    cb_guinier_csv->setText(tr(" Save Guinier results to csv file: "));
    cb_guinier_csv->setEnabled(true);
@@ -215,7 +240,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_use_cs_psv->setChecked((*saxs_options).use_cs_psv );
    cb_use_cs_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_use_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   // cb_use_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 
    le_cs_psv = new QLineEdit(this);
    le_cs_psv->setValidator( new QDoubleValidator( le_cs_psv ) );
@@ -224,6 +248,40 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_psv->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_cs_psv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_cs_psv, SIGNAL( textChanged( const QString & )), SLOT(update_cs_psv( const QString &)));
+
+   lbl_diffusion_len = new QLabel(tr(" Diffusion length (cm) : "), this);
+   lbl_diffusion_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_diffusion_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_diffusion_len = new QLineEdit(this);
+   le_diffusion_len->setValidator( new QDoubleValidator( le_diffusion_len ) );
+   le_diffusion_len->setText( QString( "%1" ).arg( (*saxs_options).diffusion_len ) );
+   le_diffusion_len->setEnabled(true);
+   le_diffusion_len->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
+
+   lbl_nuclear_mass = new QLabel(tr(" Nucleon mass (g) : "), this);
+   lbl_nuclear_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_nuclear_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_nuclear_mass = new QLineEdit(this);
+   le_nuclear_mass->setValidator( new QDoubleValidator( le_nuclear_mass ) );
+   le_nuclear_mass->setText( QString( "%1" ).arg( (*saxs_options).nuclear_mass ) );
+   le_nuclear_mass->setEnabled(true);
+   le_nuclear_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_nuclear_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nuclear_mass( const QString &)));
+
+   cb_guinier_use_standards = new QCheckBox(this);
+   cb_guinier_use_standards->setText( tr(" Use I0 standards for normalization") );
+   cb_guinier_use_standards->setEnabled( true );
+   connect( cb_guinier_use_standards, SIGNAL( clicked() ), SLOT( set_guinier_use_standards() ) );
+   cb_guinier_use_standards->setChecked((*saxs_options).guinier_use_standards );
+   cb_guinier_use_standards->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_guinier_use_standards->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    lbl_I0_exp = new QLabel(tr(" I0 standard experimental (arbitrary) : "), this);
    lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -250,32 +308,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_I0_theo->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_I0_theo->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_I0_theo, SIGNAL( textChanged( const QString & )), SLOT(update_I0_theo( const QString &)));
-
-   lbl_diffusion_len = new QLabel(tr(" Diffusion length (cm) : "), this);
-   lbl_diffusion_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_diffusion_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_diffusion_len = new QLineEdit(this);
-   le_diffusion_len->setValidator( new QDoubleValidator( le_diffusion_len ) );
-   le_diffusion_len->setText( QString( "%1" ).arg( (*saxs_options).diffusion_len ) );
-   le_diffusion_len->setEnabled(true);
-   le_diffusion_len->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
-
-   lbl_nuclear_mass = new QLabel(tr(" Nuclear mass (g) : "), this);
-   lbl_nuclear_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_nuclear_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_nuclear_mass = new QLineEdit(this);
-   le_nuclear_mass->setValidator( new QDoubleValidator( le_nuclear_mass ) );
-   le_nuclear_mass->setText( QString( "%1" ).arg( (*saxs_options).nuclear_mass ) );
-   le_nuclear_mass->setEnabled(true);
-   le_nuclear_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_nuclear_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nuclear_mass( const QString &)));
 
    pb_guinier = new QPushButton(tr("Process Guinier"), this);
    pb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -336,6 +368,11 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_pointsmax, j, 0);
    background->addWidget(le_pointsmax, j, 1);
    j++;
+   background->addMultiCellWidget(cb_guinier_use_sd, j, j, 0, 1);
+   j++;
+   background->addWidget(cb_guinier_outlier_reject, j, 0);
+   background->addWidget(le_guinier_outlier_reject_dist, j, 1);
+   j++;
    background->addWidget(cb_guinier_csv, j, 0);
    background->addWidget(le_guinier_csv_filename, j, 1);
    j++;
@@ -355,6 +392,17 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_cs_psv, j, 1);
    j++;
 
+   background->addWidget(lbl_diffusion_len, j, 0);
+   background->addWidget(le_diffusion_len, j, 1);
+   j++;
+
+   background->addWidget(lbl_nuclear_mass, j, 0);
+   background->addWidget(le_nuclear_mass, j, 1);
+   j++;
+
+   background->addMultiCellWidget( cb_guinier_use_standards, j, j, 0, 1);
+   j++;
+
    background->addWidget(lbl_I0_exp, j, 0);
    background->addWidget(le_I0_exp, j, 1);
    j++;
@@ -364,13 +412,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    j++;
 
 
-   background->addWidget(lbl_diffusion_len, j, 0);
-   background->addWidget(le_diffusion_len, j, 1);
-   j++;
-
-   background->addWidget(lbl_nuclear_mass, j, 0);
-   background->addWidget(le_nuclear_mass, j, 1);
-   j++;
 
    {
       QGridLayout * gl2 = new QGridLayout( 0 );
@@ -519,6 +560,25 @@ void US_Hydrodyn_SasOptionsGuinier::update_psv( const QString & str )
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_sd()
+{
+   (*saxs_options).guinier_use_sd = cb_guinier_use_sd->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_outlier_reject()
+{
+   (*saxs_options).guinier_outlier_reject = cb_guinier_outlier_reject->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_guinier_outlier_reject_dist( const QString & str )
+{
+   double val = str.toDouble();
+   (*saxs_options).guinier_outlier_reject_dist = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SasOptionsGuinier::set_use_cs_psv()
 {
    (*saxs_options).use_cs_psv = cb_use_cs_psv->isChecked();
@@ -529,6 +589,12 @@ void US_Hydrodyn_SasOptionsGuinier::update_cs_psv( const QString & str )
 {
    double val = str.toDouble();
    (*saxs_options).cs_psv = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_standards()
+{
+   (*saxs_options).guinier_use_standards = cb_guinier_use_standards->isChecked();
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -560,11 +626,40 @@ void US_Hydrodyn_SasOptionsGuinier::update_nuclear_mass( const QString & str )
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-
 void US_Hydrodyn_SasOptionsGuinier::guinier()
 {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->show();
+      }
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_analysis();
+   } else {
+      QMessageBox::message( caption() + ": Process Guinier",
+                            tr( "The main SAS window is not active" ) );
+   }
 }
 
 void US_Hydrodyn_SasOptionsGuinier::cs_guinier()
 {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->show();
+      }
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_cs();
+   } else {
+      QMessageBox::message( caption() + ": Process Guinier",
+                            tr( "The main SAS window is not active" ) );
+   }
 }

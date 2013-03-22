@@ -4652,6 +4652,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       QString line = tsi.readLine();
       if ( rx_end.search( line ) != -1 )
       {
+         last_chain_id = "";
+         last_residue_id = "";
          if ( modelrestartatom )
          {
             atomno = startatom;

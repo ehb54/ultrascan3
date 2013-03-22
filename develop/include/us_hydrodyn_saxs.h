@@ -251,6 +251,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_clear_plot_pr;
       QPushButton *pb_pr_legend;
       QPushButton *pb_load_gnom;
+      QPushButton *pb_ift;
       QPushButton *pb_saxs_search;
       QPushButton *pb_saxs_screen;
       QPushButton *pb_saxs_buffer;
@@ -762,6 +763,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                          double mw = 1e0 );
       void update_saxs_sans();
 
+      void guinier_window();
       void run_guinier_analysis();
       void run_guinier_cs();
       QString saxs_filestring();
@@ -779,6 +781,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_lowI(const QString &);
       void update_user_highI(const QString &);
       void load_gnom();
+      void ift();
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
