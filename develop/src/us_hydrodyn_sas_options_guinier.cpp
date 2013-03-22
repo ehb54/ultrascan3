@@ -162,7 +162,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
    cb_guinier_use_sd = new QCheckBox(this);
-   cb_guinier_use_sd->setText(tr(" Use SD's for fitting "));
+   cb_guinier_use_sd->setText(tr(" Use SDs for fitting "));
    cb_guinier_use_sd->setEnabled(true);
    cb_guinier_use_sd->setChecked((*saxs_options).guinier_use_sd);
    cb_guinier_use_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -234,7 +234,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_psv, SIGNAL( textChanged( const QString & )), SLOT(update_psv( const QString &)));
 
    cb_use_cs_psv = new QCheckBox(this);
-   cb_use_cs_psv->setText( tr(" Partial specific volume overide for CS (ml/g): ") );
+   cb_use_cs_psv->setText( tr(" Partial specific volume override for CS (ml/g): ") );
    cb_use_cs_psv->setEnabled( true );
    connect( cb_use_cs_psv, SIGNAL( clicked() ), SLOT( set_use_cs_psv() ) );
    cb_use_cs_psv->setChecked((*saxs_options).use_cs_psv );
@@ -283,7 +283,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_guinier_use_standards->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_guinier_use_standards->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   lbl_I0_exp = new QLabel(tr(" I0 standard experimental (arbitrary) : "), this);
+   lbl_I0_exp = new QLabel(tr(" I0 standard experimental (a.u.) : "), this);
    lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_exp->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

@@ -5977,14 +5977,17 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
    QString csvlog = 
       "\"Source file\","
       "\"Notes\","
-      "\"Rg\","
-      "\"Rg sd\","
+      "\"Rc\","
+      "\"Rc sd\","
       "\"I(0)\","
       "\"I(0) sd\","
+      "\"M/L\","
+      "\"M/L sd\","
+      "\"Delta_e(p,s)\","
       "\"q min\","
       "\"q max\","
-      "\"q*Rg min\","
-      "\"q*Rg max\","
+      "\"q*Rc min\","
+      "\"q*Rc max\","
       "\"starting point\","
       "\"ending point\","
       "\"points used\","
@@ -6042,6 +6045,9 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"Rg sd\","
       "\"I(0)\","
       "\"I(0) sd\","
+      "\"MW\","
+      "\"MW sd\","
+      "\"Delta_e(p,s)\","
       "\"q min\","
       "\"q max\","
       "\"q*Rg min\","
@@ -6222,17 +6228,37 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(qsl_plotted_iq_names[i]);
 
       } else {
+         double MW;
+         double MW_sd;
+         double ICL;
+
+         if ( mw_from_I0( siga, MW_sd, ICL ) )
+         {
+            // cout << QString( "siga %1 MW_sd %2 ICL %3\n" ).arg( siga ).arg( MW_sd ).arg( ICL );
+         } else {
+            // cout << errormsg << endl;
+         }
+
+         if ( !mw_from_I0( Io, MW, ICL ) )
+         {
+            editor_msg( "red", errormsg );
+            // cout << errormsg;
+         } else {
+            // cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( Io ).arg( MW ).arg( ICL );
+         }
+
          report = 
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
-                     
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
-                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb
                      , Io
                      , siga
+                     , MW
+                     , MW_sd
                      , sRgmin
                      , sRgmax
                      , bestend - beststart + 1
@@ -6265,17 +6291,15 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
-                    "%9,"
                     )
-            .arg(qsl_plotted_iq_names[i])
-            .arg(Rg)
+            .arg( qsl_plotted_iq_names[i] )
+            .arg( Rg )
             .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
-            .arg(Io)
-            .arg(siga)
-            .arg(smin)
-            .arg(smax)
-            .arg(sRgmin)
-            .arg(sRgmax)
+            .arg( Io )
+            .arg( siga )
+            .arg( MW )
+            .arg( MW_sd )
+            .arg( ICL )
             ;
 
          csvlog += 
@@ -6283,9 +6307,17 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%1,"
                     "%2,"
                     "%3,"
-                    "%4"
+                    "%4,"
+                    "%5,"
+                    "%6,"
+                    "%7,"
+                    "%8"
                     "\n"
                     )
+            .arg(smin)
+            .arg(smax)
+            .arg(sRgmin)
+            .arg(sRgmax)
             .arg(beststart)
             .arg(bestend)
             .arg(bestend - beststart + 1)
@@ -6330,7 +6362,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    int pointsmin = our_saxs_options->pointsmin;
    int pointsmax = our_saxs_options->pointsmax;
-   double sRgmaxlimit = our_saxs_options->qRgmax;
+   double sRgmaxlimit = our_saxs_options->cs_qRgmax;
    double pointweightpower = 3e0;
    double p_guinier_maxq = our_saxs_options->qend;
    
@@ -6400,7 +6432,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       report =
          QString(
                  "CS Guinier analysis of %1:\n"
-                 "**** Could not compute Rg, too few data points %2 ****\n"
+                 "**** Could not compute Rc, too few data points %2 ****\n"
                  )
          .arg(plotted_q[i].size());
 
@@ -6419,29 +6451,41 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          report =
             QString(
                     "CS Guinier analysis of %1:\n"
-                    "**** Could not compute Rg ****\n"
+                    "**** Could not compute Rc ****\n"
                     )
             .arg(qsl_plotted_iq_names[i]);
 
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Could not compute Rg\"\n"
+                    "\"Could not compute Rc\"\n"
                     )
             .arg(qsl_plotted_iq_names[i]);
 
       } else {
+         double ML;
+         double ML_sd;
+         double ICL;
+
+         ml_from_qI0( siga, ML_sd, ICL );
+         if ( !mw_from_I0( Io, ML, ICL ) )
+         {
+            editor_msg( "red", errormsg );
+         }
+
          report = 
             QString("")
             .sprintf(
                      "CS Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e\n"
                      
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
                      , Io
                      , siga
+                     , ML
+                     , ML_sd
                      , sRgmin
                      , sRgmax
                      , bestend - beststart + 1
@@ -6474,17 +6518,15 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
-                    "%9,"
                     )
             .arg(qsl_plotted_iq_names[i])
             .arg(Rg)
             .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
             .arg(Io)
             .arg(siga)
-            .arg(smin)
-            .arg(smax)
-            .arg(sRgmin)
-            .arg(sRgmax)
+            .arg( ML )
+            .arg( ML_sd )
+            .arg( ICL )
             ;
 
          csvlog += 
@@ -6492,9 +6534,17 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%1,"
                     "%2,"
                     "%3,"
-                    "%4"
+                    "%4,"
+                    "%5,"
+                    "%6,"
+                    "%7,"
+                    "%8"
                     "\n"
                     )
+            .arg(smin)
+            .arg(smax)
+            .arg(sRgmin)
+            .arg(sRgmax)
             .arg(beststart)
             .arg(bestend)
             .arg(bestend - beststart + 1)
@@ -7778,4 +7828,84 @@ void US_Hydrodyn_Saxs::guinier_window()
       US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
    }
+}
+
+bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_contrast )
+{
+   double I0_exp_to_theo_mult = 1e0;
+   if ( our_saxs_options->guinier_use_standards )
+   {
+      if ( our_saxs_options->I0_exp == 0e0 )
+      {
+         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         MW = 0e0;
+         return false;
+      }
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+   }
+
+   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
+
+   if ( our_saxs_options->nuclear_mass == 0e0 )
+   {
+      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
+   if ( our_saxs_options->conc == 0e0 )
+   {
+      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
+   internal_contrast = 
+      our_saxs_options->diffusion_len * 
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nuclear_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
+
+   MW = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast );
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_contrast )
+{
+   double I0_exp_to_theo_mult = 1e0;
+   if ( our_saxs_options->guinier_use_standards )
+   {
+      if ( our_saxs_options->I0_exp == 0e0 )
+      {
+         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         ML = 0e0;
+         return false;
+      }
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+   }
+
+   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
+
+   if ( our_saxs_options->nuclear_mass == 0e0 )
+   {
+      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      ML = 0e0;
+      return false;
+   }
+
+   if ( our_saxs_options->conc == 0e0 )
+   {
+      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      ML = 0e0;
+      return false;
+   }
+
+   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : our_saxs_options->psv;
+
+   internal_contrast = 
+      our_saxs_options->diffusion_len * 
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nuclear_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+   
+   ML = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
+
+   return true;
 }

@@ -664,6 +664,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_color_if_ok( QColor bg, QColor set );
       unsigned int pen_width;
 
+      bool mw_from_I0 ( double I0_exp, double &MW, double &internal_contrast );
+      bool ml_from_qI0( double I0_exp, double &ML, double &internal_contrast );
+
    private slots:
 
       void foxs_readFromStdout();

@@ -1193,6 +1193,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggauss_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_ggauss_results->setEnabled( false );
    connect(pb_ggauss_results, SIGNAL(clicked()), SLOT(ggauss_results()));
+   // pb_ggauss_results->hide();
 
    pb_gauss_as_curves = new QPushButton(tr("Produce Gaussians as curves"), this);
    pb_gauss_as_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));

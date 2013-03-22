@@ -3427,7 +3427,7 @@ void US_Hydrodyn::write_config(const QString& fname)
    QString str;
    f.setName( fname );
    cout << fname << endl;
-   if (f.open(IO_WriteOnly | IO_Translate)) // first try user's directory for default settings
+   if ( f.open( IO_WriteOnly ) ) // first try user's directory for default settings
    {
       QTextStream ts(&f);
       
