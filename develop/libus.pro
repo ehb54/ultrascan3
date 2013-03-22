@@ -256,6 +256,9 @@ SOURCES += \
   src/us_hydrodyn_saxs_buffer_conc.cpp \
   src/us_hydrodyn_saxs_buffer_conc_load.cpp \
   src/us_hydrodyn_saxs_hplc.cpp \
+  src/us_hydrodyn_saxs_hplc_stack.cpp \
+  src/us_hydrodyn_saxs_hplc_makeiq.cpp \
+  src/us_hydrodyn_saxs_hplc_plots.cpp \
   src/us_hydrodyn_saxs_hplc_ciq.cpp \
   src/us_hydrodyn_saxs_hplc_dctr.cpp \
   src/us_hydrodyn_saxs_hplc_p3d.cpp \
@@ -346,6 +349,7 @@ SOURCES += \
   src/us_thread.cpp \
   src/us_util.cpp \
   src/us_vbar.cpp \
+  src/us_vector.cpp \
   src/us_velocreport.cpp \
   src/us_velocmodelctrl.cpp \
   src/us_vhwdat.cpp \
@@ -621,6 +625,7 @@ HEADERS += \
   include/us_tnt_jama.h \
   include/us_util.h \
   include/us_vbar.h \
+  include/us_vector.h \
   include/us_velocreport.h \
   include/us_velocmodelctrl.h \
   include/us_version.h \

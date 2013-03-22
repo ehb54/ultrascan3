@@ -1,0 +1,35 @@
+#ifndef US_VECTOR_H
+#define US_VECTOR_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <qstring.h>
+#include <qregexp.h>
+#include <map>
+#include <vector>
+#include <list>
+
+using namespace std;
+
+class US_Vector
+{
+ public:
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+   static void printvector( QString qs, vector < unsigned int > x );
+   static void printvector( QString qs, vector < double > x, int digits = 8 );
+   static void printvector( QString qs, vector < bool > x );
+   static vector < double > intersection( vector < double > &x, vector < double > &y );
+   static vector < double > intersection( vector < vector < double > > &x );
+   static vector < double > vunion( vector < double > &x, vector < double > &y );
+   static vector < double > vunion( vector < vector < double > > &x );
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+};
+
+#endif

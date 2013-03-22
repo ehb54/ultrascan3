@@ -5511,27 +5511,11 @@ void US_Hydrodyn_Saxs_Buffer::guinier()
 {
 }
 
-
 void US_Hydrodyn_Saxs_Buffer::crop_common()
 {
-   // first make curves visible,
-   // of no movement needed, then start cropping points
-   
-   // find selected curves & their left most position:
-   // bool all_lefts_visible = true;
    map < QString, bool > selected_files;
 
-   double minx = 0e0;
-   double maxx = 0e0;
-   double miny = 0e0;
-   double maxy = 0e0;
-
-   double maxminx = 0e0;
-   double minmaxx = 0e0;
-
-   bool first = true;
-
-   bool any_differences = false;
+   vector < vector < double > > grids;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -5544,195 +5528,40 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
               f_Is[ this_file ].size() )
          {
             selected_files[ this_file ] = true;
-            double this_minx = f_qs[ this_file ][ 0 ];
-            double this_maxx = f_qs[ this_file ][ f_qs[ this_file ].size() - 1 ];
-            double this_miny = f_Is[ this_file ][ 0 ];
-            double this_maxy = f_Is[ this_file ][ 0 ];
-
-            for ( unsigned int j = 1; j < f_qs[ this_file ].size(); j++ )
-            {
-               if ( this_miny > f_Is[ this_file ][ j ] )
-               {
-                  this_miny = f_Is[ this_file ][ j ];
-               }
-               if ( this_maxy < f_Is[ this_file ][ j ] )
-               {
-                  this_maxy = f_Is[ this_file ][ j ];
-               }
-            }
-
-            if ( first )
-            {
-               first = false;
-               minx = this_minx;
-               maxx = this_maxx;
-               miny = this_miny;
-               maxy = this_maxy;
-               maxminx = minx;
-               minmaxx = maxx;
-            } else {
-               if ( minx != this_minx || maxx != this_maxx )
-               {
-                  any_differences = true;
-                  if ( maxminx < this_minx )
-                  {
-                     maxminx = this_minx;
-                  }
-                  if ( minmaxx > this_maxx )
-                  {
-                     minmaxx = this_maxx;
-                  }
-               }
-               if ( minx > this_minx )
-               {
-                  minx = this_minx;
-               }
-               if ( maxx < this_maxx )
-               {
-                  maxx = this_maxx;
-               }
-               if ( miny > this_miny )
-               {
-                  miny = this_miny;
-               }
-               if ( maxy < this_maxy )
-               {
-                  maxy = this_maxy;
-               }
-            }
-         } else {
-            editor_msg( "red", QString( tr( "Crop common: curves need at least 1 point to crop" ) ) );
-            return;
-         }            
+            grids.push_back( f_qs[ lb_files->text( i ) ] );
+         }
       }
    }
 
+   vector < double > v_union = US_Vector::vunion( grids );
+   vector < double > v_int   = US_Vector::intersection( grids );
+
    editor_msg( "black", 
                QString( tr( "Crop common:\n"
-                            "Current selected files have a maximal q-range of (%1:%2)\n"
-                            "Current selected files have a common  q-range of (%3:%4)" ) )
-               .arg( minx )
-               .arg( maxx )
-               .arg( maxminx )
-               .arg( minmaxx ) );
+                            "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
+                            "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
+                            ) )
+               .arg( v_union[ 0 ] )
+               .arg( v_union.back() )
+               .arg( v_union.size() )
+               .arg( v_int[ 0 ] )
+               .arg( v_int.back() )
+               .arg( v_int.size() )
+               );
+
+   bool any_differences = v_union != v_int;
 
    if ( !any_differences )
    {
       editor_msg( "black", tr( "Crop common: no differences between selected grids" ) );
-   }         
-
-   /* not needed
-   // is the rectangle contained?
-   if (
-#ifndef QT4
-       minx < plot_dist_zoomer->zoomRect().x1() ||
-       maxx > plot_dist_zoomer->zoomRect().x2() ||
-       miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2() )
-#else
-       minx < plot_dist_zoomer->zoomRect().left()  ||
-       maxx > plot_dist_zoomer->zoomRect().right() ||
-       miny < plot_dist_zoomer->zoomRect().top()   ||
-       maxy > plot_dist_zoomer->zoomRect().bottom() )
-#endif
-   {
-      all_lefts_visible = false;
-   }
-
-   if ( !all_lefts_visible )
-   {
-      if ( any_differences )
-      {
-         editor_msg( "black", tr( "Crop common: press again to crop" ) );
-      } 
-      // will our current zoom rectangle show all the points?
-      // if so, simply move it
-      double dx = maxx - minx;
-      double dy = maxy - miny;
-
-#ifndef QT4
-      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
-      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
-#else
-      double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
-      double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
-#endif
-      if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
-      {
-         // we can fit
-         double newx = minx - .05 * dx;
-         double newy = miny - .05 * dy;
-         if ( newx < 0e0 )
-         {
-            newx = 0e0;
-         }
-         if ( newy < 0e0 )
-         {
-            newy = 0e0;
-         }
-         cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
-         plot_dist_zoomer->move( newx, newy );
-         return;
-      }
-
-      // ok, we are going to have to make a rectangle
-      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
-
-      double newminx = minx - .05 * dx;
-      double newminy = miny - .05 * dy;
-      if ( newminx < 0e0 )
-      {
-         newminx = 0e0;
-      }
-      if ( newminy < 0e0 )
-      {
-         newminy = 0e0;
-      }
-#ifndef QT4
-      dr.setX1( newminx );
-      dr.setY1( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setX2( newminx + zdx );
-      } else {         
-         dr.setX2( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setY2( newminy + zdy );
-      } else {         
-         dr.setY2( newminy + dy * 1.1 );
-      }
-#else
-      dr.setLeft( newminx );
-      dr.setTop ( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setRight( newminx + zdx );
-      } else {         
-         dr.setRight( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setBottom( newminy + zdy );
-      } else {         
-         dr.setBottom( newminy + dy * 1.1 );
-      }
-#endif
-
-      plot_dist_zoomer->zoom( dr );
-      return;
-   }
-   */
-
-   if ( !any_differences )
-   {
       return;
    }
 
-   // rescale to common region
+   map < double, bool > map_int;
+   for ( unsigned int i = 0; i < ( unsigned int )v_int.size(); i++ )
+   {
+      map_int[ v_int[ i ] ] = true;
+   }
 
    crop_undo_data cud;
    cud.is_left   = false;
@@ -5759,8 +5588,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
 
       for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
       {
-         if ( f_qs[ it->first ][ i ] >= maxminx &&
-              f_qs[ it->first ][ i ] <= minmaxx )
+         if ( map_int.count( f_qs[ it->first ][ i ] ) )
          {
             new_q_string.push_back( f_qs_string[ it->first ][ i ] );
             new_q       .push_back( f_qs       [ it->first ][ i ] );
