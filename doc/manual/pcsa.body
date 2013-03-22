@@ -1,16 +1,17 @@
 [% INCLUDE header.us3/
-   title = 'UltraScan III 1-D Spectrum Analysis'
+   title = 'UltraScan III Parametrically Constrained Spectrum Analysis'
 %]
 
-    <h2> <i>UltraScan</i> 1-Dimensional Spectrum Analysis: </h2>
+    <h2> <i>UltraScan</i> Parametrically Constrained Spectrum Analysis: </h2>
 
-    <p> This module enables you to perform 1-dimensional spectrum analysis
-    on a chosen experimental data set. Upon completion of an analysis fit,
-    plots available include: experiment; simulation; overlayed experiment
-    and simulation; residuals; time-invariant noise; radially-invariant noise;
-    3-d model. Final outputs may include a model and computed noises.</p>
+    <p> This module enables you to perform parametrically constrained
+    spectrum analysis on a chosen experimental data set. Upon completion of
+    an analysis fit, plots available include: model lines; experiment;
+    simulation; overlayed experiment and simulation; residuals;
+    time-invariant noise; radially-invariant noise; 3-d model.
+    Final outputs may include a model and computed noises.</p>
 
-    <p> The 1DSA method is used for composition analysis of sedimentation
+    <p> The PCSA method is used for composition analysis of sedimentation
     velocity experiments. It can generate sedimentation coefficient,
     diffusion coefficient, frictional coefficient, f/f0 ratio, and molecular
     weight distributions. The distributions can be plotted as 3-dimensional
@@ -20,12 +21,14 @@
     model which is used to generate a simulation via Lamm equations. The
     simulation is plotted overlaying a plot of experimental data.</p>
 
-    <p> The 1DSA pass proceeds for a set of models each of which consists of
+    <p> The PCSA pass proceeds for a set of models each of which consists of
     the solute points along a curve in s,f/f0 space. The model whose RMSD of
     the resulting residuals (simulation-experimental difference) is the lowest
-    forms the final output model. The set of curves is specified by s and
-    f/f0 ranges and a direct or implied number of variations in each
-    direction. The type of curve used may be any of the following.</p>
+    forms the starting point for a second phase which uses Levenberg-Marquardt
+    to refine the model to a final output model. The set of initial curves is
+    specified by a s and f/f0 ranges and a direct or implied number of variations
+    in f/f0 end-points or sigmoid par1, par2 values. The type of curve used
+    may be any of the following.</p>
 
     <ul>
       <li><b>Straight Line</b></li>
@@ -62,10 +65,10 @@
     </ul>
 
     <h3> Main Window: </h3>
-    <p> The main 1DSA window is shown here in the state it appears after
+    <p> The main PCSA window is shown here in the state it appears after
     the completion of a fit run.</p>
 
-    <img src="images/1dsa_main-c.png" alt="1DSA Main Window, fit complete"/>
+    <img src="images/pcsa_main-c.png" alt="PCSA Main Window, fit complete"/>
 
     <h3> The Curves: </h3>
 
@@ -73,13 +76,13 @@
     of the model lines may be displayed. The sample shown here is for a
     Straight Line type.</p>
 
-    <img src="images/1dsa_mlines-line1.png" alt="1DSA Lines as specified"/>
+    <img src="images/pcsa_mlines-line1.png" alt="PCSA Lines as specified"/>
 
     <p> After analysis, the display is modified to illustrate the best model,
     as well as color coding of some of the other better fits. The sample
     here is for an Increasing Sigmoid type.</p>
 
-    <img src="images/1dsa_mlines-sigm2.png" alt="1DSA Lines after analysis"/>
+    <img src="images/pcsa_mlines-sigm2.png" alt="PCSA Lines after analysis"/>
 
     <h3> Functions:</h3>
 
@@ -199,20 +202,20 @@
           <b>Fit Control</b> Open a dialog to set analysis parameters and
           start a fit run.
           For details on the results of clicking this button, see
-          <a href="1dsa_analys.html">1DSA Analysis Control</a>.
+          <a href="pcsa_analys.html">PCSA Analysis Control</a>.
        </li>
 
        <li>
           <b>3-D Plot</b> Open a control window for a 3-dimensional plot of
           the final computed model. See
-          <a href="images/1dsa_3dplot.png">1DSA 3-D Plot Dialog</a> 
+          <a href="images/pcsa_3dplot.png">PCSA 3-D Plot Dialog</a> 
           for an example of a 3-D plot, along with its control dialog.
        </li>
 
        <li>
           <b>Residual Plot</b> Open a plot dialog for a far more detailed set
           of result plots. See
-          <a href="images/1dsa_resplot.png">1DSA Residual Plot Dialog</a> 
+          <a href="images/pcsa_resplot.png">PCSA Residual Plot Dialog</a> 
           for an example of the residual plot dialog.
        </li>
 

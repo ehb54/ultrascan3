@@ -1,15 +1,15 @@
 [% INCLUDE header.us3/
-   title = 'UltraScan III 1DSA Model Lines Plot'
+   title = 'UltraScan III PCSA Model Lines Plot'
 %]
 
-    <h2> <i>UltraScan</i> Model Lines Plot for 1DSA: </h2>
+    <h2> <i>UltraScan</i> Model Lines Plot for PCSA: </h2>
 
     <p> This dialog displays the lines in s x f/f0 space that define models
-    evaluated by 1-Dimensional Spectrum Analysis. The lines from the best
-    models are illustrated with color coding. Worst-model lines are shown
-    with dark gray lines or may be removed from the plot. A selected set of
-    the best model lines contain white dots showing computed solute points,
-    with size proportional to relative concentration.</p>
+    evaluated by Parametrically Constrained Spectrum Analysis. The lines
+    from the best models are illustrated with color coding. Worst-model
+    lines are shown with dark gray lines or may be removed from the plot.
+    A selected set of the best model lines contain white dots showing
+    computed solute points, with size proportional to relative concentration.</p>
 
     <p> The appearance of the plot may be governed by setting the cutoff
     points in terms of line counts for (1) the number of "elite" (best-model,
@@ -55,9 +55,9 @@
     <p> The plot dialog differs slightly based on whether the curve type is
     a line or a sigmoid. Below are images for sigmoids and straight line.</p>
 
-    <img src="images/1dsa_mlines-sigm2.png" alt="1DSA Sigmoid Plot"/>
+    <img src="images/pcsa_mlines-sigm2.png" alt="PCSA Sigmoid Plot"/>
     <p/>
-    <img src="images/1dsa_mlines-line2.png" alt="1DSA Straight-Line Plot"/>
+    <img src="images/pcsa_mlines-line2.png" alt="PCSA Straight-Line Plot"/>
 
     <h3> Functions:</h3>
 
@@ -157,13 +157,13 @@
     or sigmoid.</p>
     <ul>
       <li>
-      <a href="images/1dsa_mlines-line1.png">Pre-fit Straight Lines</a>
+      <a href="images/pcsa_mlines-line1.png">Pre-fit Straight Lines</a>
       </li><li>
-      <a href="images/1dsa_mlines-sigm1.png">Pre-fit Sigmoid Curves</a>
+      <a href="images/pcsa_mlines-sigm1.png">Pre-fit Sigmoid Curves</a>
       </li><li>
-      <a href="images/1dsa_mlines-line2.png">Post-fit Straight Lines</a>
+      <a href="images/pcsa_mlines-line2.png">Post-fit Straight Lines</a>
       </li><li>
-      <a href="images/1dsa_mlines-sigm2.png">Post-fit Sigmoid Curves</a>
+      <a href="images/pcsa_mlines-sigm2.png">Post-fit Sigmoid Curves</a>
       </li>
     </ul>
 

@@ -1,8 +1,8 @@
 [% INCLUDE header.us3/
-   title = 'UltraScan III 1DSA Analysis Control'
+   title = 'UltraScan III PCSA Analysis Control'
 %]
 
-    <h2> <i>UltraScan</i> Fit Controls for 1DSA: </h2>
+    <h2> <i>UltraScan</i> Fit Controls for PCSA: </h2>
 
     <p> The parameters of this dialog define and control an analysis run
     to find the set of solutes that best fits experimental data.
@@ -14,6 +14,12 @@
     also be computed. The curves in a set cover a specified s and f/f0 range
     and vary according to a specified increment or count. Each model has
     a specified number of input solute points along its curve.</p>
+
+    <p> After an initial pass in which all the specified model curves are
+    evaluated, the results are sorted by fitness (least RMSD). The best model
+    then becomes the starting point for a second pass that utilizes
+    Levenberg-Marquardt to refine the model. The result of that second pass
+    is inserted as the final best model.</p>
 
     <p> For a straight line type, an f/f0 increment indirectly specifies the
     number of variations. Lines cover the full s range, with end points along
@@ -76,7 +82,7 @@
     a line or a sigmoid. If straight line is specified, curve variation count
     is given indirectly by f/f0 increment.</p>
 
-    <img src="images/1dsa_analys-line.png" alt="1DSA Analysis Control"/>
+    <img src="images/pcsa_analys-line.png" alt="PCSA Analysis Control"/>
 
     <p> If one of the sigmoid types is specified, you need to specify directly
     the number of variations in par1 and par2 of the sigmoid function <br/>
@@ -85,7 +91,7 @@
     / sqrt( 2.0 * par1 ) ) + 0.5
     . </p>
 
-    <img src="images/1dsa_analys-sigm.png" alt="1DSA Analysis Control"/>
+    <img src="images/pcsa_analys-sigm.png" alt="PCSA Analysis Control"/>
 
     <h3> Functions:</h3>
 
@@ -172,12 +178,12 @@
        <li>
           <b>Plot Model Lines</b> Click on this button to open a dialog showing
           the Model Lines specified (such as
-          <a href="images/1dsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
+          <a href="images/pcsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
           the dialog is automatically opened upon analysis completion. But this
           button can be used to re-display completed model lines if the dialog
           has been closed by the user. The dialogs after analysis include
           color-coded illustrations of best and near-best models:
-          <a href="1dsa_mlines.html">Fitted Models</a>.
+          <a href="pcsa_mlines.html">Fitted Models</a>.
        </li>
 
        <li>

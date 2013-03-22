@@ -26,7 +26,6 @@
         <!-- The keyword id attribute appears to be needed, although the
              documentation does not say so -->
         <keywords>
-            <keyword id="11" name="1dsa"          ref="1dsa.html"/>
             <keyword id="21" name="2dsa"          ref="2dsa.html"/>
             <keyword id="22" name="grid-editor"   ref="grid_editor.html"/>
             <keyword id="a1" name="analyte"       ref="analytes.html"/>
@@ -58,8 +57,9 @@
             <keyword id="m5" name="model-shapes2" ref="predict2.html"/>
             <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
             <keyword id="p1" name="password"      ref="master_pw.html"/>
-            <keyword id="p2" name="project"       ref="us_project.html"/>
-            <keyword id="p3" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
+            <keyword id="p2" name="pcsa"          ref="pcsa.html"/>
+            <keyword id="p3" name="project"       ref="us_project.html"/>
+            <keyword id="p4" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="r2" name="reporter"      ref="reporter.html"/>
             <keyword id="r3" name="rotor"         ref="rotor.html"/>
@@ -244,18 +244,18 @@
             <file>images/2dsa_3dplot.png</file>
             <file>images/2dsa_resplot.png</file>
 
-            <file>1dsa.html</file>
-            <file>1dsa_analys.html</file>
-            <file>1dsa_mlines.html</file>
-            <file>images/1dsa_main-c.png</file>
-            <file>images/1dsa_analys-line.png</file>
-            <file>images/1dsa_analys-sigm.png</file>
-            <file>images/1dsa_mlines-line1.png</file>
-            <file>images/1dsa_mlines-line2.png</file>
-            <file>images/1dsa_mlines-sigm1.png</file>
-            <file>images/1dsa_mlines-sigm2.png</file>
-            <file>images/1dsa_3dplot.png</file>
-            <file>images/1dsa_resplot.png</file>
+            <file>pcsa.html</file>
+            <file>pcsa_analys.html</file>
+            <file>pcsa_mlines.html</file>
+            <file>images/pcsa_main-c.png</file>
+            <file>images/pcsa_analys-line.png</file>
+            <file>images/pcsa_analys-sigm.png</file>
+            <file>images/pcsa_mlines-line1.png</file>
+            <file>images/pcsa_mlines-line2.png</file>
+            <file>images/pcsa_mlines-sigm1.png</file>
+            <file>images/pcsa_mlines-sigm2.png</file>
+            <file>images/pcsa_3dplot.png</file>
+            <file>images/pcsa_resplot.png</file>
 
             <file>model_editor.html</file>
             <file>associations.html</file>
