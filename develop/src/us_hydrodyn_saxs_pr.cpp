@@ -261,3 +261,211 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
    pr = new_pr;
    return;
 }
+
+
+bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_contrast )
+{
+   double I0_exp_to_theo_mult = 1e0;
+   if ( our_saxs_options->guinier_use_standards )
+   {
+      cout << "mw_from_I0: using standards\n";
+      if ( our_saxs_options->I0_exp == 0e0 )
+      {
+         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         MW = 0e0;
+         return false;
+      }
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+   } else {
+      cout << "mw_from_I0: standards not used\n";
+   }
+
+   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
+
+   if ( our_saxs_options->nucleon_mass == 0e0 )
+   {
+      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
+   if ( our_saxs_options->conc == 0e0 )
+   {
+      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      MW = 0e0;
+      return false;
+   }
+
+
+   internal_contrast = 
+      our_saxs_options->diffusion_len * 
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
+
+   MW = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast );
+
+#if defined( DEBUG_MW )
+   cout << QString( 
+                   "I0_std_theo         %1\n"
+                   "I0_std_exp          %2\n"
+                   )
+      .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
+      .arg( our_saxs_options->I0_exp, 0, 'e', 8  )
+      ;
+                   
+   cout << QString( 
+                   "I0_exp_to_theo_mult %1\n"
+                   "diffusion len       %2\n"
+                   "psv                 %3\n"
+                   "water_e_density     %4\n"
+                   "I0_prot_theo        %5\n"
+                   "Avogadro            %6\n"
+                   "conc                %7\n"
+                   "internal contrast   %8\n"
+                   "nucleon mass        %9\n"
+                   )
+
+      .arg( I0_exp_to_theo_mult, 0, 'e', 8  )
+      .arg( our_saxs_options->diffusion_len, 0, 'e', 8  )
+      .arg( our_saxs_options->psv, 0, 'e', 8  )
+      .arg( our_saxs_options->water_e_density * 1e24, 0, 'e', 8  )
+      .arg( I0_prot_theo, 0, 'e', 8  )
+      .arg( AVOGADRO, 0, 'e', 8  )
+      .arg( our_saxs_options->conc, 0, 'e', 8  )
+      .arg( internal_contrast, 0, 'e', 8  )
+      .arg( our_saxs_options->nucleon_mass, 0, 'e', 8  );
+#endif
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_contrast )
+{
+   double I0_exp_to_theo_mult = 1e0;
+   if ( our_saxs_options->guinier_use_standards )
+   {
+      if ( our_saxs_options->I0_exp == 0e0 )
+      {
+         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         ML = 0e0;
+         return false;
+      }
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+   }
+
+   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
+
+   if ( our_saxs_options->nucleon_mass == 0e0 )
+   {
+      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      ML = 0e0;
+      return false;
+   }
+
+   if ( our_saxs_options->conc == 0e0 )
+   {
+      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      ML = 0e0;
+      return false;
+   }
+
+   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : our_saxs_options->psv;
+
+   internal_contrast = 
+      our_saxs_options->diffusion_len * 
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+   
+   ML = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
+
+#if defined( DEBUG_MW )
+   cout << QString( 
+                   "I0_std_theo         %1\n"
+                   "I0_std_exp          %2\n"
+                   )
+      .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
+      .arg( our_saxs_options->I0_exp, 0, 'e', 8  )
+      ;
+                   
+   cout << QString( 
+                   "I0_exp_to_theo_mult %1\n"
+                   "diffusion len       %2\n"
+                   "psv                 %3\n"
+                   "water_e_density     %4\n"
+                   "I0_prot_theo        %5\n"
+                   "Avogadro            %6\n"
+                   "conc                %7\n"
+                   "internal contrast   %8\n"
+                   "nucleon mass        %9\n"
+                   )
+
+      .arg( I0_exp_to_theo_mult, 0, 'e', 8 )
+      .arg( our_saxs_options->diffusion_len, 0, 'e', 8  )
+      .arg( use_psv, 0, 'e', 8  )
+      .arg( our_saxs_options->water_e_density * 1e24, 0, 'e', 8  )
+      .arg( I0_prot_theo, 0, 'e', 8  )
+      .arg( AVOGADRO, 0, 'e', 8  )
+      .arg( our_saxs_options->conc, 0, 'e', 8  )
+      .arg( internal_contrast, 0, 'e', 8  )
+      .arg( our_saxs_options->nucleon_mass, 0, 'e', 8  );
+#endif
+
+   return true;
+}
+
+void US_Hydrodyn_Saxs::guinier_window()
+{
+#if defined( DEBUG_MW )
+   saxs_options sav_saxs_options = *our_saxs_options;
+
+   double I0 = 0.00036;
+   double MW;
+   double ICL;
+
+   our_saxs_options->psv = 0.73;
+   our_saxs_options->water_e_density = 0.3365;
+   our_saxs_options->conc = 0.447;
+   our_saxs_options->I0_exp = 5.4e-5;
+   if ( mw_from_I0( I0, MW, ICL ) )
+   {
+      cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( I0 ).arg( MW ).arg( ICL );
+   } else {
+      cout << errormsg << endl;
+   }
+
+   I0 = 1.4174e-6;
+   our_saxs_options->psv = 7.458756e-1;
+   our_saxs_options->conc = 0.35;
+   our_saxs_options->I0_exp = 4.65e-5;
+   if ( ml_from_qI0( I0, MW, ICL ) )
+   {
+      cout << QString( "I0 %1 ML %2 ICL %3\n" ).arg( I0 ).arg( MW ).arg( ICL );
+   } else {
+      cout << errormsg << endl;
+   }
+
+   *our_saxs_options = sav_saxs_options;
+#endif
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
+      }
+   }
+   else
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window = new US_Hydrodyn_SasOptionsGuinier( &((US_Hydrodyn *)us_hydrodyn)->saxs_options, 
+                                                                                                    &((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget, 
+                                                                                                    us_hydrodyn );
+      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
+      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
+   }
+}
+void US_Hydrodyn_Saxs::ift()
+{
+}
+

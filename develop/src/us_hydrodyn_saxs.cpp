@@ -7647,7 +7647,7 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
 void US_Hydrodyn_Saxs::fix_sas_options()
 {
    
-   cout << "fix_sas_options";
+   cout << "fix_sas_options\n";
    bool any_selected = false;
 
    if ( our_saxs_options->saxs_iq_native_debye )
@@ -7803,109 +7803,3 @@ void US_Hydrodyn_Saxs::fix_sas_options()
    set_current_method_buttons();
 }
 
-void US_Hydrodyn_Saxs::ift()
-{
-}
-
-void US_Hydrodyn_Saxs::guinier_window()
-{
-   if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget )
-   {
-      if ( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->isVisible() )
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->raise();
-      }
-      else
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
-      }
-   }
-   else
-   {
-      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window = new US_Hydrodyn_SasOptionsGuinier( &((US_Hydrodyn *)us_hydrodyn)->saxs_options, 
-                                                                                                    &((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_widget, 
-                                                                                                    us_hydrodyn );
-      US_Hydrodyn::fixWinButtons( ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window );
-      ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
-   }
-}
-
-bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_contrast )
-{
-   double I0_exp_to_theo_mult = 1e0;
-   if ( our_saxs_options->guinier_use_standards )
-   {
-      if ( our_saxs_options->I0_exp == 0e0 )
-      {
-         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
-         MW = 0e0;
-         return false;
-      }
-      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
-   }
-
-   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
-
-   if ( our_saxs_options->nucleon_mass == 0e0 )
-   {
-      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
-      MW = 0e0;
-      return false;
-   }
-
-   if ( our_saxs_options->conc == 0e0 )
-   {
-      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
-      MW = 0e0;
-      return false;
-   }
-
-   internal_contrast = 
-      our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
-
-   MW = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast );
-
-   return true;
-}
-
-bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_contrast )
-{
-   double I0_exp_to_theo_mult = 1e0;
-   if ( our_saxs_options->guinier_use_standards )
-   {
-      if ( our_saxs_options->I0_exp == 0e0 )
-      {
-         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
-         ML = 0e0;
-         return false;
-      }
-      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
-   }
-
-   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
-
-   if ( our_saxs_options->nucleon_mass == 0e0 )
-   {
-      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
-      ML = 0e0;
-      return false;
-   }
-
-   if ( our_saxs_options->conc == 0e0 )
-   {
-      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
-      ML = 0e0;
-      return false;
-   }
-
-   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : our_saxs_options->psv;
-
-   internal_contrast = 
-      our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
-   
-   ML = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
-
-   return true;
-}

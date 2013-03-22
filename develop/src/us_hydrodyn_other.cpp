@@ -5190,11 +5190,11 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.cs_qend                            = 2.5e-1;
 
    saxs_options.conc                               = 1e0;
-   saxs_options.psv                                = 0e0;
+   saxs_options.psv                                = 7.2e-1;
    saxs_options.use_cs_psv                         = false;
    saxs_options.cs_psv                             = 0e0;
-   saxs_options.I0_exp                             = 1.633e-2;
-   saxs_options.I0_theo                            = 5.4e-5;
+   saxs_options.I0_exp                             = 5.4e-5;
+   saxs_options.I0_theo                            = 1.633e-2;
    saxs_options.diffusion_len                      = 2.82e-13;
    saxs_options.nucleon_mass                       = 1.674e-24;
 
