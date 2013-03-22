@@ -3832,7 +3832,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.I0_exp" ] = QString( "%1" ).arg( saxs_options.I0_exp );
       parameters[ "saxs_options.I0_theo" ] = QString( "%1" ).arg( saxs_options.I0_theo );
       parameters[ "saxs_options.diffusion_len" ] = QString( "%1" ).arg( saxs_options.diffusion_len );
-      parameters[ "saxs_options.nuclear_mass" ] = QString( "%1" ).arg( saxs_options.nuclear_mass );
+      parameters[ "saxs_options.nucleon_mass" ] = QString( "%1" ).arg( saxs_options.nucleon_mass );
       parameters[ "saxs_options.guinier_outlier_reject" ] = QString( "%1" ).arg( saxs_options.guinier_outlier_reject );
       parameters[ "saxs_options.guinier_outlier_reject_dist" ] = QString( "%1" ).arg( saxs_options.guinier_outlier_reject_dist );
       parameters[ "saxs_options.guinier_use_sd" ] = QString( "%1" ).arg( saxs_options.guinier_use_sd );
@@ -4273,7 +4273,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.I0_exp" ) ) saxs_options.I0_exp = parameters[ "saxs_options.I0_exp" ].toDouble();
    if ( parameters.count( "saxs_options.I0_theo" ) ) saxs_options.I0_theo = parameters[ "saxs_options.I0_theo" ].toDouble();
    if ( parameters.count( "saxs_options.diffusion_len" ) ) saxs_options.diffusion_len = parameters[ "saxs_options.diffusion_len" ].toDouble();
-   if ( parameters.count( "saxs_options.nuclear_mass" ) ) saxs_options.nuclear_mass = parameters[ "saxs_options.nuclear_mass" ].toDouble();
+   if ( parameters.count( "saxs_options.nucleon_mass" ) ) saxs_options.nucleon_mass = parameters[ "saxs_options.nucleon_mass" ].toDouble();
    if ( parameters.count( "saxs_options.guinier_outlier_reject" ) ) saxs_options.guinier_outlier_reject = parameters[ "saxs_options.guinier_outlier_reject" ] == "1";
    if ( parameters.count( "saxs_options.guinier_outlier_reject_dist" ) ) saxs_options.guinier_outlier_reject_dist = parameters[ "saxs_options.guinier_outlier_reject_dist" ].toDouble();
    if ( parameters.count( "saxs_options.guinier_use_sd" ) ) saxs_options.guinier_use_sd = parameters[ "saxs_options.guinier_use_sd" ] == "1";
@@ -5196,7 +5196,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.I0_exp                             = 1.633e-2;
    saxs_options.I0_theo                            = 5.4e-5;
    saxs_options.diffusion_len                      = 2.82e-13;
-   saxs_options.nuclear_mass                       = 1.674e-24;
+   saxs_options.nucleon_mass                       = 1.674e-24;
 
    saxs_options.guinier_outlier_reject             = false;
    saxs_options.guinier_outlier_reject_dist        = 2e0;

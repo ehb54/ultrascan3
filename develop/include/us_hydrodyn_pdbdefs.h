@@ -380,7 +380,7 @@ struct saxs_options
    double       I0_exp;
    double       I0_theo;
    double       diffusion_len;
-   double       nuclear_mass;
+   double       nucleon_mass;
 
    bool         guinier_outlier_reject;
    double       guinier_outlier_reject_dist;

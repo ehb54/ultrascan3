@@ -101,8 +101,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_diffusion_len;
       QLineEdit  *le_diffusion_len;
 
-      QLabel     *lbl_nuclear_mass;
-      QLineEdit  *le_nuclear_mass;
+      QLabel     *lbl_nucleon_mass;
+      QLineEdit  *le_nucleon_mass;
 
       QPushButton *pb_guinier;
       QPushButton *pb_cs_guinier;
@@ -136,7 +136,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void update_I0_exp                        ( const QString & );
       void update_I0_theo                       ( const QString & );
       void update_diffusion_len                 ( const QString & );
-      void update_nuclear_mass                  ( const QString & );
+      void update_nucleon_mass                  ( const QString & );
 
       void set_guinier_outlier_reject           ();
       void update_guinier_outlier_reject_dist   ( const QString & );

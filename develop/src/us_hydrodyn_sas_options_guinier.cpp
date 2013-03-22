@@ -262,18 +262,18 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
 
-   lbl_nuclear_mass = new QLabel(tr(" Nucleon mass (g) : "), this);
-   lbl_nuclear_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_nuclear_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_nucleon_mass = new QLabel(tr(" Nucleon mass (g) : "), this);
+   lbl_nucleon_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_nucleon_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_nucleon_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_nuclear_mass = new QLineEdit(this);
-   le_nuclear_mass->setValidator( new QDoubleValidator( le_nuclear_mass ) );
-   le_nuclear_mass->setText( QString( "%1" ).arg( (*saxs_options).nuclear_mass ) );
-   le_nuclear_mass->setEnabled(true);
-   le_nuclear_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_nuclear_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_nuclear_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nuclear_mass( const QString &)));
+   le_nucleon_mass = new QLineEdit(this);
+   le_nucleon_mass->setValidator( new QDoubleValidator( le_nucleon_mass ) );
+   le_nucleon_mass->setText( QString( "%1" ).arg( (*saxs_options).nucleon_mass ) );
+   le_nucleon_mass->setEnabled(true);
+   le_nucleon_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_nucleon_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_nucleon_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nucleon_mass( const QString &)));
 
    cb_guinier_use_standards = new QCheckBox(this);
    cb_guinier_use_standards->setText( tr(" Use I0 standards for normalization") );
@@ -396,8 +396,8 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_diffusion_len, j, 1);
    j++;
 
-   background->addWidget(lbl_nuclear_mass, j, 0);
-   background->addWidget(le_nuclear_mass, j, 1);
+   background->addWidget(lbl_nucleon_mass, j, 0);
+   background->addWidget(le_nucleon_mass, j, 1);
    j++;
 
    background->addMultiCellWidget( cb_guinier_use_standards, j, j, 0, 1);
@@ -619,10 +619,10 @@ void US_Hydrodyn_SasOptionsGuinier::update_diffusion_len( const QString & str )
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_SasOptionsGuinier::update_nuclear_mass( const QString & str )
+void US_Hydrodyn_SasOptionsGuinier::update_nucleon_mass( const QString & str )
 {
    double val = str.toDouble();
-   (*saxs_options).nuclear_mass = val;
+   (*saxs_options).nucleon_mass = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

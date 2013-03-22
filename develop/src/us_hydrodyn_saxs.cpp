@@ -7846,7 +7846,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
 
    double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
 
-   if ( our_saxs_options->nuclear_mass == 0e0 )
+   if ( our_saxs_options->nucleon_mass == 0e0 )
    {
       errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
       MW = 0e0;
@@ -7862,7 +7862,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
 
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nuclear_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
 
    MW = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast );
 
@@ -7885,7 +7885,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_
 
    double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
 
-   if ( our_saxs_options->nuclear_mass == 0e0 )
+   if ( our_saxs_options->nucleon_mass == 0e0 )
    {
       errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
       ML = 0e0;
@@ -7903,7 +7903,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_
 
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nuclear_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
    
    ML = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
 
