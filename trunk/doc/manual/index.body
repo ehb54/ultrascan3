@@ -33,7 +33,7 @@
       <li> <a href="vhw_enhanced.html">Enhanced van Holde - Weischet</a> </li>
       <li> <a href="grid_editor.html">Custom 2-D Grid Editor</a> </li>
       <li> <a href="2dsa.html">2-D Spectrum Analysis</a> </li>
-      <li> <a href="1dsa.html">1-D Spectrum Analysis</a> </li>
+      <li> <a href="pcsa.html">Parametrically Constrained Spectrum Analysis</a> </li>
       <li> <a href="ga_initialize.html">Initialize Genetic Algorithm</a> </li>
       <li> <a href="second_moment.html">Second Moment</a> </li>
       <li> <a href="time_derivative.html">Time Derivative</a> </li>
