@@ -87,7 +87,7 @@ class US_MwlRawViewer : public US_Widgets
      QString        currentDir;
      QString        runID;
 
-     int            currentCellCh;
+     int            currCellCh;
      int            nscan;
      int            ncell;
      int            nchan;
@@ -118,6 +118,7 @@ class US_MwlRawViewer : public US_Widgets
      int    hword        ( char* ); 
      float  fword        ( char* ); 
      double dword        ( char* ); 
+     void   averageWavlen( int ); 
 
   private slots:
      void import         ( QString dir = "" );

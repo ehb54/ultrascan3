@@ -16,6 +16,7 @@
 #include "us_report.h"
 #include "us_gui_util.h"
 #include "us_util.h"
+#include "us_editor.h"
 
 #ifdef WIN32
   #include <float.h>
@@ -214,6 +215,7 @@ void US_MwlRawViewer::reset( void )
 
    pb_import ->setEnabled( true  );
    pb_saveUS3->setEnabled( false );
+   pb_details->setEnabled( false );
 
    // Clear any data structures
    orig_wvlns.clear();
@@ -382,17 +384,292 @@ void US_MwlRawViewer::loadUS3Disk( QString dir )
 
 void US_MwlRawViewer::runDetails( void )
 {
-#if 0
-   // Create data structures for US_RunDetails2
-   QStringList tripleDescriptions;
-   QVector< US_DataIO2::RawData >  currentData;
+   // Loop to insure all wavelengths have been averaged
+   int saveccc   = currCellCh;
 
-   US_RunDetails2* dialog
-      = new US_RunDetails2( currentData, runID, currentDir, tripleDescriptions );
-   dialog->exec();
-   qApp->processEvents();
-   delete dialog;
-#endif
+   for ( currCellCh = 0; currCellCh < ncellch; currCellCh++ )
+      for ( int wavx = 0; wavx < nwaveln; wavx++ )
+         averageWavlen( wavx );
+
+   currCellCh    = saveccc;
+
+   // Initialize statistics for data
+   double ofdmax  = -1e99;
+   double o90max  = -1e99;
+   double ow1max  = -1e99;
+   double ow2max  = -1e99;
+   double ow3max  = -1e99;
+   double afdmax  = -1e99;
+   double a90max  = -1e99;
+   double aw1max  = -1e99;
+   double aw2max  = -1e99;
+   double aw3max  = -1e99;
+   double ofdmin  = 1e99;
+   double o90min  = 1e99;
+   double ow1min  = 1e99;
+   double ow2min  = 1e99;
+   double ow3min  = 1e99;
+   double afdmin  = 1e99;
+   double a90min  = 1e99;
+   double aw1min  = 1e99;
+   double aw2min  = 1e99;
+   double aw3min  = 1e99;
+   double ofdavg  = 0.0;
+   double o90avg  = 0.0;
+   double ow1avg  = 0.0;
+   double ow2avg  = 0.0;
+   double ow3avg  = 0.0;
+   double afdavg  = 0.0;
+   double a90avg  = 0.0;
+   double aw1avg  = 0.0;
+   double aw2avg  = 0.0;
+   double aw3avg  = 0.0;
+   int    ofdknt  = 0;
+   int    o90knt  = 0;
+   int    ow1knt  = 0;
+   int    ow2knt  = 0;
+   int    ow3knt  = 0;
+   int    afdknt  = 0;
+   int    a90knt  = 0;
+   int    aw1knt  = 0;
+   int    aw2knt  = 0;
+   int    aw3knt  = 0;
+   bool   wv1     = false;
+   bool   wv2     = false;
+   bool   wv3     = false;
+   int    awvlo   = 0;
+   int    awvmd   = nwaveln / 2;
+   int    awvhi   = nwaveln - 1;
+   int    owvlo   = 0;
+   int    owvhi   = nwlorig - 1;
+   double wvvmid  = curr_wvlns[ nwaveln / 2 ];
+   int    owvmd   = orig_wvlns.indexOf( wvvmid );
+   int    rplo    = ( npoints * 5 ) / 100;
+   int    rphi    = npoints - rplo;
+   double rdata   = 0.0;
+   int    wvx     = 0;
+   int    rpx     = 0;
+
+   // Accumulate statistics for original data
+   for ( int ii = 0; ii < ntriplo; ii++ )
+   {
+      wv1      = ( wvx == owvlo );
+      wv2      = ( wvx == owvmd );
+      wv3      = ( wvx == owvhi );
+      rpx      = 0;
+
+      for ( int jj = 0; jj < nradpt; jj++ )
+      {
+         rdata    = orig_reads[ ii ][ jj ];
+         ofdmin   = qMin( ofdmin, rdata );
+         ofdmax   = qMax( ofdmax, rdata );
+         ofdavg  += rdata;
+         ofdknt++;
+         if ( rpx > rplo  &&  rpx < rphi )
+         {
+            o90min   = qMin( o90min, rdata );
+            o90max   = qMax( o90max, rdata );
+            o90avg  += rdata;
+            o90knt++;
+            if ( wv1 )
+            {
+               ow1min   = qMin( ow1min, rdata );
+               ow1max   = qMax( ow1max, rdata );
+               ow1avg  += rdata;
+               ow1knt++;
+            }
+            if ( wv2 )
+            {
+               ow2min   = qMin( ow2min, rdata );
+               ow2max   = qMax( ow2max, rdata );
+               ow2avg  += rdata;
+               ow2knt++;
+            }
+            if ( wv3 )
+            {
+               ow3min   = qMin( ow3min, rdata );
+               ow3max   = qMax( ow3max, rdata );
+               ow3avg  += rdata;
+               ow3knt++;
+            }
+         }
+         rpx++;
+         if ( rpx >= npoints )
+            rpx      = 0;
+      }
+      wvx++;
+      if ( wvx >= nwlorig )
+         wvx      = 0;
+   }
+
+   // Accumulate statistics for averaged data
+   wvx     = 0;
+   rpx     = 0;
+
+   for ( int ii = 0; ii < ntripls; ii++ )
+   {
+      wv1      = ( wvx == awvlo );
+      wv2      = ( wvx == awvmd );
+      wv3      = ( wvx == awvhi );
+      rpx      = 0;
+
+      for ( int jj = 0; jj < nradpt; jj++ )
+      {
+         rdata    = curr_reads[ ii ][ jj ];
+         afdmin   = qMin( afdmin, rdata );
+         afdmax   = qMax( afdmax, rdata );
+         afdavg  += rdata;
+         afdknt++;
+         if ( rpx > rplo  &&  rpx < rphi )
+         {
+            a90min   = qMin( a90min, rdata );
+            a90max   = qMax( a90max, rdata );
+            a90avg  += rdata;
+            a90knt++;
+            if ( wv1 )
+            {
+               aw1min   = qMin( aw1min, rdata );
+               aw1max   = qMax( aw1max, rdata );
+               aw1avg  += rdata;
+               aw1knt++;
+            }
+            if ( wv2 )
+            {
+               aw2min   = qMin( aw2min, rdata );
+               aw2max   = qMax( aw2max, rdata );
+               aw2avg  += rdata;
+               aw2knt++;
+            }
+            if ( wv3 )
+            {
+               aw3min   = qMin( aw3min, rdata );
+               aw3max   = qMax( aw3max, rdata );
+               aw3avg  += rdata;
+               aw3knt++;
+            }
+         }
+         rpx++;
+         if ( rpx >= npoints )
+            rpx      = 0;
+      }
+      wvx++;
+      if ( wvx >= nwaveln )
+         wvx      = 0;
+   }
+
+   // Now build the report text string
+   ofdavg        /= (double)ofdknt;
+   o90avg        /= (double)o90knt;
+   ow1avg        /= (double)ow1knt;
+   ow2avg        /= (double)ow2knt;
+   ow3avg        /= (double)ow3knt;
+   afdavg        /= (double)afdknt;
+   a90avg        /= (double)a90knt;
+   aw1avg        /= (double)aw1knt;
+   aw2avg        /= (double)aw2knt;
+   aw3avg        /= (double)aw3knt;
+   double s1tem   = mwl_headers[ 0 ].temperature;
+   double s1rot   = mwl_headers[ 0 ].rotor_speed;
+   double s1omg   = mwl_headers[ 0 ].omega2t;
+   double s1etm   = mwl_headers[ 0 ].elaps_time;
+   int    lfx     = nfiles - 1;
+   double s2tem   = mwl_headers[ lfx ].temperature;
+   double s2rot   = mwl_headers[ lfx ].rotor_speed;
+   double s2omg   = mwl_headers[ lfx ].omega2t;
+   double s2etm   = mwl_headers[ lfx ].elaps_time;
+   double owvmin  = orig_wvlns[ 0 ];
+   double owvmax  = orig_wvlns[ nwlorig - 1 ];
+   double owvain  = ( owvmax - owvmin ) / (double)( nwlorig - 1 );
+   double awvain  = ( owvmax - owvmin ) / (double)( nwaveln - 1 );
+   double wavv1   = owvmin;
+   double wavv2   = orig_wvlns[ owvmd ];
+   double wavv3   = owvmax;
+   QString ffname = mwl_fnames[ 0 ];
+   QString lfname = mwl_fnames[ lfx ];
+   QString msg = tr( "Multi-Wavelength Statistics for RunID %1,\n" )
+      .arg( runID );
+   msg += tr( " from Directory %1\n\n" ).arg( currentDir );
+   msg += tr( "General Data Set Values and Counts.\n" );
+   msg += tr( "   First File Name:              %1\n" ).arg( ffname ); 
+   msg += tr( "   Last File Name:               %1\n" ).arg( lfname ); 
+   msg += tr( "   Scans:                        %1\n" ).arg( nscan );
+   msg += tr( "   Radius Data Points:           %1\n" ).arg( npoints );
+   msg += tr( "Values for 1st Cell/Channel Scan 1.\n" );
+   msg += tr( "   Temperature                   %1\n" ).arg( s1tem );
+   msg += tr( "   Omega^2T                      %1\n" ).arg( s1omg );
+   msg += tr( "   Elapsed Time                  %1\n" ).arg( s1etm );
+   msg += tr( "   RotorSpeed                    %1\n" ).arg( s1rot );
+   msg += tr( "Values for Last Cell/Channel Scan %1.\n" ).arg( nscan );
+   msg += tr( "   Temperature                   %1\n" ).arg( s2tem );
+   msg += tr( "   Omega^2T                      %1\n" ).arg( s2omg );
+   msg += tr( "   Elapsed Time                  %1\n" ).arg( s2etm );
+   msg += tr( "   RotorSpeed                    %1\n" ).arg( s2rot );
+   msg += tr( "Original Data Wavelengths.\n" );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( nwlorig );
+   msg += tr( "   Minimum:                      %1\n" ).arg( owvmin );
+   msg += tr( "   Maximum:                      %1\n" ).arg( owvmax );
+   msg += tr( "   Average Increment:            %1\n" ).arg( owvain );
+   msg += tr( "%1-point Averaged Data Wavelengths.\n" ).arg( lavgg );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( nwaveln );
+   msg += tr( "   Minimum:                      %1\n" ).arg( owvmin );
+   msg += tr( "   Maximum:                      %1\n" ).arg( owvmax );
+   msg += tr( "   Average Increment:            %1\n" ).arg( awvain );
+   msg += tr( "\nOriginal Full Intensity Data.\n" );
+   msg += tr( "   Minimum:                      %1\n" ).arg( ofdmin );
+   msg += tr( "   Maximum:                      %1\n" ).arg( ofdmax );
+   msg += tr( "   Average:                      %1\n" ).arg( ofdavg );
+   msg += tr( "%1-point Averaged Full Intensity Data.\n" ).arg( lavgg );
+   msg += tr( "   Minimum:                      %1\n" ).arg( afdmin );
+   msg += tr( "   Maximum:                      %1\n" ).arg( afdmax );
+   msg += tr( "   Average:                      %1\n" ).arg( afdavg );
+   msg += tr( "Original Middle 90% Intensity Data.\n" );
+   msg += tr( "   Minimum:                      %1\n" ).arg( o90min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( o90max );
+   msg += tr( "   Average:                      %1\n" ).arg( o90avg );
+   msg += tr( "%1-point Averaged Middle 90% Intensity Data.\n" ).arg( lavgg );
+   msg += tr( "   Minimum:                      %1\n" ).arg( a90min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( a90max );
+   msg += tr( "   Average:                      %1\n" ).arg( a90avg );
+   msg += tr( "%1 nm Original Middle 90% Intensity Data.\n" )
+      .arg( wavv1 );
+   msg += tr( "   Minimum:                      %1\n" ).arg( ow1min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( ow1max );
+   msg += tr( "   Average:                      %1\n" ).arg( ow1avg );
+   msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
+      .arg( wavv1 ).arg( lavgg );
+   msg += tr( "   Minimum:                      %1\n" ).arg( aw1min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( aw1max );
+   msg += tr( "   Average:                      %1\n" ).arg( aw1avg );
+   msg += tr( "%1 nm Original Middle 90% Intensity Data.\n" )
+      .arg( wavv2 );
+   msg += tr( "   Minimum:                      %1\n" ).arg( ow2min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( ow2max );
+   msg += tr( "   Average:                      %1\n" ).arg( ow2avg );
+   msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
+      .arg( wavv2 ).arg( lavgg );
+   msg += tr( "   Minimum:                      %1\n" ).arg( aw2min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( aw2max );
+   msg += tr( "   Average:                      %1\n" ).arg( aw2avg );
+   msg += tr( "%1 nm Original Middle 90% Intensity Data.\n" )
+      .arg( wavv3 );
+   msg += tr( "   Minimum:                      %1\n" ).arg( ow3min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( ow3max );
+   msg += tr( "   Average:                      %1\n" ).arg( ow3avg );
+   msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
+      .arg( wavv3 ).arg( lavgg );
+   msg += tr( "   Minimum:                      %1\n" ).arg( aw3min );
+   msg += tr( "   Maximum:                      %1\n" ).arg( aw3max );
+   msg += tr( "   Average:                      %1\n" ).arg( aw3avg );
+
+   // Open the dialog and display the report text
+   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true );
+   editd->setWindowTitle( tr( "Multi-Wavelength Data Statistics" ) );
+   editd->move( pos() + QPoint( 200, 200 ) );
+   editd->resize( 600, 500 );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() ) );
+   editd->e->setText( msg );
+   editd->show();
 }
 
 void US_MwlRawViewer::changeCellCh( void )
@@ -404,7 +681,7 @@ qDebug() << "changeCellCh";
    QString chan   = cellch.section( "/", 1, 1 ).simplified();
    int     icell  = cell.toInt() - 1;
    int     ichan  = QString( "ABCDEFGH" ).indexOf( chan );
-   currentCellCh  = icell * nchan + ichan;
+   currCellCh     = icell * nchan + ichan;
    
    ct_avggcnt->setValue( lavgg );
    changeLambda( lavgg );
@@ -414,7 +691,7 @@ void US_MwlRawViewer::setCellChInfo( void )
 {
    // Load them into the list box
    lw_cellchn->clear();
-   currentCellCh  = -1;          // indicates that it hasn't been selected yet
+   currCellCh     = -1;          // indicates that it hasn't been selected yet
 
    QListWidgetItem* item = lw_cellchn->item( 0 );   // select the item at row 0
    lw_cellchn->setItemSelected( item, true );
@@ -457,7 +734,7 @@ int US_MwlRawViewer::saveUS3Disk( void )
    QString dir    = US_Settings::reportDir() + "/" + runID;
    if ( ! QDir( dir ).exists() )      // make sure the directory exists
       QDir().mkdir( dir );
-   int save_currentCellCh = currentCellCh;
+   int saveccc    = currCellCh;
    data_plot->setVisible( false );
 
    // Make sure directory is empty
@@ -471,7 +748,7 @@ int US_MwlRawViewer::saveUS3Disk( void )
          qDebug() << "Unable to remove file" << rmvfiles[ ii ];
 
    // Restore original plot
-   currentCellCh = save_currentCellCh;
+   currCellCh     = saveccc;
    plot_current();
    data_plot->setVisible( true );
    QApplication::restoreOverrideCursor();
@@ -528,9 +805,9 @@ bool US_MwlRawViewer::read( QString dir )
    }
 
    // Set the runID and directory
-   runID = new_runID;
-   le_runID ->setText( runID );
-   le_dir   ->setText( dir );
+   runID       = new_runID;
+   le_runID->setText( runID );
+   le_dir  ->setText( dir );
    currentDir  = QString( dir );
 
    // Read the data
@@ -722,7 +999,7 @@ void US_MwlRawViewer::plot_all( void )
    double  radstr = mwl_headers[ 0 ].radius_start;
    double  radinc = mwl_headers[ 0 ].radius_step;
    int     wvx    = cmb_pltwavln->currentIndex();
-   int     trx    = currentCellCh * ncellch + wvx;
+   int     trx    = currCellCh * nwaveln + wvx;
    double  radval = radstr;
    double  readvl = 0.0;
    int     rdx    = 0;
@@ -750,6 +1027,7 @@ void US_MwlRawViewer::plot_all( void )
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    
    data_plot->replot();
+   pb_details->setEnabled( true );
 }
 
 void US_MwlRawViewer::read_header( QDataStream& ds, MwlHeader& head )
@@ -872,8 +1150,8 @@ qDebug() << "  chgLmb nwaveln ntripls" << nwaveln << ntripls;
    {
       double wavl = curr_wvlns[ wvx ];
       int    wvxo = orig_wvlns.indexOf( wavl );
-      int    trxo = ccx * ncellch + wvxo;
-      int    trx  = ccx * ncellch + wvx;
+      int    trxo = ccx * nwaveln + wvxo;
+      int    trx  = ccx * nwaveln + wvx;
 
       curr_lavgs[ trx ]  = 0;
       curr_reads[ trx ]  = orig_reads[ trxo ];
@@ -898,33 +1176,10 @@ qDebug() << "  chgLmb wavln-curx" << curx;
 void US_MwlRawViewer::changeWaveln( void )
 {
 qDebug() << "changeWaveln";
-   double wavl   = cmb_pltwavln->currentText().toDouble();
    int    wvx    = cmb_pltwavln->currentIndex();
-   int    trx    = currentCellCh * ncellch + wvx;
-   int    wvxo   = orig_wvlns.indexOf( wavl );
-   int    navgg  = curr_lavgs[ trx ];
 
-   if ( navgg != lavgg )
-   { // Not currently averaged, so do so
-      int    wvlo   = qMax( ( wvxo - lavgg / 2 ), 0       );
-      int    wvhi   = qMin( ( wvlo + lavgg     ), nwlorig );
-      int    trxos  = currentCellCh * ncellch + wvlo;
-      double wcsum  = (double)( wvhi - wvlo );
-
-      for ( int ii = 0; ii < nradpt; ii++ )
-      {
-         int    trxo   = trxos;
-         double wvsum  = 0.0;
-         for ( int jj = wvlo; jj < wvhi; jj++ )
-         {
-            wvsum        += orig_reads[ trxo++ ][ ii ];
-         }
-
-         curr_reads[ trx ][ ii ] = wvsum / wcsum;
-      }
-      
-      curr_lavgs[ trx ]   = lavgg;
-   }
+   // Average at the current wavelength if not already done
+   averageWavlen( wvx );
 
    // Plot what we have
    plot_current();
@@ -957,5 +1212,35 @@ void US_MwlRawViewer::nextWvpl( void )
    }
 
    cmb_pltwavln->setCurrentIndex( wvx );
+}
+
+void US_MwlRawViewer::averageWavlen( int wvx )
+{
+   double wavl   = curr_wvlns[ wvx ];
+   int    trx    = currCellCh * nwaveln + wvx;
+   int    wvxo   = orig_wvlns.indexOf( wavl );
+   int    navgg  = curr_lavgs[ trx ];
+
+   if ( navgg != lavgg )
+   { // Not currently averaged, so do so
+      int    wvlo   = qMax( ( wvxo - lavgg / 2 ), 0       );
+      int    wvhi   = qMin( ( wvlo + lavgg     ), nwlorig );
+      int    trxos  = currCellCh * nwlorig + wvlo;
+      double wcsum  = (double)( wvhi - wvlo );
+
+      for ( int ii = 0; ii < nradpt; ii++ )
+      {
+         int    trxo   = trxos;
+         double wvsum  = 0.0;
+         for ( int jj = wvlo; jj < wvhi; jj++ )
+         {
+            wvsum        += orig_reads[ trxo++ ][ ii ];
+         }
+
+         curr_reads[ trx ][ ii ] = wvsum / wcsum;
+      }
+      
+      curr_lavgs[ trx ]   = lavgg;
+   }
 }
 
