@@ -155,6 +155,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       friend class US_Hydrodyn_Saxs_Hplc_Conc;
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
+      friend class US_Hydrodyn_Saxs_Conc;
 
       friend class US_Hydrodyn_Xsr;
 
@@ -644,6 +645,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       csv  hplc_csv;
       void reset_hplc_csv();
 
+      csv  conc_csv;         // stores curve specific data
+      void sync_conc_csv();  // removes deleted curves, adds non-extant curves with default
+      void update_conc_csv( QString name, double conc, double psv, double I0_std );
+      void update_conc_csv( QString name, double conc, double psv );
+      void update_conc_csv( QString name, double conc );
+      void update_conc_csv( QString name );
+      void add_conc_csv( QString name, double conc, double psv, double I0_std );
+      void add_conc_csv( QString name );
+      bool get_conc_csv_values ( QString name, double &conc, double &psv, double &I0_std );
+
       void set_scaling_target( QString &scaling_target );
 
       void saxs_search_update_enables();
@@ -665,8 +676,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_color_if_ok( QColor bg, QColor set );
       unsigned int pen_width;
 
-      bool mw_from_I0 ( double I0_exp, double &MW, double &internal_contrast );
-      bool ml_from_qI0( double I0_exp, double &ML, double &internal_contrast );
+      bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
+      bool ml_from_qI0( QString name, double I0_exp, double &ML, double &internal_contrast );
 
    private slots:
 

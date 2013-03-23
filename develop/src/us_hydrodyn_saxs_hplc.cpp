@@ -5094,40 +5094,6 @@ void US_Hydrodyn_Saxs_Hplc::join()
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::to_saxs()
-{
-   // copy selected to saxs window
-   if ( !activate_saxs_window() )
-   {
-      return;
-   }
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         QString this_file = lb_files->text( i );
-         if ( f_qs.count( this_file ) &&
-              f_Is.count( this_file ) )
-         {
-            if ( f_errors.count( this_file ) &&
-                 f_errors[ this_file ].size() )
-            {
-               saxs_window->plot_one_iqq( f_qs    [ this_file ],
-                                          f_Is    [ this_file ],
-                                          f_errors[ this_file ],
-                                          this_file );
-            } else {
-               saxs_window->plot_one_iqq( f_qs    [ this_file ],
-                                          f_Is    [ this_file ],
-                                          this_file );
-            }
-         } else {
-            editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
-         }
-      }
-   }
-}
-
 void US_Hydrodyn_Saxs_Hplc::plot_zoomed( const QwtDoubleRect & /* rect */ )
 {
    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
@@ -9403,6 +9369,17 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q()
 {
    disable_all();
 
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         if ( lb_files->text( i ) == lbl_conc_file->text() )
+         {
+            lb_files->setSelected( i, false );
+         }
+      }
+   }
+              
    QStringList files = all_selected_files();
    create_i_of_q( files );
 

@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_saxs_conc.h"
 
 #define SLASH "/"
 #if defined(WIN32)
@@ -207,7 +208,13 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_conc_header->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_conc_header->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_conc = new QLabel(tr(" Concentration (mg/ml) : "), this);
+   pb_curve_conc = new QPushButton(tr("Curve Concentration, PSV, I0 standard experimentals"), this);
+   pb_curve_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   // pb_curve_conc->setMinimumHeight(minHeight1);
+   pb_curve_conc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_curve_conc, SIGNAL(clicked()), SLOT(curve_conc()));
+
+   lbl_conc = new QLabel(tr(" Default concentration (mg/ml) : "), this);
    lbl_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_conc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -220,7 +227,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_conc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_conc, SIGNAL( textChanged( const QString & )), SLOT(update_conc( const QString &)));
 
-   lbl_psv = new QLabel( tr(" Partial specific volume (ml/g): "), this);
+   lbl_psv = new QLabel( tr(" Default partial specific volume (ml/g): "), this);
    lbl_psv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -283,7 +290,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_guinier_use_standards->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_guinier_use_standards->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   lbl_I0_exp = new QLabel(tr(" I0 standard experimental (a.u.) : "), this);
+   lbl_I0_exp = new QLabel(tr(" Default I0 standard experimental (a.u.) : "), this);
    lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_exp->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -378,6 +385,9 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    j++;
 
    background->addMultiCellWidget(lbl_conc_header, j, j, 0, 1);
+   j++;
+
+   background->addMultiCellWidget(pb_curve_conc, j, j, 0, 1);
    j++;
 
    background->addWidget(lbl_conc, j, 0);
@@ -658,6 +668,26 @@ void US_Hydrodyn_SasOptionsGuinier::cs_guinier()
          ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->show();
       }
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_cs();
+   } else {
+      QMessageBox::message( caption() + ": Process Guinier",
+                            tr( "The main SAS window is not active" ) );
+   }
+}
+
+void US_Hydrodyn_SasOptionsGuinier::curve_conc()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->sync_conc_csv();
+      US_Hydrodyn_Saxs_Conc *hsc = 
+         new US_Hydrodyn_Saxs_Conc(
+                                   ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->conc_csv,
+                                   ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window,
+                                   this 
+                                   );
+      US_Hydrodyn::fixWinButtons( hsc );
+      hsc->exec();
+      delete hsc;
    } else {
       QMessageBox::message( caption() + ": Process Guinier",
                             tr( "The main SAS window is not active" ) );

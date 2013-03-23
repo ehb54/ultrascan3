@@ -263,19 +263,24 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
 }
 
 
-bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_contrast )
+bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, double &internal_contrast )
 {
+   double conc;
+   double psv;
+   double I0_std_exp;
+
+   get_conc_csv_values( name, conc, psv, I0_std_exp );
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
       cout << "mw_from_I0: using standards\n";
-      if ( our_saxs_options->I0_exp == 0e0 )
+      if ( I0_std_exp == 0e0 )
       {
          errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
          MW = 0e0;
          return false;
       }
-      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / I0_std_exp;
    } else {
       cout << "mw_from_I0: standards not used\n";
    }
@@ -289,19 +294,18 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
       return false;
    }
 
-   if ( our_saxs_options->conc == 0e0 )
+   if ( conc == 0e0 )
    {
       errormsg = tr( "Error: Concentration is 0, can not compute MW" );
       MW = 0e0;
       return false;
    }
 
-
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - our_saxs_options->psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - psv * ( 1e24 * our_saxs_options->water_e_density ) );
 
-   MW = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast );
+   MW = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast );
 
 #if defined( DEBUG_MW )
    cout << QString( 
@@ -309,7 +313,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
                    "I0_std_exp          %2\n"
                    )
       .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
-      .arg( our_saxs_options->I0_exp, 0, 'e', 8  )
+      .arg( I0_std_exp, 0, 'e', 8  )
       ;
                    
    cout << QString( 
@@ -326,11 +330,11 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
 
       .arg( I0_exp_to_theo_mult, 0, 'e', 8  )
       .arg( our_saxs_options->diffusion_len, 0, 'e', 8  )
-      .arg( our_saxs_options->psv, 0, 'e', 8  )
+      .arg( psv, 0, 'e', 8  )
       .arg( our_saxs_options->water_e_density * 1e24, 0, 'e', 8  )
       .arg( I0_prot_theo, 0, 'e', 8  )
       .arg( AVOGADRO, 0, 'e', 8  )
-      .arg( our_saxs_options->conc, 0, 'e', 8  )
+      .arg( conc, 0, 'e', 8  )
       .arg( internal_contrast, 0, 'e', 8  )
       .arg( our_saxs_options->nucleon_mass, 0, 'e', 8  );
 #endif
@@ -338,18 +342,24 @@ bool US_Hydrodyn_Saxs::mw_from_I0( double I0_exp, double &MW, double &internal_c
    return true;
 }
 
-bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_contrast )
+bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, double &internal_contrast )
 {
+   double conc;
+   double psv;
+   double I0_std_exp;
+
+   get_conc_csv_values( name, conc, psv, I0_std_exp );
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
-      if ( our_saxs_options->I0_exp == 0e0 )
+      if ( I0_std_exp == 0e0 )
       {
          errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
          ML = 0e0;
          return false;
       }
-      I0_exp_to_theo_mult = our_saxs_options->I0_theo / our_saxs_options->I0_exp;
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / I0_std_exp;
    }
 
    double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
@@ -361,14 +371,14 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_
       return false;
    }
 
-   if ( our_saxs_options->conc == 0e0 )
+   if ( conc == 0e0 )
    {
       errormsg = tr( "Error: Concentration is 0, can not compute MW" );
       ML = 0e0;
       return false;
    }
 
-   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : our_saxs_options->psv;
+   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
 
    internal_contrast = 
       our_saxs_options->diffusion_len * 
@@ -382,7 +392,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_
                    "I0_std_exp          %2\n"
                    )
       .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
-      .arg( our_saxs_options->I0_exp, 0, 'e', 8  )
+      .arg( I0_std_exp, 0, 'e', 8  )
       ;
                    
    cout << QString( 
@@ -403,7 +413,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( double I0_exp, double &ML, double &internal_
       .arg( our_saxs_options->water_e_density * 1e24, 0, 'e', 8  )
       .arg( I0_prot_theo, 0, 'e', 8  )
       .arg( AVOGADRO, 0, 'e', 8  )
-      .arg( our_saxs_options->conc, 0, 'e', 8  )
+      .arg( conc, 0, 'e', 8  )
       .arg( internal_contrast, 0, 'e', 8  )
       .arg( our_saxs_options->nucleon_mass, 0, 'e', 8  );
 #endif
@@ -465,7 +475,206 @@ void US_Hydrodyn_Saxs::guinier_window()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
    }
 }
+
 void US_Hydrodyn_Saxs::ift()
 {
 }
 
+
+void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extant curves with default
+{
+   if ( !conc_csv.data.size() )
+   {
+      // setup & add all
+      conc_csv.name = "Curve concentrations, PSVs and I0 standard experimentals";
+
+      conc_csv.header.clear();
+      conc_csv.header_map.clear();
+      conc_csv.data.clear();
+      conc_csv.num_data.clear();
+      conc_csv.prepended_names.clear();
+      
+      conc_csv.header.push_back("File");
+      conc_csv.header.push_back("Concentration (mg/ml)");
+      conc_csv.header.push_back("PSV (ml/g)");
+      conc_csv.header.push_back("I0 standard experimental (ml/g)");
+   }
+
+   // delete any non-plotted ones
+
+   map < QString, bool > current_files;
+   map < QString, bool > csv_files;
+   
+   for ( unsigned int i = 0; 
+#ifndef QT4
+         i < ( unsigned int ) plotted_Iq.size();
+#else
+         i < ( unsigned int ) plotted_Iq_curves.size();
+#endif
+         i++ )
+   {
+      current_files[ qsl_plotted_iq_names[ i ] ] = true;
+   }
+   csv new_csv = conc_csv;
+   new_csv.data.clear();
+   new_csv.num_data.clear();
+   new_csv.prepended_names.clear();
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      csv_files[ conc_csv.data[ i ][ 0 ] ] = true;
+      if ( current_files.count( conc_csv.data[ i ][ 0 ] ) )
+      {
+         new_csv.data.push_back( conc_csv.data[ i ] );
+         new_csv.prepended_names.push_back( conc_csv.data[ i ][ 0 ] );
+      }
+   }
+   conc_csv = new_csv;
+
+   // add new ones
+   for ( unsigned int i = 0; 
+#ifndef QT4
+         i < ( unsigned int ) plotted_Iq.size();
+#else
+         i < ( unsigned int ) plotted_Iq_curves.size();
+#endif
+         i++ )
+   {
+      if ( !csv_files.count( qsl_plotted_iq_names[ i ] ) )
+      {
+         add_conc_csv( qsl_plotted_iq_names[ i ] );
+      }
+   }
+
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      vector < double > tmp_num_data;
+      for ( unsigned int j = 0; j < conc_csv.data[ i ].size(); j++ )
+      {
+         tmp_num_data.push_back( conc_csv.data[ i ][ j ].toDouble() );
+      }
+      conc_csv.num_data.push_back( tmp_num_data );
+   }
+
+#define DEBUG_CSV
+#if defined( DEBUG_CSV )
+   puts( "sync_csv" );
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < conc_csv.data[ i ].size(); j++ )
+      {
+         cout << conc_csv.data[ i ][ j ] << " : ";
+      }
+      cout << endl;
+   }
+#endif   
+}      
+
+void US_Hydrodyn_Saxs::add_conc_csv( QString name, double conc, double psv, double I0_std )
+{
+#if defined( DEBUG_CSV )
+   cout << QString( "add_conc_csv %1 %2 %3 %4\n" ).arg( name ).arg( conc ).arg( psv ).arg( I0_std );
+#endif
+   vector < QString > tmp_data;
+   tmp_data.push_back( name );
+   tmp_data.push_back( QString( "%1" ).arg( conc ) );
+   tmp_data.push_back( QString( "%1" ).arg( psv ) );
+   tmp_data.push_back( QString( "%1" ).arg( I0_std ) );
+            
+   conc_csv.prepended_names.push_back(tmp_data[0]);
+   conc_csv.data.push_back(tmp_data);
+
+   vector < double > tmp_num_data;
+   for ( unsigned int j = 0; j < conc_csv.data.back().size(); j++ )
+   {
+      tmp_num_data.push_back( conc_csv.data.back()[ j ].toDouble() );
+   }
+   conc_csv.num_data.push_back( tmp_num_data );
+#if defined( DEBUG_CSV )
+   puts( "after add" );
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < conc_csv.data[ i ].size(); j++ )
+      {
+         cout << conc_csv.data[ i ][ j ] << " : ";
+      }
+      cout << endl;
+   }
+#endif   
+}
+
+void US_Hydrodyn_Saxs::update_conc_csv( QString name, double conc, double psv, double I0_std )
+{
+#if defined( DEBUG_CSV )
+   cout << QString( "update_conc_csv %1 %2 %3 %4\n" ).arg( name ).arg( conc ).arg( psv ).arg( I0_std );
+#endif
+
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      if ( name == conc_csv.data[ i ][ 0 ] )
+      {
+         conc_csv.data[ i ][ 1 ] = QString( "%1" ).arg( conc );
+         conc_csv.data[ i ][ 2 ] = QString( "%1" ).arg( psv );
+         conc_csv.data[ i ][ 3 ] = QString( "%1" ).arg( I0_std );
+         vector < double > tmp_num_data;
+         for ( unsigned int j = 0; j < conc_csv.data[ i ].size(); j++ )
+         {
+            conc_csv.num_data[ i ][ j ] = conc_csv.data[ i ][ j ].toDouble();
+         }
+#if defined( DEBUG_CSV )
+         puts( "after update" );
+         for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+         {
+            for ( unsigned int j = 0; j < conc_csv.data[ i ].size(); j++ )
+            {
+               cout << conc_csv.data[ i ][ j ] << " : ";
+            }
+            cout << endl;
+         }
+#endif   
+         return;
+      }
+   }   
+#if defined( DEBUG_CSV )
+   cout << QString( "not found, adding\n" );
+#endif
+   add_conc_csv( name, conc, psv, I0_std );
+}
+
+void US_Hydrodyn_Saxs::update_conc_csv( QString name, double conc, double psv )
+{
+   update_conc_csv( name, conc, psv, our_saxs_options->I0_exp );
+}
+
+void US_Hydrodyn_Saxs::update_conc_csv( QString name, double conc )
+{
+   update_conc_csv( name, conc, our_saxs_options->psv, our_saxs_options->I0_exp );
+}
+
+void US_Hydrodyn_Saxs::update_conc_csv( QString name )
+{
+   update_conc_csv( name, our_saxs_options->conc, our_saxs_options->psv, our_saxs_options->I0_exp );
+}
+
+void US_Hydrodyn_Saxs::add_conc_csv( QString name )
+{
+   add_conc_csv( name, our_saxs_options->conc, our_saxs_options->psv, our_saxs_options->I0_exp );
+}
+
+bool US_Hydrodyn_Saxs::get_conc_csv_values( QString name, double &conc, double &psv, double &I0_std_exp )
+{
+   for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
+   {
+      if ( name == conc_csv.data[ i ][ 0 ] )
+      {
+         conc       = conc_csv.num_data[ i ][ 1 ];
+         psv        = conc_csv.num_data[ i ][ 2 ];
+         I0_std_exp = conc_csv.num_data[ i ][ 3 ];
+         return true;
+      }
+   }   
+   conc       = our_saxs_options->conc;
+   psv        = our_saxs_options->psv;
+   I0_std_exp = our_saxs_options->I0_exp;
+
+   return false;
+}

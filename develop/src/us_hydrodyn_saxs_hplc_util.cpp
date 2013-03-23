@@ -1211,3 +1211,57 @@ void US_Hydrodyn_Saxs_Hplc::crop_common()
 
    update_files();
 }
+
+void US_Hydrodyn_Saxs_Hplc::to_saxs()
+{
+   // copy selected to saxs window
+   if ( !activate_saxs_window() )
+   {
+      return;
+   }
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         QString this_file = lb_files->text( i );
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) )
+         {
+            if ( f_errors.count( this_file ) &&
+                 f_errors[ this_file ].size() )
+            {
+               saxs_window->plot_one_iqq( f_qs    [ this_file ],
+                                          f_Is    [ this_file ],
+                                          f_errors[ this_file ],
+                                          this_file );
+            } else {
+               saxs_window->plot_one_iqq( f_qs    [ this_file ],
+                                          f_Is    [ this_file ],
+                                          this_file );
+            }
+            double use_conc;
+            if ( concs.count( this_file ) && concs[ this_file ] != 0e0 )
+            {
+               use_conc = concs[ this_file ];
+            } else {
+               if ( f_conc.count( this_file ) && f_conc[ this_file ] != 0e0 ) 
+               {
+                  use_conc = f_conc[ this_file ];
+               } else {
+                  use_conc = ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc;
+               }
+            }
+            saxs_window->update_conc_csv( 
+                                         saxs_window->qsl_plotted_iq_names.back(), 
+                                         use_conc,
+                                         ( f_psv .count( this_file ) && f_psv [ this_file ] != 0e0 ) ? f_psv [ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv
+                                         );
+         } else {
+            editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
+         }
+      }
+   }
+}

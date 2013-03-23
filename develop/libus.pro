@@ -235,6 +235,7 @@ SOURCES += \
   src/us_hydrodyn_sas_options_experimental.cpp \
   src/us_hydrodyn_save.cpp \
   src/us_hydrodyn_saxs.cpp \
+  src/us_hydrodyn_saxs_conc.cpp \
   src/us_hydrodyn_saxs_external.cpp \
   src/us_hydrodyn_saxs_fits.cpp \
   src/us_hydrodyn_saxs_iqq.cpp \
@@ -542,6 +543,7 @@ HEADERS += \
   include/us_hydrodyn_sas_options_experimental.h \
   include/us_hydrodyn_save.h \
   include/us_hydrodyn_saxs.h \
+  include/us_hydrodyn_saxs_conc.h \
   include/us_hydrodyn_saxs_load_csv.h \
   include/us_hydrodyn_saxs_mw.h \
   include/us_hydrodyn_saxs_options.h \

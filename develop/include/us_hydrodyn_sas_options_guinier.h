@@ -76,6 +76,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
 
       QLabel     *lbl_conc_header;
 
+      QPushButton *pb_curve_conc;
+
       QLabel     *lbl_conc;
       QLineEdit  *le_conc;
 
@@ -127,6 +129,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void update_pointsmin                     ( const QString & );
       void update_pointsmax                     ( const QString & );
       void update_guinier_csv_filename          ( const QString & );
+
+      void curve_conc                           ();
 
       void update_conc                          ( const QString & );
       void update_psv                           ( const QString & );

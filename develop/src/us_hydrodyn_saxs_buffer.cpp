@@ -4775,6 +4775,10 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
    {
       return;
    }
+
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
@@ -4795,6 +4799,13 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
                                           f_Is    [ this_file ],
                                           this_file );
             }
+
+            saxs_window->update_conc_csv( 
+                                         saxs_window->qsl_plotted_iq_names.back(), 
+                                         ( concs.count( this_file ) && concs[ this_file ] != 0e0 ) ? concs[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.conc
+                                         );
+            
+
          } else {
             editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
          }

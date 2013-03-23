@@ -408,6 +408,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    saxs_search_update_enables();
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "x" );
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "x" );
+
+   sync_conc_csv();
 }
 
 void US_Hydrodyn_Saxs::push_back_color_if_ok( QColor bg, QColor set )
@@ -6232,14 +6234,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          double MW_sd;
          double ICL;
 
-         if ( mw_from_I0( siga, MW_sd, ICL ) )
+         if ( mw_from_I0( qsl_plotted_iq_names[ i ], siga, MW_sd, ICL ) )
          {
             // cout << QString( "siga %1 MW_sd %2 ICL %3\n" ).arg( siga ).arg( MW_sd ).arg( ICL );
          } else {
             // cout << errormsg << endl;
          }
 
-         if ( !mw_from_I0( Io, MW, ICL ) )
+         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, MW, ICL ) )
          {
             editor_msg( "red", errormsg );
             // cout << errormsg;
@@ -6467,8 +6469,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          double ML_sd;
          double ICL;
 
-         ml_from_qI0( siga, ML_sd, ICL );
-         if ( !mw_from_I0( Io, ML, ICL ) )
+         ml_from_qI0( qsl_plotted_iq_names[ i ], siga, ML_sd, ICL );
+         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, ML, ICL ) )
          {
             editor_msg( "red", errormsg );
          }
