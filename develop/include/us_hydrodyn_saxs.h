@@ -198,13 +198,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       int source;
       US_Config *USglobal;
 
-      QLabel *lbl_info;
+      mQLabel *lbl_iq;
+      mQLabel *lbl_settings;
       QLabel *lbl_filename1;
       QLabel *lbl_hybrid_table;
       QLabel *lbl_atom_table;
       QLabel *lbl_saxs_table;
       QLabel *lbl_core_progress;
-      QLabel *lbl_info_prr;
+      mQLabel *lbl_pr;
       QLabel *lbl_bin_size;
       QLabel *lbl_smooth;
       QLabel *lbl_guinier_cutoff;
@@ -676,10 +677,30 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void push_back_color_if_ok( QColor bg, QColor set );
       unsigned int pen_width;
 
+   private:
+
       bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
       bool ml_from_qI0( QString name, double I0_exp, double &ML, double &internal_contrast );
 
+      
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif      
+      vector < QWidget * > iq_widgets;
+      vector < QWidget * > pr_widgets;
+      vector < QWidget * > settings_widgets;
+
+      void hide_widgets( vector < QWidget * >, bool do_hide = true );
+
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+
    private slots:
+
+      void hide_pr();
+      void hide_iq();
+      void hide_settings();
 
       void foxs_readFromStdout();
       void foxs_readFromStderr();
