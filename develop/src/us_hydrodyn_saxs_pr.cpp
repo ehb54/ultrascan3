@@ -555,7 +555,7 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
       conc_csv.num_data.push_back( tmp_num_data );
    }
 
-#define DEBUG_CSV
+   // #define DEBUG_CSV
 #if defined( DEBUG_CSV )
    puts( "sync_csv" );
    for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
