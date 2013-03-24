@@ -486,7 +486,7 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
    if ( !conc_csv.data.size() )
    {
       // setup & add all
-      conc_csv.name = "Curve concentrations, PSVs and I0 standard experimentals";
+      conc_csv.name = "Set Curve Concentration, PSV and I0 standard experimental";
 
       conc_csv.header.clear();
       conc_csv.header_map.clear();
