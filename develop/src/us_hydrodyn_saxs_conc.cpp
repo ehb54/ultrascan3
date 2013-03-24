@@ -149,7 +149,9 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    t_csv->setColumnReadOnly( 0, true );
    t_csv->setColumnReadOnly( 1, false );
    t_csv->setColumnWidth(0, 330);
-   t_csv->setColumnWidth(1, 150);
+   t_csv->setColumnWidth(1, 160);
+   t_csv->setColumnWidth(2, 120);
+   t_csv->setColumnWidth(3, 170);
    
    t_csv->horizontalHeader()->setClickEnabled(true);
    connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
