@@ -202,13 +202,13 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_guinier_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
 
-   lbl_conc_header = new QLabel(tr("Concentration computation options:"), this);
+   lbl_conc_header = new QLabel(tr("MW and M/L computation options:"), this);
    lbl_conc_header->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_conc_header->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conc_header->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_conc_header->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_curve_conc = new QPushButton(tr("Curve Concentration, PSV, I0 standard experimentals"), this);
+   pb_curve_conc = new QPushButton(tr("Set Curve Concentration, PSV, I0 standard experimental"), this);
    pb_curve_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_curve_conc->setMinimumHeight(minHeight1);
    pb_curve_conc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));

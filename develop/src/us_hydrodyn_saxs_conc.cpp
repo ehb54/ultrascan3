@@ -16,7 +16,7 @@ US_Hydrodyn_Saxs_Conc::US_Hydrodyn_Saxs_Conc(
    us_hydrodyn = ((US_Hydrodyn_Saxs *)saxs_window)->us_hydrodyn;
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption( tr( "US-SOMO: Guinier: File Concentrations, PSVs and I0 standard experimentals"));
+   setCaption( tr( "US-SOMO: Guinier: Set Concentration, PSV and I0 standard experimental"));
    order_ascending = false;
    disable_updates = false;
    setupGUI();
