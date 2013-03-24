@@ -11000,7 +11000,7 @@
 #define ENDFILE       ftnwef
 #define BACKSPACE     ftnback
 #define CLOSE         ftnclose
-#define DELETE        ftndelet
+// #define DELETE        ftndelet
 #define LOCKFILE      ftnlock
 #define UNLOCKFILE    ftnunlock
 #define RNAMELIST     rnmlist

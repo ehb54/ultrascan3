@@ -1,6 +1,10 @@
 #ifndef US_H
 #define US_H
 
+#ifdef WIN32
+#include "Windows.h"
+#endif
+
 #include <qcolor.h>
 #include <qpalette.h>
 #include <vector>
