@@ -479,6 +479,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, bool  >              skip_residue;
       //                                  flags molecule "#|resSeq|residue_list entry" to be ignored
       
+      map < QString, QString >            gparams;
+
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
       vector <struct PDB_model> model_vector_as_loaded;

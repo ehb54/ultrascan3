@@ -1434,6 +1434,84 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellWidget(lbl_iq, j, j, 0, 1);
    j++;
 
+
+   QBoxLayout *hbl_load_saxs = new QHBoxLayout(0);
+   hbl_load_saxs->addWidget(pb_load_saxs_sans);
+   hbl_load_saxs->addWidget(pb_load_gnom);
+   hbl_load_saxs->addWidget(pb_load_plot_saxs);
+   hbl_load_saxs->addWidget(pb_set_grid);
+   hbl_load_saxs->addWidget(pb_clear_plot_saxs);
+   background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
+   j++;
+
+   QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
+   hbl_various_0->addWidget(pb_ift);
+   hbl_various_0->addWidget(pb_saxs_search);
+   if ( started_in_expert_mode )
+   {
+      hbl_various_0->addWidget(pb_saxs_screen);
+   }
+
+   hbl_various_0->addWidget(pb_saxs_buffer);
+   hbl_various_0->addWidget(pb_saxs_hplc);
+
+   if ( started_in_expert_mode )
+   {
+      hbl_various_0->addWidget(pb_saxs_xsr);
+      hbl_various_0->addWidget(pb_saxs_1d);
+      hbl_various_0->addWidget(pb_saxs_2d);
+   }
+
+   hbl_various_0->addWidget(pb_guinier_analysis);
+   hbl_various_0->addWidget(pb_guinier_cs);
+   hbl_various_0->addWidget(pb_saxs_legend);
+   background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
+   j++;
+
+
+   QGridLayout *gl_plot_ctls = new QGridLayout( 0 );
+
+   gl_plot_ctls->addWidget( cb_guinier    , 0, 0 );
+   gl_plot_ctls->addWidget( cb_cs_guinier , 0, 1 );
+   gl_plot_ctls->addWidget( cb_user_range , 1, 0 );
+   gl_plot_ctls->addWidget( cb_kratky     , 1, 1 );
+
+   //    QHBoxLayout *hbl_guinier = new QHBoxLayout;
+   //    hbl_guinier->addWidget( cb_guinier );
+   //    hbl_guinier->addWidget( cb_cs_guinier );
+   //    background->addLayout(hbl_guinier, j, 0);
+
+   QHBoxLayout *hbl_guinier_range = new QHBoxLayout;
+   hbl_guinier_range->addWidget( le_guinier_lowq2 );
+   hbl_guinier_range->addWidget( le_guinier_highq2 );
+   background->addLayout(hbl_guinier_range, j, 1);
+   j++;
+
+#if defined(ADD_GUINIER)      
+   hbl_guinier->addWidget(lbl_guinier_cutoff);
+   hbl_guinier->addWidget(cnt_guinier_cutoff);
+#endif
+
+   //    QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
+   //    hbl_cb_std_kratky->addWidget( cb_user_range );
+   //    hbl_cb_std_kratky->addWidget( cb_kratky );
+   //    background->addLayout( hbl_cb_std_kratky, j, 0 );
+
+   background->addMultiCellLayout( gl_plot_ctls, j-1, j, 0, 0 );
+
+   QHBoxLayout *hbl_user_range = new QHBoxLayout;
+   hbl_user_range->addWidget(le_user_lowq);
+   hbl_user_range->addWidget(le_user_highq);
+   hbl_user_range->addWidget(le_user_lowI);
+   hbl_user_range->addWidget(le_user_highI);
+   background->addLayout(hbl_user_range, j, 1);
+   j++;
+
+   QHBoxLayout *hbl_tools = new QHBoxLayout;
+   hbl_tools->addWidget(cb_create_native_saxs);
+   background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
+   j++;
+
    QBoxLayout *hbl_saxs_iq = new QHBoxLayout(0);
    hbl_saxs_iq->addWidget(rb_saxs);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_debye);
@@ -1483,83 +1561,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(progress_saxs, j, 1);
    j++;
 
-   QBoxLayout *hbl_load_saxs = new QHBoxLayout(0);
-   hbl_load_saxs->addWidget(pb_load_saxs_sans);
-   hbl_load_saxs->addWidget(pb_load_plot_saxs);
-   hbl_load_saxs->addWidget(pb_set_grid);
-   hbl_load_saxs->addWidget(pb_clear_plot_saxs);
-   hbl_load_saxs->addWidget(pb_saxs_legend);
-   background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
-   j++;
-
-   QBoxLayout *hbl_various_0 = new QHBoxLayout(0);
-   hbl_various_0->addWidget(pb_load_gnom);
-   hbl_various_0->addWidget(pb_ift);
-   hbl_various_0->addWidget(pb_saxs_search);
-   if ( started_in_expert_mode )
-   {
-      hbl_various_0->addWidget(pb_saxs_screen);
-   }
-
-   hbl_various_0->addWidget(pb_saxs_buffer);
-   hbl_various_0->addWidget(pb_saxs_hplc);
-
-   if ( started_in_expert_mode )
-   {
-      hbl_various_0->addWidget(pb_saxs_xsr);
-      hbl_various_0->addWidget(pb_saxs_1d);
-      hbl_various_0->addWidget(pb_saxs_2d);
-   }
-
-   hbl_various_0->addWidget(pb_guinier_analysis);
-   hbl_various_0->addWidget(pb_guinier_cs);
-   background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
-   j++;
-
-   QHBoxLayout *hbl_tools = new QHBoxLayout;
-   hbl_tools->addWidget(cb_create_native_saxs);
-   background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
-   j++;
-
-   QGridLayout *gl_plot_ctls = new QGridLayout( 0 );
-
-   gl_plot_ctls->addWidget( cb_guinier    , 0, 0 );
-   gl_plot_ctls->addWidget( cb_cs_guinier , 0, 1 );
-   gl_plot_ctls->addWidget( cb_user_range , 1, 0 );
-   gl_plot_ctls->addWidget( cb_kratky     , 1, 1 );
-
-   //    QHBoxLayout *hbl_guinier = new QHBoxLayout;
-   //    hbl_guinier->addWidget( cb_guinier );
-   //    hbl_guinier->addWidget( cb_cs_guinier );
-   //    background->addLayout(hbl_guinier, j, 0);
-
-   QHBoxLayout *hbl_guinier_range = new QHBoxLayout;
-   hbl_guinier_range->addWidget( le_guinier_lowq2 );
-   hbl_guinier_range->addWidget( le_guinier_highq2 );
-   background->addLayout(hbl_guinier_range, j, 1);
-   j++;
-
-#if defined(ADD_GUINIER)      
-   hbl_guinier->addWidget(lbl_guinier_cutoff);
-   hbl_guinier->addWidget(cnt_guinier_cutoff);
-#endif
-
-   //    QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
-   //    hbl_cb_std_kratky->addWidget( cb_user_range );
-   //    hbl_cb_std_kratky->addWidget( cb_kratky );
-   //    background->addLayout( hbl_cb_std_kratky, j, 0 );
-
-   background->addMultiCellLayout( gl_plot_ctls, j-1, j, 0, 0 );
-
-   QHBoxLayout *hbl_user_range = new QHBoxLayout;
-   hbl_user_range->addWidget(le_user_lowq);
-   hbl_user_range->addWidget(le_user_highq);
-   hbl_user_range->addWidget(le_user_lowI);
-   hbl_user_range->addWidget(le_user_highI);
-   background->addLayout(hbl_user_range, j, 1);
-   j++;
-
    background->addMultiCellWidget(lbl_pr, j, j, 0, 1);
+   j++;
+   QBoxLayout *hbl_plot_pr = new QHBoxLayout(0);
+   hbl_plot_pr->addWidget(pb_load_pr);
+   hbl_plot_pr->addWidget(pb_load_plot_pr);
+   hbl_plot_pr->addWidget(pb_clear_plot_pr);
+   hbl_plot_pr->addWidget(pb_pr_legend);
+   background->addMultiCellLayout(hbl_plot_pr, j, j, 0, 1);
    j++;
    background->addWidget(lbl_bin_size, j, 0);
    background->addWidget(cnt_bin_size, j, 1);
@@ -1591,13 +1600,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    //   background->addWidget(pb_load_pr, j, 0);
    // background->addWidget(pb_clear_plot_pr, j, 1);
 
-   QBoxLayout *hbl_plot_pr = new QHBoxLayout(0);
-   hbl_plot_pr->addWidget(pb_load_pr);
-   hbl_plot_pr->addWidget(pb_load_plot_pr);
-   hbl_plot_pr->addWidget(pb_clear_plot_pr);
-   hbl_plot_pr->addWidget(pb_pr_legend);
-   background->addMultiCellLayout(hbl_plot_pr, j, j, 0, 1);
-   j++;
    
    background->addMultiCellWidget(frame, j, j, 0, 1);
    j++;
@@ -1646,6 +1648,32 @@ void US_Hydrodyn_Saxs::setupGUI()
       rb_curve_raw->setEnabled(true);
       rb_curve_saxs->setEnabled(true);
       rb_curve_sans->setEnabled(true);
+   }
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_settings" ) && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_settings" ] == "hidden" )
+   {
+      hide_widgets( settings_widgets, true );
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_pr" ) && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_pr" ] == "hidden" )
+   {
+      hide_widgets( pr_widgets, true );
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_iq" ) && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_iq" ] == "hidden" )
+   {
+      hide_widgets( iq_widgets, true );
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_plot_saxs" ) && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_saxs" ] == "hidden" )
+   {
+      plot_saxs->hide();
+   } else {
+      plot_saxs->show();
+   }
+      
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_plot_pr" ) && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_pr" ] == "hidden" )
+   {
+      plot_pr->hide();
+   } else {
+      plot_pr->show();
    }
 }
 
@@ -7734,7 +7762,7 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
 void US_Hydrodyn_Saxs::fix_sas_options()
 {
    
-   cout << "fix_sas_options\n";
+   // cout << "fix_sas_options\n";
    bool any_selected = false;
 
    if ( our_saxs_options->saxs_iq_native_debye )
@@ -7910,6 +7938,9 @@ void US_Hydrodyn_Saxs::hide_pr()
          plot_saxs->hide();
       }
    }
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_pr" ]        = pr_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_saxs" ] = plot_saxs      ->isVisible() ? "visible" : "hidden";
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_pr"   ] = plot_pr        ->isVisible() ? "visible" : "hidden";
 }
 
 void US_Hydrodyn_Saxs::hide_iq()
@@ -7924,9 +7955,13 @@ void US_Hydrodyn_Saxs::hide_iq()
          plot_pr->hide();
       }
    }
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_iq" ]        = iq_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_saxs" ] = plot_saxs      ->isVisible() ? "visible" : "hidden";
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_plot_pr"   ] = plot_pr        ->isVisible() ? "visible" : "hidden";
 }
 
 void US_Hydrodyn_Saxs::hide_settings()
 {
    hide_widgets( settings_widgets, settings_widgets[ 0 ]->isVisible() );
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_settings" ] = settings_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
 }

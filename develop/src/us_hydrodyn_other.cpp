@@ -3864,6 +3864,13 @@ void US_Hydrodyn::write_config(const QString& fname)
          parameters[ "save_params.field" ] = qsl_tmp.join( "\n" );
       }
       
+      for ( map < QString, QString >::iterator it = gparams.begin();
+            it != gparams.end();
+            it++ )
+      {
+         parameters[ "gparam:" + it->first ] = it->second;
+      }
+
       ts << US_Json::compose( parameters );
       f.close();
    }
@@ -4310,6 +4317,22 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          save_params.field.push_back( qsl_tmp[ i ] );
       }
    }
+
+   {
+      gparams.clear();
+      QRegExp rx_gparam( "^gparam:(.*)$" );
+      
+      for ( map < QString, QString >::iterator it = parameters.begin();
+            it != parameters.end();
+            it++ )
+      {
+         if ( rx_gparam.search( it->first ) != -1 )
+         {
+            gparams[ rx_gparam.cap( 1 ) ] = it->second;
+         }
+      }
+   }
+
    return true;
 }
 
@@ -5202,6 +5225,8 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.guinier_outlier_reject_dist        = 2e0;
    saxs_options.guinier_use_sd                     = false;
    saxs_options.guinier_use_standards              = false;
+
+   gparams                                         .clear();
 }
 
 void US_Hydrodyn::set_default()
