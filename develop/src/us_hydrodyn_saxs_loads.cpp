@@ -3276,3 +3276,420 @@ vector < double > US_Hydrodyn_Saxs::range_crop( vector < double > &q, vector < d
    return result;
 }
 
+
+void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
+{
+   if ( just_plotted_curves )
+   {
+      load_iqq_csv( "", true );
+      return;
+   }
+
+   if ( filename.isEmpty() )
+   {
+      QString use_dir = 
+         our_saxs_options->path_load_saxs_curve.isEmpty() ?
+         USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+         our_saxs_options->path_load_saxs_curve;
+      select_from_directory_history( use_dir, this );
+      filename = QFileDialog::getOpenFileName(use_dir, 
+                                              "All files (*);;"
+                                              "ssans files (*.ssans);;"
+                                              "csv files (*.csv);;"
+                                              "int files [cryson] (*.int);;"
+                                              "fit files [cryson] (*.fit);;"
+                                              , this
+                                              , "open file dialog"
+                                              , "Open"
+                                              , &load_saxs_sans_selected_filter
+                                              );
+      if ( filename.isEmpty() )
+      {
+         return;
+      }
+      add_to_directory_history( filename );
+   }
+
+   plotted = false;
+   QFile f(filename);
+   our_saxs_options->path_load_saxs_curve = QFileInfo(filename).dirPath(true);
+   QString ext = QFileInfo(filename).extension(FALSE).lower();
+
+   if ( ext == "pdb" || ext == "PDB" )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Can not load a PDB file as a curve: ")
+                                    + filename ) );
+      return;
+   }
+
+   if ( ext == "csv" )
+   {
+      load_iqq_csv( filename );
+      return;
+   }
+
+   vector < double > I;
+   vector < double > I_error;
+   vector < double > I2;
+   vector < double > q;
+   vector < double > q2;
+   double new_I;
+   double new_I_error;
+   double new_I2;
+   double new_q;
+   unsigned int Icolumn = 1;
+   unsigned int I_errorcolumn = 0;
+   bool dolog10 = false;
+   QString res = "";
+   unsigned int Icolumn2 = 0;
+   QString tag1;
+   QString tag2;
+
+   // scaling fields
+   QString scaling_target = "";
+
+   bool do_crop = false;
+
+   if ( f.open(IO_ReadOnly) )
+   {
+      QTextStream ts(&f);
+      vector < QString > qv;
+      QStringList qsl;
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         qv.push_back(qs);
+         qsl << qs;
+      }
+      f.close();
+      if ( !qv.size() )
+      {
+         QMessageBox::warning( this, "UltraScan",
+                               QString(tr("The file ")
+                                       + filename + tr(" is empty.")) );
+         return;
+      }
+
+      unsigned int number_of_fields = 0;
+      if ( qv.size() > 3 )
+      {
+         QString test_line = qv[2];
+         test_line.replace(QRegExp("^\\s+"),"");
+         test_line.replace(QRegExp("\\s+$"),"");
+         QStringList test_list = QStringList::split(QRegExp("\\s+"), test_line);
+         number_of_fields = test_list.size();
+         cout << "number of fields: " << number_of_fields << endl;
+      }
+
+      set_scaling_target( scaling_target );
+
+      if ( ext == "int" ) 
+      {
+         //         dolog10 = true;
+         QStringList lst;
+         lst << "I(q)   Difference intensity"
+             << "Ia(q)  Atomic scattering"
+             << "Ic(q)  Shape scattering"
+             << "Ib(q)  Border layer scattering Ib(q)";
+         bool ok;
+         
+         if ( !our_saxs_options->crysol_default_load_difference_intensity )
+         {
+            res = QInputDialog::getItem(
+                                        "Crysol's .int format has four available datasets", 
+                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        this );
+            if ( ok ) {
+               // user selected an item and pressed OK
+               Icolumn = 0;
+               if ( res.contains(QRegExp("^I.q. ")) ) 
+               {
+                  Icolumn = 1;
+               } 
+               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               {
+                  Icolumn = 2;
+               } 
+               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               {
+                  Icolumn = 3;
+               } 
+               if ( res.contains(QRegExp("^Ib.q. ")) ) 
+               {
+                  Icolumn = 4;
+               } 
+               if ( !Icolumn ) 
+               {
+                  cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+                  return;
+               }
+               cout << " column " << Icolumn << endl;
+            } 
+            else
+            {
+               return;
+            }
+         } else {
+            Icolumn = 1;
+         }
+      }
+      if ( ext == "dat" ) 
+      {
+         // foxs?
+         do_crop = true;
+
+         Icolumn = 1;
+         I_errorcolumn = 2;
+         if ( qsl.grep("exp_intensity").size() )
+         {
+            I_errorcolumn = 0;
+            
+            switch ( QMessageBox::question(this, 
+                                           tr("UltraScan Notice"),
+                                           QString(tr("Please note:\n\n"
+                                                      "The file appears to have both experiment and model data\n"
+                                                      "What would you like to do?\n"))
+                                           ,
+                                           tr("&Load only experimental"),
+                                           tr("&Load only the model"),
+                                           tr("&Load both"),
+                                           2, // Default
+                                           0 // Escape == button 0
+                                           ) )
+            {
+            case 0 : 
+               Icolumn = 1;
+               tag1 = " Experimental";
+               break;
+            case 1 : 
+               Icolumn = 2;
+               tag1 = " Model";
+               break;
+            case 2 : 
+               Icolumn = 1;
+               Icolumn2 = 2;
+               tag1 = " Experimental";
+               tag2 = " Model";
+               break;
+            default :
+               // what happended here?
+               return;
+               break;
+            }
+         }             
+      }
+      if ( ext == "fit" ) 
+      {
+         do_crop = true;
+
+         Icolumn = 2;
+         I_errorcolumn = 0;
+      }
+      if ( ext == "ssaxs" ) 
+      {
+         //         dolog10 = true;
+         if ( number_of_fields >= 4 )
+         {
+            QStringList lst;
+            lst << "I(q)   Difference intensity"
+                << "Ia(q)  Atomic scattering"
+                << "Ic(q)  Shape scattering";
+            bool ok;
+            res = QInputDialog::getItem(
+                                        "There are three available datasets", 
+                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        this );
+            if ( ok ) {
+               // user selected an item and pressed OK
+               Icolumn = 0;
+               if ( res.contains(QRegExp("^I.q. ")) ) 
+               {
+                  Icolumn = 1;
+               } 
+               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               {
+                  Icolumn = 2;
+               } 
+               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               {
+                  Icolumn = 3;
+               } 
+               if ( !Icolumn ) 
+               {
+                  cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+                  return;
+               }
+               cout << " column " << Icolumn << endl;
+            } 
+            else
+            {
+               return;
+            }
+         } else {
+            Icolumn = 1;
+         }
+      }
+      editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
+      editor->append(qv[0]);
+      double units = 1.0;
+      if ( our_saxs_options->iq_scale_ask )
+      {
+         switch( QMessageBox::information( this, 
+                                           tr("UltraScan"),
+                                           tr("Is this file in Angstrom or nm units?"),
+                                           "&Angstrom", 
+                                           "&nm", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // load it as is
+            units = 1.0;
+            break;
+         case 1: // rescale
+            units = 0.1;
+            break;
+         } 
+      } else {
+         if ( our_saxs_options->iq_scale_angstrom ) 
+         {
+            units = 1.0;
+         } else {
+            units = 0.1;
+         }
+      }
+
+      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setMinimal( true );
+      for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
+      {
+         if ( qv[i].contains(QRegExp("^#")) ||
+              rx_ok_line.search( qv[i] ) == -1 )
+         {
+            cout << "not ok: " << qv[i] << endl; 
+            continue;
+         }
+         
+         QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         if ( tokens.size() > Icolumn )
+         {
+            new_q = tokens[0].toDouble();
+            new_I = tokens[Icolumn].toDouble();
+            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            {
+               new_I_error = tokens[I_errorcolumn].toDouble();
+               if ( our_saxs_options->iqq_expt_data_contains_variances )
+               {
+                  new_I_error = sqrt( new_I_error );
+               }
+            }
+            
+            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            {
+               new_I2 = tokens[Icolumn2].toDouble();
+               if ( dolog10 )
+               {
+                  new_I2 = log10(new_I2);
+               }
+            }
+
+            if ( dolog10 )
+            {
+               new_I = log10(new_I);
+            }
+            I.push_back(new_I);
+            q.push_back(new_q * units);
+            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            {
+               I_error.push_back(new_I_error);
+            }
+            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            {
+               I2.push_back(new_I2);
+            }
+         }
+      }
+
+      cout << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
+
+      cout << QFileInfo(filename).fileName() << endl;
+      if ( do_crop )
+      {
+         if ( Icolumn2 )
+         {
+            q2 = q;
+            crop_iq_data(q2, I2);
+         }
+         if ( I_error.size() )
+         {
+            crop_iq_data(q, I, I_error );
+         } else {
+            crop_iq_data(q, I);
+         }
+      }
+         
+      cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         if ( Icolumn2 )
+         {
+            rescale_iqq_curve( scaling_target, q, I, I2 );
+         } else {
+            rescale_iqq_curve( scaling_target, q, I );
+         }
+         if ( I_error.size() )
+         {
+            rescale_iqq_curve_using_last_rescaling( I_error );
+         }
+      }
+
+      if ( q.size() )
+      {
+         if ( I_error.size() )
+         {
+            editor_msg(
+                       our_saxs_options->iqq_expt_data_contains_variances ?
+                       "red" :
+                       "dark blue"
+                       , 
+                       our_saxs_options->iqq_expt_data_contains_variances ?
+                       "Loaded variance data\n" :
+                       "Loaded standard deviation data\n"
+                       );
+            plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
+         } else {
+            plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
+         }
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+            QString("")
+            .sprintf(
+                     "Saxs curves from %s"
+                     , filename.ascii()
+                     );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
+         }
+      }
+      if ( q2.size() )
+      {
+         plot_one_iqq(q2, I2, QFileInfo(filename).fileName() + tag2);
+      }
+      if ( plotted )
+      {
+         editor_msg( "black", "I(q) plot done\n");
+         plotted = false;
+      }
+
+      cb_guinier   ->setChecked( false );
+      cb_user_range->setChecked( false );
+      set_guinier();
+   }
+}

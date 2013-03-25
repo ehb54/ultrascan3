@@ -3822,6 +3822,14 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
       parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
 
+      parameters[ "saxs_options.qstart" ] = QString( "%1" ).arg( saxs_options.qstart );
+      parameters[ "saxs_options.qend" ] = QString( "%1" ).arg( saxs_options.qend );
+      parameters[ "saxs_options.guinier_csv" ] = QString( "%1" ).arg( saxs_options.guinier_csv ); // = false;
+      parameters[ "saxs_options.guinier_csv_filename" ] = QString( "%1" ).arg( saxs_options.guinier_csv_filename ); // = "guinier";
+      parameters[ "saxs_options.qRgmax" ] = QString( "%1" ).arg( saxs_options.qRgmax ); // = 1.3e0;
+      parameters[ "saxs_options.pointsmin" ] = QString( "%1" ).arg( saxs_options.pointsmin ); // = 10;
+      parameters[ "saxs_options.pointsmax" ] = QString( "%1" ).arg( saxs_options.pointsmax ); // = 100;
+
       parameters[ "saxs_options.cs_qRgmax" ] = QString( "%1" ).arg( saxs_options.cs_qRgmax );
       parameters[ "saxs_options.cs_qstart" ] = QString( "%1" ).arg( saxs_options.cs_qstart );
       parameters[ "saxs_options.cs_qend" ] = QString( "%1" ).arg( saxs_options.cs_qend );
@@ -3837,6 +3845,10 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.guinier_outlier_reject_dist" ] = QString( "%1" ).arg( saxs_options.guinier_outlier_reject_dist );
       parameters[ "saxs_options.guinier_use_sd" ] = QString( "%1" ).arg( saxs_options.guinier_use_sd );
       parameters[ "saxs_options.guinier_use_standards" ] = QString( "%1" ).arg( saxs_options.guinier_use_standards );
+
+      parameters[ "saxs_options.cryson_sh_max_harmonics" ] = QString( "%1" ).arg( saxs_options.cryson_sh_max_harmonics ); //            = 15;
+      parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ] = QString( "%1" ).arg( saxs_options.cryson_sh_fibonacci_grid_order ); //     = 17;
+      parameters[ "saxs_options.cryson_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.cryson_hydration_shell_contrast ); //    = 0.03f;
 
       // vectors to write:
       {
@@ -4270,6 +4282,14 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
    if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
 
+   if ( parameters.count( "saxs_options.qstart" ) ) saxs_options.qstart = parameters[ "saxs_options.qstart" ].toDouble();
+   if ( parameters.count( "saxs_options.qend" ) ) saxs_options.qend = parameters[ "saxs_options.qend" ].toDouble();
+   if ( parameters.count( "saxs_options.guinier_csv" ) ) saxs_options.guinier_csv = parameters[ "saxs_options.guinier_csv" ] == "1";
+   if ( parameters.count( "saxs_options.guinier_csv_filename" ) ) saxs_options.guinier_csv_filename = parameters[ "saxs_options.guinier_csv_filename" ];
+   if ( parameters.count( "saxs_options.qRgmax" ) ) saxs_options.qRgmax = parameters[ "saxs_options.qRgmax" ].toDouble();
+   if ( parameters.count( "saxs_options.pointsmin" ) ) saxs_options.pointsmin = parameters[ "saxs_options.pointsmin" ].toUInt();
+   if ( parameters.count( "saxs_options.pointsmax" ) ) saxs_options.pointsmax = parameters[ "saxs_options.pointsmax" ].toUInt();
+
    if ( parameters.count( "saxs_options.cs_qRgmax" ) ) saxs_options.cs_qRgmax = parameters[ "saxs_options.cs_qRgmax" ].toDouble();
    if ( parameters.count( "saxs_options.cs_qstart" ) ) saxs_options.cs_qstart = parameters[ "saxs_options.cs_qstart" ].toDouble();
    if ( parameters.count( "saxs_options.cs_qend" ) ) saxs_options.cs_qend = parameters[ "saxs_options.cs_qend" ].toDouble();
@@ -4286,8 +4306,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.guinier_use_sd" ) ) saxs_options.guinier_use_sd = parameters[ "saxs_options.guinier_use_sd" ] == "1";
    if ( parameters.count( "saxs_options.guinier_use_standards" ) ) saxs_options.guinier_use_standards = parameters[ "saxs_options.guinier_use_standards" ] == "1";
 
-   saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
-   saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
+   if ( parameters.count( "saxs_options.cryson_sh_max_harmonics" ) ) saxs_options.cryson_sh_max_harmonics = parameters[ "saxs_options.cryson_sh_max_harmonics" ].toUInt();
+   if ( parameters.count( "saxs_options.cryson_sh_fibonacci_grid_order" ) ) saxs_options.cryson_sh_fibonacci_grid_order = parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ].toUInt();
+   if ( parameters.count( "saxs_options.cryson_hydration_shell_contrast" ) ) saxs_options.cryson_hydration_shell_contrast = parameters[ "saxs_options.cryson_hydration_shell_contrast" ].toFloat();
 
    // vectors to read:
 
@@ -4335,6 +4356,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          }
       }
    }
+
+   saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
+   saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
 
    return true;
 }
@@ -5228,6 +5252,10 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.guinier_outlier_reject_dist        = 2e0;
    saxs_options.guinier_use_sd                     = false;
    saxs_options.guinier_use_standards              = false;
+
+   saxs_options.cryson_sh_max_harmonics            = 15;
+   saxs_options.cryson_sh_fibonacci_grid_order     = 17;
+   saxs_options.cryson_hydration_shell_contrast    = 0.03f;
 
    gparams                                         .clear();
 }

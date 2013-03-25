@@ -4411,10 +4411,6 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
    update_iqq_suffix();
 }
 
-void US_Hydrodyn_Saxs::load_sans( QString, bool )
-{
-}
-
 void US_Hydrodyn_Saxs::clear_display()
 {
    editor->clear();
@@ -6836,6 +6832,68 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
          }
       }
    }
+   if ( rb_sans->isChecked() ) 
+   {
+      qs += "n";
+      if ( our_saxs_options->sans_iq_cryson )
+      {
+         qs += "cr";
+         qs += QString("_h%1_g%2_hs%3")
+            .arg( our_saxs_options->cryson_sh_max_harmonics )
+            .arg( our_saxs_options->cryson_sh_fibonacci_grid_order )
+            .arg( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ).replace(".", "_" ) );
+      }
+      if ( our_saxs_options->sans_iq_native_debye )
+      {
+         qs += "db";
+      }
+      if ( our_saxs_options->sans_iq_native_fast )
+      {
+         qs += "qd";
+      }
+      if ( our_saxs_options->sans_iq_native_hybrid )
+      {
+         qs += "hy";
+      }
+      if ( our_saxs_options->sans_iq_native_hybrid2 )
+      {
+         qs += "h2";
+      }
+      if ( our_saxs_options->sans_iq_native_hybrid3 )
+      {
+         qs += "h3";
+      }
+      if ( our_saxs_options->sans_iq_native_sh )
+      {
+         qs += "sh";
+         qs += QString( "_h%1_g%2" )
+            .arg( our_saxs_options->sh_max_harmonics )
+            .arg( our_saxs_options->sh_fibonacci_grid_order )
+            ;
+      }
+      if ( ( our_saxs_options->sans_iq_native_hybrid ||
+             our_saxs_options->sans_iq_native_hybrid2 ||
+             our_saxs_options->sans_iq_native_hybrid3 ) && 
+           our_saxs_options->sans_iq_hybrid_adaptive )
+      {
+         qs += "a";
+      }
+      if ( our_saxs_options->scale_excl_vol != 1e0 )
+      {
+         qs += QString("_evs%1")
+            .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
+      }
+      if ( !our_saxs_options->autocorrelate )
+      {
+         qs += "_nac";
+      }
+      if ( our_saxs_options->swh_excl_vol != 0e0 )
+      {
+         qs += QString("_swh%1")
+            .arg( QString("%1").arg( our_saxs_options->swh_excl_vol ).replace(".", "_" ) );
+      }
+   }
+
    // cout << "qs is now " << qs << endl;
    le_iqq_full_suffix->setText(qs);
 }

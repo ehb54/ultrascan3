@@ -606,13 +606,13 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    cryson->addArgument( QString("%1").arg( our_saxs_options->d2o_conc ) );
 
    cryson->addArgument( "/dro" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ) );
 
    cryson->addArgument( "/lm" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_max_harmonics ) );
 
    cryson->addArgument( "/fb" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_fibonacci_grid_order ) );
 
    //    if ( our_saxs_options->cryson_explicit_hydrogens )
    //    {

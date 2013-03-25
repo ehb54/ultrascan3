@@ -386,6 +386,12 @@ struct saxs_options
    double       guinier_outlier_reject_dist;
    bool         guinier_use_sd;
    bool         guinier_use_standards;
+
+
+   // cryson
+   unsigned int cryson_sh_max_harmonics;
+   unsigned int cryson_sh_fibonacci_grid_order;
+   float        cryson_hydration_shell_contrast;
 };
 
 struct saxs_atom

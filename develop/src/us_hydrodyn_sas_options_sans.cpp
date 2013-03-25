@@ -214,6 +214,69 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cb_sans_iq_cryson->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_sans_iq_cryson, SIGNAL(clicked()), this, SLOT(set_sans_iq_cryson()));
 
+   lbl_cryson_sh_max_harmonics = new QLabel( started_in_expert_mode ?
+                                      tr(" SH/Cryson: Maximum order of harmonics")
+                                      :
+                                      tr(" SH/Cryson: Maximum order of harmonics")
+                                      , this);
+   lbl_cryson_sh_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_cryson_sh_max_harmonics->setMinimumHeight(minHeight1);
+   lbl_cryson_sh_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_cryson_sh_max_harmonics->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_cryson_sh_max_harmonics = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_cryson_sh_max_harmonics );
+   cnt_cryson_sh_max_harmonics->setRange(1, 75, 1);
+   cnt_cryson_sh_max_harmonics->setValue((*saxs_options).sh_max_harmonics);
+   cnt_cryson_sh_max_harmonics->setMinimumHeight(minHeight1);
+   cnt_cryson_sh_max_harmonics->setEnabled(true);
+   cnt_cryson_sh_max_harmonics->setNumButtons(2);
+   cnt_cryson_sh_max_harmonics->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_cryson_sh_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_cryson_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_max_harmonics(double)));
+
+   lbl_cryson_sh_fibonacci_grid_order = new QLabel( started_in_expert_mode ? 
+                                             tr(" SH/Cryson: Order of Fibonacci grid")
+                                             :
+                                             tr(" SH/Cryson: Order of Fibonacci grid")
+                                             , this);
+   lbl_cryson_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_cryson_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   lbl_cryson_sh_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_cryson_sh_fibonacci_grid_order->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_cryson_sh_fibonacci_grid_order = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_cryson_sh_fibonacci_grid_order );
+   cnt_cryson_sh_fibonacci_grid_order->setRange(2, 75, 1);
+   cnt_cryson_sh_fibonacci_grid_order->setValue((*saxs_options).sh_fibonacci_grid_order);
+   cnt_cryson_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   cnt_cryson_sh_fibonacci_grid_order->setEnabled(true);
+   cnt_cryson_sh_fibonacci_grid_order->setNumButtons(2);
+   cnt_cryson_sh_fibonacci_grid_order->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_cryson_sh_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_cryson_sh_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_fibonacci_grid_order(double)));
+
+   lbl_cryson_hydration_shell_contrast = new QLabel( started_in_expert_mode ?
+                                                     tr(" Cryson: Contrast of hydration shell (e / A^3):")
+                                                     :
+                                                     tr(" Cryson: Contrast of hydration shell (e / A^3):")
+                                                     , this);
+   lbl_cryson_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
+   lbl_cryson_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_cryson_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_cryson_hydration_shell_contrast = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_cryson_hydration_shell_contrast );
+   cnt_cryson_hydration_shell_contrast->setRange(-1, 1, 0.001);
+   cnt_cryson_hydration_shell_contrast->setValue((*saxs_options).cryson_hydration_shell_contrast);
+   cnt_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
+   cnt_cryson_hydration_shell_contrast->setEnabled(true);
+   cnt_cryson_hydration_shell_contrast->setNumButtons(3);
+   cnt_cryson_hydration_shell_contrast->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_cryson_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_cryson_hydration_shell_contrast, SIGNAL(valueChanged(double)), SLOT(update_cryson_hydration_shell_contrast(double)));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -265,6 +328,18 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast_compute_pr);
    hbl_sans_iq->addWidget(cb_sans_iq_cryson);
    background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
+   j++;
+
+   background->addWidget(lbl_cryson_sh_max_harmonics, j, 0);
+   background->addWidget(cnt_cryson_sh_max_harmonics, j, 1);
+   j++;
+
+   background->addWidget(lbl_cryson_sh_fibonacci_grid_order, j, 0);
+   background->addWidget(cnt_cryson_sh_fibonacci_grid_order, j, 1);
+   j++;
+
+   background->addWidget(lbl_cryson_hydration_shell_contrast, j, 0);
+   background->addWidget(cnt_cryson_hydration_shell_contrast, j, 1);
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -507,3 +582,34 @@ void US_Hydrodyn_SasOptionsSans::set_sans_iq_cryson()
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
+
+void US_Hydrodyn_SasOptionsSans::update_cryson_sh_max_harmonics(double val)
+{
+   (*saxs_options).cryson_sh_max_harmonics = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
+}
+
+void US_Hydrodyn_SasOptionsSans::update_cryson_sh_fibonacci_grid_order(double val)
+{
+   (*saxs_options).cryson_sh_fibonacci_grid_order = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
+}
+
+void US_Hydrodyn_SasOptionsSans::update_cryson_hydration_shell_contrast(double val)
+{
+   (*saxs_options).cryson_hydration_shell_contrast = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
+   }
+}
+
