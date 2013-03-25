@@ -7,6 +7,7 @@ SOURCES		+= ../src/us_saxs_util_asab1.cpp
 SOURCES		+= ../src/us_saxs_util_cuda.cpp
 SOURCES		+= ../src/us_saxs_util_dmd.cpp
 SOURCES		+= ../src/us_saxs_util_extern.cpp
+SOURCES		+= ../src/us_saxs_util_guinier.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate_align.cpp
 SOURCES		+= ../src/us_saxs_util_ift.cpp

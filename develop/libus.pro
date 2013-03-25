@@ -237,6 +237,7 @@ SOURCES += \
   src/us_hydrodyn_saxs.cpp \
   src/us_hydrodyn_saxs_conc.cpp \
   src/us_hydrodyn_saxs_external.cpp \
+  src/us_hydrodyn_saxs_guinier.cpp \
   src/us_hydrodyn_saxs_fits.cpp \
   src/us_hydrodyn_saxs_iqq.cpp \
   src/us_hydrodyn_saxs_iqq_bead_model.cpp \
@@ -318,6 +319,7 @@ SOURCES += \
   src/us_saxs_util_dammin.cpp \
   src/us_saxs_util_dmd.cpp \
   src/us_saxs_util_extern.cpp \
+  src/us_saxs_util_guinier.cpp \
   src/us_saxs_util_hydrate.cpp \
   src/us_saxs_util_hydrate_align.cpp \
   src/us_saxs_util_ift.cpp \

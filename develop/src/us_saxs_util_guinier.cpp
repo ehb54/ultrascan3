@@ -1,0 +1,354 @@
+#include "../include/us_saxs_util.h"
+#include "../include/us_vector.h"
+
+#if defined(WIN32)
+#   include <dos.h>
+#   include <stdlib.h>
+#   include <float.h>
+#   define isnan _isnan
+#   undef SHOW_TIMING
+#endif
+
+void US_Saxs_Util::linear_fit( 
+                              vector < double > x, 
+                              vector < double > y, 
+                              double &a,
+                              double &b,
+                              double &siga,
+                              double &sigb,
+                              double &chi2
+                              )
+{
+   unsigned int i;
+   double t;
+   double sxoss;
+   double sx = 0e0;
+   double sy = 0e0;
+   double st2 = 0e0;
+   double ss;
+   double sigdat;
+   unsigned int ndata = x.size();
+   b = 0e0;
+
+   for ( i = 0; i < ndata; i++ )
+   {
+      sx += x[i];
+      sy += y[i];
+   }
+   ss = ndata;
+
+   sxoss = sx / ss;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      t = x[i] - sxoss;
+      st2 += t * t;
+      b += t * y[i];
+   }
+   b /= st2;
+   a = ( sy - sx * b) / ss;
+   siga = sqrt( ( 1e0 + sx * sx / ( ss * st2 ) ) / ss );
+   sigb = sqrt( 1e0 /st2 );
+   chi2 = 0e0;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      chi2 += ( y[i] - a - b * x[i] ) * ( y[i] - a - b * x[i] );
+   }
+   sigdat = sqrt( chi2/ ( ndata - 2 ) );
+   siga *= sigdat;
+   sigb *= sigdat;
+}
+
+void US_Saxs_Util::linear_fit( 
+                              vector < double > x, 
+                              vector < double > y, 
+                              vector < double > e, 
+                              double &a,
+                              double &b,
+                              double &siga,
+                              double &sigb,
+                              double &chi2
+                              )
+{
+   unsigned int i;
+   double t;
+   double sxoss;
+   double sx = 0e0;
+   double sy = 0e0;
+   double st2 = 0e0;
+   double ss = 0e0;
+   double sigdat;
+   unsigned int ndata = x.size();
+   b = 0e0;
+
+   if ( !is_nonzero_vector( e ) )
+   {
+      cout << "error: linear_fit with errors given zeros in error vector\n";
+      return linear_fit( x, y, a, b, siga, sigb, chi2 );
+   }
+
+   for ( i = 0; i < ndata; i++ )
+   {
+      double wt = 1e0 / ( e[ i ] * e[ i ] );
+      ss += wt;
+      sx += x[i] * wt;
+      sy += y[i] * wt;
+   }
+
+   sxoss = sx / ss;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      t = ( x[i] - sxoss ) / e[ i ];
+      st2 += t * t;
+      b += t * y[i] / e[ i ];
+   }
+   b /= st2;
+   a = ( sy - sx * b) / ss;
+   siga = sqrt( ( 1e0 + sx * sx / ( ss * st2 ) ) / ss );
+   sigb = sqrt( 1e0 /st2 );
+   chi2 = 0e0;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      chi2 += ( ( y[i] - a - b * x[i] ) / e[ i ] ) * ( ( y[i] - a - b * x[i] ) / e[ i ] );
+   }
+   sigdat = sqrt( chi2/ ( ndata - 2 ) );
+   siga *= sigdat;
+   sigb *= sigdat;
+}
+
+bool US_Saxs_Util::guinier_fit( 
+                               QString &log,
+                               QString tag,  // tag needs to be preprocessed with guinierplot
+                               unsigned int startpos,
+                               unsigned int endpos,
+                               double &a,
+                               double &b,
+                               double &siga,
+                               double &sigb,
+                               double &chi2,
+                               double &Rg,
+                               double &Io,
+                               double &smax,
+                               double &smin,
+                               double &sRgmin,
+                               double &sRgmax
+                               )
+{
+   vector < double > x;
+   vector < double > y;
+   errormsg = "";
+   if ( startpos > endpos - 4 )
+   {
+      errormsg = "Guinier fit needs at least 4 points";
+      return false;
+   }
+
+   if ( wave[tag].q.size() <= endpos )
+   {
+      errormsg = QString("end position %1 is past the end of the wave %2") 
+                         .arg(endpos)
+                         .arg(wave[tag].q.size());
+      return false;
+   }
+      
+   for( unsigned int i = startpos; i <= endpos; i++ )
+   {
+      x.push_back(wave[tag].q[i]);
+      y.push_back(wave[tag].r[i]);
+   }
+
+   // US_Vector::printvector( "s in guininer_fit", wave[ tag ].s );
+   if ( wave[ tag ].s.size() && wave[ tag ].s.size() == wave[ tag ].q.size() && is_nonzero_vector( wave[ tag ].s ) )
+   {
+      // cout << "guinier fit with errors\n";
+  
+      vector < double > e;
+      for( unsigned int i = startpos; i <= endpos; i++ )
+      {
+         e.push_back(wave[tag].s[i]);
+      }
+      linear_fit(x, y, e, a, b, siga, sigb, chi2);
+   } else {
+      //       cout << QString( "guinier fit no errors s.size: %1; %2; %3\n" )
+      //          .arg( wave[ tag ].s.size() )
+      //          .arg( wave[ tag ].s.size() == wave[ tag ].q.size() ? "equals q size" : "not equal q size" )
+      //          .arg( is_nonzero_vector( wave[ tag ].s ) ? "is non zero" : "is not nonzero" );
+      linear_fit(x, y, a, b, siga, sigb, chi2);
+   }
+
+   Rg = sqrt( -3e0 * b );
+   sigb = sqrt( fabs( -3e0 * sigb ) );
+   Io = exp(a);
+   siga = exp( siga );
+   smin = sqrt(wave[tag].q[startpos]);
+   smax = sqrt(wave[tag].q[endpos]);
+   sRgmin = Rg * smin;
+   sRgmax = Rg * smax;
+
+   log += QString("").sprintf("|| %u || %u || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g ||\n",
+                              startpos + 1,
+                              endpos + 1,
+                              smin,
+                              smax,
+                              sRgmin,
+                              sRgmax,
+                              Rg,
+                              Io,
+                              a,
+                              b,
+                              siga,
+                              sigb,
+                              chi2);
+   log += QString(
+#ifndef QT4
+                  "pnggnuplot.pl -p 1.5 -g -l points -c %1 %1 -m %1 %1 %1 %1 %1g%1_%1.png %1g.dat\n"
+#else
+                  "pnggnuplot.pl -p 1.5 -g -l points -c %1 %2 -m %3 %4 %5 %6 %7g%8_%9.png %10g.dat\n"
+#endif
+                  )
+      .arg(wave[tag].q[startpos]* .2 )
+      .arg(wave[tag].q[endpos]* 1.2 )
+      .arg(a)
+      .arg(b)
+      .arg(smin)
+      .arg(smax)
+      .arg(tag)
+      .arg(startpos+1)
+      .arg(endpos+1)
+      .arg(tag);
+;
+   log += QString("[[Image(htdocs:pngs/%1g%2_%3.png)]]\n")
+      .arg(tag)
+      .arg(startpos+1)
+      .arg(endpos+1);
+
+   return true;
+}
+
+bool US_Saxs_Util::guinier_fit2( 
+                                QString &log,
+                                QString tag,             // tag needs to be preprocessed with guinierplot
+                                unsigned int pointsmin,  // the minimum # of points allowed typically 10
+                                unsigned int pointsmax,  // the maximum # of points allowed typically 100
+                                double sRgmaxlimit,      // maximum sRg allowed! typically 1.3
+                                double pointweightpower, // the exponent ofnumber of points when computing the best one (3 seems to work well)
+                                //                          i.e. fitness = chi2 / ( number_of_points ** pointweightpower )
+                                double guiniermaxq,
+                                double &a,
+                                double &b,
+                                double &siga,
+                                double &sigb,
+                                double &chi2,
+                                double &Rg,
+                                double &Io,
+                                double &smin,
+                                double &smax,
+                                double &sRgmin,
+                                double &sRgmax,
+                                unsigned int &beststart,
+                                unsigned int &bestend
+                       )
+{
+   errormsg = "";
+   double bestfitness = 9e99;
+   beststart = 0;
+   bestend = 0;
+   double fitness;
+
+   for ( unsigned int i = 0; i < wave[tag].q.size() - pointsmin; i++ )
+   {
+      for ( unsigned int j = i + pointsmin ; j < wave[tag].q.size() && j - i <= pointsmax; j++ )
+      {
+         QString mylog; // only keep the good ones
+         if ( sqrt(wave[tag].q[j]) > guiniermaxq )
+         {
+            break;
+         }
+
+         if ( !guinier_fit(
+                           mylog,
+                           tag,
+                           i,
+                           j,
+                           a,
+                           b,
+                           siga,
+                           sigb,
+                           chi2,
+                           Rg,
+                           Io,
+                           smin,
+                           smax,
+                           sRgmin,
+                           sRgmax
+                           ) )
+         {
+            log += mylog;
+            return false;
+         }
+         
+         if ( sRgmax > sRgmaxlimit ) {
+            break;
+         }
+         if ( isnan(Rg) )  // positive slope
+         {
+            continue;
+         }
+         // log += mylog;
+         fitness = chi2 / pow(j - i, pointweightpower);
+         if ( fitness < bestfitness )
+         {
+            bestfitness = fitness;
+            beststart = i;
+            bestend = j;
+         }
+
+      }
+         
+   }
+
+
+   if ( !guinier_fit(
+                     log,
+                     tag,
+                     beststart,
+                     bestend,
+                     a,
+                     b,
+                     siga,
+                     sigb,
+                     chi2,
+                     Rg,
+                     Io,
+                     smin,
+                     smax,
+                     sRgmin,
+                     sRgmax
+                     ) )
+   {
+      return false;
+   }
+   
+   return true;
+}
+
+bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
+{
+   errormsg = "";
+   wave[outtag].clear();
+   wave[outtag].filename = QString("guinier_%1").arg(tag);
+   wave[outtag].header = wave[tag].header;
+   
+   bool use_errors = wave[ tag ].s.size() == wave[ tag ].q.size();
+   for( unsigned int i = 0; i < wave[tag].q.size(); i++ )
+   {
+      wave[outtag].q.push_back(wave[tag].q[i] * wave[tag].q[i]);
+      wave[outtag].r.push_back(wave[tag].r[i] > 0 ? log(wave[tag].r[i]) : 0e0);
+      wave[outtag].s.push_back( use_errors ? wave[tag].s[i] : 0e0 ); // ( wave[tag].s[i] > 0 ? log(wave[tag].s[i]) : 0e0 ) : 0e0 );
+   }
+
+   return true;
+}
