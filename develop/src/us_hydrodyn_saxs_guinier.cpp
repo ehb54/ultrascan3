@@ -456,7 +456,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
          if ( use_SD_weighting )
          {
-            usu.wave["data"].s.push_back( plotted_I_error[ i ][ j ] );
+            usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
          }
       }
    }

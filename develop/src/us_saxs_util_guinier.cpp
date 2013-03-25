@@ -346,8 +346,9 @@ bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
    for( unsigned int i = 0; i < wave[tag].q.size(); i++ )
    {
       wave[outtag].q.push_back(wave[tag].q[i] * wave[tag].q[i]);
-      wave[outtag].r.push_back(wave[tag].r[i] > 0 ? log(wave[tag].r[i]) : 0e0);
-      wave[outtag].s.push_back( use_errors ? wave[tag].s[i] : 0e0 ); // ( wave[tag].s[i] > 0 ? log(wave[tag].s[i]) : 0e0 ) : 0e0 );
+      wave[outtag].r.push_back(wave[tag].r[i] > 0e0 ? log(wave[tag].r[i]) : 0e0);
+      wave[outtag].s.push_back( use_errors && wave[tag].r[i] > 0e0 ? 
+                                wave[ outtag ].r.back() * ( wave[ tag ].s[ i ] / wave[ tag ].r[ i ] ) : 0e0 );
    }
 
    return true;
