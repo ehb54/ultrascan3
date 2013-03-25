@@ -277,13 +277,13 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
    if ( !qd_dir.exists() )
    {
-      editor_msg("red", QString("Crysol called but the director '%1' does not exist\n").arg(qd_dir.path()));
+      editor_msg("red", QString("Crysol called but the directory '%1' does not exist\n").arg(qd_dir.path()));
       return -1;
    }
 
    if ( !qd_dir.isReadable() )
    {
-      editor_msg("red", QString("Crysol called but the director '%1' is not readable. Check permissions\n").arg(qd_dir.path()));
+      editor_msg("red", QString("Crysol called but the directory '%1' is not readable. Check permissions\n").arg(qd_dir.path()));
       return -1;
    }
 
@@ -478,9 +478,157 @@ void US_Hydrodyn_Saxs::crysol_launchFinished()
 
 // -------------------- cryson ------------------------------
 
-int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString /* pdb */ )
+int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
 {
-   return -1;
+   QString prog = 
+      USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "/bin/"
+#endif
+      + SLASH
+      + "cryson" 
+#if defined(WIN32)
+      + ".exe"
+#endif      
+      ;
+
+   {
+      QFileInfo qfi(prog);
+      if ( !qfi.exists() )
+      {
+         editor_msg("red", QString("Cryson program '%1' does not exist\n").arg(prog));
+         return -1;
+      }
+      if ( !qfi.isExecutable() )
+      {
+         editor_msg("red", QString("Cryson program '%1' is not executable\n").arg(prog));
+         return -1;
+      }
+   }
+
+   QFileInfo fi( pdb );
+   if ( !fi.exists() )
+   {
+      editor_msg("red", QString("Cryson called but PDB file '%1' does not exist\n").arg(pdb));
+      return -1;
+   }
+
+   QString dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp";
+
+   QDir qd_dir( dir );
+
+   if ( !qd_dir.exists() )
+   {
+      editor_msg("red", QString("Cryson called but the directory '%1' does not exist\n").arg(qd_dir.path()));
+      return -1;
+   }
+
+   if ( !qd_dir.isReadable() )
+   {
+      editor_msg("red", QString("Cryson called but the directory '%1' is not readable. Check permissions\n").arg(qd_dir.path()));
+      return -1;
+   }
+
+   cryson_last_pdb = pdb;
+   cryson_last_pdb_base = dir + SLASH + QFileInfo(cryson_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+   QString use_pdb = pdb;
+   
+   // copy pdb if the name is too long
+   if ( our_saxs_options->crysol_version_26 &&
+        QFileInfo(cryson_last_pdb).fileName() != QFileInfo(cryson_last_pdb_base).fileName() )
+   {
+      QFile f( pdb );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red", QString("Could not open file %1. Check permissions\n").arg( pdb ));
+         return -1;
+      }
+
+      QFile f2( cryson_last_pdb_base );
+      if ( !f2.open( IO_WriteOnly ) )
+      {
+         editor_msg("red", QString("Could not open file %1. Check permissions\n").arg( cryson_last_pdb_base ));
+         return -1;
+      }
+
+      QString qs;
+      QTextStream ts( &f );
+      QTextStream ts2( &f2 );
+
+      while ( !ts.atEnd() )
+      {
+         qs = ts.readLine();
+         ts2 << qs << endl;
+      }
+      f.close();
+      f2.close();
+      use_pdb = cryson_last_pdb_base;
+   } else {
+      use_pdb = pdb;
+   }
+
+   cout << "use_pdb: <" << use_pdb << ">\n";
+   cout << "cryson_last_pdb_base: <" << cryson_last_pdb_base << ">\n";
+
+   // clean up so we have new files
+
+   {
+      QString base = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+      cout << "base: <" << base << ">\n";
+
+      QString to_remove = base + "00.alm";
+      cout << "to_remove: <" << to_remove << ">\n";
+      QFile::remove( to_remove );
+
+      to_remove = base + "00.log";
+      QFile::remove( to_remove );
+
+      to_remove = base + "00.int";
+      QFile::remove( to_remove );
+   }      
+
+   pb_plot_saxs_sans->setEnabled(false);
+
+   cryson = new QProcess( this );
+   cryson->setWorkingDirectory( dir );
+   cryson->addArgument( prog );
+   cryson->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
+
+   cryson->addArgument( "/sm" );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
+
+   cryson->addArgument( "/ns" );
+   cryson->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
+
+   cryson->addArgument( "/D2O" );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->d2o_conc ) );
+
+   cryson->addArgument( "/dro" );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
+
+   cryson->addArgument( "/lm" );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
+
+   cryson->addArgument( "/fb" );
+   cryson->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
+
+   //    if ( our_saxs_options->cryson_explicit_hydrogens )
+   //    {
+   //       cryson->addArgument( "/eh" );
+   //    }
+
+   connect( cryson, SIGNAL(readyReadStdout()), this, SLOT(cryson_readFromStdout()) );
+   connect( cryson, SIGNAL(readyReadStderr()), this, SLOT(cryson_readFromStderr()) );
+   connect( cryson, SIGNAL(processExited()), this, SLOT(cryson_processExited()) );
+   connect( cryson, SIGNAL(launchFinished()), this, SLOT(cryson_launchFinished()) );
+
+   editor->append("\n\nStarting Cryson\n");
+   cryson->start();
+   external_running = true;
+
+   return 0;
 }
 
 void US_Hydrodyn_Saxs::cryson_readFromStdout()
@@ -511,6 +659,57 @@ void US_Hydrodyn_Saxs::cryson_processExited()
    disconnect( cryson, SIGNAL(readyReadStdout()), 0, 0);
    disconnect( cryson, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( cryson, SIGNAL(processExited()), 0, 0);
+
+   // cryson creates 4 files:
+   // cryson_summary.txt
+   // pdb##.alm
+   // pdb##.log
+   // pdb##.int
+
+   // we just want the .int, the rest will be removed if needed
+
+   QString created_dat = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00.int";
+
+   if ( !QFile::exists( created_dat ) )
+   {
+      editor_msg("red", QString(tr("Error: Cryson did not create file %1")).arg( created_dat ));
+      pb_plot_saxs_sans->setEnabled(true);
+      external_running = false;
+      return;
+   }
+
+   // now move the file to the saxs directory
+   QString new_created_dat = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+      QFileInfo( cryson_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + ".int";
+
+   if ( QFile::exists(new_created_dat) )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->overwrite )
+      {
+         editor_msg("red", QString(tr("Notice: overwriting %1")).arg( new_created_dat ));
+         // windows requires removing previous file
+      } else {
+         new_created_dat = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( new_created_dat, 0, this );
+      }
+      QFile::remove( new_created_dat );
+   }
+
+   QDir qd;
+   if ( !qd.rename( created_dat, new_created_dat ) )
+   {
+      editor_msg("red", 
+                 QString(tr("Notice: could not rename %1 to %2"))
+                 .arg( created_dat )
+                 .arg( new_created_dat )
+                 );
+      new_created_dat = created_dat;
+   }
+
+   // now load & plot this curve
+   load_saxs( new_created_dat );
+
+   pb_plot_saxs_sans->setEnabled( true );
    editor->append("Cryson finished.\n");
    external_running = false;
 }
@@ -520,7 +719,6 @@ void US_Hydrodyn_Saxs::cryson_launchFinished()
    editor_msg("brown", "Cryson launch exited\n");
    disconnect( cryson, SIGNAL(launchFinished()), 0, 0);
 }
-
 
 // -------------------- Sastbx ------------------------------
 

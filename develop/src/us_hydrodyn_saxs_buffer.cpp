@@ -3468,9 +3468,10 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    map < QString, vector < double > >  t_Is;
    map < QString, vector < double > >  t_errors;
 
-   bool first = true;
    bool crop  = false;
-   unsigned int min_q_len = 0;
+
+   map < QString, bool > selected_files;
+   vector < vector < double > > grids;
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -3486,41 +3487,61 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
          return false;
       }
 
+      selected_files[ this_file ] = true;
+      grids.push_back( f_qs[ this_file ] );
+
       t_qs_string[ this_file ] = f_qs_string[ this_file ];
       t_qs       [ this_file ] = f_qs       [ this_file ];
       t_Is       [ this_file ] = f_Is       [ this_file ];
       t_errors   [ this_file ] = f_errors   [ this_file ];
-      if ( first )
-      {
-         first = false;
-         min_q_len = t_qs[ this_file ].size();
-      } else {
-         if ( min_q_len > t_qs[ this_file ].size() )
-         {
-            min_q_len = t_qs[ this_file ].size();
-            crop = true;
-         } else {
-            if ( min_q_len != t_qs[ this_file ].size() )
-            {
-               crop = true;
-            }
-         }  
-      }
    }
+
+   vector < double > v_union = US_Vector::vunion( grids );
+   vector < double > v_int   = US_Vector::intersection( grids );
+
+   crop = v_union != v_int;
 
    if ( crop )
    {
-      editor_msg( "dark red", QString( tr( "Notice: output contains versions cropped to %1 points for compatibility" ) ).arg( min_q_len ) );
-      for ( map < QString, vector < double > >::iterator it = t_qs.begin();
-            it != t_qs.end();
+      editor_msg( "dark red", QString( tr( "Notice: output contains versions cropped to identical grids for compatibility" ) ) );
+
+      map < double, bool > map_int;
+      for ( unsigned int i = 0; i < ( unsigned int )v_int.size(); i++ )
+      {
+         map_int[ v_int[ i ] ] = true;
+      }
+
+      for ( map < QString, bool >::iterator it = selected_files.begin();
+            it != selected_files.end();
             it++ )
       {
-         t_qs_string[ it->first ].resize( min_q_len );
-         t_qs       [ it->first ].resize( min_q_len );
-         t_Is       [ it->first ].resize( min_q_len );
-         if ( t_errors[ it->first ].size() )
+         vector < QString > new_q_string;
+         vector < double  > new_q;
+         vector < double  > new_I;
+         vector < double  > new_e;
+
+         for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
          {
-            t_errors   [ it->first ].resize( min_q_len );
+            if ( map_int.count( f_qs[ it->first ][ i ] ) )
+            {
+               new_q_string.push_back( t_qs_string[ it->first ][ i ] );
+               new_q       .push_back( t_qs       [ it->first ][ i ] );
+               new_I       .push_back( t_Is       [ it->first ][ i ] );
+
+               if ( t_errors.count( it->first ) &&
+                    t_errors[ it->first ].size() )
+               {
+                  new_e       .push_back( t_errors   [ it->first ][ i ] );
+               }
+            }
+         }
+         t_qs_string[ it->first ] = new_q_string;
+         t_qs       [ it->first ] = new_q;
+         t_Is       [ it->first ] = new_I;
+         if ( t_errors.count( it->first ) &&
+              t_errors[ it->first ].size() )
+         {
+            t_errors[ it->first ] = new_e;
          }
       }
    }

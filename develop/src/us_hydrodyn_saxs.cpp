@@ -4314,12 +4314,30 @@ void US_Hydrodyn_Saxs::saxs_search_update_enables()
 
 void US_Hydrodyn_Saxs::show_plot_sans()
 {
-   if ( our_saxs_options->sans_iq_cryson ) 
+   if ( our_saxs_options->iqq_ask_target_grid &&
+        plotted_q.size() )
    {
-      // cout << model_filepathname << endl;
+      ask_iq_target_grid();
+   }
+
+   if ( our_saxs_options->swh_excl_vol )
+   {
+      editor_msg("dark red", QString("SWH set to %1\n").arg( our_saxs_options->swh_excl_vol ));
+   }
+
+   if ( !source && our_saxs_options->sans_iq_cryson ) 
+   {
       run_sans_iq_cryson( model_filepathname );
+      while ( external_running )
+      {
+         QWaitCondition sleep;
+         sleep.wait( 1000 );  
+         cout << "an event\n" << flush;
+         qApp->processEvents();
+      }
       return;
    }
+
    QMessageBox::information(this, 
                             tr("Method not implemented:"), 
                             QString(tr("The selected method is not yet implemented.")));

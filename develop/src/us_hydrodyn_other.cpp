@@ -2577,13 +2577,13 @@ int US_Hydrodyn::read_config(QFile& f)
    saxs_options.saxs_sans = str.toInt();
 
    // should be saved
-   saxs_options.guinier_csv = false;
-   saxs_options.guinier_csv_filename = "guinier";
-   saxs_options.qRgmax = 1.3e0;
-   saxs_options.qstart = 1e-7;
-   saxs_options.qend = .5e0;
-   saxs_options.pointsmin = 10;
-   saxs_options.pointsmax = 100;
+   // saxs_options.guinier_csv = false;
+   // saxs_options.guinier_csv_filename = "guinier";
+   // saxs_options.qRgmax = 1.3e0;
+   // saxs_options.qstart = 1e-7;
+   // saxs_options.qend = .5e0;
+   // saxs_options.pointsmin = 10;
+   // saxs_options.pointsmax = 100;
 
    // bd_options
    {
@@ -4286,6 +4286,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.guinier_use_sd" ) ) saxs_options.guinier_use_sd = parameters[ "saxs_options.guinier_use_sd" ] == "1";
    if ( parameters.count( "saxs_options.guinier_use_standards" ) ) saxs_options.guinier_use_standards = parameters[ "saxs_options.guinier_use_standards" ] == "1";
 
+   saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
+   saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
+
    // vectors to read:
 
    saxs_options.dummy_saxs_names.clear();
@@ -5209,8 +5212,8 @@ void US_Hydrodyn::hard_coded_defaults()
    misc.export_msroll                              = false;
 
    saxs_options.cs_qRgmax                          = 1e0;
-   saxs_options.cs_qstart                          = 1e-14;
-   saxs_options.cs_qend                            = 2.5e-1;
+   saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
+   saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
 
    saxs_options.conc                               = 1e0;
    saxs_options.psv                                = 7.2e-1;

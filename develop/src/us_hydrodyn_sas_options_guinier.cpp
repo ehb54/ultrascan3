@@ -460,7 +460,6 @@ void US_Hydrodyn_SasOptionsGuinier::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-
 void US_Hydrodyn_SasOptionsGuinier::update_qRgmax( const QString & str )
 {
    double val = str.toDouble();
