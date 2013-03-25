@@ -6369,7 +6369,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
-                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb
+                     , sigb
                      , Io
                      , siga
                      , MW
@@ -6409,7 +6409,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     )
             .arg( qsl_plotted_iq_names[i] )
             .arg( Rg )
-            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
+            .arg( sigb )
             .arg( Io )
             .arg( siga )
             .arg( MW )
@@ -6596,7 +6596,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
-                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                     , sigb 
                      , Io
                      , siga
                      , ML
@@ -6636,7 +6636,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     )
             .arg(qsl_plotted_iq_names[i])
             .arg(Rg)
-            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
+            .arg( sigb )
             .arg(Io)
             .arg(siga)
             .arg( ML )

@@ -494,7 +494,9 @@ bool US_Saxs_Util::guinier_fit(
 
    linear_fit(x, y, a, b, siga, sigb, chi2);
    Rg = sqrt( -3e0 * b );
+   sigb = sqrt( fabs( -3e0 * sigb ) );
    Io = exp(a);
+   siga = exp( siga );
    smin = sqrt(wave[tag].q[startpos]);
    smax = sqrt(wave[tag].q[endpos]);
    sRgmin = Rg * smin;
