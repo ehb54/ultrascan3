@@ -295,6 +295,7 @@ SOURCES += \
   src/us_montecarloreport.cpp \
   src/us_montecarlostats.cpp \
   src/us_nucleotide.cpp \
+  src/us_pm.cpp \
   src/us_pixmap.cpp \
   src/us_plotdata.cpp \
   src/us_printfilter.cpp \
@@ -590,6 +591,7 @@ HEADERS += \
   include/us_montecarloreport.h \
   include/us_montecarlostats.h \
   include/us_nucleotide.h \
+  include/us_pm.h \
   include/us_pixmap.h \
   include/us_plotdata.h \
   include/us_printfilter.h \

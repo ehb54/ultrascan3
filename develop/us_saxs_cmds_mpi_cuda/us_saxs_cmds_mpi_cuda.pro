@@ -26,6 +26,7 @@ SOURCES		+= ../src/us_saxs_util_nsa_sga.cpp
 SOURCES		+= ../src/us_saxs_util_sgp.cpp
 SOURCES		+= ../src/us_saxs_util_sgp_phys.cpp
 SOURCES		+= ../src/us_saxs_util_mpi.cpp
+SOURCES		+= ../src/us_pm.cpp
 SOURCES		+= ../src/us_tar.cpp
 SOURCES		+= ../src/us_gzip.cpp
 SOURCES		+= ../src/us_timer.cpp
@@ -42,6 +43,7 @@ SOURCES		+= ../src/us_json.cpp
 SOURCES		+= ../src/us_lm.cpp
 
 HEADERS         += ../include/us.h
+HEADERS         += ../include/us_pm.h
 HEADERS         += ../include/us_math.h
 HEADERS         += ../include/us_tar.h
 HEADERS         += ../include/us_gzip.h

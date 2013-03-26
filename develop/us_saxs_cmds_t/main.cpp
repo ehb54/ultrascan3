@@ -2,6 +2,7 @@
 #include "../include/us_cmdline_app.h"
 #include "../include/us_revision.h"
 #include "../include/us_multi_column.h"
+#include "../include/us_pm.h"
 #include "us_cuda.h"
 
 // globals to remove dependencies on libus
@@ -80,6 +81,7 @@ int main (int argc, char **argv)
              "              \tsorts on col\n"
              "reverse       \toutfile infile\n"
              "              \treverses row order\n"
+             "pmtest        \ttest parsimonious models\n"
              , argv[0]
              );
       exit(-1);
@@ -2116,6 +2118,14 @@ int main (int argc, char **argv)
       errorbase--;
       cout << mc.info();
       exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "pmtest" ) 
+   {
+     cout << "pm test\n";
+     cout << US_PM::test();
+     exit( 0 );
    }
    errorbase -= 1000;
 
