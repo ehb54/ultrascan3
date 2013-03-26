@@ -76,6 +76,9 @@ class US_PM
    static QString      test             ();
 
    void                debug            ( int level, QString qs );
+
+   set < pm_point >    recenter         ( set < pm_point > & model );
+   // bool             = is_connected( set < pm_point > & model );
 };
 
 #endif

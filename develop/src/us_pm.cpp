@@ -413,3 +413,39 @@ QString US_PM::test()
    return test_pm.qs_bead_model( model );
 }
 
+set < pm_point > US_PM::recenter( set < pm_point > & model )
+{
+   int cx = 0;
+   int cy = 0;
+   int cz = 0;
+
+   for ( set < pm_point >::iterator it = model.begin();
+         it != model.end();
+         it++ )
+   {
+      cx += it->x[ 0 ];
+      cy += it->x[ 1 ];
+      cz += it->x[ 2 ];
+   }
+
+   cx /= model.size();
+   cy /= model.size();
+   cz /= model.size();
+
+
+   set < pm_point > result;
+
+   pm_point pmp;
+
+   for ( set < pm_point >::iterator it = model.begin();
+         it != model.end();
+         it++ )
+   {
+      pmp.x[ 0 ] = it->x[ 0 ] + ( int16_t ) cx;
+      pmp.x[ 1 ] = it->x[ 1 ] + ( int16_t ) cy;
+      pmp.x[ 2 ] = it->x[ 2 ] + ( int16_t ) cz;
+      result.insert( pmp );
+   }
+   return result;
+}
+
