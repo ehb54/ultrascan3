@@ -548,8 +548,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       vector < double > gsI;
       vector < double > gse;
       vector < double > gsG;
-      // vector < double > gsI_recon;
-      // vector < double > gsG_recon;
+      vector < double > gsI_recon;
+      vector < double > gsG_recon;
 
       // for "sd by differece"
       vector < vector < double > > used_pcts;
@@ -619,8 +619,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          vector < double > e;
          vector < double > G;
 
-         // vector < double > I_recon;
-         // vector < double > G_recon;
+         vector < double > I_recon;
+         vector < double > G_recon;
 
          vector < double > this_used_pcts;
 
@@ -692,24 +692,27 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                this_used_pcts.push_back( frac_of_gaussian_sum );
             }
 
-            // double tmp_I_recon = tmp_I;
-            // double tmp_G_recon = tmp_G;
+            double tmp_I_recon = tmp_I;
+            double tmp_G_recon = tmp_G;
 
             if ( bl_count )
             {
-               double pct_area = 1e0 / ( double ) num_of_gauss; // g_area[ i ][ g ];
+               double pct_area = 1e0; // 1e0 / ( double ) num_of_gauss; // g_area[ i ][ g ];
                double ofs = ( bl_intercept[ i ] + tv[ t ] * bl_slope[ i ] ) * pct_area;
                tmp_I += ofs;
                tmp_G += ofs;
-               // tmp_I_recon += ofs;
-               // tmp_G_recon += ofs;
+               if ( !g )
+               {
+                  tmp_I_recon += ofs;
+                  tmp_G_recon += ofs;
+               }
             }
 
             I      .push_back( tmp_I );
             e      .push_back( tmp_e );
             G      .push_back( tmp_G );
-            // I_recon.push_back( tmp_I_recon );
-            // G_recon.push_back( tmp_G_recon );
+            I_recon.push_back( tmp_I_recon );
+            G_recon.push_back( tmp_G_recon );
          } // for each file
          
          if ( g )
@@ -719,15 +722,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                gsI[ m ]       += I[ m ];
                gse[ m ]       += e[ m ];
                gsG[ m ]       += G[ m ];
-               // gsI_recon[ m ] += I_recon[ m ];
-               // gsG_recon[ m ] += G_recon[ m ];
+               gsI_recon[ m ] += I_recon[ m ];
+               gsG_recon[ m ] += G_recon[ m ];
             }
          } else {
             gsI       = I;
             gsG       = G;
             gse       = e;
-            // gsI_recon = I_recon;
-            // gsG_recon = G_recon;
+            gsI_recon = I_recon;
+            gsG_recon = G_recon;
          }
 
          // add to csv conc stuff?
@@ -991,9 +994,9 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       {
          if ( save_gaussians )
          {
-            add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
+            add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
          } else {
-            add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
+            add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
          }
       }
 

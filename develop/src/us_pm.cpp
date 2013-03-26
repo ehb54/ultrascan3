@@ -1,8 +1,9 @@
 #include "../include/us_pm.h"
 
-US_PM::US_PM( double grid_conversion_factor, vector < double > q, vector < double > I, vector < double > e, int debug_level )
+US_PM::US_PM( double grid_conversion_factor, double drho, vector < double > q, vector < double > I, vector < double > e, int debug_level )
 {
    this->grid_conversion_factor = grid_conversion_factor;
+   this->drho                   = drho;
    this->q                      = q;
    this->I                      = I;
    this->e                      = e;
@@ -382,7 +383,7 @@ QString US_PM::test()
    vector < double > I;
    vector < double > e;
 
-   US_PM test_pm( 1e0, q, I, e, 5 );
+   US_PM test_pm( 1e0, 0.1e0, q, I, e, 5 );
 
    vector < double > params;
 

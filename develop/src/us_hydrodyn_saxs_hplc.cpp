@@ -1129,11 +1129,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    cb_fix_width = new QCheckBox(this);
    cb_fix_width->setText(tr("Eq width  "));
-   cb_fix_width->setEnabled( true );
-   cb_fix_width->setChecked( false );
+   cb_fix_width->setEnabled( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_width->setChecked( true );
    cb_fix_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_fix_width->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_fix_width, SIGNAL( clicked() ), SLOT( set_fix_width() ) );
+   // if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   // {
+   // cb_fix_width->hide();
+   // }
 
    pb_gauss_fit = new QPushButton(tr("Fit"), this);
    pb_gauss_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1829,7 +1833,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
    cb_sd_weight          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
-   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
+   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
    pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 

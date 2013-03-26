@@ -5394,9 +5394,9 @@ void US_Hydrodyn_Saxs::load_gnom()
       {
          switch( QMessageBox::information( this, 
                                            tr("UltraScan"),
-                                           tr("Is this file in Angstrom or nm units?"),
-                                           "&Angstrom", 
-                                           "&nm", 0,
+                                           tr("Is this file in 1/Angstrom or 1/nm units?"),
+                                           "1/&Angstrom", 
+                                           "1/&nm", 0,
                                            0,      // Enter == button 0
                                            1 ) ) { // Escape == button 2
          case 0: // load it as is

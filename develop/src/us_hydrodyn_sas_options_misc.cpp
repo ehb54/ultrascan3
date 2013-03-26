@@ -106,7 +106,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    // connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
 
    cb_iq_scale_ask = new QCheckBox(this);
-   cb_iq_scale_ask->setText(tr("Always ask angstrom or nm"));
+   cb_iq_scale_ask->setText(tr("Always ask 1/angstrom or 1/nm"));
    cb_iq_scale_ask->setEnabled(true);
    cb_iq_scale_ask->setChecked((*saxs_options).iq_scale_ask);
    cb_iq_scale_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -122,7 +122,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(cb_iqq_ask_target_grid, SIGNAL(clicked()), this, SLOT(set_iqq_ask_target_grid()));
 
    cb_iq_scale_angstrom = new QCheckBox(this);
-   cb_iq_scale_angstrom->setText(tr("I(q) curves in angstrom"));
+   cb_iq_scale_angstrom->setText(tr("I(q) curves in 1/angstrom"));
    cb_iq_scale_angstrom->setEnabled(true);
    cb_iq_scale_angstrom->setChecked((*saxs_options).iq_scale_angstrom);
    cb_iq_scale_angstrom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -130,7 +130,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    connect(cb_iq_scale_angstrom, SIGNAL(clicked()), this, SLOT(set_iq_scale_angstrom()));
 
    cb_iq_scale_nm = new QCheckBox(this);
-   cb_iq_scale_nm->setText(tr("I(q) curves in nanometer"));
+   cb_iq_scale_nm->setText(tr("I(q) curves in 1/nanometer"));
    cb_iq_scale_nm->setEnabled(true);
    cb_iq_scale_nm->setChecked((*saxs_options).iq_scale_nm);
    cb_iq_scale_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

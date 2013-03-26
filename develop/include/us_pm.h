@@ -31,10 +31,13 @@ class US_PM
 
    // stuff for spherical harmonics
 
-   double cube_size;
-   double bead_radius;
    double grid_conversion_factor;
    double one_over_grid_conversion_factor;
+
+   double drho;
+
+   double cube_size;
+   double bead_radius;
 
    // active grid:
    vector < double >   q;
@@ -42,7 +45,7 @@ class US_PM
    vector < double >   e;
 
  public:
-   US_PM               ( double grid_conversion_factor, vector < double > q, vector < double > I, vector < double > e, int debug_level = 0 );
+   US_PM               ( double grid_conversion_factor, double drho, vector < double > q, vector < double > I, vector < double > e, int debug_level = 0 );
    ~US_PM              ();
 
    QString             error_msg;
@@ -78,7 +81,8 @@ class US_PM
    void                debug            ( int level, QString qs );
 
    set < pm_point >    recenter         ( set < pm_point > & model );
-   // bool             = is_connected( set < pm_point > & model );
+   // bool             is_connected     ( set < pm_point > & model );
+   // double           fitness          ( set < pm_point > & model ); // compute_I and compare rmsd
 };
 
 #endif
