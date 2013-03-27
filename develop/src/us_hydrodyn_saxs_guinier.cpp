@@ -295,6 +295,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                }
             }
          }
+         bestend = pend;
+         beststart = pstart;
 
          if ( 
              !usu.guinier_plot(
@@ -596,6 +598,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                }
             }
          }
+         bestend = pend;
+         beststart = pstart;
 
          if ( 
              !usu.guinier_plot(

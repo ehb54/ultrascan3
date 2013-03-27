@@ -225,7 +225,7 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
    return true;
 }
 
-bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & /* model */ )
 {
    debug( 1, "cylinder" );
    int ofs = 1;
@@ -320,7 +320,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    int minz = (int) ( basez - radius - 1 );
    int maxz = (int) ( endz  + radius + 1 );
 
-   pm_point pmp;
+   // pm_point pmp;
 
    for ( int x = minx; x <= maxx; ++x )
    {
