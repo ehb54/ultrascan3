@@ -55,8 +55,6 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq = new QCheckBox(this);
    cb_save_as_pct_iq->setText(tr( "Resulting I(q) created as a percent of the original I(q) ( if unchecked, I(q) will be created from the Gaussians )" ) );
    cb_save_as_pct_iq->setEnabled( true );
-   connect( cb_save_as_pct_iq, SIGNAL( clicked() ), SLOT( set_save_as_pct_iq() ) );
-   cb_save_as_pct_iq->setChecked( false );
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
@@ -70,10 +68,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_source = new QCheckBox(this);
    cb_sd_source->setText( tr( "Compute standard deviations as a difference between the sum of Gaussians and original I(q)" ) );
    cb_sd_source->setEnabled( true );
-   connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
-   cb_sd_source->setChecked( false );
    cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_source->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   // cb's co dependent
+   connect( cb_save_as_pct_iq, SIGNAL( clicked() ), SLOT( set_save_as_pct_iq() ) );
+   connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
+   cb_save_as_pct_iq->setChecked( true );
+   cb_sd_source->setChecked( false );
 
    QLabel * lbl_sd_zeros_found = new QLabel( tr( "If zeros are produced when computing S.D.'s:  " ), this );
    lbl_sd_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -388,7 +390,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
-   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( false ), cb_sd_source->hide() ) : cb_sd_source->show();
+   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( false ), cb_sd_source->show() ) : cb_sd_source->hide();
    update_enables();
 }
 

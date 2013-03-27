@@ -882,6 +882,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_is_time   [ name ] = false;
          f_conc      [ name ] = conc_factor;
          f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
+         if ( conv.size() > g )
+         {
+            f_extc      [ name ] = conv[ g ];
+         }
 
          {
             vector < double > tmp;

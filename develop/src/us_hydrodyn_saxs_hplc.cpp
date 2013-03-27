@@ -2099,6 +2099,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
          f_gaussians.erase( lb_files->text( i ) );
          f_psv      .erase( lb_files->text( i ) );
          f_conc     .erase( lb_files->text( i ) );
+         f_extc     .erase( lb_files->text( i ) );
          lb_files->removeItem( i );
       }
    }
@@ -3943,11 +3944,12 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
 
    QTextStream ts( &f );
 
-   ts << QString( tr( "US-SOMO Hplc %1data: %2%3%4\n" ) )
+   ts << QString( tr( "US-SOMO Hplc %1data: %2%3%4%5\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv.count( file ) ? QString( " PSV:%1" ).arg( f_psv[ file ] ) : QString( "" ) )
       .arg( f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+      .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
       ;
 
    bool use_errors = ( f_errors.count( file ) && 

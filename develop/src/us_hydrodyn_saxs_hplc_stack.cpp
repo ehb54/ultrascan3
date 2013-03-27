@@ -46,6 +46,10 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          tmp_stack.f_is_time               [ files[ i ] ] = f_is_time[ files[ i ] ];
          tmp_stack.f_conc                  [ files[ i ] ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
          tmp_stack.f_psv                   [ files[ i ] ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+         if ( f_extc.count( files[ i ] ) )
+         {
+            tmp_stack.f_extc                   [ files[ i ] ] = f_extc[ files[ i ] ];
+         }
          if ( created_files_not_saved.count( files[ i ] ) )
          {
             tmp_stack.created_files_not_saved [ files[ i ] ] = created_files_not_saved[ files[ i ] ];
@@ -79,6 +83,7 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
       tmp_stack.f_name                  = f_name;
       tmp_stack.f_is_time               = f_is_time;
       tmp_stack.f_psv                   = f_psv;
+      tmp_stack.f_extc                  = f_extc;
       tmp_stack.f_conc                  = f_conc;
       tmp_stack.created_files_not_saved = created_files_not_saved;
       tmp_stack.gaussians               = gaussians;
@@ -132,6 +137,7 @@ void US_Hydrodyn_Saxs_Hplc::set_current_data( hplc_stack_data & tmp_stack )
    f_name                  = tmp_stack.f_name;
    f_is_time               = tmp_stack.f_is_time;
    f_psv                   = tmp_stack.f_psv;
+   f_extc                  = tmp_stack.f_extc;
    f_conc                  = tmp_stack.f_conc;
    created_files_not_saved = tmp_stack.created_files_not_saved;
    gaussians               = tmp_stack.gaussians;
@@ -317,6 +323,10 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
          f_conc[ name ] = 
             tmp_stack.f_conc.count( name ) ?
             tmp_stack.f_conc[ name ] : 0e0;
+         if ( tmp_stack.f_extc.count( name ) )
+         {
+            f_extc[ name ] = tmp_stack.f_extc[ name ];
+         }
          if ( tmp_stack.created_files_not_saved.count( name ) )
          {
             created_files_not_saved[ name ] = tmp_stack.created_files_not_saved[ name ];
@@ -386,7 +396,10 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
          clipboard.f_conc[ name ] = 
             adds.f_conc.count( name ) ?
             adds.f_conc[ name ] : 0e0;
-
+         if ( adds.f_extc.count( name ) )
+         {
+            clipboard.f_extc[ name ] = adds.f_extc.count( name );
+         }
          if ( adds.created_files_not_saved.count( name ) )
          {
             clipboard.created_files_not_saved[ name ] = adds.created_files_not_saved[ name ];
