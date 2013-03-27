@@ -340,7 +340,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) qmin %.5f qmax %.5f qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb
@@ -348,6 +348,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , siga
                      , MW
                      , MW_sd
+                     , smin
+                     , smax
                      , sRgmin
                      , sRgmax
                      , bestend - beststart + 1

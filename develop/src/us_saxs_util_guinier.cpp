@@ -180,9 +180,9 @@ bool US_Saxs_Util::guinier_fit(
    }
 
    Rg = sqrt( -3e0 * b );
-   sigb = sqrt( fabs( -3e0 * sigb ) );
+   sigb = fabs( Rg * sigb / b );
    Io = exp(a);
-   siga = exp( siga );
+   siga = fabs( Io * siga / a );
    smin = sqrt(wave[tag].q[startpos]);
    smax = sqrt(wave[tag].q[endpos]);
    sRgmin = Rg * smin;
