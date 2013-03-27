@@ -219,6 +219,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    int pointsmax = our_saxs_options->pointsmax;
    double sRgmaxlimit = our_saxs_options->qRgmax;
    double pointweightpower = 3e0;
+   double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
    
    // these are function output values
@@ -237,42 +238,92 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    unsigned int beststart;
    unsigned int bestend;
 
-   bool too_few_points = plotted_q[i].size() <= 25;
+   bool too_few_points = plotted_q[i].size() <= 5;
 
    if ( !too_few_points )
    {
-      if ( 
-          !usu.guinier_plot(
-                            "guinier",
-                            "data"
-                            )   ||
-          !usu.guinier_fit2(
-                            log,
-                            "guinier", 
-                            pointsmin,
-                            pointsmax,
-                            sRgmaxlimit,
-                            pointweightpower,
-                            p_guinier_maxq,
-                            a,
-                            b,
-                            siga,
-                            sigb,
-                            chi2,
-                            Rg,
-                            Io,
-                            smax, // don't know why these are flipped
-                            smin,
-                            sRgmin,
-                            sRgmax,
-                            beststart,
-                            bestend
-                            ) )
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
       {
-         editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
-                        .arg(qsl_plotted_iq_names[i]));
-         return false;
-      }
+         if ( 
+             !usu.guinier_plot(
+                               "guinier",
+                               "data"
+                               )   ||
+             !usu.guinier_fit2(
+                               log,
+                               "guinier", 
+                               pointsmin,
+                               pointsmax,
+                               sRgmaxlimit,
+                               pointweightpower,
+                               p_guinier_maxq,
+                               a,
+                               b,
+                               siga,
+                               sigb,
+                               chi2,
+                               Rg,
+                               Io,
+                               smax, // don't know why these are flipped
+                               smin,
+                               sRgmin,
+                               sRgmax,
+                               beststart,
+                               bestend
+                               ) )
+         {
+            editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                           .arg(qsl_plotted_iq_names[i]));
+            return false;
+         }
+      } else {
+         unsigned int pstart = 0;
+         unsigned int pend   = 0;
+         {
+            bool         pstart_found = false;
+            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+            {
+               if ( !pstart_found && plotted_q[ i ][ j ] >= p_guinier_minq )
+               {
+                  pstart = j;
+                  pstart_found = true;
+               }
+               if ( plotted_q[ i ][ j ] <= p_guinier_maxq )
+               {
+                  pend = j;
+               }
+            }
+         }
+
+         if ( 
+             !usu.guinier_plot(
+                               "guinier",
+                               "data"
+                               )   ||
+             !usu.guinier_fit(
+                              log,
+                              "guinier", 
+                              pstart,
+                              pend,
+                              a,
+                              b,
+                              siga,
+                              sigb,
+                              chi2,
+                              Rg,
+                              Io,
+                              smax, // don't know why these are flipped
+                              smin,
+                              sRgmin,
+                              sRgmax
+                              ) )
+         {
+            editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                           .arg(qsl_plotted_iq_names[i]));
+            return false;
+         }
+      }         
 
       // cout << "guinier siga " << siga << endl;
       // cout << "guinier sigb " << sigb << endl;
@@ -468,6 +519,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    int pointsmax = our_saxs_options->pointsmax;
    double sRgmaxlimit = our_saxs_options->cs_qRgmax;
    double pointweightpower = 3e0;
+   double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
    
    // these are function output values
@@ -486,42 +538,92 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    unsigned int beststart;
    unsigned int bestend;
 
-   bool too_few_points = plotted_q[i].size() <= 25;
+   bool too_few_points = plotted_q[i].size() <= 5;
 
    if ( !too_few_points )
    {
-      if ( 
-          !usu.guinier_plot(
-                            "cs_guinier",
-                            "data"
-                            )   ||
-          !usu.guinier_fit2(
-                            log,
-                            "cs_guinier", 
-                            pointsmin,
-                            pointsmax,
-                            sRgmaxlimit,
-                            pointweightpower,
-                            p_guinier_maxq,
-                            a,
-                            b,
-                            siga,
-                            sigb,
-                            chi2,
-                            Rg,
-                            Io,
-                            smax, // don't know why these are flipped
-                            smin,
-                            sRgmin,
-                            sRgmax,
-                            beststart,
-                            bestend
-                            ) )
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
       {
-         editor_msg( "red",
-                     QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
-                     .arg(qsl_plotted_iq_names[i]));
-         return false;
+         if ( 
+             !usu.guinier_plot(
+                               "cs_guinier",
+                               "data"
+                               )   ||
+             !usu.guinier_fit2(
+                               log,
+                               "cs_guinier", 
+                               pointsmin,
+                               pointsmax,
+                               sRgmaxlimit,
+                               pointweightpower,
+                               p_guinier_maxq,
+                               a,
+                               b,
+                               siga,
+                               sigb,
+                               chi2,
+                               Rg,
+                               Io,
+                               smax, // don't know why these are flipped
+                               smin,
+                               sRgmin,
+                               sRgmax,
+                               beststart,
+                               bestend
+                               ) )
+         {
+            editor_msg( "red",
+                        QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                        .arg(qsl_plotted_iq_names[i]));
+            return false;
+         }
+      } else {
+         unsigned int pstart = 0;
+         unsigned int pend   = 0;
+         {
+            bool         pstart_found = false;
+            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+            {
+               if ( !pstart_found && plotted_q[ i ][ j ] >= p_guinier_minq )
+               {
+                  pstart = j;
+                  pstart_found = true;
+               }
+               if ( plotted_q[ i ][ j ] <= p_guinier_maxq )
+               {
+                  pend = j;
+               }
+            }
+         }
+
+         if ( 
+             !usu.guinier_plot(
+                               "guinier",
+                               "data"
+                               )   ||
+             !usu.guinier_fit(
+                              log,
+                              "guinier", 
+                              pstart,
+                              pend,
+                              a,
+                              b,
+                              siga,
+                              sigb,
+                              chi2,
+                              Rg,
+                              Io,
+                              smax, // don't know why these are flipped
+                              smin,
+                              sRgmin,
+                              sRgmax
+                              ) )
+         {
+            editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                           .arg(qsl_plotted_iq_names[i]));
+            return false;
+         }
       }
 
       // cout << "guinier siga " << siga << endl;
