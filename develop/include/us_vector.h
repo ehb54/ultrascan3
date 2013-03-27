@@ -20,6 +20,7 @@ class US_Vector
   #pragma warning ( disable: 4251 )
 #endif
    static void printvector( QString qs, vector < unsigned int > x );
+   static void printvector( QString qs, vector < int > x );
    static void printvector( QString qs, vector < double > x, int digits = 8 );
    static void printvector( QString qs, vector < bool > x );
    static vector < double > intersection( vector < double > &x, vector < double > &y );

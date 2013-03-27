@@ -8,6 +8,7 @@
 #include <set>
 #include <vector>
 #include "us_hydrodyn_pdbdefs.h"
+#include "us_vector.h"
 
 class pm_point
 {
@@ -83,6 +84,11 @@ class US_PM
    set < pm_point >    recenter         ( set < pm_point > & model );
    // bool             is_connected     ( set < pm_point > & model );
    // double           fitness          ( set < pm_point > & model ); // compute_I and compare rmsd
+
+   // split vectors into a "types" list and the searchable double params
+   bool                split            ( vector < double > & params, vector < int > & types, vector < double > & fparams );
+   // join them back
+   bool                join             ( vector < double > & params, vector < int > & types, vector < double > & fparams );
 };
 
 #endif

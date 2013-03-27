@@ -73,7 +73,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cnt_d_scat_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_d_scat_len, SIGNAL(valueChanged(double)), SLOT(update_d_scat_len(double)));
 
-   lbl_h2o_scat_len_dens = new QLabel(tr(" H2O scattering length density (*10^-10 cm^2): "), this);
+   lbl_h2o_scat_len_dens = new QLabel(tr(" H2O scattering length density (*10^10 cm^-2): "), this);
    lbl_h2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_h2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_h2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -90,7 +90,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cnt_h2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_h2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_h2o_scat_len_dens(double)));
 
-   lbl_d2o_scat_len_dens = new QLabel(tr(" D2O scattering length density (*10^-10 cm^2): "), this);
+   lbl_d2o_scat_len_dens = new QLabel(tr(" D2O scattering length density (*10^10 cm^-2): "), this);
    lbl_d2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_d2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -256,19 +256,27 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cnt_cryson_sh_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_cryson_sh_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_fibonacci_grid_order(double)));
 
-   lbl_cryson_hydration_shell_contrast = new QLabel( started_in_expert_mode ?
-                                                     tr(" Cryson: Contrast of hydration shell (e / A^3):")
-                                                     :
-                                                     tr(" Cryson: Contrast of hydration shell (e / A^3):")
-                                                     , this);
-   lbl_cryson_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
-   lbl_cryson_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_cryson_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   cb_cryson_manual_hs = new QCheckBox(this);
+   cb_cryson_manual_hs->setText( tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):") );
+   cb_cryson_manual_hs->setEnabled( true );
+   cb_cryson_manual_hs->setChecked( (*saxs_options).cryson_manual_hs );
+   cb_cryson_manual_hs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_cryson_manual_hs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_cryson_manual_hs, SIGNAL(clicked()), this, SLOT(set_cryson_manual_hs()));
+
+   //    lbl_cryson_hydration_shell_contrast = new QLabel( started_in_expert_mode ?
+
+   //                                                      :
+   //                                                      tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):")
+   //                                                      , this);
+   //    lbl_cryson_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   //    lbl_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
+   //    lbl_cryson_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   //    lbl_cryson_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_cryson_hydration_shell_contrast = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_cryson_hydration_shell_contrast );
-   cnt_cryson_hydration_shell_contrast->setRange(-1, 1, 0.001);
+   cnt_cryson_hydration_shell_contrast->setRange(-1, 8, 0.0001);
    cnt_cryson_hydration_shell_contrast->setValue((*saxs_options).cryson_hydration_shell_contrast);
    cnt_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
    cnt_cryson_hydration_shell_contrast->setEnabled(true);
@@ -338,7 +346,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    background->addWidget(cnt_cryson_sh_fibonacci_grid_order, j, 1);
    j++;
 
-   background->addWidget(lbl_cryson_hydration_shell_contrast, j, 0);
+   background->addWidget(cb_cryson_manual_hs, j, 0);
    background->addWidget(cnt_cryson_hydration_shell_contrast, j, 1);
    j++;
 
@@ -613,3 +621,8 @@ void US_Hydrodyn_SasOptionsSans::update_cryson_hydration_shell_contrast(double v
    }
 }
 
+void US_Hydrodyn_SasOptionsSans::set_cryson_manual_hs()
+{
+   (*saxs_options).cryson_manual_hs = cb_cryson_manual_hs->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}

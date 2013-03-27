@@ -605,8 +605,11 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    cryson->addArgument( "/D2O" );
    cryson->addArgument( QString("%1").arg( our_saxs_options->d2o_conc ) );
 
-   cryson->addArgument( "/dro" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ) );
+   if ( our_saxs_options->cryson_manual_hs )
+   {
+      cryson->addArgument( "/dro" );
+      cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ) );
+   }
 
    cryson->addArgument( "/lm" );
    cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_max_harmonics ) );

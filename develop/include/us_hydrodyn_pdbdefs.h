@@ -392,6 +392,7 @@ struct saxs_options
    unsigned int cryson_sh_max_harmonics;
    unsigned int cryson_sh_fibonacci_grid_order;
    float        cryson_hydration_shell_contrast;
+   bool         cryson_manual_hs;
 };
 
 struct saxs_atom

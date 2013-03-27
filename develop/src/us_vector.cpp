@@ -10,6 +10,16 @@ void US_Vector::printvector( QString qs, vector < unsigned int > x )
    cout << endl;
 }
 
+void US_Vector::printvector( QString qs, vector < int > x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
 void US_Vector::printvector( QString qs, vector < double > x, int digits )
 {
    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );

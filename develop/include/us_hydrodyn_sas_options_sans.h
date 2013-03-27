@@ -71,7 +71,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSans : public QFrame
       QLabel     *lbl_cryson_sh_fibonacci_grid_order;
       QwtCounter *cnt_cryson_sh_fibonacci_grid_order;
 
-      QLabel     *lbl_cryson_hydration_shell_contrast;
+      QCheckBox  *cb_cryson_manual_hs;
+      // QLabel     *lbl_cryson_hydration_shell_contrast;
       QwtCounter *cnt_cryson_hydration_shell_contrast;
 
       QPushButton *pb_help;
@@ -99,6 +100,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSans : public QFrame
       void set_sans_iq_native_fast_compute_pr();
       void set_sans_iq_cryson();
 
+      void set_cryson_manual_hs();
       void update_cryson_sh_max_harmonics(double);
       void update_cryson_sh_fibonacci_grid_order(double);
       void update_cryson_hydration_shell_contrast(double);

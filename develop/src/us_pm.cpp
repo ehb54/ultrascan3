@@ -231,31 +231,77 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    int ofs = 1;
    double radius = params[ ofs++ ];
 
-   double centerx;
-   double centery;
-   double centerz;
+   double basex;
+   double basey;
+   double basez;
+   double endx;
+   double endy;
+   double endz;
 
    switch( model_pos )
    {
    case 0 :
-      centerx = 0e0;
-      centery = 0e0;
-      centerz = 0e0;
+      // centered along x axis
+      basex = params[ ofs++ ];
+      basey = 0e0;
+      basez = 0e0;
+      endx = -basex;
+      endy = 0e0;
+      endz = 0e0;
+      if ( endx < basex )
+      {
+         double tmp = basex;
+         basex      = endx;
+         endx       = tmp;
+      }
       break;
    case 1 :
-      centerx = params[ ofs++ ];
-      centery = 0e0;
-      centerz = 0e0;
-      break;
-   case 2 :
-      centerx = params[ ofs++ ];
-      centery = params[ ofs++ ];
-      centerz = 0e0;
+      // in x-y plane
+      basex = params[ ofs++ ];
+      basey = params[ ofs++ ];
+      basez = 0e0;
+      endx = params[ ofs++ ];
+      endy = params[ ofs++ ];
+      endz = 0e0;
+      if ( endx < basex )
+      {
+         double tmp = basex;
+         basex      = endx;
+         endx       = tmp;
+      }
+      if ( endy < basey )
+      {
+         double tmp = basey;
+         basey      = endy;
+         endy       = tmp;
+      }
       break;
    default:
-      centerx = params[ ofs++ ];
-      centery = params[ ofs++ ];
-      centerz = params[ ofs++ ];
+      // arbitrary
+      basex = params[ ofs++ ];
+      basey = params[ ofs++ ];
+      basez = params[ ofs++ ];
+      endx = params[ ofs++ ];
+      endy = params[ ofs++ ];
+      endz = params[ ofs++ ];
+      if ( endx < basex )
+      {
+         double tmp = basex;
+         basex      = endx;
+         endx       = tmp;
+      }
+      if ( endy < basey )
+      {
+         double tmp = basey;
+         basey      = endy;
+         endy       = tmp;
+      }
+      if ( endz < basez )
+      {
+         double tmp = basez;
+         basez      = endz;
+         endz       = tmp;
+      }
       break;
    }
 
@@ -267,12 +313,12 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
 
    // make a bounding box
 
-   int minx = (int) ( centerx - radius - 1 );
-   int maxx = (int) ( centerx + radius + 1 );
-   int miny = (int) ( centery - radius - 1 );
-   int maxy = (int) ( centery + radius + 1 );
-   int minz = (int) ( centerz - radius - 1 );
-   int maxz = (int) ( centerz + radius + 1 );
+   int minx = (int) ( basex - radius - 1 );
+   int maxx = (int) ( endx  + radius + 1 );
+   int miny = (int) ( basey - radius - 1 );
+   int maxy = (int) ( endy  + radius + 1 );
+   int minz = (int) ( basez - radius - 1 );
+   int maxz = (int) ( endz  + radius + 1 );
 
    pm_point pmp;
 
@@ -282,15 +328,15 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
       {
          for ( int z = minz; z <= maxz; ++z )
          {
-            if ( sqrt( (double)( ( x - centerx ) * ( x - centerx ) +
-                                 ( y - centery ) * ( y - centery ) +
-                                 ( z - centerz ) * ( z - centerz ) ) ) < radius ) 
-            {
-               pmp.x[ 0 ] = ( int16_t )x;
-               pmp.x[ 1 ] = ( int16_t )y;
-               pmp.x[ 2 ] = ( int16_t )z;
-               model.insert( pmp );
-            }
+//             if ( sqrt( (double)( ( x - centerx ) * ( x - centerx ) +
+//                                  ( y - centery ) * ( y - centery ) +
+//                                  ( z - centerz ) * ( z - centerz ) ) ) < radius ) 
+//             {
+//                pmp.x[ 0 ] = ( int16_t )x;
+//                pmp.x[ 1 ] = ( int16_t )y;
+//                pmp.x[ 2 ] = ( int16_t )z;
+//                model.insert( pmp );
+//             }
          }
       }
    }
@@ -377,43 +423,6 @@ void US_PM::debug( int level, QString qs )
    }
 }
 
-QString US_PM::test()
-{
-   vector < double > q;
-   vector < double > I;
-   vector < double > e;
-
-   US_PM test_pm( 1e0, 0.1e0, q, I, e, 5 );
-
-   vector < double > params;
-
-   params.push_back( 0e0 ); // sphere 0
-   params.push_back( 5e0 ); // radius in grid coordinates
-
-   params.push_back( 0e0 ); // sphere 1
-   params.push_back( 5e0 ); // radius in grid coordinates
-   params.push_back( 10e0 ); // centerx
-
-   params.push_back( 0e0 ); // sphere 2
-   params.push_back( 5e0 ); // radius in grid coordinates
-   params.push_back( 10e0 ); // centerx
-   params.push_back( 20e0 ); // centery
-
-   params.push_back( 0e0 ); // sphere 3
-   params.push_back( 5e0 ); // radius in grid coordinates
-   params.push_back( -10e0 ); // centerx
-   params.push_back( -20e0 ); // centery
-   params.push_back( -20e0 ); // centerz
-
-   set < pm_point > model;
-
-   puts ( "x1" );
-   test_pm.create_model( params, model );
-   puts ( "x2" );
-
-   return test_pm.qs_bead_model( model );
-}
-
 set < pm_point > US_PM::recenter( set < pm_point > & model )
 {
    int cx = 0;
@@ -450,3 +459,266 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
    return result;
 }
 
+bool US_PM::split( vector < double > & params, vector < int > & types, vector < double > & fparams )
+{
+   vector < double > params_left;
+
+   int model_pos = 0;
+   int ofs       = 0;
+
+   types  .clear();
+   fparams.clear();
+
+   while ( ofs < ( int ) params.size() )
+   {
+      types.push_back( ( int )params[ ofs++ ] );
+      if ( ( int ) params.size() <= ofs )
+      {
+         error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+         return false;
+      }
+      fparams.push_back( params[ ofs++ ] );
+      switch( types.back() )
+      {
+      case 0 : // sphere
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               break;
+            case 1 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            case 2 :
+               if ( ( int ) params.size() <= ofs + 1 )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 2 )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            }
+         }
+         break;
+      case 1 : // cylinder
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               break;
+            case 1 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            case 2 :
+               if ( ( int ) params.size() <= ofs + 1 )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 2 )
+               {
+                  error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+                  return false;
+               }
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               fparams.push_back( params[ ofs++ ] );
+               break;
+            }
+         }
+         break;
+      case 2 : // ellipsoid
+      case 3 : // torus
+      default:
+         error_msg = QString( "split: object type %1 not defined" ).arg( types.back() );
+         return false;
+         break;
+      }
+      ++model_pos;
+   }
+   return true;
+}
+
+bool US_PM::join( vector < double > & params, vector < int > & types, vector < double > & fparams )
+{
+   params.clear();
+
+   int ofs = 0;
+
+   for ( int i = 0; i < ( int ) types.size(); i++ )
+   {
+      params.push_back( ( double ) types[ i ] );
+      if ( ( int ) fparams.size() <= ofs )
+      {
+         error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+         return false;
+      }
+      params.push_back( fparams[ ofs++ ] );
+      switch( types[ i ] )
+      {
+      case 0 : // sphere
+         {
+            switch( i )
+            {
+            case 0 :
+               break;
+            case 1 :
+               if ( ( int ) fparams.size() <= ofs )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            case 2 :
+               if ( ( int ) fparams.size() <= ofs + 1 )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            default:
+               if ( ( int ) fparams.size() <= ofs + 2 )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            }
+         }
+         break;
+      case 1 : // cylinder
+         {
+            switch( i )
+            {
+            case 0 :
+               break;
+            case 1 :
+               if ( ( int ) fparams.size() <= ofs )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            case 2 :
+               if ( ( int ) fparams.size() <= ofs + 1 )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            default:
+               if ( ( int ) fparams.size() <= ofs + 2 )
+               {
+                  error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+                  return false;
+               }
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               params.push_back( fparams[ ofs++ ] );
+               break;
+            }
+         }
+         break;
+      case 2 : // ellipsoid
+      case 3 : // torus
+      default:
+         error_msg = QString( "join: object type %1 not defined" ).arg( types[ i ] );
+         return false;
+         break;
+      }
+   }
+   return true;
+}
+
+QString US_PM::test()
+{
+   vector < double > q;
+   vector < double > I;
+   vector < double > e;
+
+   US_PM test_pm( 1e0, 0.1e0, q, I, e, 5 );
+
+   vector < double > params;
+
+   params.push_back( 0e0 ); // sphere 0
+   params.push_back( 5e0 ); // radius in grid coordinates
+
+   params.push_back( 0e0 ); // sphere 1
+   params.push_back( 5e0 ); // radius in grid coordinates
+   params.push_back( 10e0 ); // centerx
+
+   params.push_back( 0e0 ); // sphere 2
+   params.push_back( 5e0 ); // radius in grid coordinates
+   params.push_back( 10e0 ); // centerx
+   params.push_back( 20e0 ); // centery
+
+   params.push_back( 0e0 ); // sphere 3
+   params.push_back( 5e0 ); // radius in grid coordinates
+   params.push_back( -10e0 ); // centerx
+   params.push_back( -20e0 ); // centery
+   params.push_back( -20e0 ); // centerz
+
+   set < pm_point > model;
+
+   if ( !test_pm.create_model( params, model ) )
+   {
+      cout << test_pm.error_msg.ascii() << endl;
+   }
+
+   vector < int    > types;
+   vector < double > fparams;
+   US_Vector::printvector( "before split: params", params ); 
+   if ( !test_pm.split( params, types, fparams ) )
+   {
+      cout << test_pm.error_msg.ascii() << endl;
+   }
+   US_Vector::printvector( "split: types", types ); 
+   US_Vector::printvector( "split: fparams", fparams ); 
+
+   vector < double > new_params;
+   if ( !test_pm.join( new_params, types, fparams ) )
+   {
+      cout << test_pm.error_msg.ascii() << endl;
+   }
+   US_Vector::printvector( "after join: new_params", new_params ); 
+   if ( new_params != params )
+   {
+      cout << "ERROR: new_params != params" << endl;
+   }
+
+   return ""; // test_pm.qs_bead_model( model );
+}

@@ -3849,6 +3849,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "saxs_options.cryson_sh_max_harmonics" ] = QString( "%1" ).arg( saxs_options.cryson_sh_max_harmonics ); //            = 15;
       parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ] = QString( "%1" ).arg( saxs_options.cryson_sh_fibonacci_grid_order ); //     = 17;
       parameters[ "saxs_options.cryson_hydration_shell_contrast" ] = QString( "%1" ).arg( saxs_options.cryson_hydration_shell_contrast ); //    = 0.03f;
+      parameters[ "saxs_options.cryson_manual_hs" ] = QString( "%1" ).arg( saxs_options.cryson_manual_hs ); //    = 0.03f;
 
       // vectors to write:
       {
@@ -4309,6 +4310,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "saxs_options.cryson_sh_max_harmonics" ) ) saxs_options.cryson_sh_max_harmonics = parameters[ "saxs_options.cryson_sh_max_harmonics" ].toUInt();
    if ( parameters.count( "saxs_options.cryson_sh_fibonacci_grid_order" ) ) saxs_options.cryson_sh_fibonacci_grid_order = parameters[ "saxs_options.cryson_sh_fibonacci_grid_order" ].toUInt();
    if ( parameters.count( "saxs_options.cryson_hydration_shell_contrast" ) ) saxs_options.cryson_hydration_shell_contrast = parameters[ "saxs_options.cryson_hydration_shell_contrast" ].toFloat();
+   if ( parameters.count( "saxs_options.cryson_manual_hs" ) ) saxs_options.cryson_manual_hs = parameters[ "saxs_options.cryson_manual_hs" ] == "1";
 
    // vectors to read:
 
@@ -5255,7 +5257,8 @@ void US_Hydrodyn::hard_coded_defaults()
 
    saxs_options.cryson_sh_max_harmonics            = 15;
    saxs_options.cryson_sh_fibonacci_grid_order     = 17;
-   saxs_options.cryson_hydration_shell_contrast    = 0.03f;
+   saxs_options.cryson_hydration_shell_contrast    = 1.946f;
+   saxs_options.cryson_manual_hs                   = false;
 
    gparams                                         .clear();
 }
