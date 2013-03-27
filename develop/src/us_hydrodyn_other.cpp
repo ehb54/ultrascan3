@@ -4359,8 +4359,17 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       }
    }
 
+   // fix up consistancy parameters
+
    saxs_options.cs_qstart                          = saxs_options.qstart * saxs_options.qstart;
    saxs_options.cs_qend                            = saxs_options.qend   * saxs_options.qend;
+
+   if ( !saxs_options.cryson_manual_hs )
+   {
+      saxs_options.cryson_hydration_shell_contrast    = 
+         saxs_options.d2o_conc * saxs_options.d2o_scat_len_dens +
+         ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
+   }
 
    return true;
 }
@@ -5257,7 +5266,9 @@ void US_Hydrodyn::hard_coded_defaults()
 
    saxs_options.cryson_sh_max_harmonics            = 15;
    saxs_options.cryson_sh_fibonacci_grid_order     = 17;
-   saxs_options.cryson_hydration_shell_contrast    = 1.946f;
+   saxs_options.cryson_hydration_shell_contrast    = 
+      saxs_options.d2o_conc * saxs_options.d2o_scat_len_dens +
+      ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
    saxs_options.cryson_manual_hs                   = false;
 
    gparams                                         .clear();

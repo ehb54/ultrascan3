@@ -341,14 +341,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       hplc_ciq->exec();
       delete hplc_ciq;
       
-      //       cout << "parameters:\n";
-      //       for ( map < QString, QString >::iterator it = parameters.begin();
-      //             it != parameters.end();
-      //             it++ )
-      //       {
-      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
-      //       }
-      //       cout << "end parameters:\n";
+             cout << "parameters:\n";
+             for ( map < QString, QString >::iterator it = parameters.begin();
+                   it != parameters.end();
+                   it++ )
+             {
+                cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+             }
+             cout << "end parameters:\n";
 
       if ( bl_count && ( !parameters.count( "add_baseline" ) || parameters[ "add_baseline" ] == "false" ) )
       {
@@ -551,6 +551,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    bool reported_gs0 = false;
 
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
    for ( unsigned int t = 0; t < tv.size(); t++ )
    {
       progress->setProgress( files.size() + t, files.size() + tv.size() );
@@ -619,6 +625,16 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
             .replace( ".", "_" )
             ;
+
+         {
+            int ext = 0;
+            QString use_name = name;
+            while ( current_files.count( use_name ) )
+            {
+               use_name = name + QString( "-%1" ).arg( ++ext );
+            }
+            name = use_name;
+         }
 
          // cout << QString( "name %1\n" ).arg( name );
 

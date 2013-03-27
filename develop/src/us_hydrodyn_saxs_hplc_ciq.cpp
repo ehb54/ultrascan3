@@ -74,8 +74,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    // cb's co dependent
    connect( cb_save_as_pct_iq, SIGNAL( clicked() ), SLOT( set_save_as_pct_iq() ) );
    connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
-   cb_save_as_pct_iq->setChecked( true );
    cb_sd_source->setChecked( false );
+   cb_save_as_pct_iq->setChecked( true );
 
    QLabel * lbl_sd_zeros_found = new QLabel( tr( "If zeros are produced when computing S.D.'s:  " ), this );
    lbl_sd_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -327,6 +327,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    background->addWidget ( pb_global);
    background->addLayout ( hbl_bottom );
    // background->addSpacing( 4 );
+   set_save_as_pct_iq();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::quit()
@@ -390,7 +391,13 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
-   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( true ), cb_sd_source->show() ) : cb_sd_source->hide();
+   if ( cb_save_as_pct_iq->isChecked() )
+   {
+      cb_sd_source->show();
+   } else {
+      cb_sd_source->setChecked( false );
+      cb_sd_source->hide();
+   }
    update_enables();
 }
 

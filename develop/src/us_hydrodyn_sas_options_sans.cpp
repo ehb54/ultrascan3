@@ -380,6 +380,12 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    //       cb_sans_iq_native_hybrid3->hide();
    //       cb_sans_iq_hybrid_adaptive->hide();
    //    }      
+
+   update_enables();
+   if ( !cb_cryson_manual_hs->isChecked() )
+   {
+      recompute_contrast();
+   }
 }
 
 void US_Hydrodyn_SasOptionsSans::cancel()
@@ -418,19 +424,22 @@ void US_Hydrodyn_SasOptionsSans::update_d_scat_len(double val)
 void US_Hydrodyn_SasOptionsSans::update_h2o_scat_len_dens(double val)
 {
    (*saxs_options).h2o_scat_len_dens = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   recompute_contrast();
 }
 
 void US_Hydrodyn_SasOptionsSans::update_d2o_scat_len_dens(double val)
 {
    (*saxs_options).d2o_scat_len_dens = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   recompute_contrast();
 }
 
 void US_Hydrodyn_SasOptionsSans::update_d2o_conc(double val)
 {
    (*saxs_options).d2o_conc = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   recompute_contrast();
 }
 
 void US_Hydrodyn_SasOptionsSans::update_frac_of_exch_pep(double val)
@@ -652,4 +661,16 @@ void US_Hydrodyn_SasOptionsSans::set_cryson_manual_hs()
 {
    (*saxs_options).cryson_manual_hs = cb_cryson_manual_hs->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   update_enables();
+}
+
+void US_Hydrodyn_SasOptionsSans::recompute_contrast()
+{
+   cnt_cryson_hydration_shell_contrast->setValue( (*saxs_options).d2o_conc * (*saxs_options).d2o_scat_len_dens +
+                                                  ( 1e0 - (*saxs_options).d2o_conc ) * (*saxs_options).h2o_scat_len_dens );
+}
+
+void US_Hydrodyn_SasOptionsSans::update_enables()
+{
+   cnt_cryson_hydration_shell_contrast->setEnabled( cb_cryson_manual_hs->isChecked() );
 }
