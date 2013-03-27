@@ -113,6 +113,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Xsr;
       friend class US_Hydrodyn_Cluster_Additional;
       friend class US_Hydrodyn_SasOptionsExperimental;
+      friend class US_Hydrodyn_SasOptionsGuinier;
+      friend class US_Hydrodyn_SasOptionsSans;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -480,6 +482,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  flags molecule "#|resSeq|residue_list entry" to be ignored
       
       map < QString, QString >            gparams;
+      map < QString, QString >            default_gparams;
 
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;

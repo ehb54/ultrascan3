@@ -5261,6 +5261,8 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.cryson_manual_hs                   = false;
 
    gparams                                         .clear();
+   gparams[ "guinier_auto_fit" ]                   = "1";
+   gparams[ "perdeuteration" ]                     = "0";
 }
 
 void US_Hydrodyn::set_default()
@@ -5348,6 +5350,7 @@ void US_Hydrodyn::set_default()
    default_save_params = save_params;
    default_bd_options = bd_options;
    default_anaflex_options = anaflex_options;
+   default_gparams         = gparams;
 }
 
 void US_Hydrodyn::view_file(const QString &filename, QString title)

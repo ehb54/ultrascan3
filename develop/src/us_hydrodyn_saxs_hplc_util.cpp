@@ -1066,9 +1066,11 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
 
       int ext = 0;
       QString repeak_name = files[ i ] + QString( "-rp%1" ).arg( scale, 0, 'g', 8 ).replace( ".", "_" );
+      repeak_name.replace( ".", "_" );
       while ( current_files.count( repeak_name ) )
       {
          repeak_name = files[ i ] + QString( "-rp%1-%2" ).arg( scale, 0, 'g', 8 ).arg( ++ext ).replace( ".", "_" );
+         repeak_name.replace( ".", "_" );
       }
 
       select_files[ repeak_name ] = true;

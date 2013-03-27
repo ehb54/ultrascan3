@@ -611,6 +611,12 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
       cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ) );
    }
 
+   if ( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "perdeuteration" ) )
+   {
+      cryson->addArgument( "/per" );
+      cryson->addArgument( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "perdeuteration" ] );
+   }
+
    cryson->addArgument( "/lm" );
    cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_max_harmonics ) );
 

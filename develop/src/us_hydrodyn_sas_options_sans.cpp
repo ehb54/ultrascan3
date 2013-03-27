@@ -132,7 +132,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_frac_of_exch_pep = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_frac_of_exch_pep );
-   cnt_frac_of_exch_pep->setRange(0.0, 1.0, 0.01);
+   cnt_frac_of_exch_pep->setRange(0.0, 1.0, 0.001);
    cnt_frac_of_exch_pep->setValue((*saxs_options).frac_of_exch_pep);
    cnt_frac_of_exch_pep->setMinimumHeight(minHeight1);
    cnt_frac_of_exch_pep->setEnabled(true);
@@ -140,6 +140,24 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cnt_frac_of_exch_pep->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
+
+   lbl_perdeuteration = new QLabel(tr(" Perdeuteratoin (0 - 1): "), this);
+   lbl_perdeuteration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_perdeuteration->setMinimumHeight(minHeight1);
+   lbl_perdeuteration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_perdeuteration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_perdeuteration = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_perdeuteration );
+   cnt_perdeuteration->setRange(0.0, 1.0, 0.001);
+   cnt_perdeuteration->setValue( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "perdeuteration" ) ? 
+                                 ((US_Hydrodyn *)us_hydrodyn)->gparams[ "perdeuteration" ].toDouble() : 0e0 );
+   cnt_perdeuteration->setMinimumHeight(minHeight1);
+   cnt_perdeuteration->setEnabled(true);
+   cnt_perdeuteration->setNumButtons(3);
+   cnt_perdeuteration->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_perdeuteration->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_perdeuteration, SIGNAL(valueChanged(double)), SLOT(update_perdeuteration(double)));
 
    lbl_sans_iq = new QLabel(tr(" I(q) method: "), this);
    lbl_sans_iq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -321,6 +339,9 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    background->addWidget(lbl_frac_of_exch_pep, j, 0);
    background->addWidget(cnt_frac_of_exch_pep, j, 1);
    j++;
+   background->addWidget(lbl_perdeuteration, j, 0);
+   background->addWidget(cnt_perdeuteration, j, 1);
+   j++;
 
    QHBoxLayout *hbl_sans_iq = new QHBoxLayout;
    hbl_sans_iq->addWidget(lbl_sans_iq);
@@ -415,6 +436,12 @@ void US_Hydrodyn_SasOptionsSans::update_d2o_conc(double val)
 void US_Hydrodyn_SasOptionsSans::update_frac_of_exch_pep(double val)
 {
    (*saxs_options).frac_of_exch_pep = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsSans::update_perdeuteration(double val)
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "perdeuteration" ] = QString( "%1" ).arg( val );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

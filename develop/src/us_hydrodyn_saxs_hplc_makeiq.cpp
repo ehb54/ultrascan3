@@ -288,7 +288,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
       if ( !no_conc )
       {
-         QRegExp rx_repeak( "-rp(.\\d*_\\d+(|e.\\d+))" );
+         QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
          if ( rx_repeak.search( lbl_conc_file->text() ) != -1 )
          {
             conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
@@ -296,8 +296,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             {
                conc_repeak = 1e0;
                editor_msg( "red", tr( "Error: concentration repeak scaling value extracted is 0, turning off back scaling" ) );
+            } else {
+               editor_msg( "dark blue", QString( tr( "Notice: concentration scaling repeak value %1" ) ).arg( conc_repeak ) );
             }
+         } else {
+            editor_msg( "dark red", tr( "Notice: no concentration repeak scaling value found" ) );
          }
+      } else {
+         cout << "no conc\n";
       }
          
       if ( !any_detector )
@@ -312,6 +318,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
       parameters[ "no_errors"   ] = qs_no_errors;
       parameters[ "zero_points" ] = qs_zero_points;
+      if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+      {
+         parameters[ "expert_mode" ] = "true";
+      }
 
       //       cout << "parameters b4 ciq:\n";
       //       for ( map < QString, QString >::iterator it = parameters.begin();
@@ -606,7 +616,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                   QString( "%1_cn%2" )
                   .arg( qs_fwhm )
                   .arg( conc_factor, 0, 'g', 6 ) : QString( "" ) )
-            .arg( tv[ t ] )
+            .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
             .replace( ".", "_" )
             ;
 
@@ -695,12 +705,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             double tmp_I_recon = tmp_I;
             double tmp_G_recon = tmp_G;
 
-            if ( bl_count )
+            if ( any_bl )
             {
                double pct_area = 1e0; // 1e0 / ( double ) num_of_gauss; // g_area[ i ][ g ];
                double ofs = ( bl_intercept[ i ] + tv[ t ] * bl_slope[ i ] ) * pct_area;
-               tmp_I += ofs;
-               tmp_G += ofs;
+               if ( bl_count )
+               {
+                  tmp_I += ofs;
+                  tmp_G += ofs;
+               }
                if ( !g )
                {
                   tmp_I_recon += ofs;
@@ -994,9 +1007,17 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       {
          if ( save_gaussians )
          {
-            add_plot( QString( "sumG_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
+            add_plot( QString( "sumG%1_T%2" ).arg( any_bl ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
+            if ( any_bl )
+            {
+               add_plot( QString( "sumG_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
+            }
          } else {
-            add_plot( QString( "sumI_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
+            add_plot( QString( "sumI%1_T%2" ).arg( any_bl ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
+            if ( any_bl )
+            {
+               add_plot( QString( "sumI_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
+            }
          }
       }
 

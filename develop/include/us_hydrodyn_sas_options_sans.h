@@ -65,6 +65,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsSans : public QFrame
       QwtCounter *cnt_d2o_conc;
       QwtCounter *cnt_frac_of_exch_pep;
 
+      QLabel     *lbl_perdeuteration;
+      QwtCounter *cnt_perdeuteration;
+
       QLabel     *lbl_cryson_sh_max_harmonics;
       QwtCounter *cnt_cryson_sh_max_harmonics;
 
@@ -90,6 +93,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSans : public QFrame
       void update_d2o_scat_len_dens(double);
       void update_d2o_conc(double);
       void update_frac_of_exch_pep(double);
+      void update_perdeuteration(double);
 
       void set_sans_iq_native_debye();
       void set_sans_iq_native_hybrid();

@@ -47,7 +47,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_add_bl->setChecked( false );
    cb_add_bl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_add_bl->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   if ( !parameters->count( "baseline" ) )
+   if ( !parameters->count( "expert_mode" ) || !parameters->count( "baseline" ) )
    {
       cb_add_bl->hide();
    }

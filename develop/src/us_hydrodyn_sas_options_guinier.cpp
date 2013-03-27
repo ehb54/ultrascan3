@@ -134,6 +134,15 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_guinier_and_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_guinier_and_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
+   cb_guinier_auto_fit = new QCheckBox(this);
+   cb_guinier_auto_fit->setText(tr(" Search for best Guinier range "));
+   cb_guinier_auto_fit->setEnabled(true);
+   cb_guinier_auto_fit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_auto_fit" ) &&
+                                    ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_auto_fit" ] == "1" );
+   cb_guinier_auto_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_auto_fit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_auto_fit, SIGNAL(clicked()), this, SLOT(set_guinier_auto_fit()));
+
    lbl_pointsmin = new QLabel(tr(" Minimum number of points : "), this);
    lbl_pointsmin->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -369,12 +378,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_cs_qend, j, 0);
    background->addWidget(le_cs_qend, j, 1);
    j++;
-   background->addWidget(lbl_pointsmin, j, 0);
-   background->addWidget(le_pointsmin, j, 1);
-   j++;
-   background->addWidget(lbl_pointsmax, j, 0);
-   background->addWidget(le_pointsmax, j, 1);
-   j++;
    background->addMultiCellWidget(cb_guinier_use_sd, j, j, 0, 1);
    j++;
    background->addWidget(cb_guinier_outlier_reject, j, 0);
@@ -382,6 +385,15 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    j++;
    background->addWidget(cb_guinier_csv, j, 0);
    background->addWidget(le_guinier_csv_filename, j, 1);
+   j++;
+
+   background->addMultiCellWidget(cb_guinier_auto_fit, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_pointsmin, j, 0);
+   background->addWidget(le_pointsmin, j, 1);
+   j++;
+   background->addWidget(lbl_pointsmax, j, 0);
+   background->addWidget(le_pointsmax, j, 1);
    j++;
 
    background->addMultiCellWidget(lbl_conc_header, j, j, 0, 1);
@@ -691,4 +703,10 @@ void US_Hydrodyn_SasOptionsGuinier::curve_conc()
       QMessageBox::message( caption() + ": Process Guinier",
                             tr( "The main SAS window is not active" ) );
    }
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_auto_fit" ] = cb_guinier_auto_fit->isChecked() ? "1" : "0";
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
