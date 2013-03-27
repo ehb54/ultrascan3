@@ -3207,8 +3207,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
          double invweight  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
          sum += weight * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] );
       }
-      sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
-      avg_sd[ i ] = sqrt( sum ) * sqrt( 1e0 / (double) files.size() );
+      // sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
+      avg_sd[ i ] = sqrt( sum / ( ( (double) files.size() - 1e0 ) * ( sum_weight[ i ]  / (double) files.size() ) ) );
    }
 
    avg_conc /= files.size();
@@ -4119,8 +4119,8 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
             * ( invweight * inv_concs[ this_file ] * t_Is[ this_file ][ i ] - avg_Is[ i ] ) 
             * ( invweight * inv_concs[ this_file ] * t_Is[ this_file ][ i ] - avg_Is[ i ] );
       }
-      sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
-      avg_sd[ i ] = sqrt( sum ) * avg_conc * sqrt( 1e0 / (double) files.size() );
+      // sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
+      avg_sd[ i ] = avg_conc * sqrt( sum / ( ( (double) files.size() - 1e0 ) * ( sum_weight[ i ]  / (double) files.size() ) ) );
 
       avg_Is[ i ] *= avg_conc;
    }
