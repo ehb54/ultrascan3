@@ -26,6 +26,10 @@ class pm_point
    }
 };
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 class US_PM
 {
  private:
@@ -89,6 +93,10 @@ class US_PM
    bool                split            ( vector < double > & params, vector < int > & types, vector < double > & fparams );
    // join them back
    bool                join             ( vector < double > & params, vector < int > & types, vector < double > & fparams );
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 };
 
 #endif
