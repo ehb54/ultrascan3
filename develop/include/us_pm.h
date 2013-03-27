@@ -2,13 +2,22 @@
 #define US_PM_H
 
 #include <iostream>
-#include <stdint.h>
 #include <math.h>
 #include <qstring.h>
 #include <set>
 #include <vector>
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_vector.h"
+
+#ifdef WIN32
+typedef _int16 int16_t;
+#else
+#include <stdint.h>
+#endif
+
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
 
 class pm_point
 {
