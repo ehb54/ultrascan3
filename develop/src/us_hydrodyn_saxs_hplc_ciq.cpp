@@ -390,7 +390,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_save_as_pct_iq()
 {
    (*parameters)[ "save_as_pct_iq" ] = cb_save_as_pct_iq->isChecked() ? "true" : "false";
-   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( false ), cb_sd_source->show() ) : cb_sd_source->hide();
+   cb_save_as_pct_iq->isChecked() ? ( cb_sd_source->setChecked( true ), cb_sd_source->show() ) : cb_sd_source->hide();
    update_enables();
 }
 
