@@ -141,7 +141,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    cnt_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
 
-   lbl_perdeuteration = new QLabel(tr(" Perdeuteratoin (0 - 1): "), this);
+   lbl_perdeuteration = new QLabel(tr(" Perdeuteration (0 - 1): "), this);
    lbl_perdeuteration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_perdeuteration->setMinimumHeight(minHeight1);
    lbl_perdeuteration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
