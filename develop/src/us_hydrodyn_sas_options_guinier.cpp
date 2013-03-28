@@ -433,8 +433,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_I0_theo, j, 1);
    j++;
 
-
-
    {
       QGridLayout * gl2 = new QGridLayout( 0 );
       
@@ -448,6 +446,12 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       j++;
    }
 
+   if ( !( ( US_Hydrodyn * )us_hydrodyn)->advanced_config.expert_mode )
+   {
+      cb_use_cs_psv->hide();
+      le_cs_psv->hide();
+   }
+      
    setMinimumWidth( 400 );
 }
 
