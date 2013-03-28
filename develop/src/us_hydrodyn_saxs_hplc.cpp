@@ -2234,6 +2234,37 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       plot_files();
    }
    update_csv_conc();
+
+   {
+      map < QString, bool > add_with_conc;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) add_filenames.size(); i++ )
+      {
+         if ( f_conc.count( add_filenames[ i ] ) && f_conc[ add_filenames[ i ] ] != 0e0 )
+         {
+            add_with_conc[ add_filenames[ i ] ] = true;
+            // cout << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
+         }
+      }
+
+      if( add_with_conc.size() )
+      {
+         for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+         {
+            if ( csv_conc.data[ i ].size() > 1 &&
+                 add_with_conc.count( csv_conc.data[ i ][ 0 ] ) )
+            {
+               csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( f_conc[ csv_conc.data[ i ][ 0 ] ] );
+               add_with_conc.erase( csv_conc.data[ i ][ 0 ] );
+            }
+         }
+         if( add_with_conc.size() )
+         {
+            editor_msg( "red", QString( tr( "Internal error: could not set concentrations %1 files loaded" ).arg( add_with_conc.size() ) ) );
+         }
+      }
+   }
+
    if ( conc_widget )
    {
       conc_window->refresh( csv_conc );
@@ -2314,6 +2345,37 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
       plot_files();
    }
    update_csv_conc();
+
+   {
+      map < QString, bool > add_with_conc;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) add_filenames.size(); i++ )
+      {
+         if ( f_conc.count( add_filenames[ i ] ) && f_conc[ add_filenames[ i ] ] != 0e0 )
+         {
+            add_with_conc[ add_filenames[ i ] ] = true;
+            // cout << QString( "add file found conc %1 %2\n" ).arg( add_filenames[ i ] ).arg( f_conc[ add_filenames[ i ] ] );
+         }
+      }
+
+      if( add_with_conc.size() )
+      {
+         for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
+         {
+            if ( csv_conc.data[ i ].size() > 1 &&
+                 add_with_conc.count( csv_conc.data[ i ][ 0 ] ) )
+            {
+               csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( f_conc[ csv_conc.data[ i ][ 0 ] ] );
+               add_with_conc.erase( csv_conc.data[ i ][ 0 ] );
+            }
+         }
+         if( add_with_conc.size() )
+         {
+            editor_msg( "red", QString( tr( "Internal error: could not set concentrations %1 files loaded" ).arg( add_with_conc.size() ) ) );
+         }
+      }
+   }
+
    if ( conc_widget )
    {
       conc_window->refresh( csv_conc );
@@ -2701,6 +2763,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       if ( rx_conc.search( qv[ 0 ] ) )
       {
          this_conc = rx_conc.cap( 1 ).toDouble();
+         // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
       if ( rx_psv.search( qv[ 0 ] ) )
       {
@@ -3163,24 +3226,6 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    }
    f_conc       [ basename ] = this_conc;
    f_psv        [ basename ] = this_psv;
-
-   if ( this_conc != 0e0 )
-   {
-      update_csv_conc();
-
-      for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
-      {
-         if ( csv_conc.data[ i ].size() > 1 &&
-              csv_conc.data[ i ][ 0 ] == basename )
-         {
-            csv_conc.data[ i ][ 1 ] = QString( "%1" ).arg( this_conc );
-         }
-      }
-      if ( conc_widget )
-      {
-         conc_window->refresh( csv_conc );
-      }
-   }
 
    return true;
 }
@@ -3665,11 +3710,25 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
 
    QTextStream ts( &f );
 
+   update_csv_conc();
+   map < QString, double > concs = current_concs();
+
+   QString use_conc;
+   if ( concs.count( file ) && concs[ file ] != 0e0 )
+   {
+      use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+   } else {
+      if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
+      {
+         use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+      }
+   }
+
    ts << QString( tr( "US-SOMO Hplc %1data: %2%3%4%5\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv.count( file ) ? QString( " PSV:%1" ).arg( f_psv[ file ] ) : QString( "" ) )
-      .arg( f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+      .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
       ;
 

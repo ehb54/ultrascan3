@@ -5573,11 +5573,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
                             ) )
-               .arg( v_union[ 0 ] )
-               .arg( v_union.back() )
+               .arg( v_union.size() ? QString( "%1" ).arg( v_union[ 0 ] ) : QString( "empty" ) )
+               .arg( v_union.size() ? QString( "%1" ).arg( v_union.back() ) : QString( "empty" ) )
                .arg( v_union.size() )
-               .arg( v_int[ 0 ] )
-               .arg( v_int.back() )
+               .arg( v_int.size() ? QString( "%1" ).arg( v_int[ 0 ] ) : QString( "empty" ) )
+               .arg( v_int.size() ? QString( "%1" ).arg( v_int.back() ) : QString( "empty" ) )
                .arg( v_int.size() )
                );
 
@@ -5586,6 +5586,12 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    if ( !any_differences )
    {
       editor_msg( "black", tr( "Crop common: no differences between selected grids" ) );
+      return;
+   }
+
+   if ( !v_int.size() )
+   {
+      editor_msg( "black", tr( "Crop common: grids have no common points" ) );
       return;
    }
 
