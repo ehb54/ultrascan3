@@ -58,6 +58,13 @@ class US_PM
    vector < double >   I;
    vector < double >   e;
 
+   // ideas:
+   // best of each single model
+   // best of each pair
+   // best of each triple
+   // etc
+   // apply to various experimental & simulated data
+
  public:
    US_PM               ( double grid_conversion_factor, double drho, vector < double > q, vector < double > I, vector < double > e, int debug_level = 0 );
    ~US_PM              ();
@@ -65,7 +72,6 @@ class US_PM
    QString             error_msg;
 
    int                 debug_level;
-
 
    // params = model type, params required for model type, model type etc.
 
@@ -80,6 +86,8 @@ class US_PM
    bool                sphere           ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
    bool                ellipsoid        ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
    bool                cylinder         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   // prolate_spheroid
+   // oblate_spheroid
 
    // output a bead model
    vector < PDB_atom > bead_model       ( set < pm_point > & model );

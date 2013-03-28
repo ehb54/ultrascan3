@@ -322,6 +322,13 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
 
    // pm_point pmp;
 
+   // p . ( end - base ) < r^2
+   // if so
+   //  d(p,b)^2 <=  h^2 - r^2 &&
+   // d(p,b)^2 <= h^2 - r^2
+   // also:
+   //   do prolate & oblate spheroids
+
    for ( int x = minx; x <= maxx; ++x )
    {
       for ( int y = miny; y <= maxy; ++y )
