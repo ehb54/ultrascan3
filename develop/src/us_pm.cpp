@@ -329,12 +329,25 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    // also:
    //   do prolate & oblate spheroids
 
+   double h2 = 
+      ( endx - basex ) * ( endx - basex ) +
+      ( endy - basey ) * ( endx - basey ) +
+      ( endz - basez ) * ( endx - basez );
+
+   double r;
+
    for ( int x = minx; x <= maxx; ++x )
    {
       for ( int y = miny; y <= maxy; ++y )
       {
          for ( int z = minz; z <= maxz; ++z )
          {
+            // compute distance from point to line
+            // r = 
+               
+
+
+            
 //             if ( sqrt( (double)( ( x - centerx ) * ( x - centerx ) +
 //                                  ( y - centery ) * ( y - centery ) +
 //                                  ( z - centerz ) * ( z - centerz ) ) ) < radius ) 

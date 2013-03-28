@@ -55,7 +55,20 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
       "\"ending point\","
       "\"points used\","
       "\"chi^2\","
-      "\n";
+      "\"Conc. (mg/ml)\","
+      "\"PSV (ml/g)\","
+      "\"I0 std. expt. (ml/g)\","
+      "\"SD weighting\","
+      ;
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
+   {
+      csvlog += "\"Automatic range fitting used\",";
+   } else {
+      csvlog += "\"Manual range fitting used\",";
+   }      
+   csvlog += "\n";
    
    for ( unsigned int i = 0; 
 #ifndef QT4
@@ -119,8 +132,21 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"ending point\","
       "\"points used\","
       "\"chi^2\","
-      "\n";
+      "\"Conc. (mg/ml)\","
+      "\"PSV (ml/g)\","
+      "\"I0 std. expt. (ml/g)\","
+      "\"SD weighting\","
+      ;
    
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
+   {
+      csvlog += "\"Automatic range fitting used\",";
+   } else {
+      csvlog += "\"Manual range fitting used\",";
+   }      
+   csvlog += "\n";
+
    for ( unsigned int i = 0; 
 #ifndef QT4
          i < plotted_Iq.size();
@@ -455,8 +481,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%5,"
                     "%6,"
                     "%7,"
-                    "%8"
-                    "\n"
+                    "%8,"
                     )
             .arg(smin)
             .arg(smax)
@@ -467,6 +492,28 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(bestend - beststart + 1)
             .arg(chi2)
             ;
+
+         {
+            double conc;
+            double psv;
+            double I0_std_exp;
+            
+            get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
+            csvlog += 
+               QString( 
+                       "%1,"
+                       "%2,"
+                       "%3,"
+                       "\"%4\","
+                       )
+               .arg( conc )
+               .arg( psv )
+               .arg( I0_std_exp )
+               .arg( tr( use_SD_weighting ? "used" : "not used" ) )
+               ;
+         }
+
+         csvlog += "\n";
       }
    }
    editor_msg( plot_colors[i % plot_colors.size()], report );
@@ -749,7 +796,6 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8"
-                    "\n"
                     )
             .arg(smin)
             .arg(smax)
@@ -760,6 +806,28 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .arg(bestend - beststart + 1)
             .arg(chi2)
             ;
+
+         {
+            double conc;
+            double psv;
+            double I0_std_exp;
+            
+            get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
+            csvlog += 
+               QString( 
+                       "%1,"
+                       "%2,"
+                       "%3,"
+                       "\"%4\","
+                       )
+               .arg( conc )
+               .arg( psv )
+               .arg( I0_std_exp )
+               .arg( tr( use_SD_weighting ? "used" : "not used" ) )
+               ;
+         }
+
+         csvlog += "\n";
       }
    }
    editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground(), report );
