@@ -4,6 +4,8 @@
 #include <iostream>
 #include <math.h>
 #include <qstring.h>
+#include <qfile.h>
+#include <qtextstream.h>
 #include <set>
 #include <vector>
 #include "us_hydrodyn_pdbdefs.h"
@@ -52,6 +54,7 @@ class US_PM
 
    double cube_size;
    double bead_radius;
+   double bead_radius_over_2;
 
    // active grid:
    vector < double >   q;
@@ -84,10 +87,10 @@ class US_PM
    // models themselves:
 
    bool                sphere           ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                ellipsoid        ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
    bool                cylinder         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   // prolate_spheroid
-   // oblate_spheroid
+   bool                spheroid         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                ellipsoid        ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                torus            ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
 
    // output a bead model
    vector < PDB_atom > bead_model       ( set < pm_point > & model );
@@ -98,7 +101,7 @@ class US_PM
    //      new "on" points are cached
    vector < double >   compute_I        ( set < pm_point > & model );
 
-   static QString      test             ();
+   static QString      test             ( QString name );
 
    void                debug            ( int level, QString qs );
 

@@ -81,7 +81,8 @@ int main (int argc, char **argv)
              "              \tsorts on col\n"
              "reverse       \toutfile infile\n"
              "              \treverses row order\n"
-             "pmtest        \ttest parsimonious models\n"
+             "pmtest        \toutfile testfile\n"
+             "              test parsimonious models write model to outfile\n"
              , argv[0]
              );
       exit(-1);
@@ -2123,9 +2124,42 @@ int main (int argc, char **argv)
 
    if ( cmds[0].lower() == "pmtest" ) 
    {
-     cout << "pm test\n";
-     cout << US_PM::test();
-     exit( 0 );
+      if ( cmds.size() != 3 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile          = cmds[ p++ ];
+
+      QString output = US_PM::test( infile );
+      
+      if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+      {
+         outfile += ".bead_model";
+      }
+
+      cout << "Creating:" << outfile << "\n";
+      QFile of( outfile );
+      if ( !of.open( IO_WriteOnly ) )
+      {
+         cerr << "error: output file file can not be created.\n";
+         exit(errorbase);
+      }
+      errorbase--;
+
+      QTextStream ts( &of );
+      ts << output;
+      of.close();
+
+      exit( 0 );
    }
    errorbase -= 1000;
 
