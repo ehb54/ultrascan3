@@ -21,6 +21,12 @@ typedef _int16 int16_t;
 #define M_PI       3.14159265358979323846
 #endif
 
+// based upon int16 right now
+#define USPM_MAX_VAL   32767
+#define USPM_MAX_VAL_D ( ( double ) USPM_MAX_VAL )
+#define USPM_MIN_VAL   -32767
+#define USPM_MIN_VAL_D ( ( double ) USPM_MIN_VAL )
+
 class pm_point
 {
  public:
@@ -91,6 +97,11 @@ class US_PM
    bool                spheroid         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
    bool                ellipsoid        ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
    bool                torus            ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                torus_segment    ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+
+   // limits
+
+   bool                set_limits       ( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams );
 
    // output a bead model
    vector < PDB_atom > bead_model       ( set < pm_point > & model );

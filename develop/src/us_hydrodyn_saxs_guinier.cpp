@@ -58,6 +58,8 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
       "\"Conc. (mg/ml)\","
       "\"PSV (ml/g)\","
       "\"I0 std. expt. (ml/g)\","
+      "\"Slope\","
+      "\"Slope SD\","
       "\"SD weighting\","
       ;
 
@@ -135,6 +137,8 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"Conc. (mg/ml)\","
       "\"PSV (ml/g)\","
       "\"I0 std. expt. (ml/g)\","
+      "\"Slope\","
+      "\"Slope SD\","
       "\"SD weighting\","
       ;
    
@@ -497,6 +501,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             double conc;
             double psv;
             double I0_std_exp;
+            double slope = Rg * Rg / -3e0;
+            double slopesd = Rg != 0e0 ? fabs( sigb / Rg ) : 0e0;
             
             get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
             csvlog += 
@@ -504,11 +510,15 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                        "%1,"
                        "%2,"
                        "%3,"
-                       "\"%4\","
+                       "%4,"
+                       "%5,"
+                       "\"%6\","
                        )
                .arg( conc )
                .arg( psv )
                .arg( I0_std_exp )
+               .arg( slope  )
+               .arg( slopesd )
                .arg( tr( use_SD_weighting ? "used" : "not used" ) )
                ;
          }
@@ -811,6 +821,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             double conc;
             double psv;
             double I0_std_exp;
+            double slope = Rg * Rg / -3e0;
+            double slopesd = Rg != 0e0 ? fabs( sigb / Rg ) : 0e0;
             
             get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
             csvlog += 
@@ -818,11 +830,15 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                        "%1,"
                        "%2,"
                        "%3,"
-                       "\"%4\","
+                       "%4,"
+                       "%5,"
+                       "\"%6\","
                        )
                .arg( conc )
                .arg( psv )
                .arg( I0_std_exp )
+               .arg( slope  )
+               .arg( slopesd )
                .arg( tr( use_SD_weighting ? "used" : "not used" ) )
                ;
          }
