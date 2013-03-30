@@ -59,13 +59,13 @@ QString US_Timer::list_time( QString qs )
    double avg = ( double ) times [ qs ] / counts[ qs ];
 
    return
-      qs == 1 ?
+      counts[ qs ] == 1 ?
       QString("%1 %2 calls total time %3 ms\n")
       .arg( qs )
       .arg( counts[ qs ] )
       .arg( times [ qs ] )
       :
-      ( qs == 2 ?
+      ( counts[ qs ] == 2 ?
         QString("%1 %2 calls total time %3 ms avg time %4 ms sd %5 ms\n")
         .arg( qs )
         .arg( counts[ qs ] )

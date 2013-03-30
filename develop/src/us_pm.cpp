@@ -66,6 +66,12 @@ US_PM::US_PM(
    //    }
    Z0 = complex < float > ( 0.0f, 0.0f );
    i_ = complex < float > ( 0.0f, 1.0f );
+
+   i_l.resize( max_harmonics + 1 );
+   for ( unsigned int l = 0; l <= max_harmonics; l++ )
+   {
+      i_l[ l ] = pow( i_, l );
+   }
 }
 
 US_PM::~US_PM()
@@ -190,6 +196,7 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
    cy /= model.size();
    cz /= model.size();
 
+   // cout << QString( "recenter: cx %1,%2,%3\n" ).arg( cx ).arg( cy ).arg( cz );
 
    set < pm_point > result;
 
@@ -199,9 +206,9 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
          it != model.end();
          it++ )
    {
-      pmp.x[ 0 ] = it->x[ 0 ] + ( int16_t ) cx;
-      pmp.x[ 1 ] = it->x[ 1 ] + ( int16_t ) cy;
-      pmp.x[ 2 ] = it->x[ 2 ] + ( int16_t ) cz;
+      pmp.x[ 0 ] = it->x[ 0 ] - ( int16_t ) cx;
+      pmp.x[ 1 ] = it->x[ 1 ] - ( int16_t ) cy;
+      pmp.x[ 2 ] = it->x[ 2 ] - ( int16_t ) cz;
       result.insert( pmp );
    }
    return result;
@@ -460,6 +467,8 @@ QString US_PM::test( QString name, QString oname )
 
    QString output = test_pm.qs_bead_model( model );
 
+   oname += QString( "_gs%1" ).arg( grid_conversion_factor );
+
    // output bead model
    {
       QString outfile = oname;
@@ -494,7 +503,70 @@ QString US_PM::test( QString name, QString oname )
       {
          return "2nd compute_I error:" + test_pm.error_msg;
       }
+      QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
+      
+      if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
+      {
+         outfile += ".dat";
+      }
+
+      cout << "Creating:" << outfile << "\n";
+      QFile of( outfile );
+      if ( !of.open( IO_WriteOnly ) )
+      {
+         return "could not create output file";
+      }
+   
+      QTextStream ts( &of );
+      ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
+      for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
+      {
+         ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
+      }
+      of.close();
+   }
+
+   oname += "_recentered";
+
+   model = test_pm.recenter( model );
+   output = test_pm.qs_bead_model( model );
+
+   // output bead model
+   {
       QString outfile = oname;
+      
+      if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+      {
+         outfile += ".bead_model";
+      }
+
+      cout << "Creating:" << outfile << "\n";
+      QFile of( outfile );
+      if ( !of.open( IO_WriteOnly ) )
+      {
+         return "could not create output file";
+      }
+   
+      QTextStream ts( &of );
+      ts << output;
+      of.close();
+   }
+
+   // compute I(q)
+   if ( q.size() )
+   {
+      cout << "compute_I\n";
+      vector < double > I_result( q.size() );
+      if ( !test_pm.compute_I( model, I_result ) )
+      {
+         return "compute_I error:" + test_pm.error_msg;
+      }
+      if ( !test_pm.compute_I( model, I_result ) )
+      {
+         return "compute_I error:" + test_pm.error_msg;
+      }
+
+      QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
       
       if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
       {
