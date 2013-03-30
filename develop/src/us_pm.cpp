@@ -7,7 +7,7 @@ US_PM::US_PM(
              double buffer_e_density, 
              double ev, 
              unsigned int max_harmonics,
-             unsigned int fibonacci_grid,
+             // unsigned int fibonacci_grid, this is for hydration!
              vector < double > F, 
              vector < double > q, 
              vector < double > I, 
@@ -21,7 +21,7 @@ US_PM::US_PM(
    this->buffer_e_density       = buffer_e_density;
    this->ev                     = ev;
    this->max_harmonics          = max_harmonics;
-   this->fibonacci_grid         = fibonacci_grid;
+   // this->fibonacci_grid         = fibonacci_grid;
    this->F                      = F;
    this->q                      = q;
    this->I                      = I;
@@ -54,16 +54,16 @@ US_PM::US_PM(
       .arg( cube_size )
       .arg( bead_radius )
       .ascii();
-   if ( fibonacci_grid > 2 )
-   {
-      cout << "Building Fibonacci grid\n";
-      sh::build_grid( fib_grid, fibonacci_grid );
-      printf( "Fibonacci of order %u is %u fib_grid.size() %u\n", 
-              fibonacci_grid,
-              sh::fibonacci( fibonacci_grid ),
-              fib_grid.size() 
-              );
-   }
+   //    if ( fibonacci_grid > 2 )
+   //    {
+   //       cout << "Building Fibonacci grid\n";
+   //       sh::build_grid( fib_grid, fibonacci_grid );
+   //       printf( "Fibonacci of order %u is %u fib_grid.size() %u\n", 
+   //               fibonacci_grid,
+   //               sh::fibonacci( fibonacci_grid ),
+   //               (unsigned int)fib_grid.size() 
+   //               );
+   //    }
    Z0 = complex < float > ( 0.0f, 0.0f );
    i_ = complex < float > ( 0.0f, 1.0f );
 }
@@ -291,7 +291,7 @@ QString US_PM::test( QString name, QString oname )
    double       buffer_e_density       = 0e0;
    double       ev                     = 0e0;
    unsigned int max_harmonics          = 12;
-   unsigned int fibonacci_grid         = 17;
+   // unsigned int fibonacci_grid         = 17;
    bool         only_last_model        = false;
 
    if ( f.exists() && f.open( IO_ReadOnly ) )
@@ -303,7 +303,7 @@ QString US_PM::test( QString name, QString oname )
       buffer_e_density       = ts.readLine().stripWhiteSpace().toDouble();
       ev                     = ts.readLine().stripWhiteSpace().toDouble();
       max_harmonics          = ts.readLine().stripWhiteSpace().toUInt();
-      fibonacci_grid         = ts.readLine().stripWhiteSpace().toUInt();
+      // fibonacci_grid         = ts.readLine().stripWhiteSpace().toUInt();
       only_last_model        = ts.readLine().stripWhiteSpace().lower() == "only_last";
 
       while( !ts.atEnd() )
@@ -370,7 +370,7 @@ QString US_PM::test( QString name, QString oname )
                   buffer_e_density, 
                   ev, 
                   max_harmonics, 
-                  fibonacci_grid,
+                  // fibonacci_grid,
                   F, 
                   q, 
                   I, 

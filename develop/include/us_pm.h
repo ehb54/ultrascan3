@@ -109,7 +109,8 @@ class US_PM
    // sh variables
 
    unsigned int max_harmonics;
-   unsigned int fibonacci_grid;
+   // fib grid is for hydration
+   // unsigned int fibonacci_grid;
 
    // supplementary sh variables
 
@@ -117,7 +118,7 @@ class US_PM
    complex < float > i_; // ( 0e0, 1e0 );
 
    // sh data
-   vector < vector < double > > fib_grid;
+   // vector < vector < double > > fib_grid;
 
    US_Timer            us_timers;
 
@@ -129,7 +130,7 @@ class US_PM
                         double buffer_e_density, 
                         double ev, 
                         unsigned int max_harmonics,
-                        unsigned int fibonacci_grid,
+                        // unsigned int fibonacci_grid,
                         vector < double > F, 
                         vector < double > q, 
                         vector < double > I, 

@@ -543,10 +543,44 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    US_Vector::printvector( "area sums", g_area_sum );
 
+   unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / 3;
+
+   {
+      QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp" +  QDir::separator() + "hplc_frac.csv" );
+      if ( f.open ( IO_WriteOnly ) )
+      {
+         QTextStream ts( &f );
+         ts << QString( "\"file\",\"time\",\"peak\",\"%\"\n" );
+         for ( unsigned int t = 0; t < tv.size(); t++ )
+         {
+            for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+            {
+               for ( unsigned int g = 0; g < num_of_gauss; g++ )
+               {
+                  double frac_of_gaussian_sum;
+                  if ( fs[ i ][ t ] == 0e0 )
+                  {
+                     frac_of_gaussian_sum = -1e0;
+                  } else {
+                     frac_of_gaussian_sum = fg[ i ][ g ][ t ] / fs[ i ][ t ];
+                  }
+                  ts << QString( "\"%1\",%2,%3,%4\n" )
+                     .arg( files[ i ] )
+                     .arg( g + 1 )
+                     .arg( tv[ t ] )
+                     .arg( 100e0 * frac_of_gaussian_sum )
+                     ;
+               }
+            }
+         }
+         f.close();
+      }
+   }
+
    // build up resulting curves
 
    // for each time, tv[ t ] 
-   unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / 3;
+
    // cout << QString( "num of gauss %1\n" ).arg( num_of_gauss );
 
    bool reported_gs0 = false;
