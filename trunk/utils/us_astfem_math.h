@@ -6,6 +6,8 @@
 #include "us_simparms.h"
 #include "us_extern.h"
 
+#include <unistd.h>
+
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations
 class US_UTIL_EXTERN US_AstfemMath
