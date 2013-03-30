@@ -61,6 +61,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
             }
          }
          pdata[ *it ] = tmp_pm_data;
+         /* 
          cout << QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
             .arg( it->x[ 0 ] )
             .arg( it->x[ 1 ] )
@@ -69,6 +70,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
             .arg( tmp_pm_data.rtp[ 1 ] )
             .arg( tmp_pm_data.rtp[ 2 ] )
             ;
+         */
       } 
       v_pdata.push_back( &pdata[ *it ] );
    }

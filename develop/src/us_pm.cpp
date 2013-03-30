@@ -490,6 +490,10 @@ QString US_PM::test( QString name, QString oname )
       {
          return "compute_I error:" + test_pm.error_msg;
       }
+      if ( !test_pm.compute_I( model, I_result ) )
+      {
+         return "2nd compute_I error:" + test_pm.error_msg;
+      }
       QString outfile = oname;
       
       if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
