@@ -33,31 +33,46 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
          } else {
             tmp_pm_data.rtp[ 1 ] = acos ( (double) it->x[ 2 ] / tmp_pm_data.rtp[ 0 ] );
 
-            if ( it->x[ 0 ] < 0 )
+            if ( it->x[ 0 ] == 0 &&
+                 it->x[ 1 ] == 0 )
             {
-               tmp_pm_data.rtp[ 2 ] = M_PI - asin( (double)it->x[ 1 ] / sqrt( (double) ( (double)it->x[ 0 ] * 
-                                                                                         (double)it->x[ 0 ] +
-                                                                                         (double)it->x[ 1 ] * 
-                                                                                         (double)it->x[ 1 ] ) ) );
-            } else {
-               if ( it->x[ 1 ] < 0 )
+               tmp_pm_data.rtp[ 2 ] = 0e0;
+            } else {               
+               if ( it->x[ 0 ] < 0 )
                {
-                  tmp_pm_data.rtp[ 2 ] = M_2PI + asin( (double)it->x[ 1 ] / sqrt( (double)it->x[ 0 ] * 
-                                                                                  (double)it->x[ 0 ] +
-                                                                                  (double)it->x[ 1 ] * 
-                                                                                  (double)it->x[ 1 ] ) );
+                  tmp_pm_data.rtp[ 2 ] = M_PI - asin( (double)it->x[ 1 ] / sqrt( (double) ( (double)it->x[ 0 ] * 
+                                                                                            (double)it->x[ 0 ] +
+                                                                                            (double)it->x[ 1 ] * 
+                                                                                            (double)it->x[ 1 ] ) ) );
                } else {
-                  tmp_pm_data.rtp[ 2 ] = asin( (double) it->x[ 1 ] / sqrt( (double) it->x[ 0 ] * 
-                                                                           (double) it->x[ 0 ] +
-                                                                           (double) it->x[ 1 ] * 
-                                                                           (double) it->x[ 1 ] ) );
-               }               
+                  if ( it->x[ 1 ] < 0 )
+                  {
+                     tmp_pm_data.rtp[ 2 ] = M_2PI + asin( (double)it->x[ 1 ] / sqrt( (double)it->x[ 0 ] * 
+                                                                                     (double)it->x[ 0 ] +
+                                                                                     (double)it->x[ 1 ] * 
+                                                                                     (double)it->x[ 1 ] ) );
+                  } else {
+                     tmp_pm_data.rtp[ 2 ] = asin( (double) it->x[ 1 ] / sqrt( (double) it->x[ 0 ] * 
+                                                                              (double) it->x[ 0 ] +
+                                                                              (double) it->x[ 1 ] * 
+                                                                              (double) it->x[ 1 ] ) );
+                  }               
+               }
             }
          }
          pdata[ *it ] = tmp_pm_data;
+         cout << QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
+            .arg( it->x[ 0 ] )
+            .arg( it->x[ 1 ] )
+            .arg( it->x[ 2 ] )
+            .arg( tmp_pm_data.rtp[ 0 ] )
+            .arg( tmp_pm_data.rtp[ 1 ] )
+            .arg( tmp_pm_data.rtp[ 2 ] )
+            ;
       } 
       v_pdata.push_back( &pdata[ *it ] );
    }
+
    us_timers.end_timer( "rtp" );
 
    us_timers.init_timer( "legendre" );
@@ -81,6 +96,14 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    for ( unsigned int i = 0; i < v_pdata.size(); i++ )
    {
       pm_data *tmp_pm_data = v_pdata[ i ];
+      /*
+      cout << QString( "point %1 r %2 t %3 p %4\n" )
+         .arg( i )
+         .arg( tmp_pm_data->rtp[ 0 ] )
+         .arg( tmp_pm_data->rtp[ 1 ] )
+         .arg( tmp_pm_data->rtp[ 2 ] )
+         .ascii();
+      */
 
       Y[ i ].resize( max_harmonics + 1 );
 

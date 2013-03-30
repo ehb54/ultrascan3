@@ -360,6 +360,8 @@ QString US_PM::test( QString name, QString oname )
       }
    }
 
+   US_Vector::printvector( "rayleigh structure factors", F );
+
    US_Vector::printvector( "read params", params );
    
    US_PM test_pm( grid_conversion_factor, 
@@ -506,7 +508,7 @@ QString US_PM::test( QString name, QString oname )
       ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
       for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
       {
-         ts << QString( "%1\t%2\n" ).arg( q[ i ] ).arg( I_result[ i ] );
+         ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
       }
       of.close();
    }

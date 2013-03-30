@@ -360,25 +360,32 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          } else {
             atoms[ i ].rtp[ 1 ] = acos ( atoms[ i ].pos[ 2 ] / atoms[ i ].rtp[ 0 ] );
 
-            if ( atoms[ i ].pos[ 0 ] < 0.0 )
+
+            if ( atoms[ i ].pos[ 0 ] == 0 &&
+                 atoms[ 1 ].pos[ 1 ] == 0 )
             {
-               atoms[ i ].rtp[ 2 ] = M_PI - asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
-                                                                              atoms[ i ].pos[ 0 ] +
-                                                                              atoms[ i ].pos[ 1 ] * 
-                                                                              atoms[ i ].pos[ 1 ] ) );
-            } else {
-               if ( atoms[ i ].pos[ 1 ] < 0.0 )
+               atoms[ i ].rtp[ 2 ] = 0e0;
+            } else {               
+               if ( atoms[ i ].pos[ 0 ] < 0.0 )
                {
-                  atoms[ i ].rtp[ 2 ] = M_2PI + asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
-                                                                                  atoms[ i ].pos[ 0 ] +
-                                                                                  atoms[ i ].pos[ 1 ] * 
-                                                                                  atoms[ i ].pos[ 1 ] ) );
+                  atoms[ i ].rtp[ 2 ] = M_PI - asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                                 atoms[ i ].pos[ 0 ] +
+                                                                                 atoms[ i ].pos[ 1 ] * 
+                                                                                 atoms[ i ].pos[ 1 ] ) );
                } else {
-                  atoms[ i ].rtp[ 2 ] = asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
-                                                                          atoms[ i ].pos[ 0 ] +
-                                                                          atoms[ i ].pos[ 1 ] * 
-                                                                          atoms[ i ].pos[ 1 ] ) );
-               }               
+                  if ( atoms[ i ].pos[ 1 ] < 0.0 )
+                  {
+                     atoms[ i ].rtp[ 2 ] = M_2PI + asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                                     atoms[ i ].pos[ 0 ] +
+                                                                                     atoms[ i ].pos[ 1 ] * 
+                                                                                     atoms[ i ].pos[ 1 ] ) );
+                  } else {
+                     atoms[ i ].rtp[ 2 ] = asin( atoms[ i ].pos[ 1 ] / sqrt( atoms[ i ].pos[ 0 ] * 
+                                                                             atoms[ i ].pos[ 0 ] +
+                                                                             atoms[ i ].pos[ 1 ] * 
+                                                                             atoms[ i ].pos[ 1 ] ) );
+                  }               
+               }
             }
          }               
       }
