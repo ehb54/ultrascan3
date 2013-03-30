@@ -179,6 +179,18 @@ bool US_Saxs_Util::guinier_fit(
       linear_fit(x, y, a, b, siga, sigb, chi2);
    }
 
+   /* 
+   cout << QString( "last linear fit: a %1 b %2 siga %3 sigb %4 ndf %5 chi2 %6\n" )
+      .arg( a )
+      .arg( b )
+      .arg( siga )
+      .arg( sigb )
+      .arg( x.size() - 2 )
+      .arg( chi2 )
+      .ascii()
+      ;
+   */
+
    Rg = sqrt( -3e0 * b );
    sigb = fabs( Rg * sigb / b );
    Io = exp(a);

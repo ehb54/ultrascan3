@@ -33,7 +33,7 @@ bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < 
       return spheroid       ( model_pos, params, params_left, model );
       break;
    case 3 : // ellipsoid
-      return spheroid       ( model_pos, params, params_left, model );
+      return ellipsoid      ( model_pos, params, params_left, model );
       break;
    case 4 : // torus
       return torus          ( model_pos, params, params_left, model );
@@ -70,7 +70,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
       }
 
       low_fparams .push_back( 1e0 );
-      high_fparams.push_back( USPM_MAX_VAL_D );
+      high_fparams.push_back( max_dimension_d );
       ofs += 1;
 
       switch( types.back() )
@@ -87,8 +87,8 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 1;
                break;
             case 2 :
@@ -97,10 +97,10 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 2;
                break;
             default:
@@ -109,12 +109,12 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 3;
                break;
             }
@@ -130,8 +130,8 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 1;
                break;
             case 1 :
@@ -140,14 +140,14 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 4;
                break;
             default:
@@ -156,18 +156,18 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                ofs += 6;
                break;
             }
@@ -184,7 +184,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                ofs += 1;
                break;
             default:
@@ -194,19 +194,19 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 8;
@@ -225,9 +225,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                ofs += 2;
                break;
             default:
@@ -237,21 +237,21 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 9;
@@ -270,7 +270,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                ofs += 1;
                break;
             default:
@@ -280,25 +280,26 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 8;
                break;
             }
          }
+         break;
       case 5 : // torus_segment
          {
             switch( model_pos )
@@ -310,7 +311,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 1e-1 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 2;
@@ -322,21 +323,21 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 1e-1 );
                high_fparams.push_back( M_PI * 1.9999e0 );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
-               low_fparams .push_back( USPM_MIN_VAL_D );
-               high_fparams.push_back( USPM_MAX_VAL_D );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_dimension_d );
+               high_fparams.push_back( max_dimension_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 9;
@@ -541,6 +542,7 @@ bool US_PM::split( vector < double > & params, vector < int > & types, vector < 
                break;
             }
          }
+         break;
       case 5 : // torus_segment
          {
             switch( model_pos )
@@ -742,7 +744,7 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
             switch( i )
             {
             case 0 :
-               if ( ( int ) fparams.size() <= ofs + 1 )
+               if ( ( int ) fparams.size() <= ofs )
                {
                   error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
                   return false;
@@ -750,7 +752,7 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
                params.push_back( fparams[ ofs++ ] );
                break;
             default:
-               if ( ( int ) fparams.size() <= ofs + 8 )
+               if ( ( int ) fparams.size() <= ofs + 7 )
                {
                   error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
                   return false;
@@ -766,6 +768,7 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
                break;
             }
          }
+         break;
       case 5 : // torus_segment
          {
             switch( i )
@@ -797,6 +800,7 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
                break;
             }
          }
+         break;
       default:
          error_msg = QString( "join: object type %1 not defined" ).arg( types[ i ] );
          return false;
@@ -1134,6 +1138,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
       normx   = 1e0;
       normy   = 0e0;
       normz   = 0e0;
+      theta   = 0e0;
       break;
    default:
       centerx = params[ ofs++ ];
@@ -1159,7 +1164,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
 
    // make a bounding box
 
-   debug( 1, QString( "spheroid: center %1,%2,%3 norm vector %4,%5,%6" )
+   debug( 1, QString( "ellipsoid: center %1,%2,%3 norm vector %4,%5,%6" )
           .arg( centerx )
           .arg( centery )
           .arg( centerz )
@@ -1171,18 +1176,27 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    radiusmax = radiusmax > radiusc ? radiusmax : radiusc;
    
-   debug( 1, QString( "spheroid: radiusa %1 radiusb %2 radiusmax %3" )
+   debug( 1, QString( "ellipsoid: radiusa %1 radiusb %2 radiusmax %3" )
           .arg( radiusa )
           .arg( radiusb )
           .arg( radiusmax )
           );
 
-   int minx = (int) ( centerx - radiusmax - 1 );
-   int maxx = (int) ( centerx + radiusmax + 1 );
-   int miny = (int) ( centery - radiusmax - 1 );
-   int maxy = (int) ( centery + radiusmax + 1 );
-   int minz = (int) ( centerz - radiusmax - 1 );
-   int maxz = (int) ( centerz + radiusmax + 1 );
+   int minx = (int) ( centerx - 2 * radiusmax - 2 );
+   int maxx = (int) ( centerx + 2 * radiusmax + 2 );
+   int miny = (int) ( centery - 2 * radiusmax - 2 );
+   int maxy = (int) ( centery + 2 * radiusmax + 2 );
+   int minz = (int) ( centerz - 2 * radiusmax - 2 );
+   int maxz = (int) ( centerz + 2 * radiusmax + 2 );
+
+   debug( 1, QString( "ellispoid:bounding box %1,%2,%3 %4,%5,%6\n" )
+          .arg( minx )
+          .arg( miny )
+          .arg( minz )
+          .arg( maxx )
+          .arg( maxy )
+          .arg( maxz )
+          );
 
    pm_point pmp;
 
@@ -1194,32 +1208,70 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
    double one_over_radiusb2 = 1e0 / radiusb2;
    double one_over_radiusc2 = 1e0 / radiusc2;
 
-   for ( int x = minx; x <= maxx; ++x )
+   if ( model_pos && theta )
    {
-      for ( int y = miny; y <= maxy; ++y )
+      vector < vector < double > > rm;
+      rotation_matrix( normx, normy, normz, theta, rm );
+
+      double newx;
+      double newy;
+      double newz;
+      for ( int x = minx; x <= maxx; ++x )
       {
-         for ( int z = minz; z <= maxz; ++z )
+         for ( int y = miny; y <= maxy; ++y )
          {
-            double v_p_c[ 3 ] =
-               {
-                  (double)( x - centerx ),
-                  (double)( y - centery ),
-                  (double)( z - centerz )
-               };
-                         
-            if ( 
-                one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] ) +
-                one_over_radiusb2 * ( v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+            for ( int z = minz; z <= maxz; ++z )
             {
-               pmp.x[ 0 ] = ( int16_t )x;
-               pmp.x[ 1 ] = ( int16_t )y;
-               pmp.x[ 2 ] = ( int16_t )z;
-               model.insert( pmp );
+               apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
+               double v_p_c[ 3 ] =
+                  {
+                     newx - (double) centerx,
+                     newy - (double) centery,
+                     newz - (double) centerz,
+                  };
+                         
+               if ( 
+                   one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] ) +
+                   one_over_radiusb2 * ( v_p_c[ 1 ] * v_p_c[ 1 ] ) +
+                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+               {
+                  pmp.x[ 0 ] = ( int16_t )x;
+                  pmp.x[ 1 ] = ( int16_t )y;
+                  pmp.x[ 2 ] = ( int16_t )z;
+                  model.insert( pmp );
+               }
             }
          }
       }
-   }
+   } else {
+      for ( int x = minx; x <= maxx; ++x )
+      {
+         for ( int y = miny; y <= maxy; ++y )
+         {
+            for ( int z = minz; z <= maxz; ++z )
+            {
+               double v_p_c[ 3 ] =
+                  {
+                     (double)x - centerx,
+                     (double)y - centery,
+                     (double)z - centerz
+                  };
+                         
+               if ( 
+                   one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] ) +
+                   one_over_radiusb2 * ( v_p_c[ 1 ] * v_p_c[ 1 ] ) +
+                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+               {
+                  pmp.x[ 0 ] = ( int16_t )x;
+                  pmp.x[ 1 ] = ( int16_t )y;
+                  pmp.x[ 2 ] = ( int16_t )z;
+                  model.insert( pmp );
+               }
+            }
+         }
+      }
+   }      
+
    return true;
 }
 
@@ -1247,6 +1299,7 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
       normx   = 1e0;
       normy   = 0e0;
       normz   = 0e0;
+      theta   = 0e0;
       break;
    default:
       centerx = params[ ofs++ ];
@@ -1270,6 +1323,9 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
    normy *= magnorminv;
    normz *= magnorminv;
 
+   vector < vector < double > > rm;
+   rotation_matrix( normx, normy, normz, theta, rm );
+
    // make a bounding box
 
    debug( 1, QString( "spheroid: center %1,%2,%3 norm vector %4,%5,%6" )
@@ -1289,12 +1345,12 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
           .arg( radiusmax )
           );
 
-   int minx = (int) ( centerx - radiusmax - 1 );
-   int maxx = (int) ( centerx + radiusmax + 1 );
-   int miny = (int) ( centery - radiusmax - 1 );
-   int maxy = (int) ( centery + radiusmax + 1 );
-   int minz = (int) ( centerz - radiusmax - 1 );
-   int maxz = (int) ( centerz + radiusmax + 1 );
+   int minx = (int) ( centerx - 2 * radiusmax - 2 );
+   int maxx = (int) ( centerx + 2 * radiusmax + 2 );
+   int miny = (int) ( centery - 2 * radiusmax - 2 );
+   int maxy = (int) ( centery + 2 * radiusmax + 2 );
+   int minz = (int) ( centerz - 2 * radiusmax - 2 );
+   int maxz = (int) ( centerz + 2 * radiusmax + 2 );
 
    pm_point pmp;
 
@@ -1304,31 +1360,67 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
    double one_over_radiusa2 = 1e0 / radiusa2;
    double one_over_radiusb2 = 1e0 / radiusb2;
 
-   for ( int x = minx; x <= maxx; ++x )
+   if ( model_pos && theta )
    {
-      for ( int y = miny; y <= maxy; ++y )
+      vector < vector < double > > rm;
+      rotation_matrix( normx, normy, normz, theta, rm );
+
+      double newx;
+      double newy;
+      double newz;
+      for ( int x = minx; x <= maxx; ++x )
       {
-         for ( int z = minz; z <= maxz; ++z )
+         for ( int y = miny; y <= maxy; ++y )
          {
-            double v_p_c[ 3 ] =
-               {
-                  (double)( x - centerx ),
-                  (double)( y - centery ),
-                  (double)( z - centerz )
-               };
-                         
-            if ( 
-                one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+            for ( int z = minz; z <= maxz; ++z )
             {
-               pmp.x[ 0 ] = ( int16_t )x;
-               pmp.x[ 1 ] = ( int16_t )y;
-               pmp.x[ 2 ] = ( int16_t )z;
-               model.insert( pmp );
+               apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
+               double v_p_c[ 3 ] =
+                  {
+                     newx - centerx,
+                     newy - centery,
+                     newz - centerz,
+                  };
+               if ( 
+                   one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
+                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+               {
+                  pmp.x[ 0 ] = ( int16_t )x;
+                  pmp.x[ 1 ] = ( int16_t )y;
+                  pmp.x[ 2 ] = ( int16_t )z;
+                  model.insert( pmp );
+               }
             }
          }
       }
-   }
+   } else {
+      for ( int x = minx; x <= maxx; ++x )
+      {
+         for ( int y = miny; y <= maxy; ++y )
+         {
+            for ( int z = minz; z <= maxz; ++z )
+            {
+               double v_p_c[ 3 ] =
+                  {
+                     (double) x - centerx,
+                     (double) y - centery,
+                     (double) z - centerz
+                  };
+                         
+               if ( 
+                   one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
+                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+               {
+                  pmp.x[ 0 ] = ( int16_t )x;
+                  pmp.x[ 1 ] = ( int16_t )y;
+                  pmp.x[ 2 ] = ( int16_t )z;
+                  model.insert( pmp );
+               }
+            }
+         }
+      }
+   }      
+
    return true;
 }
 
@@ -1338,7 +1430,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
    int ofs = 1;
    double radiusa = params[ ofs++ ];
    double radiusb = params[ ofs++ ];
-   double enda    = params[ ofs++ ];  // a %'ge ? or an angle.  assume start with 0 moduli 2PI or 100% maybe require limits on params
+   /* double enda    = */ params[ ofs++ ];  // a %'ge ? or an angle.  assume start with 0 moduli 2PI or 100% maybe require limits on params
 
    double centerx;
    double centery;
@@ -1357,6 +1449,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
       normx   = 1e0;
       normy   = 0e0;
       normz   = 0e0;
+      theta   = 0e0;
       break;
    default:
       centerx = params[ ofs++ ];
@@ -1466,6 +1559,7 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
       normx   = 1e0;
       normy   = 0e0;
       normz   = 0e0;
+      theta   = 0e0;
       break;
    default:
       centerx = params[ ofs++ ];
@@ -1491,7 +1585,7 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
 
    // make a bounding box
 
-   debug( 1, QString( "spheroid: center %1,%2,%3 norm vector %4,%5,%6" )
+   debug( 1, QString( "torus: center %1,%2,%3 norm vector %4,%5,%6" )
           .arg( centerx )
           .arg( centery )
           .arg( centerz )
@@ -1502,48 +1596,144 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
 
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    
-   debug( 1, QString( "spheroid: radiusa %1 radiusb %2 radiusmax %3" )
+   debug( 1, QString( "torus: radiusa %1 radiusb %2 radiusmax %3" )
           .arg( radiusa )
           .arg( radiusb )
           .arg( radiusmax )
           );
 
-   int minx = (int) ( centerx - radiusmax - 1 );
-   int maxx = (int) ( centerx + radiusmax + 1 );
-   int miny = (int) ( centery - radiusmax - 1 );
-   int maxy = (int) ( centery + radiusmax + 1 );
-   int minz = (int) ( centerz - radiusmax - 1 );
-   int maxz = (int) ( centerz + radiusmax + 1 );
+   int minx = (int) ( - 1 * ( radiusa + radiusb + 1 ) );
+   int maxx = (int) ( 1 * ( radiusa + radiusb + 1 ) );
+   int miny = (int) ( - 1 * ( radiusa + radiusb + 1 ) );
+   int maxy = (int) ( 1 * ( radiusa + radiusb + 1 ) );
+   int minz = (int) ( - 1 * ( radiusb + 1 ) );
+   int maxz = (int) ( 1 * ( radiusb + 1 ) );
 
    pm_point pmp;
 
-   double radiusa2   = radiusa * radiusa;
-   double radiusb2   = radiusb * radiusb;
+   double radiusb2pb = ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 );
 
-   double one_over_radiusa2 = 1e0 / radiusa2;
-   double one_over_radiusb2 = 1e0 / radiusb2;
-
-   for ( int x = minx; x <= maxx; ++x )
+   if ( model_pos && theta )
    {
-      for ( int y = miny; y <= maxy; ++y )
+      vector < vector < double > > rm;
+      rotation_matrix( normx, normy, normz, theta, rm );
+
+      double newx;
+      double newy;
+      double newz;
+
+      /*
+
+      for ( int x = minx; x <= maxx; ++x )
       {
-         for ( int z = minz; z <= maxz; ++z )
+         for ( int y = miny; y <= maxy; ++y )
          {
-            double v_p_c[ 3 ] =
-               {
-                  (double)( x - centerx ),
-                  (double)( y - centery ),
-                  (double)( z - centerz )
-               };
-                         
-            if ( 
-                one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+            for ( int z = minz; z <= maxz; ++z )
             {
-               pmp.x[ 0 ] = ( int16_t )x;
-               pmp.x[ 1 ] = ( int16_t )y;
-               pmp.x[ 2 ] = ( int16_t )z;
-               model.insert( pmp );
+               apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
+               double dx = newx; // - centerx;
+               double dx2 = dx * dx;
+               double dy = newy; // - centery;
+               double dx2pdy2 = dx2 + dy * dy;
+
+               // find the x-y plane center
+               if ( dx2pdy2 > 0 ) // exclude translated 0,0,0 from torus
+               {
+                  double lenscale = radiusa / sqrt( dx2pdy2 );
+
+                  double c[ 3 ] =
+                     {
+                        dx * lenscale,
+                        dy * lenscale,
+                        0e0
+                     };
+
+                  if ( ( newx - c[ 0 ] ) * ( newx - c[ 0 ] ) +
+                       ( newy - c[ 1 ] ) * ( newy - c[ 1 ] ) +
+                       ( newz - c[ 2 ] ) * ( newz - c[ 2 ] ) < radiusb2pb ) 
+                  {
+                     pmp.x[ 0 ] = ( int16_t )( (double) x + centerx );
+                     pmp.x[ 1 ] = ( int16_t )( (double) y + centery );
+                     pmp.x[ 2 ] = ( int16_t )( (double) z + centerz );
+                     model.insert( pmp );
+                  }
+               }
+            }
+         }
+      }
+      */
+      double ofsx = 1;
+      for ( double x = (double) minx; x <= (double) maxx; x += ofsx )
+      {
+         double dx = (double)x; // - centerx;
+         double dx2 = dx * dx;
+         for ( double y = (double)miny; y <= (double) maxy; y += ofsx )
+         {
+            // find the x-y plane center
+            double dy = (double)y; // - centery;
+            double dx2pdy2 = dx2 + dy * dy;
+            if ( dx2pdy2 > 0 ) // exclude translated 0,0,0 from torus
+            {
+               double lenscale = radiusa / sqrt( dx2pdy2 );
+
+               double c[ 3 ] =
+                  {
+                     dx * lenscale,
+                     dy * lenscale,
+                     0e0
+                  };
+         
+               for ( double z = (double) minz; z <= (double) maxz; z += ofsx )
+               {
+
+                  if ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
+                       ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
+                       ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) < radiusb2pb ) 
+                  {
+                     apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
+                     pmp.x[ 0 ] = ( int16_t )( newx + centerx + 5e-1 );
+                     pmp.x[ 1 ] = ( int16_t )( newy + centery + 5e-1 );
+                     pmp.x[ 2 ] = ( int16_t )( newz + centerz + 5e-1 );
+                     model.insert( pmp );
+                  }
+               }
+            }
+         }
+      }
+   } else {
+      for ( int x = minx; x <= maxx; ++x )
+      {
+         double dx = (double)x; // - centerx;
+         double dx2 = dx * dx;
+         for ( int y = miny; y <= maxy; ++y )
+         {
+            // find the x-y plane center
+            double dy = (double)y; // - centery;
+            double dx2pdy2 = dx2 + dy * dy;
+            if ( dx2pdy2 > 0 ) // exclude translated 0,0,0 from torus
+            {
+               double lenscale = radiusa / sqrt( dx2pdy2 );
+
+               double c[ 3 ] =
+                  {
+                     dx * lenscale,
+                     dy * lenscale,
+                     0e0
+                  };
+         
+               for ( int z = minz; z <= maxz; ++z )
+               {
+
+                  if ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
+                       ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
+                       ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) < radiusb2pb ) 
+                  {
+                     pmp.x[ 0 ] = ( int16_t )( (double) x + centerx );
+                     pmp.x[ 1 ] = ( int16_t )( (double) y + centery );
+                     pmp.x[ 2 ] = ( int16_t )( (double) z + centerz );
+                     model.insert( pmp );
+                  }
+               }
             }
          }
       }

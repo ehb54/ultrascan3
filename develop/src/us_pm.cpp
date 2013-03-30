@@ -1,14 +1,44 @@
 #include "../include/us_pm.h"
 
-US_PM::US_PM( double grid_conversion_factor, double drho, vector < double > q, vector < double > I, vector < double > e, int debug_level )
+US_PM::US_PM( 
+             double grid_conversion_factor, 
+             int max_dimension, 
+             double drho, 
+             double buffer_e_density, 
+             double ev, 
+             unsigned int max_harmonics,
+             unsigned int fibonacci_grid,
+             vector < double > F, 
+             vector < double > q, 
+             vector < double > I, 
+             vector < double > e, 
+             int debug_level 
+             )
 {
    this->grid_conversion_factor = grid_conversion_factor;
+   this->max_dimension          = abs( max_dimension );
    this->drho                   = drho;
+   this->buffer_e_density       = buffer_e_density;
+   this->ev                     = ev;
+   this->max_harmonics          = max_harmonics;
+   this->fibonacci_grid         = fibonacci_grid;
+   this->F                      = F;
    this->q                      = q;
    this->I                      = I;
    this->e                      = e;
    this->debug_level            = debug_level;
 
+   this->max_dimension   = this->max_dimension < USPM_MAX_VAL ? this->max_dimension : USPM_MAX_VAL;
+
+   if ( this->max_dimension != max_dimension )
+   {
+      cerr << QString( "Warning: maximum dimension requested %1 exceedes maximum allowed %2, reset to maximum allowed\n" )
+         .arg( max_dimension )
+         .arg( this->max_dimension )
+         .ascii();
+   }
+
+   max_dimension_d = ( double ) this->max_dimension;
    one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
 
    cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
@@ -17,10 +47,25 @@ US_PM::US_PM( double grid_conversion_factor, double drho, vector < double > q, v
    bead_radius        = pow( cube_size / M_PI, 1e0/3e0 );
    bead_radius_over_2 = bead_radius * 5e-1;
 
+   q_points           = ( unsigned int ) q.size();
+
    cout << QString( "US_PM:cube size   %1\n"
                     "US_PM:bead radius %2\n" )
       .arg( cube_size )
-      .arg( bead_radius );
+      .arg( bead_radius )
+      .ascii();
+   if ( fibonacci_grid > 2 )
+   {
+      cout << "Building Fibonacci grid\n";
+      sh::build_grid( fib_grid, fibonacci_grid );
+      printf( "Fibonacci of order %u is %u fib_grid.size() %u\n", 
+              fibonacci_grid,
+              sh::fibonacci( fibonacci_grid ),
+              fib_grid.size() 
+              );
+   }
+   Z0 = complex < float > ( 0.0f, 0.0f );
+   i_ = complex < float > ( 0.0f, 1.0f );
 }
 
 US_PM::~US_PM()
@@ -92,9 +137,9 @@ vector < PDB_atom > US_PM::bead_model( set < pm_point > & model )
    return result;
 }
 
-bool US_PM::create_model( vector < double > params, set < pm_point > & model )
+bool US_PM::create_model( vector < double > params, set < pm_point > & model, bool only_last_model )
 {
-   debug( 1, "create_model" );
+   debug( 1, QString( "create_model%1" ).arg( only_last_model ? ". Note: only last model saved" : "" ) );
    model.clear();
 
    vector < double > params_left;
@@ -103,6 +148,10 @@ bool US_PM::create_model( vector < double > params, set < pm_point > & model )
 
    while ( params.size() )
    {
+      if ( only_last_model )
+      {
+         model.clear();
+      }
       debug( 2, QString( "create_model, params size %1" ).arg( params.size() ) );
       if ( !create_1_model( model_pos, params, params_left, model ) )
       {
@@ -158,27 +207,137 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
    return result;
 }
 
-QString US_PM::test( QString name )
+bool US_PM::rotation_matrix( double l, double m, double n, double theta, vector < vector < double > > &rm )
+{
+   rm.clear();
+   rm.resize( 3 );
+   rm[ 0 ].resize( 3 );
+   rm[ 1 ].resize( 3 );
+   rm[ 2 ].resize( 3 );
+
+   double c   = cos( theta );
+   double s   = sin( theta );
+   double omc = 1e0 - c;
+
+   rm[ 0 ][ 0 ] = l * l * omc + c;
+   rm[ 0 ][ 1 ] = m * l * omc - n * s;
+   rm[ 0 ][ 2 ] = n * l * omc + m * s;
+
+   rm[ 1 ][ 0 ] = l * m * omc + n * s;
+   rm[ 1 ][ 1 ] = m * m * omc + c;
+   rm[ 1 ][ 2 ] = n * m * omc - l * s;
+
+   rm[ 2 ][ 0 ] = l * n * omc - m * s;
+   rm[ 2 ][ 1 ] = m * n * omc + l * s;
+   rm[ 2 ][ 2 ] = n * n * omc + c;
+   return true;
+}
+
+bool US_PM::apply_rotation_matrix( vector < vector < double > > &rm, int x, int y, int z, double & newx, double & newy, double & newz )
+{
+   newx = ( double ) x * rm[ 0 ][ 0 ] + ( double ) y * rm[ 0 ][ 1 ] + ( double ) z * rm[ 0 ][ 2 ];
+   newy = ( double ) x * rm[ 1 ][ 0 ] + ( double ) y * rm[ 1 ][ 1 ] + ( double ) z * rm[ 1 ][ 2 ];
+   newz = ( double ) x * rm[ 2 ][ 0 ] + ( double ) y * rm[ 2 ][ 1 ] + ( double ) z * rm[ 2 ][ 2 ];
+
+   return true;
+}
+
+bool US_PM::check_limits( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams )
+{
+   for ( unsigned int i = 0; i < ( unsigned int )fparams.size(); i++ )
+   {
+      if ( fparams[ i ] < low_fparams[ i ] ||
+           fparams[ i ] > high_fparams[ i ] )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_PM::clip_limits( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams )
+{
+   bool clipped = false;
+   for ( unsigned int i = 0; i < ( unsigned int )fparams.size(); i++ )
+   {
+      if ( fparams[ i ] < low_fparams[ i ] )
+      {
+         fparams[ i ] = low_fparams[ i ];
+         clipped = true;
+      }
+      if ( fparams[ i ] > high_fparams[ i ] )
+      {
+         fparams[ i ] = high_fparams[ i ];
+         clipped = true;
+      }
+   }
+   return clipped;
+}
+
+QString US_PM::test( QString name, QString oname )
 {
    vector < double > q;
    vector < double > I;
    vector < double > e;
+   vector < double > F;
 
    vector < double > params;
 
    QFile f( name );
 
-   double grid_conversion_factor = 1e0;
-   double drho = 1e-1;
+   double       grid_conversion_factor = 1e0;
+   int          max_dimension          = USPM_MAX_VAL;
+   double       drho                   = 1e-1;
+   double       buffer_e_density       = 0e0;
+   double       ev                     = 0e0;
+   unsigned int max_harmonics          = 12;
+   unsigned int fibonacci_grid         = 17;
+   bool         only_last_model        = false;
 
    if ( f.exists() && f.open( IO_ReadOnly ) )
    {
       QTextStream ts( &f );
       grid_conversion_factor = ts.readLine().stripWhiteSpace().toDouble();
+      max_dimension          = ts.readLine().stripWhiteSpace().toInt   ();
       drho                   = ts.readLine().stripWhiteSpace().toDouble();
+      buffer_e_density       = ts.readLine().stripWhiteSpace().toDouble();
+      ev                     = ts.readLine().stripWhiteSpace().toDouble();
+      max_harmonics          = ts.readLine().stripWhiteSpace().toUInt();
+      fibonacci_grid         = ts.readLine().stripWhiteSpace().toUInt();
+      only_last_model        = ts.readLine().stripWhiteSpace().lower() == "only_last";
+
       while( !ts.atEnd() )
       {
          QString qs = ts.readLine().stripWhiteSpace();
+         if ( qs == "__END__" )
+         {
+            cout << "end in data\n";
+            break;
+         }
+         if ( qs == "__data__" )
+         {
+            while( !ts.atEnd() )
+            {
+               qs = ts.readLine().stripWhiteSpace();
+               if ( !qs.isEmpty() )
+               {
+                  if ( qs == "__data_end__" )
+                  {
+                     break;
+                  }
+                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+                  if ( qsl.size() < 2 )
+                  {
+                     cout << QString( "error: data has only %1 parameters\n" ).arg( qsl.size() );
+                     return "error";
+                  }
+                  q.push_back( qsl[ 0 ].toDouble() );
+                  I.push_back( qsl[ 1 ].toDouble() );
+                  e.push_back( qsl.size() > 2 ? qsl[ 1 ].toDouble() : 0e0 );
+               }
+            }
+            continue;
+         }
          if ( !qs.isEmpty() )
          {
             params.push_back( qs.toDouble() );
@@ -187,10 +346,39 @@ QString US_PM::test( QString name )
    }
    f.close();
 
+   {
+      US_Saxs_Util usu;
+      if ( !usu.compute_rayleigh_structure_factors( 
+                                                   pow( pow( grid_conversion_factor, 3e0 ) / M_PI, 1e0/3e0 ),
+                                                   drho,
+                                                   q,
+                                                   F
+                                                   ) )
+      {
+         cout << "could not compute rayleigh structure factors " << usu.errormsg << endl;
+         return "error";
+      }
+   }
 
    US_Vector::printvector( "read params", params );
    
-   US_PM test_pm( grid_conversion_factor, drho, q, I, e, 5 );
+   US_PM test_pm( grid_conversion_factor, 
+                  max_dimension, 
+                  drho, 
+                  buffer_e_density, 
+                  ev, 
+                  max_harmonics, 
+                  fibonacci_grid,
+                  F, 
+                  q, 
+                  I, 
+                  e, 
+                  5 );
+
+   vector < double > low_fparams;
+   vector < double > high_fparams;
+   test_pm.set_limits( params, low_fparams, high_fparams );
+   US_Vector::printvector2( "fparam limits", low_fparams, high_fparams );
 
    if ( 0 )
    {
@@ -241,7 +429,7 @@ QString US_PM::test( QString name )
 
    set < pm_point > model;
 
-   if ( !test_pm.create_model( params, model ) )
+   if ( !test_pm.create_model( params, model, only_last_model ) )
    {
       cout << test_pm.error_msg.ascii() << endl;
    }
@@ -266,6 +454,62 @@ QString US_PM::test( QString name )
    {
       cout << "ERROR: new_params != params" << endl;
    }
+   cout << QString( "bead model contains %1 beads\n" ).arg( model.size() );
 
-   return test_pm.qs_bead_model( model );
+   QString output = test_pm.qs_bead_model( model );
+
+   // output bead model
+   {
+      QString outfile = oname;
+      
+      if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+      {
+         outfile += ".bead_model";
+      }
+
+      cout << "Creating:" << outfile << "\n";
+      QFile of( outfile );
+      if ( !of.open( IO_WriteOnly ) )
+      {
+         return "could not create output file";
+      }
+   
+      QTextStream ts( &of );
+      ts << output;
+      of.close();
+   }
+
+   // compute I(q)
+   if ( q.size() )
+   {
+      cout << "compute_I\n";
+      vector < double > I_result( q.size() );
+      if ( !test_pm.compute_I( model, I_result ) )
+      {
+         return "compute_I error:" + test_pm.error_msg;
+      }
+      QString outfile = oname;
+      
+      if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
+      {
+         outfile += ".dat";
+      }
+
+      cout << "Creating:" << outfile << "\n";
+      QFile of( outfile );
+      if ( !of.open( IO_WriteOnly ) )
+      {
+         return "could not create output file";
+      }
+   
+      QTextStream ts( &of );
+      ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
+      for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
+      {
+         ts << QString( "%1\t%2\n" ).arg( q[ i ] ).arg( I_result[ i ] );
+      }
+      of.close();
+   }
+
+   return "ok";
 }

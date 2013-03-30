@@ -24,6 +24,7 @@ SOURCES		+= ../src/us_saxs_util_sgp_phys.cpp
 SOURCES		+= ../src/us_pm.cpp
 SOURCES		+= ../src/us_pm_objects.cpp
 SOURCES		+= ../src/us_pm_fitness.cpp
+SOURCES		+= ../src/us_sh.cpp
 SOURCES		+= ../src/us_tar.cpp
 SOURCES		+= ../src/us_gzip.cpp
 SOURCES		+= ../src/us_timer.cpp
@@ -40,6 +41,7 @@ SOURCES		+= ../src/us_vector.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_pm.h
+HEADERS         += ../include/us_sh.h
 HEADERS         += ../include/us_math.h
 HEADERS         += ../include/us_tar.h
 HEADERS         += ../include/us_gzip.h

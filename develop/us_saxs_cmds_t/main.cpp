@@ -2139,26 +2139,8 @@ int main (int argc, char **argv)
       QString      outfile         = cmds[ p++ ];
       QString      infile          = cmds[ p++ ];
 
-      QString output = US_PM::test( infile );
+      cout << US_PM::test( infile, outfile ).ascii() << endl;
       
-      if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-      {
-         outfile += ".bead_model";
-      }
-
-      cout << "Creating:" << outfile << "\n";
-      QFile of( outfile );
-      if ( !of.open( IO_WriteOnly ) )
-      {
-         cerr << "error: output file file can not be created.\n";
-         exit(errorbase);
-      }
-      errorbase--;
-
-      QTextStream ts( &of );
-      ts << output;
-      of.close();
-
       exit( 0 );
    }
    errorbase -= 1000;

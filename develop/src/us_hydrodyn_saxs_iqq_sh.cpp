@@ -528,11 +528,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 
       if ( !our_saxs_options->alt_sh2 )
       {
+         puts( "!sh2" );
          us_timers.init_timer( "legendre" );
          us_timers.init_timer( "combined" );
 
          if ( our_saxs_options->alt_sh1 )
          {
+            puts( "!sh2 + sh1" );
             us_timers.start_timer( "combined" );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -625,6 +627,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
             }
             us_timers.end_timer( "combined" );
          } else {
+            puts( "!sh2 + !sh1" );
             us_timers.start_timer( "combined" );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -722,6 +725,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
             us_timers.end_timer( "combined" );
          }
       } else {
+         puts( "sh2" );
          us_timers.init_timer( "bessel" );
          us_timers.init_timer( "legendre" );
          us_timers.init_timer( "amplitudes" );
@@ -794,6 +798,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 
          if ( !our_saxs_options->alt_sh1 )
          {
+            puts( "sh2 + !sh1" );
             us_timers.start_timer( "amplitudes" );
             complex < double > i_( 0e0, 1e0 );
 
@@ -835,6 +840,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
             us_timers.end_timer( "I" );
             us_timers.end_timer( "combined" );
          } else {
+            puts( "sh2 + sh1" );
             us_timers.start_timer( "amplitudes" );
             us_timers.start_timer( "combined" );
             complex < float > i_( 0e0, 1e0 );
