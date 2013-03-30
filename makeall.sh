@@ -32,6 +32,7 @@ for d in utils gui qwtplot3d-qt4 programs/*
 do
   if [ ! -d $d                          ]; then continue; fi
   if [ $d == "programs/config2"         ]; then continue; fi
+  if [ $d == "programs/us_1dsa"         ]; then continue; fi
   if [ $d == "programs/us_mpi_analysis" ]; then continue; fi
   pushd $d
   sdir=`pwd`
