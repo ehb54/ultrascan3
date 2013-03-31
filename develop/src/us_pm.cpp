@@ -88,6 +88,11 @@ US_PM::US_PM(
    {
       A0.push_back( Z0 );
    }
+   Av0.resize( q_points );
+   for ( unsigned int i = 0; i < q_points; ++i )
+   {
+      Av0[ i ] = A0;
+   }
 }
 
 US_PM::~US_PM()
@@ -393,6 +398,86 @@ QString US_PM::test( QString name, QString oname )
 
    US_Vector::printvector( "read params", params );
    
+   {
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       5 );
+
+      vector < double >                       I_result( q.size() );
+      vector < vector < complex < float > > > Av;
+      set < pm_point >                        model;
+      set < pm_point >                        prev_model;
+      vector < double > params( 2 );
+      params[ 0 ] = 0e0;
+
+      for ( params[ 1 ] = 1e0; params[ 1 ] < 20e0; ++params[ 1 ] )
+      {
+         model = prev_model;
+         
+         sphere_pm.create_model( params, model );
+         sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
+         prev_model = model;
+
+         cout << QString( "sphere radius %1 model bead count %2\n" ).arg( params[ 1 ] ).arg( model.size() );
+
+         // output bead model
+         {
+            QString outfile = QString( "%1_sh%2_spheretest_x%2" ).arg( oname ).arg( max_harmonics ).arg( params[ 1 ] );
+      
+            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+            {
+               outfile += ".bead_model";
+            }
+
+            cout << "Creating:" << outfile << "\n";
+            QFile of( outfile );
+            if ( !of.open( IO_WriteOnly ) )
+            {
+               return "could not create output file";
+            }
+   
+            QTextStream ts( &of );
+            ts << sphere_pm.qs_bead_model( model );
+            of.close();
+         }
+         
+         {
+            QString outfile = QString( "%1_sh%2_spheretest_x%2" ).arg( oname ).arg( max_harmonics ).arg( params[ 1 ] );
+      
+            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
+            {
+               outfile += ".dat";
+            }
+
+            cout << "Creating:" << outfile << "\n";
+            QFile of( outfile );
+            if ( !of.open( IO_WriteOnly ) )
+            {
+               return "could not create output file";
+            }
+   
+            QTextStream ts( &of );
+            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
+            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
+            {
+               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
+            }
+            of.close();
+         }
+      }
+   }
+
+
+
    US_PM test_pm( grid_conversion_factor, 
                   max_dimension, 
                   drho, 

@@ -10,13 +10,22 @@ US_Timer::US_Timer()
 
 US_Timer::~US_Timer()
 {
+   timers.clear();
+   counts.clear();
+   times.clear();
+   times2.clear();
+}
+
+void US_Timer::clear_timers()
+{
 }
 
 void US_Timer::clear_timer( QString qs )
 {
    timers.erase( qs );
    counts.erase( qs );
-   times.erase( qs );
+   times .erase( qs );
+   times2.erase( qs );
 }
 
 void US_Timer::init_timer( QString qs )

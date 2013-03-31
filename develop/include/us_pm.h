@@ -6,6 +6,8 @@
 #include <qstring.h>
 #include <qfile.h>
 #include <qtextstream.h>
+#include <algorithm>
+#include <iterator>
 #include <set>
 #include <vector>
 #include <complex>
@@ -130,6 +132,8 @@ class US_PM
 
    vector < complex < float > > A0;
 
+   vector < vector < complex < float > > > Av0;
+
    // sh data
    // vector < vector < double > > fib_grid;
 
@@ -188,7 +192,13 @@ class US_PM
    //      using spherical harmonics cached upon the grid
    //      new "on" points are cached
    bool                compute_I        ( set < pm_point > & model, vector < double > & I_result );
-
+   bool                compute_delta_I  ( 
+                                         set < pm_point > &                        model, 
+                                         set < pm_point > &                        prev_model, 
+                                         vector < vector < complex < float > > > & Av,
+                                         vector < double > &                       I_result
+                                         );
+   
    static QString      test             ( QString name, QString oname );
 
    void                debug            ( int level, QString qs );

@@ -20,6 +20,7 @@ class US_Timer
    bool end_timer    ( QString );
    QString list_time ( QString );
    QString list_times( );
+   void clear_timers ();
 
  private:
 
