@@ -223,9 +223,10 @@ bool US_PM::compute_delta_I(
                             )
 {
    us_timers.clear_timers();
-   if ( !Av.size() )
+   if ( !Av.size() || model.size() < 100 )
    {
       Av = Av0;
+      prev_model.clear();
    }
 
    // find elements that are in model not in new model and vice versa
@@ -244,7 +245,7 @@ bool US_PM::compute_delta_I(
                    prev_model.end(),
                    model.begin(), 
                    model.end(),
-                   inserter( model_subtracts, model_adds.end() ) );
+                   inserter( model_subtracts, model_subtracts.end() ) );
 
    I_result.resize( q_points ); // this should already be true
 
@@ -329,6 +330,15 @@ bool US_PM::compute_delta_I(
          it != model_subtracts.end();
          it++ )
    {
+      if ( !pdata.count( *it ) )
+      {
+         cerr << QString( "pdata does not contain %1 %2 %3\n" )
+            .arg( it->x[0] )
+            .arg( it->x[1] )
+            .arg( it->x[2] )
+            ;
+         exit(-1);
+      }
       v_pdata_subtracts.push_back( &pdata[ *it ] );
    }
       
@@ -447,6 +457,9 @@ bool US_PM::compute_delta_I(
             }
          }
       }
+
+      J_ofs = j * ( 1 + max_harmonics );
+
       for ( unsigned int i = 0; i < (unsigned int) v_pdata_subtracts.size(); ++i )
       {
          pm_data *tmp_pm_data = v_pdata_subtracts[ i ];
