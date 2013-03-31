@@ -72,6 +72,22 @@ US_PM::US_PM(
    {
       i_l[ l ] = pow( i_, l );
    }
+
+   Y_points = max_harmonics + 1 + ( max_harmonics ) * ( max_harmonics + 1 );
+   J_points = ( 1 + max_harmonics ) * q_points;
+   i_k.clear();
+   for ( unsigned int l = 0; l <= max_harmonics; ++l )
+   {
+      for ( int m = - (int) l ; m <= (int) l; m++ )
+      {
+         i_k.push_back( i_l[ l ] );
+      }
+   }
+
+   for ( unsigned int k = 0; k < Y_points; k++ )
+   {
+      A0.push_back( Z0 );
+   }
 }
 
 US_PM::~US_PM()
@@ -179,6 +195,9 @@ void US_PM::debug( int level, QString qs )
 
 set < pm_point > US_PM::recenter( set < pm_point > & model )
 {
+   us_timers.init_timer( "recenter" );
+   us_timers.start_timer( "recenter" );
+
    int cx = 0;
    int cy = 0;
    int cz = 0;
@@ -211,6 +230,9 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
       pmp.x[ 2 ] = it->x[ 2 ] - ( int16_t ) cz;
       result.insert( pmp );
    }
+   us_timers.end_timer( "recenter" );
+   cout << us_timers.list_time( "recenter" ).ascii();
+   us_timers.clear_timer( "recenter" );
    return result;
 }
 

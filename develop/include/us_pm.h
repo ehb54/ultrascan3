@@ -56,8 +56,10 @@ struct pm_data
    float x[ 3 ]; // converted to grid
    float rtp[ 3 ];
    bool  no_J;
+   bool  no_Y;
    // map < pm_point, double > J;  // pm_point here is j, l
    vector < double > J;
+   vector < complex < float > > Y;
 };
 
 
@@ -121,6 +123,12 @@ class US_PM
    complex < float > Z0; // ( 0e0, 0e0 );
    complex < float > i_; // ( 0e0, 1e0 );
    vector < complex < float > > i_l;
+   vector < complex < float > > i_k;
+
+   unsigned int J_points;
+   unsigned int Y_points;
+
+   vector < complex < float > > A0;
 
    // sh data
    // vector < vector < double > > fib_grid;
