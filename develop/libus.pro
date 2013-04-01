@@ -298,6 +298,7 @@ SOURCES += \
   src/us_pm.cpp \
   src/us_pm_objects.cpp \
   src/us_pm_fitness.cpp \
+  src/us_pm_test.cpp \
   src/us_pixmap.cpp \
   src/us_plotdata.cpp \
   src/us_printfilter.cpp \

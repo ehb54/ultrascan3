@@ -6,7 +6,6 @@
 bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
 {
    us_timers.clear_timers();
-   I_result.resize( q_points ); // this should already be true
 
    // model should already be centered
 
@@ -91,10 +90,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    us_timers.init_timer( "sumA" );
 
    us_timers.start_timer( "combined" );
-   for ( unsigned int j = 0; j < q_points; j++ )
-   {
-      I_result[ j ] = 0e0;
-   }
+   I_result = I0;
 
    vector < complex < float > >  A = A0;
    // cache legendre
@@ -154,8 +150,6 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
             J_ofs = j * ( 1 + max_harmonics );
             for ( unsigned int l = 0; l <= max_harmonics; ++l )
             {
-               complex < float > i_pow_l = pow( i_, l );
-
                if ( !nr::sphbes( l, q[ j ] * v_pdata[ i ]->rtp[ 0 ], v_pdata[ i ]->J[ J_ofs + l ] ) )
                {
                   error_msg = "nr::shbes failed";
@@ -211,6 +205,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    us_timers.end_timer( "sumA" );
    us_timers.end_timer( "combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   log += us_timers.list_times( QString( "CI %1 beads : " ).arg( model.size() ) );
    
    return true;
 }
@@ -246,8 +241,6 @@ bool US_PM::compute_delta_I(
                    model.begin(), 
                    model.end(),
                    inserter( model_subtracts, model_subtracts.end() ) );
-
-   I_result.resize( q_points ); // this should already be true
 
    // model should already be centered
 
@@ -350,10 +343,7 @@ bool US_PM::compute_delta_I(
    us_timers.init_timer( "dI:sumA" );
 
    us_timers.start_timer( "dI:combined" );
-   for ( unsigned int j = 0; j < q_points; j++ )
-   {
-      I_result[ j ] = 0e0;
-   }
+   I_result = I0;
 
    // cache legendre
 
@@ -412,8 +402,6 @@ bool US_PM::compute_delta_I(
             J_ofs = j * ( 1 + max_harmonics );
             for ( unsigned int l = 0; l <= max_harmonics; ++l )
             {
-               complex < float > i_pow_l = pow( i_, l );
-
                if ( !nr::sphbes( l, q[ j ] * v_pdata[ i ]->rtp[ 0 ], v_pdata[ i ]->J[ J_ofs + l ] ) )
                {
                   error_msg = "nr::shbes failed";
@@ -492,5 +480,192 @@ bool US_PM::compute_delta_I(
    us_timers.end_timer( "dI:sumA" );
    us_timers.end_timer( "dI:combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   log += us_timers.list_times( QString( "DI %1 beads : " ).arg( model.size() ) );
+   return true;
+}
+
+bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_result )
+{
+   puts(  "starting ccIn" );
+   cout << QString( "ccI: model size %1\n" ).arg( model.size() );
+
+   us_timers.clear_timers();
+
+   // model should already be centered
+
+   pmc_data tmp_pm_data;
+   pmc_data *pm_datap;
+   tmp_pm_data.A1v = A1v0;
+
+   complex < float > *Yp;
+
+   double            *Jp;
+   double            *qp;
+   double            *Fp;
+   double            qp_t_rtp0;
+
+   complex < double > tmp_cd;
+
+   us_timers.init_timer( "ccI:combined" );
+   us_timers.init_timer( "ccI:rtp/legendre/shbes" );
+   us_timers.init_timer( "ccI:sumA" );
+   us_timers.start_timer( "ccI:combined" );
+   us_timers.start_timer( "ccI:rtp/legendre/shbes" );
+
+   I_result = I0;
+
+   complex < float > *i_lp;
+   complex < float > *Ap;
+   complex < float > *A1vp;
+   complex < float > tmp_cf;
+
+   ccA1v = A1v0;
+
+   for ( set < pm_point >::iterator it = model.begin();
+         it != model.end();
+         it++ )
+   {
+      if ( !pcdata.count( *it ) )
+      {
+         // puts( "ccI np 0 new point" );
+         pcdata[ *it ] = tmp_pm_data;
+         pm_datap = &(pcdata[ *it ]);
+
+         pm_datap->x[ 0 ] = grid_conversion_factor * (double)it->x[ 0 ];
+         pm_datap->x[ 1 ] = grid_conversion_factor * (double)it->x[ 1 ];
+         pm_datap->x[ 2 ] = grid_conversion_factor * (double)it->x[ 2 ];
+
+         pm_datap->rtp[ 0 ] = sqrt ( (double) ( pm_datap->x[ 0 ] * pm_datap->x[ 0 ] +
+                                                pm_datap->x[ 1 ] * pm_datap->x[ 1 ] +
+                                                pm_datap->x[ 2 ] * pm_datap->x[ 2 ] ) );
+         if ( pm_datap->rtp[ 0 ] == 0e0 )
+         {
+            pm_datap->rtp[ 1 ] = 0e0;
+            pm_datap->rtp[ 2 ] = 0e0;
+         } else {
+            pm_datap->rtp[ 1 ] = acos ( pm_datap->x[ 2 ] / pm_datap->rtp[ 0 ] );
+
+            if ( it->x[ 0 ] == 0 &&
+                 it->x[ 1 ] == 0 )
+            {
+               pm_datap->rtp[ 2 ] = 0e0;
+            } else {               
+               if ( it->x[ 0 ] < 0 )
+               {
+                  pm_datap->rtp[ 2 ] = M_PI - asin( pm_datap->x[ 1 ] / sqrt( (double) ( pm_datap->x[ 0 ] * 
+                                                                                        pm_datap->x[ 0 ] +
+                                                                                        pm_datap->x[ 1 ] * 
+                                                                                        pm_datap->x[ 1 ] ) ) );
+               } else {
+                  if ( it->x[ 1 ] < 0 )
+                  {
+                     pm_datap->rtp[ 2 ] = M_2PI + asin( pm_datap->x[ 1 ] / sqrt( pm_datap->x[ 0 ] * 
+                                                                                 pm_datap->x[ 0 ] +
+                                                                                 pm_datap->x[ 1 ] * 
+                                                                                 pm_datap->x[ 1 ] ) );
+                  } else {
+                     pm_datap->rtp[ 2 ] = asin( pm_datap->x[ 1 ] / sqrt( pm_datap->x[ 0 ] * 
+                                                                         pm_datap->x[ 0 ] +
+                                                                         pm_datap->x[ 1 ] * 
+                                                                         pm_datap->x[ 1 ] ) );
+                  }               
+               }
+            }
+         }
+         
+         Yp = &( ccY[ 0 ] );
+
+         for ( unsigned int l = 0; l <= max_harmonics; ++l )
+         {
+            for ( int m = - (int) l ; m <= (int) l; ++m )
+            {
+               if ( !sh::conj_spherical_harmonic( l, 
+                                                  m, 
+                                                  pm_datap->rtp[ 1 ],
+                                                  pm_datap->rtp[ 2 ],
+                                                  tmp_cd) )
+               {
+                  error_msg = "sh::spherical_harmonic failed";
+                  return false;
+               }
+               (*Yp) = tmp_cd;
+               ++Yp;
+            }
+         }
+
+         Jp  = &( ccJ[ 0 ] );
+         qp  = &( q[ 0 ] );
+         Fp  = &( F[ 0 ] );
+         A1vp = &( ccA1v[ 0 ] );
+         Ap   = &( pm_datap->A1v[ 0 ] );
+
+         for ( unsigned int j = 0; j < q_points; ++j )
+         {
+            qp_t_rtp0 = (*qp) * pm_datap->rtp[ 0 ];
+            ++qp;
+
+            i_lp = &( i_l[ 0 ] );
+            Yp   = &( ccY[ 0 ] );
+
+            for ( unsigned int l = 0; l <= max_harmonics; ++l )
+            {
+               if ( !nr::sphbes( l, qp_t_rtp0, *Jp ) )
+               {
+                  error_msg = "nr::shbes failed";
+                  return false;
+               }
+
+               tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
+               for ( int m = - (int) l ; m <= (int) l; ++m )
+               {
+                  (*Ap)  +=  (*Yp) * tmp_cf;
+                  (*A1vp) +=  (*Ap);
+                  ++Yp;
+                  ++Ap;
+                  ++A1vp;
+               }
+               ++Jp;
+               ++i_lp;
+            }
+            ++Fp;
+         }
+      } else {
+         // puts( "ccI: cached point" );
+         pm_datap = &pcdata[ *it ];
+         A1vp = &( ccA1v[ 0 ] );
+         Ap   = &( pm_datap->A1v[ 0 ] );
+         for ( unsigned int j = 0; j < q_points; ++j )
+         {
+            for ( unsigned int k = 0; k <= Y_points; ++k )
+            {
+               (*A1vp) +=  (*Ap);
+               ++Ap;
+               ++A1vp;
+            }
+         }
+      }
+   }
+
+   us_timers.end_timer( "ccI:rtp/legendre/shbes" );
+   puts( "sumA" );
+   us_timers.start_timer( "ccI:sumA" );
+
+   A1vp = &( ccA1v[ 0 ] );
+   for ( unsigned int j = 0; j < q_points; ++j )
+   {
+      for ( unsigned int k = 0; k < Y_points; ++k )
+      {
+         I_result[ j ] += norm( (*A1vp) );
+         ++A1vp;
+      }
+      I_result[ j ] *= M_4PI;
+   }
+
+   us_timers.end_timer( "ccI:sumA" );
+   us_timers.end_timer( "ccI:combined" );
+
+   cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
+
    return true;
 }

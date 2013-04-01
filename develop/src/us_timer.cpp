@@ -98,7 +98,7 @@ QString US_Timer::list_time( QString qs )
       ;
 }
 
-QString US_Timer::list_times()
+QString US_Timer::list_times( QString prepend )
 {
 
    QString qs;
@@ -106,7 +106,7 @@ QString US_Timer::list_times()
          it != timers.end();
          it++ )
    {
-      qs += list_time( it->first );
+      qs += prepend + list_time( it->first );
    }
    return qs;
 }

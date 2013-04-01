@@ -24,6 +24,7 @@ SOURCES		+= ../src/us_saxs_util_sgp_phys.cpp
 SOURCES		+= ../src/us_pm.cpp
 SOURCES		+= ../src/us_pm_objects.cpp
 SOURCES		+= ../src/us_pm_fitness.cpp
+SOURCES		+= ../src/us_pm_test.cpp
 SOURCES		+= ../src/us_sh.cpp
 SOURCES		+= ../src/us_tar.cpp
 SOURCES		+= ../src/us_gzip.cpp

@@ -59,11 +59,16 @@ struct pm_data
    float rtp[ 3 ];
    bool  no_J;
    bool  no_Y;
-   // map < pm_point, double > J;  // pm_point here is j, l
    vector < double > J;
    vector < complex < float > > Y;
 };
 
+struct pmc_data
+{
+   float x[ 3 ]; // converted to grid
+   float rtp[ 3 ];
+   vector < complex < float > > A1v;
+};
 
 // so we can try floats or doubles ?
 // typedef double us_pm_real;
@@ -113,14 +118,20 @@ class US_PM
    bool apply_rotation_matrix( vector < vector < double > > &rm, int x, int y, int z, double & newx, double & newy, double & newz );
 
    map < pm_point, pm_data > pdata;
+   map < pm_point, pmc_data > pcdata;
 
    // sh variables
 
    unsigned int max_harmonics;
+   unsigned int no_harmonics;
    // fib grid is for hydration
    // unsigned int fibonacci_grid;
 
    // supplementary sh variables
+
+   vector < complex < float > > ccY;
+   vector < complex < float > > ccA1v;
+   vector < double >            ccJ;
 
    complex < float > Z0; // ( 0e0, 0e0 );
    complex < float > i_; // ( 0e0, 1e0 );
@@ -129,13 +140,17 @@ class US_PM
 
    unsigned int J_points;
    unsigned int Y_points;
+   unsigned int q_Y_points;
 
+   vector < double > I0;
    vector < complex < float > > A0;
 
    vector < vector < complex < float > > > Av0;
+   vector <  complex < float > >           A1v0;
 
    // sh data
    // vector < vector < double > > fib_grid;
+
 
    US_Timer            us_timers;
 
@@ -158,6 +173,7 @@ class US_PM
    ~US_PM              ();
 
    QString             error_msg;
+   QString             log;
 
    int                 debug_level;
 
@@ -196,6 +212,11 @@ class US_PM
                                          set < pm_point > &                        model, 
                                          set < pm_point > &                        prev_model, 
                                          vector < vector < complex < float > > > & Av,
+                                         vector < double > &                       I_result
+                                         );
+
+   bool                compute_cached_I ( 
+                                         set < pm_point > &                        model, 
                                          vector < double > &                       I_result
                                          );
    
