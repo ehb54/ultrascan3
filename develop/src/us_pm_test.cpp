@@ -90,7 +90,146 @@ QString US_PM::test( QString name, QString oname )
 
    US_Vector::printvector( "read params", params );
 
+   // leak check
+   if ( 1 )
    {
+      double spheretest_min = 3e0;
+      double spheretest_max = 5e0;
+      int     reps          = 20;
+      int     i;
+      if ( 1 ) 
+      { // fully cached
+         US_PM sphere_pm( grid_conversion_factor, 
+                          max_dimension, 
+                          drho, 
+                          buffer_e_density, 
+                          ev, 
+                          max_harmonics, 
+                          // fibonacci_grid,
+                          F, 
+                          q, 
+                          I, 
+                          e, 
+                          0 );
+
+
+         vector < double >                       I_result( q.size() );
+         set < pm_point >                        model;
+         vector < double > params( 2 );
+         params[ 0 ] = 0e0;
+
+         sphere_pm.us_timers.clear_timers();
+         sphere_pm.us_timers.init_timer( "FC rep" );
+         sphere_pm.us_timers.start_timer( "FC rep" );
+         for ( i = 0; i < reps; i++ )
+         {
+            if ( !( i % 10 ) )
+            {
+               cout << QString( "FC rep %1\n" ).arg( i );
+            }
+            for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
+            {
+               sphere_pm.log = "";
+               model.clear();
+               sphere_pm.create_model( params, model );
+               sphere_pm.compute_cached_I( model, I_result );
+            }
+         }
+         sphere_pm.us_timers.end_timer( "FC rep" );
+         cout << sphere_pm.us_timers.list_times();
+      }
+
+      if ( 1 ) 
+      { // delta 
+         US_PM sphere_pm( grid_conversion_factor, 
+                          max_dimension, 
+                          drho, 
+                          buffer_e_density, 
+                          ev, 
+                          max_harmonics, 
+                          // fibonacci_grid,
+                          F, 
+                          q, 
+                          I, 
+                          e, 
+                          0 );
+
+         vector < double >                       I_result( q.size() );
+         vector < vector < complex < float > > > Av;
+         set < pm_point >                        model;
+         set < pm_point >                        prev_model;
+         vector < double > params( 2 );
+         params[ 0 ] = 0e0;
+
+         sphere_pm.us_timers.clear_timers();
+         sphere_pm.us_timers.init_timer( "Delta rep" );
+         sphere_pm.us_timers.start_timer( "Delta rep" );
+
+         for ( i = 0; i < reps; i++ )
+         {
+            if ( !( i % 10 ) )
+            {
+               cout << QString( "Delta rep %1\n" ).arg( i );
+            }
+            for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
+            {
+               sphere_pm.log = "";
+               model.clear();
+               sphere_pm.create_model( params, model );
+               sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
+               prev_model = model;
+            }
+         }
+         sphere_pm.us_timers.end_timer( "Delta rep" );
+         cout << sphere_pm.us_timers.list_times();
+      }
+
+      if ( 1 ) 
+      { // partially cached
+         US_PM sphere_pm( grid_conversion_factor, 
+                          max_dimension, 
+                          drho, 
+                          buffer_e_density, 
+                          ev, 
+                          max_harmonics, 
+                          // fibonacci_grid,
+                          F, 
+                          q, 
+                          I, 
+                          e, 
+                          0 );
+
+         vector < double >                       I_result( q.size() );
+         set < pm_point >                        model;
+         vector < double > params( 2 );
+         params[ 0 ] = 0e0;
+
+         sphere_pm.us_timers.clear_timers();
+         sphere_pm.us_timers.init_timer( "PC rep" );
+         sphere_pm.us_timers.start_timer( "PC rep" );
+
+         for ( i = 0; i < reps; i++ )
+         {
+            if ( !( i % 10 ) )
+            {
+               cout << QString( "PC rep %1\n" ).arg( i );
+            }
+            for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
+            {
+               sphere_pm.log = "";
+               model.clear();
+               sphere_pm.create_model( params, model );
+               sphere_pm.compute_I( model, I_result );
+            }
+         }
+         sphere_pm.us_timers.end_timer( "PC rep" );
+         cout << sphere_pm.us_timers.list_times();
+      }
+   }
+
+
+   // speed test
+   if ( 0 ) {
       double spheretest_min = 1e0;
       double spheretest_max = 12e0;
       QString                 log;

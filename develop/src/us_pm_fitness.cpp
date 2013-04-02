@@ -5,12 +5,14 @@
 
 bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
 {
-   us_timers.clear_timers();
 
    // model should already be centered
 
+#if defined( USE_TIMERS )
+   us_timers.clear_timers();
    us_timers.init_timer( "rtp" );
    us_timers.start_timer( "rtp" );
+#endif
 
    pm_data tmp_pm_data;
    tmp_pm_data.no_J = true;
@@ -82,6 +84,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
       v_pdata.push_back( &pdata[ *it ] );
    }
 
+#if defined( USE_TIMERS )
    us_timers.end_timer( "rtp" );
 
    us_timers.init_timer( "legendre" );
@@ -90,12 +93,16 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    us_timers.init_timer( "sumA" );
 
    us_timers.start_timer( "combined" );
+#endif
+
    I_result = I0;
 
    vector < complex < float > >  A = A0;
    // cache legendre
 
+#if defined( USE_TIMERS )
    us_timers.start_timer( "legendre" );
+#endif
    // setup associated legendre functions
 
    for ( unsigned int i = 0; i < v_pdata.size(); ++i )
@@ -135,11 +142,11 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
       }
    }
 
+#if defined( USE_TIMERS )
    us_timers.end_timer( "legendre" );
-
-   // cache spherical bessels
-
    us_timers.start_timer( "sphbes" );
+#endif
+   // cache spherical bessels
    unsigned int J_ofs;
    for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
    {
@@ -160,9 +167,11 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
          }
       }
    }
+#if defined( USE_TIMERS )
    us_timers.end_timer( "sphbes" );
-
    us_timers.start_timer( "sumA" );
+#endif
+
    double *Jp;
 
    complex < float > *i_lp;
@@ -202,11 +211,12 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
       }
       I_result[ j ] *= M_4PI;
    }
+#if defined( USE_TIMERS )
    us_timers.end_timer( "sumA" );
    us_timers.end_timer( "combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
    log += us_timers.list_times( QString( "CI %1 beads : " ).arg( model.size() ) );
-   
+#endif   
    return true;
 }
 
@@ -217,7 +227,9 @@ bool US_PM::compute_delta_I(
                             vector < double > &                       I_result
                             )
 {
+#if defined( USE_TIMERS )
    us_timers.clear_timers();
+#endif
    if ( !Av.size() || model.size() < 100 )
    {
       Av = Av0;
@@ -244,8 +256,10 @@ bool US_PM::compute_delta_I(
 
    // model should already be centered
 
+#if defined( USE_TIMERS )
    us_timers.init_timer( "dI:rtp" );
    us_timers.start_timer( "dI:rtp" );
+#endif
 
    pm_data tmp_pm_data;
    tmp_pm_data.no_J = true;
@@ -335,6 +349,7 @@ bool US_PM::compute_delta_I(
       v_pdata_subtracts.push_back( &pdata[ *it ] );
    }
       
+#if defined( USE_TIMERS )
    us_timers.end_timer( "dI:rtp" );
 
    us_timers.init_timer( "dI:legendre" );
@@ -343,11 +358,14 @@ bool US_PM::compute_delta_I(
    us_timers.init_timer( "dI:sumA" );
 
    us_timers.start_timer( "dI:combined" );
+#endif
    I_result = I0;
 
    // cache legendre
 
+#if defined( USE_TIMERS )
    us_timers.start_timer( "dI:legendre" );
+#endif
    // setup associated legendre functions
 
    for ( unsigned int i = 0; i < v_pdata.size(); ++i )
@@ -387,11 +405,13 @@ bool US_PM::compute_delta_I(
       }
    }
 
+#if defined( USE_TIMERS )
    us_timers.end_timer( "dI:legendre" );
+   us_timers.start_timer( "dI:sphbes" );
+#endif
 
    // cache spherical bessels
 
-   us_timers.start_timer( "dI:sphbes" );
    unsigned int J_ofs;
    for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
    {
@@ -412,9 +432,10 @@ bool US_PM::compute_delta_I(
          }
       }
    }
+#if defined( USE_TIMERS )
    us_timers.end_timer( "dI:sphbes" );
-
    us_timers.start_timer( "dI:sumA" );
+#endif
    double *Jp;
 
    complex < float > *i_lp;
@@ -477,20 +498,21 @@ bool US_PM::compute_delta_I(
       }
       I_result[ j ] *= M_4PI;
    }
+
+#if defined( USE_TIMERS )
    us_timers.end_timer( "dI:sumA" );
    us_timers.end_timer( "dI:combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
    log += us_timers.list_times( QString( "DI %1 beads : " ).arg( model.size() ) );
+#endif
    return true;
 }
 
 bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_result )
 {
-   puts(  "starting ccIn" );
-   cout << QString( "ccI: model size %1\n" ).arg( model.size() );
-
+#if defined( USE_TIMERS )
    us_timers.clear_timers();
-
+#endif
    // model should already be centered
 
    pmc_data tmp_pm_data;
@@ -506,12 +528,13 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
 
    complex < double > tmp_cd;
 
+#if defined( USE_TIMERS )
    us_timers.init_timer( "ccI:combined" );
    us_timers.init_timer( "ccI:rtp/legendre/shbes" );
    us_timers.init_timer( "ccI:sumA" );
    us_timers.start_timer( "ccI:combined" );
    us_timers.start_timer( "ccI:rtp/legendre/shbes" );
-
+#endif
    I_result = I0;
 
    complex < float > *i_lp;
@@ -646,10 +669,10 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
       }
    }
 
+#if defined( USE_TIMERS )
    us_timers.end_timer( "ccI:rtp/legendre/shbes" );
-   puts( "sumA" );
    us_timers.start_timer( "ccI:sumA" );
-
+#endif
    A1vp = &( ccA1v[ 0 ] );
    for ( unsigned int j = 0; j < q_points; ++j )
    {
@@ -661,11 +684,12 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
       I_result[ j ] *= M_4PI;
    }
 
+#if defined( USE_TIMERS )
    us_timers.end_timer( "ccI:sumA" );
    us_timers.end_timer( "ccI:combined" );
 
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
    log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
-
+#endif
    return true;
 }
