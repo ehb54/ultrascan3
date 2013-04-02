@@ -150,9 +150,11 @@ class US_PM
 
    // sh data
    // vector < vector < double > > fib_grid;
-
+   bool                use_errors;
 
    US_Timer            us_timers;
+
+   double              model_fit( vector < double > & params, set < pm_point > & model, vector < double > & I_result );
 
  public:
    US_PM               ( 
@@ -220,6 +222,8 @@ class US_PM
                                          vector < double > &                       I_result
                                          );
    
+   double              fitness2         ( vector < double > & I_result ); // returns rmsd^2 or chi^2
+
    static QString      test             ( QString name, QString oname );
 
    void                debug            ( int level, QString qs );
@@ -232,6 +236,12 @@ class US_PM
    bool                split            ( vector < double > & params, vector < int > & types, vector < double > & fparams );
    // join them back
    bool                join             ( vector < double > & params, vector < int > & types, vector < double > & fparams );
+
+   bool                best_sphere      ( set < pm_point > & model, double delta = .5e0 );
+   bool                best_cylinder    ( set < pm_point > & model );
+   bool                best_spheroid    ( set < pm_point > & model );
+   bool                best_ellipsoid   ( set < pm_point > & model );
+   bool                best_torus       ( set < pm_point > & model );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

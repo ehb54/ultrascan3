@@ -109,6 +109,21 @@ US_PM::US_PM(
    ccY.resize( Y_points );
    ccJ.resize( J_points );
    ccA1v = A1v0;
+
+   bool use_errors = e.size() == q.size();
+
+   if ( use_errors )
+   {
+      for ( unsigned int i = 0; i < e.size(); i++ )
+      {
+         if ( !e[ i ] )
+         {
+            use_errors = false;
+            break;
+         }
+      }
+      cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
+   }
 }
 
 US_PM::~US_PM()

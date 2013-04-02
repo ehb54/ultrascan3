@@ -3,6 +3,8 @@
 // this will have fitness routines
 // sh etc
 
+// #define USE_TIMERS
+
 bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
 {
 
@@ -147,22 +149,32 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    us_timers.start_timer( "sphbes" );
 #endif
    // cache spherical bessels
-   unsigned int J_ofs;
-   for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
    {
-      if ( v_pdata[ i ]->no_J )
+      register double  qp_t_rtp0;
+      // it's odd that the * version is a bit slower
+      // register double  *Jp;
+      register unsigned int J_ofs;
+      for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
       {
-         for ( unsigned int j = 0; j < q_points; ++j )
+         if ( v_pdata[ i ]->no_J )
          {
-            J_ofs = j * ( 1 + max_harmonics );
-            for ( unsigned int l = 0; l <= max_harmonics; ++l )
+            v_pdata[ i ]->no_J = false;
+            // Jp = &( v_pdata[ i ]->J[ 0 ] );
+            J_ofs = 0;
+            for ( unsigned int j = 0; j < q_points; ++j )
             {
-               if ( !nr::sphbes( l, q[ j ] * v_pdata[ i ]->rtp[ 0 ], v_pdata[ i ]->J[ J_ofs + l ] ) )
+               // J_ofs = j * ( 1 + max_harmonics );
+               qp_t_rtp0 = q[ j ] * v_pdata[ i ]->rtp[ 0 ];
+               for ( unsigned int l = 0; l <= max_harmonics; ++l )
                {
-                  error_msg = "nr::shbes failed";
-                  return false;
+                  if ( !nr::sphbes( l, qp_t_rtp0, v_pdata[ i ]->J[ J_ofs ] ) )
+                  {
+                     error_msg = "nr::shbes failed";
+                     return false;
+                  }
+                  // ++Jp;
+                  ++J_ofs;
                }
-               v_pdata[ i ]->no_J = false;
             }
          }
       }
@@ -177,6 +189,8 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
    complex < float > *i_lp;
    complex < float > *Ap = &( A[0] );
    
+   unsigned int J_ofs;
+
    for ( unsigned int j = 0; j < q_points; ++j )
    {
       J_ofs = j * ( 1 + max_harmonics );
@@ -693,3 +707,26 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
 #endif
    return true;
 }
+
+double US_PM::fitness2( vector < double > & I_result )
+{
+   double chi2 = 0e0;
+   double tmp;
+
+   if ( use_errors )
+   {
+      for ( unsigned int i = 0; i < q_points; i++ )
+      {
+         tmp = ( I_result[ i ] - I[ i ] ) / e[ i ];
+         chi2 += tmp * tmp;
+      }
+   } else {
+      for ( unsigned int i = 0; i < q_points; i++ )
+      {
+         tmp = ( I_result[ i ] - I[ i ] );
+         chi2 += tmp * tmp;
+      }
+   }
+   return chi2;
+}
+
