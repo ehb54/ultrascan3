@@ -6530,6 +6530,27 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
       {
          f_gaussians[ wheel_file ] = gaussians;
       }
+      double tot_area = 0e0;
+      vector < double > g_area;
+      for ( unsigned int g = 0; g < (unsigned int) gaussians.size(); g += 3 )
+      {
+         g_area.push_back( gaussians[ g + 0 ] * gaussians[ g + 2 ] * sqrt( M_PI ) );
+         tot_area += g_area.back();
+      }
+
+      for ( unsigned int g = 0; g < (unsigned int) gaussians.size(); g += 3 )
+      {
+         editor_msg( "darkblue",
+                     QString( "Gaussian %1: center %2 height %3 width %4 area %5 % of total %6\n" ) 
+                     .arg( (g/3) + 1 )
+                     .arg( gaussians[ g + 1 ] )
+                     .arg( gaussians[ g + 0 ] )
+                     .arg( gaussians[ g + 2 ] )
+                     .arg( g_area[ g/3 ] )
+                     .arg( tot_area != 0e0 ? 100e0 * g_area[ g/3 ] / tot_area : 0e0 )
+                     );
+      }
+            
       wheel_cancel();
       return;
    }

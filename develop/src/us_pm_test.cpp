@@ -108,6 +108,7 @@ QString US_PM::test( QString name, QString oname )
                        q, 
                        I, 
                        e, 
+                       1024,
                        0 );
 
       set < pm_point >    model;
@@ -137,7 +138,7 @@ QString US_PM::test( QString name, QString oname )
          
       {
          vector < double >   I_result( q.size() );
-         sphere_pm.compute_I( model, I_result );
+         sphere_pm.compute_CYJ_I( model, I_result );
          QString outfile = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
       
          if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -181,6 +182,7 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           0 );
 
 
@@ -203,7 +205,7 @@ QString US_PM::test( QString name, QString oname )
                sphere_pm.log = "";
                model.clear();
                sphere_pm.create_model( params, model );
-               sphere_pm.compute_cached_I( model, I_result );
+               sphere_pm.compute_CA_I( model, I_result );
             }
          }
          sphere_pm.us_timers.end_timer( "FC rep" );
@@ -223,12 +225,13 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           0 );
 
          vector < double >                       I_result( q.size() );
-         vector < vector < complex < float > > > Av;
          set < pm_point >                        model;
          set < pm_point >                        prev_model;
+         vector < vector < complex < float > > > Av;
          vector < double > params( 2 );
          params[ 0 ] = 0e0;
 
@@ -268,6 +271,7 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           0 );
 
          vector < double >                       I_result( q.size() );
@@ -290,7 +294,7 @@ QString US_PM::test( QString name, QString oname )
                sphere_pm.log = "";
                model.clear();
                sphere_pm.create_model( params, model );
-               sphere_pm.compute_I( model, I_result );
+               sphere_pm.compute_CYJ_I( model, I_result );
             }
          }
          sphere_pm.us_timers.end_timer( "PC rep" );
@@ -320,6 +324,7 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           5 );
 
 
@@ -350,7 +355,7 @@ QString US_PM::test( QString name, QString oname )
                model.clear();
                sphere_pm.create_model( params, model );
                puts( "test:ccI call" );
-               sphere_pm.compute_cached_I( model, I_result );
+               sphere_pm.compute_CA_I( model, I_result );
                puts( "test:ccI return" );
 
                cout << QString( "sphere radius %1 model bead count %2\n" ).arg( params[ 1 ] ).arg( model.size() );
@@ -417,6 +422,7 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           5 );
 
          vector < double >                       I_result( q.size() );
@@ -498,6 +504,7 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           5 );
 
          vector < double >                       I_result( q.size() );
@@ -512,7 +519,7 @@ QString US_PM::test( QString name, QString oname )
                cout << QString( "---------- standard Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).ascii();
                model.clear();
                sphere_pm.create_model( params, model );
-               sphere_pm.compute_I( model, I_result );
+               sphere_pm.compute_CYJ_I( model, I_result );
 
                cout << QString( "sphere radius %1 model bead count %2\n" ).arg( params[ 1 ] ).arg( model.size() );
 
@@ -577,11 +584,12 @@ QString US_PM::test( QString name, QString oname )
                           q, 
                           I, 
                           e, 
+                          1024,
                           5 );
 
          vector < double >                       I_result( q.size() );
-         vector < vector < complex < float > > > Av;
          set < pm_point >                        model;
+         vector < vector < complex < float > > > Av;
          set < pm_point >                        prev_model;
          vector < double > params( 2 );
          params[ 0 ] = 0e0;
@@ -771,15 +779,15 @@ QString US_PM::test( QString name, QString oname )
       // compute I(q)
       if ( q.size() )
       {
-         cout << "compute_I\n";
+         cout << "compute_CYJ_I\n";
          vector < double > I_result( q.size() );
-         if ( !test_pm.compute_I( model, I_result ) )
+         if ( !test_pm.compute_CYJ_I( model, I_result ) )
          {
-            return "compute_I error:" + test_pm.error_msg;
+            return "compute_CYJ_I error:" + test_pm.error_msg;
          }
-         if ( !test_pm.compute_I( model, I_result ) )
+         if ( !test_pm.compute_CYJ_I( model, I_result ) )
          {
-            return "2nd compute_I error:" + test_pm.error_msg;
+            return "2nd compute_CYJ_I error:" + test_pm.error_msg;
          }
          QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
       
@@ -833,15 +841,15 @@ QString US_PM::test( QString name, QString oname )
       // compute I(q)
       if ( q.size() )
       {
-         cout << "compute_I\n";
+         cout << "compute_CYJ_I\n";
          vector < double > I_result( q.size() );
-         if ( !test_pm.compute_I( model, I_result ) )
+         if ( !test_pm.compute_CYJ_I( model, I_result ) )
          {
-            return "compute_I error:" + test_pm.error_msg;
+            return "compute_CYJ_I error:" + test_pm.error_msg;
          }
-         if ( !test_pm.compute_I( model, I_result ) )
+         if ( !test_pm.compute_CYJ_I( model, I_result ) )
          {
-            return "compute_I error:" + test_pm.error_msg;
+            return "compute_CYJ_I error:" + test_pm.error_msg;
          }
 
          QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );

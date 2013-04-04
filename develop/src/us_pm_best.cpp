@@ -1,12 +1,5 @@
 #include "../include/us_pm.h"
 
-double US_PM::model_fit( vector < double > & params, set < pm_point > & model, vector < double > & I_result )
-{
-   create_model( params, model );
-   compute_cached_I( model, I_result );
-   return fitness2( I_result );
-}
-
 bool US_PM::best_sphere( set < pm_point > & model, double delta )
 {
    // start with 1 sphere, slowly increase size until fitness drops
@@ -20,6 +13,7 @@ bool US_PM::best_sphere( set < pm_point > & model, double delta )
    vector < double > I_result( q_points );
 
    set < pm_point > this_model;
+   use_CYJ = false;
 
    us_timers.clear_timers();
    if ( 0 )
@@ -28,7 +22,7 @@ bool US_PM::best_sphere( set < pm_point > & model, double delta )
       for ( params[ 1 ] = 0.1; params[ 1 ] <= max_dimension_d; params[ 1 ] += delta )
       {
          create_model( params, this_model );
-         compute_cached_I( this_model, I_result );
+         compute_I( this_model, I_result );
          this_fit = fitness2( I_result );
          cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii();
          if ( this_fit < prev_fit )
@@ -45,8 +39,146 @@ bool US_PM::best_sphere( set < pm_point > & model, double delta )
       us_timers.end_timer( "sphere try with CA" );
    }
 
-
    if ( 1 )
+   {
+      us_timers.init_timer( "sphere try with delta fallback" );
+      us_timers.start_timer( "sphere try with delta fallback" );
+      double low_limit  = 0.1;
+      double high_limit = max_dimension_d;
+      double min_delta = 1e-3;
+      double prev_size;
+      double best_size;
+      delta = 1e0;
+
+      set < pm_point > prev_model;
+      vector < vector < complex < float > > > Av;
+
+      map < double, double > fitnesses;
+      while ( delta > min_delta )
+      {
+         double last_fitness_1_pos = -1e0;
+         double last_fitness_2_pos = -1e0;
+         double last_fitness_3_pos = -1e0;
+         prev_fit = 1e99;
+
+         prev_model.clear();
+         Av.clear();
+
+         cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+         for ( params[ 1 ] = low_limit; params[ 1 ] <= high_limit; params[ 1 ] += delta )
+         {
+            bool skip = false;
+            create_model( params, this_model );
+            if ( prev_model.size() != this_model.size() )
+            {
+               compute_delta_I( this_model, prev_model, Av, I_result );
+               this_fit = fitness2( I_result );
+               fitnesses[ params[ 1 ] ] = this_fit;
+            } else {
+               skip = true;
+            }
+            if ( !skip )
+            {
+               cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+
+               last_fitness_3_pos = last_fitness_2_pos;
+               last_fitness_2_pos = last_fitness_1_pos;
+               last_fitness_1_pos = params[ 1 ];
+
+               if ( this_fit < prev_fit )
+               {
+                  best_fit = this_fit;
+                  best_size = params[ 1 ];
+                  model = this_model;
+               }
+               if ( this_fit > prev_fit )
+               {
+                  break;
+               }
+               prev_fit = this_fit;
+               prev_size = params[ 1 ];
+            }
+            prev_model = this_model;
+         }
+         low_limit  = last_fitness_3_pos;
+         high_limit = last_fitness_1_pos;
+         delta /= 10e0;
+      }
+      us_timers.end_timer( "sphere try with delta fallback" );
+   }
+
+   if ( 0 )
+   {
+      us_timers.init_timer( "sphere try with CA fallback" );
+      us_timers.start_timer( "sphere try with CA fallback" );
+      double low_limit  = 0.1;
+      double high_limit = max_dimension_d;
+      double min_delta = 1e-3;
+      double prev_size;
+      double best_size;
+      delta = 1e0;
+
+      set < pm_point > prev_model;
+
+      map < double, double > fitnesses;
+      while ( delta > min_delta )
+      {
+         double last_fitness_1_pos = -1e0;
+         double last_fitness_2_pos = -1e0;
+         double last_fitness_3_pos = -1e0;
+         prev_fit = 1e99;
+
+         prev_model.clear();
+         cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+         for ( params[ 1 ] = low_limit; params[ 1 ] <= high_limit; params[ 1 ] += delta )
+         {
+            bool skip = false;
+            if ( fitnesses.count( params[ 1 ] ) )
+            {
+               this_fit = fitnesses[ params[ 1 ] ];
+            } else {
+               create_model( params, this_model );
+               if ( prev_model.size() != this_model.size() )
+               {
+                  compute_I( this_model, I_result );
+                  this_fit = fitness2( I_result );
+                  fitnesses[ params[ 1 ] ] = this_fit;
+               } else {
+                  skip = true;
+                  // cout << QString( "skipped radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+               }
+            }
+            if ( !skip )
+            {
+               cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+
+               last_fitness_3_pos = last_fitness_2_pos;
+               last_fitness_2_pos = last_fitness_1_pos;
+               last_fitness_1_pos = params[ 1 ];
+
+               if ( this_fit < prev_fit )
+               {
+                  best_fit = this_fit;
+                  best_size = params[ 1 ];
+                  model = this_model;
+               }
+               if ( this_fit > prev_fit )
+               {
+                  break;
+               }
+               prev_fit = this_fit;
+               prev_size = params[ 1 ];
+            }
+            prev_model = this_model;
+         }
+         low_limit  = last_fitness_3_pos;
+         high_limit = last_fitness_1_pos;
+         delta /= 10e0;
+      }
+      us_timers.end_timer( "sphere try with CA fallback" );
+   }
+
+   if ( 0 )
    {
       us_timers.init_timer( "sphere try with CA bisection" );
       // find initial range

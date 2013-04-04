@@ -156,6 +156,13 @@ class US_PM
 
    double              model_fit( vector < double > & params, set < pm_point > & model, vector < double > & I_result );
 
+   unsigned int        bytes_per_pm_data;
+   unsigned int        bytes_per_pmc_data;
+   unsigned int        max_mem_in_MB;
+   unsigned int        max_beads_CA;
+   unsigned int        max_beads_CYJ;
+   bool                use_CYJ;
+
  public:
    US_PM               ( 
                         double grid_conversion_factor, 
@@ -169,6 +176,7 @@ class US_PM
                         vector < double > q, 
                         vector < double > I, 
                         vector < double > e, 
+                        unsigned int max_mem_in_MB   = 2048,
                         int debug_level = 0
                         );
 
@@ -210,6 +218,12 @@ class US_PM
    //      using spherical harmonics cached upon the grid
    //      new "on" points are cached
    bool                compute_I        ( set < pm_point > & model, vector < double > & I_result );
+   bool                compute_CYJ_I    ( set < pm_point > & model, vector < double > & I_result );
+   bool                compute_CA_I     ( 
+                                         set < pm_point > &                        model, 
+                                         vector < double > &                       I_result
+                                         );
+   
    bool                compute_delta_I  ( 
                                          set < pm_point > &                        model, 
                                          set < pm_point > &                        prev_model, 
@@ -217,11 +231,6 @@ class US_PM
                                          vector < double > &                       I_result
                                          );
 
-   bool                compute_cached_I ( 
-                                         set < pm_point > &                        model, 
-                                         vector < double > &                       I_result
-                                         );
-   
    double              fitness2         ( vector < double > & I_result ); // returns rmsd^2 or chi^2
 
    static QString      test             ( QString name, QString oname );

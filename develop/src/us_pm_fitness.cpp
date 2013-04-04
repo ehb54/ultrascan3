@@ -5,7 +5,32 @@
 
 // #define USE_TIMERS
 
-bool US_PM::compute_I( set < pm_point > & model, vector < double > &I_result )
+bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
+{
+   if ( use_CYJ )
+   {
+      return compute_CYJ_I( model, I_result );
+   } else {
+      if ( model.size() > max_beads_CA )
+      {
+         cout << QString( "switching to CYJ mode\n" ).ascii();
+         pcdata.clear();
+         use_CYJ = true;
+         return compute_CYJ_I( model, I_result );
+      } else {
+         return compute_CA_I( model, I_result );
+      }
+   }
+}
+
+double US_PM::model_fit( vector < double > & params, set < pm_point > & model, vector < double > & I_result )
+{
+   create_model( params, model );
+   compute_I( model, I_result );
+   return fitness2( I_result );
+}
+
+bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result )
 {
 
    // model should already be centered
@@ -522,7 +547,7 @@ bool US_PM::compute_delta_I(
    return true;
 }
 
-bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_result )
+bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result )
 {
 #if defined( USE_TIMERS )
    us_timers.clear_timers();
@@ -543,11 +568,11 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
    complex < double > tmp_cd;
 
 #if defined( USE_TIMERS )
-   us_timers.init_timer( "ccI:combined" );
-   us_timers.init_timer( "ccI:rtp/legendre/shbes" );
-   us_timers.init_timer( "ccI:sumA" );
-   us_timers.start_timer( "ccI:combined" );
-   us_timers.start_timer( "ccI:rtp/legendre/shbes" );
+   us_timers.init_timer( "CA:combined" );
+   us_timers.init_timer( "CA:rtp/legendre/shbes" );
+   us_timers.init_timer( "CA:sumA" );
+   us_timers.start_timer( "CA:combined" );
+   us_timers.start_timer( "CA:rtp/legendre/shbes" );
 #endif
    I_result = I0;
 
@@ -667,7 +692,7 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
             ++Fp;
          }
       } else {
-         // puts( "ccI: cached point" );
+         // puts( "CA: cached point" );
          pm_datap = &pcdata[ *it ];
          A1vp = &( ccA1v[ 0 ] );
          Ap   = &( pm_datap->A1v[ 0 ] );
@@ -684,8 +709,8 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
    }
 
 #if defined( USE_TIMERS )
-   us_timers.end_timer( "ccI:rtp/legendre/shbes" );
-   us_timers.start_timer( "ccI:sumA" );
+   us_timers.end_timer( "CA:rtp/legendre/shbes" );
+   us_timers.start_timer( "CA:sumA" );
 #endif
    A1vp = &( ccA1v[ 0 ] );
    for ( unsigned int j = 0; j < q_points; ++j )
@@ -699,8 +724,8 @@ bool US_PM::compute_cached_I( set < pm_point > & model, vector < double > &I_res
    }
 
 #if defined( USE_TIMERS )
-   us_timers.end_timer( "ccI:sumA" );
-   us_timers.end_timer( "ccI:combined" );
+   us_timers.end_timer( "CA:sumA" );
+   us_timers.end_timer( "CA:combined" );
 
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
    log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );

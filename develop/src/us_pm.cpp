@@ -11,7 +11,8 @@ US_PM::US_PM(
              vector < double > F, 
              vector < double > q, 
              vector < double > I, 
-             vector < double > e, 
+             vector < double > e,
+             unsigned int max_mem_in_MB,
              int debug_level 
              )
 {
@@ -26,6 +27,7 @@ US_PM::US_PM(
    this->q                      = q;
    this->I                      = I;
    this->e                      = e;
+   this->max_mem_in_MB          = max_mem_in_MB;
    this->debug_level            = debug_level;
 
    this->max_dimension   = this->max_dimension < USPM_MAX_VAL ? this->max_dimension : USPM_MAX_VAL;
@@ -124,6 +126,32 @@ US_PM::US_PM(
       }
       cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
    }
+
+   // memory computations
+
+   bytes_per_pm_data =
+      sizeof( pm_data ) +
+      J_points * sizeof ( double ) +
+      Y_points * sizeof ( float ) * 2;
+
+   bytes_per_pmc_data =
+      sizeof( pmc_data ) +
+      q_Y_points * sizeof ( float ) * 2;
+
+   unsigned int base_mem = 20;
+
+   max_beads_CYJ =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pm_data;
+   max_beads_CA  =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pmc_data;
+
+   cout << QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii();
+   cout << QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii();
+
+   cout << QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii();
+   cout << QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii();
+   cout << QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii();
+   cout << QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii();
+
+   use_CYJ = false;
 }
 
 US_PM::~US_PM()
