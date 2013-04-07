@@ -116,6 +116,15 @@ US_PM::US_PM(
 
    if ( use_errors )
    {
+      bool any_non_zero = false;
+      for ( unsigned int i = 0; i < e.size(); i++ )
+      {
+         if ( e[ i ] )
+         {
+            any_non_zero = true;
+            break;
+         }
+      }
       for ( unsigned int i = 0; i < e.size(); i++ )
       {
          if ( !e[ i ] )
@@ -124,7 +133,10 @@ US_PM::US_PM(
             break;
          }
       }
-      cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
+      if ( !use_errors && any_non_zero )
+      {
+         cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
+      }
    }
 
    // memory computations
@@ -152,6 +164,9 @@ US_PM::US_PM(
    cout << QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii();
 
    use_CYJ = false;
+
+   set_best_delta();
+   init_objects();
 }
 
 US_PM::~US_PM()

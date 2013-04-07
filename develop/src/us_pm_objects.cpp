@@ -11,6 +11,30 @@
 
 // handling routines:
 
+void US_PM::init_objects()
+{
+   object_names        .clear();
+   object_m0_parameters.clear();
+
+   object_names        .push_back( "sphere" );
+   object_m0_parameters.push_back( 1 ); // radius
+
+   object_names        .push_back( "cylinder" );
+   object_m0_parameters.push_back( 2 ); // height length
+
+   object_names        .push_back( "spheroid" );
+   object_m0_parameters.push_back( 2 ); // a, b
+
+   object_names        .push_back( "ellipsoid" );
+   object_m0_parameters.push_back( 3 ); // a, b, c
+
+   object_names        .push_back( "torus" );
+   object_m0_parameters.push_back( 2 ); // radius1, radius2
+
+   object_names        .push_back( "torus_segment" );
+   object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
+}
+
 bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
    debug( 1, "create_1_model" );

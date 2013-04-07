@@ -297,6 +297,12 @@ SOURCES += \
   src/us_nucleotide.cpp \
   src/us_pm.cpp \
   src/us_pm_best.cpp \
+  src/us_pm_best_sphere.cpp \
+  src/us_pm_best_cylinder.cpp \
+  src/us_pm_best_spheroid.cpp \
+  src/us_pm_best_ellipsoid.cpp \
+  src/us_pm_best_torus.cpp \
+  src/us_pm_best_torus_segment.cpp \
   src/us_pm_fitness.cpp \
   src/us_pm_objects.cpp \
   src/us_pm_test.cpp \

@@ -163,6 +163,24 @@ class US_PM
    unsigned int        max_beads_CYJ;
    bool                use_CYJ;
 
+   bool                best_vary_one_param(
+                                           unsigned int        param_to_vary,
+                                           vector < double > & params, 
+                                           set < pm_point >  & model,
+                                           double            & best_fitness
+                                           );
+
+   double              best_delta_start;
+   double              best_delta_divisor;
+   double              best_delta_min;
+   double              best_delta_size_min;
+   double              best_delta_size_max;
+
+   vector < QString >  object_names;
+   vector < int >      object_m0_parameters;  // # of params for model_pos = 0
+
+   void                init_objects();
+
  public:
    US_PM               ( 
                         double grid_conversion_factor, 
@@ -190,67 +208,74 @@ class US_PM
    // params = model type, params required for model type, model type etc.
 
    // build a model from params:
-   bool                create_model     ( vector < double > params, set < pm_point > & model, bool only_last_model = false );
+   bool                create_model      ( vector < double > params, set < pm_point > & model, bool only_last_model = false );
 
    // build a single model and return remaining points
-   bool                create_1_model   ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                create_1_model    ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
 
    // models themselves:
 
-   bool                sphere           ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                cylinder         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                spheroid         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                ellipsoid        ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                torus            ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
-   bool                torus_segment    ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                sphere            ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                cylinder          ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                spheroid          ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                ellipsoid         ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                torus             ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
+   bool                torus_segment     ( int model_pos, vector < double > & params, vector < double > & params_left,  set < pm_point > & model );
 
    // limits
 
-   bool                set_limits       ( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams );
-   bool                check_limits     ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
-   bool                clip_limits      ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
+   bool                set_limits        ( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams );
+   bool                check_limits      ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
+   bool                clip_limits       ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
 
    // output a bead model
-   vector < PDB_atom > bead_model       ( set < pm_point > & model );
-   QString             qs_bead_model    ( set < pm_point > & model );
+   vector < PDB_atom > bead_model        ( set < pm_point > & model );
+   QString             qs_bead_model     ( set < pm_point > & model );
 
    // compute I of model 
    //      using spherical harmonics cached upon the grid
    //      new "on" points are cached
-   bool                compute_I        ( set < pm_point > & model, vector < double > & I_result );
-   bool                compute_CYJ_I    ( set < pm_point > & model, vector < double > & I_result );
-   bool                compute_CA_I     ( 
+   bool                compute_I         ( set < pm_point > & model, vector < double > & I_result );
+   bool                compute_CYJ_I     ( set < pm_point > & model, vector < double > & I_result );
+   bool                compute_CA_I      ( 
                                          set < pm_point > &                        model, 
                                          vector < double > &                       I_result
                                          );
    
-   bool                compute_delta_I  ( 
-                                         set < pm_point > &                        model, 
-                                         set < pm_point > &                        prev_model, 
-                                         vector < vector < complex < float > > > & Av,
-                                         vector < double > &                       I_result
-                                         );
+   bool                compute_delta_I   ( 
+                                          set < pm_point > &                        model, 
+                                          set < pm_point > &                        prev_model, 
+                                          vector < vector < complex < float > > > & Av,
+                                          vector < double > &                       I_result
+                                          );
 
-   double              fitness2         ( vector < double > & I_result ); // returns rmsd^2 or chi^2
+   double              fitness2          ( vector < double > & I_result ); // returns rmsd^2 or chi^2
 
-   static QString      test             ( QString name, QString oname );
+   static QString      test              ( QString name, QString oname );
 
-   void                debug            ( int level, QString qs );
+   void                debug             ( int level, QString qs );
 
-   set < pm_point >    recenter         ( set < pm_point > & model );
-   // bool             is_connected     ( set < pm_point > & model );
-   // double           fitness          ( set < pm_point > & model ); // compute_I and compare rmsd
+   set < pm_point >    recenter          ( set < pm_point > & model );
+   // bool             is_connected      ( set < pm_point > & model );
+   // double           fitness           ( set < pm_point > & model ); // compute_I and compare rmsd
 
    // split vectors into a "types" list and the searchable double params
-   bool                split            ( vector < double > & params, vector < int > & types, vector < double > & fparams );
+   bool                split             ( vector < double > & params, vector < int > & types, vector < double > & fparams );
    // join them back
-   bool                join             ( vector < double > & params, vector < int > & types, vector < double > & fparams );
+   bool                join              ( vector < double > & params, vector < int > & types, vector < double > & fparams );
 
-   bool                best_sphere      ( set < pm_point > & model, double delta = .5e0 );
-   bool                best_cylinder    ( set < pm_point > & model );
-   bool                best_spheroid    ( set < pm_point > & model );
-   bool                best_ellipsoid   ( set < pm_point > & model );
-   bool                best_torus       ( set < pm_point > & model );
+   void                set_best_delta    ( 
+                                          double best_delta_start   = 1e0,
+                                          double best_delta_divisor = 10e0,
+                                          double best_delta_min     = 1e-2
+                                          );
+
+   bool                best_sphere       ( set < pm_point > & model );
+   bool                best_cylinder     ( set < pm_point > & model );
+   bool                best_spheroid     ( set < pm_point > & model );
+   bool                best_ellipsoid    ( set < pm_point > & model );
+   bool                best_torus        ( set < pm_point > & model );
+   bool                best_torus_segment( set < pm_point > & model );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
