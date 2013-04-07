@@ -912,7 +912,7 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
 
 bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "cylinder" );
+   debug( 1, "cylinder----------------------------------------" );
    int ofs = 1;
    double radius = params[ ofs++ ];
 
@@ -996,7 +996,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
       params_left.push_back( params[ i ] );
    }
 
-   debug( 1, QString( "cylinder radius %1 start %2,%3,%4 end %5,%6,%7\n" )
+   debug( 1, QString( "cylinder radius %1 start %2,%3,%4 end %5,%6,%7" )
           .arg( radius )
           .arg( basex )
           .arg( basey )
@@ -1015,7 +1015,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    int minz = (int) ( basez - radius - 1 );
    int maxz = (int) ( endz  + radius + 1 );
 
-   debug( 1, QString( "cylinder:bounding box %1,%2,%3 %4,%5,%6\n" )
+   debug( 1, QString( "cylinder:bounding box %1,%2,%3 %4,%5,%6" )
           .arg( minx )
           .arg( miny )
           .arg( minz )
@@ -1054,15 +1054,15 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
          vh[ 2 ] / lh2 
       };
 
-   debug( 1, QString( "cylinder: normal %1,%2,%3 length^2 %4" )
+   double radius2 = radius * radius;
+   debug( 1, QString( "cylinder: normal %1,%2,%3 length^2 %4 radius^2 %5" )
           .arg( nvh[ 0 ] )
           .arg( nvh[ 1 ] )
           .arg( nvh[ 2 ] )
-          .arg( h2 ) );
+          .arg( h2 )
+          .arg( radius2 ) );
 
    double r2;
-
-   double radius2 = radius * radius;
 
    for ( int x = minx; x <= maxx; ++x )
    {
@@ -1108,7 +1108,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
                if ( 
                    p_b[ 0 ] * p_b[ 0 ] +
                    p_b[ 1 ] * p_b[ 1 ] +
-                   p_b[ 2 ] * p_b[ 2 ] <= h2 - r2 + bead_radius_over_2 
+                   p_b[ 2 ] * p_b[ 2 ] <= h2 + r2 + bead_radius_over_2 
                    )
                {
                   double p_e[ 3 ] = 
@@ -1121,7 +1121,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
                   if ( 
                       p_e[ 0 ] * p_e[ 0 ] +
                       p_e[ 1 ] * p_e[ 1 ] +
-                      p_e[ 2 ] * p_e[ 2 ] <= h2 - r2 + bead_radius_over_2 
+                      p_e[ 2 ] * p_e[ 2 ] <= h2 + r2 + bead_radius_over_2 
                       )
                   {
                      pmp.x[ 0 ] = ( int16_t )x;

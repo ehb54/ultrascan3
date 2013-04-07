@@ -181,6 +181,7 @@ class US_PM
 
    void                init_objects();
 
+
  public:
    US_PM               ( 
                         double grid_conversion_factor, 
@@ -280,6 +281,8 @@ class US_PM
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+   bool                write_model       ( QString filename, set < pm_point > & model );
+   QString             tmp_name          ( QString basename, vector < double > & params );
 };
 
 #endif

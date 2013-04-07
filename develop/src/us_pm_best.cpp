@@ -81,6 +81,7 @@ bool US_PM::best_vary_one_param(
          }
          if ( !skip )
          {
+            // write_model( tmp_name( "", params ), this_model );
             QString qs = 
                QString( "%1 fitness %2 beads %3 params:" )
                .arg( object_names[ (int) params[ 0 ] ] )

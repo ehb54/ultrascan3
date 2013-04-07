@@ -1,5 +1,7 @@
 #include "../include/us_pm.h"
 
+#define TEST_CYLINDER 0
+
 #define BEST_SPHERE   0
 #define BEST_CYLINDER 1
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER )
@@ -97,6 +99,37 @@ QString US_PM::test( QString name, QString oname )
    US_Vector::printvector( "rayleigh structure factors", F );
 
    US_Vector::printvector( "read params", params );
+
+   if ( TEST_CYLINDER )
+   {
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       1024,
+                       0 );
+
+
+      params.clear();
+
+      params.push_back( 1e0 );  // cylinder 0
+      params.push_back( 1e-1 );  // radius in grid coordinates
+      params.push_back( 1e-1 ); // length
+
+      set < pm_point > model;
+      for ( params[ 2 ] = 2e0; params[ 2 ] < 15e0; params[ 2 ] += 1e0 )
+      {
+         sphere_pm.create_model( params, model );
+         sphere_pm.write_model( sphere_pm.tmp_name( "", params ), model );
+      }
+   }
 
    if ( BEST )
    {

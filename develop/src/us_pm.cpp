@@ -382,3 +382,32 @@ bool US_PM::clip_limits( vector < double > & fparams, vector < double > & low_fp
    return clipped;
 }
 
+bool US_PM::write_model( QString filename, set < pm_point > & model )
+{
+   if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
+   {
+      filename += ".bead_model";
+   }
+
+   cout << "Creating:" << filename << "\n";
+   QFile of( filename );
+   if ( !of.open( IO_WriteOnly ) )
+   {
+      return false;
+   }
+   
+   QTextStream ts( &of );
+   ts << qs_bead_model( model );
+   of.close();
+   return true;
+}
+
+QString US_PM::tmp_name( QString basename, vector < double > &params )
+{
+   QString fname = QString( "/tmp/somo/%1%2_" ).arg( basename ).arg( object_names[ (int) params[ 0 ] ] );
+   for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
+   {
+      fname += QString( "_p%1" ).arg( params[ i ] ).replace( ".", "_" );
+   }
+   return fname;
+}
