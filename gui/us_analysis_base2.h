@@ -218,5 +218,11 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void updateSolution( US_Solution );
       bool query_noise_retain( void );
       void back_out_noise( int  );
+
+   signals:
+      //! \brief A signal to tell the parent when the data are loaded
+      //   void dataLoaded( void );
+      //
+      void dataAreLoaded( void );
 };
 #endif
