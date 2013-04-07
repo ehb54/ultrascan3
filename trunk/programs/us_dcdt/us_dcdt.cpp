@@ -75,11 +75,19 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
 
+   ct_boundaryPos    ->disconnect();
    ct_boundaryPos    ->setMaxValue( 90.0 );
+   ct_boundaryPos    ->setValue   ( 0.0 );
+   ct_smoothing      ->disconnect();
+   ct_smoothing      ->setValue   ( 10 );
    ct_boundaryPercent->disconnect();
    ct_boundaryPercent->setValue   ( 9000.0 );
    ct_boundaryPercent->setEnabled ( false );
    ct_boundaryPercent->setVisible ( false );
+   connect( ct_smoothing,       SIGNAL( valueChanged( double ) ),
+                                SLOT  ( smoothing   ( double ) ) );
+   connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
+			        SLOT  ( boundary_pos( double ) ) );
 
    qApp->processEvents();
 }

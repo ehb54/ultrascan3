@@ -64,9 +64,9 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QCheckBox*   ck_xvba;
    QCheckBox*   ck_yvba;
  
-   QLayout*     lo_xmwt   = us_checkbox( tr( "x=mw"   ), ck_xmwt, true  );
+   QLayout*     lo_xmwt   = us_checkbox( tr( "x=mw"   ), ck_xmwt, false );
    QLayout*     lo_ymwt   = us_checkbox( tr( "y=mw"   ), ck_ymwt, false );
-   QLayout*     lo_xsed   = us_checkbox( tr( "x=s"    ), ck_xsed, false );
+   QLayout*     lo_xsed   = us_checkbox( tr( "x=s"    ), ck_xsed, true  );
    QLayout*     lo_ysed   = us_checkbox( tr( "y=s"    ), ck_ysed, false );
    QLayout*     lo_xdif   = us_checkbox( tr( "x=D"    ), ck_xdif, false );
    QLayout*     lo_ydif   = us_checkbox( tr( "y=D"    ), ck_ydif, false );
@@ -117,7 +117,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    buttonsLayout->addWidget( pb_help   );
    buttonsLayout->addWidget( pb_close  );
 
-   ck_ymwt->setEnabled( false );
+   ck_ysed->setEnabled( false );
    ck_xfra->setEnabled( false );
 
    // set up so check boxes are like 2-d radio buttons
@@ -136,10 +136,10 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    yCheck[ 4 ] = ck_yfra;
    yCheck[ 5 ] = ck_yvba;
 
-   zscale   = 2.0;
+   zscale   = 1.0;
    gridres  = 150.0;
    pksmooth = 80.0;
-   pkwidth  = 0.3;
+   pkwidth  = 0.1;
    ct_zscalefac->setValue( zscale   );
    ct_gridreso ->setValue( gridres  );
    ct_peaksmoo ->setValue( pksmooth );

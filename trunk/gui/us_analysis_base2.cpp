@@ -229,6 +229,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    etype_filt = "velocity";
 
    setMaximumSize( qApp->desktop()->size() - QSize( 60, 60 ) );
+   reset();
 //qDebug() << "AB2: desktop size" << qApp->desktop()->size();
 //qDebug() << "AB2: max main size" << maximumSize();
 }
@@ -313,6 +314,7 @@ void US_AnalysisBase2::load( void )
                      SLOT  ( exclude_from( double ) ) );
 
    dataLoaded = true;
+   emit dataAreLoaded();
    qApp->processEvents();
 }
 
@@ -331,6 +333,9 @@ void US_AnalysisBase2::update( int selection )
 
    excludedScans = allExcls[ selection ];
 
+/* // This should be done in the constructor so these settings
+   // can be overridden by the analysis program
+
    ct_smoothing      ->disconnect();
    ct_boundaryPercent->disconnect();
    ct_boundaryPos    ->disconnect();
@@ -345,12 +350,12 @@ void US_AnalysisBase2::update( int selection )
                                 SLOT  ( boundary_pct( double ) ) );
    connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
                                 SLOT  ( boundary_pos( double ) ) );
+*/
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_from->setStep( 1.0 );
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setStep( 1.0 );
-
    // Set up solution/buffer values implied from experimental data
    QString solID;
    QString bufID;
