@@ -749,6 +749,7 @@ void US_pcsa::open_fitcntl()
    sd.viscosity    = viscosity;
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
+   sd.manual       = manual;
    US_Math2::data_correction( avTemp, sd );
 
    US_Passwd pw;
@@ -762,6 +763,7 @@ void US_pcsa::open_fitcntl()
    dset.solute_type        = 0;
    dset.viscosity          = viscosity;
    dset.density            = density;
+   dset.manual             = manual;
    dset.temperature        = avTemp;
    dset.vbar20             = vbar20;
    dset.vbartb             = vbartb;
@@ -875,6 +877,7 @@ QString US_pcsa::distrib_info()
    US_Math2::SolutionData sd;
    sd.density      = density;
    sd.viscosity    = viscosity;
+   sd.manual       = manual;
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
    US_Math2::data_correction( avTemp, sd );

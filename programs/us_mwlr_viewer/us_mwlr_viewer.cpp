@@ -19,8 +19,8 @@
 #include "us_editor.h"
 
 #ifdef WIN32
-  #include <float.h>
-  #define isnan _isnan
+#include <float.h>
+#define isnan _isnan
 #endif
 
 int main( int argc, char* argv[] )
@@ -1034,7 +1034,8 @@ void US_MwlRawViewer::read_header( QDataStream& ds, MwlHeader& head )
 {
    char cbuf[ 28 ];
 
-   ds.readRawData( cbuf, 26 );
+   //ds.readRawData( cbuf, 26 );
+   ds.readRawData( cbuf, 24 );
 
    head.cell         = QChar( '0' | cbuf[ 0 ] );
    head.channel      = QChar( cbuf[ 1 ] );
@@ -1048,7 +1049,8 @@ void US_MwlRawViewer::read_header( QDataStream& ds, MwlHeader& head )
    head.npoints      = hword( cbuf + 16 );
    head.radius_start = (double)( hword( cbuf + 18 ) ) / 1000.0;
    head.radius_step  = (double)( hword( cbuf + 20 ) ) / 10000.0;
-   head.nwaveln      = iword( cbuf + 22 );
+   //head.nwaveln      = iword( cbuf + 22 );
+   head.nwaveln      = hword( cbuf + 22 );
 }
 
 int US_MwlRawViewer::hword( char* cc )
@@ -1089,9 +1091,11 @@ void US_MwlRawViewer::read_wavelns( QDataStream& ds,
 
    for ( int ii = 0; ii < nwvpts; ii++ )
    {
-      ds.readRawData( cbuf, 4 );
-      int    ivalue = iword( cbuf );
-      double wavln  = (double)ivalue / 10.0;
+      //ds.readRawData( cbuf, 4 );
+      //int    ivalue = iword( cbuf );
+      //double wavln  = (double)ivalue / 10.0;
+      ds.readRawData( cbuf, 2 );
+      double wavln  = (double)hword( cbuf );
       wavelns << wavln;
    }
 }

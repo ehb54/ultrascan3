@@ -190,6 +190,9 @@ DbgLv(1) << "   CR:BF STYPE" << stype;
 
    if ( stype == 0 )
    {  // Normal case of varying f/f0 with constant vbar
+DataSet* dset=data_sets[0];
+DbgLv(0) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
+ << dset->D20w_correction << dset->solution_rec.buffer.manual;
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
@@ -271,8 +274,10 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             double avtemp  = dset->temperature;
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
+            sd.manual      = dset->manual;
             sd.vbar20      = sim_vals.solutes[ cc ].v;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+
             US_Math2::data_correction( avtemp, sd );
 
             // Set model with standard space s and k
@@ -349,8 +354,10 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
+            sd.manual      = dset->manual;
             sd.vbar20      = model.components[ 0 ].vbar20;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+
             US_Math2::data_correction( avtemp, sd );
 
             // Convert to experimental space

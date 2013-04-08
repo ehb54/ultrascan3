@@ -5,7 +5,7 @@
 // Get Solution/Buffer values for a data set
 bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
       QString& soluID, QString& cvbar20, QString& density, QString& viscosity,
-      QString& compress, QString& errmsg )
+      QString& compress, QString& manual, QString& errmsg )
 {
    bool    got_ok = false;
    QString bufID;
@@ -25,10 +25,10 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
                solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
                              errmsg );
       got_ok = bufvals_db( dbP, bufID, bguid, bdesc, density, viscosity,
-                           compress, errmsg );
+                           compress, manual, errmsg );
       got_ok = got_ok ? got_ok :
                bufvals_disk( bufID, bguid, bdesc, density, viscosity,
-                             compress, errmsg );
+                             compress, manual, errmsg );
    }
 
    else
@@ -36,7 +36,7 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
       got_ok = solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
                              errmsg );
       got_ok = bufvals_disk( bufID, bguid, bdesc, density, viscosity,
-                             compress, errmsg );
+                             compress, manual, errmsg );
    }
 
    return got_ok;
@@ -248,7 +248,7 @@ bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata,
 // Get buffer values from DB:  density, viscosity
 bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
    QString& bufGuid, QString& bufDesc, QString& density, QString& viscosity,
-   QString& compress, QString& errmsg  )
+   QString& compress, QString& manual, QString& errmsg  )
 {
    bool      bufvals = false;
 
@@ -287,12 +287,14 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
       }
 
       dbP->next();
+      QString ddesc = dbP->value( 1 ).toString();
       QString ddens = dbP->value( 5 ).toString();
       QString dvisc = dbP->value( 4 ).toString();
       QString dcomp = dbP->value( 2 ).toString();
       density       = ddens.isEmpty() ? density   : ddens;
       viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
       compress      = dcomp.isEmpty() ? compress  : dcomp;
+      manual        = ddesc.isEmpty() ? false  : ( ddesc.contains( "  [M]" ) );
       bufvals       = true;
    }
    else
@@ -336,12 +338,14 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
          }
 
          dbP->next();
+         QString ddesc = dbP->value( 1 ).toString();
          QString ddens = dbP->value( 5 ).toString();
          QString dvisc = dbP->value( 4 ).toString();
          QString dcomp = dbP->value( 2 ).toString();
          density       = ddens.isEmpty() ? density   : ddens;
          viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
          compress      = dcomp.isEmpty() ? compress  : dcomp;
+         manual        = ddesc.isEmpty() ? false  : ( ddesc.contains( "  [M]" ) );
          bufvals       = true;
       }
    }
@@ -352,7 +356,7 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
 // Get buffer values from local disk:  density, viscosity
 bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& density, QString& viscosity,
-      QString& compress, QString& errmsg )
+      QString& compress, QString& manual, QString& errmsg )
 {
    bool    bufvals = false;
    bool    dfound  = false;
@@ -365,6 +369,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
    QString bdens;
    QString bvisc;
    QString bcomp;
+   QString bmanu;
 
    for ( int ii = 0; ii < names.size(); ii++ )
    {
@@ -396,6 +401,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
                bdens     = ats.value( "density"         ).toString();
                bvisc     = ats.value( "viscosity"       ).toString();
                bcomp     = ats.value( "compressibility" ).toString();
+               bmanu     = ats.value( "manual"          ).toString();
                density   = bdens.isEmpty() ? density   : bdens;
                viscosity = bvisc.isEmpty() ? viscosity : bvisc;
                compress  = bcomp.isEmpty() ? compress  : bcomp;
@@ -407,6 +413,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
                bdens     = ats.value( "density"         ).toString();
                bvisc     = ats.value( "viscosity"       ).toString();
                bcomp     = ats.value( "compressibility" ).toString();
+               bmanu     = ats.value( "manual"          ).toString();
                dfound    = true;
             }
 
@@ -423,6 +430,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
       density   = bdens.isEmpty() ? density   : bdens;
       viscosity = bvisc.isEmpty() ? viscosity : bvisc;
       compress  = bcomp.isEmpty() ? compress  : bcomp;
+      manual    = bmanu.isEmpty() ? manual    : bmanu;
       bufvals   = true;
    }
 

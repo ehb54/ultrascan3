@@ -134,7 +134,40 @@ class US_Edit : public US_Widgets
       QwtCounter*        ct_to;
       QwtCounter*        ct_noise;
       QwtCounter*        ct_gaps;
-	
+
+      // MWL Controls - only shown if multi-wavelength data
+      QLabel*            lb_mwlctl;
+      QLabel*            lb_ldelta;
+      QLabel*            lb_lstart;
+      QLabel*            lb_lend;
+      QLabel*            lb_lplot;
+      QLabel*            lb_lexclf;
+      QLabel*            lb_lexclt;
+      QLabel*            lb_odlim;
+
+      QwtCounter*        ct_ldelta;
+      QwtCounter*        ct_odlim;
+
+      QLineEdit*         le_ltrng;
+
+      QComboBox*         cb_lplot;
+      QComboBox*         cb_lstart;
+      QComboBox*         cb_lend;
+      QComboBox*         cb_lexclf;
+      QComboBox*         cb_lexclt;
+
+      QPushButton*       pb_larrow;
+      QPushButton*       pb_rarrow;
+      QPushButton*       pb_excrng;
+      QPushButton*       pb_incall;
+
+      QCheckBox*         ck_radius;
+      QCheckBox*         ck_waveln;
+
+      QGridLayout*       lo_radius;
+      QGridLayout*       lo_waveln;
+
+      // Private slots
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );
       void next_step         ( void );
@@ -194,6 +227,7 @@ class US_Edit : public US_Widgets
       void next_triple       ( void );
       bool all_edits_done    ( void );
       void update_disk_db    ( bool );
+      void show_mwl_controls ( bool );
                              
       void reset             ( void );
       void reset_triple      ( void );

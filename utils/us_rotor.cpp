@@ -123,8 +123,7 @@ US_Rotor::Status US_Rotor::readLabsDisk( QVector< US_Rotor::Lab >& labList )
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
       // copy from etc
-      QString home            = US_Settings::appBaseDir();
-      QString defaultFilename = home + "/etc/labs.xml";
+      QString defaultFilename = US_Settings::appBaseDir() + "/etc/labs.xml";
       QFile::copy( defaultFilename, labFilename );
 
       if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
@@ -256,8 +255,7 @@ US_Rotor::Status US_Rotor::readAbstractRotorsDB(
 // Function to read all the abstract rotor info from disk
 US_Rotor::Status US_Rotor::readAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& arList )
 {
-   QString home     = US_Settings::appBaseDir();
-   QString filename = home + "/etc/rotors/abstractRotors.xml";
+   QString filename = US_Settings::appBaseDir() + "/etc/rotors/abstractRotors.xml";
    QFile   file( filename );
 
    arList.clear();
@@ -524,8 +522,7 @@ bool US_Rotor::diskPath( QString& path )
       }
 
       // Copy default rotors and rotor calibrations here
-      QString home       = US_Settings::appBaseDir();
-      QString defaultDir = home + "/etc/rotors";
+      QString defaultDir = US_Settings::appBaseDir() + "/etc/rotors";
       QDir    etcDir  ( defaultDir );
       QStringList files = etcDir.entryList( QDir::NoDotAndDotDot | QDir::Files );
 

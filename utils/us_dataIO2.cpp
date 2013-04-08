@@ -1300,14 +1300,18 @@ QList< double > US_DataIO2::calc_residuals( int                    order,
 // Returns index of radius value
 int US_DataIO2::index( const Scan& s, const QVector< XValue >& x, double r )
 {
-   if ( r <= x[ 0 ].radius ) return 0;
+   if ( x.size() == s.readings.size() )
+      return index( x, r );
+
+   if ( r <= x[ 0    ].radius )  return 0;
     
    int last = s.readings.size() - 1;
-   if ( r >= x[ last ].radius ) return last;
+   if ( r >= x[ last ].radius )  return last;
 
-   for ( int i = 0; i < s.readings.size(); i++ )
+   for ( int ii = 0; ii < s.readings.size(); ii++ )
    {
-      if ( fabs( x[ i ].radius - r ) < 5.0e-4 ) return i;
+      if ( ii > last )                            return -1;
+      if ( qAbs( x[ ii ].radius - r ) < 5.0e-4 )  return ii;
    }
 
    // Should never happen
@@ -1322,13 +1326,28 @@ int US_DataIO2::index( const QVector< XValue >& x, double r )
    int last = x.size() - 1;
    if ( r >= x[ last ].radius ) return last;
 
-   for ( int i = 0; i < x.size(); i++ )
+   for ( int ii = 0; ii < x.size(); ii++ )
    {
-      if ( fabs( x[ i ].radius - r ) < 5.0e-4 ) return i;
+      if ( qAbs( x[ ii ].radius - r ) < 5.0e-4 ) return ii;
    }
 
-   // Should never happen
-   return -1;
+   // If no close match, just find the index where r differs the least
+   //  (*NB*: this is probably how it should be done in the first place!!)
+   double rdmin   = qAbs( r - x[ 0 ].radius );
+   int    mindx   = 0;
+
+   for ( int ii = 1; ii < x.size(); ii++ )
+   {
+      double rdiff   = qAbs( r - x[ ii ].radius );
+
+      if ( rdiff < rdmin )
+      {
+         rdmin        = rdiff;
+         mindx        = ii;
+      }
+   }
+
+   return mindx;
 }
 
 QString US_DataIO2::errorString( int code )

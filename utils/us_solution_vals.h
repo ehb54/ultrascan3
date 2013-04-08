@@ -35,9 +35,10 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  density   Reference for returned density value string
       //! \param  viscosity Reference for returned viscosity value string
       //! \param  compress  Reference for returned compressibility string
+      //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
       //! \return           Flag for successful fetch of all values
-      static bool values( US_DB2* dbP, US_DataIO2::EditedData*,
+      static bool values( US_DB2* dbP, US_DataIO2::EditedData*, QString&,
             QString&, QString&, QString&, QString&, QString&, QString& );
 
       //! \brief Get identification values for a data set from database
@@ -71,9 +72,10 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  density   Reference for returned density value string
       //! \param  viscosity Reference for returned viscosity value string
       //! \param  compress  Reference for returned compressibility string
+      //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
       static bool bufvals_db( US_DB2* dbP, QString&, QString&, QString&,
-            QString&, QString&, QString&, QString& );
+            QString&, QString&, QString&, QString&, QString& );
                                    
       //! \brief Get buffer values for a data set from local disk
       //! \param  bufId     Reference for input buffer db ID value string
@@ -82,9 +84,10 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  density   Reference for returned density value string
       //! \param  viscosity Reference for returned viscosity value string
       //! \param  compress  Reference for returned compressibility string
+      //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
       static bool bufvals_disk( QString&, QString&, QString&,
-            QString&, QString&, QString&, QString& );
+            QString&, QString&, QString&, QString&, QString& );
                                    
 };
 

@@ -34,7 +34,7 @@ US_BufferGui::US_BufferGui(
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
    
    int row = 0;
-   
+ 
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -148,7 +148,7 @@ US_BufferGui::US_BufferGui(
 
    QPushButton* pb_synch = us_pushbutton( tr( "Synch components with DB" ) );
    connect( pb_synch, SIGNAL( clicked() ), SLOT( synch_components() ) );
-   main->addWidget( pb_synch, row++, 0 );
+   main->addWidget( pb_synch,  row++, 0 );
 
    row = 1;
 
@@ -218,20 +218,25 @@ US_BufferGui::US_BufferGui(
 
    le_compressibility = us_lineedit();
    main->addWidget( le_compressibility, row++, 2 );
-// Make compresssibility read-only for now
+// Make compressibility read-only for now
 us_setReadOnly( le_compressibility, true );
 
+   QGridLayout* lo_manual = us_checkbox(
+         tr( "Manual unadjusted Density and Viscosity" ), cb_manual );
+   main->addLayout( lo_manual, row++, 0, 1, 3 );
+
    QLabel* lb_optics = us_label( tr( "Optics:" ) );
-   main->addWidget( lb_optics, row, 0 );
 
    cmb_optics = us_comboBox();
    cmb_optics->addItem( tr( "Absorbance"   ) );
    cmb_optics->addItem( tr( "Interference" ) );
    cmb_optics->addItem( tr( "Fluorescence" ) );
-   main->addWidget( cmb_optics, row, 1 );
 
    QPushButton* pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
    connect( pb_spectrum, SIGNAL( clicked() ), SLOT( spectrum() ) );
+
+   main->addWidget( lb_optics,   row,   0 );
+   main->addWidget( cmb_optics,  row,   1 );
    main->addWidget( pb_spectrum, row++, 2 );
 
    le_description = us_lineedit();
@@ -656,7 +661,7 @@ void US_BufferGui::search( const QString& text )
 void US_BufferGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to databasee \n" ) + error );
+         tr( "Could not connect to database \n" ) + error );
 }
 
 void US_BufferGui::spectrum( void )
@@ -716,6 +721,7 @@ void US_BufferGui::read_from_disk( QListWidgetItem* item )
 
    buffer.component.clear();
    cb_shared ->setChecked( false );
+   cb_manual ->setChecked( buffer.manual );
 
    for ( int i = 0; i < buffer.componentIDs.size(); i++ )
    {
@@ -744,6 +750,8 @@ void US_BufferGui::read_from_db( const QString& bufferID )
    }
   
    buffer.readFromDB( &db, bufferID );
+  
+   cb_manual->setChecked( buffer.manual );
 }
 
 void US_BufferGui::update_lw_buf( const QString& componentID, double conc )
@@ -769,6 +777,7 @@ void US_BufferGui::update_buffer( void )
    buffer.compressibility = le_compressibility->text().toDouble();
 //hardwire compressibility to zero, for now
 buffer.compressibility = 0.0;
+   buffer.manual          = ( cb_manual->isChecked() );
 
 
    // These are updated in other places
@@ -916,6 +925,8 @@ void US_BufferGui::save_disk( void )
       return;
    }
 
+   buffer.manual    = ( cb_manual->isChecked() );
+
    bool    newFile;
    QString filename = US_Buffer::get_filename( path, buffer.GUID, newFile );
    buffer.writeToDisk( filename );
@@ -948,7 +959,9 @@ void US_BufferGui::save_db( void )
       return;
    }
 
+   buffer.manual          = ( cb_manual->isChecked() );
    QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
+
    int idBuf = buffer.saveToDB( &db, private_buffer );
 
    if ( idBuf < 0 )
@@ -956,7 +969,6 @@ void US_BufferGui::save_db( void )
       QString msg = tr( "( Return Code = %1 ) " ).arg( idBuf )
                     + db.lastError();
 
-qDebug() << "savDB error" << db.lastErrno() << db.lastError() << idBuf;
       QMessageBox::information( this,
             tr( "Attention" ), 
             tr( "Error updating buffer in the database:\n" )
@@ -1032,7 +1044,6 @@ void US_BufferGui::update_db( void )
       {
          QString msg = tr( "( Return Code = %1 ) " ).arg( idBuf )
                        + db.lastError();
-qDebug() << "updDB error" << db.lastErrno() << db.lastError() << idBuf;
 
          QMessageBox::information( this,
                tr( "Attention" ), 
@@ -1218,6 +1229,7 @@ void US_BufferGui::reset( void )
    pb_update         ->setEnabled( false );
    pb_del            ->setEnabled( false );
    cb_shared         ->setChecked( false );
+   cb_manual         ->setChecked( false );
                      
    lb_units          ->setText( "" );
    le_concentration  ->clear();

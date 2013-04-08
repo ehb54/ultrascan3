@@ -258,6 +258,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       US_Math2::SolutionData sd;
       sd.density   = ds->density;
       sd.viscosity = ds->viscosity;
+      sd.manual    = ds->manual;
       sd.vbar20    = ds->vbar20;
       sd.vbar      = ds->vbartb;
 

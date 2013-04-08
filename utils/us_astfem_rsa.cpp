@@ -1608,10 +1608,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
       case (int)US_SimulationParameters::USER:
          // User defined mesh generated from data file
          {
-            //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-            QString home = US_Settings::appBaseDir();
-
-            QFile f( home + "/etc/mesh.dat" );
+            QFile f( US_Settings::appBaseDir() + "/etc/mesh.dat" );
 
             if ( f.open( QIODevice::ReadOnly ) )
             {

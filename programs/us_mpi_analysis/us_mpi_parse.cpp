@@ -297,6 +297,7 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml,
          QXmlStreamAttributes a        = xml.attributes();
          dataset->density   = a.value( "density"   ).toString().toDouble();
          dataset->viscosity = a.value( "viscosity" ).toString().toDouble();
+         dataset->manual    = a.value( "manual"    ).toString().toInt();
       }
 
       if ( xml.isStartElement() && xml.name() == "analyte" )

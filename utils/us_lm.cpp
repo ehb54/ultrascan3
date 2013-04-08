@@ -129,6 +129,13 @@ US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
    this->f          = f;
 }
 
+QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
+{
+   QString statmsg = longmsg
+                     ? QString( lm_infmsg[ status->info ] )
+                     : QString( lm_shortmsg[ status->info ] );
+   return statmsg;
+}
 
    //*************************************************************************/
    //  lm_printout_std (default monitoring routine)

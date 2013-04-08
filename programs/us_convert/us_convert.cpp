@@ -150,6 +150,8 @@ int US_Convert::saveToDisk(
       if ( ! d.remove( rmvfiles[ ii ] ) )
          qDebug() << "Unable to remove file" << rmvfiles[ ii ];
 
+   QString wavelnp = "";
+
    for ( int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
@@ -175,6 +177,14 @@ int US_Convert::saveToDisk(
       else
       {
           QString wavelength = parts[ 2 ];
+          if ( wavelength.contains( "." ) )
+          {
+             double dwlen    = wavelength.toDouble();
+             wavelength      = QString::number( qRound( dwlen ) );
+             if ( wavelength == wavelnp )
+                wavelength      = wavelength + "b";
+          }
+          wavelnp            = wavelength;
           filename           = runID      + "." 
                              + runType    + "." 
                              + cell       + "." 

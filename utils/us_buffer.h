@@ -53,6 +53,7 @@ class US_UTIL_EXTERN US_Buffer
       double  pH;          //!< Acidity or basicity of the buffer
       double  density;     //!< The density of the buffer. 
       double  viscosity;   //!< The viscosity of the buffer. 
+      bool    manual;      //!< Manual explicit unadjusted density & viscosity
 
       //! An associative array of extinction coefficients indexed by wavelength.
       QMap< double, double > extinction;  

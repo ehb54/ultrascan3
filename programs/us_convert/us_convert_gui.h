@@ -13,6 +13,7 @@
 #include "us_dataIO2.h"
 #include "us_solution.h"
 #include "us_selectbox.h"
+#include "us_mwl_data.h"
 
 class US_ConvertGui : public US_Widgets
 {
@@ -23,10 +24,10 @@ class US_ConvertGui : public US_Widgets
       //! \brief   Some status codes to keep track of where data has been saved to
       enum aucStatus
       {
-         NOT_SAVED,                           //!< The file has not been saved
-         EDITING,                             //!< Data is being edited; certain operations not permitted
-         HD_ONLY,                             //!< The file has been saved to the HD
-         BOTH                                 //!< The file has been saved to both HD and DB
+         NOT_SAVED,         //!< The file has not been saved
+         EDITING,           //!< Data being edited; certain opers. not permitted
+         HD_ONLY,           //!< The file has been saved to the HD
+         BOTH               //!< The file has been saved to both HD and DB
       };
 
       //! \brief  Generic constructor for the US_ConvertGui() program.
@@ -63,18 +64,35 @@ class US_ConvertGui : public US_Widgets
       QLineEdit*    le_solutionDesc;
 
       QLabel*       lb_triple;
-      QListWidget*  lw_triple;                        // cell, channel, wavelength
+      QListWidget*  lw_triple;                   // cell, channel, wavelength
+      QListWidget*  lw_todoinfo;                 // to do list
 
-      QListWidget*  lw_todoinfo;                      // to do list
-
+      QLabel*       lb_scan;
+      QLabel*       lb_from;
+      QLabel*       lb_to;
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
 
       QwtCounter*   ct_tolerance;
 
+      //QLabel*       lb_mwlctrl;
+      //QLabel*       lb_mwlctre;
+      //QLabel*       lb_lambdelt;
+      QLineEdit*    le_lambraw;
+      //QLabel*       lb_lambstrt;
+      //QLabel*       lb_lambstop;
+      QLabel*       lb_lambplot;
+      //QwtCounter*   ct_lambdelt;
+      //QComboBox*    cmb_lambstrt;
+      //QComboBox*    cmb_lambstop;
+      QComboBox*    cmb_lambplot;
+      QPushButton*  pb_lambprev;
+      QPushButton*  pb_lambnext;
+
       QPushButton*  pb_editRuninfo;
       QPushButton*  pb_import;
       QPushButton*  pb_loadUS3;
+      QPushButton*  pb_impmwl;
       QPushButton*  pb_details;
       QPushButton*  pb_applyAll;
       QPushButton*  pb_solution;
@@ -97,6 +115,8 @@ class US_ConvertGui : public US_Widgets
 
       QVector< US_Convert::Excludes > allExcludes;    // excludes for all triples
 
+      US_MwlData    mwl_data;
+
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
@@ -108,11 +128,18 @@ class US_ConvertGui : public US_Widgets
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
       double        scanTolerance;                    // remember the scan tolerance value
       int           countSubsets;                     // number of subsets maximum = 4
+      bool          isMwl;                            // Is Multi-Wavelength?
+      int           tripDatax;                        // Triple data index
+      int           tripListx;                        // Triple list index
+
+      double        dlambda;
+      double        slambda;
+      double        elambda;
+      int           nlambda;
 
       bool show_plot_progress;
       US_Experiment      ExpData; 
       QList< US_Convert::TripleInfo > triples;
-      int                             currentTriple;
 
       void reset           ( void );
       void enableRunIDControl( bool );
@@ -141,6 +168,7 @@ class US_ConvertGui : public US_Widgets
       void set_colors      ( const QList< int >& );
       void draw_vline      ( double );
       void db_error        ( const QString& );
+      void triple_index    ( int = -1, int = -1 );
 
   private slots:
       //! \brief Select the current investigator
@@ -151,45 +179,55 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import          ( QString dir = "" );
-      void reimport        ( void );
-      void enableControls  ( void );
-      void runIDChanged    ( void );
-      void toleranceValueChanged( double );           // signal to notify of change
-      void editRuninfo     ( void );
-      void loadUS3         ( QString dir = "" );
-      void loadUS3Disk     ( void );
-      void loadUS3Disk     ( QString );
-      void loadUS3DB       ( void );
-      void updateExpInfo   ( US_Experiment& );
-      void cancelExpInfo   ( void );
-      void getSolutionInfo ( void );
+      void import            ( QString dir = "" );
+      void reimport          ( void );
+      void importMWL         ( void );
+      void enableControls    ( void );
+      void runIDChanged      ( void );
+      void toleranceValueChanged( double );     // signal to notify of change
+      //void lambdaDeltaChanged( double );
+      //void lambdaStartChanged( int );
+      //void lambdaEndChanged  ( int );
+      void lambdaPlotChanged ( int );
+      void lambdaPrevClicked ( void );
+      void lambdaNextClicked ( void );
+      void editRuninfo       ( void );
+      void loadUS3           ( QString dir = "" );
+      void loadUS3Disk       ( void );
+      void loadUS3Disk       ( QString );
+      void loadUS3DB         ( void );
+      void updateExpInfo     ( US_Experiment& );
+      void cancelExpInfo     ( void );
+      void getSolutionInfo   ( void );
       void updateSolutionInfo( US_Solution );
       void cancelSolutionInfo( void );
       void tripleApplyAll    ( void );
-      void runDetails      ( void );
-      void changeDescription( void );
-      void changeTriple    ( QListWidgetItem* );
+      void runDetails        ( void );
+      void changeDescription ( void );
+      void changeTriple      ( QListWidgetItem* );
       void getCenterpieceIndex( int );
-      void focus_from      ( double );
-      void focus_to        ( double );
-      void exclude_scans   ( void );
-      void include         ( void );
-      void define_subsets  ( void );
-      void cClick          ( const QwtDoublePoint& );
-      void process_subsets ( void );
+      void focus_from        ( double );
+      void focus_to          ( double );
+      void exclude_scans     ( void );
+      void include           ( void );
+      void define_subsets    ( void );
+      void cClick            ( const QwtDoublePoint& );
+      void process_subsets   ( void );
       void define_reference  ( void );
-      void show_intensity  ( void );
-      void cancel_reference( void );
-      void drop_reference  ( void );
-      void saveUS3         ( void );
-      int  saveUS3Disk     ( void );
-      void saveUS3DB       ( void );
-      void saveReportsToDB ( void );
-      void resetAll        ( void );
-      void source_changed  ( bool );
-      void update_disk_db  ( bool );
-      void help            ( void )
+      void show_intensity    ( void );
+      void cancel_reference  ( void );
+      void drop_reference    ( void );
+      void saveUS3           ( void );
+      int  saveUS3Disk       ( void );
+      void saveUS3DB         ( void );
+      void saveReportsToDB   ( void );
+      void resetAll          ( void );
+      void source_changed    ( bool );
+      void update_disk_db    ( bool );
+      void show_mwl_control  ( bool );
+      void mwl_connect       ( bool );
+      void reset_lambdas     ( void );
+      void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };
 #endif

@@ -229,6 +229,8 @@ class US_FeMatch : public US_Widgets
       double       vbar;
       double       compress;
 
+      bool         manual;
+
       // Layouts
       QBoxLayout*  mainLayout;
       QBoxLayout*  leftLayout;

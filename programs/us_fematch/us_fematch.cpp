@@ -161,6 +161,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    density      = DENS_20W;
    viscosity    = VISC_20W;
    compress     = 0.0;
+   manual       = false;
    pb_solution  = us_pushbutton( tr( "Solution" ) );
    QLabel* lb_density   = us_label( tr( "Density" ) );
    QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
@@ -209,6 +210,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    viscosity = VISC_20W;
    vbar      = TYPICAL_VBAR;
    compress  = 0.0;
+   manual    = false;
 //Hardwire compressibility to zero and make read-only, for now
 le_compress->setText( "0.0" );
 us_setReadOnly( le_compress, true );
@@ -493,6 +495,7 @@ void US_FeMatch::update( int drow )
    QString bdens = le_density  ->text();
    QString bvisc = le_viscosity->text();
    QString bcomp = le_compress ->text();
+   QString bmanu = manual ? "1" : "0";
    QString svbar = le_vbar     ->text();
    bool    bufvl = false;
 
@@ -501,7 +504,7 @@ void US_FeMatch::update( int drow )
    US_DB2* dbP = dkdb_cntrls->db() ?
                  new US_DB2( pw.getPasswd() ) : 0;
    bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
-                                    bvisc, bcomp, errmsg );
+                                    bvisc, bcomp, bmanu, errmsg );
 //Hardwire compressibility to zero, for now
 bcomp="0.0";
 
@@ -516,6 +519,7 @@ bcomp="0.0";
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
+      manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
 
       if ( solID.isEmpty() )
       {
@@ -643,6 +647,7 @@ void US_FeMatch::data_plot( void )
    double avgTemp     = edata->average_temperature();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
+   solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
@@ -1617,6 +1622,7 @@ void US_FeMatch::adjust_model()
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
+   solution.manual    = manual;
    solution.vbar20    = vbar20;
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
@@ -2004,6 +2010,7 @@ DbgLv(1) << " afvm calc: sigma delta coSed compress"
                   this,       SLOT(   update_progress(   int ) ) );
 
          solution_rec.buffer.compressibility = compress;
+         solution_rec.buffer.manual          = manual;
          astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
       }
@@ -2015,6 +2022,7 @@ DbgLv(1) << " afvm calc: sigma delta coSed compress"
    {  // Do multi-thread calculations
 DbgLv(1) << " USING THREADING";
       solution_rec.buffer.compressibility = compress;
+      solution_rec.buffer.manual          = manual;
       tsimdats.clear();
       tmodels .clear();
       kcomps  .clear();
@@ -2039,6 +2047,7 @@ DbgLv(1) << " USING THREADING";
       }
 
       thrdone   = 0;
+      solution_rec.buffer.manual = manual;
 
       // Build worker threads and begin running
       for ( int ii = 0; ii < nthread; ii++ )
@@ -2597,9 +2606,11 @@ QString US_FeMatch::hydrodynamics( void ) const
    US_Math2::SolutionData solution = this->solution;
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
+   solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
    solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
                                                   avgTemp );
+
    US_Math2::data_correction( avgTemp, solution );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
@@ -2899,6 +2910,7 @@ void US_FeMatch::get_solution()
    int dbdisk = ( dkdb_cntrls->db() ) ? US_Disk_DB_Controls::DB
                                       : US_Disk_DB_Controls::Disk;
    int expID  = 0;
+   solution_rec.buffer.manual = manual;
    QString runID = dataList[ lw_triples->currentRow() ].runID;
 
    if ( dkdb_cntrls->db() )
@@ -2936,6 +2948,7 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
    QString bvisc   = le_viscosity->text();
    QString svbar   = le_vbar     ->text();
    QString bcmpr   = "";
+   QString bmanu   = solution_rec.buffer.manual ? "1" : "0";
    QString errmsg  = "";
    QString bufGUID = solution_rec.buffer.GUID;
    
@@ -2944,19 +2957,21 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, errmsg );
+            bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    else
    {
       US_SolutionVals::bufvals_disk( sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, errmsg );
+            bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    density      = bdens.toDouble();
    viscosity    = bvisc.toDouble();
    vbar         = solution_rec.commonVbar20;
    svbar        = QString::number( vbar );
+   manual       = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+   solution_rec.buffer.manual = manual;
 
    le_density  ->setText( bdens );
    le_viscosity->setText( bvisc );
