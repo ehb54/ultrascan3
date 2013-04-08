@@ -1,6 +1,7 @@
 //! \file us_pcsa_process.cpp
 #include <QApplication>
 #include <QtCore>
+#include <float.h>
 
 #include "us_pcsa_process.h"
 #include "us_util.h"
@@ -931,7 +932,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    double kstr   = ylow;
    double kdif   = yhigh - ylow;
    double srange = xend - xstart;
-   double p1fac  = sqrt( 2.0 * par1 );
+   double p1fac  = sqrt( 2.0 * qMax( par1, p1lo ) );
    double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
    double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
@@ -1039,7 +1040,7 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
    double kstr   = yhigh;
    double kdif   = ylow - yhigh;
    double srange = xend - xstart;
-   double p1fac  = sqrt( 2.0 * par1 );
+   double p1fac  = sqrt( 2.0 * qMax( par1, p1lo ) );
    double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
    double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
@@ -1109,7 +1110,8 @@ void US_pcsaProcess::LevMarq_fit( void )
 //   static US_LM::LM_Control control( 1.e-7, 1.e-7, 1.e-7, 1.e-7,
 //                                     100., 100, 0, 0 );
    static US_LM::LM_Control control( 1.e-5, 1.e-5, 1.e-5, 1.e-5,
-                                     100., 100, 0, 0 );
+//                                     100., 100, 1,  3 );
+                                     100., 100, 0,  3 );
    static US_LM::LM_Status  status;
    static int    n_par  = 2;
    static int    m_dat  = 3;
@@ -1137,8 +1139,8 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    lmtm_id       = startTimer( stepms );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   emit message_update( tr( "\nRefining best model with Levenberg-Marquardt"
-                            " fit ...\n" ), true );
+   emit message_update( tr( "\nNow refining the best model with a "
+                            "Levenberg-Marquardt fit ...\n" ), true );
 
    elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
 
@@ -1168,11 +1170,12 @@ DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 
    if ( curvtype == 0 )
    { // Fit with Levenberg-Marquardt for straight-line curves
-DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1];
       control.ftol     = 1.e-5;
       control.xtol     = 1.e-5;
       control.gtol     = 1.e-5;
       control.epsilon  = 1.e-5;
+DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1]
+   << "ftol,epsl" << control.ftol << control.epsilon;
       fit_function_SL( -1.0, par );    // Make sure to reset eval. function
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
@@ -1180,7 +1183,8 @@ DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1];
 
 DbgLv(0) << "  lmcurve_fit (SL) return: par1,par2" << par[0] << par[1];
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
-   << status.fnorm << status.nfev << status.info;
+   << status.fnorm << status.nfev << status.info
+   << US_LM::lm_statmsg( &status, false );
 double ys = par[0];
 double ye = ys + par[1] * ( suplim - slolim );
 //double rmsd = par[10];
@@ -1192,13 +1196,15 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << slolim << ys << suplim << ye
 
    else if ( curvtype == 1 )
    { // Fit with Levenberg-Marquardt for increasing-sigmoid curves
-      control.ftol     = 1.e-5;
-      control.xtol     = 1.e-5;
-      control.gtol     = 1.e-5;
-      control.epsilon  = 1.e-5;
+      //control.ftol     = 30.0 * DBL_EPSILON;
+      control.ftol     = 1.2e-3;
+      control.xtol     = control.ftol;
+      control.gtol     = control.ftol;
+      control.epsilon  = 1.0e-3;
       fit_function_IS( -1.0, par );    // Make sure to reset eval. function
 DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
+   << "ftol,epsl" << control.ftol << control.epsilon;
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_IS), &control, &status );
@@ -1206,7 +1212,8 @@ DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
 DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
-   << status.fnorm << status.nfev << status.info;
+   << status.fnorm << status.nfev << status.info
+   << US_LM::lm_statmsg( &status, false );
 double rmsd = sqrt( dsets[0]->model.variance );
 int    nsol = dsets[0]->model.components.size();
 DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
@@ -1219,7 +1226,8 @@ DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol;
       control.epsilon  = 1.e-4;
       fit_function_DS( -1.0, par );    // Make sure to reset eval. function
 DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
+   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
+   << "ftol,epsl" << control.ftol << control.epsilon;
 
       US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_DS), &control, &status );
@@ -1251,7 +1259,7 @@ DbgLv(0) << "     lmcfit time: " << ktimeh << "h" << ktimem
  << "m" << ktimes << "s";
 DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
  << "actual" << time_lm;
-   QString fmsg = tr( "New best model has par1 %1,  par2 %2,\n"
+   QString fmsg = tr( "The new best model has par1 %1,  par2 %2,\n"
                       "  RMSD %3,  %4 solutes  " )
        .arg( par[ 0 ] ).arg( par[ 1 ] ).arg( rmsd ).arg( nsol );
    if ( ktimeh == 0 )
@@ -1415,7 +1423,9 @@ void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
       double& minp2, double& maxp2 )
 {
    int nmr        = mrecs.size();
-   int nelite     = ( nmr * 2 ) / 10;
+//   int nelite     = ( nmr * 2 ) / 10;
+   int nelite     = ( nmr * 5 + 50 ) / 100;         // Elite is top 5%, between
+       nelite     = qMin( nmr, qMax( 5, nelite ) ); //  5 and all models
 DbgLv(0) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
 DbgLv(1) << " ElLim: in minkv maxkv" << minkv << maxkv;
 DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;

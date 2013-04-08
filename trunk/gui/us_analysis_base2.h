@@ -77,6 +77,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       double       density;         //!< Density of the buffer
       double       viscosity;       //!< Viscosity of the buffer
       double       vbar;            //!< Specific volume of the analyte
+      bool         manual;          //!< Viscosity,Density manual
 
       // Layouts
       QGridLayout* mainLayout;      //!< Overall Layout

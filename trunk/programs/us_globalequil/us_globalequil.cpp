@@ -359,10 +359,11 @@ void US_GlobalEquil::load( void )
       QString s_dens = QString::number( DENS_20W );
       QString s_visc;
       QString s_comp;
+      QString s_manu;
       QString s_emsg;
       QString solID;
       US_SolutionVals::values( dbP, &dataList[ jd ], solID,
-                               s_vbar, s_dens, s_visc, s_comp, s_emsg );
+                               s_vbar, s_dens, s_visc, s_comp, s_manu, s_emsg );
       ds_vbar20s << s_vbar.toDouble();
       ds_densits << s_dens.toDouble();
       ds_viscos  << s_visc.toDouble();

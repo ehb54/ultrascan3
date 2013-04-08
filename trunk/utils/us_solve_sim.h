@@ -50,6 +50,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             double            centerpiece_bottom; //!< Base bottom
 
             int               solute_type;        //!< Solute type (0,1,2)
+            bool              manual;             //!< visc.,dens. manual
     };
 
     //! Class for communicating simulation

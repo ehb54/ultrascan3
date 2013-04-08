@@ -147,6 +147,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    density      = DENS_20W;
    viscosity    = VISC_20W;
    vbar         = TYPICAL_VBAR;
+   manual       = false;
 
    le_solution  = us_lineedit( tr( "(Experiment's solution)" ), 0, true );
    le_density   = us_lineedit( QString::number( density,   'f', 6 ), 0, true );
@@ -356,6 +357,7 @@ void US_AnalysisBase2::update( int selection )
    ct_from->setStep( 1.0 );
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setStep( 1.0 );
+
    // Set up solution/buffer values implied from experimental data
    QString solID;
    QString bufID;
@@ -365,22 +367,26 @@ void US_AnalysisBase2::update( int selection )
    QString bvisc  = le_viscosity->text();
    QString svbar  = le_vbar     ->text();
    QString bcomp  = "";
+   QString bmanu  = "0";
    QString errmsg = "";
    US_Passwd pw;
    US_DB2*   dbP  = ( disk_controls->db() ) ?
                     new US_DB2( pw.getPasswd() ) : 0;
 
-   bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar,
-                                             bdens, bvisc, bcomp, errmsg );
+   bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar, bdens,
+                                             bvisc, bcomp, bmanu, errmsg );
 
    if ( bufin )
    {
       buffLoaded  = false;
+
       le_density  ->setText( bdens );
       le_viscosity->setText( bvisc );
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
+      manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
       buffLoaded  = true;
+      solution_rec.buffer.manual = manual;
 
       if ( solID.isEmpty() )
       {
@@ -475,6 +481,7 @@ void US_AnalysisBase2::data_plot( void )
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar20    = le_vbar     ->text().toDouble();
+   solution.manual    = manual;
    double avgTemp     = d->average_temperature();
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
@@ -882,6 +889,7 @@ void US_AnalysisBase2::reset( void )
    density      = DENS_20W;
    viscosity    = VISC_20W;
    vbar         = TYPICAL_VBAR;
+   manual       = false;
 
    le_density  ->setText( QString::number( density,   'f', 6 ) );
    le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
@@ -1146,6 +1154,7 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
    solution.vbar20    = le_vbar     ->text().toDouble();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
+   solution.manual    = manual;
    double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
    solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
@@ -1438,8 +1447,10 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
    QString bvisc   = le_viscosity->text();
    QString svbar   = le_vbar     ->text();
    QString bcmpr   = "";
+   QString bmanu   = solution_rec.buffer.manual ? "1" : "0";
    QString errmsg  = "";
    QString bufGUID = solution_rec.buffer.GUID;
+qDebug() << "updSolu: manual" << bmanu;
    
    if ( disk_controls->db() )
    {
@@ -1447,24 +1458,27 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
       US_DB2 db( pw.getPasswd() );
 
       US_SolutionVals::bufvals_db( &db, sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, errmsg );
+            bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    else
    {
       US_SolutionVals::bufvals_disk( sbufID, bufGUID, bufDesc,
-            bdens, bvisc, bcmpr, errmsg );
+            bdens, bvisc, bcmpr, bmanu, errmsg );
    }
 
    density      = bdens.toDouble();
    viscosity    = bvisc.toDouble();
    vbar         = US_Math2::calcCommonVbar( solution_rec, 20.0 );
    svbar        = QString::number( vbar );
+   manual       = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+   solution_rec.buffer.manual = manual;
 
    le_density  ->setText( bdens );
    le_viscosity->setText( bvisc );
    le_vbar     ->setText( svbar );
    le_solution ->setText( solution_rec.solutionDesc );
+qDebug() << "updSolu:  reread manual" << manual << bmanu;
 }
 
 // Query whether user wants to retain already-applied noise

@@ -82,6 +82,7 @@ class US_UTIL_EXTERN US_Math2
          double buoyancyw;        //!< buoyancy w - output
          double s20w_correction;  //!< s correction - output
          double D20w_correction;  //!< D correction - output
+         bool   manual;           //!< manual/unadjusted dens.,visc.
       };
 
 

@@ -419,7 +419,7 @@ void US_ModelGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, 
       tr( "Connection Problem" ),
-      tr( "Could not connect to databasee\n" ) + error );
+      tr( "Could not connect to database\n" ) + error );
 }
 
 bool US_ModelGui::database_ok( US_DB2& db )

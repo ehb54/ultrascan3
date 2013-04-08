@@ -502,6 +502,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
       US_Math2::SolutionData sd;
       sd.viscosity  = dset->viscosity;
       sd.density    = dset->density;
+      sd.manual     = dset->manual;
       double avtemp = dset->temperature;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
@@ -539,6 +540,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
       US_Math2::SolutionData sd;
       sd.viscosity  = dset->viscosity;
       sd.density    = dset->density;
+      sd.manual     = dset->manual;
       double avtemp = dset->temperature;
 
       for ( int cc = 0; cc < nsolutes; cc++ )

@@ -758,5 +758,5 @@ void US_ExperimentGui::cancel( void )
 void US_ExperimentGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to databasee \n" ) + error );
+         tr( "Could not connect to database \n" ) + error );
 }

@@ -8,9 +8,7 @@
 US_DB2::US_DB2()
 {
 #ifndef NO_DB
-   //QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
-   QString certDir = US_Settings::appBaseDir();
-   certFile = certDir + QString( "/etc/ca-cert.pem" );
+   certFile = US_Settings::appBaseDir() + QString( "/etc/ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
@@ -23,9 +21,7 @@ US_DB2::US_DB2( const QString& ){}
 #else
 US_DB2::US_DB2( const QString& masterPW )
 {
-   //QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
-   QString certDir = US_Settings::appBaseDir();
-   certFile = certDir + QString( "/etc/ca-cert.pem" );
+   certFile = US_Settings::appBaseDir() + QString( "/etc/ca-cert.pem" );
 
    connected  = false;
    result     = NULL;

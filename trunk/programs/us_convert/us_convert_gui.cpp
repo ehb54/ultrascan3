@@ -21,10 +21,17 @@
 #include "us_report.h"
 #include "us_gui_util.h"
 #include "us_util.h"
+#include "us_images.h"
 
 #ifdef WIN32
-  #include <float.h>
-  #define isnan _isnan
+#include <float.h>
+#ifndef isnan
+#define isnan _isnan
+#endif
+#endif
+
+#if 0
+#define MWL_OLD
 #endif
 
 int main( int argc, char* argv[] )
@@ -58,6 +65,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    // Very light gray, for read-only line edits
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+   isMwl   = false;
 
    QGridLayout* settings = new QGridLayout;
 
@@ -127,22 +136,67 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    settings->addWidget( pb_loadUS3, row, 0, 1, 2 );
 
    // Run details
-   pb_details = us_pushbutton( tr( "Run Details" ), false );
+   pb_details   = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
-   settings->addWidget( pb_details, row++, 2, 1, 2 );
+   settings->addWidget( pb_details,   row++, 2, 1, 2 );
+
+   // Load MWL data
+   pb_impmwl    = us_pushbutton( tr( "Import MWL Run from HD" ) );
+   connect( pb_impmwl, SIGNAL( clicked() ), SLOT( importMWL() ) );
+   settings->addWidget( pb_impmwl,    row,   0, 1, 2 );
+   le_lambraw   = us_lineedit( tr( "" ), 0, true );
+   settings->addWidget( le_lambraw,   row++, 2, 1, 2 );
 
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label( tr( "Separation Tolerance:" ) );
    settings->addWidget( lb_tolerance, row, 0, 1, 2 );
-
-   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
+   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 );
    ct_tolerance->setStep( 1 );
-   ct_tolerance->setMinimumWidth( 160 );
+   ct_tolerance->setMinimumWidth( 80 );
    settings->addWidget( ct_tolerance, row++, 2, 1, 2 );
-   // connect whenever the user has changed it
    connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),
                           SLOT  ( toleranceValueChanged( double ) ) );
 
+   // Set Lambda Average if MWL
+#ifdef MWL_OLD
+   lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_lambdelt  = us_label   ( tr( "Lambda Delta:" ) );
+   lb_lambstrt  = us_label   ( tr( "Lambda Start:" ) );
+   lb_lambstop  = us_label   ( tr( "Lambda End:" ) );
+   ct_lambdelt  = us_counter ( 2, 1, 100, 1 );
+   ct_lambdelt->setStep( 1 );
+   ct_lambdelt->setMinimumWidth( 80 );
+   cmb_lambstrt = us_comboBox();
+   cmb_lambstop = us_comboBox();
+#endif
+   lb_lambplot  = us_label   ( tr( "Plot Lambda:" ) );
+   cmb_lambplot = us_comboBox();
+   pb_lambprev  = us_pushbutton( "previous", true, -2 );
+   pb_lambnext  = us_pushbutton( "next",     true, -2 );
+   pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+#ifdef MWL_OLD
+   settings->addWidget( lb_mwlctrl,   row++, 0, 1, 4 );
+   settings->addWidget( lb_lambdelt,  row,   0, 1, 2 );
+   settings->addWidget( ct_lambdelt,  row++, 2, 1, 2 );
+   settings->addWidget( lb_lambstrt,  row,   0, 1, 1 );
+   settings->addWidget( cmb_lambstrt, row,   1, 1, 1 );
+   settings->addWidget( lb_lambstop,  row,   2, 1, 1 );
+   settings->addWidget( cmb_lambstop, row++, 3, 1, 1 );
+#endif
+   settings->addWidget( lb_lambplot,  row,   0, 1, 1 );
+   settings->addWidget( cmb_lambplot, row,   1, 1, 1 );
+   settings->addWidget( pb_lambprev,  row,   2, 1, 1 );
+   settings->addWidget( pb_lambnext,  row++, 3, 1, 1 );
+
+   mwl_connect( true );
+   connect( pb_lambprev,   SIGNAL( clicked            (        ) ),
+                           SLOT  ( lambdaPrevClicked  (        ) ) );
+   connect( pb_lambnext,   SIGNAL( clicked            (        ) ),
+                           SLOT  ( lambdaNextClicked  (        ) ) );
+
+   QLabel* lb_runinfo   = us_banner( tr( "Run Information" ) );
+   settings->addWidget( lb_runinfo,   row++, 0, 1, 4 );
    // Change Run ID
    QGridLayout* textBoxes = new QGridLayout();
 
@@ -246,11 +300,11 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    settings->addLayout( ccw, row++, 0, 1, 4 );
 
    // Scan Controls
-   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 4 );
 
    // Scan focus from
-   QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
+   lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0, 1, 2 );
 
@@ -259,7 +313,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    settings->addWidget( ct_from, row++, 2, 1, 2 );
 
    // Scan focus to
-   QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
+   lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0, 1, 2 );
 
@@ -362,6 +416,7 @@ void US_ConvertGui::reset( void )
 
    pb_import     ->setEnabled( true  );
    pb_loadUS3    ->setEnabled( true  );
+   pb_impmwl     ->setEnabled( true  );
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
    pb_details    ->setEnabled( false );
@@ -372,6 +427,7 @@ void US_ConvertGui::reset( void )
    pb_editRuninfo ->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
    pb_saveUS3    ->setEnabled( false );
+   le_lambraw    ->clear();
 
    ct_tolerance  ->setEnabled( true  );
 
@@ -388,12 +444,14 @@ void US_ConvertGui::reset( void )
    ct_to         ->setValue   ( 0 );
 
    // Clear any data structures
-   legacyData.clear();
+   legacyData .clear();
    allExcludes.clear();
-   triples.clear();
-   allData.clear();
+   triples    .clear();
+   allData    .clear();
+   ExpData    .clear();
+   if ( isMwl )
+      mwl_data.clear();
    show_plot_progress = true;
-   ExpData.clear();
 
    // Erase the todo list
    lw_todoinfo->clear();
@@ -415,6 +473,7 @@ void US_ConvertGui::reset( void )
    toleranceChanged = false;
    saveStatus       = NOT_SAVED;
    isPseudo         = false;
+   isMwl            = false;
 
    pb_reference   ->setEnabled( false );
    referenceDefined = false;
@@ -427,6 +486,7 @@ void US_ConvertGui::reset( void )
       : "";
 
    le_investigator->setText( number + US_Settings::us_inv_name() );
+   show_mwl_control( false );
 }
 
 void US_ConvertGui::resetAll( void )
@@ -655,6 +715,163 @@ void US_ConvertGui::reimport( void )
    }
 }
 
+// User pressed the import MWL data button
+void US_ConvertGui::importMWL( void )
+{
+qDebug() << "importMWL";
+QTime timer;
+   // Ask for data directory
+   QString dir = QFileDialog::getExistingDirectory( this, 
+         tr( "Raw MWL Data Directory" ),
+         US_Settings::dataDir() + "/mwl",
+         QFileDialog::DontResolveSymlinks );
+
+   // Restore area beneath dialog
+   qApp->processEvents();
+
+   if ( dir.isEmpty() ) return;
+
+   dir.replace( "\\", "/" );  // WIN32 issue
+
+   currentDir  = QString( dir );
+   runID       = currentDir.section( "/", -1, -1 );
+qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Read the data
+   mwl_data.import_data( currentDir, le_description );
+   isMwl       = true;
+   runType     = "RI";
+
+   // if runType has changed, let's clear out xml data too
+   QApplication::restoreOverrideCursor();
+//   if ( oldRunType != runType ) ExpData.clear();
+   le_runID2->setText( runID );
+   le_dir   ->setText( currentDir );
+
+   // Define default tolerances before converting
+   scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
+   ct_tolerance->setValue( scanTolerance );
+
+   // Set initial lambda range; do 1st averaging; build the output data
+qDebug() << "impMW: set_lambdas";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_description->setText( QString( "Averaging over wavelengths ..." ) );
+   qApp->processEvents();
+   mwl_data.set_lambdas   ( );
+qDebug() << "impMW: average_lambda";
+timer.start();
+   mwl_data.average_lambda( );
+   slambda = mwl_data.countOf( "slambda" );
+   dlambda = mwl_data.countOf( "dlambda" );
+   elambda = mwl_data.countOf( "elambda" );
+qDebug() << "impMW: build_rawData  (avglam time ms)" << timer.elapsed();
+timer.start();
+   QApplication::restoreOverrideCursor();
+   le_description->setText( QString( "Building raw data AUCs ..." ) );
+   qApp->processEvents();
+   mwl_data.build_rawData ( allData );
+qDebug() << "impMW:  size allData" << allData.size() << "time(ms)"
+ << timer.elapsed();
+
+   mwl_connect( false );
+   le_description->setText( QString( "Building Lambda list ..." ) );
+   qApp->processEvents();
+
+   // Propagate initial lists of Lambdas
+   QVector< double > lambdas;
+   int    nlamb_i  = mwl_data.lambdas_raw( lambdas );
+   double rlamb_s  = lambdas[ 0 ];
+   double rlamb_e  = lambdas[ nlamb_i  - 1 ];
+#ifdef MWL_OLD
+   int    klamb    = 0;
+   double prvalu   = 0.0;
+   cmb_lambstrt->clear();
+   cmb_lambstop->clear();
+
+   for ( int ii = 0; ii < nlamb_i; ii++ )
+   {
+      double wvalu  = lambdas[ ii ];
+      wvalu         = (double)qRound( wvalu );
+      if ( wvalu == prvalu )  continue;
+      prvalu        = wvalu;
+      QString clamb = QString::number( wvalu );
+      cmb_lambstrt->addItem( clamb );
+      cmb_lambstop->addItem( clamb );
+      klamb++;
+   }
+
+   cmb_lambstrt->setCurrentIndex( 0 );
+   cmb_lambstop->setCurrentIndex( klamb - 1 );
+#endif
+
+   nlambda       = mwl_data.lambdas( lambdas );
+qDebug() << "impMW:  lambdas size,count" << lambdas.size() << nlambda;
+   cmb_lambplot->clear();
+
+   for ( int ii = 0; ii < nlambda; ii++ )
+   {
+      QString clamb = QString::number( lambdas[ ii ] );
+      cmb_lambplot->addItem( clamb );
+   }
+
+   cmb_lambplot->setCurrentIndex( nlambda / 2 );
+
+   // Build list of triples
+   QStringList celchns;
+   triples   .clear();
+   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
+                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
+
+   int ncelchn   = mwl_data.cellchannels( celchns );
+   nlambda       = mwl_data.countOf( "lambda" );
+qDebug() << "impMW:  lambdas      count" << nlambda << "ncelchn" << ncelchn;
+   le_description->setText( QString( "Building Triples list ..." ) );
+   qApp->processEvents();
+
+   for ( int ii = 0; ii < ncelchn; ii++ )
+   {
+      US_Convert::TripleInfo triple;
+      triple.tripleID    = ii;
+      triple.tripleDesc  = celchns[ ii ] + pwvln;
+      triple.excluded    = false;
+
+      triples << triple;
+   }
+
+   show_mwl_control( true );
+   mwl_connect( true );
+
+   setTripleInfo();
+
+   checkTemperature();          // Check to see if temperature varied too much
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Initialize exclude list
+   init_excludes();
+   
+   plot_current();
+
+   QApplication::restoreOverrideCursor();
+   saveStatus = NOT_SAVED;
+
+   // Ok to enable some buttons now
+   enableControls();
+
+   if ( runType == "RI" )
+   {
+      referenceDefined = false;
+      pb_reference->setEnabled( true );
+   }
+
+   QString lambmsg = tr( "%1 raw:  WL %2 to %3" )
+      .arg( nlamb_i ).arg( rlamb_s ).arg( rlamb_e );
+   le_lambraw->setText( lambmsg );
+   le_description->clear();
+   qApp->processEvents();
+   adjustSize();
+}
+
 // Enable the common dialog controls when there is data
 void US_ConvertGui::enableControls( void )
 {
@@ -685,8 +902,9 @@ void US_ConvertGui::enableControls( void )
       } 
 
       // Disable load buttons if there is data
-      pb_import        ->setEnabled( false );
-      pb_loadUS3       ->setEnabled( false );
+      pb_import ->setEnabled( false );
+      pb_loadUS3->setEnabled( false );
+      pb_impmwl ->setEnabled( false );
       
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
@@ -715,7 +933,8 @@ void US_ConvertGui::enableControls( void )
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
       pb_applyAll     -> setEnabled( false );
-      if ( triples.size() > 1 && rx.exactMatch( triples[ currentTriple ].solution.solutionGUID ) )
+      if ( triples.size() > 1  &&
+           rx.exactMatch( triples[ tripListx ].solution.solutionGUID ) )
       {   
          pb_applyAll  -> setEnabled( true );
       }
@@ -752,16 +971,19 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
 // Reset the boundaries on the scan controls
 void US_ConvertGui::enableScanControls( void )
 {
+   if ( isMwl )  return;
+   triple_index();
+
    ct_from->disconnect();
    ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() 
-                        - allExcludes[ currentTriple ].size() );
+   ct_from->setMaxValue(  allData[ tripDatax ].scanData.size() 
+                        - allExcludes[ tripDatax ].size() );
    ct_from->setValue   ( 0 );
 
    ct_to  ->disconnect();
    ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() 
-                        - allExcludes[ currentTriple ].size() );
+   ct_to  ->setMaxValue(  allData[ tripDatax ].scanData.size() 
+                        - allExcludes[ tripDatax ].size() );
    ct_to  ->setValue   ( 0 );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
@@ -779,12 +1001,13 @@ void US_ConvertGui::enableSaveBtn( void )
    lw_todoinfo->clear();
    int count = 0;
    bool completed = true;
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ tripListx ].centerpiece );
 
    if ( allData.size() == 0 )
    {
       count++;
-      lw_todoinfo->addItem( QString::number( count ) + ": Load or import some AUC data" );
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Load or import some AUC data" ) );
       completed = false;
    }
 
@@ -792,7 +1015,8 @@ void US_ConvertGui::enableSaveBtn( void )
    if ( triples.size() == 0 )
    {
       count++;
-      lw_todoinfo->addItem( QString::number( count ) + ": Load or import some AUC data" );
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Load or import some AUC data" ) );
       completed = false;
    }
    
@@ -808,7 +1032,8 @@ void US_ConvertGui::enableSaveBtn( void )
         ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
    {
       count++;
-      lw_todoinfo->addItem( QString::number( count ) + ": Edit run information" );
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Edit run information" ) );
       completed = false;
    }
    
@@ -822,7 +1047,7 @@ void US_ConvertGui::enableSaveBtn( void )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) + 
-                               ": Select solution for triple " +
+                               tr( ": Select solution for triple " ) +
                                triple.tripleDesc );
          completed = false;
       }
@@ -836,7 +1061,7 @@ void US_ConvertGui::enableSaveBtn( void )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) + 
-                               ": Select centerpiece for triple " +
+                               tr( ": Select centerpiece for triple " ) +
                                triple.tripleDesc );
          completed = false;
       }
@@ -853,7 +1078,7 @@ void US_ConvertGui::enableSaveBtn( void )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
-                               ": Verify database connectivity" );
+                               tr( ": Verify database connectivity" ) );
          completed = false;
       }
    
@@ -867,7 +1092,7 @@ void US_ConvertGui::enableSaveBtn( void )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
-                               ": Select a different runID" );
+                               tr( ": Select a different runID" ) );
          completed = false;
       }
    
@@ -875,7 +1100,8 @@ void US_ConvertGui::enableSaveBtn( void )
       if ( ExpData.operatorID == 0 )
       {
          count++;
-         lw_todoinfo->addItem( QString::number( count ) + ": Select operator in run information" );
+         lw_todoinfo->addItem( QString::number( count )
+               + tr( ": Select operator in run information" ) );
          completed = false;
       }
 
@@ -886,7 +1112,7 @@ void US_ConvertGui::enableSaveBtn( void )
    {
       count++;
       lw_todoinfo->addItem( QString::number( count ) + 
-                            ": Define reference scans" );
+                            tr( ": Define reference scans" ) );
    }
 
    // If we made it here, user can save
@@ -1177,7 +1403,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    setTripleInfo();
    init_excludes();
 
-   le_solutionDesc  -> setText( triples[ currentTriple ].solution.solutionDesc  );
+   le_solutionDesc  -> setText( triples[ tripListx ].solution.solutionDesc  );
 
    // Restore description
    le_description->setText( allData[ 0 ].description );
@@ -1187,7 +1413,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    enableScanControls();
 
    // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ tripListx ].centerpiece );
 
    // Redo plot
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -1405,12 +1631,13 @@ void US_ConvertGui::cancelExpInfo( void )
 
 void US_ConvertGui::getSolutionInfo( void )
 {
+   triple_index();
    ExpData.runID = le_runID -> text();
 
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
 
-   US_Solution solution = triples[ currentTriple ].solution;
+   US_Solution solution = triples[ tripListx ].solution;
 
    US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.expID,
                                                       1,      // channelID (figure out later ?? )
@@ -1433,12 +1660,14 @@ void US_ConvertGui::getSolutionInfo( void )
 // Updating after user has selected info from experiment dialog
 void US_ConvertGui::updateSolutionInfo( US_Solution s )
 {
+   triple_index();
+
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Update local copy
-   triples[ currentTriple ].solution = s;
+   triples[ tripListx ].solution = s;
 
-   le_solutionDesc  ->setText( triples[ currentTriple ].solution.solutionDesc  );
+   le_solutionDesc  ->setText( triples[ tripListx ].solution.solutionDesc  );
 
    plot_current();
 
@@ -1455,7 +1684,7 @@ void US_ConvertGui::cancelSolutionInfo( void )
 // Function to copy the current triple's data to all triples
 void US_ConvertGui::tripleApplyAll( void )
 {
-   US_Convert::TripleInfo triple = triples[ currentTriple ];
+   US_Convert::TripleInfo triple = triples[ tripListx ];
 
    // Copy selected fields only
    for ( int i = 0; i < triples.size(); i++ )
@@ -1498,12 +1727,11 @@ void US_ConvertGui::runDetails( void )
 void US_ConvertGui::changeDescription( void )
 {
    if ( le_description->text().size() < 1 )
-      le_description->setText( allData[ currentTriple ].description );
+      le_description->setText( allData[ tripDatax ].description );
 
    else
    {
-      allData[ currentTriple ].description = le_description->text();
-      allData[ currentTriple ].description = allData[ currentTriple ].description.trimmed();
+      allData[ tripDatax ].description = le_description->text().trimmed();
    }
 }
 
@@ -1511,22 +1739,24 @@ void US_ConvertGui::changeTriple( QListWidgetItem* )
 {
    // Match the description to find the correct triple in memory
    QString triple = lw_triple->currentItem()->text();
-   currentTriple = 0;
+   int tLx = 0;
    for ( int i = 0; i < triples.size(); i++ )
    {
       if ( triple == triples[ i ].tripleDesc )
-         currentTriple = i;
+         tLx = i;
    }
+
+   triple_index( -1, tLx );
    
-   le_dir          -> setText( currentDir );
-   le_description  -> setText( allData[ currentTriple ].description );
-   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
+   le_dir         -> setText( currentDir );
+   le_description -> setText( allData[ tripDatax ].description );
+   le_solutionDesc-> setText( triples[ tripListx ].solution.solutionDesc  );
    
    // Reset maximum scan control values
    enableScanControls();
    
    // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ tripListx ].centerpiece );
    
    // Redo plot
    plot_current();
@@ -1536,17 +1766,16 @@ void US_ConvertGui::setTripleInfo( void )
 {
    // Load them into the list box
    lw_triple->clear();
-   currentTriple = -1;          // indicates that it hasn't been selected yet
+   tripListx = -1;          // indicates that it hasn't been selected yet
    for (int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
 
       lw_triple->addItem( triples[ i ].tripleDesc );
-      if ( currentTriple == -1 ) currentTriple = i;
+      if ( tripListx == -1 ) tripListx = i;
    }
 
-   QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
-   lw_triple->setItemSelected( item, true );
+   lw_triple->setCurrentRow( 0 );
 }
 
 void US_ConvertGui::checkTemperature( void )
@@ -1575,7 +1804,7 @@ void US_ConvertGui::checkTemperature( void )
 
 void US_ConvertGui::getCenterpieceIndex( int )
 {
-   triples[ currentTriple ].centerpiece = cb_centerpiece->getLogicalID();
+   triples[ tripListx ].centerpiece = cb_centerpiece->getLogicalID();
 
    enableSaveBtn();
 }
@@ -1648,7 +1877,7 @@ void US_ConvertGui::init_excludes( void )
 // Function to exclude user-selected scans
 void US_ConvertGui::exclude_scans( void )
 {
-   US_Convert::Excludes excludes = allExcludes[ currentTriple ];
+   US_Convert::Excludes excludes = allExcludes[ tripDatax ];
 
    // Scans actually start at index 0
    int scanStart = (int)ct_from->value() - 1;
@@ -1675,7 +1904,7 @@ void US_ConvertGui::exclude_scans( void )
       if ( ! excludes.contains( scanNdx ) )
       {
          excluded++;
-         allExcludes[ currentTriple ] << scanNdx;
+         allExcludes[ tripDatax ] << scanNdx;
       }
 
       scanNdx++;
@@ -1688,7 +1917,7 @@ void US_ConvertGui::exclude_scans( void )
 
 void US_ConvertGui::include( void )
 {
-   allExcludes[ currentTriple ].excludes.clear();
+   allExcludes[ tripDatax ].excludes.clear();
    enableScanControls();
 
    pb_include->setEnabled( false );
@@ -1742,7 +1971,7 @@ void US_ConvertGui::process_subsets( void )
    picker   ->disconnect();
 
    // Now let's split the triple
-   US_Convert::splitRAData( allData, triples, currentTriple, subsets );
+   US_Convert::splitRAData( allData, triples, tripDatax, subsets );
 
    // We don't need this any more
    subsets.clear();
@@ -1803,19 +2032,19 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    PseudoCalcAvg();
 
    // Now that we have the averages, let's replot
-   Pseudo_reference_triple = currentTriple;
+   Pseudo_reference_triple = tripListx;
 
    // Default to displaying the first non-reference triple
    for ( int i = 0; i < allData.size(); i++ )
    {
       if ( i != Pseudo_reference_triple )
       {
-         currentTriple = i;
+         tripListx = i;
          break;
       }
    }
 
-   lw_triple->setCurrentRow( currentTriple );
+   lw_triple->setCurrentRow( tripListx );
    plot_current();
    QApplication::restoreOverrideCursor();
 
@@ -1858,7 +2087,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
 {
    if ( referenceDefined ) return;             // Average calculation has already been done
 
-   US_DataIO2::RawData referenceData = allData[ currentTriple ];
+   US_DataIO2::RawData referenceData = allData[ tripDatax ];
    int ref_size = referenceData.scanData[ 0 ].readings.size();
 
    for ( int i = 0; i < referenceData.scanData.size(); i++ )
@@ -1894,7 +2123,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
    for ( int i = 0; i < ExpData.RIProfile.size(); i++ )
    {
       // In case there are adjacent excluded scans...
-      if ( allExcludes[ currentTriple ].contains( i ) )
+      if ( allExcludes[ tripDatax ].contains( i ) )
          countBad++;
 
       // Calculate average of before and after for intervening values
@@ -1991,8 +2220,8 @@ void US_ConvertGui::cancel_reference( void )
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
-   currentTriple = 0;
-   lw_triple->setCurrentRow( currentTriple );
+   tripListx = 0;
+   lw_triple->setCurrentRow( tripListx );
 
    plot_current();
 
@@ -2001,12 +2230,12 @@ void US_ConvertGui::cancel_reference( void )
 
 void US_ConvertGui::drop_reference( void )
 {
-   triples[ currentTriple ].excluded = true;
-   setTripleInfo();           // Resets currentTriple
+   triples[ tripListx ].excluded = true;
+   setTripleInfo();           // Resets tripListx
 
    le_dir          -> setText( currentDir );
    le_description  -> setText( saveDescription );
-   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
+   le_solutionDesc -> setText( triples[ tripListx ].solution.solutionDesc  );
 
    enableControls();
 
@@ -2014,7 +2243,7 @@ void US_ConvertGui::drop_reference( void )
    enableScanControls();
 
    // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ tripListx ].centerpiece );
 
    // Redo plot
    plot_current();
@@ -2061,15 +2290,62 @@ int US_ConvertGui::saveUS3Disk( void )
 
    int status;
 
+   QList< US_Convert::TripleInfo > tripsave;
+
+   if ( isMwl )
+   {  // For MWL, save old triples and expand cell/channel to triples
+      tripsave   = triples;
+      triples.clear();
+      QVector< double > wavelens;
+      int nlambda = mwl_data.lambdas( wavelens );
+      QStringList wvls;
+      QStringList iwls;
+      QString ccbase = tripsave[ 0 ].tripleFilename.section( ".", 0, -5 ) + ".";
+
+      for ( int ii = 0; ii < nlambda; ii++ )
+      {  // Build string lists of wavelengths and integral-wavelengths
+         wvls << QString::number( wavelens[ ii ] );
+         iwls << QString::number( qRound( wavelens[ ii ] ) );
+      }
+
+      int tripid      = 0;
+
+      for ( int ii = 0; ii < tripsave.size(); ii++ )
+      {  // Expand each cell/channel to cell/channel/wavelength
+         US_Convert::TripleInfo triple = tripsave[ ii ];
+         QString acell  = triple.tripleDesc.section( "/", 0, 0 ).simplified();
+         QString achan  = triple.tripleDesc.section( "/", 1, 1 ).simplified();
+         QString celchn = acell + " / " + achan + " / ";
+         QString ccfile = ccbase + acell + "." + achan + ".";
+
+         for ( int jj = 0; jj < nlambda; jj++ )
+         {  // Build triple for a wavelength and append to expanded list
+            triple.tripleDesc      = celchn + wvls[ jj ];
+            triple.tripleFilename  = ccfile + iwls[ jj ] + ".auc";
+            triple.tripleID        = tripid++;
+
+            if ( jj > 0 )
+            {  // Beyond the first, generate a unique GUID
+               QString uuid_str       = US_Util::new_guid();
+               US_Util::uuid_parse( uuid_str,
+                                    (unsigned char*)triple.tripleGUID );
+            }
+
+            triples  << triple;
+         }
+      }
+   }
+
+
    // Check to see if we have all the data to write
    if ( ! ExpData.syncOK )
    {
       status = QMessageBox::information( this,
                tr( "Warning" ),
-               tr( "The run has not yet been associated with the database. "    ) +
-               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "           ) +
-               tr( "and then click on the 'Edit Run Information'"              ) +
-               tr( "button to enter this information first.\n\n "               ),
+               tr( "The run has not yet been associated with the database. "
+                   "Click 'OK' to proceed anyway, or click 'Cancel' "
+                   "and then click on the 'Edit Run Information'"
+                   "button to enter this information first.\n\n " ),
                tr( "&OK" ), tr( "&Cancel" ),
                0, 0, 1 );
       if ( status != 0 ) return US_Convert::NOT_WRITTEN;
@@ -2078,8 +2354,8 @@ int US_ConvertGui::saveUS3Disk( void )
    // Write the data
    bool saveGUIDs = saveStatus != NOT_SAVED ;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   status = US_Convert::saveToDisk( allData, triples, 
-                                    allExcludes, runType, runID, dirname, saveGUIDs );
+   status = US_Convert::saveToDisk( allData, triples, allExcludes, runType,
+                                    runID, dirname, saveGUIDs );
    QApplication::restoreOverrideCursor();
 
    // Now try to write the xml file
@@ -2105,10 +2381,10 @@ int US_ConvertGui::saveUS3Disk( void )
       // Main xml data is missing
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "The run information file was not written. " ) +
-            tr( "Please click on the " ) +
-            tr( "'Associate Run with DB' button \n\n " )    +
-            QString::number( fileCount ) + " "                + 
+            tr( "The run information file was not written. "
+                "Please click on the "
+                "'Associate Run with DB' button \n\n " ) +
+            QString::number( fileCount ) + " " + 
             runID + tr( " files written." ) );
       return( status );
    }
@@ -2118,9 +2394,9 @@ int US_ConvertGui::saveUS3Disk( void )
       // xml data is missing for one or more triples
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "Solution information is incomplete. Please click on the " ) +
-            tr( "'Manage Solutions' button for each "  ) +
-            tr( "cell, channel, and wavelength combination \n\n " ) +
+            tr( "Solution information is incomplete. Please click on the "
+                "'Manage Solutions' button for each "
+                "cell, channel, and wavelength combination \n\n " ) +
             QString::number( fileCount ) + " "                + 
             runID + tr( " files written." ) );
       return( status );
@@ -2187,13 +2463,20 @@ int US_ConvertGui::saveUS3Disk( void )
 
    enableRunIDControl( false );
 
+   if ( isMwl )
+   {  // Where triples were expanded for MWL, restore original (cell/channel)
+      //  and skip plot save
+      triples  = tripsave;
+      return( US_Convert::OK );
+   }
+
    // Save the main plots
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString dir    = US_Settings::reportDir() + "/" + runID;
    if ( ! QDir( dir ).exists() )      // make sure the directory exists
       QDir().mkdir( dir );
-   int save_currentTriple = currentTriple;
    data_plot->setVisible( false );
+   int save_tripListx = tripListx;
 
    // Make sure directory is empty
    QDir d( dir );
@@ -2207,7 +2490,7 @@ int US_ConvertGui::saveUS3Disk( void )
 
    for ( int i = 0; i < triples.size(); i++ )
    {
-      currentTriple = i;
+      tripListx = i;
 
       QString t              = triples[ i ].tripleDesc;
       QStringList parts      = t.split(" / ");
@@ -2225,8 +2508,8 @@ int US_ConvertGui::saveUS3Disk( void )
          triple         = cell 
                         + channel 
                         + radius;
-         }
-               
+      }
+            
       else
       {
          triple         = cell 
@@ -2244,7 +2527,7 @@ int US_ConvertGui::saveUS3Disk( void )
    }
 
    // Restore original plot
-   currentTriple = save_currentTriple;
+   tripListx = save_tripListx;
    plot_current();
    data_plot->setVisible( true );
    QApplication::restoreOverrideCursor();
@@ -2605,12 +2888,12 @@ bool US_ConvertGui::convert( void )
    saveDescription = QString( allData[ 0 ].description ); 
 
    // Now let's show the user the first one
-   currentTriple = -1;
+   tripListx = -1;
    for ( int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
 
-      if ( currentTriple == -1 ) currentTriple = i;
+      if ( tripListx == -1 ) tripListx = i;
    }
 
    return( true );
@@ -2662,8 +2945,6 @@ bool US_ConvertGui::centerpieceInfoDB( void )
 }
 
 // Function to get abstractCenterpiece names from disk
-// Right now use function that gets info from flat file,
-// but later change to xml
 bool US_ConvertGui::centerpieceInfoDisk( void )
 {
    // First figure out the xml file name, and try to open it
@@ -2714,86 +2995,92 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
 
 void US_ConvertGui::plot_current( void )
 {
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
+   triple_index();
+
+qDebug() << "pl_cur: tDx" << tripDatax << "aDa size" << allData.size();
+   US_DataIO2::RawData currentData = allData[ tripDatax ];
 
    if ( currentData.scanData.empty() ) return;
 
+qDebug() << "pl_cur:   call plot_titles";
    plot_titles();
 
+qDebug() << "pl_cur:   call plot_all";
    // Plot current data for cell / channel / wavelength triple
    plot_all();
    
    // Set the Scan spin boxes
-   enableScanControls();
+   if ( ! isMwl )
+      enableScanControls();
+qDebug() << "pl_cur:   RETURN";
 }
 
 void US_ConvertGui::plot_titles( void )
 {
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
+qDebug() << "pl_tit: tDx aDsize" << tripDatax << allData.size();
+   US_DataIO2::RawData currentData = allData[ tripDatax ];
 
-   QString triple         = triples[ currentTriple ].tripleDesc;
-   QStringList parts      = triple.split(" / ");
+   QString triple      = triples[ tripListx ].tripleDesc;
+   QStringList parts   = triple.split(" / ");
 
-   QString     cell       = parts[ 0 ];
-   QString     channel    = parts[ 1 ];
-   QString     wl         = parts[ 2 ];
+   QString  cell       = parts[ 0 ];
+   QString  channel    = parts[ 1 ];
+   QString  wl         = isMwl ? cmb_lambplot->currentText() : parts[ 2 ];
+   QString  wavel      = QString::number( qRound( wl.toDouble() ) );
+qDebug() << "pl_tit: cell chn wl" << cell << channel << wl;
 
    // Plot Title and legends
    QString title;
-   QString xLegend = "Radius (in cm)";
-   QString yLegend = "Absorbance";
+   QString xLegend = tr( "Radius (in cm)" );
+   QString yLegend = tr( "Absorbance" );
+   QString ccwlong = runID + tr( "\nCell: " ) + cell
+                           + tr( "  Channel: " ) + channel
+                           + tr( "  Wavelength: " ) + wavel;
 
    if ( strncmp( currentData.type, "RA", 2 ) == 0 )
    {
-      title = "Radial Absorbance Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
+      title = tr( "Radial Absorbance Data\nRun ID: " ) + ccwlong;
    }
 
    else if ( ( strncmp( currentData.type, "RI", 2 ) == 0 ) && isPseudo )
    {
-      title = "Pseudo Absorbance Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
+      title = tr( "Pseudo Absorbance Data\nRun ID: " ) + ccwlong;
    }
 
    else if ( strncmp( currentData.type, "RI", 2 ) == 0 )
    {
-      title = "Radial Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Radial Intensity";
+      title = tr( "Radial Intensity Data\nRun ID: " ) + ccwlong;
+      yLegend = tr( "Radial Intensity at " ) + wl + " nm";
    }
 
    else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
    {
-      title = "Interference Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Fringes";
+      title = tr( "Interference Data\nRun ID: " ) + ccwlong;
+      yLegend = tr( "Fringes" );
    }
 
    else if ( strncmp( currentData.type, "FI", 2 ) == 0 )
    {
-      title = "Fluorescence Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Fluorescence Intensity";
+      title = tr( "Fluorescence Intensity Data\nRun ID: " ) + ccwlong;
+      yLegend = tr( "Fluorescence Intensity" );
    }
       
    else if ( strncmp( currentData.type, "WA", 2 ) == 0 )
    {
-      title = "Wavelength Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Radius: " + wl;
-      xLegend = "Wavelength";
-      yLegend = "Value";
+      title = tr( "Wavelength Data\nRun ID: " ) + ccwlong;
+      xLegend = tr( "Wavelength" );
+      yLegend = tr( "Value" );
    }
 
    else if ( strncmp( currentData.type, "WI", 2 ) == 0 )
    {
-      title = "Wavelength Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Radius: " + wl;
-      xLegend = "Wavelength";
-      yLegend = "Value";
+      title = tr( "Wavelength Intensity Data\nRun ID: " ) + ccwlong;
+      xLegend = tr( "Wavelength" );
+      yLegend = tr( "Value" );
    }
 
    else
-      title = "File type not recognized";
+      title = tr( "File type not recognized" );
    
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
@@ -2803,24 +3090,30 @@ void US_ConvertGui::plot_titles( void )
 
 void US_ConvertGui::plot_all( void )
 {
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
+qDebug() << "pl_all: trdx aDsize" << tripDatax << allData.size();
+   US_DataIO2::RawData currentData = allData[ tripDatax ];
 
    data_plot->detachItems();
    grid = us_grid( data_plot );
 
    int size = currentData.scanData[ 0 ].readings.size();
 
-   double* r = new double[ size ];
-   double* v = new double[ size ];
+   QVector< double > rvec( size );
+   QVector< double > vvec( size );
+
+   double* r = rvec.data();
+   double* v = vvec.data();
 
    double maxR = -1.0e99;
    double minR =  1.0e99;
    double maxV = -1.0e99;
    double minV =  1.0e99;
+qDebug() << "pl_all:   cscD size" << currentData.scanData.size()
+ << "allExc size" << allExcludes.size() << "tDx" << tripDatax;
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
-      US_Convert::Excludes currentExcludes = allExcludes[ currentTriple ];
+      US_Convert::Excludes currentExcludes = allExcludes[ tripDatax ];
       if ( currentExcludes.contains( i ) ) continue;
       US_DataIO2::Scan* s = &currentData.scanData[ i ];
 
@@ -2830,6 +3123,7 @@ void US_ConvertGui::plot_all( void )
          r[ j ] = currentData.radius( j );
          v[ j ] = s->readings  [ j ].value;
 
+//if( (j<3) || ((j+3)>size) )
 //qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")";
          if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )
          {
@@ -2854,6 +3148,7 @@ void US_ConvertGui::plot_all( void )
       c->setData( r, v, size );
 
    }
+qDebug() << "plt_all-End r:v loop";
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -2864,9 +3159,7 @@ void US_ConvertGui::plot_all( void )
    
    show_plot_progress = false;
    data_plot->replot();
- 
-   delete [] r;
-   delete [] v;
+qDebug() << "plt_all-RETURN";
 }
 
 void US_ConvertGui::replot( void )
@@ -2937,5 +3230,217 @@ void US_ConvertGui::db_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Database Problem" ),
          tr( "Database returned the following error: \n" ) + error );
+}
+
+#ifdef MWL_OLD
+// User changed the Lambda Delta value
+void US_ConvertGui::lambdaDeltaChanged( double value )
+{
+qDebug() << "lambdaDeltaChanged" << value;
+   dlambda = value;
+   slambda = mwl_data.countOf( "slambda" );
+   elambda = mwl_data.countOf( "elambda" );
+
+   reset_lambdas();
+      connect( ct_lambdelt,   SIGNAL( valueChanged       ( double ) ),
+                              SLOT  ( lambdaDeltaChanged ( double ) ) );
+      connect( cmb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
+                              SLOT  ( lambdaStartChanged ( int    ) ) );
+      connect( cmb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
+                              SLOT  ( lambdaEndChanged   ( int    ) ) );
+}
+
+// User changed the Lambda Start value
+void US_ConvertGui::lambdaStartChanged( int value )
+{
+qDebug() << "lambdaStartChanged" << value;
+   slambda = cmb_lambstrt->itemText( value ).toDouble();
+   dlambda = mwl_data.countOf( "dlambda" );
+   elambda = mwl_data.countOf( "elambda" );
+
+   reset_lambdas();
+}
+
+// User changed the Lambda End value
+void US_ConvertGui::lambdaEndChanged( int value )
+{
+qDebug() << "lambdaEndChanged" << value;
+   elambda = cmb_lambstrt->itemText( value ).toDouble();
+   dlambda = mwl_data.countOf( "dlambda" );
+   slambda = mwl_data.countOf( "slambda" );
+
+   reset_lambdas();
+}
+#endif
+
+// User changed the Lambda Plot value
+void US_ConvertGui::lambdaPlotChanged( int value )
+{
+qDebug() << "lambdaPlotChanged" << value;
+   triple_index( value );
+
+qDebug() << " lPC tripDatax tripListx" << tripDatax << tripListx;
+   plot_current();
+   pb_lambprev ->setEnabled( value > 0 );
+   pb_lambnext ->setEnabled( ( value + 1 ) < cmb_lambplot->count() );
+}
+
+// User clicked the Previous Lambda Plot button
+void US_ConvertGui::lambdaPrevClicked( )
+{
+qDebug() << "lambdaPrevClicked";
+   int wvx     = cmb_lambplot->currentIndex() - 1;
+
+   if ( wvx < 0 )
+   {
+      wvx         = 0;
+      pb_lambprev->setEnabled( false );
+   }
+
+   pb_lambnext ->setEnabled( ( wvx + 1 ) < cmb_lambplot->count() );
+   cmb_lambplot->setCurrentIndex( wvx );
+}
+
+// User clicked the Next Lambda Plot button
+void US_ConvertGui::lambdaNextClicked( )
+{
+qDebug() << "lambdaNextClicked";
+   int wvx     = cmb_lambplot->currentIndex() + 1;
+   int nlamb   = cmb_lambplot->count();
+
+   if ( ( wvx + 2 ) > nlamb )
+   {
+      wvx         = nlamb - 1;
+      pb_lambnext->setEnabled( false );
+   }
+
+   pb_lambprev ->setEnabled( wvx > 0 );
+   cmb_lambplot->setCurrentIndex( wvx );
+}
+
+// Show or hide MWL controls
+void US_ConvertGui::show_mwl_control( bool show )
+{
+#ifdef MWL_OLD
+   lb_mwlctrl  ->setVisible( show );
+   lb_lambdelt ->setVisible( show );
+   ct_lambdelt ->setVisible( show );
+   lb_lambstrt ->setVisible( show );
+   cmb_lambstrt->setVisible( show );
+   lb_lambstop ->setVisible( show );
+   cmb_lambstop->setVisible( show );
+#endif
+   lb_lambplot ->setVisible( show );
+   cmb_lambplot->setVisible( show );
+   pb_lambprev ->setVisible( show );
+   pb_lambnext ->setVisible( show );
+
+   lb_scan     ->setVisible( !show );
+   lb_from     ->setVisible( !show );
+   ct_from     ->setVisible( !show );
+   lb_to       ->setVisible( !show );
+   ct_to       ->setVisible( !show );
+   pb_exclude  ->setVisible( !show );
+   pb_include  ->setVisible( !show );
+
+   adjustSize();
+}
+
+// Determine triple index (separate list,data for MWL)
+void US_ConvertGui::triple_index( int wavx, int lstx )
+{
+   tripListx     = ( lstx < 0 ) ? lw_triple->currentRow() : lstx;
+qDebug() << "TX: wx lx tlx" << wavx << lstx << tripListx << "mwl" << isMwl;
+
+   if ( isMwl )
+   {  // For multi-wavelength, triple list,data indexes are different
+      int wvx       = ( wavx < 0 ) ? cmb_lambplot->currentIndex() : wavx;
+      int nwvlen    = mwl_data.countOf( "lambda" );
+      tripDatax     = tripListx * nwvlen + wvx;
+qDebug() << "TX:  wx nwl tdx" << wvx << nwvlen << tripDatax;
+   }
+
+   else
+   {  // Otherwise, they are the same
+      tripDatax     = tripListx;
+   }
+}
+
+// Turn MWL connections on or off
+void US_ConvertGui::mwl_connect( bool connect_on )
+{
+   if ( connect_on )
+   {
+#ifdef MWL_OLD
+      connect( ct_lambdelt,   SIGNAL( valueChanged       ( double ) ),
+                              SLOT  ( lambdaDeltaChanged ( double ) ) );
+      connect( cmb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
+                              SLOT  ( lambdaStartChanged ( int    ) ) );
+      connect( cmb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
+                              SLOT  ( lambdaEndChanged   ( int    ) ) );
+#endif
+      connect( cmb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
+                              SLOT  ( lambdaPlotChanged  ( int    ) ) );
+   }
+
+   else
+   {
+#ifdef MWL_OLD
+      ct_lambdelt ->disconnect();
+      cmb_lambstrt->disconnect();
+      cmb_lambstop->disconnect();
+#endif
+      cmb_lambplot->disconnect();
+   }
+}
+
+// Reset when lambda delta,range changes
+void US_ConvertGui::reset_lambdas()
+{
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   mwl_data.set_lambdas   ( dlambda, slambda, elambda );
+   mwl_data.average_lambda( );
+   mwl_data.build_rawData ( allData );
+   mwl_connect( false );
+
+   QVector< double > lambdas;
+   nlambda       = mwl_data.lambdas( lambdas );
+   cmb_lambplot->clear();
+
+   for ( int ii = 0; ii < nlambda; ii++ )
+   {
+      QString clamb = QString::number( lambdas[ ii ] );
+      cmb_lambplot->addItem( clamb );
+   }
+
+   cmb_lambplot->setCurrentIndex( nlambda / 2 );
+
+   // Build list of triples
+   QStringList celchns;
+   triples.clear();
+   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
+                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
+
+   int ncelchn   = mwl_data.cellchannels( celchns );
+   nlambda       = mwl_data.countOf( "lambda" );
+
+   for ( int ii = 0; ii < ncelchn; ii++ )
+   {
+      US_Convert::TripleInfo triple;
+      triple.tripleID    = ii;
+      triple.tripleDesc  = celchns[ ii ] + pwvln;
+      triple.excluded    = false;
+
+      triples << triple;
+   }
+
+   mwl_connect( true );
+   QApplication::restoreOverrideCursor();
+
+   setTripleInfo();
+
+   init_excludes();
+   
+   plot_current();
 }
 

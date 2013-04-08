@@ -68,14 +68,12 @@ void US_BufferComponent::getAllFromHD(
 {
    componentList.clear();
 
-   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QString home = US_Settings::appBaseDir();
-   QFile   file( home + "/etc/bufferComponents.xml" );
+   QFile   file( US_Settings::appBaseDir() + "/etc/bufferComponents.xml" );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
       // Fail quietly
-      //qDebug() << "Cannot open file " << home + "/etc/bufferComponents.xml";
+      //qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
       return;
    }
 
@@ -145,13 +143,11 @@ void US_BufferComponent::component(
 void US_BufferComponent::putAllToHD( 
         const QMap< QString, US_BufferComponent >& componentList ) 
 {
-   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QString home = US_Settings::appBaseDir();
-   QFile   file( home + "/etc/bufferComponents.xml" );
+   QFile   file( US_Settings::appBaseDir() + "/etc/bufferComponents.xml" );
    
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
    {
-       qDebug() << "Cannot open file " << home + "/etc/bufferComponents.xml";
+       qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
        return;
    }
 
@@ -212,6 +208,7 @@ US_Buffer::US_Buffer()
    pH              = WATER_PH;
    density         = DENS_20W;
    viscosity       = VISC_20W;
+   manual          = false;
    person       .clear();
    bufferID     .clear();
    GUID         .clear();
@@ -317,6 +314,7 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute( "viscosity"  , QString::number( viscosity, 'f', 5 ) );
    xml.writeAttribute( "compressibility", 
       QString::number( compressibility, 'e', 4 ) );
+   xml.writeAttribute( "manual"     , manual ? "1" : "0" );
 
    for ( int i = 0; i < component.size(); i++ )
    {
@@ -386,6 +384,13 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    pH              = db->value( 3 ).toString().toDouble();
    viscosity       = db->value( 4 ).toString().toDouble();
    density         = db->value( 5 ).toString().toDouble();
+   manual          = false;
+   int manx        = description.indexOf( "  [M]" );
+   if ( manx > 0 )
+   {
+      manual          = true;
+      description     = description.left( manx ).simplified();
+   }
 
    component    .clear();
    componentIDs .clear();
@@ -431,8 +436,11 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
      << GUID;
    db->query( q );
 
-   int ncomp    = component.size();
-   int status   = db->lastErrno();
+   int     ncomp    = component.size();
+   int     status   = db->lastErrno();
+   QString descrip  = description;
+   if ( manual )
+      descrip          = description + "  [M]";
 //qDebug() << "get_bufferID-stat" << status;
 
    if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )
@@ -446,12 +454,12 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
       q.clear();
       q << "new_buffer"
         << GUID
-        << description
+        << descrip
         << QString::number( compressibility, 'e', 4 )
         << QString::number( pH             , 'f', 4 )
         << QString::number( density        , 'f', 6 )
         << QString::number( viscosity      , 'f', 5 )
-        << private_buffer  // Private
+        << private_buffer                              // Private
         << QString::number( US_Settings::us_inv_ID() );
 
       db->statusQuery( q );
@@ -476,12 +484,12 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
       q.clear();
       q << "update_buffer"
         << bufID
-        << description
+        << descrip
         << QString::number( compressibility, 'e', 4 )
         << QString::number( pH             , 'f', 4 )
         << QString::number( density        , 'f', 6 )
         << QString::number( viscosity      , 'f', 5 )
-        << private_buffer; // Private
+        << private_buffer;                             // Private
 
       db->statusQuery( q );
 
@@ -581,6 +589,8 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
    pH              = a.value( "ph"          ).toString().toDouble();
    density         = a.value( "density"     ).toString().toDouble();
    viscosity       = a.value( "viscosity"   ).toString().toDouble();
+   QString manu    = a.value( "manual"      ).toString();
+   manual          = ( !manu.isEmpty()  &&  manu == "1" );
 
    concentration.clear();
    componentIDs .clear();
@@ -713,6 +723,7 @@ void US_Buffer::dumpBuffer( void ) const
    qDebug() << "extinction     " << extinction;
    qDebug() << "refraction     " << refraction;
    qDebug() << "fluorescence   " << fluorescence;
+   qDebug() << "manual         " << manual;
    qDebug() << "Components     " << component.size();
    for ( int i = 0; i < component.size(); i++ )
    {

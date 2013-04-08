@@ -800,7 +800,12 @@ void US_2dsa::open_fitcntl()
    sd.viscosity    = viscosity;
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
+   sd.manual       = manual;
    US_Math2::data_correction( avTemp, sd );
+DbgLv(0) << "2DSA d_corr s,D,m" << sd.s20w_correction << sd.D20w_correction
+ << sd.manual;
+DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
+ << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
 
    US_Passwd pw;
    US_DB2* dbP             = disk_controls->db()
@@ -817,6 +822,7 @@ void US_2dsa::open_fitcntl()
    dset.vbartb             = vbartb;
    dset.s20w_correction    = sd.s20w_correction;
    dset.D20w_correction    = sd.D20w_correction;
+   dset.manual             = manual;
 DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
  << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
 
@@ -925,6 +931,8 @@ QString US_2dsa::distrib_info()
    sd.viscosity    = viscosity;
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
+   sd.manual       = manual;
+DbgLv(1) << "Data_Corr manual" << sd.manual;
    US_Math2::data_correction( avTemp, sd );
 
    for ( int ii = 0; ii < ncomp; ii++ )

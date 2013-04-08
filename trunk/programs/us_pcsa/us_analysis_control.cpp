@@ -95,7 +95,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    cmb_curvtype->addItem( "Straight Line" );
    cmb_curvtype->addItem( "Increasing Sigmoid" );
    cmb_curvtype->addItem( "Decreasing Sigmoid" );
-   cmb_curvtype->setCurrentIndex( 0 );
+   cmb_curvtype->setCurrentIndex( 1 );
 
    le_minvari   = us_lineedit( "0.000e-05", -1, true );
    le_minrmsd   = us_lineedit( "0.009000" , -1, true );

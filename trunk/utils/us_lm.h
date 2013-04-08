@@ -76,6 +76,9 @@ class US_UTIL_EXTERN US_LM
       const LM_Control lm_control_double;  //!< controls in double format
       const LM_Control lm_control_float;   //!< controls in float format
 
+      //! Status message string for termination condition
+      static QString lm_statmsg( LM_Status*, bool = false );
+
       //! Standard monitoring routine.
       static void lm_printout_std( int n_par, double *par, int m_dat,
                                    const void *data, const double *fvec,

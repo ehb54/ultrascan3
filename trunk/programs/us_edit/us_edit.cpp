@@ -20,6 +20,7 @@
 #include "us_db2.h"
 #include "us_get_edit.h"
 #include "us_constants.h"
+#include "us_images.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -131,6 +132,100 @@ US_Edit::US_Edit() : US_Widgets()
    ct_gaps->setStep ( 10.0 );
    ct_gaps->setValue( 50.0 );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
+
+   // MWL Control
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( font );
+   int fwid = fmet.maxWidth();
+   int rhgt = ct_gaps->height();
+   int lwid = fwid * 4;
+   int swid = lwid + fwid;
+   QString clambda   = QString( QChar( 955 ) );
+   lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
+   lb_ldelta = us_label( clambda + tr( " Delta:" ), -1 );
+   ct_ldelta = us_counter( 1, 1, 100, 1 );
+   ct_ldelta->setFont( font );
+   ct_ldelta->setStep( 1 );
+   ct_ldelta->setMinimumWidth( lwid );
+   ct_ldelta->resize( rhgt, swid );
+   lb_lstart = us_label( clambda + tr( " Start:" ), -1 );
+   lb_lend   = us_label( clambda + tr( " End:" ),   -1 );
+   lb_lplot  = us_label( tr( "Plot (W nm):" ), -1 );
+   lb_lexclf = us_label( tr( "Exclude from:" ), -1 );
+   lb_lexclt = us_label( tr( "Exclude to:" ), -1 );
+   lb_odlim  = us_label( tr( "OD Limit for radius range:" ), -1 );
+   ct_odlim  = us_counter( 3, 0.1, 20.5, 0.8 );
+   ct_odlim ->setFont( font );
+   ct_odlim ->setStep( 0.01 );
+   ct_odlim ->setMinimumWidth( lwid );
+   ct_odlim ->resize( rhgt, swid );
+
+   int     nlmbd  = 1118;
+   double  lmbdlo = 250.0;
+   double  lmbdhi = 650.1;
+   QString lrsmry = tr( "%1 raw: " ).arg( nlmbd ) + clambda
+                  + tr( " %1 to %2" ).arg( lmbdlo ).arg( lmbdhi );
+   le_ltrng  = us_lineedit( lrsmry, -2, true );
+   cb_lplot  = us_comboBox();
+   cb_lstart = us_comboBox();
+   cb_lend   = us_comboBox();
+   cb_lexclf = us_comboBox();
+   cb_lexclt = us_comboBox();
+
+   cb_lplot ->setFont( font );
+   cb_lstart->setFont( font );
+   cb_lend  ->setFont( font );
+   cb_lexclf->setFont( font );
+   cb_lexclt->setFont( font );
+
+   pb_larrow = us_pushbutton( tr( "previous" ), true, -2 );
+   pb_rarrow = us_pushbutton( tr( "next"     ), true, -2 );
+   pb_larrow->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
+   pb_rarrow->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+   pb_excrng = us_pushbutton( tr( "Exclude Range" ), true, -1 );
+   pb_incall = us_pushbutton( tr( "Include All" ),   true, -1 );
+   lo_radius = us_checkbox( tr( "x axis Radius" ),     ck_radius, true  );
+   lo_waveln = us_checkbox( tr( "x axis Wavelength" ), ck_waveln, false );
+   ck_radius->setFont( font );
+   ck_waveln->setFont( font );
+
+   QStringList lambdas;
+lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
+   cb_lplot ->addItems( lambdas );
+   cb_lstart->addItems( lambdas );
+   cb_lend  ->addItems( lambdas );
+   cb_lexclf->addItems( lambdas );
+   cb_lexclt->addItems( lambdas );
+
+   cb_lplot ->setCurrentIndex( 2 );
+   cb_lstart->setCurrentIndex( 0 );
+   cb_lend  ->setCurrentIndex( 6 );
+   cb_lexclf->setCurrentIndex( 4 );
+   cb_lexclt->setCurrentIndex( 5 );
+
+   specs->addWidget( lb_mwlctl, s_row++, 0, 1, 4 );
+   specs->addWidget( lb_ldelta, s_row,   0, 1, 1 );
+   specs->addWidget( ct_ldelta, s_row,   1, 1, 1 );
+   specs->addWidget( le_ltrng,  s_row++, 2, 1, 2 );
+   specs->addWidget( lb_lstart, s_row,   0, 1, 1 );
+   specs->addWidget( cb_lstart, s_row,   1, 1, 1 );
+   specs->addWidget( lb_lend,   s_row,   2, 1, 1 );
+   specs->addWidget( cb_lend,   s_row++, 3, 1, 1 );
+   specs->addLayout( lo_radius, s_row,   0, 1, 2 );
+   specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
+   specs->addWidget( lb_lplot,  s_row,   0, 1, 1 );
+   specs->addWidget( cb_lplot,  s_row,   1, 1, 1 );
+   specs->addWidget( pb_larrow, s_row,   2, 1, 1 );
+   specs->addWidget( pb_rarrow, s_row++, 3, 1, 1 );
+   specs->addWidget( lb_lexclf, s_row,   0, 1, 1 );
+   specs->addWidget( cb_lexclf, s_row,   1, 1, 1 );
+   specs->addWidget( lb_lexclt, s_row,   2, 1, 1 );
+   specs->addWidget( cb_lexclt, s_row++, 3, 1, 1 );
+   specs->addWidget( pb_excrng, s_row,   0, 1, 2 );
+   specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
+   specs->addWidget( lb_odlim,  s_row,   0, 1, 2 );
+   specs->addWidget( ct_odlim,  s_row++, 2, 1, 2 );
 
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -308,6 +403,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    main->addLayout( left );
    main->addLayout( plot );
+   main->setStretchFactor( left, 2 );
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
@@ -434,6 +530,8 @@ void US_Edit::reset( void )
    editIDs       .clear();
 
    set_pbColors( NULL );
+
+   show_mwl_controls( false );
 }
 
 // Reset parameters for a new triple
@@ -515,8 +613,8 @@ void US_Edit::gap_check( void )
       int gapLength = 0;
       int location  = 0;
 
-      int leftPoint  = US_DataIO2::index( s, data.x, range_left  );
-      int rightPoint = US_DataIO2::index( s, data.x, range_right );
+      int leftPoint  = US_DataIO2::index( data.x, range_left  );
+      int rightPoint = US_DataIO2::index( data.x, range_right );
 
       for ( int i = leftPoint; i <= rightPoint; i++ )
       {
@@ -665,7 +763,7 @@ void US_Edit::load( void )
       new US_LoadAUC( isLocal, allData, triples, workingDir );
 
    connect( dialog, SIGNAL( changed       ( bool ) ),
-            this,    SLOT(   update_disk_db( bool ) ) );
+            this,   SLOT  ( update_disk_db( bool ) ) );
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
@@ -718,12 +816,21 @@ void US_Edit::load( void )
    }
 
    QString runtype = runID + "." + dataType;
+   int     nwavln  = 0;
+   QStringList wavelns;
 
    for ( int ii = 0; ii < triples.size(); ii++ )
    {  // Generate file names
       QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
       QString file   = runtype + "." + triple + ".auc";
       files << file;
+
+      QString waveln = triple.section( ".", -1, -1 ).simplified();
+      if ( ! wavelns.contains( waveln ) )
+      {
+         nwavln++;
+         wavelns << waveln;
+      }
    }
 
    workingDir   = workingDir + "/";
@@ -946,6 +1053,14 @@ void US_Edit::load( void )
    int ntriples = triples.size();
    editGUIDs.fill( "", ntriples );
    editIDs  .fill( "", ntriples );
+
+   if ( nwavln > 2 )
+   {
+      show_mwl_controls( true );
+   }
+
+   else
+      show_mwl_controls( false );
 }
 
 // Set pushbutton colors
@@ -1087,8 +1202,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          else if ( expIsEquil || men_1click )
          {  // Equilibrium
             meniscus_left = p.x();
-            int ii        = US_DataIO2::index( data.scanData[ 0 ], data.x,
-                               meniscus_left );
+            int ii        = US_DataIO2::index( data.x, meniscus_left );
             draw_vline( meniscus_left );
             meniscus      = data.x[ ii ].radius;
             le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
@@ -1129,8 +1243,8 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                if ( ! includes.contains( i ) ) continue;
 
                s         = &data.scanData[ i ];
-               int start = US_DataIO2::index( *s, data.x, meniscus_left  );
-               int end   = US_DataIO2::index( *s, data.x, meniscus_right );
+               int start = US_DataIO2::index( data.x, meniscus_left  );
+               int end   = US_DataIO2::index( data.x, meniscus_right );
 
                for ( int j = start; j <= end; j++ )
                {
@@ -1395,9 +1509,9 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             // Use the last scan
             US_DataIO2::Scan s = data.scanData.last();
             
-            int start = US_DataIO2::index( s, data.x, range_left );
-            int end   = US_DataIO2::index( s, data.x, range_right );
-            int pt    = US_DataIO2::index( s, data.x, p.x() );
+            int start = US_DataIO2::index( data.x, range_left );
+            int end   = US_DataIO2::index( data.x, range_right );
+            int pt    = US_DataIO2::index( data.x, p.x() );
 
             if ( pt - start < 5  ||  end - pt < 5 )
             {
@@ -1779,8 +1893,8 @@ void US_Edit::plot_range( void )
       
       US_DataIO2::Scan* s = &data.scanData[ i ];
       
-      int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
-      int indexRight = US_DataIO2::index( *s, data.x, range_right );
+      int indexLeft  = US_DataIO2::index( data.x, range_left );
+      int indexRight = US_DataIO2::index( data.x, range_right );
       double menp    = 0.0;
 
       if ( expIsEquil )
@@ -1805,10 +1919,10 @@ void US_Edit::plot_range( void )
             break;
          }
 
-         indexLeft  = US_DataIO2::index( *s, data.x, rngl );
-         indexRight = US_DataIO2::index( *s, data.x, rngr );
+         indexLeft  = US_DataIO2::index( data.x, rngl );
+         indexRight = US_DataIO2::index( data.x, rngr );
 
-         int inxm   = US_DataIO2::index( *s, data.x, menp );
+         int inxm   = US_DataIO2::index( data.x, menp );
 
          if ( inxm < 1 )
             return;
@@ -1886,8 +2000,8 @@ void US_Edit::plot_last( void )
    // Plot only the last scan
    US_DataIO2::Scan* s = &data.scanData[ includes.last() ];;
    
-   int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
-   int indexRight = US_DataIO2::index( *s, data.x, range_right );
+   int indexLeft  = US_DataIO2::index( data.x, range_left );
+   int indexRight = US_DataIO2::index( data.x, range_right );
    
    int     count  = 0;
    uint    size   = s->readings.size();
@@ -2230,8 +2344,8 @@ void US_Edit::update_scan( QList< QPointF > changes )
 
    if ( range_left > 0 )
    {
-      left  = US_DataIO2::index( *s, data.x, range_left  );
-      right = US_DataIO2::index( *s, data.x, range_right );
+      left  = US_DataIO2::index( data.x, range_left  );
+      right = US_DataIO2::index( data.x, range_right );
    }
    else
    {
@@ -2310,8 +2424,8 @@ void US_Edit::remove_spikes( void )
    {
       US_DataIO2::Scan* s = &data.scanData [ i ];
 
-      int start  = US_DataIO2::index( *s, data.x, range_left  );
-      int end    = US_DataIO2::index( *s, data.x, range_right );
+      int start  = US_DataIO2::index( data.x, range_left  );
+      int end    = US_DataIO2::index( data.x, range_right );
 
       for ( int j = start; j < end; j++ )
       {
@@ -3123,7 +3237,7 @@ void US_Edit::apply_prior( void )
    pb_plateau->setEnabled( true );
 
    US_DataIO2::Scan scan  = data.scanData.last();
-   int              pt    = US_DataIO2::index( scan, data.x, baseline );
+   int              pt    = US_DataIO2::index( data.x, baseline );
    double           sum   = 0.0;
 
    // Average the value for +/- 5 points
@@ -3225,7 +3339,7 @@ void US_Edit::prior_equil( void )
       if ( db.lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to databasee \n" ) + db.lastError() );
+           tr( "Could not connect to database \n" ) + db.lastError() );
          return;
       }
 
@@ -3615,5 +3729,37 @@ void US_Edit::update_disk_db( bool isDB )
       disk_controls->set_db();
    else
       disk_controls->set_disk();
+}
+
+// Show or hide MWL Controls
+void US_Edit::show_mwl_controls( bool show )
+{
+   lb_mwlctl->setVisible( show );
+   lb_ldelta->setVisible( show );
+   ct_ldelta->setVisible( show );
+   le_ltrng ->setVisible( show );
+   lb_lstart->setVisible( show );
+   cb_lstart->setVisible( show );
+   lb_lend  ->setVisible( show );
+   cb_lend  ->setVisible( show );
+   lb_lplot ->setVisible( show );
+   cb_lplot ->setVisible( show );
+   pb_larrow->setVisible( show );
+   pb_rarrow->setVisible( show );
+   lb_lexclf->setVisible( show );
+   cb_lexclf->setVisible( show );
+   lb_lexclt->setVisible( show );
+   cb_lexclt->setVisible( show );
+   pb_excrng->setVisible( show );
+   pb_incall->setVisible( show );
+   lb_odlim ->setVisible( show );
+   ct_odlim ->setVisible( show );
+
+   lo_radius->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_radius->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_waveln->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_waveln->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+
+   adjustSize();
 }
 

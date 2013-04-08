@@ -96,8 +96,8 @@ void US_RiNoise::draw_fit( double new_order )
 
       const US_DataIO2::Scan* s = &data.scanData[ i ];
 
-      int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
-      int indexRight = US_DataIO2::index( *s, data.x, range_right );
+      int indexLeft  = US_DataIO2::index( data.x, range_left );
+      int indexRight = US_DataIO2::index( data.x, range_right );
 
       double delta_r  = ( range_right - range_left ) / 
                         ( indexRight - indexLeft );
@@ -214,8 +214,8 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
 
       const US_DataIO2::Scan* s = &data.scanData[ i ];
 
-      int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
-      int indexRight = US_DataIO2::index( *s, data.x, range_right );
+      int indexLeft  = US_DataIO2::index( data.x, range_left );
+      int indexRight = US_DataIO2::index( data.x, range_right );
 
       double delta_r  = ( range_right - range_left ) / 
                         ( indexRight - indexLeft );

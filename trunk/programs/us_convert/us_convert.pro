@@ -11,7 +11,8 @@ HEADERS       = us_convert_gui.h       \
                 us_experiment_gui.h    \
                 us_selectbox.h         \
                 us_intensity.h         \
-                us_get_dbrun.h
+                us_get_dbrun.h         \
+                us_mwl_data.h
 
 SOURCES       = us_convert_gui.cpp     \
                 us_convert.cpp         \
@@ -20,5 +21,6 @@ SOURCES       = us_convert_gui.cpp     \
                 us_experiment_gui.cpp  \
                 us_selectbox.cpp       \
                 us_intensity.cpp       \
-                us_get_dbrun.cpp
+                us_get_dbrun.cpp       \
+                us_mwl_data.cpp
 

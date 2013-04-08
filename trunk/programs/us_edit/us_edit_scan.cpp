@@ -164,8 +164,8 @@ void US_EditScan::redraw( void )
    offset     = 0;
    int  count = 0;
 
-   int indexLeft  = US_DataIO2::index( workingScan, allRadii, range_left );
-   int indexRight = US_DataIO2::index( workingScan, allRadii, range_right );
+   int indexLeft  = US_DataIO2::index( allRadii, range_left );
+   int indexRight = US_DataIO2::index( allRadii, range_right );
    
    offset = indexLeft;
 

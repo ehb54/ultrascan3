@@ -53,7 +53,8 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;

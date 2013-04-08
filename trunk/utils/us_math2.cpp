@@ -423,8 +423,16 @@ void US_Math2::data_correction( double t, SolutionData& d )
       d.viscosity_wt = VISC_20W * pow( 10.0, exponent );
    }
 
-   d.density_tb      = d.density * d.density_wt / DENS_20W;
-   d.viscosity_tb    = d.viscosity * d.viscosity_wt / VISC_20W;
+   if ( d.manual )
+   {
+      d.density_tb      = d.density;
+      d.viscosity_tb    = d.viscosity;
+   }
+   else
+   {
+      d.density_tb      = d.density * d.density_wt / DENS_20W;
+      d.viscosity_tb    = d.viscosity * d.viscosity_wt / VISC_20W;
+   }
    d.buoyancyb       = 1.0 - d.vbar * d.density_tb;
    d.buoyancyw       = 1.0 - d.vbar20 * DENS_20W;
    d.s20w_correction = ( d.buoyancyw / d.buoyancyb ) * ( d.viscosity_tb / VISC_20W );

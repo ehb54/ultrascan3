@@ -1444,7 +1444,7 @@ void US_AnalyteGui::spectrum( void )
 void US_AnalyteGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-      tr( "Could not connect to databasee\n" ) + error );
+      tr( "Could not connect to database\n" ) + error );
 }
 
 void US_AnalyteGui::list( void )

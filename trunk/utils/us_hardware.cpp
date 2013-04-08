@@ -6,8 +6,7 @@
 bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
 {
    bool    ok    = false;
-   QString home  = US_Settings::appBaseDir();
-   QString path  = home + "/etc/rotors";
+   QString path  = US_Settings::appBaseDir() + "/etc/rotors";
 
    rotor_map.clear();
    rotor_map[ "0" ] = "0 0";   // Create a simulation entry (no stretch)
@@ -250,8 +249,7 @@ bool US_AbstractCenterpiece::read_centerpieces( US_DB2* db,
 
    if ( ! got_cp )
    {  // Get centerpiece information from local (if db==NULL or db failed)
-      QString home = US_Settings::appBaseDir();
-      QFile   cp_file( home + "/etc/abstractCenterpieces.xml" );
+      QFile   cp_file( US_Settings::appBaseDir() + "/etc/abstractCenterpieces.xml" );
 
       if ( ! cp_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
          return false;
