@@ -333,6 +333,8 @@ class US_PM
 #endif
    bool                write_model       ( QString filename, set < pm_point > & model );
    QString             tmp_name          ( QString basename, vector < double > & params );
+
+   void                clear             ();
 };
 
 #endif

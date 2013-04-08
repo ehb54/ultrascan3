@@ -174,6 +174,12 @@ US_PM::~US_PM()
 {
 }
 
+void US_PM::clear()
+{
+   pcdata.clear();
+   pdata.clear();
+}
+
 QString US_PM::qs_bead_model( set < pm_point > & model )
 {
    // sphere should equal volume occupied by the cube

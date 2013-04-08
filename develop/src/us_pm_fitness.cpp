@@ -7,17 +7,21 @@
 
 bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
 {
+   puts( "ci0" );
    if ( use_CYJ )
    {
+      puts( "ci1 CYJ" );
       return compute_CYJ_I( model, I_result );
    } else {
       if ( model.size() > max_beads_CA )
       {
+         puts( "ci1 CYJ" );
          cout << QString( "switching to CYJ mode\n" ).ascii();
          pcdata.clear();
          use_CYJ = true;
          return compute_CYJ_I( model, I_result );
       } else {
+         puts( "ci1 CA" );
          return compute_CA_I( model, I_result );
       }
    }
@@ -549,6 +553,7 @@ bool US_PM::compute_delta_I(
 
 bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result )
 {
+   puts( "CAI 0" );
 #if defined( USE_TIMERS )
    us_timers.clear_timers();
 #endif
@@ -583,28 +588,39 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
 
    ccA1v = A1v0;
 
+   puts( "CAI 1" );
    for ( set < pm_point >::iterator it = model.begin();
          it != model.end();
          it++ )
    {
       if ( !pcdata.count( *it ) )
       {
-         // puts( "ccI np 0 new point" );
+         puts( "ccI np 0 new point" );
+         printf( "it->x: %d %d %d\n", it->x[ 0 ], it->x[ 1 ], it->x[ 2 ] );
+         pcdata[ *it ];
+         printf( "tmp_pm_data A1v size %u\n", tmp_pm_data.A1v.size() );
+         puts( "ccI np 00" );
          pcdata[ *it ] = tmp_pm_data;
+         puts( "ccI np 0a" );
          pm_datap = &(pcdata[ *it ]);
+         puts( "ccI np 0b" );
 
          pm_datap->x[ 0 ] = grid_conversion_factor * (double)it->x[ 0 ];
          pm_datap->x[ 1 ] = grid_conversion_factor * (double)it->x[ 1 ];
          pm_datap->x[ 2 ] = grid_conversion_factor * (double)it->x[ 2 ];
 
+         puts( "ccI np 0c" );
          pm_datap->rtp[ 0 ] = sqrt ( (double) ( pm_datap->x[ 0 ] * pm_datap->x[ 0 ] +
                                                 pm_datap->x[ 1 ] * pm_datap->x[ 1 ] +
                                                 pm_datap->x[ 2 ] * pm_datap->x[ 2 ] ) );
+         puts( "ccI np 1" );
          if ( pm_datap->rtp[ 0 ] == 0e0 )
          {
+            puts( "ccI np 2" );
             pm_datap->rtp[ 1 ] = 0e0;
             pm_datap->rtp[ 2 ] = 0e0;
          } else {
+            puts( "ccI np 3" );
             pm_datap->rtp[ 1 ] = acos ( pm_datap->x[ 2 ] / pm_datap->rtp[ 0 ] );
 
             if ( it->x[ 0 ] == 0 &&
@@ -637,6 +653,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
          
          Yp = &( ccY[ 0 ] );
 
+         puts( "ccI np 4" );
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
             for ( int m = - (int) l ; m <= (int) l; ++m )
@@ -655,6 +672,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
             }
          }
 
+         puts( "ccI np 5" );
          Jp  = &( ccJ[ 0 ] );
          qp  = &( q[ 0 ] );
          Fp  = &( F[ 0 ] );
@@ -691,8 +709,9 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
             }
             ++Fp;
          }
+         puts( "ccI np 6" );
       } else {
-         // puts( "CA: cached point" );
+         puts( "CA: cached point" );
          pm_datap = &pcdata[ *it ];
          A1vp = &( ccA1v[ 0 ] );
          Ap   = &( pm_datap->A1v[ 0 ] );
@@ -708,6 +727,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
       }
    }
 
+   puts( "CAI 2" );
 #if defined( USE_TIMERS )
    us_timers.end_timer( "CA:rtp/legendre/shbes" );
    us_timers.start_timer( "CA:sumA" );
@@ -730,6 +750,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
    log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
 #endif
+   puts( "CAI end" );
    return true;
 }
 

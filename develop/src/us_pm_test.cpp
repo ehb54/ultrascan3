@@ -153,6 +153,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_SPHERE )
       {
+         // sphere_pm.pcdata.clear();
          cout << "starting best sphere\n";
          sphere_pm.best_sphere( model );
       
@@ -208,6 +209,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_CYLINDER )
       {
+         // sphere_pm.clear();
          cout << "starting best cylinder\n";
          sphere_pm.best_cylinder( model );
       
@@ -234,7 +236,9 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
+            cout << "compute_I\n";
             sphere_pm.compute_I( model, I_result );
+            cout << "compute_I done\n";
             QString outfile = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -262,6 +266,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_SPHEROID )
       {
+         // sphere_pm.clear();
          cout << "starting best spheroid\n";
          sphere_pm.best_spheroid( model );
       
@@ -316,6 +321,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_TORUS )
       {
+         // sphere_pm.clear();
          cout << "starting best torus\n";
          sphere_pm.best_torus( model );
       
