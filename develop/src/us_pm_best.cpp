@@ -2,7 +2,6 @@
 
 #define USPM_BEST_DELTA_MIN 1e-3
 
-
 void US_PM::set_best_delta( 
                            double best_delta_start,
                            double best_delta_divisor,
@@ -83,7 +82,7 @@ bool US_PM::best_vary_one_param(
          {
             // write_model( tmp_name( "", params ), this_model );
             QString qs = 
-               QString( "%1 fitness %2 beads %3 params:" )
+               QString( "%1 fitness^2 %2 beads %3 params:" )
                .arg( object_names[ (int) params[ 0 ] ] )
                .arg( this_fit, 0, 'g', 8 )
                .arg( this_model.size() )
@@ -143,6 +142,77 @@ bool US_PM::best_vary_one_param(
       high_limit = last_fitness_1_pos;
       delta /= best_delta_divisor;
    }
-   best_fitness = best_fit;
+   best_fitness    = best_fit;
+   return true;
+}
+
+bool US_PM::best_vary_two_param( 
+                                unsigned int        param_to_vary_1,
+                                unsigned int        param_to_vary_2,
+                                vector < double > & params, 
+                                set < pm_point >  & model,
+                                double            & best_fitness
+                                )
+{
+   set < pm_point > this_model;
+   use_CYJ = false;
+
+   QString qs_timer = QString( "%1 2 params to vary" ).arg( object_names[ (int) params[ 0 ] ] );
+
+   us_timers.clear_timers();
+   us_timers.init_timer  ( qs_timer );
+   us_timers.start_timer ( qs_timer );
+
+   double delta      = best_delta_start;
+   double low_limit  = best_delta_size_min;
+   double high_limit = best_delta_size_max;
+
+   double prev_size;
+   double best_size;
+
+   double best_fit = 1e99;
+   double prev_fit = 1e99;
+   double this_fit;
+
+   map < double, double > fitnesses;
+   while ( delta > best_delta_min )
+   {
+      double last_fitness_1_pos = -1e0;
+      double last_fitness_2_pos = -1e0;
+      double last_fitness_3_pos = -1e0;
+      prev_fit = 1e99;
+
+      cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      for ( params[ param_to_vary_2 ] = low_limit; params[ param_to_vary_2 ] <= high_limit; params[ param_to_vary_2 ] += delta )
+      {
+         best_vary_one_param( param_to_vary_1, params, this_model, this_fit );
+         fitnesses[ params[ param_to_vary_2 ] ] = this_fit;
+
+         last_fitness_3_pos = last_fitness_2_pos;
+         last_fitness_2_pos = last_fitness_1_pos;
+         last_fitness_1_pos = params[ param_to_vary_2 ];
+
+         if ( this_fit < prev_fit )
+         {
+            best_fit = this_fit;
+            best_size = params[ param_to_vary_2 ];
+            model = this_model;
+         }
+         if ( this_fit > prev_fit )
+         {
+            break;
+         }
+         prev_fit = this_fit;
+         prev_size = params[ param_to_vary_2 ];
+
+      }
+      low_limit  = last_fitness_3_pos;
+      high_limit = last_fitness_1_pos;
+      delta /= best_delta_divisor;
+   }
+   us_timers.end_timer( qs_timer );
+   cout << us_timers.list_times();
+
+   best_fitness   = best_fit;
    return true;
 }

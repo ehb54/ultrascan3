@@ -13,8 +13,18 @@ bool US_PM::best_sphere( set < pm_point > & model )
    double best_fit;
    us_timers.init_timer( "sphere try with delta fallback calling vary" );
    us_timers.start_timer( "sphere try with delta fallback calling vary" );
-   best_vary_one_param( 1, params, model, best_fit );
+   bool ok = best_vary_one_param( 1, params, model, best_fit );
    us_timers.end_timer( "sphere try with delta fallback calling vary" );
+   cout << us_timers.list_times();
+   if ( ok )
+   {
+      last_best_rmsd_ok = true;
+      last_best_rmsd2   = best_fit;
+      return true;
+   } else {
+      last_best_rmsd_ok = false;
+      return false;
+   }
 
    return true;
 }

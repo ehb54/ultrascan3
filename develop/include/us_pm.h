@@ -13,9 +13,11 @@
 #include <complex>
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_vector.h"
+#include "us_json.h"
 #include "us_timer.h"
 #include "us_sh.h"
 #include "us_saxs_util.h"
+#include "us_hydrodyn_pat.h"
 
 #ifdef WIN32
 typedef _int16 int16_t;
@@ -42,6 +44,22 @@ class pm_point
  public:
    int16_t x[ 3 ];
    bool operator < ( const pm_point & objIn ) const
+   {
+      return
+         x[ 0 ] < objIn.x[ 0 ] ||
+         ( x[ 0 ] == objIn.x[ 0 ] &&
+           x[ 1 ] <  objIn.x[ 1 ] ) ||
+         ( x[ 0 ] == objIn.x[ 0 ] &&
+           x[ 1 ] == objIn.x[ 1 ] &&
+           x[ 2 ] <  objIn.x[ 2 ] );
+   }
+};
+
+class pm_point_f
+{
+ public:
+   float x[ 3 ];
+   bool operator < ( const pm_point_f & objIn ) const
    {
       return
          x[ 0 ] < objIn.x[ 0 ] ||
@@ -83,29 +101,29 @@ class US_PM
 
    // stuff for spherical harmonics
 
-   double grid_conversion_factor;
-   int    max_dimension;
-   double max_dimension_d;
-   double one_over_grid_conversion_factor;
+   double                                  grid_conversion_factor;
+   int                                     max_dimension;
+   double                                  max_dimension_d;
+   double                                  one_over_grid_conversion_factor;
 
-   double drho;
-   double buffer_e_density;
-   double ev;
+   double                                  drho;
+   double                                  buffer_e_density;
+   double                                  ev;
 
-   double cube_size;
-   double bead_radius;
-   double bead_radius_over_2;
+   double                                  cube_size;
+   double                                  bead_radius;
+   double                                  bead_radius_over_2;
 
    // active grid:
-   vector < double >   q;
-   vector < double >   I;
-   vector < double >   e;
+   vector < double >                       q;
+   vector < double >                       I;
+   vector < double >                       e;
 
-   unsigned int        q_points;
+   unsigned int                            q_points;
 
    // precomputed bead structure factors
    // these can come from rayleigh or compute_ff for an atom type
-   vector < double >   F;
+   vector < double >                       F;
 
    // ideas:
    // best of each single model
@@ -114,73 +132,105 @@ class US_PM
    // etc
    // apply to various experimental & simulated data
 
-   bool rotation_matrix( double l, double m, double n, double theta, vector < vector < double > > &rm );
-   bool apply_rotation_matrix( vector < vector < double > > &rm, int x, int y, int z, double & newx, double & newy, double & newz );
+   bool                                    rotation_matrix(
+                                                           double l, 
+                                                           double m, 
+                                                           double n, 
+                                                           double theta, 
+                                                           vector < vector < double > > &rm 
+                                                           );
+   bool                                    apply_rotation_matrix(
+                                                                  vector < vector < double > > &rm, 
+                                                                  int x, 
+                                                                  int y, 
+                                                                  int z, 
+                                                                  double & newx, 
+                                                                  double & newy, 
+                                                                  double & newz 
+                                                                  );
 
-   map < pm_point, pm_data > pdata;
-   map < pm_point, pmc_data > pcdata;
+   map < pm_point, pm_data >               pdata;
+   map < pm_point, pmc_data >              pcdata;
 
    // sh variables
 
-   unsigned int max_harmonics;
-   unsigned int no_harmonics;
+   unsigned int                            max_harmonics;
+   unsigned int                            no_harmonics;
    // fib grid is for hydration
    // unsigned int fibonacci_grid;
 
    // supplementary sh variables
 
-   vector < complex < float > > ccY;
-   vector < complex < float > > ccA1v;
-   vector < double >            ccJ;
+   vector < complex < float > >            ccY;
+   vector < complex < float > >            ccA1v;
+   vector < double >                       ccJ;
 
-   complex < float > Z0; // ( 0e0, 0e0 );
-   complex < float > i_; // ( 0e0, 1e0 );
-   vector < complex < float > > i_l;
-   vector < complex < float > > i_k;
+   complex < float >                       Z0; // ( 0e0, 0e0 );
+   complex < float >                       i_; // ( 0e0, 1e0 );
+   vector < complex < float > >            i_l;
+   vector < complex < float > >            i_k;
 
-   unsigned int J_points;
-   unsigned int Y_points;
-   unsigned int q_Y_points;
+   unsigned int                            J_points;
+   unsigned int                            Y_points;
+   unsigned int                            q_Y_points;
 
-   vector < double > I0;
-   vector < complex < float > > A0;
+   vector < double >                       I0;
+   vector < complex < float > >            A0;
 
    vector < vector < complex < float > > > Av0;
    vector <  complex < float > >           A1v0;
 
    // sh data
-   // vector < vector < double > > fib_grid;
-   bool                use_errors;
+   // vector < vector < double > >         fib_grid;
+   bool                                    use_errors;
 
-   US_Timer            us_timers;
+   US_Timer                                us_timers;
 
-   double              model_fit( vector < double > & params, set < pm_point > & model, vector < double > & I_result );
+   double                                  model_fit(
+                                                     vector < double > & params, 
+                                                     set < pm_point > & model, 
+                                                     vector < double > & I_result
+                                                     );
 
-   unsigned int        bytes_per_pm_data;
-   unsigned int        bytes_per_pmc_data;
-   unsigned int        max_mem_in_MB;
-   unsigned int        max_beads_CA;
-   unsigned int        max_beads_CYJ;
-   bool                use_CYJ;
+   unsigned int                            bytes_per_pm_data;
+   unsigned int                            bytes_per_pmc_data;
+   unsigned int                            max_mem_in_MB;
+   unsigned int                            max_beads_CA;
+   unsigned int                            max_beads_CYJ;
+   bool                                    use_CYJ;
 
-   bool                best_vary_one_param(
-                                           unsigned int        param_to_vary,
-                                           vector < double > & params, 
-                                           set < pm_point >  & model,
-                                           double            & best_fitness
-                                           );
+   bool                                    best_vary_one_param(
+                                                               unsigned int        param_to_vary,
+                                                               vector < double > & params, 
+                                                               set < pm_point >  & model,
+                                                               double            & best_fitness
+                                                               );
 
-   double              best_delta_start;
-   double              best_delta_divisor;
-   double              best_delta_min;
-   double              best_delta_size_min;
-   double              best_delta_size_max;
+   // vary_1 is the inner loop, vary_2 is the outer loop
+   bool                                    best_vary_two_param( 
+                                                               unsigned int        param_to_vary_1,
+                                                               unsigned int        param_to_vary_2,
+                                                               vector < double > & params, 
+                                                               set < pm_point >  & model,
+                                                               double            & best_fitness
+                                                               );
 
-   vector < QString >  object_names;
-   vector < int >      object_m0_parameters;  // # of params for model_pos = 0
+   double                                  best_delta_start;
+   double                                  best_delta_divisor;
+   double                                  best_delta_min;
+   double                                  best_delta_size_min;
+   double                                  best_delta_size_max;
 
-   void                init_objects();
+   vector < QString >                      object_names;
+   vector < int >                          object_m0_parameters;  // # of params for model_pos = 0
 
+   void                                    init_objects();
+   
+   map < QString, QString >                last_physical_stats;
+   QString                                 physical_stats( set < pm_point > & model );
+
+   bool                                    last_best_rmsd_ok;
+   double                                  last_best_rmsd2;
 
  public:
    US_PM               ( 

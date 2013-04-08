@@ -167,6 +167,7 @@ US_PM::US_PM(
 
    set_best_delta();
    init_objects();
+   last_best_rmsd_ok = false;
 }
 
 US_PM::~US_PM()
@@ -194,6 +195,14 @@ QString US_PM::qs_bead_model( set < pm_point > & model )
          .arg( bead_radius )
          ;
    }
+
+   qs += "\n";
+   qs += physical_stats( model );
+   if ( last_best_rmsd_ok )
+   {
+      qs += QString( "%1 to target data: %2\n" ).arg( use_errors ? "Chi^2" : "RMSD" ).arg( sqrt( last_best_rmsd2 ) );
+   }
+
    return qs;
 }
 
@@ -410,4 +419,225 @@ QString US_PM::tmp_name( QString basename, vector < double > &params )
       fname += QString( "_p%1" ).arg( params[ i ] ).replace( ".", "_" );
    }
    return fname;
+}
+
+QString US_PM::physical_stats( set < pm_point > & model )
+{
+   if ( !model.size() )
+   {
+      return "empty model\n";
+   }
+
+   // run pat? i.e. do a principal axis transformation
+
+   vector < pm_point_f > adjusted_model;
+   pm_point_f            tmp_point;
+
+   {
+      vector < dati1_supc > in_dt;
+
+      for ( set < pm_point >::iterator it = model.begin();
+            it != model.end();
+            it++ )
+      {
+         dati1_supc dt;
+
+         dt.x  = it->x[ 0 ] * grid_conversion_factor;
+         dt.y  = it->x[ 1 ] * grid_conversion_factor;
+         dt.z  = it->x[ 2 ] * grid_conversion_factor;
+         dt.r  = bead_radius;
+         dt.ru = bead_radius;
+         dt.m  = ( 4.0 / 3.0 ) * M_PI * bead_radius * bead_radius * bead_radius;
+
+         in_dt.push_back( dt );
+      }
+
+      int out_nat;
+      vector < dati1_pat > out_dt( in_dt.size() + 1 );
+
+      if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
+                                  ( int ) in_dt.size(),
+                                  &( in_dt[ 0 ] ),
+                                  &out_nat,
+                                  &( out_dt[ 0 ] ) ) )
+      {
+         // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
+         for ( unsigned int i = 0; i < model.size(); ++i )
+         {
+            tmp_point.x[ 0 ] = out_dt[ i ].x;
+            tmp_point.x[ 1 ] = out_dt[ i ].y;
+            tmp_point.x[ 2 ] = out_dt[ i ].z;
+            adjusted_model.push_back( tmp_point );
+         }
+      }
+   }
+
+   // also compute intersection volumes & subtract?
+   // every pair, remove intersection volume ?
+
+   // compute average, center of electron density?
+
+   double volume = 0e0;
+   // double volume_intersection = 0e0;
+   point pmin;
+   point pmax;
+   point prmin;
+   point prmax;
+
+   // just to stop silly compiler warning (may be used uninitialized in this function)
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      pmin.axis[ j ] =
+         pmax.axis[ j ] =
+         prmin.axis[ j ] =
+         prmax.axis[ j ] = 0.0f;
+   }
+
+   // subtract each radius from min add to max?
+   // possible alternate bounding box ...
+
+   for ( unsigned int i = 0; i < ( unsigned int ) adjusted_model.size(); ++i )
+   {
+      if ( i )
+      {
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            if ( pmin.axis[ j ] > adjusted_model[ i ].x[ j ] )
+            {
+               pmin.axis[ j ] = adjusted_model[ i ].x[ j ];
+            }
+            if ( pmax.axis[ j ] < adjusted_model[ i ].x[ j ] )
+            {
+               pmax.axis[ j ] = adjusted_model[ i ].x[ j ];
+            }
+
+            if ( prmin.axis[ j ] > adjusted_model[ i ].x[ j ] - bead_radius )
+            {
+               prmin.axis[ j ] = adjusted_model[ i ].x[ j ] - bead_radius;
+            }
+            if ( prmax.axis[ j ] < adjusted_model[ i ].x[ j ] + bead_radius )
+            {
+               prmax.axis[ j ] = adjusted_model[ i ].x[ j ] + bead_radius;
+            }
+         }
+      } else {
+         for ( unsigned int j = 0; j < 3; j++ )
+         {
+            pmin .axis[ j ] = adjusted_model[ i ].x[ j ];
+            pmax .axis[ j ] = adjusted_model[ i ].x[ j ];
+            prmin.axis[ j ] = adjusted_model[ i ].x[ j ];
+            prmax.axis[ j ] = adjusted_model[ i ].x[ j ];
+            prmin.axis[ j ] -= bead_radius;
+            prmax.axis[ j ] += bead_radius;
+         }
+      }
+
+      // not needed since each bead is of equal volume
+      // volume += ( 4e0 / 3e0 ) * M_PI * bead_radius * bead_radius * bead_radius;
+   }
+
+   volume = (double) model.size() * cube_size;
+
+   // no intersection volume needed since each bead fills the volume of the cube
+   //    for ( unsigned int i = 0; i < ( unsigned int ) adjusted_model.size() - 1; ++i )
+   //    {
+   //       for ( unsigned int j = i + 1; j < ( unsigned int ) adjusted_model.size(); ++j )
+   //       {
+   //          float d = dist( bm[ i ].bead_coordinate , bm[ j ].bead_coordinate );
+   //          if ( d < bead_radius + bead_radius )
+   //          {
+   //             float r1 = bead_radius;
+   //             float r  = bead_radius;
+   //             if ( d > 0.0 )
+   //             {
+   //                volume_intersection +=
+   //                   M_PI * ( r1 + r - d ) * ( r1 + r - d ) *
+   //                   ( d * d + 
+   //                     2.0 * d * r + 2.0 * d * r1 
+   //                     - 3.0 * r * r  - 3.0 * r1 * r1 
+   //                     + 6.0 * r * r1 ) 
+   //                   /
+   //                   ( 12.0 * d );
+   //             } else {
+   //                // one is within the other:
+   //                if ( r > r1 )
+   //                {
+   //                   r = r1;
+   //                }
+   //                volume_intersection +=
+   //                   ( 4.0 / 3.0 ) * M_PI * r * r * r;
+   //             }
+   //          }
+   //       }
+   //    }
+
+
+   last_physical_stats.clear();
+
+   last_physical_stats[ "result total volume"                ] = QString( "%1" ).arg( volume );
+   // last_physical_stats[ "result intersection volume"         ] = QString( "%1" ).arg( volume_intersection );
+   // last_physical_stats[ "result excluded volume"             ] = QString( "%1" ).arg( volume - volume_intersection );
+   last_physical_stats[ "result centers bounding box size x" ] = QString( "%1" ).arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] );
+   last_physical_stats[ "result centers bounding box size y" ] = QString( "%1" ).arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] );
+   last_physical_stats[ "result centers bounding box size z" ] = QString( "%1" ).arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
+
+   last_physical_stats[ "result centers axial ratios x:z" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+   last_physical_stats[ "result centers axial ratios x:y" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) );
+   last_physical_stats[ "result centers axial ratios y:z" ] = QString( "%1" )
+      .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+
+   last_physical_stats[ "result radial extent bounding box size x" ] = QString( "%1" ).arg( prmax.axis[ 0 ] - prmin.axis[ 0 ] );
+   last_physical_stats[ "result radial extent bounding box size y" ] = QString( "%1" ).arg( prmax.axis[ 1 ] - prmin.axis[ 1 ] );
+   last_physical_stats[ "result radial extent bounding box size z" ] = QString( "%1" ).arg( prmax.axis[ 2 ] - prmin.axis[ 2 ] );
+
+   last_physical_stats[ "result radial extent axial ratios x:z" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
+   last_physical_stats[ "result radial extent axial ratios x:y" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) );
+   last_physical_stats[ "result radial extent axial ratios y:z" ] = QString( "%1" )
+      .arg( ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
+
+   QString qs;
+
+   qs += QString( 
+                 "total        volume (A^3) %1\n" 
+                 // "intersection volume (A^3) %2\n" 
+                 // "excluded     volume (A^3) %3\n" 
+                 )
+      .arg( volume )
+      // .arg( volume_intersection )
+      // .arg( volume - volume_intersection );
+      ;
+
+   qs += QString( 
+                  "centers bounding box size (A) %1 %2 %2\n" 
+                  )
+      .arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] )
+      .arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] )
+      .arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
+
+   qs += QString( 
+                  "centers axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
+                  )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) )
+      .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) )
+      .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
+
+   qs += QString( 
+                  "radial extent bounding box size (A) %1 %2 %2\n" 
+                  )
+      .arg( prmax.axis[ 0 ] - prmin.axis[ 0 ] )
+      .arg( prmax.axis[ 1 ] - prmin.axis[ 1 ] )
+      .arg( prmax.axis[ 2 ] - prmin.axis[ 2 ] );
+
+   qs += QString( 
+                  "radial extent axial ratios: [x:z] = %1  [x:y] = %2  [y:z] = %3\n"
+                  )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) )
+      .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) )
+      .arg( ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
+
+   return qs;
 }
