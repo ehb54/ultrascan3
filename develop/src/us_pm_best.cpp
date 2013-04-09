@@ -2,6 +2,8 @@
 
 #define USPM_BEST_DELTA_MIN 1e-3
 
+#define USPM_USE_CA 1
+
 void US_PM::set_best_delta( 
                            double best_delta_start,
                            double best_delta_divisor,
@@ -52,7 +54,6 @@ bool US_PM::best_vary_one_param(
 
    map < double, double > fitnesses;
 
-
    while ( delta >= best_delta_min )
    {
       double last_fitness_1_pos = -1e0;
@@ -72,7 +73,12 @@ bool US_PM::best_vary_one_param(
          cout << QString( "create model size %1 prev model size %2\n" ).arg( this_model.size() ).arg( prev_model.size() );
          if ( this_model.size() &&  prev_model.size() != this_model.size() )
          {
-            compute_delta_I( this_model, prev_model, Av, I_result );
+            if ( USPM_USE_CA )
+            {
+               compute_I( this_model, I_result );
+            } else {
+               compute_delta_I( this_model, prev_model, Av, I_result );
+            }
             this_fit = fitness2( I_result );
             fitnesses[ params[ param_to_vary ] ] = this_fit;
          } else {

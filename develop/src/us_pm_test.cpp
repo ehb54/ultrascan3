@@ -154,7 +154,6 @@ QString US_PM::test( QString name, QString oname )
       cout << us_timers.list_times();
    }
 
-
    if ( TEST_CYLINDER )
    {
       US_PM sphere_pm( grid_conversion_factor, 
@@ -204,9 +203,13 @@ QString US_PM::test( QString name, QString oname )
 
       set < pm_point >    model;
 
+      US_Timer           us_timers;
+      us_timers          .clear_timers();
+      us_timers.init_timer( "BEST" );
+      us_timers.start_timer( "BEST" );
+
       if ( BEST_SPHERE )
       {
-         // sphere_pm.pcdata.clear();
          cout << "starting best sphere\n";
          sphere_pm.best_sphere( model );
       
@@ -426,6 +429,8 @@ QString US_PM::test( QString name, QString oname )
          }
          cout << "ending best torus\n";
       }
+      us_timers.end_timer          ( "BEST" );
+      cout << us_timers.list_times();
    }
 
    if ( LEAK_CHECK )
