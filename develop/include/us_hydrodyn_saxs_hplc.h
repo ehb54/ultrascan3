@@ -351,6 +351,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < crop_undo_data >           crop_undos;
 
       bool                                is_nonzero_vector( vector < double > &v );
+      bool                                is_zero_vector( vector < double > &v );
 
       vector < double >                   union_q( QStringList files );
 

@@ -1,11 +1,14 @@
 #include "../include/us_pm.h"
 
+#define RANDOM_TEST   100
+#define RANDOM_CYJ    1
+
 #define TEST_CYLINDER 0
 
-#define BEST_SPHERE   1
-#define BEST_CYLINDER 1
-#define BEST_SPHEROID 1
-#define BEST_TORUS    1
+#define BEST_SPHERE   0
+#define BEST_CYLINDER 0
+#define BEST_SPHEROID 0
+#define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
 #define LEAK_CHECK    0
@@ -102,6 +105,54 @@ QString US_PM::test( QString name, QString oname )
 
    US_Vector::printvector( "read params", params );
 
+   if ( RANDOM_TEST )
+   {
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       1024,
+                       0 );
+
+      srand48( -1 );
+
+      set < pm_point >   model;
+      vector < double >  I_result( q.size() );
+      US_Timer           us_timers;
+      us_timers          .clear_timers();
+      us_timers.init_timer( "create_model" );
+      us_timers.init_timer( "compute I" );
+
+      for ( int i = 0; i < RANDOM_TEST; i++ )
+      {
+         sphere_pm.random_md0_params  ( params, 5 );
+         cout << QString( "Random test %1 of %2:\n" ).arg( i+1 ).arg( RANDOM_TEST ) << sphere_pm.list_model ( params ) << endl;
+
+         us_timers.start_timer        ( "create_model" );
+         sphere_pm.create_model       ( params, model );
+         us_timers.end_timer          ( "create_model" );
+
+         us_timers.start_timer        ( "compute I" );
+         if ( RANDOM_CYJ )
+         {
+            sphere_pm.compute_CYJ_I      ( model, I_result );
+         } else {
+            sphere_pm.compute_CA_I       ( model, I_result );
+         }
+            
+         us_timers.end_timer          ( "compute I" );
+      }
+      cout << us_timers.list_times();
+   }
+
+
    if ( TEST_CYLINDER )
    {
       US_PM sphere_pm( grid_conversion_factor, 
@@ -180,7 +231,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
+            sphere_pm.compute_CYJ_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -237,7 +288,7 @@ QString US_PM::test( QString name, QString oname )
          {
             vector < double >   I_result( q.size() );
             cout << "compute_I\n";
-            sphere_pm.compute_I( model, I_result );
+            sphere_pm.compute_CYJ_I( model, I_result );
             cout << "compute_I done\n";
             QString outfile = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
       
@@ -293,7 +344,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
+            sphere_pm.compute_CYJ_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_spheroid" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -348,7 +399,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
+            sphere_pm.compute_CYJ_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )

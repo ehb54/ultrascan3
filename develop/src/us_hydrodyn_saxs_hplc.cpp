@@ -3616,7 +3616,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
          .arg( files[ i ] )
          .arg( "I(q)" )
          .arg( vector_double_to_csv( t_Is[ files[ i ] ] ) );
-      if ( t_errors.count( files[ i ] ) && t_errors[ files[ i ] ].size() )
+      if ( t_errors.count( files[ i ] ) && t_errors[ files[ i ] ].size() && !is_zero_vector( t_errors[ files[ i ] ] ) )
       {
          ts << 
             QString( "\"%1\",\"%2\",%3\n" )
@@ -5371,6 +5371,20 @@ bool US_Hydrodyn_Saxs_Hplc::is_nonzero_vector( vector < double > &v )
       }
    }
    return non_zero;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::is_zero_vector( vector < double > &v )
+{
+   bool is_zero = true;
+   for ( int i = 0; i < (int)v.size(); i++ )
+   {
+      if ( v[ i ] != 0e0 )
+      {
+         is_zero = false;
+         break;
+      }
+   }
+   return is_zero;
 }
 
 void US_Hydrodyn_Saxs_Hplc::to_created( QString file )

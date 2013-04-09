@@ -647,3 +647,24 @@ QString US_PM::physical_stats( set < pm_point > & model )
 
    return qs;
 }
+
+
+void US_PM::random_md0_params( vector < double > & params, double max_d )
+{
+   
+   int this_type = (int)( drand48() * ( double ) object_names.size() );
+
+   
+   vector < double > low_fparams;
+   vector < double > high_fparams;
+   
+   params.resize( 1 + object_m0_parameters[ this_type ] );
+   params[ 0 ] = (double) this_type;
+
+   set_limits( params, low_fparams, high_fparams, max_d );
+
+   for ( int i = 0; i < object_m0_parameters[ this_type ]; i++ )
+   {
+      params[ i + 1 ] = drand48() * ( high_fparams[ i ] - low_fparams[ i ] ) + low_fparams[ i ];
+   }
+}      

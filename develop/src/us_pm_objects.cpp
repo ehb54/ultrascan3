@@ -5,9 +5,13 @@
 //     bool US_PM::"object"( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 
 // insert into:
+//   init_objects()
 //   create_1_model()
 //   split()
 //   join()
+//   list_model()
+
+// we should probably add more data structures to simplify the code (model parameter counts for model pos)
 
 // handling routines:
 
@@ -31,8 +35,253 @@ void US_PM::init_objects()
    object_names        .push_back( "torus" );
    object_m0_parameters.push_back( 2 ); // radius1, radius2
 
-   object_names        .push_back( "torus_segment" );
-   object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
+   // object_names        .push_back( "torus_segment" );
+   // object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
+}
+
+QString US_PM::list_model( vector < double > & params )
+{
+   QString qs = "model:";
+
+   vector < int > types;
+
+   int model_pos = 0;
+   int ofs       = 0;
+
+   while ( ofs < ( int ) params.size() )
+   {
+      types.push_back( ( int )params[ ofs++ ] );
+      if ( ( int ) params.size() <= ofs )
+      {
+         error_msg = QString( "list_model: error insufficient params for type %2" ).arg( types.back() );
+         return false;
+      }
+
+      qs += QString( "\n\t%1: %2 " ).arg( object_names[ types.back() ] ).arg( params[ ofs ] );
+      ofs += 1;
+
+      switch( types.back() )
+      {
+      case 0 : // sphere
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               break;
+            case 1 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 1; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 1;
+               break;
+            case 2 :
+               if ( ( int ) params.size() <= ofs + 1 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 2; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 2;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 2 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 3; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 3;
+               break;
+            }
+         }
+         break;
+      case 1 : // cylinder
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 1; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 1;
+               break;
+            case 1 :
+               if ( ( int ) params.size() <= ofs + 3 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 4; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 4;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 5 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 6; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 6;
+               break;
+            }
+         }
+         break;
+      case 2 : // spheroid
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 1; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 1;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 7 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 8; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 8;
+               break;
+            }
+         }
+         break;
+      case 3 : // ellispoid
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               if ( ( int ) params.size() <= ofs + 1 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 2; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 2;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 8 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 9; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 9;
+               break;
+            }
+         }
+         break;
+      case 4 : // torus
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               if ( ( int ) params.size() <= ofs )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 1; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 1;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 7 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 8; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 8;
+               break;
+            }
+         }
+         break;
+      case 5 : // torus_segment
+         {
+            switch( model_pos )
+            {
+            case 0 :
+               if ( ( int ) params.size() <= ofs + 1 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 2; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 2;
+               break;
+            default:
+               if ( ( int ) params.size() <= ofs + 8 )
+               {
+                  qs += QString( " list_model: error insufficient params for type %2" ).arg( types.back() );
+                  return qs;
+               }
+               for ( int i = 0; i < 9; i++ )
+               {
+                  qs += QString( "%1 " ).arg( params[ ofs + i ] );
+               }
+               ofs += 9;
+               break;
+            }
+         }
+         break;
+      default:
+         qs += QString( "list_model: object type %1 not defined" ).arg( types.back() );
+         return qs;
+         break;
+      }
+      ++model_pos;
+   }
+   return qs;
 }
 
 bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
@@ -74,7 +323,7 @@ bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < 
    return false;
 }
 
-bool US_PM::set_limits( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams )
+bool US_PM::set_limits( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams, double max_d )
 {
    vector < int > types;
 
@@ -83,6 +332,11 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
 
    low_fparams .clear();
    high_fparams.clear();
+
+   if ( !max_d )
+   {
+      max_d = max_dimension_d;
+   }
 
    while ( ofs < ( int ) params.size() )
    {
@@ -94,7 +348,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
       }
 
       low_fparams .push_back( 1e0 );
-      high_fparams.push_back( max_dimension_d );
+      high_fparams.push_back( max_d );
       ofs += 1;
 
       switch( types.back() )
@@ -111,8 +365,8 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 1;
                break;
             case 2 :
@@ -121,10 +375,10 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 2;
                break;
             default:
@@ -133,12 +387,12 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 3;
                break;
             }
@@ -154,8 +408,8 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 1;
                break;
             case 1 :
@@ -164,14 +418,14 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 4;
                break;
             default:
@@ -180,18 +434,18 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                ofs += 6;
                break;
             }
@@ -208,7 +462,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                ofs += 1;
                break;
             default:
@@ -218,19 +472,19 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 8;
@@ -249,9 +503,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                ofs += 2;
                break;
             default:
@@ -261,21 +515,21 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 9;
@@ -294,7 +548,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                ofs += 1;
                break;
             default:
@@ -304,19 +558,19 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 8;
@@ -335,7 +589,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 1e-1 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 2;
@@ -347,21 +601,21 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   return false;
                }
                low_fparams .push_back( 1e0 );
-               high_fparams.push_back( max_dimension_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 1e-1 );
                high_fparams.push_back( M_PI * 1.9999e0 );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
-               low_fparams .push_back( -max_dimension_d );
-               high_fparams.push_back( max_dimension_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
+               low_fparams .push_back( -max_d );
+               high_fparams.push_back( max_d );
                low_fparams .push_back( 0e0 );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 9;

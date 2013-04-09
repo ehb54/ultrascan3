@@ -275,7 +275,7 @@ class US_PM
 
    // limits
 
-   bool                set_limits        ( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams );
+   bool                set_limits        ( vector < double > & params, vector < double > & low_fparams, vector < double > & high_fparams, double max_d = 0e0 );
    bool                check_limits      ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
    bool                clip_limits       ( vector < double > & fparams, vector < double > & low_fparams, vector < double > & high_fparams );
 
@@ -335,6 +335,9 @@ class US_PM
    QString             tmp_name          ( QString basename, vector < double > & params );
 
    void                clear             ();
+
+   void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
+   QString             list_model        ( vector < double > & params );
 };
 
 #endif
