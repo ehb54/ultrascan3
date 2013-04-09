@@ -19,24 +19,31 @@ void US_PM::init_objects()
 {
    object_names        .clear();
    object_m0_parameters.clear();
+   // object_best_f       .clear();
 
    object_names        .push_back( "sphere" );
    object_m0_parameters.push_back( 1 ); // radius
+   // object_best_f       .push_back( &US_PM::best_sphere );
 
    object_names        .push_back( "cylinder" );
    object_m0_parameters.push_back( 2 ); // height length
+   // object_best_f       .push_back( &US_PM::best_cylinder );
 
    object_names        .push_back( "spheroid" );
    object_m0_parameters.push_back( 2 ); // a, b
+   // object_best_f       .push_back( &US_PM::best_spheroid );
 
    object_names        .push_back( "ellipsoid" );
    object_m0_parameters.push_back( 3 ); // a, b, c
+   // object_best_f       .push_back( &US_PM::best_ellipsoid );
 
    object_names        .push_back( "torus" );
    object_m0_parameters.push_back( 2 ); // radius1, radius2
+   // object_best_f       .push_back( &US_PM::best_torus );
 
    // object_names        .push_back( "torus_segment" );
    // object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
+   // object_best_f       .push_back( &US_PM::best_torus_segment );
 }
 
 QString US_PM::list_model( vector < double > & params )

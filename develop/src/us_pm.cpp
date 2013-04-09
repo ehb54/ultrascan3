@@ -1,5 +1,25 @@
 #include "../include/us_pm.h"
 
+void US_PM::set_grid_size( double grid_conversion_factor )
+{
+   // be careful with this routine!
+   // have to clear because any rtp data is now invalid
+   clear();
+   this->grid_conversion_factor = grid_conversion_factor;
+   one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
+   cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
+
+   // radius gives a sphere with equal size to the cube:
+   bead_radius        = pow( cube_size / M_PI, 1e0/3e0 );
+   bead_radius_over_2 = bead_radius * 5e-1;
+
+   cout << QString( "US_PM:cube size   %1\n"
+                    "US_PM:bead radius %2\n" )
+      .arg( cube_size )
+      .arg( bead_radius )
+      ;
+}
+
 US_PM::US_PM( 
              double grid_conversion_factor, 
              int max_dimension, 
@@ -16,7 +36,9 @@ US_PM::US_PM(
              int debug_level 
              )
 {
-   this->grid_conversion_factor = grid_conversion_factor;
+   // this->grid_conversion_factor = grid_conversion_factor;
+   set_grid_size                ( grid_conversion_factor );
+
    this->max_dimension          = abs( max_dimension );
    this->drho                   = drho;
    this->buffer_e_density       = buffer_e_density;
@@ -41,21 +63,22 @@ US_PM::US_PM(
    }
 
    max_dimension_d = ( double ) this->max_dimension;
-   one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
 
-   cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
-
-   // radius gives a sphere with equal size to the cube:
-   bead_radius        = pow( cube_size / M_PI, 1e0/3e0 );
-   bead_radius_over_2 = bead_radius * 5e-1;
+   // replaced by set_grid_size()
+   //    one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
+   //    cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
+   //    // radius gives a sphere with equal size to the cube:
+   //    bead_radius        = pow( cube_size / M_PI, 1e0/3e0 );
+   //    bead_radius_over_2 = bead_radius * 5e-1;
+   //    cout << QString( "US_PM:cube size   %1\n"
+   //                     "US_PM:bead radius %2\n" )
+   //       .arg( cube_size )
+   //       .arg( bead_radius )
+   //       ;
 
    q_points           = ( unsigned int ) q.size();
 
-   cout << QString( "US_PM:cube size   %1\n"
-                    "US_PM:bead radius %2\n" )
-      .arg( cube_size )
-      .arg( bead_radius )
-      .ascii();
+   // fib grid is used for hydration
    //    if ( fibonacci_grid > 2 )
    //    {
    //       cout << "Building Fibonacci grid\n";
@@ -66,6 +89,7 @@ US_PM::US_PM(
    //               (unsigned int)fib_grid.size() 
    //               );
    //    }
+
    Z0 = complex < float > ( 0.0f, 0.0f );
    i_ = complex < float > ( 0.0f, 1.0f );
 
@@ -648,6 +672,46 @@ QString US_PM::physical_stats( set < pm_point > & model )
    return qs;
 }
 
+
+bool US_PM::zero_md0_params( vector < double > & params, double max_d )
+{
+   
+   if ( params.size() < 1 )
+   {
+      error_msg = "zero_md0_params: params[0] must be set";
+      return false;
+   }
+   int this_type = (int) params[ 0 ];
+   if ( this_type >= (int) object_names.size() ||
+        this_type < 0 )
+   {
+      error_msg = "zero_md0_params: params[0] invalid param";
+      return false;
+   }
+   
+   params.resize( 1 + object_m0_parameters[ this_type ] );
+   params[ 0 ] = (double) this_type;
+
+   vector < double > low_fparams;
+   vector < double > high_fparams;
+   set_limits( params, low_fparams, high_fparams, max_d );
+
+   for ( int i = 0; i < object_m0_parameters[ this_type ]; i++ )
+   {
+      if ( low_fparams[ i ] >= 0e0 )
+      {
+         params[ i + 1 ] = low_fparams[ i ];
+      } else {
+         if ( high_fparams[ i ] <= 0e0 )
+         {
+            params[ i + 1 ] = high_fparams[ i ];
+         } else {
+            params[ i + 1 ] = 0e0;
+         }
+      }
+   }
+   return true;
+}      
 
 void US_PM::random_md0_params( vector < double > & params, double max_d )
 {

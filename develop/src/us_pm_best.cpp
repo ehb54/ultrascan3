@@ -2,7 +2,7 @@
 
 #define USPM_BEST_DELTA_MIN 1e-3
 
-#define USPM_USE_CA 1
+// #define USPM_USE_CA 0
 
 void US_PM::set_best_delta( 
                            double best_delta_start,
@@ -73,12 +73,12 @@ bool US_PM::best_vary_one_param(
          cout << QString( "create model size %1 prev model size %2\n" ).arg( this_model.size() ).arg( prev_model.size() );
          if ( this_model.size() &&  prev_model.size() != this_model.size() )
          {
-            if ( USPM_USE_CA )
-            {
-               compute_I( this_model, I_result );
-            } else {
-               compute_delta_I( this_model, prev_model, Av, I_result );
-            }
+            //             if ( USPM_USE_CA )
+            //             {
+            //                compute_I( this_model, I_result );
+            //             } else {
+            compute_delta_I( this_model, prev_model, Av, I_result );
+            //             }
             this_fit = fitness2( I_result );
             fitnesses[ params[ param_to_vary ] ] = this_fit;
          } else {
@@ -222,3 +222,62 @@ bool US_PM::best_vary_two_param(
    best_fitness   = best_fit;
    return true;
 }
+
+// set params[ 0 ] and run
+
+bool US_PM::best_md0( 
+                     vector < double > & params, 
+                     set < pm_point >  & model, 
+                     double              finest_conversion,
+                     double              coarse_conversion,
+                     double              /* refinement_range_pct */,
+                     double              /* conversion_divisor */
+                     )
+{
+   if ( !zero_md0_params( params ) )
+   {
+      error_msg = "best_md0: " + error_msg;
+      return false;
+   }
+
+   set_grid_size( coarse_conversion );
+   
+   while ( grid_conversion_factor >= finest_conversion )
+   {
+      // need params[] from best model and ability to set limits for best model
+      // have to add to best_*, maybe add general best_model( params )
+      
+      switch( (int)params[ 0 ] )
+      {
+      case 0: best_sphere       ( model ); break;
+      case 1: best_cylinder     ( model ); break;
+      case 2: best_spheroid     ( model ); break;
+      case 3: best_ellipsoid    ( model ); break;
+      case 4: best_torus        ( model ); break;
+      case 5: best_torus_segment( model ); break;
+      default: error_msg = "best_md0: invalid type"; return false; break;
+      }
+
+      // (void) physical_stats( model );
+      // convert limits to new factor
+      // recompute new factor
+   }
+   error_msg = "best_md0; not yet";
+   return false;
+}
+
+   /*
+   params.resize( 
+idea:
+        initial limited maxed
+        for ( grid_conversion_factor = large; 
+        grid_conversion_factor > smallest (requested?);
+        grid_conversion_factor = new_grid_conversion_factor
+        {       
+           find best model
+           get current physical limits
+           new_grid_conversion_factor = grid_conversion_factor / ?
+           set new physical limits (converted)
+        }
+   */
+   

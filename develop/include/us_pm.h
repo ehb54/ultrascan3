@@ -223,6 +223,7 @@ class US_PM
 
    vector < QString >                      object_names;
    vector < int >                          object_m0_parameters;  // # of params for model_pos = 0
+   // doens't seem to work: vector < bool (*)( set < pm_point > & ) >  object_best_f;
 
    void                                    init_objects();
    
@@ -320,6 +321,15 @@ class US_PM
                                           double best_delta_divisor = 10e0,
                                           double best_delta_min     = 1e-2
                                           );
+   // find best model at base 0
+   bool                best_md0          ( 
+                                          vector < double > & params, 
+                                          set < pm_point >  & model, 
+                                          double              finest_conversion      = 1e0,
+                                          double              coarse_conversion      = 10e0,
+                                          double              refinement_range_pct   = 5,
+                                          double              conversion_divisor     = 2e0
+                                          );
 
    bool                best_sphere       ( set < pm_point > & model );
    bool                best_cylinder     ( set < pm_point > & model );
@@ -337,7 +347,11 @@ class US_PM
    void                clear             ();
 
    void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
+   bool                zero_md0_params   ( vector < double > & params, double max_d = 0e0 );
    QString             list_model        ( vector < double > & params );
+   void                set_grid_size     ( double grid_conversion_factor );
+
+   
 };
 
 #endif
