@@ -7,6 +7,12 @@
 
 #include "us_extern.h"
 
+#ifdef Q_WS_WIN
+#ifdef FILE_OPEN
+#undef FILE_OPEN
+#endif
+#endif
+
 //! \brief Fetch an embedded image as Pixmap or Icon. All functions are static.
 //!
 //! These methods are primarily designed to return a QPixmap or a QIcon of
