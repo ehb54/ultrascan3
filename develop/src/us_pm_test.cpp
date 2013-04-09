@@ -1,14 +1,14 @@
 #include "../include/us_pm.h"
 
-#define RANDOM_TEST   100
-#define RANDOM_CYJ    1
+#define RANDOM_TEST   0
+#define RANDOM_CYJ    0
 
 #define TEST_CYLINDER 0
 
-#define BEST_SPHERE   0
-#define BEST_CYLINDER 0
-#define BEST_SPHEROID 0
-#define BEST_TORUS    0
+#define BEST_SPHERE   1
+#define BEST_CYLINDER 1
+#define BEST_SPHEROID 1
+#define BEST_TORUS    1
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
 #define LEAK_CHECK    0
@@ -139,6 +139,8 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.create_model       ( params, model );
          us_timers.end_timer          ( "create_model" );
 
+         cout << QString( "\tbeads: %1\n" ).arg( model.size() );
+
          us_timers.start_timer        ( "compute I" );
          if ( RANDOM_CYJ )
          {
@@ -231,7 +233,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_CYJ_I( model, I_result );
+            sphere_pm.compute_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -288,7 +290,7 @@ QString US_PM::test( QString name, QString oname )
          {
             vector < double >   I_result( q.size() );
             cout << "compute_I\n";
-            sphere_pm.compute_CYJ_I( model, I_result );
+            sphere_pm.compute_I( model, I_result );
             cout << "compute_I done\n";
             QString outfile = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
       
@@ -344,7 +346,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_CYJ_I( model, I_result );
+            sphere_pm.compute_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_spheroid" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
@@ -399,7 +401,7 @@ QString US_PM::test( QString name, QString oname )
          
          {
             vector < double >   I_result( q.size() );
-            sphere_pm.compute_CYJ_I( model, I_result );
+            sphere_pm.compute_I( model, I_result );
             QString outfile = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
       
             if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
