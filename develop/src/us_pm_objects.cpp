@@ -10,10 +10,68 @@
 //   split()
 //   join()
 //   list_model()
+//   also: best_(object name)()
 
 // we should probably add more data structures to simplify the code (model parameter counts for model pos)
 
 // handling routines:
+
+// finds best one model
+bool US_PM::best_md0( 
+                     vector < double > & params, 
+                     vector < double > & low_fparams, 
+                     vector < double > & high_fparams, 
+                     set < pm_point >  & model 
+                     )
+{
+   if ( params.size() < 1 )
+   {
+      error_msg = "best_md0: params[0] must be set";
+      return false;
+   }
+   int this_type = (int) params[ 0 ];
+   if ( this_type >= (int) object_names.size() ||
+        this_type < 0 )
+   {
+      error_msg = "best_md0: params[0] invalid param";
+      return false;
+   }
+
+   if ( !low_fparams.size() )
+   {
+      cerr << "best_md0: notice, setting default range\n";
+      zero_md0_params( params );
+      set_limits( params, low_fparams, high_fparams );
+   }
+
+   if ( (int)low_fparams.size() != object_m0_parameters[ this_type ] ||
+        (int)high_fparams.size() != object_m0_parameters[ this_type ] )
+   {
+      error_msg = "best_md0: low_fparams and/or high_fparams incorrect size";
+      return false;
+   }
+
+   for ( int i = 0; i < (int)low_fparams.size(); ++i )
+   {
+      if ( low_fparams[ i ] > high_fparams[ i ] )
+      {
+         error_msg = "best_md0: fparams low > high";
+         return false;
+      }
+   }
+
+   switch( this_type )
+   {
+   case 0: return best_sphere       ( params, low_fparams, high_fparams, model ); break;
+   case 1: return best_cylinder     ( params, low_fparams, high_fparams, model ); break;
+   case 2: return best_spheroid     ( params, low_fparams, high_fparams, model ); break;
+   case 3: return best_ellipsoid    ( params, low_fparams, high_fparams, model ); break;
+   case 4: return best_torus        ( params, low_fparams, high_fparams, model ); break;
+   case 5: return best_torus_segment( params, low_fparams, high_fparams, model ); break;
+   default: error_msg = "best_md0: invalid type"; return false; break;
+   }
+   return false;
+}
 
 void US_PM::init_objects()
 {

@@ -206,11 +206,30 @@ class US_PM
                                                                double            & best_fitness
                                                                );
 
+   bool                                    best_vary_one_param(
+                                                               unsigned int        param_to_vary,
+                                                               vector < double > & params,
+                                                               vector < double > & low_fparams,
+                                                               vector < double > & high_fparams,
+                                                               set < pm_point >  & model,
+                                                               double            & best_fitness
+                                                               );
+
    // vary_1 is the inner loop, vary_2 is the outer loop
    bool                                    best_vary_two_param( 
                                                                unsigned int        param_to_vary_1,
                                                                unsigned int        param_to_vary_2,
                                                                vector < double > & params, 
+                                                               set < pm_point >  & model,
+                                                               double            & best_fitness
+                                                               );
+
+   bool                                    best_vary_two_param( 
+                                                               unsigned int        param_to_vary_1,
+                                                               unsigned int        param_to_vary_2,
+                                                               vector < double > & params, 
+                                                               vector < double > & low_fparams,
+                                                               vector < double > & high_fparams,
                                                                set < pm_point >  & model,
                                                                double            & best_fitness
                                                                );
@@ -330,6 +349,12 @@ class US_PM
                                           double              refinement_range_pct   = 5,
                                           double              conversion_divisor     = 2e0
                                           );
+   bool                best_md0          ( 
+                                          vector < double > & params, 
+                                          vector < double > & low_fparams, 
+                                          vector < double > & high_fparams, 
+                                          set < pm_point >  & model 
+                                          );
 
    bool                best_sphere       ( set < pm_point > & model );
    bool                best_cylinder     ( set < pm_point > & model );
@@ -337,6 +362,43 @@ class US_PM
    bool                best_ellipsoid    ( set < pm_point > & model );
    bool                best_torus        ( set < pm_point > & model );
    bool                best_torus_segment( set < pm_point > & model );
+
+   bool                best_sphere       (
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
+   bool                best_cylinder     (
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
+   bool                best_spheroid     (
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
+   bool                best_ellipsoid    (
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
+   bool                best_torus        (
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
+   bool                best_torus_segment(
+                                          vector < double > & params,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

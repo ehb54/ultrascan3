@@ -1,5 +1,40 @@
 #include "../include/us_pm.h"
 
+bool US_PM::best_sphere(
+                        vector < double > & params,
+                        vector < double > & low_fparams,
+                        vector < double > & high_fparams,
+                        set < pm_point >  & model
+                        )
+{
+   // start with 1 sphere, slowly increase size until fitness drops
+   params.resize( 2 );
+   params[ 0 ] = 0e0;
+
+   use_CYJ = false;
+
+   us_timers.clear_timers();
+
+   double best_fit;
+   us_timers.init_timer( "sphere try with delta fallback calling vary" );
+   us_timers.start_timer( "sphere try with delta fallback calling vary" );
+   bool ok = best_vary_one_param( 1, params, low_fparams, high_fparams, model, best_fit );
+   us_timers.end_timer( "sphere try with delta fallback calling vary" );
+   cout << us_timers.list_times();
+   if ( ok )
+   {
+      last_best_rmsd_ok = true;
+      last_best_rmsd2   = best_fit;
+      return true;
+   } else {
+      last_best_rmsd_ok = false;
+      return false;
+   }
+
+   return true;
+}
+
+
 bool US_PM::best_sphere( set < pm_point > & model )
 {
    // start with 1 sphere, slowly increase size until fitness drops

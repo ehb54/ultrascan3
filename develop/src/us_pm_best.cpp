@@ -230,8 +230,8 @@ bool US_PM::best_md0(
                      set < pm_point >  & model, 
                      double              finest_conversion,
                      double              coarse_conversion,
-                     double              /* refinement_range_pct */,
-                     double              /* conversion_divisor */
+                     double              refinement_range_pct,
+                     double              conversion_divisor
                      )
 {
    if ( !zero_md0_params( params ) )
@@ -241,43 +241,78 @@ bool US_PM::best_md0(
    }
 
    set_grid_size( coarse_conversion );
+
+   vector < double > low_fparams;
+   vector < double > high_fparams;
+   set_limits( params, low_fparams, high_fparams );
+   vector < double > next_low_fparams  = low_fparams;
+   vector < double > next_high_fparams = high_fparams;
+
+   double new_grid_conversion_factor = grid_conversion_factor;
    
    while ( grid_conversion_factor >= finest_conversion )
    {
       // need params[] from best model and ability to set limits for best model
       // have to add to best_*, maybe add general best_model( params )
       
-      switch( (int)params[ 0 ] )
+      clip_limits( next_low_fparams , low_fparams, high_fparams );
+      clip_limits( next_high_fparams, low_fparams, high_fparams );
+      low_fparams  = next_low_fparams;
+      high_fparams = next_high_fparams;
+
+      if ( !best_md0( params, low_fparams, high_fparams, model ) )
       {
-      case 0: best_sphere       ( model ); break;
-      case 1: best_cylinder     ( model ); break;
-      case 2: best_spheroid     ( model ); break;
-      case 3: best_ellipsoid    ( model ); break;
-      case 4: best_torus        ( model ); break;
-      case 5: best_torus_segment( model ); break;
-      default: error_msg = "best_md0: invalid type"; return false; break;
+         return false;
       }
 
-      // (void) physical_stats( model );
+      for ( int i = 0; i < (int)low_fparams.size(); i++ )
+      {
+         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct;
+         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct;
+      }
+
       // convert limits to new factor
-      // recompute new factor
+
+      new_grid_conversion_factor = grid_conversion_factor / conversion_divisor;
+
+      for ( int i = 0; i < (int)low_fparams.size(); i++ )
+      {
+         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct;
+         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct;
+
+         next_low_fparams [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
+         next_high_fparams[ i ] *= new_grid_conversion_factor / grid_conversion_factor;
+         low_fparams      [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
+         high_fparams     [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
+      }
+
+      set_grid_size( new_grid_conversion_factor );
    }
-   error_msg = "best_md0; not yet";
+   return true;
+}
+
+bool US_PM::best_vary_one_param(
+                                unsigned int        param_to_vary,
+                                vector < double > & params,
+                                vector < double > & low_fparams,
+                                vector < double > & high_fparams,
+                                set < pm_point >  & model,
+                                double            & best_fitness )
+{
+   error_msg = "not yet";
    return false;
 }
 
-   /*
-   params.resize( 
-idea:
-        initial limited maxed
-        for ( grid_conversion_factor = large; 
-        grid_conversion_factor > smallest (requested?);
-        grid_conversion_factor = new_grid_conversion_factor
-        {       
-           find best model
-           get current physical limits
-           new_grid_conversion_factor = grid_conversion_factor / ?
-           set new physical limits (converted)
-        }
-   */
-   
+bool US_PM::best_vary_two_param( 
+                                unsigned int        param_to_vary_1,
+                                unsigned int        param_to_vary_2,
+                                vector < double > & params, 
+                                vector < double > & low_fparams,
+                                vector < double > & high_fparams,
+                                set < pm_point >  & model,
+                                double            & best_fitness
+                                )
+{
+   error_msg = "not yet";
+   return false;
+}
