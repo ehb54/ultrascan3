@@ -9,7 +9,7 @@
 //   create_1_model()
 //   split()
 //   join()
-//   list_model()
+//   list_params()
 //   also: best_(object name)()
 
 // we should probably add more data structures to simplify the code (model parameter counts for model pos)
@@ -104,7 +104,7 @@ void US_PM::init_objects()
    // object_best_f       .push_back( &US_PM::best_torus_segment );
 }
 
-QString US_PM::list_model( vector < double > & params )
+QString US_PM::list_params( vector < double > & params )
 {
    QString qs = "model:";
 

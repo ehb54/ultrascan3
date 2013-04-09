@@ -410,7 +410,7 @@ class US_PM
 
    void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
    bool                zero_md0_params   ( vector < double > & params, double max_d = 0e0 );
-   QString             list_model        ( vector < double > & params );
+   QString             list_params       ( vector < double > & params );
    void                set_grid_size     ( double grid_conversion_factor );
 
    
